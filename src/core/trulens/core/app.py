@@ -33,6 +33,7 @@ import weakref
 
 import pandas as pd
 import pydantic
+from trulens.apps.basic import TruWrapperApp
 from trulens.core import experimental as core_experimental
 from trulens.core import instruments as core_instruments
 from trulens.core import session as core_session
@@ -496,12 +497,7 @@ class App(
                 main_method = kwargs["main_method"]
 
                 # Instead of always checking for binding,  enforce it except when app is an instance of TruWrapperApp (tru basic app).
-                try:
-                    from trulens.apps.basic import TruWrapperApp
-                except ImportError:
-                    TruWrapperApp = None
-
-                if TruWrapperApp is None or not isinstance(app, TruWrapperApp):
+                if not isinstance(app, TruWrapperApp):
                     if (
                         not hasattr(main_method, "__self__")
                         or main_method.__self__ != app
@@ -1731,6 +1727,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
         except Exception as e:
             logger.error(f"Failed to add run {run_config.run_name}. {e}")
+            return None
 
     def get_run(self, run_name: str) -> Run:
         """Retrieve a run by name.

@@ -371,8 +371,6 @@ class SnowflakeConnector(DBConnector):
         app_name: str,
         app_version: str,
     ) -> Optional[Tuple[ExternalAgentDao, RunDao, str, str]]:
-        snowflake_app_dao = None
-
         if not ObjectType.is_valid_object(object_type):
             raise ValueError(
                 f"Invalid object_type to initialize Snowflake app: {object_type}"
@@ -386,7 +384,7 @@ class SnowflakeConnector(DBConnector):
             snowflake_app_dao = ExternalAgentDao(self.snowpark_session)
             snowflake_run_dao = RunDao(self.snowpark_session)
             agent_resolved_name, agent_resolved_version = (
-                snowflake_app_dao.create_agent_if_not_exist(
+                snowflake_app_dao.create_new_agent(
                     name=app_name,
                     version=app_version,
                 )
