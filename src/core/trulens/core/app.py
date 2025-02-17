@@ -1703,45 +1703,34 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         """
 
         self._check_snowflake_dao()
-        existing_run = None
+
         try:
-            existing_run = self.get_run(run_config.run_name)
-        except ValueError as e:
-            if "not found" in str(e):
-                logger.info(
-                    f"Run {run_config.run_name} not found. Creating a new run."
-                )
-                pass
-            else:
-                raise e
+            run_metadata_df = self.snowflake_run_dao.create_new_run(
+                object_name=self.snowflake_object_name,
+                object_type=self.snowflake_object_type,
+                object_version=self.snowflake_object_version,
+                run_name=run_config.run_name,
+                dataset_name=run_config.dataset_name,
+                dataset_col_spec=validate_dataset_col_spec(
+                    run_config.dataset_col_spec
+                ),
+                description=run_config.description,
+                label=run_config.label,
+                llm_judge_name=run_config.llm_judge_name,
+            )
 
-        if existing_run:
-            logger.info(f"Run {run_config.run_name} already exists.")
-            return existing_run
+            return Run.from_metadata_df(
+                run_metadata_df,
+                {
+                    "app": self.app,
+                    "main_method_name": self.main_method_name,
+                    "run_dao": self.snowflake_run_dao,
+                    "tru_session": self.session,
+                },
+            )
 
-        run_metadata_df = self.snowflake_run_dao.create_new_run(
-            object_name=self.snowflake_object_name,
-            object_type=self.snowflake_object_type,
-            object_version=self.snowflake_object_version,
-            run_name=run_config.run_name,
-            dataset_name=run_config.dataset_name,
-            dataset_col_spec=validate_dataset_col_spec(
-                run_config.dataset_col_spec
-            ),
-            description=run_config.description,
-            label=run_config.label,
-            llm_judge_name=run_config.llm_judge_name,
-        )
-
-        return Run.from_metadata_df(
-            run_metadata_df,
-            {
-                "app": self.app,
-                "main_method_name": self.main_method_name,
-                "run_dao": self.snowflake_run_dao,
-                "tru_session": self.session,
-            },
-        )
+        except Exception as e:
+            logger.error(f"Failed to add run {run_config.run_name}. {e}")
 
     def get_run(self, run_name: str) -> Run:
         """Retrieve a run by name.

@@ -51,8 +51,8 @@ class TestRunDao(unittest.TestCase):
             "object_type": object_type,
             "object_version": object_version,
             "run_name": run_name,
+            "description": "desc",
             "run_metadata": {
-                "description": "desc",
                 "labels": ["label"],
                 "llm_judge_name": "mistral-large2",
             },

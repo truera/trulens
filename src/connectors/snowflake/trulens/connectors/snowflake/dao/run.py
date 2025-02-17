@@ -60,6 +60,7 @@ class RunDao:
             "object_name": object_name,
             "object_type": object_type,
             "run_name": run_name,
+            "description": description,
             "run_metadata": {},
             "source_info": {},
         }
@@ -69,7 +70,6 @@ class RunDao:
 
         run_metadata_dict = {}
 
-        run_metadata_dict["description"] = description
         run_metadata_dict["labels"] = [
             label
         ]  # only accepting a single label for now
