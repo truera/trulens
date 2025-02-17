@@ -149,7 +149,7 @@ class Run(BaseModel):
             default=[],
             description="Text label to group the runs. Take a single label for now",
         )
-        llmJudgeName: Optional[str] = (
+        llm_judge_name: Optional[str] = (
             Field(  # TODO: daniel - this needs to be udpated to `llm_judge_name`
                 default=None,
                 description="Name of the LLM judge to be used for the run.",

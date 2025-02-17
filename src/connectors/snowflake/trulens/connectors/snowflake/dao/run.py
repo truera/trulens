@@ -75,7 +75,7 @@ class RunDao:
         ]  # only accepting a single label for now
 
         # TODO: daniel - this needs to be udpated to `llm_judge_name`
-        run_metadata_dict["llmJudgeName"] = (
+        run_metadata_dict["llm_judge_name"] = (
             llm_judge_name if llm_judge_name else DEFAULT_LLM_JUDGE_NAME
         )
         req_payload["run_metadata"] = run_metadata_dict

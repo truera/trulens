@@ -54,7 +54,7 @@ class TestRunDao(unittest.TestCase):
             "run_metadata": {
                 "description": "desc",
                 "labels": ["label"],
-                "llmJudgeName": "mistral-large2",
+                "llm_judge_name": "mistral-large2",
             },
             "source_info": {
                 "name": dataset_name,
