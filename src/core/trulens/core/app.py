@@ -1687,8 +1687,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             raise ValueError(msg)
 
     def add_run(self, run_config: RunConfig) -> Union[Run, None]:
-        """add a new run to the snowflake App (if not already exists) or retrieve
-        the run if it already exists.
+        """add a new run to the snowflake App (if not already exists)
 
         Args:
             run_config (RunConfig):  Run config

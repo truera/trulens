@@ -19,6 +19,7 @@ class ExternalAgentDao:
     def create_new_agent(self, name: str, version: str) -> Tuple[str, str]:
         """Create a new External Agent with a specified version."""
 
+        # note we cannot parametrize inputs to query when using CREATE statement - hence f-string but there might be a risk of sql injection
         query = f"CREATE EXTERNAL AGENT {name} WITH VERSION {version};"
         execute_query(self.session, query)
 
