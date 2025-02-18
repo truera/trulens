@@ -40,9 +40,6 @@ class _TestApp:
 
 class TestOtelMultiThreaded(OtelAppTestCase):
     def test_multithreaded(self):
-        # Set up.
-        tru_session = TruSession()
-        tru_session.reset_database()
         # Create TruApp that runs many things in parallel.
         test_app = _TestApp()
         custom_app = TruApp(test_app, main_method=test_app.respond_to_query)
@@ -51,7 +48,7 @@ class TestOtelMultiThreaded(OtelAppTestCase):
             with input_recorder:
                 input_recorder.attach_to_context("best_baby", "Kojikun")
                 test_app.respond_to_query("test")
-        tru_session.force_flush()
+        TruSession().force_flush()
         actual = self._get_events()
         seen_span_ids = set()
         for _, row in actual.iterrows():

@@ -4,7 +4,6 @@ Tests for OTEL instrument decorator and custom app.
 
 from trulens.apps.app import TruApp
 from trulens.core.otel.instrument import instrument
-from trulens.core.session import TruSession
 from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.otel_app_test_case import OtelAppTestCase
@@ -51,9 +50,6 @@ class TestApp:
 
 class TestOtelTruCustom(OtelAppTestCase):
     def test_smoke(self) -> None:
-        # Set up.
-        tru_session = TruSession()
-        tru_session.reset_database()
         # Create and run app.
         test_app = TestApp()
         custom_app = TruApp(test_app, main_method=test_app.respond_to_query)

@@ -1044,7 +1044,7 @@ class App(
                     app_name=self.app_name,
                     app_version=self.app_version,
                     run_name="",
-                    input_id=None,
+                    input_id="",
                 )
             return self._current_context_manager.__enter__()
 

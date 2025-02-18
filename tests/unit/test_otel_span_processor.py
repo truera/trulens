@@ -33,6 +33,8 @@ class TestOtelSpanProcessor(OtelAppTestCase):
         tru_recorder.instrumented_invoke_main_method(
             run_name="test run", input_id="42", main_method_args=("Kojikun",)
         )
+        # Invoke without recording.
+        app.greet("Nolan")
         # Verify.
         TruSession().force_flush()
         events = self._get_events()
