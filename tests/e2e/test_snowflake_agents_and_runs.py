@@ -148,6 +148,26 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
         self.assertIn("V1", versions_df_2["name"].values)
         self.assertIn("V2", versions_df_2["name"].values)
 
+    def test_adding_run_missing_object_fields(self):
+        app = TestApp()
+
+        with self.assertRaises(Exception):
+            TruApp(
+                app,
+                app_name="custom_app",
+                app_version=None,  # missing version, should raise error
+                connector=self.snowflake_connector,
+                main_method=app.respond_to_query,
+            )
+        with self.assertRaises(Exception):
+            TruApp(
+                app,
+                app_name=None,  #  missing object name, should raise error
+                app_version="v1",
+                connector=self.snowflake_connector,
+                main_method=app.respond_to_query,
+            )
+
     def test_adding_run_to_agent(self):
         app = TestApp()
 
@@ -221,6 +241,9 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
             dataset_col_spec={"col1": "col1"},
         )
         run_2 = tru_recorder.add_run(run_config=run_config_2)
+
+        with self.assertRaises(Exception):
+            tru_recorder.add_run(run_config=run_config_2)  # run already exists
 
         runs = tru_recorder.list_runs()
         self.assertIn("test_run_1", [run.run_name for run in runs])
