@@ -1,5 +1,5 @@
 parameters:
-  - name: python-version
+  - name: pythonVersion
     type: string
     values:
       - "3.9"
