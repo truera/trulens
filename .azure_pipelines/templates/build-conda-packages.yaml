@@ -13,7 +13,7 @@ jobs:
     vmImage: ubuntu-latest
   timeoutInMinutes: 30
   steps:
-  - template: templates/env-setup.yaml
+  - template: env-setup.yaml
   - bash: |
       set -e
       conda install conda-build
