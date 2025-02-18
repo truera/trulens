@@ -67,7 +67,7 @@ class SnowflakeConnector(DBConnector):
             "role": role,
             "protocol": protocol,
             "port": port,
-            "host": host,
+            "host": host if host else f"{account}.snowflakecomputing.com",
         }
         if snowpark_session is None:
             snowpark_session = self._create_snowpark_session(
