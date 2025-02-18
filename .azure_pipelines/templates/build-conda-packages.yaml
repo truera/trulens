@@ -1,5 +1,7 @@
 jobs:
 - job: BuildCondaPackages
+  variables:
+    python-version: 3.11
   pool:
     vmImage: ubuntu-latest
   timeoutInMinutes: 30
