@@ -8,7 +8,6 @@ package:
 source:
   {% if environ.get('CONDA_SOURCE_USE_PATH') == '1' %}
   path: ./
-  #path: ../../dist/trulens-dashboard/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-dashboard/#files
