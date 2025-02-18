@@ -291,7 +291,7 @@ class Run(BaseModel):
     def get_status(self):
         raise NotImplementedError("status is not implemented yet.")
 
-    def compute_metrics(self, metrics: List[str] = ["context_relevance"]):
+    def compute_metrics(self, metrics: List[str]):
         # TODO: add update operations to the run metadata
 
         current_db = self.run_dao.session.get_current_database()
