@@ -105,10 +105,7 @@ class TestOtelTruLlama(OtelAppTestCase):
         self.assertEqual(count_wraps(rag2.query), 1)
         self.assertEqual(count_wraps(rag3.query), 1)
         self.assertFalse(
-            hasattr(
-                rag1.query,
-                TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
-            )
+            hasattr(rag1.query, TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG)
         )
         self.assertFalse(
             hasattr(rag2.query, TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG)
@@ -116,4 +113,3 @@ class TestOtelTruLlama(OtelAppTestCase):
         self.assertFalse(
             hasattr(rag3.query, TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG)
         )
-        # TODO(this_pr): why wasn't this a problem for langchain? Or the custom one? in test_snowflake_event_table_exporter.py?
