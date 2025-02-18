@@ -4,6 +4,7 @@ from typing import Tuple
 import pandas
 from snowflake.snowpark import Session
 from trulens.connectors.snowflake.dao.sql_utils import execute_query
+from trulens.connectors.snowflake.dao.sql_utils import resolve_identifier
 
 logger = logging.getLogger(__name__)
 
@@ -36,15 +37,7 @@ class ExternalAgentDao:
             Tuple[str, str]: resolved_name, version
         """
         # Get the agent if it already exists, otherwise create it
-        if not (name.startswith('"') and name.endswith('"')):
-            resolved_name = name.upper()
-        else:
-            resolved_name = name
-
-        if not (version.startswith('"') and version.endswith('"')):
-            resolved_version = version.upper()
-        else:
-            resolved_version = version
+        resolved_name = resolve_identifier(name)
 
         if not self.check_agent_exists(name):
             self.create_new_agent(name, version)
@@ -55,7 +48,7 @@ class ExternalAgentDao:
             if (
                 existing_versions.empty
                 or "name" not in existing_versions.columns
-                or resolved_version not in existing_versions["name"].values
+                or version not in existing_versions["name"].values
             ):
                 self.add_version(name, version)
                 logger.info(
@@ -65,7 +58,7 @@ class ExternalAgentDao:
                 logger.info(
                     f"External Agent {name} with version {version} already exists."
                 )
-        return resolved_name, resolved_version
+        return resolved_name, version
 
     def drop_agent(self, name: str) -> None:
         """Delete an External Agent."""
@@ -111,7 +104,7 @@ class ExternalAgentDao:
             return False
         logger.info(f"Checking if External Agent {name} exists.")
 
-        return name.upper() in agents["name"].values
+        return resolve_identifier(name) in agents["name"].values
 
     def list_agent_versions(self, name: str) -> pandas.DataFrame:
         """Retrieve all versions of a specific External Agent."""

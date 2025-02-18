@@ -221,6 +221,7 @@ class Run(BaseModel):
         Args:
             input_df (Optional[pd.DataFrame], optional): user provided input dataframe.
         """
+        # TODO: add update operations to the run metadata
         if input_df is None:
             logger.info(
                 "No input dataframe provided. Fetching input data from source."

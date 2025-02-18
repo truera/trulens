@@ -67,7 +67,7 @@ class TestExternalAgentDao(unittest.TestCase):
         # Return a list of DummyRow objects to simulate rows.
         mock_execute_query.side_effect = [
             [DummyRow({"name": "AGENT1"})],  # list_agents call
-            [DummyRow({"name": "V1"})],  # list_agent_versions call
+            [DummyRow({"name": "v1"})],  # list_agent_versions call
         ]
 
         self.dao.create_agent_if_not_exist("agent1", "v1")
@@ -114,8 +114,8 @@ class TestExternalAgentDao(unittest.TestCase):
         mock_execute_query.side_effect = [
             [DummyRow({"name": "AGENT1"})],  # list_agents call
             [
-                DummyRow({"version": "V1"}),
-                DummyRow({"version": "V2"}),
+                DummyRow({"version": "v1"}),
+                DummyRow({"version": "v2"}),
             ],  # list_agent_versions call
             [],  # add_version call returns empty list
         ]
