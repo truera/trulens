@@ -13,6 +13,7 @@ jobs:
     vmImage: ubuntu-latest
   timeoutInMinutes: 30
   steps:
+  # TODO(this_pr): only run if pyproject.toml files have changed or poetry.lock?
   - template: env-setup.yaml
     parameters:
       pythonVersion: ${{ parameters.pythonVersion }}
@@ -20,43 +21,48 @@ jobs:
       set -e
       rm -rf ./dist
       rm -rf ./src/core/trulens/data/snowflake_stage_zips
-      make build
-      # ./zip_wheels.sh
-      make zip-wheels
-      make build
-      make env
+      #make build
+      #make zip-wheels
+      #make build
+      #make env
     displayName: Build all packages
   - bash: |
       set -e
-      CONDA_ALWAYS_YES=1 conda install conda-build --yes
+      CONDA_ALWAYS_YES=1 conda install conda-build --yes # TODO(this_pr): do we need this env variable everywhere?
     displayName: Install conda-build
   - bash: |
       set -e
+      export CONDA_SOURCE_USE_PATH=1
       cd ./src/otel/semconv/
       CONDA_ALWAYS_YES=1 conda build .
     displayName: Build `trulens-otel-semconv`
   - bash: |
       set -e
+      export CONDA_SOURCE_USE_PATH=1
       cd ./src/core
       CONDA_ALWAYS_YES=1 conda build .
     displayName: Build `trulens-core`
   - bash: |
       set -e
+      export CONDA_SOURCE_USE_PATH=1
       cd ./src/feedback
       CONDA_ALWAYS_YES=1 conda build .
     displayName: Build `trulens-feedback`
   - bash: |
       set -e
+      export CONDA_SOURCE_USE_PATH=1
       cd ./src/dashboard
       CONDA_ALWAYS_YES=1 conda build .
     displayName: Build `trulens-dashboard`
   - bash: |
       set -e
+      export CONDA_SOURCE_USE_PATH=1
       cd ./src/connectors/snowflake
       CONDA_ALWAYS_YES=1 conda build .
     displayName: Build `trulens-connectors-snowflake`
   - bash: |
       set -e
+      export CONDA_SOURCE_USE_PATH=1
       cd ./src/providers/cortex
       CONDA_ALWAYS_YES=1 conda build .
     displayName: Build `trulens-providers-cortex`
