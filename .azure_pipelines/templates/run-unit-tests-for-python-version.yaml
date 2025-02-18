@@ -8,7 +8,7 @@ parameters:
       - "3.12"
 
 jobs:
-- job: RunAllUnitTestsForPython${{ parameters.pythonVersion }}
+- job: RunAllUnitTestsForPython${{ replace(parameters.pythonVersion, '.', '') }}
   pool:
     vmImage: ubuntu-latest
   timeoutInMinutes: 30
