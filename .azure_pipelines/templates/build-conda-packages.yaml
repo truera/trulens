@@ -18,6 +18,15 @@ jobs:
       pythonVersion: ${{ parameters.pythonVersion }}
   - bash: |
       set -e
+      rm -rf ./dist
+      rm -rf ./src/core/trulens/data/snowflake_stage_zips
+      make build
+      make zip-wheels
+      make build
+      make env
+    displayName: Build all packages
+  - bash: |
+      set -e
       CONDA_ALWAYS_YES=1 conda install conda-build --yes
     displayName: Install conda-build
   - bash: |
