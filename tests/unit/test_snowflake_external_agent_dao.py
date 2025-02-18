@@ -47,7 +47,7 @@ class TestExternalAgentDao(unittest.TestCase):
         self.dao.create_agent_if_not_exist("agent1", "v1")
 
         expected_show_query = "SHOW EXTERNAL AGENTS;"
-        expected_create_query = "CREATE EXTERNAL AGENT agent1 WITH VERSION v1;"
+        expected_create_query = "CREATE EXTERNAL AGENT AGENT1 WITH VERSION v1;"
 
         # We expect exactly 2 calls to execute_query.
         self.assertEqual(mock_execute_query.call_count, 2)
@@ -69,7 +69,7 @@ class TestExternalAgentDao(unittest.TestCase):
         # Return a list of DummyRow objects to simulate rows.
         mock_execute_query.side_effect = [
             [DummyRow({"name": "AGENT1"})],  # list_agents call
-            [DummyRow({"name": "v1"})],  # list_agent_versions call
+            [DummyRow({"name": "V1"})],  # list_agent_versions call
         ]
 
         self.dao.create_agent_if_not_exist("agent1", "v1")
@@ -101,7 +101,7 @@ class TestExternalAgentDao(unittest.TestCase):
         self.dao.create_agent_if_not_exist("agent1", "v2")
 
         expected_add_query = (
-            "ALTER EXTERNAL AGENT if exists agent1  ADD VERSION v2;"
+            "ALTER EXTERNAL AGENT if exists AGENT1  ADD VERSION V2;"
         )
         calls = mock_execute_query.call_args_list
         queries = [call[0][1] for call in calls]
@@ -116,8 +116,8 @@ class TestExternalAgentDao(unittest.TestCase):
         mock_execute_query.side_effect = [
             [DummyRow({"name": "AGENT1"})],  # list_agents call
             [
-                DummyRow({"version": "v1"}),
-                DummyRow({"version": "v2"}),
+                DummyRow({"version": "V1"}),
+                DummyRow({"version": "V2"}),
             ],  # list_agent_versions call
             [],  # add_version call returns empty list
         ]
@@ -125,7 +125,7 @@ class TestExternalAgentDao(unittest.TestCase):
         self.dao.create_agent_if_not_exist("agent1", "v3")
 
         expected_add_query = (
-            "ALTER EXTERNAL AGENT if exists agent1  ADD VERSION v3;"
+            "ALTER EXTERNAL AGENT if exists AGENT1  ADD VERSION V3;"
         )
         calls = mock_execute_query.call_args_list
         queries = [call[0][1] for call in calls]
