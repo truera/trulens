@@ -23,7 +23,7 @@ jobs:
       make build
       pwd
       ls -trl
-      make zip-wheels
+      ./zip_wheels.sh
       make build
       make env
     displayName: Build all packages
