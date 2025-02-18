@@ -18,35 +18,35 @@ jobs:
       pythonVersion: ${{ parameters.pythonVersion }}
   - bash: |
       set -e
-      conda install conda-build
+      CONDA_ALWAYS_YES=1 conda install conda-build --yes
     displayName: Install conda-build
   - bash: |
       set -e
       cd ./src/otel/semconv/
-      conda build .
+      CONDA_ALWAYS_YES=1 conda build .
     displayName: Build `trulens-otel-semconv`
   - bash: |
       set -e
       cd ./src/core
-      conda build .
+      CONDA_ALWAYS_YES=1 conda build .
     displayName: Build `trulens-core`
   - bash: |
       set -e
       cd ./src/feedback
-      conda build .
+      CONDA_ALWAYS_YES=1 conda build .
     displayName: Build `trulens-feedback`
   - bash: |
       set -e
       cd ./src/dashboard
-      conda build .
+      CONDA_ALWAYS_YES=1 conda build .
     displayName: Build `trulens-dashboard`
   - bash: |
       set -e
       cd ./src/connectors/snowflake
-      conda build .
+      CONDA_ALWAYS_YES=1 conda build .
     displayName: Build `trulens-connectors-snowflake`
   - bash: |
       set -e
       cd ./src/providers/cortex
-      conda build .
+      CONDA_ALWAYS_YES=1 conda build .
     displayName: Build `trulens-providers-cortex`
