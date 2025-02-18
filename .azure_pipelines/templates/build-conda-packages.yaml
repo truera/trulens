@@ -19,11 +19,14 @@ jobs:
   - bash: |
       set -e
       conda install conda-build
+    displayName: Install conda-build
   - bash: |
       set -e
       cd ./src/otel/semconv/
       conda build .
+    displayName: Build `trulens-otel-semconv`
   - bash: |
       set -e
       cd ./src/core
       conda build .
+    displayName: Build `trulens-core`
