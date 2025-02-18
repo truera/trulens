@@ -28,8 +28,8 @@ jobs:
       CONDA_SOURCE_USE_PATH=1 conda build ./src/dashboard -c https://conda.anaconda.org/sfe1ed40/
     displayName: Build `trulens-dashboard`
   - bash: |
-      CONDA_SOURCE_USE_PATH=1 conda build ./src/connectors/snowflake -c https://conda.anaconda.org/sfe1ed40/
-    displayName: Build `trulens-connectors-snowflake`
-  - bash: |
       CONDA_SOURCE_USE_PATH=1 conda build ./src/providers/cortex -c https://conda.anaconda.org/sfe1ed40/
     displayName: Build `trulens-providers-cortex`
+  - bash: |
+      CONDA_SOURCE_USE_PATH=1 conda build ./src/connectors/snowflake -c https://conda.anaconda.org/sfe1ed40/
+    displayName: Build `trulens-connectors-snowflake`
