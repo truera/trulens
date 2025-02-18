@@ -370,7 +370,7 @@ class SnowflakeConnector(DBConnector):
         object_type: str,
         app_name: str,
         app_version: str,
-    ) -> Optional[Tuple[ExternalAgentDao, RunDao, str, str]]:
+    ) -> Tuple[ExternalAgentDao, RunDao, str, str]:
         snowflake_app_dao = None
 
         if not ObjectType.is_valid_object(object_type):
@@ -397,3 +397,5 @@ class SnowflakeConnector(DBConnector):
                 agent_resolved_name,
                 agent_resolved_version,
             )
+
+        raise ValueError(f"Object type {object_type} not supported.")

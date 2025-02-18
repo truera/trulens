@@ -532,16 +532,16 @@ class App(
                     else kwargs["object_type"]
                 )
 
-                ret = connector.initialize_snowflake_dao_fields(
+                (
+                    self.snowflake_app_dao,
+                    self.snowflake_run_dao,
+                    self.snowflake_object_name,
+                    self.snowflake_object_version,
+                ) = connector.initialize_snowflake_dao_fields(
                     object_type=self.snowflake_object_type,
                     app_name=kwargs["app_name"],
                     app_version=kwargs["app_version"],
                 )
-                if ret is not None:
-                    self.snowflake_app_dao = ret[0]
-                    self.snowflake_run_dao = ret[1]
-                    self.snowflake_object_name = ret[2]
-                    self.snowflake_object_version = ret[3]
 
         self.app = app
 

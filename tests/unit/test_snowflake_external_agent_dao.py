@@ -5,7 +5,9 @@ from unittest.mock import patch
 import pytest
 
 try:
+    from trulens.connectors.snowflake.dao.enums import ObjectType
     from trulens.connectors.snowflake.dao.external_agent import ExternalAgentDao
+
 except Exception:
     pass
 
@@ -129,3 +131,8 @@ class TestExternalAgentDao(unittest.TestCase):
         queries = [call[0][1] for call in calls]
         self.assertIn(expected_add_query, queries)
         self.assertEqual(mock_execute_query.call_count, 3)
+
+    def test_is_valid_object(self):
+        self.assertTrue(ObjectType.EXTERNAL_AGENT == "EXTERNAL AGENT")
+        self.assertTrue(ObjectType.is_valid_object("EXTERNAL AGENT"))
+        self.assertFalse(ObjectType.is_valid_object("INVALID AGENT"))
