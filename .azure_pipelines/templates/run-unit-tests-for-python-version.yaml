@@ -13,17 +13,17 @@ jobs:
     vmImage: ubuntu-latest
   timeoutInMinutes: 30
   steps:
-  - template: templates/env-setup.yaml
-  - template: templates/run-precommits.yaml
-  - template: templates/run-tests.yaml
+  - template: env-setup.yaml
+  - template: run-precommits.yaml
+  - template: run-tests.yaml
     parameters:
       pytestMarker: basic
       testSuite: unit
-  - template: templates/run-tests.yaml
+  - template: run-tests.yaml
     parameters:
       pytestMarker: optional
       testSuite: unit
-  - template: templates/run-tests.yaml
+  - template: run-tests.yaml
     parameters:
       pytestMarker: snowflake
       testSuite: unit
