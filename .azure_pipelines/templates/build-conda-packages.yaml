@@ -13,7 +13,6 @@ jobs:
     vmImage: ubuntu-latest
   timeoutInMinutes: 30
   steps:
-  # TODO(this_pr): only run if pyproject.toml files have changed or poetry.lock or meta.yaml files?
   - template: env-setup.yaml
     parameters:
       pythonVersion: ${{ parameters.pythonVersion }}
