@@ -161,6 +161,9 @@ def instrument(
         decorator, then the function will not be wrapped again.
     """
     is_record_root = span_type == SpanAttributes.SpanType.RECORD_ROOT
+    is_app_specific_record_root = kwargs.get(
+        "is_app_specific_record_root", False
+    )
 
     def inner_decorator(func: Callable):
         span_name = _get_func_name(func)
@@ -328,7 +331,7 @@ def instrument(
         else:
             ret = sync_wrapper(func)
         ret.__dict__[TRULENS_INSTRUMENT_WRAPPER_FLAG] = True
-        if is_record_root:
+        if is_record_root and not is_app_specific_record_root:
             ret.__dict__[TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG] = True
         return ret
 

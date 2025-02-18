@@ -4,6 +4,9 @@ Tests for OTEL TruLlama app.
 
 import pytest
 from trulens.core.session import TruSession
+from trulens.otel.semconv.constants import (
+    TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
+)
 
 from tests.util.otel_app_test_case import OtelAppTestCase
 
@@ -60,9 +63,6 @@ class TestOtelTruLlama(OtelAppTestCase):
         self.assertIn("main_method", str(context.exception))
 
     def test_smoke(self) -> None:
-        # Set up.
-        tru_session = TruSession()
-        tru_session.reset_database()
         # Create app.
         rag = self._create_simple_rag()
         tru_recorder = TruLlama(
@@ -88,3 +88,36 @@ class TestOtelTruLlama(OtelAppTestCase):
                 (_CONTEXT_RETRIEVAL_REGEX, _CONTEXT_RETRIEVAL_REPLACEMENT)
             ],
         )
+
+    def test_app_specific_record_root(self) -> None:
+        rag1 = self._create_simple_rag()
+        rag2 = self._create_simple_rag()
+        TruLlama(
+            rag1,
+            app_name="Simple RAG",
+            app_version="v1",
+            main_method=rag1.query,
+        )
+        rag3 = self._create_simple_rag()
+
+        def count_wraps(func):
+            if not hasattr(func, "__wrapped__"):
+                return 0
+            return 1 + count_wraps(func.__wrapped__)
+
+        self.assertEqual(count_wraps(rag1.query), 2)
+        self.assertEqual(count_wraps(rag2.query), 1)
+        self.assertEqual(count_wraps(rag3.query), 1)
+        self.assertFalse(
+            hasattr(
+                rag1.query,
+                TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
+            )
+        )
+        self.assertFalse(
+            hasattr(rag2.query, TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG)
+        )
+        self.assertFalse(
+            hasattr(rag3.query, TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG)
+        )
+        # TODO(this_pr): why wasn't this a problem for langchain? Or the custom one? in test_snowflake_event_table_exporter.py?
