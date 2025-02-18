@@ -45,6 +45,9 @@ class SnowflakeConnector(DBConnector):
         schema: Optional[str] = None,
         warehouse: Optional[str] = None,
         role: Optional[str] = None,
+        protocol: Optional[str] = "https",
+        port: Optional[int] = 443,
+        host: Optional[str] = None,
         snowpark_session: Optional[Session] = None,
         init_server_side: bool = False,
         init_server_side_with_staged_packages: bool = False,
@@ -62,6 +65,9 @@ class SnowflakeConnector(DBConnector):
             "schema": schema,
             "warehouse": warehouse,
             "role": role,
+            "protocol": protocol,
+            "port": port,
+            "host": host,
         }
         if snowpark_session is None:
             snowpark_session = self._create_snowpark_session(
@@ -74,7 +80,7 @@ class SnowflakeConnector(DBConnector):
                 )
             )
 
-        self.snowpark_session = snowpark_session
+        self.snowpark_session: Session = snowpark_session
         self.connection_parameters: Dict[str, str] = connection_parameters
         self.use_staged_packages: bool = init_server_side_with_staged_packages
 
