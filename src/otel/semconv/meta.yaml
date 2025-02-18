@@ -16,7 +16,7 @@ source:
 
 build:
   noarch: python
-  script: echo "HI" && pwd && ls -trl && echo "BYE" && {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
   number: 0
 
 requirements:
