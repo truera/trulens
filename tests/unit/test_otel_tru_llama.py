@@ -3,7 +3,6 @@ Tests for OTEL TruLlama app.
 """
 
 import pytest
-from trulens.core.session import TruSession
 from trulens.otel.semconv.constants import (
     TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
 )
@@ -52,9 +51,6 @@ class TestOtelTruLlama(OtelAppTestCase):
         return index.as_query_engine(similarity_top_k=3)
 
     def test_missing_main_method_raises_error(self):
-        # Attempt to create a TruLlama without specifying main_method.
-        tru_session = TruSession()
-        tru_session.reset_database()
         # Create app.
         rag = self._create_simple_rag()
         with self.assertRaises(ValueError) as context:

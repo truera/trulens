@@ -96,6 +96,16 @@ def set_span_attribute_safely(
         span.set_attribute(key, _convert_to_valid_span_attribute_type(value))
 
 
+def set_string_span_attribute_from_baggage(
+    span: Span,
+    key: str,
+    context: Optional[Context] = None,
+) -> None:
+    value = get_baggage(key, context)
+    if value is not None:
+        span.set_attribute(key, str(value))
+
+
 def validate_attributes(attributes: Dict[str, Any]) -> Dict[str, Any]:
     """
     Utility function to validate span attributes based on the span type.
@@ -120,39 +130,30 @@ def set_general_span_attributes(
 ) -> None:
     span.set_attribute(SpanAttributes.SPAN_TYPE, span_type)
 
-    span.set_attribute(
-        SpanAttributes.APP_NAME,
-        str(get_baggage(SpanAttributes.APP_NAME, context)),
+    set_string_span_attribute_from_baggage(
+        span, SpanAttributes.APP_NAME, context
     )
-    span.set_attribute(
-        SpanAttributes.APP_VERSION,
-        str(get_baggage(SpanAttributes.APP_VERSION, context)),
+    set_string_span_attribute_from_baggage(
+        span, SpanAttributes.APP_VERSION, context
     )
-    record_id = str(get_baggage(SpanAttributes.RECORD_ID, context))
-    if record_id:
-        span.set_attribute(SpanAttributes.RECORD_ID, record_id)
-    target_record_id = get_baggage(
-        SpanAttributes.EVAL.TARGET_RECORD_ID, context
+    set_string_span_attribute_from_baggage(
+        span, SpanAttributes.RECORD_ID, context
     )
-    if target_record_id:
-        span.set_attribute(
-            SpanAttributes.EVAL.TARGET_RECORD_ID, target_record_id
-        )
-    eval_root_id = get_baggage(SpanAttributes.EVAL.EVAL_ROOT_ID, context)
-    if eval_root_id:
-        span.set_attribute(SpanAttributes.EVAL.EVAL_ROOT_ID, eval_root_id)
-    feedback_name = get_baggage(SpanAttributes.EVAL.FEEDBACK_NAME, context)
-    if feedback_name:
-        span.set_attribute(SpanAttributes.EVAL.FEEDBACK_NAME, feedback_name)
-
-    run_name_baggage = get_baggage(SpanAttributes.RUN_NAME, context)
-    input_id_baggage = get_baggage(SpanAttributes.INPUT_ID, context)
-
-    if run_name_baggage:
-        span.set_attribute(SpanAttributes.RUN_NAME, str(run_name_baggage))
-
-    if input_id_baggage:
-        span.set_attribute(SpanAttributes.INPUT_ID, str(input_id_baggage))
+    set_string_span_attribute_from_baggage(
+        span, SpanAttributes.EVAL.TARGET_RECORD_ID, context
+    )
+    set_string_span_attribute_from_baggage(
+        span, SpanAttributes.EVAL.EVAL_ROOT_ID, context
+    )
+    set_string_span_attribute_from_baggage(
+        span, SpanAttributes.EVAL.FEEDBACK_NAME, context
+    )
+    set_string_span_attribute_from_baggage(
+        span, SpanAttributes.RUN_NAME, context
+    )
+    set_string_span_attribute_from_baggage(
+        span, SpanAttributes.INPUT_ID, context
+    )
 
 
 def set_function_call_attributes(
