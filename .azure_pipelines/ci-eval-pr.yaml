@@ -6,18 +6,18 @@ pr:
       - main
 
 jobs:
-  - template: templates/run-unit-tests-for-python-version.yaml
-    parameters:
-      python-version: "3.9"
-  - template: templates/run-unit-tests-for-python-version.yaml
-    parameters:
-      python-version: "3.10"
-  - template: templates/run-unit-tests-for-python-version.yaml
-    parameters:
-      python-version: "3.11"
-  - template: templates/run-unit-tests-for-python-version.yaml
-    parameters:
-      python-version: "3.12"
-  - template: templates/build-conda-packages.yaml
-    parameters:
-      python-version: "3.11"
+- template: templates/run-unit-tests-for-python-version.yaml
+  parameters:
+    python-version: "3.9"
+- template: templates/run-unit-tests-for-python-version.yaml
+  parameters:
+    python-version: "3.10"
+- template: templates/run-unit-tests-for-python-version.yaml
+  parameters:
+    python-version: "3.11"
+- template: templates/run-unit-tests-for-python-version.yaml
+  parameters:
+    python-version: "3.12"
+- template: templates/build-conda-packages.yaml
+  parameters:
+    python-version: "3.11"

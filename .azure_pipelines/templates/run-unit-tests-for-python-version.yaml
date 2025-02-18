@@ -7,7 +7,12 @@ parameters:
       - "3.11"
       - "3.12"
 
-job:
+jobs:
+- job: RunAllUnitTests
+  pool:
+    vmImage: ubuntu-latest
+  timeoutInMinutes: 30
+  steps:
   - template: templates/env-setup.yaml
   - template: templates/run-precommits.yaml
   - template: templates/run-tests.yaml
