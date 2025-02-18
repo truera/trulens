@@ -6,10 +6,14 @@ package:
   version: {{ version }}
 
 source:
-  path: ../../dist/trulens-dashboard/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
-  # url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
+  {% if environ.get('CONDA_SOURCE_USE_PATH') == '1' %}
+  path: ./
+  #path: ../../dist/trulens-dashboard/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
+  {% else %}
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-dashboard/#files
-  # sha256: cea68d46a8751df25420b2b7b3746fdb85862b1f772183c947efb0b921a57fc0
+  sha256: cea68d46a8751df25420b2b7b3746fdb85862b1f772183c947efb0b921a57fc0
+  {% endif %}
 
 build:
   noarch: python

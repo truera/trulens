@@ -6,10 +6,14 @@ package:
   version: {{ version }}
 
 source:
-  path: ../../../dist/trulens-connectors-snowflake/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
-  # url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
+  {% if environ.get('CONDA_SOURCE_USE_PATH') == '1' %}
+  #path: ../../../dist/trulens-connectors-snowflake/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
+  path: ./
+  {% else %}
+  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-connectors-snowflake/#files
-  # sha256: e884f63ca78a23e060b24633af23d4fe9d59e5ef6205ac1c9c28eb2d4d90850b
+  sha256: e884f63ca78a23e060b24633af23d4fe9d59e5ef6205ac1c9c28eb2d4d90850b
+  {% endif %}
 
 build:
   noarch: python
