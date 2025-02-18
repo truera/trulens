@@ -124,7 +124,7 @@ class RunDao:
         object_version: Optional[str] = None,
     ) -> pd.DataFrame:
         """
-        Retrieve a run by its run_name (assumed unique) and object_name.
+        Retrieve a run.
 
         Args:
             run_name: The unique name of the run.

@@ -1,9 +1,8 @@
+import unittest
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
-
-from tests.test import TruTestCase
 
 try:
     from trulens.connectors.snowflake.dao.external_agent import ExternalAgentDao
@@ -19,10 +18,8 @@ class DummyRow:
         return self._d
 
 
-@pytest.mark.optional
-# @pytest.mark.snowflake
-# class TestExternalAgentDao(unittest.TestCase):
-class TestExternalAgentDao(TruTestCase):
+@pytest.mark.snowflake
+class TestExternalAgentDao(unittest.TestCase):
     def setUp(self):
         if ExternalAgentDao is None:
             self.skipTest(
