@@ -21,48 +21,25 @@ jobs:
       set -e
       rm -rf ./dist
       rm -rf ./src/core/trulens/data/snowflake_stage_zips
-      #make build
-      #make zip-wheels
-      #make build
-      #make env
-    displayName: Build all packages
+    displayName: Clean up existing build artifacts
   - bash: |
-      set -e
-      CONDA_ALWAYS_YES=1 conda install conda-build --yes # TODO(this_pr): do we need this env variable everywhere?
+      conda install conda-build --yes
     displayName: Install conda-build
   - bash: |
-      set -e
-      export CONDA_SOURCE_USE_PATH=1
-      cd ./src/otel/semconv/
-      CONDA_ALWAYS_YES=1 conda build . -c https://conda.anaconda.org/sfe1ed40/
+      CONDA_SOURCE_USE_PATH=1 conda build ./src/otel/semconv/ -c https://conda.anaconda.org/sfe1ed40/
     displayName: Build `trulens-otel-semconv`
   - bash: |
-      set -e
-      export CONDA_SOURCE_USE_PATH=1
-      cd ./src/core
-      CONDA_ALWAYS_YES=1 conda build . -c https://conda.anaconda.org/sfe1ed40/
+      CONDA_SOURCE_USE_PATH=1 conda build ./src/core -c https://conda.anaconda.org/sfe1ed40/
     displayName: Build `trulens-core`
   - bash: |
-      set -e
-      export CONDA_SOURCE_USE_PATH=1
-      cd ./src/feedback
-      CONDA_ALWAYS_YES=1 conda build . -c https://conda.anaconda.org/sfe1ed40/
+      CONDA_SOURCE_USE_PATH=1 conda build ./src/feedback -c https://conda.anaconda.org/sfe1ed40/
     displayName: Build `trulens-feedback`
   - bash: |
-      set -e
-      export CONDA_SOURCE_USE_PATH=1
-      cd ./src/dashboard
-      CONDA_ALWAYS_YES=1 conda build . -c https://conda.anaconda.org/sfe1ed40/
+      CONDA_SOURCE_USE_PATH=1 conda build ./src/dashboard -c https://conda.anaconda.org/sfe1ed40/
     displayName: Build `trulens-dashboard`
   - bash: |
-      set -e
-      export CONDA_SOURCE_USE_PATH=1
-      cd ./src/connectors/snowflake
-      CONDA_ALWAYS_YES=1 conda build . -c https://conda.anaconda.org/sfe1ed40/
+      CONDA_SOURCE_USE_PATH=1 conda build ./src/connectors/snowflake -c https://conda.anaconda.org/sfe1ed40/
     displayName: Build `trulens-connectors-snowflake`
   - bash: |
-      set -e
-      export CONDA_SOURCE_USE_PATH=1
-      cd ./src/providers/cortex
-      CONDA_ALWAYS_YES=1 conda build . -c https://conda.anaconda.org/sfe1ed40/
+      CONDA_SOURCE_USE_PATH=1 conda build ./src/providers/cortex -c https://conda.anaconda.org/sfe1ed40/
     displayName: Build `trulens-providers-cortex`
