@@ -16,7 +16,7 @@ class ExternalAgentDao:
         self.session: Session = snowpark_session
         logger.info("Initialized ExternalAgentDao with a Snowpark session.")
 
-    def create_new_agent(self, name: str, version: str) -> Tuple[str, str]:
+    def create_new_agent(self, name: str, version: str) -> None:
         """Create a new External Agent with a specified version."""
 
         # note we cannot parametrize inputs to query when using CREATE statement - hence f-string but there might be a risk of sql injection
@@ -24,7 +24,48 @@ class ExternalAgentDao:
         execute_query(self.session, query)
 
         logger.info(f"Created External Agent {name} with version {version}.")
-        return name, version
+
+    def create_agent_if_not_exist(
+        self, name: str, version: str
+    ) -> Tuple[str, str]:
+        """
+        Args:
+            name (str): unique name of the external agent
+            version (str): version is mandatory for now
+        Returns:
+            Tuple[str, str]: resolved_name, version
+        """
+        # Get the agent if it already exists, otherwise create it
+        if not (name.startswith('"') and name.endswith('"')):
+            resolved_name = name.upper()
+        else:
+            resolved_name = name
+
+        if not (version.startswith('"') and version.endswith('"')):
+            resolved_version = version.upper()
+        else:
+            resolved_version = version
+
+        if not self.check_agent_exists(name):
+            self.create_new_agent(name, version)
+        else:
+            # Check if the version exists for the agent
+            existing_versions = self.list_agent_versions(name)
+
+            if (
+                existing_versions.empty
+                or "name" not in existing_versions.columns
+                or resolved_version not in existing_versions["name"].values
+            ):
+                self.add_version(name, version)
+                logger.info(
+                    f"Added version {version} to External Agent {name}."
+                )
+            else:
+                logger.info(
+                    f"External Agent {name} with version {version} already exists."
+                )
+        return resolved_name, resolved_version
 
     def drop_agent(self, name: str) -> None:
         """Delete an External Agent."""
@@ -62,6 +103,15 @@ class ExternalAgentDao:
 
         logger.info("Retrieved list of External Agents.")
         return result_df
+
+    def check_agent_exists(self, name: str) -> bool:
+        """Check if an External Agent exists."""
+        agents = self.list_agents()
+        if agents.empty or "name" not in agents.columns:
+            return False
+        logger.info(f"Checking if External Agent {name} exists.")
+
+        return name.upper() in agents["name"].values
 
     def list_agent_versions(self, name: str) -> pandas.DataFrame:
         """Retrieve all versions of a specific External Agent."""
