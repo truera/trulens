@@ -9,6 +9,17 @@ parameters:
 
 jobs:
 - job: BuildCondaPackages
+  condition: >-
+    or(
+      eq(variables['Build.Reason'], 'Schedule'),
+      eq(variables['Build.Reason'], 'Manual'),
+      contains(variables['Build.SourceVersionMessage'], '[build-conda]'),
+      or(
+        contains(variables['Build.SourceVersion.ChangedFiles'], 'pyproject.toml'),
+        contains(variables['Build.SourceVersion.ChangedFiles'], 'poetry.lock'),
+        contains(variables['Build.SourceVersion.ChangedFiles'], 'meta.yaml')
+      )
+    )
   pool:
     vmImage: ubuntu-latest
   timeoutInMinutes: 30
