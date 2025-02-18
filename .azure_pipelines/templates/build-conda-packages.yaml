@@ -17,13 +17,12 @@ jobs:
     parameters:
       pythonVersion: ${{ parameters.pythonVersion }}
   - bash: |
-      set -eox
+      set -e
       rm -rf ./dist
       rm -rf ./src/core/trulens/data/snowflake_stage_zips
       make build
-      pwd
-      ls -trl
-      ./zip_wheels.sh
+      # ./zip_wheels.sh
+      make zip-wheels
       make build
       make env
     displayName: Build all packages
