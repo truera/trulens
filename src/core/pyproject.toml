@@ -57,5 +57,4 @@ tqdm = { version = ">=4.2.0", optional = true }
 optional = true
 
 [tool.poetry.group.dev.dependencies]
-trulens-connectors-snowflake = { path = "../connectors/snowflake" }
 trulens-otel-semconv = { path = "../otel/semconv" }
