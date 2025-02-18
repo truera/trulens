@@ -7,11 +7,12 @@ parameters:
       - "3.11"
       - "3.12"
 
-job: BuildCondaPackages
-pool:
-  vmImage: ubuntu-latest
-timeoutInMinutes: 30
-steps:
+jobs:
+- job: BuildCondaPackages
+  pool:
+    vmImage: ubuntu-latest
+  timeoutInMinutes: 30
+  steps:
   - template: templates/env-setup.yaml
   - bash: |
       set -e
@@ -23,3 +24,4 @@ steps:
   - bash: |
       set -e
       cd ./src/core
+      conda build .
