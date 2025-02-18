@@ -47,7 +47,7 @@ class TestExternalAgentDao(unittest.TestCase):
         self.dao.create_agent_if_not_exist("agent1", "v1")
 
         expected_show_query = "SHOW EXTERNAL AGENTS;"
-        expected_create_query = "CREATE EXTERNAL AGENT AGENT1 WITH VERSION v1;"
+        expected_create_query = "CREATE EXTERNAL AGENT AGENT1 WITH VERSION V1;"
 
         # We expect exactly 2 calls to execute_query.
         self.assertEqual(mock_execute_query.call_count, 2)

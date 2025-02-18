@@ -291,8 +291,17 @@ class Run(BaseModel):
     def get_status(self):
         raise NotImplementedError("status is not implemented yet.")
 
-    def compute_metrics(self, metrics: List[str], params: dict):
-        raise NotImplementedError("compute_metrics is not implemented yet.")
+    def compute_metrics(self, metrics: List[str] = ["context_relevance"]):
+        # TODO: add update operations to the run metadata
+
+        current_db = self.run_dao.session.get_current_database()
+        current_schema = self.run_dao.session.get_current_schema()
+        if not metrics:
+            raise ValueError("Metrics list cannot be empty")
+        metrics_str = ",".join([f"'{metric}'" for metric in metrics])
+        compute_metrics_query = f"CALL COMPUTE_AI_OBSERVABILITY_METRICS('{current_db}', '{current_schema}', '{self.object_name}', '{self.object_type}', '{self.run_name}', ARRAY_CONSTRUCT({metrics_str}));"
+
+        return self.run_dao.session.sql(compute_metrics_query).collect()
 
     def cancel(self):
         raise NotImplementedError("cancel is not implemented yet.")
