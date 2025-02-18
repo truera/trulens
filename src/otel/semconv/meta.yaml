@@ -13,7 +13,7 @@ source:
 
 build:
   noarch: python
-  script: {{ PYTHON }} -m pip install ./{{ name.replace('-', '_') }}-{{ version }} -vv --no-deps --no-build-isolation
+  script: echo "HI" && pwd && ls -trl && echo "BYE" && {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
   number: 0
 
 requirements:
