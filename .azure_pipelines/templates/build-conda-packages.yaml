@@ -30,3 +30,23 @@ jobs:
       cd ./src/core
       conda build .
     displayName: Build `trulens-core`
+  - bash: |
+      set -e
+      cd ./src/feedback
+      conda build .
+    displayName: Build `trulens-feedback`
+  - bash: |
+      set -e
+      cd ./src/dashboard
+      conda build .
+    displayName: Build `trulens-dashboard`
+  - bash: |
+      set -e
+      cd ./src/connectors/snowflake
+      conda build .
+    displayName: Build `trulens-connectors-snowflake`
+  - bash: |
+      set -e
+      cd ./src/providers/cortex
+      conda build .
+    displayName: Build `trulens-providers-cortex`
