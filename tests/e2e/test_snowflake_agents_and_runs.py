@@ -154,14 +154,6 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
         with self.assertRaises(Exception):
             TruApp(
                 app,
-                app_name="custom_app",
-                app_version=None,  # missing version, should raise error
-                connector=self.snowflake_connector,
-                main_method=app.respond_to_query,
-            )
-        with self.assertRaises(Exception):
-            TruApp(
-                app,
                 app_name=None,  #  missing object name, should raise error
                 app_version="v1",
                 connector=self.snowflake_connector,
@@ -201,7 +193,7 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
             run_name="test_run_1",
             description="desc",
             dataset_name="db.schema.table",
-            dataset_col_spec={"col1": "col1"},
+            dataset_col_spec={"input": "col1"},
         )  # type: ignore
         new_run = tru_recorder.add_run(run_config=run_config)
         self.assertIsNotNone(new_run)
@@ -226,11 +218,20 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
             main_method=app.respond_to_query,
         )
 
+        invalid_dataset_spec_run_config = RunConfig(
+            run_name="test_run_1",
+            description="desc_1",
+            dataset_name="db.schema.table",
+            dataset_col_spec={"random stuff": "col1"},
+        )
+        with self.assertRaises(ValueError):
+            tru_recorder.add_run(run_config=invalid_dataset_spec_run_config)
+
         run_config_1 = RunConfig(
             run_name="test_run_1",
             description="desc_1",
             dataset_name="db.schema.table",
-            dataset_col_spec={"col1": "col1"},
+            dataset_col_spec={"input": "col1"},
         )
         tru_recorder.add_run(run_config=run_config_1)
 
@@ -238,7 +239,7 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
             run_name="test_run_2",
             description="desc_2",
             dataset_name="db.schema.table",
-            dataset_col_spec={"col1": "col1"},
+            dataset_col_spec={"input": "col1"},
         )
         run_2 = tru_recorder.add_run(run_config=run_config_2)
 
