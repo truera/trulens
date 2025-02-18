@@ -13,7 +13,7 @@ jobs:
     vmImage: ubuntu-latest
   timeoutInMinutes: 30
   steps:
-  # TODO(this_pr): only run if pyproject.toml files have changed or poetry.lock?
+  # TODO(this_pr): only run if pyproject.toml files have changed or poetry.lock or meta.yaml files?
   - template: env-setup.yaml
     parameters:
       pythonVersion: ${{ parameters.pythonVersion }}
@@ -34,35 +34,35 @@ jobs:
       set -e
       export CONDA_SOURCE_USE_PATH=1
       cd ./src/otel/semconv/
-      CONDA_ALWAYS_YES=1 conda build .
+      CONDA_ALWAYS_YES=1 conda build . -c https://conda.anaconda.org/sfe1ed40/
     displayName: Build `trulens-otel-semconv`
   - bash: |
       set -e
       export CONDA_SOURCE_USE_PATH=1
       cd ./src/core
-      CONDA_ALWAYS_YES=1 conda build .
+      CONDA_ALWAYS_YES=1 conda build . -c https://conda.anaconda.org/sfe1ed40/
     displayName: Build `trulens-core`
   - bash: |
       set -e
       export CONDA_SOURCE_USE_PATH=1
       cd ./src/feedback
-      CONDA_ALWAYS_YES=1 conda build .
+      CONDA_ALWAYS_YES=1 conda build . -c https://conda.anaconda.org/sfe1ed40/
     displayName: Build `trulens-feedback`
   - bash: |
       set -e
       export CONDA_SOURCE_USE_PATH=1
       cd ./src/dashboard
-      CONDA_ALWAYS_YES=1 conda build .
+      CONDA_ALWAYS_YES=1 conda build . -c https://conda.anaconda.org/sfe1ed40/
     displayName: Build `trulens-dashboard`
   - bash: |
       set -e
       export CONDA_SOURCE_USE_PATH=1
       cd ./src/connectors/snowflake
-      CONDA_ALWAYS_YES=1 conda build .
+      CONDA_ALWAYS_YES=1 conda build . -c https://conda.anaconda.org/sfe1ed40/
     displayName: Build `trulens-connectors-snowflake`
   - bash: |
       set -e
       export CONDA_SOURCE_USE_PATH=1
       cd ./src/providers/cortex
-      CONDA_ALWAYS_YES=1 conda build .
+      CONDA_ALWAYS_YES=1 conda build . -c https://conda.anaconda.org/sfe1ed40/
     displayName: Build `trulens-providers-cortex`
