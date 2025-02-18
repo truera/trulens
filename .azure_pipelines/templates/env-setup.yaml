@@ -1,19 +1,10 @@
-parameters:
-  - name: pythonVersion
-    type: string
-    values:
-      - "3.9"
-      - "3.10"
-      - "3.11"
-      - "3.12"
-
 steps:
   - checkout: self
     clean: true
 
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: ${{ parameters.pythonVersion }}
+      versionSpec: '$(python-version)'
 
   - bash: |
       # Install poetry

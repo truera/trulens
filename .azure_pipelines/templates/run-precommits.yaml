@@ -1,16 +1,7 @@
-parameters:
-  - name: pythonVersion
-    type: string
-    values:
-      - "3.9"
-      - "3.10"
-      - "3.11"
-      - "3.12"
-
 steps:
   - bash: |
       set -e
       poetry install --only dev --sync
       make run-precommit
-    condition: eq('${{ parameters.pythonVersion }}', '3.11')
+    condition: eq(variables['python-version'], 3.11)
     displayName: Run Pre-commit hooks

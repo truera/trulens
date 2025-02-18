@@ -1,12 +1,3 @@
-parameters:
-  - name: pythonVersion
-    type: string
-    values:
-      - "3.9"
-      - "3.10"
-      - "3.11"
-      - "3.12"
-
 jobs:
 - job: BuildCondaPackages
   pool:
@@ -14,8 +5,6 @@ jobs:
   timeoutInMinutes: 30
   steps:
   - template: env-setup.yaml
-    parameters:
-      pythonVersion: ${{ parameters.pythonVersion }}
   - bash: |
       set -e
       rm -rf ./dist

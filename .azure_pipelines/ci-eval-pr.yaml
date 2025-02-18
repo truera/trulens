@@ -1,3 +1,6 @@
+# This a definition for azure pipelines, not github pipelines. There are
+# differences between these systems.
+
 trigger: none
 
 pr:
@@ -6,18 +9,37 @@ pr:
       - main
 
 jobs:
-- template: templates/run-unit-tests-for-python-version.yaml
-  parameters:
-    pythonVersion: "3.9"
-- template: templates/run-unit-tests-for-python-version.yaml
-  parameters:
-    pythonVersion: "3.10"
-- template: templates/run-unit-tests-for-python-version.yaml
-  parameters:
-    pythonVersion: "3.11"
-- template: templates/run-unit-tests-for-python-version.yaml
-  parameters:
-    pythonVersion: "3.12"
-- template: templates/build-conda-packages.yaml
-  parameters:
-    pythonVersion: "3.11"
+  - template: templates/build-conda-packages.yaml
+  - job: PRBranchProtect # name seems to be important but cannot figure out why
+    pool:
+      vmImage: ubuntu-latest
+    timeoutInMinutes: 30
+
+    strategy:
+      matrix:
+        default: # name is important
+          python-version: 3.12
+        py309-static:
+          python-version: 3.9
+        py310-static:
+          python-version: 3.10
+        py311-static:
+          python-version: 3.11
+        # py313-static:
+        #   python-version: 3.13
+
+    steps:
+      - template: templates/env-setup.yaml
+      - template: templates/run-precommits.yaml
+      - template: templates/run-tests.yaml
+        parameters:
+          pytestMarker: basic
+          testSuite: unit
+      - template: templates/run-tests.yaml
+        parameters:
+          pytestMarker: optional
+          testSuite: unit
+      - template: templates/run-tests.yaml
+        parameters:
+          pytestMarker: snowflake
+          testSuite: unit
