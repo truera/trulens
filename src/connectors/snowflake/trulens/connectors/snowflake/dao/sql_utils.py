@@ -39,6 +39,7 @@ def execute_query(
 
 
 # logic borrowed from https://github.com/snowflakedb/snowml/blob/main/snowflake/ml/_internal/utils/identifier.py
+# we could consider directly import when snowflake-ml-python becomes required in trulens-connectors-snowflake
 def _is_quoted(id: str) -> bool:
     """Checks if input *identifier* is quoted.
 
