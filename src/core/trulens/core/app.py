@@ -1721,7 +1721,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             return Run.from_metadata_df(
                 run_metadata_df,
                 {
-                    "app": self.app,
+                    "app": self,
                     "main_method_name": self.main_method_name,
                     "run_dao": self.snowflake_run_dao,
                     "tru_session": self.session,
@@ -1754,7 +1754,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         return Run.from_metadata_df(
             run_metadata_df,
             {
-                "app": self.app,
+                "app": self,
                 "main_method_name": self.main_method_name,
                 "run_dao": self.snowflake_run_dao,
                 "tru_session": self.session,

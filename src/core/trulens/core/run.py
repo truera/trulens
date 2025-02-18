@@ -113,7 +113,9 @@ class Run(BaseModel):
     )
 
     app: Any = Field(
-        ..., description="App instance to be invoked during run.", exclude=True
+        ...,
+        description="TruLens app/recorder instance to be invoked during run.",
+        exclude=True,
     )
 
     main_method_name: str = Field(
@@ -274,7 +276,9 @@ class Run(BaseModel):
             # Call the instrumented main method with the arguments
             self.app.instrumented_invoke_main_method(
                 run_name=self.run_name,
-                input_id=row[dataset_column_spec["input_id"]],
+                input_id=row[dataset_column_spec["input_id"]]
+                if "input_id" in dataset_column_spec
+                else None,
                 main_method_args=tuple(
                     main_method_args
                 ),  # Ensure correct order
