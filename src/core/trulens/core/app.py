@@ -1730,7 +1730,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
         except Exception as e:
             logger.error(f"Failed to add run {run_config.run_name}. {e}")
-            raise e
+            raise
 
     def get_run(self, run_name: str) -> Run:
         """Retrieve a run by name.
