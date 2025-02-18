@@ -14,16 +14,23 @@ jobs:
   timeoutInMinutes: 30
   steps:
   - template: env-setup.yaml
+    parameters:
+      pythonVersion: ${{ parameters.pythonVersion }}
   - template: run-precommits.yaml
+    parameters:
+      pythonVersion: ${{ parameters.pythonVersion }}
   - template: run-tests.yaml
     parameters:
+      pythonVersion: ${{ parameters.pythonVersion }}
       pytestMarker: basic
       testSuite: unit
   - template: run-tests.yaml
     parameters:
+      pythonVersion: ${{ parameters.pythonVersion }}
       pytestMarker: optional
       testSuite: unit
   - template: run-tests.yaml
     parameters:
+      pythonVersion: ${{ parameters.pythonVersion }}
       pytestMarker: snowflake
       testSuite: unit

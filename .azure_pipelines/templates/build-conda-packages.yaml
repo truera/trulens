@@ -14,6 +14,8 @@ jobs:
   timeoutInMinutes: 30
   steps:
   - template: env-setup.yaml
+    parameters:
+      pythonVersion: ${{ parameters.pythonVersion }}
   - bash: |
       set -e
       conda install conda-build

@@ -1,4 +1,11 @@
 parameters:
+  - name: pythonVersion
+    type: string
+    values:
+      - "3.9"
+      - "3.10"
+      - "3.11"
+      - "3.12"
   - name: pytestMarker
     type: string
     values:
@@ -16,7 +23,7 @@ steps:
   - bash: |
       set -e
       make test-${{ parameters.testSuite }}-${{ parameters.pytestMarker }}
-    condition: or(ne(variables['python-version'], 3.12), ne('${{ parameters.pytestMarker }}', 'snowflake'))
+    condition: or(ne('${{ parameters.pythonVersion }}', '3.12'), ne('${{ parameters.pytestMarker }}', 'snowflake'))
     env:
       # tests make use of various APIs:
       OPENAI_API_KEY: $(OPENAI_API_KEY)
