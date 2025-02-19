@@ -3,12 +3,9 @@ Tests for OTEL instrument decorator.
 """
 
 from unittest import TestCase
-from unittest import main
 from unittest.mock import Mock
 
-from trulens.experimental.otel_tracing.core.instrument import (
-    _resolve_attributes,
-)
+from trulens.core.otel.instrument import _resolve_attributes
 from trulens.experimental.otel_tracing.core.span import (
     set_user_defined_attributes,
 )
@@ -154,7 +151,3 @@ class TestOTELSpan(TestCase):
                     span_type=span_type,
                     attributes=attributes_invalid,  # type: ignore
                 )
-
-
-if __name__ == "__main__":
-    main()

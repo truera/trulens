@@ -6,7 +6,6 @@ DummyAPI for its requests.
 """
 
 from pathlib import Path
-from unittest import main
 
 from trulens.apps import custom as custom_app
 from trulens.core import session as core_session
@@ -63,7 +62,3 @@ class TestDummy(mod_test.TruTestCase):
         # ca_ref = weakref.ref(ca)
         # del ca, ta, recorder, rec
         # self.assertCollected(ca_ref)
-
-
-if __name__ == "__main__":
-    main()

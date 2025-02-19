@@ -9,6 +9,7 @@ import time
 from unittest import TestCase
 import uuid
 
+import pytest
 from trulens.apps import basic as basic_app
 from trulens.apps import custom as custom_app
 from trulens.apps import virtual as virtual_app
@@ -18,7 +19,6 @@ from trulens.core.schema import feedback as feedback_schema
 from trulens.core.utils import keys as key_utils
 from trulens.providers.huggingface import provider as huggingface_provider
 
-from tests import test as mod_test
 from tests.unit import feedbacks as feedback_tests
 
 
@@ -208,7 +208,7 @@ class TestTru(TestCase):
         with self.subTest(type="TruVirtual"):
             virtual_app.TruVirtual(None)
 
-    @mod_test.optional_test
+    @pytest.mark.optional
     def test_langchain_constructors(self):
         """
         Test TruChain class that require optional packages.
@@ -238,7 +238,7 @@ class TestTru(TestCase):
                     with self.assertRaises(Exception):
                         TruChain(**{arg: app})
 
-    @mod_test.optional_test
+    @pytest.mark.optional
     def test_llamaindex_constructors(self):
         """
         Test TruLlama class that require optional packages.

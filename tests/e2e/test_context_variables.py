@@ -5,13 +5,12 @@ Tests for context variable issues.
 import os
 import unittest
 
+import pytest
 from snowflake.snowpark import Session
 from trulens.apps.custom import TruCustomApp
 from trulens.apps.custom import instrument
 from trulens.connectors.snowflake import SnowflakeConnector
 from trulens.core import TruSession
-
-from tests.test import optional_test
 
 
 class TestContextVariables(unittest.TestCase):
@@ -35,7 +34,7 @@ class TestContextVariables(unittest.TestCase):
         )
         self._session = TruSession(connector=connector)
 
-    @optional_test
+    @pytest.mark.optional
     def test_endpoint_contextvar_always_cleaned(self):
         class FailingRAG:
             @instrument
@@ -71,7 +70,3 @@ class TestContextVariables(unittest.TestCase):
         # in such a way that the following call will fail.
         # TODO: find a better way to check if the context variable is cleaned.
         self._snowpark_session.sql("SELECT 1").collect()
-
-
-if __name__ == "__main__":
-    unittest.main()

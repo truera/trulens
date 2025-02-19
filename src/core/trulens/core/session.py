@@ -84,7 +84,7 @@ class TruSession(
         [TruBasicApp][trulens.apps.basic.TruBasicApp]:
             Basic apps defined solely using a function from `str` to `str`.
 
-        [TruCustomApp][trulens.apps.custom.TruCustomApp]:
+        [TruApp][trulens.apps.app.TruApp]:
             Custom apps containing custom structures and methods. Requires
             annotation of methods to instrument.
 
@@ -180,7 +180,7 @@ class TruSession(
 
         return self._experimental_otel_exporter
 
-    def experimental_force_flush(self, timeout_millis: int = 300000) -> bool:
+    def force_flush(self, timeout_millis: int = 300000) -> bool:
         """
         Force flush the OpenTelemetry exporters.
 
@@ -218,7 +218,7 @@ class TruSession(
         experimental_feature_flags: Optional[
             Union[
                 Mapping[core_experimental.Feature, bool],
-                Iterable[core_experimental.Feature],
+                List[core_experimental.Feature],
             ]
         ] = None,
         _experimental_otel_exporter: Optional[SpanExporter] = None,
@@ -260,12 +260,18 @@ class TruSession(
         )
 
         # for WithExperimentalSettings mixin
-        if experimental_feature_flags is not None:
-            self.experimental_set_features(experimental_feature_flags)
+        self.experimental_set_features(experimental_feature_flags)
 
-        if _experimental_otel_exporter is not None or self.experimental_feature(
-            core_experimental.Feature.OTEL_TRACING
+        if (
+            _experimental_otel_exporter is not None
+            and not self.experimental_feature(
+                core_experimental.Feature.OTEL_TRACING
+            )
         ):
+            raise ValueError(
+                "Cannot supply `_experimental_otel_exporter` without enabling OTEL tracing!"
+            )
+        if self.experimental_feature(core_experimental.Feature.OTEL_TRACING):
             otel_tracing_feature._FeatureSetup.assert_optionals_installed()
 
             from trulens.experimental.otel_tracing.core.session import (

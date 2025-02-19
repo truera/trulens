@@ -1,11 +1,10 @@
 from typing import List
-import unittest
 
-from trulens.apps.custom import TruCustomApp
+from trulens.apps.app import TruApp
 from trulens.core import Feedback
 from trulens.core.guardrails.base import context_filter
+from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
-from trulens.experimental.otel_tracing.core.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.otel_app_test_case import OtelAppTestCase
@@ -39,16 +38,19 @@ class _TestApp:
 class TestOtelGuardrail(OtelAppTestCase):
     def test_context_relevance(self) -> None:
         app = _TestApp()
-        tru_recorder = TruCustomApp(app, app_name="Test App", app_version="v1")
-        with tru_recorder(run_name="test run", input_id="42"):
-            result = app.retrieve("test")
+        tru_recorder = TruApp(
+            app, app_name="Test App", app_version="v1", main_method=app.retrieve
+        )
+        result = tru_recorder.instrumented_invoke_main_method(
+            run_name="test run", input_id="42", main_method_args=("test",)
+        )
         # Check that only relevant comments are returned.
         expected_result = [
             "2. This is a relevant comment.",
             "4. This is a relevant comment.",
         ]
         self.assertListEqual(sorted(result), expected_result)
-        TruSession().experimental_force_flush()
+        TruSession().force_flush()
         # Check that the span only contains the relevant comments.
         seen = False
         for _, curr in self._get_events().iterrows():
@@ -62,7 +64,3 @@ class TestOtelGuardrail(OtelAppTestCase):
                 )
                 seen = True
         self.assertTrue(seen)
-
-
-if __name__ == "__main__":
-    unittest.main()

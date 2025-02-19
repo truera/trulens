@@ -2,15 +2,11 @@
 Tests for OTEL TruLlama app.
 """
 
-from unittest import main
+import pytest
 
-from trulens.core.session import TruSession
-
-from tests.test import optional_test
-from tests.test import run_optional_tests
 from tests.util.otel_app_test_case import OtelAppTestCase
 
-if run_optional_tests():
+try:
     # These imports require optional dependencies to be installed.
     from llama_index.core import Settings
     from llama_index.core import SimpleDirectoryReader
@@ -19,6 +15,9 @@ if run_optional_tests():
     from trulens.apps.llamaindex import TruLlama
 
     from tests.util.llama_index_mock_embedder import MockEmbedding
+except Exception:
+    pass
+
 
 _UUID_REGEX = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 _FLOAT_REGEX = r"[-]?\d+\.\d+"
@@ -32,7 +31,7 @@ _CONTEXT_RETRIEVAL_REGEX = (
 _CONTEXT_RETRIEVAL_REPLACEMENT = r"\1"
 
 
-@optional_test
+@pytest.mark.optional
 class TestOtelTruLlama(OtelAppTestCase):
     @staticmethod
     def _create_simple_rag():
@@ -48,20 +47,29 @@ class TestOtelTruLlama(OtelAppTestCase):
         )
         return index.as_query_engine(similarity_top_k=3)
 
+    def test_missing_main_method_raises_error(self):
+        # Create app.
+        rag = self._create_simple_rag()
+        with self.assertRaises(ValueError) as context:
+            TruLlama(rag, app_name="Simple RAG", app_version="v1")
+
+        self.assertIn("main_method", str(context.exception))
+
     def test_smoke(self) -> None:
-        # Set up.
-        tru_session = TruSession()
-        tru_session.reset_database()
         # Create app.
         rag = self._create_simple_rag()
         tru_recorder = TruLlama(
             rag,
             app_name="Simple RAG",
             app_version="v1",
+            main_method=rag.query,
         )
         # Record and invoke.
-        with tru_recorder(run_name="test run", input_id="42"):
-            rag.query("What is multi-headed attention?")
+        tru_recorder.instrumented_invoke_main_method(
+            run_name="test run",
+            input_id="42",
+            main_method_args=("What is multi-headed attention?",),
+        )
         # Compare results to expected.
         self._compare_events_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_llama__test_smoke.csv",
@@ -73,7 +81,3 @@ class TestOtelTruLlama(OtelAppTestCase):
                 (_CONTEXT_RETRIEVAL_REGEX, _CONTEXT_RETRIEVAL_REPLACEMENT)
             ],
         )
-
-
-if __name__ == "__main__":
-    main()

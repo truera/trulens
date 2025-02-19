@@ -2,19 +2,15 @@
 Tests for OTEL instrument decorator and custom app.
 """
 
-from unittest import main
-
-from trulens.apps.custom import TruCustomApp
-from trulens.core.experimental import Feature
-from trulens.core.session import TruSession
-from trulens.experimental.otel_tracing.core.instrument import instrument
+from trulens.apps.app import TruApp
+from trulens.core.otel.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.otel_app_test_case import OtelAppTestCase
 
 
-class _TestApp:
-    @instrument(span_type=SpanAttributes.SpanType.MAIN)
+class TestApp:
+    @instrument(span_type=SpanAttributes.SpanType.RECORD_ROOT)
     def respond_to_query(self, query: str) -> str:
         return f"answer: {self.nested(query)}"
 
@@ -58,23 +54,15 @@ class _TestApp:
 
 class TestOtelTruCustom(OtelAppTestCase):
     def test_smoke(self) -> None:
-        # Set up.
-        tru_session = TruSession(
-            experimental_feature_flags=[Feature.OTEL_TRACING]
-        )
-        tru_session.reset_database()
         # Create and run app.
-        test_app = _TestApp()
-        custom_app = TruCustomApp(test_app)
-        with custom_app(run_name="test run", input_id="456"):
-            test_app.respond_to_query("test")
-        with custom_app():
+        test_app = TestApp()
+        custom_app = TruApp(test_app, main_method=test_app.respond_to_query)
+        custom_app.instrumented_invoke_main_method(
+            "test run", "42", main_method_args=("test",)
+        )
+        with custom_app:
             test_app.respond_to_query("throw")
         # Compare results to expected.
         self._compare_events_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_custom__test_smoke.csv"
         )
-
-
-if __name__ == "__main__":
-    main()

@@ -25,9 +25,11 @@ from langchain_core.runnables.base import RunnableSerializable
 from pydantic import Field
 from trulens.apps.langchain import guardrails as langchain_guardrails
 from trulens.core import app as core_app
+from trulens.core import experimental as core_experimental
 from trulens.core import instruments as core_instruments
 from trulens.core.instruments import InstrumentedMethod
 from trulens.core.schema import select as select_schema
+from trulens.core.session import TruSession
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
@@ -238,17 +240,27 @@ class TruChain(core_app.App):
 
     # Normally pydantic does not like positional args but chain here is
     # important enough to make an exception.
-    def __init__(self, app: Runnable, **kwargs: Dict[str, Any]):
+    def __init__(
+        self,
+        app: Runnable,
+        main_method: Optional[Callable] = None,
+        **kwargs: Dict[str, Any],
+    ):
         # TruChain specific:
         kwargs["app"] = app
+        if (
+            TruSession().experimental_feature(
+                core_experimental.Feature.OTEL_TRACING
+            )
+            and main_method is None
+        ):
+            raise ValueError(
+                "When OTEL_TRACING is enabled, 'main_method' must be provided in App constructor."
+            )
+
+        kwargs["main_method"] = main_method
         kwargs["root_class"] = pyschema_utils.Class.of_object(app)
         kwargs["instrument"] = LangChainInstrument(app=self)
-
-        for method_name in ["invoke", "ainvoke", "stream", "astream"]:
-            if hasattr(app, method_name) and callable(
-                getattr(app, method_name)
-            ):
-                self._wrap_main_function(app, method_name)
 
         super().__init__(**kwargs)
 

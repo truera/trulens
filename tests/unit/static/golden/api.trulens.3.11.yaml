@@ -4,7 +4,7 @@ trulens:
   lows: {}
 trulens.benchmark:
   __class__: builtins.module
-  __version__: 1.3.2
+  __version__: 1.3.5
   highs: {}
   lows:
     __version__: builtins.str
@@ -60,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 1.3.2
+  __version__: 1.3.5
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -86,6 +86,7 @@ trulens.core.app:
     Memory: trulens.core.app.ComponentViewMeta
     Other: trulens.core.app.ComponentViewMeta
     Prompt: trulens.core.app.ComponentViewMeta
+    TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG: builtins.str
     Tool: trulens.core.app.ComponentViewMeta
     TrulensComponent: trulens.core.app.ComponentViewMeta
     instrumented_component_views: builtins.function
@@ -103,6 +104,7 @@ trulens.core.app.App:
   - typing.Generic
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_run: builtins.function
     app: typing.Any
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
@@ -120,12 +122,16 @@ trulens.core.app.App:
     format_instrumented_methods: builtins.function
     initial_app_loader_dump: typing.Optional[trulens.core.utils.serial.SerialBytes,
       builtins.NoneType]
+    input: builtins.function
     instrument: typing.Optional[trulens.core.instruments.Instrument, builtins.NoneType]
     instrumented: builtins.function
+    instrumented_invoke_main_method: builtins.function
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
+    list_runs: builtins.function
     main_acall: builtins.function
     main_call: builtins.function
     main_input: builtins.function
+    main_method_name: typing.Optional[builtins.str, builtins.NoneType]
     main_output: builtins.function
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]
@@ -137,10 +143,12 @@ trulens.core.app.App:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     root_class: trulens.core.utils.pyschema.Class
+    run: builtins.function
     select_context: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -719,6 +727,10 @@ trulens.core.instruments.instrument:
   - trulens.core.instruments.AddInstruments
   __class__: builtins.type
   attributes: {}
+trulens.core.run:
+  __class__: builtins.module
+  highs: {}
+  lows: {}
 trulens.core.schema:
   __class__: builtins.module
   highs:
@@ -1142,6 +1154,7 @@ trulens.core.session.TruSession:
     connector: typing.Optional[trulens.core.database.connector.base.DBConnector, builtins.NoneType]
     delete_app: builtins.function
     find_unused_port: builtins.function
+    force_flush: builtins.function
     get_app: builtins.function
     get_apps: builtins.function
     get_ground_truth: builtins.function
@@ -1730,7 +1743,7 @@ trulens.core.utils.trulens.Other:
   attributes: {}
 trulens.dashboard:
   __class__: builtins.module
-  __version__: 1.3.3
+  __version__: 1.3.5
   highs:
     run_dashboard: builtins.function
     run_dashboard_sis: builtins.function
@@ -2018,7 +2031,7 @@ trulens.dashboard.ux.styles.ResultCategoryType:
     value: enum.property
 trulens.feedback:
   __class__: builtins.module
-  __version__: 1.3.2
+  __version__: 1.3.5
   highs:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
@@ -2027,6 +2040,28 @@ trulens.feedback:
   lows:
     __all__: builtins.list
     __version__: builtins.str
+trulens.feedback.computer:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    BASE_SCOPE: builtins.str
+    INVALID_SPAN_ID: builtins.int
+    MinimalSpanInfo: builtins.type
+    RecordGraphNode: builtins.type
+trulens.feedback.computer.MinimalSpanInfo:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    attributes: builtins.dict
+    parent_span_id: builtins.NoneType
+    span_id: builtins.NoneType
+trulens.feedback.computer.RecordGraphNode:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    build_graph: builtins.staticmethod
 trulens.feedback.dummy:
   __class__: builtins.module
   highs: {}
@@ -2904,3 +2939,120 @@ trulens.feedback.v2.provider.base.Provider:
     endpoint: typing.Optional[trulens.core.feedback.endpoint.Endpoint, builtins.NoneType]
     supported_models: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
+trulens.hotspots:
+  __class__: builtins.module
+  __version__: 1.3.5
+  highs:
+    HotspotsConfig: builtins.type
+    get_skipped_columns: builtins.function
+    hotspots: builtins.function
+    hotspots_as_df: builtins.function
+    hotspots_dict_to_df: builtins.function
+  lows:
+    __all__: builtins.list
+    __version__: builtins.str
+trulens.hotspots.hotspots:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    AUTOSKIP_COLUMNS_REGEX: _regex.Pattern
+    EqualsFeature: abc.ABCMeta
+    Feature: abc.ABCMeta
+    FeatureStats: builtins.type
+    HotspotsConfig: builtins.type
+    LengthFeature: abc.ABCMeta
+    NO_NEED_TO_BE_QUOTED_REGEX: _regex.Pattern
+    NumericalFeature: abc.ABCMeta
+    NumericalFeatureBase: abc.ABCMeta
+    QUOTE_CHARACTER: builtins.str
+    TokenFeature: abc.ABCMeta
+    delta: builtins.function
+    do_round: builtins.function
+    format_feature_with_stat: builtins.function
+    get_autoskipped_columns: builtins.function
+    get_feature_stat: builtins.function
+    get_features_for_sample: builtins.function
+    get_features_for_value: builtins.function
+    get_features_with_stats: builtins.function
+    get_inverted_index_for_features: builtins.function
+    get_skipped_columns: builtins.function
+    hotspots: builtins.function
+    hotspots_as_df: builtins.function
+    hotspots_dict_to_df: builtins.function
+    initial_round: builtins.function
+    is_feature_unwanted: builtins.function
+    is_number: builtins.function
+    opportunity: builtins.function
+    parse_args: builtins.function
+    prepare_inverted_index: builtins.function
+    prune_inverted_index: builtins.function
+    quote_if_needed: builtins.function
+    shorter_string_preference: builtins.function
+    should_be_autoskipped: builtins.function
+    to_dict_for_df: builtins.function
+    utest_z: builtins.function
+    z_to_p_value: builtins.function
+trulens.hotspots.hotspots.EqualsFeature:
+  __bases__:
+  - trulens.hotspots.hotspots.Feature
+  __class__: abc.ABCMeta
+  attributes: {}
+trulens.hotspots.hotspots.Feature:
+  __bases__:
+  - abc.ABC
+  __class__: abc.ABCMeta
+  attributes:
+    description: builtins.function
+    priority: builtins.function
+trulens.hotspots.hotspots.FeatureStats:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes: {}
+trulens.hotspots.hotspots.HotspotsConfig:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    higher_is_better: builtins.bool
+    max_features: builtins.int
+    min_occurrences: builtins.int
+    num_rounds: builtins.int
+trulens.hotspots.hotspots.LengthFeature:
+  __bases__:
+  - trulens.hotspots.hotspots.NumericalFeatureBase
+  __class__: abc.ABCMeta
+  attributes:
+    is_applicable: builtins.classmethod
+trulens.hotspots.hotspots.NumericalFeature:
+  __bases__:
+  - trulens.hotspots.hotspots.NumericalFeatureBase
+  __class__: abc.ABCMeta
+  attributes:
+    is_applicable: builtins.classmethod
+trulens.hotspots.hotspots.NumericalFeatureBase:
+  __bases__:
+  - trulens.hotspots.hotspots.Feature
+  - abc.ABC
+  __class__: abc.ABCMeta
+  attributes:
+    generate_feature: builtins.classmethod
+    generate_features: builtins.classmethod
+    get_thresholds: builtins.classmethod
+trulens.hotspots.hotspots.TokenFeature:
+  __bases__:
+  - trulens.hotspots.hotspots.Feature
+  __class__: abc.ABCMeta
+  attributes: {}
+trulens.hotspots.hotspots_streamlit:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    hotspots_in_streamlit: builtins.function
+    hotspots_in_streamlit_with_config: builtins.function
+    sample_main: builtins.function
+trulens.hotspots.tru_hotspots:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    get_hotspots: builtins.function

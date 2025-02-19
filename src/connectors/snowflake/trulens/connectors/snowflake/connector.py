@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from functools import cached_property
 import logging
+import os
 import re
 from typing import (
     Any,
@@ -11,6 +12,8 @@ from typing import (
     Union,
 )
 
+from trulens.connectors.snowflake.dao.enums import ObjectType
+from trulens.connectors.snowflake.dao.external_agent import ExternalAgentDao
 from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import (
     ServerSideEvaluationArtifacts,
 )
@@ -42,6 +45,9 @@ class SnowflakeConnector(DBConnector):
         schema: Optional[str] = None,
         warehouse: Optional[str] = None,
         role: Optional[str] = None,
+        protocol: Optional[str] = "https",
+        port: Optional[int] = 443,
+        host: Optional[str] = None,
         snowpark_session: Optional[Session] = None,
         init_server_side: bool = False,
         init_server_side_with_staged_packages: bool = False,
@@ -50,7 +56,6 @@ class SnowflakeConnector(DBConnector):
         database_prefix: Optional[str] = None,
         database_args: Optional[Dict[str, Any]] = None,
         database_check_revision: bool = True,
-        init_database: bool = True,
     ):
         connection_parameters = {
             "account": account,
@@ -60,7 +65,13 @@ class SnowflakeConnector(DBConnector):
             "schema": schema,
             "warehouse": warehouse,
             "role": role,
+            "protocol": protocol,
+            "port": port,
         }
+
+        if host is not None:
+            connection_parameters["host"] = host
+
         if snowpark_session is None:
             snowpark_session = self._create_snowpark_session(
                 connection_parameters
@@ -72,11 +83,11 @@ class SnowflakeConnector(DBConnector):
                 )
             )
 
-        self.snowpark_session = snowpark_session
+        self.snowpark_session: Session = snowpark_session
         self.connection_parameters: Dict[str, str] = connection_parameters
         self.use_staged_packages: bool = init_server_side_with_staged_packages
 
-        if init_database:
+        if os.getenv("TRULENS_OTEL_TRACING", "").lower() not in ["1", "true"]:
             self._init_with_snowpark_session(
                 snowpark_session,
                 init_server_side,
@@ -357,3 +368,31 @@ class SnowflakeConnector(DBConnector):
         if not isinstance(self._db, DB):
             raise RuntimeError("Unhandled database type.")
         return self._db
+
+    def initialize_snowflake_app_dao(
+        self,
+        object_type: Optional[str],
+        app_name: str,
+        app_version: str,
+    ) -> Optional[ExternalAgentDao]:
+        snowflake_app_dao = None
+
+        if object_type is None:
+            object_type = ObjectType.EXTERNAL_AGENT
+
+        if object_type not in ObjectType:
+            raise ValueError(
+                f"Invalid object_type to initialize Snowflake app: {object_type}"
+            )
+
+        if object_type == ObjectType.EXTERNAL_AGENT:
+            logger.info(
+                f"Initializing Snowflake External Agent DAO for app {app_name} version {app_version}"
+            )
+            # side effect: create external agent if not exist
+            snowflake_app_dao = ExternalAgentDao(self.snowpark_session)
+            snowflake_app_dao.create_agent_if_not_exist(
+                name=app_name,
+                version=app_version,
+            )
+        return snowflake_app_dao

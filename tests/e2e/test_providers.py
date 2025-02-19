@@ -6,14 +6,12 @@ from pprint import PrettyPrinter
 from typing import Callable, Dict, List, Tuple
 import unittest
 from unittest import TestCase
-from unittest import main
 
+import pytest
 from trulens.core.utils import keys as key_utils
 from trulens.feedback import llm_provider
 from trulens.providers.huggingface import provider as huggingface_provider
 from trulens.providers.openai import provider as openai_provider
-
-from tests import test as mod_test
 
 pp = PrettyPrinter()
 
@@ -548,7 +546,7 @@ class TestProviders(TestCase):
             "HUGGINGFACE_API_KEY",
         )
 
-    @mod_test.optional_test
+    @pytest.mark.optional
     def test_openai_moderation(self):
         """Check that OpenAI moderation feedback functions produce a value in the
         0-1 range only. Only checks each feedback function once."""
@@ -569,7 +567,7 @@ class TestProviders(TestCase):
                 self.assertGreaterEqual(actual, 0.0)
                 self.assertLessEqual(actual, 1.0)
 
-    @mod_test.optional_test
+    @pytest.mark.optional
     def test_llmcompletion(self):
         """Check that LLMProvider feedback functions produce a value in the 0-1
         range only.
@@ -681,7 +679,7 @@ class TestProviders(TestCase):
                                 "First element of tuple should be less than or equal to 1.0.",
                             )
 
-    @mod_test.optional_test
+    @pytest.mark.optional
     @unittest.skip("too many failures")
     def test_openai_moderation_calibration(self):
         """Check that OpenAI moderation feedback functions produce reasonable values."""
@@ -695,7 +693,7 @@ class TestProviders(TestCase):
                 actual = imp(**args)
                 self.assertAlmostEqual(actual, expected, delta=0.2)
 
-    @mod_test.optional_test
+    @pytest.mark.optional
     def test_llmcompletion_calibration(self):
         """Check that LLMProvider feedback functions produce reasonable values."""
 
@@ -745,7 +743,7 @@ class TestProviders(TestCase):
                     f"{provider_name}-{model}: {total_tests}/{total_tests} tests passed."
                 )
 
-    @mod_test.optional_test
+    @pytest.mark.optional
     def test_hugs(self):
         """
         Check that Huggingface moderation feedback functions produce a value in the
@@ -809,7 +807,7 @@ class TestProviders(TestCase):
                         "First element of tuple should be less than or equal to 1.0.",
                     )
 
-    @mod_test.optional_test
+    @pytest.mark.optional
     def test_hugs_calibration(self):
         """Check that Huggingface moderation feedback functions produce reasonable values."""
 
@@ -848,7 +846,7 @@ class TestProviders(TestCase):
         else:
             print(f"{h}: {total_tests}/{total_tests} tests passed.")
 
-    @mod_test.optional_test
+    @pytest.mark.optional
     def test_langchain_feedback(self):
         """
         Check that LangChain feedback functions produce values within the expected range
@@ -884,7 +882,3 @@ class TestProviders(TestCase):
             )
         else:
             print(f"{lc}: {total_tests}/{total_tests} tests passed.")
-
-
-if __name__ == "__main__":
-    main()

@@ -9,8 +9,8 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
 import pandas as pd
-from trulens.experimental.otel_tracing.core.instrument import _get_func_name
-from trulens.experimental.otel_tracing.core.instrument import instrument
+from trulens.core.otel.instrument import _get_func_name
+from trulens.core.otel.instrument import instrument
 from trulens.experimental.otel_tracing.core.session import (
     _set_up_tracer_provider,
 )
@@ -216,7 +216,3 @@ class TestOtelInstrument(unittest.TestCase):
             spans[1].attributes[f"{BASE_SCOPE}.unknown.best_babies"],
             ("Kojikun", "Nolan"),
         )
-
-
-if __name__ == "__main__":
-    unittest.main()

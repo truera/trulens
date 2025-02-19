@@ -2,7 +2,6 @@
 
 from pprint import PrettyPrinter
 from unittest import TestCase
-from unittest import main
 
 from munch import Munch
 from trulens.core.utils import serial as serial_utils
@@ -205,7 +204,3 @@ class TestLens(TestCase):
             )
 
         # Collect cannot be set.
-
-
-if __name__ == "__main__":
-    main()
