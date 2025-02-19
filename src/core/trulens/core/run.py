@@ -143,10 +143,11 @@ class Run(BaseModel):
         description="Unique name of the run. This name should be unique within the object.",
     )
 
+    description: Optional[str] = Field(
+        default=None, description="A description for the run."
+    )
+
     class RunMetada(BaseModel):
-        description: Optional[str] = Field(
-            default=None, description="A description for the run."
-        )
         labels: List[Optional[str]] = Field(
             default=[],
             description="Text label to group the runs. Take a single label for now",
