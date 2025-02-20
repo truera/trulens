@@ -1,7 +1,7 @@
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from opentelemetry.trace import INVALID_SPAN_ID
-from trulens.core.otel.instrument import OTELFeedbackComputationRecordingContext
+from trulens.core.otel.instrument import OtelFeedbackComputationRecordingContext
 from trulens.experimental.otel_tracing.core.span import (
     set_span_attribute_safely,
 )
@@ -93,7 +93,7 @@ def _compute_feedback(
     input_id = record_root_attributes[SpanAttributes.INPUT_ID]
     target_record_id = record_root_attributes[SpanAttributes.RECORD_ID]
     for curr in feedback_inputs:
-        context_manager = OTELFeedbackComputationRecordingContext(
+        context_manager = OtelFeedbackComputationRecordingContext(
             app_name=app_name,
             app_version=app_version,
             run_name=run_name,

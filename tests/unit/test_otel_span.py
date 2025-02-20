@@ -14,7 +14,7 @@ from trulens.experimental.otel_tracing.core.span import validate_selector_name
 from trulens.otel.semconv.trace import SpanAttributes
 
 
-class TestOTELSpan(TestCase):
+class TestOtelSpan(TestCase):
     def test__resolve_attributes(self):
         with self.subTest("None attributes"):
             self.assertEqual(
