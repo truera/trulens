@@ -174,8 +174,8 @@ class Run(BaseModel):
             description="Column name mapping from reserved dataset fields to column names in user's table.",
         )
         source_type: str = Field(
-            default="TABLE",
-            description="Type of the source (e.g. 'TABLE').",
+            default="DATAFRAME",
+            description="Type of the source (e.g. 'DATAFRAME').",
         )
 
     source_info: SourceInfo = Field(
@@ -202,7 +202,7 @@ class Run(BaseModel):
             return result
         elif hasattr(result, "empty") and not result.empty:
             # Return the first row as a dictionary.
-            return result.iloc[0].to_dict()
+            return list(result.iloc[0].to_dict().values())[0]
         else:
             return {}
 
@@ -229,6 +229,7 @@ class Run(BaseModel):
             logger.info(
                 "No input dataframe provided. Fetching input data from source."
             )
+            # TODO: update the source_info.source_type to 'TABLE'
             rows = self.run_dao.session.sql(
                 f"SELECT * FROM {self.source_info.name}"
             ).collect()
@@ -267,23 +268,22 @@ class Run(BaseModel):
                 user_column = input_columns_by_subscripts[subscript]
                 main_method_args.append(row[user_column])
 
-            # Ensure that main_method_kwargs uses the correct column values from the row
-            main_method_kwargs = {
-                key: row[value]
-                for key, value in reserved_field_column_mapping.items()
-                if value in row
-            }
-
             # Call the instrumented main method with the arguments
+            input_id = (
+                row[dataset_column_spec["input_id"]]
+                if "input_id" in dataset_column_spec
+                else None
+            )
+            if input_id is None and "input" in dataset_column_spec:
+                input_id = hash(row[dataset_column_spec["input"]])
+
             self.app.instrumented_invoke_main_method(
                 run_name=self.run_name,
-                input_id=row[dataset_column_spec["input_id"]]
-                if "input_id" in dataset_column_spec
-                else None,
+                input_id=input_id,
                 main_method_args=tuple(
                     main_method_args
                 ),  # Ensure correct order
-                main_method_kwargs=main_method_kwargs,  # Include only relevant kwargs
+                main_method_kwargs=None,  # don't take any kwargs for now so we don't break TruChain / TruLlama where input argument name cannot be defined by users.
             )
 
         self.tru_session.force_flush()

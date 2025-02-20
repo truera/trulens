@@ -87,9 +87,7 @@ class RunDao:
         source_info_dict = {}
         source_info_dict["name"] = dataset_name
         source_info_dict["column_spec"] = dataset_col_spec
-        source_info_dict["source_type"] = (
-            DEFAULT_SOURCE_TYPE  # currently only TABLE is supported
-        )
+        source_info_dict["source_type"] = DEFAULT_SOURCE_TYPE
 
         req_payload["source_info"] = source_info_dict
 
@@ -97,7 +95,7 @@ class RunDao:
 
         query = AIML_RUN_OPS_SYS_FUNC_TEMPLATE.format(method=METHOD_CREATE)
 
-        logger.info("Executing query: %s", query)
+        logger.debug("Executing query: %s", query)
 
         execute_query(
             self.session,
@@ -146,7 +144,7 @@ class RunDao:
         req_payload_json = json.dumps(req_payload)
         query = AIML_RUN_OPS_SYS_FUNC_TEMPLATE.format(method=METHOD_GET)
 
-        logger.info("Executing query: %s", query)
+        logger.debug("Executing query: %s", query)
         rows: List[Row] = execute_query(
             self.session,
             query,
@@ -173,7 +171,7 @@ class RunDao:
         req_payload_json = json.dumps(req_payload)
         query = AIML_RUN_OPS_SYS_FUNC_TEMPLATE.format(method=METHOD_LIST)
 
-        logger.info("Executing query: %s", query)
+        logger.debug("Executing query: %s", query)
 
         rows: List[Row] = execute_query(
             self.session,
@@ -210,7 +208,7 @@ class RunDao:
         req_payload_json = json.dumps(req_payload)
         query = AIML_RUN_OPS_SYS_FUNC_TEMPLATE.format(method=METHOD_DELETE)
 
-        logger.info("Executing query: %s", query)
+        logger.debug("Executing query: %s", query)
         execute_query(
             self.session,
             query,

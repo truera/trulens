@@ -82,7 +82,7 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
         self.assertIsNotNone(tru_recorder.snowflake_run_dao)
 
         self.assertEqual(tru_recorder.snowflake_object_type, "EXTERNAL AGENT")
-        self.assertEqual(tru_recorder.snowflake_object_name, "CUSTOM_APP")
+        self.assertEqual(tru_recorder.snowflake_object_name, "custom_app")
 
         self.assertTrue(
             tru_recorder.snowflake_app_dao.check_agent_exists("custom_app")
@@ -93,7 +93,7 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
         )
 
         self.assertIn(
-            "V1", versions_df["name"].values
+            "v1", versions_df["name"].values
         )  # version is uppercased in snowflake
 
         tru_recorder.delete_snowflake_app()
@@ -139,14 +139,14 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
         )
 
         # # both versions should be present under the same agent, even created by 2 different truapp instances
-        self.assertIn("V1", versions_df_1["name"].values)
-        self.assertIn("V2", versions_df_1["name"].values)
+        self.assertIn("v1", versions_df_1["name"].values)
+        self.assertIn("v2", versions_df_1["name"].values)
 
         versions_df_2 = tru_recorder_v2.snowflake_app_dao.list_agent_versions(
             "custom_app_multi_ver"
         )
-        self.assertIn("V1", versions_df_2["name"].values)
-        self.assertIn("V2", versions_df_2["name"].values)
+        self.assertIn("v1", versions_df_2["name"].values)
+        self.assertIn("v2", versions_df_2["name"].values)
 
     def test_adding_run_missing_object_fields(self):
         app = TestApp()
@@ -163,9 +163,10 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
     def test_adding_run_to_agent(self):
         app = TestApp()
 
+        TEST_APP_NAME = "custom app with space and character ##^^"
         tru_recorder = TruApp(
             app,
-            app_name="custom_app",
+            app_name=TEST_APP_NAME,
             app_version="v1",
             connector=self.snowflake_connector,
             main_method=app.respond_to_query,
@@ -175,24 +176,29 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
         self.assertIsNotNone(tru_recorder.snowflake_run_dao)
 
         self.assertEqual(tru_recorder.snowflake_object_type, "EXTERNAL AGENT")
-        self.assertEqual(tru_recorder.snowflake_object_name, "CUSTOM_APP")
+        self.assertEqual(tru_recorder.snowflake_object_name, TEST_APP_NAME)
 
         self.assertTrue(
-            tru_recorder.snowflake_app_dao.check_agent_exists("custom_app")
+            tru_recorder.snowflake_app_dao.check_agent_exists(TEST_APP_NAME)
         )
 
         versions_df = tru_recorder.snowflake_app_dao.list_agent_versions(
-            "custom_app"
+            TEST_APP_NAME
         )
 
         self.assertIn(
-            "V1", versions_df["name"].values
+            "v1", versions_df["name"].values
         )  # version is uppercased in snowflake
+
+        test_table_name = "test_table"
+        self._snowpark_session.sql(
+            f"create table if not exists {test_table_name} (name varchar)"
+        ).collect()
 
         run_config = RunConfig(
             run_name="test_run_1",
             description="desc",
-            dataset_name="db.schema.table",
+            dataset_name=test_table_name,
             dataset_col_spec={"input": "col1"},
         )  # type: ignore
         new_run = tru_recorder.add_run(run_config=run_config)
@@ -203,7 +209,7 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
         self.assertIsNotNone(run)
         self.assertEqual(new_run.run_name, "test_run_1")
 
-        self.assertEqual(new_run.run_metadata.description, "desc")
+        self.assertEqual(new_run.description, "desc")
 
         self.assertDictEqual(run.model_dump(), new_run.model_dump())
 
@@ -218,11 +224,16 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
             main_method=app.respond_to_query,
         )
 
+        test_table_name = "test_table"
+        self._snowpark_session.sql(
+            f"create table if not exists {test_table_name} (name varchar)"
+        ).collect()
+
         invalid_dataset_spec_run_config = RunConfig(
             run_name="test_run_1",
             description="desc_1",
-            dataset_name="db.schema.table",
-            dataset_col_spec={"random stuff": "col1"},
+            dataset_name=test_table_name,
+            dataset_col_spec={"INPUT": "col1"},
         )
         with self.assertRaises(ValueError):
             tru_recorder.add_run(run_config=invalid_dataset_spec_run_config)
@@ -230,7 +241,7 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
         run_config_1 = RunConfig(
             run_name="test_run_1",
             description="desc_1",
-            dataset_name="db.schema.table",
+            dataset_name=test_table_name,
             dataset_col_spec={"input": "col1"},
         )
         tru_recorder.add_run(run_config=run_config_1)
@@ -238,7 +249,7 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
         run_config_2 = RunConfig(
             run_name="test_run_2",
             description="desc_2",
-            dataset_name="db.schema.table",
+            dataset_name=test_table_name,
             dataset_col_spec={"input": "col1"},
         )
         run_2 = tru_recorder.add_run(run_config=run_config_2)
