@@ -17,7 +17,7 @@ class TestOtelRecordRoot(OtelAppTestCase):
                 pass
 
         app = App()
-        tru_app = TruApp(app, pp_name="test", app_version="v1")
+        tru_app = TruApp(app, app_name="test", app_version="v1")
         self.assertEqual(tru_app.main_method_name, "main")
         # Record and invoke.
         tru_app.instrumented_invoke_main_method(run_name="1", input_id="42")
@@ -54,7 +54,8 @@ class TestOtelRecordRoot(OtelAppTestCase):
 
         app = App()
         with self.assertRaisesRegex(
-            ValueError, "Must have exactly one main method! Found:"
+            ValueError,
+            "Must have exactly one main method or method decorated with span type 'record_root'! Found: ",
         ):
             TruApp(
                 app, main_method=app.main2, app_name="test", app_version="v1"
@@ -72,6 +73,7 @@ class TestOtelRecordRoot(OtelAppTestCase):
 
         app = App()
         with self.assertRaisesRegex(
-            ValueError, "Must have exactly one main method! Found:"
+            ValueError,
+            "Must have exactly one main method or method decorated with span type 'record_root'! Found: ",
         ):
             TruApp(app, app_name="test", app_version="v1")

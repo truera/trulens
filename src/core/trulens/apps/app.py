@@ -363,7 +363,7 @@ class TruApp(core_app.App):
                     main_methods.add(method)
             if len(main_methods) != 1:
                 raise ValueError(
-                    f"Must have exactly one main method! Found: {list(main_methods)}"
+                    f"Must have exactly one main method or method decorated with span type 'record_root'! Found: {list(main_methods)}"
                 )
             main_method = main_methods.pop()
         if main_method is not None:
