@@ -391,7 +391,7 @@ class SnowflakeConnector(DBConnector):
             # side effect: create external agent if not exist
             snowflake_app_dao = ExternalAgentDao(self.snowpark_session)
             snowflake_run_dao = RunDao(self.snowpark_session)
-            agent_resolved_name, agent_resolved_version = (
+            agent_name, agent_version = (
                 snowflake_app_dao.create_agent_if_not_exist(
                     name=app_name,
                     version=app_version,
@@ -400,8 +400,8 @@ class SnowflakeConnector(DBConnector):
             return (
                 snowflake_app_dao,
                 snowflake_run_dao,
-                agent_resolved_name,
-                agent_resolved_version,
+                agent_name,
+                agent_version,
             )
 
         raise ValueError(f"Object type {object_type} not supported.")
