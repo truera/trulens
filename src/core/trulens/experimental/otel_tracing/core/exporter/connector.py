@@ -15,7 +15,7 @@ from trulens.experimental.otel_tracing.core.exporter.utils import (
 logger = logging.getLogger(__name__)
 
 
-class TruLensOTELSpanExporter(SpanExporter):
+class TruLensOtelSpanExporter(SpanExporter):
     """
     Implementation of `SpanExporter` that flushes the spans in the TruLens session to the connector.
     """

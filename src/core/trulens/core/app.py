@@ -1033,14 +1033,14 @@ class App(
         if self.session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING
         ):
-            from trulens.core.otel.instrument import OTELRecordingContext
+            from trulens.core.otel.instrument import OtelRecordingContext
 
             with self._current_context_manager_lock:
                 if self._current_context_manager is not None:
                     raise RuntimeError(
                         "Already recording with a context manager, cannot nest!"
                     )
-                self._current_context_manager = OTELRecordingContext(
+                self._current_context_manager = OtelRecordingContext(
                     app_name=self.app_name,
                     app_version=self.app_version,
                     run_name="",
@@ -1805,9 +1805,9 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         if self.session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING
         ):
-            from trulens.core.otel.instrument import OTELRecordingContext
+            from trulens.core.otel.instrument import OtelRecordingContext
 
-            return OTELRecordingContext(
+            return OtelRecordingContext(
                 app_name=self.app_name,
                 app_version=self.app_version,
                 run_name=run_name,
@@ -1821,9 +1821,9 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         if self.session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING
         ):
-            from trulens.core.otel.instrument import OTELRecordingContext
+            from trulens.core.otel.instrument import OtelRecordingContext
 
-            return OTELRecordingContext(
+            return OtelRecordingContext(
                 app_name=self.app_name,
                 app_version=self.app_version,
                 run_name=None,
@@ -1844,9 +1844,9 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         if self.session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING
         ):
-            from trulens.core.otel.instrument import OTELRecordingContext
+            from trulens.core.otel.instrument import OtelRecordingContext
 
-            with OTELRecordingContext(
+            with OtelRecordingContext(
                 app_name=self.app_name,
                 app_version=self.app_version,
                 run_name=run_name,

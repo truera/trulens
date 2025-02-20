@@ -191,14 +191,17 @@ Function <function CustomLLM.generate at 0x1779471f0> was not found during instr
   solution as needed.
 """
 
+import inspect
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Set
+from typing import Any, Callable, ClassVar, Optional, Set
 
 import pydantic
 from pydantic import Field
 from trulens.core import app as core_app
+from trulens.core import experimental as core_experimental
 from trulens.core import instruments as core_instruments
+from trulens.core.session import TruSession
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
@@ -341,8 +344,30 @@ class TruApp(core_app.App):
     these methods are.
     """
 
-    def __init__(self, app: Any, methods_to_instrument=None, **kwargs: Any):
+    def __init__(
+        self,
+        app: Any,
+        main_method: Optional[Callable] = None,
+        methods_to_instrument=None,
+        **kwargs: Any,
+    ):
         kwargs["app"] = app
+        if TruSession().experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
+        ):
+            main_methods = set()
+            if main_method is not None:
+                main_methods.add(main_method)
+            for _, method in inspect.getmembers(app, inspect.ismethod):
+                if self._has_record_root_instrumentation(method):
+                    main_methods.add(method)
+            if len(main_methods) != 1:
+                raise ValueError(
+                    f"Must have exactly one main method or method decorated with span type 'record_root'! Found: {list(main_methods)}"
+                )
+            main_method = main_methods.pop()
+        if main_method is not None:
+            kwargs["main_method"] = main_method
         kwargs["root_class"] = pyschema_utils.Class.of_object(app)
 
         instrument = core_instruments.Instrument(

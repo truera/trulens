@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/bash
 
 # This script creates zips of packages to upload to a Snowflake stage so they
 # can be used in stored procedures, SiS, UDFs, and just generally anything run

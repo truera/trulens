@@ -138,8 +138,8 @@ def _set_span_attributes(
 def instrument(
     *,
     span_type: SpanAttributes.SpanType = SpanAttributes.SpanType.UNKNOWN,
-    attributes: Attributes = dict(),
-    full_scoped_attributes: Attributes = dict(),
+    attributes: Attributes = None,
+    full_scoped_attributes: Attributes = None,
     must_be_first_wrapper: bool = False,
     **kwargs,
 ):
@@ -160,6 +160,10 @@ def instrument(
         If this is True and the function is already wrapped with the TruLens
         decorator, then the function will not be wrapped again.
     """
+    if attributes is None:
+        attributes = {}
+    if full_scoped_attributes is None:
+        full_scoped_attributes = {}
     is_record_root = span_type == SpanAttributes.SpanType.RECORD_ROOT
 
     def inner_decorator(func: Callable):
@@ -352,7 +356,7 @@ def instrument_method(
     setattr(cls, method_name, wrapper(getattr(cls, method_name)))
 
 
-class OTELBaseRecordingContext:
+class OtelBaseRecordingContext:
     run_name: str
     """
     The name of the run that the recording context is currently processing.
@@ -424,7 +428,7 @@ class OTELBaseRecordingContext:
         return self.__exit__(exc_type, exc_val, exc_tb)
 
 
-class OTELRecordingContext(OTELBaseRecordingContext):
+class OtelRecordingContext(OtelBaseRecordingContext):
     def __init__(
         self,
         *,
@@ -455,7 +459,7 @@ class OTELRecordingContext(OTELBaseRecordingContext):
         )
 
 
-class OTELFeedbackComputationRecordingContext(OTELBaseRecordingContext):
+class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
     def __init__(self, *args, **kwargs):
         self.target_record_id = kwargs.pop("target_record_id")
         self.feedback_name = kwargs.pop("feedback_name")

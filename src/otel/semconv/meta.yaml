@@ -1,14 +1,18 @@
 {% set name = "trulens-otel-semconv" %}
-{% set version = "1.4.0" %}
+{% set version = "1.4.1" %}
 
 package:
   name: {{ name|lower }}
   version: {{ version }}
 
 source:
+  {% if environ.get('CONDA_SOURCE_USE_PATH') == '1' %}
+  path: ./
+  {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-otel-semconv/#files
-  sha256: f2314c53f206d90a8f31e4986d38948a314b9a9cddcc060c161d9e636cc8d375
+  sha256: 5e0c380bcc500c77e3d5635e81e2823a449e609de83c8d0a739cd1a40991586e
+  {% endif %}
 
 build:
   noarch: python

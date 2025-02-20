@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-core"
-version = "1.4.0"
+version = "1.4.1"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -42,7 +42,6 @@ alembic = "^1.8.1"
 nest-asyncio = "^1.5"
 python-dotenv = ">=0.21,<2.0"
 importlib-resources = "^6.0"
-trulens-connectors-snowflake = { version = "^1.0.0", optional = true }
 trulens-otel-semconv = { version = "^1.0.0", optional = true }
 opentelemetry-api = { version = "^1.0.0", optional = true }
 opentelemetry-sdk = { version = "^1.0.0", optional = true }
@@ -58,5 +57,4 @@ tqdm = { version = ">=4.2.0", optional = true }
 optional = true
 
 [tool.poetry.group.dev.dependencies]
-trulens-connectors-snowflake = { path = "../connectors/snowflake" }
 trulens-otel-semconv = { path = "../otel/semconv" }
