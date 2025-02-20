@@ -3,11 +3,12 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
-from trulens.connectors.snowflake.dao.sql_utils import escape_quotes
 
 try:
     from trulens.connectors.snowflake.dao.enums import ObjectType
     from trulens.connectors.snowflake.dao.external_agent import ExternalAgentDao
+    from trulens.connectors.snowflake.dao.sql_utils import escape_quotes
+
 
 except Exception:
     pass
