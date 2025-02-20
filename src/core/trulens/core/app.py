@@ -8,6 +8,7 @@ import datetime
 import inspect
 from inspect import BoundArguments
 from inspect import Signature
+import json
 import logging
 import os
 import threading
@@ -30,6 +31,7 @@ from typing import (
 )
 import weakref
 
+import pandas as pd
 import pydantic
 from trulens.core import experimental as core_experimental
 from trulens.core import instruments as core_instruments
@@ -40,6 +42,9 @@ from trulens.core.database import base as core_db
 from trulens.core.database import connector as core_connector
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback import feedback as core_feedback
+from trulens.core.run import Run
+from trulens.core.run import RunConfig
+from trulens.core.run import validate_dataset_col_spec
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
@@ -441,6 +446,18 @@ class App(
         pydantic.PrivateAttr(default_factory=dict)
     )
 
+    snowflake_object_type: Optional[str] = pydantic.Field(
+        None,
+    )
+    snowflake_object_name: Optional[str] = pydantic.Field(
+        None,
+    )
+    snowflake_object_version: Optional[str] = pydantic.Field(
+        None,
+    )
+
+    snowflake_run_dao: Optional[Any] = pydantic.Field(None, exclude=True)
+
     snowflake_app_dao: Optional[Any] = pydantic.Field(None, exclude=True)
 
     def __init__(
@@ -475,24 +492,25 @@ class App(
                     "A valid app instance must be provided when specifying 'main_method'."
                 )
 
-            main_method = kwargs["main_method"]
+            if "main_method" in kwargs:
+                main_method = kwargs["main_method"]
 
-            # Instead of always checking for binding,  enforce it except when app is an instance of TruWrapperApp (tru basic app).
-            try:
-                from trulens.apps.basic import TruWrapperApp
-            except ImportError:
-                TruWrapperApp = None
+                # Instead of always checking for binding,  enforce it except when app is an instance of TruWrapperApp (tru basic app).
+                try:
+                    from trulens.apps.basic import TruWrapperApp
+                except ImportError:
+                    TruWrapperApp = None
 
-            if TruWrapperApp is None or not isinstance(app, TruWrapperApp):
-                if (
-                    not hasattr(main_method, "__self__")
-                    or main_method.__self__ != app
-                ):
-                    raise ValueError(
-                        f"main_method `{main_method.__name__}` must be bound to the provided `app` instance."
-                    )
+                if TruWrapperApp is None or not isinstance(app, TruWrapperApp):
+                    if (
+                        not hasattr(main_method, "__self__")
+                        or main_method.__self__ != app
+                    ):
+                        raise ValueError(
+                            f"main_method `{main_method.__name__}` must be bound to the provided `app` instance."
+                        )
 
-            self._wrap_main_function(app, main_method.__name__)
+                self._wrap_main_function(app, main_method.__name__)
 
         super().__init__(**kwargs)
 
@@ -504,12 +522,23 @@ class App(
 
         if connector and _can_import("trulens.connectors.snowflake"):
             from trulens.connectors.snowflake import SnowflakeConnector
+            from trulens.connectors.snowflake.dao.enums import ObjectType
 
             if isinstance(connector, SnowflakeConnector):
-                self.snowflake_app_dao = connector.initialize_snowflake_app_dao(
-                    object_type=kwargs["object_type"]
-                    if "object_type" in kwargs
-                    else None,
+                self.snowflake_object_type = (
+                    ObjectType.EXTERNAL_AGENT.value
+                    if "object_type" not in kwargs
+                    or kwargs["object_type"] is None
+                    else kwargs["object_type"]
+                )
+
+                (
+                    self.snowflake_app_dao,
+                    self.snowflake_run_dao,
+                    self.snowflake_object_name,
+                    self.snowflake_object_version,
+                ) = connector.initialize_snowflake_dao_fields(
+                    object_type=self.snowflake_object_type,
                     app_name=kwargs["app_name"],
                     app_version=kwargs["app_version"],
                 )
@@ -1656,18 +1685,125 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         ):
             msg = (
                 "This API requires a Snowpark session to initialize snowflake-specific DAO instance. Please initialize App with "
-                "object_type='EXTERNAL_AGENT' and a valid snowpark_session."
+                "object_type='EXTERNAL AGENT' and a valid snowpark_session."
             )
             logger.error(msg)
-            raise NotImplementedError(msg)
+            raise ValueError(msg)
 
-    def add_run(self):
-        self._check_snowflake_dao()
-        raise NotImplementedError("Not implemented yet.")
+    def add_run(self, run_config: RunConfig) -> Union[Run, None]:
+        """add a new run to the snowflake App (if not already exists)
 
-    def list_runs(self):
+        Args:
+            run_config (RunConfig):  Run config
+            input_df (Optional[pd.DataFrame]): optional input dataset
+
+        Returns:
+            Run: Run instance
+        """
+
         self._check_snowflake_dao()
-        raise NotImplementedError("Not implemented yet.")
+
+        try:
+            run_metadata_df = self.snowflake_run_dao.create_new_run(
+                object_name=self.snowflake_object_name,
+                object_type=self.snowflake_object_type,
+                object_version=self.snowflake_object_version,
+                run_name=run_config.run_name,
+                dataset_name=run_config.dataset_name,
+                dataset_col_spec=validate_dataset_col_spec(
+                    run_config.dataset_col_spec
+                ),
+                description=run_config.description,
+                label=run_config.label,
+                llm_judge_name=run_config.llm_judge_name,
+            )
+
+            return Run.from_metadata_df(
+                run_metadata_df,
+                {
+                    "app": self,
+                    "main_method_name": self.main_method_name,
+                    "run_dao": self.snowflake_run_dao,
+                    "tru_session": self.session,
+                },
+            )
+
+        except Exception as e:
+            if "already exists." in str(e):
+                logger.debug(f"Run {run_config.run_name} already exists.")
+                return self.get_run(run_config.run_name)
+            else:
+                logger.error(f"Failed to add run {run_config.run_name}. {e}")
+                raise
+
+    def get_run(self, run_name: str) -> Run:
+        """Retrieve a run by name.
+
+        Args:
+            run_name (str): unique name of the run
+
+        Returns:
+            Run: Run instance
+        """
+        self._check_snowflake_dao()
+        run_metadata_df = self.snowflake_run_dao.get_run(
+            run_name=run_name,
+            object_name=self.snowflake_object_name,
+            object_type=self.snowflake_object_type,
+            object_version=self.snowflake_object_version,
+        )
+        if run_metadata_df.empty:
+            raise ValueError(f"Run {run_name} not found.")
+
+        return Run.from_metadata_df(
+            run_metadata_df,
+            {
+                "app": self,
+                "main_method_name": self.main_method_name,
+                "run_dao": self.snowflake_run_dao,
+                "tru_session": self.session,
+            },
+        )
+
+    def list_runs(self) -> List[Run]:
+        """Retrieve all runs belong to the snowflake App.
+
+        Returns:
+            List[Run]: List of Run instances
+        """
+        self._check_snowflake_dao()
+        run_metadata_df = self.snowflake_run_dao.list_all_runs(
+            object_name=self.snowflake_object_name,
+            object_type=self.snowflake_object_type,
+        )
+        runs = []
+
+        if run_metadata_df.empty:
+            return runs
+
+        all_runs_lst = json.loads(run_metadata_df.iloc[0].iloc[-1])
+
+        # return all_runs_lst
+        for run_dict in all_runs_lst:
+            runs.append(
+                Run.from_metadata_df(
+                    pd.DataFrame({"col": [json.dumps(run_dict)]}),
+                    {
+                        "app": self.app,
+                        "main_method_name": self.main_method_name,
+                        "run_dao": self.snowflake_run_dao,
+                        "tru_session": self.session,
+                        "object_name": self.snowflake_object_name,
+                        "object_type": self.snowflake_object_type,
+                    },
+                )
+            )
+        return runs
+
+    def delete_snowflake_app(self) -> None:
+        """Delete the snowflake App (managing object) in snowflake, if applicable."""
+        self._check_snowflake_dao()
+        self.snowflake_app_dao.drop_agent(self.snowflake_object_name)
 
     def run(self, run_name: str):
         if self.session.experimental_feature(
