@@ -6440,19 +6440,20 @@ trulens_eval.guardrails.langchain:
   __class__: builtins.module
   highs: {}
   lows:
-    WithFeedbackFilterDocuments: pydantic.v1.main.ModelMetaclass
+    WithFeedbackFilterDocuments: pydantic._internal._model_construction.ModelMetaclass
     deprecation_utils: builtins.module
 trulens_eval.guardrails.langchain.WithFeedbackFilterDocuments:
   __bases__:
   - langchain_core.vectorstores.base.VectorStoreRetriever
-  __class__: pydantic.v1.main.ModelMetaclass
+  __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     feedback: trulens.core.feedback.feedback.Feedback
-    metadata: typing.Optional[typing.Dict[builtins.str, typing.Any], builtins.NoneType]
+    metadata: typing.Optional[builtins.dict[builtins.str, typing.Any], builtins.NoneType]
+    name: typing.Optional[builtins.str, builtins.NoneType]
     of_retriever: builtins.staticmethod
     search_kwargs: builtins.dict
     search_type: builtins.str
-    tags: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+    tags: typing.Optional[builtins.list[builtins.str], builtins.NoneType]
     threshold: builtins.float
     vectorstore: langchain_core.vectorstores.base.VectorStore
 trulens_eval.guardrails.llama:
