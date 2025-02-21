@@ -84,7 +84,10 @@ class SpanAttributes:
         """Unknown span type."""
 
         RECORD_ROOT = "record_root"
-        """Spans as collected by tracing system."""
+        """Record root span."""
+
+        NESTED_RECORD_ROOT = "nested_record_root"
+        """Nested app's record root span."""
 
         EVAL_ROOT = "eval_root"
         """Feedback function evaluation root span."""
