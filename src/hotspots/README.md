@@ -7,7 +7,7 @@ TruLens Hotspots:
 * works with any evaluation metric, be they human scores, formula-based scores (F1, BLEU, ROUGE), learnable evaluation metrics (COMET) or LLM-as-a-judge scores
 * is a totally black-box method, any model can be diagnosed
 * all that is required is just a data frame with per-sample evaluation scores
-* is easily pluggable to your Python code (at the end of the day, it's a function that takes a dataframe) or can be used as a stand-alone command-line tool
+* is easily pluggable into your Python code (at the end of the day, it's a function that takes a dataframe) or can be used as a stand-alone command-line tool
 * can be run stand-alone or as a part of the whole TruLens framework
 
 ## How to run
@@ -15,7 +15,7 @@ TruLens Hotspots:
 ### As a command-line tool
 
 ```bash
-PYTHONPATH=. python trulens/hotspots/hotspots.py file.csv \
+python -m trulens.hotspots file.csv \
    --score_column COLUMN_WITH_EVALUATION_SCORES \
    [--skip_columns OPTIONAL_SPACE_SEPARATED_LIST_COLUMNS_TO_BE_DISREGARDED] \
    [--more_skipped_columns OPTIONAL_SPACE_SEPARATED_LIST_COLUMNS_TO_BE_DISREGARDED]
@@ -74,10 +74,11 @@ It's easy to run TruLens Hotspots as a part of a [Streamlit](https://streamlit.i
 functions and an example. You can run it as follows:
 
 ```bash
-PYTHONPATH=. python -m streamlit run trulens/hotspots/hotspots_streamlit.py
+pip install streamlit
+python -m trulens.hotspots.hotspots_streamlit
 ```
 
-![Screenshot for a sample Streamlit app](sample_screenshot.png)
+![Screenshot for a sample Streamlit app](https://media.githubusercontent.com/media/truera/trulens/main/src/hotspots/sample_screenshot.png)
 
 Similarly, you can use TruLens Hotspots for a [Streamlit-in-Snowflake](https://www.snowflake.com/en/data-cloud/overview/streamlit-in-snowflake/) app.
 
