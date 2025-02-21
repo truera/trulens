@@ -300,7 +300,7 @@ class Run(BaseModel):
         if not metrics:
             raise ValueError("Metrics list cannot be empty")
         metrics_str = ",".join([f"'{metric}'" for metric in metrics])
-        compute_metrics_query = f"CALL COMPUTE_AI_OBSERVABILITY_METRICS('{current_db}', '{current_schema}', '{self.object_name}', '{self.object_type}', '{self.run_name}', ARRAY_CONSTRUCT({metrics_str}));"
+        compute_metrics_query = f"CALL COMPUTE_AI_OBSERVABILITY_METRICS('{current_db}', '{current_schema}', '{self.object_name}', '{self.object_version}', '{self.object_type}', '{self.run_name}', ARRAY_CONSTRUCT({metrics_str}));"
 
         return self.run_dao.session.sql(compute_metrics_query).collect()
 
