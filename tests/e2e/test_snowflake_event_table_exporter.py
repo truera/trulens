@@ -146,7 +146,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             run_name=run_name, input_id="21", main_method_args=("Nolan",)
         )
         # Validate results.
-        self._validate_results("custom app", run_name, 8)
+        self._validate_results("custom app", run_name, 10)
 
     def test_tru_llama(self):
         # Create app.
