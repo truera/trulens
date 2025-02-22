@@ -614,6 +614,7 @@ class App(
                         func, sig, sig.bind_partial(**kwargs), ret
                     ),
                 },
+                is_app_specific_record_root=True,
             )
             # HACK!: This is a major hack to get around the fact that we can't
             # set the desired method on the app object due to Pydantic only

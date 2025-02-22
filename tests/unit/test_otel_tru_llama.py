@@ -3,6 +3,9 @@ Tests for OTEL TruLlama app.
 """
 
 import pytest
+from trulens.otel.semconv.constants import (
+    TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
+)
 
 from tests.util.otel_app_test_case import OtelAppTestCase
 
@@ -80,4 +83,33 @@ class TestOtelTruLlama(OtelAppTestCase):
                 # in some runs.
                 (_CONTEXT_RETRIEVAL_REGEX, _CONTEXT_RETRIEVAL_REPLACEMENT)
             ],
+        )
+
+    def test_app_specific_record_root(self) -> None:
+        rag1 = self._create_simple_rag()
+        rag2 = self._create_simple_rag()
+        TruLlama(
+            rag1,
+            app_name="Simple RAG",
+            app_version="v1",
+            main_method=rag1.query,
+        )
+        rag3 = self._create_simple_rag()
+
+        def count_wraps(func):
+            if not hasattr(func, "__wrapped__"):
+                return 0
+            return 1 + count_wraps(func.__wrapped__)
+
+        self.assertEqual(count_wraps(rag1.query), 2)
+        self.assertEqual(count_wraps(rag2.query), 1)
+        self.assertEqual(count_wraps(rag3.query), 1)
+        self.assertFalse(
+            hasattr(rag1.query, TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG)
+        )
+        self.assertFalse(
+            hasattr(rag2.query, TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG)
+        )
+        self.assertFalse(
+            hasattr(rag3.query, TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG)
         )
