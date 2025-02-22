@@ -192,4 +192,13 @@ def sample_main() -> None:
 
 
 if __name__ == "__main__":
-    sample_main()
+    import sys
+
+    from streamlit import runtime
+    from streamlit.web import cli as stcli
+
+    if runtime.exists():
+        sample_main()
+    else:
+        sys.argv = ["streamlit", "run", sys.argv[0]]
+        sys.exit(stcli.main())
