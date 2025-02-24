@@ -42,13 +42,13 @@ class TestOtelSpan(TestCase):
         with self.subTest("Dictionary attributes"):
             attributes_dict = {"key2": "value2"}
             self.assertEqual(
-                {"key2": "value2"},
+                {"key2": "Kojikun"},
                 _resolve_attributes(
                     attributes_dict,
                     ret=None,
                     exception=None,
                     args=(),
-                    all_kwargs={},
+                    all_kwargs={"value2": "Kojikun"},
                 ),
             )
 

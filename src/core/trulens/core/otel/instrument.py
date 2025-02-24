@@ -63,6 +63,13 @@ def _resolve_attributes(
         return {}
     if callable(attributes):
         return attributes(ret, exception, *args, **all_kwargs)
+    if isinstance(attributes, dict):
+        ret = {}
+        value_string_to_value = all_kwargs.copy()
+        value_string_to_value["return"] = ret
+        for k, v in attributes.items():
+            ret[k] = value_string_to_value[v]
+        return ret
     return attributes.copy()
 
 
