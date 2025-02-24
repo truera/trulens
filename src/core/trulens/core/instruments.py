@@ -380,7 +380,7 @@ class InstrumentedMethod:
     method: str
     class_filter: ClassFilter
     span_type: Optional[SpanAttributes.SpanType] = None
-    span_attributes: Attributes = None
+    attributes: Attributes = None
     must_be_first_wrapper: bool = True
 
 
@@ -459,7 +459,7 @@ class Instrument:
         @staticmethod
         def retrieval_span(
             query_argname: str,
-        ) -> Tuple[SpanAttributes.SpanType, Attributes, Attributes]:
+        ) -> Tuple[SpanAttributes.SpanType, Attributes]:
             return (
                 SpanAttributes.SpanType.RETRIEVAL,
                 lambda ret, exception, *args, **kwargs: {
@@ -588,7 +588,7 @@ class Instrument:
         cls: type,
         obj: object,
         span_type: Optional[SpanAttributes.SpanType] = None,
-        span_attributes: Optional[Attributes] = None,
+        attributes: Optional[Attributes] = None,
         must_be_first_wrapper: bool = False,
     ):
         """Wrap a method to capture its inputs/outputs/errors."""
@@ -605,7 +605,7 @@ class Instrument:
                 span_type = SpanAttributes.SpanType.UNKNOWN
             wrapper = instrument(
                 span_type=span_type,
-                attributes=span_attributes,
+                attributes=attributes,
                 must_be_first_wrapper=must_be_first_wrapper,
             )
             # return wrapper(func)?
@@ -1155,7 +1155,7 @@ class Instrument:
                             cls=base,
                             obj=obj,
                             span_type=instrumented_method.span_type,
-                            span_attributes=instrumented_method.span_attributes,
+                            attributes=instrumented_method.attributes,
                             must_be_first_wrapper=instrumented_method.must_be_first_wrapper,
                         ),
                     )
