@@ -255,7 +255,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         with tru_recorder(run_name="load test run", input_id="42"):
             app.start([100000] * 20 + [5000000] + [100000] * 20)
         # Validate results.
-        # There should be 42 spans: 1 root, 1 main, 40 small enough spans.
-        self._validate_results("load test app", "load test run", 42)
+        # There should be 41 spans: 1 root, 40 small enough spans.
+        self._validate_results("load test app", "load test run", 41)
         # There should also have been a failure for the 5000000 sized span.
         # TODO(otel): verify this!
