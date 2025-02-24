@@ -115,13 +115,13 @@ class SpanAttributes:
         SPAN_NAME_PREFIX = base + "."
         """Span name will end with app name."""
 
-        MAIN_INPUT = base + ".main_input"
+        INPUT = base + ".input"
         """Main input to the app."""
 
-        MAIN_OUTPUT = base + ".main_output"
+        OUTPUT = base + ".output"
         """Main output of the app."""
 
-        MAIN_ERROR = base + ".main_error"
+        ERROR = base + ".error"
         """Main error of the app.
 
         Exclusive with main output.
