@@ -588,7 +588,7 @@ class Instrument:
         cls: type,
         obj: object,
         span_type: Optional[SpanAttributes.SpanType] = None,
-        span_attributes: Optional[Attributes] = None,
+        attributes: Optional[Attributes] = None,
         must_be_first_wrapper: bool = False,
     ):
         """Wrap a method to capture its inputs/outputs/errors."""
@@ -605,7 +605,7 @@ class Instrument:
                 span_type = SpanAttributes.SpanType.UNKNOWN
             wrapper = instrument(
                 span_type=span_type,
-                attributes=span_attributes,
+                attributes=attributes,
                 must_be_first_wrapper=must_be_first_wrapper,
             )
             # return wrapper(func)?
@@ -1155,7 +1155,7 @@ class Instrument:
                             cls=base,
                             obj=obj,
                             span_type=instrumented_method.span_type,
-                            span_attributes=instrumented_method.attributes,
+                            attributes=instrumented_method.attributes,
                             must_be_first_wrapper=instrumented_method.must_be_first_wrapper,
                         ),
                     )
