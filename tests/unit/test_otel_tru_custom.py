@@ -10,7 +10,10 @@ from tests.util.otel_app_test_case import OtelAppTestCase
 
 
 class TestApp:
-    @instrument(span_type=SpanAttributes.SpanType.RECORD_ROOT)
+    @instrument(
+        span_type=SpanAttributes.SpanType.RECORD_ROOT,
+        attributes={"the_query": "query", "the_return": "return"},
+    )
     def respond_to_query(self, query: str) -> str:
         return f"answer: {self.nested(query)}"
 
