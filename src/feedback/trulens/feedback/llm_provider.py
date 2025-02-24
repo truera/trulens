@@ -161,11 +161,20 @@ class LLMProvider(core_provider.Provider):
             score = -1
             supporting_evidence = None
             criteria = None
-            for line in response.split("\n"):
+            lines = response.split("\n")
+            for i, line in enumerate(lines):
                 if "Score" in line:
+                    # If the next line exists and appears to be a numeric score, use it.
+                    if (
+                        i + 1 < len(lines)
+                        and lines[i + 1].strip().replace(".", "", 1).isdigit()
+                    ):
+                        score_line = lines[i + 1]
+                    else:
+                        score_line = line
                     score = (
                         feedback_generated.re_configured_rating(
-                            line,
+                            score_line,
                             min_score_val=min_score_val,
                             max_score_val=max_score_val,
                         )
