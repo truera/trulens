@@ -7,6 +7,7 @@ from trulens.feedback import llm_provider as llm_provider
 from trulens.providers.litellm import endpoint as litellm_endpoint
 
 from litellm import completion
+from litellm import get_supported_openai_params
 
 logger = logging.getLogger(__name__)
 
@@ -97,17 +98,22 @@ provider = LiteLLM(
 
         if messages is not None:
             completion_args["messages"] = messages
-
         elif prompt is not None:
             completion_args["messages"] = [
                 {"role": "system", "content": prompt}
             ]
-
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
 
+        _model_provider, _model_name = self.model_engine.split("/", 1)
+        required_params = ["model", "messages"]
+        supported_params = get_supported_openai_params(
+            model=_model_name, custom_llm_provider=_model_provider
+        )
+        params = required_params + (supported_params or [])
+        completion_args = {
+            k: v for k, v in completion_args.items() if k in params
+        }
+
         comp = completion(**completion_args)
-
-        assert isinstance(comp, object)
-
-        return comp["choices"][0]["message"]["content"]
+        return comp.choices[0].message.content
