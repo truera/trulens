@@ -15,7 +15,7 @@ class TestApp:
         return f"answer: {self.nested(query)}"
 
     @instrument(
-        attributes=lambda ret, exception, *args, **kargs: {
+        attributes=lambda ret, exception, *args, **kwargs: {
             "nested_attr1": "value1"
         }
     )
