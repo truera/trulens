@@ -14,7 +14,11 @@ class TestApp:
     def respond_to_query(self, query: str) -> str:
         return f"answer: {self.nested(query)}"
 
-    @instrument(attributes={"nested_attr1": "value1"})
+    @instrument(
+        attributes=lambda ret, exception, *args, **kwargs: {
+            "nested_attr1": "value1"
+        }
+    )
     def nested(self, query: str) -> str:
         return f"nested: {self.nested2(query)}"
 
