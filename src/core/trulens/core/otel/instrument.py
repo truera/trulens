@@ -31,7 +31,6 @@ from trulens.otel.semconv.constants import TRULENS_INSTRUMENT_WRAPPER_FLAG
 from trulens.otel.semconv.constants import (
     TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
 )
-from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.otel.semconv.trace import SpanAttributes
 import wrapt
 
@@ -80,7 +79,6 @@ def _set_span_attributes(
     func: Callable,
     func_exception: Optional[Exception],
     attributes: Attributes,
-    full_scoped_attributes: Attributes,
     instance: Any,
     args: Tuple[Any],
     kwargs: Dict[str, Any],
@@ -99,7 +97,7 @@ def _set_span_attributes(
             ret,
             func_exception,
         )
-    # Determine args/kwargs to pass to the attributes/full_scoped_attributes
+    # Determine args/kwargs to pass to the attributes
     # callable.
     sig = inspect.signature(func)
     bound_args = sig.bind_partial(*args, **kwargs).arguments
@@ -110,7 +108,7 @@ def _set_span_attributes(
         args_with_self_possibly = args
     # Set function call attributes.
     set_function_call_attributes(span, ret, func_exception, all_kwargs)
-    # Combine the attributes with the full_scoped_attributes.
+    # Resolve the attributes.
     resolved_attributes = _resolve_attributes(
         attributes,
         ret,
@@ -118,27 +116,12 @@ def _set_span_attributes(
         args_with_self_possibly,
         all_kwargs,
     )
-    resolved_attributes = {
-        f"{BASE_SCOPE}.{span_type.value}.{k}": v
-        for k, v in resolved_attributes.items()
-    }
-    resolved_full_scoped_attributes = _resolve_attributes(
-        full_scoped_attributes,
-        ret,
-        func_exception,
-        args_with_self_possibly,
-        all_kwargs,
-    )
-    all_attributes = {
-        **resolved_attributes,
-        **resolved_full_scoped_attributes,
-    }
-    if all_attributes:
+    if resolved_attributes:
         # Set the user-provided attributes.
         set_user_defined_attributes(
             span,
             span_type=span_type,
-            attributes=all_attributes,
+            attributes=resolved_attributes,
         )
 
 
@@ -146,7 +129,6 @@ def instrument(
     *,
     span_type: SpanAttributes.SpanType = SpanAttributes.SpanType.UNKNOWN,
     attributes: Attributes = None,
-    full_scoped_attributes: Attributes = None,
     must_be_first_wrapper: bool = False,
     **kwargs,
 ):
@@ -157,11 +139,6 @@ def instrument(
     span_type: Span type to be used for the span.
     attributes:
         A dictionary or a callable that returns a dictionary of attributes
-        (i.e. a `typing.Dict[str, typing.Any]`) to be set on the span where
-        each key in the dictionary will be an attribute in the span type's
-        scope.
-    full_scoped_attributes:
-        A dictionary or a callable that returns a dictionary of attributes
         (i.e. a `typing.Dict[str, typing.Any]`) to be set on the span.
     must_be_first_wrapper:
         If this is True and the function is already wrapped with the TruLens
@@ -169,8 +146,6 @@ def instrument(
     """
     if attributes is None:
         attributes = {}
-    if full_scoped_attributes is None:
-        full_scoped_attributes = {}
     is_record_root = span_type == SpanAttributes.SpanType.RECORD_ROOT
     is_app_specific_record_root = kwargs.get(
         "is_app_specific_record_root", False
@@ -228,7 +203,6 @@ def instrument(
                             func,
                             func_exception,
                             attributes,
-                            full_scoped_attributes,
                             instance,
                             args,
                             kwargs,
@@ -266,7 +240,6 @@ def instrument(
                         func,
                         func_exception,
                         attributes,
-                        full_scoped_attributes,
                         instance,
                         args,
                         kwargs,
@@ -309,7 +282,6 @@ def instrument(
                             func,
                             func_exception,
                             attributes,
-                            full_scoped_attributes,
                             instance,
                             args,
                             kwargs,
@@ -354,13 +326,11 @@ def instrument_method(
     method_name: str,
     span_type: SpanAttributes.SpanType = SpanAttributes.SpanType.UNKNOWN,
     attributes: Attributes = None,
-    full_scoped_attributes: Attributes = None,
     must_be_first_wrapper: bool = False,
 ):
     wrapper = instrument(
         span_type=span_type,
         attributes=attributes,
-        full_scoped_attributes=full_scoped_attributes,
         must_be_first_wrapper=must_be_first_wrapper,
     )
     setattr(cls, method_name, wrapper(getattr(cls, method_name)))

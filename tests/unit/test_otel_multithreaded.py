@@ -27,8 +27,8 @@ class _TestApp:
 
     @instrument(
         attributes=lambda ret, exception, *args, **kwargs: {
-            "best_baby": ret[0],
-            "span_id": ret[1],
+            f"{SpanAttributes.UNKNOWN.base}.best_baby": ret[0],
+            f"{SpanAttributes.UNKNOWN.base}.span_id": ret[1],
         }
     )
     def nested(self) -> Tuple[str, str]:

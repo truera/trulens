@@ -4,6 +4,7 @@ Tests for OTEL TruChain app.
 
 import pytest
 from trulens.core.otel.instrument import instrument
+from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.otel_app_test_case import OtelAppTestCase
 
@@ -29,7 +30,7 @@ class TestOtelTruChain(OtelAppTestCase):
         # Helper function.
         @instrument(
             attributes=lambda ret, exception, *args, **kwargs: {
-                "best_baby": "Kojikun"
+                f"{SpanAttributes.UNKNOWN.base}.best_baby": "Kojikun"
             }
         )
         def format_docs(docs):

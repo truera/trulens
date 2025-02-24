@@ -140,9 +140,7 @@ pp = PrettyPrinter()
 
 
 def _retrieval_span() -> Dict[str, Union[SpanAttributes.SpanType, Attributes]]:
-    def _full_scoped_span_attributes(
-        ret, exception, *args, **kwargs
-    ) -> Attributes:
+    def _span_attributes(ret, exception, *args, **kwargs) -> Attributes:
         attributes = {}
         # Guess query text.
         possible_query_texts = []
@@ -179,7 +177,7 @@ def _retrieval_span() -> Dict[str, Union[SpanAttributes.SpanType, Attributes]]:
 
     return {
         "span_type": SpanAttributes.SpanType.RETRIEVAL,
-        "full_scoped_span_attributes": _full_scoped_span_attributes,
+        "span_attributes": _span_attributes,
     }
 
 
