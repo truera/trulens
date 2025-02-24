@@ -18,7 +18,9 @@ _context_relevance = Feedback(
 class _TestApp:
     @instrument(
         span_type=SpanAttributes.SpanType.RETRIEVAL,
-        attributes=lambda ret, exception, *args, **kwargs: {"return": ret},
+        attributes=lambda ret, exception, *args, **kwargs: {
+            f"{SpanAttributes.RETRIEVAL.base}.return": ret
+        },
     )
     @context_filter(
         feedback=_context_relevance,

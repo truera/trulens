@@ -27,8 +27,8 @@ class _TestApp:
 
     @instrument(
         attributes=lambda ret, exception, *args, **kwargs: {
-            "best_baby": ret[0],
-            "span_id": ret[1],
+            f"{SpanAttributes.UNKNOWN.base}.best_baby": ret[0],
+            f"{SpanAttributes.UNKNOWN.base}.span_id": ret[1],
         }
     )
     def nested(self) -> Tuple[str, str]:
@@ -62,11 +62,11 @@ class TestOtelMultiThreaded(OtelAppTestCase):
                 seen_span_ids.add(span_id)
             elif span_type == SpanAttributes.SpanType.RECORD_ROOT:
                 self.assertEqual(
-                    record_attributes[SpanAttributes.RECORD_ROOT.MAIN_INPUT],
+                    record_attributes[SpanAttributes.RECORD_ROOT.INPUT],
                     "test",
                 )
                 self.assertEqual(
-                    record_attributes[SpanAttributes.RECORD_ROOT.MAIN_OUTPUT],
+                    record_attributes[SpanAttributes.RECORD_ROOT.OUTPUT],
                     "Kojikun",
                 )
         self.assertEqual(len(seen_span_ids), 100)
