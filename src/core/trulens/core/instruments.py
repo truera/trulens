@@ -1155,7 +1155,7 @@ class Instrument:
                             cls=base,
                             obj=obj,
                             span_type=instrumented_method.span_type,
-                            span_attributes=instrumented_method.span_attributes,
+                            span_attributes=instrumented_method.attributes,
                             must_be_first_wrapper=instrumented_method.must_be_first_wrapper,
                         ),
                     )
