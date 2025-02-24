@@ -7,6 +7,7 @@ import logging
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from opentelemetry.baggage import get_baggage
+from opentelemetry.context import Context
 from opentelemetry.trace.span import Span
 from opentelemetry.util.types import AttributeValue
 from trulens.core.utils import signature as signature_utils
@@ -95,6 +96,16 @@ def set_span_attribute_safely(
         span.set_attribute(key, _convert_to_valid_span_attribute_type(value))
 
 
+def set_string_span_attribute_from_baggage(
+    span: Span,
+    key: str,
+    context: Optional[Context] = None,
+) -> None:
+    value = get_baggage(key, context)
+    if value is not None:
+        span.set_attribute(key, str(value))
+
+
 def validate_attributes(attributes: Dict[str, Any]) -> Dict[str, Any]:
     """
     Utility function to validate span attributes based on the span type.
@@ -112,39 +123,37 @@ def validate_attributes(attributes: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def set_general_span_attributes(
-    span: Span, /, span_type: SpanAttributes.SpanType
+    span: Span,
+    /,
+    span_type: SpanAttributes.SpanType,
+    context: Optional[Context] = None,
 ) -> None:
     span.set_attribute(SpanAttributes.SPAN_TYPE, span_type)
 
-    span.set_attribute(
-        SpanAttributes.APP_NAME, str(get_baggage(SpanAttributes.APP_NAME))
+    set_string_span_attribute_from_baggage(
+        span, SpanAttributes.APP_NAME, context
     )
-    span.set_attribute(
-        SpanAttributes.APP_VERSION, str(get_baggage(SpanAttributes.APP_VERSION))
+    set_string_span_attribute_from_baggage(
+        span, SpanAttributes.APP_VERSION, context
     )
-    record_id = get_baggage(SpanAttributes.RECORD_ID)
-    if record_id:
-        span.set_attribute(SpanAttributes.RECORD_ID, record_id)
-    target_record_id = get_baggage(SpanAttributes.EVAL.TARGET_RECORD_ID)
-    if target_record_id:
-        span.set_attribute(
-            SpanAttributes.EVAL.TARGET_RECORD_ID, target_record_id
-        )
-    eval_root_id = get_baggage(SpanAttributes.EVAL.EVAL_ROOT_ID)
-    if eval_root_id:
-        span.set_attribute(SpanAttributes.EVAL.EVAL_ROOT_ID, eval_root_id)
-    feedback_name = get_baggage(SpanAttributes.EVAL.FEEDBACK_NAME)
-    if feedback_name:
-        span.set_attribute(SpanAttributes.EVAL.FEEDBACK_NAME, feedback_name)
-
-    run_name_baggage = get_baggage(SpanAttributes.RUN_NAME)
-    input_id_baggage = get_baggage(SpanAttributes.INPUT_ID)
-
-    if run_name_baggage:
-        span.set_attribute(SpanAttributes.RUN_NAME, str(run_name_baggage))
-
-    if input_id_baggage:
-        span.set_attribute(SpanAttributes.INPUT_ID, str(input_id_baggage))
+    set_string_span_attribute_from_baggage(
+        span, SpanAttributes.RECORD_ID, context
+    )
+    set_string_span_attribute_from_baggage(
+        span, SpanAttributes.EVAL.TARGET_RECORD_ID, context
+    )
+    set_string_span_attribute_from_baggage(
+        span, SpanAttributes.EVAL.EVAL_ROOT_ID, context
+    )
+    set_string_span_attribute_from_baggage(
+        span, SpanAttributes.EVAL.FEEDBACK_NAME, context
+    )
+    set_string_span_attribute_from_baggage(
+        span, SpanAttributes.RUN_NAME, context
+    )
+    set_string_span_attribute_from_baggage(
+        span, SpanAttributes.INPUT_ID, context
+    )
 
 
 def set_function_call_attributes(
@@ -180,7 +189,7 @@ def set_user_defined_attributes(
 
 
 """
-MAIN SPAN
+RECORD_ROOT SPAN
 """
 
 
@@ -190,7 +199,7 @@ def get_main_input(func: Callable, args: tuple, kwargs: dict) -> str:
     return signature_utils.main_input(func, sig, bindings)
 
 
-def set_main_span_attributes(
+def set_record_root_span_attributes(
     span: Span,
     /,
     func: Callable,
@@ -200,17 +209,26 @@ def set_main_span_attributes(
     exception: Optional[Exception],
 ) -> None:
     set_span_attribute_safely(
-        span, SpanAttributes.MAIN.MAIN_INPUT, get_main_input(func, args, kwargs)
+        span,
+        SpanAttributes.RECORD_ROOT.MAIN_INPUT,
+        get_main_input(func, args, kwargs),
     )
-
+    ground_truth_output = get_baggage(
+        SpanAttributes.RECORD_ROOT.GROUND_TRUTH_OUTPUT
+    )
+    if ground_truth_output:
+        set_span_attribute_safely(
+            span,
+            SpanAttributes.RECORD_ROOT.GROUND_TRUTH_OUTPUT,
+            ground_truth_output,
+        )
     if exception:
         set_span_attribute_safely(
-            span, SpanAttributes.MAIN.MAIN_ERROR, str(exception)
+            span, SpanAttributes.RECORD_ROOT.MAIN_ERROR, str(exception)
         )
-
     if ret is not None:
         set_span_attribute_safely(
             span,
-            SpanAttributes.MAIN.MAIN_OUTPUT,
+            SpanAttributes.RECORD_ROOT.MAIN_OUTPUT,
             signature_utils.main_output(func, ret),
         )

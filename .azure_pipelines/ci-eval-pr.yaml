@@ -9,6 +9,7 @@ pr:
       - main
 
 jobs:
+  - template: templates/build-conda-packages.yaml
   - job: PRBranchProtect # name seems to be important but cannot figure out why
     pool:
       vmImage: ubuntu-latest

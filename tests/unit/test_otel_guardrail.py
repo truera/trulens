@@ -41,8 +41,9 @@ class TestOtelGuardrail(OtelAppTestCase):
         tru_recorder = TruApp(
             app, app_name="Test App", app_version="v1", main_method=app.retrieve
         )
-        with tru_recorder(run_name="test run", input_id="42"):
-            result = app.retrieve("test")
+        result = tru_recorder.instrumented_invoke_main_method(
+            run_name="test run", input_id="42", main_method_args=("test",)
+        )
         # Check that only relevant comments are returned.
         expected_result = [
             "2. This is a relevant comment.",

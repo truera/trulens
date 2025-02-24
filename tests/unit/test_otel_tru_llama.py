@@ -3,7 +3,9 @@ Tests for OTEL TruLlama app.
 """
 
 import pytest
-from trulens.core.session import TruSession
+from trulens.otel.semconv.constants import (
+    TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
+)
 
 from tests.util.otel_app_test_case import OtelAppTestCase
 
@@ -48,10 +50,15 @@ class TestOtelTruLlama(OtelAppTestCase):
         )
         return index.as_query_engine(similarity_top_k=3)
 
+    def test_missing_main_method_raises_error(self):
+        # Create app.
+        rag = self._create_simple_rag()
+        with self.assertRaises(ValueError) as context:
+            TruLlama(rag, app_name="Simple RAG", app_version="v1")
+
+        self.assertIn("main_method", str(context.exception))
+
     def test_smoke(self) -> None:
-        # Set up.
-        tru_session = TruSession()
-        tru_session.reset_database()
         # Create app.
         rag = self._create_simple_rag()
         tru_recorder = TruLlama(
@@ -61,8 +68,11 @@ class TestOtelTruLlama(OtelAppTestCase):
             main_method=rag.query,
         )
         # Record and invoke.
-        with tru_recorder(run_name="test run", input_id="42"):
-            rag.query("What is multi-headed attention?")
+        tru_recorder.instrumented_invoke_main_method(
+            run_name="test run",
+            input_id="42",
+            main_method_args=("What is multi-headed attention?",),
+        )
         # Compare results to expected.
         self._compare_events_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_llama__test_smoke.csv",
@@ -73,4 +83,33 @@ class TestOtelTruLlama(OtelAppTestCase):
                 # in some runs.
                 (_CONTEXT_RETRIEVAL_REGEX, _CONTEXT_RETRIEVAL_REPLACEMENT)
             ],
+        )
+
+    def test_app_specific_record_root(self) -> None:
+        rag1 = self._create_simple_rag()
+        rag2 = self._create_simple_rag()
+        TruLlama(
+            rag1,
+            app_name="Simple RAG",
+            app_version="v1",
+            main_method=rag1.query,
+        )
+        rag3 = self._create_simple_rag()
+
+        def count_wraps(func):
+            if not hasattr(func, "__wrapped__"):
+                return 0
+            return 1 + count_wraps(func.__wrapped__)
+
+        self.assertEqual(count_wraps(rag1.query), 2)
+        self.assertEqual(count_wraps(rag2.query), 1)
+        self.assertEqual(count_wraps(rag3.query), 1)
+        self.assertFalse(
+            hasattr(rag1.query, TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG)
+        )
+        self.assertFalse(
+            hasattr(rag2.query, TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG)
+        )
+        self.assertFalse(
+            hasattr(rag3.query, TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG)
         )

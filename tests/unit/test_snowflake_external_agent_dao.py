@@ -5,7 +5,11 @@ from unittest.mock import patch
 import pytest
 
 try:
+    from trulens.connectors.snowflake.dao.enums import ObjectType
     from trulens.connectors.snowflake.dao.external_agent import ExternalAgentDao
+    from trulens.connectors.snowflake.dao.sql_utils import escape_quotes
+
+
 except Exception:
     pass
 
@@ -45,7 +49,9 @@ class TestExternalAgentDao(unittest.TestCase):
         self.dao.create_agent_if_not_exist("agent1", "v1")
 
         expected_show_query = "SHOW EXTERNAL AGENTS;"
-        expected_create_query = "CREATE EXTERNAL AGENT agent1 WITH VERSION v1;"
+        expected_create_query = (
+            'CREATE EXTERNAL AGENT IDENTIFIER(\'"agent1"\') WITH VERSION "v1";'
+        )
 
         # We expect exactly 2 calls to execute_query.
         self.assertEqual(mock_execute_query.call_count, 2)
@@ -66,8 +72,8 @@ class TestExternalAgentDao(unittest.TestCase):
         # Simulate that the agent exists and that the version already exists.
         # Return a list of DummyRow objects to simulate rows.
         mock_execute_query.side_effect = [
-            [DummyRow({"name": "AGENT1"})],  # list_agents call
-            [DummyRow({"name": "V1"})],  # list_agent_versions call
+            [DummyRow({"name": "agent1"})],  # list_agents call
+            [DummyRow({"name": "v1"})],  # list_agent_versions call
         ]
 
         self.dao.create_agent_if_not_exist("agent1", "v1")
@@ -78,7 +84,7 @@ class TestExternalAgentDao(unittest.TestCase):
         queries = [call[0][1] for call in calls]
         expected_show_agents_query = "SHOW EXTERNAL AGENTS;"
         expected_show_versions_query = (
-            "SHOW VERSIONS IN EXTERNAL AGENT IDENTIFIER(?);"
+            "SHOW VERSIONS IN EXTERNAL AGENT IDENTIFIER('\"agent1\"');"
         )
         self.assertIn(expected_show_agents_query, queries)
         self.assertIn(expected_show_versions_query, queries)
@@ -90,17 +96,15 @@ class TestExternalAgentDao(unittest.TestCase):
         # Simulate that the agent exists.
         mock_execute_query.side_effect = [
             [
-                DummyRow({"name": "AGENT1"})
+                DummyRow({"name": "agent 1"})
             ],  # list_agents call returns agent exists
             [],  # list_agent_versions returns empty list
             [],  # add_version returns empty list
         ]
 
-        self.dao.create_agent_if_not_exist("agent1", "v2")
+        self.dao.create_agent_if_not_exist("agent 1", "v2")
 
-        expected_add_query = (
-            "ALTER EXTERNAL AGENT if exists agent1  ADD VERSION v2;"
-        )
+        expected_add_query = 'ALTER EXTERNAL AGENT if exists IDENTIFIER(\'"agent 1"\')  ADD VERSION "v2";'
         calls = mock_execute_query.call_args_list
         queries = [call[0][1] for call in calls]
         self.assertIn(expected_add_query, queries)
@@ -112,20 +116,32 @@ class TestExternalAgentDao(unittest.TestCase):
     ):
         # Simulate that the agent exists and its versions are present but do not include "V3"
         mock_execute_query.side_effect = [
-            [DummyRow({"name": "AGENT1"})],  # list_agents call
+            [DummyRow({"name": "agent1"})],  # list_agents call
             [
-                DummyRow({"version": "V1"}),
-                DummyRow({"version": "V2"}),
+                DummyRow({"version": "v1"}),
+                DummyRow({"version": "v2"}),
             ],  # list_agent_versions call
             [],  # add_version call returns empty list
         ]
 
         self.dao.create_agent_if_not_exist("agent1", "v3")
 
-        expected_add_query = (
-            "ALTER EXTERNAL AGENT if exists agent1  ADD VERSION v3;"
-        )
+        expected_add_query = 'ALTER EXTERNAL AGENT if exists IDENTIFIER(\'"agent1"\')  ADD VERSION "v3";'
         calls = mock_execute_query.call_args_list
         queries = [call[0][1] for call in calls]
         self.assertIn(expected_add_query, queries)
         self.assertEqual(mock_execute_query.call_count, 3)
+
+    def test_is_valid_object(self):
+        self.assertTrue(ObjectType.EXTERNAL_AGENT == "EXTERNAL AGENT")
+        self.assertTrue(ObjectType.is_valid_object("EXTERNAL AGENT"))
+        self.assertFalse(ObjectType.is_valid_object("INVALID AGENT"))
+
+    def test_escape_quotes(self):
+        self.assertEqual(escape_quotes('hello "world"'), 'hello ""world""')
+        self.assertEqual(
+            escape_quotes('he said "hello" and "goodbye"'),
+            'he said ""hello"" and ""goodbye""',
+        )
+        self.assertEqual(escape_quotes('""""'), '""""""""')
+        self.assertEqual(escape_quotes(""), "")

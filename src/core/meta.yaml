@@ -1,14 +1,18 @@
 {% set name = "trulens-core" %}
-{% set version = "1.3.5" %}
+{% set version = "1.4.2" %}
 
 package:
   name: {{ name|lower }}
   version: {{ version }}
 
 source:
+  {% if environ.get('CONDA_SOURCE_USE_PATH') == '1' %}
+  path: ./
+  {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-core/#files
-  sha256: 3dc849ef2c9474a8fd1b913222052536568ceded14914c2c14bf36c0c892d425
+  sha256: c3d3fbfdc99f079b4d5b5398fc1725cb7ecd5616c84a1df44154c1fae98fbd8a
+  {% endif %}
 
 build:
   noarch: python

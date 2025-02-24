@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 from snowflake.snowpark import Session
 from snowflake.snowpark.row import Row
-from trulens.apps.custom import TruCustomApp
+from trulens.apps.app import TruApp
 from trulens.apps.langchain import TruChain
 from trulens.apps.llamaindex import TruLlama
 from trulens.connectors import snowflake as snowflake_connector
@@ -146,7 +146,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
     def test_tru_custom_app(self):
         # Create app.
         app = tests.unit.test_otel_tru_custom.TestApp()
-        tru_recorder = TruCustomApp(
+        tru_recorder = TruApp(
             app,
             app_name="custom app",
             app_version="v1",
@@ -154,14 +154,16 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         )
         # Record and invoke.
         run_name = str(uuid.uuid4())
-        with tru_recorder(run_name=run_name, input_id="42"):
-            app.respond_to_query("Kojikun")
+        tru_recorder.instrumented_invoke_main_method(
+            run_name=run_name, input_id="42", main_method_args=("Kojikun",)
+        )
         # Record and invoke again.
         self._tru_session.force_flush()
-        with tru_recorder(run_name=run_name, input_id="21"):
-            app.respond_to_query("Nolan")
+        tru_recorder.instrumented_invoke_main_method(
+            run_name=run_name, input_id="21", main_method_args=("Nolan",)
+        )
         # Validate results.
-        self._validate_results("custom app", run_name, 10)
+        self._validate_results("custom app", run_name, 8)
 
     def test_tru_llama(self):
         # Create app.
@@ -176,10 +178,13 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         )
         # Record and invoke.
         run_name = str(uuid.uuid4())
-        with tru_recorder(run_name=run_name, input_id="42"):
-            rag.query("What is multi-headed attention?")
+        tru_recorder.instrumented_invoke_main_method(
+            run_name=run_name,
+            input_id="42",
+            main_method_args=("What is multi-headed attention?",),
+        )
         # Validate results.
-        self._validate_results("llama-index app", run_name, 8)
+        self._validate_results("llama-index app", run_name, 7)
 
     def test_tru_chain(self):
         # Create app.
@@ -194,10 +199,13 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         )
         # Record and invoke.
         run_name = str(uuid.uuid4())
-        with tru_recorder(run_name=run_name, input_id="42"):
-            rag.invoke("What is multi-headed attention?")
+        tru_recorder.instrumented_invoke_main_method(
+            run_name=run_name,
+            input_id="42",
+            main_method_args=("What is multi-headed attention?",),
+        )
         # Validate results.
-        self._validate_results("langchain app", run_name, 10)
+        self._validate_results("langchain app", run_name, 9)
 
     def test_feedback_computation(self) -> None:
         # Create app.
@@ -213,15 +221,15 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         )
         # Record and invoke.
         run_name = str(uuid.uuid4())
-        with tru_recorder(
+        tru_recorder.instrumented_invoke_main_method(
             run_name=run_name,
             input_id="42",
             ground_truth_output="Like attention but with more heads.",
-        ):
-            rag_chain.invoke("What is multi-headed attention?")
+            main_method_args=("What is multi-headed attention?",),
+        )
         TruSession().force_flush()
         # Compute feedback on record we just ingested.
-        events = self._validate_results(app_name, run_name, 10)
+        events = self._validate_results(app_name, run_name, 9)
         spans = _convert_events_to_MinimalSpanInfos(events)
         record_root = RecordGraphNode.build_graph(spans)
         _compute_feedback(
@@ -237,7 +245,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
     @pytest.mark.skip(reason="Test will fail currently")
     def test_large_data(self) -> None:
         app = _LoadTestApp()
-        tru_recorder = TruCustomApp(
+        tru_recorder = TruApp(
             app,
             app_name="load test app",
             app_version="v1",

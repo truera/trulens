@@ -4,7 +4,6 @@ Tests for OTEL TruChain app.
 
 import pytest
 from trulens.core.otel.instrument import instrument
-from trulens.core.session import TruSession
 
 from tests.util.otel_app_test_case import OtelAppTestCase
 
@@ -58,10 +57,15 @@ class TestOtelTruChain(OtelAppTestCase):
             | StrOutputParser()
         )
 
+    def test_missing_main_method_raises_error(self):
+        # Create app.
+        rag_chain = self._create_simple_rag()
+        with self.assertRaises(ValueError) as context:
+            TruChain(rag_chain, app_name="Simple RAG", app_version="v1")
+
+        self.assertIn("main_method", str(context.exception))
+
     def test_smoke(self) -> None:
-        # Set up.
-        tru_session = TruSession()
-        tru_session.reset_database()
         # Create app.
         rag_chain = self._create_simple_rag()
         tru_recorder = TruChain(
@@ -71,8 +75,11 @@ class TestOtelTruChain(OtelAppTestCase):
             main_method=rag_chain.invoke,
         )
         # Record and invoke.
-        with tru_recorder(run_name="test run", input_id="42"):
-            rag_chain.invoke("What is multi-headed attention?")
+        tru_recorder.instrumented_invoke_main_method(
+            run_name="test run",
+            input_id="42",
+            main_method_args=("What is multi-headed attention?",),
+        )
         # Compare results to expected.
         self._compare_events_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_chain__test_smoke.csv"
