@@ -605,7 +605,7 @@ class App(
             sig = inspect.signature(func)
             wrapper = instrument(
                 span_type=SpanAttributes.SpanType.RECORD_ROOT,
-                full_scoped_attributes=lambda ret, exception, *args, **kwargs: {
+                attributes=lambda ret, exception, *args, **kwargs: {
                     # langchain has specific main input/output logic.
                     SpanAttributes.RECORD_ROOT.MAIN_INPUT: self.main_input(
                         func, sig, sig.bind_partial(**kwargs)

@@ -13,7 +13,7 @@ def feedback_function(**kwargs):
 
 @instrument(
     span_type=SpanAttributes.SpanType.EVAL,
-    full_scoped_attributes=lambda ret, exception, *args, **kwargs: {
+    attributes=lambda ret, exception, *args, **kwargs: {
         SpanAttributes.EVAL.CRITERIA: kwargs["criteria"],
         SpanAttributes.EVAL.EVIDENCE: ret[1],
         SpanAttributes.EVAL.SCORE: ret[0],
