@@ -380,7 +380,7 @@ class InstrumentedMethod:
     method: str
     class_filter: ClassFilter
     span_type: Optional[SpanAttributes.SpanType] = None
-    span_attributes: Attributes = None
+    attributes: Attributes = None
     must_be_first_wrapper: bool = True
 
 
@@ -459,7 +459,7 @@ class Instrument:
         @staticmethod
         def retrieval_span(
             query_argname: str,
-        ) -> Tuple[SpanAttributes.SpanType, Attributes, Attributes]:
+        ) -> Tuple[SpanAttributes.SpanType, Attributes]:
             return (
                 SpanAttributes.SpanType.RETRIEVAL,
                 lambda ret, exception, *args, **kwargs: {
