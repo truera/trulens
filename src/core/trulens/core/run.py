@@ -554,13 +554,13 @@ class Run(BaseModel):
             compute_metrics_query = f"CALL COMPUTE_AI_OBSERVABILITY_METRICS('{current_db}', '{current_schema}', '{self.object_name}', '{self.object_version}', '{self.object_type}', '{self.run_name}', ARRAY_CONSTRUCT({metrics_str}));"
 
             compute_query = self.run_dao.session.sql(compute_metrics_query)
-            query_id = compute_query._query_id
-            logger.info(f"Query id for metrics computation: {query_id}")
+            # query_id = compute_query._query_id
+            # logger.info(f"Query id for metrics computation: {test_query_id}")
 
             computation_metadata_id = str(uuid.uuid4())
             self.run_dao.upsert_computation_metadata(
                 computation_metadata_id=computation_metadata_id,
-                query_id=query_id,
+                query_id="query_id",
                 run_name=self.run_name,
                 object_name=self.object_name,
                 object_type=self.object_type,
