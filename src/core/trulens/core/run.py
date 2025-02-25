@@ -201,15 +201,61 @@ class Run(BaseModel):
             object_type=self.object_type,
             object_version=self.object_version,
         )
+        # Case 1: result already a dict
         if isinstance(result, dict):
             return result
+        # Case 2: result is a DataFrame-like object with an "empty" attribute
         elif hasattr(result, "empty") and not result.empty:
-            # Return the first row as a dictionary and load as json.
-            try:
-                return json.loads(list(result.iloc[0].to_dict().values())[0])
-            except (IndexError, ValueError, json.JSONDecodeError) as e:
-                logger.error(f"Error processing result: {e}")
-                raise
+            # (e.g., a Pandas DataFrame)
+            if hasattr(result, "iloc"):
+                try:
+                    first_row = result.iloc[0]
+                except Exception as e:
+                    logger.error(f"Error accessing first row: {e}")
+                    raise
+
+                # Convert the row to a dictionary if possible
+                if hasattr(first_row, "to_dict"):
+                    row_dict = first_row.to_dict()
+                else:
+                    try:
+                        row_dict = dict(first_row)
+                    except Exception as e:
+                        logger.error(f"Error converting first row to dict: {e}")
+                        raise
+
+                # If the row has a single column, try to decode its value as JSON.
+                if len(row_dict) == 1:
+                    key, value = next(iter(row_dict.items()))
+                    if isinstance(value, str):
+                        try:
+                            return json.loads(value)
+                        except (ValueError, json.JSONDecodeError) as e:
+                            logger.error(
+                                f"Error decoding JSON for key '{key}': {e}"
+                            )
+                            # Fall back to returning the raw dict if JSON decoding fails
+                            return row_dict
+
+                # For multiple columns, attempt to decode each string value as JSON
+                for key, value in row_dict.items():
+                    if isinstance(value, str):
+                        try:
+                            row_dict[key] = json.loads(value)
+                        except (ValueError, json.JSONDecodeError):
+                            # If decoding fails, leave the value as is
+                            pass
+                return row_dict
+            else:
+                # For objects with "empty" attribute but not supporting iloc,
+                # try converting them directly to a dict.
+                try:
+                    return dict(result)
+                except Exception as e:
+                    logger.error(f"Error converting result to dict: {e}")
+                    raise
+
+        # Case 3: result doesn't match known types, return empty dict.
         else:
             return {}
 
