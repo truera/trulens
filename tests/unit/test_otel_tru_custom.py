@@ -83,7 +83,12 @@ class TestOtelTruCustom(OtelAppTestCase):
                 return "Hi!"
 
         app = MyProblematicApp()
-        tru_app = TruApp(app, app_name="MyProblematicApp", app_version="v1")
+        tru_app = TruApp(
+            app,
+            app_name="MyProblematicApp",
+            app_version="v1",
+            main_method=app.say_hi,
+        )
         with tru_app:
             with self.assertRaisesRegex(KeyError, "does_not_exist"):
                 app.say_hi()
