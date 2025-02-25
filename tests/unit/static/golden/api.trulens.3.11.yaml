@@ -771,12 +771,13 @@ trulens.core.run.RunConfig:
   - pydantic.main.BaseModel
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
-    dataset_spec: typing.Dict[builtins.str, builtins.str]
     dataset_name: builtins.str
+    dataset_spec: typing.Dict[builtins.str, builtins.str]
     description: typing.Optional[builtins.str, builtins.NoneType]
     label: typing.Optional[builtins.str, builtins.NoneType]
     llm_judge_name: typing.Optional[builtins.str, builtins.NoneType]
     run_name: builtins.str
+    source_type: builtins.str
 trulens.core.schema:
   __class__: builtins.module
   highs:
