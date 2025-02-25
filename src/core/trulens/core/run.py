@@ -186,32 +186,30 @@ class Run(BaseModel):
         description="Source information for the run.",
     )
 
-    def describe(self) -> Dict:
+    def describe(self) -> Run:
         """
-        Retrieve the run metadata by querying the underlying DAO and return it as a dictionary.
-
-        The underlying DAO method is expected to return
-        a dictionary (JSON) representing the run's metadata response for flexibility (instead of a Run instance).
+        Retrieve the metadata of the Run object.
         """
         # TODO/TBD:  should we just return Run instance instead?
 
-        result = self.run_dao.get_run(
+        run_metadata_df = self.run_dao.get_run(
             run_name=self.run_name,
             object_name=self.object_name,
             object_type=self.object_type,
             object_version=self.object_version,
         )
-        if isinstance(result, dict):
-            return result
-        elif hasattr(result, "empty") and not result.empty:
-            # Return the first row as a dictionary and load as json.
-            try:
-                return json.loads(list(result.iloc[0].to_dict().values())[0])
-            except (IndexError, ValueError, json.JSONDecodeError) as e:
-                logger.error(f"Error processing result: {e}")
-                raise
-        else:
-            return {}
+        if run_metadata_df.empty:
+            raise ValueError(f"Run {self.run_name} not found.")
+
+        return Run.from_metadata_df(
+            run_metadata_df,
+            {
+                "app": self,
+                "main_method_name": self.main_method_name,
+                "run_dao": self.run_dao,
+                "tru_session": self.tru_session,
+            },
+        )
 
     def delete(self) -> None:
         """
