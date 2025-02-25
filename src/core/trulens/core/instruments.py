@@ -56,6 +56,8 @@ logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
+thread_local = th.local()
+
 
 class WithInstrumentCallbacks:
     """Abstract definition of callbacks invoked by Instrument during
@@ -659,6 +661,9 @@ class Instrument:
                 python_utils.is_really_coroutinefunction(func),
                 inspect.isasyncgenfunction(func),
             )
+
+            if getattr(thread_local, "do_not_track", False):
+                return func(*args, **kwargs)
 
             apps = getattr(tru_wrapper, Instrument.APPS)  # weakref
 
