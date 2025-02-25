@@ -209,7 +209,7 @@ class Run(BaseModel):
                 return json.loads(list(result.iloc[0].to_dict().values())[0])
             except (IndexError, ValueError, json.JSONDecodeError) as e:
                 logger.error(f"Error processing result: {e}")
-                return {}
+                raise
         else:
             return {}
 
