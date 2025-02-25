@@ -10,18 +10,25 @@ from tests.util.otel_app_test_case import OtelAppTestCase
 
 
 class TestApp:
-    @instrument(span_type=SpanAttributes.SpanType.RECORD_ROOT)
+    @instrument(
+        span_type=SpanAttributes.SpanType.RECORD_ROOT,
+        attributes={"the_query": "query", "the_return": "return"},
+    )
     def respond_to_query(self, query: str) -> str:
         return f"answer: {self.nested(query)}"
 
-    @instrument(attributes={"nested_attr1": "value1"})
+    @instrument(
+        attributes=lambda ret, exception, *args, **kwargs: {
+            f"{SpanAttributes.UNKNOWN.base}.nested_attr1": "value1"
+        }
+    )
     def nested(self, query: str) -> str:
         return f"nested: {self.nested2(query)}"
 
     @instrument(
         attributes=lambda ret, exception, *args, **kwargs: {
-            "nested2_ret": ret,
-            "nested2_args[1]": args[1],
+            f"{SpanAttributes.UNKNOWN.base}.nested2_ret": ret,
+            f"{SpanAttributes.UNKNOWN.base}.nested2_args[1]": args[1],
         }
     )
     def nested2(self, query: str) -> str:
@@ -36,10 +43,12 @@ class TestApp:
 
     @instrument(
         attributes=lambda ret, exception, *args, **kwargs: {
-            "nested3_ex": exception.args if exception else None,
-            "nested3_ret": ret,
-            "selector_name": "special",
-            "cows": "moo",
+            f"{SpanAttributes.UNKNOWN.base}.nested3_ex": exception.args
+            if exception
+            else None,
+            f"{SpanAttributes.UNKNOWN.base}.nested3_ret": ret,
+            f"{SpanAttributes.UNKNOWN.base}.selector_name": "special",
+            f"{SpanAttributes.UNKNOWN.base}.cows": "moo",
         }
     )
     def nested3(self, query: str) -> str:

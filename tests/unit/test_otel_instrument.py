@@ -14,7 +14,7 @@ from trulens.core.otel.instrument import instrument
 from trulens.experimental.otel_tracing.core.session import (
     _set_up_tracer_provider,
 )
-from trulens.otel.semconv.trace import BASE_SCOPE
+from trulens.otel.semconv.trace import SpanAttributes
 
 
 class TestOtelInstrument(unittest.TestCase):
@@ -48,7 +48,7 @@ class TestOtelInstrument(unittest.TestCase):
         # Set up instrumented function.
         @instrument(
             attributes=lambda ret, exception, *args, **kwargs: {
-                "best_baby": ret
+                f"{SpanAttributes.UNKNOWN.base}.best_baby": ret
             }
         )
         def my_function():
@@ -64,7 +64,8 @@ class TestOtelInstrument(unittest.TestCase):
             "tests.unit.test_otel_instrument.TestOtelInstrument.test_sync_non_generator_function.<locals>.my_function",
         )
         self.assertEqual(
-            spans[0].attributes[f"{BASE_SCOPE}.unknown.best_baby"], "Kojikun"
+            spans[0].attributes[f"{SpanAttributes.UNKNOWN.base}.best_baby"],
+            "Kojikun",
         )
 
     def _test_sync_generator_function(
@@ -82,7 +83,7 @@ class TestOtelInstrument(unittest.TestCase):
             f"tests.unit.test_otel_instrument.TestOtelInstrument.{test_name}.<locals>.my_function",
         )
         self.assertTupleEqual(
-            spans[0].attributes[f"{BASE_SCOPE}.unknown.best_babies"],
+            spans[0].attributes[f"{SpanAttributes.UNKNOWN.base}.best_babies"],
             ("Kojikun", "Nolan", "Sachiboy"),
         )
         # Run the generator partially.
@@ -102,7 +103,7 @@ class TestOtelInstrument(unittest.TestCase):
             f"tests.unit.test_otel_instrument.TestOtelInstrument.{test_name}.<locals>.my_function",
         )
         self.assertTupleEqual(
-            spans[1].attributes[f"{BASE_SCOPE}.unknown.best_babies"],
+            spans[1].attributes[f"{SpanAttributes.UNKNOWN.base}.best_babies"],
             ("Kojikun", "Nolan"),
         )
 
@@ -110,7 +111,7 @@ class TestOtelInstrument(unittest.TestCase):
         # Set up instrumented function.
         @instrument(
             attributes=lambda ret, exception, *args, **kwargs: {
-                "best_babies": ret
+                f"{SpanAttributes.UNKNOWN.base}.best_babies": ret
             }
         )
         def my_function():
@@ -126,7 +127,7 @@ class TestOtelInstrument(unittest.TestCase):
         # Set up instrumented function.
         @instrument(
             attributes=lambda ret, exception, *args, **kwargs: {
-                "best_babies": ret
+                f"{SpanAttributes.UNKNOWN.base}.best_babies": ret
             }
         )
         def my_function():
@@ -145,7 +146,7 @@ class TestOtelInstrument(unittest.TestCase):
         # Set up instrumented function.
         @instrument(
             attributes=lambda ret, exception, *args, **kwargs: {
-                "best_baby": ret
+                f"{SpanAttributes.UNKNOWN.base}.best_baby": ret
             }
         )
         async def my_function():
@@ -162,14 +163,15 @@ class TestOtelInstrument(unittest.TestCase):
             "tests.unit.test_otel_instrument.TestOtelInstrument.test_async_non_generator_function.<locals>.my_function",
         )
         self.assertEqual(
-            spans[0].attributes[f"{BASE_SCOPE}.unknown.best_baby"], "Kojikun"
+            spans[0].attributes[f"{SpanAttributes.UNKNOWN.base}.best_baby"],
+            "Kojikun",
         )
 
     def test_async_generator_function(self):
         # Set up instrumented function.
         @instrument(
             attributes=lambda ret, exception, *args, **kwargs: {
-                "best_babies": ret
+                f"{SpanAttributes.UNKNOWN.base}.best_babies": ret
             }
         )
         async def my_function():
@@ -197,7 +199,7 @@ class TestOtelInstrument(unittest.TestCase):
             "tests.unit.test_otel_instrument.TestOtelInstrument.test_async_generator_function.<locals>.my_function",
         )
         self.assertTupleEqual(
-            spans[0].attributes[f"{BASE_SCOPE}.unknown.best_babies"],
+            spans[0].attributes[f"{SpanAttributes.UNKNOWN.base}.best_babies"],
             ("Kojikun", "Nolan", "Sachiboy"),
         )
         # Run the generator partially.
@@ -213,6 +215,6 @@ class TestOtelInstrument(unittest.TestCase):
             "tests.unit.test_otel_instrument.TestOtelInstrument.test_async_generator_function.<locals>.my_function",
         )
         self.assertTupleEqual(
-            spans[1].attributes[f"{BASE_SCOPE}.unknown.best_babies"],
+            spans[1].attributes[f"{SpanAttributes.UNKNOWN.base}.best_babies"],
             ("Kojikun", "Nolan"),
         )
