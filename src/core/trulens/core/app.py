@@ -612,10 +612,10 @@ class App(
                 span_type=SpanAttributes.SpanType.RECORD_ROOT,
                 attributes=lambda ret, exception, *args, **kwargs: {
                     # langchain has specific main input/output logic.
-                    SpanAttributes.RECORD_ROOT.MAIN_INPUT: self.main_input(
+                    SpanAttributes.RECORD_ROOT.INPUT: self.main_input(
                         func, sig, sig.bind_partial(**kwargs)
                     ),
-                    SpanAttributes.RECORD_ROOT.MAIN_OUTPUT: self.main_output(
+                    SpanAttributes.RECORD_ROOT.OUTPUT: self.main_output(
                         func, sig, sig.bind_partial(**kwargs), ret
                     ),
                 },
