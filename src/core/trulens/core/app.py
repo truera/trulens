@@ -44,7 +44,7 @@ from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback import feedback as core_feedback
 from trulens.core.run import Run
 from trulens.core.run import RunConfig
-from trulens.core.run import validate_dataset_col_spec
+from trulens.core.run import validate_dataset_spec
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
@@ -1711,9 +1711,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 object_version=self.snowflake_object_version,
                 run_name=run_config.run_name,
                 dataset_name=run_config.dataset_name,
-                dataset_col_spec=validate_dataset_col_spec(
-                    run_config.dataset_col_spec
-                ),
+                source_type=run_config.source_type,
+                dataset_spec=validate_dataset_spec(run_config.dataset_spec),
                 description=run_config.description,
                 label=run_config.label,
                 llm_judge_name=run_config.llm_judge_name,

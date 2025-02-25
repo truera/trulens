@@ -21,15 +21,15 @@ DATASET_RESERVED_FIELDS = {
 }
 
 
-def validate_dataset_col_spec(
-    dataset_col_spec: Dict[str, str],
+def validate_dataset_spec(
+    dataset_spec: Dict[str, str],
 ) -> Dict[str, str]:
     """
     Validates and normalizes the dataset column specification to ensure it contains only
     valid fields and allows for subscripted fields like input_1, input_2, etc.
 
     Args:
-        dataset_col_spec: The user-provided dictionary with column names.
+        dataset_spec: The user-provided dictionary with column names.
 
     Returns:
         A validated and normalized dictionary.
@@ -40,7 +40,7 @@ def validate_dataset_col_spec(
 
     normalized_spec = {}
 
-    for key, value in dataset_col_spec.items():
+    for key, value in dataset_spec.items():
         normalized_key = key.lower()
 
         # Ensure that the key is one of the valid reserved fields or its subscripted form
@@ -48,9 +48,7 @@ def validate_dataset_col_spec(
             normalized_key.startswith(reserved_field)
             for reserved_field in DATASET_RESERVED_FIELDS
         ):
-            raise ValueError(
-                f"Invalid field '{key}' found in dataset_col_spec."
-            )
+            raise ValueError(f"Invalid field '{key}' found in dataset_spec.")
 
         # currently only handle subscripted 'input' columns, e.g., 'input_1', 'input_2'
         if "input" in normalized_key and normalized_key != "input_id":
@@ -73,10 +71,15 @@ class RunConfig(BaseModel):
     )
     dataset_name: str = Field(
         default=...,
-        description="Mandatory field. The fully qualified name of a user's Table / View  (e.g. 'db.schema.user_table_name_1'), or any user specified name of input dataframe.",
+        description="Mandatory field. The name of a user's Snowflake Table / View  (e.g. 'user_table_name_1'), or any user specified name of input dataframe.",
     )
 
-    dataset_col_spec: Dict[str, str] = Field(
+    source_type: str = Field(
+        default="DATAFRAME",
+        description="Type of the source (e.g. 'DATAFRAME' for user provided dataframe or 'TABLE' for user table in Snowflake).",
+    )
+
+    dataset_spec: Dict[str, str] = Field(
         default=...,
         description="Mandatory column name mapping from reserved dataset fields to column names in user's table.",
     )
@@ -201,8 +204,12 @@ class Run(BaseModel):
         if isinstance(result, dict):
             return result
         elif hasattr(result, "empty") and not result.empty:
-            # Return the first row as a dictionary.
-            return list(result.iloc[0].to_dict().values())[0]
+            # Return the first row as a dictionary and load as json.
+            try:
+                return json.loads(list(result.iloc[0].to_dict().values())[0])
+            except (IndexError, ValueError, json.JSONDecodeError) as e:
+                logger.error(f"Error processing result: {e}")
+                return {}
         else:
             return {}
 

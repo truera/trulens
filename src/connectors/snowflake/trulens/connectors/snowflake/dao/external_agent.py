@@ -29,6 +29,7 @@ class ExternalAgentDao:
         execute_query(self.session, query)
 
         logger.info(f"Created External Agent {name} with version {version}.")
+
         return name, version
 
     def create_agent_if_not_exist(
@@ -42,6 +43,8 @@ class ExternalAgentDao:
             Tuple[str, str]: resolved_name, version
         """
         # Get the agent if it already exists, otherwise create it
+        logger.error(self.check_agent_exists(name))
+
         if not self.check_agent_exists(name):
             self.create_new_agent(name, version)
         else:
