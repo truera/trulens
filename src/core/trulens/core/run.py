@@ -3,12 +3,14 @@ from __future__ import annotations  # defers evaluation of annotations
 import json
 import logging
 import re
+import time
 from typing import Any, ClassVar, Dict, List, Optional
 
 import pandas as pd
 import pydantic
 from pydantic import BaseModel
 from pydantic import Field
+from trulens.connectors.snowflake.dao.enums import CompletionStatusStatus
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +21,8 @@ DATASET_RESERVED_FIELDS = {
     "input",  # Represents the main input column, allow optional subscripts like input_1, input_2, etc.
     "ground_truth_output",  # Represents the ground truth output, flexible in type (string or others)
 }
+
+INVOCATION_TIMEOUT_IN_MS = 3 * 60 * 1000  # 3 minutes in milliseconds
 
 
 def validate_dataset_spec(
@@ -150,19 +154,29 @@ class Run(BaseModel):
         default=None, description="A description for the run."
     )
 
-    class RunMetada(BaseModel):
+    class RunMetadata(BaseModel):
         labels: List[Optional[str]] = Field(
             default=[],
             description="Text label to group the runs. Take a single label for now",
         )
-        llm_judge_name: Optional[str] = (
-            Field(  # TODO: daniel - this needs to be udpated to `llm_judge_name`
-                default=None,
-                description="Name of the LLM judge to be used for the run.",
-            )
+        llm_judge_name: Optional[str] = Field(
+            default=None,
+            description="Name of the LLM judge to be used for the run.",
+        )
+        invocations: Optional[Dict[str, Run.InvocationMetadata]] = Field(
+            default=None,
+            description="Map of invocation metadata with invocation ID as key.",
+        )
+        computations: Optional[Dict[str, Run.ComputationMetadata]] = Field(
+            default=None,
+            description="Map of computation metadata with computation ID as key.",
+        )
+        metrics: Optional[Dict[str, Run.MetricsMetadata]] = Field(
+            default=None,
+            description="Map of metrics metadata with metric ID as key.",
         )
 
-    run_metadata: RunMetada = Field(
+    run_metadata: RunMetadata = Field(
         default=...,
         description="Run metadata that maintains states needed for app invocation and metrics computation.",
     )
@@ -185,6 +199,72 @@ class Run(BaseModel):
         default=...,
         description="Source information for the run.",
     )
+
+    class CompletionStatus(BaseModel):
+        status: CompletionStatusStatus = Field(
+            ..., description="The status of the completion."
+        )
+        record_count: Optional[int] = Field(
+            default=None, description="The count of records processed."
+        )
+
+    class InvocationMetadata(BaseModel):
+        input_records_count: Optional[int] = Field(
+            default=None,
+            description="The number of input records in the dataset.",
+        )
+        id: Optional[str] = Field(
+            default=None,
+            description="The unique identifier for the invocation metadata.",
+        )
+        start_time_ms: Optional[int] = Field(
+            default=None,
+            description="The start time of the invocation.",
+        )
+        end_time_ms: Optional[int] = Field(
+            default=None,
+            description="The end time of the invocation.",
+        )
+        completion_status: Optional[Run.CompletionStatus] = Field(
+            default=None,
+            description="The status of the invocation.",
+        )
+
+    class ComputationMetadata(BaseModel):
+        id: Optional[str] = Field(
+            default=None,
+            description="Unique id, even if name is repeated.",
+        )
+        query_id: Optional[str] = Field(
+            default=None,
+            description="Query id associated with metric computation.",
+        )
+        start_time_ms: Optional[int] = Field(
+            default=None,
+            description="Start time of the computation in milliseconds.",
+        )
+        end_time_ms: Optional[int] = Field(
+            default=None,
+            description="End time of the computation in milliseconds.",
+        )
+
+    class MetricsMetadata(BaseModel):
+        id: Optional[str] = Field(
+            default=None,
+            description="Unique id for the metrics metadata.",
+        )
+        name: Optional[str] = Field(
+            default=None,
+            description="Name of the metric.",
+        )
+        completion_status: Optional[Run.CompletionStatus] = Field(
+            default=None,
+            description="Completion status of the metric computation.",
+        )
+        computation_id: Optional[str] = Field(
+            default=None,
+            description="ID of the computation associated with the metric.",
+        )
 
     def describe(self) -> Run:
         """
@@ -229,7 +309,7 @@ class Run(BaseModel):
         Args:
             input_df (Optional[pd.DataFrame], optional): user provided input dataframe.
         """
-        # TODO: add update operations to the run metadata
+
         if input_df is None:
             logger.info(
                 "No input dataframe provided. Fetching input data from source."
@@ -265,49 +345,214 @@ class Run(BaseModel):
                 # Prepare the kwargs for the non-input fields
                 reserved_field_column_mapping[reserved_field] = user_column
 
-        for _, row in input_df.iterrows():
-            main_method_args = []
+        input_records_count = input_df.size
 
-            # For each input column, add the value to main_method_args in the correct order
-            for subscript in sorted(input_columns_by_subscripts.keys()):
-                user_column = input_columns_by_subscripts[subscript]
-                main_method_args.append(row[user_column])
+        invocation_metadata_id = self.run_dao._compute_invocation_metadata_id(
+            dataset_name=self.source_info.name,
+            input_records_count=input_records_count,
+        )
+        start_time_ms = int(round(time.time() * 1000))
 
-            # Call the instrumented main method with the arguments
-            input_id = (
-                row[dataset_column_spec["input_id"]]
-                if "input_id" in dataset_column_spec
-                else None
+        logger.info(
+            f"Creating or updating invocation metadata with {input_records_count} records from input."
+        )
+        self.run_dao.upsert_invocation_metadata(
+            invocation_metadata_id=invocation_metadata_id,
+            input_records_count=input_records_count,
+            start_time_ms=start_time_ms,
+            run_name=self.run_name,
+            object_name=self.object_name,
+            object_type=self.object_type,
+            object_version=self.object_version,
+        )
+
+        # user app invocation - will block until the app completes
+        try:
+            for i, row in input_df.iterrows():
+                main_method_args = []
+
+                # For each input column, add the value to main_method_args in the correct order
+                for subscript in sorted(input_columns_by_subscripts.keys()):
+                    user_column = input_columns_by_subscripts[subscript]
+                    main_method_args.append(row[user_column])
+
+                # Call the instrumented main method with the arguments
+                input_id = (
+                    row[dataset_column_spec["input_id"]]
+                    if "input_id" in dataset_column_spec
+                    else None
+                )
+                if input_id is None and "input" in dataset_column_spec:
+                    input_id = hash(row[dataset_column_spec["input"]])
+
+                self.app.instrumented_invoke_main_method(
+                    run_name=self.run_name,
+                    input_id=input_id,
+                    main_method_args=tuple(
+                        main_method_args
+                    ),  # Ensure correct order
+                    main_method_kwargs=None,  # don't take any kwargs for now so we don't break TruChain / TruLlama where input argument name cannot be defined by users.
+                )
+        except Exception as e:
+            logger.exception(
+                f"Error encountered during invoking app main method: {e}."
             )
-            if input_id is None and "input" in dataset_column_spec:
-                input_id = hash(row[dataset_column_spec["input"]])
-
-            self.app.instrumented_invoke_main_method(
+            self.run_dao.upsert_invocation_metadata(
+                invocation_metadata_id=invocation_metadata_id,
+                end_time_ms=int(round(time.time() * 1000)),
+                completion_status=Run.CompletionStatus(
+                    status=CompletionStatusStatus.FAILED,
+                ),
                 run_name=self.run_name,
-                input_id=input_id,
-                main_method_args=tuple(
-                    main_method_args
-                ),  # Ensure correct order
-                main_method_kwargs=None,  # don't take any kwargs for now so we don't break TruChain / TruLlama where input argument name cannot be defined by users.
+                object_name=self.object_name,
+                object_type=self.object_type,
+                object_version=self.object_version,
             )
+
+            raise
 
         self.tru_session.force_flush()
         logger.info("Run started, invocation done and ingestion in process.")
 
-    def get_status(self):
-        raise NotImplementedError("status is not implemented yet.")
+    def _read_record_count_from_event_table(self) -> int:
+        # TODO: check w/ Dave to fix this query
+        q = """
+            SELECT
+                *
+            FROM
+                table(snowflake.local.GET_AI_OBSERVABILITY_EVENTS(
+                    ?,
+                    ?,
+                    ?,
+                    'EXTERNAL AGENT'
+                ))
+            WHERE
+                RECORD_ATTRIBUTES:"snow.ai.observability.run.name" = ?
+            """
+        try:
+            ret = self.run_dao.session.sql(
+                q,
+                params=[
+                    self.run_dao.session.get_current_database()[1:-1],
+                    self.run_dao.session.get_current_schema()[1:-1],
+                    self.object_name,
+                    self.run_name,
+                ],
+            ).to_pandas()
+
+            return len(ret)
+        except Exception as e:
+            logger.exception(
+                f"Error encountered during reading record count from event table: {e}."
+            )
+            raise
+
+    def get_status(self) -> str:
+        # first read from DPO backend, decide if we need to update status, and return
+        run_metadata_df = self.run_dao.get_run(
+            run_name=self.run_name,
+            object_name=self.object_name,
+            object_type=self.object_type,
+            object_version=self.object_version,
+        )
+
+        run = Run.from_metadata_df(
+            run_metadata_df,
+            {
+                "app": self,
+                "main_method_name": self.main_method_name,
+                "run_dao": self.run_dao,
+                "tru_session": self.tru_session,
+            },
+        )
+
+        if not run.run_metadata.invocations:
+            return "CREATED"
+        elif run.run_metadata.invocations and not run.run_metadata.computations:
+            latest_invocation = max(
+                run.run_metadata.invocations.values(),
+                key=lambda inv: inv.start_time_ms or 0,
+            )
+            logger.info(f"latest invocation field  {latest_invocation}")
+
+            if (
+                latest_invocation.completion_status
+                and latest_invocation.completion_status.status
+            ):
+                return latest_invocation.completion_status.status
+
+            current_ingested_records_count = (
+                self._read_record_count_from_event_table()
+            )
+            logger.info(
+                f"Current ingested records count: {current_ingested_records_count}"
+            )
+            if (
+                latest_invocation.start_time_ms
+                and time.time() * 1000 - latest_invocation.start_time_ms
+                > INVOCATION_TIMEOUT_IN_MS
+            ):
+                logger.warning("Invocation timeout reached and concluded")
+                # timeout reached, persist to DPO backend
+                self.run_dao.upsert_invocation_metadata(
+                    invocation_metadata_id=latest_invocation.id,
+                    end_time_ms=int(round(time.time() * 1000)),
+                    completion_status=Run.CompletionStatus(
+                        status=CompletionStatusStatus.PARTIALLY_COMPLETED,
+                        record_count=current_ingested_records_count,
+                    ),
+                    run_name=self.run_name,
+                    object_name=self.object_name,
+                    object_type=self.object_type,
+                    object_version=self.object_version,
+                )
+                return "INVOCATION_PARTIALLY_COMPLETED"
+
+            elif (
+                latest_invocation.input_records_count
+                and current_ingested_records_count
+                >= latest_invocation.input_records_count
+            ):
+                # happy case, add end time and update status
+                self.run_dao.upsert_invocation_metadata(
+                    invocation_metadata_id=latest_invocation.id,
+                    end_time_ms=int(round(time.time() * 1000)),
+                    completion_status=Run.CompletionStatus(
+                        status=CompletionStatusStatus.COMPLETED,
+                        record_count=current_ingested_records_count,
+                    ).model_dump(),
+                    run_name=self.run_name,
+                    object_name=self.object_name,
+                    object_type=self.object_type,
+                    object_version=self.object_version,
+                )
+                return "INVOCATION_COMPLETED"
+            elif latest_invocation.end_time_ms == 0:
+                return "INVOCATION_IN_PROGRESS"
+
+        elif run.run_metadata.computations:
+            return "SOME COMPUTATION STATUS"
+        else:
+            return "UNKNOWN"
 
     def compute_metrics(self, metrics: List[str]):
         # TODO: add update operations to the run metadata
+        run_status = self.get_status()
+        logger.info(f"Current run status: {run_status}")
+        if (
+            run_status == "INVOCATION_COMPLETED"
+            or run_status == "INVOCATION_PARTIALLY_COMPLETED"
+        ):
+            current_db = self.run_dao.session.get_current_database()
+            current_schema = self.run_dao.session.get_current_schema()
+            if not metrics:
+                raise ValueError("Metrics list cannot be empty")
+            metrics_str = ",".join([f"'{metric}'" for metric in metrics])
+            compute_metrics_query = f"CALL COMPUTE_AI_OBSERVABILITY_METRICS('{current_db}', '{current_schema}', '{self.object_name}', '{self.object_version}', '{self.object_type}', '{self.run_name}', ARRAY_CONSTRUCT({metrics_str}));"
 
-        current_db = self.run_dao.session.get_current_database()
-        current_schema = self.run_dao.session.get_current_schema()
-        if not metrics:
-            raise ValueError("Metrics list cannot be empty")
-        metrics_str = ",".join([f"'{metric}'" for metric in metrics])
-        compute_metrics_query = f"CALL COMPUTE_AI_OBSERVABILITY_METRICS('{current_db}', '{current_schema}', '{self.object_name}', '{self.object_version}', '{self.object_type}', '{self.run_name}', ARRAY_CONSTRUCT({metrics_str}));"
-
-        return self.run_dao.session.sql(compute_metrics_query).collect()
+            return self.run_dao.session.sql(compute_metrics_query).collect()
+        else:
+            return f"Cannot start metrics computation yet when in run status: {run_status}"
 
     def cancel(self):
         raise NotImplementedError("cancel is not implemented yet.")
