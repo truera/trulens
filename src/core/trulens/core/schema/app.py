@@ -366,12 +366,9 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
                 app: AppDefinition,
                 record: record_schema.Record,
             ):
-                orig_do_not_track = None
+                token = None
                 try:
-                    orig_do_not_track = getattr(
-                        core_instruments.thread_local, "do_not_track", False
-                    )
-                    core_instruments.thread_local.do_not_track = True
+                    token = core_instruments.do_not_track.set(True)
                     temp = ffunc.run(app=app, record=record)
                     if on_done is not None:
                         try:
@@ -380,10 +377,8 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
                             return temp
                     return temp
                 finally:
-                    if orig_do_not_track is not None:
-                        core_instruments.thread_local.do_not_track = (
-                            orig_do_not_track
-                        )
+                    if token is not None:
+                        core_instruments.do_not_track.reset(token)
 
             fut: Future[feedback_schema.FeedbackResult] = tp.submit(
                 run_and_call_callback,

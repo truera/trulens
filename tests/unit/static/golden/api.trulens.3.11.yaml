@@ -684,6 +684,7 @@ trulens.core.instruments:
     WithInstrumentCallbacks: builtins.type
     class_filter_disjunction: builtins.function
     class_filter_matches: builtins.function
+    do_not_track: _contextvars.ContextVar
     instrument: builtins.type
 trulens.core.instruments.AddInstruments:
   __bases__:
