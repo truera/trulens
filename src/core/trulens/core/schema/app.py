@@ -20,6 +20,7 @@ import warnings
 import dill
 import pydantic
 from trulens.core.feedback import feedback as core_feedback
+import trulens.core.instruments as core_instruments
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
@@ -365,13 +366,24 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
                 app: AppDefinition,
                 record: record_schema.Record,
             ):
-                temp = ffunc.run(app=app, record=record)
-                if on_done is not None:
-                    try:
-                        on_done(temp)
-                    finally:
-                        return temp
-                return temp
+                orig_do_not_track = None
+                try:
+                    orig_do_not_track = getattr(
+                        core_instruments.thread_local, "do_not_track", False
+                    )
+                    core_instruments.thread_local.do_not_track = True
+                    temp = ffunc.run(app=app, record=record)
+                    if on_done is not None:
+                        try:
+                            on_done(temp)
+                        finally:
+                            return temp
+                    return temp
+                finally:
+                    if orig_do_not_track is not None:
+                        core_instruments.thread_local.do_not_track = (
+                            orig_do_not_track
+                        )
 
             fut: Future[feedback_schema.FeedbackResult] = tp.submit(
                 run_and_call_callback,

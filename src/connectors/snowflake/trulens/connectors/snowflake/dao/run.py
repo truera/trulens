@@ -5,6 +5,7 @@ from typing import List, Optional
 import pandas as pd
 from snowflake.snowpark import Session
 from snowflake.snowpark.row import Row
+from trulens.connectors.snowflake.dao.enums import SourceType
 from trulens.connectors.snowflake.dao.sql_utils import execute_query
 
 logger = logging.getLogger(__name__)
@@ -20,7 +21,6 @@ METHOD_DELETE = "DELETE"
 METHOD_LIST = "LIST"
 
 DEFAULT_LLM_JUDGE_NAME = "mistral-large2"
-DEFAULT_SOURCE_TYPE = "TABLE"
 
 
 class RunDao:
@@ -36,7 +36,8 @@ class RunDao:
         object_type: str,
         run_name: str,
         dataset_name: str,
-        dataset_col_spec: dict,
+        source_type: str,
+        dataset_spec: dict,
         object_version: Optional[str] = None,
         description: Optional[str] = None,
         label: Optional[str] = None,
@@ -51,7 +52,8 @@ class RunDao:
             object_type: The type of the managing object. e.g. 'EXTERNAL AGENT'.
             run_name: The name of the run.
             dataset_name: The name of the dataset or user provided dataframe.
-            dataset_col_spec: The column specification of the dataset.
+            source_type: The type of the source (e.g. 'TABLE').
+            dataset_spec: The column specification of the dataset.
             object_version: The version of the managing object.
             description: A description of the run.
             label: A label for the run.
@@ -86,8 +88,13 @@ class RunDao:
 
         source_info_dict = {}
         source_info_dict["name"] = dataset_name
-        source_info_dict["column_spec"] = dataset_col_spec
-        source_info_dict["source_type"] = DEFAULT_SOURCE_TYPE
+        source_info_dict["column_spec"] = dataset_spec
+
+        if not SourceType.is_valid_source_type(source_type):
+            raise ValueError(
+                f"Invalid source type: {source_type}. Choose from {SourceType.__members__.values()}"
+            )
+        source_info_dict["source_type"] = source_type
 
         req_payload["source_info"] = source_info_dict
 
