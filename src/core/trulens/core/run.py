@@ -186,78 +186,30 @@ class Run(BaseModel):
         description="Source information for the run.",
     )
 
-    def describe(self) -> Dict:
+    def describe(self) -> Run:
         """
-        Retrieve the run metadata by querying the underlying DAO and return it as a dictionary.
-
-        The underlying DAO method is expected to return
-        a dictionary (JSON) representing the run's metadata response for flexibility (instead of a Run instance).
+        Retrieve the metadata of the Run object.
         """
         # TODO/TBD:  should we just return Run instance instead?
 
-        result = self.run_dao.get_run(
+        run_metadata_df = self.run_dao.get_run(
             run_name=self.run_name,
             object_name=self.object_name,
             object_type=self.object_type,
             object_version=self.object_version,
         )
-        # Case 1: result already a dict
-        if isinstance(result, dict):
-            return result
-        # Case 2: result is a DataFrame-like object with an "empty" attribute
-        elif hasattr(result, "empty") and not result.empty:
-            # (e.g., a Pandas DataFrame)
-            if hasattr(result, "iloc"):
-                try:
-                    first_row = result.iloc[0]
-                except Exception as e:
-                    logger.error(f"Error accessing first row: {e}")
-                    raise
+        if run_metadata_df.empty:
+            raise ValueError(f"Run {self.run_name} not found.")
 
-                # Convert the row to a dictionary if possible
-                if hasattr(first_row, "to_dict"):
-                    row_dict = first_row.to_dict()
-                else:
-                    try:
-                        row_dict = dict(first_row)
-                    except Exception as e:
-                        logger.error(f"Error converting first row to dict: {e}")
-                        raise
-
-                # If the row has a single column, try to decode its value as JSON.
-                if len(row_dict) == 1:
-                    key, value = next(iter(row_dict.items()))
-                    if isinstance(value, str):
-                        try:
-                            return json.loads(value)
-                        except (ValueError, json.JSONDecodeError) as e:
-                            logger.error(
-                                f"Error decoding JSON for key '{key}': {e}"
-                            )
-                            # Fall back to returning the raw dict if JSON decoding fails
-                            return row_dict
-
-                # For multiple columns, attempt to decode each string value as JSON
-                for key, value in row_dict.items():
-                    if isinstance(value, str):
-                        try:
-                            row_dict[key] = json.loads(value)
-                        except (ValueError, json.JSONDecodeError):
-                            # If decoding fails, leave the value as is
-                            pass
-                return row_dict
-            else:
-                # For objects with "empty" attribute but not supporting iloc,
-                # try converting them directly to a dict.
-                try:
-                    return dict(result)
-                except Exception as e:
-                    logger.error(f"Error converting result to dict: {e}")
-                    raise
-
-        # Case 3: result doesn't match known types, return empty dict.
-        else:
-            return {}
+        return Run.from_metadata_df(
+            run_metadata_df,
+            {
+                "app": self,
+                "main_method_name": self.main_method_name,
+                "run_dao": self.run_dao,
+                "tru_session": self.tru_session,
+            },
+        )
 
     def delete(self) -> None:
         """
