@@ -38,6 +38,30 @@ class RunDao:
             prefix="source_info",
         )
 
+    @staticmethod
+    def _compute_invocation_metadata_id(
+        dataset_name: str, input_records_count: int
+    ):
+        return json_utils.obj_id_of_obj(
+            obj={
+                "dataset_name": dataset_name,
+                "input_records_count": input_records_count,
+            },
+            prefix="invocation_metadata",
+        )
+
+    @staticmethod
+    def _generate_computation_metadata_id():
+        # generate a random UUID for the computation metadata
+        pass
+
+    @staticmethod
+    def _compute_metrics_metadata_id():
+        pass
+
+    def _create_or_update_invocation_metadata(self):
+        pass
+
     def create_new_run(
         self,
         object_name: str,
