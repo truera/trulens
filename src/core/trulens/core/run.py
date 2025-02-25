@@ -5,6 +5,7 @@ import logging
 import re
 import time
 from typing import Any, ClassVar, Dict, List, Optional
+import uuid
 
 import pandas as pd
 import pydantic
@@ -479,7 +480,9 @@ class Run(BaseModel):
                 latest_invocation.completion_status
                 and latest_invocation.completion_status.status
             ):
-                return latest_invocation.completion_status.status
+                return (
+                    "INVOCATION_" + latest_invocation.completion_status.status
+                )
 
             current_ingested_records_count = (
                 self._read_record_count_from_event_table()
@@ -550,7 +553,60 @@ class Run(BaseModel):
             metrics_str = ",".join([f"'{metric}'" for metric in metrics])
             compute_metrics_query = f"CALL COMPUTE_AI_OBSERVABILITY_METRICS('{current_db}', '{current_schema}', '{self.object_name}', '{self.object_version}', '{self.object_type}', '{self.run_name}', ARRAY_CONSTRUCT({metrics_str}));"
 
-            return self.run_dao.session.sql(compute_metrics_query).collect()
+            compute_query = self.run_dao.session.sql(compute_metrics_query)
+            query_id = compute_query._query_id
+            logger.info(f"Query id for metrics computation: {query_id}")
+
+            computation_metadata_id = str(uuid.uuid4())
+            self.run_dao.upsert_computation_metadata(
+                computation_metadata_id=computation_metadata_id,
+                query_id=query_id,
+                run_name=self.run_name,
+                object_name=self.object_name,
+                object_type=self.object_type,
+                object_version=self.object_version,
+                metrics=metrics,
+                start_time_ms=int(round(time.time() * 1000)),
+            )
+
+            compute_results_rows = (
+                compute_query.collect()
+            )  # TODO shouldn't this be async?
+
+            for row in compute_results_rows:
+                row_msg = row["MESSAGE"]
+                pattern = r"Computed\s+(\d+)\s+records\."
+
+                match = re.search(pattern, row_msg)
+                if match:
+                    computed_records_count = match.group(1)
+                    logger.debug(
+                        "computed_records_count:", computed_records_count
+                    )
+                else:
+                    raise ValueError(
+                        f"Cannot parse the message returned by the metrics computation: {row_msg}"
+                    )
+
+                if row["STATUS"] == "SUCCESS":
+                    logger.info(
+                        f"Metrics computation for {row['METRIC_NAME']} succeeded."
+                    )
+                    self.run_dao.upsert_metrics_metadata(
+                        metrics_metadata_id="XXX",
+                        computation_id=computation_metadata_id,
+                        name=row["METRIC"],
+                        completion_status=Run.CompletionStatus(
+                            status=CompletionStatusStatus.COMPLETED,
+                            record_count=computed_records_count,
+                        ).model_dump(),
+                        run_name=self.run_name,
+                        object_name=self.object_name,
+                        object_type=self.object_type,
+                        object_version=self.object_version,
+                    )
+
+            return
         else:
             return f"Cannot start metrics computation yet when in run status: {run_status}"
 

@@ -312,16 +312,9 @@ class RunDao:
 
         # Check if the invocation already exists.
         if invocation_metadata_id in invocations:
-            existing_invocation = invocations[invocation_metadata_id]
-            # Update the existing invocation with new values.
-            if input_records_count is not None:
-                existing_invocation["input_records_count"] = input_records_count
-            if start_time_ms is not None:
-                existing_invocation["start_time_ms"] = start_time_ms
-            if end_time_ms is not None:
-                existing_invocation["end_time_ms"] = end_time_ms
-            if completion_status is not None:
-                existing_invocation["completion_status"] = completion_status
+            raise ValueError(
+                f"Invocation metadata with ID '{invocation_metadata_id}' already exists."
+            )
         else:
             # Create a new invocation entry with only the required fields.
             new_invocation = {
@@ -355,6 +348,145 @@ class RunDao:
             invocation_metadata_id: list(new_invocation.keys())
         }
         metric_field_masks = {}  # No metric updates in this operation.
+
+        # Push the updated run metadata to the server.
+        self._update_run(
+            run_name=run_name,
+            object_name=object_name,
+            object_type=object_type,
+            object_version=object_version,
+            invocation_field_masks=invocation_field_masks,
+            metric_field_masks=metric_field_masks,
+            updated_run_metadata=updated_run_metadata,
+        )
+
+    def upsert_computation_metadata(
+        self,
+        computation_metadata_id: str,
+        query_id: str,
+        run_name: str,
+        object_name: str,
+        object_type: str,
+        object_version: Optional[str] = None,
+        start_time_ms: Optional[int] = None,
+        end_time_ms: Optional[int] = None,
+    ):
+        """
+        Upsert computation metadata for a run.
+
+        If a computation entry with the given computation_metadata_id exists, update it;
+        otherwise, insert a new computation metadata entry. The new entry contains:
+        - id: computation_metadata_id
+        - query_id: compute sproc query ID
+        - start_time_ms: start time in milliseconds
+        - end_time_ms: end time in milliseconds
+
+        Args:
+            computation_metadata_id: Unique identifier for the computation metadata.
+            run_name: The name of the run.
+            object_name: The name of the object (e.g. agent name).
+            object_type: The type of the object.
+            object_version: Optional version of the object.
+            query_id: The query identifier.
+            start_time_ms: The computation start time (ms).
+            end_time_ms: The computation end time (ms).
+        """
+        # Retrieve the existing run.
+        existing_run = self.get_run(
+            run_name=run_name,
+            object_name=object_name,
+            object_type=object_type,
+            object_version=object_version,
+        )
+        if existing_run.empty:
+            raise ValueError(f"Run '{run_name}' does not exist.")
+
+        # Extract current run_metadata; initialize if missing.
+        updated_run_metadata = existing_run.get("run_metadata", {})
+        computations = updated_run_metadata.get("computations", {})
+
+        # Build the new (or updated) computation entry.
+        new_computation = {
+            "id": computation_metadata_id,
+            "query_id": query_id,
+            "start_time_ms": start_time_ms,
+            "end_time_ms": end_time_ms,
+        }
+        computations[computation_metadata_id] = new_computation
+        updated_run_metadata["computations"] = computations
+
+        # For computation updates, we don't need to update invocation or metric fields.
+
+        # Push the updated run metadata using the generic update method.
+        self._update_run(
+            run_name=run_name,
+            object_name=object_name,
+            object_type=object_type,
+            object_version=object_version,
+            invocation_field_masks={},
+            metric_field_masks={},
+            updated_run_metadata=updated_run_metadata,
+        )
+
+    def upsert_metric_metadata(
+        self,
+        metric_metadata_id: str,
+        name: str,
+        computation_id: str,
+        completion_status: dict,
+        run_name: str,
+        object_name: str,
+        object_type: str,
+        object_version: Optional[str] = None,
+    ):
+        """
+        Upsert metric metadata for a run.
+
+        If a metric entry with the given metric_metadata_id exists, update it;
+        otherwise, insert a new metric metadata entry. The new entry contains:
+        - id: metric_metadata_id
+        - name: the metric name
+        - computation_id: the associated computation id
+        - completion_status: a dict typically containing keys such as "status" and "record_count"
+
+        Args:
+            metric_metadata_id: Unique identifier for the metric metadata.
+            run_name: The name of the run.
+            object_name: The name of the object (e.g. agent name).
+            object_type: The type of the object.
+            object_version: Optional version string.
+            name: The metric name.
+            computation_id: Identifier of the computation associated with the metric.
+            completion_status: A dictionary with completion status details.
+        """
+        # Retrieve the existing run.
+        existing_run = self.get_run(
+            run_name=run_name,
+            object_name=object_name,
+            object_type=object_type,
+            object_version=object_version,
+        )
+        if existing_run.empty:
+            raise ValueError(f"Run '{run_name}' does not exist.")
+
+        # Get current run metadata (or default to empty).
+        updated_run_metadata = existing_run.get("run_metadata", {})
+        metrics = updated_run_metadata.get("metrics", {})
+
+        # Build the new metric entry.
+        new_metric = {
+            "id": metric_metadata_id,
+            "name": name,
+            "computation_id": computation_id,
+            "completion_status": completion_status,
+        }
+        metrics[metric_metadata_id] = new_metric
+        updated_run_metadata["metrics"] = metrics
+
+        # For metric updates, no changes are made to invocations.
+        invocation_field_masks = {}
+        # Indicate which keys within the metric have been updated.
+        metric_field_masks = {metric_metadata_id: list(new_metric.keys())}
 
         # Push the updated run metadata to the server.
         self._update_run(
