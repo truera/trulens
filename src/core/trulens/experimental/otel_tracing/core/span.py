@@ -213,6 +213,11 @@ def set_record_root_span_attributes(
         SpanAttributes.RECORD_ROOT.INPUT,
         get_main_input(func, args, kwargs),
     )
+    set_span_attribute_safely(
+        span,
+        SpanAttributes.RECORD_ROOT.MAIN_INPUT,
+        get_main_input(func, args, kwargs),
+    )
     ground_truth_output = get_baggage(
         SpanAttributes.RECORD_ROOT.GROUND_TRUTH_OUTPUT
     )
@@ -226,9 +231,17 @@ def set_record_root_span_attributes(
         set_span_attribute_safely(
             span, SpanAttributes.RECORD_ROOT.ERROR, str(exception)
         )
+        set_span_attribute_safely(
+            span, SpanAttributes.RECORD_ROOT.MAIN_ERROR, str(exception)
+        )
     if ret is not None:
         set_span_attribute_safely(
             span,
             SpanAttributes.RECORD_ROOT.OUTPUT,
+            signature_utils.main_output(func, ret),
+        )
+        set_span_attribute_safely(
+            span,
+            SpanAttributes.RECORD_ROOT.MAIN_OUTPUT,
             signature_utils.main_output(func, ret),
         )
