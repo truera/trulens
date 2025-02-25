@@ -7,6 +7,7 @@ from snowflake.snowpark import Session
 from snowflake.snowpark.row import Row
 from trulens.connectors.snowflake.dao.enums import SourceType
 from trulens.connectors.snowflake.dao.sql_utils import execute_query
+from trulens.core.utils import json as json_utils
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,13 @@ class RunDao:
     def __init__(self, snowpark_session: Session) -> None:
         """Initialize with an active Snowpark session."""
         self.session: Session = snowpark_session
+
+    @staticmethod
+    def _compute_source_info_id(dataset_name: str, dataset_spec: dict) -> str:
+        return json_utils.obj_id_of_obj(
+            obj={"dataset_name": dataset_name, "dataset_spec": dataset_spec},
+            prefix="source_info",
+        )
 
     def create_new_run(
         self,
@@ -89,6 +97,9 @@ class RunDao:
         source_info_dict = {}
         source_info_dict["name"] = dataset_name
         source_info_dict["column_spec"] = dataset_spec
+        source_info_dict["id"] = self._compute_source_info_id(
+            dataset_name=dataset_name, dataset_spec=dataset_spec
+        )
 
         if not SourceType.is_valid_source_type(source_type):
             raise ValueError(
