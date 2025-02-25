@@ -8,3 +8,12 @@ class ObjectType(str, Enum):
     @classmethod
     def is_valid_object(cls, key) -> bool:
         return key in cls.__members__.values()
+
+
+class SourceType(str, Enum):
+    TABLE = "TABLE"
+    DATAFRAME = "DATAFRAME"
+
+    @classmethod
+    def is_valid_source_type(cls, key) -> bool:
+        return key in cls.__members__.values()

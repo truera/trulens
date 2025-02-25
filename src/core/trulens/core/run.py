@@ -21,15 +21,15 @@ DATASET_RESERVED_FIELDS = {
 }
 
 
-def validate_dataset_col_spec(
-    dataset_col_spec: Dict[str, str],
+def validate_dataset_spec(
+    dataset_spec: Dict[str, str],
 ) -> Dict[str, str]:
     """
     Validates and normalizes the dataset column specification to ensure it contains only
     valid fields and allows for subscripted fields like input_1, input_2, etc.
 
     Args:
-        dataset_col_spec: The user-provided dictionary with column names.
+        dataset_spec: The user-provided dictionary with column names.
 
     Returns:
         A validated and normalized dictionary.
@@ -40,7 +40,7 @@ def validate_dataset_col_spec(
 
     normalized_spec = {}
 
-    for key, value in dataset_col_spec.items():
+    for key, value in dataset_spec.items():
         normalized_key = key.lower()
 
         # Ensure that the key is one of the valid reserved fields or its subscripted form
@@ -48,9 +48,7 @@ def validate_dataset_col_spec(
             normalized_key.startswith(reserved_field)
             for reserved_field in DATASET_RESERVED_FIELDS
         ):
-            raise ValueError(
-                f"Invalid field '{key}' found in dataset_col_spec."
-            )
+            raise ValueError(f"Invalid field '{key}' found in dataset_spec.")
 
         # currently only handle subscripted 'input' columns, e.g., 'input_1', 'input_2'
         if "input" in normalized_key and normalized_key != "input_id":
@@ -73,10 +71,15 @@ class RunConfig(BaseModel):
     )
     dataset_name: str = Field(
         default=...,
-        description="Mandatory field. The fully qualified name of a user's Table / View  (e.g. 'db.schema.user_table_name_1'), or any user specified name of input dataframe.",
+        description="Mandatory field. The name of a user's Snowflake Table / View  (e.g. 'user_table_name_1'), or any user specified name of input dataframe.",
     )
 
-    dataset_col_spec: Dict[str, str] = Field(
+    source_type: str = Field(
+        default="DATAFRAME",
+        description="Type of the source (e.g. 'DATAFRAME' for user provided dataframe or 'TABLE' for user table in Snowflake).",
+    )
+
+    dataset_spec: Dict[str, str] = Field(
         default=...,
         description="Mandatory column name mapping from reserved dataset fields to column names in user's table.",
     )
@@ -198,11 +201,61 @@ class Run(BaseModel):
             object_type=self.object_type,
             object_version=self.object_version,
         )
+        # Case 1: result already a dict
         if isinstance(result, dict):
             return result
+        # Case 2: result is a DataFrame-like object with an "empty" attribute
         elif hasattr(result, "empty") and not result.empty:
-            # Return the first row as a dictionary.
-            return list(result.iloc[0].to_dict().values())[0]
+            # (e.g., a Pandas DataFrame)
+            if hasattr(result, "iloc"):
+                try:
+                    first_row = result.iloc[0]
+                except Exception as e:
+                    logger.error(f"Error accessing first row: {e}")
+                    raise
+
+                # Convert the row to a dictionary if possible
+                if hasattr(first_row, "to_dict"):
+                    row_dict = first_row.to_dict()
+                else:
+                    try:
+                        row_dict = dict(first_row)
+                    except Exception as e:
+                        logger.error(f"Error converting first row to dict: {e}")
+                        raise
+
+                # If the row has a single column, try to decode its value as JSON.
+                if len(row_dict) == 1:
+                    key, value = next(iter(row_dict.items()))
+                    if isinstance(value, str):
+                        try:
+                            return json.loads(value)
+                        except (ValueError, json.JSONDecodeError) as e:
+                            logger.error(
+                                f"Error decoding JSON for key '{key}': {e}"
+                            )
+                            # Fall back to returning the raw dict if JSON decoding fails
+                            return row_dict
+
+                # For multiple columns, attempt to decode each string value as JSON
+                for key, value in row_dict.items():
+                    if isinstance(value, str):
+                        try:
+                            row_dict[key] = json.loads(value)
+                        except (ValueError, json.JSONDecodeError):
+                            # If decoding fails, leave the value as is
+                            pass
+                return row_dict
+            else:
+                # For objects with "empty" attribute but not supporting iloc,
+                # try converting them directly to a dict.
+                try:
+                    return dict(result)
+                except Exception as e:
+                    logger.error(f"Error converting result to dict: {e}")
+                    raise
+
+        # Case 3: result doesn't match known types, return empty dict.
         else:
             return {}
 
@@ -300,7 +353,7 @@ class Run(BaseModel):
         if not metrics:
             raise ValueError("Metrics list cannot be empty")
         metrics_str = ",".join([f"'{metric}'" for metric in metrics])
-        compute_metrics_query = f"CALL COMPUTE_AI_OBSERVABILITY_METRICS('{current_db}', '{current_schema}', '{self.object_name}', '{self.object_type}', '{self.run_name}', ARRAY_CONSTRUCT({metrics_str}));"
+        compute_metrics_query = f"CALL COMPUTE_AI_OBSERVABILITY_METRICS('{current_db}', '{current_schema}', '{self.object_name}', '{self.object_version}', '{self.object_type}', '{self.run_name}', ARRAY_CONSTRUCT({metrics_str}));"
 
         return self.run_dao.session.sql(compute_metrics_query).collect()
 
