@@ -29,12 +29,12 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
     @classmethod
     def tearDownClass(cls) -> None:
         del os.environ["TRULENS_OTEL_TRACING"]
-        # super().tearDownClass()
+        super().tearDownClass()
 
     def setUp(self) -> None:
         super().setUp()
         self.create_and_use_schema(
-            "TestSnowflakeExternalAgent", append_uuid=False
+            "TestSnowflakeExternalAgent", append_uuid=True
         )
         db_connector = self._create_db_connector(self._snowpark_session)
         self.snowflake_connector = db_connector
