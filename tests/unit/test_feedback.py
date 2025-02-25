@@ -6,17 +6,22 @@ from unittest import TestCase
 import numpy as np
 import pytest
 from trulens.apps import basic as basic_app
-from trulens.apps.langchain import TruChain
 from trulens.core import Feedback
 from trulens.core import TruSession
 from trulens.core.feedback import feedback as core_feedback
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import select as select_schema
-from trulens.providers.langchain import Langchain
 
 # Get the "globally importable" feedback implementations.
 from tests.unit import feedbacks as test_feedbacks
-import tests.unit.test_otel_tru_chain
+
+try:
+    from trulens.apps.langchain import TruChain
+    from trulens.providers.langchain import Langchain
+
+    import tests.unit.test_otel_tru_chain
+except ImportError:
+    pass
 
 
 class TestFeedbackEval(TestCase):
