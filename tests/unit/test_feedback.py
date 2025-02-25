@@ -75,8 +75,8 @@ class TestFeedbackEval(TestCase):
         # But status should be DONE (as opposed to SKIPPED or ERROR)
 
     def test_same_provider_for_app_and_feedback(self) -> None:
-        session = TruSession()
-        session.reset_database()
+        tru_session = TruSession()
+        tru_session.reset_database()
         rag_chain = (
             tests.unit.test_otel_tru_chain.TestOtelTruChain._create_simple_rag()
         )
@@ -96,7 +96,7 @@ class TestFeedbackEval(TestCase):
         with tru_recorder:
             rag_chain.invoke("What is Task Decomposition?")
             time.sleep(1)
-        res = TruSession().get_records_and_feedback()[0]
+        res = tru_session.get_records_and_feedback()[0]
         self.assertEqual(len(res), 1)
 
 
