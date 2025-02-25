@@ -4,6 +4,7 @@ import time
 from unittest import TestCase
 
 import numpy as np
+import pytest
 from trulens.apps import basic as basic_app
 from trulens.apps.langchain import TruChain
 from trulens.core import Feedback
@@ -74,6 +75,7 @@ class TestFeedbackEval(TestCase):
         self.assertEqual(res.status, feedback_schema.FeedbackResultStatus.DONE)
         # But status should be DONE (as opposed to SKIPPED or ERROR)
 
+    @pytest.mark.optional
     def test_same_provider_for_app_and_feedback(self) -> None:
         tru_session = TruSession()
         tru_session.reset_database()
