@@ -285,6 +285,7 @@ class Run(BaseModel):
             self.app.instrumented_invoke_main_method(
                 run_name=self.run_name,
                 input_id=input_id,
+                ground_truth_output="",
                 main_method_args=tuple(
                     main_method_args
                 ),  # Ensure correct order
