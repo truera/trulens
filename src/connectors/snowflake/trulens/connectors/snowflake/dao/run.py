@@ -228,8 +228,6 @@ class RunDao:
           - metric_field_masks: similar mapping for metrics (if any)
           - run_metadata_non_map_field_masks: non-map fields to update (e.g. ["labels", "llm_judge_name"])
           - run_metadata: the complete, updated run_metadata (e.g. updated invocations, computations, metrics, etc.)
-          - description: "new_description"
-          - update_description: "true"
 
         Args:
             run_name: The name of the run.
@@ -251,8 +249,6 @@ class RunDao:
             "metric_field_masks": metric_field_masks,
             "run_metadata_non_map_field_masks": run_metadata_non_map_field_masks,
             "run_metadata": updated_run_metadata,
-            "description": "new_description",
-            "update_description": "true",
         }
         if object_version is not None:
             payload["object_version"] = object_version
@@ -310,31 +306,27 @@ class RunDao:
         if existing_run.empty:
             raise ValueError(f"Run '{run_name}' does not exist.")
 
-        # Get the current run_metadata (or default to empty dict).
         updated_run_metadata = existing_run.get("run_metadata", {})
 
-        # Ensure the entry_type is supported.
         if entry_type not in ["invocations", "computations", "metrics"]:
             raise ValueError(f"Unsupported entry type: {entry_type}")
 
         # Get the container (e.g., the dictionary for the given entry_type).
         container = updated_run_metadata.get(entry_type, {})
 
-        # Retrieve any existing entry; if none, default to an empty dict.
         existing_entry = container.get(entry_id, {})
 
         # Merge the existing entry with the new fields.
         new_entry = {**existing_entry, **fields}
         new_entry["id"] = entry_id  # Ensure the id is always set.
 
-        # Update the container with the merged entry.
         container[entry_id] = new_entry
         updated_run_metadata[entry_type] = container
 
         # Build the field mask from the keys of the new entry.
         field_mask = {entry_id: list(new_entry.keys())}
 
-        # Prepare masks for each type.
+        # field masks for each entry type.
         invocation_field_masks = {}
         metric_field_masks = {}
         computation_field_masks = {}
@@ -345,7 +337,6 @@ class RunDao:
         elif entry_type == "metrics":
             metric_field_masks = field_mask
 
-        # Push the updated run metadata.
         self._update_run(
             run_name=run_name,
             object_name=object_name,
