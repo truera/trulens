@@ -71,3 +71,24 @@ class TestOtelTruCustom(OtelAppTestCase):
         self._compare_events_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_custom__test_smoke.csv"
         )
+
+    def test_incorrect_span_attributes(self) -> None:
+        class MyProblematicApp:
+            @instrument(
+                attributes=lambda ret, exception, *args, **kwargs: kwargs[
+                    "does_not_exist"
+                ]
+            )
+            def say_hi(self):
+                return "Hi!"
+
+        app = MyProblematicApp()
+        tru_app = TruApp(
+            app,
+            app_name="MyProblematicApp",
+            app_version="v1",
+            main_method=app.say_hi,
+        )
+        with tru_app:
+            with self.assertRaisesRegex(KeyError, "does_not_exist"):
+                app.say_hi()
