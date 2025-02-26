@@ -275,11 +275,10 @@ class Run(BaseModel):
             description="ID of the computation associated with the metric.",
         )
 
-    def describe(self) -> Run:
+    def describe(self) -> dict:
         """
         Retrieve the metadata of the Run object.
         """
-        # TODO/TBD:  should we return Run instance or just DF?
 
         run_metadata_df = self.run_dao.get_run(
             run_name=self.run_name,
@@ -290,14 +289,8 @@ class Run(BaseModel):
         if run_metadata_df.empty:
             raise ValueError(f"Run {self.run_name} not found.")
 
-        return Run.from_metadata_df(
-            run_metadata_df,
-            {
-                "app": self,
-                "main_method_name": self.main_method_name,
-                "run_dao": self.run_dao,
-                "tru_session": self.tru_session,
-            },
+        return json.loads(
+            list(run_metadata_df.to_dict(orient="records")[0].values())[0]
         )
 
     def delete(self) -> None:
@@ -441,7 +434,8 @@ class Run(BaseModel):
                     'EXTERNAL AGENT'
                 ))
             WHERE
-                RECORD_ATTRIBUTES:"snow.ai.observability.run.name" = ?
+                RECORD_ATTRIBUTES:"snow.ai.observability.run.name" = ? AND
+                RECORD_ATTRIBUTES:"snow.ai.observability.span_type" = 'record_root'
             """
         try:
             ret = self.run_dao.session.sql(

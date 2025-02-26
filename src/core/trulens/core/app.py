@@ -476,8 +476,7 @@ class App(
                     "Already created `TruSession` with different `connector`!"
                 )
             kwargs["connector"] = connector
-
-            logger.error(f"connector type {type(connector)}")
+            # TODO: doesn't work yet
             session = TruSession(connector=connector)
         else:
             session = TruSession()
