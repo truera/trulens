@@ -27,7 +27,7 @@ class LiteLLMCostComputer:
             ],
             SpanAttributes.COST.COST: completion_cost(response),
             SpanAttributes.COST.CURRENCY: "USD",
-            SpanAttributes.COST.MODEL: response.model,
+            SpanAttributes.COST.MODEL: response.get("model"),
         }
 
 
@@ -42,7 +42,7 @@ class LiteLLMCallback(core_endpoint.EndpointCallback):
 
         response_dict = response.model_dump()
 
-        usage = response_dict["usage"]
+        usage = response_dict.get("usage")
 
         self.endpoint: LiteLLMEndpoint
         if self.endpoint.litellm_provider not in ["openai", "azure", "bedrock"]:
@@ -71,8 +71,12 @@ class LiteLLMCallback(core_endpoint.EndpointCallback):
         if self.endpoint.litellm_provider not in ["openai"]:
             # The total cost does not seem to be properly tracked except by
             # openai so we can use litellm costs for this.
-
-            setattr(self.cost, "cost", completion_cost(response_dict))
+            try:
+                cost_value = completion_cost(response)
+            except Exception as e:
+                logger.exception("Failed to compute cost: %s", e)
+                cost_value = None
+            setattr(self.cost, "cost", cost_value)
 
 
 class LiteLLMEndpoint(core_endpoint.Endpoint):
@@ -88,9 +92,7 @@ class LiteLLMEndpoint(core_endpoint.Endpoint):
 
     def __init__(self, litellm_provider: str = "openai", **kwargs):
         kwargs["callback_class"] = LiteLLMCallback
-
         super().__init__(litellm_provider=litellm_provider, **kwargs)
-
         self._instrument_module_members(litellm, "completion")
 
     def handle_wrapped_call(
@@ -100,16 +102,11 @@ class LiteLLMEndpoint(core_endpoint.Endpoint):
         response: Any,
         callback: Optional[core_endpoint.EndpointCallback],
     ) -> None:
-        # TODELETE(otel_tracing). Delete once otel_tracing is no longer
-        # experimental.
-
         counted_something = False
 
         if hasattr(response, "usage"):
             counted_something = True
-
             self.global_callback.handle_generation(response=response)
-
             if callback is not None:
                 callback.handle_generation(response=response)
 
