@@ -699,7 +699,6 @@ class Run(BaseModel):
             query_id = async_job.query_id
 
             logger.info(f"Query id for metrics computation: {query_id}")
-            # TODO: change to async and return here
 
             computation_metadata_id = str(uuid.uuid4())
 
