@@ -17,10 +17,3 @@ class SourceType(str, Enum):
     @classmethod
     def is_valid_source_type(cls, key) -> bool:
         return key in cls.__members__.values()
-
-
-class CompletionStatusStatus(str, Enum):
-    UNKNOWN = "UNKNOWN"
-    PARTIALLY_COMPLETED = "PARTIALLY_COMPLETED"
-    COMPLETED = "COMPLETED"
-    FAILED = "FAILED"

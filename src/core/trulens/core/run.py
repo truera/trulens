@@ -13,7 +13,6 @@ import pydantic
 from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
-from trulens.connectors.snowflake.dao.enums import CompletionStatusStatus
 
 logger = logging.getLogger(__name__)
 
@@ -203,8 +202,14 @@ class Run(BaseModel):
         description="Source information for the run.",
     )
 
+    class CompletionStatusStatus(str, Enum):
+        UNKNOWN = "UNKNOWN"
+        PARTIALLY_COMPLETED = "PARTIALLY_COMPLETED"
+        COMPLETED = "COMPLETED"
+        FAILED = "FAILED"
+
     class CompletionStatus(BaseModel):
-        status: CompletionStatusStatus = Field(
+        status: Run.CompletionStatusStatus = Field(
             ..., description="The status of the completion."
         )
         record_count: Optional[int] = Field(
@@ -410,7 +415,7 @@ class Run(BaseModel):
                 entry_id=invocation_metadata_id,
                 end_time_ms=int(round(time.time() * 1000)),
                 completion_status=Run.CompletionStatus(
-                    status=CompletionStatusStatus.FAILED,
+                    status=Run.CompletionStatusStatus.FAILED,
                 ).model_dump(),
                 run_name=self.run_name,
                 object_name=self.object_name,
@@ -513,7 +518,7 @@ class Run(BaseModel):
                     start_time_ms=latest_invocation.start_time_ms,
                     end_time_ms=int(round(time.time() * 1000)),
                     completion_status=Run.CompletionStatus(
-                        status=CompletionStatusStatus.PARTIALLY_COMPLETED,
+                        status=Run.CompletionStatusStatus.PARTIALLY_COMPLETED,
                         record_count=current_ingested_records_count,
                     ).model_dump(),
                     run_name=self.run_name,
@@ -537,7 +542,7 @@ class Run(BaseModel):
                     start_time_ms=latest_invocation.start_time_ms,
                     end_time_ms=int(round(time.time() * 1000)),
                     completion_status=Run.CompletionStatus(
-                        status=CompletionStatusStatus.COMPLETED,
+                        status=Run.CompletionStatusStatus.COMPLETED,
                         record_count=current_ingested_records_count,
                     ).model_dump(),
                     run_name=self.run_name,
@@ -643,7 +648,7 @@ class Run(BaseModel):
                         computation_id=computation_metadata_id,
                         name=row["METRIC"],
                         completion_status=Run.CompletionStatus(
-                            status=CompletionStatusStatus.COMPLETED,
+                            status=Run.CompletionStatusStatus.COMPLETED,
                             record_count=computed_records_count,
                         ).model_dump(),
                         run_name=self.run_name,
@@ -663,7 +668,7 @@ class Run(BaseModel):
                         computation_id=computation_metadata_id,
                         name=row["METRIC"],
                         completion_status=Run.CompletionStatus(
-                            status=CompletionStatusStatus.FAILED,
+                            status=Run.CompletionStatusStatus.FAILED,
                             record_count=computed_records_count,
                         ).model_dump(),
                         run_name=self.run_name,
