@@ -79,7 +79,7 @@ class RunConfig(BaseModel):
         description="Type of the source (e.g. 'DATAFRAME' for user provided dataframe or 'TABLE' for user table in Snowflake).",
     )
 
-    dataset_spec: Dict[str, str] = Field(
+    dataset_spec: dict[str, str] = Field(
         default=...,
         description="Mandatory column name mapping from reserved dataset fields to column names in user's table.",
     )
