@@ -91,14 +91,23 @@ class TestFeedbackEval(TestCase):
             1
         ]  # Bit of a hack, but this is the LLM for the chain.
         provider = Langchain(chain=llm)
+        context = TruChain.select_context(rag_chain)
         f_answer_relevance = Feedback(
             provider.relevance_with_cot_reasons, name="Answer Relevance"
         ).on_input_output()
+        f_groundedness = (
+            Feedback(
+                provider.groundedness_measure_with_cot_reasons,
+                name="Groundedness",
+            )
+            .on(context.collect())
+            .on_output()
+        )
         tru_recorder = TruChain(
             rag_chain,
             app_name="ChatApplication",
             app_version="Chain1",
-            feedbacks=[f_answer_relevance],
+            feedbacks=[f_answer_relevance, f_groundedness],
         )
         with tru_recorder:
             rag_chain.invoke("What is Task Decomposition?")

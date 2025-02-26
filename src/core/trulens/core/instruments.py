@@ -8,6 +8,7 @@ typical use cases.
 from __future__ import annotations
 
 import contextvars
+from contextvars import ContextVar
 import dataclasses
 from datetime import datetime
 import functools
@@ -56,7 +57,7 @@ logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
-thread_local = th.local()
+do_not_track = ContextVar("do_not_track", default=False)
 
 
 class WithInstrumentCallbacks:
@@ -662,7 +663,7 @@ class Instrument:
                 inspect.isasyncgenfunction(func),
             )
 
-            if getattr(thread_local, "do_not_track", False):
+            if do_not_track.get():
                 return func(*args, **kwargs)
 
             apps = getattr(tru_wrapper, Instrument.APPS)  # weakref
