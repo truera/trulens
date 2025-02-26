@@ -163,7 +163,9 @@ class LLMProvider(core_provider.Provider):
             criteria = None
             lines = response.split("\n")
             for i, line in enumerate(lines):
-                if "Score" in line:
+                if (
+                    "Score" in line
+                ):  # TODO: find a more robust way to generate and extract score
                     # If the next line exists and appears to be a numeric score, use it.
                     if (
                         i + 1 < len(lines)
