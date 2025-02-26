@@ -24,7 +24,9 @@ DATASET_RESERVED_FIELDS = {
     "ground_truth_output",  # Represents the ground truth output, flexible in type (string or others)
 }
 
-INVOCATION_TIMEOUT_IN_MS = 3 * 60 * 1000  # 3 minutes in milliseconds
+INVOCATION_TIMEOUT_IN_MS = (
+    5 * 60 * 1000
+)  # expected latency from the telemetry pipeline before ingested rows show up in event table
 
 
 def validate_dataset_spec(
@@ -440,7 +442,7 @@ class Run(BaseModel):
                 ))
             WHERE
                 RECORD_ATTRIBUTES:"snow.ai.observability.run.name" = ? AND
-                RECORD_ATTRIBUTES:"snow.ai.observability.span_type" = 'record_root'
+                RECORD_ATTRIBUTES:"ai.observability.span_type" = 'record_root'
             """
         try:
             ret = self.run_dao.session.sql(
@@ -515,6 +517,31 @@ class Run(BaseModel):
                 logger.info(
                     f"Current ingested records count: {current_ingested_records_count}"
                 )
+
+                if (
+                    latest_invocation.input_records_count
+                    and current_ingested_records_count
+                    >= latest_invocation.input_records_count
+                ):
+                    # happy case, add end time and update status
+                    self.run_dao.upsert_run_metadata_fields(
+                        entry_type="invocations",
+                        entry_id=latest_invocation.id,
+                        input_records_count=latest_invocation.input_records_count,
+                        start_time_ms=latest_invocation.start_time_ms,
+                        end_time_ms=int(round(time.time() * 1000)),
+                        completion_status=Run.CompletionStatus(
+                            status=Run.CompletionStatusStatus.COMPLETED,
+                            record_count=current_ingested_records_count,
+                        ).model_dump(),
+                        run_name=self.run_name,
+                        object_name=self.object_name,
+                        object_type=self.object_type,
+                        object_version=self.object_version,
+                    )
+
+                    return "INVOCATION_COMPLETED"
+
                 if (
                     latest_invocation.start_time_ms
                     and time.time() * 1000 - latest_invocation.start_time_ms
@@ -540,29 +567,6 @@ class Run(BaseModel):
 
                     return "INVOCATION_PARTIALLY_COMPLETED"
 
-                elif (
-                    latest_invocation.input_records_count
-                    and current_ingested_records_count
-                    >= latest_invocation.input_records_count
-                ):
-                    # happy case, add end time and update status
-                    self.run_dao.upsert_run_metadata_fields(
-                        entry_type="invocations",
-                        entry_id=latest_invocation.id,
-                        input_records_count=latest_invocation.input_records_count,
-                        start_time_ms=latest_invocation.start_time_ms,
-                        end_time_ms=int(round(time.time() * 1000)),
-                        completion_status=Run.CompletionStatus(
-                            status=Run.CompletionStatusStatus.COMPLETED,
-                            record_count=current_ingested_records_count,
-                        ).model_dump(),
-                        run_name=self.run_name,
-                        object_name=self.object_name,
-                        object_type=self.object_type,
-                        object_version=self.object_version,
-                    )
-
-                    return "INVOCATION_COMPLETED"
                 elif latest_invocation.end_time_ms == 0:
                     return "INVOCATION_IN_PROGRESS"
 
@@ -592,12 +596,12 @@ class Run(BaseModel):
                         object_version=self.object_version,
                     )
 
-                    if not run.active_computation_async_job:
+                    if not self.active_computation_async_job:
                         raise ValueError(
                             "No active computation async job found."
                         )
                     compute_results_rows = (
-                        run.active_computation_async_job.result()
+                        self.active_computation_async_job.result()
                     )
                     for row in compute_results_rows:
                         row_msg = row["MESSAGE"]
@@ -615,7 +619,7 @@ class Run(BaseModel):
                             self.run_dao.upsert_run_metadata_fields(
                                 entry_type="metrics",
                                 entry_id=metric_metatada_id,
-                                computation_id=latest_computation,
+                                computation_id=latest_computation.id,
                                 name=row["METRIC"],
                                 completion_status=Run.CompletionStatus(
                                     status=Run.CompletionStatusStatus.COMPLETED,
@@ -635,7 +639,7 @@ class Run(BaseModel):
                             self.run_dao.upsert_run_metadata_fields(
                                 entry_type="metrics",
                                 entry_id=metric_metatada_id,
-                                computation_id=latest_computation,
+                                computation_id=latest_computation.id,
                                 name=row["METRIC"],
                                 completion_status=Run.CompletionStatus(
                                     status=Run.CompletionStatusStatus.FAILED,

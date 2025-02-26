@@ -738,6 +738,7 @@ trulens.core.run:
   highs: {}
   lows:
     DATASET_RESERVED_FIELDS: builtins.set
+    INVOCATION_TIMEOUT_IN_MS: builtins.int
     Run: pydantic._internal._model_construction.ModelMetaclass
     RunConfig: pydantic._internal._model_construction.ModelMetaclass
     validate_dataset_spec: builtins.function
@@ -746,8 +747,14 @@ trulens.core.run.Run:
   - pydantic.main.BaseModel
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
-    RunMetada: pydantic._internal._model_construction.ModelMetaclass
+    CompletionStatus: pydantic._internal._model_construction.ModelMetaclass
+    CompletionStatusStatus: enum.EnumType
+    ComputationMetadata: pydantic._internal._model_construction.ModelMetaclass
+    InvocationMetadata: pydantic._internal._model_construction.ModelMetaclass
+    MetricsMetadata: pydantic._internal._model_construction.ModelMetaclass
+    RunMetadata: pydantic._internal._model_construction.ModelMetaclass
     SourceInfo: pydantic._internal._model_construction.ModelMetaclass
+    active_computation_async_job: typing.Optional[typing.Any, builtins.NoneType]
     app: typing.Any
     cancel: builtins.function
     compute_metrics: builtins.function
@@ -761,7 +768,7 @@ trulens.core.run.Run:
     object_type: builtins.str
     object_version: typing.Optional[builtins.str, builtins.NoneType]
     run_dao: typing.Any
-    run_metadata: trulens.core.run.Run.RunMetada
+    run_metadata: trulens.core.run.Run.RunMetadata
     run_name: builtins.str
     source_info: trulens.core.run.Run.SourceInfo
     start: builtins.function
