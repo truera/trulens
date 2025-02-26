@@ -13,7 +13,7 @@ from trulens.apps.langchain import TruChain
 from trulens.core.session import TruSession
 from trulens.otel.semconv.trace import SpanAttributes
 
-from tests.util.otel_app_test_case import OtelAppTestCase
+from tests.util.otel_test_case import OtelTestCase
 
 
 class _TestCortexApp:
@@ -82,7 +82,7 @@ class _TestLiteLLMApp:
         return completion
 
 
-class TestOtelCosts(OtelAppTestCase):
+class TestOtelCosts(OtelTestCase):
     def _check_costs(
         self,
         record_attributes: Dict[str, AttributeValue],

@@ -6,7 +6,7 @@ from trulens.core.app import App
 from trulens.core.database.connector import DefaultDBConnector
 from trulens.core.session import TruSession
 
-from tests.util.otel_app_test_case import OtelAppTestCase
+from tests.util.otel_test_case import OtelTestCase
 
 
 @dataclass
@@ -16,7 +16,7 @@ class TestAppInfo:
     TruAppClass: Type[App]
 
 
-class OtelTruAppTestCase(OtelAppTestCase):
+class OtelTruAppTestCase(OtelTestCase):
     @staticmethod
     @abstractmethod
     def _create_test_app_info() -> TestAppInfo:

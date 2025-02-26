@@ -10,7 +10,7 @@ from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
 from trulens.otel.semconv.trace import SpanAttributes
 
-from tests.util.otel_app_test_case import OtelAppTestCase
+from tests.util.otel_test_case import OtelTestCase
 
 
 class _TestApp:
@@ -37,7 +37,7 @@ class _TestApp:
         return best_baby, str(span.get_span_context().span_id)
 
 
-class TestOtelMultiThreaded(OtelAppTestCase):
+class TestOtelMultiThreaded(OtelTestCase):
     def test_multithreaded(self):
         # Create TruApp that runs many things in parallel.
         test_app = _TestApp()

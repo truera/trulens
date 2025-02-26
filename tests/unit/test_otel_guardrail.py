@@ -7,7 +7,7 @@ from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
 from trulens.otel.semconv.trace import SpanAttributes
 
-from tests.util.otel_app_test_case import OtelAppTestCase
+from tests.util.otel_test_case import OtelTestCase
 
 _context_relevance = Feedback(
     lambda query, context: 0.0 if "irrelevant" in context else 1.0,
@@ -37,7 +37,7 @@ class _TestApp:
         ]
 
 
-class TestOtelGuardrail(OtelAppTestCase):
+class TestOtelGuardrail(OtelTestCase):
     def test_context_relevance(self) -> None:
         app = _TestApp()
         tru_recorder = TruApp(

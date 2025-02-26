@@ -16,7 +16,7 @@ from tests.util.df_comparison import (
 )
 
 
-class OtelAppTestCase(TruTestCase):
+class OtelTestCase(TruTestCase):
     @classmethod
     def clear_TruSession_singleton(cls) -> None:
         # [HACK!] Clean up any instances of `TruSession` so tests don't

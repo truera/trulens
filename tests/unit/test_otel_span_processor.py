@@ -3,7 +3,7 @@ from trulens.apps.app import TruApp
 from trulens.core.session import TruSession
 from trulens.otel.semconv.trace import SpanAttributes
 
-from tests.util.otel_app_test_case import OtelAppTestCase
+from tests.util.otel_test_case import OtelTestCase
 
 
 class _TestApp:
@@ -19,7 +19,7 @@ class _TestApp:
         return txt.upper()
 
 
-class TestOtelSpanProcessor(OtelAppTestCase):
+class TestOtelSpanProcessor(OtelTestCase):
     def test_span_processor(self) -> None:
         # Create app.
         app = _TestApp()

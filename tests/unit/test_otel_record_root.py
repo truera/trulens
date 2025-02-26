@@ -3,10 +3,10 @@ from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
 from trulens.otel.semconv.trace import SpanAttributes
 
-from tests.util.otel_app_test_case import OtelAppTestCase
+from tests.util.otel_test_case import OtelTestCase
 
 
-class TestOtelRecordRoot(OtelAppTestCase):
+class TestOtelRecordRoot(OtelTestCase):
     def test_no_main_method(self):
         class App:
             @instrument(span_type=SpanAttributes.SpanType.RECORD_ROOT)
