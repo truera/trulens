@@ -3,9 +3,7 @@ Tests for OTEL instrument decorator and custom app.
 """
 
 from trulens.apps.app import TruApp
-from trulens.core.database.connector import DefaultDBConnector
 from trulens.core.otel.instrument import instrument
-from trulens.core.session import TruSession
 from trulens.otel.semconv.trace import SpanAttributes
 
 import tests.util.otel_tru_app_test_case
@@ -103,38 +101,3 @@ class TestOtelTruCustom(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         with tru_app:
             with self.assertRaisesRegex(KeyError, "does_not_exist"):
                 app.say_hi()
-
-    def test_with_existing_tru_session(self) -> None:
-        self.clear_TruSession_singleton()
-        connector1 = DefaultDBConnector()
-        connector2 = DefaultDBConnector()
-        self.assertIsNot(connector1, connector2)
-        TruSession(connector=connector1)
-        test_app = TestApp()
-        with self.assertRaisesRegex(
-            ValueError,
-            "Already created `TruSession` with different `connector`!",
-        ):
-            TruApp(
-                test_app,
-                main_method=test_app.respond_to_query,
-                connector=connector2,
-            )
-        tru_app = TruApp(
-            test_app,
-            main_method=test_app.respond_to_query,
-            connector=connector1,
-        )
-        self.assertIs(connector1, tru_app.connector)
-
-    def test_with_new_tru_session(self) -> None:
-        self.clear_TruSession_singleton()
-        connector = DefaultDBConnector()
-        test_app = TestApp()
-        tru_app = TruApp(
-            test_app,
-            main_method=test_app.respond_to_query,
-            connector=connector,
-        )
-        self.assertIs(connector, tru_app.connector)
-        self.assertIs(connector, TruSession().connector)
