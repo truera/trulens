@@ -327,7 +327,7 @@ class RunDao:
         container[entry_id] = new_entry
         updated_run_metadata[entry_type] = container
 
-        # Build the field mask from the keys of the new entry.
+        # TODO: (P0 to fix) ensure we only modify the updated ones
         field_mask = {entry_id: list(new_entry.keys())}
 
         # field masks for each entry type.

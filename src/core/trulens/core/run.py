@@ -451,7 +451,7 @@ class Run(BaseModel):
     def _read_record_count_from_event_table(self) -> int:
         query = """
             SELECT
-                *
+                COUNT(*) AS record_count
             FROM
                 table(snowflake.local.GET_AI_OBSERVABILITY_EVENTS(
                     ?,
@@ -462,9 +462,9 @@ class Run(BaseModel):
             WHERE
                 RECORD_ATTRIBUTES:"snow.ai.observability.run.name" = ? AND
                 RECORD_ATTRIBUTES:"ai.observability.span_type" = 'record_root'
-            """
+        """
         try:
-            ret = self.run_dao.session.sql(
+            result_df = self.run_dao.session.sql(
                 query,
                 params=[
                     self.run_dao.session.get_current_database()[1:-1],
@@ -474,7 +474,11 @@ class Run(BaseModel):
                 ],
             ).to_pandas()
 
-            return len(ret)
+            if "record_count" in result_df.columns:
+                count_value = result_df["record_count"].iloc[0]
+            else:
+                count_value = result_df.iloc[0, 0]
+            return int(count_value)
         except Exception as e:
             logger.exception(
                 f"Error encountered during reading record count from event table: {e}."
@@ -520,7 +524,7 @@ class Run(BaseModel):
         elif run.run_metadata.invocations:
             latest_invocation = max(
                 run.run_metadata.invocations.values(),
-                key=lambda inv: inv.start_time_ms or 0,
+                key=lambda inv: (inv.start_time_ms or 0, inv.id or ""),
             )
             logger.info(f"latest invocation field  {latest_invocation}")
             if not run.run_metadata.computations:
