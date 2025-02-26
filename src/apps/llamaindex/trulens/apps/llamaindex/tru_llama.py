@@ -140,9 +140,7 @@ pp = PrettyPrinter()
 
 
 def _retrieval_span() -> Dict[str, Union[SpanAttributes.SpanType, Attributes]]:
-    def _full_scoped_span_attributes(
-        ret, exception, *args, **kwargs
-    ) -> Attributes:
+    def _attributes(ret, exception, *args, **kwargs) -> Attributes:
         attributes = {}
         # Guess query text.
         possible_query_texts = []
@@ -179,7 +177,7 @@ def _retrieval_span() -> Dict[str, Union[SpanAttributes.SpanType, Attributes]]:
 
     return {
         "span_type": SpanAttributes.SpanType.RETRIEVAL,
-        "full_scoped_span_attributes": _full_scoped_span_attributes,
+        "attributes": _attributes,
     }
 
 
@@ -410,8 +408,13 @@ class TruLlama(core_app.App):
     ):
         # TruLlama specific:
         kwargs["app"] = app
+        tru_session = (
+            TruSession()
+            if "connector" not in kwargs
+            else TruSession(connector=kwargs["connector"])
+        )
         if (
-            TruSession().experimental_feature(
+            tru_session.experimental_feature(
                 core_experimental.Feature.OTEL_TRACING
             )
             and main_method is None

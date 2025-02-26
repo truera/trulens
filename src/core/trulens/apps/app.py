@@ -352,7 +352,12 @@ class TruApp(core_app.App):
         **kwargs: Any,
     ):
         kwargs["app"] = app
-        if TruSession().experimental_feature(
+        tru_session = (
+            TruSession()
+            if "connector" not in kwargs
+            else TruSession(connector=kwargs["connector"])
+        )
+        if tru_session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING
         ):
             main_methods = set()

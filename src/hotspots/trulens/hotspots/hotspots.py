@@ -620,7 +620,7 @@ def parse_args() -> tuple[str, HotspotsConfig]:
     )
 
 
-if __name__ == "__main__":
+def main():
     logging.basicConfig(level=logging.INFO)
 
     (csv_filename, config) = parse_args()
@@ -633,3 +633,7 @@ if __name__ == "__main__":
 
     for item in out:
         print(format_feature_with_stat(num_total, avg_score, item[0], item[1]))
+
+
+if __name__ == "__main__":
+    main()

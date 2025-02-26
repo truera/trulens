@@ -44,7 +44,8 @@ class TestRunDao(unittest.TestCase):
         object_version = "V1"
         run_name = "my_run"
         dataset_name = "db.schema.table"
-        dataset_col_spec = {"col1": "col1"}
+        source_type = "TABLE"
+        dataset_spec = {"col1": "col1"}
 
         req_payload = {
             "object_name": object_name,
@@ -58,8 +59,8 @@ class TestRunDao(unittest.TestCase):
             },
             "source_info": {
                 "name": dataset_name,
-                "column_spec": dataset_col_spec,
-                "source_type": "TABLE",
+                "column_spec": dataset_spec,
+                "source_type": source_type,
             },
         }
         req_payload_json = json.dumps(req_payload)
@@ -69,7 +70,8 @@ class TestRunDao(unittest.TestCase):
             object_type=object_type,
             object_version=object_version,
             dataset_name=dataset_name,
-            dataset_col_spec=dataset_col_spec,
+            source_type=source_type,
+            dataset_spec=dataset_spec,
             description="desc",
             label="label",
             llm_judge_name="mistral-large2",
