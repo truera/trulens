@@ -359,15 +359,12 @@ class App(
     )
     """Feedback functions to evaluate on each record."""
 
-    session: core_session.TruSession = pydantic.Field(
-        default_factory=core_session.TruSession, exclude=True
-    )
+    session: core_session.TruSession = pydantic.Field(exclude=True)
     """Session for this app."""
 
     @property
     def connector(self) -> core_connector.DBConnector:
         """Database connector."""
-
         return self.session.connector
 
     @property
@@ -480,6 +477,12 @@ class App(
                 )
             kwargs["connector"] = connector
 
+            logger.error(f"connector type {type(connector)}")
+            session = TruSession(connector=connector)
+        else:
+            session = TruSession()
+
+        kwargs["session"] = session
         kwargs["feedbacks"] = feedbacks
         kwargs["recording_contexts"] = contextvars.ContextVar(
             "recording_contexts", default=None

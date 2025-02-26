@@ -1,5 +1,6 @@
 from __future__ import annotations  # defers evaluation of annotations
 
+from enum import Enum
 import json
 import logging
 import re
@@ -10,6 +11,7 @@ import uuid
 import pandas as pd
 import pydantic
 from pydantic import BaseModel
+from pydantic import ConfigDict
 from pydantic import Field
 from trulens.connectors.snowflake.dao.enums import CompletionStatusStatus
 
@@ -208,6 +210,7 @@ class Run(BaseModel):
         record_count: Optional[int] = Field(
             default=None, description="The count of records processed."
         )
+        model_config = ConfigDict(json_encoders={Enum: lambda o: o.value})
 
     class InvocationMetadata(BaseModel):
         input_records_count: Optional[int] = Field(
@@ -271,7 +274,7 @@ class Run(BaseModel):
         """
         Retrieve the metadata of the Run object.
         """
-        # TODO/TBD:  should we just return Run instance instead?
+        # TODO/TBD:  should we return Run instance or just DF?
 
         run_metadata_df = self.run_dao.get_run(
             run_name=self.run_name,
@@ -346,7 +349,7 @@ class Run(BaseModel):
                 # Prepare the kwargs for the non-input fields
                 reserved_field_column_mapping[reserved_field] = user_column
 
-        input_records_count = input_df.size
+        input_records_count = len(input_df)
 
         invocation_metadata_id = self.run_dao._compute_invocation_metadata_id(
             dataset_name=self.source_info.name,
@@ -357,11 +360,14 @@ class Run(BaseModel):
         logger.info(
             f"Creating or updating invocation metadata with {input_records_count} records from input."
         )
-        self.run_dao.upsert_invocation_metadata(
-            invocation_metadata_id=invocation_metadata_id,
-            input_records_count=input_records_count,
+
+        self.run_dao.upsert_run_metadata_fields(
+            entry_type="invocations",
+            entry_id=invocation_metadata_id,
             start_time_ms=start_time_ms,
+            end_time_ms=0,  # required field
             run_name=self.run_name,
+            input_records_count=input_records_count,
             object_name=self.object_name,
             object_type=self.object_type,
             object_version=self.object_version,
@@ -398,12 +404,14 @@ class Run(BaseModel):
             logger.exception(
                 f"Error encountered during invoking app main method: {e}."
             )
-            self.run_dao.upsert_invocation_metadata(
-                invocation_metadata_id=invocation_metadata_id,
+
+            self.run_dao.upsert_run_metadata_fields(
+                entry_type="invocations",
+                entry_id=invocation_metadata_id,
                 end_time_ms=int(round(time.time() * 1000)),
                 completion_status=Run.CompletionStatus(
                     status=CompletionStatusStatus.FAILED,
-                ),
+                ).model_dump(),
                 run_name=self.run_name,
                 object_name=self.object_name,
                 object_type=self.object_type,
@@ -497,18 +505,23 @@ class Run(BaseModel):
             ):
                 logger.warning("Invocation timeout reached and concluded")
                 # timeout reached, persist to DPO backend
-                self.run_dao.upsert_invocation_metadata(
-                    invocation_metadata_id=latest_invocation.id,
+
+                self.run_dao.upsert_run_metadata_fields(
+                    entry_type="invocations",
+                    entry_id=latest_invocation.id,
+                    input_records_count=latest_invocation.input_records_count,
+                    start_time_ms=latest_invocation.start_time_ms,
                     end_time_ms=int(round(time.time() * 1000)),
                     completion_status=Run.CompletionStatus(
                         status=CompletionStatusStatus.PARTIALLY_COMPLETED,
                         record_count=current_ingested_records_count,
-                    ),
+                    ).model_dump(),
                     run_name=self.run_name,
                     object_name=self.object_name,
                     object_type=self.object_type,
                     object_version=self.object_version,
                 )
+
                 return "INVOCATION_PARTIALLY_COMPLETED"
 
             elif (
@@ -517,8 +530,11 @@ class Run(BaseModel):
                 >= latest_invocation.input_records_count
             ):
                 # happy case, add end time and update status
-                self.run_dao.upsert_invocation_metadata(
-                    invocation_metadata_id=latest_invocation.id,
+                self.run_dao.upsert_run_metadata_fields(
+                    entry_type="invocations",
+                    entry_id=latest_invocation.id,
+                    input_records_count=latest_invocation.input_records_count,
+                    start_time_ms=latest_invocation.start_time_ms,
                     end_time_ms=int(round(time.time() * 1000)),
                     completion_status=Run.CompletionStatus(
                         status=CompletionStatusStatus.COMPLETED,
@@ -529,23 +545,38 @@ class Run(BaseModel):
                     object_type=self.object_type,
                     object_version=self.object_version,
                 )
+
                 return "INVOCATION_COMPLETED"
             elif latest_invocation.end_time_ms == 0:
                 return "INVOCATION_IN_PROGRESS"
 
         elif run.run_metadata.computations:
-            return "SOME COMPUTATION STATUS"
+            latest_computation = max(
+                run.run_metadata.computations.values(),
+                key=lambda comp: comp.start_time_ms or 0,
+            )
+            if latest_computation.end_time_ms == 0:
+                return "COMPUTATION_IN_PROGRESS"
+            elif (
+                latest_computation.end_time_ms > 0
+            ):  # Metrics computation of all records are completed
+                return "COMPLETED"
+
+        # TODO: implement logic for computation partiall completed
+        elif run.run_metadata.metrics:
+            pass
         else:
             return "UNKNOWN"
 
     def compute_metrics(self, metrics: List[str]):
-        # TODO: add update operations to the run metadata
         run_status = self.get_status()
         logger.info(f"Current run status: {run_status}")
-        if (
-            run_status == "INVOCATION_COMPLETED"
-            or run_status == "INVOCATION_PARTIALLY_COMPLETED"
-        ):
+        if run_status in [
+            "INVOCATION_COMPLETED",
+            "INVOCATION_PARTIALLY_COMPLETED",
+            "COMPLETED",
+            "PARTIALLY_COMPLETED",  # TODO: verify skip computation behavior
+        ]:
             current_db = self.run_dao.session.get_current_database()
             current_schema = self.run_dao.session.get_current_schema()
             if not metrics:
@@ -557,46 +588,91 @@ class Run(BaseModel):
 
             async_job = compute_query.collect_nowait()
             query_id = async_job.query_id
+
             logger.info(f"Query id for metrics computation: {query_id}")
+            # TODO: change to async and return here
+
             computation_metadata_id = str(uuid.uuid4())
-            self.run_dao.upsert_computation_metadata(
-                computation_metadata_id=computation_metadata_id,
+
+            computation_start_time_ms = int(round(time.time() * 1000))
+
+            self.run_dao.upsert_run_metadata_fields(
+                entry_type="computations",
+                entry_id=computation_metadata_id,
                 query_id=query_id,
+                start_time_ms=computation_start_time_ms,
+                end_time_ms=0,
                 run_name=self.run_name,
                 object_name=self.object_name,
                 object_type=self.object_type,
                 object_version=self.object_version,
-                start_time_ms=int(round(time.time() * 1000)),
             )
 
             compute_results_rows = async_job.result()
 
             for row in compute_results_rows:
+                logger.debug(f"Row: {row}")
                 row_msg = row["MESSAGE"]
-                logger.error(row_msg)
-                # computed_records_count = int(
-                #     row_msg.split(" ")[-1]
-                # )  # TODO change to regex or directly read the field when available
 
-                # if row["STATUS"] == "SUCCESS":
-                #     logger.info(
-                #         f"Metrics computation for {row['METRIC']} succeeded."
-                #     )
-                #     self.run_dao.upsert_metrics_metadata(
-                #         metrics_metadata_id="XXX",
-                #         computation_id=computation_metadata_id,
-                #         name=row["METRIC"],
-                #         completion_status=Run.CompletionStatus(
-                #             status=CompletionStatusStatus.COMPLETED,
-                #             record_count=computed_records_count,
-                #         ).model_dump(),
-                #         run_name=self.run_name,
-                #         object_name=self.object_name,
-                #         object_type=self.object_type,
-                #         object_version=self.object_version,
-                #     )
+                computed_records_count = int(
+                    row_msg.split(" ")[1]
+                )  # TODO change to regex or directly read the field when available
+                metric_status = row["STATUS"]
 
-            return
+                self.run_dao.upsert_run_metadata_fields(
+                    entry_type="computations",
+                    entry_id=computation_metadata_id,
+                    query_id=query_id,
+                    start_time_ms=computation_start_time_ms,
+                    end_time_ms=int(round(time.time() * 1000)),
+                    run_name=self.run_name,
+                    object_name=self.object_name,
+                    object_type=self.object_type,
+                    object_version=self.object_version,
+                )
+
+                metric_metatada_id = str(uuid.uuid4())
+                if metric_status == "SUCCESS":
+                    logger.info(
+                        f"Metrics computation for {row['METRIC']} succeeded."
+                    )
+
+                    self.run_dao.upsert_run_metadata_fields(
+                        entry_type="metrics",
+                        entry_id=metric_metatada_id,
+                        computation_id=computation_metadata_id,
+                        name=row["METRIC"],
+                        completion_status=Run.CompletionStatus(
+                            status=CompletionStatusStatus.COMPLETED,
+                            record_count=computed_records_count,
+                        ).model_dump(),
+                        run_name=self.run_name,
+                        object_name=self.object_name,
+                        object_type=self.object_type,
+                        object_version=self.object_version,
+                    )
+
+                elif metric_status == "FAILURE":
+                    logger.error(
+                        f"Metrics computation for {row['METRIC']} failed."
+                    )
+
+                    self.run_dao.upsert_run_metadata_fields(
+                        entry_type="metrics",
+                        entry_id=metric_metatada_id,
+                        computation_id=computation_metadata_id,
+                        name=row["METRIC"],
+                        completion_status=Run.CompletionStatus(
+                            status=CompletionStatusStatus.FAILED,
+                            record_count=computed_records_count,
+                        ).model_dump(),
+                        run_name=self.run_name,
+                        object_name=self.object_name,
+                        object_type=self.object_type,
+                        object_version=self.object_version,
+                    )
+
+            return compute_results_rows
         else:
             return f"Cannot start metrics computation yet when in run status: {run_status}"
 

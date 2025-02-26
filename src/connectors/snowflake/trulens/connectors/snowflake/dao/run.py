@@ -21,7 +21,7 @@ METHOD_UPDATE = "UPDATE"
 METHOD_DELETE = "DELETE"
 METHOD_LIST = "LIST"
 
-DEFAULT_LLM_JUDGE_NAME = "mistral-large2"
+DEFAULT_LLM_JUDGE_NAME = "llama3.1-70b"
 
 
 class RunDao:
@@ -231,6 +231,7 @@ class RunDao:
         object_version: Optional[str] = None,
         run_metadata_non_map_field_masks: Optional[List[str]] = None,
         invocation_field_masks: Optional[Dict[str, Any]] = None,
+        computation_field_masks: Optional[Dict[str, Any]] = None,
         metric_field_masks: Optional[Dict[str, Any]] = None,
         updated_run_metadata: Optional[Dict[str, Any]] = None,
     ) -> None:
@@ -262,6 +263,7 @@ class RunDao:
             "object_type": object_type,
             "run_name": run_name,
             "invocation_field_masks": invocation_field_masks,
+            "computation_field_masks": computation_field_masks,
             "metric_field_masks": metric_field_masks,
             "run_metadata_non_map_field_masks": run_metadata_non_map_field_masks,
             "run_metadata": updated_run_metadata,
@@ -283,113 +285,36 @@ class RunDao:
             parameters=(req_payload_json,),
         )
 
-    def upsert_invocation_metadata(
+    def upsert_run_metadata_fields(
         self,
-        invocation_metadata_id: str,
-        run_name: str,
-        object_name: str,
-        object_type: str,
-        input_records_count: Optional[int] = None,
-        object_version: Optional[str] = None,
-        start_time_ms: Optional[int] = None,
-        end_time_ms: Optional[int] = None,
-        completion_status: Optional[Dict] = None,
-    ):
-        existing_run: pd.DataFrame = self.get_run(
-            run_name=run_name,
-            object_name=object_name,
-            object_type=object_type,
-            object_version=object_version,
-        )
-        if existing_run.empty:
-            raise ValueError(f"Run '{run_name}' does not exist.")
-
-        updated_run_metadata = existing_run.get("run_metadata", {})
-
-        logger.debug(f"Existing run : {existing_run}")
-
-        invocations = updated_run_metadata.get("invocations", {})
-
-        # Check if the invocation already exists.
-        if invocation_metadata_id in invocations:
-            raise ValueError(
-                f"Invocation metadata with ID '{invocation_metadata_id}' already exists."
-            )
-        else:
-            # Create a new invocation entry with only the required fields.
-            new_invocation = {
-                "id": invocation_metadata_id,
-                "input_records_count": input_records_count,
-            }
-            if start_time_ms:
-                new_invocation["start_time_ms"] = start_time_ms
-            else:
-                new_invocation["start_time_ms"] = (
-                    0  # start and end time is always required by DPO
-                )
-            if end_time_ms:
-                new_invocation["end_time_ms"] = end_time_ms
-            else:
-                new_invocation["end_time_ms"] = (
-                    0  # end time is always required by DPO
-                )
-            if completion_status:
-                new_invocation["completion_status"] = completion_status
-
-            # Update the invocations dictionary.
-            invocations[invocation_metadata_id] = new_invocation
-
-        # Update the invocations dictionary.
-        invocations[invocation_metadata_id] = new_invocation
-        updated_run_metadata["invocations"] = invocations
-
-        # The field mask tells the server which keys in the invocation entry are updated.
-        invocation_field_masks = {
-            invocation_metadata_id: list(new_invocation.keys())
-        }
-        metric_field_masks = {}  # No metric updates in this operation.
-
-        # Push the updated run metadata to the server.
-        self._update_run(
-            run_name=run_name,
-            object_name=object_name,
-            object_type=object_type,
-            object_version=object_version,
-            invocation_field_masks=invocation_field_masks,
-            metric_field_masks=metric_field_masks,
-            updated_run_metadata=updated_run_metadata,
-        )
-
-    def upsert_computation_metadata(
-        self,
-        computation_metadata_id: str,
-        query_id: str,
+        entry_type: str,
+        entry_id: str,
         run_name: str,
         object_name: str,
         object_type: str,
         object_version: Optional[str] = None,
-        start_time_ms: Optional[int] = None,
-        end_time_ms: Optional[int] = None,
-    ):
+        **fields,
+    ) -> None:
         """
-        Upsert computation metadata for a run.
+        Consolidated upsert method for run metadata entries.
+        Supported entry types: "invocations", "computations", "metrics".
 
-        If a computation entry with the given computation_metadata_id exists, update it;
-        otherwise, insert a new computation metadata entry. The new entry contains:
-        - id: computation_metadata_id
-        - query_id: compute sproc query ID
-        - start_time_ms: start time in milliseconds
-        - end_time_ms: end time in milliseconds
+        This method retrieves the current run metadata, merges new fields with any existing
+        entry (if present), and then pushes the updated run metadata via _update_run.
+
+        For "invocations" and "computations", start_time_ms and end_time_ms are required by the backend.
+        If these fields are not provided in the new update and the existing entry also does not have them,
+        they default to 0. This allows start_time/end_time to be updated from separate calls without
+        overwriting previously set values.
 
         Args:
-            computation_metadata_id: Unique identifier for the computation metadata.
+            entry_type: One of "invocations", "computations", "metrics".
+            entry_id: Unique identifier for the metadata entry.
             run_name: The name of the run.
             object_name: The name of the object (e.g. agent name).
             object_type: The type of the object.
-            object_version: Optional version of the object.
-            query_id: The query identifier.
-            start_time_ms: The computation start time (ms).
-            end_time_ms: The computation end time (ms).
+            object_version: Optional version.
+            **fields: The fields to upsert.
         """
         # Retrieve the existing run.
         existing_run = self.get_run(
@@ -401,94 +326,42 @@ class RunDao:
         if existing_run.empty:
             raise ValueError(f"Run '{run_name}' does not exist.")
 
-        # Extract current run_metadata; initialize if missing.
+        # Get the current run_metadata (or default to empty dict).
         updated_run_metadata = existing_run.get("run_metadata", {})
-        computations = updated_run_metadata.get("computations", {})
 
-        # Build the new (or updated) computation entry.
-        new_computation = {
-            "id": computation_metadata_id,
-            "query_id": query_id,
-            "start_time_ms": start_time_ms,
-            "end_time_ms": end_time_ms,
-        }
-        computations[computation_metadata_id] = new_computation
-        updated_run_metadata["computations"] = computations
+        # Ensure the entry_type is supported.
+        if entry_type not in ["invocations", "computations", "metrics"]:
+            raise ValueError(f"Unsupported entry type: {entry_type}")
 
-        # For computation updates, we don't need to update invocation or metric fields.
+        # Get the container (e.g., the dictionary for the given entry_type).
+        container = updated_run_metadata.get(entry_type, {})
 
-        # Push the updated run metadata using the generic update method.
-        self._update_run(
-            run_name=run_name,
-            object_name=object_name,
-            object_type=object_type,
-            object_version=object_version,
-            invocation_field_masks={},
-            metric_field_masks={},
-            updated_run_metadata=updated_run_metadata,
-        )
+        # Retrieve any existing entry; if none, default to an empty dict.
+        existing_entry = container.get(entry_id, {})
 
-    def upsert_metric_metadata(
-        self,
-        metric_metadata_id: str,
-        name: str,
-        computation_id: str,
-        completion_status: dict,
-        run_name: str,
-        object_name: str,
-        object_type: str,
-        object_version: Optional[str] = None,
-    ):
-        """
-        Upsert metric metadata for a run.
+        # Merge the existing entry with the new fields.
+        new_entry = {**existing_entry, **fields}
+        new_entry["id"] = entry_id  # Ensure the id is always set.
 
-        If a metric entry with the given metric_metadata_id exists, update it;
-        otherwise, insert a new metric metadata entry. The new entry contains:
-        - id: metric_metadata_id
-        - name: the metric name
-        - computation_id: the associated computation id
-        - completion_status: a dict typically containing keys such as "status" and "record_count"
+        # Update the container with the merged entry.
+        container[entry_id] = new_entry
+        updated_run_metadata[entry_type] = container
 
-        Args:
-            metric_metadata_id: Unique identifier for the metric metadata.
-            run_name: The name of the run.
-            object_name: The name of the object (e.g. agent name).
-            object_type: The type of the object.
-            object_version: Optional version string.
-            name: The metric name.
-            computation_id: Identifier of the computation associated with the metric.
-            completion_status: A dictionary with completion status details.
-        """
-        # Retrieve the existing run.
-        existing_run = self.get_run(
-            run_name=run_name,
-            object_name=object_name,
-            object_type=object_type,
-            object_version=object_version,
-        )
-        if existing_run.empty:
-            raise ValueError(f"Run '{run_name}' does not exist.")
+        # Build the field mask from the keys of the new entry.
+        field_mask = {entry_id: list(new_entry.keys())}
 
-        # Get current run metadata (or default to empty).
-        updated_run_metadata = existing_run.get("run_metadata", {})
-        metrics = updated_run_metadata.get("metrics", {})
-
-        # Build the new metric entry.
-        new_metric = {
-            "id": metric_metadata_id,
-            "name": name,
-            "computation_id": computation_id,
-            "completion_status": completion_status,
-        }
-        metrics[metric_metadata_id] = new_metric
-        updated_run_metadata["metrics"] = metrics
-
-        # For metric updates, no changes are made to invocations.
+        # Prepare masks for each type.
         invocation_field_masks = {}
-        # Indicate which keys within the metric have been updated.
-        metric_field_masks = {metric_metadata_id: list(new_metric.keys())}
+        metric_field_masks = {}
+        computation_field_masks = {}
+        if entry_type == "invocations":
+            invocation_field_masks = field_mask
+        elif entry_type == "computations":
+            computation_field_masks = field_mask
+        elif entry_type == "metrics":
+            metric_field_masks = field_mask
 
-        # Push the updated run metadata to the server.
+        # Push the updated run metadata.
         self._update_run(
             run_name=run_name,
             object_name=object_name,
@@ -496,6 +369,7 @@ class RunDao:
             object_version=object_version,
             invocation_field_masks=invocation_field_masks,
             metric_field_masks=metric_field_masks,
+            computation_field_masks=computation_field_masks,
             updated_run_metadata=updated_run_metadata,
         )
 
