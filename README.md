@@ -55,5 +55,5 @@ Interested in contributing? See our [contributing
 guide](https://www.trulens.org/trulens/contributing/) for more details.
 
 The best way to support TruLens is to give us a ⭐ on
-[GitHub](https://www.github.com/truera/trulens) and join our [slack
-community](https://communityinviter.com/apps/aiqualityforum/josh)!
+[GitHub](https://www.github.com/truera/trulens) and join our [discourse
+community](https://snowflake.discourse.group/c/ai-research-and-development-community/trulens/97)!
