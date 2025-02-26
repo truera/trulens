@@ -741,6 +741,8 @@ trulens.core.run:
     INVOCATION_TIMEOUT_IN_MS: builtins.int
     Run: pydantic._internal._model_construction.ModelMetaclass
     RunConfig: pydantic._internal._model_construction.ModelMetaclass
+    SUPPORTED_ENTRY_TYPES: builtins.list
+    SupportedEntryType: enum.EnumType
     validate_dataset_spec: builtins.function
 trulens.core.run.Run:
   __bases__:
@@ -786,6 +788,17 @@ trulens.core.run.RunConfig:
     llm_judge_name: typing.Optional[builtins.str, builtins.NoneType]
     run_name: builtins.str
     source_type: builtins.str
+trulens.core.run.SupportedEntryType:
+  __bases__:
+  - builtins.str
+  - enum.Enum
+  __class__: enum.EnumType
+  attributes:
+    COMPUTATIONS: trulens.core.run.SupportedEntryType
+    INVOCATIONS: trulens.core.run.SupportedEntryType
+    METRICS: trulens.core.run.SupportedEntryType
+    name: enum.property
+    value: enum.property
 trulens.core.schema:
   __class__: builtins.module
   highs:
