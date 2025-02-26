@@ -7,6 +7,8 @@ from snowflake.snowpark import Session
 from snowflake.snowpark.row import Row
 from trulens.connectors.snowflake.dao.enums import SourceType
 from trulens.connectors.snowflake.dao.sql_utils import execute_query
+from trulens.core.run import SUPPORTED_ENTRY_TYPES
+from trulens.core.run import SupportedEntryType
 from trulens.core.utils import json as json_utils
 
 logger = logging.getLogger(__name__)
@@ -227,7 +229,7 @@ class RunDao:
           - invocation_field_masks: maps invocation IDs to lists of updated keys (e.g., {"invocation_1": ["id", "input_records_count", "start_time_ms"]})
           - metric_field_masks: similar mapping for metrics (if any)
           - run_metadata_non_map_field_masks: non-map fields to update (e.g. ["labels", "llm_judge_name"])
-          - run_metadata: the complete, updated run_metadata (e.g. updated invocations, computations, metrics, etc.)
+          - run_metadata: the updated run_metadata (e.g. updated invocations, computations, metrics, etc.)
 
         Args:
             run_name: The name of the run.
@@ -236,7 +238,7 @@ class RunDao:
             object_version: Optional version string.
             invocation_field_masks: The mask for invocation fields to update.
             metric_field_masks: The mask for metric fields to update.
-            updated_run_metadata: The complete updated run_metadata dict.
+            updated_run_metadata: The updated run_metadata dict.
         """
 
         # Build the payload dictionary.
@@ -296,6 +298,9 @@ class RunDao:
             object_version: Optional version.
             **fields: The fields to upsert.
         """
+        if entry_type not in SUPPORTED_ENTRY_TYPES:
+            raise ValueError(f"Unsupported entry type: {entry_type}")
+
         # Retrieve the existing run.
         existing_run = self.get_run(
             run_name=run_name,
@@ -307,9 +312,6 @@ class RunDao:
             raise ValueError(f"Run '{run_name}' does not exist.")
 
         updated_run_metadata = existing_run.get("run_metadata", {})
-
-        if entry_type not in ["invocations", "computations", "metrics"]:
-            raise ValueError(f"Unsupported entry type: {entry_type}")
 
         # Get the container (e.g., the dictionary for the given entry_type).
         container = updated_run_metadata.get(entry_type, {})
@@ -330,11 +332,11 @@ class RunDao:
         invocation_field_masks = {}
         metric_field_masks = {}
         computation_field_masks = {}
-        if entry_type == "invocations":
+        if entry_type == SupportedEntryType.INVOCATIONS:
             invocation_field_masks = field_mask
-        elif entry_type == "computations":
+        elif entry_type == SupportedEntryType.COMPUTATIONS:
             computation_field_masks = field_mask
-        elif entry_type == "metrics":
+        elif entry_type == SupportedEntryType.METRICS:
             metric_field_masks = field_mask
 
         self._update_run(

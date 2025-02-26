@@ -29,6 +29,19 @@ INVOCATION_TIMEOUT_IN_MS = (
 )  # expected latency from the telemetry pipeline before ingested rows show up in event table
 
 
+class SupportedEntryType(str, Enum):
+    INVOCATIONS = "invocations"
+    COMPUTATIONS = "computations"
+    METRICS = "metrics"
+
+
+SUPPORTED_ENTRY_TYPES = [
+    SupportedEntryType.INVOCATIONS,
+    SupportedEntryType.COMPUTATIONS,
+    SupportedEntryType.METRICS,
+]
+
+
 def validate_dataset_spec(
     dataset_spec: Dict[str, str],
 ) -> Dict[str, str]:
@@ -368,7 +381,7 @@ class Run(BaseModel):
         )
 
         self.run_dao.upsert_run_metadata_fields(
-            entry_type="invocations",
+            entry_type=SupportedEntryType.INVOCATIONS,
             entry_id=invocation_metadata_id,
             start_time_ms=start_time_ms,
             end_time_ms=0,  # required field
@@ -416,7 +429,7 @@ class Run(BaseModel):
             )
 
             self.run_dao.upsert_run_metadata_fields(
-                entry_type="invocations",
+                entry_type=SupportedEntryType.INVOCATIONS,
                 entry_id=invocation_metadata_id,
                 end_time_ms=int(round(time.time() * 1000)),
                 completion_status=Run.CompletionStatus(
@@ -529,7 +542,7 @@ class Run(BaseModel):
                 ):
                     # happy case, add end time and update status
                     self.run_dao.upsert_run_metadata_fields(
-                        entry_type="invocations",
+                        entry_type=SupportedEntryType.INVOCATIONS,
                         entry_id=latest_invocation.id,
                         input_records_count=latest_invocation.input_records_count,
                         start_time_ms=latest_invocation.start_time_ms,
@@ -554,7 +567,7 @@ class Run(BaseModel):
                     logger.warning("Invocation timeout reached and concluded")
                     # timeout reached, persist to DPO backend
                     self.run_dao.upsert_run_metadata_fields(
-                        entry_type="invocations",
+                        entry_type=SupportedEntryType.INVOCATIONS,
                         entry_id=latest_invocation.id,
                         input_records_count=latest_invocation.input_records_count,
                         start_time_ms=latest_invocation.start_time_ms,
@@ -589,7 +602,7 @@ class Run(BaseModel):
 
                 if current_computation_query_status == "SUCCESS":
                     self.run_dao.upsert_run_metadata_fields(
-                        entry_type="computations",
+                        entry_type=SupportedEntryType.COMPUTATIONS,
                         entry_id=latest_computation.id,
                         query_id=computation_sproc_query_id,
                         start_time_ms=latest_computation.start_time_ms,
@@ -621,7 +634,7 @@ class Run(BaseModel):
                             )
 
                             self.run_dao.upsert_run_metadata_fields(
-                                entry_type="metrics",
+                                entry_type=SupportedEntryType.METRICS,
                                 entry_id=metric_metatada_id,
                                 computation_id=latest_computation.id,
                                 name=row["METRIC"],
@@ -641,7 +654,7 @@ class Run(BaseModel):
                             )
 
                             self.run_dao.upsert_run_metadata_fields(
-                                entry_type="metrics",
+                                entry_type=SupportedEntryType.METRICS,
                                 entry_id=metric_metatada_id,
                                 computation_id=latest_computation.id,
                                 name=row["METRIC"],
@@ -666,7 +679,7 @@ class Run(BaseModel):
                     == "FAILED_WITH_INCIDENT"
                 ):
                     self.run_dao.upsert_run_metadata_fields(
-                        entry_type="computations",
+                        entry_type=SupportedEntryType.COMPUTATIONS,
                         entry_id=latest_computation.id,
                         query_id=computation_sproc_query_id,
                         start_time_ms=latest_computation.start_time_ms,
@@ -709,7 +722,7 @@ class Run(BaseModel):
             computation_start_time_ms = int(round(time.time() * 1000))
 
             self.run_dao.upsert_run_metadata_fields(
-                entry_type="computations",
+                entry_type=SupportedEntryType.COMPUTATIONS,
                 entry_id=computation_metadata_id,
                 query_id=query_id,
                 start_time_ms=computation_start_time_ms,
