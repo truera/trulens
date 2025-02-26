@@ -374,7 +374,7 @@ class Run(BaseModel):
             dataset_name=self.source_info.name,
             input_records_count=input_records_count,
         )
-        start_time_ms = int(round(time.time() * 1000))
+        start_time_ms = self._get_current_time_in_ms()
 
         logger.info(
             f"Creating or updating invocation metadata with {input_records_count} records from input."
@@ -408,16 +408,13 @@ class Run(BaseModel):
                     if "input_id" in dataset_spec
                     else None
                 )
-                ground_truth_output = row.get(
-                    dataset_spec.get("ground_truth_output")
-                )
+
                 if input_id is None and "input" in dataset_spec:
                     input_id = hash(row[dataset_spec["input"]])
 
                 self.app.instrumented_invoke_main_method(
                     run_name=self.run_name,
                     input_id=input_id,
-                    ground_truth_output=ground_truth_output,
                     main_method_args=tuple(
                         main_method_args
                     ),  # Ensure correct order
@@ -431,7 +428,9 @@ class Run(BaseModel):
             self.run_dao.upsert_run_metadata_fields(
                 entry_type=SupportedEntryType.INVOCATIONS,
                 entry_id=invocation_metadata_id,
-                end_time_ms=int(round(time.time() * 1000)),
+                start_time_ms=start_time_ms,
+                input_records_count=input_records_count,
+                end_time_ms=self._get_current_time_in_ms(),
                 completion_status=Run.CompletionStatus(
                     status=Run.CompletionStatusStatus.FAILED,
                 ).model_dump(),
@@ -445,6 +444,9 @@ class Run(BaseModel):
 
         self.tru_session.force_flush()
         logger.info("Run started, invocation done and ingestion in process.")
+
+    def _get_current_time_in_ms(self) -> int:
+        return int(round(time.time() * 1000))
 
     def _read_record_count_from_event_table(self) -> int:
         query = """
@@ -538,7 +540,7 @@ class Run(BaseModel):
                 if (
                     latest_invocation.input_records_count
                     and current_ingested_records_count
-                    >= latest_invocation.input_records_count
+                    == latest_invocation.input_records_count
                 ):
                     # happy case, add end time and update status
                     self.run_dao.upsert_run_metadata_fields(
@@ -546,7 +548,7 @@ class Run(BaseModel):
                         entry_id=latest_invocation.id,
                         input_records_count=latest_invocation.input_records_count,
                         start_time_ms=latest_invocation.start_time_ms,
-                        end_time_ms=int(round(time.time() * 1000)),
+                        end_time_ms=self._get_current_time_in_ms(),
                         completion_status=Run.CompletionStatus(
                             status=Run.CompletionStatusStatus.COMPLETED,
                             record_count=current_ingested_records_count,
@@ -571,7 +573,7 @@ class Run(BaseModel):
                         entry_id=latest_invocation.id,
                         input_records_count=latest_invocation.input_records_count,
                         start_time_ms=latest_invocation.start_time_ms,
-                        end_time_ms=int(round(time.time() * 1000)),
+                        end_time_ms=self._get_current_time_in_ms(),
                         completion_status=Run.CompletionStatus(
                             status=Run.CompletionStatusStatus.PARTIALLY_COMPLETED,
                             record_count=current_ingested_records_count,
@@ -606,7 +608,7 @@ class Run(BaseModel):
                         entry_id=latest_computation.id,
                         query_id=computation_sproc_query_id,
                         start_time_ms=latest_computation.start_time_ms,
-                        end_time_ms=int(round(time.time() * 1000)),
+                        end_time_ms=self._get_current_time_in_ms(),
                         run_name=self.run_name,
                         object_name=self.object_name,
                         object_type=self.object_type,
@@ -683,7 +685,7 @@ class Run(BaseModel):
                         entry_id=latest_computation.id,
                         query_id=computation_sproc_query_id,
                         start_time_ms=latest_computation.start_time_ms,
-                        end_time_ms=int(round(time.time() * 1000)),
+                        end_time_ms=self._get_current_time_in_ms(),
                         run_name=self.run_name,
                         object_name=self.object_name,
                         object_type=self.object_type,
@@ -719,7 +721,7 @@ class Run(BaseModel):
 
             computation_metadata_id = str(uuid.uuid4())
 
-            computation_start_time_ms = int(round(time.time() * 1000))
+            computation_start_time_ms = self._get_current_time_in_ms()
 
             self.run_dao.upsert_run_metadata_fields(
                 entry_type=SupportedEntryType.COMPUTATIONS,

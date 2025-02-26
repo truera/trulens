@@ -251,6 +251,8 @@ class RunDao:
             "metric_field_masks": metric_field_masks,
             "run_metadata_non_map_field_masks": run_metadata_non_map_field_masks,
             "run_metadata": updated_run_metadata,
+            "description": "placeholder_description",  # TODO: fix
+            "update_description": "false",
         }
         if object_version is not None:
             payload["object_version"] = object_version
