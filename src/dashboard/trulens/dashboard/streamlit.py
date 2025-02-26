@@ -264,7 +264,6 @@ def trulens_feedback(record: record_schema.Record):
         )
         icons.append(feedbacks[call_data["feedback_name"]].icon)
 
-    st.header("Feedback Functions")
     format_func = lambda fcol: f"{fcol} {feedbacks[fcol].score:.4f}"
     if hasattr(st, "pills"):
         # Use native streamlit pills, released in 1.40.0
