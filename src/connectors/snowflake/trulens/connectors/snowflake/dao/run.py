@@ -31,13 +31,6 @@ class RunDao:
         """Initialize with an active Snowpark session."""
         self.session: Session = snowpark_session
 
-    # @staticmethod
-    # def _compute_source_info_id(dataset_name: str, dataset_spec: dict) -> str:
-    #     return json_utils.obj_id_of_obj(
-    #         obj={"dataset_name": dataset_name, "dataset_spec": dataset_spec},
-    #         prefix="source_info",
-    #     )
-
     @staticmethod
     def _compute_invocation_metadata_id(
         dataset_name: str, input_records_count: int
