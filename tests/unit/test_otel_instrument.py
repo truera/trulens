@@ -30,7 +30,7 @@ class TestOtelInstrument(unittest.TestCase):
         self.span_processor.shutdown()
         return super().tearDown()
 
-    def test__get_func_name(self):
+    def test__get_func_name(self) -> None:
         self.assertEqual(
             _get_func_name(lambda: None),
             "tests.unit.test_otel_instrument.TestOtelInstrument.test__get_func_name.<locals>.<lambda>",
@@ -44,7 +44,7 @@ class TestOtelInstrument(unittest.TestCase):
             "pandas.core.frame.DataFrame.transpose",
         )
 
-    def test_sync_non_generator_function(self):
+    def test_sync_non_generator_function(self) -> None:
         # Set up instrumented function.
         @instrument(
             attributes=lambda ret, exception, *args, **kwargs: {
@@ -70,7 +70,7 @@ class TestOtelInstrument(unittest.TestCase):
 
     def _test_sync_generator_function(
         self, my_function: Callable, test_name: str
-    ):
+    ) -> None:
         # Run the generator to completion.
         best_babies = my_function()
         for curr in best_babies:
@@ -107,7 +107,7 @@ class TestOtelInstrument(unittest.TestCase):
             ("Kojikun", "Nolan"),
         )
 
-    def test_sync_generator_function(self):
+    def test_sync_generator_function(self) -> None:
         # Set up instrumented function.
         @instrument(
             attributes=lambda ret, exception, *args, **kwargs: {
@@ -123,7 +123,7 @@ class TestOtelInstrument(unittest.TestCase):
             my_function, "test_sync_generator_function"
         )
 
-    def test_sync_generator_passed_through_function(self):
+    def test_sync_generator_passed_through_function(self) -> None:
         # Set up instrumented function.
         @instrument(
             attributes=lambda ret, exception, *args, **kwargs: {
@@ -142,7 +142,7 @@ class TestOtelInstrument(unittest.TestCase):
             my_function, "test_sync_generator_passed_through_function"
         )
 
-    def test_async_non_generator_function(self):
+    def test_async_non_generator_function(self) -> None:
         # Set up instrumented function.
         @instrument(
             attributes=lambda ret, exception, *args, **kwargs: {
@@ -167,7 +167,7 @@ class TestOtelInstrument(unittest.TestCase):
             "Kojikun",
         )
 
-    def test_async_generator_function(self):
+    def test_async_generator_function(self) -> None:
         # Set up instrumented function.
         @instrument(
             attributes=lambda ret, exception, *args, **kwargs: {

@@ -8,7 +8,6 @@ from opentelemetry.baggage import get_baggage
 from trulens.apps.app import TruApp
 from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
-from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.otel_app_test_case import OtelAppTestCase
@@ -55,9 +54,13 @@ class TestOtelMultiThreaded(OtelAppTestCase):
             record_attributes = row["record_attributes"]
             span_type = record_attributes[SpanAttributes.SPAN_TYPE]
             if span_type == SpanAttributes.SpanType.UNKNOWN:
-                best_baby = record_attributes[f"{BASE_SCOPE}.unknown.best_baby"]
+                best_baby = record_attributes[
+                    f"{SpanAttributes.UNKNOWN.base}.best_baby"
+                ]
                 self.assertEqual(best_baby, "Kojikun")
-                span_id = record_attributes[f"{BASE_SCOPE}.unknown.span_id"]
+                span_id = record_attributes[
+                    f"{SpanAttributes.UNKNOWN.base}.span_id"
+                ]
                 self.assertEqual(span_id, row["trace"]["span_id"])
                 seen_span_ids.add(span_id)
             elif span_type == SpanAttributes.SpanType.RECORD_ROOT:
