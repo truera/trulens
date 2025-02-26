@@ -7,7 +7,7 @@ from trulens.otel.semconv.constants import (
     TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
 )
 
-from tests.util.otel_app_test_case import OtelAppTestCase
+import tests.util.otel_tru_app_test_case
 
 try:
     # These imports require optional dependencies to be installed.
@@ -35,7 +35,7 @@ _CONTEXT_RETRIEVAL_REPLACEMENT = r"\1"
 
 
 @pytest.mark.optional
-class TestOtelTruLlama(OtelAppTestCase):
+class TestOtelTruLlama(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
     @staticmethod
     def _create_simple_rag():
         Settings.chunk_size = 128
@@ -49,6 +49,15 @@ class TestOtelTruLlama(OtelAppTestCase):
             documents, embed_model=MockEmbedding(10)
         )
         return index.as_query_engine(similarity_top_k=3)
+
+    @staticmethod
+    def _create_test_app_info() -> (
+        tests.util.otel_tru_app_test_case.TestAppInfo
+    ):
+        app = TestOtelTruLlama._create_simple_rag()
+        return tests.util.otel_tru_app_test_case.TestAppInfo(
+            app=app, main_method=app.query, TruAppClass=TruLlama
+        )
 
     def test_missing_main_method_raises_error(self):
         # Create app.
