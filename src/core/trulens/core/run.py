@@ -282,10 +282,16 @@ class Run(BaseModel):
             if input_id is None and "input" in dataset_column_spec:
                 input_id = hash(row[dataset_column_spec["input"]])
 
+            ground_truth_output = None
+            if "ground_truth_output" in dataset_column_spec:
+                ground_truth_output = row[
+                    dataset_column_spec["ground_truth_output"]
+                ]
+
             self.app.instrumented_invoke_main_method(
                 run_name=self.run_name,
                 input_id=input_id,
-                ground_truth_output="",
+                ground_truth_output=ground_truth_output,
                 main_method_args=tuple(
                     main_method_args
                 ),  # Ensure correct order
