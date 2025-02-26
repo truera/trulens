@@ -306,7 +306,7 @@ class RunDao:
 
         updated_run_metadata = existing_run.get("run_metadata", {})
 
-        logger.debug(f"Existing run metadata: {updated_run_metadata}")
+        logger.debug(f"Existing run : {existing_run}")
 
         invocations = updated_run_metadata.get("invocations", {})
 

@@ -554,57 +554,47 @@ class Run(BaseModel):
             compute_metrics_query = f"CALL COMPUTE_AI_OBSERVABILITY_METRICS('{current_db}', '{current_schema}', '{self.object_name}', '{self.object_version}', '{self.object_type}', '{self.run_name}', ARRAY_CONSTRUCT({metrics_str}));"
 
             compute_query = self.run_dao.session.sql(compute_metrics_query)
-            # query_id = compute_query._query_id
-            # logger.info(f"Query id for metrics computation: {test_query_id}")
 
+            async_job = compute_query.collect_nowait()
+            query_id = async_job.query_id
+            logger.info(f"Query id for metrics computation: {query_id}")
             computation_metadata_id = str(uuid.uuid4())
             self.run_dao.upsert_computation_metadata(
                 computation_metadata_id=computation_metadata_id,
-                query_id="query_id",
+                query_id=query_id,
                 run_name=self.run_name,
                 object_name=self.object_name,
                 object_type=self.object_type,
                 object_version=self.object_version,
-                metrics=metrics,
                 start_time_ms=int(round(time.time() * 1000)),
             )
 
-            compute_results_rows = (
-                compute_query.collect()
-            )  # TODO shouldn't this be async?
+            compute_results_rows = async_job.result()
 
             for row in compute_results_rows:
                 row_msg = row["MESSAGE"]
-                pattern = r"Computed\s+(\d+)\s+records\."
+                logger.error(row_msg)
+                # computed_records_count = int(
+                #     row_msg.split(" ")[-1]
+                # )  # TODO change to regex or directly read the field when available
 
-                match = re.search(pattern, row_msg)
-                if match:
-                    computed_records_count = match.group(1)
-                    logger.debug(
-                        "computed_records_count:", computed_records_count
-                    )
-                else:
-                    raise ValueError(
-                        f"Cannot parse the message returned by the metrics computation: {row_msg}"
-                    )
-
-                if row["STATUS"] == "SUCCESS":
-                    logger.info(
-                        f"Metrics computation for {row['METRIC_NAME']} succeeded."
-                    )
-                    self.run_dao.upsert_metrics_metadata(
-                        metrics_metadata_id="XXX",
-                        computation_id=computation_metadata_id,
-                        name=row["METRIC"],
-                        completion_status=Run.CompletionStatus(
-                            status=CompletionStatusStatus.COMPLETED,
-                            record_count=computed_records_count,
-                        ).model_dump(),
-                        run_name=self.run_name,
-                        object_name=self.object_name,
-                        object_type=self.object_type,
-                        object_version=self.object_version,
-                    )
+                # if row["STATUS"] == "SUCCESS":
+                #     logger.info(
+                #         f"Metrics computation for {row['METRIC']} succeeded."
+                #     )
+                #     self.run_dao.upsert_metrics_metadata(
+                #         metrics_metadata_id="XXX",
+                #         computation_id=computation_metadata_id,
+                #         name=row["METRIC"],
+                #         completion_status=Run.CompletionStatus(
+                #             status=CompletionStatusStatus.COMPLETED,
+                #             record_count=computed_records_count,
+                #         ).model_dump(),
+                #         run_name=self.run_name,
+                #         object_name=self.object_name,
+                #         object_type=self.object_type,
+                #         object_version=self.object_version,
+                #     )
 
             return
         else:
