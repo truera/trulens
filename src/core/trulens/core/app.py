@@ -473,6 +473,11 @@ class App(
 
         # for us:
         if connector:
+            tru_session = TruSession(connector=connector)
+            if tru_session.connector is not connector:
+                raise ValueError(
+                    "Already created `TruSession` with different `connector`!"
+                )
             kwargs["connector"] = connector
 
         kwargs["feedbacks"] = feedbacks

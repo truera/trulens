@@ -248,8 +248,13 @@ class TruChain(core_app.App):
     ):
         # TruChain specific:
         kwargs["app"] = app
+        tru_session = (
+            TruSession()
+            if "connector" not in kwargs
+            else TruSession(connector=kwargs["connector"])
+        )
         if (
-            TruSession().experimental_feature(
+            tru_session.experimental_feature(
                 core_experimental.Feature.OTEL_TRACING
             )
             and main_method is None
