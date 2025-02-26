@@ -43,15 +43,6 @@ class RunDao:
             prefix="invocation_metadata",
         )
 
-    @staticmethod
-    def _generate_computation_metadata_id():
-        # generate a random UUID for the computation metadata
-        pass
-
-    @staticmethod
-    def _compute_metrics_metadata_id():
-        pass
-
     def create_new_run(
         self,
         object_name: str,
