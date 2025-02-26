@@ -330,15 +330,15 @@ class Run(BaseModel):
             ).collect()
             input_df = pd.DataFrame([row.as_dict() for row in rows])
 
-        dataset_column_spec = self.source_info.column_spec
+        dataset_spec = self.source_info.column_spec
 
-        # Preprocess the dataset_column_spec to create mappings for input columns
+        # Preprocess the dataset_spec to create mappings for input columns
         # and map the inputs for reserved fields only once, before the iteration over rows.
         input_columns_by_subscripts = {}
         reserved_field_column_mapping = {}
 
         # Process dataset column spec to handle subscripting logic for input columns
-        for reserved_field, user_column in dataset_column_spec.items():
+        for reserved_field, user_column in dataset_spec.items():
             if (
                 reserved_field.startswith("input")
                 or reserved_field.split("_")[1] == "input"
@@ -391,16 +391,20 @@ class Run(BaseModel):
 
                 # Call the instrumented main method with the arguments
                 input_id = (
-                    row[dataset_column_spec["input_id"]]
-                    if "input_id" in dataset_column_spec
+                    row[dataset_spec["input_id"]]
+                    if "input_id" in dataset_spec
                     else None
                 )
-                if input_id is None and "input" in dataset_column_spec:
-                    input_id = hash(row[dataset_column_spec["input"]])
+                ground_truth_output = row.get(
+                    dataset_spec.get("ground_truth_output")
+                )
+                if input_id is None and "input" in dataset_spec:
+                    input_id = hash(row[dataset_spec["input"]])
 
                 self.app.instrumented_invoke_main_method(
                     run_name=self.run_name,
                     input_id=input_id,
+                    ground_truth_output=ground_truth_output,
                     main_method_args=tuple(
                         main_method_args
                     ),  # Ensure correct order
