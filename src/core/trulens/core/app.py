@@ -617,13 +617,7 @@ class App(
                     SpanAttributes.RECORD_ROOT.INPUT: self.main_input(
                         func, sig, sig.bind_partial(**kwargs)
                     ),
-                    SpanAttributes.RECORD_ROOT.MAIN_INPUT: self.main_input(
-                        func, sig, sig.bind_partial(**kwargs)
-                    ),
                     SpanAttributes.RECORD_ROOT.OUTPUT: self.main_output(
-                        func, sig, sig.bind_partial(**kwargs), ret
-                    ),
-                    SpanAttributes.RECORD_ROOT.MAIN_OUTPUT: self.main_output(
                         func, sig, sig.bind_partial(**kwargs), ret
                     ),
                 },

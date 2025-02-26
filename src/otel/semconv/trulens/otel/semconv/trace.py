@@ -127,18 +127,6 @@ class SpanAttributes:
         Exclusive with main output.
         """
 
-        MAIN_INPUT = base + ".main_input"
-        """Main input to the app."""
-
-        MAIN_OUTPUT = base + ".main_output"
-        """Main output of the app."""
-
-        MAIN_ERROR = base + ".main_error"
-        """Main error of the app.
-
-        Exclusive with main output.
-        """
-
         GROUND_TRUTH_OUTPUT = base + ".ground_truth_output"
         """Ground truth of the record."""
 
