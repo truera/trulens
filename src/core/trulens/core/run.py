@@ -377,6 +377,7 @@ class Run(BaseModel):
         return current_run_status in [
             RunStatus.CREATED,
             RunStatus.INVOCATION_PARTIALLY_COMPLETED,
+            RunStatus.FAILED,
             RunStatus.UNKNOWN,
         ]
 
@@ -649,7 +650,7 @@ class Run(BaseModel):
         current_status = self.get_status()
         logger.info(f"Current run status: {current_status}")
         if not self._can_start_new_invocation(current_status):
-            return f"Cannot start a new invocation when in run status: {current_status}. Valid statuses are: {RunStatus.CREATED}, {RunStatus.INVOCATION_PARTIALLY_COMPLETED}."
+            return f"Cannot start a new invocation when in run status: {current_status}. Valid statuses are: {RunStatus.CREATED}, {RunStatus.INVOCATION_PARTIALLY_COMPLETED}, or {RunStatus.FAILED}."
 
         if input_df is None:
             logger.info(
