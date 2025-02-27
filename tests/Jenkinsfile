@@ -57,6 +57,8 @@ pipeline {
                 '''
                 sh label: 'Build all packages with zip wheels', script: '''
                     set -e
+                    apt-get install zip
+                    apt-get install unzip
                     make build-with-zip-wheels
                 '''
             }
