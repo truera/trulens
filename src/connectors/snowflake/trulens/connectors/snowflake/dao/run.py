@@ -1,12 +1,15 @@
 import json
 import logging
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from snowflake.snowpark import Session
 from snowflake.snowpark.row import Row
 from trulens.connectors.snowflake.dao.enums import SourceType
 from trulens.connectors.snowflake.dao.sql_utils import execute_query
+from trulens.core.run import SUPPORTED_ENTRY_TYPES
+from trulens.core.run import SupportedEntryType
+from trulens.core.utils import json as json_utils
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +23,7 @@ METHOD_UPDATE = "UPDATE"
 METHOD_DELETE = "DELETE"
 METHOD_LIST = "LIST"
 
-DEFAULT_LLM_JUDGE_NAME = "mistral-large2"
+DEFAULT_LLM_JUDGE_NAME = "llama3.1-70b"
 
 
 class RunDao:
@@ -29,6 +32,18 @@ class RunDao:
     def __init__(self, snowpark_session: Session) -> None:
         """Initialize with an active Snowpark session."""
         self.session: Session = snowpark_session
+
+    @staticmethod
+    def _compute_invocation_metadata_id(
+        dataset_name: str, input_records_count: int
+    ):
+        return json_utils.obj_id_of_obj(
+            obj={
+                "dataset_name": dataset_name,
+                "input_records_count": input_records_count,
+            },
+            prefix="invocation_metadata",
+        )
 
     def create_new_run(
         self,
@@ -102,7 +117,9 @@ class RunDao:
 
         query = AIML_RUN_OPS_SYS_FUNC_TEMPLATE.format(method=METHOD_CREATE)
 
-        logger.debug("Executing query: %s", query)
+        logger.debug(
+            f"Executing query: {query} with parameters {req_payload_json}"
+        )
 
         execute_query(
             self.session,
@@ -151,7 +168,9 @@ class RunDao:
         req_payload_json = json.dumps(req_payload)
         query = AIML_RUN_OPS_SYS_FUNC_TEMPLATE.format(method=METHOD_GET)
 
-        logger.debug("Executing query: %s", query)
+        logger.debug(
+            f"Executing query: {query} with parameters {req_payload_json}"
+        )
         rows: List[Row] = execute_query(
             self.session,
             query,
@@ -178,7 +197,9 @@ class RunDao:
         req_payload_json = json.dumps(req_payload)
         query = AIML_RUN_OPS_SYS_FUNC_TEMPLATE.format(method=METHOD_LIST)
 
-        logger.debug("Executing query: %s", query)
+        logger.debug(
+            f"Executing query: {query} with parameters {req_payload_json}"
+        )
 
         rows: List[Row] = execute_query(
             self.session,
@@ -187,6 +208,149 @@ class RunDao:
         )
 
         return pd.DataFrame([rows[0].as_dict()])
+
+    def _update_run(
+        self,
+        run_name: str,
+        object_name: str,
+        object_type: str,
+        object_version: Optional[str] = None,
+        run_metadata_non_map_field_masks: Optional[List[str]] = None,
+        invocation_field_masks: Optional[Dict[str, Any]] = None,
+        computation_field_masks: Optional[Dict[str, Any]] = None,
+        metric_field_masks: Optional[Dict[str, Any]] = None,
+        updated_run_metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """
+        Generic method to update a run's metadata on the server.
+
+        The payload is built to match the server integration tests. It includes:
+          - object_name, object_type, object_version, run_name
+          - invocation_field_masks: maps invocation IDs to lists of updated keys (e.g., {"invocation_1": ["id", "input_records_count", "start_time_ms"]})
+          - metric_field_masks: similar mapping for metrics (if any)
+          - run_metadata_non_map_field_masks: non-map fields to update (e.g. ["labels", "llm_judge_name"])
+          - run_metadata: the updated run_metadata (e.g. updated invocations, computations, metrics, etc.)
+
+        Args:
+            run_name: The name of the run.
+            object_name: The name of the object (e.g. agent name).
+            object_type: The type of the object.
+            object_version: Optional version string.
+            invocation_field_masks: The mask for invocation fields to update.
+            metric_field_masks: The mask for metric fields to update.
+            updated_run_metadata: The updated run_metadata dict.
+        """
+
+        # Build the payload dictionary.
+        payload = {
+            "object_name": object_name,
+            "object_type": object_type,
+            "run_name": run_name,
+            "invocation_field_masks": invocation_field_masks,
+            "computation_field_masks": computation_field_masks,
+            "metric_field_masks": metric_field_masks,
+            "run_metadata_non_map_field_masks": run_metadata_non_map_field_masks,
+            "run_metadata": updated_run_metadata,
+            "description": "placeholder_description",  # TODO: fix
+            "update_description": "false",
+        }
+        if object_version is not None:
+            payload["object_version"] = object_version
+
+        req_payload_json = json.dumps(payload)
+        query = AIML_RUN_OPS_SYS_FUNC_TEMPLATE.format(method="UPDATE")
+
+        logger.debug(
+            f"Executing query: {query} with parameters {req_payload_json}"
+        )
+        execute_query(
+            self.session,
+            query,
+            parameters=(req_payload_json,),
+        )
+
+    def upsert_run_metadata_fields(
+        self,
+        entry_type: str,
+        entry_id: str,
+        run_name: str,
+        object_name: str,
+        object_type: str,
+        object_version: Optional[str] = None,
+        **fields,
+    ) -> None:
+        """
+        Consolidated upsert method for run metadata entries.
+        Supported entry types: "invocations", "computations", "metrics".
+
+        This method retrieves the current run metadata, merges new fields with any existing
+        entry (if present), and then pushes the updated run metadata via _update_run.
+
+        For "invocations" and "computations", start_time_ms and end_time_ms are required by the backend.
+        If these fields are not provided in the new update and the existing entry also does not have them,
+        they default to 0. This allows start_time/end_time to be updated from separate calls without
+        overwriting previously set values.
+
+        Args:
+            entry_type: One of "invocations", "computations", "metrics".
+            entry_id: Unique identifier for the metadata entry.
+            run_name: The name of the run.
+            object_name: The name of the object (e.g. agent name).
+            object_type: The type of the object.
+            object_version: Optional version.
+            **fields: The fields to upsert.
+        """
+        if entry_type not in SUPPORTED_ENTRY_TYPES:
+            raise ValueError(f"Unsupported entry type: {entry_type}")
+
+        # Retrieve the existing run.
+        existing_run = self.get_run(
+            run_name=run_name,
+            object_name=object_name,
+            object_type=object_type,
+            object_version=object_version,
+        )
+        if existing_run.empty:
+            raise ValueError(f"Run '{run_name}' does not exist.")
+
+        updated_run_metadata = existing_run.get("run_metadata", {})
+
+        # Get the container (e.g., the dictionary for the given entry_type).
+        container = updated_run_metadata.get(entry_type, {})
+
+        existing_entry = container.get(entry_id, {})
+
+        # Merge the existing entry with the new fields.
+        new_entry = {**existing_entry, **fields}
+        new_entry["id"] = entry_id  # Ensure the id is always set.
+
+        container[entry_id] = new_entry
+        updated_run_metadata[entry_type] = container
+
+        # TODO: (P0 to fix) ensure we only modify the updated ones
+        field_mask = {entry_id: list(new_entry.keys())}
+
+        # field masks for each entry type.
+        invocation_field_masks = {}
+        metric_field_masks = {}
+        computation_field_masks = {}
+        if entry_type == SupportedEntryType.INVOCATIONS:
+            invocation_field_masks = field_mask
+        elif entry_type == SupportedEntryType.COMPUTATIONS:
+            computation_field_masks = field_mask
+        elif entry_type == SupportedEntryType.METRICS:
+            metric_field_masks = field_mask
+
+        self._update_run(
+            run_name=run_name,
+            object_name=object_name,
+            object_type=object_type,
+            object_version=object_version,
+            invocation_field_masks=invocation_field_masks,
+            metric_field_masks=metric_field_masks,
+            computation_field_masks=computation_field_masks,
+            updated_run_metadata=updated_run_metadata,
+        )
 
     def delete_run(
         self,
@@ -215,7 +379,10 @@ class RunDao:
         req_payload_json = json.dumps(req_payload)
         query = AIML_RUN_OPS_SYS_FUNC_TEMPLATE.format(method=METHOD_DELETE)
 
-        logger.debug("Executing query: %s", query)
+        logger.debug(
+            f"Executing query: {query} with parameters {req_payload_json}"
+        )
+
         execute_query(
             self.session,
             query,
