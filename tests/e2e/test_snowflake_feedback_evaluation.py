@@ -239,6 +239,39 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         self.assertFalse(res[0][0])
 
     @pytest.mark.optional
+    def test_japanese(self) -> None:
+        session = self.get_session("test_japanese")
+        f_snowflake = self._get_cortex_relevance_feedback_function()
+        tru_app = TruBasicApp(
+            text_to_text=lambda _: "幸士君が世界で一番かわいい赤ちゃんです！",
+            feedbacks=[f_snowflake],
+        )
+        with tru_app:
+            tru_app.main_call("世界で一番かわいい赤ちゃんは誰ですか?")
+        self._wait_till_feedbacks_done(num_expected_feedbacks=1)
+        records_and_feedback = session.get_records_and_feedback()
+        self.assertEqual(len(records_and_feedback), 2)
+        self.assertListEqual(
+            records_and_feedback[1],
+            ["relevance"],
+        )
+        self.assertEqual(records_and_feedback[0].shape[0], 1)
+        self.assertGreaterEqual(
+            records_and_feedback[0]["relevance"].iloc[0],
+            0.5,
+        )
+        res = self.run_query(
+            f"SELECT INPUT, OUTPUT FROM {self._database}.{self._schema}.TRULENS_RECORDS"
+        )
+        self.assertEqual(1, len(res))
+        self.assertEqual(
+            res[0].INPUT, '"世界で一番かわいい赤ちゃんは誰ですか?"'
+        )
+        self.assertEqual(
+            res[0].OUTPUT, '"幸士君が世界で一番かわいい赤ちゃんです！"'
+        )
+
+    @pytest.mark.optional
     def test_snowflake_feedback_only_runs_cortex(self) -> None:
         self._get_cortex_relevance_feedback_function()  # no error
         with self.assertRaisesRegex(
