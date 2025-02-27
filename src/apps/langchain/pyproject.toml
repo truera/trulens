@@ -29,9 +29,18 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.9"
 trulens-core = { version = "^1.0.0" }
-langchain = ">=0.2.10"
-langchain-core = ">=0.2.0"
-pydantic = "^2.4.2"
+langchain = [
+  { version = ">=0.2.10,<0.3.0", python = "<3.9" },
+  { version = ">=0.3.0", python = ">=3.9" },
+]
+langchain-core = [
+  { version = ">=0.2.0,<0.3.0", python = "<3.9" },
+  { version = ">=0.3.0", python = ">=3.9" },
+]
+pydantic = [
+  { version = "^1.0.0", python = "<3.9" },
+  { version = ">=2.4.2", python = ">=3.9" },
+]
 
 [tool.poetry.group.dev.dependencies]
 trulens-core = { path = "../../core" }

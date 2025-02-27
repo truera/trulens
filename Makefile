@@ -54,7 +54,8 @@ env-tests-optional: env env-tests
 		llama-index-embeddings-huggingface \
 		llama-index-embeddings-openai \
 		unstructured \
-		chromadb
+		chromadb \
+		langchain-openai
 
 env-tests-snowflake: env-tests-optional
 	poetry install --with snowflake
