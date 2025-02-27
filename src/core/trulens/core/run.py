@@ -492,9 +492,13 @@ class Run(BaseModel):
             raise
 
     def _get_query_status_by_id(self, query_id: str) -> str:
-        query = f"""select EXECUTION_STATUS from table(information_schema.query_history()) where query_id = '{query_id}'"""
+        query = """
+            SELECT EXECUTION_STATUS
+            FROM table(information_schema.query_history())
+            WHERE query_id = ?
+        """
         try:
-            ret = self.run_dao.session.sql(query).collect()
+            ret = self.run_dao.session.sql(query, params=[query_id]).collect()
             return ret[0]["EXECUTION_STATUS"]
         except Exception as e:
             logger.exception(
