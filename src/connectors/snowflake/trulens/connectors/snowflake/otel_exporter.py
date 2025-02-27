@@ -132,6 +132,8 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
 
     @staticmethod
     def _clean_up_snowflake_identifier(snowflake_identifier: str) -> str:
+        if not snowflake_identifier:
+            return snowflake_identifier
         if snowflake_identifier[0] == '"' and snowflake_identifier[-1] == '"':
             return snowflake_identifier[1:-1]
         return snowflake_identifier
