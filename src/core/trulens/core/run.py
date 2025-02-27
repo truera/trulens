@@ -1,11 +1,12 @@
 from __future__ import annotations  # defers evaluation of annotations
 
 from enum import Enum
+import inspect
 import json
 import logging
 import re
 import time
-from typing import Any, ClassVar, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List, Optional, Set, Type
 import uuid
 
 import pandas as pd
@@ -14,16 +15,44 @@ from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
 from trulens.core.utils.json import obj_id_of_obj
+from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
 
-# Reserved fields (case-insensitive)
-DATASET_RESERVED_FIELDS = {
-    "input_id",  # Represents the unique identifier for the input.
-    "input",  # Represents the main input column, allow optional subscripts like input_1, input_2, etc.
-    "ground_truth_output",  # Represents the ground truth output, flexible in type (string or others)
+def _get_all_span_attribute_key_constants(cls: Type, prefix: str) -> List[str]:
+    ret = []
+    for curr_name in dir(cls):
+        if (not curr_name.startswith("__")) and (not curr_name.endswith("__")):
+            curr = getattr(cls, curr_name)
+            if inspect.isclass(curr):
+                ret += _get_all_span_attribute_key_constants(
+                    curr, f"{curr_name}"
+                )
+            elif curr_name == curr_name.upper():
+                ret += [f"{prefix + '.' if prefix else ''}{curr_name}"]
+    ret = list(set(ret))
+    ret = [field for field in ret if not (field.startswith("SpanType"))]
+
+    ret += [
+        field.replace(
+            "RECORD_ROOT.", ""
+        )  # record_root can be optionally specified
+        for field in ret
+        if field.startswith("RECORD_ROOT.")
+    ]
+    return ret
+
+
+def get_all_span_attribute_key_constants() -> set[str]:
+    return set(_get_all_span_attribute_key_constants(SpanAttributes, ""))
+
+
+# Reserved fields (case-insensitive) for dataset specification directly maps to OTEL Span attributes
+DATASET_RESERVED_FIELDS: Set[str] = {
+    field.lower() for field in get_all_span_attribute_key_constants()
 }
+
 
 INVOCATION_TIMEOUT_IN_MS = (
     5 * 60 * 1000
@@ -348,6 +377,7 @@ class Run(BaseModel):
         return current_run_status in [
             RunStatus.CREATED,
             RunStatus.INVOCATION_PARTIALLY_COMPLETED,
+            RunStatus.FAILED,
             RunStatus.UNKNOWN,
         ]
 
@@ -387,9 +417,22 @@ class Run(BaseModel):
             latest_invocation.completion_status
             and latest_invocation.completion_status.status
         ):
-            return RunStatus(
-                "INVOCATION_" + latest_invocation.completion_status.status
-            )
+            completion_status = latest_invocation.completion_status.status
+            if completion_status == Run.CompletionStatusStatus.COMPLETED:
+                return RunStatus.INVOCATION_COMPLETED
+            elif (
+                completion_status
+                == Run.CompletionStatusStatus.PARTIALLY_COMPLETED
+            ):
+                return RunStatus.INVOCATION_PARTIALLY_COMPLETED
+            elif completion_status == Run.CompletionStatusStatus.FAILED:
+                return RunStatus.FAILED
+            else:
+                logger.warning(
+                    f"Unknown completion status {completion_status} for invocation {latest_invocation.id}"
+                )
+                return RunStatus.UNKNOWN
+
         current_ingested_records_count = (
             self._read_spans_count_from_event_table(span_type="record_root")
         )
@@ -586,13 +629,14 @@ class Run(BaseModel):
         if (
             invocation_completion_status == Run.CompletionStatusStatus.COMPLETED
             or invocation_completion_status
+            == Run.CompletionStatusStatus.PARTIALLY_COMPLETED
         ) and not any(
             status == "IN_PROGRESS"
             for status in computation_sproc_query_ids_to_query_status.values()
         ):
             return RunStatus.PARTIALLY_COMPLETED
 
-        logger.warning("Cannot determin run status")
+        logger.warning("Cannot determine run status")
 
         return RunStatus.UNKNOWN
 
@@ -606,7 +650,7 @@ class Run(BaseModel):
         current_status = self.get_status()
         logger.info(f"Current run status: {current_status}")
         if not self._can_start_new_invocation(current_status):
-            return f"Cannot start a new invocation when in run status: {current_status}. Valid statuses are: {RunStatus.CREATED}, {RunStatus.INVOCATION_PARTIALLY_COMPLETED}."
+            return f"Cannot start a new invocation when in run status: {current_status}. Valid statuses are: {RunStatus.CREATED}, {RunStatus.INVOCATION_PARTIALLY_COMPLETED}, or {RunStatus.FAILED}."
 
         if input_df is None:
             logger.info(
