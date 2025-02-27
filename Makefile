@@ -50,11 +50,12 @@ env-tests-basic:
 
 env-tests-optional: env env-tests
 	poetry run pip install \
+		chromadb \
 	 	faiss-cpu \
+		langchain-openai \
 		llama-index-embeddings-huggingface \
 		llama-index-embeddings-openai \
-		unstructured \
-		chromadb
+		unstructured
 
 env-tests-snowflake: env-tests-optional
 	poetry install --with snowflake
