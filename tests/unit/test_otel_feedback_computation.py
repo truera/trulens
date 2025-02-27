@@ -15,7 +15,7 @@ from tests.util.mock_otel_feedback_computation import (
     all_retrieval_span_attributes,
 )
 from tests.util.mock_otel_feedback_computation import feedback_function
-from tests.util.otel_app_test_case import OtelAppTestCase
+from tests.util.otel_test_case import OtelTestCase
 
 try:
     # These imports require optional dependencies to be installed.
@@ -42,7 +42,7 @@ def _convert_events_to_MinimalSpanInfos(
 
 
 @pytest.mark.optional
-class TestOtelFeedbackComputation(OtelAppTestCase):
+class TestOtelFeedbackComputation(OtelTestCase):
     def test_feedback_computation(self) -> None:
         # Create app.
         rag_chain = (
