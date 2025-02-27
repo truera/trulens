@@ -739,8 +739,10 @@ trulens.core.run:
   lows:
     DATASET_RESERVED_FIELDS: builtins.set
     INVOCATION_TIMEOUT_IN_MS: builtins.int
+    PERSISTED_QUERY_RESULTS_TIMEOUT_IN_MS: builtins.int
     Run: pydantic._internal._model_construction.ModelMetaclass
     RunConfig: pydantic._internal._model_construction.ModelMetaclass
+    RunStatus: enum.EnumType
     SUPPORTED_ENTRY_TYPES: builtins.list
     SupportedEntryType: enum.EnumType
     validate_dataset_spec: builtins.function
@@ -756,7 +758,6 @@ trulens.core.run.Run:
     MetricsMetadata: pydantic._internal._model_construction.ModelMetaclass
     RunMetadata: pydantic._internal._model_construction.ModelMetaclass
     SourceInfo: pydantic._internal._model_construction.ModelMetaclass
-    active_computation_async_job: typing.Optional[typing.Any, builtins.NoneType]
     app: typing.Any
     cancel: builtins.function
     compute_metrics: builtins.function
@@ -788,6 +789,23 @@ trulens.core.run.RunConfig:
     llm_judge_name: typing.Optional[builtins.str, builtins.NoneType]
     run_name: builtins.str
     source_type: builtins.str
+trulens.core.run.RunStatus:
+  __bases__:
+  - builtins.str
+  - enum.Enum
+  __class__: enum.EnumType
+  attributes:
+    COMPLETED: trulens.core.run.RunStatus
+    COMPUTATION_IN_PROGRESS: trulens.core.run.RunStatus
+    CREATED: trulens.core.run.RunStatus
+    FAILED: trulens.core.run.RunStatus
+    INVOCATION_COMPLETED: trulens.core.run.RunStatus
+    INVOCATION_IN_PROGRESS: trulens.core.run.RunStatus
+    INVOCATION_PARTIALLY_COMPLETED: trulens.core.run.RunStatus
+    PARTIALLY_COMPLETED: trulens.core.run.RunStatus
+    UNKNOWN: trulens.core.run.RunStatus
+    name: enum.property
+    value: enum.property
 trulens.core.run.SupportedEntryType:
   __bases__:
   - builtins.str
