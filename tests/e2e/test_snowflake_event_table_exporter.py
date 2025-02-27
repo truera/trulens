@@ -145,7 +145,6 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             app,
             app_name=app_name,
             app_version="v1",
-            connector=self._tru_session.connector,  # TODO(this_pr): Remove this requirement or give a better error message!
             main_method=main_method,
         )
         # Create run.
