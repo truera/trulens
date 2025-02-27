@@ -6,7 +6,7 @@ import json
 import logging
 import re
 import time
-from typing import Any, ClassVar, Dict, List, Optional, Type
+from typing import Any, ClassVar, Dict, List, Optional, Set, Type
 import uuid
 
 import pandas as pd
@@ -30,13 +30,9 @@ def _get_all_span_attribute_key_constants(cls: Type, prefix: str) -> List[str]:
                     curr, f"{curr_name}"
                 )
             elif curr_name == curr_name.upper():
-                ret += [f"{prefix}.{curr_name}"]
+                ret += [f"{prefix + '.' if prefix else ''}{curr_name}"]
     ret = list(set(ret))
-    ret = [
-        field
-        for field in ret
-        if not (field.startswith("SpanType") or field.startswith("."))
-    ]
+    ret = [field for field in ret if not (field.startswith("SpanType"))]
 
     ret += [
         field.replace(
@@ -53,7 +49,7 @@ def get_all_span_attribute_key_constants() -> set[str]:
 
 
 # Reserved fields (case-insensitive) for dataset specification directly maps to OTEL Span attributes
-DATASET_RESERVED_FIELDS: set = {
+DATASET_RESERVED_FIELDS: Set[str] = {
     field.lower() for field in get_all_span_attribute_key_constants()
 }
 
