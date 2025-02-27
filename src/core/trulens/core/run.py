@@ -13,6 +13,7 @@ import pydantic
 from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
+from trulens.core.utils.json import obj_id_of_obj
 
 logger = logging.getLogger(__name__)
 
@@ -410,7 +411,7 @@ class Run(BaseModel):
                 )
 
                 if input_id is None and "input" in dataset_spec:
-                    input_id = hash(row[dataset_spec["input"]])
+                    input_id = obj_id_of_obj(row[dataset_spec["input"]])
 
                 ground_truth_output = row.get(
                     dataset_spec.get("ground_truth_output")
