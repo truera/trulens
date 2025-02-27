@@ -276,6 +276,14 @@ build: $(POETRY_DIRS)
 		popd; \
 	done
 
+build-with-zip-wheels:
+	rm -rf ./dist \
+		&& rm -rf ./src/core/trulens/data/snowflake_stage_zips \
+		&& make build \
+		&& make zip-wheels \
+		&& make build \
+		&& make env
+
 ## Step: Build zip files to upload to Snowflake staging
 zip-wheels:
 	poetry run ./zip_wheels.sh

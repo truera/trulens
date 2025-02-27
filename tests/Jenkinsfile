@@ -40,6 +40,7 @@ pipeline {
         stage('prepare') {
             steps {
                 sh label: 'Environment setup', script: '''
+                    set -e
                     git config --global --add safe.directory '*'  # perm fix
                     curl -sSL https://install.python-poetry.org | python3 -
                     ln -s /root/.local/bin/poetry /usr/local/bin/poetry
@@ -49,10 +50,14 @@ pipeline {
                     poetry run python --version
                     poetry run pip --version
                 '''
-                sh label: 'Run Pre-commit hooks', script: '''
+                sh label: 'Run pre-commit hooks', script: '''
                     set -e
                     poetry install --only dev --sync
                     make run-precommit
+                '''
+                sh label: 'Build all packages with zip wheels', script: '''
+                    set -e
+                    make build-with-zip-wheels
                 '''
             }
         }
