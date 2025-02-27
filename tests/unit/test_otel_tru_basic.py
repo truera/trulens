@@ -4,10 +4,21 @@ Tests for OTEL TruBasic app.
 
 from trulens.apps.basic import TruBasicApp
 
-from tests.util.otel_app_test_case import OtelAppTestCase
+import tests.util.otel_tru_app_test_case
 
 
-class TestOtelTruBasic(OtelAppTestCase):
+class TestOtelTruBasic(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
+    @staticmethod
+    def _create_test_app_info() -> (
+        tests.util.otel_tru_app_test_case.TestAppInfo
+    ):
+        text_to_text_fn = lambda name: f"Hi, {name}!"
+        return tests.util.otel_tru_app_test_case.TestAppInfo(
+            app=text_to_text_fn,
+            main_method=None,
+            TruAppClass=TruBasicApp,
+        )
+
     def test_smoke(self) -> None:
         # Create and run app.
         text_to_text_fn = lambda name: f"Hi, {name}!"
