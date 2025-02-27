@@ -111,6 +111,7 @@ def json_str_of_obj(
     return json.dumps(
         jsonify(obj, *args, redact_keys=redact_keys, **kwargs),
         default=json_default,
+        ensure_ascii=False,
     )
 
 
