@@ -149,7 +149,6 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         )
         # Create run.
         run_name = str(uuid.uuid4())
-        run_name = run_name.upper()  # TODO(this_pr): remove this requirement or give a better error message!
         run_config = RunConfig(
             run_name=run_name,
             dataset_name="My test dataframe name",
