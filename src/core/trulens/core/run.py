@@ -416,9 +416,22 @@ class Run(BaseModel):
             latest_invocation.completion_status
             and latest_invocation.completion_status.status
         ):
-            return RunStatus(
-                "INVOCATION_" + latest_invocation.completion_status.status
-            )
+            completion_status = latest_invocation.completion_status.status
+            if completion_status == Run.CompletionStatusStatus.COMPLETED:
+                return RunStatus.INVOCATION_COMPLETED
+            elif (
+                completion_status
+                == Run.CompletionStatusStatus.PARTIALLY_COMPLETED
+            ):
+                return RunStatus.INVOCATION_PARTIALLY_COMPLETED
+            elif completion_status == Run.CompletionStatusStatus.FAILED:
+                return RunStatus.FAILED
+            else:
+                logger.warning(
+                    f"Unknown completion status {completion_status} for invocation {latest_invocation.id}"
+                )
+                return RunStatus.UNKNOWN
+
         current_ingested_records_count = (
             self._read_spans_count_from_event_table(span_type="record_root")
         )
