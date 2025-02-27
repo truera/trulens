@@ -1,11 +1,12 @@
 from __future__ import annotations  # defers evaluation of annotations
 
 from enum import Enum
+import inspect
 import json
 import logging
 import re
 import time
-from typing import Any, ClassVar, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List, Optional, Type
 import uuid
 
 import pandas as pd
@@ -14,16 +15,48 @@ from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
 from trulens.core.utils.json import obj_id_of_obj
+from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
 
-# Reserved fields (case-insensitive)
-DATASET_RESERVED_FIELDS = {
-    "input_id",  # Represents the unique identifier for the input.
-    "input",  # Represents the main input column, allow optional subscripts like input_1, input_2, etc.
-    "ground_truth_output",  # Represents the ground truth output, flexible in type (string or others)
+def _get_all_span_attribute_key_constants(cls: Type, prefix: str) -> List[str]:
+    ret = []
+    for curr_name in dir(cls):
+        if (not curr_name.startswith("__")) and (not curr_name.endswith("__")):
+            curr = getattr(cls, curr_name)
+            if inspect.isclass(curr):
+                ret += _get_all_span_attribute_key_constants(
+                    curr, f"{curr_name}"
+                )
+            elif curr_name == curr_name.upper():
+                ret += [f"{prefix}.{curr_name}"]
+    ret = list(set(ret))
+    ret = [
+        field
+        for field in ret
+        if not (field.startswith("SpanType") or field.startswith("."))
+    ]
+
+    ret += [
+        field.replace(
+            "RECORD_ROOT.", ""
+        )  # record_root can be optionally specified
+        for field in ret
+        if field.startswith("RECORD_ROOT.")
+    ]
+    return ret
+
+
+def get_all_span_attribute_key_constants() -> set[str]:
+    return set(_get_all_span_attribute_key_constants(SpanAttributes, ""))
+
+
+# Reserved fields (case-insensitive) for dataset specification directly maps to OTEL Span attributes
+DATASET_RESERVED_FIELDS: set = {
+    field.lower() for field in get_all_span_attribute_key_constants()
 }
+
 
 INVOCATION_TIMEOUT_IN_MS = (
     5 * 60 * 1000
