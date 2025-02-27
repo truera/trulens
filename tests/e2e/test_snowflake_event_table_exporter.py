@@ -135,7 +135,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         main_method: Callable,
         TruAppClass: Type[App],
         dataset_spec: Dict[str, str],
-        input_dfs: List[pd.DataFrame],
+        input_df: pd.DataFrame,
         num_expected_spans: int,
     ) -> Tuple[str, str, List[Row]]:
         # Create app.
@@ -145,22 +145,23 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             app,
             app_name=app_name,
             app_version="v1",
-            connector=self._tru_session.connector,  # TODO(this_pr): Remove this requirement or give a better error message!
+            connector=self._tru_session.connector,
             main_method=main_method,
         )
         # Create run.
         run_name = str(uuid.uuid4())
         run_config = RunConfig(
             run_name=run_name,
+            description="desc",
             dataset_name="My test dataframe name",
             source_type="DATAFRAME",
+            label="label",
             dataset_spec=dataset_spec,
         )
         # Record and invoke.
         run = tru_recorder.add_run(run_config=run_config)
-        for input_df in input_dfs:
-            run.start(input_df=input_df)
-            self._tru_session.force_flush()
+        run.start(input_df=input_df)
+        self._tru_session.force_flush()
         # Validate results.
         return (
             app_name,
@@ -175,10 +176,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             app.respond_to_query,
             TruApp,
             {"input": "custom_input"},
-            [
-                pd.DataFrame({"custom_input": ["Kojikun"]}),
-                pd.DataFrame({"custom_input": ["Nolan"]}),
-            ],
+            pd.DataFrame({"custom_input": ["Kojikun", "Nolan"]}),
             8,
         )
 
@@ -191,11 +189,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             app.query,
             TruLlama,
             {"input": "custom_input"},
-            [
-                pd.DataFrame({
-                    "custom_input": ["What is multi-headed attention?"]
-                })
-            ],
+            pd.DataFrame({"custom_input": ["What is multi-headed attention?"]}),
             7,
         )
 
@@ -208,11 +202,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             app.invoke,
             TruChain,
             {"input": "custom_input"},
-            [
-                pd.DataFrame({
-                    "custom_input": ["What is multi-headed attention?"]
-                })
-            ],
+            pd.DataFrame({"custom_input": ["What is multi-headed attention?"]}),
             9,
         )
 
@@ -228,14 +218,10 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
                 "input": "custom_input",
                 "ground_truth_output": "expected_response",
             },
-            [
-                pd.DataFrame({
-                    "custom_input": ["What is multi-headed attention?"],
-                    "expected_response": [
-                        "Like attention but with more heads."
-                    ],
-                })
-            ],
+            pd.DataFrame({
+                "custom_input": ["What is multi-headed attention?"],
+                "expected_response": ["Like attention but with more heads."],
+            }),
             9,
         )
         # Compute feedback on record we just ingested.
