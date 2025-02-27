@@ -48,7 +48,6 @@ class OtelTruAppTestCase(OtelTestCase):
     def test_with_new_tru_session(self) -> None:
         self.clear_TruSession_singleton()
         test_app_info = self._create_test_app_info()
-        test_app_info = self._create_test_app_info()
         connector = DefaultDBConnector()
         tru_app = test_app_info.TruAppClass(
             test_app_info.app,
