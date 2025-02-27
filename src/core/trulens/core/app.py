@@ -478,9 +478,7 @@ class App(
                 raise ValueError(
                     "Already created `TruSession` with different `connector`!"
                 )
-        else:
-            connector = TruSession().connector
-        kwargs["connector"] = connector
+            kwargs["connector"] = connector
 
         kwargs["feedbacks"] = feedbacks
         kwargs["recording_contexts"] = contextvars.ContextVar(
