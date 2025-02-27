@@ -50,11 +50,12 @@ env-tests-basic:
 
 env-tests-optional: env env-tests
 	poetry run pip install \
+		chromadb \
 	 	faiss-cpu \
+		langchain-openai \
 		llama-index-embeddings-huggingface \
 		llama-index-embeddings-openai \
-		unstructured \
-		chromadb
+		unstructured
 
 env-tests-snowflake: env-tests-optional
 	poetry install --with snowflake
@@ -274,6 +275,14 @@ build: $(POETRY_DIRS)
 		rm -rf .venv; \
 		popd; \
 	done
+
+build-with-zip-wheels:
+	rm -rf ./dist \
+		&& rm -rf ./src/core/trulens/data/snowflake_stage_zips \
+		&& make build \
+		&& make zip-wheels \
+		&& make build \
+		&& make env
 
 ## Step: Build zip files to upload to Snowflake staging
 zip-wheels:
