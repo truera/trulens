@@ -738,15 +738,25 @@ trulens.core.run:
   highs: {}
   lows:
     DATASET_RESERVED_FIELDS: builtins.set
+    INVOCATION_TIMEOUT_IN_MS: builtins.int
+    PERSISTED_QUERY_RESULTS_TIMEOUT_IN_MS: builtins.int
     Run: pydantic._internal._model_construction.ModelMetaclass
     RunConfig: pydantic._internal._model_construction.ModelMetaclass
+    RunStatus: enum.EnumType
+    SUPPORTED_ENTRY_TYPES: builtins.list
+    SupportedEntryType: enum.EnumType
     validate_dataset_spec: builtins.function
 trulens.core.run.Run:
   __bases__:
   - pydantic.main.BaseModel
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
-    RunMetada: pydantic._internal._model_construction.ModelMetaclass
+    CompletionStatus: pydantic._internal._model_construction.ModelMetaclass
+    CompletionStatusStatus: enum.EnumType
+    ComputationMetadata: pydantic._internal._model_construction.ModelMetaclass
+    InvocationMetadata: pydantic._internal._model_construction.ModelMetaclass
+    MetricsMetadata: pydantic._internal._model_construction.ModelMetaclass
+    RunMetadata: pydantic._internal._model_construction.ModelMetaclass
     SourceInfo: pydantic._internal._model_construction.ModelMetaclass
     app: typing.Any
     cancel: builtins.function
@@ -761,7 +771,7 @@ trulens.core.run.Run:
     object_type: builtins.str
     object_version: typing.Optional[builtins.str, builtins.NoneType]
     run_dao: typing.Any
-    run_metadata: trulens.core.run.Run.RunMetada
+    run_metadata: trulens.core.run.Run.RunMetadata
     run_name: builtins.str
     source_info: trulens.core.run.Run.SourceInfo
     start: builtins.function
@@ -779,6 +789,34 @@ trulens.core.run.RunConfig:
     llm_judge_name: typing.Optional[builtins.str, builtins.NoneType]
     run_name: builtins.str
     source_type: builtins.str
+trulens.core.run.RunStatus:
+  __bases__:
+  - builtins.str
+  - enum.Enum
+  __class__: enum.EnumType
+  attributes:
+    COMPLETED: trulens.core.run.RunStatus
+    COMPUTATION_IN_PROGRESS: trulens.core.run.RunStatus
+    CREATED: trulens.core.run.RunStatus
+    FAILED: trulens.core.run.RunStatus
+    INVOCATION_COMPLETED: trulens.core.run.RunStatus
+    INVOCATION_IN_PROGRESS: trulens.core.run.RunStatus
+    INVOCATION_PARTIALLY_COMPLETED: trulens.core.run.RunStatus
+    PARTIALLY_COMPLETED: trulens.core.run.RunStatus
+    UNKNOWN: trulens.core.run.RunStatus
+    name: enum.property
+    value: enum.property
+trulens.core.run.SupportedEntryType:
+  __bases__:
+  - builtins.str
+  - enum.Enum
+  __class__: enum.EnumType
+  attributes:
+    COMPUTATIONS: trulens.core.run.SupportedEntryType
+    INVOCATIONS: trulens.core.run.SupportedEntryType
+    METRICS: trulens.core.run.SupportedEntryType
+    name: enum.property
+    value: enum.property
 trulens.core.schema:
   __class__: builtins.module
   highs:
