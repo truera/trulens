@@ -2,15 +2,18 @@ import json
 import logging
 import os
 import time
-from typing import List, Sequence
+from typing import Any, Callable, Dict, List, Tuple, Type
 import uuid
 
+import pandas as pd
 from snowflake.snowpark import Session
 from snowflake.snowpark.row import Row
 from trulens.apps.app import TruApp
 from trulens.apps.langchain import TruChain
 from trulens.apps.llamaindex import TruLlama
 from trulens.connectors import snowflake as snowflake_connector
+from trulens.core.app import App
+from trulens.core.run import RunConfig
 from trulens.core.session import TruSession
 from trulens.feedback.computer import MinimalSpanInfo
 from trulens.feedback.computer import RecordGraphNode
@@ -76,7 +79,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         expected_num_results: int,
         num_retries: int = 15,
         retry_cooldown_in_seconds: int = 10,
-    ) -> Sequence:
+    ) -> List[Row]:
         for _ in range(num_retries):
             results = self.run_query(q, params)
             if len(results) == expected_num_results:
@@ -91,7 +94,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
 
     def _validate_results(
         self, app_name: str, run_name: str, num_expected_spans: int
-    ):
+    ) -> List[Row]:
         # Flush exporter and wait for data to be made to stage.
         self._tru_session.force_flush()
         # Check that there are no other tables in the schema.
@@ -126,93 +129,117 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             num_expected_spans,
         )
 
-    def test_tru_custom_app(self):
+    def _test_tru_app(
+        self,
+        app: Any,
+        main_method: Callable,
+        TruAppClass: Type[App],
+        dataset_spec: Dict[str, str],
+        input_dfs: List[pd.DataFrame],
+        num_expected_spans: int,
+    ) -> Tuple[str, str, List[Row]]:
         # Create app.
-        app = tests.unit.test_otel_tru_custom.TestApp()
-        tru_recorder = TruApp(
+        app_name = str(uuid.uuid4())
+        app_name = app_name.upper()  # TODO(this_pr): Remove this requirement or give a better error message!
+        tru_recorder = TruAppClass(
             app,
-            app_name="custom app",
-            app_version="v1",
-            main_method=app.respond_to_query,
-        )
-        # Record and invoke.
-        run_name = str(uuid.uuid4())
-        tru_recorder.instrumented_invoke_main_method(
-            run_name=run_name, input_id="42", main_method_args=("Kojikun",)
-        )
-        # Record and invoke again.
-        self._tru_session.force_flush()
-        tru_recorder.instrumented_invoke_main_method(
-            run_name=run_name, input_id="21", main_method_args=("Nolan",)
-        )
-        # Validate results.
-        self._validate_results("custom app", run_name, 8)
-
-    def test_tru_llama(self):
-        # Create app.
-        rag = (
-            tests.unit.test_otel_tru_llama.TestOtelTruLlama._create_simple_rag()
-        )
-        tru_recorder = TruLlama(
-            rag,
-            app_name="llama-index app",
-            app_version="v1",
-            main_method=rag.query,
-        )
-        # Record and invoke.
-        run_name = str(uuid.uuid4())
-        tru_recorder.instrumented_invoke_main_method(
-            run_name=run_name,
-            input_id="42",
-            main_method_args=("What is multi-headed attention?",),
-        )
-        # Validate results.
-        self._validate_results("llama-index app", run_name, 7)
-
-    def test_tru_chain(self):
-        # Create app.
-        rag = (
-            tests.unit.test_otel_tru_chain.TestOtelTruChain._create_simple_rag()
-        )
-        tru_recorder = TruChain(
-            rag,
-            app_name="langchain app",
-            app_version="v1",
-            main_method=rag.invoke,
-        )
-        # Record and invoke.
-        run_name = str(uuid.uuid4())
-        tru_recorder.instrumented_invoke_main_method(
-            run_name=run_name,
-            input_id="42",
-            main_method_args=("What is multi-headed attention?",),
-        )
-        # Validate results.
-        self._validate_results("langchain app", run_name, 9)
-
-    def test_feedback_computation(self) -> None:
-        # Create app.
-        rag_chain = (
-            tests.unit.test_otel_tru_chain.TestOtelTruChain._create_simple_rag()
-        )
-        app_name = "Simple RAG"
-        tru_recorder = TruChain(
-            rag_chain,
             app_name=app_name,
             app_version="v1",
-            main_method=rag_chain.invoke,
+            connector=self._tru_session.connector,  # TODO(this_pr): Remove this requirement or give a better error message!
+            main_method=main_method,
+        )
+        # Create run.
+        run_name = str(uuid.uuid4())
+        run_name = run_name.upper()  # TODO(this_pr): remove this requirement or give a better error message!
+        run_config = RunConfig(
+            run_name=run_name,
+            dataset_name="My test dataframe name",
+            source_type="DATAFRAME",
+            dataset_spec=dataset_spec,
         )
         # Record and invoke.
-        run_name = str(uuid.uuid4())
-        tru_recorder.instrumented_invoke_main_method(
-            run_name=run_name,
-            input_id="42",
-            ground_truth_output="Like attention but with more heads.",
-            main_method_args=("What is multi-headed attention?",),
+        run = tru_recorder.add_run(run_config=run_config)
+        for input_df in input_dfs:
+            run.start(input_df=input_df)
+            self._tru_session.force_flush()
+        # Validate results.
+        return (
+            app_name,
+            run_name,
+            self._validate_results(app_name, run_name, num_expected_spans),
         )
-        TruSession().force_flush()
+
+    def test_tru_custom_app(self):
+        app = tests.unit.test_otel_tru_custom.TestApp()
+        self._test_tru_app(
+            app,
+            app.respond_to_query,
+            TruApp,
+            {"input": "custom_input"},
+            [
+                pd.DataFrame({"custom_input": ["Kojikun"]}),
+                pd.DataFrame({"custom_input": ["Nolan"]}),
+            ],
+            8,
+        )
+
+    def test_tru_llama(self):
+        app = (
+            tests.unit.test_otel_tru_llama.TestOtelTruLlama._create_simple_rag()
+        )
+        self._test_tru_app(
+            app,
+            app.query,
+            TruLlama,
+            {"input": "custom_input"},
+            [
+                pd.DataFrame({
+                    "custom_input": ["What is multi-headed attention?"]
+                })
+            ],
+            7,
+        )
+
+    def test_tru_chain(self):
+        app = (
+            tests.unit.test_otel_tru_chain.TestOtelTruChain._create_simple_rag()
+        )
+        self._test_tru_app(
+            app,
+            app.invoke,
+            TruChain,
+            {"input": "custom_input"},
+            [
+                pd.DataFrame({
+                    "custom_input": ["What is multi-headed attention?"]
+                })
+            ],
+            9,
+        )
+
+    def test_feedback_computation(self) -> None:
+        app = (
+            tests.unit.test_otel_tru_chain.TestOtelTruChain._create_simple_rag()
+        )
+        app_name, run_name, events = self._test_tru_app(
+            app,
+            app.invoke,
+            TruChain,
+            {
+                "input": "custom_input",
+                "ground_truth_output": "expected_response",
+            },
+            [
+                pd.DataFrame({
+                    "custom_input": ["What is multi-headed attention?"],
+                    "expected_response": [
+                        "Like attention but with more heads."
+                    ],
+                })
+            ],
+            9,
+        )
         # Compute feedback on record we just ingested.
-        events = self._validate_results(app_name, run_name, 9)
         spans = _convert_events_to_MinimalSpanInfos(events)
         record_root = RecordGraphNode.build_graph(spans)
         _compute_feedback(
