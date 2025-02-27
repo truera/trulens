@@ -615,13 +615,14 @@ class Run(BaseModel):
         if (
             invocation_completion_status == Run.CompletionStatusStatus.COMPLETED
             or invocation_completion_status
+            == Run.CompletionStatusStatus.PARTIALLY_COMPLETED
         ) and not any(
             status == "IN_PROGRESS"
             for status in computation_sproc_query_ids_to_query_status.values()
         ):
             return RunStatus.PARTIALLY_COMPLETED
 
-        logger.warning("Cannot determin run status")
+        logger.warning("Cannot determine run status")
 
         return RunStatus.UNKNOWN
 
