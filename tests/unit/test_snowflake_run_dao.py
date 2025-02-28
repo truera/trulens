@@ -5,10 +5,13 @@ from unittest.mock import patch
 
 import pandas as pd
 import pytest
-from trulens.connectors.snowflake.dao.sql_utils import double_quote_identifier
 
 try:
     from trulens.connectors.snowflake.dao.run import RunDao
+    from trulens.connectors.snowflake.dao.sql_utils import (
+        double_quote_identifier,
+    )
+
 except Exception:
     RunDao = None
 
