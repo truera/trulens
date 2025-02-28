@@ -157,5 +157,5 @@ class TestExternalAgentDao(unittest.TestCase):
         self.assertEqual(
             double_quote_identifier('hello "world"'), '"hello ""world"""'
         )
-        self.assertEqual(double_quote_identifier('""""'), '""""""""')
+        self.assertEqual(double_quote_identifier('""""'), '""""""""""')
         self.assertEqual(double_quote_identifier(""), '""')
