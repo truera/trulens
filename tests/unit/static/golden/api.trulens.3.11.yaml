@@ -745,6 +745,7 @@ trulens.core.run:
     RunStatus: enum.EnumType
     SUPPORTED_ENTRY_TYPES: builtins.list
     SupportedEntryType: enum.EnumType
+    get_all_span_attribute_key_constants: builtins.function
     validate_dataset_spec: builtins.function
 trulens.core.run.Run:
   __bases__:
