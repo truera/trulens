@@ -121,13 +121,13 @@ class SnowflakeTestCase(TestCase):
     def create_and_use_schema(
         self, schema_name: str, append_uuid: bool = False
     ) -> str:
-        schema_name = schema_name.upper()
-        if append_uuid:
-            schema_name = (
-                f"{schema_name}__{str(uuid.uuid4()).replace('-', '_')}"
-            )
-        self._schema = schema_name
-        self.run_query("CREATE SCHEMA IDENTIFIER(?)", [schema_name])
-        self._snowflake_schemas_to_delete.add(schema_name)
-        self._snowpark_session.use_schema(schema_name)
+        # schema_name = schema_name.upper()
+        # if append_uuid:
+        #     schema_name = (
+        #         f"{schema_name}__{str(uuid.uuid4()).replace('-', '_')}"
+        #     )
+        # self._schema = schema_name
+        # self.run_query("CREATE SCHEMA IDENTIFIER(?)", [schema_name])
+        # self._snowflake_schemas_to_delete.add(schema_name)
+        self._snowpark_session.use_schema("E2E")
         return schema_name
