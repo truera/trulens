@@ -7,6 +7,9 @@ import pytest
 try:
     from trulens.connectors.snowflake.dao.enums import ObjectType
     from trulens.connectors.snowflake.dao.external_agent import ExternalAgentDao
+    from trulens.connectors.snowflake.dao.sql_utils import (
+        double_quote_identifier,
+    )
     from trulens.connectors.snowflake.dao.sql_utils import escape_quotes
 
 
@@ -145,3 +148,14 @@ class TestExternalAgentDao(unittest.TestCase):
         )
         self.assertEqual(escape_quotes('""""'), '""""""""')
         self.assertEqual(escape_quotes(""), "")
+
+    def test_double_quote_identifier(self):
+        self.assertEqual(double_quote_identifier("hello"), '"hello"')
+        self.assertEqual(
+            double_quote_identifier("hello world"), '"hello world"'
+        )
+        self.assertEqual(
+            double_quote_identifier('hello "world"'), '"hello ""world"""'
+        )
+        self.assertEqual(double_quote_identifier('""""'), '""""""""')
+        self.assertEqual(double_quote_identifier(""), '""')
