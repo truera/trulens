@@ -333,7 +333,6 @@ class TestSnowflake(SnowflakeTestCase):
         NUM_SPANS_PER_INVOCATION = (
             NUM_SPANS_FOR_APP_INSTRUMENTATION + NUM_SPANS_FOR_FEEDBACK
         )
-        # TODO(this_pr): remember the feedback events.
         events = self._wait_for_events(
             NUM_SPANS_PER_INVOCATION * num_inputs,
             app_name="LOAD_TEST_APP",
