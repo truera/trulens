@@ -5,12 +5,15 @@ import time
 from typing import List, Sequence
 import uuid
 
+import numpy as np
+import pytest
 from snowflake.snowpark import Session
 from snowflake.snowpark.row import Row
 from trulens.apps.app import TruApp
 from trulens.apps.langchain import TruChain
 from trulens.apps.llamaindex import TruLlama
 from trulens.connectors import snowflake as snowflake_connector
+from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
 from trulens.feedback.computer import MinimalSpanInfo
 from trulens.feedback.computer import RecordGraphNode
@@ -40,6 +43,20 @@ def _convert_events_to_MinimalSpanInfos(
         span.attributes = json.loads(row.RECORD_ATTRIBUTES)
         ret.append(span)
     return ret
+
+
+class _LoadTestApp:
+    def start(self, sizes: List[int]) -> None:
+        for size in sizes:
+            self.make_random_data(size)
+
+    @instrument()
+    def make_random_data(self, size: int) -> str:
+        np.random.seed(0)
+        ret = "".join(
+            np.random.choice(list("abcdefghijklmnopqrstuvwxyz"), size)
+        )
+        return ret
 
 
 class TestSnowflakeEventTableExporter(SnowflakeTestCase):
@@ -223,4 +240,22 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         )
         TruSession().force_flush()
         # Validate results.
-        events = self._validate_results(app_name, run_name, 12)
+        events = self._validate_results(app_name, run_name, 13)
+
+    @pytest.mark.skip(reason="Test will fail currently")
+    def test_large_data(self) -> None:
+        app = _LoadTestApp()
+        tru_recorder = TruApp(
+            app,
+            app_name="load test app",
+            app_version="v1",
+            main_method=app.start,
+        )
+        # Record and invoke.
+        with tru_recorder(run_name="load test run", input_id="42"):
+            app.start([100000] * 20 + [5000000] + [100000] * 20)
+        # Validate results.
+        # There should be 41 spans: 1 root, 40 small enough spans.
+        self._validate_results("load test app", "load test run", 41)
+        # There should also have been a failure for the 5000000 sized span.
+        # TODO(otel): verify this!
