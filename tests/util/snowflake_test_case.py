@@ -119,7 +119,10 @@ class SnowflakeTestCase(TestCase):
         return self._snowpark_session.sql(q, bindings).collect()
 
     def create_and_use_schema(
-        self, schema_name: str, append_uuid: bool = False
+        self,
+        schema_name: str,
+        append_uuid: bool = False,
+        delete_schema_on_cleanup: bool = True,
     ) -> str:
         schema_name = schema_name.upper()
         if append_uuid:
@@ -128,6 +131,7 @@ class SnowflakeTestCase(TestCase):
             )
         self._schema = schema_name
         self.run_query("CREATE SCHEMA IDENTIFIER(?)", [schema_name])
-        self._snowflake_schemas_to_delete.add(schema_name)
+        if delete_schema_on_cleanup:
+            self._snowflake_schemas_to_delete.add(schema_name)
         self._snowpark_session.use_schema(schema_name)
         return schema_name

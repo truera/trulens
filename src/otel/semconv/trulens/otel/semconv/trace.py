@@ -139,9 +139,6 @@ class SpanAttributes:
 
         base = BASE_SCOPE + ".eval_root"
 
-        TARGET_SPAN_ID = base + ".target_span_id"
-        """Span id of the root span of the record being evaluated."""
-
         ERROR = base + ".error"
         """Error raised during evaluation."""
 
