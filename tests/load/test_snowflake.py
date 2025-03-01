@@ -368,14 +368,15 @@ class TestSnowflake(SnowflakeTestCase):
                 NUM_SPANS_PER_INVOCATION * num_inputs * num_runs,
                 app_name=f"APP_{app_idx}",
                 return_events=False,
+                num_retries=1000000,
             )
 
     def test_ingest_data(self) -> None:
         self._test_ingest_data(
             data_filename="./tests/load/data/test_snowflake_load_test_app_data.csv",
-            num_apps=5,
-            num_runs=5,
-            num_inputs=20,
+            num_apps=1,
+            num_runs=1000,
+            num_inputs=1000,
             feedbacks=[
                 "coherence",
                 "answer_relevance",
