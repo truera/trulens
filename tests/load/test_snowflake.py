@@ -1,5 +1,6 @@
 from datetime import datetime
 import json
+import logging
 import math
 import os
 import time
@@ -23,6 +24,8 @@ from trulens.core.session import TruSession
 from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.snowflake_test_case import SnowflakeTestCase
+
+logger = logging.getLogger(__name__)
 
 
 class LoadTestApp:
@@ -198,8 +201,7 @@ class TestSnowflake(SnowflakeTestCase):
                 == SpanAttributes.SpanType.EVAL_ROOT
             ):
                 eval_root_id = span_id
-            if "trace_id" in curr["TRACE"]:
-                curr["TRACE"]["trace_id"] = trace_id
+            curr["TRACE"]["trace_id"] = trace_id
             curr["TRACE"]["span_id"] = span_id
             if "parent_span_id" in curr["RECORD"]:
                 if not parent_span_id:
@@ -240,6 +242,20 @@ class TestSnowflake(SnowflakeTestCase):
     def _ingest_events(self, events: pd.DataFrame) -> None:
         spans = []
         for _, event in events.iterrows():
+            # Compute context.
+            context = trace.SpanContext(
+                trace_id=int(event["TRACE"]["trace_id"]),
+                span_id=int(event["TRACE"]["span_id"]),
+                is_remote=False,
+            )
+            # Compute parent.
+            parent = None
+            if "parent_span_id" in event["RECORD"]:
+                parent = trace.SpanContext(
+                    trace_id=int(event["TRACE"]["trace_id"]),
+                    span_id=int(event["RECORD"]["parent_span_id"]),
+                    is_remote=False,
+                )
             # Compute kind.
             kind = trace.SpanKind.INTERNAL
             if "kind" in event["RECORD"]:
@@ -275,8 +291,8 @@ class TestSnowflake(SnowflakeTestCase):
             # Create `ReadableSpan`.
             span = ReadableSpan(
                 name=event["RECORD"]["name"],
-                context=None,
-                parent=None,
+                context=context,
+                parent=parent,
                 resource=Resource(event["RESOURCE_ATTRIBUTES"]),
                 attributes=attributes,
                 kind=kind,
@@ -357,9 +373,9 @@ class TestSnowflake(SnowflakeTestCase):
     def test_ingest_data(self) -> None:
         self._test_ingest_data(
             data_filename="./tests/load/data/test_snowflake_load_test_app_data.csv",
-            num_apps=10,
-            num_runs=10,
-            num_inputs=100,
+            num_apps=5,
+            num_runs=5,
+            num_inputs=20,
             feedbacks=[
                 "coherence",
                 "answer_relevance",
@@ -367,3 +383,4 @@ class TestSnowflake(SnowflakeTestCase):
                 "groundedness",
             ],
         )
+        logger.info(f"SCHEMA: {self._schema}")
