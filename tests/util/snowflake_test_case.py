@@ -130,7 +130,9 @@ class SnowflakeTestCase(TestCase):
                 f"{schema_name}__{str(uuid.uuid4()).replace('-', '_')}"
             )
         self._schema = schema_name
-        self.run_query("CREATE SCHEMA IDENTIFIER(?)", [schema_name])
+        self.run_query(
+            "CREATE SCHEMA IF NOT EXISTS IDENTIFIER(?)", [schema_name]
+        )
         if delete_schema_on_cleanup:
             self._snowflake_schemas_to_delete.add(schema_name)
         self._snowpark_session.use_schema(schema_name)

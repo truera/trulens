@@ -94,28 +94,39 @@ class TestSnowflake(SnowflakeTestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self.create_and_use_schema(
-            "TestSnowflake", append_uuid=True, delete_schema_on_cleanup=False
-        )
+        schema = os.getenv("TEST_SNOWFLAKE_SCHEMA_NAME")
+        if schema:
+            self.create_and_use_schema(
+                schema, append_uuid=False, delete_schema_on_cleanup=False
+            )
+        else:
+            self.create_and_use_schema(
+                "TestSnowflake",
+                append_uuid=True,
+                delete_schema_on_cleanup=False,
+            )
         db_connector = self._create_db_connector(self._snowpark_session)
         self._tru_session = TruSession(db_connector)
 
     @staticmethod
     def _wait_for_run_to_finish(
-        run: Run, timeout_in_seconds: float = 120
+        run: Run,
+        retry_cooldown_in_seconds: int = 5,
+        timeout_in_seconds: float = 120,
     ) -> None:
         start_time = datetime.now()
         while (
             datetime.now() - start_time
         ).total_seconds() < timeout_in_seconds:
-            if run.get_status() in [
+            status = run.get_status()
+            if status in [
                 RunStatus.COMPLETED,
                 RunStatus.INVOCATION_COMPLETED,
             ]:
                 return
-            if run.get_status() == RunStatus.FAILED:
+            if status == RunStatus.FAILED:
                 raise ValueError("Run FAILED!")
-            time.sleep(1)
+            time.sleep(retry_cooldown_in_seconds)
         raise ValueError("Run did not finish in time!")
 
     def _wait_for_events(
@@ -310,15 +321,8 @@ class TestSnowflake(SnowflakeTestCase):
         num_runs: int,
         num_inputs: int,
         feedbacks: List[str],
+        ingest_starting_data: bool = True,
     ) -> None:
-        # Create app.
-        app = LoadTestApp(data_filename)
-        tru_app = TruApp(
-            app,
-            app_name="LOAD_TEST_APP",
-            app_version="V1",
-            connector=self._tru_session.connector,
-        )
         # Load data.
         input_data = pd.read_csv(data_filename)
         input_data = input_data[["query"]]
@@ -327,7 +331,14 @@ class TestSnowflake(SnowflakeTestCase):
             ignore_index=True,
         )
         input_data = input_data.iloc[:num_inputs]
-        # Ingest for single app/run.
+        # Create app and run config.
+        app = LoadTestApp(data_filename)
+        tru_app = TruApp(
+            app,
+            app_name="LOAD_TEST_APP",
+            app_version="V1",
+            connector=self._tru_session.connector,
+        )
         run_config = RunConfig(
             run_name="LOAD_TEST_RUN",
             description="description",
@@ -336,13 +347,19 @@ class TestSnowflake(SnowflakeTestCase):
             label="label",
             dataset_spec={"input": "query"},
         )
-        run = tru_app.add_run(run_config=run_config)
-        run.start(input_df=input_data)
-        self._wait_for_run_to_finish(run)
-        self._tru_session.force_flush()
-        run.compute_metrics(feedbacks)
-        self._wait_for_run_to_finish(run)
-        self._tru_session.force_flush()
+        # Ingest for single app/run.
+        if ingest_starting_data:
+            run = tru_app.add_run(run_config=run_config)
+            run.start(input_df=input_data)
+            self._wait_for_run_to_finish(
+                run, timeout_in_seconds=max(60, len(input_data))
+            )
+            self._tru_session.force_flush()
+            run.compute_metrics(feedbacks)
+            self._wait_for_run_to_finish(
+                run, timeout_in_seconds=max(60, 10 * len(input_data))
+            )
+            self._tru_session.force_flush()
         # Get all events associated with this.
         NUM_SPANS_FOR_APP_INSTRUMENTATION = 4
         NUM_SPANS_FOR_FEEDBACK = 10
