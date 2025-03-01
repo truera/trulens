@@ -86,11 +86,32 @@ class TestSnowflake(SnowflakeTestCase):
     @classmethod
     def setUpClass(cls) -> None:
         os.environ["TRULENS_OTEL_TRACING"] = "1"
+        if (
+            os.environ["SNOWFLAKE_ACCOUNT"]
+            != "aiml_apps_load_testing.qa6.us-west-2.aws"
+        ):
+            raise ValueError(
+                "This test should only be run on the load testing account!"
+            )
+        cls._orig_OTEL_BSP_MAX_EXPORT_BATCH_SIZE = os.getenv(
+            "OTEL_BSP_MAX_EXPORT_BATCH_SIZE"
+        )
+        cls._orig_OTEL_BSP_MAX_QUEUE_SIZE = os.getenv("OTEL_BSP_MAX_QUEUE_SIZE")
+        os.environ["OTEL_BSP_MAX_EXPORT_BATCH_SIZE"] = "1024"
+        os.environ["OTEL_BSP_MAX_QUEUE_SIZE"] = "8192"
         super().setUpClass()
 
     @classmethod
     def tearDownClass(cls) -> None:
         del os.environ["TRULENS_OTEL_TRACING"]
+        if cls._orig_OTEL_BSP_MAX_EXPORT_BATCH_SIZE is not None:
+            os.environ["OTEL_BSP_MAX_EXPORT_BATCH_SIZE"] = (
+                cls._orig_OTEL_BSP_MAX_EXPORT_BATCH_SIZE
+            )
+        if cls._orig_OTEL_BSP_MAX_QUEUE_SIZE is not None:
+            os.environ["OTEL_BSP_MAX_QUEUE_SIZE"] = (
+                cls._orig_OTEL_BSP_MAX_QUEUE_SIZE
+            )
         super().tearDownClass()
 
     def setUp(self) -> None:
