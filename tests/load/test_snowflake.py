@@ -53,6 +53,7 @@ class LoadTestApp:
         },
     )
     def get_context(self, query: str) -> List[str]:
+        query = query[(query.index(": ") + 2) :]
         for _, row in self._data.iterrows():
             if query == row["query"]:
                 self._current_row = row
@@ -331,6 +332,10 @@ class TestSnowflake(SnowflakeTestCase):
             ignore_index=True,
         )
         input_data = input_data.iloc[:num_inputs]
+        for i in range(num_inputs):
+            input_data.at[i, "query"] = (
+                f"Q{str(i).zfill(5)}: " + input_data.at[i, "query"]
+            )
         # Create app and run config.
         app = LoadTestApp(data_filename)
         tru_app = TruApp(
