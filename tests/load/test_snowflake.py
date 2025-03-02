@@ -14,6 +14,7 @@ from opentelemetry.trace.status import Status
 from opentelemetry.trace.status import StatusCode
 import pandas as pd
 from snowflake.snowpark import Session
+from tqdm.auto import tqdm
 from trulens.apps.app import TruApp
 from trulens.connectors import snowflake as snowflake_connector
 from trulens.core.otel.instrument import instrument
@@ -175,6 +176,9 @@ class TestSnowflake(SnowflakeTestCase):
         for _ in range(num_retries):
             res = self._snowpark_session.sql(q, params=params).to_pandas()
             num_events = res.iloc[0].NUM_EVENTS
+            print(
+                f"Current number of events: {num_events}, expected: {num_expected_events}. Ratio: {num_events / num_expected_events}"
+            )
             if num_events == num_expected_events:
                 if not return_events:
                     return None
@@ -399,14 +403,14 @@ class TestSnowflake(SnowflakeTestCase):
         )
         self._sort_events_by_record_id(events)
         # Ingest the remaining data.
-        for app_idx in range(num_apps):
-            for run_idx in range(num_runs):
+        for app_idx in tqdm(range(num_apps)):
+            for run_idx in tqdm(range(num_runs)):
                 app_name = f"APP_{app_idx}"
                 run_name = f"RUN_{run_idx}"
                 self._ingest_app_and_run(app, app_name, run_config, run_name)
                 self._update_events(events, app_name, run_name)
                 self._ingest_events(events)
-        for app_idx in range(num_apps):
+        for app_idx in tqdm(range(num_apps)):
             self._wait_for_events(
                 NUM_SPANS_PER_INVOCATION * num_inputs * num_runs,
                 app_name=f"APP_{app_idx}",
@@ -422,6 +426,7 @@ class TestSnowflake(SnowflakeTestCase):
             num_inputs=1000,
             feedbacks=[
                 "coherence",
+                "correctness",
                 "answer_relevance",
                 "context_relevance",
                 "groundedness",
