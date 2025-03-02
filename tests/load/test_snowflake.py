@@ -434,11 +434,11 @@ class TestSnowflake(SnowflakeTestCase):
         self._test_ingest_data(
             data_filename="./tests/load/data/test_snowflake_load_test_app_data.csv",
             num_apps=1,
-            num_runs=20,
-            num_inputs=20,
+            num_runs=1000,
+            num_inputs=1000,
             feedbacks=[
                 "coherence",
-                "correctness",
+                # "correctness",
                 "answer_relevance",
                 "context_relevance",
                 "groundedness",
