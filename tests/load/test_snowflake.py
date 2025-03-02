@@ -291,7 +291,7 @@ class TestSnowflake(SnowflakeTestCase):
         )
         run_config.run_name = run_name
         tru_app.add_run(run_config=run_config)
-        # TODO(this_pr): should we be doing something regarding the run state?
+        # TODO: should we be doing something regarding the run state?
 
     def _ingest_events(self, events: pd.DataFrame) -> None:
         spans = []
@@ -417,7 +417,6 @@ class TestSnowflake(SnowflakeTestCase):
             NUM_SPANS_PER_INVOCATION * num_inputs,
             app_name="LOAD_TEST_APP",
             return_events=True,
-            greater_num_events_ok=True,
         )
         self._sort_events_by_record_id(events)
         # Ingest the remaining data.
@@ -436,7 +435,6 @@ class TestSnowflake(SnowflakeTestCase):
                     run_name=f"RUN_{run_idx}",
                     return_events=False,
                     num_retries=1000000,
-                    greater_num_events_ok=True,  # TODO(this_pr): remove!
                 )
 
     def test_ingest_data(self) -> None:
