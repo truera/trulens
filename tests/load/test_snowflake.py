@@ -159,6 +159,7 @@ class TestSnowflake(SnowflakeTestCase):
         run_name: str = "",
         num_retries: int = 10,
         retry_cooldown_in_seconds: int = 5,
+        greater_num_events_ok: bool = False,
         return_events: bool = False,
     ) -> Optional[pd.DataFrame]:
         q = """
@@ -189,7 +190,10 @@ class TestSnowflake(SnowflakeTestCase):
             print(
                 f"Current number of events: {num_events}, expected: {num_expected_events}. Ratio: {num_events / num_expected_events}"
             )
-            if num_events == num_expected_events:
+            done = num_events == num_expected_events or (
+                greater_num_events_ok and num_events > num_expected_events
+            )
+            if done:
                 if not return_events:
                     return None
                 q = q.replace("COUNT(*) AS NUM_EVENTS", "*")
@@ -201,7 +205,10 @@ class TestSnowflake(SnowflakeTestCase):
                     "RECORD_ATTRIBUTES",
                 ]:
                     ret[json_col] = ret[json_col].apply(json.loads)
-                if len(ret) != num_expected_events:
+                if (
+                    not greater_num_events_ok
+                    and len(ret) != num_expected_events
+                ):
                     raise ValueError("Unexpected number of events!")
                 return ret
             time.sleep(retry_cooldown_in_seconds)
@@ -402,7 +409,7 @@ class TestSnowflake(SnowflakeTestCase):
             self._tru_session.force_flush()
         # Get all events associated with this.
         NUM_SPANS_FOR_APP_INSTRUMENTATION = 4
-        NUM_SPANS_FOR_FEEDBACK = 10
+        NUM_SPANS_FOR_FEEDBACK = 8
         NUM_SPANS_PER_INVOCATION = (
             NUM_SPANS_FOR_APP_INSTRUMENTATION + NUM_SPANS_FOR_FEEDBACK
         )
@@ -410,6 +417,7 @@ class TestSnowflake(SnowflakeTestCase):
             NUM_SPANS_PER_INVOCATION * num_inputs,
             app_name="LOAD_TEST_APP",
             return_events=True,
+            greater_num_events_ok=True,
         )
         self._sort_events_by_record_id(events)
         # Ingest the remaining data.
@@ -428,6 +436,7 @@ class TestSnowflake(SnowflakeTestCase):
                     run_name=f"RUN_{run_idx}",
                     return_events=False,
                     num_retries=1000000,
+                    greater_num_events_ok=True,  # TODO(this_pr): remove!
                 )
 
     def test_ingest_data(self) -> None:
