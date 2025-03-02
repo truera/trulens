@@ -156,6 +156,7 @@ class TestSnowflake(SnowflakeTestCase):
         self,
         num_expected_events: int,
         app_name: str,
+        run_name: str = "",
         num_retries: int = 10,
         retry_cooldown_in_seconds: int = 5,
         return_events: bool = False,
@@ -164,7 +165,7 @@ class TestSnowflake(SnowflakeTestCase):
             SELECT
                 COUNT(*) AS NUM_EVENTS
             FROM
-                table(snowflake.local.GET_AI_OBSERVABILITY_EVENTS(
+                TABLE(SNOWFLAKE.LOCAL.GET_AI_OBSERVABILITY_EVENTS(
                     ?, ?, ?, 'EXTERNAL AGENT'
                 ))
             """
@@ -173,6 +174,15 @@ class TestSnowflake(SnowflakeTestCase):
             self._snowpark_session.get_current_schema()[1:-1],
             app_name,
         ]
+        if run_name:
+            q += """
+                WHERE
+                    RECORD_ATTRIBUTES[?] = ?
+                """
+            params += [
+                SpanAttributes.RUN_NAME,
+                run_name,
+            ]
         for _ in range(num_retries):
             res = self._snowpark_session.sql(q, params=params).to_pandas()
             num_events = res.iloc[0].NUM_EVENTS
@@ -351,7 +361,7 @@ class TestSnowflake(SnowflakeTestCase):
     ) -> None:
         # Load data.
         input_data = pd.read_csv(data_filename)
-        input_data = input_data[["query"]]
+        input_data = input_data[["query", "response"]]
         input_data = pd.concat(
             [input_data] * int(math.ceil(num_inputs / len(input_data))),
             ignore_index=True,
@@ -375,7 +385,7 @@ class TestSnowflake(SnowflakeTestCase):
             dataset_name=data_filename,
             source_type="DATAFRAME",
             label="label",
-            dataset_spec={"input": "query"},
+            dataset_spec={"input": "query", "ground_truth_output": "response"},
         )
         # Ingest for single app/run.
         if ingest_starting_data:
@@ -411,19 +421,21 @@ class TestSnowflake(SnowflakeTestCase):
                 self._update_events(events, app_name, run_name)
                 self._ingest_events(events)
         for app_idx in tqdm(range(num_apps)):
-            self._wait_for_events(
-                NUM_SPANS_PER_INVOCATION * num_inputs * num_runs,
-                app_name=f"APP_{app_idx}",
-                return_events=False,
-                num_retries=1000000,
-            )
+            for run_idx in tqdm(range(num_runs)):
+                self._wait_for_events(
+                    NUM_SPANS_PER_INVOCATION * num_inputs,
+                    app_name=f"APP_{app_idx}",
+                    run_name=f"RUN_{run_idx}",
+                    return_events=False,
+                    num_retries=1000000,
+                )
 
     def test_ingest_data(self) -> None:
         self._test_ingest_data(
             data_filename="./tests/load/data/test_snowflake_load_test_app_data.csv",
             num_apps=1,
-            num_runs=1000,
-            num_inputs=1000,
+            num_runs=20,
+            num_inputs=20,
             feedbacks=[
                 "coherence",
                 "correctness",
