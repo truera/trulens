@@ -15,7 +15,7 @@ def feedback_function(**kwargs):
     span_type=SpanAttributes.SpanType.EVAL,
     attributes=lambda ret, exception, *args, **kwargs: {
         SpanAttributes.EVAL.CRITERIA: kwargs["criteria"],
-        SpanAttributes.EVAL.EVIDENCE: ret[1],
+        SpanAttributes.EVAL.EXPLANATION: ret[1],
         SpanAttributes.EVAL.SCORE: ret[0],
     },
 )
