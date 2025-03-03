@@ -12,7 +12,7 @@ from tests.unit.test_otel_tru_custom import TestApp
 from tests.util.snowflake_test_case import SnowflakeTestCase
 
 
-class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
+class TestSnowflakeAgentsAndRuns(SnowflakeTestCase):
     logger = logging.getLogger(__name__)
 
     @staticmethod
@@ -167,6 +167,7 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
         app = TestApp()
 
         TEST_APP_NAME = f"custom_app_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+
         tru_recorder = TruApp(
             app,
             app_name=TEST_APP_NAME,
@@ -245,7 +246,7 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
             run_name=TEST_RUN_NAME,
             description="desc_1",
             dataset_name=test_table_name,
-            dataset_spec={"INPUT": "col1"},
+            dataset_spec={"gibberish": "col1"},
         )
         with self.assertRaises(ValueError):
             tru_recorder.add_run(run_config=invalid_dataset_spec_run_config)
@@ -268,15 +269,18 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
         )
         run_2 = tru_recorder.add_run(run_config=run_config_2)
 
-        with self.assertRaises(Exception):
-            tru_recorder.add_run(run_config=run_config_2)  # run already exists
+        run_2_ = tru_recorder.add_run(
+            run_config=run_config_2
+        )  # run already exists
+
+        self.assertEqual(run_2.run_name, run_2_.run_name)
 
         runs = tru_recorder.list_runs()
-        self.assertIn("test_run_1", [run.run_name for run in runs])
+        self.assertIn(TEST_RUN_NAME, [run.run_name for run in runs])
         self.assertIn("test_run_2", [run.run_name for run in runs])
 
         # test run deletion
         run_2.delete()
         runs = tru_recorder.list_runs()
-        self.assertIn("test_run_1", [run.run_name for run in runs])
+        self.assertIn(TEST_RUN_NAME, [run.run_name for run in runs])
         self.assertNotIn("test_run_2", [run.run_name for run in runs])

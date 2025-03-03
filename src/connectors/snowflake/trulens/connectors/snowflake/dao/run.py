@@ -6,6 +6,7 @@ import pandas as pd
 from snowflake.snowpark import Session
 from snowflake.snowpark.row import Row
 from trulens.connectors.snowflake.dao.enums import SourceType
+from trulens.connectors.snowflake.dao.sql_utils import double_quote_identifier
 from trulens.connectors.snowflake.dao.sql_utils import execute_query
 from trulens.core.run import SUPPORTED_ENTRY_TYPES
 from trulens.core.run import SupportedEntryType
@@ -79,7 +80,7 @@ class RunDao:
         """
         # Build the request payload dictionary.
         req_payload = {
-            "object_name": object_name,
+            "object_name": double_quote_identifier(object_name),
             "object_type": object_type,
             "run_name": run_name,
             "description": description,
@@ -157,7 +158,7 @@ class RunDao:
             A pandas DataFrame containing the run metadata.
         """
         req_payload = {
-            "object_name": object_name,
+            "object_name": double_quote_identifier(object_name),
             "object_type": object_type,
             "run_name": run_name,
         }
@@ -193,7 +194,10 @@ class RunDao:
         Returns:
             A pandas DataFrame containing all run metadata.
         """
-        req_payload = {"object_name": object_name, "object_type": object_type}
+        req_payload = {
+            "object_name": double_quote_identifier(object_name),
+            "object_type": object_type,
+        }
         req_payload_json = json.dumps(req_payload)
         query = AIML_RUN_OPS_SYS_FUNC_TEMPLATE.format(method=METHOD_LIST)
 
@@ -242,8 +246,8 @@ class RunDao:
         """
 
         # Build the payload dictionary.
-        payload = {
-            "object_name": object_name,
+        req_payload = {
+            "object_name": double_quote_identifier(object_name),
             "object_type": object_type,
             "run_name": run_name,
             "invocation_field_masks": invocation_field_masks,
@@ -255,9 +259,10 @@ class RunDao:
             "update_description": "false",
         }
         if object_version is not None:
-            payload["object_version"] = object_version
+            req_payload["object_version"] = object_version
 
-        req_payload_json = json.dumps(payload)
+        req_payload_json = json.dumps(req_payload)
+
         query = AIML_RUN_OPS_SYS_FUNC_TEMPLATE.format(method="UPDATE")
 
         logger.debug(
@@ -370,13 +375,14 @@ class RunDao:
         """
         req_payload = {
             "run_name": run_name,
-            "object_name": object_name,
+            "object_name": double_quote_identifier(object_name),
             "object_type": object_type,
         }
         if object_version:
             req_payload["object_version"] = object_version
 
         req_payload_json = json.dumps(req_payload)
+
         query = AIML_RUN_OPS_SYS_FUNC_TEMPLATE.format(method=METHOD_DELETE)
 
         logger.debug(
