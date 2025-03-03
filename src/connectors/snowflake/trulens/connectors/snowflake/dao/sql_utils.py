@@ -21,6 +21,18 @@ def escape_quotes(unescaped: str) -> str:
     return unescaped.replace(DOUBLE_QUOTE, DOUBLE_QUOTE + DOUBLE_QUOTE)
 
 
+def double_quote_identifier(identifier: str) -> str:
+    """Double quotes the identifier to preserve it as-is in SQL.
+
+    Args:
+        identifier (str): The identifier to double quote.
+
+    Returns:
+        str: The double quoted identifier.
+    """
+    return DOUBLE_QUOTE + escape_quotes(identifier) + DOUBLE_QUOTE
+
+
 def execute_query(
     session: Session,
     query: str,
