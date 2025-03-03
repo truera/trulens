@@ -159,14 +159,14 @@ class SpanAttributes:
         EVAL_ROOT_ID = base + ".eval_root_id"
         """Span id for the EVAL_ROOT span this span is under."""
 
-        FEEDBACK_NAME = base + ".feedback_name"
+        METRIC_NAME = base + ".metric_name"
         """Name of the feedback definition being evaluated."""
 
         CRITERIA = base + ".criteria"
         """Criteria for this sub-step."""
 
-        EVIDENCE = base + ".evidence"
-        """Evidence for the score for this sub-step."""
+        EXPLANATION = base + ".explanation"
+        """Explanation for the score for this sub-step."""
 
         SCORE = base + ".score"
         """Score for this sub-step."""

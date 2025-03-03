@@ -146,7 +146,7 @@ def set_general_span_attributes(
         span, SpanAttributes.EVAL.EVAL_ROOT_ID, context
     )
     set_string_span_attribute_from_baggage(
-        span, SpanAttributes.EVAL.FEEDBACK_NAME, context
+        span, SpanAttributes.EVAL.METRIC_NAME, context
     )
     set_string_span_attribute_from_baggage(
         span, SpanAttributes.RUN_NAME, context
