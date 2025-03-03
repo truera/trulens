@@ -35,8 +35,6 @@ env-tests:
 		jsondiff \
 		nbconvert \
 		nbformat \
-		opentelemetry-sdk \
-		opentelemetry-proto \
 		pre-commit \
 		pytest \
 		pytest-azurepipelines \
