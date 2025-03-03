@@ -313,7 +313,7 @@ class TestSnowflake(SnowflakeTestCase):
             # Compute kind.
             kind = trace.SpanKind.INTERNAL
             if "kind" in event["RECORD"]:
-                {
+                kind = {
                     "SPAN_KIND_UNSPECIFIED": trace.SpanKind.INTERNAL,
                     "SPAN_KIND_INTERNAL": trace.SpanKind.INTERNAL,
                     "SPAN_KIND_CLIENT": trace.SpanKind.CLIENT,
@@ -434,7 +434,7 @@ class TestSnowflake(SnowflakeTestCase):
                     app_name=f"APP_{app_idx}",
                     run_name=f"RUN_{run_idx}",
                     return_events=False,
-                    num_retries=1000000,
+                    num_retries=10,
                 )
 
     def test_ingest_data(self) -> None:
