@@ -57,9 +57,6 @@ DATASET_RESERVED_FIELDS: Set[str] = {
 INVOCATION_TIMEOUT_IN_MS = (
     5 * 60 * 1000
 )  # expected latency from the telemetry pipeline before ingested rows show up in event table
-PERSISTED_QUERY_RESULTS_TIMEOUT_IN_MS = (
-    20 * 60 * 60 * 1000  # 20 hours (24 hours per Snowflake)
-)
 
 
 class RunStatus(str, Enum):
