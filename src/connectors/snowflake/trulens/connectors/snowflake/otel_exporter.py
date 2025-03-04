@@ -9,6 +9,7 @@ from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExporter
 from opentelemetry.sdk.trace.export import SpanExportResult
 from trulens.connectors.snowflake import SnowflakeConnector
+from trulens.connectors.snowflake.dao.sql_utils import double_quote_identifier
 from trulens.core.database import connector as core_connector
 from trulens.experimental.otel_tracing.core.exporter.utils import (
     check_if_trulens_span,
@@ -189,7 +190,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                     tmp_file_basename + ".gz",
                     database,  # TODO(otel, dhuang): This should be the database of the object entity!
                     schema,  # TODO(otel, dhuang): This should the schema of the object entity!
-                    app_name or "",
+                    double_quote_identifier(app_name or ""),
                     app_version or "",
                     run_name or "",
                 ],
