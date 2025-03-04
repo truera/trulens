@@ -196,7 +196,9 @@ class TestOtelCosts(OtelTestCase):
     def test_tru_custom_app_openai(self):
         self._test_tru_custom_app(
             _TestOpenAIApp(),
-            ["openai.resources.chat.completions.Completions.create"],
+            [
+                "openai.resources.chat.completions.completions.Completions.create"
+            ],
             "gpt-3.5-turbo-0125",
             "USD",
         )
@@ -206,7 +208,7 @@ class TestOtelCosts(OtelTestCase):
         self._test_tru_custom_app(
             _TestLiteLLMApp(model),
             [
-                "openai.resources.chat.completions.Completions.create",
+                "openai.resources.chat.completions.completions.Completions.create",
                 "litellm.main.completion",
             ],
             model,
