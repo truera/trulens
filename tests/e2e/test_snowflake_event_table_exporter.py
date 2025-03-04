@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import time
@@ -13,36 +12,14 @@ from trulens.apps.langchain import TruChain
 from trulens.apps.llamaindex import TruLlama
 from trulens.connectors import snowflake as snowflake_connector
 from trulens.core.app import App
+from trulens.core.run import Run
 from trulens.core.run import RunConfig
 from trulens.core.session import TruSession
-from trulens.feedback.computer import MinimalSpanInfo
-from trulens.feedback.computer import RecordGraphNode
-from trulens.feedback.computer import _compute_feedback
-from trulens.otel.semconv.trace import SpanAttributes
 
 import tests.unit.test_otel_tru_chain
 import tests.unit.test_otel_tru_custom
 import tests.unit.test_otel_tru_llama
-from tests.util.mock_otel_feedback_computation import (
-    all_retrieval_span_attributes,
-)
-from tests.util.mock_otel_feedback_computation import feedback_function
 from tests.util.snowflake_test_case import SnowflakeTestCase
-
-
-def _convert_events_to_MinimalSpanInfos(
-    events: List[Row],
-) -> List[MinimalSpanInfo]:
-    ret = []
-    for row in events:
-        span = MinimalSpanInfo()
-        span.span_id = json.loads(row.TRACE)["span_id"]
-        span.parent_span_id = json.loads(row.RECORD).get("parent_span_id", None)
-        if not span.parent_span_id:
-            span.parent_span_id = None
-        span.attributes = json.loads(row.RECORD_ATTRIBUTES)
-        ret.append(span)
-    return ret
 
 
 class TestSnowflakeEventTableExporter(SnowflakeTestCase):
@@ -93,18 +70,15 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         )
 
     def _validate_results(
-        self, app_name: str, run_name: str, num_expected_spans: int
+        self, app_name: str, num_expected_spans: int
     ) -> List[Row]:
         # Flush exporter and wait for data to be made to stage.
         self._tru_session.force_flush()
         # Check that there are no other tables in the schema.
-        self.assertListEqual(
-            self.run_query("SHOW TABLES"),
-            [],
-        )
+        self.assertListEqual(self.run_query("SHOW TABLES"), [])
         # Check that the data is in the event table.
         return self._wait_for_num_results(
-            f"""
+            """
             SELECT
                 *
             FROM
@@ -114,10 +88,6 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
                     ?,
                     'EXTERNAL AGENT'
                 ))
-            WHERE
-                RECORD_TYPE = 'SPAN'
-                AND TIMESTAMP >= TO_TIMESTAMP_LTZ('2025-01-31 20:42:00')
-                AND RECORD_ATTRIBUTES['{SpanAttributes.RUN_NAME}'] = '{run_name}'
             ORDER BY TIMESTAMP DESC
             LIMIT 50
             """,
@@ -137,9 +107,10 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         dataset_spec: Dict[str, str],
         input_df: pd.DataFrame,
         num_expected_spans: int,
-    ) -> Tuple[str, str, List[Row]]:
+    ) -> Tuple[str, Run]:
         # Create app.
         app_name = str(uuid.uuid4())
+        app_name = app_name.upper()  # TODO(this_pr): remove!
         tru_recorder = TruAppClass(
             app,
             app_name=app_name,
@@ -162,11 +133,8 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         run.start(input_df=input_df)
         self._tru_session.force_flush()
         # Validate results.
-        return (
-            app_name,
-            run_name,
-            self._validate_results(app_name, run_name, num_expected_spans),
-        )
+        self._validate_results(app_name, num_expected_spans)
+        return app_name, run
 
     def test_tru_custom_app(self):
         app = tests.unit.test_otel_tru_custom.TestApp()
@@ -209,7 +177,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         app = (
             tests.unit.test_otel_tru_chain.TestOtelTruChain._create_simple_rag()
         )
-        app_name, run_name, events = self._test_tru_app(
+        app_name, run = self._test_tru_app(
             app,
             app.invoke,
             TruChain,
@@ -223,15 +191,11 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             }),
             9,
         )
-        # Compute feedback on record we just ingested.
-        spans = _convert_events_to_MinimalSpanInfos(events)
-        record_root = RecordGraphNode.build_graph(spans)
-        _compute_feedback(
-            record_root,
-            feedback_function,
-            "baby_grader",
-            all_retrieval_span_attributes,
-        )
-        TruSession().force_flush()
-        # Validate results.
-        events = self._validate_results(app_name, run_name, 12)
+        run.compute_metrics([
+            "context_relevance",
+            "groundedness",
+            "answer_relevance",
+            "coherence",
+            # "correctness",
+        ])
+        self._validate_results(app_name, 20)
