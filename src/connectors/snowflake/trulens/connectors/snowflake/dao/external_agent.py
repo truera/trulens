@@ -3,7 +3,7 @@ from typing import Tuple
 
 import pandas
 from snowflake.snowpark import Session
-from trulens.connectors.snowflake.dao.sql_utils import escape_quotes
+from trulens.connectors.snowflake.dao.sql_utils import double_quote_identifier
 from trulens.connectors.snowflake.dao.sql_utils import execute_query
 
 logger = logging.getLogger(__name__)
@@ -21,15 +21,15 @@ class ExternalAgentDao:
         self.session: Session = snowpark_session
         logger.info("Initialized ExternalAgentDao with a Snowpark session.")
 
-    def create_new_agent(self, name: str, version: str) -> Tuple[str, str]:
+    def create_new_agent(self, name: str, version: str) -> None:
         """Create a new External Agent with a specified version."""
-        escaped_name = escape_quotes(name)  # escape double quotes
+        resolved_name = double_quote_identifier(name)  # escape double quotes
+
         # note we cannot parametrize inputs to query when using CREATE statement - hence f-string but there might be a risk of sql injection
-        query = f"""CREATE EXTERNAL AGENT IDENTIFIER('"{escaped_name}"') WITH VERSION "{version}";"""
+        query = f"""CREATE EXTERNAL AGENT IDENTIFIER('{resolved_name}') WITH VERSION "{version}";"""
         execute_query(self.session, query)
 
         logger.info(f"Created External Agent {name} with version {version}.")
-        return name, version
 
     def create_agent_if_not_exist(
         self, name: str, version: str
@@ -61,12 +61,13 @@ class ExternalAgentDao:
                 logger.info(
                     f"External Agent {name} with version {version} already exists."
                 )
+
         return name, version
 
     def drop_agent(self, name: str) -> None:
         """Delete an External Agent."""
-        escaped_name = escape_quotes(name)
-        query = f"""DROP EXTERNAL AGENT IDENTIFIER('"{escaped_name}"');"""
+        resolved_name = double_quote_identifier(name)
+        query = f"""DROP EXTERNAL AGENT IDENTIFIER('{resolved_name}');"""
 
         execute_query(self.session, query)
 
@@ -74,8 +75,8 @@ class ExternalAgentDao:
 
     def add_version(self, name: str, version: str) -> None:
         """Add a new version to an existing External Agent."""
-        escaped_name = escape_quotes(name)
-        query = f"""ALTER EXTERNAL AGENT if exists IDENTIFIER('"{escaped_name}"')  ADD VERSION "{version}";"""
+        resolved_name = double_quote_identifier(name)
+        query = f"""ALTER EXTERNAL AGENT if exists IDENTIFIER('{resolved_name}')  ADD VERSION "{version}";"""
         # parameter bindings doesn't work with ALTER statement
 
         execute_query(self.session, query)
@@ -84,8 +85,8 @@ class ExternalAgentDao:
 
     def drop_version(self, name: str, version: str) -> None:
         """Drop a specific version from an External Agent."""
-        escaped_name = escape_quotes(name)
-        query = f"""ALTER EXTERNAL AGENT if exists IDENTIFIER('"{escaped_name}"') DROP VERSION "{version}";"""
+        resolved_name = double_quote_identifier(name)
+        query = f"""ALTER EXTERNAL AGENT if exists IDENTIFIER('{resolved_name}') DROP VERSION "{version}";"""
 
         execute_query(self.session, query)
         logger.info(f"Dropped version {version} from External Agent {name}.")
@@ -107,13 +108,12 @@ class ExternalAgentDao:
             return False
         logger.info(f"Checking if External Agent {name} exists.")
 
-        return name in agents["name"].values
+        return double_quote_identifier(name) in agents["name"].values
 
     def list_agent_versions(self, name: str) -> pandas.DataFrame:
         """Retrieve all versions of a specific External Agent."""
-        escaped_name = escape_quotes(name)
-
-        query = f"""SHOW VERSIONS IN EXTERNAL AGENT IDENTIFIER('"{escaped_name}"');"""
+        resolved_name = double_quote_identifier(name)
+        query = f"""SHOW VERSIONS IN EXTERNAL AGENT IDENTIFIER('{resolved_name}');"""
 
         rows = execute_query(self.session, query)
         result_df = pandas.DataFrame([row.as_dict() for row in rows])

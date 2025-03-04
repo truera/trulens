@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
@@ -25,6 +26,9 @@ METHOD_DELETE = "DELETE"
 METHOD_LIST = "LIST"
 
 DEFAULT_LLM_JUDGE_NAME = "llama3.1-70b"
+PERSISTED_QUERY_RESULTS_TIMEOUT_IN_MS = (
+    20 * 60 * 60 * 1000  # 20 hours (24 hours per Snowflake)
+)
 
 
 class RunDao:
@@ -395,3 +399,92 @@ class RunDao:
             parameters=(req_payload_json,),
         )
         logger.info("Deleted run '%s'.", run_name)
+
+    def _read_spans_count_from_event_table(
+        self, object_name: str, run_name: str, span_type: str
+    ) -> int:
+        query = """
+            SELECT
+                COUNT(*) AS record_count
+            FROM
+                table(snowflake.local.GET_AI_OBSERVABILITY_EVENTS(
+                    ?,
+                    ?,
+                    ?,
+                    'EXTERNAL AGENT'
+                ))
+            WHERE
+                RECORD_ATTRIBUTES:"snow.ai.observability.run.name" = ? AND
+                RECORD_ATTRIBUTES:"ai.observability.span_type" = ?
+        """
+        try:
+            result_df = self.session.sql(
+                query,
+                params=[
+                    self.session.get_current_database()[1:-1],
+                    self.session.get_current_schema()[1:-1],
+                    double_quote_identifier(object_name),
+                    run_name,
+                    span_type,
+                ],
+            ).to_pandas()
+
+            if "record_count" in result_df.columns:
+                count_value = result_df["record_count"].iloc[0]
+            else:
+                count_value = result_df.iloc[0, 0]
+            return int(count_value)
+        except Exception as e:
+            logger.exception(
+                f"Error encountered during reading record count from event table: {e}."
+            )
+            raise
+
+    def _fetch_query_execution_status_by_id(
+        self, query_start_time_ms: int, query_id: str
+    ) -> str:
+        try:
+            # NOTE: information_schema.query_history does not always return the latest query status, even within 7 days
+            # and account_usage.query_history has higher latency, hence going with snowflake python connector API get_query_status here
+            if (
+                int(round(time.time() * 1000)) - query_start_time_ms
+                > PERSISTED_QUERY_RESULTS_TIMEOUT_IN_MS
+            ):
+                # https://docs.snowflake.com/en/user-guide/querying-persisted-results
+
+                logger.warning(
+                    f"Query {query_id} started almost a day ago, results may not be cached so try to fetch using ACCOUNT_USAGE."
+                )
+                query = """select EXECUTION_STATUS from snowflake.account_usage.query_history where query_id = ?;"""
+                ret = self.session.sql(query, params=[query_id]).collect()
+                raw_status = ret[0]["EXECUTION_STATUS"]
+
+            else:
+                logger.info(
+                    "query status using snowflake connector get_query_status()"
+                )
+                query_status = self.session.connection.get_query_status(
+                    query_id
+                )
+
+                raw_status = query_status.name
+
+            # resuming_warehouse, running, queued, blocked, success, failed_with_error, or failed_with_incident.
+            if "success" in raw_status.lower():
+                return "SUCCESS"
+            elif "failed" in raw_status.lower():
+                return "FAILED"
+            else:
+                return "IN_PROGRESS"
+        except Exception as e:
+            logger.exception(
+                f"Error encountered during reading query status from query history: {e}."
+            )
+            raise
+
+    def _fetch_computation_job_results_by_query_id(
+        self, query_id: str
+    ) -> pd.DataFrame:
+        curr = self.session.connection.cursor()
+        curr.get_results_from_sfqid(query_id)
+        return curr.fetch_pandas_all()

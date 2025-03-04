@@ -434,7 +434,11 @@ class Run(BaseModel):
                 return RunStatus.UNKNOWN
 
         current_ingested_records_count = (
-            self._read_spans_count_from_event_table(span_type="record_root")
+            self.run_dao._read_spans_count_from_event_table(
+                object_name=self.object_name,
+                run_name=self.run_name,
+                span_type="record_root",
+            )
         )
         logger.info(
             f"Current ingested records count: {current_ingested_records_count}"
@@ -516,7 +520,7 @@ class Run(BaseModel):
         computation_sproc_query_ids_to_query_status = {}
         for computation in all_computations:
             query_id = computation.query_id
-            query_status = self._fetch_query_execution_status_by_id(
+            query_status = self.run_dao._fetch_query_execution_status_by_id(
                 query_start_time_ms=computation.start_time_ms,
                 query_id=query_id,
             )
@@ -556,8 +560,10 @@ class Run(BaseModel):
             for computation in all_computations:
                 query_id = computation.query_id
 
-                result_rows = self._fetch_computation_job_results_by_query_id(
-                    query_id
+                result_rows = (
+                    self.run_dao._fetch_computation_job_results_by_query_id(
+                        query_id
+                    )
                 )
                 for i, row in result_rows.iterrows():
                     row_msg = row["MESSAGE"]
@@ -618,7 +624,11 @@ class Run(BaseModel):
                 status == "SUCCESS" or status == "FAILED"
                 for status in computation_sproc_query_ids_to_query_status.values()
             )
-            and self._read_spans_count_from_event_table(span_type="eval_root")
+            and self.run_dao._read_spans_count_from_event_table(
+                object_name=self.object_name,
+                run_name=self.run_name,
+                span_type="eval_root",
+            )
             == 0
         ):
             # metric (eval) result ingestion failed for some reason
@@ -771,95 +781,6 @@ class Run(BaseModel):
 
     def _get_current_time_in_ms(self) -> int:
         return int(round(time.time() * 1000))
-
-    def _read_spans_count_from_event_table(self, span_type: str) -> int:
-        query = """
-            SELECT
-                COUNT(*) AS record_count
-            FROM
-                table(snowflake.local.GET_AI_OBSERVABILITY_EVENTS(
-                    ?,
-                    ?,
-                    ?,
-                    'EXTERNAL AGENT'
-                ))
-            WHERE
-                RECORD_ATTRIBUTES:"snow.ai.observability.run.name" = ? AND
-                RECORD_ATTRIBUTES:"ai.observability.span_type" = ?
-        """
-        try:
-            result_df = self.run_dao.session.sql(
-                query,
-                params=[
-                    self.run_dao.session.get_current_database()[1:-1],
-                    self.run_dao.session.get_current_schema()[1:-1],
-                    self.object_name,
-                    self.run_name,
-                    span_type,
-                ],
-            ).to_pandas()
-
-            if "record_count" in result_df.columns:
-                count_value = result_df["record_count"].iloc[0]
-            else:
-                count_value = result_df.iloc[0, 0]
-            return int(count_value)
-        except Exception as e:
-            logger.exception(
-                f"Error encountered during reading record count from event table: {e}."
-            )
-            raise
-
-    def _fetch_query_execution_status_by_id(
-        self, query_start_time_ms: int, query_id: str
-    ) -> str:
-        try:
-            # NOTE: information_schema.query_history does not always return the latest query status, even within 7 days
-            # and account_usage.query_history has higher latency, hence going with snowflake python connector API get_query_status here
-            if (
-                self._get_current_time_in_ms() - query_start_time_ms
-                > PERSISTED_QUERY_RESULTS_TIMEOUT_IN_MS
-            ):
-                # https://docs.snowflake.com/en/user-guide/querying-persisted-results
-
-                logger.warning(
-                    f"Query {query_id} started almost a day ago, results may not be cached so try to fetch using ACCOUNT_USAGE."
-                )
-                query = """select EXECUTION_STATUS from snowflake.account_usage.query_history where query_id = ?;"""
-                ret = self.run_dao.session.sql(
-                    query, params=[query_id]
-                ).collect()
-                raw_status = ret[0]["EXECUTION_STATUS"]
-
-            else:
-                logger.info(
-                    "query status using snowflake connector get_query_status()"
-                )
-                query_status = self.run_dao.session.connection.get_query_status(
-                    query_id
-                )
-
-                raw_status = query_status.name
-
-            # resuming_warehouse, running, queued, blocked, success, failed_with_error, or failed_with_incident.
-            if "success" in raw_status.lower():
-                return "SUCCESS"
-            elif "failed" in raw_status.lower():
-                return "FAILED"
-            else:
-                return "IN_PROGRESS"
-        except Exception as e:
-            logger.exception(
-                f"Error encountered during reading query status from query history: {e}."
-            )
-            raise
-
-    def _fetch_computation_job_results_by_query_id(
-        self, query_id: str
-    ) -> pd.DataFrame:
-        curr = self.run_dao.session.connection.cursor()
-        curr.get_results_from_sfqid(query_id)
-        return curr.fetch_pandas_all()
 
     def get_status(self) -> RunStatus:
         # first read from DPO backend, and decide if we need to update status.

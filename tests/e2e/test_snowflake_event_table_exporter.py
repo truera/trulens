@@ -121,7 +121,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             [
                 self._snowpark_session.get_current_database()[1:-1],
                 self._snowpark_session.get_current_schema()[1:-1],
-                app_name,
+                double_quote_identifier(app_name),
             ],
             num_expected_spans,
         )
