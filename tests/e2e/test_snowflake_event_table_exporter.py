@@ -11,7 +11,6 @@ from trulens.apps.app import TruApp
 from trulens.apps.langchain import TruChain
 from trulens.apps.llamaindex import TruLlama
 from trulens.connectors import snowflake as snowflake_connector
-from trulens.connectors.snowflake.dao.sql_utils import double_quote_identifier
 from trulens.core.session import TruSession
 from trulens.feedback.computer import MinimalSpanInfo
 from trulens.feedback.computer import RecordGraphNode
@@ -122,7 +121,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             [
                 self._snowpark_session.get_current_database()[1:-1],
                 self._snowpark_session.get_current_schema()[1:-1],
-                double_quote_identifier(app_name),
+                app_name,
             ],
             num_expected_spans,
         )
