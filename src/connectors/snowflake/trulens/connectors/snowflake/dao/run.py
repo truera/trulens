@@ -4,6 +4,7 @@ import time
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
+from snowflake.snowpark import AsyncJob
 from snowflake.snowpark import Session
 from snowflake.snowpark.row import Row
 from trulens.connectors.snowflake.dao.enums import SourceType
@@ -488,3 +489,39 @@ class RunDao:
         curr = self.session.connection.cursor()
         curr.get_results_from_sfqid(query_id)
         return curr.fetch_pandas_all()
+
+    def call_compute_metrics_query(
+        self,
+        metrics: List[str],
+        object_name: str,
+        object_version: str,
+        object_type: str,
+        run_name: str,
+    ) -> AsyncJob:
+        if not metrics:
+            raise ValueError("Metrics list cannot be empty")
+        metrics_str = ",".join([f"'{metric}'" for metric in metrics])
+        compute_metrics_query = """
+        CALL COMPUTE_AI_OBSERVABILITY_METRICS(
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ARRAY_CONSTRUCT(?));
+        """
+
+        params = [
+            self.session.get_current_database()[1:-1],
+            self.session.get_current_schema()[1:-1],
+            double_quote_identifier(object_name),
+            object_version,
+            object_type,
+            run_name,
+            metrics_str,
+        ]
+
+        compute_query = self.session.sql(compute_metrics_query, params=params)
+
+        return compute_query.collect_nowait()

@@ -820,16 +820,14 @@ class Run(BaseModel):
             return f"""Cannot start a new metric computation when in run status: {run_status}. Valid statuses are: {RunStatus.INVOCATION_COMPLETED}, {RunStatus.INVOCATION_PARTIALLY_COMPLETED},
         {RunStatus.COMPUTATION_IN_PROGRESS}, {RunStatus.COMPLETED}, {RunStatus.PARTIALLY_COMPLETED}."""
 
-        current_db = self.run_dao.session.get_current_database()
-        current_schema = self.run_dao.session.get_current_schema()
-        if not metrics:
-            raise ValueError("Metrics list cannot be empty")
-        metrics_str = ",".join([f"'{metric}'" for metric in metrics])
-        compute_metrics_query = f"CALL COMPUTE_AI_OBSERVABILITY_METRICS('{current_db}', '{current_schema}', '{self.object_name}', '{self.object_version}', '{self.object_type}', '{self.run_name}', ARRAY_CONSTRUCT({metrics_str}));"
+        async_job = self.run_dao.call_compute_metrics_query(
+            metrics=metrics,
+            object_name=self.object_name,
+            object_version=self.object_version,
+            object_type=self.object_type,
+            run_name=self.run_name,
+        )
 
-        compute_query = self.run_dao.session.sql(compute_metrics_query)
-
-        async_job = compute_query.collect_nowait()
         query_id = async_job.query_id
 
         logger.info(f"Query id for metrics computation: {query_id}")
