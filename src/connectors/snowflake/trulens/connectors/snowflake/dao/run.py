@@ -400,7 +400,7 @@ class RunDao:
         )
         logger.info("Deleted run '%s'.", run_name)
 
-    def _read_spans_count_from_event_table(
+    def read_spans_count_from_event_table(
         self, object_name: str, run_name: str, span_type: str
     ) -> int:
         query = """
@@ -440,7 +440,7 @@ class RunDao:
             )
             raise
 
-    def _fetch_query_execution_status_by_id(
+    def fetch_query_execution_status_by_id(
         self, query_start_time_ms: int, query_id: str
     ) -> str:
         try:
@@ -482,7 +482,7 @@ class RunDao:
             )
             raise
 
-    def _fetch_computation_job_results_by_query_id(
+    def fetch_computation_job_results_by_query_id(
         self, query_id: str
     ) -> pd.DataFrame:
         curr = self.session.connection.cursor()

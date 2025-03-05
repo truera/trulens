@@ -431,7 +431,7 @@ class Run(BaseModel):
                 return RunStatus.UNKNOWN
 
         current_ingested_records_count = (
-            self.run_dao._read_spans_count_from_event_table(
+            self.run_dao.read_spans_count_from_event_table(
                 object_name=self.object_name,
                 run_name=self.run_name,
                 span_type="record_root",
@@ -517,7 +517,7 @@ class Run(BaseModel):
         computation_sproc_query_ids_to_query_status = {}
         for computation in all_computations:
             query_id = computation.query_id
-            query_status = self.run_dao._fetch_query_execution_status_by_id(
+            query_status = self.run_dao.fetch_query_execution_status_by_id(
                 query_start_time_ms=computation.start_time_ms,
                 query_id=query_id,
             )
@@ -558,7 +558,7 @@ class Run(BaseModel):
                 query_id = computation.query_id
 
                 result_rows = (
-                    self.run_dao._fetch_computation_job_results_by_query_id(
+                    self.run_dao.fetch_computation_job_results_by_query_id(
                         query_id
                     )
                 )
@@ -621,7 +621,7 @@ class Run(BaseModel):
                 status == "SUCCESS" or status == "FAILED"
                 for status in computation_sproc_query_ids_to_query_status.values()
             )
-            and self.run_dao._read_spans_count_from_event_table(
+            and self.run_dao.read_spans_count_from_event_table(
                 object_name=self.object_name,
                 run_name=self.run_name,
                 span_type="eval_root",

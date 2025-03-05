@@ -11,6 +11,7 @@ from trulens.apps.app import TruApp
 from trulens.apps.langchain import TruChain
 from trulens.apps.llamaindex import TruLlama
 from trulens.connectors import snowflake as snowflake_connector
+from trulens.connectors.snowflake.dao.sql_utils import double_quote_identifier
 from trulens.core.app import App
 from trulens.core.run import Run
 from trulens.core.run import RunConfig
@@ -94,7 +95,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             [
                 self._snowpark_session.get_current_database()[1:-1],
                 self._snowpark_session.get_current_schema()[1:-1],
-                app_name,
+                double_quote_identifier(app_name),
             ],
             num_expected_spans,
         )
