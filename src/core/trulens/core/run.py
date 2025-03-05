@@ -4,7 +4,6 @@ from enum import Enum
 import inspect
 import json
 import logging
-import re
 import time
 from typing import Any, ClassVar, Dict, List, Optional, Set, Type
 import uuid
@@ -95,7 +94,7 @@ def validate_dataset_spec(
 ) -> Dict[str, str]:
     """
     Validates and normalizes the dataset column specification to ensure it contains only
-    valid fields and allows for subscripted fields like input_1, input_2, etc.
+    currently supported span attributes and that the keys are in the correct format.
 
     Args:
         dataset_spec: The user-provided dictionary with column names.
@@ -118,14 +117,6 @@ def validate_dataset_spec(
             for reserved_field in DATASET_RESERVED_FIELDS
         ):
             raise ValueError(f"Invalid field '{key}' found in dataset_spec.")
-
-        # currently only handle subscripted 'input' columns, e.g., 'input_1', 'input_2'
-        if "input" in normalized_key and normalized_key != "input_id":
-            match = re.match(r"^input(?:_\d+)?$", normalized_key)
-            if not match:
-                raise ValueError(
-                    f"Invalid subscripted input field '{key}'. Expected 'input' or 'input_1', 'input_2', etc."
-                )
 
         # Add the normalized field to the dictionary
         normalized_spec[normalized_key] = value
