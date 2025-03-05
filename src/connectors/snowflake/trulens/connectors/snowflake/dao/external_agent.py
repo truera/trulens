@@ -20,7 +20,7 @@ class ExternalAgentDao:
         self.session: Session = snowpark_session
         logger.info("Initialized ExternalAgentDao with a Snowpark session.")
 
-    def create_new_agent(self, resolved_name: str, version: str) -> None:
+    def _create_new_agent(self, resolved_name: str, version: str) -> None:
         """Create a new External Agent with a specified version."""
 
         # note we cannot parametrize inputs to query when using CREATE statement - hence f-string but there might be a risk of sql injection
@@ -44,7 +44,7 @@ class ExternalAgentDao:
         resolved_name = name.upper()
         # Get the agent if it already exists, otherwise create it
         if not self.check_agent_exists(resolved_name):
-            self.create_new_agent(resolved_name, version)
+            self._create_new_agent(resolved_name, version)
         else:
             # Check if the version exists for the agent
             existing_versions = self.list_agent_versions(resolved_name)
