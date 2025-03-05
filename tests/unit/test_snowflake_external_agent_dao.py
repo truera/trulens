@@ -7,9 +7,6 @@ import pytest
 try:
     from trulens.connectors.snowflake.dao.enums import ObjectType
     from trulens.connectors.snowflake.dao.external_agent import ExternalAgentDao
-    from trulens.connectors.snowflake.dao.sql_utils import (
-        double_quote_identifier,
-    )
     from trulens.connectors.snowflake.dao.sql_utils import escape_quotes
 
 
@@ -53,7 +50,7 @@ class TestExternalAgentDao(unittest.TestCase):
 
         expected_show_query = "SHOW EXTERNAL AGENTS;"
         expected_create_query = (
-            'CREATE EXTERNAL AGENT IDENTIFIER(\'"agent1"\') WITH VERSION "v1";'
+            'CREATE EXTERNAL AGENT "AGENT1" WITH VERSION "v1";'
         )
 
         # We expect exactly 2 calls to execute_query.
@@ -75,7 +72,7 @@ class TestExternalAgentDao(unittest.TestCase):
         # Simulate that the agent exists and that the version already exists.
         # Return a list of DummyRow objects to simulate rows.
         mock_execute_query.side_effect = [
-            [DummyRow({"name": "agent1"})],  # list_agents call
+            [DummyRow({"name": "AGENT1"})],  # list_agents call
             [DummyRow({"name": "v1"})],  # list_agent_versions call
         ]
 
@@ -87,7 +84,7 @@ class TestExternalAgentDao(unittest.TestCase):
         queries = [call[0][1] for call in calls]
         expected_show_agents_query = "SHOW EXTERNAL AGENTS;"
         expected_show_versions_query = (
-            "SHOW VERSIONS IN EXTERNAL AGENT IDENTIFIER('\"agent1\"');"
+            'SHOW VERSIONS IN EXTERNAL AGENT "AGENT1";'
         )
         self.assertIn(expected_show_agents_query, queries)
         self.assertIn(expected_show_versions_query, queries)
@@ -99,7 +96,7 @@ class TestExternalAgentDao(unittest.TestCase):
         # Simulate that the agent exists.
         mock_execute_query.side_effect = [
             [
-                DummyRow({"name": "agent 1"})
+                DummyRow({"name": "AGENT 1"})
             ],  # list_agents call returns agent exists
             [],  # list_agent_versions returns empty list
             [],  # add_version returns empty list
@@ -107,7 +104,9 @@ class TestExternalAgentDao(unittest.TestCase):
 
         self.dao.create_agent_if_not_exist("agent 1", "v2")
 
-        expected_add_query = 'ALTER EXTERNAL AGENT if exists IDENTIFIER(\'"agent 1"\')  ADD VERSION "v2";'
+        expected_add_query = (
+            'ALTER EXTERNAL AGENT if exists "AGENT 1"  ADD VERSION "v2";'
+        )
         calls = mock_execute_query.call_args_list
         queries = [call[0][1] for call in calls]
         self.assertIn(expected_add_query, queries)
@@ -119,7 +118,7 @@ class TestExternalAgentDao(unittest.TestCase):
     ):
         # Simulate that the agent exists and its versions are present but do not include "V3"
         mock_execute_query.side_effect = [
-            [DummyRow({"name": "agent1"})],  # list_agents call
+            [DummyRow({"name": "AGENT1"})],  # list_agents call
             [
                 DummyRow({"version": "v1"}),
                 DummyRow({"version": "v2"}),
@@ -129,7 +128,9 @@ class TestExternalAgentDao(unittest.TestCase):
 
         self.dao.create_agent_if_not_exist("agent1", "v3")
 
-        expected_add_query = 'ALTER EXTERNAL AGENT if exists IDENTIFIER(\'"agent1"\')  ADD VERSION "v3";'
+        expected_add_query = (
+            'ALTER EXTERNAL AGENT if exists "AGENT1"  ADD VERSION "v3";'
+        )
         calls = mock_execute_query.call_args_list
         queries = [call[0][1] for call in calls]
         self.assertIn(expected_add_query, queries)
@@ -148,14 +149,3 @@ class TestExternalAgentDao(unittest.TestCase):
         )
         self.assertEqual(escape_quotes('""""'), '""""""""')
         self.assertEqual(escape_quotes(""), "")
-
-    def test_double_quote_identifier(self):
-        self.assertEqual(double_quote_identifier("hello"), '"hello"')
-        self.assertEqual(
-            double_quote_identifier("hello world"), '"hello world"'
-        )
-        self.assertEqual(
-            double_quote_identifier('hello "world"'), '"hello ""world"""'
-        )
-        self.assertEqual(double_quote_identifier('""""'), '""""""""""')
-        self.assertEqual(double_quote_identifier(""), '""')
