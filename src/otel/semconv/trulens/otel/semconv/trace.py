@@ -194,10 +194,6 @@ class SpanAttributes:
         NUM_COMPLETION_TOKENS = base + ".num_completion_tokens"
         """Number of completion tokens generated."""
 
-        NUM_CORTEX_GUARDRAIL_TOKENS = base + ".num_cortex_guardrails_tokens"
-        """Number of guardrails tokens generated. This is only available for
-        requests instrumented by the Cortex endpoint."""
-
     class CALL:
         """Instrumented method call attributes."""
 

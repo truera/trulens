@@ -34,9 +34,6 @@ class CortexCostComputer:
                 model, usage.get("total_tokens", 0)
             ),
             SpanAttributes.COST.NUM_TOKENS: usage.get("total_tokens", 0),
-            SpanAttributes.COST.NUM_CORTEX_GUARDRAIL_TOKENS: usage.get(
-                "guardrails_tokens", 0
-            ),
             SpanAttributes.COST.NUM_PROMPT_TOKENS: usage.get(
                 "prompt_tokens", 0
             ),
