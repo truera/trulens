@@ -455,7 +455,7 @@ class RunDao:
                 logger.warning(
                     f"Query {query_id} started almost a day ago, results may not be cached so try to fetch using ACCOUNT_USAGE."
                 )
-                query = """select EXECUTION_STATUS from snowflake.account_usage.query_history where query_id = ?;"""
+                query = "select EXECUTION_STATUS from snowflake.account_usage.query_history where query_id = ?;"
                 ret = self.session.sql(query, params=[query_id]).collect()
                 raw_status = ret[0]["EXECUTION_STATUS"]
 
