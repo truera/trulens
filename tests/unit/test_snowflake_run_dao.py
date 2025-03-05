@@ -8,9 +8,7 @@ import pytest
 
 try:
     from trulens.connectors.snowflake.dao.run import RunDao
-    from trulens.connectors.snowflake.dao.sql_utils import (
-        double_quote_identifier,
-    )
+
 
 except Exception:
     RunDao = None
@@ -52,7 +50,7 @@ class TestRunDao(unittest.TestCase):
         dataset_spec = {"col1": "col1"}
 
         req_payload = {
-            "object_name": double_quote_identifier(object_name),
+            "object_name": object_name,
             "object_type": object_type,
             "object_version": object_version,
             "run_name": run_name,
@@ -126,7 +124,7 @@ class TestRunDao(unittest.TestCase):
     def test_delete_run(self, mock_execute_query):
         req_payload = {
             "run_name": "my_run",
-            "object_name": double_quote_identifier("MY_AGENT"),
+            "object_name": "MY_AGENT",
             "object_type": "EXTERNAL AGENT",
         }
         req_payload_json = json.dumps(req_payload)

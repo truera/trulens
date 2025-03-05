@@ -8,7 +8,6 @@ from snowflake.snowpark import AsyncJob
 from snowflake.snowpark import Session
 from snowflake.snowpark.row import Row
 from trulens.connectors.snowflake.dao.enums import SourceType
-from trulens.connectors.snowflake.dao.sql_utils import double_quote_identifier
 from trulens.connectors.snowflake.dao.sql_utils import execute_query
 from trulens.core.run import SUPPORTED_ENTRY_TYPES
 from trulens.core.run import SupportedEntryType
@@ -85,7 +84,7 @@ class RunDao:
         """
         # Build the request payload dictionary.
         req_payload = {
-            "object_name": double_quote_identifier(object_name),
+            "object_name": object_name,
             "object_type": object_type,
             "run_name": run_name,
             "description": description,
@@ -163,7 +162,7 @@ class RunDao:
             A pandas DataFrame containing the run metadata.
         """
         req_payload = {
-            "object_name": double_quote_identifier(object_name),
+            "object_name": object_name,
             "object_type": object_type,
             "run_name": run_name,
         }
@@ -200,7 +199,7 @@ class RunDao:
             A pandas DataFrame containing all run metadata.
         """
         req_payload = {
-            "object_name": double_quote_identifier(object_name),
+            "object_name": object_name,
             "object_type": object_type,
         }
         req_payload_json = json.dumps(req_payload)
@@ -252,7 +251,7 @@ class RunDao:
 
         # Build the payload dictionary.
         req_payload = {
-            "object_name": double_quote_identifier(object_name),
+            "object_name": object_name,
             "object_type": object_type,
             "run_name": run_name,
             "invocation_field_masks": invocation_field_masks,
@@ -380,7 +379,7 @@ class RunDao:
         """
         req_payload = {
             "run_name": run_name,
-            "object_name": double_quote_identifier(object_name),
+            "object_name": object_name,
             "object_type": object_type,
         }
         if object_version:
@@ -424,7 +423,7 @@ class RunDao:
                 params=[
                     self.session.get_current_database()[1:-1],
                     self.session.get_current_schema()[1:-1],
-                    double_quote_identifier(object_name),
+                    object_name,
                     run_name,
                     span_type,
                 ],
@@ -500,28 +499,13 @@ class RunDao:
     ) -> AsyncJob:
         if not metrics:
             raise ValueError("Metrics list cannot be empty")
+
+        current_db = self.session.get_current_database()
+        current_schema = self.session.get_current_schema()
+
         metrics_str = ",".join([f"'{metric}'" for metric in metrics])
-        compute_metrics_query = """
-        CALL COMPUTE_AI_OBSERVABILITY_METRICS(
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ARRAY_CONSTRUCT(?));
-        """
+        compute_metrics_query = f"CALL COMPUTE_AI_OBSERVABILITY_METRICS('{current_db}', '{current_schema}', '{object_name}', '{object_version}', '{object_type}', '{run_name}', ARRAY_CONSTRUCT({metrics_str}));"
 
-        params = [
-            self.session.get_current_database(),
-            self.session.get_current_schema(),
-            double_quote_identifier(object_name),
-            object_version,
-            object_type,
-            run_name,
-            metrics_str,
-        ]
-
-        compute_query = self.session.sql(compute_metrics_query, params=params)
+        compute_query = self.session.sql(compute_metrics_query)
 
         return compute_query.collect_nowait()

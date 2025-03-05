@@ -564,6 +564,8 @@ class Run(BaseModel):
                 )
                 for i, row in result_rows.iterrows():
                     row_msg = row["MESSAGE"]
+                    logger.error("daniel printing")
+                    logger.error(row_msg)
                     computed_records_count = int(
                         row_msg.split(" ")[1]
                     )  # TODO change to regex or directly read the field when available
