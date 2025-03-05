@@ -1,12 +1,13 @@
 import json
 import logging
+import time
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
+from snowflake.snowpark import AsyncJob
 from snowflake.snowpark import Session
 from snowflake.snowpark.row import Row
 from trulens.connectors.snowflake.dao.enums import SourceType
-from trulens.connectors.snowflake.dao.sql_utils import double_quote_identifier
 from trulens.connectors.snowflake.dao.sql_utils import execute_query
 from trulens.core.run import SUPPORTED_ENTRY_TYPES
 from trulens.core.run import SupportedEntryType
@@ -25,6 +26,9 @@ METHOD_DELETE = "DELETE"
 METHOD_LIST = "LIST"
 
 DEFAULT_LLM_JUDGE_NAME = "llama3.1-70b"
+PERSISTED_QUERY_RESULTS_TIMEOUT_IN_MS = (
+    20 * 60 * 60 * 1000  # 20 hours (24 hours per Snowflake)
+)
 
 
 class RunDao:
@@ -80,7 +84,7 @@ class RunDao:
         """
         # Build the request payload dictionary.
         req_payload = {
-            "object_name": double_quote_identifier(object_name),
+            "object_name": object_name,
             "object_type": object_type,
             "run_name": run_name,
             "description": description,
@@ -158,7 +162,7 @@ class RunDao:
             A pandas DataFrame containing the run metadata.
         """
         req_payload = {
-            "object_name": double_quote_identifier(object_name),
+            "object_name": object_name,
             "object_type": object_type,
             "run_name": run_name,
         }
@@ -195,7 +199,7 @@ class RunDao:
             A pandas DataFrame containing all run metadata.
         """
         req_payload = {
-            "object_name": double_quote_identifier(object_name),
+            "object_name": object_name,
             "object_type": object_type,
         }
         req_payload_json = json.dumps(req_payload)
@@ -247,7 +251,7 @@ class RunDao:
 
         # Build the payload dictionary.
         req_payload = {
-            "object_name": double_quote_identifier(object_name),
+            "object_name": object_name,
             "object_type": object_type,
             "run_name": run_name,
             "invocation_field_masks": invocation_field_masks,
@@ -375,7 +379,7 @@ class RunDao:
         """
         req_payload = {
             "run_name": run_name,
-            "object_name": double_quote_identifier(object_name),
+            "object_name": object_name,
             "object_type": object_type,
         }
         if object_version:
@@ -395,3 +399,113 @@ class RunDao:
             parameters=(req_payload_json,),
         )
         logger.info("Deleted run '%s'.", run_name)
+
+    def read_spans_count_from_event_table(
+        self, object_name: str, run_name: str, span_type: str
+    ) -> int:
+        query = """
+            SELECT
+                COUNT(*) AS record_count
+            FROM
+                table(snowflake.local.GET_AI_OBSERVABILITY_EVENTS(
+                    ?,
+                    ?,
+                    ?,
+                    'EXTERNAL AGENT'
+                ))
+            WHERE
+                RECORD_ATTRIBUTES:"snow.ai.observability.run.name" = ? AND
+                RECORD_ATTRIBUTES:"ai.observability.span_type" = ?
+        """
+        try:
+            result_df = self.session.sql(
+                query,
+                params=[
+                    self.session.get_current_database()[1:-1],
+                    self.session.get_current_schema()[1:-1],
+                    object_name,
+                    run_name,
+                    span_type,
+                ],
+            ).to_pandas()
+
+            if "record_count" in result_df.columns:
+                count_value = result_df["record_count"].iloc[0]
+            else:
+                count_value = result_df.iloc[0, 0]
+            return int(count_value)
+        except Exception as e:
+            logger.exception(
+                f"Error encountered during reading record count from event table: {e}."
+            )
+            raise
+
+    def fetch_query_execution_status_by_id(
+        self, query_start_time_ms: int, query_id: str
+    ) -> str:
+        try:
+            # NOTE: information_schema.query_history does not always return the latest query status, even within 7 days
+            # and account_usage.query_history has higher latency, hence going with snowflake python connector API get_query_status here
+            if (
+                int(round(time.time() * 1000)) - query_start_time_ms
+                > PERSISTED_QUERY_RESULTS_TIMEOUT_IN_MS
+            ):
+                # https://docs.snowflake.com/en/user-guide/querying-persisted-results
+
+                logger.warning(
+                    f"Query {query_id} started almost a day ago, results may not be cached so try to fetch using ACCOUNT_USAGE."
+                )
+                query = "select EXECUTION_STATUS from snowflake.account_usage.query_history where query_id = ?;"
+                ret = self.session.sql(query, params=[query_id]).collect()
+                raw_status = ret[0]["EXECUTION_STATUS"]
+
+            else:
+                logger.info(
+                    "query status using snowflake connector get_query_status()"
+                )
+                query_status = self.session.connection.get_query_status(
+                    query_id
+                )
+
+                raw_status = query_status.name
+
+            # resuming_warehouse, running, queued, blocked, success, failed_with_error, or failed_with_incident.
+            if "success" in raw_status.lower():
+                return "SUCCESS"
+            elif "failed" in raw_status.lower():
+                return "FAILED"
+            else:
+                return "IN_PROGRESS"
+        except Exception as e:
+            logger.exception(
+                f"Error encountered during reading query status from query history: {e}."
+            )
+            raise
+
+    def fetch_computation_job_results_by_query_id(
+        self, query_id: str
+    ) -> pd.DataFrame:
+        curr = self.session.connection.cursor()
+        curr.get_results_from_sfqid(query_id)
+        return curr.fetch_pandas_all()
+
+    def call_compute_metrics_query(
+        self,
+        metrics: List[str],
+        object_name: str,
+        object_version: str,
+        object_type: str,
+        run_name: str,
+    ) -> AsyncJob:
+        if not metrics:
+            raise ValueError("Metrics list cannot be empty")
+
+        current_db = self.session.get_current_database()
+        current_schema = self.session.get_current_schema()
+
+        metrics_str = ",".join([f"'{metric}'" for metric in metrics])
+        compute_metrics_query = f"CALL COMPUTE_AI_OBSERVABILITY_METRICS('{current_db}', '{current_schema}', '{object_name}', '{object_version}', '{object_type}', '{run_name}', ARRAY_CONSTRUCT({metrics_str}));"
+
+        compute_query = self.session.sql(compute_metrics_query)
+
+        return compute_query.collect_nowait()

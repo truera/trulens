@@ -4,7 +4,6 @@ from enum import Enum
 import inspect
 import json
 import logging
-import re
 import time
 from typing import Any, ClassVar, Dict, List, Optional, Set, Type
 import uuid
@@ -57,9 +56,6 @@ DATASET_RESERVED_FIELDS: Set[str] = {
 INVOCATION_TIMEOUT_IN_MS = (
     5 * 60 * 1000
 )  # expected latency from the telemetry pipeline before ingested rows show up in event table
-PERSISTED_QUERY_RESULTS_TIMEOUT_IN_MS = (
-    20 * 60 * 60 * 1000  # 20 hours (24 hours per Snowflake)
-)
 
 
 class RunStatus(str, Enum):
@@ -98,7 +94,7 @@ def validate_dataset_spec(
 ) -> Dict[str, str]:
     """
     Validates and normalizes the dataset column specification to ensure it contains only
-    valid fields and allows for subscripted fields like input_1, input_2, etc.
+    currently supported span attributes and that the keys are in the correct format.
 
     Args:
         dataset_spec: The user-provided dictionary with column names.
@@ -121,14 +117,6 @@ def validate_dataset_spec(
             for reserved_field in DATASET_RESERVED_FIELDS
         ):
             raise ValueError(f"Invalid field '{key}' found in dataset_spec.")
-
-        # currently only handle subscripted 'input' columns, e.g., 'input_1', 'input_2'
-        if "input" in normalized_key and normalized_key != "input_id":
-            match = re.match(r"^input(?:_\d+)?$", normalized_key)
-            if not match:
-                raise ValueError(
-                    f"Invalid subscripted input field '{key}'. Expected 'input' or 'input_1', 'input_2', etc."
-                )
 
         # Add the normalized field to the dictionary
         normalized_spec[normalized_key] = value
@@ -434,7 +422,11 @@ class Run(BaseModel):
                 return RunStatus.UNKNOWN
 
         current_ingested_records_count = (
-            self._read_spans_count_from_event_table(span_type="record_root")
+            self.run_dao.read_spans_count_from_event_table(
+                object_name=self.object_name,
+                run_name=self.run_name,
+                span_type="record_root",
+            )
         )
         logger.info(
             f"Current ingested records count: {current_ingested_records_count}"
@@ -516,7 +508,7 @@ class Run(BaseModel):
         computation_sproc_query_ids_to_query_status = {}
         for computation in all_computations:
             query_id = computation.query_id
-            query_status = self._fetch_query_execution_status_by_id(
+            query_status = self.run_dao.fetch_query_execution_status_by_id(
                 query_start_time_ms=computation.start_time_ms,
                 query_id=query_id,
             )
@@ -556,11 +548,14 @@ class Run(BaseModel):
             for computation in all_computations:
                 query_id = computation.query_id
 
-                result_rows = self._fetch_computation_job_results_by_query_id(
-                    query_id
+                result_rows = (
+                    self.run_dao.fetch_computation_job_results_by_query_id(
+                        query_id
+                    )
                 )
                 for i, row in result_rows.iterrows():
                     row_msg = row["MESSAGE"]
+
                     computed_records_count = int(
                         row_msg.split(" ")[1]
                     )  # TODO change to regex or directly read the field when available
@@ -618,7 +613,11 @@ class Run(BaseModel):
                 status == "SUCCESS" or status == "FAILED"
                 for status in computation_sproc_query_ids_to_query_status.values()
             )
-            and self._read_spans_count_from_event_table(span_type="eval_root")
+            and self.run_dao.read_spans_count_from_event_table(
+                object_name=self.object_name,
+                run_name=self.run_name,
+                span_type="eval_root",
+            )
             == 0
         ):
             # metric (eval) result ingestion failed for some reason
@@ -666,26 +665,12 @@ class Run(BaseModel):
 
         # Preprocess the dataset_spec to create mappings for input columns
         # and map the inputs for reserved fields only once, before the iteration over rows.
-        input_columns_by_subscripts = {}
+
         reserved_field_column_mapping = {}
 
         # Process dataset column spec to handle subscripting logic for input columns
         for reserved_field, user_column in dataset_spec.items():
-            if (
-                reserved_field.startswith("input")
-                or reserved_field.split("_")[1] == "input"
-            ):
-                if (
-                    "_" in reserved_field
-                    and reserved_field.split("_")[-1].isdigit()
-                ):
-                    subscript = int(reserved_field.split("_")[-1])
-                    input_columns_by_subscripts[subscript] = user_column
-                else:
-                    input_columns_by_subscripts[0] = user_column
-            else:
-                # Prepare the kwargs for the non-input fields
-                reserved_field_column_mapping[reserved_field] = user_column
+            reserved_field_column_mapping[reserved_field] = user_column
 
         input_records_count = len(input_df)
 
@@ -716,23 +701,26 @@ class Run(BaseModel):
             for i, row in input_df.iterrows():
                 main_method_args = []
 
-                # For each input column, add the value to main_method_args in the correct order
-                for subscript in sorted(input_columns_by_subscripts.keys()):
-                    user_column = input_columns_by_subscripts[subscript]
-                    main_method_args.append(row[user_column])
-
                 # Call the instrumented main method with the arguments
+                # TODO (dhuang) better way to check span attributes, also is this all we need to support?
                 input_id = (
                     row[dataset_spec["input_id"]]
                     if "input_id" in dataset_spec
                     else None
                 )
-
-                if input_id is None and "input" in dataset_spec:
-                    input_id = obj_id_of_obj(row[dataset_spec["input"]])
+                input_col = None
+                if input_id is None:
+                    if "input" in dataset_spec:
+                        input_col = dataset_spec["input"]
+                    elif "record_root.input" in dataset_spec:
+                        input_col = dataset_spec["record_root.input"]
+                    if input_col:
+                        input_id = obj_id_of_obj(row[input_col])
+                        main_method_args.append(row[input_col])
 
                 ground_truth_output = row.get(
                     dataset_spec.get("ground_truth_output")
+                    or dataset_spec.get("record_root.ground_truth_output")
                 )
 
                 self.app.instrumented_invoke_main_method(
@@ -771,95 +759,6 @@ class Run(BaseModel):
 
     def _get_current_time_in_ms(self) -> int:
         return int(round(time.time() * 1000))
-
-    def _read_spans_count_from_event_table(self, span_type: str) -> int:
-        query = """
-            SELECT
-                COUNT(*) AS record_count
-            FROM
-                table(snowflake.local.GET_AI_OBSERVABILITY_EVENTS(
-                    ?,
-                    ?,
-                    ?,
-                    'EXTERNAL AGENT'
-                ))
-            WHERE
-                RECORD_ATTRIBUTES:"snow.ai.observability.run.name" = ? AND
-                RECORD_ATTRIBUTES:"ai.observability.span_type" = ?
-        """
-        try:
-            result_df = self.run_dao.session.sql(
-                query,
-                params=[
-                    self.run_dao.session.get_current_database()[1:-1],
-                    self.run_dao.session.get_current_schema()[1:-1],
-                    self.object_name,
-                    self.run_name,
-                    span_type,
-                ],
-            ).to_pandas()
-
-            if "record_count" in result_df.columns:
-                count_value = result_df["record_count"].iloc[0]
-            else:
-                count_value = result_df.iloc[0, 0]
-            return int(count_value)
-        except Exception as e:
-            logger.exception(
-                f"Error encountered during reading record count from event table: {e}."
-            )
-            raise
-
-    def _fetch_query_execution_status_by_id(
-        self, query_start_time_ms: int, query_id: str
-    ) -> str:
-        try:
-            # NOTE: information_schema.query_history does not always return the latest query status, even within 7 days
-            # and account_usage.query_history has higher latency, hence going with snowflake python connector API get_query_status here
-            if (
-                self._get_current_time_in_ms() - query_start_time_ms
-                > PERSISTED_QUERY_RESULTS_TIMEOUT_IN_MS
-            ):
-                # https://docs.snowflake.com/en/user-guide/querying-persisted-results
-
-                logger.warning(
-                    f"Query {query_id} started almost a day ago, results may not be cached so try to fetch using ACCOUNT_USAGE."
-                )
-                query = """select EXECUTION_STATUS from snowflake.account_usage.query_history where query_id = ?;"""
-                ret = self.run_dao.session.sql(
-                    query, params=[query_id]
-                ).collect()
-                raw_status = ret[0]["EXECUTION_STATUS"]
-
-            else:
-                logger.info(
-                    "query status using snowflake connector get_query_status()"
-                )
-                query_status = self.run_dao.session.connection.get_query_status(
-                    query_id
-                )
-
-                raw_status = query_status.name
-
-            # resuming_warehouse, running, queued, blocked, success, failed_with_error, or failed_with_incident.
-            if "success" in raw_status.lower():
-                return "SUCCESS"
-            elif "failed" in raw_status.lower():
-                return "FAILED"
-            else:
-                return "IN_PROGRESS"
-        except Exception as e:
-            logger.exception(
-                f"Error encountered during reading query status from query history: {e}."
-            )
-            raise
-
-    def _fetch_computation_job_results_by_query_id(
-        self, query_id: str
-    ) -> pd.DataFrame:
-        curr = self.run_dao.session.connection.cursor()
-        curr.get_results_from_sfqid(query_id)
-        return curr.fetch_pandas_all()
 
     def get_status(self) -> RunStatus:
         # first read from DPO backend, and decide if we need to update status.
@@ -902,16 +801,14 @@ class Run(BaseModel):
             return f"""Cannot start a new metric computation when in run status: {run_status}. Valid statuses are: {RunStatus.INVOCATION_COMPLETED}, {RunStatus.INVOCATION_PARTIALLY_COMPLETED},
         {RunStatus.COMPUTATION_IN_PROGRESS}, {RunStatus.COMPLETED}, {RunStatus.PARTIALLY_COMPLETED}."""
 
-        current_db = self.run_dao.session.get_current_database()
-        current_schema = self.run_dao.session.get_current_schema()
-        if not metrics:
-            raise ValueError("Metrics list cannot be empty")
-        metrics_str = ",".join([f"'{metric}'" for metric in metrics])
-        compute_metrics_query = f"CALL COMPUTE_AI_OBSERVABILITY_METRICS('{current_db}', '{current_schema}', '{self.object_name}', '{self.object_version}', '{self.object_type}', '{self.run_name}', ARRAY_CONSTRUCT({metrics_str}));"
+        async_job = self.run_dao.call_compute_metrics_query(
+            metrics=metrics,
+            object_name=self.object_name,
+            object_version=self.object_version,
+            object_type=self.object_type,
+            run_name=self.run_name,
+        )
 
-        compute_query = self.run_dao.session.sql(compute_metrics_query)
-
-        async_job = compute_query.collect_nowait()
         query_id = async_job.query_id
 
         logger.info(f"Query id for metrics computation: {query_id}")
