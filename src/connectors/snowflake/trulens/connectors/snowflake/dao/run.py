@@ -513,8 +513,8 @@ class RunDao:
         """
 
         params = [
-            self.session.get_current_database()[1:-1],
-            self.session.get_current_schema()[1:-1],
+            self.session.get_current_database(),
+            self.session.get_current_schema(),
             double_quote_identifier(object_name),
             object_version,
             object_type,
