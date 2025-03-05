@@ -94,7 +94,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             [
                 self._snowpark_session.get_current_database()[1:-1],
                 self._snowpark_session.get_current_schema()[1:-1],
-                app_name,
+                app_name.upper(),
             ],
             num_expected_spans,
         )
@@ -167,7 +167,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             app,
             app.invoke,
             TruChain,
-            {"input": "custom_input"},
+            {"record_root.input": "custom_input"},
             pd.DataFrame({"custom_input": ["What is multi-headed attention?"]}),
             9,
         )

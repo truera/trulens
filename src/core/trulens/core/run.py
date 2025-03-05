@@ -665,26 +665,12 @@ class Run(BaseModel):
 
         # Preprocess the dataset_spec to create mappings for input columns
         # and map the inputs for reserved fields only once, before the iteration over rows.
-        input_columns_by_subscripts = {}
+
         reserved_field_column_mapping = {}
 
         # Process dataset column spec to handle subscripting logic for input columns
         for reserved_field, user_column in dataset_spec.items():
-            if (
-                reserved_field.startswith("input")
-                or reserved_field.split("_")[1] == "input"
-            ):
-                if (
-                    "_" in reserved_field
-                    and reserved_field.split("_")[-1].isdigit()
-                ):
-                    subscript = int(reserved_field.split("_")[-1])
-                    input_columns_by_subscripts[subscript] = user_column
-                else:
-                    input_columns_by_subscripts[0] = user_column
-            else:
-                # Prepare the kwargs for the non-input fields
-                reserved_field_column_mapping[reserved_field] = user_column
+            reserved_field_column_mapping[reserved_field] = user_column
 
         input_records_count = len(input_df)
 
@@ -715,23 +701,26 @@ class Run(BaseModel):
             for i, row in input_df.iterrows():
                 main_method_args = []
 
-                # For each input column, add the value to main_method_args in the correct order
-                for subscript in sorted(input_columns_by_subscripts.keys()):
-                    user_column = input_columns_by_subscripts[subscript]
-                    main_method_args.append(row[user_column])
-
                 # Call the instrumented main method with the arguments
+                # TODO (dhuang) better way to check span attributes, also is this all we need to support?
                 input_id = (
                     row[dataset_spec["input_id"]]
                     if "input_id" in dataset_spec
                     else None
                 )
-
-                if input_id is None and "input" in dataset_spec:
-                    input_id = obj_id_of_obj(row[dataset_spec["input"]])
+                input_col = None
+                if input_id is None:
+                    if "input" in dataset_spec:
+                        input_col = dataset_spec["input"]
+                    elif "record_root.input" in dataset_spec:
+                        input_col = dataset_spec["record_root.input"]
+                    if input_col:
+                        input_id = obj_id_of_obj(row[input_col])
+                        main_method_args.append(row[input_col])
 
                 ground_truth_output = row.get(
                     dataset_spec.get("ground_truth_output")
+                    or dataset_spec.get("record_root.ground_truth_output")
                 )
 
                 self.app.instrumented_invoke_main_method(
