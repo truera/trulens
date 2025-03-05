@@ -110,7 +110,6 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
     ) -> Tuple[str, Run]:
         # Create app.
         app_name = str(uuid.uuid4())
-        app_name = app_name.upper()  # TODO(this_pr): remove!
         tru_recorder = TruAppClass(
             app,
             app_name=app_name,
