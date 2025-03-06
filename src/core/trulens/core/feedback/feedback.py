@@ -947,7 +947,7 @@ Feedback function signature:
                 try:
                     result_and_meta, part_cost_tally = (
                         core_endpoint.Endpoint.track_all_costs_tally(
-                            self.imp, **ins
+                            self, **ins
                         )
                     )
 
