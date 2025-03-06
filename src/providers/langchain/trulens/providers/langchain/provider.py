@@ -29,8 +29,8 @@ class Langchain(llm_provider.LLMProvider):
         from trulens.providers.langchain import LangChain
         from langchain_community.llms import OpenAI
 
-        gpt3_llm = OpenAI(model="gpt-3.5-turbo-instruct")
-        langchain_provider = LangChain(chain = gpt3_llm)
+        openai_llm = OpenAI(model="gpt-4o-mini")
+        langchain_provider = LangChain(chain = openai_llm)
         ```
 
     Args:
