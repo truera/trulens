@@ -793,7 +793,7 @@ class Run(BaseModel):
             logger.info("Run is created, invocation started.")
             return self._compute_latest_invocation_status(run)
 
-    def compute_metrics(self, metrics: List[str]):
+    def compute_metrics(self, metrics: List[str]) -> str:
         run_status = self.get_status()
 
         logger.info(f"Current run status: {run_status}")
@@ -830,7 +830,7 @@ class Run(BaseModel):
         )
 
         logger.info("Metrics computation job started")
-        return async_job
+        return "Metrics computation in progress."
 
     def cancel(self):
         raise NotImplementedError("cancel is not implemented yet.")
