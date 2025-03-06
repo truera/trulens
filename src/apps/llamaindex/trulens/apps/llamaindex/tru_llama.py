@@ -11,6 +11,7 @@ from typing import (
     ClassVar,
     Dict,
     Generator,
+    List,
     Optional,
     TypeVar,
     Union,
@@ -20,18 +21,22 @@ import llama_index
 from pydantic import Field
 from trulens.apps.langchain import tru_chain as mod_tru_chain
 from trulens.core import app as core_app
+from trulens.core import experimental as core_experimental
 from trulens.core import instruments as core_instruments
 from trulens.core._utils.pycompat import EmptyType  # import style exception
 from trulens.core._utils.pycompat import (
     getmembers_static,  # import style exception
 )
+from trulens.core.instruments import InstrumentedMethod
 
 # TODO: Do we need to depend on this?
-from trulens.core.utils import containers as container_utils
+from trulens.core.session import TruSession
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
+from trulens.experimental.otel_tracing.core.span import Attributes
+from trulens.otel.semconv.trace import SpanAttributes
 
 T = TypeVar("T")
 
@@ -72,6 +77,7 @@ if not legacy:
     from llama_index.core.response_synthesizers import Refine
     from llama_index.core.retrievers import BaseRetriever
     from llama_index.core.schema import BaseComponent
+    from llama_index.core.schema import NodeWithScore
     from llama_index.core.schema import QueryBundle
     from llama_index.core.service_context_elements.llm_predictor import (
         BaseLLMPredictor,
@@ -133,6 +139,48 @@ else:
 pp = PrettyPrinter()
 
 
+def _retrieval_span() -> Dict[str, Union[SpanAttributes.SpanType, Attributes]]:
+    def _attributes(ret, exception, *args, **kwargs) -> Attributes:
+        attributes = {}
+        # Guess query text.
+        possible_query_texts = []
+        for k, v in kwargs.items():
+            if isinstance(v, str):
+                possible_query_texts.append(v)
+            elif isinstance(v, QueryBundle):
+                possible_query_texts.append(v.query_str)
+        # Guess retrieved contexts.
+        retrieved_context = ret
+        if isinstance(ret, list):
+            if all(isinstance(curr, NodeWithScore) for curr in ret):
+                retrieved_context = [curr.get_content() for curr in ret]
+            elif all(hasattr(curr, "text") for curr in ret):
+                retrieved_context = [curr.text for curr in ret]
+        # Return.
+        attributes = {
+            SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: retrieved_context
+        }
+        if len(possible_query_texts) < 1:
+            logger.info(
+                "Could not guess query text for retrieval span as no likely candidates found!"
+            )
+        elif len(possible_query_texts) == 1:
+            attributes[SpanAttributes.RETRIEVAL.QUERY_TEXT] = (
+                possible_query_texts[0]
+            )
+        elif len(possible_query_texts) > 1:
+            logger.info(
+                "Could not guess query text for retrieval span! Found multiple possible query texts: %s",
+                pp.pformat(possible_query_texts),
+            )
+        return attributes
+
+    return {
+        "span_type": SpanAttributes.SpanType.RETRIEVAL,
+        "attributes": _attributes,
+    }
+
+
 class LlamaInstrument(core_instruments.Instrument):
     """Instrumentation for LlamaIndex apps."""
 
@@ -174,65 +222,87 @@ class LlamaInstrument(core_instruments.Instrument):
         }.union(mod_tru_chain.LangChainInstrument.Default.CLASSES())
         """Classes to instrument."""
 
-        METHODS: Dict[str, core_instruments.ClassFilter] = (
-            container_utils.dict_set_with_multikey(
-                dict(mod_tru_chain.LangChainInstrument.Default.METHODS),
-                {
-                    # LLM:
-                    (
-                        "chat",
-                        "complete",
-                        "stream_chat",
-                        "stream_complete",
-                        "achat",
-                        "acomplete",
-                        "astream_chat",
-                        "astream_complete",
-                    ): BaseLLM,
-                    # BaseTool/AsyncBaseTool:
-                    ("__call__", "call"): BaseTool,
-                    ("acall"): AsyncBaseTool,
-                    # Memory:
-                    ("put"): BaseMemory,
-                    # Misc.:
-                    ("get_response"): Refine,
-                    (
-                        "predict",
-                        "apredict",
-                        "stream",
-                        "astream",
-                    ): BaseLLMPredictor,
-                    (
-                        "query",
-                        "aquery",
-                        "synthesize",
-                        "asynthesize",
-                    ): BaseQueryEngine,
-                    (
-                        "chat",
-                        "achat",
-                        "stream_chat",
-                        "astream_chat",
-                        "complete",
-                        "acomplete",
-                        "stream_complete",
-                        "astream_complete",
-                    ): (BaseChatEngine,),
-                    # BaseRetriever/BaseQueryEngine:
-                    ("retrieve", "_retrieve", "_aretrieve"): (
-                        BaseQueryEngine,
-                        BaseRetriever,
-                        WithFeedbackFilterNodes,
-                    ),
-                    # BaseNodePostProcessor
-                    ("_postprocess_nodes"): BaseNodePostprocessor,
-                    # Components
-                    ("_run_component"): (
-                        QueryEngineComponent,
-                        RetrieverComponent,
-                    ),
-                },
-            )
+        METHODS: List[InstrumentedMethod] = (
+            mod_tru_chain.LangChainInstrument.Default.METHODS
+            + [
+                InstrumentedMethod("chat", BaseLLM),
+                InstrumentedMethod("complete", BaseLLM),
+                InstrumentedMethod("stream_chat", BaseLLM),
+                InstrumentedMethod("stream_complete", BaseLLM),
+                InstrumentedMethod("achat", BaseLLM),
+                InstrumentedMethod("acomplete", BaseLLM),
+                InstrumentedMethod("astream_chat", BaseLLM),
+                InstrumentedMethod("astream_complete", BaseLLM),
+                InstrumentedMethod("__call__", BaseTool),
+                InstrumentedMethod("call", BaseTool),
+                InstrumentedMethod("acall", AsyncBaseTool),
+                InstrumentedMethod("put", BaseMemory),
+                InstrumentedMethod("get_response", Refine),
+                InstrumentedMethod("predict", BaseLLMPredictor),
+                InstrumentedMethod("apredict", BaseLLMPredictor),
+                InstrumentedMethod("stream", BaseLLMPredictor),
+                InstrumentedMethod("astream", BaseLLMPredictor),
+                InstrumentedMethod("query", BaseQueryEngine),
+                InstrumentedMethod("aquery", BaseQueryEngine),
+                InstrumentedMethod("synthesize", BaseQueryEngine),
+                InstrumentedMethod("asynthesize", BaseQueryEngine),
+                InstrumentedMethod("chat", BaseChatEngine),
+                InstrumentedMethod("achat", BaseChatEngine),
+                InstrumentedMethod("stream_chat", BaseChatEngine),
+                InstrumentedMethod("astream_chat", BaseChatEngine),
+                InstrumentedMethod("complete", BaseChatEngine),
+                InstrumentedMethod("acomplete", BaseChatEngine),
+                InstrumentedMethod("stream_complete", BaseChatEngine),
+                InstrumentedMethod("astream_complete", BaseChatEngine),
+                InstrumentedMethod(
+                    "retrieve",
+                    BaseQueryEngine,
+                    **_retrieval_span(),
+                ),
+                InstrumentedMethod(
+                    "_retrieve",
+                    BaseQueryEngine,
+                    **_retrieval_span(),
+                ),
+                InstrumentedMethod(
+                    "_aretrieve",
+                    BaseQueryEngine,
+                    **_retrieval_span(),
+                ),
+                InstrumentedMethod(
+                    "retrieve",
+                    BaseRetriever,
+                    **_retrieval_span(),
+                ),
+                InstrumentedMethod(
+                    "_retrieve",
+                    BaseRetriever,
+                    **_retrieval_span(),
+                ),
+                InstrumentedMethod(
+                    "_aretrieve",
+                    BaseRetriever,
+                    **_retrieval_span(),
+                ),
+                InstrumentedMethod(
+                    "retrieve",
+                    WithFeedbackFilterNodes,
+                    **_retrieval_span(),
+                ),
+                InstrumentedMethod(
+                    "_retrieve",
+                    WithFeedbackFilterNodes,
+                    **_retrieval_span(),
+                ),
+                InstrumentedMethod(
+                    "_aretrieve",
+                    WithFeedbackFilterNodes,
+                    **_retrieval_span(),
+                ),
+                InstrumentedMethod("_postprocess_nodes", BaseNodePostprocessor),
+                InstrumentedMethod("_run_component", QueryEngineComponent),
+                InstrumentedMethod("_run_component", RetrieverComponent),
+            ]
         )
         """Methods to instrument."""
 
@@ -331,10 +401,28 @@ class TruLlama(core_app.App):
     root_callable: ClassVar[pyschema_utils.FunctionOrMethod] = Field(None)
 
     def __init__(
-        self, app: Union[BaseQueryEngine, BaseChatEngine], **kwargs: dict
+        self,
+        app: Union[BaseQueryEngine, BaseChatEngine],
+        main_method: Optional[Callable] = None,
+        **kwargs: dict,
     ):
         # TruLlama specific:
         kwargs["app"] = app
+        tru_session = (
+            TruSession()
+            if "connector" not in kwargs
+            else TruSession(connector=kwargs["connector"])
+        )
+        if (
+            tru_session.experimental_feature(
+                core_experimental.Feature.OTEL_TRACING
+            )
+            and main_method is None
+        ):
+            raise ValueError(
+                "When OTEL_TRACING is enabled, 'main_method' must be provided in App constructor."
+            )
+        kwargs["main_method"] = main_method
         kwargs["root_class"] = pyschema_utils.Class.of_object(
             app
         )  # TODO: make class property

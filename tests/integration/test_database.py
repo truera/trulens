@@ -27,7 +27,6 @@ import shutil
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, Iterator, Literal, Union
 from unittest import TestCase
-from unittest import main
 
 import pandas as pd
 from sqlalchemy import Engine
@@ -304,7 +303,7 @@ def clean_db(
             # NOTE: Sqlalchemy docs say this should be written
             # "sqlite://:memory:" but that gives an error on mac at least.
             "sqlite_file": f"sqlite:///{Path(tmp) / 'test.sqlite'}",
-            "postgres": "postgresql+psycopg2://pg-test-user:pg-test-pswd@localhost/pg-test-db",
+            "postgres": "postgresql+psycopg://pg-test-user:pg-test-pswd@localhost/pg-test-db",
             "mysql": "mysql+pymysql://mysql-test-user:mysql-test-pswd@localhost/mysql-test-db",
         }[alias]
 
@@ -492,7 +491,3 @@ def _populate_data(db: core_db.DB):
         print("  ", res)
 
     return fb, app, rec
-
-
-if __name__ == "__main__":
-    main()

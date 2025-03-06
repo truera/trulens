@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens"
-version = "1.2.9"
+version = "1.4.4"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -27,7 +27,8 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8.1,!=3.9.7"
+poetry = "<2.0.0"
+python = "^3.9,!=3.9.7"
 trulens-core = { version = "^1.0.0", extras = [
   "otel",
   "tqdm",
@@ -37,6 +38,7 @@ trulens-feedback = { version = "^1.0.0" }
 trulens-dashboard = { version = "^1.0.0", extras = [
   "full",
 ] }
+trulens-otel-semconv = { version = "^1.0.0" }
 # Remove after deprecation period:
 trulens_eval = { version = "^1.0.0" }
 
@@ -50,13 +52,6 @@ mypy = "^1.11"
 build = "^1.2"
 twine = "^5.1"
 codespell = "^2.3"
-# scipy is here even though it's for trulens-feedback because `poetry lock`
-# doesn't incorporate the python version specific dependencies in
-# `./src/feedback/pyproject.toml` correctly for some reason.
-scipy = [
-  { version = ">=1.7.0,<1.11.1", python = "<3.9" },
-  { version = ">=1.11.1", python = ">=3.9" },
-]
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = ">=1.6"
@@ -92,10 +87,17 @@ trulens-providers-litellm = { path = "src/providers/litellm", develop = true }
 [tool.poetry.group.connectors.dependencies]
 trulens-connectors-snowflake = { path = "src/connectors/snowflake", develop = true, python = "<3.12" }
 
+[tool.poetry.group.snowflake.dependencies]
+trulens-connectors-snowflake = { path = "src/connectors/snowflake", develop = true, python = "<3.12" }
+
+[tool.poetry.group.hotspots.dependencies]
+trulens-hotspots = { path = "src/hotspots", develop = true }
+
 [tool.poetry.group.required.dependencies]
 trulens-core = { path = "src/core", develop = true }
 trulens-feedback = { path = "src/feedback", develop = true }
 trulens-dashboard = { path = "src/dashboard", develop = true }
+trulens-otel-semconv = { path = "src/otel/semconv", develop = true }
 # Remove after deprecation period.
 trulens_eval = { path = "src/trulens_eval", develop = true }
 
@@ -138,6 +140,11 @@ convention = "google"
 [tool.pytest.ini_options]
 testpaths = [
   "tests",
+]
+markers = [
+  "required_only: for tests that must be run only with required dependencies",
+  "optional: for tests that must be run with optional dependencies",
+  "snowflake: for tests that must be run with snowflake dependencies",
 ]
 
 [tool.mypy]

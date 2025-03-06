@@ -219,7 +219,7 @@ def run_dashboard(
                         line  # store the url when dashboard is started
                     )
             else:
-                if "Network URL: " in line:
+                if "Local URL: " in line:
                     url = line.split(": ")[1]
                     url = url.rstrip()
                     print(f"Dashboard started at {url} .")

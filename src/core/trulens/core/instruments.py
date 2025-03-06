@@ -8,6 +8,7 @@ typical use cases.
 from __future__ import annotations
 
 import contextvars
+from contextvars import ContextVar
 import dataclasses
 from datetime import datetime
 import functools
@@ -37,22 +38,26 @@ import weakref
 import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
 from trulens.core import experimental as core_experimental
+from trulens.core._utils.pycompat import WeakSet
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback import feedback as core_feedback
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
-from trulens.core.utils import containers as container_utils
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
+from trulens.experimental.otel_tracing.core.span import Attributes
+from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
+
+do_not_track = ContextVar("do_not_track", default=False)
 
 
 class WithInstrumentCallbacks:
@@ -373,6 +378,15 @@ class _RecordingContext:
 ClassFilter = Union[Type, Tuple[Type, ...]]
 
 
+@dataclasses.dataclass
+class InstrumentedMethod:
+    method: str
+    class_filter: ClassFilter
+    span_type: Optional[SpanAttributes.SpanType] = None
+    attributes: Attributes = None
+    must_be_first_wrapper: bool = True
+
+
 def class_filter_disjunction(f1: ClassFilter, f2: ClassFilter) -> ClassFilter:
     """Create a disjunction of two class filters.
 
@@ -439,11 +453,25 @@ class Instrument:
         CLASSES = set([core_feedback.Feedback])
         """Classes to instrument."""
 
-        METHODS: Dict[str, ClassFilter] = {"__call__": core_feedback.Feedback}
+        METHODS = [InstrumentedMethod("__call__", core_feedback.Feedback)]
         """Methods to instrument.
 
         Methods matching name have to pass the filter to be instrumented.
         """
+
+        @staticmethod
+        def retrieval_span(
+            query_argname: str,
+        ) -> Tuple[SpanAttributes.SpanType, Attributes]:
+            return (
+                SpanAttributes.SpanType.RETRIEVAL,
+                lambda ret, exception, *args, **kwargs: {
+                    SpanAttributes.RETRIEVAL.QUERY_TEXT: kwargs[query_argname],
+                    SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: [
+                        curr.page_content for curr in ret
+                    ],
+                },
+            )
 
     def print_instrumentation(self) -> None:
         """Print out description of the modules, classes, methods this class
@@ -452,7 +480,7 @@ class Instrument:
         t = "  "
 
         for mod in sorted(self.include_modules):
-            print(f"Module {mod}*")
+            logger.info(f"Module {mod}*")
 
             for cls in sorted(
                 self.include_classes,
@@ -462,26 +490,28 @@ class Instrument:
                     continue
 
                 if isinstance(cls, import_utils.Dummy):
-                    print(
+                    logger.warning(
                         f"{t * 1}Class {cls.__module__}.{cls.__qualname__}\n{t * 2}WARNING: this class could not be imported. It may have been (re)moved. Error:"
                     )
-                    print(
+                    logger.warning(
                         text_utils.retab(
                             tab=f"{t * 3}> ", s=str(cls.original_exception)
                         )
                     )
                     continue
 
-                print(f"{t * 1}Class {cls.__module__}.{cls.__qualname__}")
+                logger.info(f"{t * 1}Class {cls.__module__}.{cls.__qualname__}")
 
-                for method, class_filter in self.include_methods.items():
+                for instrumented_method in self.include_methods:
+                    method = instrumented_method.method
+                    class_filter = instrumented_method.class_filter
                     if class_filter_matches(
                         f=class_filter, obj=cls
                     ) and python_utils.safe_hasattr(cls, method):
                         f = getattr(cls, method)
-                        print(f"{t * 2}Method {method}: {inspect.signature(f)}")
-
-            print()
+                        logger.info(
+                            f"{t * 2}Method {method}: {inspect.signature(f)}"
+                        )
 
     def to_instrument_object(self, obj: object) -> bool:
         """Determine whether the given object should be instrumented."""
@@ -515,7 +545,7 @@ class Instrument:
         self,
         include_modules: Optional[Iterable[str]] = None,
         include_classes: Optional[Iterable[type]] = None,
-        include_methods: Optional[Dict[str, ClassFilter]] = None,
+        include_methods: Optional[List[InstrumentedMethod]] = None,
         app: Optional[WithInstrumentCallbacks] = None,
     ):
         if include_modules is None:
@@ -523,21 +553,15 @@ class Instrument:
         if include_classes is None:
             include_classes = []
         if include_methods is None:
-            include_methods = {}
+            include_methods = []
 
         self.include_modules = Instrument.Default.MODULES.union(
             set(include_modules)
         )
-
         self.include_classes = Instrument.Default.CLASSES.union(
             set(include_classes)
         )
-
-        self.include_methods = container_utils.dict_merge_with(
-            dict1=Instrument.Default.METHODS,
-            dict2=include_methods,
-            merge=class_filter_disjunction,
-        )
+        self.include_methods = Instrument.Default.METHODS + include_methods
 
         # NOTE(piotrm): This is a weakref to prevent capturing a reference to
         # the app in method wrapper closures.
@@ -566,6 +590,9 @@ class Instrument:
         method_name: str,
         cls: type,
         obj: object,
+        span_type: Optional[SpanAttributes.SpanType] = None,
+        attributes: Optional[Attributes] = None,
+        must_be_first_wrapper: bool = False,
     ):
         """Wrap a method to capture its inputs/outputs/errors."""
 
@@ -575,18 +602,18 @@ class Instrument:
         if self.app.session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING, freeze=True
         ):
-            from trulens.experimental.otel_tracing.core.instruments import (
-                _Instrument,
-            )
+            from trulens.core.otel.instrument import instrument
 
-            return _Instrument.tracked_method_wrapper(
-                self,
-                query=query,
-                func=func,
-                method_name=method_name,
-                cls=cls,
-                obj=obj,
+            if span_type is None:
+                span_type = SpanAttributes.SpanType.UNKNOWN
+            wrapper = instrument(
+                span_type=span_type,
+                attributes=attributes,
+                must_be_first_wrapper=must_be_first_wrapper,
             )
+            # return wrapper(func)?
+            of_cls_method = getattr(cls, method_name)
+            return wrapper(of_cls_method)
 
         if python_utils.safe_hasattr(func, "__func__"):
             raise ValueError("Function expected but method received.")
@@ -635,6 +662,9 @@ class Instrument:
                 python_utils.is_really_coroutinefunction(func),
                 inspect.isasyncgenfunction(func),
             )
+
+            if do_not_track.get():
+                return func(*args, **kwargs)
 
             apps = getattr(tru_wrapper, Instrument.APPS)  # weakref
 
@@ -765,6 +795,8 @@ class Instrument:
                 # Using sig bind here so we can produce a list of key-value
                 # pairs even if positional arguments were provided.
                 bindings: BoundArguments = sig.bind(*args, **kwargs)
+
+                logger.info(f"calling {func} with {args}")
 
                 rets, tally = core_endpoint.Endpoint.track_all_costs_tally(
                     func, *args, **kwargs
@@ -931,7 +963,7 @@ class Instrument:
         # recorder/app gets garbage collected, it will be evicted from this set.
 
         # NOTE(piotrm): __repr__.__self__ undoes weakref.proxy .
-        apps = weakref.WeakSet([self.app.__repr__.__self__])
+        apps = WeakSet([self.app.__repr__.__self__])
 
         # Indicate that the wrapper is an instrumented method so that we dont
         # further instrument it in another layer accidentally.
@@ -1062,11 +1094,15 @@ class Instrument:
             # subchains call superchains, and we want to capture the
             # intermediate steps. On the other hand we don't want to instrument
             # the very base classes such as object:
-            if not self.to_instrument_module(base.__module__):
-                continue
+            # if not self.to_instrument_module(base.__module__):
+            #    print(
+            #        f"skipping base {base} because of module {base.__module__}"
+            #    )
+            #    continue
 
             try:
                 if not self.to_instrument_class(base):
+                    logger.debug(f"skipping base {base} because of class")
                     continue
 
             except Exception as e:
@@ -1081,11 +1117,16 @@ class Instrument:
 
                 # continue
 
-            for method_name, class_filter in self.include_methods.items():
+            print(f"instrumenting {obj.__class__} for base {base}")
+
+            for instrumented_method in self.include_methods:
+                method_name = instrumented_method.method
+                class_filter = instrumented_method.class_filter
                 if python_utils.safe_hasattr(base, method_name):
                     if not class_filter_matches(f=class_filter, obj=obj):
                         continue
 
+                    print("\tinstrumenting", method_name)
                     original_fun = getattr(base, method_name)
 
                     # If an instrument class uses a decorator to wrap one of
@@ -1119,6 +1160,9 @@ class Instrument:
                             method_name=method_name,
                             cls=base,
                             obj=obj,
+                            span_type=instrumented_method.span_type,
+                            attributes=instrumented_method.attributes,
+                            must_be_first_wrapper=instrumented_method.must_be_first_wrapper,
                         ),
                     )
 
@@ -1201,16 +1245,26 @@ class AddInstruments:
     """Utilities for adding more things to default instrumentation filters."""
 
     @classmethod
-    def method(cls, of_cls: type, name: str) -> None:
+    def method(
+        cls,
+        of_cls: type,
+        name: str,
+        *,
+        span_type: Optional[SpanAttributes.SpanType] = None,
+    ) -> None:
         """Add the class with a method named `name`, its module, and the method
         `name` to the Default instrumentation walk filters."""
 
+        logger.debug("adding method", of_cls, name, of_cls.__module__)
+
         Instrument.Default.MODULES.add(of_cls.__module__)
         Instrument.Default.CLASSES.add(of_cls)
-
-        check_o: ClassFilter = Instrument.Default.METHODS.get(name, ())
-        Instrument.Default.METHODS[name] = class_filter_disjunction(
-            check_o, of_cls
+        Instrument.Default.METHODS.append(
+            InstrumentedMethod(
+                method=name,
+                class_filter=of_cls,
+                span_type=span_type,
+            )
         )
 
     @classmethod
@@ -1229,6 +1283,7 @@ class instrument(AddInstruments):
     # https://stackoverflow.com/questions/2366713/can-a-decorator-of-an-instance-method-access-the-class
 
     def __init__(self, func: Callable):
+        logger.debug("decorating", func)
         self.func = func
 
     def __set_name__(self, cls: type, name: str):
@@ -1238,6 +1293,11 @@ class instrument(AddInstruments):
 
         # Important: do this first:
         setattr(cls, name, self.func)
+
+        if self.func is not getattr(cls, name):
+            print(
+                "Warning. Method to be instrumented does not belong to a class. It may not be instrumented."
+            )
 
         # Note that this does not actually change the method, just adds it to
         # list of filters.

@@ -6,7 +6,6 @@ from concurrent.futures import as_completed
 import datetime
 import logging
 from typing import (
-    Any,
     ClassVar,
     Dict,
     Hashable,
@@ -28,7 +27,6 @@ from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import threading as threading_utils
-from trulens.experimental.otel_tracing import _feature as otel_tracing_feature
 
 T = TypeVar("T")
 
@@ -167,48 +165,6 @@ class Record(serial_utils.SerialModel, Hashable):
 
     Invariant: calls are ordered by `.perf.end_time`.
     """
-
-    experimental_otel_spans: List[
-        Any
-    ] = []  # actually trulens.experimental.otel_tracing.core.trace.Span
-    """EXPERIMENTAL(otel_tracing): OTEL spans representation of this record.
-
-    This will be filled in only if the otel_tracing experimental feature is enabled.
-    """
-
-    @pydantic.field_validator("experimental_otel_spans", mode="before")
-    @classmethod
-    def _validate_experimental_otel_spans(cls, spans: List[Any]) -> List[Any]:
-        """Deserialize spans if otel_tracing is enabled.
-
-        We need to do this manually as the experimental_otel_spans field is
-        declared as containing `Any` but we want to have `Span`s there instead.
-        We cannot declare the field having `Span`s because we are not sure
-        otel_tracing is available.
-        """
-
-        ret = []
-
-        if len(spans) > 0:
-            if otel_tracing_feature._FeatureSetup.are_optionals_installed():
-                from trulens.experimental.otel_tracing.core.trace import Span
-
-                for span in spans:
-                    if isinstance(span, dict):
-                        ret.append(Span.model_validate(span))
-                    else:
-                        ret.append(span)
-            else:
-                logger.warning(
-                    "Read record with otel_tracing spans but otel_tracing cannot "
-                    "be used in the current environment due to missing modules.\n%s",
-                    otel_tracing_feature._FeatureSetup.REQUIREMENT.module_not_found,
-                )
-                # Set to empty None to prevent errors downstream where Span
-                # instances are expected.
-                ret = []
-
-        return ret
 
     feedback_and_future_results: Optional[
         List[
@@ -371,23 +327,6 @@ class Record(serial_utils.SerialModel, Hashable):
                 ret = path.set(obj=ret, val=[call])
 
         ret.spans = {}
-        spans_path = serial_utils.Lens() + serial_utils.GetItemOrAttribute(
-            item_or_attribute="spans"
-        )
-
-        for span in self.experimental_otel_spans:
-            path = spans_path
-            for step in span.name.split(
-                "."
-            ):  # interpret dots in name as elements of a path
-                path += serial_utils.GetItemOrAttribute(item_or_attribute=step)
-
-            if path.exists(obj=ret):
-                existing = path.get_sole_item(obj=ret)
-                ret = path.set(obj=ret, val=existing + [span])
-            else:
-                ret = path.set(obj=ret, val=[span])
-
         return ret
 
 

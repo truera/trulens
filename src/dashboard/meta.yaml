@@ -1,13 +1,18 @@
 {% set name = "trulens-dashboard" %}
-{% set version = "1.2.9" %}
+{% set version = "1.4.4" %}
 
 package:
   name: {{ name|lower }}
   version: {{ version }}
 
 source:
+  {% if environ.get('CONDA_SOURCE_USE_PATH') == '1' %}
+  path: ./
+  {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
-  sha256: 3a784770d596a45bbe7e858911925e70b9363b0f6813881ca440a7dfca3767f8
+  # Get SHA256 from https://pypi.org/project/trulens-dashboard/#files
+  sha256: 257929e79fd177a7f66de21ce9a678f53c41a3c44ddaa65ee1c4d2ebe88dd8d2
+  {% endif %}
 
 build:
   noarch: python
@@ -16,8 +21,8 @@ build:
 
 requirements:
   host:
-    - python >=3.8,<3.12
-    - poetry-core
+    - python >=3.9,<3.12
+    - poetry-core <2.0.0
     - pip
   run:
     - python >=3.9,<3.12

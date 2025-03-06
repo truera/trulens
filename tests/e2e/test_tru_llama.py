@@ -3,7 +3,6 @@
 import os
 from pathlib import Path
 from typing import Set
-from unittest import main
 from unittest import skip
 import weakref
 
@@ -15,17 +14,17 @@ from llama_index.core.base.response.schema import Response
 from llama_index.core.base.response.schema import StreamingResponse
 from llama_index.core.chat_engine.types import AgentChatResponse
 from llama_index.llms.openai import OpenAI
+import pytest
 from trulens.apps.llamaindex import TruLlama
 from trulens.core.schema import base as base_schema
 from trulens.core.utils import keys as key_utils
 
 from tests.test import TruTestCase
 from tests.test import async_test
-from tests.test import optional_test
 
 
 # All tests require optional packages.
-@optional_test
+@pytest.mark.optional
 class TestLlamaIndex(TruTestCase):
     DATA_PATH = Path("data") / "paul_graham_essay.txt"
     DATA_URL = "https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt"
@@ -241,7 +240,3 @@ class TestLlamaIndex(TruTestCase):
         await self._async_test(
             self._create_chat_engine, "achat", streaming=True
         )
-
-
-if __name__ == "__main__":
-    main()

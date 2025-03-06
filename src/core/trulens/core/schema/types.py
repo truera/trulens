@@ -83,3 +83,7 @@ DatasetID: TypeAlias = str
 
 By default these are hashes of dataset content as json.
 """
+
+EventID: TypeAlias = str
+"""Unique identifier for a event.
+"""

@@ -8,7 +8,9 @@ import datetime
 import inspect
 from inspect import BoundArguments
 from inspect import Signature
+import json
 import logging
+import os
 import threading
 from typing import (
     Any,
@@ -29,6 +31,7 @@ from typing import (
 )
 import weakref
 
+import pandas as pd
 import pydantic
 from trulens.core import experimental as core_experimental
 from trulens.core import instruments as core_instruments
@@ -39,11 +42,15 @@ from trulens.core.database import base as core_db
 from trulens.core.database import connector as core_connector
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback import feedback as core_feedback
+from trulens.core.run import Run
+from trulens.core.run import RunConfig
+from trulens.core.run import validate_dataset_spec
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import select as select_schema
+from trulens.core.session import TruSession
 from trulens.core.utils import asynchro as asynchro_utils
 from trulens.core.utils import constants as constant_utils
 from trulens.core.utils import containers as container_utils
@@ -53,7 +60,12 @@ from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
+from trulens.core.utils import signature as signature_utils
 from trulens.core.utils import threading as threading_utils
+from trulens.otel.semconv.constants import (
+    TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
+)
+from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
@@ -304,6 +316,14 @@ def instrumented_component_views(
             yield q, ComponentView.of_json(json=o)
 
 
+def _can_import(to_import: str) -> bool:
+    try:
+        __import__(to_import)
+        return True
+    except ImportError:
+        return False
+
+
 class App(
     app_schema.AppDefinition,
     core_instruments.WithInstrumentCallbacks,
@@ -321,8 +341,10 @@ class App(
         apps.
     - [TruVirtual][trulens.apps.virtual.TruVirtual] for recording
         information about invocations of apps without access to those apps.
-    - [TruCustomApp][trulens.apps.custom.TruCustomApp] for custom
+    - [TruCustomApp][trulens.apps.custom.TruCustomApp] (To be deprecated in favor of TruApp) for custom
         apps. These need to be decorated to have appropriate data recorded.
+    - [TruApp][trulens.apps.app.TruApp] for custom
+        apps allowing maximized flexibility. These need to be decorated to have appropriate data recorded.
     - [TruBasicApp][trulens.apps.basic.TruBasicApp] for apps defined
         solely by a string-to-string method.
     """
@@ -363,6 +385,9 @@ class App(
 
     app: Any = pydantic.Field(exclude=True)
     """The app to be recorded."""
+
+    main_method_name: Optional[str] = pydantic.Field(None)
+    """Name of the main method of the app to be recorded. For serialization and this is required for OTEL."""
 
     instrument: Optional[core_instruments.Instrument] = pydantic.Field(
         None, exclude=True
@@ -421,6 +446,20 @@ class App(
         pydantic.PrivateAttr(default_factory=dict)
     )
 
+    snowflake_object_type: Optional[str] = pydantic.Field(
+        None,
+    )
+    snowflake_object_name: Optional[str] = pydantic.Field(
+        None,
+    )
+    snowflake_object_version: Optional[str] = pydantic.Field(
+        None,
+    )
+
+    snowflake_run_dao: Optional[Any] = pydantic.Field(None, exclude=True)
+
+    snowflake_app_dao: Optional[Any] = pydantic.Field(None, exclude=True)
+
     def __init__(
         self,
         connector: Optional[core_connector.DBConnector] = None,
@@ -434,15 +473,81 @@ class App(
 
         # for us:
         if connector:
+            tru_session = TruSession(connector=connector)
+            if tru_session.connector is not connector:
+                raise ValueError(
+                    "Already created `TruSession` with different `connector`!"
+                )
             kwargs["connector"] = connector
+
         kwargs["feedbacks"] = feedbacks
         kwargs["recording_contexts"] = contextvars.ContextVar(
             "recording_contexts", default=None
         )
+        app = kwargs["app"]
+
+        otel_enabled = TruSession().experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
+        )
+        main_method = None
+
+        if otel_enabled:
+            if app is None:
+                raise ValueError(
+                    "A valid app instance must be provided when specifying 'main_method'."
+                )
+
+            if "main_method" in kwargs:
+                main_method = kwargs["main_method"]
+
+                # Instead of always checking for binding,  enforce it except when app is an instance of TruWrapperApp (tru basic app).
+                try:
+                    from trulens.apps.basic import TruWrapperApp
+                except ImportError:
+                    TruWrapperApp = None
+
+                if TruWrapperApp is None or not isinstance(app, TruWrapperApp):
+                    if (
+                        not hasattr(main_method, "__self__")
+                        or main_method.__self__ != app
+                    ):
+                        raise ValueError(
+                            f"main_method `{main_method.__name__}` must be bound to the provided `app` instance."
+                        )
+
+                self._wrap_main_function(app, main_method.__name__)
 
         super().__init__(**kwargs)
 
-        app = kwargs["app"]
+        if main_method:
+            self.main_method_name = main_method.__name__  # for serialization
+
+        self._current_context_manager_lock = threading.Lock()
+        self._current_context_manager = None
+
+        if connector and _can_import("trulens.connectors.snowflake"):
+            from trulens.connectors.snowflake import SnowflakeConnector
+            from trulens.connectors.snowflake.dao.enums import ObjectType
+
+            if isinstance(connector, SnowflakeConnector):
+                self.snowflake_object_type = (
+                    ObjectType.EXTERNAL_AGENT.value
+                    if "object_type" not in kwargs
+                    or kwargs["object_type"] is None
+                    else kwargs["object_type"]
+                )
+
+                (
+                    self.snowflake_app_dao,
+                    self.snowflake_run_dao,
+                    self.snowflake_object_name,
+                    self.snowflake_object_version,
+                ) = connector.initialize_snowflake_dao_fields(
+                    object_type=self.snowflake_object_type,
+                    app_name=kwargs["app_name"],
+                    app_version=kwargs["app_version"],
+                )
+
         self.app = app
 
         if self.instrument is not None:
@@ -459,10 +564,73 @@ class App(
 
     def __del__(self):
         """Shut down anything associated with this app that might persist otherwise."""
+        try:
+            # Use object.__getattribute__ to avoid triggering __getattr__
+            m_thread = object.__getattribute__(
+                self, "manage_pending_feedback_results_thread"
+            )
+        except Exception:
+            m_thread = None
 
-        if self.manage_pending_feedback_results_thread is not None:
-            self.records_with_pending_feedback_results.shutdown()
-            self.manage_pending_feedback_results_thread.join()
+        if m_thread is not None:
+            try:
+                records = object.__getattribute__(
+                    self, "records_with_pending_feedback_results"
+                )
+                if records is not None:
+                    records.shutdown()
+            except Exception:
+                # If records or shutdown is not available, ignore.
+                pass
+
+            try:
+                m_thread.join()
+            except Exception:
+                pass
+
+    @staticmethod
+    def _has_record_root_instrumentation(func: Callable) -> bool:
+        while hasattr(func, "__wrapped__"):
+            if hasattr(func, TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG):
+                return True
+            func = func.__wrapped__
+        return False
+
+    def _wrap_main_function(self, app: Any, method_name: str) -> None:
+        if TruSession().experimental_feature(
+            core_experimental.Feature.OTEL_TRACING, freeze=True
+        ):
+            from trulens.core.otel.instrument import instrument
+
+            if not hasattr(app, method_name):
+                raise ValueError(f"App must have an `{method_name}` method!")
+            func = getattr(app, method_name)
+            if self._has_record_root_instrumentation(func):
+                return
+            sig = inspect.signature(func)
+            wrapper = instrument(
+                span_type=SpanAttributes.SpanType.RECORD_ROOT,
+                attributes=lambda ret, exception, *args, **kwargs: {
+                    # langchain has specific main input/output logic.
+                    SpanAttributes.RECORD_ROOT.INPUT: self.main_input(
+                        func, sig, sig.bind_partial(**kwargs)
+                    ),
+                    SpanAttributes.RECORD_ROOT.OUTPUT: self.main_output(
+                        func, sig, sig.bind_partial(**kwargs), ret
+                    ),
+                },
+                is_app_specific_record_root=True,
+            )
+            # HACK!: This is a major hack to get around the fact that we can't
+            # set the desired method on the app object due to Pydantic only
+            # allowing fields to be set on the class, not on the instance for
+            # some reason. To get around this, we're setting it on the __dict__
+            # of the app object, which is mutable and is the first place that
+            # the field is looked up it seems. There's another implication of
+            # this, which is that the desired method for this object will not
+            # run whatever is instrumented by TruChain otherwise but that's
+            # fine.
+            app.__dict__[method_name] = wrapper(func)
 
     def _start_manage_pending_feedback_results(self) -> None:
         """Start the thread that manages the queue of records with
@@ -606,7 +774,11 @@ class App(
                     "No feedback evaluation and logging will occur."
                 )
 
-        if self.connector is not None:
+        otel_tracing_enabled = os.getenv(
+            "TRULENS_OTEL_TRACING", ""
+        ).lower() in ["1", "true"]
+
+        if self.connector is not None and not otel_tracing_enabled:
             self.connector.add_app(app=self)
 
             if self.feedback_mode != feedback_schema.FeedbackMode.NONE:
@@ -692,61 +864,13 @@ class App(
             The extracted content, which may be a single value, a list of values,
             or a nested structure with content extracted from all levels.
         """
-        if isinstance(value, pydantic.BaseModel):
-            content = getattr(value, "content", None)
-            if content is not None:
-                return content
-
-            # If 'content' is not found, check for 'choices' attribute which indicates a ChatResponse
-            choices = getattr(value, "choices", None)
-            if choices is not None:
-                # Extract 'content' from the 'message' attribute of each _Choice in 'choices'
-                return [
-                    self._extract_content(choice.message) for choice in choices
-                ]
-
-            # Recursively extract content from nested pydantic models
-            try:
-                return {
-                    k: self._extract_content(v)
-                    if isinstance(v, (pydantic.BaseModel, dict, list))
-                    else v
-                    for k, v in value.model_dump().items()
-                }
-            except Exception as e:
-                logger.warning(
-                    "Failed to extract content from pydantic model: %s", e
-                )
-                # Unsure what is best to do here. Lets just return the exception
-                # so that it might reach the user if nothing else gets picked up
-                # as main input/output.
-                return str(e)
-
-        elif isinstance(value, dict):
-            # Check for 'content' key in the dictionary
-            for key in content_keys:
-                content = value.get(key)
-                if content is not None:
-                    return content
-
-            # Recursively extract content from nested dictionaries
-            return {
-                k: self._extract_content(v)
-                if isinstance(v, (dict, list))
-                else v
-                for k, v in value.items()
-            }
-
-        elif isinstance(value, list):
-            # Handle lists by extracting content from each item
-            return [self._extract_content(item) for item in value]
-
-        else:
-            return value
+        return signature_utils._extract_content(
+            value, content_keys=content_keys
+        )
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
-    ) -> serial_utils.JSON:
+    ) -> str:
         """Determine (guess) the main input string for a main app call.
 
         Args:
@@ -759,68 +883,7 @@ class App(
         Returns:
             The main input string.
         """
-
-        if bindings is None:
-            raise RuntimeError(
-                f"Cannot determine main input of unbound call to {func}: {sig}."
-            )
-
-        # ignore self
-        all_args = list(
-            v
-            for k, v in bindings.arguments.items()
-            if k not in ["self", "_self"]
-        )  # llama_index is using "_self" in some places
-
-        # If there is only one string arg, it is a pretty good guess that it is
-        # the main input.
-
-        # if have only containers of length 1, find the innermost non-container
-        focus = all_args
-
-        while (
-            not isinstance(focus, serial_utils.JSON_BASES) and len(focus) == 1
-        ):
-            focus = focus[0]
-            focus = self._extract_content(
-                focus, content_keys=["content", "input"]
-            )
-
-            if not isinstance(focus, Sequence):
-                logger.warning("Focus %s is not a sequence.", focus)
-                break
-
-        if isinstance(focus, serial_utils.JSON_BASES):
-            return str(focus)
-
-        # Otherwise we are not sure.
-        logger.warning(
-            "Unsure what the main input string is for the call to %s with args %s.",
-            python_utils.callable_name(func),
-            bindings,
-        )
-
-        # After warning, just take the first item in each container until a
-        # non-container is reached.
-        focus = all_args
-        while (
-            not isinstance(focus, serial_utils.JSON_BASES) and len(focus) >= 1
-        ):
-            focus = focus[0]
-            focus = self._extract_content(focus)
-
-            if not isinstance(focus, Sequence):
-                logger.warning("Focus %s is not a sequence.", focus)
-                break
-
-        if isinstance(focus, serial_utils.JSON_BASES):
-            return str(focus)
-
-        logger.warning(
-            "Could not determine main input/output of %s.", str(all_args)
-        )
-
-        return "TruLens: Could not determine main input from " + str(all_args)
+        return signature_utils.main_input(func, sig, bindings)
 
     def main_output(
         self,
@@ -828,83 +891,8 @@ class App(
         sig: Signature,  # pylint: disable=W0613
         bindings: BoundArguments,  # pylint: disable=W0613
         ret: Any,
-    ) -> serial_utils.JSON:
-        """Determine (guess) the "main output" string for a given main app call.
-
-        This is for functions whose output is not a string.
-
-        Args:
-            func: The main function whose main output we are guessing.
-
-            sig: The signature of the above function.
-
-            bindings: The arguments that were passed to that function.
-
-            ret: The return value of the function.
-        """
-
-        if isinstance(ret, serial_utils.JSON_BASES):
-            return str(ret)
-
-        if isinstance(ret, Sequence) and all(isinstance(x, str) for x in ret):
-            # Chunked/streamed outputs.
-            return "".join(ret)
-
-        # Use _extract_content to get the content out of the return value
-        content = self._extract_content(ret, content_keys=["content", "output"])
-
-        if isinstance(content, str):
-            return content
-
-        if isinstance(content, float):
-            return str(content)
-
-        if isinstance(content, Dict):
-            return str(next(iter(content.values()), ""))
-
-        elif isinstance(content, Sequence):
-            if len(content) > 0:
-                return str(content[0])
-            else:
-                return (
-                    f"Could not determine main output of {func.__name__}"
-                    f" from {python_utils.class_name(type(content))} value {content}."
-                )
-
-        else:
-            logger.warning(
-                "Could not determine main output of %s from %s value %s.",
-                func.__name__,
-                python_utils.class_name(type(content)),
-                content,
-            )
-            return (
-                str(content)
-                if content is not None
-                else (
-                    f"TruLens: could not determine main output of {func.__name__} "
-                    f"from {python_utils.class_name(type(content))} value {content}."
-                )
-            )
-
-    # Experimental OTEL WithInstrumentCallbacks requirement
-    def _on_new_recording_span(
-        self,
-        recording_span: Any,  # Any = mod_trace.Span,
-    ):
-        from trulens.experimental.otel_tracing.core.app import _App
-
-        return _App._on_new_recording_span(self, recording_span)
-
-    # Experimental OTEL WithInstrumentCallbacks requirement
-    def _on_new_root_span(
-        self,
-        recording: core_instruments._RecordingContext,
-        root_span: Any,  # Any = mod_trace.Span,
-    ) -> record_schema.Record:
-        from trulens.experimental.otel_tracing.core.app import _App
-
-        return _App._on_new_root_span(self, recording, root_span)
+    ) -> str:
+        return signature_utils.main_output(func, ret)
 
     # WithInstrumentCallbacks requirement
     def on_method_instrumented(
@@ -1040,24 +1028,40 @@ class App(
             **kwargs,
         )
 
-    # For use as a context manager.
-    def __enter__(self):
-        if not core_instruments.Instrument._have_context():
-            raise RuntimeError(core_endpoint._NO_CONTEXT_WARNING)
-
+    def _prevent_invalid_otel_syntax(self):
         if self.session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING
         ):
-            from trulens.experimental.otel_tracing.core.app import _App
+            raise RuntimeError("Invalid TruLens OTEL Tracing syntax.")
 
-            return _App.__enter__(self)
+    # For use as a context manager.
+    def __enter__(self):
+        if self.session.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
+        ):
+            from trulens.core.otel.instrument import OtelRecordingContext
 
+            with self._current_context_manager_lock:
+                if self._current_context_manager is not None:
+                    raise RuntimeError(
+                        "Already recording with a context manager, cannot nest!"
+                    )
+                self._current_context_manager = OtelRecordingContext(
+                    app_name=self.app_name,
+                    app_version=self.app_version,
+                    run_name="",
+                    input_id="",
+                )
+            return self._current_context_manager.__enter__()
+
+        if not core_instruments.Instrument._have_context():
+            raise RuntimeError(core_endpoint._NO_CONTEXT_WARNING)
+
+        self._prevent_invalid_otel_syntax()
         ctx = core_instruments._RecordingContext(app=self)
 
         token = self.recording_contexts.set(ctx)
         ctx.token = token
-
-        # self._set_context_vars()
 
         return ctx
 
@@ -1066,14 +1070,16 @@ class App(
         if self.session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING
         ):
-            from trulens.experimental.otel_tracing.core.app import _App
+            with self._current_context_manager_lock:
+                if self._current_context_manager is None:
+                    raise RuntimeError("Unknown recording context manager!")
+                context_manager = self._current_context_manager
+            return context_manager.__exit__(exc_type, exc_value, exc_tb)
 
-            return _App.__exit__(self, exc_type, exc_value, exc_tb)
+        self._prevent_invalid_otel_syntax()
 
         ctx = self.recording_contexts.get()
         self.recording_contexts.reset(ctx.token)
-
-        # self._reset_context_vars()
 
         if exc_type is not None:
             raise exc_value
@@ -1082,12 +1088,7 @@ class App(
 
     # For use as a context manager.
     async def __aenter__(self):
-        if self.session.experimental_feature(
-            core_experimental.Feature.OTEL_TRACING
-        ):
-            from trulens.experimental.otel_tracing.core.app import _App
-
-            return await _App.__aenter__(self)
+        self._prevent_invalid_otel_syntax()
 
         ctx = core_instruments._RecordingContext(app=self)
 
@@ -1100,12 +1101,7 @@ class App(
 
     # For use as a context manager.
     async def __aexit__(self, exc_type, exc_value, exc_tb):
-        if self.session.experimental_feature(
-            core_experimental.Feature.OTEL_TRACING
-        ):
-            from trulens.experimental.otel_tracing.core.app import _App
-
-            return await _App.__aexit__(self, exc_type, exc_value, exc_tb)
+        self._prevent_invalid_otel_syntax()
 
         ctx = self.recording_contexts.get()
         self.recording_contexts.reset(ctx.token)
@@ -1672,7 +1668,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
     def print_instrumented_methods(self) -> None:
         """Print instrumented methods."""
 
-        print(self.format_instrumented_methods())
+        logger.info(self.format_instrumented_methods())
 
     def print_instrumented_components(self) -> None:
         """Print instrumented components and their categories."""
@@ -1686,7 +1682,195 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 f"\t{type(obj).__name__} ({t[1].__class__.__name__}) at 0x{id(obj):x} with path {str(t[0])}"
             )
 
-        print("\n".join(object_strings))
+        logger.info("\n".join(object_strings))
+
+    def _check_snowflake_dao(self):
+        if (
+            not hasattr(self, "snowflake_app_dao")
+            or self.snowflake_app_dao is None
+        ):
+            msg = (
+                "This API requires a Snowpark session to initialize snowflake-specific DAO instance. Please initialize App with "
+                "object_type='EXTERNAL AGENT' and a valid snowpark_session."
+            )
+            logger.error(msg)
+            raise ValueError(msg)
+
+    def add_run(self, run_config: RunConfig) -> Union[Run, None]:
+        """add a new run to the snowflake App (if not already exists)
+
+        Args:
+            run_config (RunConfig):  Run config
+            input_df (Optional[pd.DataFrame]): optional input dataset
+
+        Returns:
+            Run: Run instance
+        """
+
+        self._check_snowflake_dao()
+
+        try:
+            run_metadata_df = self.snowflake_run_dao.create_new_run(
+                object_name=self.snowflake_object_name,
+                object_type=self.snowflake_object_type,
+                object_version=self.snowflake_object_version,
+                run_name=run_config.run_name,
+                dataset_name=run_config.dataset_name,
+                source_type=run_config.source_type,
+                dataset_spec=validate_dataset_spec(run_config.dataset_spec),
+                description=run_config.description,
+                label=run_config.label,
+                llm_judge_name=run_config.llm_judge_name,
+            )
+
+            return Run.from_metadata_df(
+                run_metadata_df,
+                {
+                    "app": self,
+                    "main_method_name": self.main_method_name,
+                    "run_dao": self.snowflake_run_dao,
+                    "tru_session": self.session,
+                },
+            )
+
+        except Exception as e:
+            if "already exists." in str(e):
+                logger.debug(f"Run {run_config.run_name} already exists.")
+                return self.get_run(run_config.run_name)
+            else:
+                logger.error(f"Failed to add run {run_config.run_name}. {e}")
+                raise
+
+    def get_run(self, run_name: str) -> Run:
+        """Retrieve a run by name.
+
+        Args:
+            run_name (str): unique name of the run
+
+        Returns:
+            Run: Run instance
+        """
+        self._check_snowflake_dao()
+        run_metadata_df = self.snowflake_run_dao.get_run(
+            run_name=run_name,
+            object_name=self.snowflake_object_name,
+            object_type=self.snowflake_object_type,
+            object_version=self.snowflake_object_version,
+        )
+        if run_metadata_df.empty:
+            raise ValueError(f"Run {run_name} not found.")
+
+        return Run.from_metadata_df(
+            run_metadata_df,
+            {
+                "app": self,
+                "main_method_name": self.main_method_name,
+                "run_dao": self.snowflake_run_dao,
+                "tru_session": self.session,
+            },
+        )
+
+    def list_runs(self) -> List[Run]:
+        """Retrieve all runs belong to the snowflake App.
+
+        Returns:
+            List[Run]: List of Run instances
+        """
+        self._check_snowflake_dao()
+        run_metadata_df = self.snowflake_run_dao.list_all_runs(
+            object_name=self.snowflake_object_name,
+            object_type=self.snowflake_object_type,
+        )
+        runs = []
+
+        if run_metadata_df.empty:
+            return runs
+
+        all_runs_lst = json.loads(run_metadata_df.iloc[0].iloc[-1])
+
+        # return all_runs_lst
+        for run_dict in all_runs_lst:
+            runs.append(
+                Run.from_metadata_df(
+                    pd.DataFrame({"col": [json.dumps(run_dict)]}),
+                    {
+                        "app": self.app,
+                        "main_method_name": self.main_method_name,
+                        "run_dao": self.snowflake_run_dao,
+                        "tru_session": self.session,
+                        "object_name": self.snowflake_object_name,
+                        "object_type": self.snowflake_object_type,
+                    },
+                )
+            )
+        return runs
+
+    def delete_snowflake_app(self) -> None:
+        """Delete the snowflake App (managing object) in snowflake, if applicable."""
+        self._check_snowflake_dao()
+        self.snowflake_app_dao.drop_agent(self.snowflake_object_name)
+
+    def run(self, run_name: str):
+        if self.session.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
+        ):
+            from trulens.core.otel.instrument import OtelRecordingContext
+
+            return OtelRecordingContext(
+                app_name=self.app_name,
+                app_version=self.app_version,
+                run_name=run_name,
+                input_id=None,
+            )
+        raise NotImplementedError(
+            "This feature is not yet implemented for non-OTEL TruLens!"
+        )
+
+    def input(self, input_id: str):
+        if self.session.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
+        ):
+            from trulens.core.otel.instrument import OtelRecordingContext
+
+            return OtelRecordingContext(
+                app_name=self.app_name,
+                app_version=self.app_version,
+                run_name=None,
+                input_id=input_id,
+            )
+        raise NotImplementedError(
+            "This feature is not yet implemented for non-OTEL TruLens!"
+        )
+
+    def instrumented_invoke_main_method(
+        self,
+        run_name: str,
+        input_id: str,
+        ground_truth_output: Optional[str] = None,
+        main_method_args: Optional[Sequence[Any]] = None,
+        main_method_kwargs: Optional[Dict[str, Any]] = None,
+    ) -> Any:
+        if self.session.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
+        ):
+            from trulens.core.otel.instrument import OtelRecordingContext
+
+            with OtelRecordingContext(
+                app_name=self.app_name,
+                app_version=self.app_version,
+                run_name=run_name,
+                input_id=input_id,
+                ground_truth_output=ground_truth_output,
+            ):
+                f = getattr(self.app, self.main_method_name)
+                if main_method_args is None:
+                    main_method_args = ()
+                if main_method_kwargs is None:
+                    main_method_kwargs = {}
+                return f(*main_method_args, **main_method_kwargs)
+        raise NotImplementedError(
+            "This feature is not yet implemented for non-OTEL TruLens!"
+        )
 
 
 # NOTE: Cannot App.model_rebuild here due to circular imports involving mod_session.TruSession

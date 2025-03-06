@@ -24,21 +24,17 @@ from typing import (
     TypeVar,
     Union,
 )
-import unittest
 from unittest import TestCase
-import weakref
 
+import pandas as pd
 import pydantic
 from pydantic import BaseModel
+from trulens.core._utils.pycompat import ReferenceType
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 import yaml
 
 from tests import utils as test_utils
-
-OPTIONAL_VAR = "TEST_OPTIONAL"
-"""Env var that were to evaluate to true indicates that optional tests are to be
-run."""
 
 WRITE_GOLDEN_VAR = "WRITE_GOLDEN"
 """Env var for indicating whether golden expected results are to be written (if
@@ -51,9 +47,6 @@ running tasks after the test completes."""
 TEST_THREADS_CLEANUP_VAR = "TEST_THREADS_CLEANUP"
 """Env var that when set to true will cause tests to fail if there are any
 non-main threads running after the test completes."""
-
-ALLOW_OPTIONAL_VAR = "ALLOW_OPTIONALS"
-"""Env var that when set to true will allow optional tests to be run."""
 
 WITH_REF_PATH_VAR = "WITH_REF_PATH"
 """Env var that when set to true will print out the reference path to the given
@@ -86,34 +79,6 @@ def async_test(func):
         return temp
 
     return wrapper
-
-
-def optional_test(testmethodorclass):
-    """Only run the decorated test if the environment variable with_optional
-    evaluates true.
-
-    These are meant to be run only in an environment where
-    all optional packages have been installed.
-    """
-
-    return unittest.skipIf(
-        not TruTestCase.env_true(OPTIONAL_VAR), "optional test"
-    )(testmethodorclass)
-
-
-def requiredonly_test(testmethodorclass):
-    """Only runs the decorated test if the environment variable with_optional
-    evaluates to false or is not set.
-
-    Decorated tests are meant to run specifically when optional imports are not
-    installed. ALLOW_EXTRA_DEPS allows optional imports to be installed.
-    """
-
-    return unittest.skipIf(
-        TruTestCase.env_true(OPTIONAL_VAR)
-        or TruTestCase.env_true(ALLOW_OPTIONAL_VAR),
-        "not an optional test",
-    )(testmethodorclass)
 
 
 def module_installed(module: str) -> bool:
@@ -225,14 +190,16 @@ class WithJSONTestCase(TestCase):
     """TestCase mixin class that adds JSON comparisons and golden expectation
     handling."""
 
-    def load_golden(self, golden_path: Union[str, Path]) -> serial_utils.JSON:
+    def load_golden(
+        self,
+        golden_path: Union[str, Path],
+    ) -> Union[serial_utils.JSON, pd.DataFrame]:
         """Load the golden file `path` and return its contents.
 
         Args:
             golden_path: The name of the golden file to load. The file must
                 have an extension of either `.json` or `.yaml`. The extension
                 determines the input format.
-
         """
         golden_path = Path(golden_path)
 
@@ -240,6 +207,8 @@ class WithJSONTestCase(TestCase):
             loader = functools.partial(json.load)
         elif ".yaml" in golden_path.suffixes or ".yml" in golden_path.suffixes:
             loader = functools.partial(yaml.load, Loader=yaml.FullLoader)
+        elif ".csv" in golden_path.suffixes:
+            loader = functools.partial(pd.read_csv, index_col=0)
         else:
             raise ValueError(f"Unknown file extension {golden_path}.")
 
@@ -250,7 +219,9 @@ class WithJSONTestCase(TestCase):
             return loader(f)
 
     def write_golden(
-        self, golden_path: Union[str, Path], data: serial_utils.JSON
+        self,
+        golden_path: Union[str, Path],
+        data: Union[serial_utils.JSON, pd.DataFrame],
     ) -> None:
         """If writing golden file is enabled, write the golden file `path` with
         `data` and raise exception indicating so.
@@ -272,6 +243,10 @@ class WithJSONTestCase(TestCase):
             writer = functools.partial(json.dump, indent=2, sort_keys=True)
         elif golden_path.suffix == ".yaml":
             writer = functools.partial(yaml.dump, sort_keys=True)
+        elif golden_path.suffix == ".csv":
+            writer = lambda data, f: data.to_csv(f)
+        elif golden_path.suffix == ".parquet":
+            writer = lambda data, f: data.to_parquet(f)
         else:
             raise ValueError(f"Unknown file extension {golden_path.suffix}.")
 
@@ -553,7 +528,7 @@ class TruTestCase(WithJSONTestCase, TestCase):
             "on",
         ]
 
-    def assertCollected(self, ref: weakref.ReferenceType[T], msg=None):
+    def assertCollected(self, ref: ReferenceType[T], msg=None):
         """Check that the object referenced by `ref` has been garbage
         collected.
 

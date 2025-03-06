@@ -1,0 +1,47 @@
+{% set name = "trulens-otel-semconv" %}
+{% set version = "1.4.4" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  {% if environ.get('CONDA_SOURCE_USE_PATH') == '1' %}
+  path: ./
+  {% else %}
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
+  # Get SHA256 from https://pypi.org/project/trulens-otel-semconv/#files
+  sha256: 6a098c730103b57cca9462ee0ecf46616d11951da01028d8b75771b10f4730b6
+  {% endif %}
+
+build:
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  number: 0
+
+requirements:
+  host:
+    - python >=3.9,<3.12
+    - poetry-core <2.0.0
+    - pip
+  run:
+    - python >=3.9,<3.12
+    - opentelemetry-semantic-conventions >=0.36b0
+
+test:
+  imports:
+    - trulens.otel.semconv
+  commands:
+    - pip check
+  requires:
+    - pip
+
+about:
+  home: https://trulens.org/
+  summary: Library to systematically track and evaluate LLM based applications.
+  license: MIT
+
+extra:
+  recipe-maintainers:
+    - sfc-gh-srudenko
+    - sfc-gh-chu

@@ -13,7 +13,6 @@ from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.utils import keys as key_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import threading as threading_utils
-from trulens.experimental.otel_tracing import _feature as otel_tracing_feature
 
 logger = logging.getLogger(__name__)
 
@@ -35,94 +34,12 @@ class HuggingfaceCallback(core_endpoint.EndpointCallback):
                 self.cost.n_classes += len(item)
 
 
-if otel_tracing_feature._FeatureSetup.are_optionals_installed():
-    from trulens.experimental.otel_tracing.core.feedback import (
-        endpoint as experimental_core_endpoint,
-    )
-
-    class _WrapperHuggingfaceEndpointCallback(
-        experimental_core_endpoint._WrapperEndpointCallback[
-            requests.Response, serial_utils.JSON
-        ]
-    ):
-        """EXPERIMENTAL(otel_tracing): process huggingface wrapped calls to
-        extract cost information.
-
-        !!! Note
-            Huggingface free inference api does not have its own modules and the
-            documentation suggests to use `requests`. Therefore, this class
-            processes request module responses.
-        """
-
-        def on_callable_call(self, bindings, **kwargs):
-            super().on_callable_call(bindings, **kwargs)
-
-            url = bindings.arguments["url"]
-            if not url.startswith("https://api-inference.huggingface.co"):
-                logger.debug(
-                    "Unknown huggingface api request: %s. Cost tracking will not be available.",
-                    url,
-                )
-                return
-
-            self.cost.n_classification_requests += 1
-
-        def on_callable_return(
-            self, ret: requests.Response, **kwargs
-        ) -> requests.Response:
-            """Process a returned call."""
-
-            super().on_callable_return(ret=ret, **kwargs)
-
-            bindings = self.bindings
-
-            if "url" not in bindings.arguments:
-                return ret
-
-            url = bindings.arguments["url"]
-            if not url.startswith("https://api-inference.huggingface.co"):
-                return ret
-
-            # TODO: Determine whether the request was a classification or some other
-            # type of request. Currently we use huggingface only for classification
-            # in feedback but this can change.
-
-            if ret.ok:
-                self.on_endpoint_classification(response=ret.json())
-
-            return ret
-
-        def on_endpoint_classification(
-            self, response: serial_utils.JSON
-        ) -> None:
-            """Process a classification response."""
-
-            super().on_endpoint_classification(response)
-
-            if not isinstance(response, Sequence):
-                logger.warning("Unexpected response: %s", response)
-                return
-
-            # Handle case when multiple items returned by hf api
-            for item in response:
-                if not isinstance(item, Sequence):
-                    logger.warning("Unexpected response item: %s", item)
-                else:
-                    self.cost.n_classes += len(item)
-
-
 class HuggingfaceEndpoint(core_endpoint._WithPost, core_endpoint.Endpoint):
     """Huggingface endpoint.
 
     Instruments the requests.post method for requests to
     "https://api-inference.huggingface.co".
     """
-
-    _experimental_wrapper_callback_class = (
-        _WrapperHuggingfaceEndpointCallback
-        if otel_tracing_feature._FeatureSetup.are_optionals_installed()
-        else None
-    )
 
     def __init__(self, *args, **kwargs):
         kwargs["callback_class"] = HuggingfaceCallback

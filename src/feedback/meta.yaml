@@ -1,13 +1,18 @@
 {% set name = "trulens-feedback" %}
-{% set version = "1.2.9" %}
+{% set version = "1.4.4" %}
 
 package:
   name: {{ name|lower }}
   version: {{ version }}
 
 source:
+  {% if environ.get('CONDA_SOURCE_USE_PATH') == '1' %}
+  path: ./
+  {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
-  sha256: db5564acc7ca2526d8d89573dca950c5e41e6cc689283d834268fac7be93597c
+  # Get SHA256 from https://pypi.org/project/trulens-feedback/#files
+  sha256: 37e9eb6d60d7de6107fc564eb375dc1557f59a9a5cddd7a84395b2fe743f5fd2
+  {% endif %}
 
 build:
   noarch: python
@@ -16,8 +21,8 @@ build:
 
 requirements:
   host:
-    - python >=3.8.1
-    - poetry-core
+    - python >=3.9
+    - poetry-core <2.0.0
     - pip
   run:
     - python >=3.9,<3.12

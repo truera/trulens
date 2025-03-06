@@ -107,7 +107,3 @@ class TestGuardrailDecorators(unittest.TestCase):
 
         result = chat("example prompt")
         self.assertEqual(result, "Response")
-
-
-if __name__ == "__main__":
-    unittest.main()

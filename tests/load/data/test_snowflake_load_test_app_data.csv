@@ -1,0 +1,11 @@
+query,context,response
+"What is the capital of France?","{""sentences"": [""France is known for its wine production."", ""Paris is a major city in Europe."", ""The Eiffel Tower is a famous landmark.""]}","Paris"
+"What is the longest river in the world?","{""sentences"": [""The Amazon rainforest is incredibly biodiverse."", ""The Nile River flows through several African countries."", ""Rivers are important sources of fresh water.""]}","The Amazon River"
+"What is the highest mountain in the world?","{""sentences"": [""Mount Everest is located in the Himalayas."", ""Mountains are formed by tectonic plate movement."", ""K2 is known as the Savage Mountain.""]}","Mount Kilimanjaro"
+"Which country is known as the Land of the Rising Sun?","{""sentences"": [""Japan is an archipelago in East Asia."", ""The sun rises in the east."", ""China has a long and rich history.""]}","Japan"
+"What is the largest desert in the world (by area)?","{""sentences"": [""Deserts are characterized by low rainfall."", ""The Sahara Desert is in North Africa."", ""Antarctica is a continent covered in ice.""]}","The Sahara Desert"
+"What is the smallest country in the world?","{""sentences"": [""Vatican City is an independent city-state."", ""Monaco is known for its casino."", ""Small countries often have unique cultures.""]}","Vatican City"
+"Which ocean is the largest?","{""sentences"": [""The Pacific Ocean contains the Mariana Trench."", ""Oceans cover most of the Earth's surface."", ""The Atlantic Ocean separates Europe and North America.""]}","The Atlantic Ocean"
+"What is the name of the largest continent?","{""sentences"": [""Asia is home to a large portion of the world's population."", ""Continents are large landmasses."", ""Africa is known for its diverse wildlife.""]}","Asia"
+"What is the name of the line of latitude that divides the Earth into the Northern and Southern Hemispheres?","{""sentences"": [""The Prime Meridian is a line of longitude."", ""The Equator is 0 degrees latitude."", ""Latitude and longitude are used to determine location.""]}","The Tropic of Cancer"
+"Which US state is known as the 'Sunshine State'?","{""sentences"": [""Florida is a popular tourist destination."", ""California is known for its beaches."", ""Sunshine is essential for plant growth.""]}","Florida"

@@ -335,6 +335,12 @@ class FeedbackDefinition(
     ] = None
     """Aggregator method serialization."""
 
+    examples: Optional[List[Tuple]] = None
+    """User supplied examples for this feedback function."""
+
+    criteria: Optional[str] = None
+    """Criteria for the feedback function."""
+
     combinations: Optional[FeedbackCombinations] = FeedbackCombinations.PRODUCT
     """Mode of combining selected values to produce arguments to each feedback
     function call."""
@@ -378,6 +384,8 @@ class FeedbackDefinition(
         aggregator: Optional[
             Union[pyschema_utils.Function, pyschema_utils.Method]
         ] = None,
+        examples: Optional[List[Tuple]] = None,
+        criteria: Optional[str] = None,
         if_exists: Optional[serial_utils.Lens] = None,
         if_missing: FeedbackOnMissingParameters = FeedbackOnMissingParameters.ERROR,
         selectors: Optional[Dict[str, serial_utils.Lens]] = None,
@@ -395,6 +403,8 @@ class FeedbackDefinition(
             feedback_definition_id="temporary",
             implementation=implementation,
             aggregator=aggregator,
+            examples=examples,
+            criteria=criteria,
             selectors=selectors,
             if_exists=if_exists,
             if_missing=if_missing,

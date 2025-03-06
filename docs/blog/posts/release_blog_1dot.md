@@ -4,7 +4,6 @@ categories:
 date: 2024-08-30
 ---
 
-
 # Moving to TruLens v1: Reliable and Modular Logging and Evaluation
 
 It has always been our goal to make it easy to build trustworthy LLM applications. Since we launched last May, the package has grown up before our eyes, morphing from a hacked-together addition to an existing project (`trulens-explain`) to a thriving, agnostic standard for tracking and evaluating LLM apps. Along the way, we’ve experienced growing pains and discovered inefficiencies in the way TruLens was built. We’ve also heard that the reasons people use TruLens today are diverse, and many of its use cases do not require its full footprint.
@@ -23,12 +22,12 @@ Split off `trulens-eval` from `trulens-explain`, and let `trulens-eval` take ove
 
 Next, we modularized _TruLens_ into a family of different packages, described below. This change is designed to minimize the overhead required for _TruLens_ developers to use the capabilities they need. For example, you can now install instrumentation packages in production without the additional dependencies required to run the dashboard.
 
-* `trulens-core` holds core abstractions for database operations, app instrumentation, guardrails and evaluation.
-* `trulens-dashboard` gives you the required capabilities to run and operate the TruLens dashboard.
-* `trulens-apps-` prefixed packages give you tools for interacting with LLM apps built with other frameworks, giving you capabilities including tracing, logging and guardrailing. These include `trulens-apps-langchain` and `trulens-apps-llamaindex` which hold our popular `TruChain` and `TruLlama` wrappers that seamlessly instrument _LangChain_ and _Llama-Index_ apps.
-* `trulens-feedback` gives you access to out of the box feedback functions required for running feedback functions. Feedback function implementations must be combined with a selected provider integration.
-* `trulens-providers-` prefixed package describes a set of integrations with other libraries for running feedback functions. Today, we offer an extensive set of integrations that allow you to run feedback functions on top of virtually any LLM. These integrations can be installed as standalone packages, and include: `trulens-providers-openai`, `trulens-providers-huggingface`, `trulens-providers-litellm`, `trulens-providers-langchain`, `trulens-providers-bedrock`, `trulens-providers-cortex`.
-* `trulens-connectors-` provide ways to log _TruLens_ traces and evaluations to other databases. In addition to connect to any `sqlalchemy` database with `trulens-core`, we've added with `trulens-connectors-snowflake` tailored specifically to connecting to Snowflake. We plan to add more connectors over time.
+- `trulens-core` holds core abstractions for database operations, app instrumentation, guardrails and evaluation.
+- `trulens-dashboard` gives you the required capabilities to run and operate the TruLens dashboard.
+- `trulens-apps-` prefixed packages give you tools for interacting with LLM apps built with other frameworks, giving you capabilities including tracing, logging and guardrailing. These include `trulens-apps-langchain` and `trulens-apps-llamaindex` which hold our popular `TruChain` and `TruLlama` wrappers that seamlessly instrument _LangChain_ and _Llama-Index_ apps.
+- `trulens-feedback` gives you access to out of the box feedback functions required for running feedback functions. Feedback function implementations must be combined with a selected provider integration.
+- `trulens-providers-` prefixed package describes a set of integrations with other libraries for running feedback functions. Today, we offer an extensive set of integrations that allow you to run feedback functions on top of virtually any LLM. These integrations can be installed as standalone packages, and include: `trulens-providers-openai`, `trulens-providers-huggingface`, `trulens-providers-litellm`, `trulens-providers-langchain`, `trulens-providers-bedrock`, `trulens-providers-cortex`.
+- `trulens-connectors-` provide ways to log _TruLens_ traces and evaluations to other databases. In addition to connect to any `sqlalchemy` database with `trulens-core`, we've added with `trulens-connectors-snowflake` tailored specifically to connecting to Snowflake. We plan to add more connectors over time.
 
 ![TruLens 1.0 Release Graphics](../../assets/images/trulens_1_release_graphic_modular.png)
 
@@ -249,7 +248,7 @@ You can see how to start a TruLens session logging to a postgres database below:
     from trulens.core import TruSession
     from trulens.core.database.connector import DefaultDBConnector
 
-    connector = DefaultDBConnector(database_url="postgresql://trulensuser:password@localhost/trulens")
+    connector = DefaultDBConnector(database_url="postgresql+psycopg://trulensuser:password@localhost/trulens")
     session = TruSession(connector=connector)
     ```
 

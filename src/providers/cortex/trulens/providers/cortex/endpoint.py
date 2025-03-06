@@ -3,18 +3,44 @@ import json
 import logging
 import os
 import pprint
-from typing import Any, Callable, ClassVar, Optional
+from typing import Any, Callable, ClassVar, Dict, Optional
 
-from snowflake.connector.cursor import SnowflakeCursor
 from snowflake.cortex._sse_client import Event
 from snowflake.cortex._sse_client import SSEClient
-from snowflake.snowpark import DataFrame
-from snowflake.snowpark import Session
 from trulens.core.feedback import endpoint as core_endpoint
+from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
+
+
+class CortexCostComputer:
+    @staticmethod
+    def handle_response(response: Any) -> Dict[str, Any]:
+        for curr in response:
+            data = json.loads(curr.data)
+            choice = data["choices"][0]
+            if "finish_reason" in choice and choice["finish_reason"] == "stop":
+                model = data["model"]
+                usage = data["usage"]
+                break
+        endpoint = CortexEndpoint()
+        callback = CortexCallback(endpoint=endpoint)
+        return {
+            SpanAttributes.COST.MODEL: model,
+            SpanAttributes.COST.CURRENCY: "Snowflake credits",
+            SpanAttributes.COST.COST: callback._compute_credits_consumed(
+                model, usage.get("total_tokens", 0)
+            ),
+            SpanAttributes.COST.NUM_TOKENS: usage.get("total_tokens", 0),
+            SpanAttributes.COST.NUM_PROMPT_TOKENS: usage.get(
+                "prompt_tokens", 0
+            ),
+            SpanAttributes.COST.NUM_COMPLETION_TOKENS: usage.get(
+                "completion_tokens", 0
+            ),
+        }
 
 
 class CortexCallback(core_endpoint.EndpointCallback):
@@ -29,6 +55,7 @@ class CortexCallback(core_endpoint.EndpointCallback):
             if self._model_costs is None:
                 # the credit consumption table needs to be kept up-to-date with
                 # the latest cost information https://www.snowflake.com/legal-files/CreditConsumptionTable.pdf#page=9.
+                # We should refer to the latest model availability of REST api https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-llm-rest-api#model-availability
 
                 with open(
                     os.path.join(
@@ -99,9 +126,6 @@ class CortexEndpoint(core_endpoint.Endpoint):
 
         super().__init__(*args, **kwargs)
 
-        # we instrument sql and fetchall in case users are calling Cortex LLM functions via Snowflake SQL
-        self._instrument_class(Session, "sql")
-        self._instrument_class(SnowflakeCursor, "fetchall")
         # we instrument the SSEClient class from snowflake.cortex module to get the usage information from the HTTP response when calling the REST Complete endpoint
         self._instrument_class(SSEClient, "events")
 
@@ -121,11 +145,6 @@ class CortexEndpoint(core_endpoint.Endpoint):
                 response_dict = json.loads(
                     response.data
                 )  # response is a server-sent event (SSE). see _sse_client.py from snowflake.cortex module for reference
-
-            elif isinstance(response, DataFrame):
-                response_dict = json.loads(response.collect()[0][0])
-            elif isinstance(response, list):
-                response_dict = json.loads(response[0][0])
 
         except Exception as e:
             logger.error(f"Error occurred while parsing response: {e}")

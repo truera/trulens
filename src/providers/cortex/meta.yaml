@@ -1,13 +1,18 @@
 {% set name = "trulens-providers-cortex" %}
-{% set version = "1.2.9" %}
+{% set version = "1.4.4" %}
 
 package:
   name: {{ name|lower }}
   version: {{ version }}
 
 source:
+  {% if environ.get('CONDA_SOURCE_USE_PATH') == '1' %}
+  path: ./
+  {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
-  sha256: 9368c88ec0315d1c333aaf8ecce479f869a19686d3b53eaf9d0dcb63d24eb466
+  # Get SHA256 from https://pypi.org/project/trulens-providers-cortex/#files
+  sha256: 9938ea5cb7cc056c1d8aec9fed6567b6f701a29548fa42e0cf4888fbc6c9df7d
+  {% endif %}
 
 build:
   noarch: python
@@ -16,15 +21,15 @@ build:
 
 requirements:
   host:
-    - python >=3.8.1,<3.12
-    - poetry-core
+    - python >=3.9,<3.12
+    - poetry-core <2.0.0
     - pip
   run:
     - python >=3.9,<3.12
     - trulens-core >=1.0.0,<2.0.0
     - trulens-feedback >=1.0.0,<2.0.0
     - snowflake-connector-python >=3.11.0,<4.0.0
-    - snowflake-ml-python >=1.7.1
+    - snowflake-ml-python >=1.7.2
     - snowflake-snowpark-python >=1.18.0,<2.0.0
 
 test:

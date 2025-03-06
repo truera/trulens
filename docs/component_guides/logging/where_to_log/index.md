@@ -15,14 +15,14 @@ For example, for Postgres database `trulens` running on `localhost` with usernam
     ```python
     from trulens.core.session import TruSession
     from trulens.core.database.connector.default import DefaultDBConnector
-    connector = DefaultDBConnector(database_url = "postgresql://trulensuser:password@localhost/trulens")
+    connector = DefaultDBConnector(database_url = "postgresql+psycopg://trulensuser:password@localhost/trulens")
     session = TruSession(connector = connector)
     ```
 
 After which you should receive the following message:
 
 ```
-🦑 TruSession initialized with db url postgresql://trulensuser:password@localhost/trulens.
+🦑 TruSession initialized with db url postgresql+psycopg://trulensuser:password@localhost/trulens.
 ```
 
 ## Connecting to a Database Engine
@@ -38,7 +38,7 @@ See [this article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-
     from sqlalchemy import create_engine
 
     database_engine = create_engine(
-        "postgresql://trulensuser:password@localhost/trulens",
+        "postgresql+psycopg://trulensuser:password@localhost/trulens",
         connect_args={"connection_factory": MyConnectionFactory},
     )
     connector = DefaultDBConnector(database_engine = database_engine)
@@ -50,4 +50,5 @@ See [this article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-
 After which you should receive the following message:
 
 ```
-🦑 TruSession initialized with db url postgresql://trulensuser:password@localhost/trulens.
+🦑 TruSession initialized with db url postgresql+psycopg://trulensuser:password@localhost/trulens.
+```

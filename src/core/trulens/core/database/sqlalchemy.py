@@ -22,11 +22,13 @@ import warnings
 
 from alembic.ddl.impl import DefaultImpl
 import numpy as np
+from packaging.version import Version
 import pandas as pd
 import pydantic
 from pydantic import Field
 import sqlalchemy as sa
 from sqlalchemy import Table
+from sqlalchemy import inspect
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text as sql_text
@@ -44,6 +46,7 @@ from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import groundtruth as groundtruth_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
+from trulens.core.schema.event import Event
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
@@ -134,6 +137,27 @@ class SQLAlchemyDB(core_db.DB):
 
     def _reload_engine(self):
         if self.engine is None:
+            # Check if the dialect is snowflake and set isolation_level
+            snowflake_sqlalchemy_version = None
+            try:
+                import snowflake.sqlalchemy
+
+                snowflake_sqlalchemy_version = snowflake.sqlalchemy.__version__
+            except Exception:
+                pass
+            if (
+                snowflake_sqlalchemy_version
+                and Version(snowflake_sqlalchemy_version) >= Version("1.7.2")
+                and "url" in self.engine_params
+                and "snowflake" in self.engine_params["url"]
+            ):
+                temp_engine = sa.create_engine(**self.engine_params)
+                if temp_engine.dialect.name == "snowflake":
+                    self.engine_params.setdefault(
+                        "isolation_level", "AUTOCOMMIT"
+                    )
+                # Dispose of the temporary engine
+                temp_engine.dispose()
             self.engine = sa.create_engine(**self.engine_params)
         self.session = sessionmaker(self.engine, **self.session_params)
 
@@ -937,6 +961,73 @@ class SQLAlchemyDB(core_db.DB):
             return df
             # TODO: use a generator instead of a list? (for large datasets)
 
+    def get_virtual_ground_truth(
+        self,
+        user_table_name: str,
+        user_schema_mapping: Dict[str, str],
+        user_schema_name: Optional[str] = None,
+    ) -> pd.DataFrame:
+        virtual_gt_schema_mapping: groundtruth_schema.VirtualGroundTruthSchemaMapping = groundtruth_schema.VirtualGroundTruthSchemaMapping.validate_mapping(
+            user_schema_mapping
+        )
+        with self.session.begin() as session:
+            try:
+                # Dynamically construct the column mappings
+                inspector = inspect(session.get_bind())
+                user_columns = inspector.get_columns(
+                    user_table_name, schema=user_schema_name
+                )
+
+                # Dynamically define the table with its columns
+                user_table = sa.Table(
+                    user_table_name,
+                    sa.MetaData(),
+                    *[
+                        sa.Column(
+                            col["name"], col["type"], nullable=col["nullable"]
+                        )
+                        for col in user_columns
+                    ],
+                    schema=user_schema_name,
+                )
+
+                # Ensure all required columns exist
+                required_columns = {
+                    getattr(virtual_gt_schema_mapping, field)
+                    for field in virtual_gt_schema_mapping.model_dump()
+                    if getattr(virtual_gt_schema_mapping, field)
+                }
+
+                existing_columns = {col.name for col in user_table.columns}
+                missing_columns = required_columns - existing_columns
+                if missing_columns:
+                    raise ValueError(
+                        f"Missing required columns in user table '{user_table_name}': {', '.join(missing_columns)}"
+                    )
+
+                # Create a query to fetch the mapped data
+                column_mapping = {
+                    field: user_table.c[
+                        getattr(virtual_gt_schema_mapping, field)
+                    ]
+                    for field in virtual_gt_schema_mapping.model_dump()
+                    if getattr(virtual_gt_schema_mapping, field)
+                }
+
+                query = sa.select(*column_mapping.values())
+                results = session.execute(query).fetchall()
+
+                # Convert results to DataFrame
+                if not results:
+                    return pd.DataFrame()
+                return pd.DataFrame(
+                    data=results, columns=list(column_mapping.keys())
+                )
+            except Exception as e:
+                raise ValueError(
+                    f"Failed to fetch virtual ground truth: {str(e)}"
+                )
+
     def insert_dataset(
         self, dataset: dataset_schema.Dataset
     ) -> types_schema.DatasetID:
@@ -972,6 +1063,17 @@ class SQLAlchemyDB(core_db.DB):
                 data=((ds.dataset_id, ds.name, ds.meta) for ds in results),
                 columns=["dataset_id", "name", "meta"],
             )
+
+    def insert_event(self, event: Event) -> types_schema.EventID:
+        """See [DB.insert_event][trulens.core.database.base.DB.insert_event]."""
+
+        with self.session.begin() as session:
+            _event = self.orm.Event.parse(event, redact_keys=self.redact_keys)
+            session.add(_event)
+            logger.info(
+                f"{text_utils.UNICODE_CHECK} added event {_event.event_id}"
+            )
+            return _event.event_id
 
 
 # Use this Perf for missing Perfs.

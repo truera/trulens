@@ -6,11 +6,15 @@
 
 SHELL := /bin/bash
 REPO_ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
-PYTEST := poetry run pytest -n auto --rootdir=. -s
+PYTEST := poetry run pytest -n auto --rootdir=. -s -r fex --durations=0
 POETRY_DIRS := $(shell find . \
 	-not -path "./dist/*" \
 	-maxdepth 4 \
 	-name "*pyproject.toml" \
+	-exec dirname {} \;)
+CONDA_BUILD_DIRS := $(shell find . \
+	-maxdepth 4 \
+	-name "*meta.yaml" \
 	-exec dirname {} \;)
 LAST_TRULENS_EVAL_COMMIT := 4cadb05 # commit that includes the last pre-namespace trulens_eval package
 
@@ -30,25 +34,31 @@ env-tests:
 	poetry run pip install \
 		pytest \
 		pytest-xdist[psutil] \
+		jsondiff \
 		nbconvert \
 		nbformat \
-		pytest-subtests \
-		pytest-azurepipelines \
-		ruff \
 		pre-commit \
+		pytest \
+		pytest-azurepipelines \
 		pytest-cov \
-		jsondiff
+		pytest-subtests \
+		ruff \
 
-env-tests-required:
+env-tests-basic:
 	poetry install --only required \
 		&& make env-tests
 
 env-tests-optional: env env-tests
 	poetry run pip install \
+		chromadb \
+	 	faiss-cpu \
+		langchain-openai \
 		llama-index-embeddings-huggingface \
 		llama-index-embeddings-openai \
-		unstructured \
-		chromadb
+		unstructured
+
+env-tests-snowflake: env-tests-optional
+	poetry install --with snowflake
 
 env-tests-db: env-tests
 	poetry run pip install \
@@ -76,6 +86,14 @@ lock: $(POETRY_DIRS)
 	for dir in $(POETRY_DIRS); do \
 		echo "Creating lockfile for $$dir/pyproject.toml"; \
 		poetry lock -C $$dir; \
+	done
+
+# Test build of conda packages against the Snowflake channel
+# This does not publish packages, only builds them locally.
+conda-build: $(CONDA_BUILD_DIRS)
+	for dir in $(CONDA_BUILD_DIRS); do \
+		echo "Testing conda build for $$dir/meta.yaml"; \
+		conda build $$dir -c https://conda.anaconda.org/sfe1ed40/; \
 	done
 
 # Run the ruff linter.
@@ -132,7 +150,7 @@ codespell:
 
 # Generates a coverage report.
 coverage:
-	ALLOW_OPTIONALS=true poetry run pytest -n auto --rootdir=. tests/* --cov src --cov-report html
+	$(PYTEST) tests/* --cov src --cov-report html
 
 # Run the static unit tests only, those in the static subfolder. They are run
 # for every tested python version while those outside of static are run only for
@@ -186,7 +204,7 @@ test-snowflake:
 		&& make zip-wheels \
 		&& make build \
 		&& make env \
-		&& TEST_OPTIONAL=1 ALLOW_OPTIONALS=1 $(PYTEST) \
+		&& TEST_OPTIONAL=1 $(PYTEST) \
 			./tests/e2e/test_context_variables.py \
 			./tests/e2e/test_snowflake_*
 
@@ -207,29 +225,32 @@ test-optional-file-%: tests/unit/static/%
 	TEST_OPTIONAL=true $(PYTEST) tests/unit/static/$*
 
 # Runs required tests
-test-%-required: env-tests-required
+test-%-basic: env-tests-basic
 	make test-$*
-
-# Runs required tests, but allows optional dependencies to be installed.
-test-%-allow-optional: env
-	ALLOW_OPTIONALS=true make test-$*
 
 # Requires the full optional environment to be set up.
 test-%-optional: env-tests-optional
-	TEST_OPTIONAL=true make test-$*
+	SKIP_BASIC_TESTS=1 TEST_OPTIONAL=true make test-$*
+
+# Requires the full optional environment to be set up, with Snowflake specific packages.
+test-unit-snowflake: env-tests-snowflake
+	SKIP_BASIC_TESTS=1 TEST_SNOWFLAKE=true make test-unit
+
+test-%-all: env-tests env-tests-optional env-tests-snowflake
+	TEST_OPTIONAL=true TEST_SNOWFLAKE=true make test-$*
 
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline
 # frequently.
 test-unit:
-	poetry run pytest -n auto --rootdir=. tests/unit/*
+	$(PYTEST) tests/unit/*
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
 test-e2e:
-	poetry run pytest -n auto --rootdir=. tests/e2e/*
+	$(PYTEST) tests/e2e/*
 
 # Runs the notebook test
-test-notebook: env-tests-notebook
-	poetry run pytest --rootdir=. tests/docs_notebooks/*
+test-notebook:
+	$(PYTEST) tests/docs_notebooks/*
 
 install-wheels:
 	pip install dist/*/*.whl
@@ -263,6 +284,14 @@ build: $(POETRY_DIRS)
 		rm -rf .venv; \
 		popd; \
 	done
+
+build-with-zip-wheels:
+	rm -rf ./dist \
+		&& rm -rf ./src/core/trulens/data/snowflake_stage_zips \
+		&& make build \
+		&& make zip-wheels \
+		&& make build \
+		&& make env
 
 ## Step: Build zip files to upload to Snowflake staging
 zip-wheels:

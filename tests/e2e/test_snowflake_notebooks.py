@@ -1,12 +1,15 @@
+import os
 import tempfile
 from typing import Sequence
-from unittest import main
 
 from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import (
     _TRULENS_PACKAGES,
 )
 from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import (
     _TRULENS_PACKAGES_DEPENDENCIES,
+)
+from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import (
+    ServerSideEvaluationArtifacts,
 )
 
 from tests.util.snowflake_test_case import SnowflakeTestCase
@@ -25,6 +28,26 @@ class TestSnowflakeNotebooks(SnowflakeTestCase):
         self._upload_and_run_notebook(
             "staged_packages", _TRULENS_PACKAGES_DEPENDENCIES
         )
+
+    def test_staged_packages_with_otel(self) -> None:
+        self.create_and_use_schema(
+            "test_staged_packages_with_otel", append_uuid=True
+        )
+        self._set_up_stage()
+        self._upload_and_run_notebook(
+            "staged_packages_with_otel", _TRULENS_PACKAGES_DEPENDENCIES
+        )
+
+    def _set_up_stage(self) -> None:
+        ssea = ServerSideEvaluationArtifacts(
+            self._snowpark_session,
+            self._database,
+            self._schema,
+            os.environ["SNOWFLAKE_WAREHOUSE"],
+            "trulens_",
+            True,
+        )
+        ssea._set_up_stage()
 
     def _upload_and_run_notebook(
         self,
@@ -69,7 +92,3 @@ class TestSnowflakeNotebooks(SnowflakeTestCase):
         self.run_query(
             f"PUT file://{filename} @{_STAGE_NAME} AUTO_COMPRESS = FALSE"
         )
-
-
-if __name__ == "__main__":
-    main()

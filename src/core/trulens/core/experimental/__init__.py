@@ -5,6 +5,7 @@ from collections import defaultdict
 from enum import Enum
 import functools
 import importlib
+import os
 from typing import (
     Callable,
     ClassVar,
@@ -377,11 +378,11 @@ class _WithExperimentalSettings(
         if value is not None and changed:
             if val:
                 print(
-                    f"{text_utils.UNICODE_CHECK} experimental {flag} enabled for {self._ident_str()}."
+                    f"{text_utils.UNICODE_CHECK} experimental {flag} enabled."
                 )
             else:
                 print(
-                    f"{text_utils.UNICODE_STOP} experimental {flag} disabled for {self._ident_str()}"
+                    f"{text_utils.UNICODE_STOP} experimental {flag} disabled."
                 )
 
         if val and freeze and not was_frozen:
@@ -426,9 +427,11 @@ class _WithExperimentalSettings(
 
     def experimental_set_features(
         self,
-        flags: Union[
-            Iterable[Union[str, Feature]],
-            Mapping[Union[str, Feature], bool],
+        flags: Optional[
+            Union[
+                Iterable[Union[str, Feature]],
+                Mapping[Union[str, Feature], bool],
+            ]
         ],
         freeze: bool = False,
     ):
@@ -440,11 +443,14 @@ class _WithExperimentalSettings(
             ValueError: If any flag is already frozen to a different value than
             provided.
         """
-
+        if os.getenv("TRULENS_OTEL_TRACING", "").lower() in ["1", "true"]:
+            self._experimental_feature(
+                Feature.OTEL_TRACING, value=True, freeze=True
+            )
         if isinstance(flags, dict):
             for flag, val in flags.items():
                 self._experimental_feature(flag, value=val, freeze=freeze)
-        else:
+        elif flags is not None:
             for flag in flags:
                 self._experimental_feature(flag, value=True, freeze=freeze)
 

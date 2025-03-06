@@ -45,6 +45,8 @@ from trulens.core.utils import threading as threading_utils
 from trulens.experimental.otel_tracing import _feature as otel_tracing_feature
 
 if TYPE_CHECKING:
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import SpanExporter
     from trulens.core import app as base_app
 
 tqdm = None
@@ -82,7 +84,7 @@ class TruSession(
         [TruBasicApp][trulens.apps.basic.TruBasicApp]:
             Basic apps defined solely using a function from `str` to `str`.
 
-        [TruCustomApp][trulens.apps.custom.TruCustomApp]:
+        [TruApp][trulens.apps.app.TruApp]:
             Custom apps containing custom structures and methods. Requires
             annotation of methods to instrument.
 
@@ -157,16 +159,18 @@ class TruSession(
     """Database Connector to use. If not provided, a default is created and
     used."""
 
-    _experimental_otel_exporter: Optional[
-        Any
-    ] = (  # Any = otel_export_sdk.SpanExporter
+    _experimental_otel_exporter: Optional[SpanExporter] = pydantic.PrivateAttr(
+        None
+    )
+
+    _experimental_tracer_provider: Optional[TracerProvider] = (
         pydantic.PrivateAttr(None)
     )
 
     @property
     def experimental_otel_exporter(
         self,
-    ) -> Any:  # Any = Optional[otel_export_sdk.SpanExporter]
+    ) -> Optional[SpanExporter]:
         """EXPERIMENTAL(otel_tracing): OpenTelemetry SpanExporter to send spans
         to.
 
@@ -176,15 +180,27 @@ class TruSession(
 
         return self._experimental_otel_exporter
 
-    @experimental_otel_exporter.setter
-    def experimental_otel_exporter(
-        self, value: Optional[Any]
-    ):  # Any = otel_export_sdk.SpanExporter
-        otel_tracing_feature._FeatureSetup.assert_optionals_installed()
+    def force_flush(self, timeout_millis: int = 300000) -> bool:
+        """
+        Force flush the OpenTelemetry exporters.
 
-        from trulens.experimental.otel_tracing.core.session import _TruSession
+        Args:
+            timeout_millis: The maximum amount of time to wait for spans to be
+                processed.
 
-        _TruSession._setup_otel_exporter(self, value)
+        Returns:
+            False if the timeout is exceeded, feature is not enabled, or the provider doesn't exist, True otherwise.
+        """
+
+        if (
+            not self.experimental_feature(
+                core_experimental.Feature.OTEL_TRACING
+            )
+            or self._experimental_tracer_provider is None
+        ):
+            return False
+
+        return self._experimental_tracer_provider.force_flush(timeout_millis)
 
     def __str__(self) -> str:
         return f"TruSession({self.connector})"
@@ -202,12 +218,10 @@ class TruSession(
         experimental_feature_flags: Optional[
             Union[
                 Mapping[core_experimental.Feature, bool],
-                Iterable[core_experimental.Feature],
+                List[core_experimental.Feature],
             ]
         ] = None,
-        _experimental_otel_exporter: Optional[
-            Any
-        ] = None,  # Any = otel_export_sdk.SpanExporter
+        _experimental_otel_exporter: Optional[SpanExporter] = None,
         **kwargs,
     ):
         if python_utils.safe_hasattr(self, "connector"):
@@ -236,24 +250,39 @@ class TruSession(
                 f"Cannot provide both `connector` and connector argument(s) {extra_keys}."
             )
 
+        connector = connector or core_connector.DefaultDBConnector(
+            **connector_args
+        )
+
         super().__init__(
-            connector=connector
-            or core_connector.DefaultDBConnector(**connector_args),
+            connector=connector,
             **self_args,
         )
 
         # for WithExperimentalSettings mixin
-        if experimental_feature_flags is not None:
-            self.experimental_set_features(experimental_feature_flags)
+        self.experimental_set_features(experimental_feature_flags)
 
-        if _experimental_otel_exporter is not None:
-            otel_tracing_feature.assert_optionals_installed()
+        if (
+            _experimental_otel_exporter is not None
+            and not self.experimental_feature(
+                core_experimental.Feature.OTEL_TRACING
+            )
+        ):
+            raise ValueError(
+                "Cannot supply `_experimental_otel_exporter` without enabling OTEL tracing!"
+            )
+        if self.experimental_feature(core_experimental.Feature.OTEL_TRACING):
+            otel_tracing_feature._FeatureSetup.assert_optionals_installed()
 
             from trulens.experimental.otel_tracing.core.session import (
                 _TruSession,
             )
 
-            _TruSession._setup_otel_exporter(self, _experimental_otel_exporter)
+            _TruSession._set_up_otel_exporter(
+                self, connector, _experimental_otel_exporter
+            )
+
+            _TruSession._track_costs()
 
     def App(self, *args, app: Optional[Any] = None, **kwargs) -> base_app.App:
         """Create an App from the given App constructor arguments by guessing
@@ -833,12 +862,31 @@ class TruSession(
         if buffer:
             self.connector.db.batch_insert_ground_truth(buffer)
 
-    def get_ground_truth(self, dataset_name: str) -> pandas.DataFrame:
-        """Get ground truth data from the dataset.
+    def get_ground_truth(
+        self,
+        dataset_name: Optional[str] = None,
+        user_table_name: Optional[str] = None,
+        user_schema_mapping: Optional[Dict[str, str]] = None,
+        user_schema_name: Optional[str] = None,
+    ) -> pandas.DataFrame:
+        """Get ground truth data from the dataset. If `user_table_name` and `user_schema_mapping` are provided,
+        load a virtual dataset from the user's table using the schema mapping. If `dataset_name` is provided,
+        load ground truth data from the dataset by name.
         dataset_name: Name of the dataset.
+        user_table_name: Name of the user's table to load ground truth data from.
+        user_schema_mapping: Mapping of user table columns to internal `GroundTruth` schema fields.
+        user_schema_name: Name of the user's schema to load ground truth data from.
         """
-
-        return self.connector.db.get_ground_truths_by_dataset(dataset_name)
+        if user_table_name and user_schema_mapping:
+            return self.connector.db.get_virtual_ground_truth(
+                user_table_name, user_schema_mapping, user_schema_name
+            )
+        elif dataset_name:
+            return self.connector.db.get_ground_truths_by_dataset(dataset_name)
+        else:
+            raise ValueError(
+                "Either `dataset_name` or `user_table_name` and `user_schema_mapping` must be provided."
+            )
 
     def start_evaluator(
         self,
