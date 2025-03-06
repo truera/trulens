@@ -193,6 +193,7 @@ Function <function CustomLLM.generate at 0x1779471f0> was not found during instr
 
 import inspect
 import logging
+import os
 from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Optional, Set
 
@@ -485,5 +486,10 @@ class instrument(core_instruments.instrument):
         # after init.
         TruApp.functions_to_instrument.add(getattr(inst_cls, name))
 
+
+if os.getenv("TRULENS_OTEL_TRACING", "").lower() in ["1", "true"]:
+    from trulens.core.otel.instrument import instrument as otel_instrument
+
+    instrument = otel_instrument
 
 TruApp.model_rebuild()
