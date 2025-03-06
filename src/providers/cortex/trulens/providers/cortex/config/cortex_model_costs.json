@@ -1,8 +1,11 @@
 {
     "mistral-large": 5.1,
+    "deepseek-r1": 3.06,
     "llama3.1-405b": 3,
+    "claude-3-5-sonnet": 2.55,
     "mistral-large2": 1.95,
     "llama3.1-70b": 1.21,
+    "snowflake-llama-3.3-70b":0.29,
     "llama3.1-8b": 0.19,
     "mistral-7b": 0.12,
     "llama3.2-3b": 0.06,
