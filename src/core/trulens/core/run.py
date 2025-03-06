@@ -386,7 +386,7 @@ class Run(BaseModel):
             RunStatus.COMPUTATION_IN_PROGRESS,
             RunStatus.COMPLETED,
             RunStatus.PARTIALLY_COMPLETED,
-            RunStatus.UNKNOWN,  # TODO: verify if this is allowed behavior
+            RunStatus.FAILED,
         ]
 
     def _is_invocation_started(self, run: Run) -> bool:
@@ -799,7 +799,7 @@ class Run(BaseModel):
         logger.info(f"Current run status: {run_status}")
         if not self._can_start_new_metric_computation(run_status):
             return f"""Cannot start a new metric computation when in run status: {run_status}. Valid statuses are: {RunStatus.INVOCATION_COMPLETED}, {RunStatus.INVOCATION_PARTIALLY_COMPLETED},
-        {RunStatus.COMPUTATION_IN_PROGRESS}, {RunStatus.COMPLETED}, {RunStatus.PARTIALLY_COMPLETED}."""
+        {RunStatus.COMPUTATION_IN_PROGRESS}, {RunStatus.COMPLETED}, {RunStatus.PARTIALLY_COMPLETED}, {RunStatus.FAILED}."""
 
         async_job = self.run_dao.call_compute_metrics_query(
             metrics=metrics,
