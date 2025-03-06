@@ -10,9 +10,8 @@ logger = logging.getLogger(__name__)
 
 class ExternalAgentDao:
     """Data Access Object (DAO) layer for managing External Agents in Snowflake.
-    We currently enclose all names in double quotes to preserve the passed in string as-is when converting to SQL identifiers.
+    We currently use unquoted object identifiers when converting to SQL identifiers.
     https://docs.snowflake.com/en/sql-reference/identifiers-syntax
-    double quotes in the passed in string will be escaped with an additional double quote
     """
 
     def __init__(self, snowpark_session: Session):
