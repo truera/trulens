@@ -147,62 +147,39 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         run_name: str,
         dry_run: bool,
     ):
-        original_trace_level = (
-            snowpark_session.sql("SHOW PARAMETERS LIKE 'TRACE_LEVEL'")
-            .collect()[0]
-            .value.upper()
+        database = TruLensSnowflakeSpanExporter._clean_up_snowflake_identifier(
+            snowpark_session.get_current_database()
         )
-        try:
-            if original_trace_level != "ALWAYS":
-                try:
-                    snowpark_session.sql(
-                        "ALTER SESSION SET TRACE_LEVEL=ALWAYS"
-                    ).collect()
-                except Exception as e:
-                    logger.error(f"Error setting trace level to ALWAYS: {e}!")
-                    raise e
-            database = (
-                TruLensSnowflakeSpanExporter._clean_up_snowflake_identifier(
-                    snowpark_session.get_current_database()
-                )
-            )
-            schema = (
-                TruLensSnowflakeSpanExporter._clean_up_snowflake_identifier(
-                    snowpark_session.get_current_schema()
-                )
-            )
-            sql_cmd = snowpark_session.sql(
-                f"""
-                CALL SYSTEM$INGEST_AI_OBSERVABILITY_SPANS(
-                    BUILD_SCOPED_FILE_URL(
-                        @{database}.{schema}.trulens_spans,
-                        ?
-                    ),
-                    ?,
-                    ?,
-                    ?,
-                    ?,
+        schema = TruLensSnowflakeSpanExporter._clean_up_snowflake_identifier(
+            snowpark_session.get_current_schema()
+        )
+        sql_cmd = snowpark_session.sql(
+            f"""
+            CALL SYSTEM$INGEST_AI_OBSERVABILITY_SPANS(
+                BUILD_SCOPED_FILE_URL(
+                    @{database}.{schema}.trulens_spans,
                     ?
-                )
-                """,
-                params=[
-                    tmp_file_basename + ".gz",
-                    database,  # TODO(otel, dhuang): This should be the database of the object entity!
-                    schema,  # TODO(otel, dhuang): This should the schema of the object entity!
-                    (
-                        app_name or ""
-                    ).upper(),  # object name is converted to uppercase
-                    app_version or "",
-                    run_name or "",
-                ],
+                ),
+                ?,
+                ?,
+                ?,
+                ?,
+                ?
             )
-            if not dry_run:
-                logger.debug(sql_cmd.collect()[0][0])
-        finally:
-            if original_trace_level != "ALWAYS":
-                snowpark_session.sql(
-                    f"ALTER SESSION SET TRACE_LEVEL={original_trace_level}"
-                ).collect()
+            """,
+            params=[
+                tmp_file_basename + ".gz",
+                database,  # TODO(otel, dhuang): This should be the database of the object entity!
+                schema,  # TODO(otel, dhuang): This should the schema of the object entity!
+                (
+                    app_name or ""
+                ).upper(),  # object name is converted to uppercase
+                app_version or "",
+                run_name or "",
+            ],
+        )
+        if not dry_run:
+            logger.debug(sql_cmd.collect()[0][0])
 
     def _export_to_snowflake_stage_for_app_and_run(
         self,
