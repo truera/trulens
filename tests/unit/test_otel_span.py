@@ -14,7 +14,7 @@ from trulens.experimental.otel_tracing.core.span import validate_selector_name
 from trulens.otel.semconv.trace import SpanAttributes
 
 
-class TestOTELSpan(TestCase):
+class TestOtelSpan(TestCase):
     def test__resolve_attributes(self):
         with self.subTest("None attributes"):
             self.assertEqual(
@@ -40,15 +40,15 @@ class TestOTELSpan(TestCase):
                 ),
             )
         with self.subTest("Dictionary attributes"):
-            attributes_dict = {"key2": "value2"}
+            attributes_dict = {"key2": "value2", "key3": "return"}
             self.assertEqual(
-                {"key2": "value2"},
+                {"key2": "Kojikun", "key3": "Nolan"},
                 _resolve_attributes(
                     attributes_dict,
-                    ret=None,
+                    ret="Nolan",
                     exception=None,
                     args=(),
-                    all_kwargs={},
+                    all_kwargs={"value2": "Kojikun"},
                 ),
             )
 

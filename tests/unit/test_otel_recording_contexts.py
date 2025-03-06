@@ -5,7 +5,7 @@ from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
 from trulens.otel.semconv.trace import SpanAttributes
 
-from tests.util.otel_app_test_case import OtelAppTestCase
+from tests.util.otel_test_case import OtelTestCase
 
 
 class _TestApp:
@@ -17,7 +17,7 @@ class _TestApp:
         return s.upper()
 
 
-class TestOtelRecordingContexts(OtelAppTestCase):
+class TestOtelRecordingContexts(OtelTestCase):
     def setUp(self):
         super().setUp()
         self._app = _TestApp()

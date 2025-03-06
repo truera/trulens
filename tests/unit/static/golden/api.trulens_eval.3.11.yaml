@@ -908,6 +908,7 @@ trulens_eval.TruApp:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
+    delete_snowflake_app: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -921,10 +922,13 @@ trulens_eval.TruApp:
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
+    get_run: builtins.function
     initial_app_loader_dump: typing.Optional[trulens.core.utils.serial.SerialBytes,
       builtins.NoneType]
+    input: builtins.function
     instrument: typing.Optional[trulens.core.instruments.Instrument, builtins.NoneType]
     instrumented: builtins.function
+    instrumented_invoke_main_method: builtins.function
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
@@ -972,6 +976,7 @@ trulens_eval.TruApp:
     replace: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
+    run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
     select_context: builtins.classmethod
@@ -981,6 +986,10 @@ trulens_eval.TruApp:
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
     snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_object_name: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1011,6 +1020,7 @@ trulens_eval.TruBasicApp:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
+    delete_snowflake_app: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -1023,10 +1033,13 @@ trulens_eval.TruBasicApp:
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
+    get_run: builtins.function
     initial_app_loader_dump: typing.Optional[trulens.core.utils.serial.SerialBytes,
       builtins.NoneType]
+    input: builtins.function
     instrument: typing.Optional[trulens.core.instruments.Instrument, builtins.NoneType]
     instrumented: builtins.function
+    instrumented_invoke_main_method: builtins.function
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
@@ -1074,6 +1087,7 @@ trulens_eval.TruBasicApp:
     replace: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
+    run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
     select_context: builtins.classmethod
@@ -1083,6 +1097,10 @@ trulens_eval.TruBasicApp:
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
     snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_object_name: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1114,6 +1132,7 @@ trulens_eval.TruChain:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
+    delete_snowflake_app: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -1126,10 +1145,13 @@ trulens_eval.TruChain:
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
+    get_run: builtins.function
     initial_app_loader_dump: typing.Optional[trulens.core.utils.serial.SerialBytes,
       builtins.NoneType]
+    input: builtins.function
     instrument: typing.Optional[trulens.core.instruments.Instrument, builtins.NoneType]
     instrumented: builtins.function
+    instrumented_invoke_main_method: builtins.function
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
@@ -1177,6 +1199,7 @@ trulens_eval.TruChain:
     replace: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
+    run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
     select_context: builtins.classmethod
@@ -1186,6 +1209,10 @@ trulens_eval.TruChain:
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
     snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_object_name: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1215,6 +1242,7 @@ trulens_eval.TruCustomApp:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
+    delete_snowflake_app: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -1228,10 +1256,13 @@ trulens_eval.TruCustomApp:
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
+    get_run: builtins.function
     initial_app_loader_dump: typing.Optional[trulens.core.utils.serial.SerialBytes,
       builtins.NoneType]
+    input: builtins.function
     instrument: typing.Optional[trulens.core.instruments.Instrument, builtins.NoneType]
     instrumented: builtins.function
+    instrumented_invoke_main_method: builtins.function
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
@@ -1279,6 +1310,7 @@ trulens_eval.TruCustomApp:
     replace: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
+    run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
     select_context: builtins.classmethod
@@ -1288,6 +1320,10 @@ trulens_eval.TruCustomApp:
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
     snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_object_name: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1317,6 +1353,7 @@ trulens_eval.TruLlama:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
+    delete_snowflake_app: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -1329,10 +1366,13 @@ trulens_eval.TruLlama:
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
+    get_run: builtins.function
     initial_app_loader_dump: typing.Optional[trulens.core.utils.serial.SerialBytes,
       builtins.NoneType]
+    input: builtins.function
     instrument: typing.Optional[trulens.core.instruments.Instrument, builtins.NoneType]
     instrumented: builtins.function
+    instrumented_invoke_main_method: builtins.function
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
@@ -1380,6 +1420,7 @@ trulens_eval.TruLlama:
     replace: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
+    run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
     select_context: builtins.classmethod
@@ -1390,6 +1431,10 @@ trulens_eval.TruLlama:
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
     snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_object_name: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1419,6 +1464,7 @@ trulens_eval.TruRails:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
+    delete_snowflake_app: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -1431,10 +1477,13 @@ trulens_eval.TruRails:
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
+    get_run: builtins.function
     initial_app_loader_dump: typing.Optional[trulens.core.utils.serial.SerialBytes,
       builtins.NoneType]
+    input: builtins.function
     instrument: typing.Optional[trulens.core.instruments.Instrument, builtins.NoneType]
     instrumented: builtins.function
+    instrumented_invoke_main_method: builtins.function
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
@@ -1482,6 +1531,7 @@ trulens_eval.TruRails:
     replace: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
+    run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
     select_context: builtins.classmethod
@@ -1491,6 +1541,10 @@ trulens_eval.TruRails:
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
     snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_object_name: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1522,6 +1576,7 @@ trulens_eval.TruVirtual:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
+    delete_snowflake_app: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -1534,10 +1589,13 @@ trulens_eval.TruVirtual:
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
+    get_run: builtins.function
     initial_app_loader_dump: typing.Optional[trulens.core.utils.serial.SerialBytes,
       builtins.NoneType]
+    input: builtins.function
     instrument: typing.Optional[trulens.core.instruments.Instrument, builtins.NoneType]
     instrumented: builtins.function
+    instrumented_invoke_main_method: builtins.function
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
@@ -1585,6 +1643,7 @@ trulens_eval.TruVirtual:
     replace: builtins.function
     root_callable: trulens.core.utils.pyschema.Method
     root_class: typing.Any
+    run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
     select_context: builtins.classmethod
@@ -1594,6 +1653,10 @@ trulens_eval.TruVirtual:
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
     snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_object_name: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1656,6 +1719,7 @@ trulens_eval.app.App:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
+    delete_snowflake_app: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -1668,10 +1732,13 @@ trulens_eval.app.App:
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
+    get_run: builtins.function
     initial_app_loader_dump: typing.Optional[trulens.core.utils.serial.SerialBytes,
       builtins.NoneType]
+    input: builtins.function
     instrument: typing.Optional[trulens.core.instruments.Instrument, builtins.NoneType]
     instrumented: builtins.function
+    instrumented_invoke_main_method: builtins.function
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
@@ -1718,6 +1785,7 @@ trulens_eval.app.App:
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
     root_class: trulens.core.utils.pyschema.Class
+    run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
     select_context: builtins.classmethod
@@ -1727,6 +1795,10 @@ trulens_eval.app.App:
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
     snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_object_name: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7122,6 +7194,7 @@ trulens_eval.tru_basic_app.TruBasicApp:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
+    delete_snowflake_app: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -7134,10 +7207,13 @@ trulens_eval.tru_basic_app.TruBasicApp:
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
+    get_run: builtins.function
     initial_app_loader_dump: typing.Optional[trulens.core.utils.serial.SerialBytes,
       builtins.NoneType]
+    input: builtins.function
     instrument: typing.Optional[trulens.core.instruments.Instrument, builtins.NoneType]
     instrumented: builtins.function
+    instrumented_invoke_main_method: builtins.function
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
@@ -7185,6 +7261,7 @@ trulens_eval.tru_basic_app.TruBasicApp:
     replace: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
+    run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
     select_context: builtins.classmethod
@@ -7194,6 +7271,10 @@ trulens_eval.tru_basic_app.TruBasicApp:
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
     snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_object_name: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7269,6 +7350,7 @@ trulens_eval.tru_chain.TruChain:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
+    delete_snowflake_app: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -7281,10 +7363,13 @@ trulens_eval.tru_chain.TruChain:
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
+    get_run: builtins.function
     initial_app_loader_dump: typing.Optional[trulens.core.utils.serial.SerialBytes,
       builtins.NoneType]
+    input: builtins.function
     instrument: typing.Optional[trulens.core.instruments.Instrument, builtins.NoneType]
     instrumented: builtins.function
+    instrumented_invoke_main_method: builtins.function
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
@@ -7332,6 +7417,7 @@ trulens_eval.tru_chain.TruChain:
     replace: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
+    run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
     select_context: builtins.classmethod
@@ -7341,6 +7427,10 @@ trulens_eval.tru_chain.TruChain:
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
     snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_object_name: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7378,6 +7468,7 @@ trulens_eval.tru_custom_app.TruCustomApp:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
+    delete_snowflake_app: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -7391,10 +7482,13 @@ trulens_eval.tru_custom_app.TruCustomApp:
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
+    get_run: builtins.function
     initial_app_loader_dump: typing.Optional[trulens.core.utils.serial.SerialBytes,
       builtins.NoneType]
+    input: builtins.function
     instrument: typing.Optional[trulens.core.instruments.Instrument, builtins.NoneType]
     instrumented: builtins.function
+    instrumented_invoke_main_method: builtins.function
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
@@ -7442,6 +7536,7 @@ trulens_eval.tru_custom_app.TruCustomApp:
     replace: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
+    run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
     select_context: builtins.classmethod
@@ -7451,6 +7546,10 @@ trulens_eval.tru_custom_app.TruCustomApp:
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
     snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_object_name: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7511,6 +7610,7 @@ trulens_eval.tru_llama.TruLlama:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
+    delete_snowflake_app: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -7523,10 +7623,13 @@ trulens_eval.tru_llama.TruLlama:
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
+    get_run: builtins.function
     initial_app_loader_dump: typing.Optional[trulens.core.utils.serial.SerialBytes,
       builtins.NoneType]
+    input: builtins.function
     instrument: typing.Optional[trulens.core.instruments.Instrument, builtins.NoneType]
     instrumented: builtins.function
+    instrumented_invoke_main_method: builtins.function
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
@@ -7574,6 +7677,7 @@ trulens_eval.tru_llama.TruLlama:
     replace: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
+    run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
     select_context: builtins.classmethod
@@ -7584,6 +7688,10 @@ trulens_eval.tru_llama.TruLlama:
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
     snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_object_name: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7679,6 +7787,7 @@ trulens_eval.tru_rails.TruRails:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
+    delete_snowflake_app: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -7691,10 +7800,13 @@ trulens_eval.tru_rails.TruRails:
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
+    get_run: builtins.function
     initial_app_loader_dump: typing.Optional[trulens.core.utils.serial.SerialBytes,
       builtins.NoneType]
+    input: builtins.function
     instrument: typing.Optional[trulens.core.instruments.Instrument, builtins.NoneType]
     instrumented: builtins.function
+    instrumented_invoke_main_method: builtins.function
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
@@ -7742,6 +7854,7 @@ trulens_eval.tru_rails.TruRails:
     replace: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
+    run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
     select_context: builtins.classmethod
@@ -7751,6 +7864,10 @@ trulens_eval.tru_rails.TruRails:
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
     snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_object_name: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7790,6 +7907,7 @@ trulens_eval.tru_virtual.TruVirtual:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
+    delete_snowflake_app: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -7802,10 +7920,13 @@ trulens_eval.tru_virtual.TruVirtual:
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
+    get_run: builtins.function
     initial_app_loader_dump: typing.Optional[trulens.core.utils.serial.SerialBytes,
       builtins.NoneType]
+    input: builtins.function
     instrument: typing.Optional[trulens.core.instruments.Instrument, builtins.NoneType]
     instrumented: builtins.function
+    instrumented_invoke_main_method: builtins.function
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
@@ -7853,6 +7974,7 @@ trulens_eval.tru_virtual.TruVirtual:
     replace: builtins.function
     root_callable: trulens.core.utils.pyschema.Method
     root_class: typing.Any
+    run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
     select_context: builtins.classmethod
@@ -7862,6 +7984,10 @@ trulens_eval.tru_virtual.TruVirtual:
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
     snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_object_name: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
+    snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class

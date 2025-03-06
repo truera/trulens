@@ -4,8 +4,9 @@ Tests for OTEL TruChain app.
 
 import pytest
 from trulens.core.otel.instrument import instrument
+from trulens.otel.semconv.trace import SpanAttributes
 
-from tests.util.otel_app_test_case import OtelAppTestCase
+import tests.util.otel_tru_app_test_case
 
 try:
     # These imports require optional dependencies to be installed.
@@ -23,11 +24,15 @@ except Exception:
 
 
 @pytest.mark.optional
-class TestOtelTruChain(OtelAppTestCase):
+class TestOtelTruChain(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
     @staticmethod
     def _create_simple_rag():
         # Helper function.
-        @instrument(attributes={"best_baby": "Kojikun"})
+        @instrument(
+            attributes=lambda ret, exception, *args, **kwargs: {
+                f"{SpanAttributes.UNKNOWN.base}.best_baby": "Kojikun"
+            }
+        )
         def format_docs(docs):
             return "\n\n".join(doc.page_content for doc in docs)
 
@@ -55,6 +60,15 @@ class TestOtelTruChain(OtelAppTestCase):
             | prompt
             | llm
             | StrOutputParser()
+        )
+
+    @staticmethod
+    def _create_test_app_info() -> (
+        tests.util.otel_tru_app_test_case.TestAppInfo
+    ):
+        app = TestOtelTruChain._create_simple_rag()
+        return tests.util.otel_tru_app_test_case.TestAppInfo(
+            app=app, main_method=app.invoke, TruAppClass=TruChain
         )
 
     def test_missing_main_method_raises_error(self):

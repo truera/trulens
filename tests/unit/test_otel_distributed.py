@@ -13,13 +13,13 @@ from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
 from trulens.otel.semconv.trace import SpanAttributes
 
-from tests.util.otel_app_test_case import OtelAppTestCase
+from tests.util.otel_test_case import OtelTestCase
 
 
 class _TestApp:
     @instrument(
         span_type=SpanAttributes.SpanType.RECORD_ROOT,
-        full_scoped_attributes=lambda ret, exception, *args, **kwargs: {
+        attributes=lambda ret, exception, *args, **kwargs: {
             "process_id": os.getpid()
         },
     )
@@ -52,7 +52,7 @@ class CapitalizeHandler(BaseHTTPRequestHandler):
             raise ValueError("Unknown path!")
 
     @instrument(
-        full_scoped_attributes=lambda ret, exception, *args, **kwargs: {
+        attributes=lambda ret, exception, *args, **kwargs: {
             "process_id": os.getpid()
         }
     )
@@ -67,7 +67,7 @@ def run_server():
     server.serve_forever()
 
 
-class TestOtelDistributed(OtelAppTestCase):
+class TestOtelDistributed(OtelTestCase):
     @staticmethod
     def _wait_for_server(
         num_retries: int = 40, sleep_time: float = 0.25

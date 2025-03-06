@@ -131,6 +131,14 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         snowpark_session.file.put(tmp_file_path, f"@{stage_name}")
 
     @staticmethod
+    def _clean_up_snowflake_identifier(snowflake_identifier: str) -> str:
+        if not snowflake_identifier:
+            return snowflake_identifier
+        if snowflake_identifier[0] == '"' and snowflake_identifier[-1] == '"':
+            return snowflake_identifier[1:-1]
+        return snowflake_identifier
+
+    @staticmethod
     def _ingest_spans_from_stage(
         snowpark_session: Session,
         tmp_file_basename: str,
@@ -153,8 +161,16 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                 except Exception as e:
                     logger.error(f"Error setting trace level to ALWAYS: {e}!")
                     raise e
-            database = snowpark_session.get_current_database()[1:-1]
-            schema = snowpark_session.get_current_schema()[1:-1]
+            database = (
+                TruLensSnowflakeSpanExporter._clean_up_snowflake_identifier(
+                    snowpark_session.get_current_database()
+                )
+            )
+            schema = (
+                TruLensSnowflakeSpanExporter._clean_up_snowflake_identifier(
+                    snowpark_session.get_current_schema()
+                )
+            )
             sql_cmd = snowpark_session.sql(
                 f"""
                 CALL SYSTEM$INGEST_AI_OBSERVABILITY_SPANS(
@@ -173,7 +189,9 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                     tmp_file_basename + ".gz",
                     database,  # TODO(otel, dhuang): This should be the database of the object entity!
                     schema,  # TODO(otel, dhuang): This should the schema of the object entity!
-                    app_name or "",
+                    (
+                        app_name or ""
+                    ).upper(),  # object name is converted to uppercase
                     app_version or "",
                     run_name or "",
                 ],

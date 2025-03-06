@@ -12,9 +12,7 @@ from trulens.core import app as core_app
 from trulens.core import instruments as core_instruments
 from trulens.core.instruments import InstrumentedMethod
 from trulens.core.utils import pyschema as pyschema_utils
-from trulens.otel.semconv.constants import (
-    TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
-)
+from trulens.otel.semconv.constants import TRULENS_INSTRUMENT_WRAPPER_FLAG
 
 logger = logging.getLogger(__name__)
 
@@ -128,8 +126,7 @@ class TruBasicApp(core_app.App):
             assert (
                 app is not None
             ), "Need to provide either `app: TruWrapperApp` or a `text_to_text: Callable`."
-
-        if "main_method" in kwargs:
+        if "main_method" in kwargs and kwargs["main_method"] is not None:
             raise ValueError(
                 "`main_method` should not be provided for `TruBasicApp`!"
             )
@@ -149,7 +146,7 @@ class TruBasicApp(core_app.App):
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> str:
-        if hasattr(func, TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG):
+        if hasattr(func, TRULENS_INSTRUMENT_WRAPPER_FLAG):
             sig = signature(self.app._call_fn)
             args = ()
             if "args" in bindings.kwargs:

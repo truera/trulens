@@ -12,7 +12,7 @@ from trulens.core.database.connector import DBConnector
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import text as text_utils
 from trulens.experimental.otel_tracing.core.exporter.connector import (
-    TruLensOTELSpanExporter,
+    TruLensOtelSpanExporter,
 )
 from trulens.experimental.otel_tracing.core.span import (
     set_general_span_attributes,
@@ -73,7 +73,7 @@ class _TruSession(core_session.TruSession):
             if isinstance(connector, SnowflakeConnector):
                 exporter = TruLensSnowflakeSpanExporter(connector)
         if not exporter:
-            exporter = TruLensOTELSpanExporter(connector)
+            exporter = TruLensOtelSpanExporter(connector)
         if not isinstance(exporter, otel_export_sdk.SpanExporter):
             raise ValueError(
                 "Provided exporter must be an OpenTelemetry SpanExporter!"
@@ -125,7 +125,7 @@ class _TruSession(core_session.TruSession):
                     obj,
                     method,
                     span_type=span_type,
-                    full_scoped_attributes=lambda ret,
+                    attributes=lambda ret,
                     exception,
                     *args,
                     **kwargs: cost_computer(ret),
@@ -143,7 +143,7 @@ class _TruSession(core_session.TruSession):
                 SSEClient,
                 "events",
                 span_type=SpanAttributes.SpanType.UNKNOWN,
-                full_scoped_attributes=lambda ret,
+                attributes=lambda ret,
                 exception,
                 *args,
                 **kwargs: CortexCostComputer.handle_response(ret),
@@ -171,7 +171,7 @@ class _TruSession(core_session.TruSession):
                 litellm,
                 "completion",
                 span_type=SpanAttributes.SpanType.GENERATION,
-                full_scoped_attributes=lambda ret,
+                attributes=lambda ret,
                 exception,
                 *args,
                 **kwargs: LiteLLMCostComputer.handle_response(ret),

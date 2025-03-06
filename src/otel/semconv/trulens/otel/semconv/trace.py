@@ -115,13 +115,13 @@ class SpanAttributes:
         SPAN_NAME_PREFIX = base + "."
         """Span name will end with app name."""
 
-        MAIN_INPUT = base + ".main_input"
+        INPUT = base + ".input"
         """Main input to the app."""
 
-        MAIN_OUTPUT = base + ".main_output"
+        OUTPUT = base + ".output"
         """Main output of the app."""
 
-        MAIN_ERROR = base + ".main_error"
+        ERROR = base + ".error"
         """Main error of the app.
 
         Exclusive with main output.
@@ -138,9 +138,6 @@ class SpanAttributes:
         """
 
         base = BASE_SCOPE + ".eval_root"
-
-        TARGET_SPAN_ID = base + ".target_span_id"
-        """Span id of the root span of the record being evaluated."""
 
         ERROR = base + ".error"
         """Error raised during evaluation."""
@@ -162,14 +159,14 @@ class SpanAttributes:
         EVAL_ROOT_ID = base + ".eval_root_id"
         """Span id for the EVAL_ROOT span this span is under."""
 
-        FEEDBACK_NAME = base + ".feedback_name"
+        METRIC_NAME = base + ".metric_name"
         """Name of the feedback definition being evaluated."""
 
         CRITERIA = base + ".criteria"
         """Criteria for this sub-step."""
 
-        EVIDENCE = base + ".evidence"
-        """Evidence for the score for this sub-step."""
+        EXPLANATION = base + ".explanation"
+        """Explanation for the score for this sub-step."""
 
         SCORE = base + ".score"
         """Score for this sub-step."""
@@ -196,10 +193,6 @@ class SpanAttributes:
 
         NUM_COMPLETION_TOKENS = base + ".num_completion_tokens"
         """Number of completion tokens generated."""
-
-        NUM_CORTEX_GUARDRAIL_TOKENS = base + ".num_cortex_guardrails_tokens"
-        """Number of guardrails tokens generated. This is only available for
-        requests instrumented by the Cortex endpoint."""
 
     class CALL:
         """Instrumented method call attributes."""

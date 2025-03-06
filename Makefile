@@ -6,7 +6,7 @@
 
 SHELL := /bin/bash
 REPO_ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
-PYTEST := poetry run pytest --rootdir=. -s
+PYTEST := poetry run pytest --rootdir=. -s -r fex --durations=0
 POETRY_DIRS := $(shell find . \
 	-not -path "./dist/*" \
 	-maxdepth 4 \
@@ -35,8 +35,6 @@ env-tests:
 		jsondiff \
 		nbconvert \
 		nbformat \
-		opentelemetry-sdk \
-		opentelemetry-proto \
 		pre-commit \
 		pytest \
 		pytest-azurepipelines \
@@ -50,11 +48,12 @@ env-tests-basic:
 
 env-tests-optional: env env-tests
 	poetry run pip install \
+		chromadb \
 	 	faiss-cpu \
+		langchain-openai \
 		llama-index-embeddings-huggingface \
 		llama-index-embeddings-openai \
-		unstructured \
-		chromadb
+		unstructured
 
 env-tests-snowflake: env-tests-optional
 	poetry install --with snowflake
@@ -140,7 +139,7 @@ codespell:
 
 # Generates a coverage report.
 coverage:
-	poetry run pytest --rootdir=. tests/* --cov src --cov-report html
+	$(PYTEST) tests/* --cov src --cov-report html
 
 # Run the static unit tests only, those in the static subfolder. They are run
 # for every tested python version while those outside of static are run only for
@@ -232,15 +231,15 @@ test-%-all: env-tests env-tests-optional env-tests-snowflake
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline
 # frequently.
 test-unit:
-	poetry run pytest --rootdir=. tests/unit/*
+	$(PYTEST) tests/unit/*
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
 test-e2e:
-	poetry run pytest --rootdir=. tests/e2e/*
+	$(PYTEST) tests/e2e/*
 
 # Runs the notebook test
 test-notebook:
-	poetry run pytest --rootdir=. tests/docs_notebooks/*
+	$(PYTEST) tests/docs_notebooks/*
 
 install-wheels:
 	pip install dist/*/*.whl
@@ -274,6 +273,14 @@ build: $(POETRY_DIRS)
 		rm -rf .venv; \
 		popd; \
 	done
+
+build-with-zip-wheels:
+	rm -rf ./dist \
+		&& rm -rf ./src/core/trulens/data/snowflake_stage_zips \
+		&& make build \
+		&& make zip-wheels \
+		&& make build \
+		&& make env
 
 ## Step: Build zip files to upload to Snowflake staging
 zip-wheels:

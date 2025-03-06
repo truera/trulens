@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-apps-langchain"
-version = "1.4.0"
+version = "1.4.4"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",

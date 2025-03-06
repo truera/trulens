@@ -3,8 +3,11 @@ Tests for OTEL TruLlama app.
 """
 
 import pytest
+from trulens.otel.semconv.constants import (
+    TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
+)
 
-from tests.util.otel_app_test_case import OtelAppTestCase
+import tests.util.otel_tru_app_test_case
 
 try:
     # These imports require optional dependencies to be installed.
@@ -32,7 +35,7 @@ _CONTEXT_RETRIEVAL_REPLACEMENT = r"\1"
 
 
 @pytest.mark.optional
-class TestOtelTruLlama(OtelAppTestCase):
+class TestOtelTruLlama(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
     @staticmethod
     def _create_simple_rag():
         Settings.chunk_size = 128
@@ -46,6 +49,15 @@ class TestOtelTruLlama(OtelAppTestCase):
             documents, embed_model=MockEmbedding(10)
         )
         return index.as_query_engine(similarity_top_k=3)
+
+    @staticmethod
+    def _create_test_app_info() -> (
+        tests.util.otel_tru_app_test_case.TestAppInfo
+    ):
+        app = TestOtelTruLlama._create_simple_rag()
+        return tests.util.otel_tru_app_test_case.TestAppInfo(
+            app=app, main_method=app.query, TruAppClass=TruLlama
+        )
 
     def test_missing_main_method_raises_error(self):
         # Create app.
@@ -80,4 +92,33 @@ class TestOtelTruLlama(OtelAppTestCase):
                 # in some runs.
                 (_CONTEXT_RETRIEVAL_REGEX, _CONTEXT_RETRIEVAL_REPLACEMENT)
             ],
+        )
+
+    def test_app_specific_record_root(self) -> None:
+        rag1 = self._create_simple_rag()
+        rag2 = self._create_simple_rag()
+        TruLlama(
+            rag1,
+            app_name="Simple RAG",
+            app_version="v1",
+            main_method=rag1.query,
+        )
+        rag3 = self._create_simple_rag()
+
+        def count_wraps(func):
+            if not hasattr(func, "__wrapped__"):
+                return 0
+            return 1 + count_wraps(func.__wrapped__)
+
+        self.assertEqual(count_wraps(rag1.query), 2)
+        self.assertEqual(count_wraps(rag2.query), 1)
+        self.assertEqual(count_wraps(rag3.query), 1)
+        self.assertFalse(
+            hasattr(rag1.query, TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG)
+        )
+        self.assertFalse(
+            hasattr(rag2.query, TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG)
+        )
+        self.assertFalse(
+            hasattr(rag3.query, TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG)
         )
