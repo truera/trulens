@@ -386,7 +386,7 @@ class Run(BaseModel):
             RunStatus.COMPUTATION_IN_PROGRESS,
             RunStatus.COMPLETED,
             RunStatus.PARTIALLY_COMPLETED,
-            RunStatus.UNKNOWN,  # TODO: verify if this is allowed behavior
+            RunStatus.FAILED,
         ]
 
     def _is_invocation_started(self, run: Run) -> bool:
@@ -793,13 +793,13 @@ class Run(BaseModel):
             logger.info("Run is created, invocation started.")
             return self._compute_latest_invocation_status(run)
 
-    def compute_metrics(self, metrics: List[str]):
+    def compute_metrics(self, metrics: List[str]) -> str:
         run_status = self.get_status()
 
         logger.info(f"Current run status: {run_status}")
         if not self._can_start_new_metric_computation(run_status):
             return f"""Cannot start a new metric computation when in run status: {run_status}. Valid statuses are: {RunStatus.INVOCATION_COMPLETED}, {RunStatus.INVOCATION_PARTIALLY_COMPLETED},
-        {RunStatus.COMPUTATION_IN_PROGRESS}, {RunStatus.COMPLETED}, {RunStatus.PARTIALLY_COMPLETED}."""
+        {RunStatus.COMPUTATION_IN_PROGRESS}, {RunStatus.COMPLETED}, {RunStatus.PARTIALLY_COMPLETED}, {RunStatus.FAILED}."""
 
         async_job = self.run_dao.call_compute_metrics_query(
             metrics=metrics,
@@ -830,7 +830,7 @@ class Run(BaseModel):
         )
 
         logger.info("Metrics computation job started")
-        return async_job
+        return "Metrics computation in progress."
 
     def cancel(self):
         raise NotImplementedError("cancel is not implemented yet.")
