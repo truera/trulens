@@ -506,35 +506,6 @@ class Run(BaseModel):
             latest_invocation.completion_status.status
         )
 
-        # computation_sproc_query_ids_to_query_status = {}
-        # for computation in all_computations:
-        #     query_id = computation.query_id
-        #     query_status = self.run_dao.fetch_query_execution_status_by_id(
-        #         query_start_time_ms=computation.start_time_ms,
-        #         query_id=query_id,
-        #     )
-
-        #     if query_status == "IN_PROGRESS":
-        #         logger.info(
-        #             f"Computation {computation.id} is still running or being queued."
-        #         )
-        #         # Returning early to avoid unnecessary checks as long as at least one computation is still running
-        #         return RunStatus.COMPUTATION_IN_PROGRESS
-        #     computation_sproc_query_ids_to_query_status[query_id] = query_status
-        # all computations are done, update DPO computations metadata
-        # for computation in all_computations:
-        #     self.run_dao.upsert_run_metadata_fields(
-        #         entry_type=SupportedEntryType.COMPUTATIONS,
-        #         entry_id=computation.id,
-        #         query_id=computation.query_id,
-        #         start_time_ms=computation.start_time_ms,
-        #         end_time_ms=self._get_current_time_in_ms(),
-        #         run_name=self.run_name,
-        #         object_name=self.object_name,
-        #         object_type=self.object_type,
-        #         object_version=self.object_version,
-        #     )
-
         # check all metrics and see if their completion status are set or not
         metrics_status_not_set = [
             metric
@@ -569,7 +540,7 @@ class Run(BaseModel):
                 return RunStatus.UNKNOWN
         else:
             logger.info(
-                f"Metrics status not set for: {[metric.name for metric in metrics_status_not_set]}"
+                f"Metrics status not set for: {[metric.name for metric in metrics_status_not_set]}. Checking sproc query status via query history"
             )
             # multiple metrics can be associated with the same computation
             computation_id_to_metrics = defaultdict(list)
@@ -598,7 +569,7 @@ class Run(BaseModel):
 
                     elif query_status == "FAILED" or query_status == "SUCCESS":
                         logger.warning(
-                            f"Computation query_id: {query_id} finished with status: {query_status}."
+                            f"Computation query_id: {query_id} finished with status: {query_status}. Updating run metadata."
                         )
 
                         self.run_dao.upsert_run_metadata_fields(
@@ -615,104 +586,47 @@ class Run(BaseModel):
                         metrics_in_computation = computation_id_to_metrics[
                             computation.id
                         ]
-                        if query_status == "FAILED":
-                            # update metrics metadata to reflect the failure
-                            for metric in metrics_in_computation:
-                                self.run_dao.upsert_run_metadata_fields(
-                                    entry_type=SupportedEntryType.METRICS,
-                                    entry_id=metric.id,
-                                    computation_id=computation.id,
-                                    name=metric.name,
-                                    completion_status=Run.CompletionStatus(
-                                        status=Run.CompletionStatusStatus.FAILED,
-                                        record_count=computed_records_count_,  # TODO: read from event table
-                                    ).model_dump(),
-                                    run_name=self.run_name,
-                                    object_name=self.object_name,
-                                    object_type=self.object_type,
-                                    object_version=self.object_version,
-                                )
-                        elif query_status == "SUCCESS":
-                            # update metrics metadata to reflect the success
-                            for metric in metrics_in_computation:
-                                self.run_dao.upsert_run_metadata_fields(
-                                    entry_type=SupportedEntryType.METRICS,
-                                    entry_id=metric.id,
-                                    computation_id=computation.id,
-                                    name=metric.name,
-                                    completion_status=Run.CompletionStatus(
-                                        status=Run.CompletionStatusStatus.COMPLETED,
-                                        record_count=computed_records_count_,  # TODO: read from event table
-                                    ).model_dump(),
-                                    run_name=self.run_name,
-                                    object_name=self.object_name,
-                                    object_type=self.object_type,
-                                    object_version=self.object_version,
-                                )
-                        # TODO: don't read from sproc rows, but read directly from event table
-
                         result_rows = self.run_dao.fetch_computation_job_results_by_query_id(
                             query_id
                         )
-                        for _, row in result_rows.iterrows():
-                            row_msg = row["MESSAGE"]
 
-                            computed_records_count = int(
-                                row_msg.split(" ")[
+                        metric_name_to_status = {
+                            row["METRIC"]: row["STATUS"]
+                            for _, row in result_rows.iterrows()
+                        }
+
+                        metric_name_to_computed_records_count = {
+                            row["METRIC"]: int(
+                                row["MESSAGE"].split(" ")[
                                     1
                                 ]  # TODO unbrittel this - directly read the field when available
                             )
-                            metric_status = row["STATUS"]
-                            # metric_metatada_id = str(uuid.uuid4())
-                            metric_metadata_id = obj_id_of_obj(
-                                computation_id_to_metrics[computation.id]
-                            )
+                            for _, row in result_rows.iterrows()
+                        }
 
-                            if metric_status == "SUCCESS":
+                        for metric in metrics_in_computation:
+                            if (
+                                metric.name in metric_name_to_status
+                                and metric.name
+                                in metric_name_to_computed_records_count
+                            ):
                                 logger.info(
-                                    f"Metrics computation for {row['METRIC']} succeeded."
+                                    f"Updating metric {metric.name} metadata."
                                 )
-
                                 self.run_dao.upsert_run_metadata_fields(
                                     entry_type=SupportedEntryType.METRICS,
-                                    entry_id=metric_metatada_id,
+                                    entry_id=metric.id,
                                     computation_id=computation.id,
-                                    name=row["METRIC"],
+                                    name=metric.name,
                                     completion_status=Run.CompletionStatus(
-                                        status=Run.CompletionStatusStatus.COMPLETED,
-                                        record_count=computed_records_count,
+                                        status=Run.CompletionStatusStatus.COMPLETED
+                                        if metric_name_to_status[metric.name]
+                                        == "SUCCESS"
+                                        else Run.CompletionStatusStatus.FAILED,
+                                        record_count=metric_name_to_computed_records_count[
+                                            metric.name
+                                        ],  # TODO: read from event table if possible
                                     ).model_dump(),
-                                    run_name=self.run_name,
-                                    object_name=self.object_name,
-                                    object_type=self.object_type,
-                                    object_version=self.object_version,
-                                )
-
-                        # update each metric in this completed computation
-                        for metric in computation_id_to_metrics[computation.id]:
-                            if query_status == "SUCCESS":
-                                self.run_dao.upsert_run_metadata_fields(
-                                    entry_type=SupportedEntryType.METRICS,
-                                    entry_id=metric.id,
-                                    computation_id=computation.id,
-                                    name=metric.name,
-                                    completion_status=metric.completion_status,
-                                    run_name=self.run_name,
-                                    object_name=self.object_name,
-                                    object_type=self.object_type,
-                                    object_version=self.object_version,
-                                )
-                            elif query_status == "FAILED":
-                                completion_status = Run.CompletionStatus(
-                                    status=Run.CompletionStatusStatus.FAILED,
-                                    record_count=metric.completion_status.record_count,
-                                ).model_dump()
-                                self.run_dao.upsert_run_metadata_fields(
-                                    entry_type=SupportedEntryType.METRICS,
-                                    entry_id=metric.id,
-                                    computation_id=computation.id,
-                                    name=metric.name,
-                                    completion_status=completion_status,
                                     run_name=self.run_name,
                                     object_name=self.object_name,
                                     object_type=self.object_type,
@@ -721,97 +635,15 @@ class Run(BaseModel):
 
             if some_computation_in_progress:
                 return RunStatus.COMPUTATION_IN_PROGRESS
+            else:
+                logger.info("All computations concluded.")
 
-            # for computation in all_computations:
-            #     query_id = computation.query_id
-
-            #     result_rows = (
-            #         self.run_dao.fetch_computation_job_results_by_query_id(
-            #             query_id
-            #         )
-            #     )
-            #     for i, row in result_rows.iterrows():
-            #         row_msg = row["MESSAGE"]
-
-            #         computed_records_count = int(
-            #             row_msg.split(" ")[1]
-            #         )  # TODO change to regex or directly read the field when available
-            #         metric_status = row["STATUS"]
-            #         metric_metatada_id = str(uuid.uuid4())
-            #         if metric_status == "SUCCESS":
-            #             logger.info(
-            #                 f"Metrics computation for {row['METRIC']} succeeded."
-            #             )
-
-            #             self.run_dao.upsert_run_metadata_fields(
-            #                 entry_type=SupportedEntryType.METRICS,
-            #                 entry_id=metric_metatada_id,
-            #                 computation_id=computation.id,
-            #                 name=row["METRIC"],
-            #                 completion_status=Run.CompletionStatus(
-            #                     status=Run.CompletionStatusStatus.COMPLETED,
-            #                     record_count=computed_records_count,
-            #                 ).model_dump(),
-            #                 run_name=self.run_name,
-            #                 object_name=self.object_name,
-            #                 object_type=self.object_type,
-            #                 object_version=self.object_version,
-            #             )
-
-            #         elif metric_status == "FAILURE":
-            #             logger.warning(
-            #                 f"Metrics computation for {row['METRIC']} failed."
-            #             )
-
-            #             self.run_dao.upsert_run_metadata_fields(
-            #                 entry_type=SupportedEntryType.METRICS,
-            #                 entry_id=metric_metatada_id,
-            #                 computation_id=computation.id,
-            #                 name=row["METRIC"],
-            #                 completion_status=Run.CompletionStatus(
-            #                     status=Run.CompletionStatusStatus.FAILED,
-            #                     record_count=computed_records_count,
-            #                 ).model_dump(),
-            #                 run_name=self.run_name,
-            #                 object_name=self.object_name,
-            #                 object_type=self.object_type,
-            #                 object_version=self.object_version,
-            #             )
-
-            # return overall_computation_status
-
-        # if all(
-        #     status == "FAILED"
-        #     for status in computation_sproc_query_ids_to_query_status.values()
-        # ):
-        #     logger.warning("All computations failed.")
-        #     return RunStatus.FAILED
-        if (
-            all(
-                status == "SUCCESS" or status == "FAILED"
-                for status in computation_sproc_query_ids_to_query_status.values()
-            )
-            and self.run_dao.read_spans_count_from_event_table(
-                object_name=self.object_name,
-                run_name=self.run_name,
-                span_type="eval_root",
-            )
-            == 0
-        ):
-            # metric (eval) result ingestion failed for some reason
-            logger.warning(
-                "All computations concluded, but no metric results ingested."
-            )
-            return RunStatus.FAILED
-        if (
-            invocation_completion_status == Run.CompletionStatusStatus.COMPLETED
-            or invocation_completion_status
-            == Run.CompletionStatusStatus.PARTIALLY_COMPLETED
-        ) and not any(
-            status == "IN_PROGRESS"
-            for status in computation_sproc_query_ids_to_query_status.values()
-        ):
-            return RunStatus.PARTIALLY_COMPLETED
+                return (
+                    RunStatus.COMPLETED
+                    if invocation_completion_status
+                    == Run.CompletionStatusStatus.COMPLETED
+                    else RunStatus.PARTIALLY_COMPLETED
+                )
 
     def start(self, input_df: Optional[pd.DataFrame] = None):
         """
