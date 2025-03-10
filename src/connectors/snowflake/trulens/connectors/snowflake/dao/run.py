@@ -30,6 +30,11 @@ PERSISTED_QUERY_RESULTS_TIMEOUT_IN_MS = (
     20 * 60 * 60 * 1000  # 20 hours (24 hours per Snowflake)
 )
 
+RUN_METADATA_NON_MAP_FIELD_MASKS = [
+    "labels",
+    "llm_judge_name",
+]  # run_metadata_non_map_field_masks
+
 
 class RunDao:
     """Data Access Object for managing AIML RunMetadata entities in Snowflake."""
@@ -223,11 +228,14 @@ class RunDao:
         object_name: str,
         object_type: str,
         object_version: Optional[str] = None,
-        run_metadata_non_map_field_masks: Optional[List[str]] = None,
         invocation_field_masks: Optional[Dict[str, Any]] = None,
         computation_field_masks: Optional[Dict[str, Any]] = None,
         metric_field_masks: Optional[Dict[str, Any]] = None,
         updated_run_metadata: Optional[Dict[str, Any]] = None,
+        update_description: Optional[bool] = False,
+        updated_description: Optional[str] = None,
+        update_run_status: Optional[bool] = False,
+        updated_run_status: Optional[str] = None,
     ) -> None:
         """
         Generic method to update a run's metadata on the server.
@@ -236,7 +244,6 @@ class RunDao:
           - object_name, object_type, object_version, run_name
           - invocation_field_masks: maps invocation IDs to lists of updated keys (e.g., {"invocation_1": ["id", "input_records_count", "start_time_ms"]})
           - metric_field_masks: similar mapping for metrics (if any)
-          - run_metadata_non_map_field_masks: non-map fields to update (e.g. ["labels", "llm_judge_name"])
           - run_metadata: the updated run_metadata (e.g. updated invocations, computations, metrics, etc.)
 
         Args:
@@ -245,8 +252,13 @@ class RunDao:
             object_type: The type of the object.
             object_version: Optional version string.
             invocation_field_masks: The mask for invocation fields to update.
+            computation_field_masks: The mask for computation fields to update.
             metric_field_masks: The mask for metric fields to update.
             updated_run_metadata: The updated run_metadata dict.
+            update_description: Whether to update the run's description.
+            updated_description: The new description.
+            update_run_status: Whether to update the run's status.
+            updated_run_status: The new status.
         """
 
         # Build the payload dictionary.
@@ -257,11 +269,17 @@ class RunDao:
             "invocation_field_masks": invocation_field_masks,
             "computation_field_masks": computation_field_masks,
             "metric_field_masks": metric_field_masks,
-            "run_metadata_non_map_field_masks": run_metadata_non_map_field_masks,
+            "run_metadata_non_map_field_masks": RUN_METADATA_NON_MAP_FIELD_MASKS,
             "run_metadata": updated_run_metadata,
-            "description": "placeholder_description",  # TODO: fix
-            "update_description": "false",
+            "update_description": "true" if update_description else "false",
+            "update_run_status": "true" if update_run_status else "false",
         }
+        if update_description:
+            req_payload["description"] = updated_description
+
+        if update_run_status:
+            req_payload["run_status"] = updated_run_status
+
         if object_version is not None:
             req_payload["object_version"] = object_version
 
@@ -286,7 +304,7 @@ class RunDao:
         object_name: str,
         object_type: str,
         object_version: Optional[str] = None,
-        **fields,
+        **fields: Any,
     ) -> None:
         """
         Consolidated upsert method for run metadata entries.

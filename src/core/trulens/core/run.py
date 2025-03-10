@@ -343,9 +343,13 @@ class Run(BaseModel):
         if run_metadata_df.empty:
             raise ValueError(f"Run {self.run_name} not found.")
 
-        return json.loads(
+        raw_json = json.loads(
             list(run_metadata_df.to_dict(orient="records")[0].values())[0]
         )
+
+        # remove / hide entity-level run_status field to avoid customer's confusion
+        raw_json.pop("run_status", None)
+        return raw_json
 
     def delete(self) -> None:
         """
@@ -655,7 +659,6 @@ class Run(BaseModel):
             logger.info(
                 "No input dataframe provided. Fetching input data from source."
             )
-            # TODO: update the source_info.source_type to 'TABLE'
             rows = self.run_dao.session.sql(
                 f"SELECT * FROM {self.source_info.name}"
             ).collect()
