@@ -133,3 +133,85 @@ class TestRunDao(unittest.TestCase):
         mock_execute_query.assert_called_once_with(
             self.sf_session, expected_query, parameters=(req_payload_json,)
         )
+
+    def test_set_nested_value_simple(self):
+        # Test with an empty dictionary and a simple nested key path.
+        d = {}
+        keys = ["a", "b", "c"]
+        self.dao._set_nested_value(d, keys, 42)
+        expected = {"a": {"b": {"c": 42}}}
+        self.assertEqual(d, expected)
+
+    def test_set_nested_value_existing(self):
+        # Test updating a nested value where intermediate dicts exist.
+        d = {"a": {"b": {"x": 100}}}
+        keys = ["a", "b", "c"]
+        self.dao._set_nested_value(d, keys, "new")
+        expected = {"a": {"b": {"x": 100, "c": "new"}}}
+        self.assertEqual(d, expected)
+
+    def test_set_nested_value_overwrite(self):
+        # Test overwriting an existing value.
+        d = {"a": {"b": {"c": "old"}}}
+        keys = ["a", "b", "c"]
+        self.dao._set_nested_value(d, keys, "new")
+        expected = {"a": {"b": {"c": "new"}}}
+        self.assertEqual(d, expected)
+
+    def test_update_run_metadata_field_masks(self):
+        # Prepare an empty run metadata and a set of field updates.
+        existing_run_metadata = {}
+        field_updates = {
+            "invocations.invocation_1.completion_status.record_count": 1,
+            "metrics.metric_1.completion_status.status": "PARTIALLY_COMPLETED",
+            "labels": ["new_label"],
+            "llm_judge_name": "j1",
+        }
+        (
+            updated_run_metadata,
+            invocation_masks,
+            metric_masks,
+            computation_masks,
+            non_map_masks,
+        ) = self.dao._update_run_metadata_field_masks(
+            existing_run_metadata, field_updates
+        )
+
+        expected_run_metadata = {
+            "invocations": {
+                "invocation_1": {
+                    "id": "invocation_1",
+                    "completion_status": {"record_count": 1},
+                }
+            },
+            "metrics": {
+                "metric_1": {
+                    "id": "metric_1",
+                    "completion_status": {"status": "PARTIALLY_COMPLETED"},
+                }
+            },
+            "labels": ["new_label"],
+            "llm_judge_name": "j1",
+        }
+        self.assertEqual(updated_run_metadata, expected_run_metadata)
+        self.assertEqual(
+            invocation_masks,
+            {"invocation_1": ["completion_status.record_count"]},
+        )
+        self.assertEqual(
+            metric_masks, {"metric_1": ["completion_status.status"]}
+        )
+        self.assertEqual(computation_masks, {})
+        # non_map_masks is returned as a list but order doesn't matter.
+        self.assertCountEqual(non_map_masks, ["labels", "llm_judge_name"])
+
+    def test_update_run_metadata_field_masks_invalid(self):
+        # Test that an invalid update key (with insufficient parts) raises a ValueError.
+        existing_run_metadata = {}
+        field_updates = {
+            "invocations.invocation_1": 1  # Should be at least "invocations.<id>.<field>"
+        }
+        with self.assertRaises(ValueError):
+            self.dao._update_run_metadata_field_masks(
+                existing_run_metadata, field_updates
+            )
