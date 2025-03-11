@@ -860,7 +860,7 @@ class Run(BaseModel):
         for metric_name in metrics:
             if not self._should_skip_computation(metric_name, run):
                 logger.info(
-                    "Adding metric: {metric_name} to run metadata for computation."
+                    f"Adding metric: {metric_name} to run metadata for computation."
                 )
                 # add placeholder entries to metrics field in run metadata
                 metric_metadata_id = str(uuid.uuid4())
