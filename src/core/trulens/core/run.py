@@ -511,7 +511,8 @@ class Run(BaseModel):
         metrics_status_not_set = [
             metric
             for metric in all_existing_metrics
-            if not metric.completion_status.status
+            if not metric.completion_status
+            or not metric.completion_status.status
         ]
 
         if len(metrics_status_not_set) == 0:
