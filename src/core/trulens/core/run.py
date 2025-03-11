@@ -82,11 +82,7 @@ class SupportedEntryType(str, Enum):
     METRICS = "metrics"
 
 
-SUPPORTED_ENTRY_TYPES = [
-    SupportedEntryType.INVOCATIONS,
-    SupportedEntryType.COMPUTATIONS,
-    SupportedEntryType.METRICS,
-]
+SUPPORTED_ENTRY_TYPES = [e.value for e in SupportedEntryType]
 
 
 def validate_dataset_spec(
@@ -443,7 +439,7 @@ class Run(BaseModel):
         ):
             # happy case, add end time and update status
             self.run_dao.upsert_run_metadata_fields(
-                entry_type=SupportedEntryType.INVOCATIONS,
+                entry_type=SupportedEntryType.INVOCATIONS.value,
                 entry_id=latest_invocation.id,
                 input_records_count=latest_invocation.input_records_count,
                 start_time_ms=latest_invocation.start_time_ms,
@@ -468,7 +464,7 @@ class Run(BaseModel):
             # inconclusive case, timeout reached and add end time and update completion status in DPO
             logger.warning("Invocation timeout reached and concluded")
             self.run_dao.upsert_run_metadata_fields(
-                entry_type=SupportedEntryType.INVOCATIONS,
+                entry_type=SupportedEntryType.INVOCATIONS.value,
                 entry_id=latest_invocation.id,
                 input_records_count=latest_invocation.input_records_count,
                 start_time_ms=latest_invocation.start_time_ms,
@@ -527,7 +523,7 @@ class Run(BaseModel):
         # all computations are done, update DPO computations metadata
         for computation in all_computations:
             self.run_dao.upsert_run_metadata_fields(
-                entry_type=SupportedEntryType.COMPUTATIONS,
+                entry_type=SupportedEntryType.COMPUTATIONS.value,
                 entry_id=computation.id,
                 query_id=computation.query_id,
                 start_time_ms=computation.start_time_ms,
@@ -571,7 +567,7 @@ class Run(BaseModel):
                         )
 
                         self.run_dao.upsert_run_metadata_fields(
-                            entry_type=SupportedEntryType.METRICS,
+                            entry_type=SupportedEntryType.METRICS.value,
                             entry_id=metric_metatada_id,
                             computation_id=computation.id,
                             name=row["METRIC"],
@@ -591,7 +587,7 @@ class Run(BaseModel):
                         )
 
                         self.run_dao.upsert_run_metadata_fields(
-                            entry_type=SupportedEntryType.METRICS,
+                            entry_type=SupportedEntryType.METRICS.value,
                             entry_id=metric_metatada_id,
                             computation_id=computation.id,
                             name=row["METRIC"],
@@ -688,7 +684,7 @@ class Run(BaseModel):
         )
 
         self.run_dao.upsert_run_metadata_fields(
-            entry_type=SupportedEntryType.INVOCATIONS,
+            entry_type=SupportedEntryType.INVOCATIONS.value,
             entry_id=invocation_metadata_id,
             start_time_ms=start_time_ms,
             end_time_ms=0,  # required field
@@ -741,7 +737,7 @@ class Run(BaseModel):
             )
 
             self.run_dao.upsert_run_metadata_fields(
-                entry_type=SupportedEntryType.INVOCATIONS,
+                entry_type=SupportedEntryType.INVOCATIONS.value,
                 entry_id=invocation_metadata_id,
                 start_time_ms=start_time_ms,
                 input_records_count=input_records_count,
@@ -821,7 +817,7 @@ class Run(BaseModel):
         computation_start_time_ms = self._get_current_time_in_ms()
 
         self.run_dao.upsert_run_metadata_fields(
-            entry_type=SupportedEntryType.COMPUTATIONS,
+            entry_type=SupportedEntryType.COMPUTATIONS.value,
             entry_id=computation_metadata_id,
             query_id=query_id,
             start_time_ms=computation_start_time_ms,
