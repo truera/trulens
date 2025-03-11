@@ -335,7 +335,7 @@ class RunDao:
 
         for key, value in field_updates.items():
             parts = key.split(".")
-            logger.error("danny parts: %s", parts)
+
             if parts[0] in SUPPORTED_ENTRY_TYPES:
                 group = parts[0]
                 if len(parts) < 3:
