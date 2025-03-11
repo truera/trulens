@@ -466,7 +466,7 @@ class RunDao:
             f"non-map field masks: {non_map_field_masks}"
         )
 
-        update_desrciption = "description" in field_updates
+        update_description = "description" in field_updates
         description = field_updates.get("description", None)
 
         update_run_status = "run_status" in field_updates
@@ -481,7 +481,7 @@ class RunDao:
             metric_field_masks=metric_field_masks,
             computation_field_masks=computation_field_masks,
             updated_run_metadata=updated_run_metadata,
-            update_description=update_desrciption,
+            update_description=update_description,
             description=description,
             update_run_status=update_run_status,
             run_status=run_status,
