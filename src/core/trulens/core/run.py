@@ -436,8 +436,9 @@ class Run(BaseModel):
         if (
             latest_invocation.input_records_count
             and current_ingested_records_count
-            == latest_invocation.input_records_count
+            >= latest_invocation.input_records_count
         ):
+            # greater than or equal to input records count to account for the edge case where multiple tru recorders are set on the same run
             # happy case, add end time and update status
             self.run_dao.upsert_run_metadata_fields(
                 entry_type=SupportedEntryType.INVOCATIONS,
@@ -798,6 +799,8 @@ class Run(BaseModel):
             return self._compute_latest_invocation_status(run)
 
     def _should_skip_computation(self, metric_name: str, run: Run) -> bool:
+        if run.run_metadata.metrics is None:
+            return False
         all_existing_metrics_metadata = run.run_metadata.metrics.values()
 
         for metric_metadata in all_existing_metrics_metadata:
