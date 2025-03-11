@@ -33,7 +33,7 @@ PERSISTED_QUERY_RESULTS_TIMEOUT_IN_MS = (
 RUN_METADATA_NON_MAP_FIELD_MASKS = [
     "labels",
     "llm_judge_name",
-]  # run_metadata_non_map_field_masks
+]
 
 
 class RunDao:
@@ -387,7 +387,7 @@ class RunDao:
         object_name: str,
         object_type: str,
         object_version: Optional[str] = None,
-        **fields: Any,
+        **field_updates: Any,
     ) -> None:
         """
         Consolidated upsert method for run metadata entries.
@@ -408,14 +408,16 @@ class RunDao:
             object_name: The name of the object (e.g. agent name).
             object_type: The type of the object.
             object_version: Optional version.
-            **fields: The fields to upsert.
+            **field_updates: The fields to upsert.
         """
         if entry_type not in SUPPORTED_ENTRY_TYPES:
             raise ValueError(f"Unsupported entry type: {entry_type}")
 
-        keys = list(fields.keys())
+        keys = list(field_updates.keys())
         for key in keys:
-            fields[f"{entry_type}.{entry_id}.{key}"] = fields.pop(key)
+            field_updates[f"{entry_type}.{entry_id}.{key}"] = field_updates.pop(
+                key
+            )
 
         # Retrieve the existing run.
         existing_run = self.get_run(
@@ -427,39 +429,25 @@ class RunDao:
         if existing_run.empty:
             raise ValueError(f"Run '{run_name}' does not exist.")
 
-        # updated_run_metadata = existing_run.get("run_metadata", {})
         existing_run_metadata = existing_run.get("run_metadata", {})
 
         (
             updated_run_metadata,
             invocation_masks,
-            metric_masks,
-            computation_masks,
-            non_map_masks,
+            metric_field_masks,
+            computation_field_masks,
+            non_map_field_masks,
         ) = self._update_run_metadata_field_masks(
-            existing_run_metadata=existing_run_metadata, field_updates=fields
+            existing_run_metadata=existing_run_metadata,
+            field_updates=field_updates,
         )
 
-        # # Get the fields dictionary for the given entry_type.
-        # entry_fields = updated_run_metadata.get(entry_type, {})
-
-        # existing_entry = entry_fields.get(entry_id, {})
-
-        # # Merge the existing entry with the new fields.
-        # # merged_entry = {**existing_entry, **fields}
-        # # merged_entry["id"] = entry_id  # Ensure the id is always set.
-
-        # fields["id"] = entry_id  # Ensure the id is always set.
-        # entry_fields[entry_id] = merged_entry
-        # updated_run_metadata[entry_type] = entry_fields
-
-        # # TODO: (P0 to fix) ensure we only modify the updated ones
-        # field_mask = {entry_id: list(merged_entry.keys())}
-
-        logger.debug(f"inovcation masks: {invocation_masks}")
-        logger.debug(f"metrics masks: {metric_masks}")
-        logger.debug(f"computation masks: {computation_masks}")
-        logger.debug(f"non map masks: {non_map_masks}")
+        logger.debug(
+            f"invocation field masks: {invocation_masks}, "
+            f"metrics field masks: {metric_field_masks}, "
+            f"computation field masks: {computation_field_masks}, "
+            f"non-map field masks: {non_map_field_masks}"
+        )
 
         self._update_run(
             run_name=run_name,
@@ -467,34 +455,10 @@ class RunDao:
             object_type=object_type,
             object_version=object_version,
             invocation_field_masks=invocation_masks,
-            metric_field_masks=metric_masks,
-            computation_field_masks=computation_masks,
+            metric_field_masks=metric_field_masks,
+            computation_field_masks=computation_field_masks,
             updated_run_metadata=updated_run_metadata,
         )
-
-        # # field masks for each entry type.
-        # invocation_field_masks = {}
-        # metric_field_masks = {}
-        # computation_field_masks = {}
-        # if entry_type == SupportedEntryType.INVOCATIONS:
-        #     invocation_field_masks = field_mask
-        # elif entry_type == SupportedEntryType.COMPUTATIONS:
-        #     computation_field_masks = field_mask
-        # elif entry_type == SupportedEntryType.METRICS:
-        #     metric_field_masks = field_mask
-        # else:
-        #     raise ValueError(f"Unsupported entry type: {entry_type}")
-
-        # self._update_run(
-        #     run_name=run_name,
-        #     object_name=object_name,
-        #     object_type=object_type,
-        #     object_version=object_version,
-        #     invocation_field_masks=invocation_field_masks,
-        #     metric_field_masks=metric_field_masks,
-        #     computation_field_masks=computation_field_masks,
-        #     updated_run_metadata=updated_run_metadata,
-        # )
 
     def delete_run(
         self,
