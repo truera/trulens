@@ -111,8 +111,9 @@ class ExternalAgentDao:
 
         return resolved_name in agents["name"].values
 
-    def list_agent_versions(self, resolved_name: str) -> pandas.DataFrame:
+    def list_agent_versions(self, name: str) -> pandas.DataFrame:
         """Retrieve all versions of a specific External Agent."""
+        resolved_name = name.upper()
         query = f"""SHOW VERSIONS IN EXTERNAL AGENT "{resolved_name}";"""
 
         rows = execute_query(self.session, query)
