@@ -34,6 +34,7 @@ RUN_METADATA_NON_MAP_FIELD_MASKS = [
     "labels",
     "llm_judge_name",
 ]
+RUN_ENTITY_EDITABLE_ATTRIBUTES = ["description", "run_status"]
 
 
 class RunDao:
@@ -64,9 +65,9 @@ class RunDao:
         source_type: str,
         dataset_spec: dict,
         object_version: Optional[str] = None,
-        description: Optional[str] = None,
-        label: Optional[str] = None,
-        llm_judge_name: Optional[str] = None,
+        description: Optional[str] = "",
+        label: Optional[str] = "",
+        llm_judge_name: Optional[str] = "",
     ) -> pd.DataFrame:
         """
         Create a new RunMetadata entity in Snowflake.
@@ -345,7 +346,10 @@ class RunDao:
                 entry_id = parts[1]
                 nested_field = ".".join(parts[2:])
 
-                if group not in existing_run_metadata:
+                if (
+                    group not in existing_run_metadata
+                    or existing_run_metadata[group] is None
+                ):
                     existing_run_metadata[group] = {}
                 if entry_id not in existing_run_metadata[group]:
                     existing_run_metadata[group][entry_id] = {
@@ -367,9 +371,12 @@ class RunDao:
                 elif group == SupportedEntryType.METRICS:
                     metric_masks.setdefault(entry_id, []).append(nested_field)
 
-            else:
+            elif key in RUN_METADATA_NON_MAP_FIELD_MASKS:
                 existing_run_metadata[key] = value
                 non_map_masks.add(key)
+            else:
+                if key not in RUN_ENTITY_EDITABLE_ATTRIBUTES:
+                    raise ValueError(f"Unsupported key: {key}")
 
         return (
             existing_run_metadata,
@@ -381,12 +388,12 @@ class RunDao:
 
     def upsert_run_metadata_fields(
         self,
-        entry_type: str,
-        entry_id: str,
         run_name: str,
         object_name: str,
         object_type: str,
         object_version: Optional[str] = None,
+        entry_id: Optional[str] = None,
+        entry_type: Optional[str] = None,
         **field_updates: Any,
     ) -> None:
         """
@@ -410,27 +417,37 @@ class RunDao:
             object_version: Optional version.
             **field_updates: The fields to upsert.
         """
-        if entry_type not in SUPPORTED_ENTRY_TYPES:
+        if entry_type and entry_type not in SUPPORTED_ENTRY_TYPES:
             raise ValueError(f"Unsupported entry type: {entry_type}")
 
         keys = list(field_updates.keys())
         for key in keys:
-            field_updates[f"{entry_type}.{entry_id}.{key}"] = field_updates.pop(
-                key
-            )
+            if entry_type:
+                field_updates[f"{entry_type}.{entry_id}.{key}"] = (
+                    field_updates.pop(key)
+                )
 
         # Retrieve the existing run.
-        existing_run = self.get_run(
+        existing_run_metadata_df = self.get_run(
             run_name=run_name,
             object_name=object_name,
             object_type=object_type,
             object_version=object_version,
         )
-        if existing_run.empty:
+
+        if existing_run_metadata_df.empty:
             raise ValueError(f"Run '{run_name}' does not exist.")
 
+        existing_run = json.loads(
+            list(
+                existing_run_metadata_df.to_dict(orient="records")[0].values()
+            )[0]
+        )
         existing_run_metadata = existing_run.get("run_metadata", {})
 
+        logger.debug(
+            f"Existing run metadata before update: {existing_run_metadata}"
+        )
         (
             updated_run_metadata,
             invocation_masks,
@@ -449,6 +466,12 @@ class RunDao:
             f"non-map field masks: {non_map_field_masks}"
         )
 
+        update_desrciption = "description" in field_updates
+        description = field_updates.get("description", None)
+
+        update_run_status = "run_status" in field_updates
+        run_status = field_updates.get("run_status", None)
+
         self._update_run(
             run_name=run_name,
             object_name=object_name,
@@ -458,6 +481,10 @@ class RunDao:
             metric_field_masks=metric_field_masks,
             computation_field_masks=computation_field_masks,
             updated_run_metadata=updated_run_metadata,
+            update_description=update_desrciption,
+            description=description,
+            update_run_status=update_run_status,
+            run_status=run_status,
         )
 
     def delete_run(

@@ -840,7 +840,22 @@ class Run(BaseModel):
         """
         Only description and label are allowed to be updated at the moment.
         """
-        raise NotImplementedError("update is not implemented yet.")
+        update_fields = {}
+        if description is not None:
+            logger.info(f"Updating run description to {description}")
+            update_fields["description"] = description
+        if label is not None:
+            logger.info(f"Updating run label to {label}")
+            update_fields["labels"] = [label]
+
+        if update_fields:
+            self.run_dao.upsert_run_metadata_fields(
+                run_name=self.run_name,
+                object_name=self.object_name,
+                object_type=self.object_type,
+                object_version=self.object_version,
+                **update_fields,
+            )
 
     @classmethod
     def from_metadata_df(
