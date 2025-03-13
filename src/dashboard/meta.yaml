@@ -11,7 +11,7 @@ source:
   {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-dashboard/#files
-  sha256: 5b9c1dc29531f3199ce6536d8ea3e6a728d96678f4882da41e4326754c204c7b
+  sha256: a25095f60b58c9c0eca5154286d10ffbbe1697f6d2b8fe029ff6b8dd88d71f02
   {% endif %}
 
 build:
