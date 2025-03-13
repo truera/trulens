@@ -215,3 +215,119 @@ class TestRunDao(unittest.TestCase):
             self.dao._update_run_metadata_field_masks(
                 existing_run_metadata, field_updates
             )
+
+    def test_update_run_metadata_multiple_updates(self):
+        # Start with an empty run metadata.
+        existing_run_metadata = {}
+
+        # Step 1: Add new invocation and metric entries.
+        field_updates_1 = {
+            "invocations.inv_1.completion_status.record_count": 100,
+            "metrics.met_1.completion_status.status": "COMPLETED",
+        }
+        (
+            metadata_1,
+            invocation_masks_1,
+            metric_masks_1,
+            computation_masks_1,
+            non_map_masks_1,
+        ) = self.dao._update_run_metadata_field_masks(
+            existing_run_metadata, field_updates_1
+        )
+
+        expected_metadata_1 = {
+            "invocations": {
+                "inv_1": {
+                    "id": "inv_1",
+                    "completion_status": {"record_count": 100},
+                }
+            },
+            "metrics": {
+                "met_1": {
+                    "id": "met_1",
+                    "completion_status": {"status": "COMPLETED"},
+                }
+            },
+        }
+        self.assertEqual(metadata_1, expected_metadata_1)
+        self.assertEqual(
+            invocation_masks_1, {"inv_1": ["completion_status.record_count"]}
+        )
+        self.assertEqual(
+            metric_masks_1, {"met_1": ["completion_status.status"]}
+        )
+        self.assertEqual(computation_masks_1, {})
+        self.assertEqual(set(non_map_masks_1), set())
+
+        # Step 2: Update the existing invocation and metric entries.
+        field_updates_2 = {
+            "invocations.inv_1.completion_status.record_count": 150,
+            "metrics.met_1.completion_status.status": "FAILED",
+        }
+        (
+            metadata_2,
+            invocation_masks_2,
+            metric_masks_2,
+            computation_masks_2,
+            non_map_masks_2,
+        ) = self.dao._update_run_metadata_field_masks(
+            metadata_1, field_updates_2
+        )
+
+        expected_metadata_2 = {
+            "invocations": {
+                "inv_1": {
+                    "id": "inv_1",
+                    "completion_status": {"record_count": 150},
+                }
+            },
+            "metrics": {
+                "met_1": {
+                    "id": "met_1",
+                    "completion_status": {"status": "FAILED"},
+                }
+            },
+        }
+        self.assertEqual(metadata_2, expected_metadata_2)
+        self.assertEqual(
+            invocation_masks_2, {"inv_1": ["completion_status.record_count"]}
+        )
+        self.assertEqual(
+            metric_masks_2, {"met_1": ["completion_status.status"]}
+        )
+        self.assertEqual(computation_masks_2, {})
+        self.assertEqual(set(non_map_masks_2), set())
+
+        # Step 3: Update only a top-level field (e.g. labels).
+        field_updates_3 = {"labels": ["final_label"]}
+        (
+            metadata_3,
+            invocation_masks_3,
+            metric_masks_3,
+            computation_masks_3,
+            non_map_masks_3,
+        ) = self.dao._update_run_metadata_field_masks(
+            metadata_2, field_updates_3
+        )
+
+        expected_metadata_3 = {
+            "invocations": {
+                "inv_1": {
+                    "id": "inv_1",
+                    "completion_status": {"record_count": 150},
+                }
+            },
+            "metrics": {
+                "met_1": {
+                    "id": "met_1",
+                    "completion_status": {"status": "FAILED"},
+                }
+            },
+            "labels": ["final_label"],
+        }
+        self.assertEqual(metadata_3, expected_metadata_3)
+        # In this step, no nested update for invocations/metrics, so those masks should be empty.
+        self.assertEqual(invocation_masks_3, {})
+        self.assertEqual(metric_masks_3, {})
+        self.assertEqual(computation_masks_3, {})
+        self.assertEqual(set(non_map_masks_3), {"labels"})

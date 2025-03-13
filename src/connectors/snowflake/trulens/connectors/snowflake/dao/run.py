@@ -398,7 +398,7 @@ class RunDao:
     ) -> None:
         """
         Consolidated upsert method for run metadata entries.
-        Supported entry types: "invocations", "computations", "metrics".
+        Supported entry types: "invocations", "computations", "metrics" and also entity level fields like "description", "run_status".
 
         This method retrieves the current run metadata, merges new fields with any existing
         entry (if present), and then pushes the updated run metadata via _update_run.
