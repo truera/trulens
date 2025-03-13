@@ -11,7 +11,6 @@ from opentelemetry.context import Context
 from opentelemetry.trace.span import Span
 from opentelemetry.util.types import AttributeValue
 from trulens.core.utils import signature as signature_utils
-from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
@@ -176,16 +175,35 @@ def set_user_defined_attributes(
 ) -> None:
     final_attributes = validate_attributes(attributes)
 
+    cost_attributes = {}
     for key, value in final_attributes.items():
-        span.set_attribute(key, value)
-        if (
-            key != SpanAttributes.SELECTOR_NAME_KEY
-            and SpanAttributes.SELECTOR_NAME_KEY in final_attributes
-        ):
-            span.set_attribute(
-                f"{BASE_SCOPE}.{final_attributes[SpanAttributes.SELECTOR_NAME_KEY]}.{key}",
-                value,
-            )
+        if key.startswith(f"{SpanAttributes.COST.base}."):
+            cost_attributes[key] = value
+        else:
+            span.set_attribute(key, value)
+    if cost_attributes:
+        attributes_so_far = dict(getattr(span, "attributes", {}))
+        if attributes_so_far:
+            for cost_field in [
+                SpanAttributes.COST.COST,
+                SpanAttributes.COST.NUM_TOKENS,
+                SpanAttributes.COST.NUM_PROMPT_TOKENS,
+                SpanAttributes.COST.NUM_COMPLETION_TOKENS,
+            ]:
+                cost_attributes[cost_field] = cost_attributes.get(
+                    cost_field, 0
+                ) + attributes_so_far.get(cost_field, 0)
+            currency = attributes_so_far.get(SpanAttributes.COST.CURRENCY, None)
+            model = attributes_so_far.get(SpanAttributes.COST.MODEL, None)
+            if currency not in [
+                None,
+                cost_attributes[SpanAttributes.COST.CURRENCY],
+            ]:
+                cost_attributes[SpanAttributes.COST.CURRENCY] = "mixed"
+            if model not in [None, cost_attributes[SpanAttributes.COST.MODEL]]:
+                cost_attributes[SpanAttributes.COST.MODEL] = "mixed"
+            for k, v in cost_attributes.items():
+                span.set_attribute(k, v)
 
 
 """

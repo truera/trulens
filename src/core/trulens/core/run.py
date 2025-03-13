@@ -83,11 +83,7 @@ class SupportedEntryType(str, Enum):
     METRICS = "metrics"
 
 
-SUPPORTED_ENTRY_TYPES = [
-    SupportedEntryType.INVOCATIONS,
-    SupportedEntryType.COMPUTATIONS,
-    SupportedEntryType.METRICS,
-]
+SUPPORTED_ENTRY_TYPES = [e.value for e in SupportedEntryType]
 
 
 def validate_dataset_spec(
@@ -344,9 +340,13 @@ class Run(BaseModel):
         if run_metadata_df.empty:
             raise ValueError(f"Run {self.run_name} not found.")
 
-        return json.loads(
+        raw_json = json.loads(
             list(run_metadata_df.to_dict(orient="records")[0].values())[0]
         )
+
+        # remove / hide entity-level run_status field to avoid customer's confusion
+        raw_json.pop("run_status", None)
+        return raw_json
 
     def delete(self) -> None:
         """
@@ -441,7 +441,7 @@ class Run(BaseModel):
             # greater than or equal to input records count to account for the edge case where multiple tru recorders are set on the same run
             # happy case, add end time and update status
             self.run_dao.upsert_run_metadata_fields(
-                entry_type=SupportedEntryType.INVOCATIONS,
+                entry_type=SupportedEntryType.INVOCATIONS.value,
                 entry_id=latest_invocation.id,
                 input_records_count=latest_invocation.input_records_count,
                 start_time_ms=latest_invocation.start_time_ms,
@@ -466,7 +466,7 @@ class Run(BaseModel):
             # inconclusive case, timeout reached and add end time and update completion status in DPO
             logger.warning("Invocation timeout reached and concluded")
             self.run_dao.upsert_run_metadata_fields(
-                entry_type=SupportedEntryType.INVOCATIONS,
+                entry_type=SupportedEntryType.INVOCATIONS.value,
                 entry_id=latest_invocation.id,
                 input_records_count=latest_invocation.input_records_count,
                 start_time_ms=latest_invocation.start_time_ms,
@@ -663,7 +663,6 @@ class Run(BaseModel):
             logger.info(
                 "No input dataframe provided. Fetching input data from source."
             )
-            # TODO: update the source_info.source_type to 'TABLE'
             rows = self.run_dao.session.sql(
                 f"SELECT * FROM {self.source_info.name}"
             ).collect()
@@ -693,7 +692,7 @@ class Run(BaseModel):
         )
 
         self.run_dao.upsert_run_metadata_fields(
-            entry_type=SupportedEntryType.INVOCATIONS,
+            entry_type=SupportedEntryType.INVOCATIONS.value,
             entry_id=invocation_metadata_id,
             start_time_ms=start_time_ms,
             end_time_ms=0,  # required field
@@ -746,7 +745,7 @@ class Run(BaseModel):
             )
 
             self.run_dao.upsert_run_metadata_fields(
-                entry_type=SupportedEntryType.INVOCATIONS,
+                entry_type=SupportedEntryType.INVOCATIONS.value,
                 entry_id=invocation_metadata_id,
                 start_time_ms=start_time_ms,
                 input_records_count=input_records_count,
@@ -890,7 +889,7 @@ class Run(BaseModel):
 
         logger.info(f"Query id for metrics computation: {query_id}")
         self.run_dao.upsert_run_metadata_fields(
-            entry_type=SupportedEntryType.COMPUTATIONS,
+            entry_type=SupportedEntryType.COMPUTATIONS.value,
             entry_id=computation_metadata_id,
             query_id=query_id,
             start_time_ms=computation_start_time_ms,
@@ -913,7 +912,22 @@ class Run(BaseModel):
         """
         Only description and label are allowed to be updated at the moment.
         """
-        raise NotImplementedError("update is not implemented yet.")
+        update_fields = {}
+        if description is not None:
+            logger.info(f"Updating run description to {description}")
+            update_fields["description"] = description
+        if label is not None:
+            logger.info(f"Updating run label to {label}")
+            update_fields["labels"] = [label]
+
+        if update_fields:
+            self.run_dao.upsert_run_metadata_fields(
+                run_name=self.run_name,
+                object_name=self.object_name,
+                object_type=self.object_type,
+                object_version=self.object_version,
+                **update_fields,
+            )
 
     @classmethod
     def from_metadata_df(
