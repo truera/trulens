@@ -1,5 +1,5 @@
 {% set name = "trulens-core" %}
-{% set version = "1.4.5" %}
+{% set version = "1.4.6" %}
 
 package:
   name: {{ name|lower }}
@@ -26,7 +26,7 @@ requirements:
     - pip
   run:
     - python >=3.9,<3.12
-    - trulens-otel-semconv >=1.4.5,<2.0.0
+    - trulens-otel-semconv >=1.4.6,<2.0.0
     - opentelemetry-api >=1.23.0
     - opentelemetry-sdk >=1.23.0
     - opentelemetry-proto >=1.23.0

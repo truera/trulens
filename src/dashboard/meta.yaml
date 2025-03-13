@@ -1,5 +1,5 @@
 {% set name = "trulens-dashboard" %}
-{% set version = "1.4.5" %}
+{% set version = "1.4.6" %}
 
 package:
   name: {{ name|lower }}
