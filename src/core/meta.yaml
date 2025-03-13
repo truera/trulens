@@ -1,5 +1,5 @@
 {% set name = "trulens-core" %}
-{% set version = "1.4.5" %}
+{% set version = "1.4.6" %}
 
 package:
   name: {{ name|lower }}
@@ -11,7 +11,7 @@ source:
   {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-core/#files
-  sha256: fcde45a2927f47e366a4dd84d68f469bc50679fdcfe712e59389f18376b79d99
+  sha256: 2b7a4b9b2b7b550a12994ea2dc78d4f8f19ed169e207281ce6eea2a91c5be8a6
   {% endif %}
 
 build:
@@ -26,7 +26,7 @@ requirements:
     - pip
   run:
     - python >=3.9,<3.12
-    - trulens-otel-semconv >=1.4.5,<2.0.0
+    - trulens-otel-semconv >=1.4.6,<2.0.0
     - opentelemetry-api >=1.23.0
     - opentelemetry-sdk >=1.23.0
     - opentelemetry-proto >=1.23.0

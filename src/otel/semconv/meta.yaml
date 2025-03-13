@@ -1,5 +1,5 @@
 {% set name = "trulens-otel-semconv" %}
-{% set version = "1.4.5" %}
+{% set version = "1.4.6" %}
 
 package:
   name: {{ name|lower }}
@@ -11,7 +11,7 @@ source:
   {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-otel-semconv/#files
-  sha256: a1ce2200d1bc4afba1a371e4969522b60a2f4e82e7f476a5c574ebc1317aafd9
+  sha256: 5ec21bd1c3301e1e61d5533b91e72cbbc2dd44a01f0a9f964e7c3055c890e5d2
   {% endif %}
 
 build:
