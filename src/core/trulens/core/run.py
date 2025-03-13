@@ -575,7 +575,7 @@ class Run(BaseModel):
                         )
 
                         self.run_dao.upsert_run_metadata_fields(
-                            entry_type=SupportedEntryType.COMPUTATIONS,
+                            entry_type=SupportedEntryType.COMPUTATIONS.value,
                             entry_id=computation.id,
                             query_id=query_id,
                             start_time_ms=computation.start_time_ms,
@@ -616,7 +616,7 @@ class Run(BaseModel):
                                     f"Updating metric {metric.name} metadata."
                                 )
                                 self.run_dao.upsert_run_metadata_fields(
-                                    entry_type=SupportedEntryType.METRICS,
+                                    entry_type=SupportedEntryType.METRICS.value,
                                     entry_id=metric.id,
                                     computation_id=computation.id,
                                     name=metric.name,
@@ -864,7 +864,7 @@ class Run(BaseModel):
                 # add placeholder entries to metrics field in run metadata
                 metric_metadata_id = str(uuid.uuid4())
                 self.run_dao.upsert_run_metadata_fields(
-                    entry_type=SupportedEntryType.METRICS,
+                    entry_type=SupportedEntryType.METRICS.value,
                     entry_id=metric_metadata_id,
                     computation_id=computation_metadata_id,
                     name=metric_name,
