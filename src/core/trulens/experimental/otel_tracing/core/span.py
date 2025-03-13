@@ -184,15 +184,6 @@ def set_user_defined_attributes(
     if cost_attributes:
         attributes_so_far = dict(getattr(span, "attributes", {}))
         if attributes_so_far:
-            currency = attributes_so_far.get(SpanAttributes.COST.CURRENCY, None)
-            model = attributes_so_far.get(SpanAttributes.COST.MODEL, None)
-            if currency not in [
-                None,
-                cost_attributes[SpanAttributes.COST.CURRENCY],
-            ]:
-                cost_attributes[SpanAttributes.COST.CURRENCY] = "mixed"
-            if model not in [None, cost_attributes[SpanAttributes.COST.MODEL]]:
-                cost_attributes[SpanAttributes.COST.MODEL] = "mixed"
             for cost_field in [
                 SpanAttributes.COST.COST,
                 SpanAttributes.COST.NUM_TOKENS,
@@ -202,6 +193,15 @@ def set_user_defined_attributes(
                 cost_attributes[cost_field] = cost_attributes.get(
                     cost_field, 0
                 ) + attributes_so_far.get(cost_field, 0)
+            currency = attributes_so_far.get(SpanAttributes.COST.CURRENCY, None)
+            model = attributes_so_far.get(SpanAttributes.COST.MODEL, None)
+            if currency not in [
+                None,
+                cost_attributes[SpanAttributes.COST.CURRENCY],
+            ]:
+                cost_attributes[SpanAttributes.COST.CURRENCY] = "mixed"
+            if model not in [None, cost_attributes[SpanAttributes.COST.MODEL]]:
+                cost_attributes[SpanAttributes.COST.MODEL] = "mixed"
             for k, v in cost_attributes.items():
                 span.set_attribute(k, v)
 

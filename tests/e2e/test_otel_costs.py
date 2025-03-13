@@ -1,17 +1,15 @@
 import os
-from typing import Any, Dict, List
+from typing import Any, List
 import unittest
 
 from langchain_community.chat_models import ChatSnowflakeCortex
 import litellm
 from openai import OpenAI
-from opentelemetry.util.types import AttributeValue
 from snowflake.cortex import Complete
 from snowflake.snowpark import Session
 from trulens.apps.app import TruApp
 from trulens.apps.langchain import TruChain
 from trulens.core.session import TruSession
-from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.otel_test_case import OtelTestCase
 
@@ -83,44 +81,6 @@ class _TestLiteLLMApp:
 
 
 class TestOtelCosts(OtelTestCase):
-    def _check_costs(
-        self,
-        record_attributes: Dict[str, AttributeValue],
-        cost_model: str,
-        cost_currency: str,
-        free: bool,
-    ):
-        self.assertEqual(
-            record_attributes[SpanAttributes.COST.MODEL],
-            cost_model,
-        )
-        self.assertEqual(
-            record_attributes[SpanAttributes.COST.CURRENCY],
-            cost_currency,
-        )
-        if free:
-            self.assertEqual(
-                record_attributes[SpanAttributes.COST.COST],
-                0,
-            )
-        else:
-            self.assertGreater(
-                record_attributes[SpanAttributes.COST.COST],
-                0,
-            )
-        self.assertGreater(
-            record_attributes[SpanAttributes.COST.NUM_TOKENS],
-            0,
-        )
-        self.assertGreater(
-            record_attributes[SpanAttributes.COST.NUM_PROMPT_TOKENS],
-            0,
-        )
-        self.assertGreater(
-            record_attributes[SpanAttributes.COST.NUM_COMPLETION_TOKENS],
-            0,
-        )
-
     def _test_tru_custom_app(
         self,
         app: Any,
