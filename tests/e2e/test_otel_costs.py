@@ -86,15 +86,10 @@ class TestOtelCosts(OtelTestCase):
     def _check_costs(
         self,
         record_attributes: Dict[str, AttributeValue],
-        span_name: str,
         cost_model: str,
         cost_currency: str,
         free: bool,
     ):
-        self.assertEqual(
-            record_attributes["name"],
-            span_name,
-        )
         self.assertEqual(
             record_attributes[SpanAttributes.COST.MODEL],
             cost_model,
@@ -132,6 +127,7 @@ class TestOtelCosts(OtelTestCase):
         cost_functions: List[str],
         model: str,
         currency: str,
+        num_expected_spans: int = 1,
         free: bool = False,
     ):
         # Create app.
@@ -150,16 +146,13 @@ class TestOtelCosts(OtelTestCase):
         # Compare results to expected.
         TruSession().force_flush()
         events = self._get_events()
-        self.assertEqual(len(events), 1 + len(cost_functions))
-        for i, cost_function in enumerate(cost_functions):
-            record_attributes = events.iloc[-i - 1]["record_attributes"]
-            self._check_costs(
-                record_attributes,
-                cost_function,
-                model[(model.find("/") + 1) :],
-                currency,
-                free,
-            )
+        self.assertEqual(len(events), num_expected_spans)
+        self._check_costs(
+            events.iloc[-1]["record_attributes"],
+            model[(model.find("/") + 1) :],
+            currency,
+            free,
+        )
 
     # TODO(otel): Fix this test!
     @unittest.skip("Not currently working!")
@@ -213,6 +206,7 @@ class TestOtelCosts(OtelTestCase):
             ],
             model,
             "USD",
+            num_expected_spans=2,
         )
 
     def test_tru_custom_app_litellm_gemini(self):
@@ -222,6 +216,7 @@ class TestOtelCosts(OtelTestCase):
             ["litellm.main.completion"],
             model,
             "USD",
+            num_expected_spans=2,
             free=True,
         )
 
@@ -234,4 +229,5 @@ class TestOtelCosts(OtelTestCase):
             ["litellm.main.completion"],
             model,
             "USD",
+            num_expected_spans=2,
         )
