@@ -2,21 +2,20 @@
 Tests for a Snowflake connection.
 """
 
-from unittest import main
 import uuid
 
+import pytest
 import snowflake.connector
 from snowflake.snowpark import Session
 from trulens.connectors.snowflake import SnowflakeConnector
 from trulens.dashboard import run_dashboard
 from trulens.dashboard import stop_dashboard
 
-from tests.test import optional_test
 from tests.util.snowflake_test_case import SnowflakeTestCase
 
 
 class TestSnowflakeConnection(SnowflakeTestCase):
-    @optional_test
+    @pytest.mark.optional
     def test_snowflake_connection_via_snowpark_session(self):
         """
         Check that we can connect to a Snowflake backend and have created the required schema.
@@ -26,7 +25,7 @@ class TestSnowflakeConnection(SnowflakeTestCase):
             connect_via_snowpark_session=True,
         )
 
-    @optional_test
+    @pytest.mark.optional
     def test_snowflake_connection_via_connection_parameters(self):
         """
         Check that we can connect to a Snowflake backend and have created the required schema.
@@ -36,7 +35,7 @@ class TestSnowflakeConnection(SnowflakeTestCase):
             connect_via_snowpark_session=False,
         )
 
-    @optional_test
+    @pytest.mark.optional
     def test_connecting_to_premade_schema(self):
         # Create schema.
         schema_name = "test_connecting_to_premade_schema__"
@@ -52,7 +51,7 @@ class TestSnowflakeConnection(SnowflakeTestCase):
         # Test that using this connection works.
         self.get_session(schema_name=schema_name, schema_already_exists=True)
 
-    @optional_test
+    @pytest.mark.optional
     def test_run_leaderboard_without_password(self):
         session = self.get_session(
             "test_run_leaderboard_without_password",
@@ -71,7 +70,7 @@ class TestSnowflakeConnection(SnowflakeTestCase):
             except Exception:
                 pass
 
-    @optional_test
+    @pytest.mark.optional
     def test_paramstyle_pyformat(self):
         default_paramstyle = snowflake.connector.paramstyle
         try:
@@ -101,7 +100,3 @@ class TestSnowflakeConnection(SnowflakeTestCase):
             SnowflakeConnector(snowpark_session=snowpark_session)
         finally:
             snowflake.connector.paramstyle = default_paramstyle
-
-
-if __name__ == "__main__":
-    main()

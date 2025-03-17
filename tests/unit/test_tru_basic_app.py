@@ -1,7 +1,5 @@
 """Tests for TruBasicApp."""
 
-from unittest import main
-
 from trulens.apps import basic as basic_app
 from trulens.core import session as core_session
 from trulens.core.schema import feedback as feedback_schema
@@ -52,7 +50,3 @@ class TestTruBasicApp(mod_test.TruTestCase):
         records = self.session.get_records_and_feedback()[0]
 
         self.assertEqual(len(records), 1)
-
-
-if __name__ == "__main__":
-    main()

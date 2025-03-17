@@ -24,7 +24,6 @@ from typing import (
     TypeVar,
     Union,
 )
-import unittest
 from unittest import TestCase
 
 import pandas as pd
@@ -37,10 +36,6 @@ import yaml
 
 from tests import utils as test_utils
 
-OPTIONAL_VAR = "TEST_OPTIONAL"
-"""Env var that were to evaluate to true indicates that optional tests are to be
-run."""
-
 WRITE_GOLDEN_VAR = "WRITE_GOLDEN"
 """Env var for indicating whether golden expected results are to be written (if
 true) or read and compared (if false/undefined)."""
@@ -52,9 +47,6 @@ running tasks after the test completes."""
 TEST_THREADS_CLEANUP_VAR = "TEST_THREADS_CLEANUP"
 """Env var that when set to true will cause tests to fail if there are any
 non-main threads running after the test completes."""
-
-ALLOW_OPTIONAL_VAR = "ALLOW_OPTIONALS"
-"""Env var that when set to true will allow optional tests to be run."""
 
 WITH_REF_PATH_VAR = "WITH_REF_PATH"
 """Env var that when set to true will print out the reference path to the given
@@ -87,38 +79,6 @@ def async_test(func):
         return temp
 
     return wrapper
-
-
-def run_optional_tests() -> bool:
-    return TruTestCase.env_true(OPTIONAL_VAR)
-
-
-def optional_test(testmethodorclass):
-    """Only run the decorated test if the environment variable with_optional
-    evaluates true.
-
-    These are meant to be run only in an environment where
-    all optional packages have been installed.
-    """
-
-    return unittest.skipIf(not run_optional_tests(), "optional test")(
-        testmethodorclass
-    )
-
-
-def requiredonly_test(testmethodorclass):
-    """Only runs the decorated test if the environment variable with_optional
-    evaluates to false or is not set.
-
-    Decorated tests are meant to run specifically when optional imports are not
-    installed. ALLOW_EXTRA_DEPS allows optional imports to be installed.
-    """
-
-    return unittest.skipIf(
-        TruTestCase.env_true(OPTIONAL_VAR)
-        or TruTestCase.env_true(ALLOW_OPTIONAL_VAR),
-        "not an optional test",
-    )(testmethodorclass)
 
 
 def module_installed(module: str) -> bool:

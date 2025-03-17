@@ -1,20 +1,17 @@
 import os
-from typing import Any, Dict, List
+from typing import Any, List
 import unittest
 
 from langchain_community.chat_models import ChatSnowflakeCortex
 import litellm
 from openai import OpenAI
-from opentelemetry.util.types import AttributeValue
 from snowflake.cortex import Complete
 from snowflake.snowpark import Session
-from trulens.apps.custom import TruCustomApp
+from trulens.apps.app import TruApp
 from trulens.apps.langchain import TruChain
-from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
-from trulens.otel.semconv.trace import SpanAttributes
 
-from tests.util.otel_app_test_case import OtelAppTestCase
+from tests.util.otel_test_case import OtelTestCase
 
 
 class _TestCortexApp:
@@ -32,7 +29,6 @@ class _TestCortexApp:
             self._connection_params
         ).create()
 
-    @instrument(span_type=SpanAttributes.SpanType.MAIN)
     def respond_to_query(self, query: str) -> str:
         return Complete(
             model="mistral-large2",
@@ -45,7 +41,6 @@ class _TestOpenAIApp:
     def __init__(self) -> None:
         self._openai_client = OpenAI()
 
-    @instrument(span_type=SpanAttributes.SpanType.MAIN)
     def respond_to_query(self, query: str) -> str:
         return (
             self._openai_client.chat.completions.create(
@@ -67,12 +62,9 @@ class _TestLiteLLMApp:
     def __init__(self, model: str) -> None:
         self._model = model
 
-    @instrument(span_type=SpanAttributes.SpanType.MAIN)
-    # @old_instrument
     def respond_to_query(self, query: str) -> str:
         completion = (
             litellm.completion(
-                # model="mistral/mistral-small", # TODO(this_pr) test this?
                 model=self._model,
                 temperature=0,
                 messages=[
@@ -88,81 +80,39 @@ class _TestLiteLLMApp:
         return completion
 
 
-class TestOtelCosts(OtelAppTestCase):
-    def _check_costs(
-        self,
-        record_attributes: Dict[str, AttributeValue],
-        span_name: str,
-        cost_model: str,
-        cost_currency: str,
-        free: bool,
-    ):
-        self.assertEqual(
-            record_attributes["name"],
-            span_name,
-        )
-        self.assertEqual(
-            record_attributes[SpanAttributes.COST.MODEL],
-            cost_model,
-        )
-        self.assertEqual(
-            record_attributes[SpanAttributes.COST.CURRENCY],
-            cost_currency,
-        )
-        if free:
-            self.assertEqual(
-                record_attributes[SpanAttributes.COST.COST],
-                0,
-            )
-        else:
-            self.assertGreater(
-                record_attributes[SpanAttributes.COST.COST],
-                0,
-            )
-        self.assertGreater(
-            record_attributes[SpanAttributes.COST.NUM_TOKENS],
-            0,
-        )
-        self.assertGreater(
-            record_attributes[SpanAttributes.COST.NUM_PROMPT_TOKENS],
-            0,
-        )
-        self.assertGreater(
-            record_attributes[SpanAttributes.COST.NUM_COMPLETION_TOKENS],
-            0,
-        )
-
+class TestOtelCosts(OtelTestCase):
     def _test_tru_custom_app(
         self,
         app: Any,
         cost_functions: List[str],
         model: str,
         currency: str,
+        num_expected_spans: int = 1,
         free: bool = False,
     ):
         # Create app.
-        tru_recorder = TruCustomApp(
+        tru_recorder = TruApp(
             app,
             app_name="testing",
             app_version="v1",
             main_method=app.respond_to_query,
         )
         # Record and invoke.
-        with tru_recorder(run_name="test run", input_id="42"):
-            app.respond_to_query("How is baby Kojikun able to be so cute?")
+        tru_recorder.instrumented_invoke_main_method(
+            run_name="test run",
+            input_id="42",
+            main_method_args=("How is baby Kojikun able to be so cute?",),
+        )
         # Compare results to expected.
         TruSession().force_flush()
         events = self._get_events()
-        self.assertEqual(len(events), 2 + len(cost_functions))
-        for i, cost_function in enumerate(cost_functions):
-            record_attributes = events.iloc[-i - 1]["record_attributes"]
-            self._check_costs(
-                record_attributes,
-                cost_function,
-                model[(model.find("/") + 1) :],
-                currency,
-                free,
-            )
+        self.assertEqual(len(events), num_expected_spans)
+        self._check_costs(
+            events.iloc[-1]["record_attributes"],
+            model[(model.find("/") + 1) :],
+            currency,
+            free,
+        )
 
     # TODO(otel): Fix this test!
     @unittest.skip("Not currently working!")
@@ -178,8 +128,11 @@ class TestOtelCosts(OtelAppTestCase):
             cortex_function="complete",
         )
         tru_recorder = TruChain(app, app_name="testing", app_version="v1")
-        with tru_recorder(run_name="test run", input_id="42"):
-            app.invoke("How is baby Kojikun able to be so cute?")
+        tru_recorder.instrumented_invoke_main_method(
+            run_name="test run",
+            input_id="42",
+            main_method_args=("How is baby Kojikun able to be so cute?",),
+        )
         tru_session.force_flush()
         events = self._get_events()
         self.assertEqual(len(events), 3)
@@ -196,7 +149,9 @@ class TestOtelCosts(OtelAppTestCase):
     def test_tru_custom_app_openai(self):
         self._test_tru_custom_app(
             _TestOpenAIApp(),
-            ["openai.resources.chat.completions.Completions.create"],
+            [
+                "openai.resources.chat.completions.completions.Completions.create"
+            ],
             "gpt-3.5-turbo-0125",
             "USD",
         )
@@ -206,11 +161,12 @@ class TestOtelCosts(OtelAppTestCase):
         self._test_tru_custom_app(
             _TestLiteLLMApp(model),
             [
-                "openai.resources.chat.completions.Completions.create",
+                "openai.resources.chat.completions.completions.Completions.create",
                 "litellm.main.completion",
             ],
             model,
             "USD",
+            num_expected_spans=2,
         )
 
     def test_tru_custom_app_litellm_gemini(self):
@@ -220,6 +176,7 @@ class TestOtelCosts(OtelAppTestCase):
             ["litellm.main.completion"],
             model,
             "USD",
+            num_expected_spans=2,
             free=True,
         )
 
@@ -232,8 +189,5 @@ class TestOtelCosts(OtelAppTestCase):
             ["litellm.main.completion"],
             model,
             "USD",
+            num_expected_spans=2,
         )
-
-
-if __name__ == "__main__":
-    unittest.main()

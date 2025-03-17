@@ -6,6 +6,7 @@ Create Date: 2024-08-16 12:44:05.560492
 """
 
 from alembic import op
+import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "4"
@@ -24,6 +25,7 @@ def upgrade(config) -> None:
     with op.batch_alter_table(prefix + "feedbacks") as batch_op:
         batch_op.alter_column(
             "feedback_definition_id",
+            existing_type=sa.VARCHAR(length=1024),
             nullable=False,
         )
     # ### end Alembic commands ###
@@ -36,6 +38,7 @@ def downgrade(config) -> None:
     with op.batch_alter_table(prefix + "feedbacks") as batch_op:
         batch_op.alter_column(
             "feedback_definition_id",
+            existing_type=sa.VARCHAR(length=1024),
             nullable=True,
         )
     # ### end Alembic commands ###

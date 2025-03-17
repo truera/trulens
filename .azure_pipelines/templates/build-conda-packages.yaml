@@ -1,0 +1,35 @@
+jobs:
+- job: BuildCondaPackages
+  variables:
+    python-version: 3.11
+  pool:
+    vmImage: ubuntu-latest
+  timeoutInMinutes: 30
+  steps:
+  - template: env-setup.yaml
+  - bash: |
+      set -e
+      rm -rf ./dist
+      rm -rf ./src/core/trulens/data/snowflake_stage_zips
+    displayName: Clean up existing build artifacts
+  - bash: |
+      conda install conda-build --yes
+    displayName: Install conda-build
+  - bash: |
+      CONDA_SOURCE_USE_PATH=1 conda build ./src/otel/semconv/ -c https://conda.anaconda.org/sfe1ed40/
+    displayName: Build `trulens-otel-semconv`
+  - bash: |
+      CONDA_SOURCE_USE_PATH=1 conda build ./src/core -c https://conda.anaconda.org/sfe1ed40/
+    displayName: Build `trulens-core`
+  - bash: |
+      CONDA_SOURCE_USE_PATH=1 conda build ./src/feedback -c https://conda.anaconda.org/sfe1ed40/
+    displayName: Build `trulens-feedback`
+  - bash: |
+      CONDA_SOURCE_USE_PATH=1 conda build ./src/dashboard -c https://conda.anaconda.org/sfe1ed40/
+    displayName: Build `trulens-dashboard`
+  - bash: |
+      CONDA_SOURCE_USE_PATH=1 conda build ./src/providers/cortex -c https://conda.anaconda.org/sfe1ed40/
+    displayName: Build `trulens-providers-cortex`
+  - bash: |
+      CONDA_SOURCE_USE_PATH=1 conda build ./src/connectors/snowflake -c https://conda.anaconda.org/sfe1ed40/
+    displayName: Build `trulens-connectors-snowflake`

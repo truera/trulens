@@ -1,14 +1,18 @@
 {% set name = "trulens-core" %}
-{% set version = "1.3.3" %}
+{% set version = "1.4.6" %}
 
 package:
   name: {{ name|lower }}
   version: {{ version }}
 
 source:
+  {% if environ.get('CONDA_SOURCE_USE_PATH') == '1' %}
+  path: ./
+  {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-core/#files
-  sha256: 7d7627d594ac540e4be55e714f81e23e9fcb62d649a3532d98ccb908a60b2893
+  sha256: 2b7a4b9b2b7b550a12994ea2dc78d4f8f19ed169e207281ce6eea2a91c5be8a6
+  {% endif %}
 
 build:
   noarch: python
@@ -22,16 +26,16 @@ requirements:
     - pip
   run:
     - python >=3.9,<3.12
-    - trulens-otel-semconv >=1.0.0,<2.0.0
-    - opentelemetry-api >=1.0.0,<2.0.0
-    - opentelemetry-sdk >=1.0.0,<2.0.0
-    - opentelemetry-proto >=1.0.0,<2.0.0
-    - numpy >=1.23
+    - trulens-otel-semconv >=1.4.6,<2.0.0
+    - opentelemetry-api >=1.23.0
+    - opentelemetry-sdk >=1.23.0
+    - opentelemetry-proto >=1.23.0
+    - numpy >=1.23.0
     - munch >=2.5.0,<3.0.0
     - dill >=0.3.8,<0.4.0
     - typing_extensions >=4.9.0,<5.0.0
-    - pydantic >=2.0.0,<3.0.0
-    - pandas >=1.0.0,<3.0.0
+    - pydantic >=2.4.2,<3.0.0
+    - pandas >=1.0.0
     - rich >=13.6.0,<14.0.0
     - sqlalchemy >=2.0.0,<3.0.0
     - alembic >=1.8.1,<2.0.0

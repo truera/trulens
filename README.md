@@ -2,7 +2,7 @@
 [![Azure Build Status](https://dev.azure.com/truera/trulens/_apis/build/status%2FTruLens%20E2E%20Tests?branchName=main)](https://dev.azure.com/truera/trulens/_build/latest?definitionId=8&branchName=main)
 ![GitHub](https://img.shields.io/github/license/truera/trulens)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/trulens)
-[![Slack](https://img.shields.io/badge/slack-join-green?logo=slack)](https://communityinviter.com/apps/aiqualityforum/josh)
+[![Discourse](https://img.shields.io/discourse/users?server=https://snowflake.discourse.group/)](https://snowflake.discourse.group/c/ai-research-and-development-community/trulens/97)
 [![Docs](https://img.shields.io/badge/docs-trulens.org-blue)](https://www.trulens.org/getting_started/)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/examples/quickstart/langchain_quickstart.ipynb)
 
@@ -55,5 +55,5 @@ Interested in contributing? See our [contributing
 guide](https://www.trulens.org/trulens/contributing/) for more details.
 
 The best way to support TruLens is to give us a ⭐ on
-[GitHub](https://www.github.com/truera/trulens) and join our [slack
-community](https://communityinviter.com/apps/aiqualityforum/josh)!
+[GitHub](https://www.github.com/truera/trulens) and join our [discourse
+community](https://snowflake.discourse.group/c/ai-research-and-development-community/trulens/97)!

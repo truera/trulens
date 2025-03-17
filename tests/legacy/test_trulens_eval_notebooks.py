@@ -23,8 +23,7 @@ import warnings
 from dotenv import load_dotenv
 from nbconvert.preprocessors import ExecutePreprocessor
 import nbformat
-
-from tests.test import optional_test
+import pytest
 
 LEGACY_NOTEBOOKS_PATH = Path(
     "_trulens_eval/trulens_eval/tests/docs_notebooks/notebooks_to_test"
@@ -175,27 +174,27 @@ class TestTruLensEvalNotebooks(TestCase):
         self._test_notebook("human_feedback.ipynb")
 
     # @skip("temp")
-    @optional_test
+    @pytest.mark.optional
     def test_langchain_faiss_example(self):
         self._test_notebook("langchain_faiss_example.ipynb")
 
     # @skip("temp")
-    @optional_test
+    @pytest.mark.optional
     def test_langchain_instrumentation(self):
         self._test_notebook("langchain_instrumentation.ipynb")
 
     # @skip("temp")
-    @optional_test
+    @pytest.mark.optional
     def test_langchain_quickstart(self):
         self._test_notebook("langchain_quickstart.ipynb")
 
     # @skip("temp")
-    @optional_test
+    @pytest.mark.optional
     def test_llama_index_instrumentation(self):
         self._test_notebook("llama_index_instrumentation.ipynb")
 
     # @skip("temp")
-    @optional_test
+    @pytest.mark.optional
     def test_llama_index_quickstart(self):
         self._test_notebook("llama_index_quickstart.ipynb")
 

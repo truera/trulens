@@ -2,15 +2,20 @@ import logging
 from typing import Any, Callable, Dict, Optional
 
 from opentelemetry import trace
+from opentelemetry.context import Context
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace import export as otel_export_sdk
+from opentelemetry.trace.span import Span
 from trulens.core import session as core_session
 from trulens.core.database.connector import DBConnector
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import text as text_utils
 from trulens.experimental.otel_tracing.core.exporter.connector import (
-    TruLensOTELSpanExporter,
+    TruLensOtelSpanExporter,
+)
+from trulens.experimental.otel_tracing.core.span import (
+    set_general_span_attributes,
 )
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -38,6 +43,17 @@ def _can_import(to_import: str) -> bool:
         return False
 
 
+class TrulensOtelSpanProcessor(otel_export_sdk.BatchSpanProcessor):
+    def on_start(
+        self, span: Span, parent_context: Optional[Context] = None
+    ) -> None:
+        set_general_span_attributes(
+            span,
+            span_type=SpanAttributes.SpanType.UNKNOWN,
+            context=parent_context,
+        )
+
+
 class _TruSession(core_session.TruSession):
     def _validate_otel_exporter(
         self,
@@ -57,7 +73,7 @@ class _TruSession(core_session.TruSession):
             if isinstance(connector, SnowflakeConnector):
                 exporter = TruLensSnowflakeSpanExporter(connector)
         if not exporter:
-            exporter = TruLensOTELSpanExporter(connector)
+            exporter = TruLensOtelSpanExporter(connector)
         if not isinstance(exporter, otel_export_sdk.SpanExporter):
             raise ValueError(
                 "Provided exporter must be an OpenTelemetry SpanExporter!"
@@ -82,8 +98,8 @@ class _TruSession(core_session.TruSession):
             self, exporter, connector
         )
 
-        self._experimental_otel_span_processor = (
-            otel_export_sdk.BatchSpanProcessor(exporter)
+        self._experimental_otel_span_processor = TrulensOtelSpanProcessor(
+            exporter
         )
         tracer_provider.add_span_processor(
             self._experimental_otel_span_processor
@@ -94,9 +110,8 @@ class _TruSession(core_session.TruSession):
         module,
         method: str,
         cost_computer: Callable[[Any], Dict[str, Any]],
-        span_type: SpanAttributes.SpanType,
     ):
-        from trulens.core.otel.instrument import instrument_method
+        from trulens.core.otel.instrument import instrument_cost_computer
 
         for cls in dir(module):
             obj = python_utils.safer_getattr(module, cls)
@@ -105,33 +120,29 @@ class _TruSession(core_session.TruSession):
                 and isinstance(obj, type)
                 and hasattr(obj, method)
             ):
-                instrument_method(
+                instrument_cost_computer(
                     obj,
                     method,
-                    span_type=span_type,
-                    full_scoped_attributes=lambda ret,
+                    attributes=lambda ret,
                     exception,
                     *args,
                     **kwargs: cost_computer(ret),
-                    must_be_first_wrapper=True,
                 )
 
     @staticmethod
     def _track_costs():
         if _can_import("trulens.providers.cortex.endpoint"):
             from snowflake.cortex._sse_client import SSEClient
-            from trulens.core.otel.instrument import instrument_method
+            from trulens.core.otel.instrument import instrument_cost_computer
             from trulens.providers.cortex.endpoint import CortexCostComputer
 
-            instrument_method(
+            instrument_cost_computer(
                 SSEClient,
                 "events",
-                span_type=SpanAttributes.SpanType.UNKNOWN,
-                full_scoped_attributes=lambda ret,
+                attributes=lambda ret,
                 exception,
                 *args,
                 **kwargs: CortexCostComputer.handle_response(ret),
-                must_be_first_wrapper=True,
             )
         if _can_import("trulens.providers.openai.endpoint"):
             import openai
@@ -144,7 +155,6 @@ class _TruSession(core_session.TruSession):
                     module,
                     "create",
                     OpenAICostComputer.handle_response,
-                    SpanAttributes.SpanType.UNKNOWN,
                 )
         if _can_import("trulens.providers.litellm.endpoint"):
             import litellm
@@ -155,7 +165,7 @@ class _TruSession(core_session.TruSession):
                 litellm,
                 "completion",
                 span_type=SpanAttributes.SpanType.GENERATION,
-                full_scoped_attributes=lambda ret,
+                attributes=lambda ret,
                 exception,
                 *args,
                 **kwargs: LiteLLMCostComputer.handle_response(ret),

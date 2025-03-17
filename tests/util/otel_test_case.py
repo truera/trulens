@@ -3,12 +3,14 @@ Tests for OTEL app.
 """
 
 import os
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
+from opentelemetry.util.types import AttributeValue
 import pandas as pd
 import sqlalchemy as sa
 from trulens.core.schema.event import EventRecordType
 from trulens.core.session import TruSession
+from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.test import TruTestCase
 from tests.util.df_comparison import (
@@ -16,7 +18,7 @@ from tests.util.df_comparison import (
 )
 
 
-class OtelAppTestCase(TruTestCase):
+class OtelTestCase(TruTestCase):
     @classmethod
     def clear_TruSession_singleton(cls) -> None:
         # [HACK!] Clean up any instances of `TruSession` so tests don't
@@ -101,4 +103,42 @@ class OtelAppTestCase(TruTestCase):
             ],
             timestamp_tol=pd.Timedelta("0.02s"),
             regex_replacements=regex_replacements,
+        )
+
+    def _check_costs(
+        self,
+        record_attributes: Dict[str, AttributeValue],
+        cost_model: str,
+        cost_currency: str,
+        free: bool,
+    ):
+        self.assertEqual(
+            record_attributes[SpanAttributes.COST.MODEL],
+            cost_model,
+        )
+        self.assertEqual(
+            record_attributes[SpanAttributes.COST.CURRENCY],
+            cost_currency,
+        )
+        if free:
+            self.assertEqual(
+                record_attributes[SpanAttributes.COST.COST],
+                0,
+            )
+        else:
+            self.assertGreater(
+                record_attributes[SpanAttributes.COST.COST],
+                0,
+            )
+        self.assertGreater(
+            record_attributes[SpanAttributes.COST.NUM_TOKENS],
+            0,
+        )
+        self.assertGreater(
+            record_attributes[SpanAttributes.COST.NUM_PROMPT_TOKENS],
+            0,
+        )
+        self.assertGreater(
+            record_attributes[SpanAttributes.COST.NUM_COMPLETION_TOKENS],
+            0,
         )

@@ -7,6 +7,7 @@ from opentelemetry.proto.common.v1.common_pb2 import ArrayValue
 from opentelemetry.proto.common.v1.common_pb2 import KeyValue
 from opentelemetry.proto.common.v1.common_pb2 import KeyValueList
 from opentelemetry.proto.trace.v1.trace_pb2 import Span as SpanProto
+from opentelemetry.proto.trace.v1.trace_pb2 import Status
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.trace import StatusCode
 from trulens.core.schema import event as event_schema
@@ -88,6 +89,7 @@ def convert_readable_span_to_proto(span: ReadableSpan) -> SpanProto:
         ]
         if span.attributes
         else None,
+        status=Status(code=Status.StatusCode.STATUS_CODE_UNSET),
     )
     return span_proto
 
@@ -115,8 +117,8 @@ def check_if_trulens_span(span: ReadableSpan) -> bool:
     """
     if not span.attributes:
         return False
-
-    return bool(span.attributes.get(SpanAttributes.RECORD_ID))
+    app_name = span.attributes.get(SpanAttributes.APP_NAME)
+    return bool(app_name)
 
 
 def construct_event(span: ReadableSpan) -> event_schema.Event:

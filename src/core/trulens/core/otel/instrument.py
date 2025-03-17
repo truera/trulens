@@ -3,7 +3,6 @@ import logging
 import types
 from types import TracebackType
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
-import uuid
 
 from opentelemetry import trace
 from opentelemetry.baggage import get_baggage
@@ -11,7 +10,9 @@ from opentelemetry.baggage import remove_baggage
 from opentelemetry.baggage import set_baggage
 import opentelemetry.context as context_api
 from opentelemetry.trace.span import Span
-from trulens.core import app as core_app
+from trulens.core.otel.function_call_context_manager import (
+    create_function_call_context_manager,
+)
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
 from trulens.experimental.otel_tracing.core.span import Attributes
 from trulens.experimental.otel_tracing.core.span import (
@@ -20,18 +21,20 @@ from trulens.experimental.otel_tracing.core.span import (
 from trulens.experimental.otel_tracing.core.span import (
     set_general_span_attributes,
 )
-from trulens.experimental.otel_tracing.core.span import set_main_span_attributes
+from trulens.experimental.otel_tracing.core.span import (
+    set_record_root_span_attributes,
+)
 from trulens.experimental.otel_tracing.core.span import (
     set_user_defined_attributes,
 )
-from trulens.otel.semconv.trace import BASE_SCOPE
+from trulens.otel.semconv.constants import TRULENS_INSTRUMENT_WRAPPER_FLAG
+from trulens.otel.semconv.constants import (
+    TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
+)
 from trulens.otel.semconv.trace import SpanAttributes
 import wrapt
 
 logger = logging.getLogger(__name__)
-
-
-_TRULENS_INSTRUMENT_WRAPPER_FLAG = "__trulens_instrument_wrapper"
 
 
 def _get_func_name(func: Callable) -> str:
@@ -48,14 +51,6 @@ def _get_func_name(func: Callable) -> str:
         return func.__name__
 
 
-def _create_span(span_name: str) -> Span:
-    return (
-        trace.get_tracer_provider()
-        .get_tracer(TRULENS_SERVICE_NAME)
-        .start_as_current_span(name=span_name)
-    )
-
-
 def _resolve_attributes(
     attributes: Attributes,
     ret: Optional[Any],
@@ -67,6 +62,13 @@ def _resolve_attributes(
         return {}
     if callable(attributes):
         return attributes(ret, exception, *args, **all_kwargs)
+    if isinstance(attributes, dict):
+        resolved = {}
+        value_string_to_value = all_kwargs.copy()
+        value_string_to_value["return"] = ret
+        for k, v in attributes.items():
+            resolved[k] = value_string_to_value[v]
+        return resolved
     return attributes.copy()
 
 
@@ -77,37 +79,38 @@ def _set_span_attributes(
     func: Callable,
     func_exception: Optional[Exception],
     attributes: Attributes,
-    full_scoped_attributes: Attributes,
     instance: Any,
     args: Tuple[Any],
     kwargs: Dict[str, Any],
     ret: Any,
+    only_set_user_defined_attributes: bool = False,
 ):
-    # Set general span attributes.
-    span.set_attribute("name", span_name)
-    set_general_span_attributes(span, span_type)
-    # Set main span attributes if necessary.
-    if span_type == SpanAttributes.SpanType.MAIN:
-        set_main_span_attributes(
-            span,
-            func,
-            args,
-            kwargs,
-            ret,
-            func_exception,
-        )
-    # Determine args/kwargs to pass to the attributes/full_scoped_attributes
+    # Determine args/kwargs to pass to the attributes
     # callable.
     sig = inspect.signature(func)
     bound_args = sig.bind_partial(*args, **kwargs).arguments
     all_kwargs = {**kwargs, **bound_args}
+    if not only_set_user_defined_attributes:
+        # Set general span attributes.
+        span.set_attribute("name", span_name)
+        set_general_span_attributes(span, span_type)
+        # Set record root span attributes if necessary.
+        if span_type == SpanAttributes.SpanType.RECORD_ROOT:
+            set_record_root_span_attributes(
+                span,
+                func,
+                args,
+                kwargs,
+                ret,
+                func_exception,
+            )
+        # Set function call attributes.
+        set_function_call_attributes(span, ret, func_exception, all_kwargs)
+    # Resolve the attributes.
     if instance is not None:
         args_with_self_possibly = (instance,) + args
     else:
         args_with_self_possibly = args
-    # Set function call attributes.
-    set_function_call_attributes(span, ret, func_exception, all_kwargs)
-    # Combine the attributes with the full_scoped_attributes.
     resolved_attributes = _resolve_attributes(
         attributes,
         ret,
@@ -115,37 +118,22 @@ def _set_span_attributes(
         args_with_self_possibly,
         all_kwargs,
     )
-    resolved_attributes = {
-        f"{BASE_SCOPE}.{span_type.value}.{k}": v
-        for k, v in resolved_attributes.items()
-    }
-    resolved_full_scoped_attributes = _resolve_attributes(
-        full_scoped_attributes,
-        ret,
-        func_exception,
-        args_with_self_possibly,
-        all_kwargs,
-    )
-    all_attributes = {
-        **resolved_attributes,
-        **resolved_full_scoped_attributes,
-    }
-    if all_attributes:
+    if resolved_attributes:
         # Set the user-provided attributes.
         set_user_defined_attributes(
             span,
             span_type=span_type,
-            attributes=all_attributes,
+            attributes=resolved_attributes,
         )
 
 
 def instrument(
     *,
     span_type: SpanAttributes.SpanType = SpanAttributes.SpanType.UNKNOWN,
-    attributes: Attributes = dict(),
-    full_scoped_attributes: Attributes = dict(),
+    attributes: Attributes = None,
     must_be_first_wrapper: bool = False,
-):
+    **kwargs,
+) -> Callable[[Callable], Any]:  # TODO(this_pr): get type!
     """
     Decorator for marking functions to be instrumented with OpenTelemetry
     tracing.
@@ -153,16 +141,21 @@ def instrument(
     span_type: Span type to be used for the span.
     attributes:
         A dictionary or a callable that returns a dictionary of attributes
-        (i.e. a `typing.Dict[str, typing.Any]`) to be set on the span where
-        each key in the dictionary will be an attribute in the span type's
-        scope.
-    full_scoped_attributes:
-        A dictionary or a callable that returns a dictionary of attributes
         (i.e. a `typing.Dict[str, typing.Any]`) to be set on the span.
     must_be_first_wrapper:
         If this is True and the function is already wrapped with the TruLens
         decorator, then the function will not be wrapped again.
     """
+    if attributes is None:
+        attributes = {}
+    is_record_root = span_type == SpanAttributes.SpanType.RECORD_ROOT
+    is_app_specific_record_root = kwargs.get(
+        "is_app_specific_record_root", False
+    )
+    create_new_span = kwargs.get("create_new_span", True)
+    only_set_user_defined_attributes = kwargs.get(
+        "only_set_user_defined_attributes", False
+    )
 
     def inner_decorator(func: Callable):
         span_name = _get_func_name(func)
@@ -184,7 +177,9 @@ def instrument(
             return ret
 
         def convert_to_generator(func, instance, args, kwargs):
-            with _create_span(span_name) as span:
+            with create_function_call_context_manager(
+                create_new_span, span_name, is_record_root
+            ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
                 attributes_exception: Optional[Exception] = None
@@ -216,11 +211,11 @@ def instrument(
                             func,
                             func_exception,
                             attributes,
-                            full_scoped_attributes,
                             instance,
                             args,
                             kwargs,
                             ret,
+                            only_set_user_defined_attributes=only_set_user_defined_attributes,
                         )
                     except Exception as e:
                         logger.error(f"Error setting attributes: {e}")
@@ -233,7 +228,9 @@ def instrument(
 
         @wrapt.decorator
         async def async_wrapper(func, instance, args, kwargs):
-            with _create_span(span_name) as span:
+            with create_function_call_context_manager(
+                create_new_span, span_name, is_record_root
+            ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
                 attributes_exception: Optional[Exception] = None
@@ -254,7 +251,6 @@ def instrument(
                         func,
                         func_exception,
                         attributes,
-                        full_scoped_attributes,
                         instance,
                         args,
                         kwargs,
@@ -271,7 +267,9 @@ def instrument(
 
         @wrapt.decorator
         async def async_generator_wrapper(func, instance, args, kwargs):
-            with _create_span(span_name) as span:
+            with create_function_call_context_manager(
+                create_new_span, span_name, is_record_root
+            ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
                 attributes_exception: Optional[Exception] = None
@@ -297,7 +295,6 @@ def instrument(
                             func,
                             func_exception,
                             attributes,
-                            full_scoped_attributes,
                             instance,
                             args,
                             kwargs,
@@ -313,12 +310,12 @@ def instrument(
 
         # Check if already wrapped if not allowing multiple wrappers.
         if must_be_first_wrapper:
-            if hasattr(func, _TRULENS_INSTRUMENT_WRAPPER_FLAG):
+            if hasattr(func, TRULENS_INSTRUMENT_WRAPPER_FLAG):
                 return func
             curr = func
             while hasattr(curr, "__wrapped__"):
                 curr = curr.__wrapped__
-                if hasattr(curr, _TRULENS_INSTRUMENT_WRAPPER_FLAG):
+                if hasattr(curr, TRULENS_INSTRUMENT_WRAPPER_FLAG):
                     return func
 
         # Wrap.
@@ -329,7 +326,9 @@ def instrument(
             ret = async_wrapper(func)
         else:
             ret = sync_wrapper(func)
-        ret.__dict__[_TRULENS_INSTRUMENT_WRAPPER_FLAG] = True
+        ret.__dict__[TRULENS_INSTRUMENT_WRAPPER_FLAG] = True
+        if is_record_root and not is_app_specific_record_root:
+            ret.__dict__[TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG] = True
         return ret
 
     return inner_decorator
@@ -340,19 +339,30 @@ def instrument_method(
     method_name: str,
     span_type: SpanAttributes.SpanType = SpanAttributes.SpanType.UNKNOWN,
     attributes: Attributes = None,
-    full_scoped_attributes: Attributes = None,
     must_be_first_wrapper: bool = False,
-):
+) -> None:
     wrapper = instrument(
         span_type=span_type,
         attributes=attributes,
-        full_scoped_attributes=full_scoped_attributes,
         must_be_first_wrapper=must_be_first_wrapper,
     )
     setattr(cls, method_name, wrapper(getattr(cls, method_name)))
 
 
-class OTELRecordingContext:
+def instrument_cost_computer(
+    cls: type,
+    method_name: str,
+    attributes: Attributes,
+) -> None:
+    wrapper = instrument(
+        attributes=attributes,
+        create_new_span=False,
+        only_set_user_defined_attributes=True,
+    )
+    setattr(cls, method_name, wrapper(getattr(cls, method_name)))
+
+
+class OtelBaseRecordingContext:
     run_name: str
     """
     The name of the run that the recording context is currently processing.
@@ -374,8 +384,11 @@ class OTELRecordingContext:
     Keys added to the OTEL context.
     """
 
-    def __init__(self, *, app: core_app.App, run_name: str, input_id: str):
-        self.app = app
+    def __init__(
+        self, *, app_name: str, app_version: str, run_name: str, input_id: str
+    ):
+        self.app_name = app_name
+        self.app_version = app_version
         self.run_name = run_name
         self.input_id = input_id
         self.tokens = []
@@ -390,45 +403,6 @@ class OTELRecordingContext:
 
         self.tokens.append(context_api.attach(set_baggage(key, value)))
         self.context_keys_added.append(key)
-
-    # For use as a context manager.
-    def __enter__(self):
-        # Note: This is not the same as the record_id in the core app since the OTEL
-        # tracing is currently separate from the old records behavior
-        otel_record_id = str(uuid.uuid4())
-
-        tracer = trace.get_tracer_provider().get_tracer(TRULENS_SERVICE_NAME)
-
-        self.attach_to_context(SpanAttributes.DOMAIN, "module")
-        self.attach_to_context(SpanAttributes.RECORD_ID, otel_record_id)
-        self.attach_to_context(SpanAttributes.APP_NAME, self.app.app_name)
-        self.attach_to_context(SpanAttributes.APP_VERSION, self.app.app_version)
-
-        self.attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
-        self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
-
-        # Use start_as_current_span as a context manager
-        self.span_context = tracer.start_as_current_span("root")
-        root_span = self.span_context.__enter__()
-
-        # Set general span attributes
-        root_span.set_attribute("name", "root")
-        set_general_span_attributes(
-            root_span, SpanAttributes.SpanType.RECORD_ROOT
-        )
-
-        # Set record root specific attributes
-        root_span.set_attribute(
-            SpanAttributes.RECORD_ROOT.APP_NAME, self.app.app_name
-        )
-        root_span.set_attribute(
-            SpanAttributes.RECORD_ROOT.APP_VERSION, self.app.app_version
-        )
-        root_span.set_attribute(
-            SpanAttributes.RECORD_ROOT.RECORD_ID, otel_record_id
-        )
-
-        return root_span
 
     async def __aenter__(self):
         return self.__enter__()
@@ -458,3 +432,78 @@ class OTELRecordingContext:
         exc_tb: Optional[TracebackType],
     ) -> None:
         return self.__exit__(exc_type, exc_val, exc_tb)
+
+
+class OtelRecordingContext(OtelBaseRecordingContext):
+    def __init__(
+        self,
+        *,
+        app_name: str,
+        app_version: str,
+        run_name: str,
+        input_id: str,
+        ground_truth_output: Optional[str] = None,
+    ) -> None:
+        super().__init__(
+            app_name=app_name,
+            app_version=app_version,
+            run_name=run_name,
+            input_id=input_id,
+        )
+        self.ground_truth_output = ground_truth_output
+
+    # For use as a context manager.
+    def __enter__(self) -> None:
+        self.attach_to_context(SpanAttributes.APP_NAME, self.app_name)
+        self.attach_to_context(SpanAttributes.APP_VERSION, self.app_version)
+
+        self.attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
+        self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
+        self.attach_to_context(
+            SpanAttributes.RECORD_ROOT.GROUND_TRUTH_OUTPUT,
+            self.ground_truth_output,
+        )
+
+
+class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
+    def __init__(self, *args, **kwargs):
+        self.target_record_id = kwargs.pop("target_record_id")
+        self.feedback_name = kwargs.pop("feedback_name")
+        super().__init__(*args, **kwargs)
+
+    # For use as a context manager.
+    def __enter__(self) -> Span:
+        tracer = trace.get_tracer_provider().get_tracer(TRULENS_SERVICE_NAME)
+
+        self.attach_to_context(
+            SpanAttributes.RECORD_ID, self.target_record_id
+        )  # TODO(otel): Should we include this? It's automatically getting added to the span.
+        self.attach_to_context(SpanAttributes.APP_NAME, self.app_name)
+        self.attach_to_context(SpanAttributes.APP_VERSION, self.app_version)
+
+        self.attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
+        self.attach_to_context(
+            SpanAttributes.EVAL.TARGET_RECORD_ID, self.target_record_id
+        )
+        self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
+        self.attach_to_context(
+            SpanAttributes.EVAL.METRIC_NAME, self.feedback_name
+        )
+
+        # Use start_as_current_span as a context manager
+        self.span_context = tracer.start_as_current_span("eval_root")
+        root_span = self.span_context.__enter__()
+        root_span_id = str(root_span.get_span_context().span_id)
+
+        self.attach_to_context(
+            SpanAttributes.EVAL.EVAL_ROOT_ID,
+            root_span_id,
+        )
+
+        # Set general span attributes
+        root_span.set_attribute("name", "eval_root")
+        set_general_span_attributes(
+            root_span, SpanAttributes.SpanType.EVAL_ROOT
+        )
+
+        return root_span

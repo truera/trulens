@@ -1,16 +1,27 @@
 """Tests for Feedback class."""
 
+import time
 from unittest import TestCase
-from unittest import main
 
 import numpy as np
+import pytest
 from trulens.apps import basic as basic_app
+from trulens.core import Feedback
+from trulens.core import TruSession
 from trulens.core.feedback import feedback as core_feedback
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import select as select_schema
 
 # Get the "globally importable" feedback implementations.
 from tests.unit import feedbacks as test_feedbacks
+
+try:
+    from trulens.apps.langchain import TruChain
+    from trulens.providers.langchain import Langchain
+
+    import tests.unit.test_otel_tru_chain
+except ImportError:
+    pass
 
 
 class TestFeedbackEval(TestCase):
@@ -68,6 +79,41 @@ class TestFeedbackEval(TestCase):
 
         self.assertEqual(res.status, feedback_schema.FeedbackResultStatus.DONE)
         # But status should be DONE (as opposed to SKIPPED or ERROR)
+
+    @pytest.mark.optional
+    def test_same_provider_for_app_and_feedback(self) -> None:
+        tru_session = TruSession()
+        tru_session.reset_database()
+        rag_chain = (
+            tests.unit.test_otel_tru_chain.TestOtelTruChain._create_simple_rag()
+        )
+        llm = rag_chain.middle[
+            1
+        ]  # Bit of a hack, but this is the LLM for the chain.
+        provider = Langchain(chain=llm)
+        context = TruChain.select_context(rag_chain)
+        f_answer_relevance = Feedback(
+            provider.relevance_with_cot_reasons, name="Answer Relevance"
+        ).on_input_output()
+        f_groundedness = (
+            Feedback(
+                provider.groundedness_measure_with_cot_reasons,
+                name="Groundedness",
+            )
+            .on(context.collect())
+            .on_output()
+        )
+        tru_recorder = TruChain(
+            rag_chain,
+            app_name="ChatApplication",
+            app_version="Chain1",
+            feedbacks=[f_answer_relevance, f_groundedness],
+        )
+        with tru_recorder:
+            rag_chain.invoke("What is Task Decomposition?")
+            time.sleep(1)
+        res = tru_session.get_records_and_feedback()[0]
+        self.assertEqual(len(res), 1)
 
 
 class TestFeedbackConstructors(TestCase):
@@ -187,7 +233,3 @@ class TestFeedbackConstructors(TestCase):
                         feedbacks=[f],
                         feedback_mode=feedback_schema.FeedbackMode.DEFERRED,
                     )
-
-
-if __name__ == "__main__":
-    main()
