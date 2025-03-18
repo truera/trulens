@@ -1,5 +1,6 @@
 """Tests for TruChain."""
 
+import gc
 from typing import Optional
 import weakref
 
@@ -31,8 +32,30 @@ class TestTruChain(mod_test.TruTestCase):
     def _get_question_and_answers(index: int):
         return list(TestTruChain.ANSWERS.items())[index]
 
+    @staticmethod
+    def _import_nltk_hack():
+        # We need to import `nltk.parse.bllip` because if we don't do it early,
+        # it will be loaded at runtime while loading the endpoints through
+        # `llm_provider.py`. This in turn will import `nltk` which will in turn
+        # import `nltk.parse.bllip` which may fail to import `bllipparser` if
+        # it's not properly installed and then hold onto a traceback that will
+        # hold onto some references to objects we want to test are garbage
+        # collected.
+        import nltk.parse.bllip
+
+        failed = False
+        try:
+            nltk.parse.bllip._ensure_bllip_import_or_error()
+        except ImportError:
+            failed = True
+        if not failed:
+            raise ValueError(
+                "Likely no longer need to import nltk.parse.bllip prematurely!"
+            )
+
     @classmethod
     def setUpClass(cls):
+        cls._import_nltk_hack()
         # Cannot reset on each test as they might be done in parallel.
         core_session.TruSession().reset_database()
 
@@ -114,8 +137,9 @@ class TestTruChain(mod_test.TruTestCase):
         recorder_ref = weakref.ref(recorder)
         chain_ref = weakref.ref(chain)
         del recorder, recording, record, chain
-        self.assertCollected(recorder_ref)
-        self.assertCollected(chain_ref)
+        gc.collect()
+        self.assertCollected(recorder_ref, "recorder isn't GCed!")
+        self.assertCollected(chain_ref, "chain isn't GCed!")
 
     @mod_test.async_test
     async def test_async(self):
