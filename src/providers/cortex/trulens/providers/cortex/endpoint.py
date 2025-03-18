@@ -151,12 +151,20 @@ class CortexEndpoint(core_endpoint.Endpoint):
             raise e
 
         if isinstance(response_dict, dict) and "usage" in response_dict:
-            counted_something = True
+            if "choices" in response_dict:
+                choice = response_dict["choices"][0]
+                if (
+                    "finish_reason" in choice
+                    and choice["finish_reason"] == "stop"
+                ):
+                    counted_something = True
 
-            self.global_callback.handle_generation(response=response_dict)
+                    self.global_callback.handle_generation(
+                        response=response_dict
+                    )
 
-            if callback is not None:
-                callback.handle_generation(response=response_dict)
+                    if callback is not None:
+                        callback.handle_generation(response=response_dict)
 
         if not counted_something:
             logger.warning(
