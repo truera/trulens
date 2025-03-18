@@ -536,10 +536,19 @@ class Run(BaseModel):
             ):
                 logger.warning("All computations failed.")
                 return RunStatus.FAILED
-            else:
-                logger.warning("Cannot determine run status")
+            elif all(
+                metric.completion_status.status
+                in [
+                    Run.CompletionStatusStatus.COMPLETED,
+                    Run.CompletionStatusStatus.FAILED,
+                ]
+                for metric in all_existing_metrics
+            ):
+                return RunStatus.PARTIALLY_COMPLETED
 
-                return RunStatus.UNKNOWN
+            logger.warning("Cannot determine run status")
+
+            return RunStatus.UNKNOWN
         else:
             logger.info(
                 f"Metrics status not set for: {[metric.name for metric in metrics_status_not_set]}. Checking sproc query status via query history"
