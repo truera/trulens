@@ -1,11 +1,14 @@
 """Tests for TruChain."""
 
+import gc
+import json
 from typing import Optional
 import weakref
 
 from langchain.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai.chat_models.base import ChatOpenAI
+import pandas as pd
 import pytest
 from trulens.apps.langchain import tru_chain as mod_tru_chain
 from trulens.core import session as core_session
@@ -31,8 +34,36 @@ class TestTruChain(mod_test.TruTestCase):
     def _get_question_and_answers(index: int):
         return list(TestTruChain.ANSWERS.items())[index]
 
+    @staticmethod
+    def _load_first_record(record: pd.DataFrame) -> record_schema.Record:
+        return record_schema.Record.model_validate_json(
+            json.dumps(record.record_json.iloc[0])
+        )
+
+    @staticmethod
+    def _import_nltk_hack():
+        # We need to import `nltk.parse.bllip` because if we don't do it early,
+        # it will be loaded at runtime while loading the endpoints through
+        # `llm_provider.py`. This in turn will import `nltk` which will in turn
+        # import `nltk.parse.bllip` which may fail to import `bllipparser` if
+        # it's not properly installed and then hold onto a traceback that will
+        # hold onto some references to objects we want to test are garbage
+        # collected.
+        import nltk.parse.bllip
+
+        failed = False
+        try:
+            nltk.parse.bllip._ensure_bllip_import_or_error()
+        except ImportError:
+            failed = True
+        if not failed:
+            raise ValueError(
+                "Likely no longer need to import nltk.parse.bllip prematurely!"
+            )
+
     @classmethod
     def setUpClass(cls):
+        cls._import_nltk_hack()
         # Cannot reset on each test as they might be done in parallel.
         core_session.TruSession().reset_database()
 
@@ -114,8 +145,9 @@ class TestTruChain(mod_test.TruTestCase):
         recorder_ref = weakref.ref(recorder)
         chain_ref = weakref.ref(chain)
         del recorder, recording, record, chain
-        self.assertCollected(recorder_ref)
-        self.assertCollected(chain_ref)
+        gc.collect()
+        self.assertCollected(recorder_ref, "recorder isn't GCed!")
+        self.assertCollected(chain_ref, "chain isn't GCed!")
 
     @mod_test.async_test
     async def test_async(self):
@@ -218,9 +250,7 @@ class TestTruChain(mod_test.TruTestCase):
         ):
             recs, _ = session.get_records_and_feedback([recorder.app_id])
             self.assertGreater(len(recs), 0)
-            rec = record_schema.Record.model_validate_json(
-                recs.iloc[-1].record_json
-            )
+            rec = self._load_first_record(recs.iloc[-1:])
             self.assertEqual(rec.meta, meta)
 
         with self.subTest("Check updating the record metadata in the db."):
@@ -229,9 +259,7 @@ class TestTruChain(mod_test.TruTestCase):
             session.update_record(rec)
             recs, _ = session.get_records_and_feedback([recorder.app_id])
             self.assertGreater(len(recs), 0)
-            rec = record_schema.Record.model_validate_json(
-                recs[recs.record_id == rec.record_id].record_json[0]
-            )
+            rec = self._load_first_record(recs[recs.record_id == rec.record_id])
             self.assertNotEqual(rec.meta, meta)
             self.assertEqual(rec.meta, new_meta)
 
@@ -246,8 +274,8 @@ class TestTruChain(mod_test.TruTestCase):
                 self.assertEqual(rec.meta, None)
                 recs, _ = session.get_records_and_feedback([recorder.app_id])
                 self.assertGreater(len(recs), 1)
-                rec = record_schema.Record.model_validate_json(
-                    recs[recs.record_id == rec.record_id].record_json[0]
+                rec = self._load_first_record(
+                    recs[recs.record_id == rec.record_id]
                 )
                 self.assertEqual(rec.meta, None)
 
@@ -256,8 +284,8 @@ class TestTruChain(mod_test.TruTestCase):
                 session.update_record(rec)
                 recs, _ = session.get_records_and_feedback([recorder.app_id])
                 self.assertGreater(len(recs), 1)
-                rec = record_schema.Record.model_validate_json(
-                    recs[recs.record_id == rec.record_id].record_json[0]
+                rec = self._load_first_record(
+                    recs[recs.record_id == rec.record_id]
                 )
                 self.assertEqual(rec.meta, new_meta)
 
@@ -284,7 +312,7 @@ class TestTruChain(mod_test.TruTestCase):
             recorder.app_id
         ])
         self.assertGreater(len(recs), 0)
-        rec = record_schema.Record.model_validate_json(recs.iloc[0].record_json)
+        rec = self._load_first_record(recs)
         self.assertEqual(rec.meta, meta)
 
         # Check updating the record metadata in the db.
@@ -296,6 +324,6 @@ class TestTruChain(mod_test.TruTestCase):
             recorder.app_id
         ])
         self.assertGreater(len(recs), 0)
-        rec = record_schema.Record.model_validate_json(recs.iloc[0].record_json)
+        rec = self._load_first_record(recs)
         self.assertNotEqual(rec.meta, meta)
         self.assertEqual(rec.meta, new_meta)
