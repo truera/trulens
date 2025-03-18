@@ -1,12 +1,14 @@
 """Tests for TruChain."""
 
 import gc
+import json
 from typing import Optional
 import weakref
 
 from langchain.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai.chat_models.base import ChatOpenAI
+import pandas as pd
 import pytest
 from trulens.apps.langchain import tru_chain as mod_tru_chain
 from trulens.core import session as core_session
@@ -31,6 +33,12 @@ class TestTruChain(mod_test.TruTestCase):
     @staticmethod
     def _get_question_and_answers(index: int):
         return list(TestTruChain.ANSWERS.items())[index]
+
+    @staticmethod
+    def _load_first_record(record: pd.DataFrame) -> record_schema.Record:
+        return record_schema.Record.model_validate_json(
+            json.dumps(record.record_json.iloc[0])
+        )
 
     @staticmethod
     def _import_nltk_hack():
@@ -242,9 +250,7 @@ class TestTruChain(mod_test.TruTestCase):
         ):
             recs, _ = session.get_records_and_feedback([recorder.app_id])
             self.assertGreater(len(recs), 0)
-            rec = record_schema.Record.model_validate_json(
-                recs.iloc[-1].record_json
-            )
+            rec = self._load_first_record(recs.iloc[-1:])
             self.assertEqual(rec.meta, meta)
 
         with self.subTest("Check updating the record metadata in the db."):
@@ -253,9 +259,7 @@ class TestTruChain(mod_test.TruTestCase):
             session.update_record(rec)
             recs, _ = session.get_records_and_feedback([recorder.app_id])
             self.assertGreater(len(recs), 0)
-            rec = record_schema.Record.model_validate_json(
-                recs[recs.record_id == rec.record_id].record_json[0]
-            )
+            rec = self._load_first_record(recs[recs.record_id == rec.record_id])
             self.assertNotEqual(rec.meta, meta)
             self.assertEqual(rec.meta, new_meta)
 
@@ -270,8 +274,8 @@ class TestTruChain(mod_test.TruTestCase):
                 self.assertEqual(rec.meta, None)
                 recs, _ = session.get_records_and_feedback([recorder.app_id])
                 self.assertGreater(len(recs), 1)
-                rec = record_schema.Record.model_validate_json(
-                    recs[recs.record_id == rec.record_id].record_json[0]
+                rec = self._load_first_record(
+                    recs[recs.record_id == rec.record_id]
                 )
                 self.assertEqual(rec.meta, None)
 
@@ -280,8 +284,8 @@ class TestTruChain(mod_test.TruTestCase):
                 session.update_record(rec)
                 recs, _ = session.get_records_and_feedback([recorder.app_id])
                 self.assertGreater(len(recs), 1)
-                rec = record_schema.Record.model_validate_json(
-                    recs[recs.record_id == rec.record_id].record_json[0]
+                rec = self._load_first_record(
+                    recs[recs.record_id == rec.record_id]
                 )
                 self.assertEqual(rec.meta, new_meta)
 
@@ -308,7 +312,7 @@ class TestTruChain(mod_test.TruTestCase):
             recorder.app_id
         ])
         self.assertGreater(len(recs), 0)
-        rec = record_schema.Record.model_validate_json(recs.iloc[0].record_json)
+        rec = self._load_first_record(recs)
         self.assertEqual(rec.meta, meta)
 
         # Check updating the record metadata in the db.
@@ -320,6 +324,6 @@ class TestTruChain(mod_test.TruTestCase):
             recorder.app_id
         ])
         self.assertGreater(len(recs), 0)
-        rec = record_schema.Record.model_validate_json(recs.iloc[0].record_json)
+        rec = self._load_first_record(recs)
         self.assertNotEqual(rec.meta, meta)
         self.assertEqual(rec.meta, new_meta)
