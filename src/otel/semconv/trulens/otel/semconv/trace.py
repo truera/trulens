@@ -98,6 +98,12 @@ class SpanAttributes:
         GENERATION = "generation"
         """A generation call to an LLM."""
 
+        RETRIEVAL_GROUND_TRUTH = "retrieval_ground_truth"
+        """Ground truth for a retrieval task."""
+
+        RETRIEVAL_GROUND_TRUTH_DOCUMENT = "retrieval_ground_truth_document"
+        """A ground truth document for a retrieval task."""
+
     class UNKNOWN:
         """Attributes relevant for spans that could not be categorized otherwise."""
 
@@ -144,6 +150,9 @@ class SpanAttributes:
 
         RESULT = base + ".result"
         """Result of the evaluation."""
+
+        PARAMS = base + ".params"
+        """Parameters to the evaluation metric."""
 
         METADATA = base + ".metadata"
         """Any metadata of the evaluation."""
@@ -250,3 +259,28 @@ class SpanAttributes:
 
     class GENERATION:
         base = BASE_SCOPE + ".generation"
+
+    class RETRIEVAL_GROUND_TRUTH:
+        """Ground truth for a retrieval task."""
+
+        base = BASE_SCOPE + ".ground_truth"
+
+        DOCUMENT_IDS = base + ".document_ids"
+        """The document ids of the ground truth documents."""
+
+        QUERY_RELEVANCIES = base + ".query_relevancies"
+        """The relevance of the query to the ground truth documents."""
+
+        METADATA = base + ".metadata"
+        """The metadata of the ground truth."""
+
+    class RETRIEVAL_GROUND_TRUTH_DOCUMENT:
+        """A ground truth document for a retrieval task."""
+
+        base = BASE_SCOPE + ".ground_truth_document"
+
+        TEXT = base + ".text"
+        """The text of the ground truth document."""
+
+        DOCUMENT_ID = base + ".document_id"
+        """The document id of the ground truth document."""
