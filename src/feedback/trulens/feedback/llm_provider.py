@@ -718,7 +718,7 @@ class LLMProvider(core_provider.Provider):
     def _langchain_evaluate_with_cot_reasons(
         self,
         text: str,
-        criteria: Optional[str] = None,
+        criteria: str,
         min_score_val: Optional[int] = 0,
         max_score_val: Optional[int] = 3,
         temperature: Optional[float] = 0.0,

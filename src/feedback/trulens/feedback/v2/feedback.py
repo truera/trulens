@@ -1102,8 +1102,7 @@ class Comprehensiveness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
     system_prompt: ClassVar[str] = cleandoc(
         system_prompt_template.format(
-            output_space_prompt=output_space_prompt,
-            criteria=criteria,
+            output_space_prompt=output_space_prompt, criteria=criteria
         )
     )
 
