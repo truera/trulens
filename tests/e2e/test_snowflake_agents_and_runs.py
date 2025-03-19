@@ -83,7 +83,9 @@ class TestSnowflakeAgentsAndRuns(SnowflakeTestCase):
         self.assertIsNotNone(tru_recorder.snowflake_run_dao)
 
         self.assertEqual(tru_recorder.snowflake_object_type, "EXTERNAL AGENT")
-        self.assertEqual(tru_recorder.snowflake_object_name, TEST_APP_NAME)
+        self.assertEqual(
+            tru_recorder.snowflake_object_name, TEST_APP_NAME.upper()
+        )
 
         self.assertTrue(
             tru_recorder.snowflake_app_dao.check_agent_exists(TEST_APP_NAME)
@@ -180,7 +182,9 @@ class TestSnowflakeAgentsAndRuns(SnowflakeTestCase):
         self.assertIsNotNone(tru_recorder.snowflake_run_dao)
 
         self.assertEqual(tru_recorder.snowflake_object_type, "EXTERNAL AGENT")
-        self.assertEqual(tru_recorder.snowflake_object_name, TEST_APP_NAME)
+        self.assertEqual(
+            tru_recorder.snowflake_object_name, TEST_APP_NAME.upper()
+        )
 
         self.assertTrue(
             tru_recorder.snowflake_app_dao.check_agent_exists(TEST_APP_NAME)

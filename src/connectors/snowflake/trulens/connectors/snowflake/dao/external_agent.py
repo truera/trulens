@@ -118,11 +118,13 @@ class ExternalAgentDao:
         logger.info("Retrieved list of External Agents.")
         return result_df
 
-    def check_agent_exists(self, resolved_name: str) -> bool:
+    def check_agent_exists(self, name: str) -> bool:
         """Check if an External Agent exists."""
         agents = self._list_agents()
         if agents.empty or "name" not in agents.columns:
             return False
+
+        resolved_name = name.upper()
         logger.info(f"Checking if External Agent {resolved_name} exists.")
 
         return resolved_name in agents["name"].values
