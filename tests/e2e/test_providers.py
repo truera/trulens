@@ -876,9 +876,11 @@ class TestProviders(TestCase):
         Check that LangChain feedback functions produce values within the expected range
         and adhere to the expected format.
         """
+        from langchain.chat_models import ChatOpenAI
         from trulens.providers.langchain import Langchain
 
-        lc = Langchain()
+        llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+        lc = Langchain(llm)
 
         tests = get_langchain_tests(lc)
 
@@ -889,6 +891,8 @@ class TestProviders(TestCase):
         for imp, args, expected in tests:
             subtest_name = f"{imp.__name__}-{args}"
             actual = imp(**args)
+            if "with_cot_reasons" in imp.__name__:
+                actual = actual[0]  # Extract the actual score from the tuple.
             with self.subTest(subtest_name):
                 total_tests += 1
                 try:
