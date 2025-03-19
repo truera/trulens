@@ -362,6 +362,10 @@ class Run(BaseModel):
         """
         Check if the run is in a state that allows starting a new invocation.
         """
+        if self._is_cancelled():
+            logger.warning("Cannot start a new invocation for a cancelled run.")
+            return False
+
         return current_run_status in [
             RunStatus.CREATED,
             RunStatus.INVOCATION_PARTIALLY_COMPLETED,
@@ -375,6 +379,12 @@ class Run(BaseModel):
         """
         Check if the run is in a state that allows starting a new metric computation.
         """
+        if self._is_cancelled():
+            logger.warning(
+                "Cannot start a new metric computation for a cancelled run."
+            )
+            return False
+
         if current_run_status == RunStatus.COMPUTATION_IN_PROGRESS:
             logger.warning(
                 "Previous computation(s) still in progress. Starting another new metric computation when computation is in progress."
