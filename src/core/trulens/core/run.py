@@ -831,8 +831,34 @@ class Run(BaseModel):
         logger.info("Metrics computation job started")
         return "Metrics computation in progress."
 
+    def _is_cancelled(self) -> bool:
+        run_metadata_df = self.run_dao.get_run(
+            run_name=self.run_name,
+            object_name=self.object_name,
+            object_type=self.object_type,
+            object_version=self.object_version,
+        )
+        if run_metadata_df.empty:
+            raise ValueError(f"Run {self.run_name} not found.")
+
+        raw_json = json.loads(
+            list(run_metadata_df.to_dict(orient="records")[0].values())[0]
+        )
+
+        return raw_json.get("run_status") == "CANCELLED"
+
     def cancel(self):
-        raise NotImplementedError("cancel is not implemented yet.")
+        update_fields = {"run_status": "CANCELLED"}
+
+        self.run_dao.upsert_run_metadata_fields(
+            run_name=self.run_name,
+            object_name=self.object_name,
+            object_type=self.object_type,
+            object_version=self.object_version,
+            **update_fields,
+        )
+
+        logger.info(f"Run {self.run_name} cancelled.")
 
     def update(
         self, description: Optional[str] = None, label: Optional[str] = None
