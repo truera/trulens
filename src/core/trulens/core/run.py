@@ -858,6 +858,10 @@ class Run(BaseModel):
         return raw_json.get("run_status") == "CANCELLED"
 
     def cancel(self):
+        if self._is_cancelled():
+            logger.warning(f"Run {self.run_name} is already cancelled.")
+            return
+
         update_fields = {"run_status": "CANCELLED"}
 
         self.run_dao.upsert_run_metadata_fields(
