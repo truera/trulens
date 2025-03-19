@@ -84,29 +84,33 @@ class ExternalAgentDao:
             f"Added version {version} to External Agent {resolved_name}."
         )
 
-    def _get_current_version(self, name: str) -> str:
-        """Retrieve the current version of an External Agent."""
+    def drop_current_version(self, name: str) -> None:
+        """Drop a specific version from an External Agent."""
+
         versions_df = self.list_agent_versions(name)
+
+        print("gg")
+        print(versions_df)
 
         if not versions_df.empty:
             for _, row in versions_df.iterrows():
                 if "LAST" in row["aliases"]:
                     current_version = row["name"]
-                    return current_version
+                    if "DEFAULT" in row["aliases"]:
+                        raise ValueError(
+                            f"""Cannot drop the default version for {name}.
+                            To delete the version, application needs to be deleted. Note that deleting the application will delete all the versions and runs associated with the app"""
+                        )
 
-        raise ValueError(f"No versions found for External Agent {name}.")
+                    resolved_name = name.upper()
+                    query = f"""ALTER EXTERNAL AGENT if exists "{resolved_name}" DROP VERSION "{current_version}";"""
 
-    def drop_current_version(self, name: str) -> None:
-        """Drop a specific version from an External Agent."""
-
-        current_version = self._get_current_version(name)
-        resolved_name = name.upper()
-        query = f"""ALTER EXTERNAL AGENT if exists "{resolved_name}" DROP VERSION "{current_version}";"""
-
-        execute_query(self.session, query)
-        logger.info(
-            f"Dropped current version {current_version} from External Agent {name}."
-        )
+                    execute_query(self.session, query)
+                    logger.info(
+                        f"Dropped current version {current_version} from External Agent {name}."
+                    )
+        else:
+            raise ValueError(f"No versions found for External Agent {name}.")
 
     def _list_agents(self) -> pandas.DataFrame:
         """Retrieve a list of all External Agents."""
