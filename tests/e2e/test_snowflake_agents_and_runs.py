@@ -153,6 +153,39 @@ class TestSnowflakeAgentsAndRuns(SnowflakeTestCase):
         self.assertIn("v1", versions_df_2["name"].values)
         self.assertIn("v2", versions_df_2["name"].values)
 
+    def test_tru_dropping_versions(self):
+        TEST_APP_NAME = (
+            f"custom_app_multi_ver_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        )
+        app = TestApp()
+        tru_recorder = TruApp(
+            app,
+            app_name=TEST_APP_NAME,
+            app_version="v1",
+            connector=self.snowflake_connector,
+            main_method=app.respond_to_query,
+        )
+
+        # Create app version 2.
+        tru_recorder = TruApp(
+            app,
+            app_name=TEST_APP_NAME,
+            app_version="v2",
+            connector=self.snowflake_connector,
+            main_method=app.respond_to_query,
+        )
+
+        tru_recorder.delete_version()  # delete current version (v2) should succeed
+        versions_df = tru_recorder.snowflake_app_dao.list_agent_versions(
+            TEST_APP_NAME
+        )
+
+        self.assertIn("v1", versions_df["name"].values)
+        self.assertNotIn("v2", versions_df["name"].values)
+
+        with self.assertRaises(ValueError):
+            tru_recorder.delete_version()  # Attempting to delete the default version (v1) should raise ValueError
+
     def test_adding_run_missing_object_fields(self):
         app = TestApp()
 
