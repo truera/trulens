@@ -4,7 +4,7 @@ trulens:
   lows: {}
 trulens.benchmark:
   __class__: builtins.module
-  __version__: 1.4.2
+  __version__: 1.4.6
   highs: {}
   lows:
     __version__: builtins.str
@@ -60,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 1.4.2
+  __version__: 1.4.6
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -1829,7 +1829,7 @@ trulens.core.utils.trulens.Other:
   attributes: {}
 trulens.dashboard:
   __class__: builtins.module
-  __version__: 1.4.2
+  __version__: 1.4.6
   highs:
     run_dashboard: builtins.function
     run_dashboard_sis: builtins.function
@@ -2117,7 +2117,7 @@ trulens.dashboard.ux.styles.ResultCategoryType:
     value: enum.property
 trulens.feedback:
   __class__: builtins.module
-  __version__: 1.4.2
+  __version__: 1.4.6
   highs:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
@@ -2797,14 +2797,8 @@ trulens.feedback.v2.feedback.Insensitivity:
   - trulens.feedback.v2.feedback.WithPrompt
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
-    criteria: builtins.str
-    criteria_template: builtins.str
     languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
-    output_space: builtins.str
-    output_space_prompt: builtins.str
     system_prompt: builtins.str
-    system_prompt_template: builtins.str
-    user_prompt: builtins.str
 trulens.feedback.v2.feedback.LanguageMatch:
   __bases__:
   - trulens.feedback.v2.feedback.Syntax
@@ -3027,7 +3021,7 @@ trulens.feedback.v2.provider.base.Provider:
     tru_class_info: trulens.core.utils.pyschema.Class
 trulens.hotspots:
   __class__: builtins.module
-  __version__: 1.4.2
+  __version__: 1.4.6
   highs:
     HotspotsConfig: builtins.type
     get_skipped_columns: builtins.function
