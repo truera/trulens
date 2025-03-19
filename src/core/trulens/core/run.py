@@ -73,7 +73,8 @@ class RunStatus(str, Enum):
 
     CREATED = "CREATED"
     FAILED = "FAILED"
-    UNKNOWN = "UNKNOWN"  # TODO: do we want to show this to users?
+    CANCELLED = "CANCELLED"
+    UNKNOWN = "UNKNOWN"
 
 
 class SupportedEntryType(str, Enum):
@@ -200,6 +201,11 @@ class Run(BaseModel):
     run_name: str = Field(
         ...,
         description="Unique name of the run. This name should be unique within the object.",
+    )
+
+    run_status: Optional[str] = Field(
+        default=None,
+        description="The status of the run on the entity level. Currently it can only be ACTIVE or CANCELLED.",
     )
 
     description: Optional[str] = Field(
@@ -492,9 +498,6 @@ class Run(BaseModel):
             return RunStatus.INVOCATION_PARTIALLY_COMPLETED
 
         else:
-            if self._is_cancelled():
-                logger.warning("Run was cancelled when invocation in progress.")
-                return RunStatus.INVOCATION_PARTIALLY_COMPLETED
             return (
                 RunStatus.INVOCATION_IN_PROGRESS
                 if latest_invocation.end_time_ms == 0
@@ -530,11 +533,7 @@ class Run(BaseModel):
                 logger.info(
                     f"Computation {computation.id} is still running or being queued."
                 )
-                if self._is_cancelled():
-                    logger.warning(
-                        "Run was cancelled when computation in progress."
-                    )
-                    return RunStatus.PARTIALLY_COMPLETED
+
                 # Returning early to avoid unnecessary checks as long as at least one computation is still running
                 return RunStatus.COMPUTATION_IN_PROGRESS
             computation_sproc_query_ids_to_query_status[query_id] = query_status
@@ -797,6 +796,9 @@ class Run(BaseModel):
             },
         )
 
+        if run.run_status == "CANCELLED":
+            return RunStatus.CANCELLED
+
         if not self._is_invocation_started(run):
             logger.info("Run is created, no invocation nor computation yet.")
             return RunStatus.CREATED
@@ -852,20 +854,7 @@ class Run(BaseModel):
         return "Metrics computation in progress."
 
     def _is_cancelled(self) -> bool:
-        run_metadata_df = self.run_dao.get_run(
-            run_name=self.run_name,
-            object_name=self.object_name,
-            object_type=self.object_type,
-            object_version=self.object_version,
-        )
-        if run_metadata_df.empty:
-            raise ValueError(f"Run {self.run_name} not found.")
-
-        raw_json = json.loads(
-            list(run_metadata_df.to_dict(orient="records")[0].values())[0]
-        )
-
-        return raw_json.get("run_status") == "CANCELLED"
+        return self.get_status() == RunStatus.CANCELLED
 
     def cancel(self):
         if self._is_cancelled():

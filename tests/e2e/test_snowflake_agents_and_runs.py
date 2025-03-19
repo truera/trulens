@@ -6,6 +6,7 @@ from snowflake.snowpark import Session
 from trulens.apps.app import TruApp
 from trulens.connectors import snowflake as snowflake_connector
 from trulens.core.run import RunConfig
+from trulens.core.run import RunStatus
 from trulens.core.session import TruSession
 
 from tests.unit.test_otel_tru_custom import TestApp
@@ -284,3 +285,57 @@ class TestSnowflakeAgentsAndRuns(SnowflakeTestCase):
         runs = tru_recorder.list_runs()
         self.assertIn(TEST_RUN_NAME, [run.run_name for run in runs])
         self.assertNotIn("test_run_2", [run.run_name for run in runs])
+
+    def test_run_cancellation(self):
+        app = TestApp()
+
+        TEST_APP_NAME = f"custom_app_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+
+        tru_recorder = TruApp(
+            app,
+            app_name=TEST_APP_NAME,
+            app_version="v1",
+            connector=self.snowflake_connector,
+            main_method=app.respond_to_query,
+        )
+
+        test_table_name = "test_table"
+        self._snowpark_session.sql(
+            f"create table if not exists {test_table_name} (name varchar)"
+        ).collect()
+
+        TEST_RUN_NAME = f"test_run_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        run_config = RunConfig(
+            run_name=TEST_RUN_NAME,
+            dataset_name=test_table_name,
+            source_type="TABLE",
+            label="label",
+            dataset_spec={"input": "col1"},
+            description="desc",
+        )
+        run = tru_recorder.add_run(run_config=run_config)
+
+        self.assertIsNotNone(run)
+
+        run.cancel()
+
+        run_start_msg = run.start()
+
+        self.assertTrue(
+            run_start_msg.startswith(
+                "Cannot start a new invocation when in run status: RunStatus.CANCELLED"
+            )
+        )
+
+        run_compute_msg = run.compute_metrics(["groundedness"])
+        self.assertTrue(
+            run_compute_msg.startswith(
+                "Cannot start a new metric computation when in run status: RunStatus.CANCELLED"
+            )
+        )
+        self.assertEqual(run.get_status(), RunStatus.CANCELLED)
+
+        run = tru_recorder.get_run(
+            TEST_RUN_NAME
+        )  # retrieve latest run from DPO and verify its DPO entity level field run_status is updated
+        self.assertEqual(run.run_status, "CANCELLED")
