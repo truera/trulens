@@ -23,8 +23,7 @@ class DummyRow:
         return self._d
 
 
-# @pytest.mark.snowflake
-@pytest.mark.optional
+@pytest.mark.snowflake
 class TestExternalAgentDao(unittest.TestCase):
     def setUp(self):
         if ExternalAgentDao is None:
