@@ -796,10 +796,21 @@ class Run(BaseModel):
             logger.info(
                 "Run is created, invocation done, and computation started."
             )
+            if self._is_cancelled():
+                logger.warning(
+                    "Run was cancelled when computation in progress."
+                )
+                return RunStatus.PARTIALLY_COMPLETED
+
             return self._compute_overall_computations_status(run)
 
         else:
             logger.info("Run is created, invocation started.")
+
+            if self._is_cancelled():
+                logger.warning("Run was cancelled when invocation in progress.")
+                return RunStatus.INVOCATION_PARTIALLY_COMPLETED
+
             return self._compute_latest_invocation_status(run)
 
     def compute_metrics(self, metrics: List[str]) -> str:
