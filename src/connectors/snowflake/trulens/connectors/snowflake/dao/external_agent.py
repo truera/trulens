@@ -89,12 +89,11 @@ class ExternalAgentDao:
 
         versions_df = self.list_agent_versions(name)
 
-        print("gg")
-        print(versions_df)
-
         if not versions_df.empty:
+            found_last = False
             for _, row in versions_df.iterrows():
                 if "LAST" in row["aliases"]:
+                    found_last = True
                     current_version = row["name"]
                     if "DEFAULT" in row["aliases"]:
                         raise ValueError(
@@ -109,6 +108,12 @@ class ExternalAgentDao:
                     logger.info(
                         f"Dropped current version {current_version} from External Agent {name}."
                     )
+                    break
+
+            if not found_last:
+                raise ValueError(
+                    f"No version with 'LAST' alias found for External Agent {name}."
+                )
         else:
             raise ValueError(f"No versions found for External Agent {name}.")
 
