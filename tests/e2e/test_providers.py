@@ -101,7 +101,7 @@ def get_llmprovider_tests(
             provider.context_relevance,
             dict(
                 question="What is the capital of Poland?",
-                statement="The capital of Germany is Berlin.",
+                context="The capital of Germany is Berlin.",
             ),
             0.0,
         ),
@@ -109,7 +109,7 @@ def get_llmprovider_tests(
             provider.context_relevance,
             dict(
                 question="What is the capital of Germany?",
-                statement="The capital of Germany is Berlin.",
+                context="The capital of Germany is Berlin.",
             ),
             1.0,
         ),
@@ -117,7 +117,7 @@ def get_llmprovider_tests(
             provider.context_relevance_with_cot_reasons,
             dict(
                 question="What is the capital of Poland?",
-                statement="The capital of Germany is Berlin.",
+                context="The capital of Germany is Berlin.",
             ),
             0.0,
         ),
@@ -125,7 +125,7 @@ def get_llmprovider_tests(
             provider.context_relevance_with_cot_reasons,
             dict(
                 question="What is the capital of Germany?",
-                statement="The capital of Germany is Berlin.",
+                context="The capital of Germany is Berlin.",
             ),
             1.0,
         ),
@@ -166,7 +166,7 @@ def get_llmprovider_tests(
         ),
         (
             provider.conciseness,
-            dict(text="A long sentence puts together many complex words."),
+            dict(text="1 + 1 = 2"),
             1.0,
         ),
         (
@@ -178,7 +178,7 @@ def get_llmprovider_tests(
         ),
         (
             provider.conciseness_with_cot_reasons,
-            dict(text="A long sentence puts together many complex words."),
+            dict(text="1 + 1 = 2"),
             1.0,
         ),
         (
@@ -699,7 +699,7 @@ class TestProviders(TestCase):
 
         provider_models = [
             (openai_provider.OpenAI(model_engine=model), model)
-            for model in ["gpt-3.5-turbo", "gpt-4"]
+            for model in ["gpt-4o", "gpt-4"]
         ]
         for provider, model in provider_models:
             provider_name = provider.__class__.__name__
