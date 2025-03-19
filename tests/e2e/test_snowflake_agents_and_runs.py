@@ -97,7 +97,7 @@ class TestSnowflakeAgentsAndRuns(SnowflakeTestCase):
             "v1", versions_df["name"].values
         )  # version is uppercased in snowflake
 
-        tru_recorder.delete_snowflake_app()
+        tru_recorder.delete()
 
         self.assertFalse(
             tru_recorder.snowflake_app_dao.check_agent_exists(TEST_APP_NAME)
@@ -221,7 +221,7 @@ class TestSnowflakeAgentsAndRuns(SnowflakeTestCase):
 
         self.assertDictEqual(run.model_dump(), new_run.model_dump())
 
-        tru_recorder.delete_snowflake_app()  # cleanup external agent after test
+        tru_recorder.delete()  # cleanup external agent after test
 
     def test_list_runs_after_adding(self):
         app = TestApp()

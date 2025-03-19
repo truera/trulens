@@ -4,7 +4,7 @@ trulens:
   lows: {}
 trulens.benchmark:
   __class__: builtins.module
-  __version__: 1.4.2
+  __version__: 1.4.4
   highs: {}
   lows:
     __version__: builtins.str
@@ -60,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 1.4.2
+  __version__: 1.4.4
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -115,7 +115,8 @@ trulens.core.app.App:
     awith_record: builtins.function
     connector: builtins.property
     db: builtins.property
-    delete_snowflake_app: builtins.function
+    delete: builtins.function
+    delete_version: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
     feedback_mode: trulens.core.schema.feedback.FeedbackMode
@@ -1829,7 +1830,7 @@ trulens.core.utils.trulens.Other:
   attributes: {}
 trulens.dashboard:
   __class__: builtins.module
-  __version__: 1.4.2
+  __version__: 1.4.4
   highs:
     run_dashboard: builtins.function
     run_dashboard_sis: builtins.function
@@ -2117,7 +2118,7 @@ trulens.dashboard.ux.styles.ResultCategoryType:
     value: enum.property
 trulens.feedback:
   __class__: builtins.module
-  __version__: 1.4.2
+  __version__: 1.4.4
   highs:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
@@ -3027,7 +3028,7 @@ trulens.feedback.v2.provider.base.Provider:
     tru_class_info: trulens.core.utils.pyschema.Class
 trulens.hotspots:
   __class__: builtins.module
-  __version__: 1.4.2
+  __version__: 1.4.4
   highs:
     HotspotsConfig: builtins.type
     get_skipped_columns: builtins.function
