@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
+import pandas as pd
 import pytest
 
 try:
@@ -22,7 +23,8 @@ class DummyRow:
         return self._d
 
 
-@pytest.mark.snowflake
+# @pytest.mark.snowflake
+@pytest.mark.optional
 class TestExternalAgentDao(unittest.TestCase):
     def setUp(self):
         if ExternalAgentDao is None:
@@ -135,6 +137,50 @@ class TestExternalAgentDao(unittest.TestCase):
         queries = [call[0][1] for call in calls]
         self.assertIn(expected_add_query, queries)
         self.assertEqual(mock_execute_query.call_count, 3)
+
+    @patch("trulens.connectors.snowflake.dao.external_agent.execute_query")
+    def test_delete_agent(self, mock_execute_query):
+        # Simulate that the agent exists.
+        mock_execute_query.side_effect = [
+            [DummyRow({"name": "AGENT1"})],  # list_agents call
+        ]
+
+        self.dao.drop_agent("agent1")
+
+        expected_drop_query = 'DROP EXTERNAL AGENT "AGENT1";'
+        calls = mock_execute_query.call_args_list
+        queries = [call[0][1] for call in calls]
+        self.assertIn(expected_drop_query, queries)
+        self.assertEqual(mock_execute_query.call_count, 1)
+
+    @patch.object(ExternalAgentDao, "list_agent_versions")
+    def test_get_current_version_success(self, mock_list_agent_versions):
+        # Simulate list_agent_versions returning a DataFrame with two rows,
+        # where one row's "aliases" contains "LAST".
+        data = [
+            {"aliases": ["FIRST", "DEFAULT"], "name": "v0"},
+            {"aliases": ["LAST", "DEFAULT"], "name": "v1"},
+        ]
+        df = pd.DataFrame(data)
+        mock_list_agent_versions.return_value = df
+
+        current_version = self.dao._get_current_version("agent1")
+        self.assertEqual(current_version, "v1")
+
+    @patch("trulens.connectors.snowflake.dao.external_agent.execute_query")
+    @patch.object(ExternalAgentDao, "_get_current_version", return_value="v1")
+    def test_drop_current_version(
+        self, mock_get_current_version, mock_execute_query
+    ):
+        # When drop_current_version is called, _get_current_version returns "v1".
+        # The agent name should be resolved to upper-case.
+        self.dao.drop_current_version("agent1")
+        expected_query = (
+            'ALTER EXTERNAL AGENT if exists "AGENT1" DROP VERSION "v1";'
+        )
+        mock_execute_query.assert_called_once_with(
+            self.sf_session, expected_query
+        )
 
     def test_is_valid_object(self):
         self.assertTrue(ObjectType.EXTERNAL_AGENT == "EXTERNAL AGENT")
