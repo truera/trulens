@@ -682,6 +682,8 @@ class DummyEndpoint(core_endpoint._WithPost, core_endpoint.Endpoint):
         # TODELETE(otel_tracing). Delete once otel_tracing is no longer
         # experimental.
 
+        response = mod_json.loads(response.text)[0]
+
         logger.debug(
             "Handling dummyapi instrumented call to func: %s,\n"
             "\tbindings: %s,\n"
