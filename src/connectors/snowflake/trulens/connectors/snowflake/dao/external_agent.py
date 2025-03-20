@@ -84,13 +84,38 @@ class ExternalAgentDao:
             f"Added version {version} to External Agent {resolved_name}."
         )
 
-    def drop_version(self, name: str, version: str) -> None:
+    def drop_current_version(self, name: str) -> None:
         """Drop a specific version from an External Agent."""
-        resolved_name = name.upper()
-        query = f"""ALTER EXTERNAL AGENT if exists "{resolved_name}" DROP VERSION "{version}";"""
 
-        execute_query(self.session, query)
-        logger.info(f"Dropped version {version} from External Agent {name}.")
+        versions_df = self.list_agent_versions(name)
+
+        if not versions_df.empty:
+            found_last = False
+            for _, row in versions_df.iterrows():
+                if "LAST" in row["aliases"]:
+                    found_last = True
+                    current_version = row["name"]
+                    if "DEFAULT" in row["aliases"]:
+                        raise ValueError(
+                            f"""Cannot drop the default version for {name}.
+                            To delete the version, application needs to be deleted. Note that deleting the application will delete all the versions and runs associated with the app"""
+                        )
+
+                    resolved_name = name.upper()
+                    query = f"""ALTER EXTERNAL AGENT if exists "{resolved_name}" DROP VERSION "{current_version}";"""
+
+                    execute_query(self.session, query)
+                    logger.info(
+                        f"Dropped current version {current_version} from External Agent {name}."
+                    )
+                    break
+
+            if not found_last:
+                raise ValueError(
+                    f"No version with 'LAST' alias found for External Agent {name}."
+                )
+        else:
+            raise ValueError(f"No versions found for External Agent {name}.")
 
     def _list_agents(self) -> pandas.DataFrame:
         """Retrieve a list of all External Agents."""
@@ -102,11 +127,13 @@ class ExternalAgentDao:
         logger.info("Retrieved list of External Agents.")
         return result_df
 
-    def check_agent_exists(self, resolved_name: str) -> bool:
+    def check_agent_exists(self, name: str) -> bool:
         """Check if an External Agent exists."""
         agents = self._list_agents()
         if agents.empty or "name" not in agents.columns:
             return False
+
+        resolved_name = name.upper()
         logger.info(f"Checking if External Agent {resolved_name} exists.")
 
         return resolved_name in agents["name"].values
