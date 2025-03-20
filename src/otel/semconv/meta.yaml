@@ -1,5 +1,5 @@
 {% set name = "trulens-otel-semconv" %}
-{% set version = "1.4.6" %}
+{% set version = "1.4.7" %}
 
 package:
   name: {{ name|lower }}

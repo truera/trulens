@@ -1,5 +1,5 @@
 {% set name = "trulens-apps-langchain" %}
-{% set version = "1.3.3" %}
+{% set version = "1.4.7" %}
 
 package:
   name: {{ name|lower }}
