@@ -1805,10 +1805,17 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             )
         return runs
 
-    def delete_snowflake_app(self) -> None:
-        """Delete the snowflake App (managing object) in snowflake, if applicable."""
+    def delete(self) -> None:
+        """Delete the snowflake App (external agent) in snowflake. All versions will be removed"""
         self._check_snowflake_dao()
         self.snowflake_app_dao.drop_agent(self.snowflake_object_name)
+
+    def delete_version(self) -> None:
+        """Delete the current version of the snowflake App (external agent) in snowflake.
+        Only the non-default version can be deleted.
+        """
+        self._check_snowflake_dao()
+        self.snowflake_app_dao.drop_current_version(self.snowflake_object_name)
 
     def run(self, run_name: str):
         if self.session.experimental_feature(
