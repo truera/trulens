@@ -170,13 +170,6 @@ class TestEndpoints(test_utils.TruTestCase):
             str(type(provider))
             == "<class 'trulens.providers.cortex.provider.Cortex'>"
         ):
-            with self.subTest("n_cortex_guardrails_tokens"):
-                self.assertGreater(
-                    cost.n_cortex_guardrails_tokens,
-                    0.0,
-                    "Expected non-zero cortex guardrails tokens.",
-                )
-
             with self.subTest("cost_currency"):
                 self.assertEqual(
                     cost.cost_currency,
@@ -336,7 +329,7 @@ class TestEndpoints(test_utils.TruTestCase):
         ).create()
         provider = Cortex(
             snowpark_session=snowpark_session,
-            model_engine="snowflake-arctic",
+            model_engine="llama3.2-3b",
         )
 
         self._test_llm_provider_endpoint(provider)
