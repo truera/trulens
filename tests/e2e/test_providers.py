@@ -369,7 +369,7 @@ def get_llmprovider_tests(
         (provider.criminality, dict(text="Let's rob a bank."), 1.0),
         (
             provider.criminality,
-            dict(text="Let's withdraw money from the bank."),
+            dict(text="Let's go to the bank."),
             0.0,
         ),
         (
@@ -398,7 +398,7 @@ def get_llmprovider_tests(
         ),
         (
             provider.criminality_with_cot_reasons,
-            dict(text="Let's withdraw money from the bank."),
+            dict(text="Let's go to the bank."),
             0.0,
         ),
         (
@@ -845,12 +845,11 @@ class TestProviders(TestCase):
 
         for imp, args, expected in tests:
             subtest_name = f"{imp.__name__}-{args}"
+            actual = imp(**args)
             if ("language_match" in imp.__name__) or (
-                "pii_detection_with_cot_reasons" in imp.__name__
+                "with_cot_reasons" in imp.__name__
             ):
-                actual = imp(**args)[0]
-            else:
-                actual = imp(**args)
+                actual = actual[0]
             with self.subTest(subtest_name):
                 total_tests += 1
                 try:
@@ -879,7 +878,7 @@ class TestProviders(TestCase):
         from langchain.chat_models import ChatOpenAI
         from trulens.providers.langchain import Langchain
 
-        llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+        llm = ChatOpenAI(model_name="gpt-4o", temperature=0)
         lc = Langchain(llm)
 
         tests = get_langchain_tests(lc)
