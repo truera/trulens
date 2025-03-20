@@ -76,6 +76,8 @@ def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
         # OpenAI version 1 classes may cause this isinstance test to raise an
         # exception.
         is_prop = isinstance(v, property)
+    except AttributeError as e:
+        raise e
     except Exception as e:
         return {constant_utils.ERROR: Obj.of_object(e)}
 
@@ -86,7 +88,8 @@ def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
         try:
             v = v.fget(obj)
             return v
-
+        except AttributeError as e:
+            raise e
         except Exception as e:
             return {constant_utils.ERROR: Obj.of_object(e)}
     else:

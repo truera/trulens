@@ -6,7 +6,7 @@
 
 SHELL := /bin/bash
 REPO_ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
-PYTEST := poetry run pytest --rootdir=. -s -r fex --durations=0
+PYTEST := poetry run pytest -n auto --rootdir=. -s -r fex --durations=0
 POETRY_DIRS := $(shell find . \
 	-not -path "./dist/*" \
 	-maxdepth 4 \
@@ -32,6 +32,8 @@ env-%:
 
 env-tests:
 	poetry run pip install \
+		pytest \
+		pytest-xdist[psutil] \
 		jsondiff \
 		nbconvert \
 		nbformat \
@@ -67,8 +69,17 @@ env-tests-db: env-tests
 env-tests-notebook: env-tests env-tests-optional
 	poetry run pip install \
 		faiss-cpu \
+		llama-hub \
+		rank_bm25 \
 		ipytree \
-		llama-index-readers-web
+		sentencepiece \
+		langchainhub \
+		llama-index-readers-web \
+		llama-index-vector-stores-milvus \
+		llama-index-retrievers-bm25 \
+		llama-index-tools-yelp \
+		llama-index-vector-stores-mongodb \
+		langchain-huggingface
 
 # Lock the poetry dependencies for all the subprojects.
 lock: $(POETRY_DIRS)
