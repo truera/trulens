@@ -908,7 +908,8 @@ trulens_eval.TruApp:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
-    delete_snowflake_app: builtins.function
+    delete: builtins.function
+    delete_version: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -1020,7 +1021,8 @@ trulens_eval.TruBasicApp:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
-    delete_snowflake_app: builtins.function
+    delete: builtins.function
+    delete_version: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -1132,7 +1134,8 @@ trulens_eval.TruChain:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
-    delete_snowflake_app: builtins.function
+    delete: builtins.function
+    delete_version: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -1242,7 +1245,8 @@ trulens_eval.TruCustomApp:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
-    delete_snowflake_app: builtins.function
+    delete: builtins.function
+    delete_version: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -1353,7 +1357,8 @@ trulens_eval.TruLlama:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
-    delete_snowflake_app: builtins.function
+    delete: builtins.function
+    delete_version: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -1464,7 +1469,8 @@ trulens_eval.TruRails:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
-    delete_snowflake_app: builtins.function
+    delete: builtins.function
+    delete_version: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -1576,7 +1582,8 @@ trulens_eval.TruVirtual:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
-    delete_snowflake_app: builtins.function
+    delete: builtins.function
+    delete_version: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -1719,7 +1726,8 @@ trulens_eval.app.App:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
-    delete_snowflake_app: builtins.function
+    delete: builtins.function
+    delete_version: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -7194,7 +7202,8 @@ trulens_eval.tru_basic_app.TruBasicApp:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
-    delete_snowflake_app: builtins.function
+    delete: builtins.function
+    delete_version: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -7350,7 +7359,8 @@ trulens_eval.tru_chain.TruChain:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
-    delete_snowflake_app: builtins.function
+    delete: builtins.function
+    delete_version: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -7468,7 +7478,8 @@ trulens_eval.tru_custom_app.TruCustomApp:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
-    delete_snowflake_app: builtins.function
+    delete: builtins.function
+    delete_version: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -7610,7 +7621,8 @@ trulens_eval.tru_llama.TruLlama:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
-    delete_snowflake_app: builtins.function
+    delete: builtins.function
+    delete_version: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -7787,7 +7799,8 @@ trulens_eval.tru_rails.TruRails:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
-    delete_snowflake_app: builtins.function
+    delete: builtins.function
+    delete_version: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
@@ -7907,7 +7920,8 @@ trulens_eval.tru_virtual.TruVirtual:
     continue_session: builtins.staticmethod
     copy: builtins.function
     db: builtins.property
-    delete_snowflake_app: builtins.function
+    delete: builtins.function
+    delete_version: builtins.function
     dict: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]

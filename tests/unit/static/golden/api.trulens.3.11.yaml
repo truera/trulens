@@ -115,7 +115,8 @@ trulens.core.app.App:
     awith_record: builtins.function
     connector: builtins.property
     db: builtins.property
-    delete_snowflake_app: builtins.function
+    delete: builtins.function
+    delete_version: builtins.function
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
     feedback_mode: trulens.core.schema.feedback.FeedbackMode
@@ -773,6 +774,7 @@ trulens.core.run.Run:
     run_dao: typing.Any
     run_metadata: trulens.core.run.Run.RunMetadata
     run_name: builtins.str
+    run_status: typing.Optional[builtins.str, builtins.NoneType]
     source_info: trulens.core.run.Run.SourceInfo
     start: builtins.function
     tru_session: typing.Any
@@ -795,6 +797,7 @@ trulens.core.run.RunStatus:
   - enum.Enum
   __class__: enum.EnumType
   attributes:
+    CANCELLED: trulens.core.run.RunStatus
     COMPLETED: trulens.core.run.RunStatus
     COMPUTATION_IN_PROGRESS: trulens.core.run.RunStatus
     CREATED: trulens.core.run.RunStatus
