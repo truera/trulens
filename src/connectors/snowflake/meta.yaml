@@ -1,5 +1,5 @@
 {% set name = "trulens-connectors-snowflake" %}
-{% set version = "1.4.6" %}
+{% set version = "1.4.7" %}
 
 package:
   name: {{ name|lower }}
@@ -11,7 +11,7 @@ source:
   {% else %}
   url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-connectors-snowflake/#files
-  sha256: 854fdfce53c23fb23e7d3b9c6e5ac02b4825c4e6790bec5046ba1335c07f3360
+  sha256: 631b110461ecf1f6f25ef10fcbd1137c14e37ff2de851f60a045b80e76a3130c
   {% endif %}
 
 build:
