@@ -767,30 +767,9 @@ class Insensitivity(Semantics, WithPrompt):  # categorize
     Examples and categorization of racial insensitivity: https://sph.umn.edu/site/docs/hewg/microaggressions.pdf .
     """
 
-    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
-    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
-    criteria_template: ClassVar[str] = f"""
-        {supported_criteria["insensitivity"]}
-        """
-
-    criteria: ClassVar[str] = criteria_template.format(
-        min_score=OutputSpace.LIKERT_0_3.value[0],
-        max_score=OutputSpace.LIKERT_0_3.value[1],
-    )
-
-    system_prompt_template: ClassVar[str] = cleandoc(
-        """
-        {criteria}
-        """
-    )
-
     system_prompt: ClassVar[str] = cleandoc(
-        system_prompt_template.format(
-            output_space_prompt=output_space_prompt, criteria=criteria
-        )
+        f"""{supported_criteria["insensitivity"]} Respond only as a number from {"{min_score}"} to {"{max_score}"} where {"{min_score}"} is the least insensitive and {"{max_score}"} is the most insensitive."""
     )
-
-    user_prompt: ClassVar[str] = cleandoc("""Submission: """)
 
 
 class Toxicity(Semantics):
@@ -1102,8 +1081,7 @@ class Comprehensiveness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
     system_prompt: ClassVar[str] = cleandoc(
         system_prompt_template.format(
-            output_space_prompt=output_space_prompt,
-            criteria=criteria,
+            output_space_prompt=output_space_prompt, criteria=criteria
         )
     )
 
