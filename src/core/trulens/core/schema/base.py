@@ -108,6 +108,15 @@ class Cost(serial_utils.SerialModel, pydantic.BaseModel):
             else getattr(other, k)
             for k in self.model_fields.keys()
         }
+        if other.cost_currency != self.cost_currency:
+            if self.cost == 0:
+                kwargs["cost_currency"] = other.cost_currency
+            elif other.cost == 0:
+                kwargs["cost_currency"] = self.cost_currency
+            else:
+                raise ValueError(
+                    f"Cannot add costs with different currencies: {self.cost_currency} and {other.cost_currency}!"
+                )
         return Cost(**kwargs)
 
     def __radd__(self, other: "Cost") -> "Cost":
