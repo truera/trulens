@@ -533,7 +533,7 @@ class DummyEndpointCallback(core_endpoint.EndpointCallback):
     def handle_classification(self, response: Sequence) -> None:
         super().handle_classification(response)
 
-        if "scores" in response:
+        if all("score" in curr for curr in response):
             # fake classification
             self.cost.n_classes += len(response)
 
