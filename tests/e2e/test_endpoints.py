@@ -44,9 +44,10 @@ class TestEndpoints(test_utils.TruTestCase):
             # "AWS_SECRET_ACCESS_KEY",
             # "AWS_SESSION_TOKEN",
             # for azure openai tests
+            "AZURE_OPENAI_DEPLOYMENT",
             "AZURE_OPENAI_API_KEY",
             "AZURE_OPENAI_ENDPOINT",
-            "AZURE_OPENAI_DEPLOYMENT_NAME",
+            "OPENAI_API_VERSION",
             # for snowflake cortex
             "SNOWFLAKE_ACCOUNT",
             "SNOWFLAKE_USER",
@@ -254,8 +255,10 @@ class TestEndpoints(test_utils.TruTestCase):
         OpenAIEndpoint.delete_instances()
 
         provider = AzureOpenAI(
-            model_engine=AzureOpenAI.DEFAULT_MODEL_ENGINE,
-            deployment_name=os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"],
+            deployment_name=os.environ["AZURE_OPENAI_DEPLOYMENT"],  # gpt-4o
+            api_key=os.environ["AZURE_OPENAI_API_KEY"],
+            azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
+            api_version=os.environ["OPENAI_API_VERSION"],
         )
 
         self._test_llm_provider_endpoint(provider)
@@ -276,7 +279,7 @@ class TestEndpoints(test_utils.TruTestCase):
         from trulens.providers.litellm import LiteLLM
 
         provider = LiteLLM(
-            f"azure/{os.environ['AZURE_OPENAI_DEPLOYMENT_NAME']}",
+            f"azure/{os.environ['AZURE_OPENAI_DEPLOYMENT']}",
             completion_kwargs=dict(
                 api_base=os.environ["AZURE_OPENAI_ENDPOINT"]
             ),
