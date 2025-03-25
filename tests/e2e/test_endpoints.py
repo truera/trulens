@@ -37,7 +37,7 @@ class TestEndpoints(test_utils.TruTestCase):
             # for non-azure openai tests
             "OPENAI_API_KEY",
             # for huggingface tests
-            "HUGGINGFACE_API_KEY",
+            # "HUGGINGFACE_API_KEY",
             # for bedrock tests # no current keys available for bedrock
             # "AWS_REGION_NAME",
             # "AWS_ACCESS_KEY_ID",
@@ -255,19 +255,24 @@ class TestEndpoints(test_utils.TruTestCase):
         OpenAIEndpoint.delete_instances()
 
         provider = AzureOpenAI(
-            deployment_name=os.environ["AZURE_OPENAI_DEPLOYMENT"],  # gpt-4o
+            deployment_name=os.environ["AZURE_OPENAI_DEPLOYMENT"],
             api_key=os.environ["AZURE_OPENAI_API_KEY"],
             azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
             api_version=os.environ["OPENAI_API_VERSION"],
         )
 
-        self._test_llm_provider_endpoint(provider)
+        self._test_llm_provider_endpoint(
+            provider, with_cost=False
+        )  # no cost tracking for azure openai when using Snowflake's deployment
 
     @pytest.mark.optional
     def test_litellm_openai_azure(self):
         """Check that cost tracking works for openai models through litellm."""
 
         os.environ["OPENAI_API_TYPE"] = "azure"
+        os.environ["AZURE_API_BASE"] = os.getenv(
+            "AZURE_OPENAI_ENDPOINT"
+        )  # this is required to be set explicitly for some weird reason alongside the api_base in completion_kwargs
 
         # Have to delete litellm endpoint singleton as it may have been created
         # with the wrong underlying litellm provider in a prior test.
@@ -280,7 +285,7 @@ class TestEndpoints(test_utils.TruTestCase):
         provider = LiteLLM(
             f"azure/{os.environ['AZURE_OPENAI_DEPLOYMENT']}",
             completion_kwargs=dict(
-                api_base=os.environ["AZURE_OPENAI_ENDPOINT"]
+                api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
             ),
         )
 
