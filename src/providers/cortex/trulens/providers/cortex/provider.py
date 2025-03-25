@@ -7,7 +7,7 @@ from typing import (
 )
 
 from packaging.version import Version
-from snowflake.cortex import Complete
+from snowflake.cortex import complete
 import snowflake.ml.version
 from snowflake.snowpark import Session
 from snowflake.snowpark import context
@@ -145,7 +145,7 @@ class Cortex(
 
         options = {"temperature": temperature}
 
-        completion_res: str = Complete(
+        completion_res: str = complete(
             model=model,
             prompt=messages,
             options=options,

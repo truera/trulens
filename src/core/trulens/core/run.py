@@ -74,7 +74,8 @@ class RunStatus(str, Enum):
 
     CREATED = "CREATED"
     FAILED = "FAILED"
-    UNKNOWN = "UNKNOWN"  # TODO: do we want to show this to users?
+    CANCELLED = "CANCELLED"
+    UNKNOWN = "UNKNOWN"
 
 
 class SupportedEntryType(str, Enum):
@@ -201,6 +202,11 @@ class Run(BaseModel):
     run_name: str = Field(
         ...,
         description="Unique name of the run. This name should be unique within the object.",
+    )
+
+    run_status: Optional[str] = Field(
+        default=None,
+        description="The status of the run on the entity level. Currently it can only be ACTIVE or CANCELLED.",
     )
 
     description: Optional[str] = Field(
@@ -363,6 +369,10 @@ class Run(BaseModel):
         """
         Check if the run is in a state that allows starting a new invocation.
         """
+        if self._is_cancelled():
+            logger.warning("Cannot start a new invocation for a cancelled run.")
+            return False
+
         return current_run_status in [
             RunStatus.CREATED,
             RunStatus.INVOCATION_PARTIALLY_COMPLETED,
@@ -376,6 +386,12 @@ class Run(BaseModel):
         """
         Check if the run is in a state that allows starting a new metric computation.
         """
+        if self._is_cancelled():
+            logger.warning(
+                "Cannot start a new metric computation for a cancelled run."
+            )
+            return False
+
         if current_run_status == RunStatus.COMPUTATION_IN_PROGRESS:
             logger.warning(
                 "Previous computation(s) still in progress. Starting another new metric computation when computation is in progress."
@@ -794,6 +810,9 @@ class Run(BaseModel):
             },
         )
 
+        if run.run_status == "CANCELLED":
+            return RunStatus.CANCELLED
+
         if not self._is_invocation_started(run):
             logger.info("Run is created, no invocation nor computation yet.")
             return RunStatus.CREATED
@@ -801,10 +820,12 @@ class Run(BaseModel):
             logger.info(
                 "Run is created, invocation done, and some or all metrics computed."
             )
+
             return self._compute_overall_computations_status(run)
 
         else:
             logger.info("Run is created, invocation started.")
+
             return self._compute_latest_invocation_status(run)
 
     def _should_skip_computation(self, metric_name: str, run: Run) -> bool:
@@ -912,8 +933,25 @@ class Run(BaseModel):
         logger.info("Metrics computation job started")
         return "Metrics computation in progress."
 
+    def _is_cancelled(self) -> bool:
+        return self.get_status() == RunStatus.CANCELLED
+
     def cancel(self):
-        raise NotImplementedError("cancel is not implemented yet.")
+        if self._is_cancelled():
+            logger.warning(f"Run {self.run_name} is already cancelled.")
+            return
+
+        update_fields = {"run_status": "CANCELLED"}
+
+        self.run_dao.upsert_run_metadata_fields(
+            run_name=self.run_name,
+            object_name=self.object_name,
+            object_type=self.object_type,
+            object_version=self.object_version,
+            **update_fields,
+        )
+
+        logger.info(f"Run {self.run_name} cancelled.")
 
     def update(
         self, description: Optional[str] = None, label: Optional[str] = None

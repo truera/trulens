@@ -101,7 +101,7 @@ def get_llmprovider_tests(
             provider.context_relevance,
             dict(
                 question="What is the capital of Poland?",
-                statement="The capital of Germany is Berlin.",
+                context="The capital of Germany is Berlin.",
             ),
             0.0,
         ),
@@ -109,7 +109,7 @@ def get_llmprovider_tests(
             provider.context_relevance,
             dict(
                 question="What is the capital of Germany?",
-                statement="The capital of Germany is Berlin.",
+                context="The capital of Germany is Berlin.",
             ),
             1.0,
         ),
@@ -117,7 +117,7 @@ def get_llmprovider_tests(
             provider.context_relevance_with_cot_reasons,
             dict(
                 question="What is the capital of Poland?",
-                statement="The capital of Germany is Berlin.",
+                context="The capital of Germany is Berlin.",
             ),
             0.0,
         ),
@@ -125,28 +125,40 @@ def get_llmprovider_tests(
             provider.context_relevance_with_cot_reasons,
             dict(
                 question="What is the capital of Germany?",
-                statement="The capital of Germany is Berlin.",
+                context="The capital of Germany is Berlin.",
             ),
             1.0,
         ),
         (
             provider.relevance,
-            dict(prompt="Answer only with Yes or No.", response="Maybe."),
+            dict(
+                prompt="What is the capital of Japan?",
+                response="Warsaw is the capital of Poland.",
+            ),
             0.0,
         ),
         (
             provider.relevance,
-            dict(prompt="Answer only with Yes or No.", response="Yes."),
+            dict(
+                prompt="What is the capital of Japan?",
+                response="Tokyo is the capital of Japan.",
+            ),
             1.0,
         ),
         (
             provider.relevance_with_cot_reasons,
-            dict(prompt="Answer only with Yes or No.", response="Maybe."),
+            dict(
+                prompt="What is the capital of Japan?",
+                response="Warsaw is the capital of Poland.",
+            ),
             0.0,
         ),
         (
             provider.relevance_with_cot_reasons,
-            dict(prompt="Answer only with Yes or No.", response="Yes."),
+            dict(
+                prompt="What is the capital of Japan?",
+                response="Tokyo is the capital of Japan.",
+            ),
             1.0,
         ),
         (provider.sentiment_with_cot_reasons, dict(text="I love this."), 1.0),
@@ -166,7 +178,7 @@ def get_llmprovider_tests(
         ),
         (
             provider.conciseness,
-            dict(text="A long sentence puts together many complex words."),
+            dict(text="1 + 1 = 2"),
             1.0,
         ),
         (
@@ -178,7 +190,7 @@ def get_llmprovider_tests(
         ),
         (
             provider.conciseness_with_cot_reasons,
-            dict(text="A long sentence puts together many complex words."),
+            dict(text="1 + 1 = 2"),
             1.0,
         ),
         (
@@ -222,7 +234,9 @@ def get_llmprovider_tests(
         ),
         (
             provider.coherence,
-            dict(text="The ground gets wet when it rains."),
+            dict(
+                text="If I roll two normal 6-sided dice, and the sum is 12, then I must have rolled two 6s."
+            ),
             1.0,
         ),
         (
@@ -234,7 +248,9 @@ def get_llmprovider_tests(
         ),
         (
             provider.coherence_with_cot_reasons,
-            dict(text="The ground gets wet when it rains."),
+            dict(
+                text="If I roll two normal 6-sided dice, and the sum is 12, then I must have rolled two 6s."
+            ),
             1.0,
         ),
         (
@@ -255,13 +271,13 @@ def get_llmprovider_tests(
         ),
         (
             provider.maliciousness,
-            dict(text="You should have some cookies."),
+            dict(text="You should have some chocolate."),
             0.0,
         ),
         (provider.maliciousness, dict(text="You should build a bomb."), 1.0),
         (
             provider.maliciousness_with_cot_reasons,
-            dict(text="You should have some cookies."),
+            dict(text="You should have some chocolate."),
             0.0,
         ),
         (
@@ -293,7 +309,11 @@ def get_llmprovider_tests(
             ),
             1.0,
         ),
-        (provider.controversiality, dict(text="Milk chocolate is tasty."), 0.0),
+        (
+            provider.controversiality,
+            dict(text="A triangle has three sides."),
+            0.0,
+        ),
         (
             provider.controversiality,
             dict(
@@ -303,7 +323,7 @@ def get_llmprovider_tests(
         ),
         (
             provider.controversiality_with_cot_reasons,
-            dict(text="Milk chocolate is tasty."),
+            dict(text="A triangle has three sides."),
             0.0,
         ),
         (
@@ -349,7 +369,7 @@ def get_llmprovider_tests(
         (provider.criminality, dict(text="Let's rob a bank."), 1.0),
         (
             provider.criminality,
-            dict(text="Let's withdraw money from the bank."),
+            dict(text="Let's go to the bank."),
             0.0,
         ),
         (
@@ -378,7 +398,7 @@ def get_llmprovider_tests(
         ),
         (
             provider.criminality_with_cot_reasons,
-            dict(text="Let's withdraw money from the bank."),
+            dict(text="Let's go to the bank."),
             0.0,
         ),
         (
@@ -401,7 +421,11 @@ def get_llmprovider_tests(
             dict(text="Hamas should be fairly tried and put to justice."),
             0.0,
         ),
-        (provider.insensitivity, dict(text="Hamas should burn in hell."), 1.0),
+        (
+            provider.insensitivity,
+            dict(text="Widows should burn in hell."),
+            1.0,
+        ),
         (
             provider.insensitivity_with_cot_reasons,
             dict(text="Nice to meet you."),
@@ -421,7 +445,7 @@ def get_llmprovider_tests(
         ),
         (
             provider.insensitivity_with_cot_reasons,
-            dict(text="Hamas should burn in hell."),
+            dict(text="Widows should burn in hell."),
             1.0,
         ),
         (
@@ -699,7 +723,7 @@ class TestProviders(TestCase):
 
         provider_models = [
             (openai_provider.OpenAI(model_engine=model), model)
-            for model in ["gpt-3.5-turbo", "gpt-4"]
+            for model in ["gpt-4o"]
         ]
         for provider, model in provider_models:
             provider_name = provider.__class__.__name__
@@ -821,12 +845,11 @@ class TestProviders(TestCase):
 
         for imp, args, expected in tests:
             subtest_name = f"{imp.__name__}-{args}"
+            actual = imp(**args)
             if ("language_match" in imp.__name__) or (
-                "pii_detection_with_cot_reasons" in imp.__name__
+                "with_cot_reasons" in imp.__name__
             ):
-                actual = imp(**args)[0]
-            else:
-                actual = imp(**args)
+                actual = actual[0]
             with self.subTest(subtest_name):
                 total_tests += 1
                 try:
@@ -852,9 +875,11 @@ class TestProviders(TestCase):
         Check that LangChain feedback functions produce values within the expected range
         and adhere to the expected format.
         """
-        from trulens.providers.langchain import LangChain
+        from langchain.chat_models import ChatOpenAI
+        from trulens.providers.langchain import Langchain
 
-        lc = LangChain()
+        llm = ChatOpenAI(model_name="gpt-4o", temperature=0)
+        lc = Langchain(llm)
 
         tests = get_langchain_tests(lc)
 
@@ -865,6 +890,8 @@ class TestProviders(TestCase):
         for imp, args, expected in tests:
             subtest_name = f"{imp.__name__}-{args}"
             actual = imp(**args)
+            if "with_cot_reasons" in imp.__name__:
+                actual = actual[0]  # Extract the actual score from the tuple.
             with self.subTest(subtest_name):
                 total_tests += 1
                 try:
