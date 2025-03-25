@@ -533,7 +533,7 @@ class DummyEndpointCallback(core_endpoint.EndpointCallback):
     def handle_classification(self, response: Sequence) -> None:
         super().handle_classification(response)
 
-        if "scores" in response:
+        if all("score" in curr for curr in response):
             # fake classification
             self.cost.n_classes += len(response)
 
@@ -681,6 +681,8 @@ class DummyEndpoint(core_endpoint._WithPost, core_endpoint.Endpoint):
     ) -> Any:
         # TODELETE(otel_tracing). Delete once otel_tracing is no longer
         # experimental.
+
+        response = mod_json.loads(response.text)[0]
 
         logger.debug(
             "Handling dummyapi instrumented call to func: %s,\n"

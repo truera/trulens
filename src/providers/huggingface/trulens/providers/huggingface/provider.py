@@ -345,7 +345,7 @@ class HuggingfaceBase(core_provider.Provider):
 
         if not "." == premise[len(premise) - 1]:
             premise = premise + "."
-        nli_string = premise + " " + hypothesis
+        nli_string = "<s> " + premise + " </s><s> " + hypothesis + " </s>"
         return self._summarized_groundedness_endpoint(nli_string)
 
     def pii_detection(self, text: str) -> float:
