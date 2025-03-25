@@ -37,7 +37,7 @@ class TestEndpoints(test_utils.TruTestCase):
             # for non-azure openai tests
             "OPENAI_API_KEY",
             # for huggingface tests
-            # "HUGGINGFACE_API_KEY",
+            "HUGGINGFACE_API_KEY",
             # for bedrock tests # no current keys available for bedrock
             # "AWS_REGION_NAME",
             # "AWS_ACCESS_KEY_ID",
