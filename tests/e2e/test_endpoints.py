@@ -267,7 +267,6 @@ class TestEndpoints(test_utils.TruTestCase):
     def test_litellm_openai_azure(self):
         """Check that cost tracking works for openai models through litellm."""
 
-        os.environ["OPENAI_API_VERSION"] = "2023-07-01-preview"
         os.environ["OPENAI_API_TYPE"] = "azure"
 
         # Have to delete litellm endpoint singleton as it may have been created
