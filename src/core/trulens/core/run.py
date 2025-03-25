@@ -53,8 +53,8 @@ DATASET_RESERVED_FIELDS: Set[str] = {
 }
 
 
-INVOCATION_TIMEOUT_IN_MS = (
-    5 * 60 * 1000
+EXPECTED_TELEMETRY_LATENCY_IN_MS = (
+    2 * 60 * 1000
 )  # expected latency from the telemetry pipeline before ingested rows show up in event table
 
 
@@ -284,11 +284,11 @@ class Run(BaseModel):
         )
         start_time_ms: Optional[int] = Field(
             default=None,
-            description="The start time of the invocation.",
+            description="The start time of the ingestion after invocation of app is done.",
         )
         end_time_ms: Optional[int] = Field(
             default=None,
-            description="The end time of the invocation.",
+            description="The end time of the invocation after all / some of the records are ingested into the event table.",
         )
         completion_status: Optional[Run.CompletionStatus] = Field(
             default=None,
@@ -475,7 +475,7 @@ class Run(BaseModel):
         elif (
             latest_invocation.start_time_ms
             and time.time() * 1000 - latest_invocation.start_time_ms
-            > INVOCATION_TIMEOUT_IN_MS
+            > EXPECTED_TELEMETRY_LATENCY_IN_MS
         ):
             # inconclusive case, timeout reached and add end time and update completion status in DPO
             logger.warning("Invocation timeout reached and concluded")
@@ -694,22 +694,9 @@ class Run(BaseModel):
             dataset_name=self.source_info.name,
             input_records_count=input_records_count,
         )
-        start_time_ms = self._get_current_time_in_ms()
 
         logger.info(
             f"Creating or updating invocation metadata with {input_records_count} records from input."
-        )
-
-        self.run_dao.upsert_run_metadata_fields(
-            entry_type=SupportedEntryType.INVOCATIONS.value,
-            entry_id=invocation_metadata_id,
-            start_time_ms=start_time_ms,
-            end_time_ms=0,  # required field
-            run_name=self.run_name,
-            input_records_count=input_records_count,
-            object_name=self.object_name,
-            object_type=self.object_type,
-            object_version=self.object_version,
         )
 
         # user app invocation - will block until the app completes
@@ -748,17 +735,31 @@ class Run(BaseModel):
                     ),  # Ensure correct order
                     main_method_kwargs=None,  # don't take any kwargs for now so we don't break TruChain / TruLlama where input argument name cannot be defined by users.
                 )
+
+            self.run_dao.upsert_run_metadata_fields(
+                entry_type=SupportedEntryType.INVOCATIONS.value,
+                entry_id=invocation_metadata_id,
+                start_time_ms=self._get_current_time_in_ms(),  # mark the start time after all invocations are done, so that the timeout for partially completed is not based on the app invocation latency themselves
+                end_time_ms=0,  # required field
+                run_name=self.run_name,
+                input_records_count=input_records_count,
+                object_name=self.object_name,
+                object_type=self.object_type,
+                object_version=self.object_version,
+            )
+
         except Exception as e:
             logger.exception(
                 f"Error encountered during invoking app main method: {e}."
             )
 
+            current_time = self._get_current_time_in_ms()
             self.run_dao.upsert_run_metadata_fields(
                 entry_type=SupportedEntryType.INVOCATIONS.value,
                 entry_id=invocation_metadata_id,
-                start_time_ms=start_time_ms,
+                start_time_ms=current_time,
                 input_records_count=input_records_count,
-                end_time_ms=self._get_current_time_in_ms(),
+                end_time_ms=current_time,
                 completion_status=Run.CompletionStatus(
                     status=Run.CompletionStatusStatus.FAILED,
                 ).model_dump(),
