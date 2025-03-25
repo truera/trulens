@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import ClassVar, Dict, Optional, Sequence
 
 import pydantic
@@ -56,20 +57,24 @@ class LiteLLM(llm_provider.LLMProvider):
             completion_kwargs = {}
 
         if model_engine.startswith("azure/") and (
-            completion_kwargs is None or "api_base" not in completion_kwargs
+            completion_kwargs is None
+            or (
+                "api_base" not in completion_kwargs
+                and not os.getenv("AZURE_API_BASE")
+            )
         ):
             raise ValueError(
                 "Azure model engine requires 'api_base' parameter to litellm completions. "
                 "Provide it to LiteLLM provider in the 'completion_kwargs' parameter:"
                 """
-```python
-provider = LiteLLM(
-    "azure/your_deployment_name",
-    completion_kwargs={
-        "api_base": "https://yourendpoint.openai.azure.com/"
-    }
-)
-```
+                ```python
+                provider = LiteLLM(
+                    "azure/your_deployment_name",
+                    completion_kwargs={
+                        "api_base": "https://yourendpoint.openai.azure.com/"
+                    }
+                )
+                ```
                 """
             )
 

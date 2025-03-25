@@ -284,9 +284,6 @@ class TestEndpoints(test_utils.TruTestCase):
 
         provider = LiteLLM(
             f"azure/{os.environ['AZURE_OPENAI_DEPLOYMENT']}",
-            completion_kwargs=dict(
-                api_base=os.environ["AZURE_OPENAI_ENDPOINT"],
-            ),
         )
 
         self._test_llm_provider_endpoint(provider)
