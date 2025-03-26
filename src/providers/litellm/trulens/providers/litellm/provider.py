@@ -57,11 +57,8 @@ class LiteLLM(llm_provider.LLMProvider):
             completion_kwargs = {}
 
         if model_engine.startswith("azure/") and (
-            completion_kwargs is None
-            or (
-                "api_base" not in completion_kwargs
-                and not os.getenv("AZURE_API_BASE")
-            )
+            "api_base" not in completion_kwargs
+            and not os.getenv("AZURE_API_BASE")
         ):
             raise ValueError(
                 "Azure model engine requires 'api_base' parameter to litellm completions. "
