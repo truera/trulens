@@ -510,8 +510,8 @@ def get_huggingface_tests(
         (
             h._summarized_groundedness,
             dict(
-                premise="A man, woman, and child enjoying themselves on a beach.",
-                hypothesis="A family of three is at the beach.",
+                premise="A man is eating pizza",
+                hypothesis="A man eats something",
             ),
             1.0,
         ),
