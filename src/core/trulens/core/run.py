@@ -474,11 +474,14 @@ class Run(BaseModel):
 
         elif (
             latest_invocation.start_time_ms
-            and time.time() * 1000 - latest_invocation.start_time_ms
+            and time.time() * 1000
+            - self.run_dao.read_latest_record_root_timestamp_in_ms(
+                object_name=self.object_name, run_name=self.run_name
+            )
             > EXPECTED_TELEMETRY_LATENCY_IN_MS
         ):
             # inconclusive case, timeout reached and add end time and update completion status in DPO
-            logger.warning("Invocation timeout reached and concluded")
+            logger.warning("Invocation timed out.")
             self.run_dao.upsert_run_metadata_fields(
                 entry_type=SupportedEntryType.INVOCATIONS.value,
                 entry_id=latest_invocation.id,

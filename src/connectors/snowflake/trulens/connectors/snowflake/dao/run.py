@@ -566,6 +566,59 @@ class RunDao:
             )
             raise
 
+    def read_latest_record_root_timestamp_in_ms(
+        self, object_name: str, run_name: str
+    ) -> Optional[int]:
+        """
+        Retrieve the timestamp of the latest record_root from the event table.
+
+        Args:
+            object_name: The name of the managing object.
+            run_name: The unique name of the run.
+
+        Returns:
+            The timestamp of the latest record_root, or None if no records are found.
+        """
+        query = """
+            SELECT
+                MAX(TIMESTAMP) AS latest_timestamp
+            FROM
+                table(snowflake.local.GET_AI_OBSERVABILITY_EVENTS(
+                    ?,
+                    ?,
+                    ?,
+                    'EXTERNAL AGENT'
+                ))
+            WHERE
+                RECORD_ATTRIBUTES:"snow.ai.observability.run.name" = ? AND
+                RECORD_ATTRIBUTES:"ai.observability.span_type" = 'record_root' LIMIT 1;
+        """
+        logger.debug("Executing query: %s", query)
+        try:
+            result_df = self.session.sql(
+                query,
+                params=[
+                    self.session.get_current_database()[1:-1],
+                    self.session.get_current_schema()[1:-1],
+                    object_name,
+                    run_name,
+                ],
+            ).to_pandas()
+
+            if "latest_timestamp" in result_df.columns and not result_df.empty:
+                latest_timestamp = result_df["latest_timestamp"].iloc[0]
+                return (
+                    int(latest_timestamp * 1000)
+                    if latest_timestamp is not None
+                    else None
+                )
+            return None
+        except Exception as e:
+            logger.exception(
+                f"Error encountered during reading latest record_root timestamp from event table: {e}."
+            )
+            raise
+
     def fetch_query_execution_status_by_id(
         self, query_start_time_ms: int, query_id: str
     ) -> str:
