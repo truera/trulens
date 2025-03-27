@@ -739,7 +739,7 @@ trulens.core.run:
   highs: {}
   lows:
     DATASET_RESERVED_FIELDS: builtins.set
-    INVOCATION_TIMEOUT_IN_MS: builtins.int
+    EXPECTED_TELEMETRY_LATENCY_IN_MS: builtins.int
     Run: pydantic._internal._model_construction.ModelMetaclass
     RunConfig: pydantic._internal._model_construction.ModelMetaclass
     RunStatus: enum.EnumType
