@@ -36,6 +36,28 @@ pipeline {
         ansiColor('xterm')
     }
 
+
+    triggers {
+        // Handles push to main and release branches
+        githubPush(
+            includeBranches: ['main', 'releases/**']
+        )
+
+        /// Handles PRs created or updated against any branch
+        githubPullRequest(
+            cron: 'H/5 * * * *', // Run every 5 minutes
+            triggerPhrase: '.*run\\s+tests.*', // Start manual run by commenting "run tests"
+            onlyTriggerPhrase: false,
+            useGitHubHooks: true,
+            permitAll: false,
+            cancelQueued: true,
+            autoCloseFailedPullRequests: false,
+            extensions: [
+                [$class: 'GitHubStatusUpdater'] // Automatically update GitHub PR status
+            ]
+        )
+    }
+
     stages {
         stage('prepare') {
             steps {
@@ -87,6 +109,18 @@ pipeline {
                     }
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()  // Clean workspace after build
+        }
+        success {
+            echo 'All tests passed!'
+        }
+        failure {
+            echo 'Tests failed. See logs for details.'
         }
     }
 }
