@@ -45,15 +45,15 @@ pipeline {
 
         /// Handles PRs created or updated against any branch
         githubPullRequest(
-            cron: 'H/5 * * * *', // Run every 5 minutes
+            // cron: 'H/5 * * * *', // Poll every 5 minutes - note: not ideal for performance, but can be used if webhooks are not available
             triggerPhrase: '.*run\\s+e2e\\s+tests.*', // Start manual run by commenting "run e2e tests"
             onlyTriggerPhrase: false,
-            useGitHubHooks: false, // Note: polling is perhaps not the best strategy here
+            useGitHubHooks: true,
             permitAll: false,
             cancelQueued: true,
             autoCloseFailedPullRequests: false,
             extensions: [
-                [$class: 'GitHubStatusUpdater']
+                [$class: 'GitHubStatusUpdater'] // Automatically update GitHub PR status
             ]
         )
     }
