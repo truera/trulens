@@ -127,6 +127,22 @@ def _set_span_attributes(
         )
 
 
+def instrument_arg_parser(func):
+    @wrapt.decorator
+    def wrapper(f, instance, args, kwargs):
+        if len(args) == 0:
+            return f(**kwargs)
+        if len(args) == 1:
+            if callable(args[0]) and len(kwargs) == 0:
+                return f()(args[0])
+        raise ValueError(
+            "`@instrument` decorator must be called only with keyword arguments!"
+        )
+
+    return wrapper(func)
+
+
+@instrument_arg_parser
 def instrument(
     *,
     span_type: SpanAttributes.SpanType = SpanAttributes.SpanType.UNKNOWN,
