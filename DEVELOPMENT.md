@@ -146,6 +146,7 @@ where `<TEST(S) TO RUN>` is any valid argument to `pytest` such as:
 3. A specific test. E.g. `./tests/unit/test_otel_tru_chain.py::TestOtelTruChain::test_smoke`
 4. Any list of these.
 
+To run all unit tests:
 ```bash
 # Runs tests from tests/unit with the current environment
 make test-unit
