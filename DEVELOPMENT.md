@@ -136,6 +136,16 @@ make lint
 
 ### Run tests
 
+To run a single test or specific group of tests:
+```
+TEST_OPTIONAL=true TEST_SNOWFLAKE=true poetry run pytest -rfex --durations=0 <TEST(S) TO RUN>
+```
+where `<TEST(S) TO RUN>` is any valid argument to `pytest` such as:
+1. A file. E.g. `./tests/unit/test_otel_tru_chain.py`
+2. A class. E.g. `./tests/unit/test_otel_tru_chain.py::TestOtelTruChain`
+3. A specific test. E.g. `./tests/unit/test_otel_tru_chain.py::TestOtelTruChain::test_smoke`
+4. Any list of these.
+
 ```bash
 # Runs tests from tests/unit with the current environment
 make test-unit
