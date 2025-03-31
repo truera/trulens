@@ -1,397 +1,444 @@
-from collections import defaultdict
 import unittest
+from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pandas as pd
 import pytest
 
-# --- Dummy classes to simulate Run metadata (these mimic your proto/Pydantic models) ---
+try:
+    from trulens.core.run import INVOCATION_TIMEOUT_IN_MS
+    from trulens.core.run import Run
+    from trulens.core.run import RunStatus
+
+except Exception:
+    Run = None
+    RunStatus = None
 
 
-class DummyCompletionStatus:
-    def __init__(self, status, record_count=None):
-        self.status = status
-        self.record_count = record_count
-
-    def model_dump(self):
-        return {"status": self.status, "record_count": self.record_count}
-
-
-class DummyInvocation:
-    def __init__(self, id, start_time_ms, completion_status):
-        self.id = id
-        self.start_time_ms = start_time_ms
-        self.completion_status = completion_status
-
-
-class DummyMetric:
-    def __init__(self, id, name, completion_status, computation_id):
-        self.id = id
-        self.name = name
-        self.completion_status = completion_status
-        self.computation_id = computation_id
-
-
-class DummyComputation:
-    def __init__(self, id, query_id, start_time_ms):
-        self.id = id
-        self.query_id = query_id
-        self.start_time_ms = start_time_ms
+# Helper: create a dummy Run instance from a dict.
+def create_dummy_run(run_metadata_dict: dict, run_status: str = None) -> Run:
+    # Minimal required fields for Run model.
+    base = {
+        "run_name": "test_run",
+        "object_name": "TEST_AGENT",
+        "object_type": "EXTERNAL AGENT",
+        "object_version": "v1",
+        "run_metadata": run_metadata_dict,
+        "source_info": {
+            "name": "dummy_source",
+            "column_spec": {"dummy": "dummy"},
+            "source_type": "TABLE",
+        },
+    }
+    # Extra fields needed by from_metadata_df.
+    extra = {
+        "app": MagicMock(),
+        "main_method_name": "dummy_method",
+        "run_dao": MagicMock(),
+        "tru_session": MagicMock(),
+    }
+    # Create a Run instance via model_validate.
+    run = Run.model_validate({**base, **extra})
+    if run_status is not None:
+        run.run_status = run_status
+    return run
 
 
-class DummyRunMetadata:
-    def __init__(self, invocations=None, metrics=None, computations=None):
-        self.invocations = invocations or {}
-        self.metrics = metrics or {}
-        self.computations = computations or {}
-
-
-class DummyRun:
-    def __init__(
-        self, run_metadata, run_name, object_name, object_type, object_version
-    ):
-        self.run_metadata = run_metadata
-        self.run_name = run_name
-        self.object_name = object_name
-        self.object_type = object_type
-        self.object_version = object_version
-
-
-# --- Dummy Enums for statuses ---
-class RunStatus:
-    COMPLETED = "COMPLETED"
-    PARTIALLY_COMPLETED = "PARTIALLY_COMPLETED"
-    FAILED = "FAILED"
-    UNKNOWN = "UNKNOWN"
-    COMPUTATION_IN_PROGRESS = "COMPUTATION_IN_PROGRESS"
-
-
-class CompletionStatusStatus:
-    COMPLETED = "COMPLETED"
-    FAILED = "FAILED"
-    PARTIALLY_COMPLETED = "PARTIALLY_COMPLETED"
-    UNKNOWN = "UNKNOWN"
-
-
-# --- Dummy RunDao with methods to be patched ---
-class DummyRunDao:
-    def fetch_query_execution_status_by_id(self, query_start_time_ms, query_id):
-        return "UNKNOWN"
-
-    def fetch_computation_job_results_by_query_id(self, query_id):
-        return pd.DataFrame()
-
-    def upsert_run_metadata_fields(self, **kwargs):
-        pass
-
-
-# --- A dummy Run class for _compute_overall_computations_status ---
-class DummyRunClass:
-    def __init__(self):
-        self.run_dao = DummyRunDao()
-        self.run_name = "dummy_run"
-        self.object_name = "dummy_agent"
-        self.object_type = "EXTERNAL AGENT"
-        self.object_version = "v1"
-
-    def _get_current_time_in_ms(self):
-        return 9999999999  # fixed dummy value
-
-    def _compute_overall_computations_status(self, run: DummyRun) -> str:
-        # Copy of the method to test, using our dummy classes and enums.
-        all_existing_metrics = run.run_metadata.metrics.values()
-
-        latest_invocation = max(
-            run.run_metadata.invocations.values(),
-            key=lambda inv: (inv.start_time_ms or 0, inv.id or ""),
-        )
-        invocation_completion_status = (
-            latest_invocation.completion_status.status
-        )
-
-        # Metrics with no set status.
-        metrics_status_not_set = [
-            metric
-            for metric in all_existing_metrics
-            if not metric.completion_status
-            or not metric.completion_status.status
-        ]
-
-        if len(metrics_status_not_set) == 0:
-            # All metrics are set.
-            if all(
-                metric.completion_status.status
-                == CompletionStatusStatus.COMPLETED
-                for metric in all_existing_metrics
-            ):
-                return (
-                    RunStatus.COMPLETED
-                    if invocation_completion_status
-                    == CompletionStatusStatus.COMPLETED
-                    else RunStatus.PARTIALLY_COMPLETED
-                )
-            elif all(
-                metric.completion_status.status == CompletionStatusStatus.FAILED
-                for metric in all_existing_metrics
-            ):
-                return RunStatus.FAILED
-            elif all(
-                metric.completion_status.status
-                in [
-                    CompletionStatusStatus.COMPLETED,
-                    CompletionStatusStatus.FAILED,
-                ]
-                for metric in all_existing_metrics
-            ):
-                return RunStatus.PARTIALLY_COMPLETED
-            return RunStatus.UNKNOWN
-        else:
-            # Some metrics not set.
-            computation_id_to_metrics = defaultdict(list)
-            for metric in metrics_status_not_set:
-                computation_id_to_metrics[metric.computation_id].append(metric)
-
-            all_computations = run.run_metadata.computations.values()
-
-            some_computation_in_progress = False
-            for computation in all_computations:
-                if computation.id in computation_id_to_metrics:
-                    query_id = computation.query_id
-                    query_status = (
-                        self.run_dao.fetch_query_execution_status_by_id(
-                            query_start_time_ms=computation.start_time_ms,
-                            query_id=query_id,
-                        )
-                    )
-                    if query_status == "IN_PROGRESS":
-                        some_computation_in_progress = True
-                    elif query_status in ("FAILED", "SUCCESS"):
-                        self.run_dao.upsert_run_metadata_fields(
-                            entry_type="computations",
-                            entry_id=computation.id,
-                            query_id=query_id,
-                            start_time_ms=computation.start_time_ms,
-                            end_time_ms=self._get_current_time_in_ms(),
-                            run_name=self.run_name,
-                            object_name=self.object_name,
-                            object_type=self.object_type,
-                            object_version=self.object_version,
-                        )
-                        metrics_in_computation = computation_id_to_metrics[
-                            computation.id
-                        ]
-                        result_rows = self.run_dao.fetch_computation_job_results_by_query_id(
-                            query_id
-                        )
-                        metric_name_to_status = {
-                            row["METRIC"]: row["STATUS"]
-                            for _, row in result_rows.iterrows()
-                        }
-                        metric_name_to_computed_records_count = {
-                            row["METRIC"]: int(row["MESSAGE"].split(" ")[1])
-                            for _, row in result_rows.iterrows()
-                        }
-                        for metric in metrics_in_computation:
-                            if (
-                                metric.name in metric_name_to_status
-                                and metric.name
-                                in metric_name_to_computed_records_count
-                            ):
-                                self.run_dao.upsert_run_metadata_fields(
-                                    entry_type="metrics",
-                                    entry_id=metric.id,
-                                    computation_id=computation.id,
-                                    name=metric.name,
-                                    completion_status=DummyCompletionStatus(
-                                        status=(
-                                            CompletionStatusStatus.COMPLETED
-                                            if metric_name_to_status[
-                                                metric.name
-                                            ]
-                                            == "SUCCESS"
-                                            else CompletionStatusStatus.FAILED
-                                        ),
-                                        record_count=metric_name_to_computed_records_count[
-                                            metric.name
-                                        ],
-                                    ).model_dump(),
-                                    run_name=self.run_name,
-                                    object_name=self.object_name,
-                                    object_type=self.object_type,
-                                    object_version=self.object_version,
-                                )
-            if some_computation_in_progress:
-                return RunStatus.COMPUTATION_IN_PROGRESS
-            else:
-                return (
-                    RunStatus.COMPLETED
-                    if invocation_completion_status
-                    == CompletionStatusStatus.COMPLETED
-                    else RunStatus.PARTIALLY_COMPLETED
-                )
-
-
-# --- Unit Tests for _compute_overall_computations_status ---
 @pytest.mark.snowflake
 class TestComputeOverallComputationsStatus(unittest.TestCase):
     def setUp(self):
-        self.run_cls = DummyRunClass()
+        if Run is None or RunStatus is None:
+            self.skipTest("Trulens Run class not available.")
+            return
 
-    def test_all_metrics_completed_and_invocation_completed(self):
-        # Build a dummy run where:
-        # - Latest invocation has COMPLETED status.
-        # - All metrics have COMPLETED status.
-        invocation = DummyInvocation(
-            "inv1",
-            1000,
-            DummyCompletionStatus(CompletionStatusStatus.COMPLETED),
+        # Create a dummy run_dao that will be attached to our Run instances.
+        self.base_run_dao = MagicMock()
+        # Set default returns for methods used in _compute_overall_computations_status.
+        self.base_run_dao.fetch_query_execution_status_by_id.return_value = (
+            "SUCCESS"
         )
-        metric = DummyMetric(
-            "met1",
-            "answer_relevance",
-            DummyCompletionStatus(
-                CompletionStatusStatus.COMPLETED, record_count=10
-            ),
-            "comp1",
-        )
-        run_metadata = DummyRunMetadata(
-            invocations={"inv1": invocation},
-            metrics={"met1": metric},
-            computations={},
-        )
-        run = DummyRun(run_metadata, "run1", "agent", "EXTERNAL AGENT", "v1")
-        status = self.run_cls._compute_overall_computations_status(run)
-        # Expect overall COMPLETED because invocation and metric statuses are COMPLETED.
-        self.assertEqual(status, RunStatus.COMPLETED)
-
-    def test_all_metrics_failed(self):
-        # Build a dummy run where all metrics are FAILED.
-        invocation = DummyInvocation(
-            "inv1",
-            1000,
-            DummyCompletionStatus(CompletionStatusStatus.COMPLETED),
-        )
-        metric = DummyMetric(
-            "met1",
-            "answer_relevance",
-            DummyCompletionStatus(
-                CompletionStatusStatus.FAILED, record_count=5
-            ),
-            "comp1",
-        )
-        run_metadata = DummyRunMetadata(
-            invocations={"inv1": invocation},
-            metrics={"met1": metric},
-            computations={},
-        )
-        run = DummyRun(run_metadata, "run1", "agent", "EXTERNAL AGENT", "v1")
-        status = self.run_cls._compute_overall_computations_status(run)
-        self.assertEqual(status, RunStatus.FAILED)
-
-    def test_metrics_mix_completed_failed(self):
-        # Build a dummy run where metrics are a mix of COMPLETED and FAILED.
-        invocation = DummyInvocation(
-            "inv1", 1000, DummyCompletionStatus(CompletionStatusStatus.FAILED)
-        )
-        metric1 = DummyMetric(
-            "met1",
-            "answer_relevance",
-            DummyCompletionStatus(
-                CompletionStatusStatus.COMPLETED, record_count=10
-            ),
-            "comp1",
-        )
-        metric2 = DummyMetric(
-            "met2",
-            "coherence",
-            DummyCompletionStatus(
-                CompletionStatusStatus.FAILED, record_count=7
-            ),
-            "comp1",
-        )
-        run_metadata = DummyRunMetadata(
-            invocations={"inv1": invocation},
-            metrics={"met1": metric1, "met2": metric2},
-            computations={},
-        )
-        run = DummyRun(run_metadata, "run1", "agent", "EXTERNAL AGENT", "v1")
-        status = self.run_cls._compute_overall_computations_status(run)
-        # Mixed metrics => overall PARTIALLY_COMPLETED.
-        self.assertEqual(status, RunStatus.PARTIALLY_COMPLETED)
-
-    @patch.object(DummyRunDao, "fetch_query_execution_status_by_id")
-    @patch.object(DummyRunDao, "fetch_computation_job_results_by_query_id")
-    @patch.object(DummyRunDao, "upsert_run_metadata_fields")
-    def test_metrics_not_set_computation_in_progress(
-        self, mock_upsert, mock_fetch_results, mock_fetch_status
-    ):
-        # Build a dummy run with one metric that is not set.
-        invocation = DummyInvocation(
-            "inv1",
-            1000,
-            DummyCompletionStatus(CompletionStatusStatus.COMPLETED),
-        )
-        # metric with no completion_status
-        metric = DummyMetric("met1", "answer_relevance", None, "comp1")
-        computation = DummyComputation("comp1", "query1", 500)
-        run_metadata = DummyRunMetadata(
-            invocations={"inv1": invocation},
-            metrics={"met1": metric},
-            computations={"comp1": computation},
-        )
-        run = DummyRun(run_metadata, "run1", "agent", "EXTERNAL AGENT", "v1")
-        # Simulate computation still in progress.
-        mock_fetch_status.return_value = "IN_PROGRESS"
-        status = self.run_cls._compute_overall_computations_status(run)
-        self.assertEqual(status, RunStatus.COMPUTATION_IN_PROGRESS)
-        mock_fetch_status.assert_called_once_with(
-            query_start_time_ms=500, query_id="query1"
-        )
-        mock_upsert.assert_not_called()
-        mock_fetch_results.assert_not_called()
-
-    @patch.object(DummyRunDao, "fetch_query_execution_status_by_id")
-    @patch.object(DummyRunDao, "fetch_computation_job_results_by_query_id")
-    @patch.object(DummyRunDao, "upsert_run_metadata_fields")
-    def test_metrics_not_set_all_computations_done(
-        self, mock_upsert, mock_fetch_results, mock_fetch_status
-    ):
-        # Build a dummy run with one metric that is not set.
-        invocation = DummyInvocation(
-            "inv1",
-            1000,
-            DummyCompletionStatus(CompletionStatusStatus.COMPLETED),
-        )
-        metric = DummyMetric("met1", "answer_relevance", None, "comp1")
-        computation = DummyComputation("comp1", "query1", 500)
-        run_metadata = DummyRunMetadata(
-            invocations={"inv1": invocation},
-            metrics={"met1": metric},
-            computations={"comp1": computation},
-        )
-        run = DummyRun(run_metadata, "run1", "agent", "EXTERNAL AGENT", "v1")
-        # Simulate that the computation query finished with SUCCESS.
-        mock_fetch_status.return_value = "SUCCESS"
-        # Simulate fetch_computation_job_results_by_query_id returning a DataFrame with one row.
-        result_data = [
+        self.base_run_dao.fetch_computation_job_results_by_query_id.return_value = pd.DataFrame([
             {
                 "METRIC": "answer_relevance",
                 "STATUS": "SUCCESS",
                 "MESSAGE": "Computed 10 records.",
             }
-        ]
-        df = pd.DataFrame(result_data)
-        mock_fetch_results.return_value = df
+        ])
+        self.base_run_dao.upsert_run_metadata_fields = MagicMock()
+        # Fix current time to a known value.
+        self.fixed_time = 9999999999
+        fixed_time = self.fixed_time
+        self._orig_get_current_time = Run._get_current_time_in_ms
+        Run._get_current_time_in_ms = lambda self: fixed_time
 
-        status = self.run_cls._compute_overall_computations_status(run)
-        # Since invocation is COMPLETED, overall should be COMPLETED.
-        self.assertEqual(status, RunStatus.COMPLETED)
-        mock_fetch_status.assert_called_once_with(
-            query_start_time_ms=500, query_id="query1"
+    def tearDown(self):
+        Run._get_current_time_in_ms = self._orig_get_current_time
+
+    def attach_run_dao(self, run: Run):
+        run.run_dao = self.base_run_dao
+        run.run_name = "test_run"
+        run.object_name = "TEST_AGENT"
+        run.object_type = "EXTERNAL AGENT"
+        run.object_version = "v1"
+
+    def create_invocation(
+        self,
+        id: str,
+        start_time_ms: int,
+        end_time_ms: int,
+        completion_status: str = None,
+    ):
+        """Helper to build an invocation dict."""
+        inv = {
+            "id": id,
+            "input_records_count": 1000,
+            "start_time_ms": start_time_ms,
+            "end_time_ms": end_time_ms,
+        }
+        if completion_status is not None:
+            inv["completion_status"] = {
+                "status": completion_status,
+                "record_count": 1000,
+            }
+        else:
+            inv["completion_status"] = None
+        return inv
+
+    def test_with_completion_status_completed(self):
+        # Latest invocation has completion_status COMPLETED.
+        inv = self.create_invocation(
+            "inv1", 1000, 0, Run.CompletionStatusStatus.COMPLETED
         )
-        mock_fetch_results.assert_called_once_with("query1")
-        # Expect upsert_run_metadata_fields to be called for both the computation and the metric update.
-        self.assertTrue(mock_upsert.call_count >= 2)
+        run_metadata = {
+            "invocations": {"inv1": inv},
+            "metrics": {},
+            "computations": {},
+        }
+        run = create_dummy_run(run_metadata)
+        self.attach_run_dao(run)
+
+        status = run._compute_latest_invocation_status(run)
+        self.assertEqual(status, RunStatus.INVOCATION_COMPLETED)
+
+    def test_with_completion_status_partially_completed(self):
+        # Latest invocation has completion_status PARTIALLY_COMPLETED.
+        inv = self.create_invocation(
+            "inv1", 1000, 0, Run.CompletionStatusStatus.PARTIALLY_COMPLETED
+        )
+        run_metadata = {
+            "invocations": {"inv1": inv},
+            "metrics": {},
+            "computations": {},
+        }
+        run = create_dummy_run(run_metadata)
+        self.attach_run_dao(run)
+
+        status = run._compute_latest_invocation_status(run)
+        self.assertEqual(status, RunStatus.INVOCATION_PARTIALLY_COMPLETED)
+
+    def test_with_completion_status_failed(self):
+        # Latest invocation has completion_status FAILED.
+        inv = self.create_invocation(
+            "inv1", 1000, 0, Run.CompletionStatusStatus.FAILED
+        )
+        run_metadata = {
+            "invocations": {"inv1": inv},
+            "metrics": {},
+            "computations": {},
+        }
+        run = create_dummy_run(run_metadata)
+        self.attach_run_dao(run)
+
+        status = run._compute_latest_invocation_status(run)
+        self.assertEqual(status, RunStatus.FAILED)
+
+    def test_no_completion_status_ingested_records_met(self):
+        # Latest invocation has no completion_status.
+        # Simulate that the current ingested records count >= input_records_count.
+        inv = self.create_invocation("inv1", 1000, 0, None)
+        run_metadata = {
+            "invocations": {"inv1": inv},
+            "metrics": {},
+            "computations": {},
+        }
+        run = create_dummy_run(run_metadata)
+        self.attach_run_dao(run)
+        self.base_run_dao.read_spans_count_from_event_table.return_value = 1000
+
+        status = run._compute_latest_invocation_status(run)
+        # Expect upsert to be called and overall status to be INVOCATION_COMPLETED.
+        self.assertEqual(status, RunStatus.INVOCATION_COMPLETED)
+        self.base_run_dao.upsert_run_metadata_fields.assert_called_once()
+
+    def test_no_completion_status_timeout(self):
+        # Latest invocation has no completion_status.
+        # Simulate that current ingested count < input_records_count, and elapsed time > INVOCATION_TIMEOUT_IN_MS.
+        inv = self.create_invocation("inv1", 1000, 0, None)
+        run_metadata = {
+            "invocations": {"inv1": inv},
+            "metrics": {},
+            "computations": {},
+        }
+        run = create_dummy_run(run_metadata)
+        self.attach_run_dao(run)
+        self.base_run_dao.read_spans_count_from_event_table.return_value = (
+            500  # less than 1000
+        )
+
+        # If start_time_ms is 1000, then time.time()*1000 must be > (1000 + INVOCATION_TIMEOUT_IN_MS)
+        # For example, return_value = (INVOCATION_TIMEOUT_IN_MS / 1000 + 1.1) gives:
+        # time.time()*1000 = INVOCATION_TIMEOUT_IN_MS + 1100, which is > (1000 + INVOCATION_TIMEOUT_IN_MS)
+        with patch(
+            "time.time", return_value=(INVOCATION_TIMEOUT_IN_MS / 1000 + 1.1)
+        ):
+            status = run._compute_latest_invocation_status(run)
+        self.assertEqual(status, RunStatus.INVOCATION_PARTIALLY_COMPLETED)
+        self.base_run_dao.upsert_run_metadata_fields.assert_called_once()
+
+    def test_no_completion_status_in_progress(self):
+        # Latest invocation has no completion_status.
+        # Simulate that current ingested count < input_records_count and elapsed time is less than timeout.
+        current_time_ms = self.fixed_time
+        inv = self.create_invocation("inv1", current_time_ms - 1000, 0, None)
+        run_metadata = {
+            "invocations": {"inv1": inv},
+            "metrics": {},
+            "computations": {},
+        }
+        run = create_dummy_run(run_metadata)
+        self.attach_run_dao(run)
+        self.base_run_dao.read_spans_count_from_event_table.return_value = 500
+
+        # Patch time.time() so that elapsed time is less than INVOCATION_TIMEOUT_IN_MS.
+        with patch("time.time", return_value=(current_time_ms / 1000 + 0.5)):
+            status = run._compute_latest_invocation_status(run)
+        # If no completion_status is set and end_time_ms is 0, we expect INVOCATION_IN_PROGRESS.
+        self.assertEqual(status, RunStatus.INVOCATION_IN_PROGRESS)
+
+    def test_all_metrics_completed(self):
+        run_metadata = {
+            "invocations": {
+                "inv1": {
+                    "id": "inv1",
+                    "input_records_count": 1000,
+                    "start_time_ms": 1000,
+                    "end_time_ms": 0,
+                    "completion_status": {
+                        "status": "COMPLETED",
+                        "record_count": 1000,
+                    },
+                }
+            },
+            "metrics": {
+                "met1": {
+                    "id": "met1",
+                    "name": "answer_relevance",
+                    "completion_status": {
+                        "status": "COMPLETED",
+                        "record_count": 10,
+                    },
+                    "computation_id": "comp1",
+                }
+            },
+            "computations": {},
+        }
+        run = create_dummy_run(run_metadata)
+        self.attach_run_dao(run)
+        status = run._compute_overall_computations_status(run)
+        self.assertEqual(status, RunStatus.COMPLETED)
+
+    def test_all_metrics_failed(self):
+        run_metadata = {
+            "invocations": {
+                "inv1": {
+                    "id": "inv1",
+                    "input_records_count": 1000,
+                    "start_time_ms": 1000,
+                    "end_time_ms": 0,
+                    "completion_status": {
+                        "status": "COMPLETED",
+                        "record_count": 1000,
+                    },
+                }
+            },
+            "metrics": {
+                "met1": {
+                    "id": "met1",
+                    "name": "answer_relevance",
+                    "completion_status": {
+                        "status": "FAILED",
+                        "record_count": 5,
+                    },
+                    "computation_id": "comp1",
+                }
+            },
+            "computations": {},
+        }
+        run = create_dummy_run(run_metadata)
+        self.attach_run_dao(run)
+        status = run._compute_overall_computations_status(run)
+        self.assertEqual(status, RunStatus.FAILED)
+
+    def test_metrics_mix_completed_failed(self):
+        run_metadata = {
+            "invocations": {
+                "inv1": {
+                    "id": "inv1",
+                    "input_records_count": 1000,
+                    "start_time_ms": 1000,
+                    "end_time_ms": 0,
+                    "completion_status": {
+                        "status": "FAILED",
+                        "record_count": 1000,
+                    },
+                }
+            },
+            "metrics": {
+                "met1": {
+                    "id": "met1",
+                    "name": "answer_relevance",
+                    "completion_status": {
+                        "status": "COMPLETED",
+                        "record_count": 10,
+                    },
+                    "computation_id": "comp1",
+                },
+                "met2": {
+                    "id": "met2",
+                    "name": "coherence",
+                    "completion_status": {
+                        "status": "FAILED",
+                        "record_count": 7,
+                    },
+                    "computation_id": "comp1",
+                },
+            },
+            "computations": {},
+        }
+        run = create_dummy_run(run_metadata)
+        self.attach_run_dao(run)
+        status = run._compute_overall_computations_status(run)
+        self.assertEqual(status, RunStatus.PARTIALLY_COMPLETED)
+
+    def test_metrics_not_set_computation_in_progress(self):
+        run_metadata = {
+            "invocations": {
+                "inv1": {
+                    "id": "inv1",
+                    "input_records_count": 1000,
+                    "start_time_ms": 1000,
+                    "end_time_ms": 0,
+                    "completion_status": {
+                        "status": "COMPLETED",
+                        "record_count": 1000,
+                    },
+                }
+            },
+            "metrics": {
+                "met1": {
+                    "id": "met1",
+                    "name": "answer_relevance",
+                    "completion_status": None,  # not set
+                    "computation_id": "comp1",
+                }
+            },
+            "computations": {
+                "comp1": {
+                    "id": "comp1",
+                    "query_id": "query1",
+                    "start_time_ms": 500,
+                    "end_time_ms": None,
+                }
+            },
+        }
+        run = create_dummy_run(run_metadata)
+        self.attach_run_dao(run)
+        # Inline patching on the attached run_dao
+        with (
+            patch.object(
+                self.base_run_dao,
+                "fetch_query_execution_status_by_id",
+                return_value="IN_PROGRESS",
+            ) as mock_fetch_status,
+            patch.object(
+                self.base_run_dao, "fetch_computation_job_results_by_query_id"
+            ) as mock_fetch_results,
+            patch.object(
+                self.base_run_dao, "upsert_run_metadata_fields"
+            ) as mock_upsert,
+        ):
+            status = run._compute_overall_computations_status(run)
+            self.assertEqual(status, RunStatus.COMPUTATION_IN_PROGRESS)
+            mock_fetch_status.assert_called_once_with(
+                query_start_time_ms=500, query_id="query1"
+            )
+            mock_upsert.assert_not_called()
+            mock_fetch_results.assert_not_called()
+
+    def test_metrics_not_set_computation_success(self):
+        run_metadata = {
+            "invocations": {
+                "inv1": {
+                    "id": "inv1",
+                    "input_records_count": 1000,
+                    "start_time_ms": 1000,
+                    "end_time_ms": 0,
+                    "completion_status": {
+                        "status": "COMPLETED",
+                        "record_count": 1000,
+                    },
+                }
+            },
+            "metrics": {
+                "met1": {
+                    "id": "met1",
+                    "name": "answer_relevance",
+                    "completion_status": None,
+                    "computation_id": "comp1",
+                }
+            },
+            "computations": {
+                "comp1": {
+                    "id": "comp1",
+                    "query_id": "query1",
+                    "start_time_ms": 500,
+                    "end_time_ms": None,
+                }
+            },
+        }
+        run = create_dummy_run(run_metadata)
+        self.attach_run_dao(run)
+        with (
+            patch.object(
+                self.base_run_dao,
+                "fetch_query_execution_status_by_id",
+                return_value="SUCCESS",
+            ) as mock_fetch_status,
+            patch.object(
+                self.base_run_dao, "fetch_computation_job_results_by_query_id"
+            ) as mock_fetch_results,
+            patch.object(
+                self.base_run_dao, "upsert_run_metadata_fields"
+            ) as mock_upsert,
+        ):
+            # Simulate computation results returning a row for metric 'answer_relevance'
+            df_results = pd.DataFrame([
+                {
+                    "METRIC": "answer_relevance",
+                    "STATUS": "SUCCESS",
+                    "MESSAGE": "Computed 10 records.",
+                }
+            ])
+            mock_fetch_results.return_value = df_results
+
+            status = run._compute_overall_computations_status(run)
+            self.assertEqual(status, RunStatus.COMPLETED)
+            mock_fetch_status.assert_called_once_with(
+                query_start_time_ms=500, query_id="query1"
+            )
+            mock_fetch_results.assert_called_once_with("query1")
+            # Expect upsert_run_metadata_fields to be called for both computation and metric update.
+            self.assertGreaterEqual(mock_upsert.call_count, 2)
 
 
 if __name__ == "__main__":
