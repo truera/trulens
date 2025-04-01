@@ -37,7 +37,7 @@ def create_dummy_run(run_metadata_dict: dict, run_status: str = None) -> Run:
         "run_dao": MagicMock(),
         "tru_session": MagicMock(),
     }
-    # Create a Run instance via model_validate.
+
     run = Run.model_validate({**base, **extra})
     if run_status is not None:
         run.run_status = run_status
@@ -45,13 +45,12 @@ def create_dummy_run(run_metadata_dict: dict, run_status: str = None) -> Run:
 
 
 @pytest.mark.snowflake
-class TestComputeOverallComputationsStatus(unittest.TestCase):
+class TestRunStatusOrchestration(unittest.TestCase):
     def setUp(self):
         if Run is None or RunStatus is None:
             self.skipTest("Trulens Run class not available.")
             return
 
-        # Create a dummy run_dao that will be attached to our Run instances.
         self.base_run_dao = MagicMock()
         # Set default returns for methods used in _compute_overall_computations_status.
         self.base_run_dao.fetch_query_execution_status_by_id.return_value = (
@@ -65,7 +64,7 @@ class TestComputeOverallComputationsStatus(unittest.TestCase):
             }
         ])
         self.base_run_dao.upsert_run_metadata_fields = MagicMock()
-        # Fix current time to a known value.
+
         self.fixed_time = 9999999999
         fixed_time = self.fixed_time
         self._orig_get_current_time = Run._get_current_time_in_ms
@@ -353,7 +352,7 @@ class TestComputeOverallComputationsStatus(unittest.TestCase):
         }
         run = create_dummy_run(run_metadata)
         self.attach_run_dao(run)
-        # Inline patching on the attached run_dao
+
         with (
             patch.object(
                 self.base_run_dao,
@@ -439,7 +438,3 @@ class TestComputeOverallComputationsStatus(unittest.TestCase):
             mock_fetch_results.assert_called_once_with("query1")
             # Expect upsert_run_metadata_fields to be called for both computation and metric update.
             self.assertGreaterEqual(mock_upsert.call_count, 2)
-
-
-if __name__ == "__main__":
-    unittest.main()
