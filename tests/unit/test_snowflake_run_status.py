@@ -269,7 +269,16 @@ class TestRunStatusOrchestration(unittest.TestCase):
                         "record_count": 5,
                     },
                     "computation_id": "comp1",
-                }
+                },
+                "met2": {
+                    "id": "met2",
+                    "name": "context_relevance",
+                    "completion_status": {
+                        "status": "FAILED",
+                        "record_count": 5,
+                    },
+                    "computation_id": "comp1",
+                },
             },
             "computations": {},
         }
