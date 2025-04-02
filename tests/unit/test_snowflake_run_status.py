@@ -644,7 +644,7 @@ class TestRunStatusOrchestration(unittest.TestCase):
             ) as mock_upsert,
         ):
             status = run._compute_overall_computations_status(run)
-            # Now that the side effect has updated the run's metric completion_status,
+            # After the side effect has updated the run's metric completion_status,
             # the final check in _compute_overall_computations_status should detect that
             # all metrics have FAILED status and return FAILED overall.
             self.assertEqual(status, RunStatus.FAILED)
