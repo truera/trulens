@@ -675,6 +675,19 @@ class Run(BaseModel):
                     if all(
                         metric.completion_status
                         and metric.completion_status.status
+                        == Run.CompletionStatusStatus.COMPLETED
+                        for metric in all_existing_metrics
+                    ):
+                        return (
+                            RunStatus.COMPLETED
+                            if invocation_completion_status
+                            == Run.CompletionStatusStatus.COMPLETED
+                            else RunStatus.PARTIALLY_COMPLETED
+                        )
+
+                    if all(
+                        metric.completion_status
+                        and metric.completion_status.status
                         in [
                             Run.CompletionStatusStatus.COMPLETED,
                             Run.CompletionStatusStatus.FAILED,
@@ -682,12 +695,10 @@ class Run(BaseModel):
                         for metric in all_existing_metrics
                     ):
                         return RunStatus.PARTIALLY_COMPLETED
-                return (
-                    RunStatus.COMPLETED
-                    if invocation_completion_status
-                    == Run.CompletionStatusStatus.COMPLETED
-                    else RunStatus.PARTIALLY_COMPLETED
-                )
+
+                    logger.warning("Cannot determine run status")
+
+                    return RunStatus.UNKNOWN
 
     def start(self, input_df: Optional[pd.DataFrame] = None):
         """

@@ -417,6 +417,26 @@ class TestRunStatusOrchestration(unittest.TestCase):
         }
         run = create_dummy_run(run_metadata)
         self.attach_run_dao(run)
+
+        # Define a side effect for upsert_run_metadata_fields that updates the metric in the run.
+        def upsert_side_effect(**kwargs):
+            entry_type = kwargs.get("entry_type")
+            if entry_type == SupportedEntryType.METRICS.value:
+                metric_id = kwargs.get("entry_id")
+                new_completion_status = kwargs.get("completion_status")
+                # Convert the dict to a Run.CompletionStatus instance if necessary.
+                if new_completion_status is not None and isinstance(
+                    new_completion_status, dict
+                ):
+                    new_completion_status = Run.CompletionStatus(
+                        **new_completion_status
+                    )
+                old_metric = run.run_metadata.metrics[metric_id]
+                new_metric = old_metric.copy(
+                    update={"completion_status": new_completion_status}
+                )
+                run.run_metadata.metrics[metric_id] = new_metric
+
         with (
             patch.object(
                 self.base_run_dao,
@@ -427,7 +447,9 @@ class TestRunStatusOrchestration(unittest.TestCase):
                 self.base_run_dao, "fetch_computation_job_results_by_query_id"
             ) as mock_fetch_results,
             patch.object(
-                self.base_run_dao, "upsert_run_metadata_fields"
+                self.base_run_dao,
+                "upsert_run_metadata_fields",
+                side_effect=upsert_side_effect,
             ) as mock_upsert,
         ):
             # Simulate computation results returning a row for metric 'answer_relevance'
