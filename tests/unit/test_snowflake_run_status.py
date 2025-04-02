@@ -9,6 +9,7 @@ try:
     from trulens.core.run import INVOCATION_TIMEOUT_IN_MS
     from trulens.core.run import Run
     from trulens.core.run import RunStatus
+    from trulens.core.run import SupportedEntryType
 
 except Exception:
     Run = None
@@ -447,3 +448,188 @@ class TestRunStatusOrchestration(unittest.TestCase):
             mock_fetch_results.assert_called_once_with("query1")
             # Expect upsert_run_metadata_fields to be called for both computation and metric update.
             self.assertGreaterEqual(mock_upsert.call_count, 2)
+
+    def test_metrics_not_set_computation_mix_of_success_and_failure(self):
+        # Create run metadata with one invocation (COMPLETED) and one metric with no completion status.
+        run_metadata = {
+            "invocations": {
+                "inv1": {
+                    "id": "inv1",
+                    "input_records_count": 1000,
+                    "start_time_ms": 1000,
+                    "end_time_ms": 0,
+                    "completion_status": {
+                        "status": "COMPLETED",
+                        "record_count": 1000,
+                    },
+                }
+            },
+            "metrics": {
+                "met1": {
+                    "id": "met1",
+                    "name": "answer_relevance",
+                    "completion_status": None,  # initially not set
+                    "computation_id": "comp1",
+                },
+                "met2": {
+                    "id": "met2",
+                    "name": "context_relevance",
+                    "completion_status": {
+                        "status": "COMPLETED",
+                        "record_count": 5,
+                    },
+                    "computation_id": "comp1",
+                },
+            },
+            "computations": {
+                "comp1": {
+                    "id": "comp1",
+                    "query_id": "query1",
+                    "start_time_ms": 500,
+                    "end_time_ms": None,
+                }
+            },
+        }
+        run = create_dummy_run(run_metadata)
+        self.attach_run_dao(run)
+
+        # Define a side effect for upsert_run_metadata_fields that updates the metric in the run.
+        def upsert_side_effect(**kwargs):
+            entry_type = kwargs.get("entry_type")
+            if entry_type == SupportedEntryType.METRICS.value:
+                metric_id = kwargs.get("entry_id")
+                new_completion_status = kwargs.get("completion_status")
+                # Convert the dict to a Run.CompletionStatus instance if necessary.
+                if new_completion_status is not None and isinstance(
+                    new_completion_status, dict
+                ):
+                    new_completion_status = Run.CompletionStatus(
+                        **new_completion_status
+                    )
+                old_metric = run.run_metadata.metrics[metric_id]
+                new_metric = old_metric.copy(
+                    update={"completion_status": new_completion_status}
+                )
+                run.run_metadata.metrics[metric_id] = new_metric
+
+        with (
+            patch.object(
+                self.base_run_dao,
+                "fetch_query_execution_status_by_id",
+                return_value="SUCCESS",
+            ) as mock_fetch_status,
+            patch.object(
+                self.base_run_dao,
+                "fetch_computation_job_results_by_query_id",
+                return_value=pd.DataFrame([
+                    {
+                        "METRIC": "answer_relevance",
+                        "STATUS": "FAILED",
+                        "MESSAGE": "Computed 1 records.",
+                    }
+                ]),
+            ) as mock_fetch_results,
+            patch.object(
+                self.base_run_dao,
+                "upsert_run_metadata_fields",
+                side_effect=upsert_side_effect,
+            ) as mock_upsert,
+        ):
+            status = run._compute_overall_computations_status(run)
+            # Now that the side effect has updated the run's metric completion_status,
+            # the final check in _compute_overall_computations_status should detect that
+            # all metrics have either FAILED or COMPLETED status and thus return PARTIALLY_COMPLETED overall.
+            self.assertEqual(status, RunStatus.PARTIALLY_COMPLETED)
+            mock_fetch_status.assert_called_once_with(
+                query_start_time_ms=500, query_id="query1"
+            )
+            mock_fetch_results.assert_called_once_with("query1")
+            self.assertGreaterEqual(mock_upsert.call_count, 1)
+
+    def test_metrics_not_set_computation_success_updates_metric_to_failed(self):
+        # Create run metadata with one invocation (COMPLETED) and one metric with no completion status.
+        run_metadata = {
+            "invocations": {
+                "inv1": {
+                    "id": "inv1",
+                    "input_records_count": 1000,
+                    "start_time_ms": 1000,
+                    "end_time_ms": 0,
+                    "completion_status": {
+                        "status": "COMPLETED",
+                        "record_count": 1000,
+                    },
+                }
+            },
+            "metrics": {
+                "met1": {
+                    "id": "met1",
+                    "name": "answer_relevance",
+                    "completion_status": None,  # initially not set
+                    "computation_id": "comp1",
+                },
+            },
+            "computations": {
+                "comp1": {
+                    "id": "comp1",
+                    "query_id": "query1",
+                    "start_time_ms": 500,
+                    "end_time_ms": None,
+                }
+            },
+        }
+        run = create_dummy_run(run_metadata)
+        self.attach_run_dao(run)
+
+        # Define a side effect for upsert_run_metadata_fields that updates the metric in the run.
+        def upsert_side_effect(**kwargs):
+            entry_type = kwargs.get("entry_type")
+            if entry_type == SupportedEntryType.METRICS.value:
+                metric_id = kwargs.get("entry_id")
+                new_completion_status = kwargs.get("completion_status")
+                # Convert the dict to a Run.CompletionStatus instance if necessary.
+                if new_completion_status is not None and isinstance(
+                    new_completion_status, dict
+                ):
+                    new_completion_status = Run.CompletionStatus(
+                        **new_completion_status
+                    )
+                old_metric = run.run_metadata.metrics[metric_id]
+                new_metric = old_metric.copy(
+                    update={"completion_status": new_completion_status}
+                )
+                run.run_metadata.metrics[metric_id] = new_metric
+
+        with (
+            patch.object(
+                self.base_run_dao,
+                "fetch_query_execution_status_by_id",
+                return_value="SUCCESS",
+            ) as mock_fetch_status,
+            patch.object(
+                self.base_run_dao,
+                "fetch_computation_job_results_by_query_id",
+                return_value=pd.DataFrame([
+                    {
+                        "METRIC": "answer_relevance",
+                        "STATUS": "FAILED",
+                        "MESSAGE": "Computed 1 records.",
+                    }
+                ]),
+            ) as mock_fetch_results,
+            patch.object(
+                self.base_run_dao,
+                "upsert_run_metadata_fields",
+                side_effect=upsert_side_effect,
+            ) as mock_upsert,
+        ):
+            status = run._compute_overall_computations_status(run)
+            # Now that the side effect has updated the run's metric completion_status,
+            # the final check in _compute_overall_computations_status should detect that
+            # all metrics have FAILED status and return FAILED overall.
+            self.assertEqual(status, RunStatus.FAILED)
+            mock_fetch_status.assert_called_once_with(
+                query_start_time_ms=500, query_id="query1"
+            )
+            mock_fetch_results.assert_called_once_with("query1")
+            self.assertGreaterEqual(mock_upsert.call_count, 1)

@@ -664,7 +664,24 @@ class Run(BaseModel):
                 return RunStatus.COMPUTATION_IN_PROGRESS
             else:
                 logger.info("All computations concluded.")
-
+                if all(
+                    metric.completion_status
+                    and metric.completion_status.status
+                    == Run.CompletionStatusStatus.FAILED
+                    for metric in all_existing_metrics
+                ):
+                    return RunStatus.FAILED
+                else:
+                    if all(
+                        metric.completion_status
+                        and metric.completion_status.status
+                        in [
+                            Run.CompletionStatusStatus.COMPLETED,
+                            Run.CompletionStatusStatus.FAILED,
+                        ]
+                        for metric in all_existing_metrics
+                    ):
+                        return RunStatus.PARTIALLY_COMPLETED
                 return (
                     RunStatus.COMPLETED
                     if invocation_completion_status
