@@ -17,7 +17,7 @@ aligned.
 
 - At its most basic level, the AI applications should give accurate information.
 
-- It should have access too, retrieve and reliably use the information needed to
+- It should have access to, retrieve and reliably use the information needed to
   answer questions it is intended for.
 
 **See honest evaluations in action:**
