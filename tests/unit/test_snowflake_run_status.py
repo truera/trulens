@@ -515,7 +515,6 @@ class TestRunStatusOrchestration(unittest.TestCase):
         run = create_dummy_run(run_metadata)
         self.attach_run_dao(run)
 
-        # Define a side effect for upsert_run_metadata_fields that updates the metric in the run.
         def upsert_side_effect(**kwargs):
             entry_type = kwargs.get("entry_type")
             if entry_type == SupportedEntryType.METRICS.value:
@@ -603,7 +602,6 @@ class TestRunStatusOrchestration(unittest.TestCase):
         run = create_dummy_run(run_metadata)
         self.attach_run_dao(run)
 
-        # Define a side effect for upsert_run_metadata_fields that updates the metric in the run.
         def upsert_side_effect(**kwargs):
             entry_type = kwargs.get("entry_type")
             if entry_type == SupportedEntryType.METRICS.value:
