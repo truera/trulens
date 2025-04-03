@@ -54,8 +54,8 @@ DATASET_RESERVED_FIELDS: Set[str] = {
 }
 
 
-INVOCATION_TIMEOUT_IN_MS = (
-    5 * 60 * 1000
+EXPECTED_TELEMETRY_LATENCY_IN_MS = (
+    2 * 60 * 1000
 )  # expected latency from the telemetry pipeline before ingested rows show up in event table
 
 
@@ -214,8 +214,8 @@ class Run(BaseModel):
     )
 
     class RunMetadata(BaseModel):
-        labels: List[Optional[str]] = Field(
-            default=[],
+        labels: Optional[List[str]] = Field(
+            default=None,
             description="Text label to group the runs. Take a single label for now",
         )
         llm_judge_name: Optional[str] = Field(
@@ -449,6 +449,16 @@ class Run(BaseModel):
             f"Current ingested records count: {current_ingested_records_count}"
         )
 
+        latest_record_root_timestamp_in_ms = (
+            self.run_dao.read_latest_record_root_timestamp_in_ms(
+                object_name=self.object_name, run_name=self.run_name
+            )
+        )
+
+        logger.debug(
+            f"Latest record root timestamp in ms: {latest_record_root_timestamp_in_ms}"
+        )
+
         if (
             latest_invocation.input_records_count
             and current_ingested_records_count
@@ -476,11 +486,12 @@ class Run(BaseModel):
 
         elif (
             latest_invocation.start_time_ms
-            and time.time() * 1000 - latest_invocation.start_time_ms
-            > INVOCATION_TIMEOUT_IN_MS
+            and latest_record_root_timestamp_in_ms
+            and time.time() * 1000 - latest_record_root_timestamp_in_ms
+            > EXPECTED_TELEMETRY_LATENCY_IN_MS
         ):
             # inconclusive case, timeout reached and add end time and update completion status in DPO
-            logger.warning("Invocation timeout reached and concluded")
+            logger.warning("Invocation timed out.")
             self.run_dao.upsert_run_metadata_fields(
                 entry_type=SupportedEntryType.INVOCATIONS.value,
                 entry_id=latest_invocation.id,
