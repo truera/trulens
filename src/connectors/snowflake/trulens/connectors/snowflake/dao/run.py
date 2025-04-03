@@ -3,7 +3,6 @@ import logging
 import time
 from typing import Any, Dict, List, Optional
 
-from otel.semconv.trulens.otel.semconv.trace import SpanAttributes
 import pandas as pd
 from snowflake.snowpark import AsyncJob
 from snowflake.snowpark import Session
@@ -16,6 +15,7 @@ from trulens.connectors.snowflake.dao.sql_utils import execute_query
 from trulens.core.run import SUPPORTED_ENTRY_TYPES
 from trulens.core.run import SupportedEntryType
 from trulens.core.utils import json as json_utils
+from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
@@ -598,7 +598,7 @@ class RunDao:
                 ))
             WHERE
                 RECORD_ATTRIBUTES:"snow.ai.observability.run.name" = ? AND
-                RECORD_ATTRIBUTES:"{SpanAttributes.SPAN_TYPE}" = '{SpanAttributes.SpanType.RECORD_ROOT}'
+                RECORD_ATTRIBUTES:"{SpanAttributes.SPAN_TYPE}" = '{SpanAttributes.SpanType.RECORD_ROOT}';
         """
 
         try:
