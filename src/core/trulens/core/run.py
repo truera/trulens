@@ -548,7 +548,7 @@ class Run(BaseModel):
         ):
             return RunStatus.PARTIALLY_COMPLETED
         else:
-            logger.warning("Cannot determine run status")
+            logger.warning("Cannot determine run status. Metrics: %s", [metric.name for metric in all_metrics])
             return RunStatus.UNKNOWN
 
     def _compute_overall_computations_status(self, run: Run) -> RunStatus:
