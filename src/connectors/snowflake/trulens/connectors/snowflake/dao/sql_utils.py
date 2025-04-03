@@ -9,6 +9,16 @@ logger = logging.getLogger(__name__)
 DOUBLE_QUOTE = '"'
 
 
+def clean_up_snowflake_identifier(
+    snowflake_identifier: Optional[str],
+) -> Optional[str]:
+    if not snowflake_identifier:
+        return snowflake_identifier
+    if snowflake_identifier[0] == '"' and snowflake_identifier[-1] == '"':
+        return snowflake_identifier[1:-1]
+    return snowflake_identifier
+
+
 def escape_quotes(unescaped: str) -> str:
     """Escapes double quotes in a string by doubling them.
 

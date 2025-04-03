@@ -3,11 +3,15 @@ import logging
 import time
 from typing import Any, Dict, List, Optional
 
+from otel.semconv.trulens.otel.semconv.trace import SpanAttributes
 import pandas as pd
 from snowflake.snowpark import AsyncJob
 from snowflake.snowpark import Session
 from snowflake.snowpark.row import Row
 from trulens.connectors.snowflake.dao.enums import SourceType
+from trulens.connectors.snowflake.dao.sql_utils import (
+    clean_up_snowflake_identifier,
+)
 from trulens.connectors.snowflake.dao.sql_utils import execute_query
 from trulens.core.run import SUPPORTED_ENTRY_TYPES
 from trulens.core.run import SupportedEntryType
@@ -546,8 +550,12 @@ class RunDao:
             result_df = self.session.sql(
                 query,
                 params=[
-                    self.session.get_current_database()[1:-1],
-                    self.session.get_current_schema()[1:-1],
+                    clean_up_snowflake_identifier(
+                        self.session.get_current_database()
+                    ),
+                    clean_up_snowflake_identifier(
+                        self.session.get_current_schema()
+                    ),
                     object_name,
                     run_name,
                     span_type,
@@ -578,7 +586,7 @@ class RunDao:
         Returns:
             The timestamp of the latest record_root, or None if no records are found.
         """
-        query = """
+        query = f"""
             SELECT
                 MAX(TIMESTAMP) AS LATEST_TIMESTAMP
             FROM
@@ -590,15 +598,19 @@ class RunDao:
                 ))
             WHERE
                 RECORD_ATTRIBUTES:"snow.ai.observability.run.name" = ? AND
-                RECORD_ATTRIBUTES:"ai.observability.span_type" = 'record_root' LIMIT 1;
+                RECORD_ATTRIBUTES:"{SpanAttributes.SPAN_TYPE}" = '{SpanAttributes.SpanType.RECORD_ROOT}'
         """
 
         try:
             result_df = self.session.sql(
                 query,
                 params=[
-                    self.session.get_current_database()[1:-1],
-                    self.session.get_current_schema()[1:-1],
+                    clean_up_snowflake_identifier(
+                        self.session.get_current_database()
+                    ),
+                    clean_up_snowflake_identifier(
+                        self.session.get_current_schema()
+                    ),
                     object_name,
                     run_name,
                 ],
