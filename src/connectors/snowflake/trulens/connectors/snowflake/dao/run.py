@@ -580,7 +580,7 @@ class RunDao:
         """
         query = """
             SELECT
-                MAX(TIMESTAMP) AS latest_timestamp
+                MAX(TIMESTAMP) AS LATEST_TIMESTAMP
             FROM
                 table(snowflake.local.GET_AI_OBSERVABILITY_EVENTS(
                     ?,
@@ -592,7 +592,7 @@ class RunDao:
                 RECORD_ATTRIBUTES:"snow.ai.observability.run.name" = ? AND
                 RECORD_ATTRIBUTES:"ai.observability.span_type" = 'record_root' LIMIT 1;
         """
-        logger.debug("Executing query: %s", query)
+
         try:
             result_df = self.session.sql(
                 query,
@@ -604,11 +604,13 @@ class RunDao:
                 ],
             ).to_pandas()
 
-            if "latest_timestamp" in result_df.columns and not result_df.empty:
-                latest_timestamp = result_df["latest_timestamp"].iloc[0]
+            if "LATEST_TIMESTAMP" in result_df.columns and not result_df.empty:
+                latest_timestamp = result_df["LATEST_TIMESTAMP"].iloc[0]
+
                 return (
-                    int(latest_timestamp * 1000)
+                    int(pd.Timestamp(latest_timestamp).timestamp() * 1000)
                     if latest_timestamp is not None
+                    and not pd.isna(latest_timestamp)
                     else None
                 )
             return None
