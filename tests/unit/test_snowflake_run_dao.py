@@ -331,3 +331,53 @@ class TestRunDao(unittest.TestCase):
         self.assertEqual(metric_masks_3, {})
         self.assertEqual(computation_masks_3, {})
         self.assertEqual(set(non_map_masks_3), {"labels"})
+
+    def test_read_latest_record_root_timestamp_valid(self):
+        # Create a mock session to mock event table query results.
+        mock_session = MagicMock()
+        mock_session.get_current_database.return_value = '"MY_DB"'
+        mock_session.get_current_schema.return_value = '"MY_SCHEMA"'
+        latest_ts = "2025-01-01 12:00:00"
+        df = pd.DataFrame({"LATEST_TIMESTAMP": [latest_ts]})
+        dummy_sql_obj = MagicMock()
+        dummy_sql_obj.to_pandas.return_value = df
+        mock_session.sql.return_value = dummy_sql_obj
+
+        dao = RunDao(snowpark_session=mock_session)
+        result = dao.read_latest_record_root_timestamp_in_ms(
+            object_name="TEST_AGENT", run_name="test_run"
+        )
+        expected = int(pd.Timestamp(latest_ts).timestamp() * 1000)
+        self.assertEqual(result, expected)
+
+    def test_read_latest_record_root_timestamp_empty(self):
+        # Create a mock session that returns an empty DataFrame.
+        mock_session = MagicMock()
+        mock_session.get_current_database.return_value = '"MY_DB"'
+        mock_session.get_current_schema.return_value = '"MY_SCHEMA"'
+        df = pd.DataFrame()
+        dummy_sql_obj = MagicMock()
+        dummy_sql_obj.to_pandas.return_value = df
+        mock_session.sql.return_value = dummy_sql_obj
+
+        dao = RunDao(snowpark_session=mock_session)
+        result = dao.read_latest_record_root_timestamp_in_ms(
+            object_name="TEST_AGENT", run_name="test_run"
+        )
+        self.assertIsNone(result)
+
+    def test_read_latest_record_root_timestamp_nan(self):
+        # Create a mock session that returns a DataFrame with NaN in LATEST_TIMESTAMP.
+        mock_session = MagicMock()
+        mock_session.get_current_database.return_value = '"MY_DB"'
+        mock_session.get_current_schema.return_value = '"MY_SCHEMA"'
+        df = pd.DataFrame({"LATEST_TIMESTAMP": [float("nan")]})
+        dummy_sql_obj = MagicMock()
+        dummy_sql_obj.to_pandas.return_value = df
+        mock_session.sql.return_value = dummy_sql_obj
+
+        dao = RunDao(snowpark_session=mock_session)
+        result = dao.read_latest_record_root_timestamp_in_ms(
+            object_name="TEST_AGENT", run_name="test_run"
+        )
+        self.assertIsNone(result)

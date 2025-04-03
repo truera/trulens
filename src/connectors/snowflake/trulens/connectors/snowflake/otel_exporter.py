@@ -9,6 +9,9 @@ from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExporter
 from opentelemetry.sdk.trace.export import SpanExportResult
 from trulens.connectors.snowflake import SnowflakeConnector
+from trulens.connectors.snowflake.dao.sql_utils import (
+    clean_up_snowflake_identifier,
+)
 from trulens.core.database import connector as core_connector
 from trulens.experimental.otel_tracing.core.exporter.utils import (
     check_if_trulens_span,
@@ -131,14 +134,6 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         snowpark_session.file.put(tmp_file_path, f"@{stage_name}")
 
     @staticmethod
-    def _clean_up_snowflake_identifier(snowflake_identifier: str) -> str:
-        if not snowflake_identifier:
-            return snowflake_identifier
-        if snowflake_identifier[0] == '"' and snowflake_identifier[-1] == '"':
-            return snowflake_identifier[1:-1]
-        return snowflake_identifier
-
-    @staticmethod
     def _ingest_spans_from_stage(
         snowpark_session: Session,
         tmp_file_basename: str,
@@ -147,10 +142,10 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         run_name: str,
         dry_run: bool,
     ):
-        database = TruLensSnowflakeSpanExporter._clean_up_snowflake_identifier(
+        database = clean_up_snowflake_identifier(
             snowpark_session.get_current_database()
         )
-        schema = TruLensSnowflakeSpanExporter._clean_up_snowflake_identifier(
+        schema = clean_up_snowflake_identifier(
             snowpark_session.get_current_schema()
         )
         sql_cmd = snowpark_session.sql(
