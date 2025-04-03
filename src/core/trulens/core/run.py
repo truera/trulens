@@ -855,7 +855,6 @@ class Run(BaseModel):
         if not statuses:
             return False
 
-        # If any metric is COMPLETED, we skip further computation.
         if any(s == Run.CompletionStatusStatus.COMPLETED for s in statuses):
             logger.info(
                 f"Metric {metric_name} already computed successfully (one entry COMPLETED); skipping computation."
@@ -876,7 +875,6 @@ class Run(BaseModel):
             )
             return False
 
-        # Fallback: if there's a mix that doesn't meet the above conditions, you could default to skipping.
         logger.warning(
             "Unknown state for metric computation; skipping computation."
         )

@@ -653,3 +653,167 @@ class TestRunStatusOrchestration(unittest.TestCase):
             )
             mock_fetch_results.assert_called_once_with("query1")
             self.assertGreaterEqual(mock_upsert.call_count, 1)
+
+    def test_metrics_none(self):
+        # If run.run_metadata.metrics is None, should return False.
+        base_run_metadata = {
+            "labels": [],
+            "llm_judge_name": None,
+            "invocations": {},  # not used in these tests
+            "computations": {},
+            "metrics": {},
+        }
+        run = create_dummy_run(base_run_metadata)
+        run.run_metadata.metrics = None
+        result = run._should_skip_computation("answer_relevance", run)
+        self.assertFalse(result)
+
+    def test_no_matching_metric(self):
+        # Metrics exist but none match the given metric name.
+        base_run_metadata = {
+            "labels": [],
+            "llm_judge_name": None,
+            "invocations": {},
+            "computations": {},
+            "metrics": {
+                "met1": Run.MetricsMetadata.model_validate({
+                    "id": "met1",
+                    "name": "other_metric",
+                    "completion_status": {
+                        "status": "COMPLETED",
+                        "record_count": 10,
+                    },
+                    "computation_id": "comp1",
+                })
+            },
+        }
+        run = create_dummy_run(base_run_metadata)
+        result = run._should_skip_computation("answer_relevance", run)
+        self.assertFalse(result)
+
+    def test_one_completed_metric(self):
+        # One metric matching "answer_relevance" with COMPLETED status => skip computation.
+        base_run_metadata = {
+            "labels": [],
+            "llm_judge_name": None,
+            "invocations": {},
+            "computations": {},
+            "metrics": {
+                "met1": Run.MetricsMetadata.model_validate({
+                    "id": "met1",
+                    "name": "answer_relevance",
+                    "completion_status": {
+                        "status": Run.CompletionStatusStatus.COMPLETED,
+                        "record_count": 10,
+                    },
+                    "computation_id": "comp1",
+                })
+            },
+        }
+        run = create_dummy_run(base_run_metadata)
+        result = run._should_skip_computation("answer_relevance", run)
+        self.assertTrue(result)
+
+    def test_one_in_progress_metric(self):
+        # One metric matching "answer_relevance" with no completion_status (interpreted as in progress) => skip computation.
+        base_run_metadata = {
+            "labels": [],
+            "llm_judge_name": None,
+            "invocations": {},
+            "computations": {},
+            "metrics": {
+                "met1": Run.MetricsMetadata.model_validate({
+                    "id": "met1",
+                    "name": "answer_relevance",
+                    "completion_status": None,
+                    "computation_id": "comp1",
+                })
+            },
+        }
+        run = create_dummy_run(base_run_metadata)
+        result = run._should_skip_computation("answer_relevance", run)
+        self.assertTrue(result)
+
+    def test_all_failed_metric(self):
+        # One metric matching "answer_relevance" with FAILED status => allow re-computation.
+        base_run_metadata = {
+            "labels": [],
+            "llm_judge_name": None,
+            "invocations": {},
+            "computations": {},
+            "metrics": {
+                "met1": Run.MetricsMetadata.model_validate({
+                    "id": "met1",
+                    "name": "answer_relevance",
+                    "completion_status": {
+                        "status": Run.CompletionStatusStatus.FAILED,
+                        "record_count": 5,
+                    },
+                    "computation_id": "comp1",
+                })
+            },
+        }
+        run = create_dummy_run(base_run_metadata)
+        result = run._should_skip_computation("answer_relevance", run)
+        self.assertFalse(result)
+
+    def test_multiple_metrics_one_in_progress(self):
+        # Multiple metrics with the same name: one FAILED, one in progress => skip (since one is in progress).
+        base_run_metadata = {
+            "labels": [],
+            "llm_judge_name": None,
+            "invocations": {},
+            "computations": {},
+            "metrics": {
+                "met1": Run.MetricsMetadata.model_validate({
+                    "id": "met1",
+                    "name": "answer_relevance",
+                    "completion_status": {
+                        "status": Run.CompletionStatusStatus.FAILED,
+                        "record_count": 5,
+                    },
+                    "computation_id": "comp1",
+                }),
+                "met2": Run.MetricsMetadata.model_validate({
+                    "id": "met2",
+                    "name": "answer_relevance",
+                    "completion_status": None,  # in progress
+                    "computation_id": "comp2",
+                }),
+            },
+        }
+        run = create_dummy_run(base_run_metadata)
+        result = run._should_skip_computation("answer_relevance", run)
+        self.assertTrue(result)
+
+    def test_multiple_metrics_one_completed(self):
+        # Multiple metrics with the same name: one FAILED and one COMPLETED => skip computation.
+        base_run_metadata = {
+            "labels": [],
+            "llm_judge_name": None,
+            "invocations": {},
+            "computations": {},
+            "metrics": {
+                "met1": Run.MetricsMetadata.model_validate({
+                    "id": "met1",
+                    "name": "answer_relevance",
+                    "completion_status": {
+                        "status": Run.CompletionStatusStatus.FAILED,
+                        "record_count": 5,
+                    },
+                    "computation_id": "comp1",
+                }),
+                "met2": Run.MetricsMetadata.model_validate({
+                    "id": "met2",
+                    "name": "answer_relevance",
+                    "completion_status": {
+                        "status": Run.CompletionStatusStatus.COMPLETED,
+                        "record_count": 10,
+                    },
+                    "computation_id": "comp2",
+                }),
+            },
+        }
+        run = create_dummy_run(base_run_metadata)
+        result = run._should_skip_computation("answer_relevance", run)
+        self.assertTrue(result)
