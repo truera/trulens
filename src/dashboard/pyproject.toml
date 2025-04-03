@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-dashboard"
-version = "1.4.7"
+version = "1.4.8"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",

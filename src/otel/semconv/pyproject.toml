@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-otel-semconv"
-version = "1.4.7"
+version = "1.4.8"
 description = "Semantic conventions for spans produced by TruLens."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
