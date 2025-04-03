@@ -512,6 +512,45 @@ class Run(BaseModel):
             and len(run.run_metadata.metrics) > 0
         )
 
+    def _resolve_overall_metrics_status(
+        self, all_metrics, invocation_completion_status
+    ):
+        """
+        Given the list of all metrics, resolve and return the overall metrics status.
+        """
+        if all(
+            metric.completion_status
+            and metric.completion_status.status
+            == Run.CompletionStatusStatus.COMPLETED
+            for metric in all_metrics
+        ):
+            return (
+                RunStatus.COMPLETED
+                if invocation_completion_status
+                == Run.CompletionStatusStatus.COMPLETED
+                else RunStatus.PARTIALLY_COMPLETED
+            )
+        elif all(
+            metric.completion_status
+            and metric.completion_status.status
+            == Run.CompletionStatusStatus.FAILED
+            for metric in all_metrics
+        ):
+            return RunStatus.FAILED
+        elif all(
+            metric.completion_status
+            and metric.completion_status.status
+            in [
+                Run.CompletionStatusStatus.COMPLETED,
+                Run.CompletionStatusStatus.FAILED,
+            ]
+            for metric in all_metrics
+        ):
+            return RunStatus.PARTIALLY_COMPLETED
+        else:
+            logger.warning("Cannot determine run status")
+            return RunStatus.UNKNOWN
+
     def _compute_overall_computations_status(self, run: Run) -> RunStatus:
         all_existing_metrics = run.run_metadata.metrics.values()
 
@@ -534,37 +573,9 @@ class Run(BaseModel):
         if len(metrics_status_not_set) == 0:
             # early return cases as status of all metrics are set
             logger.info("All metrics statuses are set.")
-            if all(
-                metric.completion_status.status
-                == Run.CompletionStatusStatus.COMPLETED
-                for metric in all_existing_metrics
-            ):
-                return (
-                    RunStatus.COMPLETED
-                    if invocation_completion_status
-                    == Run.CompletionStatusStatus.COMPLETED
-                    else RunStatus.PARTIALLY_COMPLETED
-                )
-            elif all(
-                metric.completion_status.status
-                == Run.CompletionStatusStatus.FAILED
-                for metric in all_existing_metrics
-            ):
-                logger.warning("All computations failed.")
-                return RunStatus.FAILED
-            elif all(
-                metric.completion_status.status
-                in [
-                    Run.CompletionStatusStatus.COMPLETED,
-                    Run.CompletionStatusStatus.FAILED,
-                ]
-                for metric in all_existing_metrics
-            ):
-                return RunStatus.PARTIALLY_COMPLETED
-
-            logger.warning("Cannot determine run status")
-
-            return RunStatus.UNKNOWN
+            return self._resolve_overall_metrics_status(
+                all_existing_metrics, invocation_completion_status
+            )
         else:
             logger.info(
                 f"Metrics status not set for: {[metric.name for metric in metrics_status_not_set]}. Checking sproc query status via query history"
@@ -664,41 +675,9 @@ class Run(BaseModel):
                 return RunStatus.COMPUTATION_IN_PROGRESS
             else:
                 logger.info("All computations concluded.")
-                if all(
-                    metric.completion_status
-                    and metric.completion_status.status
-                    == Run.CompletionStatusStatus.FAILED
-                    for metric in all_existing_metrics
-                ):
-                    return RunStatus.FAILED
-                else:
-                    if all(
-                        metric.completion_status
-                        and metric.completion_status.status
-                        == Run.CompletionStatusStatus.COMPLETED
-                        for metric in all_existing_metrics
-                    ):
-                        return (
-                            RunStatus.COMPLETED
-                            if invocation_completion_status
-                            == Run.CompletionStatusStatus.COMPLETED
-                            else RunStatus.PARTIALLY_COMPLETED
-                        )
-
-                    if all(
-                        metric.completion_status
-                        and metric.completion_status.status
-                        in [
-                            Run.CompletionStatusStatus.COMPLETED,
-                            Run.CompletionStatusStatus.FAILED,
-                        ]
-                        for metric in all_existing_metrics
-                    ):
-                        return RunStatus.PARTIALLY_COMPLETED
-
-                    logger.warning("Cannot determine run status")
-
-                    return RunStatus.UNKNOWN
+                return self._resolve_overall_metrics_status(
+                    all_existing_metrics, invocation_completion_status
+                )
 
     def start(self, input_df: Optional[pd.DataFrame] = None):
         """
