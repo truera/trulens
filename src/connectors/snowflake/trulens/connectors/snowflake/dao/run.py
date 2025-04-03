@@ -103,9 +103,8 @@ class RunDao:
 
         run_metadata_dict = {}
 
-        run_metadata_dict["labels"] = [
-            label
-        ]  # only accepting a single label for now
+        run_metadata_dict["labels"] = [label] if label else []
+        # only accepting a single label for now
 
         run_metadata_dict["llm_judge_name"] = (
             llm_judge_name if llm_judge_name else DEFAULT_LLM_JUDGE_NAME
