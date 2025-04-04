@@ -243,7 +243,7 @@ class GroundTruthAgreement(
         response: str,
     ) -> Union[float, Tuple[float, Dict[str, str]]]:
         """
-        Uses OpenAI's Chat GPT Model. A function that that measures
+        Uses OpenAI's Chat GPT Model. A function that measures
         similarity to ground truth. A second template is given to Chat GPT
         with a prompt that the original response is correct, and measures
         whether previous Chat GPT's response is similar.
