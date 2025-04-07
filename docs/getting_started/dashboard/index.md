@@ -32,7 +32,7 @@ By default, the dashboard will find and run on an unused port number. You can al
 
 In addition to the complete dashboard, several of the dashboard components can be used on their own and added to existing _Streamlit_ dashboards.
 
-_Streamlit_ is an easy way to create python scripts into shareable web applications, and has become a popular way to interact with generative AI technology. Several _TruLens_ UI components are now accessible for adding to Streamlit dashboards using the _TruLens_ [Streamlit module][trulens.dashboard.streamlit].
+_Streamlit_ is an easy way to transform Python scripts into shareable web applications, and has become a popular way to interact with generative AI technology. Several _TruLens_ UI components are now accessible for adding to Streamlit dashboards using the _TruLens_ [Streamlit module][trulens.dashboard.streamlit].
 
 Consider the below `app.py` which consists of a simple RAG application that is already logged and evaluated with _TruLens_. Notice in particular, that we are getting both the application's `response` and `record`.
 

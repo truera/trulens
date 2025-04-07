@@ -40,7 +40,7 @@ git lfs install && git lfs pull
 
 ## (Optional) Install PyEnv for environment management
 
-Optionally install a Python runtime manager like PyEnv. This helps install and switch across multiple python versions which can be useful for local testing.
+Optionally install a Python runtime manager like PyEnv. This helps install and switch across multiple Python versions which can be useful for local testing.
 
 ```bash
 curl https://pyenv.run | bash
@@ -83,7 +83,7 @@ poetry install --sync
 
 These commands install the `trulens` package and all its dependencies in editable mode, so changes to the code are immediately reflected in the environment.
 
-For more information on Poetry, see [poetry docs](https://python-poetry.org/docs/).
+For more information on Poetry, see [Poetry docs](https://python-poetry.org/docs/).
 
 ## Install pre-commit hooks
 
@@ -120,7 +120,7 @@ ggshield secret scan repo ./docs/
 
 ### Formatting
 
-Runs [ruff formatter](https://docs.astral.sh/ruff/formatter/) to format all python and notebook files in the repository.
+Runs [ruff formatter](https://docs.astral.sh/ruff/formatter/) to format all Python and notebook files in the repository.
 
 ```bash
 make format

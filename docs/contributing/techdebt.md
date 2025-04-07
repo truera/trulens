@@ -41,13 +41,13 @@ See `instruments.py` docstring for discussion why these are done.
 
 - "HACK007" -- We override `Thread` in `threading`.
 
-### llama-index
+### LlamaIndex
 
 - __Fixed as of llama_index 0.9.26 or near there.__ "HACK001" -- `trace_method`
   decorator in llama_index does not preserve function signatures; we hack it so
   that it does.
 
-### langchain
+### LangChain
 
 - "HACK003" -- We override the base class of
   `langchain_core.runnables.config.ContextThreadPoolExecutor` so it uses our
@@ -83,14 +83,14 @@ See `instruments.py` docstring for discussion why these are done.
 - "HACK010" -- cannot tell whether something is a coroutine and need additional
   checks in `sync`/`desync`.
 
-- "HACK011" -- older pythons don't allow use of `Future` as a type constructor
-  in annotations. We define a dummy type `Future` in older versions of python to
+- "HACK011" -- older versions of Python don't allow use of `Future` as a type constructor
+  in annotations. We define a dummy type `Future` in older versions of Python to
   circumvent this but have to selectively import it to make sure type checking
   and mkdocs is done right.
 
 - "HACK012" -- same but with `Queue`.
 
-- Similarly, we define `NoneType` for older python versions.
+- Similarly, we define `NoneType` for older Python versions.
 
 - "HACK013" -- when using `from __future__ import annotations` for more
   convenient type annotation specification, one may have to call pydantic's

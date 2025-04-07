@@ -34,15 +34,15 @@ types and providers:
     - 📦 [Cortex][trulens.providers.cortex.provider.Cortex] in the package
         `trulens-providers-cortex` for using Snowflake Cortex models.
 
-    - 📦 [Langchain][trulens.providers.langchain.provider.Langchain] in the package
-        `trulens-providers-langchain` for using models via Langchain.
+    - 📦 [LangChain][trulens.providers.langchain.provider.Langchain] in the package
+        `trulens-providers-langchain` for using models via LangChain.
 
     - 📦 [Bedrock][trulens.providers.bedrock.provider.Bedrock] in the package
         `trulens-providers-bedrock` for using Amazon Bedrock models.
 
-    - 📦 [Huggingface][trulens.providers.huggingface.provider.Huggingface] and
+    - 📦 [HuggingFace][trulens.providers.huggingface.provider.Huggingface] and
         [HuggingfaceLocal][trulens.providers.huggingface.provider.HuggingfaceLocal]
-        in the package `trulens-providers-huggingface` for using Huggingface models.
+        in the package `trulens-providers-huggingface` for using HuggingFace models.
 
     - 📦 [LiteLLM][trulens.providers.litellm.provider.LiteLLM] in the package
         `trulens-providers-litellm` for using models via LiteLLM.
