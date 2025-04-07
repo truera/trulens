@@ -137,9 +137,9 @@ def safe_signature(func_or_obj: Any):
     for `__call__` attribute and use that instead.
     """
     try:
-        assert isinstance(
-            func_or_obj, Callable
-        ), f"Expected a Callable. Got {type(func_or_obj)} instead."
+        assert isinstance(func_or_obj, Callable), (
+            f"Expected a Callable. Got {type(func_or_obj)} instead."
+        )
 
         return inspect.signature(func_or_obj)
 
@@ -363,9 +363,9 @@ def superstack() -> Iterator[FrameType]:
         if id(f.f_code) == id(_future_target_wrapper.__code__):
             locs = f.f_locals
 
-            assert (
-                "pre_start_stack" in locs
-            ), "Pre thread start stack expected but not found."
+            assert "pre_start_stack" in locs, (
+                "Pre thread start stack expected but not found."
+            )
             for fi in locs["pre_start_stack"].get():  # is WeakWrapper
                 q.put(fi.frame)
 
@@ -613,7 +613,7 @@ def _future_target_wrapper(stack, func, *args, **kwargs):
     """Wrapper for a function that is started by threads.
 
     This is needed to record the call stack prior to thread creation as in
-    python threads do not inherit the stack. Our instrumentation, however,
+    Python threads do not inherit the stack. Our instrumentation, however,
     relies on walking the stack and need to do this to the frames prior to
     thread starts.
     """
@@ -679,9 +679,9 @@ def get_all_local_in_call_stack(
 
         if id(f.f_code) == id(_future_target_wrapper.__code__):
             locs = f.f_locals
-            assert (
-                "pre_start_stack" in locs
-            ), "Pre thread start stack expected but not found."
+            assert "pre_start_stack" in locs, (
+                "Pre thread start stack expected but not found."
+            )
             for fi in locs["pre_start_stack"].get():  # is WeakWrapper
                 q.put(fi.frame)
 

@@ -60,7 +60,7 @@ class RecordAppCall(serial_utils.SerialModel):
 
     This is shared across different instances of
     [RecordAppCall][trulens.core.schema.record.RecordAppCall] if they refer to
-    the same python method call. This may happen if multiple recorders capture
+    the same Python method call. This may happen if multiple recorders capture
     the call in which case they will each have a different
     [RecordAppCall][trulens.core.schema.record.RecordAppCall] but the
     [call_id][trulens.core.schema.record.RecordAppCall.call_id] will be the

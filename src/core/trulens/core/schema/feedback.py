@@ -286,7 +286,7 @@ class FeedbackCombinations(str, Enum):
 
     If the quantities of items in the various generators do not match, the
     result will have only as many combinations as the generator with the
-    fewest items as per python [zip][zip] (strict mode is not used).
+    fewest items as per Python [zip][zip] (strict mode is not used).
 
     Note that selectors can use
     [Lens][trulens.core.utils.serial.Lens] `collect()` to name a single (list)
