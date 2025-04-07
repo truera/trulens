@@ -1,6 +1,6 @@
 # 💣 Tech Debt
 
-This is a (likely incomplete) list of hacks present in the trulens library.
+This is a (likely incomplete) list of hacks present in the TruLens library.
 They are likely a source of debugging problems so ideally they can be
 addressed/removed in time. This document is to serve as a warning in the
 meantime and a resource for hard-to-debug issues when they arise.
@@ -17,7 +17,7 @@ See `instruments.py` docstring for discussion why these are done.
   replace this with `contextvars`.
 
 - "HACK012" -- In the optional imports scheme, we have to make sure that imports
-  that happen from outside of trulens raise exceptions instead of
+  that happen from outside of TruLens raise exceptions instead of
   producing dummies without raising exceptions.
 
 ## Method overriding
@@ -53,19 +53,19 @@ See `instruments.py` docstring for discussion why these are done.
   `langchain_core.runnables.config.ContextThreadPoolExecutor` so it uses our
   thread starter.
 
-### pydantic
+### Pydantic
 
 - "HACK006" -- `endpoint` needs to be added as a keyword arg with default value
-  in some `__init__` because pydantic overrides signature without default value
+  in some `__init__` because Pydantic overrides signature without default value
   otherwise.
 
 - "HACK005" -- `model_validate` inside `WithClassInfo` is implemented in
-  decorated method because pydantic doesn't call it otherwise. It is uncertain
-  whether this is a pydantic bug.
+  decorated method because Pydantic doesn't call it otherwise. It is uncertain
+  whether this is a Pydantic bug.
 
-- We dump attributes marked to be excluded by pydantic except our own classes.
+- We dump attributes marked to be excluded by Pydantic except our own classes.
   This is because some objects are of interest despite being marked to exclude.
-  Example: `RetrievalQA.retriever` in langchain.
+  Example: `RetrievalQA.retriever` in LangChain.
 
 ### Other
 
@@ -93,13 +93,13 @@ See `instruments.py` docstring for discussion why these are done.
 - Similarly, we define `NoneType` for older Python versions.
 
 - "HACK013" -- when using `from __future__ import annotations` for more
-  convenient type annotation specification, one may have to call pydantic's
+  convenient type annotation specification, one may have to call Pydantic's
   `BaseModel.model_rebuild` after all types references in annotations in that file
   have been defined for each model class that uses type annotations that
   reference types defined after its own definition (i.e. "forward refs").
 
 - "HACK014" -- cannot `from trulens import schema` in some places due to
-  strange interaction with pydantic. Results in:
+  strange interaction with Pydantic. Results in:
 
     ```python
     AttributeError: module 'pydantic' has no attribute 'v1'

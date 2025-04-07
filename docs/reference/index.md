@@ -54,7 +54,7 @@ types and providers:
 - [Connectors](connectors/index.md) for storing TruLens data.
 
     - 📦 [SnowflakeConnector][trulens.connectors.snowflake.connector.SnowflakeConnector]
-      in package `trulens-connectors-snowlake` for connecting to Snowflake
+      in package `trulens-connectors-snowflake` for connecting to Snowflake
       databases.
 
 Other optional packages:

@@ -19,9 +19,9 @@ logger = logging.getLogger(__name__)
 
 class HuggingfaceCallback(core_endpoint.EndpointCallback):
     def handle_classification(self, response: requests.Response) -> None:
-        # Huggingface free inference api doesn't seem to have its own library
+        # HuggingFace free inference API doesn't seem to have its own library
         # and the docs say to use `requests`` so that is what we instrument and
-        # process to track api calls.
+        # process to track API calls.
 
         super().handle_classification(response)
 
@@ -29,13 +29,13 @@ class HuggingfaceCallback(core_endpoint.EndpointCallback):
             self.cost.n_successful_requests += 1
             content = response.json()
 
-            # Handle case when multiple items returned by hf api
+            # Handle case when multiple items returned by HF API
             for item in content:
                 self.cost.n_classes += len(item)
 
 
 class HuggingfaceEndpoint(core_endpoint._WithPost, core_endpoint.Endpoint):
-    """Huggingface endpoint.
+    """HuggingFace endpoint.
 
     Instruments the requests.post method for requests to
     "https://api-inference.huggingface.co".
@@ -122,8 +122,8 @@ class HuggingfaceEndpoint(core_endpoint._WithPost, core_endpoint.Endpoint):
             else:
                 raise RuntimeError(error)
 
-        assert (
-            isinstance(j, Sequence) and len(j) > 0
-        ), f"Post did not return a sequence: {j}"
+        assert isinstance(j, Sequence) and len(j) > 0, (
+            f"Post did not return a sequence: {j}"
+        )
 
         return ret
