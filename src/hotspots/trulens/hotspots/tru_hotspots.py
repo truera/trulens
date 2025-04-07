@@ -13,12 +13,12 @@ def get_hotspots(
     hotspots_config: Optional[HotspotsConfig] = None,
     feedback: Optional[str] = None,
 ) -> pd.DataFrame:
-    """Get hotspots for a Trulens session.
+    """Get hotspots for a TruLens session.
 
     Args:
-        session: Trulens session
+        session: TruLens session
 
-        app_ids: A list of app ids to filter records by. If empty or not given, all
+        app_ids: A list of app IDs to filter records by. If empty or not given, all
               apps' records will be returned.
 
         hotspots_config: A hotspots configuration. A default one based on feedbacks will be used

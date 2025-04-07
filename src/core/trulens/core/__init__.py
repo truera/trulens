@@ -1,4 +1,4 @@
-"""Trulens Core LLM Evaluation Library."""
+"""TruLens Core LLM Evaluation Library."""
 
 # WARNING: This file does not follow the no-init aliases import standard.
 

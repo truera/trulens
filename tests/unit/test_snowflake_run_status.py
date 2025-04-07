@@ -49,7 +49,7 @@ def create_dummy_run(run_metadata_dict: dict, run_status: str = None) -> Run:
 class TestRunStatusOrchestration(unittest.TestCase):
     def setUp(self):
         if Run is None or RunStatus is None:
-            self.skipTest("Trulens Run class not available.")
+            self.skipTest("TruLens Run class not available.")
             return
 
         self.base_run_dao = MagicMock()
