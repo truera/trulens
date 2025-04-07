@@ -1,7 +1,7 @@
 """
 # Synchronization/Async Utilities
 
-NOTE: we cannot name a module "async" as it is a python keyword.
+NOTE: we cannot name a module "async" as it is a Python keyword.
 
 ## Synchronous vs. Asynchronous
 
