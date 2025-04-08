@@ -770,7 +770,7 @@ class TestProviders(TestCase):
     @pytest.mark.optional
     def test_hugs(self):
         """
-        Check that Huggingface moderation feedback functions produce a value in the
+        Check that HuggingFace moderation feedback functions produce a value in the
         0-1 range only. And also make sure to check the reason of feedback function.
         Only checks each feedback function once.
         """
@@ -833,7 +833,7 @@ class TestProviders(TestCase):
 
     @pytest.mark.optional
     def test_hugs_calibration(self):
-        """Check that Huggingface moderation feedback functions produce reasonable values."""
+        """Check that HuggingFace moderation feedback functions produce reasonable values."""
 
         h = huggingface_provider.Huggingface()
 

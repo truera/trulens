@@ -29,7 +29,7 @@ class Provider(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
     The feedback functions available for these providers are tied to specific providers, as they
     rely on provider-specific endpoints to models that are tuned to a particular task.
 
-    For example, the Huggingface feedback provider provides access to a number of classification models
+    For example, the HuggingFace feedback provider provides access to a number of classification models
     for specific tasks, such as language detection. These models are than utilized by a feedback function
     to generate an evaluation score.
 

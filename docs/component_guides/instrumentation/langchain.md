@@ -14,7 +14,7 @@ apps.
 
 ## Example Usage
 
-To demonstrate usage, we'll create a standard RAG defined with Langchain Expression Language (LCEL).
+To demonstrate usage, we'll create a standard RAG defined with LangChain Expression Language (LCEL).
 
 First, this requires loading data into a vector store.
 
@@ -81,7 +81,7 @@ us to evaluate for metrics including context relevance and groundedness.
 For LangChain applications where the BaseRetriever is used, `select_context` can
 be used to access the retrieved text for evaluation.
 
-!!! example "Evaluating retrieved context in Langchain"
+!!! example "Evaluating retrieved context in LangChain"
 
     ```python
     import numpy as np

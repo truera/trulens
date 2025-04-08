@@ -3,7 +3,7 @@
 TruLens provides TruRails, an integration with _NeMo Guardrails_ apps to allow you to
 inspect and evaluate the internals of your application built using _NeMo Guardrails_.
 This is done through the instrumentation of key _NeMo Guardrails_ classes. To see a list
-of classes instrumented, see *Appendix: Instrumented Nemo Classes and
+of classes instrumented, see *Appendix: Instrumented NeMo Classes and
 Methods*.
 
 In addition to the default instrumentation, TruRails exposes the
@@ -14,7 +14,7 @@ apps.
 
 ## Example Usage
 
-Below is a quick example of usage. First, we'll create a standard Nemo app.
+Below is a quick example of usage. First, we'll create a standard NeMo app.
 
 !!! example "Create a NeMo app"
 
@@ -24,9 +24,9 @@ Below is a quick example of usage. First, we'll create a standard Nemo app.
     instructions:
     - type: general
         content: |
-        Below is a conversation between a user and a bot called the trulens Bot.
-        The bot is designed to answer questions about the trulens python library.
-        The bot is knowledgeable about python.
+        Below is a conversation between a user and a bot called the TruLens Bot.
+        The bot is designed to answer questions about the TruLens Python library.
+        The bot is knowledgeable about Python.
         If the bot does not know the answer to a question, it truthfully says it does not know.
 
     sample_conversation: |
@@ -85,7 +85,7 @@ To properly evaluate LLM apps we often need to point our evaluation at an
 internal step of our application, such as the retrieved context. Doing so allows
 us to evaluate for metrics including context relevance and groundedness.
 
-For Nemo applications with a knowledge base, `select_context` can
+For NeMo applications with a knowledge base, `select_context` can
 be used to access the retrieved text for evaluation.
 
 !!! example "Instrument a NeMo app"
@@ -109,7 +109,7 @@ be used to access the retrieved text for evaluation.
 
 For examples of using `TruRails`, check out the [_TruLens_ Cookbook](../../cookbook/index.md)
 
-## Appendix: Instrumented Nemo Classes and Methods
+## Appendix: Instrumented NeMo Classes and Methods
 
 The modules, classes, and methods that trulens instruments can be retrieved from
 the appropriate Instrument subclass.

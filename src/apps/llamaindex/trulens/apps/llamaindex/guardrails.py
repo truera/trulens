@@ -22,7 +22,7 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
 
         threshold: and keep documents only if their feedback value is at least this threshold.
 
-    Example: "Using TruLens guardrail context filters with Llama-Index"
+    Example: "Using TruLens guardrail context filters with LlamaIndex"
         ```python
         from trulens.apps.llamaindex.guardrails import WithFeedbackFilterNodes
 

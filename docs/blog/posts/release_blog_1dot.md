@@ -24,7 +24,7 @@ Next, we modularized _TruLens_ into a family of different packages, described be
 
 - `trulens-core` holds core abstractions for database operations, app instrumentation, guardrails and evaluation.
 - `trulens-dashboard` gives you the required capabilities to run and operate the TruLens dashboard.
-- `trulens-apps-` prefixed packages give you tools for interacting with LLM apps built with other frameworks, giving you capabilities including tracing, logging and guardrailing. These include `trulens-apps-langchain` and `trulens-apps-llamaindex` which hold our popular `TruChain` and `TruLlama` wrappers that seamlessly instrument _LangChain_ and _Llama-Index_ apps.
+- `trulens-apps-` prefixed packages give you tools for interacting with LLM apps built with other frameworks, giving you capabilities including tracing, logging and guardrailing. These include `trulens-apps-langchain` and `trulens-apps-llamaindex` which hold our popular `TruChain` and `TruLlama` wrappers that seamlessly instrument _LangChain_ and _LlamaIndex_ apps.
 - `trulens-feedback` gives you access to out of the box feedback functions required for running feedback functions. Feedback function implementations must be combined with a selected provider integration.
 - `trulens-providers-` prefixed package describes a set of integrations with other libraries for running feedback functions. Today, we offer an extensive set of integrations that allow you to run feedback functions on top of virtually any LLM. These integrations can be installed as standalone packages, and include: `trulens-providers-openai`, `trulens-providers-huggingface`, `trulens-providers-litellm`, `trulens-providers-langchain`, `trulens-providers-bedrock`, `trulens-providers-cortex`.
 - `trulens-connectors-` provide ways to log _TruLens_ traces and evaluations to other databases. In addition to connect to any `sqlalchemy` database with `trulens-core`, we've added with `trulens-connectors-snowflake` tailored specifically to connecting to Snowflake. We plan to add more connectors over time.
@@ -55,7 +55,7 @@ To see the core re-architecture changes in action, we've included some usage exa
 
 !!! example "Log and Instrument LLM Apps"
 
-    === "python"
+    === "Python"
 
         ```bash
         pip install trulens-core
@@ -88,7 +88,7 @@ To see the core re-architecture changes in action, we've included some usage exa
         ca = CustomApp()
         ```
 
-    === "Langchain"
+    === "LangChain"
 
         ```bash
         pip install trulens-apps-langchain
@@ -125,7 +125,7 @@ To see the core re-architecture changes in action, we've included some usage exa
             chain("What is langchain?")
         ```
 
-    === "Llama-Index"
+    === "LlamaIndex"
 
         ```bash
         pip install trulens-core trulens-apps-llamaindex
@@ -145,7 +145,7 @@ To see the core re-architecture changes in action, we've included some usage exa
             app_id='LlamaIndex_App1')
 
         with tru_recorder as recording:
-            query_engine.query("What is llama index?")
+            query_engine.query("What is LlamaIndex?")
         ```
 
 !!! example "Run Feedback Functions with different LLMs"
@@ -207,7 +207,7 @@ To see the core re-architecture changes in action, we've included some usage exa
         from trulens.core import Select
         from trulens.providers.huggingface import Huggingface
 
-        # Define a remote Huggingface groundedness feedback function
+        # Define a remote HuggingFace groundedness feedback function
         provider = Huggingface()
         f_remote_groundedness = (
             Feedback(
