@@ -2,7 +2,7 @@
 
 """Import renames for TruLens test modules as per code standards.
 
-This is intentionally a python file to be analyzed by static tools. Do not
+This is intentionally a Python file to be analyzed by static tools. Do not
 import this module otherwise.
 """
 

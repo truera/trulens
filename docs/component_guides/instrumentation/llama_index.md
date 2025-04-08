@@ -14,9 +14,9 @@ evaluations reusable across different apps.
 
 ## Example usage
 
-Below is a quick example of usage. First, we'll create a standard LlamaIndex query engine from Paul Graham's Essay, *What I Worked On*
+Below is a quick example of usage. First, we'll create a standard LlamaIndex query engine from Paul Graham's Essay, *What I Worked On*:
 
-!!! example "Create a Llama-Index Query Engine"
+!!! example "Create a LlamaIndex Query Engine"
 
     ```python
     from llama_index.core import VectorStoreIndex
@@ -30,9 +30,9 @@ Below is a quick example of usage. First, we'll create a standard LlamaIndex que
     query_engine = index.as_query_engine()
     ```
 
-To instrument an Llama-Index query engine, all that's required is to wrap it using TruLlama.
+To instrument an LlamaIndex query engine, all that's required is to wrap it using TruLlama.
 
-!!! example "Instrument a Llama-Index Query Engine"
+!!! example "Instrument a LlamaIndex Query Engine"
 
     ```python
     from trulens.apps.llamaindex import TruLlama
@@ -50,7 +50,7 @@ us to evaluate for metrics including context relevance and groundedness.
 For LlamaIndex applications where the source nodes are used, `select_context`
 can be used to access the retrieved text for evaluation.
 
-!!! example "Evaluating retrieved context for Llama-Index query engines"
+!!! example "Evaluating retrieved context for LlamaIndex query engines"
 
     ```python
     import numpy as np
@@ -69,7 +69,7 @@ can be used to access the retrieved text for evaluation.
     )
     ```
 
-You can find the full quickstart available here: [Llama-Index Quickstart](../../getting_started/quickstarts/llama_index_quickstart.ipynb)
+You can find the full quickstart available here: [LlamaIndex Quickstart](../../getting_started/quickstarts/llama_index_quickstart.ipynb)
 
 ## Async Support
 TruLlama also provides async support for LlamaIndex through the `aquery`,
@@ -78,7 +78,7 @@ applications.
 
 As an example, below is an LlamaIndex async chat engine (`achat`).
 
-!!! example "Instrument an async Llama-Index app"
+!!! example "Instrument an async LlamaIndex app"
 
     ```python
     from llama_index.core import VectorStoreIndex
@@ -108,7 +108,7 @@ TruLlama also provides streaming support for LlamaIndex. This allows you to trac
 
 As an example, below is an LlamaIndex query engine with streaming.
 
-!!! example "Instrument an async Llama-Index app"
+!!! example "Instrument an async LlamaIndex app"
 
     ```python
     from llama_index.core import VectorStoreIndex
@@ -126,7 +126,7 @@ Just like with other methods, just wrap your streaming query engine with TruLlam
 
 You can also print the response tokens as they are generated using the `response_gen` attribute.
 
-!!! example "Instrument a streaming Llama-Index app"
+!!! example "Instrument a streaming LlamaIndex app"
 
     ```python
     tru_chat_engine_recorder = TruLlama(chat_engine)

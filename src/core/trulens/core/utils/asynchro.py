@@ -1,7 +1,7 @@
 """
 # Synchronization/Async Utilities
 
-NOTE: we cannot name a module "async" as it is a python keyword.
+NOTE: we cannot name a module "async" as it is a Python keyword.
 
 ## Synchronous vs. Asynchronous
 
@@ -9,7 +9,7 @@ Some functions in TruLens come with asynchronous versions. Those use "async
 def" instead of "def" and typically start with the letter "a" in their name with
 the rest matching their synchronous version.
 
-Due to how python handles such functions and how they are executed, it is
+Due to how Python handles such functions and how they are executed, it is
 relatively difficult to reshare code between the two versions. Asynchronous
 functions are executed by an async loop (see
 [EventLoop](https://docs.python.org/3/library/asyncio-eventloop.html)). Python

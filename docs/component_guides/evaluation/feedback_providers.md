@@ -16,9 +16,9 @@ functions based capabilities of the constituent providers.
 
 Some feedback functions rely on classification typically tailor made for task, unlike LLM models.
 
-- [Huggingface provider][trulens.providers.huggingface.Huggingface]
-  containing a variety of classification-based feedback functions runnable on the remote Huggingface API.
-  - [Huggingface Local provider][trulens.providers.huggingface.HuggingfaceLocal]
+- [HuggingFace provider][trulens.providers.huggingface.Huggingface]
+  containing a variety of classification-based feedback functions runnable on the remote HuggingFace API.
+  - [HuggingFace Local provider][trulens.providers.huggingface.HuggingfaceLocal]
   containing a variety of classification-based feedback functions runnable locally.
 - [OpenAI provider][trulens.providers.openai.OpenAI] (and
   subclasses) features moderation feedback functions.
