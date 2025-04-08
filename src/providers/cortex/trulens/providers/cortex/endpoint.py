@@ -18,7 +18,7 @@ pp = pprint.PrettyPrinter()
 class CortexCostComputer:
     @staticmethod
     def handle_response(response: Any) -> Dict[str, Any]:
-        model = "undefined"
+        model = None
         usage = {}
         for curr in response:
             data = json.loads(curr.data)
@@ -27,7 +27,8 @@ class CortexCostComputer:
                 model = data["model"]
                 usage = data["usage"]
                 break
-
+        if model is None:
+            return {}
         endpoint = CortexEndpoint()
         callback = CortexCallback(endpoint=endpoint)
         return {
