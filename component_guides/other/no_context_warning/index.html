@@ -14,7 +14,7 @@
       
       
       <link rel="icon" href="../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
     
     
       
@@ -22,7 +22,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.d7758b05.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.4af4bdda.min.css">
       
         
         <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
@@ -3544,7 +3544,7 @@
               
   
   <span class="md-ellipsis">
-    📦 Nemo Guardrails
+    📦 NeMo Guardrails
     
   </span>
   
@@ -3561,7 +3561,7 @@
         <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_3_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_3_7">
             <span class="md-nav__icon md-icon"></span>
-            📦 Nemo Guardrails
+            📦 NeMo Guardrails
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -8925,7 +8925,7 @@
         
   
   <span class="md-ellipsis">
-    Local vs Remote Huggingface Feedback Functions
+    Local vs Remote HuggingFace Feedback Functions
     
   </span>
   
@@ -9506,6 +9506,8 @@
       
         
       
+        
+      
     
     
       
@@ -9884,6 +9886,81 @@
   
   <span class="md-ellipsis">
     Simple Pinecone setup with LlamaIndex + Eval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5_5" id="__nav_5_5_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Weaviate
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            Weaviate
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cookbook/vector_stores/weaviate/weaviate_query_agent/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Evaluating Weaviate Query Agents
     
   </span>
   
@@ -10456,23 +10533,23 @@ of the cases. This document is here to help you fix the issue in case your app
 or the libraries you use were not covered by our existing remedies.</p>
 <h2 id="threads">Threads<a class="headerlink" href="#threads" title="Permanent link">&para;</a></h2>
 <p>If using threads, use the replacement threading classes included in <em>TruLens</em>
-that stand in place of python classes:</p>
+that stand in place of Python classes:</p>
 <ul>
 <li>
-<p><a class="autorefs autorefs-internal" href="../../../reference/trulens/core/utils/threading/#trulens.core.utils.threading.Thread">trulens.core.utils.threading.Thread</a>
+<p><a class="autorefs autorefs-internal" title="            Thread" href="../../../reference/trulens/core/utils/threading/#trulens.core.utils.threading.Thread">trulens.core.utils.threading.Thread</a>
   instead of <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/threading.html#threading.Thread">threading.Thread</a>.</p>
 </li>
 <li>
-<p><a class="autorefs autorefs-internal" href="../../../reference/trulens/core/utils/threading/#trulens.core.utils.threading.ThreadPoolExecutor">trulens.core.utils.threading.ThreadPoolExecutor</a>
+<p><a class="autorefs autorefs-internal" title="            ThreadPoolExecutor" href="../../../reference/trulens/core/utils/threading/#trulens.core.utils.threading.ThreadPoolExecutor">trulens.core.utils.threading.ThreadPoolExecutor</a>
   instead of
   <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ThreadPoolExecutor">concurrent.futures.ThreadPoolExecutor</a>.</p>
 </li>
 </ul>
 <p>You can also import either from their builtin locations as long as you import
 <em>TruLens</em> first.</p>
-<p>Alternatively, use the utility methods in the <a class="autorefs autorefs-internal" href="../../../reference/trulens/core/utils/threading/#trulens.core.utils.threading.TP">TP
+<p>Alternatively, use the utility methods in the <a class="autorefs autorefs-internal" title="            TP" href="../../../reference/trulens/core/utils/threading/#trulens.core.utils.threading.TP">TP
 class</a> such as
-<a class="autorefs autorefs-internal" href="../../../reference/trulens/core/utils/threading/#trulens.core.utils.threading.TP.submit">submit</a>.</p>
+<a class="autorefs autorefs-internal" title="            submit" href="../../../reference/trulens/core/utils/threading/#trulens.core.utils.threading.TP.submit">submit</a>.</p>
 <p>Alternatively, target <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/contextvars.html#contextvars.Context.run">Context.run</a> in your threads,
 with the original target being the first argument to <code>run</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">contextvars</span><span class="w"> </span><span class="kn">import</span> <span class="n">copy_context</span>
@@ -10485,7 +10562,7 @@ with the original target being the first argument to <code>run</code>:</p>
 </code></pre></div>
 <h2 id="async-tasks">Async Tasks<a class="headerlink" href="#async-tasks" title="Permanent link">&para;</a></h2>
 <p>If using async Tasks, make sure that the default <code>copy_context</code> behaviour of
-<code>Task</code> is being used. This only applies to python &gt;= 3.11:</p>
+<code>Task</code> is being used. This only applies to Python &gt;= 3.11:</p>
 <div class="admonition example">
 <p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">contextvars</span><span class="w"> </span><span class="kn">import</span> <span class="n">copy_context</span>
@@ -10502,7 +10579,7 @@ with the original target being the first argument to <code>run</code>:</p>
 <span class="n">task</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">your_coroutine</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span> <span class="c1"># use default context behaviour</span>
 </code></pre></div>
 </div>
-<p>If you are using python prior to 3.11, <code>copy_context</code> is the fixed behaviour
+<p>If you are using Python prior to 3.11, <code>copy_context</code> is the fixed behaviour
 which cannot be changed.</p>
 <h2 id="other-issues">Other issues<a class="headerlink" href="#other-issues" title="Permanent link">&para;</a></h2>
 <p>If you are still seeing the <em>Cannot find TruLens context</em> warning and none of the solutions
@@ -10561,7 +10638,7 @@ issue</a> or a slack post on the
     <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "search.highlight", "toc.follow", "content.code.copy", "content.tabs"], "search": "../../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.f13b1293.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.c8b220af.min.js"></script>
       
         <script src="../../../javascript/config.js"></script>
       

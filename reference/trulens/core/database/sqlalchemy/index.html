@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.d7758b05.min.css">
+      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.4af4bdda.min.css">
       
         
         <link rel="stylesheet" href="../../../../../assets/stylesheets/palette.06af60db.min.css">
@@ -3561,7 +3561,7 @@
               
   
   <span class="md-ellipsis">
-    📦 Nemo Guardrails
+    📦 NeMo Guardrails
     
   </span>
   
@@ -3578,7 +3578,7 @@
         <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_3_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_3_7">
             <span class="md-nav__icon md-icon"></span>
-            📦 Nemo Guardrails
+            📦 NeMo Guardrails
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -9458,7 +9458,7 @@
         
   
   <span class="md-ellipsis">
-    Local vs Remote Huggingface Feedback Functions
+    Local vs Remote HuggingFace Feedback Functions
     
   </span>
   
@@ -10039,6 +10039,8 @@
       
         
       
+        
+      
     
     
       
@@ -10417,6 +10419,81 @@
   
   <span class="md-ellipsis">
     Simple Pinecone setup with LlamaIndex + Eval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5_5" id="__nav_5_5_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Weaviate
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            Weaviate
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../cookbook/vector_stores/weaviate/weaviate_query_agent/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Evaluating Weaviate Query Agents
     
   </span>
   
@@ -11424,6 +11501,7 @@
 
 
 
+
   <div class="doc doc-children">
 
 
@@ -11446,11 +11524,12 @@
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="trulens.core.database.base.DB" href="../base/#trulens.core.database.base.DB">DB</a></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="            DB (trulens.core.database.base.DB)" href="../base/#trulens.core.database.base.DB">DB</a></code></p>
 
 
         <p>Database implemented using sqlalchemy.</p>
-<p>See abstract class <a class="autorefs autorefs-internal" href="../base/#trulens.core.database.base.DB">DB</a> for method reference.</p>
+<p>See abstract class <a class="autorefs autorefs-internal" title="            DB" href="../base/#trulens.core.database.base.DB">DB</a> for method reference.</p>
+
 
 
 
@@ -11482,12 +11561,18 @@
   </span>
 
 <a href="#trulens.core.database.sqlalchemy.SQLAlchemyDB.redact_keys" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">redact_keys</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.database.base.DEFAULT_DATABASE_REDACT_KEYS" href="../base/#trulens.core.database.base.DEFAULT_DATABASE_REDACT_KEYS">DEFAULT_DATABASE_REDACT_KEYS</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">redact_keys</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            DEFAULT_DATABASE_REDACT_KEYS
+
+
+  
+      module-attribute
+   (trulens.core.database.base.DEFAULT_DATABASE_REDACT_KEYS)" href="../base/#trulens.core.database.base.DEFAULT_DATABASE_REDACT_KEYS">DEFAULT_DATABASE_REDACT_KEYS</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Redact secrets before writing out data.</p>
+
     </div>
 
 </div>
@@ -11506,13 +11591,19 @@
   </span>
 
 <a href="#trulens.core.database.sqlalchemy.SQLAlchemyDB.table_prefix" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">table_prefix</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.database.base.DEFAULT_DATABASE_PREFIX" href="../base/#trulens.core.database.base.DEFAULT_DATABASE_PREFIX">DEFAULT_DATABASE_PREFIX</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">table_prefix</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            DEFAULT_DATABASE_PREFIX
+
+
+  
+      module-attribute
+   (trulens.core.database.base.DEFAULT_DATABASE_PREFIX)" href="../base/#trulens.core.database.base.DEFAULT_DATABASE_PREFIX">DEFAULT_DATABASE_PREFIX</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>The prefix to use for all table names.</p>
-<p><a class="autorefs autorefs-internal" href="../base/#trulens.core.database.base.DB">DB</a> interface requirement.</p>
+<p><a class="autorefs autorefs-internal" title="            DB" href="../base/#trulens.core.database.base.DB">DB</a> interface requirement.</p>
+
     </div>
 
 </div>
@@ -11537,6 +11628,7 @@
     <div class="doc doc-contents ">
 
         <p>SQLAlchemy-related engine params.</p>
+
     </div>
 
 </div>
@@ -11561,6 +11653,7 @@
     <div class="doc doc-contents ">
 
         <p>SQLAlchemy-related session.</p>
+
     </div>
 
 </div>
@@ -11585,6 +11678,7 @@
     <div class="doc doc-contents ">
 
         <p>SQLAlchemy engine.</p>
+
     </div>
 
 </div>
@@ -11609,6 +11703,7 @@
     <div class="doc doc-contents ">
 
         <p>SQLAlchemy session(maker).</p>
+
     </div>
 
 </div>
@@ -11626,14 +11721,15 @@
   </span>
 
 <a href="#trulens.core.database.sqlalchemy.SQLAlchemyDB.orm" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">orm</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Type" href="https://docs.python.org/3/library/typing.html#typing.Type">Type</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.database.orm.ORM" href="../orm/#trulens.core.database.orm.ORM">ORM</a></span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">orm</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Type" href="https://docs.python.org/3/library/typing.html#typing.Type">Type</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            ORM (trulens.core.database.orm.ORM)" href="../orm/#trulens.core.database.orm.ORM">ORM</a></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Container of all the ORM classes for this database.</p>
 <p>This should be set to a subclass of
-<a class="autorefs autorefs-internal" href="../orm/#trulens.core.database.orm.ORM">ORM</a> upon initialization.</p>
+<a class="autorefs autorefs-internal" title="            ORM" href="../orm/#trulens.core.database.orm.ORM">ORM</a> upon initialization.</p>
+
     </div>
 
 </div>
@@ -11655,6 +11751,7 @@
 
         <p>Requirement for pretty printing using the rich package.</p>
 
+
     </div>
 
 </div>
@@ -11674,6 +11771,7 @@
 
         <p>Relatively concise identifier string for this instance.</p>
 
+
     </div>
 
 </div>
@@ -11692,6 +11790,7 @@
     <div class="doc doc-contents ">
 
         <p>Even more concise identifier string than <strong>str</strong>.</p>
+
 
     </div>
 
@@ -11714,19 +11813,30 @@
     <span class="n">database_engine</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><span title="sqlalchemy.Engine">Engine</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">database_redact_keys</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span>
         <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span>
-    <span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.database.base.DEFAULT_DATABASE_REDACT_KEYS" href="../base/#trulens.core.database.base.DEFAULT_DATABASE_REDACT_KEYS">DEFAULT_DATABASE_REDACT_KEYS</a></span><span class="p">,</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            DEFAULT_DATABASE_REDACT_KEYS
+
+
+  
+      module-attribute
+   (trulens.core.database.base.DEFAULT_DATABASE_REDACT_KEYS)" href="../base/#trulens.core.database.base.DEFAULT_DATABASE_REDACT_KEYS">DEFAULT_DATABASE_REDACT_KEYS</a></span><span class="p">,</span>
     <span class="n">database_prefix</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span>
         <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span>
-    <span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.database.base.DEFAULT_DATABASE_PREFIX" href="../base/#trulens.core.database.base.DEFAULT_DATABASE_PREFIX">DEFAULT_DATABASE_PREFIX</a></span><span class="p">,</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            DEFAULT_DATABASE_PREFIX
+
+
+  
+      module-attribute
+   (trulens.core.database.base.DEFAULT_DATABASE_PREFIX)" href="../base/#trulens.core.database.base.DEFAULT_DATABASE_PREFIX">DEFAULT_DATABASE_PREFIX</a></span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">]</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.database.sqlalchemy.SQLAlchemyDB" href="#trulens.core.database.sqlalchemy.SQLAlchemyDB">SQLAlchemyDB</a></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            SQLAlchemyDB (trulens.core.database.sqlalchemy.SQLAlchemyDB)" href="#trulens.core.database.sqlalchemy.SQLAlchemyDB">SQLAlchemyDB</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Process database-related configuration provided to the <a class="autorefs autorefs-internal" href="../../session/#trulens.core.session.TruSession">Tru</a> class to
+        <p>Process database-related configuration provided to the <a class="autorefs autorefs-internal" title="            TruSession" href="../../session/#trulens.core.session.TruSession">Tru</a> class to
 create a database.</p>
 <p>Emits warnings if appropriate.</p>
+
 
     </div>
 
@@ -11746,7 +11856,7 @@ create a database.</p>
 <a href="#trulens.core.database.sqlalchemy.SQLAlchemyDB.from_db_url" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">from_db_url</span><span class="p">(</span>
     <span class="n">url</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">]</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.database.sqlalchemy.SQLAlchemyDB" href="#trulens.core.database.sqlalchemy.SQLAlchemyDB">SQLAlchemyDB</a></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            SQLAlchemyDB (trulens.core.database.sqlalchemy.SQLAlchemyDB)" href="#trulens.core.database.sqlalchemy.SQLAlchemyDB">SQLAlchemyDB</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -11813,7 +11923,7 @@ create a database.</p>
           <tr class="doc-section-item">
             <td>
                 <span class="doc-returns-annotation">
-                    <code><a class="autorefs autorefs-internal" title="trulens.core.database.sqlalchemy.SQLAlchemyDB" href="#trulens.core.database.sqlalchemy.SQLAlchemyDB">SQLAlchemyDB</a></code>
+                    <code><a class="autorefs autorefs-internal" title="            SQLAlchemyDB (trulens.core.database.sqlalchemy.SQLAlchemyDB)" href="#trulens.core.database.sqlalchemy.SQLAlchemyDB">SQLAlchemyDB</a></code>
                 </span>
             </td>
             <td class="doc-returns-details">
@@ -11824,6 +11934,7 @@ create a database.</p>
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -11843,7 +11954,7 @@ create a database.</p>
 <a href="#trulens.core.database.sqlalchemy.SQLAlchemyDB.from_db_engine" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">from_db_engine</span><span class="p">(</span>
     <span class="n">engine</span><span class="p">:</span> <span class="n"><span title="sqlalchemy.Engine">Engine</span></span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">]</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.database.sqlalchemy.SQLAlchemyDB" href="#trulens.core.database.sqlalchemy.SQLAlchemyDB">SQLAlchemyDB</a></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            SQLAlchemyDB (trulens.core.database.sqlalchemy.SQLAlchemyDB)" href="#trulens.core.database.sqlalchemy.SQLAlchemyDB">SQLAlchemyDB</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -11854,6 +11965,7 @@ Args:
     kwargs: Additional arguments to pass to the database constructor.
 Returns:
     A database instance.</p>
+
 
     </div>
 
@@ -11873,7 +11985,13 @@ Returns:
     <div class="doc doc-contents ">
 
         <p>See
-<a class="autorefs autorefs-internal" href="../base/#trulens.core.database.base.DB.check_db_revision">DB.check_db_revision</a>.</p>
+<a class="autorefs autorefs-internal" title="            check_db_revision
+
+
+  
+      abstractmethod
+  " href="../base/#trulens.core.database.base.DB.check_db_revision">DB.check_db_revision</a>.</p>
+
 
     </div>
 
@@ -11892,7 +12010,13 @@ Returns:
 
     <div class="doc doc-contents ">
 
-        <p>See <a class="autorefs autorefs-internal" href="../base/#trulens.core.database.base.DB.migrate_database">DB.migrate_database</a>.</p>
+        <p>See <a class="autorefs autorefs-internal" title="            migrate_database
+
+
+  
+      abstractmethod
+  " href="../base/#trulens.core.database.base.DB.migrate_database">DB.migrate_database</a>.</p>
+
 
     </div>
 
@@ -11911,7 +12035,13 @@ Returns:
 
     <div class="doc doc-contents ">
 
-        <p>See <a class="autorefs autorefs-internal" href="../base/#trulens.core.database.base.DB.reset_database">DB.reset_database</a>.</p>
+        <p>See <a class="autorefs autorefs-internal" title="            reset_database
+
+
+  
+      abstractmethod
+  " href="../base/#trulens.core.database.base.DB.reset_database">DB.reset_database</a>.</p>
+
 
     </div>
 
@@ -11925,12 +12055,23 @@ Returns:
 
 
 <a href="#trulens.core.database.sqlalchemy.SQLAlchemyDB.insert_record" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">insert_record</span><span class="p">(</span><span class="n">record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.record.Record" href="../../schema/record/#trulens.core.schema.record.Record">Record</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.RecordID" href="../../schema/types/#trulens.core.schema.types.RecordID">RecordID</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">insert_record</span><span class="p">(</span><span class="n">record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            Record (trulens.core.schema.record.Record)" href="../../schema/record/#trulens.core.schema.record.Record">Record</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            RecordID
+
+
+  
+      module-attribute
+   (trulens.core.schema.types.RecordID)" href="../../schema/types/#trulens.core.schema.types.RecordID">RecordID</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>See <a class="autorefs autorefs-internal" href="../base/#trulens.core.database.base.DB.insert_record">DB.insert_record</a>.</p>
+        <p>See <a class="autorefs autorefs-internal" title="            insert_record
+
+
+  
+      abstractmethod
+  " href="../base/#trulens.core.database.base.DB.insert_record">DB.insert_record</a>.</p>
+
 
     </div>
 
@@ -11945,13 +12086,24 @@ Returns:
 
 <a href="#trulens.core.database.sqlalchemy.SQLAlchemyDB.batch_insert_record" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">batch_insert_record</span><span class="p">(</span>
-    <span class="n">records</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.record.Record" href="../../schema/record/#trulens.core.schema.record.Record">Record</a></span><span class="p">],</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.RecordID" href="../../schema/types/#trulens.core.schema.types.RecordID">RecordID</a></span><span class="p">]</span>
+    <span class="n">records</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Record (trulens.core.schema.record.Record)" href="../../schema/record/#trulens.core.schema.record.Record">Record</a></span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            RecordID
+
+
+  
+      module-attribute
+   (trulens.core.schema.types.RecordID)" href="../../schema/types/#trulens.core.schema.types.RecordID">RecordID</a></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>See <a class="autorefs autorefs-internal" href="../base/#trulens.core.database.base.DB.batch_insert_record">DB.batch_insert_record</a>.</p>
+        <p>See <a class="autorefs autorefs-internal" title="            batch_insert_record
+
+
+  
+      abstractmethod
+  " href="../base/#trulens.core.database.base.DB.batch_insert_record">DB.batch_insert_record</a>.</p>
+
 
     </div>
 
@@ -11965,12 +12117,23 @@ Returns:
 
 
 <a href="#trulens.core.database.sqlalchemy.SQLAlchemyDB.get_app" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_app</span><span class="p">(</span><span class="n">app_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.AppID" href="../../schema/types/#trulens.core.schema.types.AppID">AppID</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.serial.JSONized" href="../../utils/serial/#trulens.core.utils.serial.JSONized">JSONized</a></span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_app</span><span class="p">(</span><span class="n">app_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            AppID
+
+
+  
+      module-attribute
+   (trulens.core.schema.types.AppID)" href="../../schema/types/#trulens.core.schema.types.AppID">AppID</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            JSONized (trulens.core.utils.serial.JSONized)" href="../../utils/serial/#trulens.core.utils.serial.JSONized">JSONized</a></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>See <a class="autorefs autorefs-internal" href="../base/#trulens.core.database.base.DB.get_app">DB.get_app</a>.</p>
+        <p>See <a class="autorefs autorefs-internal" title="            get_app
+
+
+  
+      abstractmethod
+  " href="../base/#trulens.core.database.base.DB.get_app">DB.get_app</a>.</p>
+
 
     </div>
 
@@ -11985,13 +12148,19 @@ Returns:
 
 <a href="#trulens.core.database.sqlalchemy.SQLAlchemyDB.update_app_metadata" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">update_app_metadata</span><span class="p">(</span>
-    <span class="n">app_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.AppID" href="../../schema/types/#trulens.core.schema.types.AppID">AppID</a></span><span class="p">,</span> <span class="n">metadata</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">]</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.app.AppDefinition" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a></span><span class="p">]</span>
+    <span class="n">app_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            AppID
+
+
+  
+      module-attribute
+   (trulens.core.schema.types.AppID)" href="../../schema/types/#trulens.core.schema.types.AppID">AppID</a></span><span class="p">,</span> <span class="n">metadata</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            AppDefinition (trulens.core.schema.app.AppDefinition)" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>See <a class="autorefs autorefs-internal" href="../base/#trulens.core.database.base.DB.update_app_metadata">DB.update_app_metadata</a>.</p>
+        <p>See <a class="autorefs autorefs-internal" title="            update_app_metadata" href="../base/#trulens.core.database.base.DB.update_app_metadata">DB.update_app_metadata</a>.</p>
+
 
     </div>
 
@@ -12006,13 +12175,29 @@ Returns:
 
 <a href="#trulens.core.database.sqlalchemy.SQLAlchemyDB.get_apps" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_apps</span><span class="p">(</span>
-    <span class="n">app_name</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.AppName" href="../../schema/types/#trulens.core.schema.types.AppName">AppName</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.serial.JSON" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a></span><span class="p">]</span>
+    <span class="n">app_name</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            AppName
+
+
+  
+      module-attribute
+   (trulens.core.schema.types.AppName)" href="../../schema/types/#trulens.core.schema.types.AppName">AppName</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            JSON
+
+
+  
+      module-attribute
+   (trulens.core.utils.serial.JSON)" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>See <a class="autorefs autorefs-internal" href="../base/#trulens.core.database.base.DB.get_apps">DB.get_apps</a>.</p>
+        <p>See <a class="autorefs autorefs-internal" title="            get_apps
+
+
+  
+      abstractmethod
+  " href="../base/#trulens.core.database.base.DB.get_apps">DB.get_apps</a>.</p>
+
 
     </div>
 
@@ -12026,12 +12211,23 @@ Returns:
 
 
 <a href="#trulens.core.database.sqlalchemy.SQLAlchemyDB.insert_app" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">insert_app</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.app.AppDefinition" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.AppID" href="../../schema/types/#trulens.core.schema.types.AppID">AppID</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">insert_app</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            AppDefinition (trulens.core.schema.app.AppDefinition)" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            AppID
+
+
+  
+      module-attribute
+   (trulens.core.schema.types.AppID)" href="../../schema/types/#trulens.core.schema.types.AppID">AppID</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>See <a class="autorefs autorefs-internal" href="../base/#trulens.core.database.base.DB.insert_app">DB.insert_app</a>.</p>
+        <p>See <a class="autorefs autorefs-internal" title="            insert_app
+
+
+  
+      abstractmethod
+  " href="../base/#trulens.core.database.base.DB.insert_app">DB.insert_app</a>.</p>
+
 
     </div>
 
@@ -12045,7 +12241,12 @@ Returns:
 
 
 <a href="#trulens.core.database.sqlalchemy.SQLAlchemyDB.delete_app" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">delete_app</span><span class="p">(</span><span class="n">app_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.AppID" href="../../schema/types/#trulens.core.schema.types.AppID">AppID</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">delete_app</span><span class="p">(</span><span class="n">app_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            AppID
+
+
+  
+      module-attribute
+   (trulens.core.schema.types.AppID)" href="../../schema/types/#trulens.core.schema.types.AppID">AppID</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -12080,6 +12281,7 @@ Returns:
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -12093,13 +12295,24 @@ Returns:
 
 <a href="#trulens.core.database.sqlalchemy.SQLAlchemyDB.insert_feedback_definition" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">insert_feedback_definition</span><span class="p">(</span>
-    <span class="n">feedback_definition</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackDefinition" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackDefinition">FeedbackDefinition</a></span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.FeedbackDefinitionID" href="../../schema/types/#trulens.core.schema.types.FeedbackDefinitionID">FeedbackDefinitionID</a></span>
+    <span class="n">feedback_definition</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            FeedbackDefinition (trulens.core.schema.feedback.FeedbackDefinition)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackDefinition">FeedbackDefinition</a></span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            FeedbackDefinitionID
+
+
+  
+      module-attribute
+   (trulens.core.schema.types.FeedbackDefinitionID)" href="../../schema/types/#trulens.core.schema.types.FeedbackDefinitionID">FeedbackDefinitionID</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>See <a class="autorefs autorefs-internal" href="../base/#trulens.core.database.base.DB.insert_feedback_definition">DB.insert_feedback_definition</a>.</p>
+        <p>See <a class="autorefs autorefs-internal" title="            insert_feedback_definition
+
+
+  
+      abstractmethod
+  " href="../base/#trulens.core.database.base.DB.insert_feedback_definition">DB.insert_feedback_definition</a>.</p>
+
 
     </div>
 
@@ -12115,14 +12328,25 @@ Returns:
 <a href="#trulens.core.database.sqlalchemy.SQLAlchemyDB.get_feedback_defs" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_feedback_defs</span><span class="p">(</span>
     <span class="n">feedback_definition_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span>
-        <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.FeedbackDefinitionID" href="../../schema/types/#trulens.core.schema.types.FeedbackDefinitionID">FeedbackDefinitionID</a></span>
+        <span class="n"><a class="autorefs autorefs-internal" title="            FeedbackDefinitionID
+
+
+  
+      module-attribute
+   (trulens.core.schema.types.FeedbackDefinitionID)" href="../../schema/types/#trulens.core.schema.types.FeedbackDefinitionID">FeedbackDefinitionID</a></span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="pandas.DataFrame" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame">DataFrame</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>See <a class="autorefs autorefs-internal" href="../base/#trulens.core.database.base.DB.get_feedback_defs">DB.get_feedback_defs</a>.</p>
+        <p>See <a class="autorefs autorefs-internal" title="            get_feedback_defs
+
+
+  
+      abstractmethod
+  " href="../base/#trulens.core.database.base.DB.get_feedback_defs">DB.get_feedback_defs</a>.</p>
+
 
     </div>
 
@@ -12137,13 +12361,24 @@ Returns:
 
 <a href="#trulens.core.database.sqlalchemy.SQLAlchemyDB.insert_feedback" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">insert_feedback</span><span class="p">(</span>
-    <span class="n">feedback_result</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackResult" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResult">FeedbackResult</a></span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.FeedbackResultID" href="../../schema/types/#trulens.core.schema.types.FeedbackResultID">FeedbackResultID</a></span>
+    <span class="n">feedback_result</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            FeedbackResult (trulens.core.schema.feedback.FeedbackResult)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResult">FeedbackResult</a></span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            FeedbackResultID
+
+
+  
+      module-attribute
+   (trulens.core.schema.types.FeedbackResultID)" href="../../schema/types/#trulens.core.schema.types.FeedbackResultID">FeedbackResultID</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>See <a class="autorefs autorefs-internal" href="../base/#trulens.core.database.base.DB.insert_feedback">DB.insert_feedback</a>.</p>
+        <p>See <a class="autorefs autorefs-internal" title="            insert_feedback
+
+
+  
+      abstractmethod
+  " href="../base/#trulens.core.database.base.DB.insert_feedback">DB.insert_feedback</a>.</p>
+
 
     </div>
 
@@ -12158,13 +12393,24 @@ Returns:
 
 <a href="#trulens.core.database.sqlalchemy.SQLAlchemyDB.batch_insert_feedback" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">batch_insert_feedback</span><span class="p">(</span>
-    <span class="n">feedback_results</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackResult" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResult">FeedbackResult</a></span><span class="p">],</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.FeedbackResultID" href="../../schema/types/#trulens.core.schema.types.FeedbackResultID">FeedbackResultID</a></span><span class="p">]</span>
+    <span class="n">feedback_results</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            FeedbackResult (trulens.core.schema.feedback.FeedbackResult)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResult">FeedbackResult</a></span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            FeedbackResultID
+
+
+  
+      module-attribute
+   (trulens.core.schema.types.FeedbackResultID)" href="../../schema/types/#trulens.core.schema.types.FeedbackResultID">FeedbackResultID</a></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>See <a class="autorefs autorefs-internal" href="../base/#trulens.core.database.base.DB.batch_insert_feedback">DB.batch_insert_feedback</a>.</p>
+        <p>See <a class="autorefs autorefs-internal" title="            batch_insert_feedback
+
+
+  
+      abstractmethod
+  " href="../base/#trulens.core.database.base.DB.batch_insert_feedback">DB.batch_insert_feedback</a>.</p>
+
 
     </div>
 
@@ -12179,28 +12425,49 @@ Returns:
 
 <a href="#trulens.core.database.sqlalchemy.SQLAlchemyDB.get_feedback_count_by_status" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_feedback_count_by_status</span><span class="p">(</span>
-    <span class="n">record_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.RecordID" href="../../schema/types/#trulens.core.schema.types.RecordID">RecordID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">feedback_result_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.FeedbackResultID" href="../../schema/types/#trulens.core.schema.types.FeedbackResultID">FeedbackResultID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">record_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            RecordID
+
+
+  
+      module-attribute
+   (trulens.core.schema.types.RecordID)" href="../../schema/types/#trulens.core.schema.types.RecordID">RecordID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">feedback_result_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            FeedbackResultID
+
+
+  
+      module-attribute
+   (trulens.core.schema.types.FeedbackResultID)" href="../../schema/types/#trulens.core.schema.types.FeedbackResultID">FeedbackResultID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">feedback_definition_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span>
-        <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.FeedbackDefinitionID" href="../../schema/types/#trulens.core.schema.types.FeedbackDefinitionID">FeedbackDefinitionID</a></span>
+        <span class="n"><a class="autorefs autorefs-internal" title="            FeedbackDefinitionID
+
+
+  
+      module-attribute
+   (trulens.core.schema.types.FeedbackDefinitionID)" href="../../schema/types/#trulens.core.schema.types.FeedbackDefinitionID">FeedbackDefinitionID</a></span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">status</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span>
         <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span>
-            <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackResultStatus" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResultStatus">FeedbackResultStatus</a></span><span class="p">,</span>
-            <span class="n"><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackResultStatus" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResultStatus">FeedbackResultStatus</a></span><span class="p">],</span>
+            <span class="n"><a class="autorefs autorefs-internal" title="            FeedbackResultStatus (trulens.core.schema.feedback.FeedbackResultStatus)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResultStatus">FeedbackResultStatus</a></span><span class="p">,</span>
+            <span class="n"><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            FeedbackResultStatus (trulens.core.schema.feedback.FeedbackResultStatus)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResultStatus">FeedbackResultStatus</a></span><span class="p">],</span>
         <span class="p">]</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">last_ts_before</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">offset</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">limit</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">shuffle</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">run_location</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackRunLocation" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackRunLocation">FeedbackRunLocation</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackResultStatus" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResultStatus">FeedbackResultStatus</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span>
+    <span class="n">run_location</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            FeedbackRunLocation (trulens.core.schema.feedback.FeedbackRunLocation)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackRunLocation">FeedbackRunLocation</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            FeedbackResultStatus (trulens.core.schema.feedback.FeedbackResultStatus)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResultStatus">FeedbackResultStatus</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>See <a class="autorefs autorefs-internal" href="../base/#trulens.core.database.base.DB.get_feedback_count_by_status">DB.get_feedback_count_by_status</a>.</p>
+        <p>See <a class="autorefs autorefs-internal" title="            get_feedback_count_by_status
+
+
+  
+      abstractmethod
+  " href="../base/#trulens.core.database.base.DB.get_feedback_count_by_status">DB.get_feedback_count_by_status</a>.</p>
+
 
     </div>
 
@@ -12215,28 +12482,49 @@ Returns:
 
 <a href="#trulens.core.database.sqlalchemy.SQLAlchemyDB.get_feedback" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_feedback</span><span class="p">(</span>
-    <span class="n">record_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.RecordID" href="../../schema/types/#trulens.core.schema.types.RecordID">RecordID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">feedback_result_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.FeedbackResultID" href="../../schema/types/#trulens.core.schema.types.FeedbackResultID">FeedbackResultID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">record_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            RecordID
+
+
+  
+      module-attribute
+   (trulens.core.schema.types.RecordID)" href="../../schema/types/#trulens.core.schema.types.RecordID">RecordID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">feedback_result_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            FeedbackResultID
+
+
+  
+      module-attribute
+   (trulens.core.schema.types.FeedbackResultID)" href="../../schema/types/#trulens.core.schema.types.FeedbackResultID">FeedbackResultID</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">feedback_definition_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span>
-        <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.FeedbackDefinitionID" href="../../schema/types/#trulens.core.schema.types.FeedbackDefinitionID">FeedbackDefinitionID</a></span>
+        <span class="n"><a class="autorefs autorefs-internal" title="            FeedbackDefinitionID
+
+
+  
+      module-attribute
+   (trulens.core.schema.types.FeedbackDefinitionID)" href="../../schema/types/#trulens.core.schema.types.FeedbackDefinitionID">FeedbackDefinitionID</a></span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">status</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span>
         <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span>
-            <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackResultStatus" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResultStatus">FeedbackResultStatus</a></span><span class="p">,</span>
-            <span class="n"><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackResultStatus" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResultStatus">FeedbackResultStatus</a></span><span class="p">],</span>
+            <span class="n"><a class="autorefs autorefs-internal" title="            FeedbackResultStatus (trulens.core.schema.feedback.FeedbackResultStatus)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResultStatus">FeedbackResultStatus</a></span><span class="p">,</span>
+            <span class="n"><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            FeedbackResultStatus (trulens.core.schema.feedback.FeedbackResultStatus)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResultStatus">FeedbackResultStatus</a></span><span class="p">],</span>
         <span class="p">]</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">last_ts_before</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">offset</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">limit</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">shuffle</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">run_location</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackRunLocation" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackRunLocation">FeedbackRunLocation</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">run_location</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            FeedbackRunLocation (trulens.core.schema.feedback.FeedbackRunLocation)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackRunLocation">FeedbackRunLocation</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="pandas.DataFrame" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame">DataFrame</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>See <a class="autorefs autorefs-internal" href="../base/#trulens.core.database.base.DB.get_feedback">DB.get_feedback</a>.</p>
+        <p>See <a class="autorefs autorefs-internal" title="            get_feedback
+
+
+  
+      abstractmethod
+  " href="../base/#trulens.core.database.base.DB.get_feedback">DB.get_feedback</a>.</p>
+
 
     </div>
 
@@ -12252,7 +12540,12 @@ Returns:
 <a href="#trulens.core.database.sqlalchemy.SQLAlchemyDB.get_records_and_feedback" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_records_and_feedback</span><span class="p">(</span>
     <span class="n">app_ids</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">app_name</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.AppName" href="../../schema/types/#trulens.core.schema.types.AppName">AppName</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">app_name</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            AppName
+
+
+  
+      module-attribute
+   (trulens.core.schema.types.AppName)" href="../../schema/types/#trulens.core.schema.types.AppName">AppName</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">offset</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">limit</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="pandas.DataFrame" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame">DataFrame</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]]</span>
@@ -12260,7 +12553,13 @@ Returns:
 
     <div class="doc doc-contents ">
 
-        <p>See <a class="autorefs autorefs-internal" href="../base/#trulens.core.database.base.DB.get_records_and_feedback">DB.get_records_and_feedback</a>.</p>
+        <p>See <a class="autorefs autorefs-internal" title="            get_records_and_feedback
+
+
+  
+      abstractmethod
+  " href="../base/#trulens.core.database.base.DB.get_records_and_feedback">DB.get_records_and_feedback</a>.</p>
+
 
     </div>
 
@@ -12275,13 +12574,24 @@ Returns:
 
 <a href="#trulens.core.database.sqlalchemy.SQLAlchemyDB.insert_ground_truth" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">insert_ground_truth</span><span class="p">(</span>
-    <span class="n">ground_truth</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.groundtruth.GroundTruth" href="../../schema/groundtruth/#trulens.core.schema.groundtruth.GroundTruth">GroundTruth</a></span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.GroundTruthID" href="../../schema/types/#trulens.core.schema.types.GroundTruthID">GroundTruthID</a></span>
+    <span class="n">ground_truth</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            GroundTruth (trulens.core.schema.groundtruth.GroundTruth)" href="../../schema/groundtruth/#trulens.core.schema.groundtruth.GroundTruth">GroundTruth</a></span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            GroundTruthID
+
+
+  
+      module-attribute
+   (trulens.core.schema.types.GroundTruthID)" href="../../schema/types/#trulens.core.schema.types.GroundTruthID">GroundTruthID</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>See <a class="autorefs autorefs-internal" href="../base/#trulens.core.database.base.DB.insert_ground_truth">DB.insert_ground_truth</a>.</p>
+        <p>See <a class="autorefs autorefs-internal" title="            insert_ground_truth
+
+
+  
+      abstractmethod
+  " href="../base/#trulens.core.database.base.DB.insert_ground_truth">DB.insert_ground_truth</a>.</p>
+
 
     </div>
 
@@ -12296,13 +12606,24 @@ Returns:
 
 <a href="#trulens.core.database.sqlalchemy.SQLAlchemyDB.batch_insert_ground_truth" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">batch_insert_ground_truth</span><span class="p">(</span>
-    <span class="n">ground_truths</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.groundtruth.GroundTruth" href="../../schema/groundtruth/#trulens.core.schema.groundtruth.GroundTruth">GroundTruth</a></span><span class="p">],</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.GroundTruthID" href="../../schema/types/#trulens.core.schema.types.GroundTruthID">GroundTruthID</a></span><span class="p">]</span>
+    <span class="n">ground_truths</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            GroundTruth (trulens.core.schema.groundtruth.GroundTruth)" href="../../schema/groundtruth/#trulens.core.schema.groundtruth.GroundTruth">GroundTruth</a></span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            GroundTruthID
+
+
+  
+      module-attribute
+   (trulens.core.schema.types.GroundTruthID)" href="../../schema/types/#trulens.core.schema.types.GroundTruthID">GroundTruthID</a></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>See <a class="autorefs autorefs-internal" href="../base/#trulens.core.database.base.DB.batch_insert_ground_truth">DB.batch_insert_ground_truth</a>.</p>
+        <p>See <a class="autorefs autorefs-internal" title="            batch_insert_ground_truth
+
+
+  
+      abstractmethod
+  " href="../base/#trulens.core.database.base.DB.batch_insert_ground_truth">DB.batch_insert_ground_truth</a>.</p>
+
 
     </div>
 
@@ -12318,12 +12639,18 @@ Returns:
 <a href="#trulens.core.database.sqlalchemy.SQLAlchemyDB.get_ground_truth" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_ground_truth</span><span class="p">(</span>
     <span class="n">ground_truth_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.serial.JSONized" href="../../utils/serial/#trulens.core.utils.serial.JSONized">JSONized</a></span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            JSONized (trulens.core.utils.serial.JSONized)" href="../../utils/serial/#trulens.core.utils.serial.JSONized">JSONized</a></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>See <a class="autorefs autorefs-internal" href="../base/#trulens.core.database.base.DB.get_ground_truth">DB.get_ground_truth</a>.</p>
+        <p>See <a class="autorefs autorefs-internal" title="            get_ground_truth
+
+
+  
+      abstractmethod
+  " href="../base/#trulens.core.database.base.DB.get_ground_truth">DB.get_ground_truth</a>.</p>
+
 
     </div>
 
@@ -12344,7 +12671,13 @@ Returns:
 
     <div class="doc doc-contents ">
 
-        <p>See <a class="autorefs autorefs-internal" href="../base/#trulens.core.database.base.DB.get_ground_truths_by_dataset">DB.get_ground_truths_by_dataset</a>.</p>
+        <p>See <a class="autorefs autorefs-internal" title="            get_ground_truths_by_dataset
+
+
+  
+      abstractmethod
+  " href="../base/#trulens.core.database.base.DB.get_ground_truths_by_dataset">DB.get_ground_truths_by_dataset</a>.</p>
+
 
     </div>
 
@@ -12358,12 +12691,23 @@ Returns:
 
 
 <a href="#trulens.core.database.sqlalchemy.SQLAlchemyDB.insert_dataset" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">insert_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.dataset.Dataset" href="../../schema/dataset/#trulens.core.schema.dataset.Dataset">Dataset</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.DatasetID" href="../../schema/types/#trulens.core.schema.types.DatasetID">DatasetID</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">insert_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            Dataset (trulens.core.schema.dataset.Dataset)" href="../../schema/dataset/#trulens.core.schema.dataset.Dataset">Dataset</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            DatasetID
+
+
+  
+      module-attribute
+   (trulens.core.schema.types.DatasetID)" href="../../schema/types/#trulens.core.schema.types.DatasetID">DatasetID</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>See <a class="autorefs autorefs-internal" href="../base/#trulens.core.database.base.DB.insert_dataset">DB.insert_dataset</a>.</p>
+        <p>See <a class="autorefs autorefs-internal" title="            insert_dataset
+
+
+  
+      abstractmethod
+  " href="../base/#trulens.core.database.base.DB.insert_dataset">DB.insert_dataset</a>.</p>
+
 
     </div>
 
@@ -12382,7 +12726,13 @@ Returns:
 
     <div class="doc doc-contents ">
 
-        <p>See <a class="autorefs autorefs-internal" href="../base/#trulens.core.database.base.DB.get_datasets">DB.get_datasets</a>.</p>
+        <p>See <a class="autorefs autorefs-internal" title="            get_datasets
+
+
+  
+      abstractmethod
+  " href="../base/#trulens.core.database.base.DB.get_datasets">DB.get_datasets</a>.</p>
+
 
     </div>
 
@@ -12396,12 +12746,23 @@ Returns:
 
 
 <a href="#trulens.core.database.sqlalchemy.SQLAlchemyDB.insert_event" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">insert_event</span><span class="p">(</span><span class="n">event</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.event.Event" href="../../schema/event/#trulens.core.schema.event.Event">Event</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.EventID" href="../../schema/types/#trulens.core.schema.types.EventID">EventID</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">insert_event</span><span class="p">(</span><span class="n">event</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            Event (trulens.core.schema.event.Event)" href="../../schema/event/#trulens.core.schema.event.Event">Event</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            EventID
+
+
+  
+      module-attribute
+   (trulens.core.schema.types.EventID)" href="../../schema/types/#trulens.core.schema.types.EventID">EventID</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>See <a class="autorefs autorefs-internal" href="../base/#trulens.core.database.base.DB.insert_event">DB.insert_event</a>.</p>
+        <p>See <a class="autorefs autorefs-internal" title="            insert_event
+
+
+  
+      abstractmethod
+  " href="../base/#trulens.core.database.base.DB.insert_event">DB.insert_event</a>.</p>
+
 
     </div>
 
@@ -12430,6 +12791,7 @@ Returns:
 
 
         <p>Utilities for creating dataframes from orm instances.</p>
+
 
 
 
@@ -12522,6 +12884,7 @@ with <code>apps</code>.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -12545,6 +12908,7 @@ with <code>apps</code>.</p>
         <p>Creates record rows with app information.</p>
 <p>TODO: The means for enumerating records in this method is not ideal as
 it does a lot of filtering.</p>
+
 
     </div>
 
@@ -12618,7 +12982,7 @@ it does a lot of filtering.</p>
     <script id="__config" type="application/json">{"base": "../../../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "search.highlight", "toc.follow", "content.code.copy", "content.tabs"], "search": "../../../../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../../../assets/javascripts/bundle.f13b1293.min.js"></script>
+      <script src="../../../../../assets/javascripts/bundle.c8b220af.min.js"></script>
       
         <script src="../../../../../javascript/config.js"></script>
       

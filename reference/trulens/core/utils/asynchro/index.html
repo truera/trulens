@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.d7758b05.min.css">
+      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.4af4bdda.min.css">
       
         
         <link rel="stylesheet" href="../../../../../assets/stylesheets/palette.06af60db.min.css">
@@ -3561,7 +3561,7 @@
               
   
   <span class="md-ellipsis">
-    📦 Nemo Guardrails
+    📦 NeMo Guardrails
     
   </span>
   
@@ -3578,7 +3578,7 @@
         <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_3_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_3_7">
             <span class="md-nav__icon md-icon"></span>
-            📦 Nemo Guardrails
+            📦 NeMo Guardrails
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -9140,7 +9140,7 @@
         
   
   <span class="md-ellipsis">
-    Local vs Remote Huggingface Feedback Functions
+    Local vs Remote HuggingFace Feedback Functions
     
   </span>
   
@@ -9721,6 +9721,8 @@
       
         
       
+        
+      
     
     
       
@@ -10099,6 +10101,81 @@
   
   <span class="md-ellipsis">
     Simple Pinecone setup with LlamaIndex + Eval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5_5" id="__nav_5_5_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Weaviate
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            Weaviate
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../cookbook/vector_stores/weaviate/weaviate_query_agent/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Evaluating Weaviate Query Agents
     
   </span>
   
@@ -10782,12 +10859,12 @@
     <div class="doc doc-contents first">
 
         <h3 id="trulens.core.utils.asynchro--synchronizationasync-utilities">Synchronization/Async Utilities<a class="headerlink" href="#trulens.core.utils.asynchro--synchronizationasync-utilities" title="Permanent link">&para;</a></h3>
-<p>NOTE: we cannot name a module "async" as it is a python keyword.</p>
+<p>NOTE: we cannot name a module "async" as it is a Python keyword.</p>
 <h4 id="trulens.core.utils.asynchro--synchronous-vs-asynchronous">Synchronous vs. Asynchronous<a class="headerlink" href="#trulens.core.utils.asynchro--synchronous-vs-asynchronous" title="Permanent link">&para;</a></h4>
 <p>Some functions in TruLens come with asynchronous versions. Those use "async
 def" instead of "def" and typically start with the letter "a" in their name with
 the rest matching their synchronous version.</p>
-<p>Due to how python handles such functions and how they are executed, it is
+<p>Due to how Python handles such functions and how they are executed, it is
 relatively difficult to reshare code between the two versions. Asynchronous
 functions are executed by an async loop (see
 <a href="https://docs.python.org/3/library/asyncio-eventloop.html">EventLoop</a>). Python
@@ -10800,6 +10877,7 @@ this, whether overhead, or record info, is uncertain.</p>
 <p>Try to have all internals be async but for users we may expose sync versions via
 the <code>sync</code> method. If internals are async and don't need exposure, don't need to
 provide a synced version.</p>
+
 
 
 
@@ -10836,6 +10914,7 @@ provide a synced version.</p>
 
         <p>Awaitable or not.</p>
 <p>May be checked with <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/inspect.html#inspect.isawaitable">isawaitable</a>.</p>
+
     </div>
 
 </div>
@@ -10862,7 +10941,8 @@ provide a synced version.</p>
 
         <p>Function or coroutine function.</p>
 <p>May be checked with
-<a class="autorefs autorefs-internal" href="../python/#trulens.core.utils.python.is_really_coroutinefunction">is_really_coroutinefunction</a>.</p>
+<a class="autorefs autorefs-internal" title="            is_really_coroutinefunction" href="../python/#trulens.core.utils.python.is_really_coroutinefunction">is_really_coroutinefunction</a>.</p>
+
     </div>
 
 </div>
@@ -10886,6 +10966,7 @@ provide a synced version.</p>
     <div class="doc doc-contents ">
 
         <p>Function that produces an awaitable / coroutine function.</p>
+
     </div>
 
 </div>
@@ -10903,14 +10984,25 @@ provide a synced version.</p>
   </span>
 
 <a href="#trulens.core.utils.asynchro.ThunkMaybeAwaitable" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">ThunkMaybeAwaitable</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.python.Thunk" href="../python/#trulens.core.utils.python.Thunk">Thunk</a></span><span class="p">[</span><span class="n"><span title="trulens.core.utils.asynchro.T">T</span></span><span class="p">],</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.python.Thunk" href="../python/#trulens.core.utils.python.Thunk">Thunk</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Awaitable" href="https://docs.python.org/3/library/typing.html#typing.Awaitable">Awaitable</a></span><span class="p">[</span><span class="n"><span title="trulens.core.utils.asynchro.T">T</span></span><span class="p">]]]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">ThunkMaybeAwaitable</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Thunk
+
+
+  
+      module-attribute
+   (trulens.core.utils.python.Thunk)" href="../python/#trulens.core.utils.python.Thunk">Thunk</a></span><span class="p">[</span><span class="n"><span title="trulens.core.utils.asynchro.T">T</span></span><span class="p">],</span> <span class="n"><a class="autorefs autorefs-internal" title="            Thunk
+
+
+  
+      module-attribute
+   (trulens.core.utils.python.Thunk)" href="../python/#trulens.core.utils.python.Thunk">Thunk</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Awaitable" href="https://docs.python.org/3/library/typing.html#typing.Awaitable">Awaitable</a></span><span class="p">[</span><span class="n"><span title="trulens.core.utils.asynchro.T">T</span></span><span class="p">]]]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Thunk or coroutine thunk.</p>
 <p>May be checked with
-<a class="autorefs autorefs-internal" href="../python/#trulens.core.utils.python.is_really_coroutinefunction">is_really_coroutinefunction</a>.</p>
+<a class="autorefs autorefs-internal" title="            is_really_coroutinefunction" href="../python/#trulens.core.utils.python.is_really_coroutinefunction">is_really_coroutinefunction</a>.</p>
+
     </div>
 
 </div>
@@ -10930,7 +11022,12 @@ provide a synced version.</p>
 
 <a href="#trulens.core.utils.asynchro.desync" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">desync</span><span class="p">(</span>
-    <span class="n">func</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.asynchro.CallableMaybeAwaitable" href="#trulens.core.utils.asynchro.CallableMaybeAwaitable">CallableMaybeAwaitable</a></span><span class="p">[</span><span class="n"><span title="trulens.core.utils.asynchro.A">A</span></span><span class="p">,</span> <span class="n"><span title="trulens.core.utils.asynchro.T">T</span></span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="n">func</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            CallableMaybeAwaitable
+
+
+  
+      module-attribute
+   (trulens.core.utils.asynchro.CallableMaybeAwaitable)" href="#trulens.core.utils.asynchro.CallableMaybeAwaitable">CallableMaybeAwaitable</a></span><span class="p">[</span><span class="n"><span title="trulens.core.utils.asynchro.A">A</span></span><span class="p">,</span> <span class="n"><span title="trulens.core.utils.asynchro.T">T</span></span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="trulens.core.utils.asynchro.T">T</span></span>
 </code></pre></div>
 
@@ -10941,6 +11038,7 @@ asynchronous, will run in thread. Note: this has to be marked async since in
 some cases we cannot tell ahead of time that <code>func</code> is asynchronous so we
 may end up running it to produce a coroutine object which we then need to
 run asynchronously.</p>
+
 
     </div>
 
@@ -10955,7 +11053,12 @@ run asynchronously.</p>
 
 <a href="#trulens.core.utils.asynchro.sync" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">sync</span><span class="p">(</span>
-    <span class="n">func</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.asynchro.CallableMaybeAwaitable" href="#trulens.core.utils.asynchro.CallableMaybeAwaitable">CallableMaybeAwaitable</a></span><span class="p">[</span><span class="n"><span title="trulens.core.utils.asynchro.A">A</span></span><span class="p">,</span> <span class="n"><span title="trulens.core.utils.asynchro.T">T</span></span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="n">func</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            CallableMaybeAwaitable
+
+
+  
+      module-attribute
+   (trulens.core.utils.asynchro.CallableMaybeAwaitable)" href="#trulens.core.utils.asynchro.CallableMaybeAwaitable">CallableMaybeAwaitable</a></span><span class="p">[</span><span class="n"><span title="trulens.core.utils.asynchro.A">A</span></span><span class="p">,</span> <span class="n"><span title="trulens.core.utils.asynchro.T">T</span></span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="trulens.core.utils.asynchro.T">T</span></span>
 </code></pre></div>
 
@@ -10963,6 +11066,7 @@ run asynchronously.</p>
 
         <p>Get result of calling function on the given args. If it is awaitable, will
 block until it is finished. Runs in a new thread in such cases.</p>
+
 
     </div>
 
@@ -11027,7 +11131,7 @@ block until it is finished. Runs in a new thread in such cases.</p>
     <script id="__config" type="application/json">{"base": "../../../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "search.highlight", "toc.follow", "content.code.copy", "content.tabs"], "search": "../../../../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../../../assets/javascripts/bundle.f13b1293.min.js"></script>
+      <script src="../../../../../assets/javascripts/bundle.c8b220af.min.js"></script>
       
         <script src="../../../../../javascript/config.js"></script>
       

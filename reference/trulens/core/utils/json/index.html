@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.d7758b05.min.css">
+      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.4af4bdda.min.css">
       
         
         <link rel="stylesheet" href="../../../../../assets/stylesheets/palette.06af60db.min.css">
@@ -3561,7 +3561,7 @@
               
   
   <span class="md-ellipsis">
-    📦 Nemo Guardrails
+    📦 NeMo Guardrails
     
   </span>
   
@@ -3578,7 +3578,7 @@
         <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_3_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_3_7">
             <span class="md-nav__icon md-icon"></span>
-            📦 Nemo Guardrails
+            📦 NeMo Guardrails
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -9086,7 +9086,7 @@
         
   
   <span class="md-ellipsis">
-    Local vs Remote Huggingface Feedback Functions
+    Local vs Remote HuggingFace Feedback Functions
     
   </span>
   
@@ -9667,6 +9667,8 @@
       
         
       
+        
+      
     
     
       
@@ -10045,6 +10047,81 @@
   
   <span class="md-ellipsis">
     Simple Pinecone setup with LlamaIndex + Eval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5_5" id="__nav_5_5_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Weaviate
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            Weaviate
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../cookbook/vector_stores/weaviate/weaviate_query_agent/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Evaluating Weaviate Query Agents
     
   </span>
   
@@ -10682,6 +10759,7 @@
 
 
 
+
   <div class="doc doc-children">
 
 
@@ -10788,6 +10866,7 @@
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -10807,6 +10886,7 @@
 
         <p>Create an id from a json-able structure/definition. Should produce the same
 name if definition stays the same.</p>
+
 
     </div>
 
@@ -10829,6 +10909,7 @@ name if definition stays the same.</p>
 
         <p>Encode the given json object as a string.</p>
 
+
     </div>
 
 </div>
@@ -10847,6 +10928,7 @@ name if definition stays the same.</p>
     <div class="doc doc-contents ">
 
         <p>Produce a representation of an object which does not have a json serializer.</p>
+
 
     </div>
 
@@ -10868,6 +10950,7 @@ name if definition stays the same.</p>
         <p>Options for jsonify common to UI displays.</p>
 <p>Redacts keys and hides special fields introduced by trulens.</p>
 
+
     </div>
 
 </div>
@@ -10882,14 +10965,24 @@ name if definition stays the same.</p>
 <a href="#trulens.core.utils.json.jsonify" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">jsonify</span><span class="p">(</span>
     <span class="n">obj</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">,</span>
-    <span class="n">dicted</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.serial.JSON" href="../serial/#trulens.core.utils.serial.JSON">JSON</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">instrument</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.instruments.Instrument" href="../../instruments/#trulens.core.instruments.Instrument">Instrument</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">dicted</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            JSON
+
+
+  
+      module-attribute
+   (trulens.core.utils.serial.JSON)" href="../serial/#trulens.core.utils.serial.JSON">JSON</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">instrument</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Instrument (trulens.core.instruments.Instrument)" href="../../instruments/#trulens.core.instruments.Instrument">Instrument</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">skip_specials</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">redact_keys</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">include_excluded</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">depth</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="n">max_depth</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.serial.JSON" href="../serial/#trulens.core.utils.serial.JSON">JSON</a></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            JSON
+
+
+  
+      module-attribute
+   (trulens.core.utils.serial.JSON)" href="../serial/#trulens.core.utils.serial.JSON">JSON</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -10927,6 +11020,7 @@ name if definition stays the same.</p>
     object is either a JSON base type, a list, or a dict with the containing
     elements of the same.
 </code></pre>
+
 
     </div>
 
@@ -10991,7 +11085,7 @@ name if definition stays the same.</p>
     <script id="__config" type="application/json">{"base": "../../../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "search.highlight", "toc.follow", "content.code.copy", "content.tabs"], "search": "../../../../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../../../assets/javascripts/bundle.f13b1293.min.js"></script>
+      <script src="../../../../../assets/javascripts/bundle.c8b220af.min.js"></script>
       
         <script src="../../../../../javascript/config.js"></script>
       

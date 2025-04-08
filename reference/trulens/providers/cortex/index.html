@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/main.d7758b05.min.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.4af4bdda.min.css">
       
         
         <link rel="stylesheet" href="../../../../assets/stylesheets/palette.06af60db.min.css">
@@ -3565,7 +3565,7 @@
               
   
   <span class="md-ellipsis">
-    📦 Nemo Guardrails
+    📦 NeMo Guardrails
     
   </span>
   
@@ -3582,7 +3582,7 @@
         <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_3_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_3_7">
             <span class="md-nav__icon md-icon"></span>
-            📦 Nemo Guardrails
+            📦 NeMo Guardrails
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -8961,7 +8961,7 @@
         
   
   <span class="md-ellipsis">
-    Local vs Remote Huggingface Feedback Functions
+    Local vs Remote HuggingFace Feedback Functions
     
   </span>
   
@@ -9542,6 +9542,8 @@
       
         
       
+        
+      
     
     
       
@@ -9920,6 +9922,81 @@
   
   <span class="md-ellipsis">
     Simple Pinecone setup with LlamaIndex + Eval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5_5" id="__nav_5_5_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Weaviate
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            Weaviate
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../cookbook/vector_stores/weaviate/weaviate_query_agent/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Evaluating Weaviate Query Agents
     
   </span>
   
@@ -10994,6 +11071,7 @@
 
 
 
+
   <div class="doc doc-children">
 
 
@@ -11016,7 +11094,8 @@
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="trulens.feedback.llm_provider.LLMProvider" href="../../feedback/llm_provider/#trulens.feedback.llm_provider.LLMProvider">LLMProvider</a></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="            LLMProvider (trulens.feedback.llm_provider.LLMProvider)" href="../../feedback/llm_provider/#trulens.feedback.llm_provider.LLMProvider">LLMProvider</a></code></p>
+
 
 
 
@@ -11048,7 +11127,7 @@
   </span>
 
 <a href="#trulens.providers.cortex.Cortex.tru_class_info" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">tru_class_info</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.pyschema.Class" href="../../core/utils/pyschema/#trulens.core.utils.pyschema.Class">Class</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">tru_class_info</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            Class (trulens.core.utils.pyschema.Class)" href="../../core/utils/pyschema/#trulens.core.utils.pyschema.Class">Class</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -11056,6 +11135,7 @@
         <p>Class information of this pydantic object for use in deserialization.</p>
 <p>Using this odd key to not pollute attribute names in whatever class we mix
 this into. Should be the same as CLASS_INFO.</p>
+
     </div>
 
 </div>
@@ -11174,6 +11254,7 @@ this into. Should be the same as CLASS_INFO.</p>
           </tr>
       </tbody>
     </table>
+
     </div>
 
 </div>
@@ -11194,6 +11275,7 @@ this into. Should be the same as CLASS_INFO.</p>
     <div class="doc doc-contents ">
 
         <p>Requirement for pretty printing using the rich package.</p>
+
 
     </div>
 
@@ -11218,6 +11300,7 @@ this into. Should be the same as CLASS_INFO.</p>
 
         <p>Deserialize/load this object using the class information in
 tru_class_info to lookup the actual class that will do the deserialization.</p>
+
 
     </div>
 
@@ -11247,8 +11330,9 @@ class it was serialized from.</p>
 <details class="note" open>
   <summary>Note</summary>
   <p>This process uses extra information stored in the jsonized object
-and handled by <a class="autorefs autorefs-internal" href="../../core/utils/pyschema/#trulens.core.utils.pyschema.WithClassInfo">WithClassInfo</a>.</p>
+and handled by <a class="autorefs autorefs-internal" title="            WithClassInfo" href="../../core/utils/pyschema/#trulens.core.utils.pyschema.WithClassInfo">WithClassInfo</a>.</p>
 </details>
+
     </div>
 
 </div>
@@ -11405,6 +11489,7 @@ and handled by <a class="autorefs autorefs-internal" href="../../core/utils/pysc
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -11575,6 +11660,7 @@ and handled by <a class="autorefs autorefs-internal" href="../../core/utils/pysc
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -11667,6 +11753,7 @@ and handled by <a class="autorefs autorefs-internal" href="../../core/utils/pysc
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -11834,6 +11921,7 @@ check the relevance of the context to the question.</p>
     </table>
         <p>Returns:
     float: A value between 0.0 (not relevant) and 1.0 (relevant).</p>
+
 
     </div>
 
@@ -12029,6 +12117,7 @@ Also uses chain of thought methodology and emits the reasons.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -12223,6 +12312,7 @@ template to check the relevance of the response to a prompt.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -12414,6 +12504,7 @@ thought methodology and emits the reasons.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -12539,6 +12630,7 @@ being "positive sentiment".</p>
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -12690,6 +12782,7 @@ Also uses chain of thought methodology and emits the reasons.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -12789,6 +12882,7 @@ correct, and measures whether previous chat completion response is similar.</p>
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -12933,6 +13027,7 @@ evaluation.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -12947,7 +13042,7 @@ evaluation.</p>
 <a href="#trulens.providers.cortex.Cortex._langchain_evaluate_with_cot_reasons" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">_langchain_evaluate_with_cot_reasons</span><span class="p">(</span>
     <span class="n">text</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span>
-    <span class="n">criteria</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">criteria</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span>
     <span class="n">min_score_val</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="n">max_score_val</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
     <span class="n">temperature</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
@@ -12996,10 +13091,6 @@ to evaluate different aspects of some text. Prompt credit to Langchain.</p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
                       <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
-                  </span>
-                  <span class="doc-param-default">
-                    <b>DEFAULT:</b>
-                      <code>None</code>
                   </span>
               </p>
             </td>
@@ -13091,6 +13182,7 @@ to evaluate different aspects of some text. Prompt credit to Langchain.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -13175,6 +13267,7 @@ check the conciseness of some text. Prompt credit to LangChain Eval.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -13232,6 +13325,7 @@ check the conciseness of some text. Prompt credit to LangChain Eval.</p>
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -13317,6 +13411,7 @@ check the correctness of some text. Prompt credit to LangChain Eval.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -13401,6 +13496,7 @@ Also uses chain of thought methodology and emits the reasons.</p>
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -13490,6 +13586,7 @@ template to check the coherence of some text. Prompt credit to LangChain Eval.</
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -13574,6 +13671,7 @@ uses chain of thought methodology and emits the reasons.</p>
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -13663,6 +13761,7 @@ check the harmfulness of some text. Prompt credit to LangChain Eval.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -13747,6 +13846,7 @@ Also uses chain of thought methodology and emits the reasons.</p>
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -13836,6 +13936,7 @@ check the maliciousness of some text. Prompt credit to LangChain Eval.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -13920,6 +14021,7 @@ Also uses chain of thought methodology and emits the reasons.</p>
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -14009,6 +14111,7 @@ check the helpfulness of some text. Prompt credit to LangChain Eval.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -14093,6 +14196,7 @@ Also uses chain of thought methodology and emits the reasons.</p>
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -14184,6 +14288,7 @@ Eval.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -14268,6 +14373,7 @@ Eval. Also uses chain of thought methodology and emits the reasons.</p>
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -14357,6 +14463,7 @@ check the misogyny of some text. Prompt credit to LangChain Eval.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -14441,6 +14548,7 @@ uses chain of thought methodology and emits the reasons.</p>
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -14530,6 +14638,7 @@ check the criminality of some text. Prompt credit to LangChain Eval.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -14614,6 +14723,7 @@ Also uses chain of thought methodology and emits the reasons.</p>
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -14703,6 +14813,7 @@ check the insensitivity of some text. Prompt credit to LangChain Eval.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -14788,6 +14899,7 @@ Also uses chain of thought methodology and emits the reasons.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -14835,6 +14947,7 @@ to be used by the comprehensiveness feedback function.</p>
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -14929,6 +15042,7 @@ to be used by the comprehensiveness feedback function.</p>
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -15033,6 +15147,7 @@ in function assessment.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -15053,6 +15168,7 @@ in function assessment.</p>
     <div class="doc doc-contents ">
 
         <p>Summarization is deprecated in place of comprehensiveness. This function is no longer implemented.</p>
+
 
     </div>
 
@@ -15195,6 +15311,7 @@ prompt.</p>
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -15358,6 +15475,7 @@ prompt.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -15430,6 +15548,7 @@ prompt.</p>
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -15662,6 +15781,7 @@ the statement using an LLM provider.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -15681,6 +15801,7 @@ the statement using an LLM provider.</p>
 
         <p>Deprecated. Use <code>relevance</code> instead.</p>
 
+
     </div>
 
 </div>
@@ -15699,6 +15820,7 @@ the statement using an LLM provider.</p>
     <div class="doc doc-contents ">
 
         <p>Deprecated. Use <code>relevance_with_cot_reasons</code> instead.</p>
+
 
     </div>
 
@@ -15933,6 +16055,7 @@ the statement using an LLM provider.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -16035,6 +16158,7 @@ check if two answers agree.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -16107,7 +16231,7 @@ check if two answers agree.</p>
     <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "search.highlight", "toc.follow", "content.code.copy", "content.tabs"], "search": "../../../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../../assets/javascripts/bundle.f13b1293.min.js"></script>
+      <script src="../../../../assets/javascripts/bundle.c8b220af.min.js"></script>
       
         <script src="../../../../javascript/config.js"></script>
       

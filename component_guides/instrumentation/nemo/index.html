@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.d7758b05.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.4af4bdda.min.css">
       
         
         <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
@@ -1275,11 +1275,11 @@
         <li class="md-nav__item">
   <a href="#appendix-instrumented-nemo-classes-and-methods" class="md-nav__link">
     <span class="md-ellipsis">
-      Appendix: Instrumented Nemo Classes and Methods
+      Appendix: Instrumented NeMo Classes and Methods
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Appendix: Instrumented Nemo Classes and Methods">
+    <nav class="md-nav" aria-label="Appendix: Instrumented NeMo Classes and Methods">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -3660,7 +3660,7 @@
               
   
   <span class="md-ellipsis">
-    📦 Nemo Guardrails
+    📦 NeMo Guardrails
     
   </span>
   
@@ -3677,7 +3677,7 @@
         <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_3_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_3_7">
             <span class="md-nav__icon md-icon"></span>
-            📦 Nemo Guardrails
+            📦 NeMo Guardrails
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -9041,7 +9041,7 @@
         
   
   <span class="md-ellipsis">
-    Local vs Remote Huggingface Feedback Functions
+    Local vs Remote HuggingFace Feedback Functions
     
   </span>
   
@@ -9622,6 +9622,8 @@
       
         
       
+        
+      
     
     
       
@@ -10000,6 +10002,81 @@
   
   <span class="md-ellipsis">
     Simple Pinecone setup with LlamaIndex + Eval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5_5" id="__nav_5_5_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Weaviate
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            Weaviate
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cookbook/vector_stores/weaviate/weaviate_query_agent/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Evaluating Weaviate Query Agents
     
   </span>
   
@@ -10525,11 +10602,11 @@
         <li class="md-nav__item">
   <a href="#appendix-instrumented-nemo-classes-and-methods" class="md-nav__link">
     <span class="md-ellipsis">
-      Appendix: Instrumented Nemo Classes and Methods
+      Appendix: Instrumented NeMo Classes and Methods
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Appendix: Instrumented Nemo Classes and Methods">
+    <nav class="md-nav" aria-label="Appendix: Instrumented NeMo Classes and Methods">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -10578,7 +10655,7 @@
 <p>TruLens provides TruRails, an integration with <em>NeMo Guardrails</em> apps to allow you to
 inspect and evaluate the internals of your application built using <em>NeMo Guardrails</em>.
 This is done through the instrumentation of key <em>NeMo Guardrails</em> classes. To see a list
-of classes instrumented, see <em>Appendix: Instrumented Nemo Classes and
+of classes instrumented, see <em>Appendix: Instrumented NeMo Classes and
 Methods</em>.</p>
 <p>In addition to the default instrumentation, TruRails exposes the
 <em>select_context</em> method for evaluations that require access to retrieved
@@ -10586,7 +10663,7 @@ context. Exposing <em>select_context</em> bypasses the need to know the json str
 of your app ahead of time, and makes your evaluations reusable across different
 apps.</p>
 <h2 id="example-usage">Example Usage<a class="headerlink" href="#example-usage" title="Permanent link">&para;</a></h2>
-<p>Below is a quick example of usage. First, we'll create a standard Nemo app.</p>
+<p>Below is a quick example of usage. First, we'll create a standard NeMo app.</p>
 <div class="admonition example">
 <p class="admonition-title">Create a NeMo app</p>
 <div class="highlight"><pre><span></span><code><span class="o">%%</span><span class="n">writefile</span> <span class="n">config</span><span class="o">.</span><span class="n">yaml</span>
@@ -10594,9 +10671,9 @@ apps.</p>
 <span class="n">instructions</span><span class="p">:</span>
 <span class="o">-</span> <span class="nb">type</span><span class="p">:</span> <span class="n">general</span>
     <span class="n">content</span><span class="p">:</span> <span class="o">|</span>
-    <span class="n">Below</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">conversation</span> <span class="n">between</span> <span class="n">a</span> <span class="n">user</span> <span class="ow">and</span> <span class="n">a</span> <span class="n">bot</span> <span class="n">called</span> <span class="n">the</span> <span class="n">trulens</span> <span class="n">Bot</span><span class="o">.</span>
-    <span class="n">The</span> <span class="n">bot</span> <span class="ow">is</span> <span class="n">designed</span> <span class="n">to</span> <span class="n">answer</span> <span class="n">questions</span> <span class="n">about</span> <span class="n">the</span> <span class="n">trulens</span> <span class="n">python</span> <span class="n">library</span><span class="o">.</span>
-    <span class="n">The</span> <span class="n">bot</span> <span class="ow">is</span> <span class="n">knowledgeable</span> <span class="n">about</span> <span class="n">python</span><span class="o">.</span>
+    <span class="n">Below</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">conversation</span> <span class="n">between</span> <span class="n">a</span> <span class="n">user</span> <span class="ow">and</span> <span class="n">a</span> <span class="n">bot</span> <span class="n">called</span> <span class="n">the</span> <span class="n">TruLens</span> <span class="n">Bot</span><span class="o">.</span>
+    <span class="n">The</span> <span class="n">bot</span> <span class="ow">is</span> <span class="n">designed</span> <span class="n">to</span> <span class="n">answer</span> <span class="n">questions</span> <span class="n">about</span> <span class="n">the</span> <span class="n">TruLens</span> <span class="n">Python</span> <span class="n">library</span><span class="o">.</span>
+    <span class="n">The</span> <span class="n">bot</span> <span class="ow">is</span> <span class="n">knowledgeable</span> <span class="n">about</span> <span class="n">Python</span><span class="o">.</span>
     <span class="n">If</span> <span class="n">the</span> <span class="n">bot</span> <span class="n">does</span> <span class="ow">not</span> <span class="n">know</span> <span class="n">the</span> <span class="n">answer</span> <span class="n">to</span> <span class="n">a</span> <span class="n">question</span><span class="p">,</span> <span class="n">it</span> <span class="n">truthfully</span> <span class="n">says</span> <span class="n">it</span> <span class="n">does</span> <span class="ow">not</span> <span class="n">know</span><span class="o">.</span>
 
 <span class="n">sample_conversation</span><span class="p">:</span> <span class="o">|</span>
@@ -10652,7 +10729,7 @@ apps.</p>
 <p>To properly evaluate LLM apps we often need to point our evaluation at an
 internal step of our application, such as the retrieved context. Doing so allows
 us to evaluate for metrics including context relevance and groundedness.</p>
-<p>For Nemo applications with a knowledge base, <code>select_context</code> can
+<p>For NeMo applications with a knowledge base, <code>select_context</code> can
 be used to access the retrieved text for evaluation.</p>
 <div class="admonition example">
 <p class="admonition-title">Instrument a NeMo app</p>
@@ -10673,7 +10750,7 @@ be used to access the retrieved text for evaluation.</p>
 </code></pre></div>
 </div>
 <p>For examples of using <code>TruRails</code>, check out the <a href="../../../cookbook/"><em>TruLens</em> Cookbook</a></p>
-<h2 id="appendix-instrumented-nemo-classes-and-methods">Appendix: Instrumented Nemo Classes and Methods<a class="headerlink" href="#appendix-instrumented-nemo-classes-and-methods" title="Permanent link">&para;</a></h2>
+<h2 id="appendix-instrumented-nemo-classes-and-methods">Appendix: Instrumented NeMo Classes and Methods<a class="headerlink" href="#appendix-instrumented-nemo-classes-and-methods" title="Permanent link">&para;</a></h2>
 <p>The modules, classes, and methods that trulens instruments can be retrieved from
 the appropriate Instrument subclass.</p>
 <div class="admonition example">
@@ -10753,7 +10830,7 @@ function only shows what in an app was actually instrumented.</p>
     <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "search.highlight", "toc.follow", "content.code.copy", "content.tabs"], "search": "../../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.f13b1293.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.c8b220af.min.js"></script>
       
         <script src="../../../javascript/config.js"></script>
       

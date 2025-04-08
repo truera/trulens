@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/main.d7758b05.min.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.4af4bdda.min.css">
       
         
         <link rel="stylesheet" href="../../../../assets/stylesheets/palette.06af60db.min.css">
@@ -3550,7 +3550,7 @@
               
   
   <span class="md-ellipsis">
-    📦 Nemo Guardrails
+    📦 NeMo Guardrails
     
   </span>
   
@@ -3567,7 +3567,7 @@
         <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_3_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_3_7">
             <span class="md-nav__icon md-icon"></span>
-            📦 Nemo Guardrails
+            📦 NeMo Guardrails
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -9110,7 +9110,7 @@
         
   
   <span class="md-ellipsis">
-    Local vs Remote Huggingface Feedback Functions
+    Local vs Remote HuggingFace Feedback Functions
     
   </span>
   
@@ -9694,6 +9694,8 @@
       
         
       
+        
+      
     
     
       
@@ -10075,6 +10077,81 @@
   
   <span class="md-ellipsis">
     Simple Pinecone setup with LlamaIndex + Eval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5_5" id="__nav_5_5_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Weaviate
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            Weaviate
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../vector_stores/weaviate/weaviate_query_agent/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Evaluating Weaviate Query Agents
     
   </span>
   
@@ -11173,7 +11250,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h1 id="feedback-functions-in-nemo-guardrails-apps">Feedback functions in <em>NeMo Guardrails</em> apps<a class="anchor-link" href="#feedback-functions-in-nemo-guardrails-apps">¶</a></h1><p>This notebook demonstrates how to use feedback functions from within rails apps.
-The integration in the other direction, monitoring rails apps using trulens, is
+The integration in the other direction, monitoring rails apps using TruLens, is
 shown in the <code>nemoguardrails_trurails_example.ipynb</code> notebook.</p>
 <p>We feature two examples of how to integrate feedback in rails apps. This
 notebook goes over the more complex but ultimately more concise of the two. The
@@ -11240,7 +11317,7 @@ simpler example is shown in <code>nemoguardrails_custom_action_feedback_example.
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># This notebook uses openai and huggingface providers which need some keys set.</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># This notebook uses OpenAI and HuggingFace providers which need some keys set.</span>
 <span class="c1"># You can set them here:</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">trulens.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">TruSession</span>
@@ -11253,7 +11330,7 @@ simpler example is shown in <code>nemoguardrails_custom_action_feedback_example.
 <span class="n">session</span> <span class="o">=</span> <span class="n">TruSession</span><span class="p">()</span>
 <span class="n">session</span><span class="o">.</span><span class="n">reset_database</span><span class="p">()</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-2"># This notebook uses openai and huggingface providers which need some keys set.
+<div class="clipboard-copy-txt" id="cell-2"># This notebook uses OpenAI and HuggingFace providers which need some keys set.
 # You can set them here:
 
 from trulens.core import TruSession
@@ -11473,16 +11550,16 @@ the originating example.</p>
 <span class="n">instructions</span><span class="p">:</span>
   <span class="o">-</span> <span class="nb">type</span><span class="p">:</span> <span class="n">general</span>
     <span class="n">content</span><span class="p">:</span> <span class="o">|</span>
-      <span class="n">Below</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">conversation</span> <span class="n">between</span> <span class="n">a</span> <span class="n">user</span> <span class="ow">and</span> <span class="n">a</span> <span class="n">bot</span> <span class="n">called</span> <span class="n">the</span> <span class="n">trulens</span> <span class="n">Bot</span><span class="o">.</span>
-      <span class="n">The</span> <span class="n">bot</span> <span class="ow">is</span> <span class="n">designed</span> <span class="n">to</span> <span class="n">answer</span> <span class="n">questions</span> <span class="n">about</span> <span class="n">the</span> <span class="n">trulens</span> <span class="n">python</span> <span class="n">library</span><span class="o">.</span>
-      <span class="n">The</span> <span class="n">bot</span> <span class="ow">is</span> <span class="n">knowledgeable</span> <span class="n">about</span> <span class="n">python</span><span class="o">.</span>
+      <span class="n">Below</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">conversation</span> <span class="n">between</span> <span class="n">a</span> <span class="n">user</span> <span class="ow">and</span> <span class="n">a</span> <span class="n">bot</span> <span class="n">called</span> <span class="n">the</span> <span class="n">TruLens</span> <span class="n">Bot</span><span class="o">.</span>
+      <span class="n">The</span> <span class="n">bot</span> <span class="ow">is</span> <span class="n">designed</span> <span class="n">to</span> <span class="n">answer</span> <span class="n">questions</span> <span class="n">about</span> <span class="n">the</span> <span class="n">TruLens</span> <span class="n">Python</span> <span class="n">library</span><span class="o">.</span>
+      <span class="n">The</span> <span class="n">bot</span> <span class="ow">is</span> <span class="n">knowledgeable</span> <span class="n">about</span> <span class="n">Python</span><span class="o">.</span>
       <span class="n">If</span> <span class="n">the</span> <span class="n">bot</span> <span class="n">does</span> <span class="ow">not</span> <span class="n">know</span> <span class="n">the</span> <span class="n">answer</span> <span class="n">to</span> <span class="n">a</span> <span class="n">question</span><span class="p">,</span> <span class="n">it</span> <span class="n">truthfully</span> <span class="n">says</span> <span class="n">it</span> <span class="n">does</span> <span class="ow">not</span> <span class="n">know</span><span class="o">.</span>
 
 <span class="n">sample_conversation</span><span class="p">:</span> <span class="o">|</span>
-  <span class="n">user</span> <span class="s2">"Hi there. Can you help me with some questions I have about trulens?"</span>
+  <span class="n">user</span> <span class="s2">"Hi there. Can you help me with some questions I have about TruLens?"</span>
     <span class="n">express</span> <span class="n">greeting</span> <span class="ow">and</span> <span class="n">ask</span> <span class="k">for</span> <span class="n">assistance</span>
   <span class="n">bot</span> <span class="n">express</span> <span class="n">greeting</span> <span class="ow">and</span> <span class="n">confirm</span> <span class="ow">and</span> <span class="n">offer</span> <span class="n">assistance</span>
-    <span class="s2">"Hi there! I'm here to help answer any questions you may have about the trulens. What would you like to know?"</span>
+    <span class="s2">"Hi there! I'm here to help answer any questions you may have about the TruLens. What would you like to know?"</span>
 
 <span class="n">models</span><span class="p">:</span>
   <span class="o">-</span> <span class="nb">type</span><span class="p">:</span> <span class="n">main</span>
@@ -11503,16 +11580,16 @@ the originating example.</p>
 instructions:
   - type: general
     content: |
-      Below is a conversation between a user and a bot called the trulens Bot.
-      The bot is designed to answer questions about the trulens python library.
-      The bot is knowledgeable about python.
+      Below is a conversation between a user and a bot called the TruLens Bot.
+      The bot is designed to answer questions about the TruLens Python library.
+      The bot is knowledgeable about Python.
       If the bot does not know the answer to a question, it truthfully says it does not know.
 
 sample_conversation: |
-  user "Hi there. Can you help me with some questions I have about trulens?"
+  user "Hi there. Can you help me with some questions I have about TruLens?"
     express greeting and ask for assistance
   bot express greeting and confirm and offer assistance
-    "Hi there! I'm here to help answer any questions you may have about the trulens. What would you like to know?"
+    "Hi there! I'm here to help answer any questions you may have about the TruLens. What would you like to know?"
 
 models:
   - type: main
@@ -12187,7 +12264,7 @@ print(response["content"])</div>
     <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "search.highlight", "toc.follow", "content.code.copy", "content.tabs"], "search": "../../../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../../assets/javascripts/bundle.f13b1293.min.js"></script>
+      <script src="../../../../assets/javascripts/bundle.c8b220af.min.js"></script>
       
         <script src="../../../../javascript/config.js"></script>
       

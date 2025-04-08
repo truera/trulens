@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/main.d7758b05.min.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.4af4bdda.min.css">
       
         
         <link rel="stylesheet" href="../../../../assets/stylesheets/palette.06af60db.min.css">
@@ -3561,7 +3561,7 @@
               
   
   <span class="md-ellipsis">
-    📦 Nemo Guardrails
+    📦 NeMo Guardrails
     
   </span>
   
@@ -3578,7 +3578,7 @@
         <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_3_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_3_7">
             <span class="md-nav__icon md-icon"></span>
-            📦 Nemo Guardrails
+            📦 NeMo Guardrails
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -9585,7 +9585,7 @@
         
   
   <span class="md-ellipsis">
-    Local vs Remote Huggingface Feedback Functions
+    Local vs Remote HuggingFace Feedback Functions
     
   </span>
   
@@ -10166,6 +10166,8 @@
       
         
       
+        
+      
     
     
       
@@ -10544,6 +10546,81 @@
   
   <span class="md-ellipsis">
     Simple Pinecone setup with LlamaIndex + Eval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5_5" id="__nav_5_5_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Weaviate
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            Weaviate
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../cookbook/vector_stores/weaviate/weaviate_query_agent/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Evaluating Weaviate Query Agents
     
   </span>
   
@@ -11680,6 +11757,7 @@
 
 
 
+
   <div class="doc doc-children">
 
 
@@ -11701,8 +11779,14 @@
   </span>
 
 <a href="#trulens.core.experimental._FEATURE_SETUPS" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">_FEATURE_SETUPS</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental.Feature" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental.Feature.OTEL_TRACING" href="#trulens.core.experimental.Feature.OTEL_TRACING">OTEL_TRACING</a></span><span class="p">:</span> <span class="s2">&quot;trulens.experimental.otel_tracing._feature&quot;</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">_FEATURE_SETUPS</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Feature (trulens.core.experimental.Feature)" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n"><a class="autorefs autorefs-internal" title="            OTEL_TRACING
+
+
+  
+      class-attribute
+      instance-attribute
+   (trulens.core.experimental.Feature.OTEL_TRACING)" href="#trulens.core.experimental.Feature.OTEL_TRACING">OTEL_TRACING</a></span><span class="p">:</span> <span class="s2">&quot;trulens.experimental.otel_tracing._feature&quot;</span>
 <span class="p">}</span>
 </code></pre></div>
 
@@ -11714,6 +11798,7 @@ containing _FeatureSetup class).</p>
 importing them here would result in a circular import.</p>
 <p>This is used to check if the optional imports are available before enabling the
 feature flags.</p>
+
     </div>
 
 </div>
@@ -11736,7 +11821,7 @@ feature flags.</p>
 
 
         <p>Experimental feature flags.</p>
-<p>Use <a class="autorefs autorefs-internal" href="../session/#trulens.core.session.TruSession.experimental_enable_feature">TruSession.experimental_enable_feature</a> to enable
+<p>Use <a class="autorefs autorefs-internal" title="            experimental_enable_feature" href="../session/#trulens.core.session.TruSession.experimental_enable_feature">TruSession.experimental_enable_feature</a> to enable
 these features:</p>
 
 
@@ -11748,6 +11833,7 @@ these features:</p>
 
 <span class="n">session</span><span class="o">.</span><span class="n">experimental_enable_feature</span><span class="p">(</span><span class="n">Feature</span><span class="o">.</span><span class="n">OTEL_TRACING</span><span class="p">)</span>
 </code></pre></div>
+
 
 
 
@@ -11790,6 +11876,7 @@ these features:</p>
 <p>This changes how wrapped functions are processed. This setting cannot be
 changed after any wrapper is produced.</p>
 </div>
+
     </div>
 
 </div>
@@ -11814,6 +11901,7 @@ changed after any wrapper is produced.</p>
     <div class="doc doc-contents ">
 
         <p>Return a string representation of all the feature flags.</p>
+
 
     </div>
 
@@ -11853,6 +11941,7 @@ changed after any wrapper is produced.</p>
 
 
 
+
   <div class="doc doc-children">
 
 
@@ -11874,12 +11963,13 @@ changed after any wrapper is produced.</p>
   </span>
 
 <a href="#trulens.core.experimental._FeatureSetup.FEATURE" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">FEATURE</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental.Feature" href="#trulens.core.experimental.Feature">Feature</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">FEATURE</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feature (trulens.core.experimental.Feature)" href="#trulens.core.experimental.Feature">Feature</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>The feature flag enabling this feature.</p>
+
     </div>
 
 </div>
@@ -11897,12 +11987,18 @@ changed after any wrapper is produced.</p>
   </span>
 
 <a href="#trulens.core.experimental._FeatureSetup.REQUIREMENT" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">REQUIREMENT</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.imports.ImportErrorMessages" href="../utils/imports/#trulens.core.utils.imports.ImportErrorMessages">ImportErrorMessages</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">REQUIREMENT</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            ImportErrorMessages
+
+
+  
+      dataclass
+   (trulens.core.utils.imports.ImportErrorMessages)" href="../utils/imports/#trulens.core.utils.imports.ImportErrorMessages">ImportErrorMessages</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>The optional imports required to use the feature.</p>
+
     </div>
 
 </div>
@@ -11929,6 +12025,7 @@ changed after any wrapper is produced.</p>
 
         <p>Assert that the optional requirements for the feature are installed.</p>
 
+
     </div>
 
 </div>
@@ -11953,6 +12050,7 @@ changed after any wrapper is produced.</p>
 
         <p>Check if the optional requirements for the feature are installed.</p>
 
+
     </div>
 
 </div>
@@ -11969,7 +12067,7 @@ changed after any wrapper is produced.</p>
   </span>
 
 <a href="#trulens.core.experimental._FeatureSetup.assert_can_enable" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">assert_can_enable</span><span class="p">(</span><span class="n">feature</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental.Feature" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">assert_can_enable</span><span class="p">(</span><span class="n">feature</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feature (trulens.core.experimental.Feature)" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -11977,6 +12075,7 @@ changed after any wrapper is produced.</p>
         <p>Asserts that the given feature can be enabled.</p>
 <p>This is used to check if the optional imports are available before
 enabling the feature flags.</p>
+
 
     </div>
 
@@ -11994,7 +12093,7 @@ enabling the feature flags.</p>
   </span>
 
 <a href="#trulens.core.experimental._FeatureSetup.can_enable" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">can_enable</span><span class="p">(</span><span class="n">feature</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental.Feature" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">can_enable</span><span class="p">(</span><span class="n">feature</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feature (trulens.core.experimental.Feature)" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -12002,6 +12101,7 @@ enabling the feature flags.</p>
         <p>Check if the given feature can be enabled.</p>
 <p>This is used to check if the optional imports are available before
 enabling the feature flags.</p>
+
 
     </div>
 
@@ -12019,12 +12119,13 @@ enabling the feature flags.</p>
   </span>
 
 <a href="#trulens.core.experimental._FeatureSetup.load_setup" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">load_setup</span><span class="p">(</span><span class="n">modname</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Type" href="https://docs.python.org/3/library/typing.html#typing.Type">Type</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental._FeatureSetup" href="#trulens.core.experimental._FeatureSetup">_FeatureSetup</a></span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">load_setup</span><span class="p">(</span><span class="n">modname</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Type" href="https://docs.python.org/3/library/typing.html#typing.Type">Type</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            _FeatureSetup (trulens.core.experimental._FeatureSetup)" href="#trulens.core.experimental._FeatureSetup">_FeatureSetup</a></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Load the setup class for the given module.</p>
+
 
     </div>
 
@@ -12065,6 +12166,7 @@ changes ("frozen").</p>
 
 
 
+
   <div class="doc doc-children">
 
 
@@ -12086,12 +12188,13 @@ changes ("frozen").</p>
   </span>
 
 <a href="#trulens.core.experimental._Setting.value" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">value</span><span class="p">:</span> <span class="n"><span title="trulens.core.experimental.T">T</span></span> <span class="o">=</span> <span class="n">default</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">value</span><span class="p">:</span> <span class="n"><span title="trulens.core.experimental.T">T</span></span> <span class="o">=</span> <span class="n"><span title="trulens.core.experimental._Setting(default)">default</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>The stored value.</p>
+
     </div>
 
 </div>
@@ -12109,13 +12212,14 @@ changes ("frozen").</p>
   </span>
 
 <a href="#trulens.core.experimental._Setting.frozen_by" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">frozen_by</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Set" href="https://docs.python.org/3/library/typing.html#typing.Set">Set</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental._Setting.set" href="#trulens.core.experimental._Setting.set">set</a></span><span class="p">()</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">frozen_by</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Set" href="https://docs.python.org/3/library/typing.html#typing.Set">Set</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            set (trulens.core.experimental._Setting.set)" href="#trulens.core.experimental._Setting.set">set</a></span><span class="p">()</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Set of representations of frames (not in trulens) that have frozen this value.</p>
 <p>If empty, it has not been frozen and can be changed.</p>
+
     </div>
 
 </div>
@@ -12139,6 +12243,7 @@ changes ("frozen").</p>
     <div class="doc doc-contents ">
 
         <p>Determine if the setting is frozen.</p>
+
     </div>
 
 </div>
@@ -12187,6 +12292,7 @@ different from the current value.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -12206,6 +12312,7 @@ different from the current value.</p>
 
         <p>Get the value of this setting.</p>
 <p>If freeze is True, freeze the setting so it cannot be changed.</p>
+
 
     </div>
 
@@ -12252,6 +12359,7 @@ different from the current value.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -12292,6 +12400,7 @@ the instrumentation cannot be changed.</p>
 
 
 
+
   <div class="doc doc-children">
 
 
@@ -12313,14 +12422,15 @@ the instrumentation cannot be changed.</p>
   </span>
 
 <a href="#trulens.core.experimental._Settings.settings" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">settings</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental.Feature" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental._Setting" href="#trulens.core.experimental._Setting">_Setting</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span><span class="p">]]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="collections.defaultdict" href="https://docs.python.org/3/library/collections.html#collections.defaultdict">defaultdict</a></span><span class="p">(</span>
-    <span class="k">lambda</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental._Setting" href="#trulens.core.experimental._Setting">_Setting</a></span><span class="p">(</span><span class="n"><span title="trulens.core.experimental._Setting(default)">default</span></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">settings</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Feature (trulens.core.experimental.Feature)" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            _Setting (trulens.core.experimental._Setting)" href="#trulens.core.experimental._Setting">_Setting</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span><span class="p">]]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="collections.defaultdict" href="https://docs.python.org/3/library/collections.html#collections.defaultdict">defaultdict</a></span><span class="p">(</span>
+    <span class="k">lambda</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            _Setting (trulens.core.experimental._Setting)" href="#trulens.core.experimental._Setting">_Setting</a></span><span class="p">(</span><span class="n"><span title="trulens.core.experimental._Setting(default)">default</span></span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>The settings for the experimental features.</p>
+
     </div>
 
 </div>
@@ -12335,12 +12445,13 @@ the instrumentation cannot be changed.</p>
 
 
 <a href="#trulens.core.experimental._Settings.is_frozen" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">is_frozen</span><span class="p">(</span><span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental.Feature" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">is_frozen</span><span class="p">(</span><span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Feature (trulens.core.experimental.Feature)" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Determine if the given setting is frozen.</p>
+
 
     </div>
 
@@ -12355,7 +12466,7 @@ the instrumentation cannot be changed.</p>
 
 <a href="#trulens.core.experimental._Settings.set" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nb">set</span><span class="p">(</span>
-    <span class="nf">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental.Feature" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">],</span>
+    <span class="nf">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Feature (trulens.core.experimental.Feature)" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">],</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">value</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">freeze</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span>
@@ -12392,6 +12503,7 @@ the flag if the freeze parameter is set to True.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -12405,7 +12517,7 @@ the flag if the freeze parameter is set to True.</p>
 
 <a href="#trulens.core.experimental._Settings.freeze" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">freeze</span><span class="p">(</span>
-    <span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental.Feature" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">],</span>
+    <span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Feature (trulens.core.experimental.Feature)" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">],</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">value</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span>
@@ -12440,6 +12552,7 @@ the flag if the freeze parameter is set to True.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -12453,13 +12566,14 @@ the flag if the freeze parameter is set to True.</p>
 
 <a href="#trulens.core.experimental._Settings.get" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">get</span><span class="p">(</span>
-    <span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental.Feature" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">freeze</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feature (trulens.core.experimental.Feature)" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">freeze</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Determine the value of the given feature flag.</p>
+
 
     </div>
 
@@ -12474,7 +12588,7 @@ the flag if the freeze parameter is set to True.</p>
 
 <a href="#trulens.core.experimental._Settings.enable" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">enable</span><span class="p">(</span>
-    <span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental.Feature" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">freeze</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Feature (trulens.core.experimental.Feature)" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">freeze</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span>
 </code></pre></div>
 
@@ -12507,6 +12621,7 @@ the flag if the freeze parameter is set to True.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -12520,7 +12635,7 @@ the flag if the freeze parameter is set to True.</p>
 
 <a href="#trulens.core.experimental._Settings.disable" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">disable</span><span class="p">(</span>
-    <span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental.Feature" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">freeze</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Feature (trulens.core.experimental.Feature)" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">freeze</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span>
 </code></pre></div>
 
@@ -12553,6 +12668,7 @@ the flag if the freeze parameter is set to True.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -12567,8 +12683,8 @@ the flag if the freeze parameter is set to True.</p>
 <a href="#trulens.core.experimental._Settings.set_multiple" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">set_multiple</span><span class="p">(</span>
     <span class="n">flags</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span>
-        <span class="n"><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental.Feature" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">]],</span>
-        <span class="n"><a class="autorefs autorefs-external" title="typing.Mapping" href="https://docs.python.org/3/library/typing.html#typing.Mapping">Mapping</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental.Feature" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">],</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span><span class="p">],</span>
+        <span class="n"><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feature (trulens.core.experimental.Feature)" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">]],</span>
+        <span class="n"><a class="autorefs autorefs-external" title="typing.Mapping" href="https://docs.python.org/3/library/typing.html#typing.Mapping">Mapping</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feature (trulens.core.experimental.Feature)" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">],</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span><span class="p">],</span>
     <span class="p">],</span>
     <span class="n">freeze</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span>
@@ -12606,6 +12722,7 @@ value than specified.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -12631,12 +12748,13 @@ value than specified.</p>
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-external" title="pydantic.BaseModel" href="https://docs.pydantic.dev/latest/api/base_model/#pydantic.BaseModel">BaseModel</a></code>, <code><a class="autorefs autorefs-internal" title="trulens.core.utils.text.WithIdentString" href="../utils/text/#trulens.core.utils.text.WithIdentString">WithIdentString</a></code></p>
+              Bases: <code><a class="autorefs autorefs-external" title="pydantic.BaseModel" href="https://docs.pydantic.dev/latest/api/base_model/#pydantic.BaseModel">BaseModel</a></code>, <code><a class="autorefs autorefs-internal" title="            WithIdentString (trulens.core.utils.text.WithIdentString)" href="../utils/text/#trulens.core.utils.text.WithIdentString">WithIdentString</a></code></p>
 
 
         <p>Mixin to add experimental flags and control methods.</p>
 <p>Prints out messages when features are enabled/disabled, frozen, and when a
 setting fails to take up due to earlier freeze.</p>
+
 
 
 
@@ -12668,14 +12786,15 @@ setting fails to take up due to earlier freeze.</p>
   </span>
 
 <a href="#trulens.core.experimental._WithExperimentalSettings._experimental_feature_flags" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">_experimental_feature_flags</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental._Settings" href="#trulens.core.experimental._Settings">_Settings</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="pydantic.PrivateAttr" href="https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.PrivateAttr">PrivateAttr</a></span><span class="p">(</span>
-    <span class="n"><span title="pydantic.PrivateAttr(default_factory)">default_factory</span></span><span class="o">=</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental._Settings" href="#trulens.core.experimental._Settings">_Settings</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">_experimental_feature_flags</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            _Settings (trulens.core.experimental._Settings)" href="#trulens.core.experimental._Settings">_Settings</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="pydantic.PrivateAttr" href="https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.PrivateAttr">PrivateAttr</a></span><span class="p">(</span>
+    <span class="n"><span title="pydantic.PrivateAttr(default_factory)">default_factory</span></span><span class="o">=</span><span class="n"><a class="autorefs autorefs-internal" title="            _Settings (trulens.core.experimental._Settings)" href="#trulens.core.experimental._Settings">_Settings</a></span>
 <span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>EXPERIMENTAL: Flags to control experimental features.</p>
+
     </div>
 
 </div>
@@ -12698,6 +12817,7 @@ setting fails to take up due to earlier freeze.</p>
         <p>Get a string to identify this instance in some way without
 overburdening the output with details.</p>
 
+
     </div>
 
 </div>
@@ -12711,7 +12831,7 @@ overburdening the output with details.</p>
 
 <a href="#trulens.core.experimental._WithExperimentalSettings._experimental_feature" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">_experimental_feature</span><span class="p">(</span>
-    <span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental.Feature" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">],</span>
+    <span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feature (trulens.core.experimental.Feature)" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">],</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">value</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">freeze</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span>
@@ -12747,6 +12867,7 @@ overburdening the output with details.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -12760,13 +12881,14 @@ overburdening the output with details.</p>
 
 <a href="#trulens.core.experimental._WithExperimentalSettings._experimental_freeze_feature" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">_experimental_freeze_feature</span><span class="p">(</span>
-    <span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental.Feature" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">]</span>
+    <span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feature (trulens.core.experimental.Feature)" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Get and freeze the given feature flag.</p>
+
 
     </div>
 
@@ -12781,7 +12903,7 @@ overburdening the output with details.</p>
 
 <a href="#trulens.core.experimental._WithExperimentalSettings.experimental_enable_feature" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">experimental_enable_feature</span><span class="p">(</span>
-    <span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental.Feature" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">]</span>
+    <span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feature (trulens.core.experimental.Feature)" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span>
 </code></pre></div>
 
@@ -12813,6 +12935,7 @@ overburdening the output with details.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -12826,7 +12949,7 @@ overburdening the output with details.</p>
 
 <a href="#trulens.core.experimental._WithExperimentalSettings.experimental_disable_feature" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">experimental_disable_feature</span><span class="p">(</span>
-    <span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental.Feature" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">]</span>
+    <span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feature (trulens.core.experimental.Feature)" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span>
 </code></pre></div>
 
@@ -12858,6 +12981,7 @@ overburdening the output with details.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -12871,7 +12995,7 @@ overburdening the output with details.</p>
 
 <a href="#trulens.core.experimental._WithExperimentalSettings.experimental_feature" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">experimental_feature</span><span class="p">(</span>
-    <span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental.Feature" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">freeze</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feature (trulens.core.experimental.Feature)" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">freeze</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span>
 </code></pre></div>
 
@@ -12879,6 +13003,7 @@ overburdening the output with details.</p>
 
         <p>Determine the value of the given feature flag.</p>
 <p>If <code>freeze</code> is set, the flag will be frozen to the value returned.</p>
+
 
     </div>
 
@@ -12895,8 +13020,8 @@ overburdening the output with details.</p>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">experimental_set_features</span><span class="p">(</span>
     <span class="n">flags</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span>
         <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span>
-            <span class="n"><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental.Feature" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">]],</span>
-            <span class="n"><a class="autorefs autorefs-external" title="typing.Mapping" href="https://docs.python.org/3/library/typing.html#typing.Mapping">Mapping</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental.Feature" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">],</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span><span class="p">],</span>
+            <span class="n"><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feature (trulens.core.experimental.Feature)" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">]],</span>
+            <span class="n"><a class="autorefs autorefs-external" title="typing.Mapping" href="https://docs.python.org/3/library/typing.html#typing.Mapping">Mapping</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feature (trulens.core.experimental.Feature)" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">],</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span><span class="p">],</span>
         <span class="p">]</span>
     <span class="p">],</span>
     <span class="n">freeze</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -12932,6 +13057,7 @@ overburdening the output with details.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -12945,7 +13071,7 @@ overburdening the output with details.</p>
 
 <a href="#trulens.core.experimental._WithExperimentalSettings._experimental_assert_feature" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">_experimental_assert_feature</span><span class="p">(</span>
-    <span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental.Feature" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">,</span> <span class="n">purpose</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feature (trulens.core.experimental.Feature)" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">,</span> <span class="n">purpose</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span>
 </code></pre></div>
 
@@ -12954,6 +13080,7 @@ overburdening the output with details.</p>
         <p>Raise a ValueError if the given feature flag is not enabled.</p>
 <p>Gives instructions on how to enable the feature flag if error gets
 raised.</p>
+
 
     </div>
 
@@ -12972,7 +13099,7 @@ raised.</p>
 
 <a href="#trulens.core.experimental._WithExperimentalSettings._experimental_method_override" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">_experimental_method_override</span><span class="p">(</span>
-    <span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental.Feature" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">,</span> <span class="n">enabled</span><span class="p">:</span> <span class="n"><span title="trulens.core.experimental.T">T</span></span><span class="p">,</span> <span class="n">freeze</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feature (trulens.core.experimental.Feature)" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">,</span> <span class="n">enabled</span><span class="p">:</span> <span class="n"><span title="trulens.core.experimental.T">T</span></span><span class="p">,</span> <span class="n">freeze</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="trulens.core.experimental.T">T</span></span>
 </code></pre></div>
 
@@ -12996,6 +13123,7 @@ specified feature is enabled.</p>
     <span class="k">def</span><span class="w"> </span><span class="nf">my_method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="o">...</span>
 </code></pre></div>
 </details>
+
     </div>
 
 </div>
@@ -13013,7 +13141,7 @@ specified feature is enabled.</p>
 
 <a href="#trulens.core.experimental._WithExperimentalSettings._experimental_method" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">_experimental_method</span><span class="p">(</span>
-    <span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.experimental.Feature" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">,</span>
+    <span class="n">flag</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feature (trulens.core.experimental.Feature)" href="#trulens.core.experimental.Feature">Feature</a></span><span class="p">,</span>
     <span class="n">enabled</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Callable" href="https://docs.python.org/3/library/typing.html#typing.Callable">Callable</a></span><span class="p">,</span>
     <span class="n">disabled</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Callable" href="https://docs.python.org/3/library/typing.html#typing.Callable">Callable</a></span><span class="p">,</span>
     <span class="n">freeze</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -13041,6 +13169,7 @@ class MyClass(_WithExperimentalSettings, ...):
         disabled=my_method_default
     )</code></p>
 </details>
+
     </div>
 
 </div>
@@ -13113,7 +13242,7 @@ class MyClass(_WithExperimentalSettings, ...):
     <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "search.highlight", "toc.follow", "content.code.copy", "content.tabs"], "search": "../../../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../../assets/javascripts/bundle.f13b1293.min.js"></script>
+      <script src="../../../../assets/javascripts/bundle.c8b220af.min.js"></script>
       
         <script src="../../../../javascript/config.js"></script>
       

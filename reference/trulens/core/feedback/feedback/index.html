@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.d7758b05.min.css">
+      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.4af4bdda.min.css">
       
         
         <link rel="stylesheet" href="../../../../../assets/stylesheets/palette.06af60db.min.css">
@@ -3561,7 +3561,7 @@
               
   
   <span class="md-ellipsis">
-    📦 Nemo Guardrails
+    📦 NeMo Guardrails
     
   </span>
   
@@ -3578,7 +3578,7 @@
         <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_3_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_3_7">
             <span class="md-nav__icon md-icon"></span>
-            📦 Nemo Guardrails
+            📦 NeMo Guardrails
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -9830,7 +9830,7 @@
         
   
   <span class="md-ellipsis">
-    Local vs Remote Huggingface Feedback Functions
+    Local vs Remote HuggingFace Feedback Functions
     
   </span>
   
@@ -10411,6 +10411,8 @@
       
         
       
+        
+      
     
     
       
@@ -10789,6 +10791,81 @@
   
   <span class="md-ellipsis">
     Simple Pinecone setup with LlamaIndex + Eval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5_5" id="__nav_5_5_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Weaviate
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            Weaviate
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../cookbook/vector_stores/weaviate/weaviate_query_agent/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Evaluating Weaviate Query Agents
     
   </span>
   
@@ -12168,6 +12245,7 @@
 
 
 
+
   <div class="doc doc-children">
 
 
@@ -12199,6 +12277,7 @@
         <p>Signature of feedback implementations.</p>
 <p>Those take in any number of arguments and return either a single float or a
 float and a dictionary (of metadata).</p>
+
     </div>
 
 </div>
@@ -12225,6 +12304,7 @@ float and a dictionary (of metadata).</p>
     <div class="doc doc-contents ">
 
         <p>Signature of aggregation functions.</p>
+
     </div>
 
 </div>
@@ -12289,7 +12369,7 @@ it is not aggregated with other non-skipped results.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback" href="#trulens.core.feedback.feedback.Feedback">Feedback</a>]</code>
+                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-internal" title="            Feedback (trulens.core.feedback.feedback.Feedback)" href="#trulens.core.feedback.feedback.Feedback">Feedback</a>]</code>
                   </span>
                   <span class="doc-param-default">
                     <b>DEFAULT:</b>
@@ -12320,6 +12400,7 @@ it is not aggregated with other non-skipped results.</p>
           </tr>
       </tbody>
     </table>
+
 
 
 
@@ -12373,6 +12454,7 @@ it is not aggregated with other non-skipped results.</p>
 
 
 
+
   <div class="doc doc-children">
 
 
@@ -12404,12 +12486,12 @@ it is not aggregated with other non-skipped results.</p>
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackDefinition" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackDefinition">FeedbackDefinition</a></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="            FeedbackDefinition (trulens.core.schema.feedback.FeedbackDefinition)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackDefinition">FeedbackDefinition</a></code></p>
 
 
         <p>Feedback function container.</p>
 <p>Typical usage is to specify a feedback implementation function from a
-<a class="autorefs autorefs-internal" href="../provider/#trulens.core.feedback.provider.Provider">Provider</a> and the mapping of
+<a class="autorefs autorefs-internal" title="            Provider" href="../provider/#trulens.core.feedback.provider.Provider">Provider</a> and the mapping of
 selectors describing how to construct the arguments to the implementation:</p>
 
 
@@ -12425,6 +12507,7 @@ selectors describing how to construct the arguments to the implementation:</p>
 <span class="p">)</span><span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span> <span class="c1"># selectors shorthand</span>
 </code></pre></div>
 </details>
+
 
 
 
@@ -12454,7 +12537,7 @@ selectors describing how to construct the arguments to the implementation:</p>
   </span>
 
 <a href="#trulens.core.feedback.feedback.Feedback.tru_class_info" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">tru_class_info</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.pyschema.Class" href="../../utils/pyschema/#trulens.core.utils.pyschema.Class">Class</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">tru_class_info</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            Class (trulens.core.utils.pyschema.Class)" href="../../utils/pyschema/#trulens.core.utils.pyschema.Class">Class</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -12462,6 +12545,7 @@ selectors describing how to construct the arguments to the implementation:</p>
         <p>Class information of this pydantic object for use in deserialization.</p>
 <p>Using this odd key to not pollute attribute names in whatever class we mix
 this into. Should be the same as CLASS_INFO.</p>
+
     </div>
 
 </div>
@@ -12480,12 +12564,13 @@ this into. Should be the same as CLASS_INFO.</p>
   </span>
 
 <a href="#trulens.core.feedback.feedback.Feedback.implementation" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">implementation</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.pyschema.Function" href="../../utils/pyschema/#trulens.core.utils.pyschema.Function">Function</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.pyschema.Method" href="../../utils/pyschema/#trulens.core.utils.pyschema.Method">Method</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">implementation</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Function (trulens.core.utils.pyschema.Function)" href="../../utils/pyschema/#trulens.core.utils.pyschema.Function">Function</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            Method (trulens.core.utils.pyschema.Method)" href="../../utils/pyschema/#trulens.core.utils.pyschema.Method">Method</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Implementation serialization.</p>
+
     </div>
 
 </div>
@@ -12504,12 +12589,13 @@ this into. Should be the same as CLASS_INFO.</p>
   </span>
 
 <a href="#trulens.core.feedback.feedback.Feedback.aggregator" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">aggregator</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.pyschema.Function" href="../../utils/pyschema/#trulens.core.utils.pyschema.Function">Function</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.pyschema.Method" href="../../utils/pyschema/#trulens.core.utils.pyschema.Method">Method</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">aggregator</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Function (trulens.core.utils.pyschema.Function)" href="../../utils/pyschema/#trulens.core.utils.pyschema.Function">Function</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            Method (trulens.core.utils.pyschema.Method)" href="../../utils/pyschema/#trulens.core.utils.pyschema.Method">Method</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Aggregator method serialization.</p>
+
     </div>
 
 </div>
@@ -12528,13 +12614,20 @@ this into. Should be the same as CLASS_INFO.</p>
   </span>
 
 <a href="#trulens.core.feedback.feedback.Feedback.combinations" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">combinations</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackCombinations" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations">FeedbackCombinations</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackCombinations.PRODUCT" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations.PRODUCT">PRODUCT</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">combinations</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            FeedbackCombinations (trulens.core.schema.feedback.FeedbackCombinations)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations">FeedbackCombinations</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            PRODUCT
+
+
+  
+      class-attribute
+      instance-attribute
+   (trulens.core.schema.feedback.FeedbackCombinations.PRODUCT)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations.PRODUCT">PRODUCT</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Mode of combining selected values to produce arguments to each feedback
 function call.</p>
+
     </div>
 
 </div>
@@ -12552,14 +12645,20 @@ function call.</p>
   </span>
 
 <a href="#trulens.core.feedback.feedback.Feedback.feedback_definition_id" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">feedback_definition_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.FeedbackDefinitionID" href="../../schema/types/#trulens.core.schema.types.FeedbackDefinitionID">FeedbackDefinitionID</a></span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackDefinition.feedback_definition_id" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackDefinition.feedback_definition_id">feedback_definition_id</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">feedback_definition_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            FeedbackDefinitionID
+
+
+  
+      module-attribute
+   (trulens.core.schema.types.FeedbackDefinitionID)" href="../../schema/types/#trulens.core.schema.types.FeedbackDefinitionID">FeedbackDefinitionID</a></span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n"><span title="trulens.core.schema.feedback.FeedbackDefinition(feedback_definition_id)">feedback_definition_id</span></span>
 <span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Id, if not given, uniquely determined from content.</p>
+
     </div>
 
 </div>
@@ -12578,7 +12677,7 @@ function call.</p>
   </span>
 
 <a href="#trulens.core.feedback.feedback.Feedback.if_exists" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">if_exists</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.serial.Lens" href="../../utils/serial/#trulens.core.utils.serial.Lens">Lens</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">if_exists</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Lens (trulens.core.utils.serial.Lens)" href="../../utils/serial/#trulens.core.utils.serial.Lens">Lens</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -12587,7 +12686,14 @@ function call.</p>
 something that exists in a record/app.</p>
 <p>Can use this to evaluate conditionally on presence of some calls, for
 example. Feedbacks skipped this way will have a status of
-<a class="autorefs autorefs-internal" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResultStatus.SKIPPED">FeedbackResultStatus.SKIPPED</a>.</p>
+<a class="autorefs autorefs-internal" title="            SKIPPED
+
+
+  
+      class-attribute
+      instance-attribute
+  " href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResultStatus.SKIPPED">FeedbackResultStatus.SKIPPED</a>.</p>
+
     </div>
 
 </div>
@@ -12606,12 +12712,19 @@ example. Feedbacks skipped this way will have a status of
   </span>
 
 <a href="#trulens.core.feedback.feedback.Feedback.if_missing" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">if_missing</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackOnMissingParameters" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackOnMissingParameters">FeedbackOnMissingParameters</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackOnMissingParameters.ERROR" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackOnMissingParameters.ERROR">ERROR</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">if_missing</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            FeedbackOnMissingParameters (trulens.core.schema.feedback.FeedbackOnMissingParameters)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackOnMissingParameters">FeedbackOnMissingParameters</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            ERROR
+
+
+  
+      class-attribute
+      instance-attribute
+   (trulens.core.schema.feedback.FeedbackOnMissingParameters.ERROR)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackOnMissingParameters.ERROR">ERROR</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>How to handle missing parameters in feedback function calls.</p>
+
     </div>
 
 </div>
@@ -12629,12 +12742,13 @@ example. Feedbacks skipped this way will have a status of
   </span>
 
 <a href="#trulens.core.feedback.feedback.Feedback.run_location" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">run_location</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackRunLocation" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackRunLocation">FeedbackRunLocation</a></span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">run_location</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            FeedbackRunLocation (trulens.core.schema.feedback.FeedbackRunLocation)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackRunLocation">FeedbackRunLocation</a></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Where the feedback evaluation takes place (e.g. locally, at a Snowflake server, etc).</p>
+
     </div>
 
 </div>
@@ -12652,13 +12766,14 @@ example. Feedbacks skipped this way will have a status of
   </span>
 
 <a href="#trulens.core.feedback.feedback.Feedback.selectors" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">selectors</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.serial.Lens" href="../../utils/serial/#trulens.core.utils.serial.Lens">Lens</a></span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">selectors</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            Lens (trulens.core.utils.serial.Lens)" href="../../utils/serial/#trulens.core.utils.serial.Lens">Lens</a></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Selectors; pointers into <a class="autorefs autorefs-internal" href="../../schema/record/#trulens.core.schema.record.Record">Records</a> of where
+        <p>Selectors; pointers into <a class="autorefs autorefs-internal" title="            Record" href="../../schema/record/#trulens.core.schema.record.Record">Records</a> of where
 to get arguments for <code>imp</code>.</p>
+
     </div>
 
 </div>
@@ -12683,6 +12798,7 @@ to get arguments for <code>imp</code>.</p>
     <div class="doc doc-contents ">
 
         <p>An optional name. Only will affect displayed tables.</p>
+
     </div>
 
 </div>
@@ -12707,6 +12823,7 @@ to get arguments for <code>imp</code>.</p>
     <div class="doc doc-contents ">
 
         <p>Feedback result magnitude interpretation.</p>
+
     </div>
 
 </div>
@@ -12725,14 +12842,26 @@ to get arguments for <code>imp</code>.</p>
   </span>
 
 <a href="#trulens.core.feedback.feedback.Feedback.imp" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">imp</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.ImpCallable" href="#trulens.core.feedback.feedback.ImpCallable">ImpCallable</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback.imp" href="#trulens.core.feedback.feedback.Feedback.imp">imp</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">imp</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            ImpCallable
+
+
+  
+      module-attribute
+   (trulens.core.feedback.feedback.ImpCallable)" href="#trulens.core.feedback.feedback.ImpCallable">ImpCallable</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><span title="trulens.core.feedback.feedback.Feedback(imp)">imp</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Implementation callable.</p>
 <p>A serialized version is stored at
-<a class="autorefs autorefs-internal" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackDefinition.implementation">FeedbackDefinition.implementation</a>.</p>
+<a class="autorefs autorefs-internal" title="            implementation
+
+
+  
+      class-attribute
+      instance-attribute
+  " href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackDefinition.implementation">FeedbackDefinition.implementation</a>.</p>
+
     </div>
 
 </div>
@@ -12751,7 +12880,12 @@ to get arguments for <code>imp</code>.</p>
   </span>
 
 <a href="#trulens.core.feedback.feedback.Feedback.agg" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">agg</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.AggCallable" href="#trulens.core.feedback.feedback.AggCallable">AggCallable</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback.agg" href="#trulens.core.feedback.feedback.Feedback.agg">agg</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">agg</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            AggCallable
+
+
+  
+      module-attribute
+   (trulens.core.feedback.feedback.AggCallable)" href="#trulens.core.feedback.feedback.AggCallable">AggCallable</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><span title="trulens.core.feedback.feedback.Feedback(agg)">agg</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -12759,7 +12893,14 @@ to get arguments for <code>imp</code>.</p>
         <p>Aggregator method for feedback functions that produce more than one
 result.</p>
 <p>A serialized version is stored at
-<a class="autorefs autorefs-internal" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackDefinition.aggregator">FeedbackDefinition.aggregator</a>.</p>
+<a class="autorefs autorefs-internal" title="            aggregator
+
+
+  
+      class-attribute
+      instance-attribute
+  " href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackDefinition.aggregator">FeedbackDefinition.aggregator</a>.</p>
+
     </div>
 
 </div>
@@ -12778,12 +12919,13 @@ result.</p>
   </span>
 
 <a href="#trulens.core.feedback.feedback.Feedback.examples" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">examples</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">]]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback.examples" href="#trulens.core.feedback.feedback.Feedback.examples">examples</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">examples</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">]]</span> <span class="o">=</span> <span class="n"><span title="trulens.core.feedback.feedback.Feedback(examples)">examples</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Examples to use when evaluating the feedback function.</p>
+
     </div>
 
 </div>
@@ -12802,12 +12944,13 @@ result.</p>
   </span>
 
 <a href="#trulens.core.feedback.feedback.Feedback.criteria" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">criteria</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback.criteria" href="#trulens.core.feedback.feedback.Feedback.criteria">criteria</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">criteria</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><span title="trulens.core.feedback.feedback.Feedback(criteria)">criteria</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Criteria for the feedback function.</p>
+
     </div>
 
 </div>
@@ -12826,12 +12969,13 @@ result.</p>
   </span>
 
 <a href="#trulens.core.feedback.feedback.Feedback.min_score_val" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">min_score_val</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback.min_score_val" href="#trulens.core.feedback.feedback.Feedback.min_score_val">min_score_val</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">min_score_val</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><span title="trulens.core.feedback.feedback.Feedback(min_score_val)">min_score_val</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Minimum score value for the feedback function.</p>
+
     </div>
 
 </div>
@@ -12850,12 +12994,13 @@ result.</p>
   </span>
 
 <a href="#trulens.core.feedback.feedback.Feedback.max_score_val" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">max_score_val</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback.max_score_val" href="#trulens.core.feedback.feedback.Feedback.max_score_val">max_score_val</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">max_score_val</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><span title="trulens.core.feedback.feedback.Feedback(max_score_val)">max_score_val</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Maximum score value for the feedback function.</p>
+
     </div>
 
 </div>
@@ -12874,12 +13019,13 @@ result.</p>
   </span>
 
 <a href="#trulens.core.feedback.feedback.Feedback.temperature" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">temperature</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback.temperature" href="#trulens.core.feedback.feedback.Feedback.temperature">temperature</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">temperature</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><span title="trulens.core.feedback.feedback.Feedback(temperature)">temperature</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Temperature parameter for the feedback function.</p>
+
     </div>
 
 </div>
@@ -12899,13 +13045,14 @@ result.</p>
 
 <a href="#trulens.core.feedback.feedback.Feedback.groundedness_configs" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">groundedness_configs</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><span title="trulens.core.feedback.feedback.GroundednessConfigs">GroundednessConfigs</span></span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback.groundedness_configs" href="#trulens.core.feedback.feedback.Feedback.groundedness_configs">groundedness_configs</a></span>
+    <span class="n"><span title="trulens.core.feedback.feedback.Feedback(groundedness_configs)">groundedness_configs</span></span>
 <span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Optional groundedness configuration parameters.</p>
+
     </div>
 
 </div>
@@ -12929,6 +13076,7 @@ result.</p>
     <div class="doc doc-contents ">
 
         <p>Signature of the feedback function implementation.</p>
+
     </div>
 
 </div>
@@ -12954,6 +13102,7 @@ result.</p>
         <p>Name of the feedback function.</p>
 <p>Derived from the name of the function implementing it if no supplied
 name provided.</p>
+
     </div>
 
 </div>
@@ -12974,6 +13123,7 @@ name provided.</p>
     <div class="doc doc-contents ">
 
         <p>Requirement for pretty printing using the rich package.</p>
+
 
     </div>
 
@@ -12998,6 +13148,7 @@ name provided.</p>
 
         <p>Deserialize/load this object using the class information in
 tru_class_info to lookup the actual class that will do the deserialization.</p>
+
 
     </div>
 
@@ -13027,8 +13178,9 @@ class it was serialized from.</p>
 <details class="note" open>
   <summary>Note</summary>
   <p>This process uses extra information stored in the jsonized object
-and handled by <a class="autorefs autorefs-internal" href="../../utils/pyschema/#trulens.core.utils.pyschema.WithClassInfo">WithClassInfo</a>.</p>
+and handled by <a class="autorefs autorefs-internal" title="            WithClassInfo" href="../../utils/pyschema/#trulens.core.utils.pyschema.WithClassInfo">WithClassInfo</a>.</p>
 </details>
+
     </div>
 
 </div>
@@ -13041,7 +13193,7 @@ and handled by <a class="autorefs autorefs-internal" href="../../utils/pyschema/
 
 
 <a href="#trulens.core.feedback.feedback.Feedback.on_input_output" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_input_output</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_input_output</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feedback (trulens.core.feedback.feedback.Feedback)" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -13049,6 +13201,7 @@ and handled by <a class="autorefs autorefs-internal" href="../../utils/pyschema/
         <p>Specifies that the feedback implementation arguments are to be the main
 app input and output in that order.</p>
 <p>Returns a new Feedback object with the specification.</p>
+
 
     </div>
 
@@ -13062,7 +13215,7 @@ app input and output in that order.</p>
 
 
 <a href="#trulens.core.feedback.feedback.Feedback.on_default" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_default</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_default</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feedback (trulens.core.feedback.feedback.Feedback)" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -13071,6 +13224,7 @@ app input and output in that order.</p>
 app output and two argument feedbacks should be evaluates on main input
 and main output in that order.</p>
 <p>Returns a new Feedback object with this specification.</p>
+
 
     </div>
 
@@ -13091,6 +13245,7 @@ and main output in that order.</p>
 
         <p>Fill in default selectors for any remaining feedback function arguments.</p>
 
+
     </div>
 
 </div>
@@ -13108,18 +13263,18 @@ and main output in that order.</p>
 
 <a href="#trulens.core.feedback.feedback.Feedback.evaluate_deferred" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">evaluate_deferred</span><span class="p">(</span>
-    <span class="n">session</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.session.TruSession" href="../../session/#trulens.core.session.TruSession">TruSession</a></span><span class="p">,</span>
+    <span class="n">session</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            TruSession (trulens.core.session.TruSession)" href="../../session/#trulens.core.session.TruSession">TruSession</a></span><span class="p">,</span>
     <span class="n">limit</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">shuffle</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">run_location</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackRunLocation" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackRunLocation">FeedbackRunLocation</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="pandas.Series" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.html#pandas.Series">Series</a></span><span class="p">,</span> <span class="n"><span title="trulens.core._utils.pycompat.Future">Future</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackResult" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResult">FeedbackResult</a></span><span class="p">]]]</span>
+    <span class="n">run_location</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            FeedbackRunLocation (trulens.core.schema.feedback.FeedbackRunLocation)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackRunLocation">FeedbackRunLocation</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="pandas.Series" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.html#pandas.Series">Series</a></span><span class="p">,</span> <span class="n"><span title="trulens.core._utils.pycompat.Future">Future</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            FeedbackResult (trulens.core.schema.feedback.FeedbackResult)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResult">FeedbackResult</a></span><span class="p">]]]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Evaluates feedback functions that were specified to be deferred.</p>
 <p>Returns a list of tuples with the DB row containing the Feedback and
-initial <a class="autorefs autorefs-internal" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResult">FeedbackResult</a> as
+initial <a class="autorefs autorefs-internal" title="            FeedbackResult" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResult">FeedbackResult</a> as
 well as the Future which will contain the actual result.</p>
 
 
@@ -13182,7 +13337,7 @@ well as the Future which will contain the actual result.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackRunLocation" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackRunLocation">FeedbackRunLocation</a>]</code>
+                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-internal" title="            FeedbackRunLocation (trulens.core.schema.feedback.FeedbackRunLocation)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackRunLocation">FeedbackRunLocation</a>]</code>
                   </span>
                   <span class="doc-param-default">
                     <b>DEFAULT:</b>
@@ -13205,6 +13360,7 @@ well as the Future which will contain the actual result.</p>
 </li>
 </ul>
 
+
     </div>
 
 </div>
@@ -13218,9 +13374,14 @@ well as the Future which will contain the actual result.</p>
 
 <a href="#trulens.core.feedback.feedback.Feedback.aggregate" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">aggregate</span><span class="p">(</span>
-    <span class="n">func</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.AggCallable" href="#trulens.core.feedback.feedback.AggCallable">AggCallable</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">combinations</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackCombinations" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations">FeedbackCombinations</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></span>
+    <span class="n">func</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            AggCallable
+
+
+  
+      module-attribute
+   (trulens.core.feedback.feedback.AggCallable)" href="#trulens.core.feedback.feedback.AggCallable">AggCallable</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">combinations</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            FeedbackCombinations (trulens.core.schema.feedback.FeedbackCombinations)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations">FeedbackCombinations</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feedback (trulens.core.feedback.feedback.Feedback)" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -13229,7 +13390,8 @@ well as the Future which will contain the actual result.</p>
 generate more than one value for implementation argument(s). Can also
 specify the method of producing combinations of values in such cases.</p>
 <p>Returns a new Feedback object with the given aggregation function and/or
-the given <a class="autorefs autorefs-internal" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations">combination mode</a>.</p>
+the given <a class="autorefs autorefs-internal" title="            FeedbackCombinations" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations">combination mode</a>.</p>
+
 
     </div>
 
@@ -13243,13 +13405,14 @@ the given <a class="autorefs autorefs-internal" href="../../schema/feedback/#tru
 
 
 <a href="#trulens.core.feedback.feedback.Feedback.on_prompt" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_prompt</span><span class="p">(</span><span class="n">arg</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_prompt</span><span class="p">(</span><span class="n">arg</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feedback (trulens.core.feedback.feedback.Feedback)" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Create a variant of <code>self</code> that will take in the main app input or
 "prompt" as input, sending it as an argument <code>arg</code> to implementation.</p>
+
 
     </div>
 
@@ -13263,13 +13426,14 @@ the given <a class="autorefs autorefs-internal" href="../../schema/feedback/#tru
 
 
 <a href="#trulens.core.feedback.feedback.Feedback.on_response" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_response</span><span class="p">(</span><span class="n">arg</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_response</span><span class="p">(</span><span class="n">arg</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feedback (trulens.core.feedback.feedback.Feedback)" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Create a variant of <code>self</code> that will take in the main app output or
 "response" as input, sending it as an argument <code>arg</code> to implementation.</p>
+
 
     </div>
 
@@ -13283,7 +13447,7 @@ the given <a class="autorefs autorefs-internal" href="../../schema/feedback/#tru
 
 
 <a href="#trulens.core.feedback.feedback.Feedback.on" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feedback (trulens.core.feedback.feedback.Feedback)" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -13292,6 +13456,7 @@ the given <a class="autorefs autorefs-internal" href="../../schema/feedback/#tru
 selectors. Those provided positionally get their implementation argument
 name guessed and those provided as kwargs get their name from the kwargs
 key.</p>
+
 
     </div>
 
@@ -13306,8 +13471,13 @@ key.</p>
 
 <a href="#trulens.core.feedback.feedback.Feedback.check_selectors" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">check_selectors</span><span class="p">(</span>
-    <span class="n">app</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.app.AppDefinition" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.serial.JSON" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a></span><span class="p">],</span>
-    <span class="n">record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.record.Record" href="../../schema/record/#trulens.core.schema.record.Record">Record</a></span><span class="p">,</span>
+    <span class="n">app</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            AppDefinition (trulens.core.schema.app.AppDefinition)" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            JSON
+
+
+  
+      module-attribute
+   (trulens.core.utils.serial.JSON)" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a></span><span class="p">],</span>
+    <span class="n">record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            Record (trulens.core.schema.record.Record)" href="../../schema/record/#trulens.core.schema.record.Record">Record</a></span><span class="p">,</span>
     <span class="n">source_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">warning</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span>
@@ -13337,7 +13507,12 @@ key.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a>[<a class="autorefs autorefs-internal" title="trulens.core.schema.app.AppDefinition" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a>, <a class="autorefs autorefs-internal" title="trulens.core.utils.serial.JSON" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a>]</code>
+                      <code><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a>[<a class="autorefs autorefs-internal" title="            AppDefinition (trulens.core.schema.app.AppDefinition)" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a>, <a class="autorefs autorefs-internal" title="            JSON
+
+
+  
+      module-attribute
+   (trulens.core.utils.serial.JSON)" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a>]</code>
                   </span>
               </p>
             </td>
@@ -13351,13 +13526,13 @@ key.</p>
                 <p>The record that the feedback will run on. This can be a
 mostly empty record for checking ahead of producing one. The
 utility method
-<a class="autorefs autorefs-internal" href="../../app/#trulens.core.app.App.dummy_record">App.dummy_record</a> is built
+<a class="autorefs autorefs-internal" title="            dummy_record" href="../../app/#trulens.core.app.App.dummy_record">App.dummy_record</a> is built
 for this purpose.</p>
               </div>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-internal" title="trulens.core.schema.record.Record" href="../../schema/record/#trulens.core.schema.record.Record">Record</a></code>
+                      <code><a class="autorefs autorefs-internal" title="            Record (trulens.core.schema.record.Record)" href="../../schema/record/#trulens.core.schema.record.Record">Record</a></code>
                   </span>
               </p>
             </td>
@@ -13457,6 +13632,7 @@ and only issue a warning.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -13470,11 +13646,16 @@ and only issue a warning.</p>
 
 <a href="#trulens.core.feedback.feedback.Feedback.run" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">run</span><span class="p">(</span>
-    <span class="n">app</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.app.AppDefinition" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.serial.JSON" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.record.Record" href="../../schema/record/#trulens.core.schema.record.Record">Record</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">app</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            AppDefinition (trulens.core.schema.app.AppDefinition)" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            JSON
+
+
+  
+      module-attribute
+   (trulens.core.utils.serial.JSON)" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Record (trulens.core.schema.record.Record)" href="../../schema/record/#trulens.core.schema.record.Record">Record</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">source_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">]</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackResult" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResult">FeedbackResult</a></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            FeedbackResult (trulens.core.schema.feedback.FeedbackResult)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResult">FeedbackResult</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -13504,7 +13685,12 @@ AppDefinition. It will be jsonized if it is not already.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a>[<a class="autorefs autorefs-internal" title="trulens.core.schema.app.AppDefinition" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a>, <a class="autorefs autorefs-internal" title="trulens.core.utils.serial.JSON" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a>]]</code>
+                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a>[<a class="autorefs autorefs-internal" title="            AppDefinition (trulens.core.schema.app.AppDefinition)" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a>, <a class="autorefs autorefs-internal" title="            JSON
+
+
+  
+      module-attribute
+   (trulens.core.utils.serial.JSON)" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a>]]</code>
                   </span>
                   <span class="doc-param-default">
                     <b>DEFAULT:</b>
@@ -13524,7 +13710,7 @@ AppDefinition. It will be jsonized if it is not already.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-internal" title="trulens.core.schema.record.Record" href="../../schema/record/#trulens.core.schema.record.Record">Record</a>]</code>
+                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-internal" title="            Record (trulens.core.schema.record.Record)" href="../../schema/record/#trulens.core.schema.record.Record">Record</a>]</code>
                   </span>
                   <span class="doc-param-default">
                     <b>DEFAULT:</b>
@@ -13590,7 +13776,7 @@ selected feedback function inputs.</p>
           <tr class="doc-section-item">
             <td>
                 <span class="doc-returns-annotation">
-                    <code><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackResult" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResult">FeedbackResult</a></code>
+                    <code><a class="autorefs autorefs-internal" title="            FeedbackResult (trulens.core.schema.feedback.FeedbackResult)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResult">FeedbackResult</a></code>
                 </span>
             </td>
             <td class="doc-returns-details">
@@ -13601,6 +13787,7 @@ selected feedback function inputs.</p>
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -13616,7 +13803,13 @@ selected feedback function inputs.</p>
 <a href="#trulens.core.feedback.feedback.Feedback._extract_selection" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">_extract_selection</span><span class="p">(</span>
     <span class="n">source_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">,</span>
-    <span class="n">combinations</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackCombinations" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations">FeedbackCombinations</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackCombinations.PRODUCT" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations.PRODUCT">PRODUCT</a></span><span class="p">,</span>
+    <span class="n">combinations</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            FeedbackCombinations (trulens.core.schema.feedback.FeedbackCombinations)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations">FeedbackCombinations</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            PRODUCT
+
+
+  
+      class-attribute
+      instance-attribute
+   (trulens.core.schema.feedback.FeedbackCombinations.PRODUCT)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations.PRODUCT">PRODUCT</a></span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">]]</span>
 </code></pre></div>
@@ -13663,11 +13856,17 @@ make an assignment to the while signature.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackCombinations" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations">FeedbackCombinations</a></code>
+                      <code><a class="autorefs autorefs-internal" title="            FeedbackCombinations (trulens.core.schema.feedback.FeedbackCombinations)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations">FeedbackCombinations</a></code>
                   </span>
                   <span class="doc-param-default">
                     <b>DEFAULT:</b>
-                      <code><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackCombinations.PRODUCT" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations.PRODUCT">PRODUCT</a></code>
+                      <code><a class="autorefs autorefs-internal" title="            PRODUCT
+
+
+  
+      class-attribute
+      instance-attribute
+   (trulens.core.schema.feedback.FeedbackCombinations.PRODUCT)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations.PRODUCT">PRODUCT</a></code>
                   </span>
               </p>
             </td>
@@ -13698,6 +13897,7 @@ will be ignored.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -13711,8 +13911,13 @@ will be ignored.</p>
 
 <a href="#trulens.core.feedback.feedback.Feedback._construct_source_data" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">_construct_source_data</span><span class="p">(</span>
-    <span class="n">app</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.app.AppDefinition" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.serial.JSON" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.record.Record" href="../../schema/record/#trulens.core.schema.record.Record">Record</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">app</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            AppDefinition (trulens.core.schema.app.AppDefinition)" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            JSON
+
+
+  
+      module-attribute
+   (trulens.core.utils.serial.JSON)" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Record (trulens.core.schema.record.Record)" href="../../schema/record/#trulens.core.schema.record.Record">Record</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">source_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span>
@@ -13742,7 +13947,12 @@ will be ignored.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a>[<a class="autorefs autorefs-internal" title="trulens.core.schema.app.AppDefinition" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a>, <a class="autorefs autorefs-internal" title="trulens.core.utils.serial.JSON" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a>]]</code>
+                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a>[<a class="autorefs autorefs-internal" title="            AppDefinition (trulens.core.schema.app.AppDefinition)" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a>, <a class="autorefs autorefs-internal" title="            JSON
+
+
+  
+      module-attribute
+   (trulens.core.utils.serial.JSON)" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a>]]</code>
                   </span>
                   <span class="doc-param-default">
                     <b>DEFAULT:</b>
@@ -13762,7 +13972,7 @@ will be ignored.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-internal" title="trulens.core.schema.record.Record" href="../../schema/record/#trulens.core.schema.record.Record">Record</a>]</code>
+                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-internal" title="            Record (trulens.core.schema.record.Record)" href="../../schema/record/#trulens.core.schema.record.Record">Record</a>]</code>
                   </span>
                   <span class="doc-param-default">
                     <b>DEFAULT:</b>
@@ -13840,6 +14050,7 @@ source_data.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -13853,8 +14064,13 @@ source_data.</p>
 
 <a href="#trulens.core.feedback.feedback.Feedback.extract_selection" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">extract_selection</span><span class="p">(</span>
-    <span class="n">app</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.app.AppDefinition" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.serial.JSON" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.record.Record" href="../../schema/record/#trulens.core.schema.record.Record">Record</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">app</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            AppDefinition (trulens.core.schema.app.AppDefinition)" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            JSON
+
+
+  
+      module-attribute
+   (trulens.core.utils.serial.JSON)" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Record (trulens.core.schema.record.Record)" href="../../schema/record/#trulens.core.schema.record.Record">Record</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">source_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">]]</span>
 </code></pre></div>
@@ -13865,9 +14081,10 @@ source_data.</p>
 the values that will be sent as arguments to the implementation as
 specified by <code>self.selectors</code>. Additional data to select from can be
 provided in <code>source_data</code>. All args are optional. If a
-<a class="autorefs autorefs-internal" href="../../schema/record/#trulens.core.schema.record.Record">Record</a> is specified, its calls are
+<a class="autorefs autorefs-internal" title="            Record" href="../../schema/record/#trulens.core.schema.record.Record">Record</a> is specified, its calls are
 laid out as app (see
-<a class="autorefs autorefs-internal" href="../../schema/record/#trulens.core.schema.record.Record.layout_calls_as_app">layout_calls_as_app</a>).</p>
+<a class="autorefs autorefs-internal" title="            layout_calls_as_app" href="../../schema/record/#trulens.core.schema.record.Record.layout_calls_as_app">layout_calls_as_app</a>).</p>
+
 
     </div>
 
@@ -13894,10 +14111,11 @@ laid out as app (see
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="            Feedback (trulens.core.feedback.feedback.Feedback)" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></code></p>
 
 
         <p>Similar to the parent class Feedback except this ensures the feedback is run only on the Snowflake server.</p>
+
 
 
 
@@ -13928,7 +14146,7 @@ laid out as app (see
   </span>
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.tru_class_info" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">tru_class_info</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.pyschema.Class" href="../../utils/pyschema/#trulens.core.utils.pyschema.Class">Class</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">tru_class_info</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            Class (trulens.core.utils.pyschema.Class)" href="../../utils/pyschema/#trulens.core.utils.pyschema.Class">Class</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -13936,6 +14154,7 @@ laid out as app (see
         <p>Class information of this pydantic object for use in deserialization.</p>
 <p>Using this odd key to not pollute attribute names in whatever class we mix
 this into. Should be the same as CLASS_INFO.</p>
+
     </div>
 
 </div>
@@ -13954,12 +14173,13 @@ this into. Should be the same as CLASS_INFO.</p>
   </span>
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.implementation" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">implementation</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.pyschema.Function" href="../../utils/pyschema/#trulens.core.utils.pyschema.Function">Function</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.pyschema.Method" href="../../utils/pyschema/#trulens.core.utils.pyschema.Method">Method</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">implementation</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Function (trulens.core.utils.pyschema.Function)" href="../../utils/pyschema/#trulens.core.utils.pyschema.Function">Function</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            Method (trulens.core.utils.pyschema.Method)" href="../../utils/pyschema/#trulens.core.utils.pyschema.Method">Method</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Implementation serialization.</p>
+
     </div>
 
 </div>
@@ -13978,12 +14198,13 @@ this into. Should be the same as CLASS_INFO.</p>
   </span>
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.aggregator" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">aggregator</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.pyschema.Function" href="../../utils/pyschema/#trulens.core.utils.pyschema.Function">Function</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.pyschema.Method" href="../../utils/pyschema/#trulens.core.utils.pyschema.Method">Method</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">aggregator</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Function (trulens.core.utils.pyschema.Function)" href="../../utils/pyschema/#trulens.core.utils.pyschema.Function">Function</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            Method (trulens.core.utils.pyschema.Method)" href="../../utils/pyschema/#trulens.core.utils.pyschema.Method">Method</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Aggregator method serialization.</p>
+
     </div>
 
 </div>
@@ -14002,12 +14223,13 @@ this into. Should be the same as CLASS_INFO.</p>
   </span>
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.examples" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">examples</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">]]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback.examples" href="#trulens.core.feedback.feedback.Feedback.examples">examples</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">examples</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">]]</span> <span class="o">=</span> <span class="n"><span title="trulens.core.feedback.feedback.Feedback(examples)">examples</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Examples to use when evaluating the feedback function.</p>
+
     </div>
 
 </div>
@@ -14026,12 +14248,13 @@ this into. Should be the same as CLASS_INFO.</p>
   </span>
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.criteria" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">criteria</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback.criteria" href="#trulens.core.feedback.feedback.Feedback.criteria">criteria</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">criteria</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><span title="trulens.core.feedback.feedback.Feedback(criteria)">criteria</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Criteria for the feedback function.</p>
+
     </div>
 
 </div>
@@ -14050,13 +14273,20 @@ this into. Should be the same as CLASS_INFO.</p>
   </span>
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.combinations" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">combinations</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackCombinations" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations">FeedbackCombinations</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackCombinations.PRODUCT" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations.PRODUCT">PRODUCT</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">combinations</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            FeedbackCombinations (trulens.core.schema.feedback.FeedbackCombinations)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations">FeedbackCombinations</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            PRODUCT
+
+
+  
+      class-attribute
+      instance-attribute
+   (trulens.core.schema.feedback.FeedbackCombinations.PRODUCT)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations.PRODUCT">PRODUCT</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Mode of combining selected values to produce arguments to each feedback
 function call.</p>
+
     </div>
 
 </div>
@@ -14074,14 +14304,20 @@ function call.</p>
   </span>
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.feedback_definition_id" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">feedback_definition_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.FeedbackDefinitionID" href="../../schema/types/#trulens.core.schema.types.FeedbackDefinitionID">FeedbackDefinitionID</a></span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackDefinition.feedback_definition_id" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackDefinition.feedback_definition_id">feedback_definition_id</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">feedback_definition_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            FeedbackDefinitionID
+
+
+  
+      module-attribute
+   (trulens.core.schema.types.FeedbackDefinitionID)" href="../../schema/types/#trulens.core.schema.types.FeedbackDefinitionID">FeedbackDefinitionID</a></span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n"><span title="trulens.core.schema.feedback.FeedbackDefinition(feedback_definition_id)">feedback_definition_id</span></span>
 <span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Id, if not given, uniquely determined from content.</p>
+
     </div>
 
 </div>
@@ -14100,7 +14336,7 @@ function call.</p>
   </span>
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.if_exists" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">if_exists</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.serial.Lens" href="../../utils/serial/#trulens.core.utils.serial.Lens">Lens</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">if_exists</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Lens (trulens.core.utils.serial.Lens)" href="../../utils/serial/#trulens.core.utils.serial.Lens">Lens</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -14109,7 +14345,14 @@ function call.</p>
 something that exists in a record/app.</p>
 <p>Can use this to evaluate conditionally on presence of some calls, for
 example. Feedbacks skipped this way will have a status of
-<a class="autorefs autorefs-internal" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResultStatus.SKIPPED">FeedbackResultStatus.SKIPPED</a>.</p>
+<a class="autorefs autorefs-internal" title="            SKIPPED
+
+
+  
+      class-attribute
+      instance-attribute
+  " href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResultStatus.SKIPPED">FeedbackResultStatus.SKIPPED</a>.</p>
+
     </div>
 
 </div>
@@ -14128,12 +14371,19 @@ example. Feedbacks skipped this way will have a status of
   </span>
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.if_missing" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">if_missing</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackOnMissingParameters" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackOnMissingParameters">FeedbackOnMissingParameters</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackOnMissingParameters.ERROR" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackOnMissingParameters.ERROR">ERROR</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">if_missing</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            FeedbackOnMissingParameters (trulens.core.schema.feedback.FeedbackOnMissingParameters)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackOnMissingParameters">FeedbackOnMissingParameters</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            ERROR
+
+
+  
+      class-attribute
+      instance-attribute
+   (trulens.core.schema.feedback.FeedbackOnMissingParameters.ERROR)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackOnMissingParameters.ERROR">ERROR</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>How to handle missing parameters in feedback function calls.</p>
+
     </div>
 
 </div>
@@ -14151,13 +14401,14 @@ example. Feedbacks skipped this way will have a status of
   </span>
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.selectors" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">selectors</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.serial.Lens" href="../../utils/serial/#trulens.core.utils.serial.Lens">Lens</a></span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">selectors</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            Lens (trulens.core.utils.serial.Lens)" href="../../utils/serial/#trulens.core.utils.serial.Lens">Lens</a></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Selectors; pointers into <a class="autorefs autorefs-internal" href="../../schema/record/#trulens.core.schema.record.Record">Records</a> of where
+        <p>Selectors; pointers into <a class="autorefs autorefs-internal" title="            Record" href="../../schema/record/#trulens.core.schema.record.Record">Records</a> of where
 to get arguments for <code>imp</code>.</p>
+
     </div>
 
 </div>
@@ -14182,6 +14433,7 @@ to get arguments for <code>imp</code>.</p>
     <div class="doc doc-contents ">
 
         <p>An optional name. Only will affect displayed tables.</p>
+
     </div>
 
 </div>
@@ -14206,6 +14458,7 @@ to get arguments for <code>imp</code>.</p>
     <div class="doc doc-contents ">
 
         <p>Feedback result magnitude interpretation.</p>
+
     </div>
 
 </div>
@@ -14231,6 +14484,7 @@ to get arguments for <code>imp</code>.</p>
         <p>Name of the feedback function.</p>
 <p>Derived from the name of the function implementing it if no supplied
 name provided.</p>
+
     </div>
 
 </div>
@@ -14249,14 +14503,26 @@ name provided.</p>
   </span>
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.imp" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">imp</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.ImpCallable" href="#trulens.core.feedback.feedback.ImpCallable">ImpCallable</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback.imp" href="#trulens.core.feedback.feedback.Feedback.imp">imp</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">imp</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            ImpCallable
+
+
+  
+      module-attribute
+   (trulens.core.feedback.feedback.ImpCallable)" href="#trulens.core.feedback.feedback.ImpCallable">ImpCallable</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><span title="trulens.core.feedback.feedback.Feedback(imp)">imp</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Implementation callable.</p>
 <p>A serialized version is stored at
-<a class="autorefs autorefs-internal" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackDefinition.implementation">FeedbackDefinition.implementation</a>.</p>
+<a class="autorefs autorefs-internal" title="            implementation
+
+
+  
+      class-attribute
+      instance-attribute
+  " href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackDefinition.implementation">FeedbackDefinition.implementation</a>.</p>
+
     </div>
 
 </div>
@@ -14275,7 +14541,12 @@ name provided.</p>
   </span>
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.agg" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">agg</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.AggCallable" href="#trulens.core.feedback.feedback.AggCallable">AggCallable</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback.agg" href="#trulens.core.feedback.feedback.Feedback.agg">agg</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">agg</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            AggCallable
+
+
+  
+      module-attribute
+   (trulens.core.feedback.feedback.AggCallable)" href="#trulens.core.feedback.feedback.AggCallable">AggCallable</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><span title="trulens.core.feedback.feedback.Feedback(agg)">agg</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -14283,7 +14554,14 @@ name provided.</p>
         <p>Aggregator method for feedback functions that produce more than one
 result.</p>
 <p>A serialized version is stored at
-<a class="autorefs autorefs-internal" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackDefinition.aggregator">FeedbackDefinition.aggregator</a>.</p>
+<a class="autorefs autorefs-internal" title="            aggregator
+
+
+  
+      class-attribute
+      instance-attribute
+  " href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackDefinition.aggregator">FeedbackDefinition.aggregator</a>.</p>
+
     </div>
 
 </div>
@@ -14302,12 +14580,13 @@ result.</p>
   </span>
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.min_score_val" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">min_score_val</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback.min_score_val" href="#trulens.core.feedback.feedback.Feedback.min_score_val">min_score_val</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">min_score_val</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><span title="trulens.core.feedback.feedback.Feedback(min_score_val)">min_score_val</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Minimum score value for the feedback function.</p>
+
     </div>
 
 </div>
@@ -14326,12 +14605,13 @@ result.</p>
   </span>
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.max_score_val" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">max_score_val</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback.max_score_val" href="#trulens.core.feedback.feedback.Feedback.max_score_val">max_score_val</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">max_score_val</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><span title="trulens.core.feedback.feedback.Feedback(max_score_val)">max_score_val</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Maximum score value for the feedback function.</p>
+
     </div>
 
 </div>
@@ -14350,12 +14630,13 @@ result.</p>
   </span>
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.temperature" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">temperature</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback.temperature" href="#trulens.core.feedback.feedback.Feedback.temperature">temperature</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">temperature</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><span title="trulens.core.feedback.feedback.Feedback(temperature)">temperature</span></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Temperature parameter for the feedback function.</p>
+
     </div>
 
 </div>
@@ -14375,13 +14656,14 @@ result.</p>
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.groundedness_configs" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">groundedness_configs</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><span title="trulens.core.feedback.feedback.GroundednessConfigs">GroundednessConfigs</span></span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback.groundedness_configs" href="#trulens.core.feedback.feedback.Feedback.groundedness_configs">groundedness_configs</a></span>
+    <span class="n"><span title="trulens.core.feedback.feedback.Feedback(groundedness_configs)">groundedness_configs</span></span>
 <span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Optional groundedness configuration parameters.</p>
+
     </div>
 
 </div>
@@ -14405,6 +14687,7 @@ result.</p>
     <div class="doc doc-contents ">
 
         <p>Signature of the feedback function implementation.</p>
+
     </div>
 
 </div>
@@ -14425,6 +14708,7 @@ result.</p>
     <div class="doc doc-contents ">
 
         <p>Requirement for pretty printing using the rich package.</p>
+
 
     </div>
 
@@ -14449,6 +14733,7 @@ result.</p>
 
         <p>Deserialize/load this object using the class information in
 tru_class_info to lookup the actual class that will do the deserialization.</p>
+
 
     </div>
 
@@ -14478,8 +14763,9 @@ class it was serialized from.</p>
 <details class="note" open>
   <summary>Note</summary>
   <p>This process uses extra information stored in the jsonized object
-and handled by <a class="autorefs autorefs-internal" href="../../utils/pyschema/#trulens.core.utils.pyschema.WithClassInfo">WithClassInfo</a>.</p>
+and handled by <a class="autorefs autorefs-internal" title="            WithClassInfo" href="../../utils/pyschema/#trulens.core.utils.pyschema.WithClassInfo">WithClassInfo</a>.</p>
 </details>
+
     </div>
 
 </div>
@@ -14492,7 +14778,7 @@ and handled by <a class="autorefs autorefs-internal" href="../../utils/pyschema/
 
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.on_input_output" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_input_output</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_input_output</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feedback (trulens.core.feedback.feedback.Feedback)" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -14500,6 +14786,7 @@ and handled by <a class="autorefs autorefs-internal" href="../../utils/pyschema/
         <p>Specifies that the feedback implementation arguments are to be the main
 app input and output in that order.</p>
 <p>Returns a new Feedback object with the specification.</p>
+
 
     </div>
 
@@ -14513,7 +14800,7 @@ app input and output in that order.</p>
 
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.on_default" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_default</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_default</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feedback (trulens.core.feedback.feedback.Feedback)" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -14522,6 +14809,7 @@ app input and output in that order.</p>
 app output and two argument feedbacks should be evaluates on main input
 and main output in that order.</p>
 <p>Returns a new Feedback object with this specification.</p>
+
 
     </div>
 
@@ -14542,6 +14830,7 @@ and main output in that order.</p>
 
         <p>Fill in default selectors for any remaining feedback function arguments.</p>
 
+
     </div>
 
 </div>
@@ -14559,18 +14848,18 @@ and main output in that order.</p>
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.evaluate_deferred" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">evaluate_deferred</span><span class="p">(</span>
-    <span class="n">session</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.session.TruSession" href="../../session/#trulens.core.session.TruSession">TruSession</a></span><span class="p">,</span>
+    <span class="n">session</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            TruSession (trulens.core.session.TruSession)" href="../../session/#trulens.core.session.TruSession">TruSession</a></span><span class="p">,</span>
     <span class="n">limit</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">shuffle</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">run_location</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackRunLocation" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackRunLocation">FeedbackRunLocation</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="pandas.Series" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.html#pandas.Series">Series</a></span><span class="p">,</span> <span class="n"><span title="trulens.core._utils.pycompat.Future">Future</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackResult" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResult">FeedbackResult</a></span><span class="p">]]]</span>
+    <span class="n">run_location</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            FeedbackRunLocation (trulens.core.schema.feedback.FeedbackRunLocation)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackRunLocation">FeedbackRunLocation</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="pandas.Series" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.html#pandas.Series">Series</a></span><span class="p">,</span> <span class="n"><span title="trulens.core._utils.pycompat.Future">Future</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            FeedbackResult (trulens.core.schema.feedback.FeedbackResult)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResult">FeedbackResult</a></span><span class="p">]]]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Evaluates feedback functions that were specified to be deferred.</p>
 <p>Returns a list of tuples with the DB row containing the Feedback and
-initial <a class="autorefs autorefs-internal" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResult">FeedbackResult</a> as
+initial <a class="autorefs autorefs-internal" title="            FeedbackResult" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResult">FeedbackResult</a> as
 well as the Future which will contain the actual result.</p>
 
 
@@ -14633,7 +14922,7 @@ well as the Future which will contain the actual result.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackRunLocation" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackRunLocation">FeedbackRunLocation</a>]</code>
+                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-internal" title="            FeedbackRunLocation (trulens.core.schema.feedback.FeedbackRunLocation)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackRunLocation">FeedbackRunLocation</a>]</code>
                   </span>
                   <span class="doc-param-default">
                     <b>DEFAULT:</b>
@@ -14656,6 +14945,7 @@ well as the Future which will contain the actual result.</p>
 </li>
 </ul>
 
+
     </div>
 
 </div>
@@ -14669,9 +14959,14 @@ well as the Future which will contain the actual result.</p>
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.aggregate" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">aggregate</span><span class="p">(</span>
-    <span class="n">func</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.AggCallable" href="#trulens.core.feedback.feedback.AggCallable">AggCallable</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">combinations</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackCombinations" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations">FeedbackCombinations</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></span>
+    <span class="n">func</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            AggCallable
+
+
+  
+      module-attribute
+   (trulens.core.feedback.feedback.AggCallable)" href="#trulens.core.feedback.feedback.AggCallable">AggCallable</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">combinations</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            FeedbackCombinations (trulens.core.schema.feedback.FeedbackCombinations)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations">FeedbackCombinations</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feedback (trulens.core.feedback.feedback.Feedback)" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -14680,7 +14975,8 @@ well as the Future which will contain the actual result.</p>
 generate more than one value for implementation argument(s). Can also
 specify the method of producing combinations of values in such cases.</p>
 <p>Returns a new Feedback object with the given aggregation function and/or
-the given <a class="autorefs autorefs-internal" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations">combination mode</a>.</p>
+the given <a class="autorefs autorefs-internal" title="            FeedbackCombinations" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations">combination mode</a>.</p>
+
 
     </div>
 
@@ -14694,13 +14990,14 @@ the given <a class="autorefs autorefs-internal" href="../../schema/feedback/#tru
 
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.on_prompt" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_prompt</span><span class="p">(</span><span class="n">arg</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_prompt</span><span class="p">(</span><span class="n">arg</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feedback (trulens.core.feedback.feedback.Feedback)" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Create a variant of <code>self</code> that will take in the main app input or
 "prompt" as input, sending it as an argument <code>arg</code> to implementation.</p>
+
 
     </div>
 
@@ -14714,13 +15011,14 @@ the given <a class="autorefs autorefs-internal" href="../../schema/feedback/#tru
 
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.on_response" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_response</span><span class="p">(</span><span class="n">arg</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on_response</span><span class="p">(</span><span class="n">arg</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feedback (trulens.core.feedback.feedback.Feedback)" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Create a variant of <code>self</code> that will take in the main app output or
 "response" as input, sending it as an argument <code>arg</code> to implementation.</p>
+
 
     </div>
 
@@ -14734,7 +15032,7 @@ the given <a class="autorefs autorefs-internal" href="../../schema/feedback/#tru
 
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.on" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">on</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            Feedback (trulens.core.feedback.feedback.Feedback)" href="#trulens.core.feedback.feedback.Feedback">Feedback</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -14743,6 +15041,7 @@ the given <a class="autorefs autorefs-internal" href="../../schema/feedback/#tru
 selectors. Those provided positionally get their implementation argument
 name guessed and those provided as kwargs get their name from the kwargs
 key.</p>
+
 
     </div>
 
@@ -14757,8 +15056,13 @@ key.</p>
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.check_selectors" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">check_selectors</span><span class="p">(</span>
-    <span class="n">app</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.app.AppDefinition" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.serial.JSON" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a></span><span class="p">],</span>
-    <span class="n">record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.record.Record" href="../../schema/record/#trulens.core.schema.record.Record">Record</a></span><span class="p">,</span>
+    <span class="n">app</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            AppDefinition (trulens.core.schema.app.AppDefinition)" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            JSON
+
+
+  
+      module-attribute
+   (trulens.core.utils.serial.JSON)" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a></span><span class="p">],</span>
+    <span class="n">record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            Record (trulens.core.schema.record.Record)" href="../../schema/record/#trulens.core.schema.record.Record">Record</a></span><span class="p">,</span>
     <span class="n">source_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">warning</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span>
@@ -14788,7 +15092,12 @@ key.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a>[<a class="autorefs autorefs-internal" title="trulens.core.schema.app.AppDefinition" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a>, <a class="autorefs autorefs-internal" title="trulens.core.utils.serial.JSON" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a>]</code>
+                      <code><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a>[<a class="autorefs autorefs-internal" title="            AppDefinition (trulens.core.schema.app.AppDefinition)" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a>, <a class="autorefs autorefs-internal" title="            JSON
+
+
+  
+      module-attribute
+   (trulens.core.utils.serial.JSON)" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a>]</code>
                   </span>
               </p>
             </td>
@@ -14802,13 +15111,13 @@ key.</p>
                 <p>The record that the feedback will run on. This can be a
 mostly empty record for checking ahead of producing one. The
 utility method
-<a class="autorefs autorefs-internal" href="../../app/#trulens.core.app.App.dummy_record">App.dummy_record</a> is built
+<a class="autorefs autorefs-internal" title="            dummy_record" href="../../app/#trulens.core.app.App.dummy_record">App.dummy_record</a> is built
 for this purpose.</p>
               </div>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-internal" title="trulens.core.schema.record.Record" href="../../schema/record/#trulens.core.schema.record.Record">Record</a></code>
+                      <code><a class="autorefs autorefs-internal" title="            Record (trulens.core.schema.record.Record)" href="../../schema/record/#trulens.core.schema.record.Record">Record</a></code>
                   </span>
               </p>
             </td>
@@ -14908,6 +15217,7 @@ and only issue a warning.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -14921,11 +15231,16 @@ and only issue a warning.</p>
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.run" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">run</span><span class="p">(</span>
-    <span class="n">app</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.app.AppDefinition" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.serial.JSON" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.record.Record" href="../../schema/record/#trulens.core.schema.record.Record">Record</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">app</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            AppDefinition (trulens.core.schema.app.AppDefinition)" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            JSON
+
+
+  
+      module-attribute
+   (trulens.core.utils.serial.JSON)" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Record (trulens.core.schema.record.Record)" href="../../schema/record/#trulens.core.schema.record.Record">Record</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">source_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">]</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackResult" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResult">FeedbackResult</a></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            FeedbackResult (trulens.core.schema.feedback.FeedbackResult)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResult">FeedbackResult</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -14955,7 +15270,12 @@ AppDefinition. It will be jsonized if it is not already.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a>[<a class="autorefs autorefs-internal" title="trulens.core.schema.app.AppDefinition" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a>, <a class="autorefs autorefs-internal" title="trulens.core.utils.serial.JSON" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a>]]</code>
+                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a>[<a class="autorefs autorefs-internal" title="            AppDefinition (trulens.core.schema.app.AppDefinition)" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a>, <a class="autorefs autorefs-internal" title="            JSON
+
+
+  
+      module-attribute
+   (trulens.core.utils.serial.JSON)" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a>]]</code>
                   </span>
                   <span class="doc-param-default">
                     <b>DEFAULT:</b>
@@ -14975,7 +15295,7 @@ AppDefinition. It will be jsonized if it is not already.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-internal" title="trulens.core.schema.record.Record" href="../../schema/record/#trulens.core.schema.record.Record">Record</a>]</code>
+                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-internal" title="            Record (trulens.core.schema.record.Record)" href="../../schema/record/#trulens.core.schema.record.Record">Record</a>]</code>
                   </span>
                   <span class="doc-param-default">
                     <b>DEFAULT:</b>
@@ -15041,7 +15361,7 @@ selected feedback function inputs.</p>
           <tr class="doc-section-item">
             <td>
                 <span class="doc-returns-annotation">
-                    <code><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackResult" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResult">FeedbackResult</a></code>
+                    <code><a class="autorefs autorefs-internal" title="            FeedbackResult (trulens.core.schema.feedback.FeedbackResult)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResult">FeedbackResult</a></code>
                 </span>
             </td>
             <td class="doc-returns-details">
@@ -15052,6 +15372,7 @@ selected feedback function inputs.</p>
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -15067,7 +15388,13 @@ selected feedback function inputs.</p>
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback._extract_selection" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">_extract_selection</span><span class="p">(</span>
     <span class="n">source_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">,</span>
-    <span class="n">combinations</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackCombinations" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations">FeedbackCombinations</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackCombinations.PRODUCT" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations.PRODUCT">PRODUCT</a></span><span class="p">,</span>
+    <span class="n">combinations</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            FeedbackCombinations (trulens.core.schema.feedback.FeedbackCombinations)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations">FeedbackCombinations</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            PRODUCT
+
+
+  
+      class-attribute
+      instance-attribute
+   (trulens.core.schema.feedback.FeedbackCombinations.PRODUCT)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations.PRODUCT">PRODUCT</a></span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">]]</span>
 </code></pre></div>
@@ -15114,11 +15441,17 @@ make an assignment to the while signature.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackCombinations" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations">FeedbackCombinations</a></code>
+                      <code><a class="autorefs autorefs-internal" title="            FeedbackCombinations (trulens.core.schema.feedback.FeedbackCombinations)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations">FeedbackCombinations</a></code>
                   </span>
                   <span class="doc-param-default">
                     <b>DEFAULT:</b>
-                      <code><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackCombinations.PRODUCT" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations.PRODUCT">PRODUCT</a></code>
+                      <code><a class="autorefs autorefs-internal" title="            PRODUCT
+
+
+  
+      class-attribute
+      instance-attribute
+   (trulens.core.schema.feedback.FeedbackCombinations.PRODUCT)" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackCombinations.PRODUCT">PRODUCT</a></code>
                   </span>
               </p>
             </td>
@@ -15149,6 +15482,7 @@ will be ignored.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -15162,8 +15496,13 @@ will be ignored.</p>
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback._construct_source_data" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">_construct_source_data</span><span class="p">(</span>
-    <span class="n">app</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.app.AppDefinition" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.serial.JSON" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.record.Record" href="../../schema/record/#trulens.core.schema.record.Record">Record</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">app</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            AppDefinition (trulens.core.schema.app.AppDefinition)" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            JSON
+
+
+  
+      module-attribute
+   (trulens.core.utils.serial.JSON)" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Record (trulens.core.schema.record.Record)" href="../../schema/record/#trulens.core.schema.record.Record">Record</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">source_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span>
@@ -15193,7 +15532,12 @@ will be ignored.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a>[<a class="autorefs autorefs-internal" title="trulens.core.schema.app.AppDefinition" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a>, <a class="autorefs autorefs-internal" title="trulens.core.utils.serial.JSON" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a>]]</code>
+                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a>[<a class="autorefs autorefs-internal" title="            AppDefinition (trulens.core.schema.app.AppDefinition)" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a>, <a class="autorefs autorefs-internal" title="            JSON
+
+
+  
+      module-attribute
+   (trulens.core.utils.serial.JSON)" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a>]]</code>
                   </span>
                   <span class="doc-param-default">
                     <b>DEFAULT:</b>
@@ -15213,7 +15557,7 @@ will be ignored.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-internal" title="trulens.core.schema.record.Record" href="../../schema/record/#trulens.core.schema.record.Record">Record</a>]</code>
+                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-internal" title="            Record (trulens.core.schema.record.Record)" href="../../schema/record/#trulens.core.schema.record.Record">Record</a>]</code>
                   </span>
                   <span class="doc-param-default">
                     <b>DEFAULT:</b>
@@ -15291,6 +15635,7 @@ source_data.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -15304,8 +15649,13 @@ source_data.</p>
 
 <a href="#trulens.core.feedback.feedback.SnowflakeFeedback.extract_selection" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">extract_selection</span><span class="p">(</span>
-    <span class="n">app</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.app.AppDefinition" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.serial.JSON" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.record.Record" href="../../schema/record/#trulens.core.schema.record.Record">Record</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">app</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            AppDefinition (trulens.core.schema.app.AppDefinition)" href="../../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="            JSON
+
+
+  
+      module-attribute
+   (trulens.core.utils.serial.JSON)" href="../../utils/serial/#trulens.core.utils.serial.JSON">JSON</a></span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Record (trulens.core.schema.record.Record)" href="../../schema/record/#trulens.core.schema.record.Record">Record</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">source_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">]]</span>
 </code></pre></div>
@@ -15316,9 +15666,10 @@ source_data.</p>
 the values that will be sent as arguments to the implementation as
 specified by <code>self.selectors</code>. Additional data to select from can be
 provided in <code>source_data</code>. All args are optional. If a
-<a class="autorefs autorefs-internal" href="../../schema/record/#trulens.core.schema.record.Record">Record</a> is specified, its calls are
+<a class="autorefs autorefs-internal" title="            Record" href="../../schema/record/#trulens.core.schema.record.Record">Record</a> is specified, its calls are
 laid out as app (see
-<a class="autorefs autorefs-internal" href="../../schema/record/#trulens.core.schema.record.Record.layout_calls_as_app">layout_calls_as_app</a>).</p>
+<a class="autorefs autorefs-internal" title="            layout_calls_as_app" href="../../schema/record/#trulens.core.schema.record.Record.layout_calls_as_app">layout_calls_as_app</a>).</p>
+
 
     </div>
 
@@ -15392,7 +15743,7 @@ laid out as app (see
     <script id="__config" type="application/json">{"base": "../../../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "search.highlight", "toc.follow", "content.code.copy", "content.tabs"], "search": "../../../../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../../../assets/javascripts/bundle.f13b1293.min.js"></script>
+      <script src="../../../../../assets/javascripts/bundle.c8b220af.min.js"></script>
       
         <script src="../../../../../javascript/config.js"></script>
       

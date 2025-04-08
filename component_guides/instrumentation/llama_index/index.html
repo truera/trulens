@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.d7758b05.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.4af4bdda.min.css">
       
         
         <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
@@ -3678,7 +3678,7 @@
               
   
   <span class="md-ellipsis">
-    📦 Nemo Guardrails
+    📦 NeMo Guardrails
     
   </span>
   
@@ -3695,7 +3695,7 @@
         <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_3_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_3_7">
             <span class="md-nav__icon md-icon"></span>
-            📦 Nemo Guardrails
+            📦 NeMo Guardrails
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -9059,7 +9059,7 @@
         
   
   <span class="md-ellipsis">
-    Local vs Remote Huggingface Feedback Functions
+    Local vs Remote HuggingFace Feedback Functions
     
   </span>
   
@@ -9640,6 +9640,8 @@
       
         
       
+        
+      
     
     
       
@@ -10018,6 +10020,81 @@
   
   <span class="md-ellipsis">
     Simple Pinecone setup with LlamaIndex + Eval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5_5" id="__nav_5_5_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Weaviate
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            Weaviate
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cookbook/vector_stores/weaviate/weaviate_query_agent/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Evaluating Weaviate Query Agents
     
   </span>
   
@@ -10622,9 +10699,9 @@ access to retrieved context or source nodes. Exposing these methods bypasses the
 need to know the json structure of your app ahead of time, and makes your
 evaluations reusable across different apps.</p>
 <h2 id="example-usage">Example usage<a class="headerlink" href="#example-usage" title="Permanent link">&para;</a></h2>
-<p>Below is a quick example of usage. First, we'll create a standard LlamaIndex query engine from Paul Graham's Essay, <em>What I Worked On</em></p>
+<p>Below is a quick example of usage. First, we'll create a standard LlamaIndex query engine from Paul Graham's Essay, <em>What I Worked On</em>:</p>
 <div class="admonition example">
-<p class="admonition-title">Create a Llama-Index Query Engine</p>
+<p class="admonition-title">Create a LlamaIndex Query Engine</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">llama_index.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">VectorStoreIndex</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">llama_index.readers.web</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimpleWebPageReader</span>
 
@@ -10636,9 +10713,9 @@ evaluations reusable across different apps.</p>
 <span class="n">query_engine</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">as_query_engine</span><span class="p">()</span>
 </code></pre></div>
 </div>
-<p>To instrument an Llama-Index query engine, all that's required is to wrap it using TruLlama.</p>
+<p>To instrument an LlamaIndex query engine, all that's required is to wrap it using TruLlama.</p>
 <div class="admonition example">
-<p class="admonition-title">Instrument a Llama-Index Query Engine</p>
+<p class="admonition-title">Instrument a LlamaIndex Query Engine</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">trulens.apps.llamaindex</span><span class="w"> </span><span class="kn">import</span> <span class="n">TruLlama</span>
 
 <span class="n">tru_query_engine_recorder</span> <span class="o">=</span> <span class="n">TruLlama</span><span class="p">(</span><span class="n">query_engine</span><span class="p">)</span>
@@ -10653,7 +10730,7 @@ us to evaluate for metrics including context relevance and groundedness.</p>
 <p>For LlamaIndex applications where the source nodes are used, <code>select_context</code>
 can be used to access the retrieved text for evaluation.</p>
 <div class="admonition example">
-<p class="admonition-title">Evaluating retrieved context for Llama-Index query engines</p>
+<p class="admonition-title">Evaluating retrieved context for LlamaIndex query engines</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">trulens.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Feedback</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">trulens.providers.openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAI</span>
@@ -10670,14 +10747,14 @@ can be used to access the retrieved text for evaluation.</p>
 <span class="p">)</span>
 </code></pre></div>
 </div>
-<p>You can find the full quickstart available here: <a href="../../../getting_started/quickstarts/llama_index_quickstart/">Llama-Index Quickstart</a></p>
+<p>You can find the full quickstart available here: <a href="../../../getting_started/quickstarts/llama_index_quickstart/">LlamaIndex Quickstart</a></p>
 <h2 id="async-support">Async Support<a class="headerlink" href="#async-support" title="Permanent link">&para;</a></h2>
 <p>TruLlama also provides async support for LlamaIndex through the <code>aquery</code>,
 <code>achat</code>, and <code>astream_chat</code> methods. This allows you to track and evaluate async
 applications.</p>
 <p>As an example, below is an LlamaIndex async chat engine (<code>achat</code>).</p>
 <div class="admonition example">
-<p class="admonition-title">Instrument an async Llama-Index app</p>
+<p class="admonition-title">Instrument an async LlamaIndex app</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">llama_index.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">VectorStoreIndex</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">llama_index.readers.web</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimpleWebPageReader</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">trulens.apps.llamaindex</span><span class="w"> </span><span class="kn">import</span> <span class="n">TruLlama</span>
@@ -10703,7 +10780,7 @@ applications.</p>
 <p>TruLlama also provides streaming support for LlamaIndex. This allows you to track and evaluate streaming applications.</p>
 <p>As an example, below is an LlamaIndex query engine with streaming.</p>
 <div class="admonition example">
-<p class="admonition-title">Instrument an async Llama-Index app</p>
+<p class="admonition-title">Instrument an async LlamaIndex app</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">llama_index.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">VectorStoreIndex</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">llama_index.readers.web</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimpleWebPageReader</span>
 
@@ -10718,7 +10795,7 @@ applications.</p>
 <p>Just like with other methods, just wrap your streaming query engine with TruLlama and operate like before.</p>
 <p>You can also print the response tokens as they are generated using the <code>response_gen</code> attribute.</p>
 <div class="admonition example">
-<p class="admonition-title">Instrument a streaming Llama-Index app</p>
+<p class="admonition-title">Instrument a streaming LlamaIndex app</p>
 <div class="highlight"><pre><span></span><code><span class="n">tru_chat_engine_recorder</span> <span class="o">=</span> <span class="n">TruLlama</span><span class="p">(</span><span class="n">chat_engine</span><span class="p">)</span>
 
 <span class="k">with</span> <span class="n">tru_chat_engine_recorder</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
@@ -10809,7 +10886,7 @@ function only shows what in an app was actually instrumented.</p>
     <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "search.highlight", "toc.follow", "content.code.copy", "content.tabs"], "search": "../../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.f13b1293.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.c8b220af.min.js"></script>
       
         <script src="../../../javascript/config.js"></script>
       

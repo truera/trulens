@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.d7758b05.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.4af4bdda.min.css">
       
         
         <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
@@ -3579,7 +3579,7 @@
               
   
   <span class="md-ellipsis">
-    📦 Nemo Guardrails
+    📦 NeMo Guardrails
     
   </span>
   
@@ -3596,7 +3596,7 @@
         <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_3_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_3_7">
             <span class="md-nav__icon md-icon"></span>
-            📦 Nemo Guardrails
+            📦 NeMo Guardrails
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -8960,7 +8960,7 @@
         
   
   <span class="md-ellipsis">
-    Local vs Remote Huggingface Feedback Functions
+    Local vs Remote HuggingFace Feedback Functions
     
   </span>
   
@@ -9541,6 +9541,8 @@
       
         
       
+        
+      
     
     
       
@@ -9919,6 +9921,81 @@
   
   <span class="md-ellipsis">
     Simple Pinecone setup with LlamaIndex + Eval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5_5" id="__nav_5_5_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Weaviate
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            Weaviate
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cookbook/vector_stores/weaviate/weaviate_query_agent/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Evaluating Weaviate Query Agents
     
   </span>
   
@@ -10470,19 +10547,19 @@
 
 
 <h1 id="feedback-implementations">Feedback Implementations<a class="headerlink" href="#feedback-implementations" title="Permanent link">&para;</a></h1>
-<p>TruLens constructs feedback functions by a <a class="autorefs autorefs-internal" href="../../../reference/trulens/core/feedback/#trulens.core.feedback.Provider"><strong><em>feedback provider</em></strong></a>, and <strong><em>feedback implementation</em></strong>.</p>
+<p>TruLens constructs feedback functions by a <a class="autorefs autorefs-internal" title="            Provider" href="../../../reference/trulens/core/feedback/#trulens.core.feedback.Provider"><strong><em>feedback provider</em></strong></a>, and <strong><em>feedback implementation</em></strong>.</p>
 <p>This page documents the feedback implementations available in <em>TruLens</em>.</p>
-<p>Feedback functions are implemented in instances of the <a class="autorefs autorefs-internal" href="../../../reference/trulens/core/feedback/#trulens.core.feedback.Provider">Provider</a> class. They are made up of carefully constructed prompts and custom logic tailored to perform a particular evaluation task.</p>
+<p>Feedback functions are implemented in instances of the <a class="autorefs autorefs-internal" title="            Provider" href="../../../reference/trulens/core/feedback/#trulens.core.feedback.Provider">Provider</a> class. They are made up of carefully constructed prompts and custom logic tailored to perform a particular evaluation task.</p>
 <h2 id="generation-based-feedback-implementations">Generation-based feedback implementations<a class="headerlink" href="#generation-based-feedback-implementations" title="Permanent link">&para;</a></h2>
 <p>The implementation of generation-based feedback functions can consist of:</p>
 <ol>
 <li>Instructions to a generative model (LLM) on how to perform a particular evaluation task. These instructions are sent to the LLM as a system message, and often consist of a rubric.</li>
 <li>A template that passes the arguments of the feedback function to the LLM. This template containing the arguments of the feedback function is sent to the LLM as a user message.</li>
-<li>A method for parsing, validating, and normalizing the output of the LLM, accomplished by <a class="autorefs autorefs-internal" href="../../../reference/trulens/feedback/#trulens.feedback.LLMProvider.generate_score"><code>generate_score</code></a>.</li>
+<li>A method for parsing, validating, and normalizing the output of the LLM, accomplished by <a class="autorefs autorefs-internal" title="            generate_score" href="../../../reference/trulens/feedback/#trulens.feedback.LLMProvider.generate_score"><code>generate_score</code></a>.</li>
 <li>Custom Logic to perform data preprocessing tasks before the LLM is called for evaluation.</li>
 <li>Additional logic to perform postprocessing tasks using the LLM output.</li>
 </ol>
-<p><em>TruLens</em> can also provide reasons using <a href="https://arxiv.org/abs/2201.11903">chain-of-thought methodology</a>. Such implementations are denoted by method names ending in <code>_with_cot_reasons</code>. These implementations illicit the LLM to provide reasons for its score, accomplished by <a class="autorefs autorefs-internal" href="../../../reference/trulens/feedback/#trulens.feedback.LLMProvider.generate_score_and_reasons"><code>generate_score_and_reasons</code></a>.</p>
+<p><em>TruLens</em> can also provide reasons using <a href="https://arxiv.org/abs/2201.11903">chain-of-thought methodology</a>. Such implementations are denoted by method names ending in <code>_with_cot_reasons</code>. These implementations illicit the LLM to provide reasons for its score, accomplished by <a class="autorefs autorefs-internal" title="            generate_score_and_reasons" href="../../../reference/trulens/feedback/#trulens.feedback.LLMProvider.generate_score_and_reasons"><code>generate_score_and_reasons</code></a>.</p>
 <h2 id="classification-based-providers">Classification-based Providers<a class="headerlink" href="#classification-based-providers" title="Permanent link">&para;</a></h2>
 <p>Some feedback functions rely on classification models, typically tailor made for task, unlike LLM models.</p>
 <p>This implementation consists of:</p>
@@ -10543,7 +10620,7 @@
     <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "search.highlight", "toc.follow", "content.code.copy", "content.tabs"], "search": "../../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.f13b1293.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.c8b220af.min.js"></script>
       
         <script src="../../../javascript/config.js"></script>
       

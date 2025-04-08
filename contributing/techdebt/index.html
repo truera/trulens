@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.d7758b05.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.4af4bdda.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
@@ -3550,7 +3550,7 @@
               
   
   <span class="md-ellipsis">
-    📦 Nemo Guardrails
+    📦 NeMo Guardrails
     
   </span>
   
@@ -3567,7 +3567,7 @@
         <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_3_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_3_7">
             <span class="md-nav__icon md-icon"></span>
-            📦 Nemo Guardrails
+            📦 NeMo Guardrails
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -8931,7 +8931,7 @@
         
   
   <span class="md-ellipsis">
-    Local vs Remote Huggingface Feedback Functions
+    Local vs Remote HuggingFace Feedback Functions
     
   </span>
   
@@ -9512,6 +9512,8 @@
       
         
       
+        
+      
     
     
       
@@ -9908,6 +9910,81 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5_5" id="__nav_5_5_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Weaviate
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            Weaviate
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/vector_stores/weaviate/weaviate_query_agent/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Evaluating Weaviate Query Agents
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -10148,9 +10225,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#llama-index" class="md-nav__link">
+  <a href="#llamaindex" class="md-nav__link">
     <span class="md-ellipsis">
-      llama-index
+      LlamaIndex
     </span>
   </a>
   
@@ -10159,7 +10236,7 @@
           <li class="md-nav__item">
   <a href="#langchain" class="md-nav__link">
     <span class="md-ellipsis">
-      langchain
+      LangChain
     </span>
   </a>
   
@@ -10168,7 +10245,7 @@
           <li class="md-nav__item">
   <a href="#pydantic" class="md-nav__link">
     <span class="md-ellipsis">
-      pydantic
+      Pydantic
     </span>
   </a>
   
@@ -10547,9 +10624,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#llama-index" class="md-nav__link">
+  <a href="#llamaindex" class="md-nav__link">
     <span class="md-ellipsis">
-      llama-index
+      LlamaIndex
     </span>
   </a>
   
@@ -10558,7 +10635,7 @@
           <li class="md-nav__item">
   <a href="#langchain" class="md-nav__link">
     <span class="md-ellipsis">
-      langchain
+      LangChain
     </span>
   </a>
   
@@ -10567,7 +10644,7 @@
           <li class="md-nav__item">
   <a href="#pydantic" class="md-nav__link">
     <span class="md-ellipsis">
-      pydantic
+      Pydantic
     </span>
   </a>
   
@@ -10607,7 +10684,7 @@
 
 
 <h1 id="tech-debt">💣 Tech Debt<a class="headerlink" href="#tech-debt" title="Permanent link">&para;</a></h1>
-<p>This is a (likely incomplete) list of hacks present in the trulens library.
+<p>This is a (likely incomplete) list of hacks present in the TruLens library.
 They are likely a source of debugging problems so ideally they can be
 addressed/removed in time. This document is to serve as a warning in the
 meantime and a resource for hard-to-debug issues when they arise.</p>
@@ -10623,7 +10700,7 @@ lives.</p>
 </li>
 <li>
 <p>"HACK012" -- In the optional imports scheme, we have to make sure that imports
-  that happen from outside of trulens raise exceptions instead of
+  that happen from outside of TruLens raise exceptions instead of
   producing dummies without raising exceptions.</p>
 </li>
 </ul>
@@ -10652,34 +10729,34 @@ lives.</p>
 <p>"HACK007" -- We override <code>Thread</code> in <code>threading</code>.</p>
 </li>
 </ul>
-<h3 id="llama-index">llama-index<a class="headerlink" href="#llama-index" title="Permanent link">&para;</a></h3>
+<h3 id="llamaindex">LlamaIndex<a class="headerlink" href="#llamaindex" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Fixed as of llama_index 0.9.26 or near there.</strong> "HACK001" -- <code>trace_method</code>
   decorator in llama_index does not preserve function signatures; we hack it so
   that it does.</li>
 </ul>
-<h3 id="langchain">langchain<a class="headerlink" href="#langchain" title="Permanent link">&para;</a></h3>
+<h3 id="langchain">LangChain<a class="headerlink" href="#langchain" title="Permanent link">&para;</a></h3>
 <ul>
 <li>"HACK003" -- We override the base class of
   <code>langchain_core.runnables.config.ContextThreadPoolExecutor</code> so it uses our
   thread starter.</li>
 </ul>
-<h3 id="pydantic">pydantic<a class="headerlink" href="#pydantic" title="Permanent link">&para;</a></h3>
+<h3 id="pydantic">Pydantic<a class="headerlink" href="#pydantic" title="Permanent link">&para;</a></h3>
 <ul>
 <li>
 <p>"HACK006" -- <code>endpoint</code> needs to be added as a keyword arg with default value
-  in some <code>__init__</code> because pydantic overrides signature without default value
+  in some <code>__init__</code> because Pydantic overrides signature without default value
   otherwise.</p>
 </li>
 <li>
 <p>"HACK005" -- <code>model_validate</code> inside <code>WithClassInfo</code> is implemented in
-  decorated method because pydantic doesn't call it otherwise. It is uncertain
-  whether this is a pydantic bug.</p>
+  decorated method because Pydantic doesn't call it otherwise. It is uncertain
+  whether this is a Pydantic bug.</p>
 </li>
 <li>
-<p>We dump attributes marked to be excluded by pydantic except our own classes.
+<p>We dump attributes marked to be excluded by Pydantic except our own classes.
   This is because some objects are of interest despite being marked to exclude.
-  Example: <code>RetrievalQA.retriever</code> in langchain.</p>
+  Example: <code>RetrievalQA.retriever</code> in LangChain.</p>
 </li>
 </ul>
 <h3 id="other">Other<a class="headerlink" href="#other" title="Permanent link">&para;</a></h3>
@@ -10703,8 +10780,8 @@ lives.</p>
   checks in <code>sync</code>/<code>desync</code>.</p>
 </li>
 <li>
-<p>"HACK011" -- older pythons don't allow use of <code>Future</code> as a type constructor
-  in annotations. We define a dummy type <code>Future</code> in older versions of python to
+<p>"HACK011" -- older versions of Python don't allow use of <code>Future</code> as a type constructor
+  in annotations. We define a dummy type <code>Future</code> in older versions of Python to
   circumvent this but have to selectively import it to make sure type checking
   and mkdocs is done right.</p>
 </li>
@@ -10712,18 +10789,18 @@ lives.</p>
 <p>"HACK012" -- same but with <code>Queue</code>.</p>
 </li>
 <li>
-<p>Similarly, we define <code>NoneType</code> for older python versions.</p>
+<p>Similarly, we define <code>NoneType</code> for older Python versions.</p>
 </li>
 <li>
 <p>"HACK013" -- when using <code>from __future__ import annotations</code> for more
-  convenient type annotation specification, one may have to call pydantic's
+  convenient type annotation specification, one may have to call Pydantic's
   <code>BaseModel.model_rebuild</code> after all types references in annotations in that file
   have been defined for each model class that uses type annotations that
   reference types defined after its own definition (i.e. "forward refs").</p>
 </li>
 <li>
 <p>"HACK014" -- cannot <code>from trulens import schema</code> in some places due to
-  strange interaction with pydantic. Results in:</p>
+  strange interaction with Pydantic. Results in:</p>
 <div class="highlight"><pre><span></span><code><span class="ne">AttributeError</span><span class="p">:</span> <span class="n">module</span> <span class="s1">&#39;pydantic&#39;</span> <span class="n">has</span> <span class="n">no</span> <span class="n">attribute</span> <span class="s1">&#39;v1&#39;</span>
 </code></pre></div>
 <p>It might be some interaction with <code>from __future__ import annotations</code> and/or
@@ -10782,7 +10859,7 @@ lives.</p>
     <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "search.highlight", "toc.follow", "content.code.copy", "content.tabs"], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.f13b1293.min.js"></script>
+      <script src="../../assets/javascripts/bundle.c8b220af.min.js"></script>
       
         <script src="../../javascript/config.js"></script>
       

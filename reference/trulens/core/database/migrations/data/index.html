@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../../../assets/stylesheets/main.d7758b05.min.css">
+      <link rel="stylesheet" href="../../../../../../assets/stylesheets/main.4af4bdda.min.css">
       
         
         <link rel="stylesheet" href="../../../../../../assets/stylesheets/palette.06af60db.min.css">
@@ -3561,7 +3561,7 @@
               
   
   <span class="md-ellipsis">
-    📦 Nemo Guardrails
+    📦 NeMo Guardrails
     
   </span>
   
@@ -3578,7 +3578,7 @@
         <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_3_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_3_7">
             <span class="md-nav__icon md-icon"></span>
-            📦 Nemo Guardrails
+            📦 NeMo Guardrails
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -9103,7 +9103,7 @@
         
   
   <span class="md-ellipsis">
-    Local vs Remote Huggingface Feedback Functions
+    Local vs Remote HuggingFace Feedback Functions
     
   </span>
   
@@ -9684,6 +9684,8 @@
       
         
       
+        
+      
     
     
       
@@ -10062,6 +10064,81 @@
   
   <span class="md-ellipsis">
     Simple Pinecone setup with LlamaIndex + Eval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5_5" id="__nav_5_5_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Weaviate
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            Weaviate
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../../cookbook/vector_stores/weaviate/weaviate_query_agent/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Evaluating Weaviate Query Agents
     
   </span>
   
@@ -10712,6 +10789,7 @@
 
 
 
+
   <div class="doc doc-children">
 
 
@@ -10750,6 +10828,7 @@
     <div class="doc doc-contents ">
 
         <p>DB versions.</p>
+
     </div>
 
 </div>
@@ -10768,13 +10847,14 @@
 
 <a href="#trulens.core.database.migrations.data.sqlalchemy_upgrade_paths" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">sqlalchemy_upgrade_paths</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span>
-    <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Callable" href="https://docs.python.org/3/library/typing.html#typing.Callable">Callable</a></span><span class="p">[[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.database.base.DB" href="../../base/#trulens.core.database.base.DB">DB</a></span><span class="p">]]]</span>
+    <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Callable" href="https://docs.python.org/3/library/typing.html#typing.Callable">Callable</a></span><span class="p">[[</span><span class="n"><a class="autorefs autorefs-internal" title="            DB (trulens.core.database.base.DB)" href="../../base/#trulens.core.database.base.DB">DB</a></span><span class="p">]]]</span>
 <span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>A DAG of upgrade functions to get to most recent DB.</p>
+
     </div>
 
 </div>
@@ -10852,6 +10932,7 @@
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -10864,7 +10945,7 @@
 
 
 <a href="#trulens.core.database.migrations.data._sql_alchemy_serialization_asserts" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">_sql_alchemy_serialization_asserts</span><span class="p">(</span><span class="n">db</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.database.base.DB" href="../../base/#trulens.core.database.base.DB">DB</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">_sql_alchemy_serialization_asserts</span><span class="p">(</span><span class="n">db</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            DB (trulens.core.database.base.DB)" href="../../base/#trulens.core.database.base.DB">DB</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -10891,7 +10972,7 @@
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-internal" title="trulens.core.database.base.DB" href="../../base/#trulens.core.database.base.DB">DB</a></code>
+                      <code><a class="autorefs autorefs-internal" title="            DB (trulens.core.database.base.DB)" href="../../base/#trulens.core.database.base.DB">DB</a></code>
                   </span>
               </p>
             </td>
@@ -10911,7 +10992,7 @@
           <tr class="doc-section-item">
             <td>
               <span class="doc-raises-annotation">
-                  <code>VersionException</code>
+                  <code><span title="VersionException">VersionException</span></code>
               </span>
             </td>
             <td class="doc-raises-details">
@@ -10922,6 +11003,7 @@
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -10935,7 +11017,7 @@
 
 
 <a href="#trulens.core.database.migrations.data.data_migrate" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">data_migrate</span><span class="p">(</span><span class="n">db</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.database.base.DB" href="../../base/#trulens.core.database.base.DB">DB</a></span><span class="p">,</span> <span class="n">from_version</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">])</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">data_migrate</span><span class="p">(</span><span class="n">db</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            DB (trulens.core.database.base.DB)" href="../../base/#trulens.core.database.base.DB">DB</a></span><span class="p">,</span> <span class="n">from_version</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">])</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -10963,7 +11045,7 @@ current version.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-internal" title="trulens.core.database.base.DB" href="../../base/#trulens.core.database.base.DB">DB</a></code>
+                      <code><a class="autorefs autorefs-internal" title="            DB (trulens.core.database.base.DB)" href="../../base/#trulens.core.database.base.DB">DB</a></code>
                   </span>
               </p>
             </td>
@@ -10999,7 +11081,7 @@ current version.</p>
           <tr class="doc-section-item">
             <td>
               <span class="doc-raises-annotation">
-                  <code>VersionException</code>
+                  <code><span title="VersionException">VersionException</span></code>
               </span>
             </td>
             <td class="doc-raises-details">
@@ -11010,6 +11092,7 @@ current version.</p>
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -11074,7 +11157,7 @@ current version.</p>
     <script id="__config" type="application/json">{"base": "../../../../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "search.highlight", "toc.follow", "content.code.copy", "content.tabs"], "search": "../../../../../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../../../../assets/javascripts/bundle.f13b1293.min.js"></script>
+      <script src="../../../../../../assets/javascripts/bundle.c8b220af.min.js"></script>
       
         <script src="../../../../../../javascript/config.js"></script>
       

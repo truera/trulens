@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.d7758b05.min.css">
+      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.4af4bdda.min.css">
       
         
         <link rel="stylesheet" href="../../../../../assets/stylesheets/palette.06af60db.min.css">
@@ -3561,7 +3561,7 @@
               
   
   <span class="md-ellipsis">
-    📦 Nemo Guardrails
+    📦 NeMo Guardrails
     
   </span>
   
@@ -3578,7 +3578,7 @@
         <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_3_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_3_7">
             <span class="md-nav__icon md-icon"></span>
-            📦 Nemo Guardrails
+            📦 NeMo Guardrails
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -8963,7 +8963,7 @@
         
   
   <span class="md-ellipsis">
-    Local vs Remote Huggingface Feedback Functions
+    Local vs Remote HuggingFace Feedback Functions
     
   </span>
   
@@ -9544,6 +9544,8 @@
       
         
       
+        
+      
     
     
       
@@ -9922,6 +9924,81 @@
   
   <span class="md-ellipsis">
     Simple Pinecone setup with LlamaIndex + Eval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5_5" id="__nav_5_5_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Weaviate
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            Weaviate
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../cookbook/vector_stores/weaviate/weaviate_query_agent/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Evaluating Weaviate Query Agents
     
   </span>
   
@@ -10606,7 +10683,7 @@
 database to incorporate changes in existing database created from the previously
 installed version. The changes to database schemas is handled by
 <a href="https://github.com/sqlalchemy/alembic/">Alembic</a> while some data changes are
-handled by converters in <a class="autorefs autorefs-internal" href="data/#trulens.core.database.migrations.data">the data
+handled by converters in <a class="autorefs autorefs-internal" title="            trulens.core.database.migrations.data" href="data/#trulens.core.database.migrations.data">the data
 module</a>.</p>
 <h4 id="trulens.core.database.migrations--upgrading-to-the-latest-schema-revision">Upgrading to the latest schema revision<a class="headerlink" href="#trulens.core.database.migrations--upgrading-to-the-latest-schema-revision" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">trulens.core.session</span><span class="w"> </span><span class="kn">import</span> <span class="n">TruSession</span>
@@ -10625,7 +10702,7 @@ above. This migration assumes that the prefix in the existing database was
 blank.</p>
 <p>If you need to change this prefix after migration, you may need to specify the
 old prefix when invoking
-<a class="autorefs autorefs-internal" href="../../session/#trulens.core.session.TruSession.migrate_database">migrate_database</a>:</p>
+<a class="autorefs autorefs-internal" title="            migrate_database" href="../../session/#trulens.core.session.TruSession.migrate_database">migrate_database</a>:</p>
 <div class="highlight"><pre><span></span><code><span class="n">session</span> <span class="o">=</span> <span class="n">TruSession</span><span class="p">(</span>
    <span class="n">database_url</span><span class="o">=</span><span class="s2">&quot;&lt;sqlalchemy_url&gt;&quot;</span><span class="p">,</span>
    <span class="n">database_prefix</span><span class="o">=</span><span class="s2">&quot;new_prefix&quot;</span>
@@ -10649,6 +10726,7 @@ items under the section <code>Important considerations</code>:</p>
     <span class="n">tgt_prefix</span><span class="o">=</span><span class="s2">&quot;&lt;target_db_prefix&gt;&quot;</span>
 <span class="p">)</span>
 </code></pre></div>
+
 
 
 
@@ -10690,6 +10768,7 @@ items under the section <code>Important considerations</code>:</p>
 
 
 
+
   <div class="doc doc-children">
 
 
@@ -10717,6 +10796,7 @@ items under the section <code>Important considerations</code>:</p>
     <div class="doc doc-contents ">
 
         <p>Expected revision for this release</p>
+
     </div>
 
 </div>
@@ -10741,7 +10821,12 @@ items under the section <code>Important considerations</code>:</p>
 
 <a href="#trulens.core.database.migrations.get_revision_history" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_revision_history</span><span class="p">(</span>
-    <span class="n">engine</span><span class="p">:</span> <span class="n"><span title="sqlalchemy.Engine">Engine</span></span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.database.base.DEFAULT_DATABASE_PREFIX" href="../base/#trulens.core.database.base.DEFAULT_DATABASE_PREFIX">DEFAULT_DATABASE_PREFIX</a></span>
+    <span class="n">engine</span><span class="p">:</span> <span class="n"><span title="sqlalchemy.Engine">Engine</span></span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            DEFAULT_DATABASE_PREFIX
+
+
+  
+      module-attribute
+   (trulens.core.database.base.DEFAULT_DATABASE_PREFIX)" href="../base/#trulens.core.database.base.DEFAULT_DATABASE_PREFIX">DEFAULT_DATABASE_PREFIX</a></span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span>
 </code></pre></div>
 
@@ -10749,6 +10834,7 @@ items under the section <code>Important considerations</code>:</p>
 
         <p>Return list of all revisions, from base to head.
 Warn: Branching not supported, fails if there's more than one head.</p>
+
 
     </div>
 
@@ -10813,7 +10899,7 @@ Warn: Branching not supported, fails if there's more than one head.</p>
     <script id="__config" type="application/json">{"base": "../../../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "search.highlight", "toc.follow", "content.code.copy", "content.tabs"], "search": "../../../../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../../../assets/javascripts/bundle.f13b1293.min.js"></script>
+      <script src="../../../../../assets/javascripts/bundle.c8b220af.min.js"></script>
       
         <script src="../../../../../javascript/config.js"></script>
       

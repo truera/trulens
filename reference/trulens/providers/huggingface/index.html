@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/main.d7758b05.min.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.4af4bdda.min.css">
       
         
         <link rel="stylesheet" href="../../../../assets/stylesheets/palette.06af60db.min.css">
@@ -3565,7 +3565,7 @@
               
   
   <span class="md-ellipsis">
-    📦 Nemo Guardrails
+    📦 NeMo Guardrails
     
   </span>
   
@@ -3582,7 +3582,7 @@
         <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_3_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_3_7">
             <span class="md-nav__icon md-icon"></span>
-            📦 Nemo Guardrails
+            📦 NeMo Guardrails
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -8961,7 +8961,7 @@
         
   
   <span class="md-ellipsis">
-    Local vs Remote Huggingface Feedback Functions
+    Local vs Remote HuggingFace Feedback Functions
     
   </span>
   
@@ -9542,6 +9542,8 @@
       
         
       
+        
+      
     
     
       
@@ -9920,6 +9922,81 @@
   
   <span class="md-ellipsis">
     Simple Pinecone setup with LlamaIndex + Eval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5_5" id="__nav_5_5_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Weaviate
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            Weaviate
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../cookbook/vector_stores/weaviate/weaviate_query_agent/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Evaluating Weaviate Query Agents
     
   </span>
   
@@ -10859,6 +10936,7 @@
 
 
 
+
   <div class="doc doc-children">
 
 
@@ -10881,10 +10959,11 @@
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="trulens.providers.huggingface.provider.HuggingfaceBase" href="provider/#trulens.providers.huggingface.provider.HuggingfaceBase">HuggingfaceBase</a></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="            HuggingfaceBase (trulens.providers.huggingface.provider.HuggingfaceBase)" href="provider/#trulens.providers.huggingface.provider.HuggingfaceBase">HuggingfaceBase</a></code></p>
 
 
-        <p>Out of the box feedback functions calling Huggingface APIs.</p>
+        <p>Out of the box feedback functions calling HuggingFace APIs.</p>
+
 
 
 
@@ -10915,7 +10994,7 @@
   </span>
 
 <a href="#trulens.providers.huggingface.Huggingface.tru_class_info" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">tru_class_info</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.pyschema.Class" href="../../core/utils/pyschema/#trulens.core.utils.pyschema.Class">Class</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">tru_class_info</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            Class (trulens.core.utils.pyschema.Class)" href="../../core/utils/pyschema/#trulens.core.utils.pyschema.Class">Class</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -10923,6 +11002,7 @@
         <p>Class information of this pydantic object for use in deserialization.</p>
 <p>Using this odd key to not pollute attribute names in whatever class we mix
 this into. Should be the same as CLASS_INFO.</p>
+
     </div>
 
 </div>
@@ -10943,6 +11023,7 @@ this into. Should be the same as CLASS_INFO.</p>
     <div class="doc doc-contents ">
 
         <p>Requirement for pretty printing using the rich package.</p>
+
 
     </div>
 
@@ -10967,6 +11048,7 @@ this into. Should be the same as CLASS_INFO.</p>
 
         <p>Deserialize/load this object using the class information in
 tru_class_info to lookup the actual class that will do the deserialization.</p>
+
 
     </div>
 
@@ -10996,8 +11078,9 @@ class it was serialized from.</p>
 <details class="note" open>
   <summary>Note</summary>
   <p>This process uses extra information stored in the jsonized object
-and handled by <a class="autorefs autorefs-internal" href="../../core/utils/pyschema/#trulens.core.utils.pyschema.WithClassInfo">WithClassInfo</a>.</p>
+and handled by <a class="autorefs autorefs-internal" title="            WithClassInfo" href="../../core/utils/pyschema/#trulens.core.utils.pyschema.WithClassInfo">WithClassInfo</a>.</p>
 </details>
+
     </div>
 
 </div>
@@ -11017,7 +11100,7 @@ and handled by <a class="autorefs autorefs-internal" href="../../core/utils/pysc
 
     <div class="doc doc-contents ">
 
-        <p>Uses Huggingface's papluca/xlm-roberta-base-language-detection model.</p>
+        <p>Uses HuggingFace's papluca/xlm-roberta-base-language-detection model.</p>
 <p>A function that uses language detection on <code>text1</code> and <code>text2</code> and
 calculates the probit difference on the language detected on text1. The
 function is: <code>1.0 - (|probit_language_text1(text1) -
@@ -11105,6 +11188,7 @@ being "same languages".</p>
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -11210,6 +11294,7 @@ f_groundedness = (
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -11227,7 +11312,7 @@ f_groundedness = (
 
     <div class="doc doc-contents ">
 
-        <p>Uses Huggingface's truera/context_relevance model, a
+        <p>Uses HuggingFace's truera/context_relevance model, a
 model that uses computes the relevance of a given context to the prompt.
 The model can be found at <a href="https://huggingface.co/truera/context_relevance">https://huggingface.co/truera/context_relevance</a>.</p>
 
@@ -11318,6 +11403,7 @@ The model can be found at <a href="https://huggingface.co/truera/context_relevan
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -11335,7 +11421,7 @@ The model can be found at <a href="https://huggingface.co/truera/context_relevan
 
     <div class="doc doc-contents ">
 
-        <p>Uses Huggingface's cardiffnlp/twitter-roberta-base-sentiment model. A
+        <p>Uses HuggingFace's cardiffnlp/twitter-roberta-base-sentiment model. A
 function that uses a sentiment classifier on <code>text</code>.</p>
 
 
@@ -11404,6 +11490,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -11422,7 +11509,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
     <div class="doc doc-contents ">
 
         <p>A function that uses a toxic comment classifier on <code>text</code>.</p>
-<p>Uses Huggingface's martin-ha/toxic-comment-model model.</p>
+<p>Uses HuggingFace's martin-ha/toxic-comment-model model.</p>
 
 
 <details class="example" open>
@@ -11490,6 +11577,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -11511,7 +11599,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 
         <p>A groundedness measure best used for summarized premise against
 simple hypothesis.</p>
-<p>This Huggingface implementation uses NLI.</p>
+<p>This HuggingFace implementation uses NLI.</p>
 
 
 <table>
@@ -11568,6 +11656,7 @@ simple hypothesis.</p>
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -11653,6 +11742,7 @@ simple hypothesis.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -11685,6 +11775,7 @@ simple hypothesis.</p>
 <p>Returns:
     Tuple[float, str]: A tuple containing a the likelihood that a PII is contained in the input text and a string containing what PII is detected (if any).</p>
 </details>
+
     </div>
 
 </div>
@@ -11789,6 +11880,7 @@ less than 0.5 the statement is evaluated as a hallucination.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -11803,14 +11895,14 @@ less than 0.5 the statement is evaluated as a hallucination.</p>
 <a href="#trulens.providers.huggingface.Huggingface.__init__" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="fm">__init__</span><span class="p">(</span>
     <span class="nf">name</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="s2">&quot;huggingface&quot;</span><span class="p">,</span>
-    <span class="n">endpoint</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.endpoint.Endpoint" href="../../core/feedback/endpoint/#trulens.core.feedback.endpoint.Endpoint">Endpoint</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">endpoint</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Endpoint (trulens.core.feedback.endpoint.Endpoint)" href="../../core/feedback/endpoint/#trulens.core.feedback.endpoint.Endpoint">Endpoint</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span>
 <span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Create a Huggingface Provider with out of the box feedback functions.</p>
+        <p>Create a HuggingFace Provider with out of the box feedback functions.</p>
 
 
 <details class="example" open>
@@ -11819,6 +11911,7 @@ less than 0.5 the statement is evaluated as a hallucination.</p>
 <span class="n">huggingface_provider</span> <span class="o">=</span> <span class="n">Huggingface</span><span class="p">()</span>
 </code></pre></div>
 </details>
+
     </div>
 
 </div>
@@ -11833,12 +11926,18 @@ less than 0.5 the statement is evaluated as a hallucination.</p>
 <a href="#trulens.providers.huggingface.Huggingface._post_scores" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">_post_scores</span><span class="p">(</span>
     <span class="n">url</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">json</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">],</span> <span class="n">timeout</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span> <span class="o">=</span> <span class="mf">30.0</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.serial.JSON" href="../../core/utils/serial/#trulens.core.utils.serial.JSON">JSON</a></span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            JSON
+
+
+  
+      module-attribute
+   (trulens.core.utils.serial.JSON)" href="../../core/utils/serial/#trulens.core.utils.serial.JSON">JSON</a></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Wrap <code>post</code> with .json()[0] to extract score list from response.</p>
+
 
     </div>
 
@@ -11865,10 +11964,11 @@ less than 0.5 the statement is evaluated as a hallucination.</p>
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="trulens.providers.huggingface.provider.HuggingfaceBase" href="provider/#trulens.providers.huggingface.provider.HuggingfaceBase">HuggingfaceBase</a></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="            HuggingfaceBase (trulens.providers.huggingface.provider.HuggingfaceBase)" href="provider/#trulens.providers.huggingface.provider.HuggingfaceBase">HuggingfaceBase</a></code></p>
 
 
         <p>Out of the box feedback functions using HuggingFace models locally.</p>
+
 
 
 
@@ -11899,7 +11999,7 @@ less than 0.5 the statement is evaluated as a hallucination.</p>
   </span>
 
 <a href="#trulens.providers.huggingface.HuggingfaceLocal.tru_class_info" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">tru_class_info</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.pyschema.Class" href="../../core/utils/pyschema/#trulens.core.utils.pyschema.Class">Class</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">tru_class_info</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            Class (trulens.core.utils.pyschema.Class)" href="../../core/utils/pyschema/#trulens.core.utils.pyschema.Class">Class</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -11907,6 +12007,7 @@ less than 0.5 the statement is evaluated as a hallucination.</p>
         <p>Class information of this pydantic object for use in deserialization.</p>
 <p>Using this odd key to not pollute attribute names in whatever class we mix
 this into. Should be the same as CLASS_INFO.</p>
+
     </div>
 
 </div>
@@ -11925,13 +12026,14 @@ this into. Should be the same as CLASS_INFO.</p>
   </span>
 
 <a href="#trulens.providers.huggingface.HuggingfaceLocal.endpoint" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">endpoint</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.endpoint.Endpoint" href="../../core/feedback/endpoint/#trulens.core.feedback.endpoint.Endpoint">Endpoint</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">endpoint</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Endpoint (trulens.core.feedback.endpoint.Endpoint)" href="../../core/feedback/endpoint/#trulens.core.feedback.endpoint.Endpoint">Endpoint</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
         <p>Endpoint supporting this provider.</p>
 <p>Remote API invocations are handled by the endpoint.</p>
+
     </div>
 
 </div>
@@ -11952,6 +12054,7 @@ this into. Should be the same as CLASS_INFO.</p>
     <div class="doc doc-contents ">
 
         <p>Requirement for pretty printing using the rich package.</p>
+
 
     </div>
 
@@ -11976,6 +12079,7 @@ this into. Should be the same as CLASS_INFO.</p>
 
         <p>Deserialize/load this object using the class information in
 tru_class_info to lookup the actual class that will do the deserialization.</p>
+
 
     </div>
 
@@ -12005,8 +12109,9 @@ class it was serialized from.</p>
 <details class="note" open>
   <summary>Note</summary>
   <p>This process uses extra information stored in the jsonized object
-and handled by <a class="autorefs autorefs-internal" href="../../core/utils/pyschema/#trulens.core.utils.pyschema.WithClassInfo">WithClassInfo</a>.</p>
+and handled by <a class="autorefs autorefs-internal" title="            WithClassInfo" href="../../core/utils/pyschema/#trulens.core.utils.pyschema.WithClassInfo">WithClassInfo</a>.</p>
 </details>
+
     </div>
 
 </div>
@@ -12026,7 +12131,7 @@ and handled by <a class="autorefs autorefs-internal" href="../../core/utils/pysc
 
     <div class="doc doc-contents ">
 
-        <p>Uses Huggingface's papluca/xlm-roberta-base-language-detection model.</p>
+        <p>Uses HuggingFace's papluca/xlm-roberta-base-language-detection model.</p>
 <p>A function that uses language detection on <code>text1</code> and <code>text2</code> and
 calculates the probit difference on the language detected on text1. The
 function is: <code>1.0 - (|probit_language_text1(text1) -
@@ -12114,6 +12219,7 @@ being "same languages".</p>
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -12219,6 +12325,7 @@ f_groundedness = (
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -12236,7 +12343,7 @@ f_groundedness = (
 
     <div class="doc doc-contents ">
 
-        <p>Uses Huggingface's truera/context_relevance model, a
+        <p>Uses HuggingFace's truera/context_relevance model, a
 model that uses computes the relevance of a given context to the prompt.
 The model can be found at <a href="https://huggingface.co/truera/context_relevance">https://huggingface.co/truera/context_relevance</a>.</p>
 
@@ -12327,6 +12434,7 @@ The model can be found at <a href="https://huggingface.co/truera/context_relevan
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -12344,7 +12452,7 @@ The model can be found at <a href="https://huggingface.co/truera/context_relevan
 
     <div class="doc doc-contents ">
 
-        <p>Uses Huggingface's cardiffnlp/twitter-roberta-base-sentiment model. A
+        <p>Uses HuggingFace's cardiffnlp/twitter-roberta-base-sentiment model. A
 function that uses a sentiment classifier on <code>text</code>.</p>
 
 
@@ -12413,6 +12521,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -12431,7 +12540,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
     <div class="doc doc-contents ">
 
         <p>A function that uses a toxic comment classifier on <code>text</code>.</p>
-<p>Uses Huggingface's martin-ha/toxic-comment-model model.</p>
+<p>Uses HuggingFace's martin-ha/toxic-comment-model model.</p>
 
 
 <details class="example" open>
@@ -12499,6 +12608,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -12520,7 +12630,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 
         <p>A groundedness measure best used for summarized premise against
 simple hypothesis.</p>
-<p>This Huggingface implementation uses NLI.</p>
+<p>This HuggingFace implementation uses NLI.</p>
 
 
 <table>
@@ -12577,6 +12687,7 @@ simple hypothesis.</p>
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -12662,6 +12773,7 @@ simple hypothesis.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -12694,6 +12806,7 @@ simple hypothesis.</p>
 <p>Returns:
     Tuple[float, str]: A tuple containing a the likelihood that a PII is contained in the input text and a string containing what PII is detected (if any).</p>
 </details>
+
     </div>
 
 </div>
@@ -12798,6 +12911,7 @@ less than 0.5 the statement is evaluated as a hallucination.</p>
       </tbody>
     </table>
 
+
     </div>
 
 </div>
@@ -12870,7 +12984,7 @@ less than 0.5 the statement is evaluated as a hallucination.</p>
     <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "search.highlight", "toc.follow", "content.code.copy", "content.tabs"], "search": "../../../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../../assets/javascripts/bundle.f13b1293.min.js"></script>
+      <script src="../../../../assets/javascripts/bundle.c8b220af.min.js"></script>
       
         <script src="../../../../javascript/config.js"></script>
       

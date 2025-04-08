@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.2">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.d7758b05.min.css">
+      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.4af4bdda.min.css">
       
         
         <link rel="stylesheet" href="../../../../../assets/stylesheets/palette.06af60db.min.css">
@@ -3561,7 +3561,7 @@
               
   
   <span class="md-ellipsis">
-    📦 Nemo Guardrails
+    📦 NeMo Guardrails
     
   </span>
   
@@ -3578,7 +3578,7 @@
         <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_3_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4_3_7">
             <span class="md-nav__icon md-icon"></span>
-            📦 Nemo Guardrails
+            📦 NeMo Guardrails
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -9326,7 +9326,7 @@
         
   
   <span class="md-ellipsis">
-    Local vs Remote Huggingface Feedback Functions
+    Local vs Remote HuggingFace Feedback Functions
     
   </span>
   
@@ -9907,6 +9907,8 @@
       
         
       
+        
+      
     
     
       
@@ -10285,6 +10287,81 @@
   
   <span class="md-ellipsis">
     Simple Pinecone setup with LlamaIndex + Eval
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_5_5" id="__nav_5_5_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Weaviate
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_5_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_5_5">
+            <span class="md-nav__icon md-icon"></span>
+            Weaviate
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../cookbook/vector_stores/weaviate/weaviate_query_agent/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Evaluating Weaviate Query Agents
     
   </span>
   
@@ -11162,6 +11239,7 @@
 
 
 
+
   <div class="doc doc-children">
 
 
@@ -11189,6 +11267,7 @@
     <div class="doc doc-contents ">
 
         <p>Max size in bytes of pickled objects.</p>
+
     </div>
 
 </div>
@@ -11207,10 +11286,11 @@
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="trulens.core.utils.serial.SerialModel" href="../../utils/serial/#trulens.core.utils.serial.SerialModel">SerialModel</a></code>, <code><a class="autorefs autorefs-external" title="pydantic.BaseModel" href="https://docs.pydantic.dev/latest/api/base_model/#pydantic.BaseModel">BaseModel</a></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="            SerialModel (trulens.core.utils.serial.SerialModel)" href="../../utils/serial/#trulens.core.utils.serial.SerialModel">SerialModel</a></code>, <code><a class="autorefs autorefs-external" title="pydantic.BaseModel" href="https://docs.pydantic.dev/latest/api/base_model/#pydantic.BaseModel">BaseModel</a></code></p>
 
 
         <p>Costs associated with some call or set of calls.</p>
+
 
 
 
@@ -11249,6 +11329,7 @@
 
         <p>Number of requests.</p>
 <p>To increment immediately when a request is made.</p>
+
     </div>
 
 </div>
@@ -11274,6 +11355,7 @@
 
         <p>Number of successful requests.</p>
 <p>To increment only after a response is processed and it indicates success.</p>
+
     </div>
 
 </div>
@@ -11299,6 +11381,7 @@
 
         <p>Number of completion requests.</p>
 <p>To increment immediately when a completion request is made.</p>
+
     </div>
 
 </div>
@@ -11324,6 +11407,7 @@
 
         <p>Number of classification requests.</p>
 <p>To increment immediately when a classification request is made.</p>
+
     </div>
 
 </div>
@@ -11349,6 +11433,7 @@
 
         <p>Number of class scores retrieved.</p>
 <p>To increment for each class in a successful classification response.</p>
+
     </div>
 
 </div>
@@ -11374,6 +11459,7 @@
 
         <p>Number of embedding requests.</p>
 <p>To increment immediately when an embedding request is made.</p>
+
     </div>
 
 </div>
@@ -11399,6 +11485,7 @@
 
         <p>Number of embeddings retrieved.</p>
 <p>To increment for each embedding vector returned by an embedding request.</p>
+
     </div>
 
 </div>
@@ -11428,6 +11515,7 @@ requests. While the input part of this could be incremented upon a request,
 the actual count is not easy to determine due to tokenizer variations and
 instead is usually seen in the response. Also, we want to count only tokens
 for successful requests that incur a cost to the user.</p>
+
     </div>
 
 </div>
@@ -11454,6 +11542,7 @@ for successful requests that incur a cost to the user.</p>
         <p>In streaming mode, number of chunks produced.</p>
 <p>To increment for each chunk in a streaming response. This does not need to
 wait for completion of the responses.</p>
+
     </div>
 
 </div>
@@ -11481,6 +11570,7 @@ wait for completion of the responses.</p>
 <p>To increment by the number of tokens in the prompt of a completion request.
 This is visible in the response though and should only count successful
 requests.</p>
+
     </div>
 
 </div>
@@ -11506,6 +11596,7 @@ requests.</p>
 
         <p>Number of completion tokens generated.</p>
 <p>To increment by the number of tokens in the completion of a completion request.</p>
+
     </div>
 
 </div>
@@ -11531,6 +11622,7 @@ requests.</p>
 
         <p>Number of guardrails tokens generated. This is only available for
 requests instrumented by the Cortex endpoint.</p>
+
     </div>
 
 </div>
@@ -11556,6 +11648,7 @@ requests instrumented by the Cortex endpoint.</p>
 
         <p>Cost in [cost_currency].</p>
 <p>This may not always be available or accurate.</p>
+
     </div>
 
 </div>
@@ -11576,6 +11669,7 @@ requests instrumented by the Cortex endpoint.</p>
     <div class="doc doc-contents ">
 
         <p>Requirement for pretty printing using the rich package.</p>
+
 
     </div>
 
@@ -11602,11 +11696,12 @@ requests instrumented by the Cortex endpoint.</p>
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="trulens.core.utils.serial.SerialModel" href="../../utils/serial/#trulens.core.utils.serial.SerialModel">SerialModel</a></code>, <code><a class="autorefs autorefs-external" title="pydantic.BaseModel" href="https://docs.pydantic.dev/latest/api/base_model/#pydantic.BaseModel">BaseModel</a></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="            SerialModel (trulens.core.utils.serial.SerialModel)" href="../../utils/serial/#trulens.core.utils.serial.SerialModel">SerialModel</a></code>, <code><a class="autorefs autorefs-external" title="pydantic.BaseModel" href="https://docs.pydantic.dev/latest/api/base_model/#pydantic.BaseModel">BaseModel</a></code></p>
 
 
         <p>Performance information.</p>
 <p>Presently only the start and end times, and thus latency.</p>
+
 
 
 
@@ -11643,6 +11738,7 @@ requests instrumented by the Cortex endpoint.</p>
     <div class="doc doc-contents ">
 
         <p>Datetime before the recorded call.</p>
+
     </div>
 
 </div>
@@ -11666,6 +11762,7 @@ requests instrumented by the Cortex endpoint.</p>
     <div class="doc doc-contents ">
 
         <p>Datetime after the recorded call.</p>
+
     </div>
 
 </div>
@@ -11689,6 +11786,7 @@ requests instrumented by the Cortex endpoint.</p>
     <div class="doc doc-contents ">
 
         <p>Latency in seconds.</p>
+
     </div>
 
 </div>
@@ -11709,6 +11807,7 @@ requests instrumented by the Cortex endpoint.</p>
     <div class="doc doc-contents ">
 
         <p>Requirement for pretty printing using the rich package.</p>
+
 
     </div>
 
@@ -11733,6 +11832,7 @@ requests instrumented by the Cortex endpoint.</p>
 
         <p>Zero-length span with start and end times at the minimum datetime.</p>
 
+
     </div>
 
 </div>
@@ -11749,7 +11849,7 @@ requests instrumented by the Cortex endpoint.</p>
   </span>
 
 <a href="#trulens.core.schema.base.Perf.now" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">now</span><span class="p">(</span><span class="n">latency</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="datetime.timedelta" href="https://docs.python.org/3/library/datetime.html#datetime.timedelta">timedelta</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.base.Perf" href="#trulens.core.schema.base.Perf">Perf</a></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">now</span><span class="p">(</span><span class="n">latency</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="datetime.timedelta" href="https://docs.python.org/3/library/datetime.html#datetime.timedelta">timedelta</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            Perf (trulens.core.schema.base.Perf)" href="#trulens.core.schema.base.Perf">Perf</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -11788,6 +11888,7 @@ latency. Otherwise end time will be a minimal interval plus start_time.</p>
           </tr>
       </tbody>
     </table>
+
 
     </div>
 
@@ -11861,7 +11962,7 @@ latency. Otherwise end time will be a minimal interval plus start_time.</p>
     <script id="__config" type="application/json">{"base": "../../../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "search.highlight", "toc.follow", "content.code.copy", "content.tabs"], "search": "../../../../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../../../assets/javascripts/bundle.f13b1293.min.js"></script>
+      <script src="../../../../../assets/javascripts/bundle.c8b220af.min.js"></script>
       
         <script src="../../../../../javascript/config.js"></script>
       
