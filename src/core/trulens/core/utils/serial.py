@@ -1018,9 +1018,9 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
     def get_sole_item(self, obj: Any) -> Any:
         all_objects = list(self.get(obj))
 
-        assert len(all_objects) == 1, (
-            f"Lens {self} did not address exactly a single object."
-        )
+        assert (
+            len(all_objects) == 1
+        ), f"Lens {self} did not address exactly a single object."
 
         return all_objects[0]
 

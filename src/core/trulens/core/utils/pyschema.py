@@ -260,9 +260,9 @@ class Class(serial_utils.SerialModel):
     def noserio_issubclass(self, class_name: str, module_name: str):
         bases = self.bases
 
-        assert bases is not None, (
-            "Cannot do subclass check without bases. Serialize me with `Class.of_class(with_bases=True ...)`."
-        )
+        assert (
+            bases is not None
+        ), "Cannot do subclass check without bases. Serialize me with `Class.of_class(with_bases=True ...)`."
 
         for base in bases:
             if (
@@ -564,9 +564,9 @@ class Method(FunctionOrMethod):
         loadable: bool = False,
     ) -> "Method":
         if obj is None:
-            assert inspect.ismethod(meth), (
-                f"Expected a method (maybe it is a function?): {meth}"
-            )
+            assert inspect.ismethod(
+                meth
+            ), f"Expected a method (maybe it is a function?): {meth}"
             obj = meth.__self__
 
         if cls is None:
@@ -744,9 +744,9 @@ class WithClassInfo(pydantic.BaseModel):
             cls = type(obj)
 
         if class_info is None:
-            assert cls is not None, (
-                "Either `class_info`, `obj` or `cls` need to be specified."
-            )
+            assert (
+                cls is not None
+            ), "Either `class_info`, `obj` or `cls` need to be specified."
             class_info = Class.of_class(cls, with_bases=True)
 
         kwargs[constant_utils.CLASS_INFO] = class_info

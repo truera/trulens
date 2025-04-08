@@ -122,8 +122,8 @@ class HuggingfaceEndpoint(core_endpoint._WithPost, core_endpoint.Endpoint):
             else:
                 raise RuntimeError(error)
 
-        assert isinstance(j, Sequence) and len(j) > 0, (
-            f"Post did not return a sequence: {j}"
-        )
+        assert (
+            isinstance(j, Sequence) and len(j) > 0
+        ), f"Post did not return a sequence: {j}"
 
         return ret
