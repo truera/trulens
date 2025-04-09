@@ -25,7 +25,7 @@ pipeline {
         docker {
             label 'regular-memory-node-c7'
             image 'python:3.11'
-            reuseNode false
+            reuseNode true
             alwaysPull false
             args '-u root'
         }
@@ -80,18 +80,9 @@ pipeline {
             }
         }
         stage('Test Suites') {
-            parallel {
-            // stages {
+            // parallel {
+            stages {
                 stage('e2e') {
-                    agent {
-                        docker {
-                            label 'regular-memory-node-c7'
-                            image 'python:3.11'
-                            reuseNode false
-                            alwaysPull false
-                            args '-u root'
-                        }
-                    }
                     steps {
                         withVault(vault_settings) {
                             sh label: 'Run Optional "e2e" Test Suite', script: '''
@@ -107,15 +98,6 @@ pipeline {
                     }
                 }
                 stage('notebook') {
-                    agent {
-                        docker {
-                            label 'regular-memory-node-c7'
-                            image 'python:3.11'
-                            reuseNode false
-                            alwaysPull false
-                            args '-u root'
-                        }
-                    }
                     steps {
                         withVault(vault_settings) {
                             sh label: 'Run Optional "test" Test Suite', script: '''
