@@ -57,10 +57,10 @@ class RecordGraphNode:
 
 def _compute_feedback(
     record_root: RecordGraphNode,
+    feedback_name: str,
     feedback_function: Callable[
         [Any], Union[float, Tuple[float, Dict[str, Any]]]
     ],
-    feedback_name: str,
     selector_function: Callable[[RecordGraphNode], List[Dict[str, Any]]],
 ) -> None:
     """
@@ -69,8 +69,8 @@ def _compute_feedback(
 
     Args:
         record: Record to compute feedback for.
-        feedback_function: Function to compute feedback.
         feedback_name: Name of feedback.
+        feedback_function: Function to compute feedback.
         selector_function:
             Function to select inputs for feedback computation. Given a record
             in graph form, it returns a list of inputs to the feedback
@@ -79,63 +79,10 @@ def _compute_feedback(
     """
     feedback_inputs = selector_function(record_root)
     record_root_attributes = record_root.current_span.attributes
-    if SpanAttributes.APP_NAME in record_root_attributes:
-        app_name = record_root_attributes[SpanAttributes.APP_NAME]
-        app_version = record_root_attributes[SpanAttributes.APP_VERSION]
-        run_name = record_root_attributes[SpanAttributes.RUN_NAME]
-    elif f"snow.{BASE_SCOPE}.object.name" in record_root_attributes:
-        # TODO(otel, dhuang): need to use these when getting the object entity!
-        # database_name = record_root_attributes[
-        #    f"snow.{BASE_SCOPE}.database.name"
-        # ]
-        # schema_name = record_root_attributes[
-        #    f"snow.{BASE_SCOPE}.schema.name"
-        # ]
-        app_name = record_root_attributes[f"snow.{BASE_SCOPE}.object.name"]
-        app_version = record_root_attributes[
-            f"snow.{BASE_SCOPE}.object.version.name"
-        ]
-        run_name = record_root_attributes[f"snow.{BASE_SCOPE}.run.name"]
-    input_id = record_root_attributes[SpanAttributes.INPUT_ID]
-    target_record_id = record_root_attributes[SpanAttributes.RECORD_ID]
     for curr in feedback_inputs:
-        context_manager = OtelFeedbackComputationRecordingContext(
-            app_name=app_name,
-            app_version=app_version,
-            run_name=run_name,
-            input_id=input_id,
-            target_record_id=target_record_id,
-            feedback_name=feedback_name,
+        _call_feedback_function(
+            feedback_name, feedback_function, curr, record_root_attributes
         )
-        with context_manager as eval_root_span:
-            try:
-                res = feedback_function(**curr)
-            except Exception as e:
-                eval_root_span.set_attribute(
-                    SpanAttributes.EVAL_ROOT.ERROR, str(e)
-                )
-                raise e
-            metadata = {}
-            if isinstance(res, tuple):
-                if (
-                    len(res) != 2
-                    or not isinstance(res[0], float)
-                    or not isinstance(res[1], dict)
-                    or not all([
-                        isinstance(curr, str) for curr in res[1].keys()
-                    ])
-                ):
-                    raise ValueError(
-                        "Feedback functions must be of type `Callable[Any, Union[float, Tuple[float, Dict[str, Any]]]]`!"
-                    )
-                res, metadata = res[0], res[1]
-            eval_root_span.set_attribute(SpanAttributes.EVAL_ROOT.RESULT, res)
-            for k, v in metadata.items():
-                set_span_attribute_safely(
-                    eval_root_span,
-                    f"{SpanAttributes.EVAL_ROOT.METADATA}.{k}",
-                    v,
-                )
 
 
 @dataclass
@@ -173,13 +120,21 @@ def compute_feedback_by_span_group(
     unflattened_inputs = _collect_inputs_from_events(
         events, kwarg_groups, kwarg_to_selector, error_messages
     )
-    if len(kwarg_groups) > 1:
-        unflattened_inputs = _validate_unflattened_inputs(
-            unflattened_inputs, kwarg_groups, feedback_name, error_messages
-        )
+    record_id_to_record_roots = _map_record_id_to_record_roots(events)
+    unflattened_inputs = _validate_unflattened_inputs(
+        unflattened_inputs,
+        kwarg_groups,
+        list(record_id_to_record_roots.keys()),
+        feedback_name,
+        error_messages,
+    )
     flattened_inputs = _flatten_inputs(unflattened_inputs)
     _run_feedback_on_inputs(
-        flattened_inputs, feedback_function, feedback_name, error_messages
+        flattened_inputs,
+        feedback_name,
+        feedback_function,
+        record_id_to_record_roots,
+        error_messages,
     )
     _report_errors(error_messages)
 
@@ -271,6 +226,29 @@ def _collect_inputs_from_events(
     return ret
 
 
+def _map_record_id_to_record_roots(
+    events: pd.DataFrame,
+) -> Dict[str, pd.Series]:
+    """Map record_id to record roots.
+
+    Args:
+        events: DataFrame containing trace events.
+
+    Returns:
+        Mapping from record_id to record roots.
+    """
+    ret = {}
+    for _, row in events.iterrows():
+        record_attributes = row["record_attributes"]
+        if (
+            record_attributes.get(SpanAttributes.SPAN_TYPE, None)
+            == SpanAttributes.SpanType.RECORD_ROOT
+        ):
+            record_id = record_attributes[SpanAttributes.RECORD_ID]
+            ret[record_id] = row
+    return ret
+
+
 def _row_matches_selector(
     record_attributes: Dict[str, Any], selector: Selector
 ) -> bool:
@@ -304,6 +282,7 @@ def _validate_unflattened_inputs(
         Tuple[str, Optional[str]], Dict[Tuple, Dict[str, Any]]
     ],
     kwarg_groups: List[Tuple[str]],
+    record_ids_with_record_roots: List[str],
     feedback_name: str,
     error_messages: List[str],
 ) -> Dict[Tuple[str, Optional[str]], Dict[Tuple, Dict[str, Any]]]:
@@ -320,27 +299,35 @@ def _validate_unflattened_inputs(
     """
     keys_to_remove = []
 
-    for (
-        record_id,
-        span_group,
-    ), kwarg_group_to_inputs in unflattened_inputs.items():
-        if len(kwarg_group_to_inputs) != len(kwarg_groups):
-            error_messages.append(
-                # TODO(this_pr): go over all error messages.
-                f"record_id={record_id}, span_group={span_group} is missing required inputs for feedback '{feedback_name}'"
-            )
-            keys_to_remove.append((record_id, span_group))
-            continue
+    if len(kwarg_groups) > 1:
+        for (
+            record_id,
+            span_group,
+        ), kwarg_group_to_inputs in unflattened_inputs.items():
+            if len(kwarg_group_to_inputs) != len(kwarg_groups):
+                error_messages.append(
+                    # TODO(this_pr): go over all error messages.
+                    f"record_id={record_id}, span_group={span_group} is missing required inputs for feedback '{feedback_name}'"
+                )
+                keys_to_remove.append((record_id, span_group))
+                continue
 
-        # Check for ambiguous inputs (multiple possible values).
-        group_sizes = sorted([
-            len(inputs) for inputs in kwarg_group_to_inputs.values()
-        ])
-        if (
-            group_sizes[-2] > 1
-        ):  # If second largest group has multiple items then unclear how to combine.
+            # Check for ambiguous inputs (multiple possible values).
+            group_sizes = sorted([
+                len(inputs) for inputs in kwarg_group_to_inputs.values()
+            ])
+            if (
+                group_sizes[-2] > 1
+            ):  # If second largest group has multiple items then unclear how to combine.
+                error_messages.append(
+                    f"record={record_id}, span_group={span_group} has ambiguous inputs for feedback '{feedback_name}'"
+                )
+                keys_to_remove.append((record_id, span_group))
+
+    for record_id, span_group in unflattened_inputs:
+        if record_id not in record_ids_with_record_roots:
             error_messages.append(
-                f"record={record_id}, span_group={span_group} has ambiguous inputs for feedback '{feedback_name}'"
+                f"record_id={record_id} not found in events for feedback '{feedback_name}'"
             )
             keys_to_remove.append((record_id, span_group))
 
@@ -385,38 +372,103 @@ def _flatten_inputs(
 
 def _run_feedback_on_inputs(
     flattened_inputs: List[Tuple[str, Optional[str], Dict[str, Any]]],
+    feedback_name: str,
     feedback_function: Callable[
         [Any], Union[float, Tuple[float, Dict[str, Any]]]
     ],
-    feedback_name: str,
+    record_id_to_record_root: Dict[str, pd.Series],
     error_messages: List[str],
 ) -> None:
     """Run feedback function on all inputs.
 
     Args:
         flattened_inputs: Flattened inputs. Each entry is a tuple of (record_id, span_group, inputs).
-        feedback_function: Function to compute feedback.
         feedback_name: Name of the feedback function.
+        feedback_function: Function to compute feedback.
         error_messages: List of error messages to append to if any errors occur during this function.
     """
     for record_id, span_group, inputs in flattened_inputs:
         try:
-            _call_feedback(feedback_function, feedback_name, inputs)
+            _call_feedback_function(
+                feedback_name,
+                feedback_function,
+                inputs,
+                record_id_to_record_root[record_id]["record_attributes"],
+            )
         except Exception as e:
             error_messages.append(
-                f"Error computing feedback '{feedback_name}': {str(e)}"
+                f"Error computing feedback '{feedback_name}': {str(e)} for span group {span_group}"
             )
 
 
-def _call_feedback(
+def _call_feedback_function(
+    feedback_name: str,
     feedback_function: Callable[
         [Any], Union[float, Tuple[float, Dict[str, Any]]]
     ],
-    feedback_name: str,
-    inputs: Dict[str, Any],
+    kwarg_inputs: Dict[str, Any],
+    record_root_attributes: Dict[str, Any],
 ):
-    # TODO(this_pr): implement this!
-    pass
+    """Call feedback function.
+
+    Args:
+        feedback_name: Name of the feedback function.
+        feedback_function: Function to compute feedback.
+        kwarg_inputs: kwarg inputs to feedback function.
+        record_root_attributes: Span attributes of record root.
+    """
+    if SpanAttributes.APP_NAME in record_root_attributes:
+        app_name = record_root_attributes[SpanAttributes.APP_NAME]
+        app_version = record_root_attributes[SpanAttributes.APP_VERSION]
+        run_name = record_root_attributes[SpanAttributes.RUN_NAME]
+    elif f"snow.{BASE_SCOPE}.object.name" in record_root_attributes:
+        # TODO(otel, dhuang): need to use these when getting the object entity!
+        # database_name = record_root_attributes[
+        #    f"snow.{BASE_SCOPE}.database.name"
+        # ]
+        # schema_name = record_root_attributes[
+        #    f"snow.{BASE_SCOPE}.schema.name"
+        # ]
+        app_name = record_root_attributes[f"snow.{BASE_SCOPE}.object.name"]
+        app_version = record_root_attributes[
+            f"snow.{BASE_SCOPE}.object.version.name"
+        ]
+        run_name = record_root_attributes[f"snow.{BASE_SCOPE}.run.name"]
+    input_id = record_root_attributes[SpanAttributes.INPUT_ID]
+    target_record_id = record_root_attributes[SpanAttributes.RECORD_ID]
+    context_manager = OtelFeedbackComputationRecordingContext(
+        app_name=app_name,
+        app_version=app_version,
+        run_name=run_name,
+        input_id=input_id,
+        target_record_id=target_record_id,
+        feedback_name=feedback_name,
+    )
+    with context_manager as eval_root_span:
+        try:
+            res = feedback_function(**kwarg_inputs)
+        except Exception as e:
+            eval_root_span.set_attribute(SpanAttributes.EVAL_ROOT.ERROR, str(e))
+            raise e
+        metadata = {}
+        if isinstance(res, tuple):
+            if (
+                len(res) != 2
+                or not isinstance(res[0], float)
+                or not isinstance(res[1], dict)
+                or not all([isinstance(curr, str) for curr in res[1].keys()])
+            ):
+                raise ValueError(
+                    "Feedback functions must be of type `Callable[Any, Union[float, Tuple[float, Dict[str, Any]]]]`!"
+                )
+            res, metadata = res[0], res[1]
+        eval_root_span.set_attribute(SpanAttributes.EVAL_ROOT.RESULT, res)
+        for k, v in metadata.items():
+            set_span_attribute_safely(
+                eval_root_span,
+                f"{SpanAttributes.EVAL_ROOT.METADATA}.{k}",
+                v,
+            )
 
 
 def _report_errors(error_messages: List[str]) -> None:

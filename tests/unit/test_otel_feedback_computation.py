@@ -68,8 +68,8 @@ class TestOtelFeedbackComputation(OtelTestCase):
         record_root = RecordGraphNode.build_graph(spans)
         _compute_feedback(
             record_root,
-            feedback_function,
             "baby_grader",
+            feedback_function,
             all_retrieval_span_attributes,
         )
         TruSession().force_flush()
