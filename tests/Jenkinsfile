@@ -53,7 +53,11 @@ pipeline {
                     echo "Using $(python --version) ($(which python)) $(poetry -V)"
 
                     poetry config requests.max-retries 3
-                    poetry config virtualenvs.create true
+                    poetry config virtualenvs.create false
+
+                    # NOTE: temp print poetry config to confirm
+                    echo "Poetry env path:"
+                    poetry env info --path
 
                     # NOTE: temp print poetry config to confirm
                     echo "Poetry config PREPARE:"
@@ -86,7 +90,11 @@ pipeline {
                                 set -e
 
                                 # NOTE: temp print poetry config to confirm
-                                echo "Poetry config E2E:"
+                                echo "Poetry env path:"
+                                poetry env info --path
+
+                                # NOTE: temp print poetry config to confirm
+                                echo "Poetry config PREPARE:"
                                 poetry config --list
 
                                 make test-e2e-optional
@@ -101,7 +109,11 @@ pipeline {
                                 set -e
 
                                 # NOTE: temp print poetry config to confirm
-                                echo "Poetry config NOTEBOOK:"
+                                echo "Poetry env path:"
+                                poetry env info --path
+
+                                # NOTE: temp print poetry config to confirm
+                                echo "Poetry config PREPARE:"
                                 poetry config --list
 
                                 make test-notebook-optional
