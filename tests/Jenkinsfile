@@ -83,7 +83,7 @@ pipeline {
                     steps {
                         // NOTE:  As of PR#1904, this is a temporary workaround to ensure we are still able to run both e2e and notebook stages even if one fails (while sequential).
                         // We will revisit this once we re-enable parallelism.
-                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                             withVault(vault_settings) {
                                 sh label: 'Run Optional "e2e" Test Suite', script: '''
                                     set -e
