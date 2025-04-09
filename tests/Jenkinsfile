@@ -80,38 +80,38 @@ pipeline {
             }
         }
         stage('Test Suites') {
-            parallel {
-                stage('e2e') {
-                    steps {
-                        withVault(vault_settings) {
-                            sh label: 'Run Optional "e2e" Test Suite', script: '''
-                                set -e
+            // parallel {
+            stage('e2e') {
+                steps {
+                    withVault(vault_settings) {
+                        sh label: 'Run Optional "e2e" Test Suite', script: '''
+                            set -e
 
-                                # NOTE: temp print poetry config to confirm
-                                echo "Poetry config E2E:"
-                                poetry config --list
+                            # NOTE: temp print poetry config to confirm
+                            echo "Poetry config E2E:"
+                            poetry config --list
 
-                                make test-e2e-optional
-                            '''
-                        }
-                    }
-                }
-                stage('notebook') {
-                    steps {
-                        withVault(vault_settings) {
-                            sh label: 'Run Optional "test" Test Suite', script: '''
-                                set -e
-
-                                # NOTE: temp print poetry config to confirm
-                                echo "Poetry config E2E:"
-                                poetry config --list
-
-                                make test-notebook-optional
-                            '''
-                        }
+                            make test-e2e-optional
+                        '''
                     }
                 }
             }
+            stage('notebook') {
+                steps {
+                    withVault(vault_settings) {
+                        sh label: 'Run Optional "test" Test Suite', script: '''
+                            set -e
+
+                            # NOTE: temp print poetry config to confirm
+                            echo "Poetry config E2E:"
+                            poetry config --list
+
+                            make test-notebook-optional
+                        '''
+                    }
+                }
+            }
+            // }
         }
     }
 }
