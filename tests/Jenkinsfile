@@ -35,7 +35,6 @@ pipeline {
         // NOTE: Increase timeout for HTTP requests to avoid issues with slow downloads
         // See: https://github.com/python-poetry/poetry/blob/master/src/poetry/utils/constants.py
         POETRY_REQUESTS_TIMEOUT=120
-        // POETRY_REQUESTS_MAX_RETRIES=3
     }
 
     options {
@@ -53,17 +52,8 @@ pipeline {
                     ln -s /root/.local/bin/poetry /usr/local/bin/poetry
                     echo "Using $(python --version) ($(which python)) $(poetry -V)"
 
-                    # ALERT: temp disable to test overall env
-                    # NOTE: Increase timeout for HTTP requests to avoid issues with slow downloads
-                    # See: https://github.com/python-poetry/poetry/blob/master/src/poetry/utils/constants.py
-                    # export POETRY_REQUESTS_TIMEOUT=120
-                    # export POETRY_REQUESTS_MAX_RETRIES=3
-
-                    echo "env PREPARE:"
-                    printenv
-
                     poetry config requests.max-retries 3
-                    poetry config virtualenvs.create false
+                    poetry config virtualenvs.create true
 
                     # NOTE: temp print poetry config to confirm
                     echo "Poetry config PREPARE:"
@@ -95,9 +85,6 @@ pipeline {
                             sh label: 'Run Optional "e2e" Test Suite', script: '''
                                 set -e
 
-                                echo "env E2E:"
-                                printenv
-
                                 # NOTE: temp print poetry config to confirm
                                 echo "Poetry config E2E:"
                                 poetry config --list
@@ -112,9 +99,6 @@ pipeline {
                         withVault(vault_settings) {
                             sh label: 'Run Optional "test" Test Suite', script: '''
                                 set -e
-
-                                echo "env NOTEBOOK:"
-                                printenv
 
                                 # NOTE: temp print poetry config to confirm
                                 echo "Poetry config NOTEBOOK:"
