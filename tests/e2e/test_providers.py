@@ -172,7 +172,7 @@ def get_llmprovider_tests(
         (
             provider.conciseness,
             dict(
-                text="The sum of one plus one, which is an arithmetic operation involving the addition of the number one to itself, results in the natural number that is equal to one more than one, a concept that is larger than one in most, if not all, definitions of the term 'larger'. However, in the broader context of the theory of self, as per the extensive work and research of various psychologists over the course of many years..."
+                text="One can argue that the numeral 1 does not simply refer to a quantity but is also a cultural and linguistic symbol. In many ways, the number 1 stands as a representation of unity, singularity, and wholeness. It is the symbol of the beginning, the first step, the origin from which all other things emanate. But does adding 1 to 1 break this wholeness, or does it create a new form of unity—one that is not simply the sum of parts, but rather an emergence of something qualitatively distinct? Here we encounter the principle of emergence, where a system composed of simple elements gives rise to properties that cannot be directly predicted from those elements alone. Just as the addition of two water molecules creates something more than simply two molecules, the addition of 1 and 1 gives rise to the number 2, which possesses properties that neither 1 nor 1 could have alone. This idea of emergent properties challenges us to reconsider the very nature of addition. It is not simply a mechanical operation but a transformative act that alters the essence of the numbers involved..."
             ),
             0.0,
         ),
@@ -184,7 +184,7 @@ def get_llmprovider_tests(
         (
             provider.conciseness_with_cot_reasons,
             dict(
-                text="The sum of one plus one, which is an arithmetic operation involving the addition of the number one to itself, results in the natural number that is equal to one more than one, a concept that is larger than one in most, if not all, definitions of the term 'larger'. However, in the broader context of the theory of self, as per the extensive work and research of various psychologists over the course of many years..."
+                text="One can argue that the numeral 1 does not simply refer to a quantity but is also a cultural and linguistic symbol. In many ways, the number 1 stands as a representation of unity, singularity, and wholeness. It is the symbol of the beginning, the first step, the origin from which all other things emanate. But does adding 1 to 1 break this wholeness, or does it create a new form of unity—one that is not simply the sum of parts, but rather an emergence of something qualitatively distinct? Here we encounter the principle of emergence, where a system composed of simple elements gives rise to properties that cannot be directly predicted from those elements alone. Just as the addition of two water molecules creates something more than simply two molecules, the addition of 1 and 1 gives rise to the number 2, which possesses properties that neither 1 nor 1 could have alone. This idea of emergent properties challenges us to reconsider the very nature of addition. It is not simply a mechanical operation but a transformative act that alters the essence of the numbers involved..."
             ),
             0.0,
         ),
