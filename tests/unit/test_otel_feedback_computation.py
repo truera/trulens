@@ -9,7 +9,9 @@ import pytest
 from trulens.core.session import TruSession
 from trulens.feedback.computer import MinimalSpanInfo
 from trulens.feedback.computer import RecordGraphNode
+from trulens.feedback.computer import Selector
 from trulens.feedback.computer import _compute_feedback
+from trulens.feedback.computer import _group_kwargs_by_selectors
 
 from tests.util.mock_otel_feedback_computation import (
     all_retrieval_span_attributes,
@@ -76,4 +78,42 @@ class TestOtelFeedbackComputation(OtelTestCase):
         # Compare results to expected.
         self._compare_events_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_feedback_computation__test_feedback_computation.csv"
+        )
+
+    def test__group_kwargs_by_selectors(self) -> None:
+        # Test empty case.
+        self.assertEqual([], _group_kwargs_by_selectors({}))
+        # Test single selector case.
+        self.assertEqual(
+            [("input",)],
+            _group_kwargs_by_selectors({
+                "input": Selector(
+                    span_type="a", span_name="b", span_attribute="c"
+                )
+            }),
+        )
+        # Test complex grouping.
+        kwarg_to_selector = {
+            "input1": Selector(
+                span_type="a", span_name="b", span_attribute="x"
+            ),
+            "input2": Selector(
+                span_type="a", span_name="b", span_attribute="x"
+            ),
+            "input3": Selector(
+                span_type="c", span_name="d", span_attribute="x"
+            ),
+            "input4": Selector(span_type="c", span_attribute="x"),
+            "input5": Selector(
+                span_type="c", span_name="e", span_attribute="x"
+            ),
+        }
+        self.assertEqual(
+            [
+                ("input1", "input2"),
+                ("input3",),
+                ("input4",),
+                ("input5",),
+            ],
+            sorted(_group_kwargs_by_selectors(kwarg_to_selector)),
         )
