@@ -52,12 +52,10 @@ pipeline {
                     ln -s /root/.local/bin/poetry /usr/local/bin/poetry
                     echo "Using $(python --version) ($(which python)) $(poetry -V)"
 
-                    # NOTE: temp remove venvs
-                    poetry env remove --all
-
                     poetry config requests.max-retries 3
-                    poetry config virtualenvs.create true
-                    poetry config virtualenvs.in-project true
+                    poetry config virtualenvs.create false
+                    # See open race condition issue: https://github.com/python-poetry/poetry/issues/8159
+                    poetry config installer.parallel false
 
                     # NOTE: temp print poetry config to confirm
                     echo "Poetry config PREPARE:"
@@ -89,9 +87,6 @@ pipeline {
                             sh label: 'Run Optional "e2e" Test Suite', script: '''
                                 set -e
 
-                                # NOTE: temp remove venvs
-                                poetry env remove --all
-
                                 # NOTE: temp print poetry config to confirm
                                 echo "Poetry config E2E:"
                                 poetry config --list
@@ -106,9 +101,6 @@ pipeline {
                         withVault(vault_settings) {
                             sh label: 'Run Optional "test" Test Suite', script: '''
                                 set -e
-
-                                # NOTE: temp remove venvs
-                                poetry env remove --all
 
                                 # NOTE: temp print poetry config to confirm
                                 echo "Poetry config E2E:"
