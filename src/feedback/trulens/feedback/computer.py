@@ -408,7 +408,7 @@ def _call_feedback_function(
     ],
     kwarg_inputs: Dict[str, Any],
     record_root_attributes: Dict[str, Any],
-):
+) -> None:
     """Call feedback function.
 
     Args:
