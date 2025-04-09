@@ -275,10 +275,6 @@ build: $(POETRY_DIRS)
 	done
 
 build-with-zip-wheels:
-	# Increase timeout for http requests to avoid issues with slow downloads
-	# See https://github.com/python-poetry/poetry/blob/master/src/poetry/utils/constants.py
-	export POETRY_REQUESTS_TIMEOUT=60
-
 	rm -rf ./dist \
 		&& rm -rf ./src/core/trulens/data/snowflake_stage_zips \
 		&& make build \
