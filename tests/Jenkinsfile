@@ -80,8 +80,8 @@ pipeline {
             }
         }
         stage('Test Suites') {
-            // parallel {
-            stages {
+            parallel {
+            // stages {
                 stage('e2e') {
                     agent {
                         docker {
