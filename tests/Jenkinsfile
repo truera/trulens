@@ -56,10 +56,6 @@ pipeline {
                     poetry config virtualenvs.create false
 
                     # NOTE: temp print poetry config to confirm
-                    echo "Poetry env path:"
-                    poetry env info --path
-
-                    # NOTE: temp print poetry config to confirm
                     echo "Poetry config PREPARE:"
                     poetry config --list
 
@@ -90,11 +86,7 @@ pipeline {
                                 set -e
 
                                 # NOTE: temp print poetry config to confirm
-                                echo "Poetry env path:"
-                                poetry env info --path
-
-                                # NOTE: temp print poetry config to confirm
-                                echo "Poetry config PREPARE:"
+                                echo "Poetry config E2E:"
                                 poetry config --list
 
                                 make test-e2e-optional
@@ -109,11 +101,7 @@ pipeline {
                                 set -e
 
                                 # NOTE: temp print poetry config to confirm
-                                echo "Poetry env path:"
-                                poetry env info --path
-
-                                # NOTE: temp print poetry config to confirm
-                                echo "Poetry config PREPARE:"
+                                echo "Poetry config NOTEBOOK:"
                                 poetry config --list
 
                                 make test-notebook-optional
