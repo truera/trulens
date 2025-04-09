@@ -29,6 +29,12 @@ pipeline {
             alwaysPull false
             args '-u root'
         }
+        environment {
+            // NOTE: Increase timeout for HTTP requests to avoid issues with slow downloads
+            // See: https://github.com/python-poetry/poetry/blob/master/src/poetry/utils/constants.py
+            POETRY_REQUESTS_TIMEOUT=120
+            POETRY_REQUESTS_MAX_RETRIES=3
+        }
     }
 
     options {
@@ -46,12 +52,18 @@ pipeline {
                     ln -s /root/.local/bin/poetry /usr/local/bin/poetry
                     echo "Using $(python --version) ($(which python)) $(poetry -V)"
 
+                    # ALERT: temp disable to test overall env
                     # NOTE: Increase timeout for HTTP requests to avoid issues with slow downloads
                     # See: https://github.com/python-poetry/poetry/blob/master/src/poetry/utils/constants.py
-                    export POETRY_REQUESTS_TIMEOUT=120
-                    export POETRY_REQUESTS_MAX_RETRIES=3
+                    # export POETRY_REQUESTS_TIMEOUT=120
+                    # export POETRY_REQUESTS_MAX_RETRIES=3
 
                     poetry config virtualenvs.create false
+
+                    # NOTE: temp print poetry config to confirm
+                    echo "Poetry config PREPARE:"
+                    poetry config --list
+
                     poetry run pip install pip==24.1.2
                     poetry run python --version
                     poetry run pip --version
@@ -77,6 +89,11 @@ pipeline {
                         withVault(vault_settings) {
                             sh label: 'Run Optional "e2e" Test Suite', script: '''
                                 set -e
+
+                                # NOTE: temp print poetry config to confirm
+                                echo "Poetry config E2E:"
+                                poetry config --list
+
                                 make test-e2e-optional
                             '''
                         }
@@ -87,6 +104,11 @@ pipeline {
                         withVault(vault_settings) {
                             sh label: 'Run Optional "test" Test Suite', script: '''
                                 set -e
+
+                                # NOTE: temp print poetry config to confirm
+                                echo "Poetry config NOTEBOOK:"
+                                poetry config --list
+
                                 make test-notebook-optional
                             '''
                         }
