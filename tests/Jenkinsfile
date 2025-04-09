@@ -25,7 +25,7 @@ pipeline {
         docker {
             label 'regular-memory-node-c7'
             image 'python:3.11'
-            reuseNode false
+            reuseNode true
             alwaysPull false
             args '-u root'
         }
@@ -54,12 +54,8 @@ pipeline {
 
                     poetry config requests.max-retries 3
                     poetry config virtualenvs.create false
-                    # See open race condition issue: https://github.com/python-poetry/poetry/issues/8159
+                    # NOTE: See known race condition issue: https://github.com/python-poetry/poetry/issues/8159
                     poetry config installer.parallel false
-
-                    # NOTE: temp print poetry config to confirm
-                    echo "Poetry config PREPARE:"
-                    poetry config --list
 
                     poetry run pip install pip==24.1.2
                     poetry run python --version
@@ -80,26 +76,14 @@ pipeline {
             }
         }
         stage('Test Suites') {
-            parallel {
-            // stages {
+            // NOTE: As of PR#1904, we run test suites sequentially to avoid a known race condition with Poetry installs (see issue linked above).
+            // TODO: Consider re-enabling parallelism after the issue is resolved, or if we find a better workaround (e.g. provisioning identical, fully separated containers for each stage).
+            stages {
                 stage('e2e') {
-                    agent {
-                        docker {
-                            label 'regular-memory-node-c7'
-                            image 'python:3.11'
-                            reuseNode false
-                            alwaysPull false
-                            args '-u root'
-                        }
-                    }
                     steps {
                         withVault(vault_settings) {
                             sh label: 'Run Optional "e2e" Test Suite', script: '''
                                 set -e
-
-                                # NOTE: temp print poetry config to confirm
-                                echo "Poetry config E2E:"
-                                poetry config --list
 
                                 make test-e2e-optional
                             '''
@@ -107,23 +91,10 @@ pipeline {
                     }
                 }
                 stage('notebook') {
-                    agent {
-                        docker {
-                            label 'regular-memory-node-c7'
-                            image 'python:3.11'
-                            reuseNode false
-                            alwaysPull false
-                            args '-u root'
-                        }
-                    }
                     steps {
                         withVault(vault_settings) {
-                            sh label: 'Run Optional "test" Test Suite', script: '''
+                            sh label: 'Run Optional "notebook" Test Suite', script: '''
                                 set -e
-
-                                # NOTE: temp print poetry config to confirm
-                                echo "Poetry config E2E:"
-                                poetry config --list
 
                                 make test-notebook-optional
                             '''
