@@ -84,7 +84,13 @@ pipeline {
             // stages {
                 stage('e2e') {
                     agent {
-                        label 'regular-memory-node-c7'
+                        docker {
+                            label 'regular-memory-node-c7'
+                            image 'python:3.11'
+                            reuseNode false
+                            alwaysPull false
+                            args '-u root'
+                        }
                     }
                     steps {
                         withVault(vault_settings) {
@@ -102,7 +108,13 @@ pipeline {
                 }
                 stage('notebook') {
                     agent {
-                        label 'regular-memory-node-c7'
+                        docker {
+                            label 'regular-memory-node-c7'
+                            image 'python:3.11'
+                            reuseNode false
+                            alwaysPull false
+                            args '-u root'
+                        }
                     }
                     steps {
                         withVault(vault_settings) {
