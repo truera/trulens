@@ -76,17 +76,21 @@ pipeline {
             }
         }
         stage('Test Suites') {
-            // NOTE: As of PR#1904, we run test suites sequentially to avoid a known race condition with Poetry installs (see issue linked above).
+            // NOTE: As of PR#1904, we now run test suites sequentially to avoid a known race condition with parallel Poetry installs (see issue linked above).
             // TODO: Consider re-enabling parallelism after the issue is resolved, or if we find a better workaround (e.g. provisioning identical, fully separated containers for each stage).
             stages {
                 stage('e2e') {
                     steps {
-                        withVault(vault_settings) {
-                            sh label: 'Run Optional "e2e" Test Suite', script: '''
-                                set -e
+                        // NOTE:  As of PR#1904, this is a temporary workaround to ensure we are still able to run both e2e and notebook stages even if one fails (while sequential).
+                        // We will revisit this once we re-enable parallelism.
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                            withVault(vault_settings) {
+                                sh label: 'Run Optional "e2e" Test Suite', script: '''
+                                    set -e
 
-                                make test-e2e-optional
-                            '''
+                                    make test-e2e-optional
+                                '''
+                            }
                         }
                     }
                 }
