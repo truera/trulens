@@ -25,7 +25,7 @@ pipeline {
         docker {
             label 'regular-memory-node-c7'
             image 'python:3.11'
-            reuseNode true
+            reuseNode false
             alwaysPull false
             args '-u root'
         }
