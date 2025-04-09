@@ -47,7 +47,7 @@ pipeline {
                     echo "Using $(python --version) ($(which python)) $(poetry -V)"
 
                     # NOTE: Increase timeout for HTTP requests to avoid issues with slow downloads
-	                # See: https://github.com/python-poetry/poetry/blob/master/src/poetry/utils/constants.py
+                    # See: https://github.com/python-poetry/poetry/blob/master/src/poetry/utils/constants.py
                     export POETRY_REQUESTS_TIMEOUT=120
 
                     poetry config virtualenvs.create false
