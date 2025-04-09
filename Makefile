@@ -276,7 +276,7 @@ build: $(POETRY_DIRS)
 
 build-with-zip-wheels:
 	# Increase timeout for http requests to avoid issues with slow downloads
-	POETRY_HTTP_TIMEOUT=1200
+	export POETRY_HTTP_TIMEOUT=1200
 
 	rm -rf ./dist \
 		&& rm -rf ./src/core/trulens/data/snowflake_stage_zips \
