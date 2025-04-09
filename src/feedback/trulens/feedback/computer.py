@@ -1,6 +1,11 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+import itertools
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from opentelemetry.trace import INVALID_SPAN_ID
+import pandas as pd
 from trulens.core.otel.instrument import OtelFeedbackComputationRecordingContext
 from trulens.experimental.otel_tracing.core.span import (
     set_span_attribute_safely,
@@ -130,3 +135,148 @@ def _compute_feedback(
                     f"{SpanAttributes.EVAL_ROOT.METADATA}.{k}",
                     v,
                 )
+
+
+@dataclass
+class Selector:
+    span_type: Optional[str] = None
+    span_name: Optional[str] = None
+    span_attribute: Optional[str] = None
+
+    def describes_same_spans(self, other: Selector) -> bool:
+        return (
+            self.span_type == other.span_type
+            and self.span_name == other.span_name
+        )
+
+
+def _group_kwargs_by_selectors(
+    kwarg_to_selectors: Dict[str, Selector],
+) -> List[List[str]]:
+    """Group kwargs by by whether their selectors describe the same spans.
+
+    Args:
+        kwarg_to_selectors: kwarg to selector mapping.
+
+    Returns:
+        List[List[str]]: List of list of kwargs. Each sublist contains kwargs that describe the same spans in their selector.
+    """
+    ret = []
+    for kwarg, selector in kwarg_to_selectors.items():
+        new_kwarg_group = True
+        for kwarg_group in ret:
+            if selector.describes_same_spans(
+                kwarg_to_selectors[kwarg_group[0]]
+            ):
+                kwarg_group.append(kwarg)
+                new_kwarg_group = False
+                break
+        if new_kwarg_group:
+            ret.append([kwarg])
+    return ret
+
+
+def compute_feedback_by_span_group(
+    events: pd.DataFrame,
+    feedback_name: str,
+    feedback_function: Callable[
+        [Any], Union[float, Tuple[float, Dict[str, Any]]]
+    ],
+    kwarg_to_selectors: Dict[str, Selector],
+) -> None:
+    kwarg_groups = _group_kwargs_by_selectors(kwarg_to_selectors)
+    error_messages = []
+    unflattened_inputs = {}
+    for _, row in events.iterrows():
+        record_attributes = row["record_attributes"]
+        span_id = row["trace"]["span_id"]
+        record_id = record_attributes[SpanAttributes.RECORD_ID]
+        span_groups = record_attributes[SpanAttributes.SPAN_GROUPS]
+        if span_groups is None:
+            span_groups = [None]
+        elif isinstance(span_groups, str):
+            span_groups = [span_groups]
+        for kwarg_group in kwarg_groups:
+            row_satisfies_kwarg_group_selector = True
+            if kwarg_to_selectors[kwarg_group[0]].span_name not in [
+                None,
+                record_attributes["name"],
+            ]:
+                row_satisfies_kwarg_group_selector = False
+            if kwarg_to_selectors[kwarg_group[0]].span_type not in [
+                None,
+                record_attributes[SpanAttributes.SPAN_TYPE],
+            ]:
+                row_satisfies_kwarg_group_selector = False
+            if row_satisfies_kwarg_group_selector:
+                valid = True
+                kwarg_group_inputs = {}
+                for kwarg in kwarg_group:
+                    span_attribute = kwarg_to_selectors[kwarg].span_attribute
+                    if span_attribute not in record_attributes:
+                        error_messages.append(
+                            # TODO(this_pr): give better error message.
+                            f"Span attribute {span_attribute} not found in record attributes for record id={record_id}, span_id={span_id}!"
+                        )
+                        valid = False
+                    else:
+                        kwarg_group_inputs[kwarg] = record_attributes[
+                            span_attribute
+                        ]
+                if valid:
+                    for span_group in span_groups:
+                        unflattened_inputs[(record_id, span_group)][
+                            kwarg_group
+                        ] = kwarg_group_inputs
+    # Pare down feedback function invocations.
+    if len(kwarg_groups) > 1:
+        keys_to_remove = []
+        for (
+            record_id,
+            span_group,
+        ), kwarg_group_to_inputs in unflattened_inputs.items():
+            valid = True
+            if len(kwarg_group_to_inputs) != len(kwarg_groups):
+                error_messages.append(
+                    # TODO(this_pr): give better error message.
+                    f"For record id {record_id} and span group {span_group}, missing input to feedback {feedback_name}!"
+                )
+                valid = False
+            len_kwarg_group_inputs = [
+                len(inputs) for inputs in kwarg_group_to_inputs.values()
+            ]
+            len_kwarg_group_inputs = sorted(len_kwarg_group_inputs)
+            if len_kwarg_group_inputs[-2] > 1:
+                error_messages.append(
+                    # TODO(this_pr): give better error message.
+                    f"For record id {record_id} and span group {span_group}, multiple possible inputs to feedback {feedback_name}!"
+                )
+                valid = False
+            if not valid:
+                keys_to_remove.append((record_id, span_group))
+        for key in keys_to_remove:
+            del unflattened_inputs[key]
+    # Flatten out all inputs to feedback function via cartesian product.
+    flattened_inputs = []
+    for (
+        record_id,
+        span_group,
+    ), kwarg_group_to_inputs in unflattened_inputs.items():
+        cartesian_product = itertools.product(kwarg_group_inputs.values())
+        for entry in cartesian_product:
+            res = {}
+            for curr in entry:
+                res.update(curr)
+            flattened_inputs.append(res)
+    # Invoke.
+    for inputs in flattened_inputs:
+        try:
+            call(feedback_function, feedback_name, inputs)
+        except Exception as e:
+            error_messages.append(str(e))
+    # Raise any error if necessary.
+    if error_messages:
+        error_message = "Found the following errors:\n"
+        for i, curr in enumerate(error_messages):
+            error_message += f"{i}. {curr}\n"
+        raise ValueError(error_message)
