@@ -84,7 +84,7 @@ pipeline {
             // stages {
                 stage('e2e') {
                     agent {
-                        label "e2e"
+                        label 'regular-memory-node-c7'
                     }
                     steps {
                         withVault(vault_settings) {
@@ -102,7 +102,7 @@ pipeline {
                 }
                 stage('notebook') {
                     agent {
-                        label "notebook"
+                        label 'regular-memory-node-c7'
                     }
                     steps {
                         withVault(vault_settings) {
