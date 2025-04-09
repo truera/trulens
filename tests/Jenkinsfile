@@ -35,7 +35,7 @@ pipeline {
         // NOTE: Increase timeout for HTTP requests to avoid issues with slow downloads
         // See: https://github.com/python-poetry/poetry/blob/master/src/poetry/utils/constants.py
         POETRY_REQUESTS_TIMEOUT=120
-        POETRY_REQUESTS_MAX_RETRIES=3
+        // POETRY_REQUESTS_MAX_RETRIES=3
     }
 
     options {
@@ -62,6 +62,7 @@ pipeline {
                     echo "env PREPARE:"
                     printenv
 
+                    poetry config requests.max-retries 3
                     poetry config virtualenvs.create false
 
                     # NOTE: temp print poetry config to confirm
