@@ -56,7 +56,8 @@ pipeline {
                     poetry env remove --all
 
                     poetry config requests.max-retries 3
-                    poetry config virtualenvs.create false
+                    poetry config virtualenvs.create true
+                    poetry config virtualenvs.in-project true
 
                     # NOTE: temp print poetry config to confirm
                     echo "Poetry config PREPARE:"
