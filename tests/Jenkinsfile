@@ -55,7 +55,8 @@ pipeline {
                     poetry config requests.max-retries 3
                     poetry config virtualenvs.create false
                     # NOTE: See known race condition issue: https://github.com/python-poetry/poetry/issues/8159
-                    poetry config installer.parallel false
+                    # TODO: temp re-allowing parallel installs to test if the issue is resolved
+                    # poetry config installer.parallel false
 
                     poetry run pip install pip==24.1.2
                     poetry run python --version
