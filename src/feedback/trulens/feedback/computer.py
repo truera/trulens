@@ -118,7 +118,7 @@ def compute_feedback_by_span_group(
     error_messages = []
     kwarg_groups = _group_kwargs_by_selectors(kwarg_to_selector)
     unflattened_inputs = _collect_inputs_from_events(
-        events, kwarg_groups, kwarg_to_selector, error_messages
+        events, kwarg_groups, kwarg_to_selector
     )
     record_id_to_record_roots = _map_record_id_to_record_roots(events)
     unflattened_inputs = _validate_unflattened_inputs(
@@ -168,7 +168,6 @@ def _collect_inputs_from_events(
     events: pd.DataFrame,
     kwarg_groups: List[Tuple[str]],
     kwarg_to_selector: Dict[str, Selector],
-    error_messages: List[str],
 ) -> Dict[Tuple[str, Optional[str]], Dict[Tuple, List[Dict[str, Any]]]]:
     """Collect inputs from events based on selectors.
 
@@ -176,7 +175,6 @@ def _collect_inputs_from_events(
         events: DataFrame containing trace events.
         kwarg_groups: List of list of kwargs. Each sublist contains kwargs that describe the same spans in their selector.
         kwarg_to_selector: Mapping from function kwargs to span selectors.
-        error_messages: List of error messages to append to if any errors occur during this function.
 
     Returns:
         Mapping from (record_id, span_group) to kwarg group to inputs.
@@ -185,7 +183,6 @@ def _collect_inputs_from_events(
 
     for _, row in events.iterrows():
         record_attributes = row["record_attributes"]
-        span_id = row["trace"]["span_id"]
         record_id = record_attributes[SpanAttributes.RECORD_ID]
 
         # Handle span groups.
@@ -207,9 +204,6 @@ def _collect_inputs_from_events(
                 for kwarg in kwarg_group:
                     span_attribute = kwarg_to_selector[kwarg].span_attribute
                     if span_attribute not in record_attributes:
-                        error_messages.append(
-                            f"Span attribute '{span_attribute}' not found in record_id={record_id}, span_id={span_id}"
-                        )
                         valid = False
                         break
                     else:
@@ -305,9 +299,6 @@ def _validate_unflattened_inputs(
             span_group,
         ), kwarg_group_to_inputs in unflattened_inputs.items():
             if len(kwarg_group_to_inputs) != len(kwarg_groups):
-                error_messages.append(
-                    f"record_id={record_id}, span_group={span_group} is missing required inputs for feedback '{feedback_name}'"
-                )
                 keys_to_remove.append((record_id, span_group))
                 continue
 
@@ -326,6 +317,7 @@ def _validate_unflattened_inputs(
 
     for record_id, span_group in unflattened_inputs:
         if record_id not in record_ids_with_record_roots:
+            # TODO(this_pr): go over all error messages.
             error_messages.append(
                 f"record_id={record_id} not found in events for feedback '{feedback_name}'"
             )

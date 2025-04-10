@@ -156,13 +156,13 @@ class TestOtelFeedbackComputation(OtelTestCase):
         compute_feedback_by_span_group(
             events,
             "blah1",
-            lambda a, b: 0.9 if a == b else 0.1,
+            lambda a1, b1: 0.9 if a1 == b1 else 0.1,
             {
-                "a": Selector(
+                "a1": Selector(
                     span_name="tests.unit.test_otel_feedback_computation._TestApp.call1",
                     span_attribute=f"{SpanAttributes.CALL.KWARGS}.a1",
                 ),
-                "b": Selector(
+                "b1": Selector(
                     span_name="tests.unit.test_otel_feedback_computation._TestApp.call1",
                     span_attribute=f"{SpanAttributes.CALL.KWARGS}.b1",
                 ),
