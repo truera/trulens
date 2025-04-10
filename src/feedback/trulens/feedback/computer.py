@@ -87,9 +87,9 @@ def _compute_feedback(
 
 @dataclass
 class Selector:
-    span_type: Optional[str] = None
+    span_attribute: str
     span_name: Optional[str] = None
-    span_attribute: Optional[str] = None
+    span_type: Optional[str] = None
 
     def describes_same_spans(self, other: Selector) -> bool:
         return (
