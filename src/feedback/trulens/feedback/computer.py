@@ -310,16 +310,14 @@ def _validate_unflattened_inputs(
                 group_sizes[-2] > 1
             ):  # If second largest group has multiple items then unclear how to combine.
                 error_messages.append(
-                    # TODO(this_pr): go over all error messages.
-                    f"record={record_id}, span_group={span_group} has ambiguous inputs for feedback '{feedback_name}'"
+                    f"feedback_name={feedback_name}, record={record_id}, span_group={span_group} has ambiguous inputs!"
                 )
                 keys_to_remove.append((record_id, span_group))
 
     for record_id, span_group in unflattened_inputs:
         if record_id not in record_ids_with_record_roots:
-            # TODO(this_pr): go over all error messages.
             error_messages.append(
-                f"record_id={record_id} not found in events for feedback '{feedback_name}'"
+                f"record_id={record_id} has no known record root!"
             )
             keys_to_remove.append((record_id, span_group))
 
@@ -389,7 +387,7 @@ def _run_feedback_on_inputs(
             )
         except Exception as e:
             error_messages.append(
-                f"Error computing feedback '{feedback_name}': {str(e)} for span group {span_group}"
+                f"feedback_name={feedback_name}, record={record_id}, span_group={span_group} had an error during computation:\n{str(e)}"
             )
 
 

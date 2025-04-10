@@ -150,9 +150,10 @@ class TestOtelFeedbackComputation(OtelTestCase):
             },
         )
         TruSession().force_flush()
-        # Compute feedback on record we just ingested.
         events = self._get_events()
-        # 1. Many attributes from one span that there are many of.
+        # Compute feedback on record we just ingested.
+        # Case 1. Two attributes from one function that has multiple (three)
+        #         invocations.
         compute_feedback_by_span_group(
             events,
             "blah1",
@@ -168,7 +169,7 @@ class TestOtelFeedbackComputation(OtelTestCase):
                 ),
             },
         )
-        # 2. Attributes across spans where span groups are used.
+        # Case 2. Attributes across functions with span groups.
         compute_feedback_by_span_group(
             events,
             "blah2",
@@ -184,7 +185,9 @@ class TestOtelFeedbackComputation(OtelTestCase):
                 ),
             },
         )
-        # 3. Attributes across spans where only one has more than one.
+        # Case 3. Attributes across functions with span groups where one
+        #         function is invoked once and the other multiple (three)
+        #         times.
         compute_feedback_by_span_group(
             events,
             "blah3",
@@ -200,9 +203,29 @@ class TestOtelFeedbackComputation(OtelTestCase):
                 ),
             },
         )
-        # 4. Attributes across spans where two have more than one (error case).
-        TruSession().force_flush()
+        # Case 4. Attributes across functions where both functions are invoked
+        #         more than once (error case).
+        with self.assertRaisesRegex(
+            ValueError,
+            "^Found the following errors:\n1. feedback_name=blah4, record=.*, span_group=30 has ambiguous inputs!$",
+        ):
+            compute_feedback_by_span_group(
+                events,
+                "blah4",
+                lambda a4, a0: 0.9 if 4 * a4 == a0 else 0.1,
+                {
+                    "a4": Selector(
+                        span_name="tests.unit.test_otel_feedback_computation._TestApp.call4",
+                        span_attribute=f"{SpanAttributes.CALL.KWARGS}.a4",
+                    ),
+                    "a0": Selector(
+                        span_name="tests.unit.test_otel_feedback_computation._TestApp.call0",
+                        span_attribute=f"{SpanAttributes.CALL.KWARGS}.a0",
+                    ),
+                },
+            )
         # Compare results to expected.
+        TruSession().force_flush()
         events = self._get_events()
         eval_root_record_attributes = [
             curr["record_attributes"]
@@ -210,32 +233,17 @@ class TestOtelFeedbackComputation(OtelTestCase):
             if curr["record_attributes"][SpanAttributes.SPAN_TYPE]
             == SpanAttributes.SpanType.EVAL_ROOT
         ]
-        for i in range(3):
+        expected_case_number = [1, 1, 1, 2, 2, 2, 3, 3, 3]
+        self.assertEqual(
+            len(expected_case_number),
+            len(eval_root_record_attributes),
+        )
+        for curr in eval_root_record_attributes:
+            self.assertEqual(curr[SpanAttributes.EVAL_ROOT.RESULT], 0.9)
+        for i in range(len(expected_case_number)):
             self.assertEqual(
                 eval_root_record_attributes[i][SpanAttributes.EVAL.METRIC_NAME],
-                "blah1",
-            )
-            self.assertEqual(
-                eval_root_record_attributes[i][SpanAttributes.EVAL_ROOT.RESULT],
-                0.9,
-            )
-        for i in range(3, 6):
-            self.assertEqual(
-                eval_root_record_attributes[i][SpanAttributes.EVAL.METRIC_NAME],
-                "blah2",
-            )
-            self.assertEqual(
-                eval_root_record_attributes[i][SpanAttributes.EVAL_ROOT.RESULT],
-                0.9,
-            )
-        for i in range(6, 9):
-            self.assertEqual(
-                eval_root_record_attributes[i][SpanAttributes.EVAL.METRIC_NAME],
-                "blah3",
-            )
-            self.assertEqual(
-                eval_root_record_attributes[i][SpanAttributes.EVAL_ROOT.RESULT],
-                0.9,
+                f"blah{expected_case_number[i]}",
             )
 
     def test__group_kwargs_by_selectors(self) -> None:
