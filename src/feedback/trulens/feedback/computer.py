@@ -169,7 +169,7 @@ def _collect_inputs_from_events(
     kwarg_groups: List[Tuple[str]],
     kwarg_to_selector: Dict[str, Selector],
     error_messages: List[str],
-) -> Dict[Tuple[str, Optional[str]], Dict[Tuple, Dict[str, Any]]]:
+) -> Dict[Tuple[str, Optional[str]], Dict[Tuple, List[Dict[str, Any]]]]:
     """Collect inputs from events based on selectors.
 
     Args:
@@ -181,7 +181,7 @@ def _collect_inputs_from_events(
     Returns:
         Mapping from (record_id, span_group) to kwarg group to inputs.
     """
-    ret = defaultdict(lambda: defaultdict(dict))
+    ret = defaultdict(lambda: defaultdict(list))
 
     for _, row in events.iterrows():
         record_attributes = row["record_attributes"]
@@ -197,7 +197,7 @@ def _collect_inputs_from_events(
 
         # Process each kwarg group.
         for kwarg_group in kwarg_groups:
-            # Check if row satisfies selector conditions
+            # Check if row satisfies selector conditions.
             selector = kwarg_to_selector[kwarg_group[0]]
             if _row_matches_selector(record_attributes, selector):
                 # Collect inputs for this kwarg group.
@@ -219,7 +219,7 @@ def _collect_inputs_from_events(
 
                 if valid:
                     for span_group in span_groups:
-                        ret[(record_id, span_group)][kwarg_group] = (
+                        ret[(record_id, span_group)][kwarg_group].append(
                             kwarg_group_inputs
                         )
 
@@ -279,13 +279,13 @@ def _row_matches_selector(
 
 def _validate_unflattened_inputs(
     unflattened_inputs: Dict[
-        Tuple[str, Optional[str]], Dict[Tuple, Dict[str, Any]]
+        Tuple[str, Optional[str]], Dict[Tuple, List[Dict[str, Any]]]
     ],
     kwarg_groups: List[Tuple[str]],
     record_ids_with_record_roots: List[str],
     feedback_name: str,
     error_messages: List[str],
-) -> Dict[Tuple[str, Optional[str]], Dict[Tuple, Dict[str, Any]]]:
+) -> Dict[Tuple[str, Optional[str]], Dict[Tuple, List[Dict[str, Any]]]]:
     """Validate collected inputs and remove invalid entries.
 
     Args:
@@ -306,7 +306,6 @@ def _validate_unflattened_inputs(
         ), kwarg_group_to_inputs in unflattened_inputs.items():
             if len(kwarg_group_to_inputs) != len(kwarg_groups):
                 error_messages.append(
-                    # TODO(this_pr): go over all error messages.
                     f"record_id={record_id}, span_group={span_group} is missing required inputs for feedback '{feedback_name}'"
                 )
                 keys_to_remove.append((record_id, span_group))
@@ -320,6 +319,7 @@ def _validate_unflattened_inputs(
                 group_sizes[-2] > 1
             ):  # If second largest group has multiple items then unclear how to combine.
                 error_messages.append(
+                    # TODO(this_pr): go over all error messages.
                     f"record={record_id}, span_group={span_group} has ambiguous inputs for feedback '{feedback_name}'"
                 )
                 keys_to_remove.append((record_id, span_group))
@@ -341,7 +341,7 @@ def _validate_unflattened_inputs(
 
 def _flatten_inputs(
     unflattened_inputs: Dict[
-        Tuple[str, Optional[str]], Dict[Tuple, Dict[str, Any]]
+        Tuple[str, Optional[str]], Dict[Tuple, List[Dict[str, Any]]]
     ],
 ) -> List[Tuple[str, Optional[str], Dict[str, Any]]]:
     """Flatten inputs via cartesian product.
