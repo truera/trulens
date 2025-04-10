@@ -54,9 +54,7 @@ pipeline {
 
                     poetry config requests.max-retries 3
                     poetry config virtualenvs.create false
-                    # NOTE: See known race condition issue: https://github.com/python-poetry/poetry/issues/8159
-                    # TODO: temp re-allowing parallel installs to test if the issue is resolved
-                    # poetry config installer.parallel false
+                    # NOTE: See known race condition issue: https://github.com/python-poetry/poetry/issues/8159, potential workaround: `poetry config installer.parallel false`
 
                     poetry run pip install pip==24.1.2
                     poetry run python --version
@@ -78,11 +76,11 @@ pipeline {
         }
         stage('Test Suites') {
             // NOTE: As of PR#1904, we now run test suites sequentially to avoid a known race condition with parallel Poetry installs (see issue linked above).
-            // TODO: Consider re-enabling parallelism after the issue is resolved, or if we find a better workaround (e.g. provisioning identical, fully separated containers for each stage).
+            // TODO: Re-enable parallel CI stages with fully separated nodes (SNOW-2034894).
             stages {
                 stage('e2e') {
                     steps {
-                        // NOTE:  As of PR#1904, this is a temporary workaround to ensure we are still able to run both e2e and notebook stages even if one fails (while sequential).
+                        // NOTE: As of PR#1904, this is a temporary workaround to ensure we are still able to run both e2e and notebook stages even if one fails (while sequential).
                         // We will revisit this once we re-enable parallelism.
                         catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                             withVault(vault_settings) {
