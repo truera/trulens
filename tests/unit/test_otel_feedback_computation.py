@@ -66,20 +66,20 @@ class _TestApp:
         return [a2, b2, c2]
 
     @instrument(attributes={SpanAttributes.SPAN_GROUPS: "span_group"})
+    def call3(
+        self, span_group: str, a3: int, b3: int, c3: int, num_call3_calls: int
+    ) -> List[int]:
+        for _ in range(num_call3_calls):
+            self.call0(span_group, 3 * a3, 3 * b3, 3 * c3)
+        return [a3, b3, c3]
+
+    @instrument(attributes={SpanAttributes.SPAN_GROUPS: "span_group"})
     def call4(
         self, span_group: str, a4: int, b4: int, c4: int, num_call3_calls: int
     ) -> List[int]:
         for _ in range(num_call3_calls):
             self.call0(span_group, 4 * a4, 4 * b4, 4 * c4)
         return [a4, b4, c4]
-
-    @instrument(attributes={SpanAttributes.SPAN_GROUPS: "span_group"})
-    def call5(
-        self, span_group: str, a5: int, b5: int, c5: int, num_call3_calls: int
-    ) -> List[int]:
-        for _ in range(num_call3_calls):
-            self.call0(span_group, 5 * a5, 5 * b5, 5 * c5)
-        return [a5, b5, c5]
 
     @instrument(span_type=SpanAttributes.SpanType.RECORD_ROOT)
     def query(self, question: str) -> str:
@@ -92,10 +92,10 @@ class _TestApp:
         self.call2("11", 11, 11, 11)
         self.call2("12", 12, 12, 12)
         # 3. Attributes across spans where only one has more than one.
-        self.call4("20", 20, 20, 20, 3)
+        self.call3("20", 20, 20, 20, 3)
         # 4. Attributes across spans where two have more than one (error case).
-        self.call5("30", 30, 30, 30, 1)
-        self.call5("30", 30, 30, 30, 1)
+        self.call4("30", 30, 30, 30, 1)
+        self.call4("30", 30, 30, 30, 1)
         # Return value is irrelevant.
         return "Kojikun"
 
@@ -185,6 +185,21 @@ class TestOtelFeedbackComputation(OtelTestCase):
             },
         )
         # 3. Attributes across spans where only one has more than one.
+        compute_feedback_by_span_group(
+            events,
+            "blah3",
+            lambda a3, a0: 0.9 if 3 * a3 == a0 else 0.1,
+            {
+                "a3": Selector(
+                    span_name="tests.unit.test_otel_feedback_computation._TestApp.call3",
+                    span_attribute=f"{SpanAttributes.CALL.KWARGS}.a3",
+                ),
+                "a0": Selector(
+                    span_name="tests.unit.test_otel_feedback_computation._TestApp.call0",
+                    span_attribute=f"{SpanAttributes.CALL.KWARGS}.a0",
+                ),
+            },
+        )
         # 4. Attributes across spans where two have more than one (error case).
         TruSession().force_flush()
         # Compare results to expected.
@@ -208,6 +223,15 @@ class TestOtelFeedbackComputation(OtelTestCase):
             self.assertEqual(
                 eval_root_record_attributes[i][SpanAttributes.EVAL.METRIC_NAME],
                 "blah2",
+            )
+            self.assertEqual(
+                eval_root_record_attributes[i][SpanAttributes.EVAL_ROOT.RESULT],
+                0.9,
+            )
+        for i in range(6, 9):
+            self.assertEqual(
+                eval_root_record_attributes[i][SpanAttributes.EVAL.METRIC_NAME],
+                "blah3",
             )
             self.assertEqual(
                 eval_root_record_attributes[i][SpanAttributes.EVAL_ROOT.RESULT],
