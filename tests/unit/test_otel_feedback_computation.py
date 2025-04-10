@@ -152,38 +152,24 @@ class TestOtelFeedbackComputation(OtelTestCase):
         TruSession().force_flush()
         events = self._get_events()
         # Compute feedback on record we just ingested.
+        get_selector = lambda s: Selector(
+            span_name=f"tests.unit.test_otel_feedback_computation._TestApp.call{s[1]}",
+            span_attribute=f"{SpanAttributes.CALL.KWARGS}.{s}",
+        )
         # Case 1. Two attributes from one function that has multiple (three)
         #         invocations.
         compute_feedback_by_span_group(
             events,
             "blah1",
             lambda a1, b1: 0.9 if a1 == b1 else 0.1,
-            {
-                "a1": Selector(
-                    span_name="tests.unit.test_otel_feedback_computation._TestApp.call1",
-                    span_attribute=f"{SpanAttributes.CALL.KWARGS}.a1",
-                ),
-                "b1": Selector(
-                    span_name="tests.unit.test_otel_feedback_computation._TestApp.call1",
-                    span_attribute=f"{SpanAttributes.CALL.KWARGS}.b1",
-                ),
-            },
+            {"a1": get_selector("a1"), "b1": get_selector("b1")},
         )
         # Case 2. Attributes across functions with span groups.
         compute_feedback_by_span_group(
             events,
             "blah2",
             lambda a2, a0: 0.9 if 2 * a2 == a0 else 0.1,
-            {
-                "a2": Selector(
-                    span_name="tests.unit.test_otel_feedback_computation._TestApp.call2",
-                    span_attribute=f"{SpanAttributes.CALL.KWARGS}.a2",
-                ),
-                "a0": Selector(
-                    span_name="tests.unit.test_otel_feedback_computation._TestApp.call0",
-                    span_attribute=f"{SpanAttributes.CALL.KWARGS}.a0",
-                ),
-            },
+            {"a2": get_selector("a2"), "a0": get_selector("a0")},
         )
         # Case 3. Attributes across functions with span groups where one
         #         function is invoked once and the other multiple (three)
@@ -192,16 +178,7 @@ class TestOtelFeedbackComputation(OtelTestCase):
             events,
             "blah3",
             lambda a3, a0: 0.9 if 3 * a3 == a0 else 0.1,
-            {
-                "a3": Selector(
-                    span_name="tests.unit.test_otel_feedback_computation._TestApp.call3",
-                    span_attribute=f"{SpanAttributes.CALL.KWARGS}.a3",
-                ),
-                "a0": Selector(
-                    span_name="tests.unit.test_otel_feedback_computation._TestApp.call0",
-                    span_attribute=f"{SpanAttributes.CALL.KWARGS}.a0",
-                ),
-            },
+            {"a3": get_selector("a3"), "a0": get_selector("a0")},
         )
         # Case 4. Attributes across functions where both functions are invoked
         #         more than once (error case).
@@ -213,16 +190,7 @@ class TestOtelFeedbackComputation(OtelTestCase):
                 events,
                 "blah4",
                 lambda a4, a0: 0.9 if 4 * a4 == a0 else 0.1,
-                {
-                    "a4": Selector(
-                        span_name="tests.unit.test_otel_feedback_computation._TestApp.call4",
-                        span_attribute=f"{SpanAttributes.CALL.KWARGS}.a4",
-                    ),
-                    "a0": Selector(
-                        span_name="tests.unit.test_otel_feedback_computation._TestApp.call0",
-                        span_attribute=f"{SpanAttributes.CALL.KWARGS}.a0",
-                    ),
-                },
+                {"a4": get_selector("a4"), "a0": get_selector("a0")},
             )
         # Compare results to expected.
         TruSession().force_flush()
