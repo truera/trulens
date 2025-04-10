@@ -54,7 +54,6 @@ pipeline {
 
                     poetry config requests.max-retries 3
                     poetry config virtualenvs.create false
-                    # NOTE: See known race condition issue: https://github.com/python-poetry/poetry/issues/8159, potential workaround: `poetry config installer.parallel false`
 
                     poetry run pip install pip==24.1.2
                     poetry run python --version
@@ -75,8 +74,9 @@ pipeline {
             }
         }
         stage('Test Suites') {
-            // NOTE: As of PR#1904, we now run test suites sequentially to avoid a known race condition with parallel Poetry installs (see issue linked above).
-            // TODO: Re-enable parallel CI stages with fully separated nodes (SNOW-2034894).
+            // NOTE: As of PR#1904, we now run test suites sequentially to avoid a known race condition with parallel CI Poetry installs (https://github.com/python-poetry/poetry/issues/8159).
+            // NOTE: Another proposed workaround is to set `poetry config installer.parallel false`, but this would (1) slow down all CI jobs and (2) does not fix the issue with parallel CI stages.
+            // TODO(SNOW-2034894): Re-enable parallel CI stages with fully separated nodes.
             stages {
                 stage('e2e') {
                     steps {
