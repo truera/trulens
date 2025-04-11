@@ -885,7 +885,7 @@ class TestProviders(TestCase):
         Check that LangChain feedback functions produce values within the expected range
         and adhere to the expected format.
         """
-        from langchain.chat_models import ChatOpenAI
+        from langchain_openai import ChatOpenAI
         from trulens.providers.langchain import Langchain
 
         llm = ChatOpenAI(model_name="gpt-4o", temperature=0)
