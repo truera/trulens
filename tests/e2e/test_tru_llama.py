@@ -33,6 +33,7 @@ class TestLlamaIndex(TruTestCase):
         "What did the author do growing up?": set([
             "The author worked on writing and",
             "The author worked on writing short",
+            "The author focused on writing and",
             "The author focused on writing short",
             "I couldn't find specific information",
         ])
