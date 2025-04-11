@@ -226,7 +226,7 @@ test-unit-snowflake: env-tests-snowflake
 	SKIP_BASIC_TESTS=1 TEST_SNOWFLAKE=true make test-unit
 
 test-%-all: env-tests env-tests-optional env-tests-snowflake
-	TEST_OPTIONAL=true TEST_SNOWFLAKE=true make test-$*
+	TEST_OPTIONAL=true TEST_SNOWFLAKE=true TEST_HUGGINGFACE=true make test-$*
 
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline
 # frequently.
