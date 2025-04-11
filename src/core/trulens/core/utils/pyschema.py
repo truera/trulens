@@ -1,9 +1,9 @@
 """
 # Serialization of Python objects
 
-In order to serialize (and optionally deserialize) python entities while still
+In order to serialize (and optionally deserialize) Python entities while still
 being able to inspect them in their serialized form, we employ several storage
-classes that mimic basic python entities:
+classes that mimic basic Python entities:
 
 | Serializable representation | Python entity |
 | --- | --- |
@@ -171,7 +171,7 @@ class Module(serial_utils.SerialModel):
 
 class Class(serial_utils.SerialModel):
     """
-    A python class. Should be enough to deserialize the constructor. Also
+    A Python class. Should be enough to deserialize the constructor. Also
     includes bases so that we can query subtyping relationships without
     deserializing the class first.
     """
@@ -210,7 +210,7 @@ class Class(serial_utils.SerialModel):
             print(e)
             raise ImportError(
                 f"Class {self} is not importable. "
-                "If you are defining custom feedback function implementations, make sure they can be imported by python scripts. "
+                "If you are defining custom feedback function implementations, make sure they can be imported by Python scripts. "
                 "If you defined a function in a notebook, it will not be importable."
             )
 
@@ -547,7 +547,7 @@ class FunctionOrMethod(serial_utils.SerialModel):
 
 class Method(FunctionOrMethod):
     """
-    A python method. A method belongs to some class in some module and must have
+    A Python method. A method belongs to some class in some module and must have
     a pre-bound self object. The location of the method is encoded in `obj`
     alongside self. If obj is Obj with init_bindings, this method should be
     deserializable.
@@ -595,7 +595,7 @@ def object_module(obj):
 
 class Function(FunctionOrMethod):
     """
-    A python function. Could be a static method inside a class (not instance of
+    A Python function. Could be a static method inside a class (not instance of
     the class).
     """
 
@@ -643,7 +643,7 @@ class Function(FunctionOrMethod):
             except Exception:
                 raise ImportError(
                     f"Function {self} is not importable. "
-                    "If you are defining custom feedback function implementations, make sure they can be imported by python scripts. "
+                    "If you are defining custom feedback function implementations, make sure they can be imported by Python scripts. "
                     "If you defined a function in a notebook, it will not be importable."
                 )
 

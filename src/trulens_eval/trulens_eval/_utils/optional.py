@@ -43,7 +43,7 @@ REQUIREMENT_PROVIDER_CORTEX = format_import_errors(
 )
 REQUIREMENT_PROVIDER_HUGGINGFACE = format_import_errors(
     "trulens-providers-huggingface",
-    purpose="evaluating feedback using Huggingface",
+    purpose="evaluating feedback using HuggingFace",
 )
 REQUIREMENT_PROVIDER_LANGCHAIN = format_import_errors(
     "trulens-providers-langchain", purpose="evaluating feedback using LangChain"

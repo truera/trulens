@@ -8,10 +8,14 @@ from snowflake.snowpark import AsyncJob
 from snowflake.snowpark import Session
 from snowflake.snowpark.row import Row
 from trulens.connectors.snowflake.dao.enums import SourceType
+from trulens.connectors.snowflake.dao.sql_utils import (
+    clean_up_snowflake_identifier,
+)
 from trulens.connectors.snowflake.dao.sql_utils import execute_query
 from trulens.core.run import SUPPORTED_ENTRY_TYPES
 from trulens.core.run import SupportedEntryType
 from trulens.core.utils import json as json_utils
+from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
@@ -103,9 +107,8 @@ class RunDao:
 
         run_metadata_dict = {}
 
-        run_metadata_dict["labels"] = [
-            label
-        ]  # only accepting a single label for now
+        run_metadata_dict["labels"] = [label] if label else []
+        # only accepting a single label for now
 
         run_metadata_dict["llm_judge_name"] = (
             llm_judge_name if llm_judge_name else DEFAULT_LLM_JUDGE_NAME
@@ -547,8 +550,12 @@ class RunDao:
             result_df = self.session.sql(
                 query,
                 params=[
-                    self.session.get_current_database()[1:-1],
-                    self.session.get_current_schema()[1:-1],
+                    clean_up_snowflake_identifier(
+                        self.session.get_current_database()
+                    ),
+                    clean_up_snowflake_identifier(
+                        self.session.get_current_schema()
+                    ),
                     object_name,
                     run_name,
                     span_type,
@@ -563,6 +570,65 @@ class RunDao:
         except Exception as e:
             logger.exception(
                 f"Error encountered during reading record count from event table: {e}."
+            )
+            raise
+
+    def read_latest_record_root_timestamp_in_ms(
+        self, object_name: str, run_name: str
+    ) -> Optional[int]:
+        """
+        Retrieve the timestamp of the latest record_root from the event table.
+
+        Args:
+            object_name: The name of the managing object.
+            run_name: The unique name of the run.
+
+        Returns:
+            The timestamp of the latest record_root, or None if no records are found.
+        """
+        query = f"""
+            SELECT
+                MAX(TIMESTAMP) AS LATEST_TIMESTAMP
+            FROM
+                table(snowflake.local.GET_AI_OBSERVABILITY_EVENTS(
+                    ?,
+                    ?,
+                    ?,
+                    'EXTERNAL AGENT'
+                ))
+            WHERE
+                RECORD_ATTRIBUTES:"snow.ai.observability.run.name" = ? AND
+                RECORD_ATTRIBUTES:"{SpanAttributes.SPAN_TYPE}" = '{SpanAttributes.SpanType.RECORD_ROOT}';
+        """
+
+        try:
+            result_df = self.session.sql(
+                query,
+                params=[
+                    clean_up_snowflake_identifier(
+                        self.session.get_current_database()
+                    ),
+                    clean_up_snowflake_identifier(
+                        self.session.get_current_schema()
+                    ),
+                    object_name,
+                    run_name,
+                ],
+            ).to_pandas()
+
+            if "LATEST_TIMESTAMP" in result_df.columns and not result_df.empty:
+                latest_timestamp = result_df["LATEST_TIMESTAMP"].iloc[0]
+
+                return (
+                    int(pd.Timestamp(latest_timestamp).timestamp() * 1000)
+                    if latest_timestamp is not None
+                    and not pd.isna(latest_timestamp)
+                    else None
+                )
+            return None
+        except Exception as e:
+            logger.exception(
+                f"Error encountered during reading latest record_root timestamp from event table: {e}."
             )
             raise
 

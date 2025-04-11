@@ -271,7 +271,7 @@ No standards are currently recommended.
 
 ## Markdown
 
-- Always indicate code type in code blocks as in python in
+- Always indicate code type in code blocks as in Python in
 
     ````markdown
     ```python
@@ -288,7 +288,7 @@ No standards are currently recommended.
     a = 42
     ```
 
-  - Typescript
+  - TypeScript
     ```typescript
     var a = 42;
     ```
@@ -329,10 +329,10 @@ See `tests/unit`.
 
 See `tests/unit/static`.
 
-Static tests run on multiple versions of python: `3.8`, `3.9`, `3.10`, `3.11`,
-and being a subset of unit tests, are also run on latest supported python,
+Static tests run on multiple versions of Python: `3.8`, `3.9`, `3.10`, `3.11`,
+and being a subset of unit tests, are also run on latest supported Python,
 `3.12` . Some tests that require all optional packages to be installed run only
-on `3.11` as the latter python version does not support some of those optional
+on `3.11` as the latter Python version does not support some of those optional
 packages.
 
 ### Test pipelines

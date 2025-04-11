@@ -33,7 +33,7 @@ from trulens.providers.huggingface import endpoint as huggingface_endpoint
 
 logger = logging.getLogger(__name__)
 
-# Cannot put these inside Huggingface since it interferes with pydantic.BaseModel.
+# Cannot put these inside HuggingFace since it interferes with pydantic.BaseModel.
 
 HUGS_SENTIMENT_API_URL = "https://api-inference.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment"
 HUGS_TOXIC_API_URL = (
@@ -104,7 +104,7 @@ def _tci(func):  # "typecheck inputs"
 
 class HuggingfaceBase(core_provider.Provider):
     """
-    Out of the box feedback functions calling Huggingface.
+    Out of the box feedback functions calling HuggingFace.
     """
 
     @abstractmethod
@@ -141,7 +141,7 @@ class HuggingfaceBase(core_provider.Provider):
     # TODEP
     @_tci
     def language_match(self, text1: str, text2: str) -> Tuple[float, Dict]:
-        """Uses Huggingface's papluca/xlm-roberta-base-language-detection model.
+        """Uses HuggingFace's papluca/xlm-roberta-base-language-detection model.
 
         A function that uses language detection on `text1` and `text2` and
         calculates the probit difference on the language detected on text1. The
@@ -243,7 +243,7 @@ class HuggingfaceBase(core_provider.Provider):
     @_tci
     def context_relevance(self, prompt: str, context: str) -> float:
         """
-        Uses Huggingface's truera/context_relevance model, a
+        Uses HuggingFace's truera/context_relevance model, a
         model that uses computes the relevance of a given context to the prompt.
         The model can be found at https://huggingface.co/truera/context_relevance.
 
@@ -278,7 +278,7 @@ class HuggingfaceBase(core_provider.Provider):
     @_tci
     def positive_sentiment(self, text: str) -> float:
         """
-        Uses Huggingface's cardiffnlp/twitter-roberta-base-sentiment model. A
+        Uses HuggingFace's cardiffnlp/twitter-roberta-base-sentiment model. A
         function that uses a sentiment classifier on `text`.
 
         Example:
@@ -305,7 +305,7 @@ class HuggingfaceBase(core_provider.Provider):
     def toxic(self, text: str) -> float:
         """A function that uses a toxic comment classifier on `text`.
 
-        Uses Huggingface's martin-ha/toxic-comment-model model.
+        Uses HuggingFace's martin-ha/toxic-comment-model model.
 
         Example:
             ```python
@@ -334,7 +334,7 @@ class HuggingfaceBase(core_provider.Provider):
         """A groundedness measure best used for summarized premise against
         simple hypothesis.
 
-        This Huggingface implementation uses NLI.
+        This HuggingFace implementation uses NLI.
 
         Args:
             premise (str): NLI Premise hypothesis (str): NLI Hypothesis
@@ -458,7 +458,7 @@ class HuggingfaceBase(core_provider.Provider):
 
 class Huggingface(HuggingfaceBase):
     """
-    Out of the box feedback functions calling Huggingface APIs.
+    Out of the box feedback functions calling HuggingFace APIs.
     """
 
     endpoint: (
@@ -474,7 +474,7 @@ class Huggingface(HuggingfaceBase):
         # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
-        """Create a Huggingface Provider with out of the box feedback functions.
+        """Create a HuggingFace Provider with out of the box feedback functions.
 
         Example:
             ```python
@@ -580,7 +580,7 @@ class Huggingface(HuggingfaceBase):
             hf_response = [hf_response]
         if not isinstance(hf_response, list):
             raise ValueError(
-                f"Unexpected response from Huggingface API: {hf_response}"
+                f"Unexpected response from HuggingFace API: {hf_response}"
             )
         # Iterate through the entities and extract scores for "NAME" entities
         for entity in hf_response:
@@ -617,7 +617,7 @@ class Huggingface(HuggingfaceBase):
         # Check if the response is a list
         if not isinstance(hf_response, list):
             raise ValueError(
-                "Unexpected response from Huggingface API: response should be a list or a dictionary"
+                "Unexpected response from HuggingFace API: response should be a list or a dictionary"
             )
         # Iterate through the entities and extract "word" and "score" for "NAME" entities
         for _, entity in enumerate(hf_response):
@@ -681,27 +681,27 @@ class HuggingfaceLocal(HuggingfaceBase):
 
     def _language_scores_endpoint(self, text: str) -> Dict[str, float]:
         raise NotImplementedError(
-            "Currently not implemented in for local Huggingface!"
+            "Currently not implemented in for local HuggingFace!"
         )
 
     def _context_relevance_endpoint(self, input: str) -> float:
         raise NotImplementedError(
-            "Currently not implemented in for local Huggingface!"
+            "Currently not implemented in for local HuggingFace!"
         )
 
     def _positive_sentiment_endpoint(self, input: str) -> float:
         raise NotImplementedError(
-            "Currently not implemented in for local Huggingface!"
+            "Currently not implemented in for local HuggingFace!"
         )
 
     def _toxic_endpoint(self, input: str) -> float:
         raise NotImplementedError(
-            "Currently not implemented in for local Huggingface!"
+            "Currently not implemented in for local HuggingFace!"
         )
 
     def _summarized_groundedness_endpoint(self, input: str) -> float:
         raise NotImplementedError(
-            "Currently not implemented in for local Huggingface!"
+            "Currently not implemented in for local HuggingFace!"
         )
 
     # TODEP
@@ -720,25 +720,25 @@ class HuggingfaceLocal(HuggingfaceBase):
 
     def _pii_detection_endpoint(self, input: str) -> List[float]:
         raise NotImplementedError(
-            "Currently not implemented in for local Huggingface!"
+            "Currently not implemented in for local HuggingFace!"
         )
 
     def _pii_detection_with_cot_reasons_endpoint(
         self, input: str
     ) -> Tuple[List[float], Dict[str, str]]:
         raise NotImplementedError(
-            "Currently not implemented in for local Huggingface!"
+            "Currently not implemented in for local HuggingFace!"
         )
 
     def _hallucination_evaluator_endpoint(self, input: str) -> float:
         raise NotImplementedError(
-            "Currently not implemented in for local Huggingface!"
+            "Currently not implemented in for local HuggingFace!"
         )
 
 
 class Dummy(Huggingface):
-    """A version of a Huggingface provider that uses a dummy endpoint and thus
-    produces fake results without making any networked calls to huggingface."""
+    """A version of a HuggingFace provider that uses a dummy endpoint and thus
+    produces fake results without making any networked calls to HuggingFace."""
 
     def __init__(
         self,

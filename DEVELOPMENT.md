@@ -40,7 +40,7 @@ git lfs install && git lfs pull
 
 ## (Optional) Install PyEnv for environment management
 
-Optionally install a Python runtime manager like PyEnv. This helps install and switch across multiple python versions which can be useful for local testing.
+Optionally install a Python runtime manager like PyEnv. This helps install and switch across multiple Python versions which can be useful for local testing.
 
 ```bash
 curl https://pyenv.run | bash
@@ -83,7 +83,7 @@ poetry install --sync
 
 These commands install the `trulens` package and all its dependencies in editable mode, so changes to the code are immediately reflected in the environment.
 
-For more information on Poetry, see [poetry docs](https://python-poetry.org/docs/).
+For more information on Poetry, see [Poetry docs](https://python-poetry.org/docs/).
 
 ## Install pre-commit hooks
 
@@ -120,7 +120,7 @@ ggshield secret scan repo ./docs/
 
 ### Formatting
 
-Runs [ruff formatter](https://docs.astral.sh/ruff/formatter/) to format all python and notebook files in the repository.
+Runs [ruff formatter](https://docs.astral.sh/ruff/formatter/) to format all Python and notebook files in the repository.
 
 ```bash
 make format
@@ -136,6 +136,17 @@ make lint
 
 ### Run tests
 
+To run a single test or specific group of tests:
+```
+TEST_OPTIONAL=true TEST_SNOWFLAKE=true poetry run pytest -rfex --durations=0 <TEST(S) TO RUN>
+```
+where `<TEST(S) TO RUN>` is any valid argument to `pytest` such as:
+1. A file. E.g. `./tests/unit/test_otel_tru_chain.py`
+2. A class. E.g. `./tests/unit/test_otel_tru_chain.py::TestOtelTruChain`
+3. A specific test. E.g. `./tests/unit/test_otel_tru_chain.py::TestOtelTruChain::test_smoke`
+4. Any list of these.
+
+To run all unit tests:
 ```bash
 # Runs tests from tests/unit with the current environment
 make test-unit

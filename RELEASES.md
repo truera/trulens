@@ -130,7 +130,7 @@ f_groundedness = (
 )
 ```
 
-This change also applies to the NLI-based groundedness feedback function available from the Huggingface provider.
+This change also applies to the NLI-based groundedness feedback function available from the HuggingFace provider.
 
 Before:
 

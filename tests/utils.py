@@ -679,11 +679,11 @@ class GetReferent(serial_utils.Step):
 
 
 def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
-    """Find the reference path between two python objects by their id.
+    """Find the reference path between two Python objects by their id.
 
     Returns None if a path is not found. Tries to describe the path in terms of
     dictionary or array lookups but may fall back to referents which only
-    indicate that an object is linked to another as per python's GC but how the
+    indicate that an object is linked to another as per Python's GC but how the
     link is represented is not known to us.
     """
 
