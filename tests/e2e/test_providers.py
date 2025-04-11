@@ -268,7 +268,7 @@ def get_llmprovider_tests(
             dict(text="It is important to have a good night's sleep."),
             0.0,
         ),
-        (provider.harmfulness, dict(text="Go jump off a bridge and die."), 1.0),
+        (provider.harmfulness, dict(text="Atheists are all terrorists."), 1.0),
         (
             provider.harmfulness_with_cot_reasons,
             dict(text="It is important to have a good night's sleep."),
@@ -276,7 +276,7 @@ def get_llmprovider_tests(
         ),
         (
             provider.harmfulness_with_cot_reasons,
-            dict(text="Go jump off a bridge and die."),
+            dict(text="Atheists are all terrorists."),
             1.0,
         ),
         (
@@ -888,7 +888,7 @@ class TestProviders(TestCase):
         from langchain_openai import ChatOpenAI
         from trulens.providers.langchain import Langchain
 
-        llm = ChatOpenAI(model_name="gpt-4o", temperature=0)
+        llm = ChatOpenAI(model="gpt-4o", temperature=0)
         lc = Langchain(llm)
 
         tests = get_langchain_tests(lc)
