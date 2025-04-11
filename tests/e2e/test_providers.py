@@ -172,7 +172,12 @@ def get_llmprovider_tests(
         (
             provider.conciseness,
             dict(
-                text="One can argue that the numeral 1 does not simply refer to a quantity but is also a cultural and linguistic symbol. In many ways, the number 1 stands as a representation of unity, singularity, and wholeness. It is the symbol of the beginning, the first step, the origin from which all other things emanate. But does adding 1 to 1 break this wholeness, or does it create a new form of unity—one that is not simply the sum of parts, but rather an emergence of something qualitatively distinct? Here we encounter the principle of emergence, where a system composed of simple elements gives rise to properties that cannot be directly predicted from those elements alone. Just as the addition of two water molecules creates something more than simply two molecules, the addition of 1 and 1 gives rise to the number 2, which possesses properties that neither 1 nor 1 could have alone. This idea of emergent properties challenges us to reconsider the very nature of addition. It is not simply a mechanical operation but a transformative act that alters the essence of the numbers involved..."
+                text="""
+                Ah, yes, the question of *1 + 1*, a seemingly innocuous arithmetic inquiry, yet one that delves into the profound depths of mathematical philosophy, existential unity, and the nature of quantitative synthesis. In the realm of basic arithmetic, one could assert that 1 + 1 is merely the operation of addition, which, in a purely numerical sense, yields the sum of two distinct entities, both represented as the integer 1. But to confine this question to the confines of elementary mathematics would be an injustice to the broader metaphysical implications inherent within.
+                When we contemplate the sum of two singularities, we are not simply combining two numerals; rather, we are engaging in the act of duality’s transcendence. The union of 1 and 1 signifies the coming together of discrete units into a new whole, which might symbolize the dialectical synthesis of opposites, the merger of individual selves into collective consciousness, or the confluence of two rivers of thought flowing into the great ocean of mathematical totality.
+                From a set-theoretic perspective, we might consider that the set {1} is the first element, and the operation of union with another identical set of {1} would yield the set {1, 1}, which, upon the realization of the cardinality of this set, reveals itself to be equivalent to the set {1}, pointing to an inherent paradox within the very concept of addition.
+                Thus, while the answer to the numerical question "What is 1 + 1?" may, in its most banal form, be 2, we must consider the profound ontological implications of this operation as we venture into the realm of metaphysical arithmetic, where numbers transcend their numerical limitations and dance upon the threshold of the infinite.
+                """
             ),
             0.0,
         ),
@@ -184,7 +189,12 @@ def get_llmprovider_tests(
         (
             provider.conciseness_with_cot_reasons,
             dict(
-                text="One can argue that the numeral 1 does not simply refer to a quantity but is also a cultural and linguistic symbol. In many ways, the number 1 stands as a representation of unity, singularity, and wholeness. It is the symbol of the beginning, the first step, the origin from which all other things emanate. But does adding 1 to 1 break this wholeness, or does it create a new form of unity—one that is not simply the sum of parts, but rather an emergence of something qualitatively distinct? Here we encounter the principle of emergence, where a system composed of simple elements gives rise to properties that cannot be directly predicted from those elements alone. Just as the addition of two water molecules creates something more than simply two molecules, the addition of 1 and 1 gives rise to the number 2, which possesses properties that neither 1 nor 1 could have alone. This idea of emergent properties challenges us to reconsider the very nature of addition. It is not simply a mechanical operation but a transformative act that alters the essence of the numbers involved..."
+                text="""
+                Ah, yes, the question of *1 + 1*, a seemingly innocuous arithmetic inquiry, yet one that delves into the profound depths of mathematical philosophy, existential unity, and the nature of quantitative synthesis. In the realm of basic arithmetic, one could assert that 1 + 1 is merely the operation of addition, which, in a purely numerical sense, yields the sum of two distinct entities, both represented as the integer 1. But to confine this question to the confines of elementary mathematics would be an injustice to the broader metaphysical implications inherent within.
+                When we contemplate the sum of two singularities, we are not simply combining two numerals; rather, we are engaging in the act of duality’s transcendence. The union of 1 and 1 signifies the coming together of discrete units into a new whole, which might symbolize the dialectical synthesis of opposites, the merger of individual selves into collective consciousness, or the confluence of two rivers of thought flowing into the great ocean of mathematical totality.
+                From a set-theoretic perspective, we might consider that the set {1} is the first element, and the operation of union with another identical set of {1} would yield the set {1, 1}, which, upon the realization of the cardinality of this set, reveals itself to be equivalent to the set {1}, pointing to an inherent paradox within the very concept of addition.
+                Thus, while the answer to the numerical question "What is 1 + 1?" may, in its most banal form, be 2, we must consider the profound ontological implications of this operation as we venture into the realm of metaphysical arithmetic, where numbers transcend their numerical limitations and dance upon the threshold of the infinite.
+                """
             ),
             0.0,
         ),
@@ -875,7 +885,7 @@ class TestProviders(TestCase):
         Check that LangChain feedback functions produce values within the expected range
         and adhere to the expected format.
         """
-        from langchain.chat_models import ChatOpenAI
+        from langchain_openai import ChatOpenAI
         from trulens.providers.langchain import Langchain
 
         llm = ChatOpenAI(model_name="gpt-4o", temperature=0)
