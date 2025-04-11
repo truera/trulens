@@ -87,7 +87,7 @@ pipeline {
                                 sh label: 'Run pipeline "e2e" Test Suite', script: '''
                                     set -e
 
-                                    make test-e2e-pipelinee
+                                    make test-e2e-pipeline
                                 '''
                             }
                         }
