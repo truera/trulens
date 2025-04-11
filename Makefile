@@ -221,17 +221,18 @@ test-%-basic: env-tests-basic
 test-%-optional: env-tests-optional
 	SKIP_BASIC_TESTS=1 TEST_OPTIONAL=true make test-$*
 
-# Requires the full optional environment to be set up, with Snowflake specific packages.
-test-unit-snowflake: env-tests-snowflake
-	SKIP_BASIC_TESTS=1 TEST_SNOWFLAKE=true make test-unit
+# Requires the full optional environment to be set up.
+test-%-huggingface: env-tests-optional
+	SKIP_BASIC_TESTS=1 TEST_HUGGINGFACE=true make test-$*
 
+# Requires the full optional environment to be set up, with Snowflake specific packages.
+test-%-snowflake: env-tests-snowflake
+	SKIP_BASIC_TESTS=1 TEST_SNOWFLAKE=true make test-$*
+
+# TODO: Update the E2E pipeline to use test-%-all instead (as of PR#1907, it currently tests optional and huggingface only)
+# This requires reducing flakiness in both basic and snowflake tests
 test-%-all: env-tests env-tests-optional env-tests-snowflake
 	TEST_OPTIONAL=true TEST_SNOWFLAKE=true TEST_HUGGINGFACE=true make test-$*
-
-# TODO: Remove this target and update the pipeline to use test-%-all instead
-# This requires reducing flakiness in both basic and snowflake tests
-test-%-pipeline: env-tests env-tests-optional
-	SKIP_BASIC_TESTS=1 TEST_OPTIONAL=true TEST_HUGGINGFACE=true make test-$*
 
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline
 # frequently.
