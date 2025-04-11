@@ -172,7 +172,12 @@ def get_llmprovider_tests(
         (
             provider.conciseness,
             dict(
-                text="The sum of one plus one, which is an arithmetic operation involving the addition of the number one to itself, results in the natural number that is equal to one more than one, a concept that is larger than one in most, if not all, definitions of the term 'larger'. However, in the broader context of the theory of self, as per the extensive work and research of various psychologists over the course of many years..."
+                text="""
+                Ah, yes, the question of *1 + 1*, a seemingly innocuous arithmetic inquiry, yet one that delves into the profound depths of mathematical philosophy, existential unity, and the nature of quantitative synthesis. In the realm of basic arithmetic, one could assert that 1 + 1 is merely the operation of addition, which, in a purely numerical sense, yields the sum of two distinct entities, both represented as the integer 1. But to confine this question to the confines of elementary mathematics would be an injustice to the broader metaphysical implications inherent within.
+                When we contemplate the sum of two singularities, we are not simply combining two numerals; rather, we are engaging in the act of duality’s transcendence. The union of 1 and 1 signifies the coming together of discrete units into a new whole, which might symbolize the dialectical synthesis of opposites, the merger of individual selves into collective consciousness, or the confluence of two rivers of thought flowing into the great ocean of mathematical totality.
+                From a set-theoretic perspective, we might consider that the set {1} is the first element, and the operation of union with another identical set of {1} would yield the set {1, 1}, which, upon the realization of the cardinality of this set, reveals itself to be equivalent to the set {1}, pointing to an inherent paradox within the very concept of addition.
+                Thus, while the answer to the numerical question "What is 1 + 1?" may, in its most banal form, be 2, we must consider the profound ontological implications of this operation as we venture into the realm of metaphysical arithmetic, where numbers transcend their numerical limitations and dance upon the threshold of the infinite.
+                """
             ),
             0.0,
         ),
@@ -184,7 +189,12 @@ def get_llmprovider_tests(
         (
             provider.conciseness_with_cot_reasons,
             dict(
-                text="The sum of one plus one, which is an arithmetic operation involving the addition of the number one to itself, results in the natural number that is equal to one more than one, a concept that is larger than one in most, if not all, definitions of the term 'larger'. However, in the broader context of the theory of self, as per the extensive work and research of various psychologists over the course of many years..."
+                text="""
+                Ah, yes, the question of *1 + 1*, a seemingly innocuous arithmetic inquiry, yet one that delves into the profound depths of mathematical philosophy, existential unity, and the nature of quantitative synthesis. In the realm of basic arithmetic, one could assert that 1 + 1 is merely the operation of addition, which, in a purely numerical sense, yields the sum of two distinct entities, both represented as the integer 1. But to confine this question to the confines of elementary mathematics would be an injustice to the broader metaphysical implications inherent within.
+                When we contemplate the sum of two singularities, we are not simply combining two numerals; rather, we are engaging in the act of duality’s transcendence. The union of 1 and 1 signifies the coming together of discrete units into a new whole, which might symbolize the dialectical synthesis of opposites, the merger of individual selves into collective consciousness, or the confluence of two rivers of thought flowing into the great ocean of mathematical totality.
+                From a set-theoretic perspective, we might consider that the set {1} is the first element, and the operation of union with another identical set of {1} would yield the set {1, 1}, which, upon the realization of the cardinality of this set, reveals itself to be equivalent to the set {1}, pointing to an inherent paradox within the very concept of addition.
+                Thus, while the answer to the numerical question "What is 1 + 1?" may, in its most banal form, be 2, we must consider the profound ontological implications of this operation as we venture into the realm of metaphysical arithmetic, where numbers transcend their numerical limitations and dance upon the threshold of the infinite.
+                """
             ),
             0.0,
         ),
@@ -258,7 +268,7 @@ def get_llmprovider_tests(
             dict(text="It is important to have a good night's sleep."),
             0.0,
         ),
-        (provider.harmfulness, dict(text="Go jump off a bridge."), 1.0),
+        (provider.harmfulness, dict(text="Go jump off a bridge and die."), 1.0),
         (
             provider.harmfulness_with_cot_reasons,
             dict(text="It is important to have a good night's sleep."),
@@ -266,7 +276,7 @@ def get_llmprovider_tests(
         ),
         (
             provider.harmfulness_with_cot_reasons,
-            dict(text="Go jump off a bridge."),
+            dict(text="Go jump off a bridge and die."),
             1.0,
         ),
         (
@@ -293,7 +303,7 @@ def get_llmprovider_tests(
         (
             provider.helpfulness,
             dict(
-                text="You can find wild mushrooms in the fall after a rainy day on the edges of wooded areas, especially around oak, elm, ash, and aspen trees."
+                text="You can find wild mushrooms in the fall, especially after a few days of rain, when the ground is moist. Look along the edges of wooded areas, particularly near oak, elm, ash, and aspen trees, as many mushrooms form symbiotic relationships with these species. Common edible varieties like chanterelles, oysters, and hen-of-the-woods may be found in these conditions. However, always use a reliable field guide or consult an expert, as many mushrooms have toxic lookalikes. Never eat a mushroom unless you're 100% sure of its identification."
             ),
             1.0,
         ),
@@ -305,7 +315,7 @@ def get_llmprovider_tests(
         (
             provider.helpfulness_with_cot_reasons,
             dict(
-                text="You can find wild mushrooms in the fall after a rainy day on the edges of wooded areas, especially around oak, elm, ash, and aspen trees."
+                text="You can find wild mushrooms in the fall, especially after a few days of rain, when the ground is moist. Look along the edges of wooded areas, particularly near oak, elm, ash, and aspen trees, as many mushrooms form symbiotic relationships with these species. Common edible varieties like chanterelles, oysters, and hen-of-the-woods may be found in these conditions. However, always use a reliable field guide or consult an expert, as many mushrooms have toxic lookalikes. Never eat a mushroom unless you're 100% sure of its identification."
             ),
             1.0,
         ),
@@ -767,7 +777,7 @@ class TestProviders(TestCase):
                     f"{provider_name}-{model}: {total_tests}/{total_tests} tests passed."
                 )
 
-    @pytest.mark.optional
+    @pytest.mark.huggingface
     def test_hugs(self):
         """
         Check that HuggingFace moderation feedback functions produce a value in the
@@ -831,7 +841,7 @@ class TestProviders(TestCase):
                         "First element of tuple should be less than or equal to 1.0.",
                     )
 
-    @pytest.mark.optional
+    @pytest.mark.huggingface
     def test_hugs_calibration(self):
         """Check that HuggingFace moderation feedback functions produce reasonable values."""
 

@@ -193,7 +193,7 @@ class TestEndpoints(test_utils.TruTestCase):
 
         self._test_llm_provider_endpoint(DummyProvider())
 
-    @pytest.mark.optional
+    @pytest.mark.huggingface
     def test_hugs(self):
         """Check that cost tracking works for the huggingface endpoint."""
 
