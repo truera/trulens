@@ -228,7 +228,8 @@ test-unit-snowflake: env-tests-snowflake
 test-%-all: env-tests env-tests-optional env-tests-snowflake
 	TEST_OPTIONAL=true TEST_SNOWFLAKE=true TEST_HUGGINGFACE=true make test-$*
 
-# TODO: add snowflake tests
+# TODO: Remove this target and update the pipeline to use test-%-all instead
+# This requires reducing flakiness in both basic and snowflake tests
 test-%-pipeline: env-tests env-tests-optional
 	SKIP_BASIC_TESTS=1 TEST_OPTIONAL=true TEST_HUGGINGFACE=true make test-$*
 
