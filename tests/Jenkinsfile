@@ -99,6 +99,10 @@ pipeline {
                                 '''
                             }
                         }
+                    }
+                }
+                stage('huggingface') {
+                    steps {
                         // NOTE: HuggingFace Inference API is unstable and may fail due to rate limiting.
                         catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
                             withVault(vault_settings) {
