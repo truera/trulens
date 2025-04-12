@@ -145,6 +145,7 @@ markers = [
   "required_only: for tests that must be run only with required dependencies",
   "optional: for tests that must be run with optional dependencies",
   "snowflake: for tests that must be run with snowflake dependencies",
+  "huggingface: for tests that must be run with huggingface dependencies",
 ]
 
 [tool.mypy]

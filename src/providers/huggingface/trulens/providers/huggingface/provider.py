@@ -525,7 +525,7 @@ class Huggingface(HuggingfaceBase):
     def _context_relevance_endpoint(self, input: str) -> float:
         json = {"inputs": input}
         hf_response = self._post_scores(
-            url=HUGS_CONTEXT_RELEVANCE_API_URL, json=json
+            url=HUGS_CONTEXT_RELEVANCE_API_URL, json=json, timeout=30
         )
         for label in hf_response:
             if label["label"] == "context_relevance":
@@ -536,7 +536,9 @@ class Huggingface(HuggingfaceBase):
 
     def _positive_sentiment_endpoint(self, input: str) -> float:
         json = {"inputs": input}
-        hf_response = self._post_scores(url=HUGS_SENTIMENT_API_URL, json=json)
+        hf_response = self._post_scores(
+            url=HUGS_SENTIMENT_API_URL, json=json, timeout=30
+        )
         for label in hf_response:
             if label["label"] == "LABEL_2":
                 return float(label["score"])
@@ -544,7 +546,9 @@ class Huggingface(HuggingfaceBase):
 
     def _toxic_endpoint(self, input: str) -> float:
         json = {"inputs": input}
-        hf_response = self._post_scores(url=HUGS_TOXIC_API_URL, json=json)
+        hf_response = self._post_scores(
+            url=HUGS_TOXIC_API_URL, json=json, timeout=30
+        )
         for label in hf_response:
             if label["label"] == "toxic":
                 return label["score"]
@@ -552,7 +556,9 @@ class Huggingface(HuggingfaceBase):
 
     def _summarized_groundedness_endpoint(self, input: str) -> float:
         json = {"inputs": input}
-        hf_response = self._post_scores(url=HUGS_NLI_API_URL, json=json)
+        hf_response = self._post_scores(
+            url=HUGS_NLI_API_URL, json=json, timeout=30
+        )
         for label in hf_response:
             if label["label"] == "entailment":
                 return label["score"]
@@ -563,7 +569,9 @@ class Huggingface(HuggingfaceBase):
     def _doc_groundedness(self, premise: str, hypothesis: str) -> float:
         nli_string = premise + " [SEP] " + hypothesis
         json = {"inputs": nli_string}
-        hf_response = self._post_scores(url=HUGS_DOCNLI_API_URL, json=json)
+        hf_response = self._post_scores(
+            url=HUGS_DOCNLI_API_URL, json=json, timeout=30
+        )
         for label in hf_response:
             if label["label"] == "entailment":
                 return label["score"]
@@ -573,7 +581,7 @@ class Huggingface(HuggingfaceBase):
         likelihood_scores = []
         json = {"inputs": input}
         hf_response = self._post_scores(
-            url=HUGS_PII_DETECTION_API_URL, json=json
+            url=HUGS_PII_DETECTION_API_URL, json=json, timeout=30
         )
         # If the response is a dictionary, convert it to a list. This is for when only one name is identified.
         if isinstance(hf_response, dict):
@@ -597,7 +605,7 @@ class Huggingface(HuggingfaceBase):
         json = {"inputs": input}
         try:
             hf_response = self._post_scores(
-                url=HUGS_PII_DETECTION_API_URL, json=json
+                url=HUGS_PII_DETECTION_API_URL, json=json, timeout=30
             )
         # TODO: Make error handling more granular so it's not swallowed.
         except Exception:
@@ -629,7 +637,9 @@ class Huggingface(HuggingfaceBase):
 
     def _hallucination_evaluator_endpoint(self, input: str) -> float:
         json = {"inputs": input}
-        response = self._post_scores(url=HUGS_HALLUCINATION_API_URL, json=json)
+        response = self._post_scores(
+            url=HUGS_HALLUCINATION_API_URL, json=json, timeout=30
+        )
         if isinstance(response, list):
             # Assuming the list contains the result, check if the first element has a 'score' key
             if "score" not in response[0]:

@@ -3,11 +3,19 @@ def vault_settings = [
         [
             path: 'ml-platform/snowml/e2etests-trulens-jenkins-credentials',
             secretValues: [
+                // LLM API keys
                 [envVar: 'OPENAI_API_KEY', vaultKey: 'OPENAI_API_KEY'],
                 [envVar: 'HUGGINGFACEHUB_API_TOKEN', vaultKey: 'HUGGINGFACEHUB_API_TOKEN'],
                 [envVar: 'HUGGINGFACE_API_KEY', vaultKey: 'HUGGINGFACE_API_KEY'],
+                // Azure OpenAI credentials
+                [envVar: 'AZURE_OPENAI_API_KEY', vaultKey: 'AZURE_OPENAI_API_KEY'],
+                [envVar: 'AZURE_OPENAI_DEPLOYMENT', vaultKey: 'AZURE_OPENAI_DEPLOYMENT'],
+                [envVar: 'AZURE_OPENAI_ENDPOINT', vaultKey: 'AZURE_OPENAI_ENDPOINT'],
+                [envVar: 'OPENAI_API_VERSION', vaultKey: 'OPENAI_API_VERSION'],
+                // Pinecone credentials
                 [envVar: 'PINECONE_API_KEY', vaultKey: 'PINECONE_API_KEY'],
                 [envVar: 'PINECONE_ENV', vaultKey: 'PINECONE_ENV'],
+                // Snowflake credentials
                 [envVar: 'SNOWFLAKE_ACCOUNT', vaultKey: 'SNOWFLAKE_ACCOUNT'],
                 [envVar: 'SNOWFLAKE_DATABASE', vaultKey: 'SNOWFLAKE_DATABASE'],
                 [envVar: 'SNOWFLAKE_ROLE', vaultKey: 'SNOWFLAKE_ROLE'],
@@ -84,7 +92,7 @@ pipeline {
                         // We will revisit this once we re-enable parallelism.
                         catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                             withVault(vault_settings) {
-                                sh label: 'Run Optional "e2e" Test Suite', script: '''
+                                sh label: 'Run optional "e2e" Test Suite', script: '''
                                     set -e
 
                                     make test-e2e-optional
@@ -93,10 +101,24 @@ pipeline {
                         }
                     }
                 }
+                stage('huggingface') {
+                    steps {
+                        // NOTE: HuggingFace Inference API is unstable and may fail due to rate limiting.
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+                            withVault(vault_settings) {
+                                sh label: 'Run huggingface "e2e" Test Suite', script: '''
+                                    set -e
+
+                                    make test-e2e-huggingface
+                                '''
+                            }
+                        }
+                    }
+                }
                 stage('notebook') {
                     steps {
                         withVault(vault_settings) {
-                            sh label: 'Run Optional "notebook" Test Suite', script: '''
+                            sh label: 'Run pipeline "notebook" Test Suite', script: '''
                                 set -e
 
                                 make test-notebook-optional
