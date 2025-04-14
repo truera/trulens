@@ -92,9 +92,6 @@ if user_input:
                         message_area.markdown(full_response)
             # Display TruLens feedback and metrics
             record = recording.get()
-            total_seconds = (record.perf.end_time - record.perf.start_time).total_seconds()
-            st.write(f"completion tokens: {record.cost.n_completion_tokens}")
-            st.write(f"tokens / second: {(record.cost.n_completion_tokens/total_seconds):.2f}")
             trulens_st.trulens_feedback(record=record)
             trulens_st.trulens_trace(record=record)
 
