@@ -35,7 +35,7 @@ def create_evals(provider: LLMProvider = None):
 
     context_relevance_custom_criteria = """
     When the question plausibly requires multiple different sources to answer, score context relevance based on the following criteria:
-    - 0: The context is not relevant to the any part of the question.
+    - 0: The context is not relevant to any part of the question.
     - 1: The context is somewhat relevant but not sufficient for answering a portion of the question.
     - 2: The context is sufficient for answering a portion of the question.
     - 3: The context is highly relevant and sufficient for answering the complete question.
