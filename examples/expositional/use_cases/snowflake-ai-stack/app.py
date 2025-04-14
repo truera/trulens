@@ -10,9 +10,9 @@ from trulens.apps.app import TruApp
 from trulens.dashboard import streamlit as trulens_st
 import os
 
-st.set_page_config(page_title="Chat with the Web", page_icon="❄️", layout="centered", initial_sidebar_state="collapsed", menu_items=None)
+st.set_page_config(page_title="Snowflake AI Stack", page_icon="❄️", layout="centered", initial_sidebar_state="collapsed", menu_items=None)
 
-st.subheader("Using the ❄️ OSS RAG Stack")
+st.subheader("Using the ❄️ AI Stack")
 
 # Initialize TruLens for observability (similar to notebook example)
 if "tru_session" not in st.session_state:
