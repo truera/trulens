@@ -59,7 +59,7 @@ class TestTru(TestCase):
                         session = core_session.TruSession(**args)
                     finally:
                         if session is not None:
-                            session.delete_singleton()
+                            session.delete_singleton_by_name(None)
 
                     if session is None:
                         continue
