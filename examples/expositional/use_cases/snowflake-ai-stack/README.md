@@ -21,11 +21,13 @@ pip install -r requirements.txt
 
 For this demo, we will run two versions of the app.
 
-3) RAG with no context filters:
+3) Add required keys to `.sh` files.
+
+4) RAG with no context filters:
 
 `bash run_app1.sh`
 
-1) RAG with context filters:
+5) RAG with context filters:
 
 `bash run_app2_filters.sh`
 
