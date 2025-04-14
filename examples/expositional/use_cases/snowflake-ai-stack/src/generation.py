@@ -14,7 +14,7 @@ class ChatModel:
         # Use the provided model name or default to "gpt4o-mini"
         self.generation_model_name = generation_model_name or "gpt-4o-mini-2024-07-18"
 
-    def construct_prompt(self, question: str, context: list[Document], message_history: List = None) -> List:
+    def construct_prompt(self, question: str, context: list[str], message_history: List = None) -> List:
         docs_content = "\n\n".join(doc for doc in context)
         system_message = "You are a helpful assistant who answers questions as completely as possible using the context provided. Always respond in paragraph form, and never as a list or enumerated items."
         user_message = f"Question: {question}\n\nContext:\n{docs_content}"
