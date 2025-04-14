@@ -14,7 +14,6 @@ class ChatModel:
     def __init__(self, generation_model_name=None):
         # Use the provided model name or default to "gpt4o-mini"
         self.generation_model_name = generation_model_name or "gpt-4o-mini-2024-07-18"
-        # Ensure your OpenAI API key is configured in your environment (e.g., OPENAI_API_KEY)
 
     def construct_prompt(self, question: str, context: list[Document], message_history: List = None) -> List:
         docs_content = "\n\n".join(doc for doc in context)
