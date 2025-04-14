@@ -1,5 +1,6 @@
 import uuid
 from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import WebBaseLoader, TextLoader
 from langchain_community.vectorstores.utils import filter_complex_metadata
 from langchain_core.documents import Document
@@ -36,7 +37,7 @@ class VectorStore:
 
     def split_documents(self, documents):
         """Split the loaded documents into chunks using SemanticChunker."""
-        text_splitter = SemanticChunker(OpenAIEmbeddings())
+        text_splitter = RecursiveCharacterTextSplitter()
         chunks = text_splitter.split_documents(documents=documents)
         return chunks
 
