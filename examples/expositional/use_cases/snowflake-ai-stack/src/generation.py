@@ -1,4 +1,3 @@
-import openai
 from langchain_core.documents import Document
 from typing import List
 

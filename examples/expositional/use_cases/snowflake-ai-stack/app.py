@@ -33,8 +33,8 @@ if "messages" not in st.session_state:
 @st.cache_resource
 def setup_vector_store():
     vector_store = VectorStore()
-    all_docs = vector_store.load_text_files(file_path="./data.txt")
-    chunks = vector_store.split_documents(documents=all_docs)
+    docs = vector_store.load_text_files(file_path="./data.txt")
+    chunks = vector_store.split_documents(documents=docs)
     vector_store.add_chunks(chunks)
     return vector_store
 

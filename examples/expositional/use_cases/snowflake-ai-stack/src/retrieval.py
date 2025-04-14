@@ -1,12 +1,11 @@
 import uuid
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_openai import OpenAIEmbeddings
-from langchain_experimental.text_splitter import SemanticChunker
-from langchain_community.document_loaders import UnstructuredURLLoader, WebBaseLoader, TextLoader
+from langchain_community.document_loaders import WebBaseLoader, TextLoader
 from langchain_community.vectorstores.utils import filter_complex_metadata
+from langchain_core.documents import Document
 import chromadb
 from chromadb.config import Settings
-from langchain_core.documents import Document
+
 
 class VectorStore:
     def __init__(self, embed_model_name=None, embed_dimension=None):
@@ -14,8 +13,6 @@ class VectorStore:
         self.embed_model_name = embed_model_name or "Snowflake/snowflake-arctic-embed-l-v2.0"
         self.embed_dimension = embed_dimension or 512  # Adjust as necessary
         self.embeddings = HuggingFaceEmbeddings(model_name=self.embed_model_name)
-        # self.embeddings = OpenAIEmbeddings()
-        # Initialize the client and collection once so that they remain loaded
         self.client = chromadb.Client(Settings(persist_directory="./chroma_vector_store"))
         self.collection = self.client.get_or_create_collection(name="snowflake_eng_blogs")
 
