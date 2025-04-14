@@ -10525,6 +10525,7 @@
 
 <h1 id="contributing-to-trulens">🤝 Contributing to TruLens<a class="headerlink" href="#contributing-to-trulens" title="Permanent link">&para;</a></h1>
 <p>Interested in contributing to TruLens? Here's how to get started!</p>
+<p>Step 1: Join the <a href="https://snowflake.discourse.group/c/ai-research-and-development-community/89">community</a>.</p>
 <h2 id="what-can-you-work-on">What can you work on?<a class="headerlink" href="#what-can-you-work-on" title="Permanent link">&para;</a></h2>
 <ol>
 <li>💪 Add new <a class="autorefs autorefs-internal" title="            Provider" href="../reference/trulens/core/feedback/provider/#trulens.core.feedback.provider.Provider">feedback
@@ -10536,9 +10537,6 @@
 <li>📄 Improve code quality &amp; documentation</li>
 <li>⛅ Address open issues.</li>
 </ol>
-<p>Also, join the <a href="https://communityinviter.com/apps/aiqualityforum/josh">AI Quality Slack
-community</a> for ideas and
-discussions.</p>
 <h2 id="add-new-feedback-functions">💪 Add new <a class="autorefs autorefs-internal" title="            Provider" href="../reference/trulens/core/feedback/provider/#trulens.core.feedback.provider.Provider">feedback functions</a><a class="headerlink" href="#add-new-feedback-functions" title="Permanent link">&para;</a></h2>
 <p>Feedback functions are the backbone of TruLens, and evaluating unique LLM apps
 may require new evaluations. We'd love your contribution to extend the feedback
@@ -10547,7 +10545,7 @@ functions library so others can benefit!</p>
 <li>To add a feedback function for an existing model provider, you can add it to
   an existing provider module. You can read more about the structure of a
   feedback function in this
-  <a href="https://www.trulens.org/trulens/custom_feedback_functions/">guide</a>.</li>
+  <a href="https://www.trulens.org/component_guides/evaluation/feedback_implementations/custom_feedback_functions/">guide</a>.</li>
 <li>New methods can either take a single text (str) as a parameter or two
   different texts (str), such as prompt and retrieved context. It should return
   a float, or a dict of multiple floats. Each output value should be a float on
@@ -10569,9 +10567,7 @@ issues tagged with good first issue. Please feel free to open an issue and/or
 assign an issue to yourself.</p>
 <h2 id="add-usage-examples">🎉 Add Usage Examples<a class="headerlink" href="#add-usage-examples" title="Permanent link">&para;</a></h2>
 <p>If you have applied TruLens to track and evaluate a unique use-case, we would
-love your contribution in the form of an example notebook: e.g. <a href="https://colab.research.google.com/github/truera/trulens/blob/main/examples/expositional/vector-dbs/pinecone/pinecone_evals_build_better_rags.ipynb">Evaluating
-Pinecone Configuration Choices on Downstream App
-Performance</a></p>
+love your contribution to the cookbook in the form of an example notebook: e.g. <a href="https://www.trulens.org/cookbook/vector_stores/weaviate/weaviate_query_agent/">Evaluating Weaviate Query Agents</a></p>
 <p>All example notebooks are expected to:</p>
 <ul>
 <li>Start with a title and description of the example</li>
@@ -10584,6 +10580,7 @@ Performance</a></p>
 <p>If you have a crazy idea, make a PR for it! Whether if it's the latest research,
 or what you thought of in the shower, we'd love to see creative ways to improve
 TruLens.</p>
+<p>Community contributions that have been accepted in the past include the SQLAlchemy logging connection and the LiteLLM provider.</p>
 <h2 id="improve-code-quality-documentation">📄 Improve Code Quality &amp; Documentation<a class="headerlink" href="#improve-code-quality-documentation" title="Permanent link">&para;</a></h2>
 <p>We would love your help in making the project cleaner, more robust, and more
 understandable. If you find something confusing, it most likely is for other
