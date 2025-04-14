@@ -1,6 +1,6 @@
 # ❄️ Snowflake AI Stack
 
-This project gives you a starting point for building RAG with the Snowflake AI stack, so you can choose which componenents fit for your RAG system and see how the full picture works together.
+This project gives you a starting point for building RAG with the Snowflake AI stack, so you can choose which components fit for your RAG system and see how the full picture works together.
 
 All together, the app has the following features:
 
