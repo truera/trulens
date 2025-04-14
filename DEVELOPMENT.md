@@ -138,7 +138,7 @@ make lint
 
 To run a single test or specific group of tests:
 ```
-TEST_OPTIONAL=true TEST_SNOWFLAKE=true poetry run pytest -rfex --durations=0 <TEST(S) TO RUN>
+TEST_OPTIONAL=true TEST_SNOWFLAKE=true TEST_HUGGINGFACE=true poetry run pytest -rfex --durations=0 <TEST(S) TO RUN>
 ```
 where `<TEST(S) TO RUN>` is any valid argument to `pytest` such as:
 1. A file. E.g. `./tests/unit/test_otel_tru_chain.py`

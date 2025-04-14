@@ -22,6 +22,12 @@ def pytest_addoption(parser):
         default=False,
         help="Run tests marked as snowflake",
     )
+    parser.addoption(
+        "--run_huggingface_tests",
+        action="store_true",
+        default=False,
+        help="Run tests marked as huggingface",
+    )
 
 
 def pytest_collection_modifyitems(config, items):
@@ -34,12 +40,16 @@ def pytest_collection_modifyitems(config, items):
     snowflake = config.getoption("--run_snowflake_tests") or os.environ.get(
         "TEST_SNOWFLAKE", ""
     ).lower() in ["1", "true"]
+    huggingface = config.getoption("--run_huggingface_tests") or os.environ.get(
+        "TEST_HUGGINGFACE", ""
+    ).lower() in ["1", "true"]
 
     skip_basic = pytest.mark.skip(
         reason="Skipping non optional/snowflake tests"
     )
     skip_optional = pytest.mark.skip(reason="Skipping optional tests")
     skip_snowflake = pytest.mark.skip(reason="Skipping snowflake tests")
+    skip_huggingface = pytest.mark.skip(reason="Skipping huggingface tests")
 
     for item in items:
         # Assume that `item` is marked with at most one of
@@ -47,7 +57,12 @@ def pytest_collection_modifyitems(config, items):
         if (
             len([
                 curr
-                for curr in ["required_only", "optional", "snowflake"]
+                for curr in [
+                    "required_only",
+                    "optional",
+                    "snowflake",
+                    "huggingface",
+                ]
                 if curr in item.keywords
             ])
             > 1
@@ -70,6 +85,9 @@ def pytest_collection_modifyitems(config, items):
         elif "snowflake" in item.keywords:
             if not snowflake:
                 item.add_marker(skip_snowflake)
+        elif "huggingface" in item.keywords:
+            if not huggingface:
+                item.add_marker(skip_huggingface)
         else:
             if not basic:
                 item.add_marker(skip_basic)
