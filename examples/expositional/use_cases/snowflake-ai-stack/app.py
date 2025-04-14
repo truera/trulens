@@ -30,32 +30,38 @@ if "tru_rag" not in st.session_state:
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-vector_store = VectorStore()
-all_docs = vector_store.load_text_files(file_path="./data.txt")
-chunks = vector_store.split_documents(documents=all_docs)
-vector_store.add_chunks(chunks)
-st.session_state.vector_store = vector_store
+@st.cache_resource
+def setup_vector_store():
+    vector_store = VectorStore()
+    all_docs = vector_store.load_text_files(file_path="./data.txt")
+    chunks = vector_store.split_documents(documents=all_docs)
+    vector_store.add_chunks(chunks)
+    return vector_store
 
-if st.session_state.vector_store is not None:
+if st.session_state.vector_store is None:
+    st.session_state.vector_store = setup_vector_store()
+
+# Create the RAG instance only once
+if st.session_state.vector_store is not None and st.session_state.rag is None:
     chat_model = ChatModel(generation_model_name=os.environ.get("GENERATION_MODEL_NAME"))
-    rag = Rag(chat_model=chat_model, vector_store=st.session_state.vector_store, use_context_filter=os.environ.get("USE_CONTEXT_FILTER"))
-    st.session_state.rag = rag
+    st.session_state.rag = Rag(
+        chat_model=chat_model,
+        vector_store=st.session_state.vector_store,
+        use_context_filter=os.environ.get("USE_CONTEXT_FILTER")
+    )
 
-    # Set up TruLens observability (similar to notebook example)
+    # Set up TruLens observability
     provider = OpenAI(
-    model_engine=os.environ.get("GENERATION_MODEL_NAME"),
-    api_key=os.environ.get("OPENAI_API_KEY")
-)
+        model_engine=os.environ.get("GENERATION_MODEL_NAME"),
+        api_key=os.environ.get("OPENAI_API_KEY")
+    )
     evals = create_evals(provider=provider)
-
-    tru_rag = TruApp(
-        rag,
+    st.session_state.tru_rag = TruApp(
+        st.session_state.rag,
         app_name="RAG",
         app_version="snowflake-oss",
-        feedbacks = evals
+        feedbacks=evals
     )
-    st.session_state.tru_rag = tru_rag
-
     st.success("Knowledge Base Loaded!")
 
 st.markdown("---")
@@ -76,35 +82,21 @@ if user_input:
         message_area = message_container.empty()
         full_response = ""  # Initialize to collect the full response
 
-        # Use TruLens to track the RAG application if available
-        if st.session_state.tru_rag:
-            with st.session_state.tru_rag as recording:
-                with st.spinner("Thinking..."):
-                    # For streaming mode, collect full response while displaying chunks
-                    full_response = st.session_state.rag.retrieve_and_generate(user_input, st.session_state.messages)
-                message_area.markdown(full_response)
-                    # generator = st.session_state.rag.retrieve_and_generate_stream(user_input, st.session_state.messages)
-
-                # Manually stream and collect the response
-                # for chunk in generator:
-                #   if chunk is not None:  # Skip if chunk is None
-                #        full_response += chunk
-                #        message_area.markdown(full_response)
-
-                # Display TruLens feedback and metrics
-                record = recording.get()
-                total_seconds = (record.perf.end_time - record.perf.start_time).total_seconds()
-                st.write(f"completion tokens: {record.cost.n_completion_tokens}")
-                st.write(f"tokens / second: {(record.cost.n_completion_tokens/total_seconds):.2f}")
-                trulens_st.trulens_feedback(record=record)
-                trulens_st.trulens_trace(record=record)
-        else:
-            # Fallback if TruLens not set up - still collect and store the response
-            response = st.session_state.rag.retrieve_and_generate(user_input, st.session_state.messages)
-            # generator = st.session_state.rag.retrieve_and_generate_stream(user_input, st.session_state.messages)
-            # for chunk in generator:
-            #     full_response += chunk
-            #     message_area.markdown(full_response)
+        # Use TruLens to track the RAG application with streaming enabled
+        with st.session_state.tru_rag as recording:
+            with st.spinner("Thinking..."):
+                generator = st.session_state.rag.retrieve_and_generate_stream(user_input, st.session_state.messages)
+                for chunk in generator:
+                    if chunk is not None:
+                        full_response += chunk
+                        message_area.markdown(full_response)
+            # Display TruLens feedback and metrics
+            record = recording.get()
+            total_seconds = (record.perf.end_time - record.perf.start_time).total_seconds()
+            st.write(f"completion tokens: {record.cost.n_completion_tokens}")
+            st.write(f"tokens / second: {(record.cost.n_completion_tokens/total_seconds):.2f}")
+            trulens_st.trulens_feedback(record=record)
+            trulens_st.trulens_trace(record=record)
 
         # Add the assistant response to session state - only once!
         st.session_state.messages.append({"role": "assistant", "content": full_response})

@@ -40,6 +40,7 @@ class ChatModel:
         )
         return response.choices[0].message.content
 
+
     def generate_stream(self, messages: List):
         response = openai_client.chat.completions.create(
             model=self.generation_model_name,
@@ -48,7 +49,13 @@ class ChatModel:
             max_tokens=1024,
             top_p=0.9,
             stream=True,
+            stream_options={
+                "include_usage": True
+            },
         )
         for chunk in response:
-            delta = chunk.choices[0].delta
-            yield delta.content
+            if (
+                len(choices := chunk.choices) > 0
+                and (content := choices[0].delta.content) is not None
+            ):
+                yield content
