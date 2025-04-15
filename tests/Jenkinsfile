@@ -118,7 +118,7 @@ pipeline {
                 stage('notebook') {
                     steps {
                         withVault(vault_settings) {
-                            sh label: 'Run pipeline "notebook" Test Suite', script: '''
+                            sh label: 'Run optional "notebook" Test Suite', script: '''
                                 set -e
 
                                 make test-notebook-optional

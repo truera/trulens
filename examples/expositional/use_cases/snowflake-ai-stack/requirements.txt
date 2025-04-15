@@ -1,0 +1,14 @@
+langchain
+langchain_huggingface
+langchain_community
+langchain_core
+langchain_text_splitters
+bs4
+trulens-core
+trulens-apps-langchain
+trulens-providers-openai
+trulens-dashboard
+transformers
+numpy
+streamlit
+openai
