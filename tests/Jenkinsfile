@@ -3,11 +3,19 @@ def vault_settings = [
         [
             path: 'ml-platform/snowml/e2etests-trulens-jenkins-credentials',
             secretValues: [
+                // LLM API keys
                 [envVar: 'OPENAI_API_KEY', vaultKey: 'OPENAI_API_KEY'],
                 [envVar: 'HUGGINGFACEHUB_API_TOKEN', vaultKey: 'HUGGINGFACEHUB_API_TOKEN'],
                 [envVar: 'HUGGINGFACE_API_KEY', vaultKey: 'HUGGINGFACE_API_KEY'],
+                // Azure OpenAI credentials
+                [envVar: 'AZURE_OPENAI_API_KEY', vaultKey: 'AZURE_OPENAI_API_KEY'],
+                [envVar: 'AZURE_OPENAI_DEPLOYMENT', vaultKey: 'AZURE_OPENAI_DEPLOYMENT'],
+                [envVar: 'AZURE_OPENAI_ENDPOINT', vaultKey: 'AZURE_OPENAI_ENDPOINT'],
+                [envVar: 'OPENAI_API_VERSION', vaultKey: 'OPENAI_API_VERSION'],
+                // Pinecone credentials
                 [envVar: 'PINECONE_API_KEY', vaultKey: 'PINECONE_API_KEY'],
                 [envVar: 'PINECONE_ENV', vaultKey: 'PINECONE_ENV'],
+                // Snowflake credentials
                 [envVar: 'SNOWFLAKE_ACCOUNT', vaultKey: 'SNOWFLAKE_ACCOUNT'],
                 [envVar: 'SNOWFLAKE_DATABASE', vaultKey: 'SNOWFLAKE_DATABASE'],
                 [envVar: 'SNOWFLAKE_ROLE', vaultKey: 'SNOWFLAKE_ROLE'],
@@ -31,6 +39,12 @@ pipeline {
         }
     }
 
+    environment {
+        // NOTE: Increase timeout for HTTP requests to avoid issues with slow downloads
+        // See: https://github.com/python-poetry/poetry/blob/master/src/poetry/utils/constants.py
+        POETRY_REQUESTS_TIMEOUT=120
+    }
+
     options {
         timestamps()
         ansiColor('xterm')
@@ -45,7 +59,10 @@ pipeline {
                     curl -sSL https://install.python-poetry.org | python3 -
                     ln -s /root/.local/bin/poetry /usr/local/bin/poetry
                     echo "Using $(python --version) ($(which python)) $(poetry -V)"
+
+                    poetry config requests.max-retries 3
                     poetry config virtualenvs.create false
+
                     poetry run pip install pip==24.1.2
                     poetry run python --version
                     poetry run pip --version
@@ -65,22 +82,45 @@ pipeline {
             }
         }
         stage('Test Suites') {
-            parallel {
+            // NOTE: As of PR#1904, we now run test suites sequentially to avoid a known race condition with parallel CI Poetry installs (https://github.com/python-poetry/poetry/issues/8159).
+            // NOTE: Another proposed workaround is to set `poetry config installer.parallel false`, but this would (1) slow down all CI jobs and (2) does not fix the issue with parallel CI stages.
+            // TODO(SNOW-2034894): Re-enable parallel CI stages with fully separated nodes.
+            stages {
                 stage('e2e') {
                     steps {
-                        withVault(vault_settings) {
-                            sh label: 'Run Optional "e2e" Test Suite', script: '''
-                                set -e
-                                make test-e2e-optional
-                            '''
+                        // NOTE: As of PR#1904, this is a temporary workaround to ensure we are still able to run both e2e and notebook stages even if one fails (while sequential).
+                        // We will revisit this once we re-enable parallelism.
+                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                            withVault(vault_settings) {
+                                sh label: 'Run optional "e2e" Test Suite', script: '''
+                                    set -e
+
+                                    make test-e2e-optional
+                                '''
+                            }
+                        }
+                    }
+                }
+                stage('huggingface') {
+                    steps {
+                        // NOTE: HuggingFace Inference API is unstable and may fail due to rate limiting.
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+                            withVault(vault_settings) {
+                                sh label: 'Run huggingface "e2e" Test Suite', script: '''
+                                    set -e
+
+                                    make test-e2e-huggingface
+                                '''
+                            }
                         }
                     }
                 }
                 stage('notebook') {
                     steps {
                         withVault(vault_settings) {
-                            sh label: 'Run Optional "test" Test Suite', script: '''
+                            sh label: 'Run optional "notebook" Test Suite', script: '''
                                 set -e
+
                                 make test-notebook-optional
                             '''
                         }

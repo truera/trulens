@@ -75,7 +75,7 @@ def _resolve_attributes(
 def _set_span_attributes(
     span: Span,
     span_type: SpanAttributes.SpanType,
-    span_name: str,
+    func_name: str,
     func: Callable,
     func_exception: Optional[Exception],
     attributes: Attributes,
@@ -92,7 +92,7 @@ def _set_span_attributes(
     all_kwargs = {**kwargs, **bound_args}
     if not only_set_user_defined_attributes:
         # Set general span attributes.
-        span.set_attribute("name", span_name)
+        span.set_attribute("name", func_name)
         set_general_span_attributes(span, span_type)
         # Set record root span attributes if necessary.
         if span_type == SpanAttributes.SpanType.RECORD_ROOT:
@@ -105,7 +105,9 @@ def _set_span_attributes(
                 func_exception,
             )
         # Set function call attributes.
-        set_function_call_attributes(span, ret, func_exception, all_kwargs)
+        set_function_call_attributes(
+            span, ret, func_name, func_exception, all_kwargs
+        )
     # Resolve the attributes.
     if instance is not None:
         args_with_self_possibly = (instance,) + args
@@ -158,7 +160,7 @@ def instrument(
     )
 
     def inner_decorator(func: Callable):
-        span_name = _get_func_name(func)
+        func_name = _get_func_name(func)
 
         @wrapt.decorator
         def sync_wrapper(func, instance, args, kwargs):
@@ -178,7 +180,7 @@ def instrument(
 
         def convert_to_generator(func, instance, args, kwargs):
             with create_function_call_context_manager(
-                create_new_span, span_name, is_record_root
+                create_new_span, func_name, is_record_root
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
@@ -207,7 +209,7 @@ def instrument(
                         _set_span_attributes(
                             span,
                             span_type,
-                            span_name,
+                            func_name,
                             func,
                             func_exception,
                             attributes,
@@ -229,7 +231,7 @@ def instrument(
         @wrapt.decorator
         async def async_wrapper(func, instance, args, kwargs):
             with create_function_call_context_manager(
-                create_new_span, span_name, is_record_root
+                create_new_span, func_name, is_record_root
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
@@ -247,7 +249,7 @@ def instrument(
                     _set_span_attributes(
                         span,
                         span_type,
-                        span_name,
+                        func_name,
                         func,
                         func_exception,
                         attributes,
@@ -268,7 +270,7 @@ def instrument(
         @wrapt.decorator
         async def async_generator_wrapper(func, instance, args, kwargs):
             with create_function_call_context_manager(
-                create_new_span, span_name, is_record_root
+                create_new_span, func_name, is_record_root
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
@@ -291,7 +293,7 @@ def instrument(
                         _set_span_attributes(
                             span,
                             span_type,
-                            span_name,
+                            func_name,
                             func,
                             func_exception,
                             attributes,

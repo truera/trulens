@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class HuggingfaceCallback(core_endpoint.EndpointCallback):
     def handle_classification(self, response: requests.Response) -> None:
         # HuggingFace free inference API doesn't seem to have its own library
-        # and the docs say to use `requests`` so that is what we instrument and
+        # and the docs say to use `requests` so that is what we instrument and
         # process to track API calls.
 
         super().handle_classification(response)
