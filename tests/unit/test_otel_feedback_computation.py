@@ -184,7 +184,7 @@ class TestOtelFeedbackComputation(OtelTestCase):
         #         more than once (error case).
         with self.assertRaisesRegex(
             ValueError,
-            "^Found the following errors:\n1. feedback_name=blah4, record=.*, span_group=30 has ambiguous inputs!$",
+            "^No feedbacks were computed!$",
         ):
             compute_feedback_by_span_group(
                 events,

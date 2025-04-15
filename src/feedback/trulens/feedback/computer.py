@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 import itertools
+import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from opentelemetry.trace import INVALID_SPAN_ID
@@ -13,6 +14,8 @@ from trulens.experimental.otel_tracing.core.span import (
 )
 from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.otel.semconv.trace import SpanAttributes
+
+_logger = logging.getLogger(__name__)
 
 
 # If we could just have `opentelemetry.sdk.trace.ReadableSpan` it would be
@@ -105,6 +108,7 @@ def compute_feedback_by_span_group(
         [Any], Union[float, Tuple[float, Dict[str, Any]]]
     ],
     kwarg_to_selector: Dict[str, Selector],
+    raise_error_on_no_feedbacks_computed: bool = True,
 ) -> None:
     """
     Compute feedback based on span groups in events.
@@ -115,7 +119,6 @@ def compute_feedback_by_span_group(
         feedback_function: Function to compute feedback.
         kwarg_to_selector: Mapping from function kwargs to span selectors
     """
-    error_messages = []
     kwarg_groups = _group_kwargs_by_selectors(kwarg_to_selector)
     unflattened_inputs = _collect_inputs_from_events(
         events, kwarg_groups, kwarg_to_selector
@@ -126,17 +129,16 @@ def compute_feedback_by_span_group(
         kwarg_groups,
         list(record_id_to_record_roots.keys()),
         feedback_name,
-        error_messages,
     )
     flattened_inputs = _flatten_inputs(unflattened_inputs)
-    _run_feedback_on_inputs(
+    num_feedbacks_computed = _run_feedback_on_inputs(
         flattened_inputs,
         feedback_name,
         feedback_function,
         record_id_to_record_roots,
-        error_messages,
     )
-    _report_errors(error_messages)
+    if raise_error_on_no_feedbacks_computed and num_feedbacks_computed == 0:
+        raise ValueError("No feedbacks were computed!")
 
 
 def _group_kwargs_by_selectors(
@@ -278,15 +280,14 @@ def _validate_unflattened_inputs(
     kwarg_groups: List[Tuple[str]],
     record_ids_with_record_roots: List[str],
     feedback_name: str,
-    error_messages: List[str],
 ) -> Dict[Tuple[str, Optional[str]], Dict[Tuple, List[Dict[str, Any]]]]:
     """Validate collected inputs and remove invalid entries.
 
     Args:
         unflattened_inputs: Mapping from (record_id, span_group) to kwarg group to inputs.
         kwarg_groups: List of list of kwargs. Each sublist contains kwargs that describe the same spans in their selector.
+        record_ids_with_record_roots: List of record ids that have record roots.
         feedback_name: Name of the feedback function.
-        error_messages: List of error messages to append to if any errors occur during this function.
 
     Returns:
         Validated mapping from (record_id, span_group) to kwarg group to inputs.
@@ -309,16 +310,14 @@ def _validate_unflattened_inputs(
             if (
                 group_sizes[-2] > 1
             ):  # If second largest group has multiple items then unclear how to combine.
-                error_messages.append(
+                _logger.warning(
                     f"feedback_name={feedback_name}, record={record_id}, span_group={span_group} has ambiguous inputs!"
                 )
                 keys_to_remove.append((record_id, span_group))
 
     for record_id, span_group in unflattened_inputs:
         if record_id not in record_ids_with_record_roots:
-            error_messages.append(
-                f"record_id={record_id} has no known record root!"
-            )
+            _logger.warning(f"record_id={record_id} has no known record root!")
             keys_to_remove.append((record_id, span_group))
 
     # Remove invalid entries.
@@ -367,16 +366,19 @@ def _run_feedback_on_inputs(
         [Any], Union[float, Tuple[float, Dict[str, Any]]]
     ],
     record_id_to_record_root: Dict[str, pd.Series],
-    error_messages: List[str],
-) -> None:
+) -> int:
     """Run feedback function on all inputs.
 
     Args:
         flattened_inputs: Flattened inputs. Each entry is a tuple of (record_id, span_group, inputs).
         feedback_name: Name of the feedback function.
         feedback_function: Function to compute feedback.
-        error_messages: List of error messages to append to if any errors occur during this function.
+        record_id_to_record_root: Mapping from record_id to record root.
+
+    Returns:
+        Number of feedbacks computed.
     """
+    ret = 0
     for record_id, span_group, inputs in flattened_inputs:
         try:
             _call_feedback_function(
@@ -385,10 +387,12 @@ def _run_feedback_on_inputs(
                 inputs,
                 record_id_to_record_root[record_id]["record_attributes"],
             )
+            ret += 1
         except Exception as e:
-            error_messages.append(
+            _logger.warning(
                 f"feedback_name={feedback_name}, record={record_id}, span_group={span_group} had an error during computation:\n{str(e)}"
             )
+    return ret
 
 
 def _call_feedback_function(
@@ -459,16 +463,3 @@ def _call_feedback_function(
                 f"{SpanAttributes.EVAL_ROOT.METADATA}.{k}",
                 v,
             )
-
-
-def _report_errors(error_messages: List[str]) -> None:
-    """Report collected errors if any.
-
-    Args:
-        error_messages: List of error messages to report.
-    """
-    if error_messages:
-        error_message = "Found the following errors:\n"
-        for i, err in enumerate(error_messages, 1):
-            error_message += f"{i}. {err}\n"
-        raise ValueError(error_message)
