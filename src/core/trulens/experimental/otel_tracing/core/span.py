@@ -158,10 +158,12 @@ def set_general_span_attributes(
 def set_function_call_attributes(
     span: Span,
     ret: Any,
+    func_name: str,
     func_exception: Optional[Exception],
     all_kwargs: Dict[str, Any],
 ) -> None:
     set_span_attribute_safely(span, SpanAttributes.CALL.RETURN, ret)
+    set_span_attribute_safely(span, SpanAttributes.CALL.FUNCTION, func_name)
     set_span_attribute_safely(span, SpanAttributes.CALL.ERROR, func_exception)
     for k, v in all_kwargs.items():
         set_span_attribute_safely(span, f"{SpanAttributes.CALL.KWARGS}.{k}", v)
