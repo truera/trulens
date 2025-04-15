@@ -64,6 +64,9 @@ class SpanAttributes:
     INPUT_ID = BASE_SCOPE + ".input_id"
     """ID of the input that the span belongs to."""
 
+    SPAN_GROUPS = BASE_SCOPE + ".span_groups"
+    """List of groups that the span belongs to."""
+
     class SpanType(str, Enum):
         """Span type attribute values.
 
