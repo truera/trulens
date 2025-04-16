@@ -36,6 +36,7 @@ class TestLlamaIndex(TruTestCase):
             "The author focused on writing and",
             "The author focused on writing short",
             "I couldn't find specific information",
+            "I apologize for the inconvenience, but I couldn't find specific information",
         ])
     }
     """Common answers to a simple question.

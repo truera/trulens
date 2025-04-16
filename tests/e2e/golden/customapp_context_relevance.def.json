@@ -65,6 +65,7 @@
               "overloaded_prob": 0.0
             },
             "name": "dummyendpoint",
+            "post_headers": {},
             "retries": 3,
             "rpm": 60.0,
             "tru_class_info": {
@@ -76,6 +77,14 @@
                     "package_name": "trulens.feedback.dummy"
                   },
                   "name": "DummyEndpoint"
+                },
+                {
+                  "bases": null,
+                  "module": {
+                    "module_name": "trulens.core.feedback.endpoint",
+                    "package_name": "trulens.core.feedback"
+                  },
+                  "name": "_WithPost"
                 },
                 {
                   "bases": null,
@@ -115,7 +124,7 @@
                     "module_name": "trulens.core.utils.python",
                     "package_name": "trulens.core.utils"
                   },
-                  "name": "SingletonPerName"
+                  "name": "InstanceRefMixin"
                 },
                 {
                   "bases": null,
