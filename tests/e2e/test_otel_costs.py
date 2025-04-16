@@ -169,6 +169,8 @@ class TestOtelCosts(OtelTestCase):
             num_expected_spans=2,
         )
 
+    # TODO(otel): Get keys for this!
+    @unittest.skip("Don't have keys")
     def test_tru_custom_app_litellm_gemini(self):
         model = "gemini/gemini-2.0-flash-exp"
         self._test_tru_custom_app(
