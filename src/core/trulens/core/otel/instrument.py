@@ -188,8 +188,6 @@ class instrument:
             return ret
 
         def convert_to_generator(func, instance, args, kwargs):
-            if not self.enabled:
-                return func(*args, **kwargs)
             with create_function_call_context_manager(
                 self.create_new_span, func_name, self.is_record_root
             ) as span:
@@ -242,8 +240,7 @@ class instrument:
         @wrapt.decorator
         async def async_wrapper(func, instance, args, kwargs):
             if not self.enabled:
-                await func(*args, **kwargs)
-                return
+                return await func(*args, **kwargs)
             with create_function_call_context_manager(
                 self.create_new_span, func_name, self.is_record_root
             ) as span:
