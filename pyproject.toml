@@ -4,26 +4,38 @@ requires = [
   "poetry-core",
 ]
 
-[tool.poetry]
+[project]
 name = "trulens"
 version = "1.4.9"
 description = "Library to systematically track and evaluate LLM based applications."
-authors = [
-  "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
-]
-license = "MIT"
 readme = "README.md"
-packages = [
-  { from = "_trulens", include = "trulens" },
+license = "MIT"
+authors = [
+  { name = "Snowflake Inc.", email = "ml-observability-wg-dl@snowflake.com" },
 ]
-homepage = "https://trulens.org/"
-documentation = "https://trulens.org/getting_started/"
-repository = "https://github.com/truera/trulens"
 classifiers = [
-  "Programming Language :: Python :: 3",
-  "Operating System :: OS Independent",
   "Development Status :: 3 - Alpha",
   "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+
+dynamic = [
+  "dependencies",
+  "requires-python",
+]
+
+urls.documentation = "https://trulens.org/getting_started/"
+urls.homepage = "https://trulens.org/"
+urls.repository = "https://github.com/truera/trulens"
+
+[tool.poetry]
+packages = [
+  { from = "_trulens", include = "trulens" },
 ]
 
 [tool.poetry.dependencies]
