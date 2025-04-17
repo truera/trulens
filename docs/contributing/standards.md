@@ -329,7 +329,7 @@ See `tests/unit`.
 
 See `tests/unit/static`.
 
-Static tests run on multiple versions of Python: `3.8`, `3.9`, `3.10`, `3.11`,
+Static tests run on multiple versions of Python: `3.9`, `3.10`, `3.11`,
 and being a subset of unit tests, are also run on latest supported Python,
 `3.12` . Some tests that require all optional packages to be installed run only
 on `3.11` as the latter Python version does not support some of those optional
@@ -337,4 +337,4 @@ packages.
 
 ### Test pipelines
 
-Defined in `.azure_pipelines/ci-eval{-pr,}.yaml`.
+Defined in `.azure_pipelines/ci-eval-pr.yaml`.
