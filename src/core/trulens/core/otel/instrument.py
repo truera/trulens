@@ -132,7 +132,7 @@ def _set_span_attributes(
 
 
 class instrument:
-    instrumenters: List[instrument] = []
+    enabled: bool = True
 
     def __init__(
         self,
@@ -163,8 +163,6 @@ class instrument:
             "only_set_user_defined_attributes", False
         )
         self.must_be_first_wrapper = kwargs.get("must_be_first_wrapper", False)
-        self.enabled = True
-        instrument.instrumenters.append(self)
 
     def __call__(self, func: Callable) -> Callable:
         func_name = _get_func_name(func)
@@ -350,13 +348,11 @@ class instrument:
 
     @classmethod
     def enable_all_instrumentation(cls):
-        for curr in cls.instrumenters:
-            curr.enabled = True
+        cls.enabled = True
 
     @classmethod
     def disable_all_instrumentation(cls):
-        for curr in cls.instrumenters:
-            curr.enabled = False
+        cls.enabled = False
 
 
 def instrument_method(
