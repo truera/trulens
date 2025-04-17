@@ -22,7 +22,7 @@ build:
 requirements:
   host:
     - python >=3.9,<3.12
-    - poetry-core >=2.0.0
+    - poetry-core
     - pip
   run:
     - python >=3.9,<3.12
