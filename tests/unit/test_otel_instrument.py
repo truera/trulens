@@ -1,4 +1,5 @@
 import asyncio
+from collections import defaultdict
 import gc
 from typing import Callable
 import unittest
@@ -218,3 +219,29 @@ class TestOtelInstrument(unittest.TestCase):
             spans[1].attributes[f"{SpanAttributes.UNKNOWN.base}.best_babies"],
             ("Kojikun", "Nolan"),
         )
+
+    def test_disabled_instrumentation(self) -> None:
+        instrument_info = defaultdict(int)
+
+        # Set up instrumented function.
+        def fake_attributes(ret, exception, *args, **kwargs):
+            instrument_info["cnt"] += 1
+            instrument_info["ret"] = ret
+            return {}
+
+        @instrument(attributes=fake_attributes)
+        def my_function() -> str:
+            return "Kojikun is the best baby!"
+
+        # Run the function.
+        my_function()
+        self.assertEqual(instrument_info["cnt"], 1)
+        self.assertEqual(instrument_info["ret"], "Kojikun is the best baby!")
+        instrument.disable_all_instrumentation()
+        my_function()
+        self.assertEqual(instrument_info["cnt"], 1)
+        self.assertEqual(instrument_info["ret"], "Kojikun is the best baby!")
+        instrument.enable_all_instrumentation()
+        my_function()
+        self.assertEqual(instrument_info["cnt"], 2)
+        self.assertEqual(instrument_info["ret"], "Kojikun is the best baby!")

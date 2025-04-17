@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import inspect
 import logging
 import types
@@ -130,6 +132,8 @@ def _set_span_attributes(
 
 
 class instrument:
+    instrumenters: List[instrument] = []
+
     def __init__(
         self,
         *,
@@ -160,12 +164,15 @@ class instrument:
         )
         self.must_be_first_wrapper = kwargs.get("must_be_first_wrapper", False)
         self.enabled = True
+        instrument.instrumenters.append(self)
 
     def __call__(self, func: Callable) -> Callable:
         func_name = _get_func_name(func)
 
         @wrapt.decorator
         def sync_wrapper(func, instance, args, kwargs):
+            if not self.enabled:
+                return func(*args, **kwargs)
             ret = convert_to_generator(func, instance, args, kwargs)
             if next(ret) == "is_not_generator":
                 res = next(ret)
@@ -181,6 +188,8 @@ class instrument:
             return ret
 
         def convert_to_generator(func, instance, args, kwargs):
+            if not self.enabled:
+                return func(*args, **kwargs)
             with create_function_call_context_manager(
                 self.create_new_span, func_name, self.is_record_root
             ) as span:
@@ -232,6 +241,9 @@ class instrument:
 
         @wrapt.decorator
         async def async_wrapper(func, instance, args, kwargs):
+            if not self.enabled:
+                await func(*args, **kwargs)
+                return
             with create_function_call_context_manager(
                 self.create_new_span, func_name, self.is_record_root
             ) as span:
@@ -271,6 +283,10 @@ class instrument:
 
         @wrapt.decorator
         async def async_generator_wrapper(func, instance, args, kwargs):
+            if not self.enabled:
+                async for curr in func(*args, **kwargs):
+                    yield curr
+                return
             with create_function_call_context_manager(
                 self.create_new_span, func_name, self.is_record_root
             ) as span:
@@ -334,6 +350,16 @@ class instrument:
         if self.is_record_root and not self.is_app_specific_record_root:
             ret.__dict__[TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG] = True
         return ret
+
+    @classmethod
+    def enable_all_instrumentation(cls):
+        for curr in cls.instrumenters:
+            curr.enabled = True
+
+    @classmethod
+    def disable_all_instrumentation(cls):
+        for curr in cls.instrumenters:
+            curr.enabled = False
 
 
 def instrument_method(

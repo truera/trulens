@@ -8,6 +8,7 @@ from typing import Dict, List, Optional, Tuple
 from opentelemetry.util.types import AttributeValue
 import pandas as pd
 import sqlalchemy as sa
+from trulens.core.otel.instrument import instrument
 from trulens.core.schema.event import EventRecordType
 from trulens.core.session import TruSession
 from trulens.otel.semconv.trace import SpanAttributes
@@ -33,10 +34,12 @@ class OtelTestCase(TruTestCase):
     @classmethod
     def setUpClass(cls) -> None:
         os.environ["TRULENS_OTEL_TRACING"] = "1"
+        instrument.enable_all_instrumentation()
         return super().setUpClass()
 
     @classmethod
     def tearDownClass(cls) -> None:
+        instrument.disable_all_instrumentation()
         del os.environ["TRULENS_OTEL_TRACING"]
         cls.clear_TruSession_singleton()
         return super().tearDownClass()
