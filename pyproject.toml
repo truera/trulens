@@ -26,7 +26,7 @@ classifiers = [
 ]
 dynamic = [
   "dependencies",
-  "requires-python"
+  "requires-python",
 ]
 
 urls.documentation = "https://trulens.org/getting_started/"
