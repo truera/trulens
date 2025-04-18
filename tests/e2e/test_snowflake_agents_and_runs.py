@@ -5,6 +5,7 @@ import os
 from snowflake.snowpark import Session
 from trulens.apps.app import TruApp
 from trulens.connectors import snowflake as snowflake_connector
+from trulens.core.otel.instrument import instrument
 from trulens.core.run import RunConfig
 from trulens.core.run import RunStatus
 from trulens.core.session import TruSession
@@ -25,10 +26,12 @@ class TestSnowflakeAgentsAndRuns(SnowflakeTestCase):
     @classmethod
     def setUpClass(cls) -> None:
         os.environ["TRULENS_OTEL_TRACING"] = "1"
+        instrument.enable_all_instrumentation()
         super().setUpClass()
 
     @classmethod
     def tearDownClass(cls) -> None:
+        instrument.disable_all_instrumentation()
         del os.environ["TRULENS_OTEL_TRACING"]
         super().tearDownClass()
 
