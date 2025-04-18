@@ -95,7 +95,7 @@ pipeline {
                                 sh label: 'Run optional "e2e" Test Suite', script: '''
                                     set -e
 
-                                    make test-e2e-all
+                                    make test-e2e-optional
                                 '''
                             }
                         }

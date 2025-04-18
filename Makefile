@@ -233,7 +233,7 @@ test-%-snowflake: env-tests-snowflake
 # TODO: Update the E2E pipeline to use test-%-all instead (as of PR#1907, it currently tests optional and huggingface only)
 # This requires reducing flakiness in both basic and snowflake tests
 test-%-all: env-tests env-tests-optional env-tests-snowflake
-	TEST_OPTIONAL=true TEST_SNOWFLAKE=true TEST_HUGGINGFACE=false make test-$*
+	TEST_OPTIONAL=true TEST_SNOWFLAKE=true TEST_HUGGINGFACE=true make test-$*
 
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline
 # frequently.

@@ -1133,7 +1133,7 @@ class Instrument:
                     # their methods, the wrapper will capture an un-instrumented
                     # version of the inner method which we may fail to
                     # instrument.
-                    # @sfc-gh-dkurokawa:
+                    # @davidkurokawa:
                     #   This doesn't make any sense. This will remove a non
                     #   trulens wrapper such as for `llama-index` functions
                     #   decorated by `@dispatcher.span`. I also don't
@@ -1146,8 +1146,7 @@ class Instrument:
                     #   had issues due to the non-OTEL flow trying to wrap a
                     #   function with a `@wrapt.decorator` decorator which is
                     #   incompatible with the way `@functools.wraps` works.
-                    while hasattr(original_fun, "__wrapped__"):
-                        original_fun = original_fun.__wrapped__
+                    original_fun = inspect.unwrap(original_fun)
 
                     # Sometimes the base class may be in some module but when a
                     # method is looked up from it, it actually comes from some
