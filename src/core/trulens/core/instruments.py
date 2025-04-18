@@ -1138,7 +1138,7 @@ class Instrument:
                     #   trulens wrapper such as for `llama-index` functions
                     #   decorated by `@dispatcher.span`. I also don't
                     #   understand the comment above so it's hard to just
-                    #   remove this, but given non-OTEL is soon to be
+                    #   fix this easily, but given non-OTEL is soon to be
                     #   deprecated, I'm not going to fix this.
                     #   I've also changed this from an `if` to a `while` so
                     #   that it removes all decorators since that would make
