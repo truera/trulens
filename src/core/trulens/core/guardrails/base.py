@@ -1,7 +1,7 @@
 from concurrent.futures import as_completed
 import inspect
 import logging
-from typing import Optional
+from typing import Optional, Sequence, Union
 
 from trulens.core.feedback import feedback as core_feedback
 from trulens.core.utils import threading as threading_utils
@@ -147,7 +147,9 @@ class block_input:
 
     def __init__(
         self,
-        feedback: core_feedback.Feedback,
+        feedback: Union[
+            core_feedback.Feedback, Sequence[core_feedback.Feedback]
+        ],
         threshold: float,
         keyword_for_prompt: Optional[str] = None,
         return_value: Optional[str] = None,
@@ -177,15 +179,31 @@ class block_input:
         def wrapper(*args, **kwargs):
             bindings = sig.bind(*args, **kwargs)
             keyword_value = bindings.arguments[self.keyword_for_prompt]
-            result = self.feedback(keyword_value)
-            if not isinstance(result, float):
-                raise ValueError(
-                    "`block_input` can only be used with feedback functions that return a float."
-                )
-            if (self.feedback.higher_is_better and result < self.threshold) or (
-                not self.feedback.higher_is_better and result > self.threshold
-            ):
-                return self.return_value
+            # Support multiple feedback functions:
+            feedbacks = (
+                self.feedback
+                if isinstance(self.feedback, (list, tuple))
+                else [self.feedback]
+            )
+
+            with threading_utils.ThreadPoolExecutor(
+                max_workers=len(feedbacks)
+            ) as executor:
+                future_to_fb = {
+                    executor.submit(fb, keyword_value): fb for fb in feedbacks
+                }
+                for future in as_completed(future_to_fb):
+                    result = future.result()
+                    if not isinstance(result, float):
+                        raise ValueError(
+                            "`block_input` can only be used with feedback functions that return a float."
+                        )
+                    fb = future_to_fb[future]
+                    # Block if any feedback returns a failing result
+                    if (fb.higher_is_better and result < self.threshold) or (
+                        not fb.higher_is_better and result > self.threshold
+                    ):
+                        return self.return_value
 
             return func(*args, **kwargs)
 
@@ -236,7 +254,9 @@ class block_output:
 
     def __init__(
         self,
-        feedback: core_feedback.Feedback,
+        feedback: Union[
+            core_feedback.Feedback, Sequence[core_feedback.Feedback]
+        ],
         threshold: float,
         return_value: Optional[str] = None,
     ):
@@ -249,17 +269,35 @@ class block_output:
 
         def wrapper(*args, **kwargs):
             output = func(*args, **kwargs)
-            result = self.feedback(output)
-            if not isinstance(result, float):
-                raise ValueError(
-                    "`block_output` can only be used with feedback functions that return a float."
-                )
-            if (self.feedback.higher_is_better and result < self.threshold) or (
-                not self.feedback.higher_is_better and result > self.threshold
-            ):
-                return self.return_value
-            else:
-                return output
+            # Support multiple feedback functions:
+            feedbacks = (
+                self.feedback
+                if isinstance(self.feedback, (list, tuple))
+                else [self.feedback]
+            )
+
+            from concurrent.futures import as_completed
+
+            with threading_utils.ThreadPoolExecutor(
+                max_workers=len(feedbacks)
+            ) as executor:
+                future_to_fb = {
+                    executor.submit(fb, output): fb for fb in feedbacks
+                }
+                for future in as_completed(future_to_fb):
+                    result = future.result()
+                    if not isinstance(result, float):
+                        raise ValueError(
+                            "`block_output` can only be used with feedback functions that return a float."
+                        )
+                    fb = future_to_fb[future]
+                    # Block if any feedback returns a failing result
+                    if (fb.higher_is_better and result < self.threshold) or (
+                        not fb.higher_is_better and result > self.threshold
+                    ):
+                        return self.return_value
+
+            return output
 
         # note: the following information is manually written to the wrapper because @functools.wraps(func) causes breaking of the method.
         wrapper.__name__ = func.__name__
