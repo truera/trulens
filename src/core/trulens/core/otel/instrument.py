@@ -347,11 +347,11 @@ class instrument:
         return ret
 
     @classmethod
-    def enable_all_instrumentation(cls):
+    def enable_all_instrumentation(cls) -> None:
         cls.enabled = True
 
     @classmethod
-    def disable_all_instrumentation(cls):
+    def disable_all_instrumentation(cls) -> None:
         cls.enabled = False
 
 
