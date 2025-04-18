@@ -276,7 +276,6 @@ class block_output:
                 else [self.feedback]
             )
 
-            from concurrent.futures import as_completed
 
             with threading_utils.ThreadPoolExecutor(
                 max_workers=len(feedbacks)
