@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import inspect
 import logging
 import types
@@ -129,41 +131,83 @@ def _set_span_attributes(
         )
 
 
-def instrument(
-    *,
-    span_type: SpanAttributes.SpanType = SpanAttributes.SpanType.UNKNOWN,
-    attributes: Attributes = None,
-    must_be_first_wrapper: bool = False,
-    **kwargs,
-) -> Callable[[Callable], Any]:  # TODO(this_pr): get type!
-    """
-    Decorator for marking functions to be instrumented with OpenTelemetry
-    tracing.
+def _set_span_attributes_and_handle_exceptions(
+    span: Span,
+    span_type: SpanAttributes.SpanType,
+    func_name: str,
+    func: Callable,
+    func_exception: Optional[Exception],
+    attributes: Attributes,
+    instance: Any,
+    args: Tuple[Any],
+    kwargs: Dict[str, Any],
+    ret: Any,
+    only_set_user_defined_attributes: bool = False,
+):
+    attributes_exception: Optional[Exception] = None
+    try:
+        _set_span_attributes(
+            span,
+            span_type,
+            func_name,
+            func,
+            func_exception,
+            attributes,
+            instance,
+            args,
+            kwargs,
+            ret,
+            only_set_user_defined_attributes=only_set_user_defined_attributes,
+        )
+    except Exception as e:
+        logger.error(f"Error setting attributes: {e}")
+        attributes_exception = e
+    # Raise any exceptions that occurred.
+    exception = func_exception or attributes_exception
+    if exception:
+        raise exception
 
-    span_type: Span type to be used for the span.
-    attributes:
-        A dictionary or a callable that returns a dictionary of attributes
-        (i.e. a `typing.Dict[str, typing.Any]`) to be set on the span.
-    must_be_first_wrapper:
-        If this is True and the function is already wrapped with the TruLens
-        decorator, then the function will not be wrapped again.
-    """
-    if attributes is None:
-        attributes = {}
-    is_record_root = span_type == SpanAttributes.SpanType.RECORD_ROOT
-    is_app_specific_record_root = kwargs.get(
-        "is_app_specific_record_root", False
-    )
-    create_new_span = kwargs.get("create_new_span", True)
-    only_set_user_defined_attributes = kwargs.get(
-        "only_set_user_defined_attributes", False
-    )
 
-    def inner_decorator(func: Callable):
+class instrument:
+    enabled: bool = True
+
+    def __init__(
+        self,
+        *,
+        span_type: SpanAttributes.SpanType = SpanAttributes.SpanType.UNKNOWN,
+        attributes: Attributes = None,
+        **kwargs,
+    ) -> None:
+        """
+        Decorator for marking functions to be instrumented with OpenTelemetry
+        tracing.
+
+        span_type: Span type to be used for the span.
+        attributes:
+            A dictionary or a callable that returns a dictionary of attributes
+            (i.e. a `typing.Dict[str, typing.Any]`) to be set on the span.
+        """
+        self.span_type = span_type
+        if attributes is None:
+            attributes = {}
+        self.attributes = attributes
+        self.is_record_root = span_type == SpanAttributes.SpanType.RECORD_ROOT
+        self.is_app_specific_record_root = kwargs.get(
+            "is_app_specific_record_root", False
+        )
+        self.create_new_span = kwargs.get("create_new_span", True)
+        self.only_set_user_defined_attributes = kwargs.get(
+            "only_set_user_defined_attributes", False
+        )
+        self.must_be_first_wrapper = kwargs.get("must_be_first_wrapper", False)
+
+    def __call__(self, func: Callable) -> Callable:
         func_name = _get_func_name(func)
 
         @wrapt.decorator
         def sync_wrapper(func, instance, args, kwargs):
+            if not self.enabled:
+                return func(*args, **kwargs)
             ret = convert_to_generator(func, instance, args, kwargs)
             if next(ret) == "is_not_generator":
                 res = next(ret)
@@ -180,11 +224,10 @@ def instrument(
 
         def convert_to_generator(func, instance, args, kwargs):
             with create_function_call_context_manager(
-                create_new_span, func_name, is_record_root
+                self.create_new_span, func_name, self.is_record_root
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
-                attributes_exception: Optional[Exception] = None
                 # Run function.
                 try:
                     result = func(*args, **kwargs)
@@ -204,38 +247,30 @@ def instrument(
                     # None as a return value.
                     func_exception = e
                 finally:
-                    # Set span attributes.
-                    try:
-                        _set_span_attributes(
-                            span,
-                            span_type,
-                            func_name,
-                            func,
-                            func_exception,
-                            attributes,
-                            instance,
-                            args,
-                            kwargs,
-                            ret,
-                            only_set_user_defined_attributes=only_set_user_defined_attributes,
-                        )
-                    except Exception as e:
-                        logger.error(f"Error setting attributes: {e}")
-                        attributes_exception = e
-                    # Raise any exceptions that occurred.
-                    exception = func_exception or attributes_exception
-                    if exception:
-                        raise exception
+                    _set_span_attributes_and_handle_exceptions(
+                        span,
+                        self.span_type,
+                        func_name,
+                        func,
+                        func_exception,
+                        self.attributes,
+                        instance,
+                        args,
+                        kwargs,
+                        ret,
+                        self.only_set_user_defined_attributes,
+                    )
                     return ret
 
         @wrapt.decorator
         async def async_wrapper(func, instance, args, kwargs):
+            if not self.enabled:
+                return await func(*args, **kwargs)
             with create_function_call_context_manager(
-                create_new_span, func_name, is_record_root
+                self.create_new_span, func_name, self.is_record_root
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
-                attributes_exception: Optional[Exception] = None
                 # Run function.
                 try:
                     ret = await func(*args, **kwargs)
@@ -245,36 +280,32 @@ def instrument(
                     # None as a return value.
                     func_exception = e
                 # Set span attributes.
-                try:
-                    _set_span_attributes(
-                        span,
-                        span_type,
-                        func_name,
-                        func,
-                        func_exception,
-                        attributes,
-                        instance,
-                        args,
-                        kwargs,
-                        ret,
-                    )
-                except Exception as e:
-                    logger.error(f"Error setting attributes: {e}")
-                    attributes_exception = e
-                # Raise any exceptions that occurred.
-                exception = func_exception or attributes_exception
-                if exception:
-                    raise exception
+                _set_span_attributes_and_handle_exceptions(
+                    span,
+                    self.span_type,
+                    func_name,
+                    func,
+                    func_exception,
+                    self.attributes,
+                    instance,
+                    args,
+                    kwargs,
+                    ret,
+                    self.only_set_user_defined_attributes,
+                )
             return ret
 
         @wrapt.decorator
         async def async_generator_wrapper(func, instance, args, kwargs):
+            if not self.enabled:
+                async for curr in func(*args, **kwargs):
+                    yield curr
+                return
             with create_function_call_context_manager(
-                create_new_span, func_name, is_record_root
+                self.create_new_span, func_name, self.is_record_root
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
-                attributes_exception: Optional[Exception] = None
                 # Run function.
                 try:
                     result = func(*args, **kwargs)
@@ -288,30 +319,22 @@ def instrument(
                     # None as a return value.
                     func_exception = e
                 finally:
-                    # Set span attributes.
-                    try:
-                        _set_span_attributes(
-                            span,
-                            span_type,
-                            func_name,
-                            func,
-                            func_exception,
-                            attributes,
-                            instance,
-                            args,
-                            kwargs,
-                            ret,
-                        )
-                    except Exception as e:
-                        logger.error(f"Error setting attributes: {e}")
-                        attributes_exception = e
-                    # Raise any exceptions that occurred.
-                    exception = func_exception or attributes_exception
-                    if exception:
-                        raise exception
+                    _set_span_attributes_and_handle_exceptions(
+                        span,
+                        self.span_type,
+                        func_name,
+                        func,
+                        func_exception,
+                        self.attributes,
+                        instance,
+                        args,
+                        kwargs,
+                        ret,
+                        self.only_set_user_defined_attributes,
+                    )
 
         # Check if already wrapped if not allowing multiple wrappers.
-        if must_be_first_wrapper:
+        if self.must_be_first_wrapper:
             if hasattr(func, TRULENS_INSTRUMENT_WRAPPER_FLAG):
                 return func
             curr = func
@@ -329,11 +352,17 @@ def instrument(
         else:
             ret = sync_wrapper(func)
         ret.__dict__[TRULENS_INSTRUMENT_WRAPPER_FLAG] = True
-        if is_record_root and not is_app_specific_record_root:
+        if self.is_record_root and not self.is_app_specific_record_root:
             ret.__dict__[TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG] = True
         return ret
 
-    return inner_decorator
+    @classmethod
+    def enable_all_instrumentation(cls) -> None:
+        cls.enabled = True
+
+    @classmethod
+    def disable_all_instrumentation(cls) -> None:
+        cls.enabled = False
 
 
 def instrument_method(

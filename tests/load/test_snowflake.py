@@ -87,6 +87,7 @@ class TestSnowflake(SnowflakeTestCase):
     @classmethod
     def setUpClass(cls) -> None:
         os.environ["TRULENS_OTEL_TRACING"] = "1"
+        instrument.enable_all_instrumentation()
         if (
             os.environ["SNOWFLAKE_ACCOUNT"]
             != "aiml_apps_load_testing.qa6.us-west-2.aws"
@@ -104,6 +105,7 @@ class TestSnowflake(SnowflakeTestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
+        instrument.disable_all_instrumentation()
         del os.environ["TRULENS_OTEL_TRACING"]
         if cls._orig_OTEL_BSP_MAX_EXPORT_BATCH_SIZE is not None:
             os.environ["OTEL_BSP_MAX_EXPORT_BATCH_SIZE"] = (
