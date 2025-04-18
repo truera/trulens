@@ -95,7 +95,7 @@ pipeline {
                                 sh label: 'Run non-flaky "e2e" Test Suite', script: '''
                                     set -e
 
-                                    make test-e2e-nonflaky
+                                    make test-e2e-stable
                                 '''
                             }
                         }

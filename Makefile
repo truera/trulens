@@ -230,7 +230,7 @@ test-%-huggingface: env-tests-optional
 test-%-snowflake: env-tests-snowflake
 	SKIP_BASIC_TESTS=1 TEST_SNOWFLAKE=true make test-$*
 
-test-%-nonflaky: env-tests env-tests-optional env-tests-snowflake
+test-%-stable: env-tests env-tests-optional env-tests-snowflake
 	TEST_OPTIONAL=true TEST_SNOWFLAKE=true TEST_HUGGINGFACE=false make test-$*
 
 test-%-all: env-tests env-tests-optional env-tests-snowflake
