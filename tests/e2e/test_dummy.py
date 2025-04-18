@@ -11,6 +11,7 @@ from trulens.apps import custom as custom_app
 from trulens.core import session as core_session
 
 from examples.dev.dummy_app.app import DummyApp
+from examples.dev.dummy_app.tool import DummyStackTool
 from tests import test as mod_test
 
 
@@ -18,8 +19,14 @@ class TestDummy(mod_test.TruTestCase):
     """Tests for cost tracking of endpoints."""
 
     def setUp(self):
+        DummyStackTool.clear_stack()
         self.session = core_session.TruSession()
         self.session.reset_database()
+        super().setUp()
+
+    def tearDown(self):
+        DummyStackTool.clear_stack()
+        super().tearDown()
 
     def test_dummy(self):
         """Check that recording of example custom app using dummy endpoint works
