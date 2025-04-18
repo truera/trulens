@@ -131,6 +131,43 @@ def _set_span_attributes(
         )
 
 
+def _set_span_attributes_and_handle_exceptions(
+    span: Span,
+    span_type: SpanAttributes.SpanType,
+    func_name: str,
+    func: Callable,
+    func_exception: Optional[Exception],
+    attributes: Attributes,
+    instance: Any,
+    args: Tuple[Any],
+    kwargs: Dict[str, Any],
+    ret: Any,
+    only_set_user_defined_attributes: bool = False,
+):
+    attributes_exception: Optional[Exception] = None
+    try:
+        _set_span_attributes(
+            span,
+            span_type,
+            func_name,
+            func,
+            func_exception,
+            attributes,
+            instance,
+            args,
+            kwargs,
+            ret,
+            only_set_user_defined_attributes=only_set_user_defined_attributes,
+        )
+    except Exception as e:
+        logger.error(f"Error setting attributes: {e}")
+        attributes_exception = e
+    # Raise any exceptions that occurred.
+    exception = func_exception or attributes_exception
+    if exception:
+        raise exception
+
+
 class instrument:
     enabled: bool = True
 
@@ -191,7 +228,6 @@ class instrument:
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
-                attributes_exception: Optional[Exception] = None
                 # Run function.
                 try:
                     result = func(*args, **kwargs)
@@ -211,28 +247,19 @@ class instrument:
                     # None as a return value.
                     func_exception = e
                 finally:
-                    # Set span attributes.
-                    try:
-                        _set_span_attributes(
-                            span,
-                            self.span_type,
-                            func_name,
-                            func,
-                            func_exception,
-                            self.attributes,
-                            instance,
-                            args,
-                            kwargs,
-                            ret,
-                            only_set_user_defined_attributes=self.only_set_user_defined_attributes,
-                        )
-                    except Exception as e:
-                        logger.error(f"Error setting attributes: {e}")
-                        attributes_exception = e
-                    # Raise any exceptions that occurred.
-                    exception = func_exception or attributes_exception
-                    if exception:
-                        raise exception
+                    _set_span_attributes_and_handle_exceptions(
+                        span,
+                        self.span_type,
+                        func_name,
+                        func,
+                        func_exception,
+                        self.attributes,
+                        instance,
+                        args,
+                        kwargs,
+                        ret,
+                        self.only_set_user_defined_attributes,
+                    )
                     return ret
 
         @wrapt.decorator
@@ -244,7 +271,6 @@ class instrument:
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
-                attributes_exception: Optional[Exception] = None
                 # Run function.
                 try:
                     ret = await func(*args, **kwargs)
@@ -254,26 +280,19 @@ class instrument:
                     # None as a return value.
                     func_exception = e
                 # Set span attributes.
-                try:
-                    _set_span_attributes(
-                        span,
-                        self.span_type,
-                        func_name,
-                        func,
-                        func_exception,
-                        self.attributes,
-                        instance,
-                        args,
-                        kwargs,
-                        ret,
-                    )
-                except Exception as e:
-                    logger.error(f"Error setting attributes: {e}")
-                    attributes_exception = e
-                # Raise any exceptions that occurred.
-                exception = func_exception or attributes_exception
-                if exception:
-                    raise exception
+                _set_span_attributes_and_handle_exceptions(
+                    span,
+                    self.span_type,
+                    func_name,
+                    func,
+                    func_exception,
+                    self.attributes,
+                    instance,
+                    args,
+                    kwargs,
+                    ret,
+                    self.only_set_user_defined_attributes,
+                )
             return ret
 
         @wrapt.decorator
@@ -287,7 +306,6 @@ class instrument:
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
-                attributes_exception: Optional[Exception] = None
                 # Run function.
                 try:
                     result = func(*args, **kwargs)
@@ -301,27 +319,19 @@ class instrument:
                     # None as a return value.
                     func_exception = e
                 finally:
-                    # Set span attributes.
-                    try:
-                        _set_span_attributes(
-                            span,
-                            self.span_type,
-                            func_name,
-                            func,
-                            func_exception,
-                            self.attributes,
-                            instance,
-                            args,
-                            kwargs,
-                            ret,
-                        )
-                    except Exception as e:
-                        logger.error(f"Error setting attributes: {e}")
-                        attributes_exception = e
-                    # Raise any exceptions that occurred.
-                    exception = func_exception or attributes_exception
-                    if exception:
-                        raise exception
+                    _set_span_attributes_and_handle_exceptions(
+                        span,
+                        self.span_type,
+                        func_name,
+                        func,
+                        func_exception,
+                        self.attributes,
+                        instance,
+                        args,
+                        kwargs,
+                        ret,
+                        self.only_set_user_defined_attributes,
+                    )
 
         # Check if already wrapped if not allowing multiple wrappers.
         if self.must_be_first_wrapper:
@@ -347,11 +357,11 @@ class instrument:
         return ret
 
     @classmethod
-    def enable_all_instrumentation(cls):
+    def enable_all_instrumentation(cls) -> None:
         cls.enabled = True
 
     @classmethod
-    def disable_all_instrumentation(cls):
+    def disable_all_instrumentation(cls) -> None:
         cls.enabled = False
 
 
