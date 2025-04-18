@@ -1133,8 +1133,20 @@ class Instrument:
                     # their methods, the wrapper will capture an un-instrumented
                     # version of the inner method which we may fail to
                     # instrument.
-                    if hasattr(original_fun, "__wrapped__"):
-                        original_fun = original_fun.__wrapped__
+                    # @davidkurokawa:
+                    #   This doesn't make any sense. This will remove a non
+                    #   trulens wrapper such as for `llama-index` functions
+                    #   decorated by `@dispatcher.span`. I also don't
+                    #   understand the comment above so it's hard to just
+                    #   fix this easily, but given non-OTEL is soon to be
+                    #   deprecated, I'm not going to fix this.
+                    #   I've also changed this from an `if` to a `while` so
+                    #   that it removes all decorators since that would make
+                    #   slightly more sense and it also fixes a test that
+                    #   had issues due to the non-OTEL flow trying to wrap a
+                    #   function with a `@wrapt.decorator` decorator which is
+                    #   incompatible with the way `@functools.wraps` works.
+                    original_fun = inspect.unwrap(original_fun)
 
                     # Sometimes the base class may be in some module but when a
                     # method is looked up from it, it actually comes from some
