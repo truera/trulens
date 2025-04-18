@@ -86,42 +86,13 @@ pipeline {
             // NOTE: Another proposed workaround is to set `poetry config installer.parallel false`, but this would (1) slow down all CI jobs and (2) does not fix the issue with parallel CI stages.
             // TODO(SNOW-2034894): Re-enable parallel CI stages with fully separated nodes.
             stages {
-                stage('e2e') {
-                    steps {
-                        // NOTE: As of PR#1904, this is a temporary workaround to ensure we are still able to run both e2e and notebook stages even if one fails (while sequential).
-                        // We will revisit this once we re-enable parallelism.
-                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                            withVault(vault_settings) {
-                                sh label: 'Run non-flaky "e2e" Test Suite', script: '''
-                                    set -e
-
-                                    make test-e2e-stable
-                                '''
-                            }
-                        }
-                    }
-                }
-                stage('huggingface') {
-                    steps {
-                        // NOTE: HuggingFace Inference API is unstable and may fail due to rate limiting.
-                        catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
-                            withVault(vault_settings) {
-                                sh label: 'Run huggingface "e2e" Test Suite', script: '''
-                                    set -e
-
-                                    make test-e2e-huggingface
-                                '''
-                            }
-                        }
-                    }
-                }
                 stage('notebook') {
                     steps {
                         withVault(vault_settings) {
                             sh label: 'Run optional "notebook" Test Suite', script: '''
                                 set -e
 
-                                make test-notebook-optional
+                                make test-notebook-stable
                             '''
                         }
                     }
