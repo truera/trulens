@@ -107,3 +107,51 @@ class TestGuardrailDecorators(unittest.TestCase):
 
         result = chat("example prompt")
         self.assertEqual(result, "Response")
+
+    def test_block_input_multiple_feedbacks(self):
+        threshold = 0.5
+
+        # Mix high and low feedback functions; the low one should trigger blocking.
+        @block_input(
+            [f_dummy_feedback_high, f_dummy_feedback_low], threshold, "prompt"
+        )
+        def generate_completion(prompt: str) -> str:
+            return "Completion"
+
+        result = generate_completion("example query")
+        self.assertEqual(result, None)
+
+    def test_no_block_input_multiple_feedbacks(self):
+        threshold = 0.5
+
+        # Both feedback functions yield high values so input is allowed.
+        @block_input(
+            [f_dummy_feedback_high, f_dummy_feedback_high], threshold, "prompt"
+        )
+        def generate_completion(prompt: str) -> str:
+            return "Completion"
+
+        result = generate_completion("example query")
+        self.assertEqual(result, "Completion")
+
+    def test_block_output_multiple_feedbacks(self):
+        threshold = 0.5
+
+        # Mix high and low feedback functions; the low one should trigger blocking.
+        @block_output([f_dummy_feedback_low, f_dummy_feedback_high], threshold)
+        def chat(prompt: str) -> str:
+            return "Response"
+
+        result = chat("example prompt")
+        self.assertEqual(result, None)
+
+    def test_no_block_output_multiple_feedbacks(self):
+        threshold = 0.5
+
+        # Both feedback functions yield high values so output is returned.
+        @block_output([f_dummy_feedback_high, f_dummy_feedback_high], threshold)
+        def chat(prompt: str) -> str:
+            return "Response"
+
+        result = chat("example prompt")
+        self.assertEqual(result, "Response")
