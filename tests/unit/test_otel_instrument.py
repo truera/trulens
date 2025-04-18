@@ -19,6 +19,16 @@ from trulens.otel.semconv.trace import SpanAttributes
 
 
 class TestOtelInstrument(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        instrument.enable_all_instrumentation()
+        return super().setUpClass()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        instrument.disable_all_instrumentation()
+        return super().tearDownClass()
+
     def setUp(self) -> None:
         # Set up OTEL tracing.
         self.exporter = InMemorySpanExporter()
