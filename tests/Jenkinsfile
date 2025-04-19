@@ -92,10 +92,10 @@ pipeline {
                         // We will revisit this once we re-enable parallelism.
                         catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                             withVault(vault_settings) {
-                                sh label: 'Run optional "e2e" Test Suite', script: '''
+                                sh label: 'Run stable "e2e" Test Suite', script: '''
                                     set -e
 
-                                    make test-e2e-all
+                                    make test-e2e-stable
                                 '''
                             }
                         }
