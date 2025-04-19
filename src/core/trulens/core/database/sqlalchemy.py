@@ -4,6 +4,7 @@ from collections import defaultdict
 from datetime import datetime
 import json
 import logging
+import os
 from sqlite3 import OperationalError
 from typing import (
     Any,
@@ -51,6 +52,7 @@ from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
+from trulens.otel.semconv.trace import BASE_SCOPE, SpanAttributes
 
 logger = logging.getLogger(__name__)
 
@@ -804,7 +806,290 @@ class SQLAlchemyDB(core_db.DB):
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """See [DB.get_records_and_feedback][trulens.core.database.base.DB.get_records_and_feedback]."""
+        # Check if OTEL is enabled
+        otel_tracing_enabled = os.getenv(
+            "TRULENS_OTEL_TRACING", ""
+        ).lower() in ["1", "true"]
 
+        if otel_tracing_enabled:
+            return self._get_records_and_feedback_otel(
+                app_ids=app_ids, app_name=app_name, offset=offset, limit=limit
+            )
+        else:
+            return self._get_records_and_feedback(
+                app_ids=app_ids, app_name=app_name, offset=offset, limit=limit
+            )
+
+    def _get_records_and_feedback_otel(
+        self,
+        app_ids: Optional[List[str]] = None,
+        app_name: Optional[types_schema.AppName] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> Tuple[pd.DataFrame, Sequence[str]]:
+        """With OTEL tracing, maps trace span attributes and additional span data to existing dataframe representation."""
+
+        with self.session() as session:
+            # NOTE: do we have to query only for root spans (application runs) that have no parent_id?
+            stmt = sa.select(self.orm.Event).where(
+                self.orm.Event.trace["parent_id"].is_(None)
+            )
+            # or can we query for all spans and then group them by trace_id in python?
+            # stmt = sa.select(self.orm.Event)
+
+            # Filter by app_ids if provided
+            if app_ids:
+                app_id_filters = []
+                for app_id in app_ids:
+                    app_id_filters.append(
+                        self.orm.Event.record_attributes[
+                            f"{BASE_SCOPE}.app_id"
+                        ].astext
+                        == app_id
+                    )
+                if app_id_filters:
+                    stmt = stmt.where(sa.or_(*app_id_filters))
+
+            # Filter by app_name if provided
+            if app_name:
+                stmt = stmt.where(
+                    self.orm.Event.record_attributes[
+                        f"{BASE_SCOPE}.app_name"
+                    ].astext
+                    == app_name
+                )
+
+            # Order by timestamp descending
+            stmt = stmt.order_by(self.orm.Event.start_timestamp.desc())
+
+            # Apply pagination
+            if offset is not None:
+                stmt = stmt.offset(offset)
+
+            if limit is not None:
+                stmt = stmt.limit(limit)
+
+            # Execute query
+            result = session.execute(stmt)
+            events = result.scalars().all()
+
+            # Process events into records
+            records_data = []
+            record_ids = []
+
+            for event in events:
+                # Parse record_attributes
+                if isinstance(event.record_attributes, str):
+                    attrs = json.loads(event.record_attributes)
+                else:
+                    attrs = event.record_attributes or {}
+
+                # Skip events without a record id
+                record_id = attrs.get(f"{SpanAttributes.RECORD_ID}")
+                if not record_id:
+                    continue
+
+                record_ids.append(record_id)
+
+                # Extract app info
+                app_name = attrs.get(f"{SpanAttributes.APP_NAME}")
+                app_version = attrs.get(f"{SpanAttributes.APP_VERSION}")
+
+                # Generate app_id
+                app_id = f"app_hash_{hash(app_name + app_version)}"
+
+                # Calculate latency
+                latency = None
+                if event.start_timestamp and event.end_timestamp:
+                    latency = (
+                        event.end_timestamp - event.start_timestamp
+                    ).total_seconds()
+
+                # Extract record input/output
+                input_str = attrs.get(f"{BASE_SCOPE}.record_root.input")
+                output_str = attrs.get(f"{BASE_SCOPE}.record_root.output")
+
+                # Extract cost info
+                cost_currency = attrs.get(
+                    f"{BASE_SCOPE}.cost.cost_currency", "USD"
+                )
+                total_cost = attrs.get(f"{BASE_SCOPE}.cost.cost", 0)
+                total_tokens = attrs.get(f"{BASE_SCOPE}.cost.num_tokens", 0)
+
+                # Set placeholder value for tags
+                tags = "-"
+
+                # Set null value for metadata
+                metadata = None
+
+                # Create record
+                record = {
+                    "record_id": record_id,
+                    "app_id": app_id,
+                    "app_name": app_name,
+                    "app_version": app_version,
+                    "input": input_str,
+                    "output": output_str,
+                    "tags": tags,
+                    "ts": event.start_timestamp,
+                    "latency": latency,
+                    "total_tokens": total_tokens,
+                    "total_cost": total_cost,
+                    "cost_currency": cost_currency,
+                }
+
+                # Add required JSON fields for dashboard compatibility
+                record["record_json"] = {
+                    "record_id": record_id,
+                    "app_id": app_id,
+                    "input": input_str,
+                    "output": output_str,
+                    "tags": tags,
+                    "meta": metadata,
+                    "ts": event.start_timestamp.isoformat()
+                    if event.start_timestamp
+                    else None,
+                }
+
+                record["app_json"] = {
+                    "app_id": app_id,
+                    "app_name": app_name,
+                    "app_version": app_version,
+                }
+
+                # Add metadata for filtering
+                record["record_metadata"] = metadata
+
+                records_data.append(record)
+
+            # Create DataFrame
+            if not records_data:
+                return pd.DataFrame(), []
+
+            df = pd.DataFrame(records_data)
+
+            # Query evaluation spans for records
+            if record_ids:
+                # Find spans with record_id that also have eval.metric_name
+                eval_conditions = []
+                for record_id in record_ids:
+                    eval_conditions.append(
+                        self.orm.Event.record_attributes[
+                            f"{SpanAttributes.RECORD_ID}"
+                        ].astext
+                        == record_id
+                    )
+                eval_stmt = sa.select(self.orm.Event).where(
+                    sa.and_(
+                        sa.or_(*eval_conditions),
+                        self.orm.Event.record_attributes[
+                            f"{BASE_SCOPE}.eval.metric_name"
+                        ]
+                        != None,
+                    )
+                )
+
+                eval_result = session.execute(eval_stmt)
+                eval_spans = eval_result.scalars().all()
+
+                # Group eval spans by record_id
+                eval_spans_by_record = {}
+                for span in eval_spans:
+                    if isinstance(span.record_attributes, str):
+                        attrs = json.loads(span.record_attributes)
+                    else:
+                        attrs = span.record_attributes or {}
+
+                    span_record_id = attrs.get(f"{SpanAttributes.RECORD_ID}")
+                    if span_record_id not in eval_spans_by_record:
+                        eval_spans_by_record[span_record_id] = []
+                    eval_spans_by_record[span_record_id].append(span)
+
+                # Process each record to add eval results
+                feedback_columns = set()
+
+                for i, row in df.iterrows():
+                    record_id = row["record_id"]
+                    if record_id not in eval_spans_by_record:
+                        continue
+
+                    spans = eval_spans_by_record[record_id]
+
+                    # Group eval spans by metric_name
+                    eval_results = {}
+                    for span in spans:
+                        if isinstance(span.record_attributes, str):
+                            attrs = json.loads(span.record_attributes)
+                        else:
+                            attrs = span.record_attributes or {}
+
+                        metric_name = attrs.get(
+                            f"{BASE_SCOPE}.eval.metric_name"
+                        )
+                        if not metric_name:
+                            continue
+
+                        if metric_name not in eval_results:
+                            eval_results[metric_name] = {
+                                "scores": [],
+                                "calls": [],
+                                "cost": 0,
+                                "higher_is_better": attrs.get(
+                                    f"{BASE_SCOPE}.eval.higher_is_better"
+                                ),
+                            }
+
+                        score = attrs.get(f"{BASE_SCOPE}.eval.score")
+                        if score is not None:
+                            eval_results[metric_name]["scores"].append(score)
+
+                        # Format call data for dashboard compatibility
+                        call_data = {
+                            "args": attrs.get(f"{BASE_SCOPE}.eval.args", {}),
+                            "ret": score,
+                            "meta": attrs.get(
+                                f"{BASE_SCOPE}.eval.explanation", {}
+                            ),
+                        }
+                        eval_results[metric_name]["calls"].append(call_data)
+
+                        cost = attrs.get(f"{BASE_SCOPE}.cost.cost", 0)
+                        eval_results[metric_name]["cost"] += cost
+
+                    # Add eval results to DataFrame
+                    for metric_name, data in eval_results.items():
+                        scores = data["scores"]
+                        if scores:
+                            df.at[i, metric_name] = np.mean(scores)
+                            feedback_columns.add(metric_name)
+                        else:
+                            df.at[i, metric_name] = None
+
+                        df.at[i, f"{metric_name}_calls"] = data["calls"]
+
+                        if data["cost"] > 0:
+                            currency = row.get("cost_currency", "USD")
+                            cost_col = (
+                                f"{metric_name} feedback cost in {currency}"
+                            )
+                            df.at[i, cost_col] = data["cost"]
+
+                        df.at[i, f"{metric_name}_direction"] = data[
+                            "higher_is_better"
+                        ]
+
+                return df, list(feedback_columns)
+
+            return df, []
+
+    def _get_records_and_feedback(
+        self,
+        app_ids: Optional[List[str]] = None,
+        app_name: Optional[types_schema.AppName] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> Tuple[pd.DataFrame, Sequence[str]]:
+        """Original implementation of get_records_and_feedback."""
         # TODO: Add pagination to this method. Currently the joinedload in
         # select below disables lazy loading of records which will be a problem
         # for large databases without the use of pagination.
@@ -1248,9 +1533,9 @@ class AppsExtractor:
                 with `apps`.
         """
 
-        assert (
-            apps is None or records is None
-        ), "`apps` and `records` are mutually exclusive"
+        assert apps is None or records is None, (
+            "`apps` and `records` are mutually exclusive"
+        )
 
         if apps is not None:
             df = pd.concat(self.extract_apps(apps))
