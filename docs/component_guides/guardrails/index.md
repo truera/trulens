@@ -14,7 +14,7 @@ This mechanism for guardrails is supported via the `block_output` guardrail.
 
 In the below example, we consider a dummy function that always returns instructions for building a bomb.
 
-Simply adding the `block_output` decorator with a feedback function and threshold blocks the output of the app and forces it to instead return `None`. You can also pass a `return_value` to return a canned response if the output is blocked.
+Simply adding the `block_output` decorator with a feedback function (or list of feedback functions) and threshold blocks the output of the app and forces it to instead return `None`. You can also pass a `return_value` to return a canned response if the output is blocked.
 
 !!! example "Using `block_output`"
 
@@ -41,7 +41,7 @@ In many cases, you may want to go even further to block unsafe usage of the app 
 
 ![Input Blocking Guardrails Flow](input_blocking_guardrails.png)
 
-This mechanism for guardrails is supported via the `block_input` guardrail. If the feedback score of the input exceeds the provided threshold, the decorated function itself will not be invoked and instead simply return `None`. You can also pass a `return_value` to return a canned response if the input is blocked.
+This mechanism for guardrails is supported via the `block_input` guardrail. If any of the feedback scores of the input exceeds the provided threshold, the decorated function itself will not be invoked and instead simply return `None`. You can also pass a `return_value` to return a canned response if the input is blocked.
 
 !!! example "Using `block_input`"
 
