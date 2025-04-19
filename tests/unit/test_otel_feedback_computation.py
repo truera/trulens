@@ -223,7 +223,9 @@ class TestOtelFeedbackComputation(OtelTestCase):
             match_expected: bool,
         ):
             selector = Selector(
-                function_name=selector_function_name, span_attribute="Z"
+                function_name=selector_function_name,
+                span_name="span_name",
+                span_attribute="Z",
             )
             if match_expected:
                 self.assertTrue(
@@ -282,41 +284,58 @@ class TestOtelFeedbackComputation(OtelTestCase):
             })
         )
         self.assertTrue(
-            Selector(span_attribute="Z").matches_span({
+            Selector(function_name="CC", span_attribute="Z").matches_span({
                 SpanAttributes.CALL.FUNCTION: "AA.BB.CC",
                 SpanAttributes.SPAN_TYPE: "span_type",
                 "name": "XX.YY.ZZ",
             })
         )
-        self.assertTrue(Selector(span_attribute="Z").matches_span({}))
+        self.assertTrue(
+            Selector(span_name="Y", span_attribute="Z").matches_span({
+                "name": "Y"
+            })
+        )
 
     def test_Selector_process_span(self) -> None:
         self.assertEqual(
             Selector(
-                span_attributes_processor=lambda attributes: "z"
+                span_attributes_processor=lambda attributes: "z",
+                function_name="X",
             ).process_span({}),
             "z",
         )
-        self.assertEqual(Selector(span_attribute="Z").process_span({}), None)
         self.assertEqual(
-            Selector(span_attribute="Z").process_span({"Z": "z"}), "z"
+            Selector(span_attribute="Z", function_name="X").process_span({}),
+            None,
         )
         self.assertEqual(
-            Selector(function_attribute="return").process_span({}), None
-        )
-        self.assertEqual(
-            Selector(function_attribute="return").process_span({
-                SpanAttributes.CALL.RETURN: "z"
+            Selector(span_attribute="Z", function_name="X").process_span({
+                "Z": "z"
             }),
             "z",
         )
         self.assertEqual(
-            Selector(function_attribute="arg1").process_span({}), None
+            Selector(
+                function_attribute="return", function_name="X"
+            ).process_span({}),
+            None,
         )
         self.assertEqual(
-            Selector(function_attribute="arg1").process_span({
-                f"{SpanAttributes.CALL.KWARGS}.arg1": "z"
-            }),
+            Selector(
+                function_attribute="return", function_name="X"
+            ).process_span({SpanAttributes.CALL.RETURN: "z"}),
+            "z",
+        )
+        self.assertEqual(
+            Selector(
+                function_attribute="arg1", function_name="X"
+            ).process_span({}),
+            None,
+        )
+        self.assertEqual(
+            Selector(
+                function_attribute="arg1", function_name="X"
+            ).process_span({f"{SpanAttributes.CALL.KWARGS}.arg1": "z"}),
             "z",
         )
 

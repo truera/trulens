@@ -113,8 +113,8 @@ class Selector:
         function_attribute: Optional[str] = None,
     ):
         if function_name is None and span_name is None and span_type is None:
-            _logger.warning(
-                "All of `function_name`, `span_name`, and `span_type` are None, this `Selector` will apply to apply to all spans."
+            raise ValueError(
+                "Must specify at least one of `function_name`, `span_name`, or `span_type`!"
             )
         if (
             sum([
