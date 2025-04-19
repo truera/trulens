@@ -90,14 +90,101 @@ def _compute_feedback(
 
 @dataclass
 class Selector:
-    span_attribute: str
+    # The following fields describe how to select the spans.
+    function_name: Optional[str] = None
     span_name: Optional[str] = None
     span_type: Optional[str] = None
 
+    # The following fields describe what to extract from the spans to use as
+    # the feedback function input.
+    span_attributes_processor: Optional[Callable[[Dict[str, Any]], Any]] = None
+    span_attribute: Optional[str] = None
+    function_attribute: Optional[str] = None
+
+    def __init__(
+        self,
+        function_name: Optional[str] = None,
+        span_name: Optional[str] = None,
+        span_type: Optional[str] = None,
+        span_attributes_processor: Optional[
+            Callable[[Dict[str, Any]], Any]
+        ] = None,
+        span_attribute: Optional[str] = None,
+        function_attribute: Optional[str] = None,
+    ):
+        if function_name is None and span_name is None and span_type is None:
+            _logger.warning(
+                "All of `function_name`, `span_name`, and `span_type` are None, this `Selector` will apply to apply to all spans."
+            )
+        if (
+            sum([
+                span_attributes_processor is not None,
+                span_attribute is not None,
+                function_attribute is not None,
+            ])
+            != 1
+        ):
+            raise ValueError(
+                "Must specify exactly one of `span_attributes_processor`, `span_attribute`, or `function_attribute`!"
+            )
+        self.function_name = function_name
+        self.span_name = span_name
+        self.span_type = span_type
+        self.span_attributes_processor = span_attributes_processor
+        self.span_attribute = span_attribute
+        self.function_attribute = function_attribute
+
     def describes_same_spans(self, other: Selector) -> bool:
         return (
-            self.span_type == other.span_type
+            self.function_name == other.function_name
             and self.span_name == other.span_name
+            and self.span_type == other.span_type
+        )
+
+    @staticmethod
+    def _split_function_name(function_name: str) -> List[str]:
+        if "::" in function_name:
+            return function_name.split("::")
+        return function_name.split(".")
+
+    def _matches_function_name(self, function_name: Optional[str]) -> bool:
+        if self.function_name is None:
+            return True
+        if function_name is None:
+            return False
+        actual = self._split_function_name(function_name)
+        expected = self._split_function_name(self.function_name)
+        if len(actual) < len(expected):
+            return False
+        return actual[-len(expected) :] == expected
+
+    def matches_span(self, attributes: Dict[str, Any]) -> bool:
+        ret = True
+        if self.function_name is not None:
+            ret = ret and self._matches_function_name(
+                attributes.get(SpanAttributes.CALL.FUNCTION, None)
+            )
+        if self.span_name is not None:
+            ret = ret and self.span_name == attributes.get("name", None)
+        if self.span_type is not None:
+            ret = ret and self.span_type == attributes.get(
+                SpanAttributes.SPAN_TYPE, None
+            )
+        return ret
+
+    def process_span(self, attributes: Dict[str, Any]) -> Any:
+        if self.span_attributes_processor is not None:
+            return self.span_attributes_processor(attributes)
+        if self.span_attribute is not None:
+            return attributes.get(self.span_attribute, None)
+        if self.function_attribute is not None:
+            if self.function_attribute == "return":
+                return attributes.get(SpanAttributes.CALL.RETURN, None)
+            return attributes.get(
+                f"{SpanAttributes.CALL.KWARGS}.{self.function_attribute}", None
+            )
+        raise ValueError(
+            "None of `span_attributes_processor`, `span_attribute`, or `function_attribute` are set!"
         )
 
 
@@ -150,7 +237,8 @@ def _group_kwargs_by_selectors(
         kwarg_to_selector: kwarg to selector mapping.
 
     Returns:
-        List of tuples of kwargs. Each tuple contains kwargs that describe the same spans in their selector.
+        List of tuples of kwargs. Each tuple contains kwargs that describe the
+        same spans in their selector.
     """
     ret = []
     for kwarg, selector in kwarg_to_selector.items():
@@ -175,7 +263,8 @@ def _collect_inputs_from_events(
 
     Args:
         events: DataFrame containing trace events.
-        kwarg_groups: List of list of kwargs. Each sublist contains kwargs that describe the same spans in their selector.
+        kwarg_groups: List of list of kwargs. Each sublist contains kwargs that
+                      describe the same spans in their selector.
         kwarg_to_selector: Mapping from function kwargs to span selectors.
 
     Returns:
@@ -197,28 +286,21 @@ def _collect_inputs_from_events(
         # Process each kwarg group.
         for kwarg_group in kwarg_groups:
             # Check if row satisfies selector conditions.
-            selector = kwarg_to_selector[kwarg_group[0]]
-            if _row_matches_selector(record_attributes, selector):
+            if kwarg_to_selector[kwarg_group[0]].matches_span(
+                record_attributes
+            ):
                 # Collect inputs for this kwarg group.
-                kwarg_group_inputs = {}
-                valid = True
-
-                for kwarg in kwarg_group:
-                    span_attribute = kwarg_to_selector[kwarg].span_attribute
-                    if span_attribute not in record_attributes:
-                        valid = False
-                        break
-                    else:
-                        kwarg_group_inputs[kwarg] = record_attributes[
-                            span_attribute
-                        ]
-
-                if valid:
-                    for span_group in span_groups:
-                        ret[(record_id, span_group)][kwarg_group].append(
-                            kwarg_group_inputs
-                        )
-
+                kwarg_group_inputs = {
+                    kwarg: kwarg_to_selector[kwarg].process_span(
+                        record_attributes
+                    )
+                    for kwarg in kwarg_group
+                }
+                # Place the inputs for this record id and every span group.
+                for span_group in span_groups:
+                    ret[(record_id, span_group)][kwarg_group].append(
+                        kwarg_group_inputs
+                    )
     return ret
 
 
@@ -245,34 +327,6 @@ def _map_record_id_to_record_roots(
     return ret
 
 
-def _row_matches_selector(
-    record_attributes: Dict[str, Any], selector: Selector
-) -> bool:
-    """Check if a record matches the given selector.
-
-    Args:
-        record_attributes: attributes of row/span.
-        selector: Selector to check against.
-
-    Returns:
-        True iff the row/span matches the selector.
-    """
-    if selector.span_name is not None:
-        if (
-            "name" not in record_attributes
-            or record_attributes.get("name") != selector.span_name
-        ):
-            return False
-    if selector.span_type is not None:
-        if (
-            SpanAttributes.SPAN_TYPE not in record_attributes
-            or record_attributes.get(SpanAttributes.SPAN_TYPE)
-            != selector.span_type
-        ):
-            return False
-    return True
-
-
 def _validate_unflattened_inputs(
     unflattened_inputs: Dict[
         Tuple[str, Optional[str]], Dict[Tuple, List[Dict[str, Any]]]
@@ -284,9 +338,12 @@ def _validate_unflattened_inputs(
     """Validate collected inputs and remove invalid entries.
 
     Args:
-        unflattened_inputs: Mapping from (record_id, span_group) to kwarg group to inputs.
-        kwarg_groups: List of list of kwargs. Each sublist contains kwargs that describe the same spans in their selector.
-        record_ids_with_record_roots: List of record ids that have record roots.
+        unflattened_inputs: Mapping from (record_id, span_group) to kwarg group
+                            to inputs.
+        kwarg_groups: List of list of kwargs. Each sublist contains kwargs that
+                      describe the same spans in their selector.
+        record_ids_with_record_roots: List of record ids that have record
+                                      roots.
         feedback_name: Name of the feedback function.
 
     Returns:
