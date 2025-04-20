@@ -216,6 +216,14 @@ class TestOtelFeedbackComputation(OtelTestCase):
                 f"blah{expected_case_number[i]}",
             )
 
+    def test_Selector__split_function_name(self) -> None:
+        self.assertEqual(
+            Selector._split_function_name("a.B.c"), ["a", "B", "c"]
+        )
+        self.assertEqual(
+            Selector._split_function_name("a.py::B::c"), ["a.py", "B", "c"]
+        )
+
     def test_Selector__matches_function_name(self) -> None:
         def _test_matches_function_name(
             selector_function_name: Optional[str],
