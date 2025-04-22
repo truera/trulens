@@ -52,6 +52,7 @@ from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
+from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
@@ -886,12 +887,14 @@ class SQLAlchemyDB(core_db.DB):
         the structure of the pre-OTEL ORM's get_records_and_feedback method.
 
         Args:
-            app_ids (Optional[List[str]], optional): List of app IDs to filter by. Defaults to None.
-            app_name (Optional[types_schema.AppName], optional): App name to filter by. Defaults to None.
-            offset (Optional[int], optional): Offset for pagination. Defaults to None.
-            limit (Optional[int], optional): Limit for pagination. Defaults to None.
+            app_ids: List of app IDs to filter by. Defaults to None.
+            app_name: App name to filter by. Defaults to None.
+            offset: Offset for pagination. Defaults to None.
+            limit: Limit for pagination. Defaults to None.
+        Returns:
+            A tuple containing the records dataframe and the
+            column names of the feedback results.
         """
-        from trulens.otel.semconv.trace import SpanAttributes
 
         with self.session.begin() as session:
             # Query to get all events
@@ -905,6 +908,7 @@ class SQLAlchemyDB(core_db.DB):
                     )
                 ).params(app_name=app_name)
 
+            # TODO: fix app_id filter to use hash(app_name + app_version)
             if app_ids:
                 app_id_conditions = []
                 for app_id in app_ids:
@@ -942,7 +946,9 @@ class SQLAlchemyDB(core_db.DB):
                     try:
                         record_attributes = json.loads(record_attributes)
                     except (json.JSONDecodeError, TypeError):
-                        continue
+                        logger.error(
+                            f"Failed to decode record attributes as JSON: {record_attributes}",
+                        )
 
                 record_id = record_attributes.get(SpanAttributes.RECORD_ID)
                 if not record_id:
@@ -957,6 +963,7 @@ class SQLAlchemyDB(core_db.DB):
                         "app_version": record_attributes.get(
                             SpanAttributes.APP_VERSION, ""
                         ),
+                        # TODO: fix app_id to use hash(app_name + app_version)
                         "app_id": f"{record_attributes.get(SpanAttributes.APP_NAME, '')}:{record_attributes.get(SpanAttributes.APP_VERSION, '')}",
                         "input": record_attributes.get(
                             SpanAttributes.RECORD_ROOT.INPUT, ""
@@ -970,15 +977,15 @@ class SQLAlchemyDB(core_db.DB):
                             event.timestamp - event.start_timestamp
                         ).total_seconds()
                         * 1000,  # Convert to ms
-                        "total_tokens": 0,  # On purpose, will fill later
-                        "total_cost": 0.0,  # On purpose, will fill later
-                        "cost_currency": "",  # On purpose, will fill later
-                        "feedback_results": {},  # On purpose, will fill later
+                        "total_tokens": 0,  # Initialize to 0, calculated below
+                        "total_cost": 0.0,  # Initialize to 0.0, calculated below
+                        "cost_currency": "",  # Initialize to empty string, calculated below
+                        "feedback_results": {},  # Initialize to empty, calculated below
                     }
 
                 record_events[record_id]["events"].append(event)
 
-                # Check if this is a cost span
+                # Check if the span has cost info
                 cost_base = SpanAttributes.COST.base
                 if cost_base in record_attributes:
                     cost_data = record_attributes[cost_base]
@@ -1006,7 +1013,9 @@ class SQLAlchemyDB(core_db.DB):
                         try:
                             record_attributes = json.loads(record_attributes)
                         except (json.JSONDecodeError, TypeError):
-                            continue
+                            logger.error(
+                                f"Failed to decode record attributes as JSON: {record_attributes}",
+                            )
 
                     # Check if this is an eval span
                     eval_base = SpanAttributes.EVAL.base
@@ -1069,16 +1078,18 @@ class SQLAlchemyDB(core_db.DB):
             # Create dataframe
             records_data = []
             for record_id, record_data in record_events.items():
+                # TODO: audit created jsons for correctness
+
                 # Create record_json
-                record_json = {
-                    "record_id": record_id,
-                    "app_id": record_data["app_id"],
-                    "input": record_data["input"],
-                    "output": record_data["output"],
-                    "tags": record_data["tags"],
-                    "ts": record_data["ts"],
-                    "meta": {},
-                }
+                # record_json = {
+                #     "record_id": record_id,
+                #     "app_id": record_data["app_id"],
+                #     "input": record_data["input"],
+                #     "output": record_data["output"],
+                #     "tags": record_data["tags"],
+                #     "ts": record_data["ts"],
+                #     "meta": {},
+                # }
 
                 # Create cost_json
                 cost_json = {
@@ -1096,16 +1107,17 @@ class SQLAlchemyDB(core_db.DB):
                 # Create record row
                 record_row = {
                     "app_id": record_data["app_id"],
-                    "app_json": json.dumps({
-                        "app_name": record_data["app_name"],
-                        "app_version": record_data["app_version"],
-                    }),
-                    "type": "SPAN",  # Default type as per orm.py
+                    # TODO(cleanup): Remove app_json and record_json for now, add later (lower priority)
+                    # "app_json": json.dumps({
+                    #     "app_name": record_data["app_name"],
+                    #     "app_version": record_data["app_version"],
+                    # }),
+                    "type": "SPAN",  # Default type as per orm.py, TODO(nit): consider using a constant here?
                     "record_id": record_id,
                     "input": record_data["input"],
                     "output": record_data["output"],
                     "tags": record_data["tags"],
-                    "record_json": json.dumps(record_json),
+                    # "record_json": json.dumps(record_json),
                     "cost_json": json.dumps(cost_json),
                     "perf_json": json.dumps(perf_json),
                     "ts": record_data["ts"],
