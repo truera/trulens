@@ -4,6 +4,7 @@ from collections import defaultdict
 from datetime import datetime
 import json
 import logging
+import os
 from sqlite3 import OperationalError
 from typing import (
     Any,
@@ -796,6 +797,14 @@ class SQLAlchemyDB(core_db.DB):
 
             return _extract_feedback_results(results)
 
+    def _is_otel_tracing_enabled(self) -> bool:
+        """Check if OTEL tracing is enabled.
+
+        Returns:
+            bool: True if OTEL tracing is enabled, False otherwise.
+        """
+        return os.getenv("TRULENS_OTEL_TRACING", "").lower() in ["1", "true"]
+
     def get_records_and_feedback(
         self,
         app_ids: Optional[List[str]] = None,
@@ -804,6 +813,14 @@ class SQLAlchemyDB(core_db.DB):
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """See [DB.get_records_and_feedback][trulens.core.database.base.DB.get_records_and_feedback]."""
+
+        # Check if OTEL tracing is enabled
+        if self._is_otel_tracing_enabled():
+            return self._get_records_and_feedback_otel(
+                app_ids=app_ids, app_name=app_name, offset=offset, limit=limit
+            )
+
+        # Original implementation for pre-OTEL ORM
 
         # TODO: Add pagination to this method. Currently the joinedload in
         # select below disables lazy loading of records which will be a problem
@@ -855,6 +872,274 @@ class SQLAlchemyDB(core_db.DB):
             # TODO(piotrm) above.
 
             return AppsExtractor().get_df_and_cols(records=records)
+
+    def _get_records_and_feedback_otel(
+        self,
+        app_ids: Optional[List[str]] = None,
+        app_name: Optional[types_schema.AppName] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> Tuple[pd.DataFrame, Sequence[str]]:
+        """Get records and feedback from the OTEL event table.
+
+        This method builds a records dataframe from the EVENT table that mirrors
+        the structure of the pre-OTEL ORM's get_records_and_feedback method.
+
+        Args:
+            app_ids (Optional[List[str]], optional): List of app IDs to filter by. Defaults to None.
+            app_name (Optional[types_schema.AppName], optional): App name to filter by. Defaults to None.
+            offset (Optional[int], optional): Offset for pagination. Defaults to None.
+            limit (Optional[int], optional): Limit for pagination. Defaults to None.
+        """
+        from trulens.otel.semconv.trace import SpanAttributes
+
+        with self.session.begin() as session:
+            # Query to get all evnets
+            stmt = sa.select(self.orm.Event)
+
+            # Apply filters if provided
+            if app_name:
+                stmt = stmt.filter(
+                    sa.text(
+                        f"record_attributes->>'{SpanAttributes.APP_NAME}' = :app_name"
+                    )
+                ).params(app_name=app_name)
+
+            if app_ids:
+                app_id_conditions = []
+                for app_id in app_ids:
+                    app_id_conditions.append(
+                        sa.text(
+                            f"record_attributes->>'{SpanAttributes.APP_NAME}' || ':' || "
+                            f"record_attributes->>'{SpanAttributes.APP_VERSION}' = :app_id"
+                        )
+                    )
+                stmt = stmt.filter(sa.or_(*app_id_conditions)).params(
+                    app_id=app_ids
+                )
+
+            # Order by timestamp desc
+            stmt = stmt.order_by(self.orm.Event.start_timestamp.desc())
+
+            # Apply pagination
+            if limit is not None:
+                stmt = stmt.limit(limit)
+            if offset is not None:
+                stmt = stmt.offset(offset)
+
+            # Execute query
+            events = session.execute(stmt).scalars().all()
+
+            if not events:
+                # Return empty dataframe with expected columns
+                return pd.DataFrame(columns=AppsExtractor.all_cols), []
+
+            # Group events by record_id
+            record_events = {}
+            for event in events:
+                record_attributes = event.record_attributes
+                if not isinstance(record_attributes, dict):
+                    try:
+                        record_attributes = json.loads(record_attributes)
+                    except (json.JSONDecodeError, TypeError):
+                        continue
+
+                record_id = record_attributes.get(SpanAttributes.RECORD_ID)
+                if not record_id:
+                    continue
+
+                if record_id not in record_events:
+                    record_events[record_id] = {
+                        "events": [],
+                        "app_name": record_attributes.get(
+                            SpanAttributes.APP_NAME, ""
+                        ),
+                        "app_version": record_attributes.get(
+                            SpanAttributes.APP_VERSION, ""
+                        ),
+                        "app_id": f"{record_attributes.get(SpanAttributes.APP_NAME, '')}:{record_attributes.get(SpanAttributes.APP_VERSION, '')}",
+                        "input": record_attributes.get(
+                            SpanAttributes.RECORD_ROOT.INPUT, ""
+                        ),
+                        "output": record_attributes.get(
+                            SpanAttributes.RECORD_ROOT.OUTPUT, ""
+                        ),
+                        "tags": "",  # Not present in OTEL, use empty string
+                        "ts": event.start_timestamp,
+                        "latency": (
+                            event.timestamp - event.start_timestamp
+                        ).total_seconds()
+                        * 1000,  # Convert to ms
+                        "total_tokens": 0,  # On purpose, will fill later
+                        "total_cost": 0.0,  # On purpose, will fill later
+                        "cost_currency": "",  # On purpose, will fill later
+                        "feedback_results": {},  # On purpose, will fill later
+                    }
+
+                record_events[record_id]["events"].append(event)
+
+                # Check if this is a cost span
+                cost_base = SpanAttributes.COST.base
+                if cost_base in record_attributes:
+                    cost_data = record_attributes[cost_base]
+                    if isinstance(cost_data, dict):
+                        record_events[record_id]["total_tokens"] += (
+                            cost_data.get(
+                                SpanAttributes.COST.NUM_TOKENS.split(".")[-1], 0
+                            )
+                        )
+                        record_events[record_id]["total_cost"] += cost_data.get(
+                            SpanAttributes.COST.COST.split(".")[-1], 0.0
+                        )
+                        record_events[record_id]["cost_currency"] = (
+                            cost_data.get(
+                                SpanAttributes.COST.CURRENCY.split(".")[-1], ""
+                            )
+                        )
+
+            # Process feedback results
+            feedback_col_names = []
+            for record_id, record_data in record_events.items():
+                for event in record_data["events"]:
+                    record_attributes = event.record_attributes
+                    if not isinstance(record_attributes, dict):
+                        try:
+                            record_attributes = json.loads(record_attributes)
+                        except (json.JSONDecodeError, TypeError):
+                            continue
+
+                    # Check if this is an eval span
+                    eval_base = SpanAttributes.EVAL.base
+                    if eval_base in record_attributes:
+                        eval_data = record_attributes[eval_base]
+                        if not isinstance(eval_data, dict):
+                            continue
+
+                        metric_name = eval_data.get(
+                            SpanAttributes.EVAL.METRIC_NAME.split(".")[-1]
+                        )
+                        if not metric_name:
+                            continue
+
+                        # Add feedback name to column names if not present
+                        if metric_name not in feedback_col_names:
+                            feedback_col_names.append(metric_name)
+
+                        # Initialize feedback result if not present
+                        if metric_name not in record_data["feedback_results"]:
+                            record_data["feedback_results"][metric_name] = {
+                                "score": 0.0,
+                                "calls": [],
+                                "cost": 0.0,
+                                "direction": eval_data.get(
+                                    "higher_is_better", True
+                                ),
+                            }
+
+                        # Update feedback result
+                        feedback_result = record_data["feedback_results"][
+                            metric_name
+                        ]
+                        feedback_result["score"] = eval_data.get(
+                            SpanAttributes.EVAL.SCORE.split(".")[-1], 0.0
+                        )
+
+                        # Add call data
+                        call_data = {
+                            "args": eval_data.get(
+                                SpanAttributes.CALL.ARGS.split(".")[-1], {}
+                            ),
+                            "ret": eval_data.get(
+                                SpanAttributes.EVAL.SCORE.split(".")[-1], 0.0
+                            ),
+                            "meta": eval_data.get(
+                                SpanAttributes.EVAL.EXPLANATION.split(".")[-1],
+                                {},
+                            ),
+                        }
+                        feedback_result["calls"].append(call_data)
+
+                        # Update cost if available
+                        if cost_base in record_attributes:
+                            cost_data = record_attributes[cost_base]
+                            if isinstance(cost_data, dict):
+                                feedback_result["cost"] = cost_data.get(
+                                    SpanAttributes.COST.COST.split(".")[-1], 0.0
+                                )
+            # Create dataframe
+            records_data = []
+            for record_id, record_data in record_events.items():
+                # Create record_json
+                record_json = {
+                    "record_id": record_id,
+                    "app_id": record_data["app_id"],
+                    "input": record_data["input"],
+                    "output": record_data["output"],
+                    "tags": record_data["tags"],
+                    "ts": record_data["ts"],
+                    "meta": {},
+                }
+
+                # Create cost_json
+                cost_json = {
+                    "n_tokens": record_data["total_tokens"],
+                    "cost": record_data["total_cost"],
+                    "cost_currency": record_data["cost_currency"],
+                }
+
+                perf_json = {
+                    "start_time": record_data["ts"],
+                    "end_time": record_data["ts"]
+                    + pd.Timedelta(milliseconds=record_data["latency"]),
+                }
+
+                # Create record row
+                record_row = {
+                    "app_id": record_data["app_id"],
+                    "app_json": json.dumps({
+                        "app_name": record_data["app_name"],
+                        "app_version": record_data["app_version"],
+                    }),
+                    "type": "SPAN",  # Default type as per orm.py
+                    "record_id": record_id,
+                    "input": record_data["input"],
+                    "output": record_data["output"],
+                    "tags": record_data["tags"],
+                    "record_json": json.dumps(record_json),
+                    "cost_json": json.dumps(cost_json),
+                    "perf_json": json.dumps(perf_json),
+                    "ts": record_data["ts"],
+                    "latency": record_data["latency"],
+                    "total_tokens": record_data["total_tokens"],
+                    "total_cost": record_data["total_cost"],
+                }
+
+                # Add feedback results
+                for feedback_name, feedback_result in record_data[
+                    "feedback_results"
+                ].items():
+                    record_row[feedback_name] = feedback_result["score"]
+                    record_row[f"{feedback_name}_calls"] = json.dumps(
+                        feedback_result["calls"]
+                    )
+                    record_row[
+                        f"{feedback_name} feedback cost in {record_data['cost_currency']}"
+                    ] = feedback_result["cost"]
+                    record_row[f"{feedback_name}_direction"] = feedback_result[
+                        "direction"
+                    ]
+
+                records_data.append(record_row)
+
+            # Create dataframe
+            df = pd.DataFrame(records_data)
+
+            # Ensure that all expected columns are present
+            for col in AppsExtractor.all_cols:
+                if col not in df.columns:
+                    df[col] = None
+
+            return df, feedback_col_names
 
     def insert_ground_truth(
         self, ground_truth: groundtruth_schema.GroundTruth
@@ -1248,9 +1533,9 @@ class AppsExtractor:
                 with `apps`.
         """
 
-        assert (
-            apps is None or records is None
-        ), "`apps` and `records` are mutually exclusive"
+        assert apps is None or records is None, (
+            "`apps` and `records` are mutually exclusive"
+        )
 
         if apps is not None:
             df = pd.concat(self.extract_apps(apps))
