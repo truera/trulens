@@ -806,17 +806,52 @@ class SQLAlchemyDB(core_db.DB):
         """
         return os.getenv("TRULENS_OTEL_TRACING", "").lower() in ["1", "true"]
 
+    def _compute_app_id_otel(self, app_name: str, app_version: str) -> str:
+        """Compute the app_id from the app_name and app_version.
+
+        This implementation differs from the pre-OTEL computation by using a hash.
+        See trulens/src/core/trulens/core/schema/app.py::_compute_app_id.
+
+        Args:
+            app_name: The name of the app.
+            app_version: The version of the app.
+
+        Returns:
+            str: The computed app_id.
+        """
+        import hashlib
+
+        combined = f"{app_name}{app_version}"
+        return "app_hash_" + hashlib.md5(combined.encode()).hexdigest()
+
     def get_records_and_feedback(
         self,
         app_ids: Optional[List[str]] = None,
         app_name: Optional[types_schema.AppName] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
+        use_otel: Optional[bool] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
-        """See [DB.get_records_and_feedback][trulens.core.database.base.DB.get_records_and_feedback]."""
+        """See [DB.get_records_and_feedback][trulens.core.database.base.DB.get_records_and_feedback].
 
-        # Check if OTEL tracing is enabled
-        if self._is_otel_tracing_enabled():
+        Args:
+            app_ids: Optional list of app IDs to filter by. Defaults to None.
+            app_name: Optional app name to filter by. Defaults to None.
+            offset: Optional offset for pagination. Defaults to None.
+            limit: Optional limit for pagination. Defaults to None.
+            use_otel: Optional flag to explicitly choose between OTEL and pre-OTEL implementations. Defaults to None.
+                      If None, the implementation is chosen automatically based on whether OTEL tracing is enabled.
+        """
+
+        # If use_otel is explicitly set, use the specified implementation
+        # Otherwise, determine based on whtehre OTEL tracing is enabled
+        if use_otel is None:
+            use_otel = self._is_otel_tracing_enabled()
+            logger.warning(
+                f"use_otel is not set, checking if OTEL tracing is enabled (TRULENS_OTEL_TRACING): {use_otel}"
+            )
+
+        if use_otel:
             return self._get_records_and_feedback_otel(
                 app_ids=app_ids, app_name=app_name, offset=offset, limit=limit
             )
@@ -873,21 +908,6 @@ class SQLAlchemyDB(core_db.DB):
             # TODO(piotrm) above.
 
             return AppsExtractor().get_df_and_cols(records=records)
-
-    def _compute_app_id(self, app_name: str, app_version: str) -> str:
-        """Compute the app_id from the app_name and app_version.
-
-        Args:
-            app_name: The name of the app.
-            app_version: The version of the app.
-
-        Returns:
-            str: The computed app_id.
-        """
-        import hashlib
-
-        combined = f"{app_name}{app_version}"
-        return "app_hash_" + hashlib.md5(combined.encode()).hexdigest()
 
     def _get_records_and_feedback_otel(
         self,
@@ -975,7 +995,7 @@ class SQLAlchemyDB(core_db.DB):
                 app_version = record_attributes.get(
                     SpanAttributes.APP_VERSION, ""
                 )
-                app_id = self._compute_app_id(app_name, app_version)
+                app_id = self._compute_app_id_otel(app_name, app_version)
 
                 # Filter by app_ids if provided
                 if app_ids and app_id not in app_ids:
@@ -990,7 +1010,6 @@ class SQLAlchemyDB(core_db.DB):
                         "app_version": record_attributes.get(
                             SpanAttributes.APP_VERSION, ""
                         ),
-                        # TODO: fix app_id to use hash(app_name + app_version)
                         "app_id": app_id,
                         "input": record_attributes.get(
                             SpanAttributes.RECORD_ROOT.INPUT, ""
@@ -1177,6 +1196,9 @@ class SQLAlchemyDB(core_db.DB):
             # Ensure that all expected columns are present
             for col in AppsExtractor.all_cols:
                 if col not in df.columns:
+                    logger.warning(
+                        f"Column {col} not found in dataframe, setting to None."
+                    )
                     df[col] = None
 
             return df, feedback_col_names
