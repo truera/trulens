@@ -121,7 +121,7 @@ pipeline {
                             sh label: 'Run optional "notebook" Test Suite', script: '''
                                 set -e
 
-                                make test-notebook-optional
+                                make test-notebook-stable
                             '''
                         }
                     }
