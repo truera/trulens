@@ -894,7 +894,7 @@ class SQLAlchemyDB(core_db.DB):
         from trulens.otel.semconv.trace import SpanAttributes
 
         with self.session.begin() as session:
-            # Query to get all evnets
+            # Query to get all events
             stmt = sa.select(self.orm.Event)
 
             # Apply filters if provided
@@ -1533,9 +1533,9 @@ class AppsExtractor:
                 with `apps`.
         """
 
-        assert apps is None or records is None, (
-            "`apps` and `records` are mutually exclusive"
-        )
+        assert (
+            apps is None or records is None
+        ), "`apps` and `records` are mutually exclusive"
 
         if apps is not None:
             df = pd.concat(self.extract_apps(apps))
