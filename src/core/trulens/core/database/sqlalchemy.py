@@ -874,6 +874,21 @@ class SQLAlchemyDB(core_db.DB):
 
             return AppsExtractor().get_df_and_cols(records=records)
 
+    def _compute_app_id(self, app_name: str, app_version: str) -> str:
+        """Compute the app_id from the app_name and app_version.
+
+        Args:
+            app_name: The name of the app.
+            app_version: The version of the app.
+
+        Returns:
+            str: The computed app_id.
+        """
+        import hashlib
+
+        combined = f"{app_name}{app_version}"
+        return "app_hash_" + hashlib.md5(combined.encode()).hexdigest()
+
     def _get_records_and_feedback_otel(
         self,
         app_ids: Optional[List[str]] = None,
@@ -900,7 +915,19 @@ class SQLAlchemyDB(core_db.DB):
             # Query to get all events
             stmt = sa.select(self.orm.Event)
 
-            # Apply filters if provided
+            # Filter by relevant span types
+            span_types = [
+                SpanAttributes.SpanType.RECORD_ROOT.value,
+                SpanAttributes.SpanType.EVAL_ROOT.value,
+                SpanAttributes.SpanType.GENERATION.value,
+            ]
+            stmt = stmt.filter(
+                sa.text(
+                    f"record_attributes->>'{SpanAttributes.SPAN_TYPE}' = ANY(:span_types)"
+                )
+            ).params(span_types=span_types)
+
+            # Filter by app_name if provided
             if app_name:
                 stmt = stmt.filter(
                     sa.text(
@@ -908,22 +935,11 @@ class SQLAlchemyDB(core_db.DB):
                     )
                 ).params(app_name=app_name)
 
-            # TODO: fix app_id filter to use hash(app_name + app_version)
-            if app_ids:
-                app_id_conditions = []
-                for app_id in app_ids:
-                    app_id_conditions.append(
-                        sa.text(
-                            f"record_attributes->>'{SpanAttributes.APP_NAME}' || ':' || "
-                            f"record_attributes->>'{SpanAttributes.APP_VERSION}' = :app_id"
-                        )
-                    )
-                stmt = stmt.filter(sa.or_(*app_id_conditions)).params(
-                    app_id=app_ids
-                )
-
             # Order by timestamp desc
             stmt = stmt.order_by(self.orm.Event.start_timestamp.desc())
+
+            ## We'll filter by app_ids after retrieving events
+            ## This is simpler and more consistent with how we handle other filtering
 
             # Apply pagination
             if limit is not None:
@@ -949,9 +965,20 @@ class SQLAlchemyDB(core_db.DB):
                         logger.error(
                             f"Failed to decode record attributes as JSON: {record_attributes}",
                         )
+                        continue
 
                 record_id = record_attributes.get(SpanAttributes.RECORD_ID)
                 if not record_id:
+                    continue
+
+                app_name = record_attributes.get(SpanAttributes.APP_NAME, "")
+                app_version = record_attributes.get(
+                    SpanAttributes.APP_VERSION, ""
+                )
+                app_id = self._compute_app_id(app_name, app_version)
+
+                # Filter by app_ids if provided
+                if app_ids and app_id not in app_ids:
                     continue
 
                 if record_id not in record_events:
@@ -964,7 +991,7 @@ class SQLAlchemyDB(core_db.DB):
                             SpanAttributes.APP_VERSION, ""
                         ),
                         # TODO: fix app_id to use hash(app_name + app_version)
-                        "app_id": f"{record_attributes.get(SpanAttributes.APP_NAME, '')}:{record_attributes.get(SpanAttributes.APP_VERSION, '')}",
+                        "app_id": app_id,
                         "input": record_attributes.get(
                             SpanAttributes.RECORD_ROOT.INPUT, ""
                         ),
@@ -1016,6 +1043,7 @@ class SQLAlchemyDB(core_db.DB):
                             logger.error(
                                 f"Failed to decode record attributes as JSON: {record_attributes}",
                             )
+                            continue
 
                     # Check if this is an eval span
                     eval_base = SpanAttributes.EVAL.base
