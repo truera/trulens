@@ -71,6 +71,7 @@ env-tests-notebook: env-tests env-tests-optional
 		ipytree \
 		llama-index-readers-web
 
+
 # Lock the poetry dependencies for all the subprojects.
 lock: $(POETRY_DIRS)
 	for dir in $(POETRY_DIRS); do \
@@ -246,7 +247,7 @@ test-e2e:
 	$(PYTEST) tests/e2e/*
 
 # Runs the notebook test
-test-notebook:
+test-notebook: env-tests-notebook
 	$(PYTEST) tests/docs_notebooks/*
 
 install-wheels:
