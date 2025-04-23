@@ -846,7 +846,7 @@ class SQLAlchemyDB(core_db.DB):
 
         return record_attributes
 
-    def _calculate_total_cost_otel(self, record_events, record_id, cost_data):
+    def _calculate_total_cost_otel(self, record_events: dict, record_id: str, cost_data: dict) -> None:
         cost = cost_data.get(SpanAttributes.COST.COST.split(".")[-1], 0.0)
         currency = cost_data.get(
             SpanAttributes.COST.CURRENCY.split(".")[-1], "USD"
