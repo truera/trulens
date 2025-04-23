@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import datetime
+import hashlib
 import json
 import logging
 import os
@@ -819,10 +820,31 @@ class SQLAlchemyDB(core_db.DB):
         Returns:
             str: The computed app_id.
         """
-        import hashlib
-
         combined = f"{app_name}{app_version}"
         return "app_hash_" + hashlib.md5(combined.encode()).hexdigest()
+
+    def _get_event_record_attributes_otel(self, event: Event) -> Dict[str, Any]:
+        """Get the record attributes from the event.
+
+        This implementation differs from the pre-OTEL implementation by using the
+        `record_attributes` field of the event.
+
+        Args:
+            event: The event to extract the record attributes from.
+
+        Returns:
+            Dict[str, Any]: The record attributes from the event.
+        """
+        record_attributes = event.record_attributes
+        if not isinstance(record_attributes, dict):
+            try:
+                record_attributes = json.loads(record_attributes)
+            except (json.JSONDecodeError, TypeError):
+                logger.error(
+                    f"Failed to decode record attributes as JSON: {record_attributes}",
+                )
+
+        return record_attributes
 
     def get_records_and_feedback(
         self,
@@ -977,15 +999,9 @@ class SQLAlchemyDB(core_db.DB):
             # Group events by record_id
             record_events = {}
             for event in events:
-                record_attributes = event.record_attributes
-                if not isinstance(record_attributes, dict):
-                    try:
-                        record_attributes = json.loads(record_attributes)
-                    except (json.JSONDecodeError, TypeError):
-                        logger.error(
-                            f"Failed to decode record attributes as JSON: {record_attributes}",
-                        )
-                        continue
+                record_attributes = self._get_event_record_attributes_otel(
+                    event
+                )
 
                 record_id = record_attributes.get(SpanAttributes.RECORD_ID)
                 if not record_id:
@@ -1054,15 +1070,9 @@ class SQLAlchemyDB(core_db.DB):
             feedback_col_names = []
             for record_id, record_data in record_events.items():
                 for event in record_data["events"]:
-                    record_attributes = event.record_attributes
-                    if not isinstance(record_attributes, dict):
-                        try:
-                            record_attributes = json.loads(record_attributes)
-                        except (json.JSONDecodeError, TypeError):
-                            logger.error(
-                                f"Failed to decode record attributes as JSON: {record_attributes}",
-                            )
-                            continue
+                    record_attributes = self._get_event_record_attributes_otel(
+                        event
+                    )
 
                     # Check if this is an eval span
                     eval_base = SpanAttributes.EVAL.base
