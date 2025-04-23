@@ -846,6 +846,17 @@ class SQLAlchemyDB(core_db.DB):
 
         return record_attributes
 
+    def _calculate_total_cost_otel(self, record_events, record_id, cost_data):
+        cost = cost_data.get(SpanAttributes.COST.COST.split(".")[-1], 0.0)
+        currency = cost_data.get(
+            SpanAttributes.COST.CURRENCY.split(".")[-1], "USD"
+        )
+
+        # Add to total_cost map
+        if currency not in record_events[record_id]["total_cost"]:
+            record_events[record_id]["total_cost"][currency] = 0.0
+        record_events[record_id]["total_cost"][currency] += cost
+
     def get_records_and_feedback(
         self,
         app_ids: Optional[List[str]] = None,
@@ -1040,9 +1051,8 @@ class SQLAlchemyDB(core_db.DB):
                         ).total_seconds()
                         * 1000,  # Convert to ms
                         "total_tokens": 0,  # Initialize to 0, calculated below
-                        "total_cost": 0.0,  # Initialize to 0.0, calculated below
-                        "cost_currency": "",  # Initialize to empty string, calculated below
-                        "feedback_results": {},  # Initialize to empty, calculated below
+                        "total_cost": {},  # Initialize to empty map, calculated below
+                        "feedback_results": {},  # Initialize to empty map, calculated below
                     }
 
                 record_events[record_id]["events"].append(event)
@@ -1057,13 +1067,8 @@ class SQLAlchemyDB(core_db.DB):
                                 SpanAttributes.COST.NUM_TOKENS.split(".")[-1], 0
                             )
                         )
-                        record_events[record_id]["total_cost"] += cost_data.get(
-                            SpanAttributes.COST.COST.split(".")[-1], 0.0
-                        )
-                        record_events[record_id]["cost_currency"] = (
-                            cost_data.get(
-                                SpanAttributes.COST.CURRENCY.split(".")[-1], ""
-                            )
+                        self._calculate_total_cost_otel(
+                            record_events, record_id, cost_data
                         )
 
             # Process feedback results
@@ -1097,6 +1102,7 @@ class SQLAlchemyDB(core_db.DB):
                                 "score": 0.0,
                                 "calls": [],
                                 "cost": 0.0,
+                                "currency": "USD",
                                 "direction": eval_data.get(
                                     "higher_is_better", True
                                 ),
@@ -1132,6 +1138,10 @@ class SQLAlchemyDB(core_db.DB):
                                 feedback_result["cost"] = cost_data.get(
                                     SpanAttributes.COST.COST.split(".")[-1], 0.0
                                 )
+                                feedback_result["currency"] = cost_data.get(
+                                    SpanAttributes.COST.CURRENCY.split(".")[-1],
+                                    "USD",
+                                )
             # Create dataframe
             records_data = []
             for record_id, record_data in record_events.items():
@@ -1151,8 +1161,7 @@ class SQLAlchemyDB(core_db.DB):
                 # Create cost_json
                 cost_json = {
                     "n_tokens": record_data["total_tokens"],
-                    "cost": record_data["total_cost"],
-                    "cost_currency": record_data["cost_currency"],
+                    "cost": json.dumps(record_data["total_cost"]),
                 }
 
                 perf_json = {
@@ -1180,7 +1189,7 @@ class SQLAlchemyDB(core_db.DB):
                     "ts": record_data["ts"],
                     "latency": record_data["latency"],
                     "total_tokens": record_data["total_tokens"],
-                    "total_cost": record_data["total_cost"],
+                    "total_cost": json.dumps(record_data["total_cost"]),
                 }
 
                 # Add feedback results
@@ -1192,7 +1201,7 @@ class SQLAlchemyDB(core_db.DB):
                         feedback_result["calls"]
                     )
                     record_row[
-                        f"{feedback_name} feedback cost in {record_data['cost_currency']}"
+                        f"{feedback_name} feedback cost in {feedback_result['currency']}"
                     ] = feedback_result["cost"]
                     record_row[f"{feedback_name}_direction"] = feedback_result[
                         "direction"
