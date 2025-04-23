@@ -4,7 +4,7 @@ trulens:
   lows: {}
 trulens.benchmark:
   __class__: builtins.module
-  __version__: 1.4.8
+  __version__: 1.4.9
   highs: {}
   lows:
     __version__: builtins.str
@@ -60,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 1.4.8
+  __version__: 1.4.9
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -1832,7 +1832,7 @@ trulens.core.utils.trulens.Other:
   attributes: {}
 trulens.dashboard:
   __class__: builtins.module
-  __version__: 1.4.8
+  __version__: 1.4.9
   highs:
     run_dashboard: builtins.function
     run_dashboard_sis: builtins.function
@@ -2120,7 +2120,7 @@ trulens.dashboard.ux.styles.ResultCategoryType:
     value: enum.property
 trulens.feedback:
   __class__: builtins.module
-  __version__: 1.4.8
+  __version__: 1.4.9
   highs:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
@@ -2159,6 +2159,12 @@ trulens.feedback.computer.Selector:
   __class__: builtins.type
   attributes:
     describes_same_spans: builtins.function
+    function_attribute: builtins.NoneType
+    function_name: builtins.NoneType
+    matches_span: builtins.function
+    process_span: builtins.function
+    span_attribute: builtins.NoneType
+    span_attributes_processor: builtins.NoneType
     span_name: builtins.NoneType
     span_type: builtins.NoneType
 trulens.feedback.dummy:
@@ -3034,7 +3040,7 @@ trulens.feedback.v2.provider.base.Provider:
     tru_class_info: trulens.core.utils.pyschema.Class
 trulens.hotspots:
   __class__: builtins.module
-  __version__: 1.4.8
+  __version__: 1.4.9
   highs:
     HotspotsConfig: builtins.type
     get_skipped_columns: builtins.function
