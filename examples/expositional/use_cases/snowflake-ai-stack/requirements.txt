@@ -12,3 +12,4 @@ transformers
 numpy
 streamlit
 openai
+chromadb
