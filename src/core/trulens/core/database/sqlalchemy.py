@@ -846,16 +846,28 @@ class SQLAlchemyDB(core_db.DB):
 
         return record_attributes
 
-    def _calculate_total_cost_otel(self, record_events: dict, record_id: str, cost_data: dict) -> None:
+    def _calculate_total_cost_otel(
+        self, record_events: dict, record_id: str, cost_data: dict
+    ) -> None:
         cost = cost_data.get(SpanAttributes.COST.COST.split(".")[-1], 0.0)
         currency = cost_data.get(
             SpanAttributes.COST.CURRENCY.split(".")[-1], "USD"
         )
 
+        # TODO: convert to map
+        record_events[record_id]["total_cost"] += cost
+        record_events[record_id]["cost_currency"] = currency
+
         # Add to total_cost map
-        if currency not in record_events[record_id]["total_cost"]:
-            record_events[record_id]["total_cost"][currency] = 0.0
-        record_events[record_id]["total_cost"][currency] += cost
+        # if currency not in record_events[record_id]["total_cost"]:
+        #     record_events[record_id]["total_cost"][currency] = 0.0
+        # record_events[record_id]["total_cost"][currency] += cost
+
+    def _datetime_serializer(self, obj):
+        """Helper function to serialize datetime objects to ISO format strings."""
+        if isinstance(obj, (datetime, pd.Timestamp)):
+            return obj.isoformat()
+        raise TypeError(f"Type {type(obj)} not serializable")
 
     def get_records_and_feedback(
         self,
@@ -974,11 +986,17 @@ class SQLAlchemyDB(core_db.DB):
                 SpanAttributes.SpanType.EVAL_ROOT.value,
                 SpanAttributes.SpanType.GENERATION.value,
             ]
-            stmt = stmt.filter(
-                sa.text(
-                    f"record_attributes->>'{SpanAttributes.SPAN_TYPE}' = ANY(:span_types)"
-                )
-            ).params(span_types=span_types)
+
+            # Create a SQLAlchemy column expression for the JSON path
+            span_type_col = sa.cast(
+                sa.func.json_extract(
+                    self.orm.Event.record_attributes,
+                    f'$."{SpanAttributes.SPAN_TYPE}"',
+                ),
+                sa.String,
+            )
+
+            stmt = stmt.filter(span_type_col.in_(span_types))
 
             # Filter by app_name if provided
             if app_name:
@@ -1051,7 +1069,9 @@ class SQLAlchemyDB(core_db.DB):
                         ).total_seconds()
                         * 1000,  # Convert to ms
                         "total_tokens": 0,  # Initialize to 0, calculated below
-                        "total_cost": {},  # Initialize to empty map, calculated below
+                        # TODO: convert to map
+                        "total_cost": 0.0,
+                        # "total_cost": {},  # Initialize to empty map, calculated below
                         "feedback_results": {},  # Initialize to empty map, calculated below
                     }
 
@@ -1067,6 +1087,7 @@ class SQLAlchemyDB(core_db.DB):
                                 SpanAttributes.COST.NUM_TOKENS.split(".")[-1], 0
                             )
                         )
+                        # TODO: convert to map
                         self._calculate_total_cost_otel(
                             record_events, record_id, cost_data
                         )
@@ -1112,6 +1133,7 @@ class SQLAlchemyDB(core_db.DB):
                         feedback_result = record_data["feedback_results"][
                             metric_name
                         ]
+
                         feedback_result["score"] = eval_data.get(
                             SpanAttributes.EVAL.SCORE.split(".")[-1], 0.0
                         )
@@ -1138,32 +1160,46 @@ class SQLAlchemyDB(core_db.DB):
                                 feedback_result["cost"] = cost_data.get(
                                     SpanAttributes.COST.COST.split(".")[-1], 0.0
                                 )
-                                feedback_result["currency"] = cost_data.get(
-                                    SpanAttributes.COST.CURRENCY.split(".")[-1],
-                                    "USD",
+                                feedback_result["cost_currency"] = (
+                                    cost_data.get(
+                                        SpanAttributes.COST.CURRENCY.split(".")[
+                                            -1
+                                        ],
+                                        "USD",
+                                    )
                                 )
             # Create dataframe
             records_data = []
             for record_id, record_data in record_events.items():
                 # TODO: audit created jsons for correctness
+                # TODO(cleanup): Remove app_json and record_json for now, add later (lower priority)
+
+                # Create app_json
+                app_json = {
+                    "app_name": record_data["app_name"],
+                    "app_version": record_data["app_version"],
+                }
 
                 # Create record_json
-                # record_json = {
-                #     "record_id": record_id,
-                #     "app_id": record_data["app_id"],
-                #     "input": record_data["input"],
-                #     "output": record_data["output"],
-                #     "tags": record_data["tags"],
-                #     "ts": record_data["ts"],
-                #     "meta": {},
-                # }
+                record_json = {
+                    "record_id": record_id,
+                    "app_id": record_data["app_id"],
+                    "input": record_data["input"],
+                    "output": record_data["output"],
+                    "tags": record_data["tags"],
+                    "ts": record_data["ts"],
+                    "meta": {},
+                }
 
                 # Create cost_json
                 cost_json = {
                     "n_tokens": record_data["total_tokens"],
-                    "cost": json.dumps(record_data["total_cost"]),
+                    # TODO: convert to map
+                    "cost": record_data["total_cost"],
+                    # "cost": json.dumps(record_data["total_cost"]),
                 }
 
+                # Create perf_json
                 perf_json = {
                     "start_time": record_data["ts"],
                     "end_time": record_data["ts"]
@@ -1173,23 +1209,21 @@ class SQLAlchemyDB(core_db.DB):
                 # Create record row
                 record_row = {
                     "app_id": record_data["app_id"],
-                    # TODO(cleanup): Remove app_json and record_json for now, add later (lower priority)
-                    # "app_json": json.dumps({
-                    #     "app_name": record_data["app_name"],
-                    #     "app_version": record_data["app_version"],
-                    # }),
+                    "app_json": app_json,
                     "type": "SPAN",  # Default type as per orm.py, TODO(nit): consider using a constant here?
                     "record_id": record_id,
                     "input": record_data["input"],
                     "output": record_data["output"],
                     "tags": record_data["tags"],
-                    # "record_json": json.dumps(record_json),
-                    "cost_json": json.dumps(cost_json),
-                    "perf_json": json.dumps(perf_json),
+                    "record_json": record_json,
+                    "cost_json": cost_json,
+                    "perf_json": perf_json,
                     "ts": record_data["ts"],
                     "latency": record_data["latency"],
                     "total_tokens": record_data["total_tokens"],
-                    "total_cost": json.dumps(record_data["total_cost"]),
+                    # TODO: convert to map
+                    "total_cost": record_data["total_cost"],
+                    # "total_cost": json.dumps(record_data["total_cost"]),
                 }
 
                 # Add feedback results
@@ -1201,7 +1235,7 @@ class SQLAlchemyDB(core_db.DB):
                         feedback_result["calls"]
                     )
                     record_row[
-                        f"{feedback_name} feedback cost in {feedback_result['currency']}"
+                        f"{feedback_name} feedback cost in {feedback_result['cost_currency']}"
                     ] = feedback_result["cost"]
                     record_row[f"{feedback_name}_direction"] = feedback_result[
                         "direction"
