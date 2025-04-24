@@ -863,7 +863,7 @@ class SQLAlchemyDB(core_db.DB):
         #     record_events[record_id]["total_cost"][currency] = 0.0
         # record_events[record_id]["total_cost"][currency] += cost
 
-    def _datetime_serializer(self, obj):
+    def _datetime_serializer(self, obj: Any) -> str:
         """Helper function to serialize datetime objects to ISO format strings."""
         if isinstance(obj, (datetime, pd.Timestamp)):
             return obj.isoformat()
