@@ -854,7 +854,7 @@ class SQLAlchemyDB(core_db.DB):
             SpanAttributes.COST.CURRENCY.split(".")[-1], "USD"
         )
 
-        # TODO: convert to map
+        # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
         record_events[record_id]["total_cost"] += cost
         record_events[record_id]["cost_currency"] = currency
 
@@ -1056,12 +1056,8 @@ class SQLAlchemyDB(core_db.DB):
                             SpanAttributes.APP_VERSION, ""
                         ),
                         "app_id": app_id,
-                        "input": record_attributes.get(
-                            SpanAttributes.RECORD_ROOT.INPUT, ""
-                        ),
-                        "output": record_attributes.get(
-                            SpanAttributes.RECORD_ROOT.OUTPUT, ""
-                        ),
+                        "input": "",  # Initialize to empty string, filled below
+                        "output": "",  # Initialize to empty string, filled below
                         "tags": "",  # Not present in OTEL, use empty string
                         "ts": event.start_timestamp,
                         "latency": (
@@ -1069,13 +1065,24 @@ class SQLAlchemyDB(core_db.DB):
                         ).total_seconds()
                         * 1000,  # Convert to ms
                         "total_tokens": 0,  # Initialize to 0, calculated below
-                        # TODO: convert to map
+                        # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
                         "total_cost": 0.0,
                         # "total_cost": {},  # Initialize to empty map, calculated below
                         "feedback_results": {},  # Initialize to empty map, calculated below
                     }
 
                 record_events[record_id]["events"].append(event)
+
+                # Check if the span has input/output info
+                record_root_base = SpanAttributes.RECORD_ROOT.base
+                if record_root_base in record_attributes:
+                    record_root_data = record_attributes[record_root_base]
+                    record_events[record_id]["input"] = record_root_data.get(
+                        SpanAttributes.RECORD_ROOT.INPUT.split(".")[-1], ""
+                    )
+                    record_events[record_id]["output"] = record_root_data.get(
+                        SpanAttributes.RECORD_ROOT.OUTPUT.split(".")[-1], ""
+                    )
 
                 # Check if the span has cost info
                 cost_base = SpanAttributes.COST.base
@@ -1087,7 +1094,7 @@ class SQLAlchemyDB(core_db.DB):
                                 SpanAttributes.COST.NUM_TOKENS.split(".")[-1], 0
                             )
                         )
-                        # TODO: convert to map
+                        # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
                         self._calculate_total_cost_otel(
                             record_events, record_id, cost_data
                         )
@@ -1194,7 +1201,7 @@ class SQLAlchemyDB(core_db.DB):
                 # Create cost_json
                 cost_json = {
                     "n_tokens": record_data["total_tokens"],
-                    # TODO: convert to map
+                    # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
                     "cost": record_data["total_cost"],
                     # "cost": json.dumps(record_data["total_cost"]),
                 }
@@ -1221,7 +1228,7 @@ class SQLAlchemyDB(core_db.DB):
                     "ts": record_data["ts"],
                     "latency": record_data["latency"],
                     "total_tokens": record_data["total_tokens"],
-                    # TODO: convert to map
+                    # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
                     "total_cost": record_data["total_cost"],
                     # "total_cost": json.dumps(record_data["total_cost"]),
                 }
