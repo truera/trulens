@@ -856,6 +856,45 @@ class SQLAlchemyDB(core_db.DB):
 
             return AppsExtractor().get_df_and_cols(records=records)
 
+    def get_spans(
+        self,
+        app_ids: Optional[List[str]] = None,
+        app_name: Optional[types_schema.AppName] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> pd.DataFrame:
+        """See [DB.get_spans][trulens.core.database.base.DB.get_spans]."""
+        assert self.session is not None
+        with self.session.begin() as session:
+            stmt = sa.select(self.orm.Event)
+            stmt = stmt.limit(limit).offset(offset)
+            result = session.execute(stmt)
+            data = result.fetchall()
+
+            return pd.DataFrame(
+                data=(
+                    (
+                        ds[0].record,
+                        ds[0].event_id,
+                        ds[0].record_attributes,
+                        ds[0].resource_attributes,
+                        ds[0].start_timestamp.timestamp(),
+                        ds[0].timestamp.timestamp(),
+                        ds[0].trace,
+                    )
+                    for ds in data
+                ),
+                columns=[
+                    "record",
+                    "event_id",
+                    "record_attributes",
+                    "resource_attributes",
+                    "start_timestamp",
+                    "timestamp",
+                    "trace",
+                ],
+            )
+
     def insert_ground_truth(
         self, ground_truth: groundtruth_schema.GroundTruth
     ) -> types_schema.GroundTruthID:

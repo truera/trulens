@@ -176,6 +176,20 @@ def get_records_and_feedback(
     return records_df, feedback_col_names
 
 
+def get_spans(
+    app_name: str,
+    app_ids: Optional[List[str]] = None,
+    limit: Optional[int] = None,
+):
+    session = get_session()
+    lms = session.connector.db
+    assert lms
+
+    spans_df = lms.get_spans(app_name=app_name, app_ids=app_ids, limit=limit)
+
+    return spans_df
+
+
 @st.cache_data(
     ttl=dashboard_constants.CACHE_TTL, show_spinner="Getting app data"
 )

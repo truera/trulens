@@ -349,6 +349,32 @@ class DBConnector(ABC, text_utils.WithIdentString):
 
         return df, list(feedback_columns)
 
+    def get_spans(
+        self,
+        app_ids: Optional[List[types_schema.AppID]] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> pandas.DataFrame:
+        """Get records, their feedback results, and feedback names.
+        TODO(garett)
+        Args:
+            app_ids: A list of app ids to filter records by. If empty or not given, all
+                apps' records will be returned.
+
+            offset: Record row offset.
+
+            limit: Limit on the number of records to return.
+
+        Returns:
+            DataFrame of records with their feedback results.
+
+            List of feedback names that are columns in the DataFrame.
+        """
+
+        df = self.db.get_spans(app_ids, offset=offset, limit=limit)
+
+        return df
+
     def get_leaderboard(
         self,
         app_ids: Optional[List[types_schema.AppID]] = None,

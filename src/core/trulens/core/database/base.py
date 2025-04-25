@@ -364,6 +364,21 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
         raise NotImplementedError()
 
     @abc.abstractmethod
+    def get_spans(
+        self,
+        app_ids: Optional[List[types_schema.AppID]] = None,
+        app_name: Optional[types_schema.AppName] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> pd.DataFrame:
+        """Get all spans from the database.
+
+        Returns:
+            A dataframe with the spans.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
     def insert_ground_truth(
         self, ground_truth: groundtruth_schema.GroundTruth
     ) -> types_schema.GroundTruthID:

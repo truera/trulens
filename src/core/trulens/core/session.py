@@ -789,6 +789,29 @@ class TruSession(
             app_ids=app_ids, offset=offset, limit=limit
         )
 
+    def get_spans(
+        self,
+        app_ids: Optional[List[types_schema.AppID]] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> pandas.DataFrame:
+        """Get spans from the database.
+
+        Args:
+            app_ids: A list of app ids to filter records by. If empty or not given, all
+                apps' records will be returned.
+
+            offset: Record row offset.
+
+            limit: Limit on the number of records to return.
+
+        Returns:
+            DataFrame of spans.
+        """
+        return self.connector.get_spans(
+            app_ids=app_ids, offset=offset, limit=limit
+        )
+
     def get_leaderboard(
         self,
         app_ids: Optional[List[types_schema.AppID]] = None,
