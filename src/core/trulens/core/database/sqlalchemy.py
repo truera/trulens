@@ -846,23 +846,6 @@ class SQLAlchemyDB(core_db.DB):
 
         return record_attributes
 
-    def _calculate_total_cost_otel(
-        self, record_events: dict, record_id: str, cost_data: dict
-    ) -> None:
-        cost = cost_data.get(SpanAttributes.COST.COST.split(".")[-1], 0.0)
-        currency = cost_data.get(
-            SpanAttributes.COST.CURRENCY.split(".")[-1], "USD"
-        )
-
-        # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
-        record_events[record_id]["total_cost"] += cost
-        record_events[record_id]["cost_currency"] = currency
-
-        # Add to total_cost map
-        # if currency not in record_events[record_id]["total_cost"]:
-        #     record_events[record_id]["total_cost"][currency] = 0.0
-        # record_events[record_id]["total_cost"][currency] += cost
-
     def _datetime_serializer(self, obj: Any) -> str:
         """Helper function to serialize datetime objects to ISO format strings."""
         if isinstance(obj, (datetime, pd.Timestamp)):
@@ -943,7 +926,11 @@ class SQLAlchemyDB(core_db.DB):
             # records were to be retrieved from AppDefinition.records via auto
             # join, though, the orm backref ordering would be able to take hold.
 
-            stmt = stmt.limit(limit).offset(offset)
+            # Apply pagination
+            if limit is not None:
+                stmt = stmt.limit(limit)
+            if offset is not None:
+                stmt = stmt.offset(offset)
 
             ex = session.execute(stmt).unique()
             # unique needed for joinedload above.
@@ -985,6 +972,7 @@ class SQLAlchemyDB(core_db.DB):
                 SpanAttributes.SpanType.RECORD_ROOT.value,
                 SpanAttributes.SpanType.EVAL_ROOT.value,
                 SpanAttributes.SpanType.GENERATION.value,
+                SpanAttributes.SpanType.RETRIEVAL.value,
             ]
 
             # Create a SQLAlchemy column expression for the JSON path
@@ -1000,11 +988,16 @@ class SQLAlchemyDB(core_db.DB):
 
             # Filter by app_name if provided
             if app_name:
-                stmt = stmt.filter(
-                    sa.text(
-                        f"record_attributes->>'{SpanAttributes.APP_NAME}' = :app_name"
-                    )
-                ).params(app_name=app_name)
+                # Create a SQLAlchemy column expression for the JSON path
+                app_name_col = sa.cast(
+                    sa.func.json_extract(
+                        self.orm.Event.record_attributes,
+                        f'$."{SpanAttributes.APP_NAME}"',
+                    ),
+                    sa.String,
+                )
+
+                stmt = stmt.filter(app_name_col == app_name)
 
             # Order by timestamp desc
             stmt = stmt.order_by(self.orm.Event.start_timestamp.desc())
@@ -1073,31 +1066,40 @@ class SQLAlchemyDB(core_db.DB):
 
                 record_events[record_id]["events"].append(event)
 
-                # Check if the span has input/output info
-                record_root_base = SpanAttributes.RECORD_ROOT.base
-                if record_root_base in record_attributes:
-                    record_root_data = record_attributes[record_root_base]
-                    record_events[record_id]["input"] = record_root_data.get(
-                        SpanAttributes.RECORD_ROOT.INPUT.split(".")[-1], ""
+                # Check if the span is of type RECORD_ROOT
+                if (
+                    record_attributes.get(SpanAttributes.SPAN_TYPE)
+                    == SpanAttributes.SpanType.RECORD_ROOT.value
+                ):
+                    record_events[record_id]["input"] = record_attributes.get(
+                        SpanAttributes.RECORD_ROOT.INPUT, ""
                     )
-                    record_events[record_id]["output"] = record_root_data.get(
-                        SpanAttributes.RECORD_ROOT.OUTPUT.split(".")[-1], ""
+                    record_events[record_id]["output"] = record_attributes.get(
+                        SpanAttributes.RECORD_ROOT.OUTPUT, ""
                     )
 
                 # Check if the span has cost info
-                cost_base = SpanAttributes.COST.base
-                if cost_base in record_attributes:
-                    cost_data = record_attributes[cost_base]
-                    if isinstance(cost_data, dict):
-                        record_events[record_id]["total_tokens"] += (
-                            cost_data.get(
-                                SpanAttributes.COST.NUM_TOKENS.split(".")[-1], 0
-                            )
-                        )
-                        # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
-                        self._calculate_total_cost_otel(
-                            record_events, record_id, cost_data
-                        )
+                if any(
+                    key.startswith(SpanAttributes.COST.base)
+                    for key in record_attributes
+                ):
+                    record_events[record_id]["total_tokens"] += (
+                        record_attributes.get(SpanAttributes.COST.NUM_TOKENS, 0)
+                    )
+                    # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
+                    cost = record_attributes.get(SpanAttributes.COST.COST, 0.0)
+                    currency = record_attributes.get(
+                        SpanAttributes.COST.CURRENCY, "USD"
+                    )
+
+                    # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
+                    record_events[record_id]["total_cost"] += cost
+                    record_events[record_id]["cost_currency"] = currency
+
+                    # Add to total_cost map
+                    # if currency not in record_events[record_id]["total_cost"]:
+                    #     record_events[record_id]["total_cost"][currency] = 0.0
+                    # record_events[record_id]["total_cost"][currency] += cost
 
             # Process feedback results
             feedback_col_names = []
@@ -1161,20 +1163,19 @@ class SQLAlchemyDB(core_db.DB):
                         feedback_result["calls"].append(call_data)
 
                         # Update cost if available
-                        if cost_base in record_attributes:
-                            cost_data = record_attributes[cost_base]
-                            if isinstance(cost_data, dict):
-                                feedback_result["cost"] = cost_data.get(
-                                    SpanAttributes.COST.COST.split(".")[-1], 0.0
+                        if any(
+                            key.startswith(SpanAttributes.COST.base)
+                            for key in record_attributes
+                        ):
+                            feedback_result["cost"] = record_attributes.get(
+                                SpanAttributes.COST.COST, 0.0
+                            )
+                            feedback_result["cost_currency"] = (
+                                record_attributes.get(
+                                    SpanAttributes.COST.CURRENCY,
+                                    "USD",
                                 )
-                                feedback_result["cost_currency"] = (
-                                    cost_data.get(
-                                        SpanAttributes.COST.CURRENCY.split(".")[
-                                            -1
-                                        ],
-                                        "USD",
-                                    )
-                                )
+                            )
             # Create dataframe
             records_data = []
             for record_id, record_data in record_events.items():
@@ -1216,6 +1217,8 @@ class SQLAlchemyDB(core_db.DB):
                 # Create record row
                 record_row = {
                     "app_id": record_data["app_id"],
+                    "app_name": record_data["app_name"],
+                    "app_version": record_data["app_version"],
                     "app_json": app_json,
                     "type": "SPAN",  # Default type as per orm.py, TODO(nit): consider using a constant here?
                     "record_id": record_id,
@@ -1231,6 +1234,7 @@ class SQLAlchemyDB(core_db.DB):
                     # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
                     "total_cost": record_data["total_cost"],
                     # "total_cost": json.dumps(record_data["total_cost"]),
+                    "events": record_data["events"],
                 }
 
                 # Add feedback results
