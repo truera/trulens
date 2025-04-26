@@ -33,7 +33,6 @@ MANIFEST
 # Notebook tests generate these files:
 imagenet_class_index.json
 imagenet_class_index.json.*
-**/faiss_index/
 
 .env
 *.db
