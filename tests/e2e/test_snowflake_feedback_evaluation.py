@@ -51,7 +51,9 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         self,
     ) -> core_feedback.SnowflakeFeedback:
         return core_feedback.SnowflakeFeedback(
-            cortex_provider.Cortex(self._snowpark_session).relevance
+            cortex_provider.Cortex(
+                self._snowpark_session, retry_timeout=60
+            ).relevance
         ).on_input_output()
 
     def _start_evaluator_as_snowflake(self, session: core_session.TruSession):

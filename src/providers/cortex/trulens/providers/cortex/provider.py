@@ -93,6 +93,7 @@ class Cortex(
         self,
         snowpark_session: Optional[Session] = None,
         model_engine: Optional[str] = None,
+        retry_timeout: Optional[float] = None,
         *args,
         **kwargs: Dict,
     ):
@@ -105,6 +106,8 @@ class Cortex(
         self_kwargs["endpoint"] = cortex_endpoint.CortexEndpoint(
             *args, **kwargs
         )
+
+        self_kwargs["retry_timeout"] = retry_timeout
 
         if snowpark_session is None or pyschema_utils.is_noserio(
             snowpark_session
@@ -151,6 +154,7 @@ class Cortex(
             options=options,
             session=self.snowpark_session,
             stream=False,
+            timeout=self.retry_timeout,
         )
         if Version(snowflake.ml.version.VERSION) >= Version("1.7.1"):
             return completion_res
