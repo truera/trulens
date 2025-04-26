@@ -199,7 +199,9 @@ def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
             return v
 
         except Exception as e:
-            raise RuntimeError(f"Failed to get property {k}.") from e
+            raise RuntimeError(
+                f"Failed to get property {k} due to {str(e)}"
+            ) from e
 
     else:
         return v

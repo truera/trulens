@@ -51,7 +51,6 @@ env-tests-optional: env env-tests
 		chromadb \
 	 	faiss-cpu \
 		langchain-openai \
-		'langchain-core<0.3.52' \
 		llama-index-embeddings-huggingface \
 		llama-index-embeddings-openai \
 		unstructured
