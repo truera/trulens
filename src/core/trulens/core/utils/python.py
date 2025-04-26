@@ -197,7 +197,10 @@ def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
         try:
             v = v.fget(obj)
             return v
-
+        except NotImplementedError:
+            # some properties (like Chain._chain_type) deliberately raise
+            # NotImplementedError to signal "no saving" — just skip them
+            return None
         except Exception as e:
             raise RuntimeError(
                 f"Failed to get property {k} due to {str(e)}"

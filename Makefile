@@ -55,6 +55,7 @@ env-tests-optional: env env-tests
 		llama-index-embeddings-openai \
 		unstructured
 
+
 env-tests-snowflake: env-tests-optional
 	poetry install --with snowflake
 
@@ -69,7 +70,7 @@ env-tests-notebook: env-tests env-tests-optional
 		faiss-cpu \
 		ipytree \
 		llama-index-readers-web \
-		langchain_openai
+		markdown
 
 
 # Lock the poetry dependencies for all the subprojects.
