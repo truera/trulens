@@ -68,7 +68,8 @@ env-tests-notebook: env-tests env-tests-optional
 	poetry run pip install \
 		faiss-cpu \
 		ipytree \
-		llama-index-readers-web
+		llama-index-readers-web \
+		langchain_openai
 
 
 # Lock the poetry dependencies for all the subprojects.
