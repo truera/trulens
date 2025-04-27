@@ -29,6 +29,7 @@ class Cortex(
     model_engine: str
     endpoint: cortex_endpoint.CortexEndpoint
     snowpark_session: Session
+    retry_timeout: Optional[float]
 
     """Snowflake's Cortex COMPLETE endpoint. Defaults to `llama3.1-8b`.
 
