@@ -115,9 +115,6 @@ class SpanAttributes:
 
         base = BASE_SCOPE + ".record_root"
 
-        SPAN_NAME_PREFIX = base + "."
-        """Span name will end with app name."""
-
         INPUT = base + ".input"
         """Main input to the app."""
 
@@ -202,34 +199,19 @@ class SpanAttributes:
 
         base = BASE_SCOPE + ".call"
 
-        SPAN_NAME_PREFIX = base + "."
-        """Span name will end with the function name."""
-
         FUNCTION = base + ".function"
-        """Function being tracked.
-
-        Serialized from
-        [trulens.core.utils.pyschema.FunctionOrMethod][trulens.core.utils.pyschema.FunctionOrMethod]."""
-
-        ARGS = base + ".args"
-        """Arguments of the function.
-
-        Serialized using
-        [trulens.core.utils.json.jsonify][trulens.core.utils.json.jsonify]. If
-        the function was a method, self will NOT be included in this list.
-        """
+        """Name of function being tracked."""
 
         KWARGS = base + ".kwargs"
-        """Keyword arguments of the function.
-
-        Serialized using [trulens.core.utils.json.jsonify][trulens.core.utils.json.jsonify].
+        """
+        Keyword arguments of the function. This is a scope, and not an
+        attribute by itself. E.g. If the function has an argument `x` that had
+        a value `1`, then we should have an attribute with key `KWARGS + ".x"`
+        with value `1`.
         """
 
         RETURN = base + ".return"
-        """Return value of the function if it executed without error.
-
-        Serialized using [trulens.core.utils.json.jsonify][trulens.core.utils.json.jsonify].
-        """
+        """Return value of the function if it executed without error."""
 
         ERROR = base + ".error"
         """Error raised by the function if it executed with an error.
