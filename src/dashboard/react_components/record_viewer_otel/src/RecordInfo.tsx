@@ -13,10 +13,10 @@ import { StackTreeNode } from '@/utils/StackTreeNode';
  */
 enum RECORD_CONTENT_TABS {
   DETAILS = 'Details',
-  SPAN_JSON = 'Span JSON',
+  RAW_ATTRIBUTES = 'Raw Attributes',
 }
 
-const SPAN_TREE_TABS = [RECORD_CONTENT_TABS.DETAILS, RECORD_CONTENT_TABS.SPAN_JSON];
+const SPAN_TREE_TABS = [RECORD_CONTENT_TABS.DETAILS, RECORD_CONTENT_TABS.RAW_ATTRIBUTES];
 
 enum SPAN_VIEW {
   TREE = 'Tree',
@@ -43,7 +43,7 @@ export default function RecordInfo({ nodeMap, root }: RecordTreeProps) {
 
   // Changes the right hand panel depending on user selection.
   const getSelectedView = () => {
-    if (selectedTab === RECORD_CONTENT_TABS.SPAN_JSON) {
+    if (selectedTab === RECORD_CONTENT_TABS.RAW_ATTRIBUTES) {
       return <JSONViewer src={selectedNode.raw ?? {}} />;
     }
 

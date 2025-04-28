@@ -1,12 +1,13 @@
 import NodeDetails from '@/RecordTree/Details/NodeDetails';
 import { StackTreeNode } from '@/utils/StackTreeNode';
+import { Typography } from '@mui/material';
 
 type DetailsProps = {
   selectedNode: StackTreeNode;
 };
 
 export default function Details({ selectedNode }: DetailsProps) {
-  if (!selectedNode) return <>Node not found.</>;
+  if (!selectedNode) return <Typography>Node not found.</Typography>;
 
   return <NodeDetails selectedNode={selectedNode} />;
 }

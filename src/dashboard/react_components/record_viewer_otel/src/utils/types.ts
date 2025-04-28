@@ -1,18 +1,3 @@
-export interface AppJSONRaw {
-  app_id: string;
-  feedback_definitions: [];
-  feedback_mode: string;
-  root_class: {
-    name: string;
-    module: {
-      package_name: string;
-      module_name: string;
-    };
-    bases: null;
-  };
-  app: unknown;
-}
-
 export interface StackJSONRaw {
   event_id: string;
   record: {

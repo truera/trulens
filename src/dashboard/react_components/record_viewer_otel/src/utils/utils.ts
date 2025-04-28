@@ -82,9 +82,12 @@ export const formatTime = (timestampInSeconds: number) => {
 
   const jsDate = new Date(timestampInSeconds * 1000);
 
-  return `${jsDate.toLocaleDateString()} ${jsDate.toLocaleTimeString('en-US', {
-    hour12: false,
-  })}.${timestampInSeconds.toString().padStart(6, '0')}`;
+  const formatter = new Intl.DateTimeFormat(navigator.languages, {
+    dateStyle: 'full',
+    timeStyle: 'long',
+  });
+
+  return formatter.format(jsDate);
 };
 
 /**

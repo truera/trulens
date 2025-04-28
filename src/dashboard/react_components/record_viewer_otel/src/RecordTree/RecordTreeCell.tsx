@@ -8,6 +8,7 @@ import { SpanTooltip } from '@/SpanTooltip';
 import Tag from '@/Tag';
 import { StackTreeNode } from '@/utils/StackTreeNode';
 import { formatDuration } from '@/utils/utils';
+import { SpanTypeTag } from './SpanTypeTag';
 
 type RecordTreeCellProps = TreeItemContentProps & {
   node: StackTreeNode;
@@ -67,7 +68,7 @@ export const RecordTreeCell = forwardRef(function CustomContent(props: RecordTre
                 title={formatDuration(timeTaken)}
               />
 
-              {spanType !== 'unknown' && <Tag sx={tagSx} title={spanType} />}
+              <SpanTypeTag spanType={spanType} />
             </Box>
           </Box>
 

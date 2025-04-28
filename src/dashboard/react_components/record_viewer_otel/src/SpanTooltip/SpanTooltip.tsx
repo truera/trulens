@@ -11,12 +11,17 @@ type SpanTooltipProps = {
 };
 
 export default function SpanTooltip({ node, children }: SpanTooltipProps) {
-  const { startTime, endTime } = node;
+  const { startTime, endTime, name } = node;
 
   return (
     <StyledTooltip
       title={
         <Box sx={{ lineHeight: 1.5 }}>
+          <span>
+            <b>Name: </b>
+            {name}
+          </span>
+          <br />
           <span>
             <b>Start: </b>
             {formatTime(startTime)}
