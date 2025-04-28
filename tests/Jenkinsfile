@@ -66,7 +66,6 @@ pipeline {
                     poetry run pip install pip==24.1.2
                     poetry run python --version
                     poetry run pip --version
-                    poetry run pip install certifi==2025.1.31
                 '''
                 sh label: 'Run pre-commit hooks', script: '''
                     set -e
