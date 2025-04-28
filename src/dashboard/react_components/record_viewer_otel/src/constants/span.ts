@@ -30,7 +30,7 @@ export const SpanType = {
   AGENT_INVOCATION: 'agent_invocation',
 } as const;
 
-export type AIObservabilitySpanType = (typeof SpanType)[keyof typeof SpanType];
+export type TruLensSpanType = (typeof SpanType)[keyof typeof SpanType];
 
 export const SpanAttributes = {
   RUN_NAME: `${BASE_SCOPE}.run.name`,

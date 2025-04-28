@@ -23,7 +23,6 @@ class RecordViewer extends StreamlitComponentBase {
      * Actual code begins
      */
     const root = createTreeFromCalls(spans);
-    console.log({ root });
 
     const nodeMap = createNodeMap(root);
 

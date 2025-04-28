@@ -1,3 +1,4 @@
+import { SpanAttributes, SpanType } from '@/constants/span';
 import { StackTreeNode } from '@/utils/StackTreeNode';
 import { Span } from '@/utils/types';
 
@@ -5,8 +6,8 @@ export const createTreeFromCalls = (spans: Span[]) => {
   const nodes = spans
     .filter(
       (span) =>
-        span.record_attributes['ai.observability.span_type'] !== 'eval' &&
-        span.record_attributes['ai.observability.span_type'] !== 'eval_root'
+        span.record_attributes[SpanAttributes.SPAN_TYPE] !== SpanType.EVAL &&
+        span.record_attributes[SpanAttributes.SPAN_TYPE] !== SpanType.EVAL_ROOT
     )
     .map((span) => {
       return new StackTreeNode({
@@ -26,8 +27,6 @@ export const createTreeFromCalls = (spans: Span[]) => {
     }
     nodeParentMap.get(node.parentId)?.push(node);
   });
-
-  console.log({ nodeParentMap });
 
   const roots = nodeParentMap.get('') ?? [];
 
