@@ -120,7 +120,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         correctly processes the spans and produces the expected output.
         """
         # Load the example spans from the JSON files
-        data_dir = Path(__file__).parent / "data"
+        data_dir = Path(__file__).parent / "data" / "test_rag_spans"
         with open(data_dir / "record_root_span.json", "r") as f:
             record_root_span = json.load(f)
         with open(data_dir / "generation_span.json", "r") as f:
@@ -251,18 +251,18 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         correctly processes the spans and produces the expected output.
         """
         # Load the example spans from the JSON files
-        data_dir = Path(__file__).parent / "data" / "snowflake_spans"
-        with open(data_dir / "sf_record_root_span.json", "r") as f:
+        data_dir = Path(__file__).parent / "data" / "test_rag_spans"
+        with open(data_dir / "record_root_span.json", "r") as f:
             record_root_span = json.load(f)
-        with open(data_dir / "sf_generation_span.json", "r") as f:
+        with open(data_dir / "generation_span.json", "r") as f:
             generation_span = json.load(f)
-        with open(data_dir / "sf_retrieval_span.json", "r") as f:
+        with open(data_dir / "retrieval_span.json", "r") as f:
             retrieval_span = json.load(f)
-        with open(data_dir / "sf_eval_root_span.json", "r") as f:
+        with open(data_dir / "eval_root_span.json", "r") as f:
             eval_root_span = json.load(f)
-        with open(data_dir / "sf_eval_span_1.json", "r") as f:
+        with open(data_dir / "eval_span_1.json", "r") as f:
             eval_span1 = json.load(f)
-        with open(data_dir / "sf_eval_span_2.json", "r") as f:
+        with open(data_dir / "eval_span_2.json", "r") as f:
             eval_span2 = json.load(f)
 
         # Convert the spans to Event objects
