@@ -142,7 +142,7 @@ class SpanAttributes:
         ERROR = base + ".error"
         """Error raised during evaluation."""
 
-        SCORE = base + ".result"
+        SCORE = base + ".score"
         """Score of the evaluation."""
 
         METADATA = base + ".metadata"
