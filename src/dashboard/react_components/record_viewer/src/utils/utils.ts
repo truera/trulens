@@ -147,26 +147,14 @@ export const formatTime = (timestampInMicroSeconds: number) => {
 
   const jsDate = new Date(timestampInMicroSeconds / 1000);
 
-  return `${jsDate.toLocaleDateString()} ${jsDate.toLocaleTimeString('en-US', {
+  const formatter = new Intl.DateTimeFormat(navigator.languages, {
     hour12: false,
-  })}.${(timestampInMicroSeconds % 1_000_000).toString().padStart(6, '0')}`;
+  });
+
+  return formatter.format(jsDate);
 };
 
 /**
- * Formatting duration to display.
- *
- * @param durationInMicroSeconds - duration in microseconds
- * @returns Human-readable formatted timestamp duration string
- */
-export const formatDuration = (durationInMicroSeconds: number) => {
-  if (durationInMicroSeconds === null || durationInMicroSeconds === undefined) return '';
-
-  if (durationInMicroSeconds < 1000) return `${durationInMicroSeconds} µs`;
-  if (durationInMicroSeconds < 1_000_000) return `${Math.round(durationInMicroSeconds / 1000)} ms`;
-
-  return `${Math.round(durationInMicroSeconds / 1_000_000)} s`;
-};
-
 /**
  * Get the number of microseconds since January 1, 1970.
  *
