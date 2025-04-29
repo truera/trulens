@@ -1154,10 +1154,10 @@ class SQLAlchemyDB(core_db.DB):
                         # Initialize feedback result if not present
                         if metric_name not in record_data["feedback_results"]:
                             record_data["feedback_results"][metric_name] = {
-                                "scores": 0.0,
+                                "mean_score": 0.0,
                                 "calls": [],
-                                "cost": 0.0,
-                                "currency": "USD",
+                                "total_cost": 0.0,
+                                "cost_currency": "USD",
                                 "direction": record_attributes.get(
                                     SpanAttributes.EVAL.HIGHER_IS_BETTER, True
                                 ),
@@ -1168,10 +1168,16 @@ class SQLAlchemyDB(core_db.DB):
                             metric_name
                         ]
 
-                        # NOTE: EVAL_ROOT.SCORE should provide the mean score of all related EVAL spans
-                        feedback_result["mean_score"] = record_attributes.get(
-                            SpanAttributes.EVAL_ROOT.SCORE, 0.0
-                        )
+                        if (
+                            record_attributes.get(SpanAttributes.SPAN_TYPE)
+                            == SpanAttributes.SpanType.EVAL_ROOT.value
+                        ):
+                            # NOTE: EVAL_ROOT.SCORE should provide the mean score of all related EVAL spans
+                            feedback_result["mean_score"] = (
+                                record_attributes.get(
+                                    SpanAttributes.EVAL_ROOT.SCORE, 0.0
+                                )
+                            )
 
                         # Add call data
                         call_data = {
@@ -1261,7 +1267,7 @@ class SQLAlchemyDB(core_db.DB):
                     record_row[
                         f"{feedback_name} feedback cost in {feedback_result['cost_currency']}"
                     ] = feedback_result["total_cost"]
-                    record_row[f"{feedback_name}_direction"] = feedback_result[
+                    record_row[f"{feedback_name} direction"] = feedback_result[
                         "direction"
                     ]
 
