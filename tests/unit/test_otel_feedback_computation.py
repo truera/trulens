@@ -209,7 +209,7 @@ class TestOtelFeedbackComputation(OtelTestCase):
             len(eval_root_record_attributes),
         )
         for curr in eval_root_record_attributes:
-            self.assertEqual(curr[SpanAttributes.EVAL_ROOT.RESULT], 0.9)
+            self.assertEqual(curr[SpanAttributes.EVAL_ROOT.SCORE], 0.9)
         for i in range(len(expected_case_number)):
             self.assertEqual(
                 eval_root_record_attributes[i][SpanAttributes.EVAL.METRIC_NAME],
