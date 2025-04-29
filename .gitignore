@@ -75,7 +75,7 @@ _trulens_eval/
 
 # testing: unit test data
 data/*
-!data/test_rag_spans/
+!data/test_otel_spans/
 
 # Staged artifacts for snowflake connector
 !src/connectors/snowflake/trulens/data
