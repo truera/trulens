@@ -16,14 +16,16 @@ export default function NodeDetails(props: DetailsProps) {
   const { selectedNode } = props;
   const { timeTaken: nodeTime, attributes } = selectedNode;
   const spanTypeTitle = getSpanTypeTitle(attributes[SpanAttributes.SPAN_TYPE]);
+  const inputId = attributes[SpanAttributes.INPUT_ID];
 
   return (
     <>
       <Stack direction="row" sx={summarySx}>
         <LabelAndValue label="Time taken" value={<Typography>{formatDuration(nodeTime)}</Typography>} />
         {spanTypeTitle !== 'Unknown' && (
-          <LabelAndValue label="Span type" value={<Typography>{spanTypeTitle} </Typography>} />
+          <LabelAndValue label="Span type" value={<Typography>{spanTypeTitle}</Typography>} />
         )}
+        {!!inputId && <LabelAndValue label="Input ID" value={<Typography>{inputId}</Typography>} />}
       </Stack>
 
       <Stack gap={1}>

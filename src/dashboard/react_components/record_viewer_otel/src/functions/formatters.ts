@@ -1,7 +1,9 @@
 const { languages } = navigator;
 
+const languagesToUse = [...languages];
+
 export const formatNumber = (value: number, options: Intl.NumberFormatOptions): string => {
-  return new Intl.NumberFormat(languages, options).format(value);
+  return new Intl.NumberFormat(languagesToUse, options).format(value);
 };
 
 /**
@@ -15,9 +17,17 @@ export const formatTime = (timestampInSeconds: number) => {
 
   const jsDate = new Date(timestampInSeconds * 1000);
 
-  const formatter = new Intl.DateTimeFormat(navigator.languages, {
-    dateStyle: 'full',
-    timeStyle: 'long',
+  const formatter = new Intl.DateTimeFormat(languagesToUse, {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+    fractionalSecondDigits: 3,
+    hour12: true,
+    timeZoneName: 'short',
   });
 
   return formatter.format(jsDate);
@@ -32,7 +42,7 @@ export const formatTime = (timestampInSeconds: number) => {
 export const formatDuration = (durationInSeconds: number) => {
   if (durationInSeconds === null || durationInSeconds === undefined) return '';
 
-  const { format } = new Intl.NumberFormat(navigator.languages, {
+  const { format } = new Intl.NumberFormat(languagesToUse, {
     minimumFractionDigits: 0,
     maximumFractionDigits: 3,
   });

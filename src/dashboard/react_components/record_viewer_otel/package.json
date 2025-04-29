@@ -2,7 +2,7 @@
   "dependencies": {
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
-    "@microlink/react-json-view": "^1.23.0",
+    "@microlink/react-json-view": "^1.26.1",
     "@mui/icons-material": "^6.0.2",
     "@mui/material": "^6.0.2",
     "@mui/x-tree-view": "^7.15.0",
@@ -18,7 +18,7 @@
     "@types/uuid": "^9.0.8",
     "@typescript-eslint/eslint-plugin": "^5.61.0",
     "@typescript-eslint/parser": "^5.61.0",
-    "@vitejs/plugin-react-swc": "^3.3.2",
+    "@vitejs/plugin-react-swc": "^3.9.0",
     "eslint": "^8.44.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-airbnb-base": "^15.0.0",
