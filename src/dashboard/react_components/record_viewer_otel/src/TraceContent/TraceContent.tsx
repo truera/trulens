@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import JSONViewer from '@/JSONViewer';
 import { Typography } from '@mui/material';
 
@@ -15,8 +14,7 @@ export const TraceContent = (props: TraceContentProps) => {
     return <Typography>No information found.</Typography>;
   }
 
-  // TODO(garett)
-  let value: ReactNode = rawValue;
+  let value = rawValue;
 
   if (typeof rawValue === 'string') {
     try {
@@ -38,10 +36,5 @@ export const TraceContent = (props: TraceContentProps) => {
     return <JSONViewer src={rawValue} />;
   }
 
-  if (typeof value === 'string' && value.length > MAX_STRING_LENGTH) {
-    // TODO(garett)
-    return <JSONViewer src={{ value }} />;
-  }
-
-  return <Typography>{value || 'No information found.'}</Typography>;
+  return <Typography>{String(value) || 'No information found.'}</Typography>;
 };

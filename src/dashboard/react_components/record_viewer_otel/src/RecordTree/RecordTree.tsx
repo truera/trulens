@@ -4,7 +4,7 @@ import { SimpleTreeView } from '@mui/x-tree-view';
 import { Streamlit } from 'streamlit-component-lib';
 
 import RecordTreeCellRecursive from '@/RecordTree/RecordTreeCellRecursive';
-import { ROOT_NODE_ID, StackTreeNode } from '@/utils/StackTreeNode';
+import { ROOT_NODE_ID, StackTreeNode } from '@/types/StackTreeNode';
 
 type RecordTreeProps = {
   nodeMap: Record<string, StackTreeNode>;

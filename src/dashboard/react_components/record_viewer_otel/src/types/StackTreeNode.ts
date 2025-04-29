@@ -1,4 +1,4 @@
-import { CallJSONRaw } from '@/utils/types';
+import { SpanAttributes } from '@/types/SpanAttributes';
 
 export const ROOT_NODE_ID = 'root-root-root';
 
@@ -13,7 +13,7 @@ export class StackTreeNode {
 
   endTime = 0;
 
-  raw?: CallJSONRaw;
+  attributes: SpanAttributes;
 
   parentId: string;
 
@@ -23,13 +23,13 @@ export class StackTreeNode {
     id,
     startTime,
     endTime,
-    raw,
+    attributes,
     parentId,
   }: {
     children?: StackTreeNode[];
     name: string;
     id: string;
-    raw: CallJSONRaw;
+    attributes: SpanAttributes;
     parentId: string;
     startTime: number;
     endTime: number;
@@ -38,7 +38,7 @@ export class StackTreeNode {
     this.endTime = endTime;
     this.children = children;
     this.name = name;
-    this.raw = raw;
+    this.attributes = attributes;
     this.parentId = parentId;
     this.id = id;
   }

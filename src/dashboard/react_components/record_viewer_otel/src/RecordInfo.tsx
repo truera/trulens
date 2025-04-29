@@ -1,4 +1,4 @@
-import { Grid2, Stack } from '@mui/material';
+import { Grid2, Stack, Box } from '@mui/material';
 import { useState } from 'react';
 
 import JSONViewer from '@/JSONViewer/JSONViewer';
@@ -6,7 +6,8 @@ import RecordTable from '@/RecordTable/RecordTable';
 import Details from '@/RecordTree/Details/Details';
 import RecordTree from '@/RecordTree/RecordTree';
 import { Tab, Tabs } from '@/Tabs';
-import { StackTreeNode } from '@/utils/StackTreeNode';
+import { StackTreeNode } from '@/types/StackTreeNode';
+import TracePanel from './RecordTree/Details/TracePanel';
 
 /**
  * Constants and enums for the view
@@ -14,9 +15,11 @@ import { StackTreeNode } from '@/utils/StackTreeNode';
 enum RECORD_CONTENT_TABS {
   DETAILS = 'Details',
   RAW_ATTRIBUTES = 'Raw Attributes',
+  RECORD_INFORMATION = 'Record Information',
 }
 
 const SPAN_TREE_TABS = [RECORD_CONTENT_TABS.DETAILS, RECORD_CONTENT_TABS.RAW_ATTRIBUTES];
+const GENERAL_TABS = [RECORD_CONTENT_TABS.RECORD_INFORMATION];
 
 enum SPAN_VIEW {
   TREE = 'Tree',
@@ -44,7 +47,11 @@ export default function RecordInfo({ nodeMap, root }: RecordTreeProps) {
   // Changes the right hand panel depending on user selection.
   const getSelectedView = () => {
     if (selectedTab === RECORD_CONTENT_TABS.RAW_ATTRIBUTES) {
-      return <JSONViewer src={selectedNode.raw ?? {}} />;
+      return <JSONViewer src={selectedNode.attributes ?? {}} />;
+    }
+
+    if (selectedTab === RECORD_CONTENT_TABS.RECORD_INFORMATION) {
+      return <TracePanel root={root} />;
     }
 
     return <Details selectedNode={selectedNode} />;
@@ -90,6 +97,12 @@ export default function RecordInfo({ nodeMap, root }: RecordTreeProps) {
           sx={{ borderBottom: ({ vars }) => `1px solid ${vars.palette.grey[300]}` }}
         >
           {SPAN_TREE_TABS.map((tab) => (
+            <Tab label={tab} value={tab} key={tab} id={tab} />
+          ))}
+
+          <Box sx={{ flexGrow: 1 }} />
+
+          {GENERAL_TABS.map((tab) => (
             <Tab label={tab} value={tab} key={tab} id={tab} />
           ))}
         </Tabs>

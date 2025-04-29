@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { Streamlit } from 'streamlit-component-lib';
 
 import { RecordTreeCell } from '@/RecordTree/RecordTreeCell';
-import { StackTreeNode } from '@/utils/StackTreeNode';
+import { StackTreeNode } from '@/types/StackTreeNode';
 
 type RecordTableRowRecursiveProps = {
   node: StackTreeNode;

@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { Streamlit } from 'streamlit-component-lib';
 
 import { SpanTooltip } from '@/SpanTooltip';
-import { StackTreeNode } from '@/utils/StackTreeNode';
-import { formatDuration } from '@/utils/utils';
+import { StackTreeNode } from '@/types/StackTreeNode';
+import { formatDuration } from '@/functions/formatters';
+import { getNodeSpanType } from '@/functions/getNodeSpanType';
 
 type RecordTableRowRecursiveProps = {
   node: StackTreeNode;
@@ -32,6 +33,8 @@ export default function RecordTableRowRecursive({
 
   const isNodeSelected = selectedNodeId === id;
 
+  const spanType = getNodeSpanType(node);
+
   return (
     <>
       <TableRow
@@ -56,6 +59,7 @@ export default function RecordTableRowRecursive({
           </Box>
         </TableCell>
         <TableCell align="right">{formatDuration(timeTaken)}</TableCell>
+        <TableCell>{spanType === 'Unknown' ? '-' : spanType}</TableCell>
         <TableCell sx={{ minWidth: 500, padding: 0 }}>
           <SpanTooltip node={node}>
             <Box

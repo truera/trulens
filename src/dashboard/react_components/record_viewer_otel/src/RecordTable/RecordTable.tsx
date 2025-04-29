@@ -1,7 +1,7 @@
 import { SxProps, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Theme } from '@mui/material';
 
 import RecordTableRowRecursive from '@/RecordTable/RecordTableRow';
-import { StackTreeNode } from '@/utils/StackTreeNode';
+import { StackTreeNode } from '@/types/StackTreeNode';
 
 type RecordTableProps = {
   root: StackTreeNode;
@@ -19,6 +19,7 @@ export default function RecordTable({ root, selectedNodeId, setSelectedNodeId }:
           <TableRow>
             <TableCell width={275}>Method</TableCell>
             <TableCell width={75}>Duration</TableCell>
+            <TableCell width={75}>Type</TableCell>
             <TableCell>Timeline</TableCell>
           </TableRow>
         </TableHead>

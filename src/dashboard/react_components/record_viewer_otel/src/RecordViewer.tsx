@@ -3,8 +3,9 @@ import { StreamlitComponentBase, withStreamlitConnection } from 'streamlit-compo
 
 import RecordInfo from '@/RecordInfo';
 import { ThemeProvider } from '@/utils/ThemeProvider';
-import { DataRaw } from '@/utils/types';
-import { createNodeMap, createTreeFromCalls } from '@/utils/utils';
+import type { DataRaw } from '@/types/DataRaw';
+import { createNodeMap } from '@/functions/createNodeMap';
+import { createTreeFromCalls } from '@/functions/createTreeFromCalls';
 
 /**
  * This component serves as our entryway into streamlit. Keeping the logic here at a minimum,

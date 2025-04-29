@@ -2,6 +2,7 @@ import { deduplicateAttributes } from '@/functions/deduplicateAttributes';
 import { getSpanAttributeName } from '@/functions/getSpanAttributeName';
 import { processCostAttributes } from '@/functions/processCostAttributes';
 import { processSpanType } from '@/functions/processSpanType';
+import { removeUnnecessaryAttributes } from '@/functions/removeUnnecessaryAttributes';
 import { sortSpanKeys } from '@/functions/sortSpanKeys';
 import type { Attributes } from '@/types/attributes';
 import Panel from '@/Panel';
@@ -28,6 +29,7 @@ export const TraceAttributes = (props: TraceAttributesProps) => {
     const attributesToProcess: Attributes = { ...attributes };
     const results: Record<string, ReactNode> = {};
 
+    removeUnnecessaryAttributes(attributesToProcess);
     processCostAttributes(attributesToProcess);
     // TODO (garett) processTokenAttributes(attributesToProcess, results);
     processSpanType(attributesToProcess);

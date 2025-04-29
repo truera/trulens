@@ -1,9 +1,9 @@
-import { Box } from '@mui/material';
+import { Grid2 } from '@mui/material';
 import { ReactElement } from 'react';
 
 import StyledTooltip from '@/StyledTooltip';
-import { StackTreeNode } from '@/utils/StackTreeNode';
-import { formatTime } from '@/utils/utils';
+import { StackTreeNode } from '@/types/StackTreeNode';
+import { formatTime } from '@/functions/formatters';
 
 type SpanTooltipProps = {
   node: StackTreeNode;
@@ -13,25 +13,28 @@ type SpanTooltipProps = {
 export default function SpanTooltip({ node, children }: SpanTooltipProps) {
   const { startTime, endTime, name } = node;
 
+  const titleSize = { xs: 2 };
+  const valueSize = { xs: 10 };
+
   return (
     <StyledTooltip
       title={
-        <Box sx={{ lineHeight: 1.5 }}>
-          <span>
+        <Grid2 container rowSpacing={0.5}>
+          <Grid2 size={titleSize}>
             <b>Name: </b>
-            {name}
-          </span>
-          <br />
-          <span>
+          </Grid2>
+          <Grid2 size={valueSize}>{name}</Grid2>
+
+          <Grid2 size={titleSize}>
             <b>Start: </b>
-            {formatTime(startTime)}
-          </span>
-          <br />
-          <span>
+          </Grid2>
+          <Grid2 size={valueSize}>{formatTime(startTime)}</Grid2>
+
+          <Grid2 size={titleSize}>
             <b>End: </b>
-            {formatTime(endTime)}
-          </span>
-        </Box>
+          </Grid2>
+          <Grid2 size={valueSize}>{formatTime(endTime)}</Grid2>
+        </Grid2>
       }
     >
       {children}

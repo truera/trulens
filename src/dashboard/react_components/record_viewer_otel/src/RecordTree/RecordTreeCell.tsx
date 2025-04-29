@@ -6,8 +6,8 @@ import { forwardRef } from 'react';
 
 import { SpanTooltip } from '@/SpanTooltip';
 import Tag from '@/Tag';
-import { StackTreeNode } from '@/utils/StackTreeNode';
-import { formatDuration } from '@/utils/utils';
+import { StackTreeNode } from '@/types/StackTreeNode';
+import { formatDuration } from '@/functions/formatters';
 import { SpanTypeTag } from './SpanTypeTag';
 
 type RecordTreeCellProps = TreeItemContentProps & {
@@ -31,7 +31,7 @@ export const RecordTreeCell = forwardRef(function CustomContent(props: RecordTre
     handleSelection(event);
   };
 
-  const spanType = node.raw?.['ai.observability.span_type'];
+  const spanType = node.attributes?.['ai.observability.span_type'];
 
   return (
     <SpanTooltip node={node}>

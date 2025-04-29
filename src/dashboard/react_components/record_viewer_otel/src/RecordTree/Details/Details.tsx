@@ -1,5 +1,5 @@
 import NodeDetails from '@/RecordTree/Details/NodeDetails';
-import { StackTreeNode } from '@/utils/StackTreeNode';
+import { StackTreeNode } from '@/types/StackTreeNode';
 import { Typography } from '@mui/material';
 
 type DetailsProps = {
