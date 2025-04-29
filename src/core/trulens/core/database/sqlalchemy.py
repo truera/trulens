@@ -1158,9 +1158,7 @@ class SQLAlchemyDB(core_db.DB):
                                 "calls": [],
                                 "total_cost": 0.0,
                                 "cost_currency": "USD",
-                                "direction": record_attributes.get(
-                                    SpanAttributes.EVAL.HIGHER_IS_BETTER, True
-                                ),
+                                "direction": None,
                             }
 
                         # Update feedback result
@@ -1176,6 +1174,13 @@ class SQLAlchemyDB(core_db.DB):
                             feedback_result["mean_score"] = (
                                 record_attributes.get(
                                     SpanAttributes.EVAL_ROOT.SCORE, 0.0
+                                )
+                            )
+                            # NOTE: HIGHER_IS_BETTER has not been populated in the OTEL spans yet
+                            feedback_result["direction"] = (
+                                record_attributes.get(
+                                    SpanAttributes.EVAL_ROOT.HIGHER_IS_BETTER,
+                                    None,
                                 )
                             )
 
