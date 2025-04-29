@@ -79,6 +79,10 @@ pipeline {
                     apt-get install -y unzip
                     make build-with-zip-wheels
                 '''
+                sh label : 'Install & register the kernel for notebook tests', script: '''
+                poetry run pip install ipykernel
+                poetry run python -m ipykernel install --name trulens-llm --display-name trulens-llm --sys-prefix
+                '''
             }
         }
         stage('Test Suites') {
@@ -121,7 +125,7 @@ pipeline {
                             sh label: 'Run optional "notebook" Test Suite', script: '''
                                 set -e
 
-                                make test-notebook-optional
+                                make test-notebook-stable
                             '''
                         }
                     }

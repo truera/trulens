@@ -59,7 +59,7 @@ class VersionException(Exception):
 
 
 MIGRATION_UNKNOWN_STR = "unknown[db_migration]"
-migration_versions: List[str] = ["0.19.0"]
+migration_versions: List[str] = ["1.4.9"]
 
 
 def _update_db_json_col(

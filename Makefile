@@ -51,10 +51,10 @@ env-tests-optional: env env-tests
 		chromadb \
 	 	faiss-cpu \
 		langchain-openai \
-		'langchain-core<0.3.52' \
 		llama-index-embeddings-huggingface \
 		llama-index-embeddings-openai \
 		unstructured
+
 
 env-tests-snowflake: env-tests-optional
 	poetry install --with snowflake
@@ -69,7 +69,9 @@ env-tests-notebook: env-tests env-tests-optional
 	poetry run pip install \
 		faiss-cpu \
 		ipytree \
-		llama-index-readers-web
+		llama-index-readers-web \
+		markdown
+
 
 # Lock the poetry dependencies for all the subprojects.
 lock: $(POETRY_DIRS)
@@ -246,7 +248,7 @@ test-e2e:
 	$(PYTEST) tests/e2e/*
 
 # Runs the notebook test
-test-notebook:
+test-notebook: env-tests-notebook
 	$(PYTEST) tests/docs_notebooks/*
 
 install-wheels:
