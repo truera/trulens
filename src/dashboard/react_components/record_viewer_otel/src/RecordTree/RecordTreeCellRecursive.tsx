@@ -6,14 +6,14 @@ import { Streamlit } from 'streamlit-component-lib';
 import { RecordTreeCell } from '@/RecordTree/RecordTreeCell';
 import { StackTreeNode } from '@/types/StackTreeNode';
 
-type RecordTableRowRecursiveProps = {
+type RecordTreeCellRecursiveProps = {
   node: StackTreeNode;
   depth: number;
   totalTime: number;
   treeStart: number;
 };
 
-export default function RecordTreeCellRecursive({ node, depth, totalTime, treeStart }: RecordTableRowRecursiveProps) {
+export default function RecordTreeCellRecursive({ node, depth, totalTime, treeStart }: RecordTreeCellRecursiveProps) {
   useEffect(() => Streamlit.setFrameHeight());
 
   const { id, label } = node;

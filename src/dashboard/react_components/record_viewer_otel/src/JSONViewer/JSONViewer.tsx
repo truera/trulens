@@ -3,7 +3,7 @@ import { useColorScheme } from '@mui/material';
 import { Streamlit } from 'streamlit-component-lib';
 
 /**
- * Utility component as a rapper around react-json-view with default params
+ * Utility component as a wrapper around react-json-view with default params
  */
 export default function JSONViewer({ src }: { src: ReactJsonViewProps['src'] }) {
   const { mode } = useColorScheme();
