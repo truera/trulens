@@ -1051,6 +1051,9 @@ class SQLAlchemyDB(core_db.DB):
 
             if not events:
                 # Return empty dataframe with expected columns
+                logger.warning(
+                    f"No events found for app_name: {app_name}, app_ids: {app_ids}"
+                )
                 return pd.DataFrame(columns=AppsExtractor.all_cols), []
 
             # Group events by record_id
@@ -1070,6 +1073,9 @@ class SQLAlchemyDB(core_db.DB):
 
                 # Filter by app_ids if provided
                 if app_ids and app_id not in app_ids:
+                    logger.warning(
+                        f"Skipping event for app_id: {app_id}, not in {app_ids}"
+                    )
                     continue
 
                 if record_id not in record_events:
@@ -1081,13 +1087,10 @@ class SQLAlchemyDB(core_db.DB):
                         "input": "",  # Initialize to empty string, filled below
                         "output": "",  # Initialize to empty string, filled below
                         "tags": "",  # Not present in OTEL, use empty string
-                        "ts": event.start_timestamp,
-                        "latency": (
-                            event.timestamp - event.start_timestamp
-                        ).total_seconds()
-                        * 1000,  # Convert to ms
+                        "ts": "",  # Initialize to empty value, filled below
+                        "latency": 0.0,  # Initialize to 0.0, filled below
                         "total_tokens": 0,  # Initialize to 0, calculated below
-                        "total_cost": 0.0,
+                        "total_cost": 0.0,  # Initialize to 0.0, calculated below
                         "feedback_results": {},  # Initialize to empty map, calculated below
                     }
 
@@ -1104,15 +1107,23 @@ class SQLAlchemyDB(core_db.DB):
                     record_events[record_id]["output"] = record_attributes.get(
                         SpanAttributes.RECORD_ROOT.OUTPUT, ""
                     )
+                    # NOTE: We grab timestamps from the RECORD_ROOT span because it provides a
+                    # more accurate duration than grabbing from the first matching span.
+                    # TODO: revisit if we want to grab the earliest start_timestamp from all
+                    # spans and the latest (end) timestamp from all spans to better represent
+                    # the latency of the record.
+                    record_events[record_id]["ts"] = event.start_timestamp
+                    record_events[record_id]["latency"] = (
+                        event.timestamp - event.start_timestamp
+                    ).total_seconds() * 1000
 
-                # Check if the span has cost info, and update record events
+                # Check if the span has cost info (tokens, cost, currency), and update record events
                 self._update_cost_info_otel(
                     record_events[record_id],
                     record_attributes,
                     include_tokens=True,
                 )
 
-            # TODO: update once we have an example of feedback spans
             # Process feedback results
             feedback_col_names = []
             for record_id, record_data in record_events.items():
@@ -1121,7 +1132,8 @@ class SQLAlchemyDB(core_db.DB):
                         event
                     )
 
-                    # Check if this is an EVAL span
+                    # Check if the span is of type EVAL
+                    # NOTE: Revisit information from EVAL_ROOT spans
                     if (
                         record_attributes.get(SpanAttributes.SPAN_TYPE)
                         == SpanAttributes.SpanType.EVAL.value
@@ -1130,6 +1142,9 @@ class SQLAlchemyDB(core_db.DB):
                             SpanAttributes.EVAL.METRIC_NAME, ""
                         )
                         if not metric_name:
+                            logger.warning(
+                                f"Skipping eval span for record_id: {record_id}, no metric name found"
+                            )
                             continue
 
                         # Add feedback name to column names if not present
@@ -1161,10 +1176,6 @@ class SQLAlchemyDB(core_db.DB):
 
                         # Add call data
                         call_data = {
-                            # TODO: consider porting over EVAL.args
-                            "args": record_attributes.get(
-                                SpanAttributes.CALL.ARGS, {}
-                            ),
                             "kwargs": record_attributes.get(
                                 SpanAttributes.CALL.KWARGS, {}
                             ),
@@ -1241,9 +1252,17 @@ class SQLAlchemyDB(core_db.DB):
                     "feedback_results"
                 ].items():
                     # NOTE: we use the mean score as the feedback result
-                    record_row[feedback_name] = np.mean(
-                        feedback_result["scores"]
-                    )
+
+                    if feedback_result["scores"]:
+                        record_row[feedback_name] = np.mean(
+                            feedback_result["scores"]
+                        )
+                    else:
+                        logger.error(
+                            f"No scores found for feedback_name: {feedback_name}, setting to None"
+                        )
+                        record_row[feedback_name] = None
+
                     record_row[f"{feedback_name}_calls"] = feedback_result[
                         "calls"
                     ]

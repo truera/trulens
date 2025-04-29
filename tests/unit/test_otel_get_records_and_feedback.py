@@ -31,6 +31,18 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         self.app_version = "1.0.0"
 
     # # TODO: IMPLEMENT THIS
+    # def _create_eval_span(
+    #     self, record_id, trace_id, input_text, output_text, token_count=10
+    # ):
+    #     return None
+
+    # # TODO: IMPLEMENT THIS
+    # def _create_eval_root_span(
+    #     self, record_id, trace_id, input_text, output_text, token_count=10
+    # ):
+    #     return None
+
+    # # TODO: IMPLEMENT THIS
     # def _create_record_root_span(
     #     self, record_id, trace_id, input_text, output_text, token_count=10
     # ):
@@ -52,7 +64,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
     # def _create_rag_flow(
     #     self, record_id=None, trace_id=None, input_text=None, output_text=None
     # ):
-    #     """Create a simple RAG flow with three events: RECORD_ROOT, RETRIEVAL, and GENERATION.
+    #     """Create a simple RAG flow with all five spans.
 
     #     Args:
     #         TODO: Implement this
@@ -99,6 +111,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         self.assertEqual(len(records_df), 0)
         self.assertEqual(feedback_col_names, [])
 
+    # TODO: add tests for EVAL and EVAL_ROOT spans
     def test_get_records_and_feedback_otel_with_example_spans(self):
         """Test that _get_records_and_feedback_otel correctly processes example spans.
 
@@ -184,12 +197,12 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         # Verify the timestamp and latency
         self.assertEqual(
             row["ts"].strftime("%Y-%m-%d %H:%M:%S.%f"),
-            "2025-04-11 10:19:56.356391",
+            "2025-04-11 10:19:55.993955",
         )
 
         # Calculate expected latency in milliseconds
-        start_time = datetime.fromisoformat("2025-04-11 10:19:56.356391")
-        end_time = datetime.fromisoformat("2025-04-11 10:19:58.166073")
+        start_time = datetime.fromisoformat("2025-04-11 10:19:55.993955")
+        end_time = datetime.fromisoformat("2025-04-11 10:19:58.166175")
         expected_latency = (end_time - start_time).total_seconds() * 1000
         self.assertEqual(row["latency"], expected_latency)
 
@@ -221,10 +234,10 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         # Verify that the perf_json contains the expected fields
         perf_json = row["perf_json"]
         self.assertEqual(
-            perf_json["start_time"].strftime("%Y-%m-%d %H:%M:%S"),
-            "2025-04-11 10:19:56",
+            perf_json["start_time"].strftime("%Y-%m-%d %H:%M:%S.%f"),
+            "2025-04-11 10:19:55.993955",
         )
         self.assertEqual(
-            perf_json["end_time"].strftime("%Y-%m-%d %H:%M:%S"),
-            "2025-04-11 10:19:58",
+            perf_json["end_time"].strftime("%Y-%m-%d %H:%M:%S.%f"),
+            "2025-04-11 10:19:58.166175",
         )
