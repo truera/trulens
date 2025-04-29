@@ -1087,7 +1087,7 @@ class SQLAlchemyDB(core_db.DB):
                         "input": "",  # Initialize to empty string, filled below
                         "output": "",  # Initialize to empty string, filled below
                         "tags": "",  # Not present in OTEL, use empty string
-                        "ts": "",  # Initialize to empty value, filled below
+                        "ts": pd.NaT,  # Initialize to empty value, filled below
                         "latency": 0.0,  # Initialize to 0.0, filled below
                         "total_tokens": 0,  # Initialize to 0, calculated below
                         "total_cost": 0.0,  # Initialize to 0.0, calculated below
@@ -1134,10 +1134,10 @@ class SQLAlchemyDB(core_db.DB):
 
                     # Check if the span is of type EVAL
                     # NOTE: Revisit information from EVAL_ROOT spans
-                    if (
-                        record_attributes.get(SpanAttributes.SPAN_TYPE)
-                        == SpanAttributes.SpanType.EVAL.value
-                    ):
+                    if record_attributes.get(SpanAttributes.SPAN_TYPE) in [
+                        SpanAttributes.SpanType.EVAL.value,
+                        SpanAttributes.SpanType.EVAL_ROOT.value,
+                    ]:
                         metric_name = record_attributes.get(
                             SpanAttributes.EVAL.METRIC_NAME, ""
                         )
@@ -1154,7 +1154,7 @@ class SQLAlchemyDB(core_db.DB):
                         # Initialize feedback result if not present
                         if metric_name not in record_data["feedback_results"]:
                             record_data["feedback_results"][metric_name] = {
-                                "scores": [],
+                                "scores": 0.0,
                                 "calls": [],
                                 "cost": 0.0,
                                 "currency": "USD",
@@ -1168,18 +1168,19 @@ class SQLAlchemyDB(core_db.DB):
                             metric_name
                         ]
 
-                        score = record_attributes.get(
-                            SpanAttributes.EVAL.SCORE, 0.0
+                        # NOTE: EVAL_ROOT.SCORE should provide the mean score of all related EVAL spans
+                        feedback_result["mean_score"] = record_attributes.get(
+                            SpanAttributes.EVAL_ROOT.SCORE, 0.0
                         )
-
-                        feedback_result["scores"].append(score)
 
                         # Add call data
                         call_data = {
                             "kwargs": record_attributes.get(
                                 SpanAttributes.CALL.KWARGS, {}
                             ),
-                            "ret": score,
+                            "ret": record_attributes.get(
+                                SpanAttributes.EVAL.SCORE, 0.0
+                            ),
                             "meta": record_attributes.get(
                                 SpanAttributes.EVAL.EXPLANATION,
                                 {},
@@ -1252,16 +1253,7 @@ class SQLAlchemyDB(core_db.DB):
                     "feedback_results"
                 ].items():
                     # NOTE: we use the mean score as the feedback result
-
-                    if feedback_result["scores"]:
-                        record_row[feedback_name] = np.mean(
-                            feedback_result["scores"]
-                        )
-                    else:
-                        logger.error(
-                            f"No scores found for feedback_name: {feedback_name}, setting to None"
-                        )
-                        record_row[feedback_name] = None
+                    record_row[feedback_name] = feedback_result["mean_score"]
 
                     record_row[f"{feedback_name}_calls"] = feedback_result[
                         "calls"
