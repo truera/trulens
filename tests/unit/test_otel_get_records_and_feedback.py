@@ -191,7 +191,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         start_time = datetime.fromisoformat("2025-04-11 10:19:56.356391")
         end_time = datetime.fromisoformat("2025-04-11 10:19:58.166073")
         expected_latency = (end_time - start_time).total_seconds() * 1000
-        self.assertAlmostEqual(row["latency"], expected_latency, delta=1.0)
+        self.assertEqual(row["latency"], expected_latency)
 
         # Verify that the app_id is correctly computed
         expected_app_id = self.db._compute_app_id_otel("coffee_rag", "openai")
