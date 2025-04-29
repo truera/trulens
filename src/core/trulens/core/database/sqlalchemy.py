@@ -1242,7 +1242,7 @@ class SQLAlchemyDB(core_db.DB):
                 ].items():
                     # NOTE: we use the mean score as the feedback result
                     record_row[feedback_name] = np.mean(
-                        feedback_result["total_score"]
+                        feedback_result["scores"]
                     )
                     record_row[f"{feedback_name}_calls"] = feedback_result[
                         "calls"
