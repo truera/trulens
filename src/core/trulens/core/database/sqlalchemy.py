@@ -852,6 +852,40 @@ class SQLAlchemyDB(core_db.DB):
             return obj.isoformat()
         raise TypeError(f"Type {type(obj)} not serializable")
 
+    def _update_cost_info_otel(
+        self, target_dict, record_attributes, include_tokens=False
+    ):
+        """Update cost information in the target dictionary.
+
+        Args:
+            target_dict: Dictionary to update with cost information
+            record_attributes: Source attributes containing cost information
+            include_tokens: Whether to update token count (only for record_events)
+        """
+        if any(
+            key.startswith(SpanAttributes.COST.base)
+            for key in record_attributes
+        ):
+            if include_tokens:
+                target_dict["total_tokens"] += record_attributes.get(
+                    SpanAttributes.COST.NUM_TOKENS, 0
+                )
+
+            target_dict["total_cost"] += record_attributes.get(
+                SpanAttributes.COST.COST, 0.0
+            )
+            target_dict["cost_currency"] = record_attributes.get(
+                SpanAttributes.COST.CURRENCY, "USD"
+            )
+
+        # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
+        # Add to total_cost map
+        # cost = record_attributes.get(SpanAttributes.COST.COST, 0.0)
+        # currency = record_attributes.get(SpanAttributes.COST.CURRENCY, "USD")
+        # if currency not in record_events[record_id]["total_cost"]:
+        #     record_events[record_id]["total_cost"][currency] = 0.0
+        # record_events[record_id]["total_cost"][currency] += cost
+
     def get_records_and_feedback(
         self,
         app_ids: Optional[List[str]] = None,
@@ -971,6 +1005,7 @@ class SQLAlchemyDB(core_db.DB):
             span_types = [
                 SpanAttributes.SpanType.RECORD_ROOT.value,
                 SpanAttributes.SpanType.EVAL_ROOT.value,
+                SpanAttributes.SpanType.EVAL.value,
                 SpanAttributes.SpanType.GENERATION.value,
                 SpanAttributes.SpanType.RETRIEVAL.value,
             ]
@@ -1024,11 +1059,9 @@ class SQLAlchemyDB(core_db.DB):
                 record_attributes = self._get_event_record_attributes_otel(
                     event
                 )
-
                 record_id = record_attributes.get(SpanAttributes.RECORD_ID)
                 if not record_id:
                     continue
-
                 app_name = record_attributes.get(SpanAttributes.APP_NAME, "")
                 app_version = record_attributes.get(
                     SpanAttributes.APP_VERSION, ""
@@ -1042,12 +1075,8 @@ class SQLAlchemyDB(core_db.DB):
                 if record_id not in record_events:
                     record_events[record_id] = {
                         "events": [],
-                        "app_name": record_attributes.get(
-                            SpanAttributes.APP_NAME, ""
-                        ),
-                        "app_version": record_attributes.get(
-                            SpanAttributes.APP_VERSION, ""
-                        ),
+                        "app_name": app_name,
+                        "app_version": app_version,
                         "app_id": app_id,
                         "input": "",  # Initialize to empty string, filled below
                         "output": "",  # Initialize to empty string, filled below
@@ -1058,9 +1087,7 @@ class SQLAlchemyDB(core_db.DB):
                         ).total_seconds()
                         * 1000,  # Convert to ms
                         "total_tokens": 0,  # Initialize to 0, calculated below
-                        # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
                         "total_cost": 0.0,
-                        # "total_cost": {},  # Initialize to empty map, calculated below
                         "feedback_results": {},  # Initialize to empty map, calculated below
                     }
 
@@ -1078,29 +1105,14 @@ class SQLAlchemyDB(core_db.DB):
                         SpanAttributes.RECORD_ROOT.OUTPUT, ""
                     )
 
-                # Check if the span has cost info
-                if any(
-                    key.startswith(SpanAttributes.COST.base)
-                    for key in record_attributes
-                ):
-                    record_events[record_id]["total_tokens"] += (
-                        record_attributes.get(SpanAttributes.COST.NUM_TOKENS, 0)
-                    )
-                    # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
-                    cost = record_attributes.get(SpanAttributes.COST.COST, 0.0)
-                    currency = record_attributes.get(
-                        SpanAttributes.COST.CURRENCY, "USD"
-                    )
+                # Check if the span has cost info, and update record events
+                self._update_cost_info_otel(
+                    record_events[record_id],
+                    record_attributes,
+                    include_tokens=True,
+                )
 
-                    # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
-                    record_events[record_id]["total_cost"] += cost
-                    record_events[record_id]["cost_currency"] = currency
-
-                    # Add to total_cost map
-                    # if currency not in record_events[record_id]["total_cost"]:
-                    #     record_events[record_id]["total_cost"][currency] = 0.0
-                    # record_events[record_id]["total_cost"][currency] += cost
-
+            # TODO: update once we have an example of feedback spans
             # Process feedback results
             feedback_col_names = []
             for record_id, record_data in record_events.items():
@@ -1109,15 +1121,13 @@ class SQLAlchemyDB(core_db.DB):
                         event
                     )
 
-                    # Check if this is an eval span
-                    eval_base = SpanAttributes.EVAL.base
-                    if eval_base in record_attributes:
-                        eval_data = record_attributes[eval_base]
-                        if not isinstance(eval_data, dict):
-                            continue
-
-                        metric_name = eval_data.get(
-                            SpanAttributes.EVAL.METRIC_NAME.split(".")[-1]
+                    # Check if this is an EVAL span
+                    if (
+                        record_attributes.get(SpanAttributes.SPAN_TYPE)
+                        == SpanAttributes.SpanType.EVAL.value
+                    ):
+                        metric_name = record_attributes.get(
+                            SpanAttributes.EVAL.METRIC_NAME, ""
                         )
                         if not metric_name:
                             continue
@@ -1129,12 +1139,12 @@ class SQLAlchemyDB(core_db.DB):
                         # Initialize feedback result if not present
                         if metric_name not in record_data["feedback_results"]:
                             record_data["feedback_results"][metric_name] = {
-                                "score": 0.0,
+                                "scores": [],
                                 "calls": [],
                                 "cost": 0.0,
                                 "currency": "USD",
-                                "direction": eval_data.get(
-                                    "higher_is_better", True
+                                "direction": record_attributes.get(
+                                    SpanAttributes.EVAL.HIGHER_IS_BETTER, True
                                 ),
                             }
 
@@ -1143,52 +1153,44 @@ class SQLAlchemyDB(core_db.DB):
                             metric_name
                         ]
 
-                        feedback_result["score"] = eval_data.get(
-                            SpanAttributes.EVAL.SCORE.split(".")[-1], 0.0
+                        score = record_attributes.get(
+                            SpanAttributes.EVAL.SCORE, 0.0
                         )
+
+                        feedback_result["scores"].append(score)
 
                         # Add call data
                         call_data = {
-                            "args": eval_data.get(
-                                SpanAttributes.CALL.ARGS.split(".")[-1], {}
+                            # TODO: consider porting over EVAL.args
+                            "args": record_attributes.get(
+                                SpanAttributes.CALL.ARGS, {}
                             ),
-                            "ret": eval_data.get(
-                                SpanAttributes.EVAL.SCORE.split(".")[-1], 0.0
+                            "kwargs": record_attributes.get(
+                                SpanAttributes.CALL.KWARGS, {}
                             ),
-                            "meta": eval_data.get(
-                                SpanAttributes.EVAL.EXPLANATION.split(".")[-1],
+                            "ret": score,
+                            "meta": record_attributes.get(
+                                SpanAttributes.EVAL.EXPLANATION,
                                 {},
                             ),
                         }
                         feedback_result["calls"].append(call_data)
 
-                        # Update cost if available
-                        if any(
-                            key.startswith(SpanAttributes.COST.base)
-                            for key in record_attributes
-                        ):
-                            feedback_result["cost"] = record_attributes.get(
-                                SpanAttributes.COST.COST, 0.0
-                            )
-                            feedback_result["cost_currency"] = (
-                                record_attributes.get(
-                                    SpanAttributes.COST.CURRENCY,
-                                    "USD",
-                                )
-                            )
+                        # Update feedback result with cost info if available
+                        self._update_cost_info_otel(
+                            feedback_result, record_attributes
+                        )
+
             # Create dataframe
             records_data = []
             for record_id, record_data in record_events.items():
-                # TODO: audit created jsons for correctness
-                # TODO(cleanup): Remove app_json and record_json for now, add later (lower priority)
+                # TODO: audit created jsons for correctness (app_json, record_json, cost_json, perf_json)
 
-                # Create app_json
                 app_json = {
                     "app_name": record_data["app_name"],
                     "app_version": record_data["app_version"],
                 }
 
-                # Create record_json
                 record_json = {
                     "record_id": record_id,
                     "app_id": record_data["app_id"],
@@ -1199,15 +1201,12 @@ class SQLAlchemyDB(core_db.DB):
                     "meta": {},
                 }
 
-                # Create cost_json
                 cost_json = {
                     "n_tokens": record_data["total_tokens"],
                     # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
                     "cost": record_data["total_cost"],
-                    # "cost": json.dumps(record_data["total_cost"]),
                 }
 
-                # Create perf_json
                 perf_json = {
                     "start_time": record_data["ts"],
                     "end_time": record_data["ts"]
@@ -1220,7 +1219,8 @@ class SQLAlchemyDB(core_db.DB):
                     "app_name": record_data["app_name"],
                     "app_version": record_data["app_version"],
                     "app_json": app_json,
-                    "type": "SPAN",  # Default type as per orm.py, TODO(nit): consider using a constant here?
+                    # TODO(nit): consider using a constant here
+                    "type": "SPAN",  # Default type as per orm.py
                     "record_id": record_id,
                     "input": record_data["input"],
                     "output": record_data["output"],
@@ -1233,7 +1233,6 @@ class SQLAlchemyDB(core_db.DB):
                     "total_tokens": record_data["total_tokens"],
                     # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
                     "total_cost": record_data["total_cost"],
-                    # "total_cost": json.dumps(record_data["total_cost"]),
                     "events": record_data["events"],
                 }
 
@@ -1241,13 +1240,16 @@ class SQLAlchemyDB(core_db.DB):
                 for feedback_name, feedback_result in record_data[
                     "feedback_results"
                 ].items():
-                    record_row[feedback_name] = feedback_result["score"]
-                    record_row[f"{feedback_name}_calls"] = json.dumps(
-                        feedback_result["calls"]
+                    # NOTE: we use the mean score as the feedback result
+                    record_row[feedback_name] = np.mean(
+                        feedback_result["total_score"]
                     )
+                    record_row[f"{feedback_name}_calls"] = feedback_result[
+                        "calls"
+                    ]
                     record_row[
                         f"{feedback_name} feedback cost in {feedback_result['cost_currency']}"
-                    ] = feedback_result["cost"]
+                    ] = feedback_result["total_cost"]
                     record_row[f"{feedback_name}_direction"] = feedback_result[
                         "direction"
                     ]
