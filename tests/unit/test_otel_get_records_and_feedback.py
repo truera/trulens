@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 import pandas as pd
+from trulens.core.database.sqlalchemy import SQLAlchemyDB
 from trulens.core.schema.event import Event
 from trulens.core.session import TruSession
 
@@ -24,7 +25,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         # Create a TruSession and reset the database
         self.session = TruSession()
         self.session.reset_database()
-        self.db = self.session.connector.db
+        self.db: SQLAlchemyDB = self.session.connector.db
 
         # Set app name and version
         self.app_name = "test_app"
@@ -112,10 +113,10 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         self.assertEqual(feedback_col_names, [])
 
     # TODO: add tests for EVAL and EVAL_ROOT spans
-    def test_get_records_and_feedback_otel_with_example_spans(self):
-        """Test that _get_records_and_feedback_otel correctly processes example spans.
+    def test_get_records_and_feedback_otel_with_rag_spans(self):
+        """Test that _get_records_and_feedback_otel correctly processes example RAG spans.
 
-        This test uses the example spans from the JSON files to verify that the method
+        This test uses example RAG spans from JSON files to verify that the method
         correctly processes the spans and produces the expected output.
         """
         # Load the example spans from the JSON files
@@ -140,10 +141,10 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         # Call the method to get the records and feedback
         df, feedback_cols = self.db._get_records_and_feedback_otel()
 
-        # Verify there are no feedback columns (this is a simple rag case)
+        # Verify there are no feedback columns (this is a simple RAG case)
         self.assertEqual(len(feedback_cols), 0)
 
-        # Verify that the dataframe has the expected structure
+        # Verify that the dataframe is not empty
         self.assertGreater(len(df), 0, "Dataframe should not be empty")
 
         # Verify that the dataframe is appropriately grouping the spans by record_id
@@ -241,3 +242,60 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             perf_json["end_time"].strftime("%Y-%m-%d %H:%M:%S.%f"),
             "2025-04-11 10:19:58.166175",
         )
+
+    # Create new test based on snowflake spans
+    def test_get_records_and_feedback_otel_with_eval_spans(self):
+        """Test that _get_records_and_feedback_otel correctly processes eval spans.
+
+        This test uses exampleeval spans from the JSON files to verify that the method
+        correctly processes the spans and produces the expected output.
+        """
+        # Load the example spans from the JSON files
+        data_dir = Path(__file__).parent / "data" / "snowflake_spans"
+        with open(data_dir / "sf_record_root_span.json", "r") as f:
+            record_root_span = json.load(f)
+        with open(data_dir / "sf_generation_span.json", "r") as f:
+            generation_span = json.load(f)
+        with open(data_dir / "sf_retrieval_span.json", "r") as f:
+            retrieval_span = json.load(f)
+        with open(data_dir / "sf_eval_root_span.json", "r") as f:
+            eval_root_span = json.load(f)
+        with open(data_dir / "sf_eval_span_1.json", "r") as f:
+            eval_span1 = json.load(f)
+        with open(data_dir / "sf_eval_span_2.json", "r") as f:
+            eval_span2 = json.load(f)
+
+        # Convert the spans to Event objects
+        record_root_event = Event.model_validate(record_root_span)
+        generation_event = Event.model_validate(generation_span)
+        retrieval_event = Event.model_validate(retrieval_span)
+        eval_root_event = Event.model_validate(eval_root_span)
+        eval_span_event = Event.model_validate(eval_span1)
+        eval_span2_event = Event.model_validate(eval_span2)
+
+        # Insert the events into the database
+        self.db.insert_event(record_root_event)
+        self.db.insert_event(generation_event)
+        self.db.insert_event(retrieval_event)
+        self.db.insert_event(eval_root_event)
+        self.db.insert_event(eval_span_event)
+        self.db.insert_event(eval_span2_event)
+
+        # Call the method to get the records and feedback
+        df, feedback_cols = self.db._get_records_and_feedback_otel()
+
+        expected_feedback_name = "answer_relevance"
+
+        # Verify that the feedback columns are properly created
+        self.assertEqual(len(feedback_cols), 1)
+        self.assertEqual(feedback_cols[0], expected_feedback_name)
+
+        # Verify that the dataframe has the expected structure
+        self.assertGreater(len(df), 0, "Dataframe should not be empty")
+
+        # Assert that all feedback columns exist
+        self.assertIn(f"{expected_feedback_name}_calls", df.columns)
+        self.assertIn(
+            f"{expected_feedback_name} feedback cost in USD", df.columns
+        )
+        self.assertIn(f"{expected_feedback_name} direction", df.columns)
