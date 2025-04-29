@@ -18,9 +18,6 @@
         "span_id": "5107167242136132510_EVAL_ROOT",
         "trace_id": ""
     },
-
-
-
     "record_attributes": {
         "ai.observability.eval.eval_root_id": "98bbSpP2",
         "ai.observability.eval.llm_judge_name": "llama3.1-70b",

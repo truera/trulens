@@ -20,9 +20,6 @@
         "span_id": "5107167242136132510_EVAL_SPAN_2",
         "trace_id": "38285552113882235753580066402372722435"
     },
-
-
-
     "record_attributes": {
         "ai.observability.eval.args": {
           "ai.observability.record_root.input": "Who is the best basketball player in the world?",
