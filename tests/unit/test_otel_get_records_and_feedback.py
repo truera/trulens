@@ -25,7 +25,7 @@ from tests.util.otel_test_case import OtelTestCase
 
 try:
     import tests.unit.test_otel_feedback_computation
-except Exception:
+except ImportError:
     pass
 
 
@@ -284,11 +284,25 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
 
         # Verify that total_tokens and total_cost are the sum from all spans
         if row is not None:
-            retrieval_tokens = events[2].record_attributes[
-                "ai.observability.cost.num_tokens"
+            # Find retrieval and generation spans by their span_type
+            retrieval_event = next(
+                event
+                for event in events
+                if event.record_attributes.get(SpanAttributes.SPAN_TYPE)
+                == SpanAttributes.SpanType.RETRIEVAL
+            )
+            generation_event = next(
+                event
+                for event in events
+                if event.record_attributes.get(SpanAttributes.SPAN_TYPE)
+                == SpanAttributes.SpanType.GENERATION
+            )
+
+            retrieval_tokens = retrieval_event.record_attributes[
+                SpanAttributes.COST.NUM_TOKENS
             ]
-            generation_tokens = events[1].record_attributes[
-                "ai.observability.cost.num_tokens"
+            generation_tokens = generation_event.record_attributes[
+                SpanAttributes.COST.NUM_TOKENS
             ]
             expected_total_tokens = retrieval_tokens + generation_tokens
             self.assertEqual(
@@ -297,11 +311,11 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
                 "Total tokens should be sum of tokens from all spans",
             )
 
-            retrieval_cost = events[2].record_attributes[
-                "ai.observability.cost.cost"
+            retrieval_cost = retrieval_event.record_attributes[
+                SpanAttributes.COST.COST
             ]
-            generation_cost = events[1].record_attributes[
-                "ai.observability.cost.cost"
+            generation_cost = generation_event.record_attributes[
+                SpanAttributes.COST.COST
             ]
             expected_total_cost = retrieval_cost + generation_cost
             self.assertEqual(
@@ -405,7 +419,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         )
 
         # Force flush to ensure all spans are written to the database
-        TruSession().force_flush()
+        self.session.force_flush()
 
         # Get records and feedback
         df, feedback_cols = self.db._get_records_and_feedback_otel()
@@ -458,7 +472,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             input_id="42",
             main_method_kwargs={"question": self.GEN_QUESTION},
         )
-        TruSession().force_flush()
+        self.session.force_flush()
 
         events = self._get_events()
         spans = tests.unit.test_otel_feedback_computation._convert_events_to_MinimalSpanInfos(
@@ -471,7 +485,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             feedback_function,
             all_retrieval_span_attributes,
         )
-        TruSession().force_flush()
+        self.session.force_flush()
 
         # Get records and feedback
         df, feedback_cols = self.db._get_records_and_feedback_otel()
