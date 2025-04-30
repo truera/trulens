@@ -58,6 +58,7 @@ env-tests-optional: env env-tests
 
 env-tests-snowflake: env-tests-optional
 	poetry install --with snowflake
+	poetry run pip install certifi==2025.1.31
 
 env-tests-db: env-tests
 	poetry run pip install \
