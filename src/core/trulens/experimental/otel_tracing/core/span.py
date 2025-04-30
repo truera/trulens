@@ -3,6 +3,7 @@ This file contains utility functions specific to certain span types.
 """
 
 from inspect import signature
+import json
 import logging
 from typing import Any, Callable, Dict, List, Optional, Union
 
@@ -75,6 +76,14 @@ def validate_selector_name(attributes: Dict[str, Any]) -> Dict[str, Any]:
     return result
 
 
+def _stringify_span_attribute(value: Any) -> str:
+    try:
+        return json.dumps(value)
+    except Exception:
+        pass
+    return str(value)
+
+
 def _convert_to_valid_span_attribute_type(val: Any) -> AttributeValue:
     if isinstance(val, (bool, int, float, str)):
         return val
@@ -82,8 +91,8 @@ def _convert_to_valid_span_attribute_type(val: Any) -> AttributeValue:
         for curr_type in [bool, int, float, str]:
             if all([isinstance(curr, curr_type) for curr in val]):
                 return val
-        return [str(curr) for curr in val]
-    return str(val)
+        return [_stringify_span_attribute(curr) for curr in val]
+    return _stringify_span_attribute(val)
 
 
 def set_span_attribute_safely(
