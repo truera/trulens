@@ -1,0 +1,31 @@
+{
+    "event_id": "5107167242136132510_EVAL_ROOT",
+    "record": {
+        "kind": "SPAN_KIND_UNSPECIFIED",
+        "name": "ai.observability.llm.span"
+    },
+    "record_type": "SPAN",
+    "resource_attributes": {
+        "service.name": "trulens",
+        "telemetry.sdk.language": "python",
+        "telemetry.sdk.name": "opentelemetry",
+        "telemetry.sdk.version": "1.31.0"
+    },
+    "start_timestamp": "2025-04-11 10:19:55.993997",
+    "timestamp": "2025-04-11 10:19:56.356310",
+    "trace": {
+        "parent_id": "",
+        "span_id": "5107167242136132510_EVAL_ROOT",
+        "trace_id": ""
+    },
+    "record_attributes": {
+        "ai.observability.eval.eval_root_id": "98bbSpP2",
+        "ai.observability.eval.llm_judge_name": "llama3.1-70b",
+        "ai.observability.eval.metric_name": "answer_relevance",
+        "ai.observability.eval.target_record_id": "dd121e81-ccc2-449f-a3ba-e12467d0d671",
+        "ai.observability.eval_root.n_calls": 1,
+        "ai.observability.eval_root.score": 0.75,
+        "ai.observability.record_id": "dd121e81-ccc2-449f-a3ba-e12467d0d671",
+        "ai.observability.span_type": "eval_root"
+    }
+}
