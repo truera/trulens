@@ -1021,7 +1021,7 @@ class SQLAlchemyDB(core_db.DB):
             # Order by timestamp desc
             stmt = stmt.order_by(self.orm.Event.start_timestamp.desc())
 
-            # TODO(SNOW-2081987): Apply pagination on records df (this is essentially a full-table scan)
+            # TODO(SNOW-2081987): Apply pagination on unique record IDs, not events table (this is essentially a full-table scan)
             if limit is not None:
                 stmt = stmt.limit(limit)
             if offset is not None:
