@@ -66,6 +66,11 @@ pipeline {
                     poetry run pip install pip==24.1.2
                     poetry run python --version
                     poetry run pip --version
+
+                    # Install Node.js and npm
+                    apt-get update
+                    apt-get install -y nodejs npm
+                    echo "Using Node $(node --version) and NPM $(npm --version)"
                 '''
                 sh label: 'Run pre-commit hooks', script: '''
                     set -e
