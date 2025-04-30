@@ -145,7 +145,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         # Verify the basic record information
         self.assertEqual(row["app_name"], app_name)
         self.assertEqual(row["app_version"], app_version)
-        # Use startswith to handle potential variations in the text
+        # (hacky): uses startswith to circumvent typing out long inputs/outputs
         self.assertTrue(row["input"].startswith(input_text))
         self.assertTrue(row["output"].startswith(output_text))
 
@@ -275,11 +275,11 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         # Verify record information
         self._verify_record_information(
             row,
-            app_name=self.STATIC_APP_NAME,
-            app_version=self.STATIC_APP_VERSION,
-            input_text=self.STATIC_QUESTION,
-            output_text=self.STATIC_ANSWER,
-            expected_num_events=self.STATIC_NUM_EVENTS,
+            self.STATIC_APP_NAME,
+            self.STATIC_APP_VERSION,
+            self.STATIC_QUESTION,
+            self.STATIC_ANSWER,
+            self.STATIC_NUM_EVENTS,
         )
 
         # Verify that total_tokens and total_cost are the sum from all spans
@@ -437,7 +437,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             self.app_version,
             self.GEN_QUESTION,
             self.GEN_ANSWER,
-            expected_num_events=self.STATIC_NUM_EVENTS,
+            self.STATIC_NUM_EVENTS,
         )
 
         # Verify that the app_id is correctly computed
@@ -465,8 +465,6 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         )
 
         # Record and invoke the query method
-        mock_feedback_name = self.GEN_FEEDBACK_NAME
-
         tru_app.instrumented_invoke_main_method(
             run_name="test run",
             input_id="42",
@@ -481,7 +479,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         record_root = RecordGraphNode.build_graph(spans)
         _compute_feedback(
             record_root,
-            mock_feedback_name,
+            self.GEN_FEEDBACK_NAME,
             feedback_function,
             all_retrieval_span_attributes,
         )
@@ -518,7 +516,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             self._verify_feedback_columns(
                 feedback_cols,
                 df,
-                mock_feedback_name,
+                self.GEN_FEEDBACK_NAME,
                 self.GEN_NUM_CALLS,
                 self.GEN_COST_CURRENCY,
             )
