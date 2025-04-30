@@ -172,4 +172,103 @@ describe(createTreeFromCalls.name, () => {
 
     expect(() => createTreeFromCalls(spans)).toThrow('More than one root node found');
   });
+
+  it('should handle spans that are not in chronological order', () => {
+    const spans: Span[] = [
+      createSpan({
+        record_name: 'child',
+        start_timestamp: 150,
+        timestamp: 250,
+        record_attributes: { [SpanAttributes.SPAN_TYPE]: 'OTHER' },
+        span_id: '2',
+        parent_id: '1',
+      }),
+      createSpan({
+        record_name: 'root',
+        start_timestamp: 100,
+        timestamp: 300,
+        record_attributes: { [SpanAttributes.SPAN_TYPE]: 'OTHER' },
+        span_id: '1',
+        parent_id: '',
+      }),
+    ];
+
+    const result = createTreeFromCalls(spans);
+
+    expect(result.id).toBe('1');
+    expect(result.children.length).toBe(1);
+    expect(result.children[0].id).toBe('2');
+  });
+
+  it('should only show the root node when spans form disconnected trees', () => {
+    const spans: Span[] = [
+      createSpan({
+        record_name: 'root',
+        start_timestamp: 100,
+        timestamp: 200,
+        record_attributes: { [SpanAttributes.SPAN_TYPE]: 'OTHER' },
+        span_id: '1',
+        parent_id: '',
+      }),
+      createSpan({
+        record_name: 'disconnected',
+        start_timestamp: 300,
+        timestamp: 400,
+        record_attributes: { [SpanAttributes.SPAN_TYPE]: 'OTHER' },
+        span_id: '2',
+        parent_id: 'non_existent',
+      }),
+    ];
+
+    // The disconnected span won't affect the tree structure as it's not connected to the root
+    const result = createTreeFromCalls(spans);
+    expect(result.id).toBe('1');
+    expect(result.children.length).toBe(0);
+  });
+
+  it('should correctly process spans with multiple levels of nesting', () => {
+    const spans: Span[] = [
+      createSpan({
+        record_name: 'root',
+        start_timestamp: 100,
+        timestamp: 500,
+        record_attributes: { [SpanAttributes.SPAN_TYPE]: 'OTHER' },
+        span_id: '1',
+        parent_id: '',
+      }),
+      createSpan({
+        record_name: 'child1',
+        start_timestamp: 150,
+        timestamp: 450,
+        record_attributes: { [SpanAttributes.SPAN_TYPE]: 'OTHER' },
+        span_id: '2',
+        parent_id: '1',
+      }),
+      createSpan({
+        record_name: 'grandchild1',
+        start_timestamp: 200,
+        timestamp: 300,
+        record_attributes: { [SpanAttributes.SPAN_TYPE]: 'OTHER' },
+        span_id: '3',
+        parent_id: '2',
+      }),
+      createSpan({
+        record_name: 'grandchild2',
+        start_timestamp: 350,
+        timestamp: 400,
+        record_attributes: { [SpanAttributes.SPAN_TYPE]: 'OTHER' },
+        span_id: '4',
+        parent_id: '2',
+      }),
+    ];
+
+    const result = createTreeFromCalls(spans);
+
+    expect(result.id).toBe('1');
+    expect(result.children.length).toBe(1);
+    expect(result.children[0].id).toBe('2');
+    expect(result.children[0].children.length).toBe(2);
+    expect(result.children[0].children[0].id).toBe('3');
+    expect(result.children[0].children[1].id).toBe('4');
+  });
 });
