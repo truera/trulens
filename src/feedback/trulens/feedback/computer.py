@@ -513,7 +513,7 @@ def _call_feedback_function(
                     "Feedback functions must be of type `Callable[Any, Union[float, Tuple[float, Dict[str, Any]]]]`!"
                 )
             res, metadata = res[0], res[1]
-        eval_root_span.set_attribute(SpanAttributes.EVAL_ROOT.RESULT, res)
+        eval_root_span.set_attribute(SpanAttributes.EVAL_ROOT.SCORE, res)
         for k, v in metadata.items():
             set_span_attribute_safely(
                 eval_root_span,
