@@ -91,7 +91,6 @@ def _convert_to_valid_span_attribute_type(val: Any) -> AttributeValue:
         for curr_type in [bool, int, float, str]:
             if all([isinstance(curr, curr_type) for curr in val]):
                 return val
-        return [_stringify_span_attribute(curr) for curr in val]
     return _stringify_span_attribute(val)
 
 
