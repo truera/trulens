@@ -799,6 +799,7 @@ class SQLAlchemyDB(core_db.DB):
 
             return _extract_feedback_results(results)
 
+    # Helper methods for OTEL tracing
     def _is_otel_tracing_enabled(self) -> bool:
         """Check if OTEL tracing is enabled.
 
@@ -853,7 +854,10 @@ class SQLAlchemyDB(core_db.DB):
         raise TypeError(f"Type {type(obj)} not serializable")
 
     def _update_cost_info_otel(
-        self, target_dict, record_attributes, include_tokens=False
+        self,
+        target_dict: dict,
+        record_attributes: dict,
+        include_tokens: bool = False,
     ):
         """Update cost information in the target dictionary.
 
@@ -878,7 +882,7 @@ class SQLAlchemyDB(core_db.DB):
                 SpanAttributes.COST.CURRENCY, "USD"
             )
 
-        # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
+        # TODO(SNOW-2061174): convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
         # Add to total_cost map
         # cost = record_attributes.get(SpanAttributes.COST.COST, 0.0)
         # currency = record_attributes.get(SpanAttributes.COST.CURRENCY, "USD")
@@ -906,11 +910,11 @@ class SQLAlchemyDB(core_db.DB):
         """
 
         # If use_otel is explicitly set, use the specified implementation
-        # Otherwise, determine based on whtehre OTEL tracing is enabled
+        # Otherwise, determine based on whether OTEL tracing environment variable is enabled
         if use_otel is None:
             use_otel = self._is_otel_tracing_enabled()
             logger.warning(
-                f"use_otel is not set, checking if OTEL tracing is enabled (TRULENS_OTEL_TRACING): {use_otel}"
+                f"use_otel is not explicitly set, checking if OTEL tracing environment variable is enabled (TRULENS_OTEL_TRACING): {use_otel}"
             )
 
         if use_otel:
@@ -1001,26 +1005,6 @@ class SQLAlchemyDB(core_db.DB):
             # Query to get all events
             stmt = sa.select(self.orm.Event)
 
-            # Filter by relevant span types
-            span_types = [
-                SpanAttributes.SpanType.RECORD_ROOT.value,
-                SpanAttributes.SpanType.EVAL_ROOT.value,
-                SpanAttributes.SpanType.EVAL.value,
-                SpanAttributes.SpanType.GENERATION.value,
-                SpanAttributes.SpanType.RETRIEVAL.value,
-            ]
-
-            # Create a SQLAlchemy column expression for the JSON path
-            span_type_col = sa.cast(
-                sa.func.json_extract(
-                    self.orm.Event.record_attributes,
-                    f'$."{SpanAttributes.SPAN_TYPE}"',
-                ),
-                sa.String,
-            )
-
-            stmt = stmt.filter(span_type_col.in_(span_types))
-
             # Filter by app_name if provided
             if app_name:
                 # Create a SQLAlchemy column expression for the JSON path
@@ -1037,10 +1021,7 @@ class SQLAlchemyDB(core_db.DB):
             # Order by timestamp desc
             stmt = stmt.order_by(self.orm.Event.start_timestamp.desc())
 
-            ## We'll filter by app_ids after retrieving events
-            ## This is simpler and more consistent with how we handle other filtering
-
-            # Apply pagination
+            # TODO(SNOW-2081987): Apply pagination on records df (this is essentially a full-table scan)
             if limit is not None:
                 stmt = stmt.limit(limit)
             if offset is not None:
@@ -1071,7 +1052,8 @@ class SQLAlchemyDB(core_db.DB):
                 )
                 app_id = self._compute_app_id_otel(app_name, app_version)
 
-                # Filter by app_ids if provided
+                # NOTE: We filter by app_ids after retrieving events
+                # This is simpler and more consistent with how we handle other filtering
                 if app_ids and app_id not in app_ids:
                     logger.warning(
                         f"Skipping event for app_id: {app_id}, not in {app_ids}"
@@ -1132,8 +1114,7 @@ class SQLAlchemyDB(core_db.DB):
                         event
                     )
 
-                    # Check if the span is of type EVAL
-                    # NOTE: Revisit information from EVAL_ROOT spans
+                    # Check if the span is of type EVAL or EVAL_ROOT
                     if record_attributes.get(SpanAttributes.SPAN_TYPE) in [
                         SpanAttributes.SpanType.EVAL.value,
                         SpanAttributes.SpanType.EVAL_ROOT.value,
