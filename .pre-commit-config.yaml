@@ -8,7 +8,8 @@ repos:
         exclude: |
           (?x)^(
             src/dashboard/trulens/dashboard/.*/dist/.*|
-            poetry.lock
+            poetry.lock|
+            src/dashboard/react_components/.*/package-lock.json
           )$
       - id: check-yaml
         exclude: meta.yaml
