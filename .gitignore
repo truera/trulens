@@ -72,7 +72,10 @@ htmlcov/
 
 # testing: parts of old trulens_eval package for backwards compatibility testing
 _trulens_eval/
-data/
+
+# testing: unit test data
+data/*
+!data/test_otel_spans/
 
 # Staged artifacts for snowflake connector
 !src/connectors/snowflake/trulens/data
