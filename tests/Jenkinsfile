@@ -130,6 +130,17 @@ pipeline {
                         }
                     }
                 }
+                stage('record-viewer') {
+                    steps {
+                        withVault(vault_settings) {
+                            sh label: 'Run Jest tests for the OTEL Record viewer', script: '''
+                                set -e
+
+                                make test-record-viewer-otel
+                            '''
+                        }
+                    }
+                }
             }
         }
     }

@@ -331,3 +331,8 @@ upload-testpypi-all: clean build
 		&& make build \
 		&& poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl \
 		&& poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.tar.gz
+
+test-record-viewer-otel:
+	cd src/dashboard/react_components/record_viewer_otel \
+	 	&& npm install \
+		&& npm run test
