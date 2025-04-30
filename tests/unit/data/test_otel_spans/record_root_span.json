@@ -1,0 +1,37 @@
+{
+    "event_id": "12203920175536650289",
+    "record": {
+        "kind": 1,
+        "name": "__main__.RAG.query",
+        "parent_span_id": "",
+        "status": "STATUS_CODE_UNSET"
+    },
+    "record_attributes": {
+        "ai.observability.app_name": "coffee_rag",
+        "ai.observability.app_version": "openai",
+        "ai.observability.call.kwargs.query": "What is the best coffee?",
+        "ai.observability.call.return": "Hello! I'm happy to help. \n\nWhen it comes to the best coffee, it often depends on personal preference. However, Starbucks, as the world's largest coffeehouse chain, is known for its wide variety of coffee options, including espresso drinks, brewed coffee, and seasonal specialties. Many people enjoy their signature blends and the experience of customizing their drinks. If you're looking for a specific type of coffee or flavor profile, I can help you narrow it down further!",
+        "ai.observability.input_id": "42",
+        "ai.observability.record_id": "dd121e81-ccc2-449f-a3ba-e12467d0d671",
+        "ai.observability.record_root.ground_truth_output": "Like attention but with more heads.",
+        "ai.observability.record_root.input": "What is the best coffee?",
+        "ai.observability.record_root.output": "Hello! I'm happy to help. \n\nWhen it comes to the best coffee, it often depends on personal preference. However, Starbucks, as the world's largest coffeehouse chain, is known for its wide variety of coffee options, including espresso drinks, brewed coffee, and seasonal specialties. Many people enjoy their signature blends and the experience of customizing their drinks. If you're looking for a specific type of coffee or flavor profile, I can help you narrow it down further!",
+        "ai.observability.run.name": "test run",
+        "ai.observability.span_type": "record_root",
+        "name": "__main__.RAG.query"
+    },
+    "record_type": "SPAN",
+    "resource_attributes": {
+        "service.name": "trulens",
+        "telemetry.sdk.language": "python",
+        "telemetry.sdk.name": "opentelemetry",
+        "telemetry.sdk.version": "1.31.0"
+    },
+    "start_timestamp": "2025-04-11 10:19:55.993955",
+    "timestamp": "2025-04-11 10:19:58.166175",
+    "trace": {
+        "parent_id": "",
+        "span_id": "12203920175536650289",
+        "trace_id": "38285552113882235753580066402372722435"
+    }
+}
