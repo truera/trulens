@@ -32,11 +32,23 @@ export const withMuiTheme: Decorator = (Story, context) => {
 
 const preview: Preview = {
   parameters: {
+    // Ensure consistent date/time rendering
+    dates: {
+      // Set a fixed timezone for consistent rendering across environments
+      timezone: 'UTC',
+    },
     controls: {
       matchers: {
         color: /(background|color)$/i,
         date: /Date$/i,
       },
+    },
+    // Control animations
+    chromatic: {
+      // Disables animations and transitions for more consistent snapshots
+      disableSnapshot: false,
+      pauseAnimationAtEnd: true,
+      delay: 300,
     },
   },
 

@@ -13,6 +13,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.52.0",
     "@storybook/addon-essentials": "^8.6.12",
     "@storybook/addon-onboarding": "^8.6.12",
     "@storybook/addon-themes": "^8.6.12",
@@ -61,7 +62,9 @@
     "preview": "vite preview",
     "test": "LC_ALL=en-US.UTF-8 vitest",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "test:snapshots": "playwright test",
+    "test:snapshots:update": "UPDATE_SNAPSHOTS=true playwright test"
   },
   "type": "module",
   "version": "0.0.0",
