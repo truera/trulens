@@ -73,3 +73,9 @@ cd <your-trulens-directory>/src/dashboard/trulens/dashboard/react_components/rec
 ```
 PYTHONPATH="<path to trulens>:$PYTHONPATH" jupyter lab
 ```
+
+## Running the Storybook
+
+```
+npm run storybook
+```
