@@ -8,6 +8,7 @@ import type { Attributes } from '@/types/attributes';
 import Panel from '@/Panel';
 import { useMemo, ReactNode, Fragment } from 'react';
 import { TraceContent } from '@/TraceContent/TraceContent';
+import { processTokenAttributes } from '@/functions/processTokenAttributes';
 
 export interface TraceAttributesProps {
   attributes: Attributes;
@@ -31,7 +32,7 @@ export const TraceAttributes = (props: TraceAttributesProps) => {
 
     removeUnnecessaryAttributes(attributesToProcess);
     processCostAttributes(attributesToProcess);
-    // TODO (garett) processTokenAttributes(attributesToProcess, results);
+    processTokenAttributes(attributesToProcess, results);
     processSpanType(attributesToProcess);
     deduplicateAttributes(attributesToProcess);
 

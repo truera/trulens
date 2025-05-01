@@ -33,7 +33,7 @@ export const TraceContent = (props: TraceContentProps) => {
   }
 
   if (typeof value === 'object') {
-    return <JSONViewer src={rawValue} />;
+    return <JSONViewer src={value} />;
   }
 
   return <Typography>{String(value) || 'No information found.'}</Typography>;
