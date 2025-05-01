@@ -1,6 +1,4 @@
 import { expect, Page } from '@playwright/test';
-import { writeFileSync, mkdirSync, existsSync } from 'fs';
-import { dirname } from 'path';
 
 /**
  * Takes a snapshot of a story and compares it to the baseline
@@ -15,24 +13,12 @@ export async function takeStorySnapshot(page: Page, storyId: string) {
   // Additional wait to ensure animations/fonts are loaded
   await page.waitForTimeout(300);
 
+  // Get the expected path
+  const storyIdPath = `${storyId.replace(/\//g, '-')}.png`;
+
   // Take a screenshot
   const screenshot = await page.screenshot();
 
-  // Get the expected path
-  const snapshotDir = `./test/__snapshots__`;
-  const snapshotPath = `${snapshotDir}/${storyId.replace(/\//g, '-')}.png`;
-
-  // Ensure directory exists
-  if (!existsSync(dirname(snapshotPath))) {
-    mkdirSync(dirname(snapshotPath), { recursive: true });
-  }
-
-  // Create baseline if it doesn't exist
-  if (process.env.UPDATE_SNAPSHOTS === 'true' || !existsSync(snapshotPath)) {
-    writeFileSync(snapshotPath, screenshot);
-    return;
-  }
-
   // Compare with existing baseline
-  expect(screenshot).toMatchSnapshot(snapshotPath);
+  expect(screenshot).toMatchSnapshot(storyIdPath);
 }

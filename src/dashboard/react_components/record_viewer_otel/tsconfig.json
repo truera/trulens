@@ -28,6 +28,6 @@
 
     "types": ["@testing-library/jest-dom", "node", "react", "react-dom"],
   },
-  "include": ["src"],
+  "include": ["src", "test/takeStorySnapshot.ts"],
   "references": [{ "path": "./tsconfig.node.json" }],
 }

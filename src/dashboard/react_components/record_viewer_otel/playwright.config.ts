@@ -1,7 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  testDir: './snapshots',
+  testDir: './test',
   timeout: 30000,
   expect: {
     toMatchSnapshot: { threshold: 0.2 }, // Allow slight variations (0.2% difference)

@@ -1,1 +1,4 @@
 !**/dist/
+**/test-results/
+**/test-results/.last-run.json
+**/storybook-static/

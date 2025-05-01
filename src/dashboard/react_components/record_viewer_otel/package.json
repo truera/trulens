@@ -64,7 +64,7 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test:snapshots": "playwright test",
-    "test:snapshots:update": "UPDATE_SNAPSHOTS=true playwright test"
+    "test:snapshots:update": "playwright test --update-snapshots"
   },
   "type": "module",
   "version": "0.0.0",
