@@ -13,12 +13,25 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@chromatic-com/storybook": "^3.2.6",
+    "@storybook/addon-essentials": "^8.6.12",
+    "@storybook/addon-onboarding": "^8.6.12",
+    "@storybook/addon-themes": "^8.6.12",
+    "@storybook/blocks": "^8.6.12",
+    "@storybook/experimental-addon-test": "^8.6.12",
+    "@storybook/react": "^8.6.12",
+    "@storybook/react-vite": "^8.6.12",
+    "@storybook/test": "^8.6.12",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
     "@types/react": "^18.2.14",
     "@types/react-dom": "^18.2.6",
     "@types/uuid": "^9.0.8",
     "@typescript-eslint/eslint-plugin": "^5.61.0",
     "@typescript-eslint/parser": "^5.61.0",
     "@vitejs/plugin-react-swc": "^3.9.0",
+    "@vitest/browser": "^3.1.2",
+    "@vitest/coverage-v8": "^3.1.2",
     "eslint": "^8.44.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-airbnb-base": "^15.0.0",
@@ -30,7 +43,11 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.1",
     "eslint-plugin-simple-import-sort": "^10.0.0",
+    "eslint-plugin-storybook": "^0.12.0",
+    "jsdom": "^26.1.0",
+    "playwright": "^1.52.0",
     "prettier": "^3.0.0",
+    "storybook": "^8.6.12",
     "typescript": "^5.8.2",
     "vite": "^6.3.3",
     "vitest": "^3.1.2"
@@ -43,8 +60,15 @@
     "lint": "eslint src --report-unused-disable-directives --max-warnings 0",
     "prettier": "prettier --config .prettierrc . --write",
     "preview": "vite preview",
-    "test": "LC_ALL=en-US.UTF-8 vitest"
+    "test": "LC_ALL=en-US.UTF-8 vitest",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "type": "module",
-  "version": "0.0.0"
+  "version": "0.0.0",
+  "eslintConfig": {
+    "extends": [
+      "plugin:storybook/recommended"
+    ]
+  }
 }
