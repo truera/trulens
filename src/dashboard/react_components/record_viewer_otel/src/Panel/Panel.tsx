@@ -1,11 +1,12 @@
 import { Box, SxProps, Theme, Typography } from '@mui/material';
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, useId } from 'react';
 
 type PanelProps = PropsWithChildren<{ header: string; id?: string }>;
 
 export default function Panel({ header, children, id }: PanelProps) {
   // Generate a unique ID if one isn't provided
-  const panelId = id ?? `panel-${Math.random().toString(36)}`;
+  const reactId = useId();
+  const panelId = id ?? reactId;
   const headerId = `${panelId}-header`;
   const contentId = `${panelId}-content`;
 
