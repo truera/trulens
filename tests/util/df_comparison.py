@@ -1,3 +1,4 @@
+import json
 import re
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 from unittest import TestCase
@@ -76,6 +77,14 @@ def compare_dfs_accounting_for_ids_and_timestamps(
         prev_value = timestamp_mapping[curr]
 
 
+def _jsonifiable(s: str) -> bool:
+    try:
+        json.loads(s)
+        return True
+    except Exception:
+        return False
+
+
 def _compare_entity(
     test_case: TestCase,
     expected: Any,
@@ -147,6 +156,22 @@ def _compare_entity(
         )
     else:
         if isinstance(expected, str):
+            if _jsonifiable(expected):
+                expected = json.loads(expected)
+                actual = json.loads(actual)
+                _compare_entity(
+                    test_case,
+                    expected,
+                    actual,
+                    id_mapping,
+                    timestamp_mapping,
+                    is_id=is_id,
+                    locator=locator,
+                    ignore_locators=ignore_locators,
+                    regex_replacements=regex_replacements,
+                )
+                return
+            # TODO(this_pr): do we still need this?
             for regex, replacement in regex_replacements:
                 expected = re.sub(regex, replacement, expected)
                 actual = re.sub(regex, replacement, actual)
