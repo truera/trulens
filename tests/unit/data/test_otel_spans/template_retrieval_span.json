@@ -1,0 +1,42 @@
+{
+    "event_id": "{{event_id}}",
+    "record": {
+        "kind": 1,
+        "name": "__main__.RAG.retrieve_context",
+        "parent_span_id": "random_parent_span_id",
+        "status": "STATUS_CODE_UNSET"
+    },
+    "record_attributes": {
+        "ai.observability.app_name": "{{app_name}}",
+        "ai.observability.app_version": "{{app_version}}",
+        "ai.observability.call.kwargs.query": "{{query}}",
+        "ai.observability.call.return": {{return_value}},
+        "ai.observability.cost.cost": {{cost}},
+        "ai.observability.cost.cost_currency": "USD",
+        "ai.observability.cost.model": "{{model}}",
+        "ai.observability.cost.num_completion_tokens": 0,
+        "ai.observability.cost.num_prompt_tokens": 0,
+        "ai.observability.cost.num_tokens": {{num_tokens}},
+        "ai.observability.input_id": "42",
+        "ai.observability.record_id": "{{record_id}}",
+        "ai.observability.retrieval.query_text": "{{query}}",
+        "ai.observability.retrieval.retrieved_contexts": {{retrieved_contexts}},
+        "ai.observability.run.name": "test run",
+        "ai.observability.span_type": "{{span_type}}",
+        "name": "__main__.RAG.retrieve_context"
+    },
+    "record_type": "SPAN",
+    "resource_attributes": {
+        "service.name": "trulens",
+        "telemetry.sdk.language": "python",
+        "telemetry.sdk.name": "opentelemetry",
+        "telemetry.sdk.version": "1.31.0"
+    },
+    "start_timestamp": "{{start_timestamp}}",
+    "timestamp": "{{timestamp}}",
+    "trace": {
+        "parent_id": "random_parent_span_id",
+        "span_id": "{{span_id}}",
+        "trace_id": "random_trace_id"
+    }
+}
