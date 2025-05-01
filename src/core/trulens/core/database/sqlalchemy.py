@@ -979,6 +979,58 @@ class SQLAlchemyDB(core_db.DB):
 
             return AppsExtractor().get_df_and_cols(records=records)
 
+    def _get_paginated_record_ids_otel(
+        self,
+        session,
+        app_name: Optional[types_schema.AppName] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> sa.Select:
+        """Get a paginated query for record IDs from the OTEL event table.
+
+        Args:
+            session: The database session.
+            app_name: App name to filter by. Defaults to None.
+            offset: Offset for pagination. Defaults to None.
+            limit: Limit for pagination. Defaults to None.
+
+        Returns:
+            A SQLAlchemy select statement for record IDs with pagination applied.
+        """
+        # First, get unique record IDs with pagination
+        record_id_subquery = (
+            sa.select(
+                sa.func.json_extract(
+                    self.orm.Event.record_attributes,
+                    f'$."{SpanAttributes.RECORD_ID}"',
+                ).label("record_id"),
+                self.orm.Event.start_timestamp,
+            )
+            .group_by("record_id")
+            .order_by(self.orm.Event.start_timestamp.desc())
+        )
+
+        # If app_name is provided, filter record IDs by app_name first
+        if app_name:
+            app_name_col = sa.cast(
+                sa.func.json_extract(
+                    self.orm.Event.record_attributes,
+                    f'$."{SpanAttributes.APP_NAME}"',
+                ),
+                sa.String,
+            )
+            record_id_subquery = record_id_subquery.where(
+                app_name_col == app_name
+            )
+
+        # Apply pagination to the record IDs
+        if limit is not None:
+            record_id_subquery = record_id_subquery.limit(limit)
+        if offset is not None:
+            record_id_subquery = record_id_subquery.offset(offset)
+
+        return record_id_subquery
+
     def _get_records_and_feedback_otel(
         self,
         app_ids: Optional[List[str]] = None,
@@ -996,36 +1048,23 @@ class SQLAlchemyDB(core_db.DB):
             app_name: App name to filter by. Defaults to None.
             offset: Offset for pagination. Defaults to None.
             limit: Limit for pagination. Defaults to None.
+
         Returns:
-            A tuple containing the records dataframe and the
-            column names of the feedback results.
+            A tuple of (records dataframe, feedback column names).
         """
-
         with self.session.begin() as session:
-            # Query to get all events
-            stmt = sa.select(self.orm.Event)
+            # Get paginated record IDs
+            record_id_subquery = self._get_paginated_record_ids_otel(
+                session, app_name, offset, limit
+            )
 
-            # Filter by app_name if provided
-            if app_name:
-                # Create a SQLAlchemy column expression for the JSON path
-                app_name_col = sa.cast(
-                    sa.func.json_extract(
-                        self.orm.Event.record_attributes,
-                        f'$."{SpanAttributes.APP_NAME}"',
-                    ),
-                    sa.String,
-                )
-
-                stmt = stmt.filter(app_name_col == app_name)
-
-            # Order by timestamp desc
-            stmt = stmt.order_by(self.orm.Event.start_timestamp.desc())
-
-            # TODO(SNOW-2081987): Apply pagination on unique record IDs, not events table (this is essentially a full-table scan)
-            if limit is not None:
-                stmt = stmt.limit(limit)
-            if offset is not None:
-                stmt = stmt.offset(offset)
+            # Now get all events for those record IDs
+            stmt = sa.select(self.orm.Event).where(
+                sa.func.json_extract(
+                    self.orm.Event.record_attributes,
+                    f'$."{SpanAttributes.RECORD_ID}"',
+                ).in_(sa.select(record_id_subquery.c.record_id))
+            )
 
             # Execute query
             events = session.execute(stmt).scalars().all()

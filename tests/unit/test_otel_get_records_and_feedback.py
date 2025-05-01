@@ -235,6 +235,162 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
 
         return events
 
+    def _create_test_event(
+        self,
+        event_id: str,
+        record_id: str,
+        app_name: str,
+        app_version: str,
+        start_timestamp: str,
+        timestamp: str,
+        span_type: str = "retrieval",
+        query: str = "What is the best coffee?",
+        cost: float = 420.0,
+        num_tokens: int = 101,
+        model: str = "text-embedding-ada-002-v2",
+        return_value: List[str] = None,
+        retrieved_contexts: List[str] = None,
+    ) -> Event:
+        """Create a test event with customizable attributes.
+
+        Args:
+            event_id: Unique identifier for the event
+            record_id: Record ID associated with the event
+            app_name: Name of the app
+            app_version: Version of the app
+            start_timestamp: Start timestamp of the event
+            timestamp: End timestamp of the event
+            span_type: Type of span (default: "retrieval")
+            query: Query text (default: "What is the best coffee?")
+            cost: Cost of the operation (default: 420.0)
+            num_tokens: Number of tokens used (default: 101)
+            model: Model used (default: "text-embedding-ada-002-v2")
+            return_value: List of return values (default: None)
+            retrieved_contexts: List of retrieved contexts (default: None)
+
+        Returns:
+            An Event object with the specified attributes
+        """
+        if return_value is None:
+            return_value = ["Sample response"]
+        if retrieved_contexts is None:
+            retrieved_contexts = ["Sample context"]
+
+        event_data = {
+            "event_id": event_id,
+            "record": {
+                "kind": 1,
+                "name": "__main__.RAG.retrieve_context",
+                "parent_span_id": "12203920175536650289",
+                "status": "STATUS_CODE_UNSET",
+            },
+            "record_attributes": {
+                "ai.observability.app_name": app_name,
+                "ai.observability.app_version": app_version,
+                "ai.observability.call.kwargs.query": query,
+                "ai.observability.call.return": return_value,
+                "ai.observability.cost.cost": cost,
+                "ai.observability.cost.cost_currency": "USD",
+                "ai.observability.cost.model": model,
+                "ai.observability.cost.num_completion_tokens": 0,
+                "ai.observability.cost.num_prompt_tokens": 0,
+                "ai.observability.cost.num_tokens": num_tokens,
+                "ai.observability.input_id": "42",
+                "ai.observability.record_id": record_id,
+                "ai.observability.retrieval.query_text": query,
+                "ai.observability.retrieval.retrieved_contexts": retrieved_contexts,
+                "ai.observability.run.name": "test run",
+                "ai.observability.span_type": span_type,
+                "name": "__main__.RAG.retrieve_context",
+            },
+            "record_type": "SPAN",
+            "resource_attributes": {
+                "service.name": "trulens",
+                "telemetry.sdk.language": "python",
+                "telemetry.sdk.name": "opentelemetry",
+                "telemetry.sdk.version": "1.31.0",
+            },
+            "start_timestamp": start_timestamp,
+            "timestamp": timestamp,
+            "trace": {
+                "parent_id": "12203920175536650289",
+                "span_id": f"span_{record_id}",
+                "trace_id": "38285552113882235753580066402372722435",
+            },
+        }
+        return Event.model_validate(event_data)
+
+    def _create_event_from_template(
+        self,
+        event_id: str,
+        record_id: str,
+        app_name: str,
+        app_version: str,
+        start_timestamp: str,
+        timestamp: str,
+        span_type: str = "retrieval",
+        query: str = "What is the best coffee?",
+        cost: float = 420.0,
+        num_tokens: int = 101,
+        model: str = "text-embedding-ada-002-v2",
+        return_value: List[str] = None,
+        retrieved_contexts: List[str] = None,
+    ) -> Event:
+        """Create an event by filling in a template span file.
+
+        Args:
+            event_id: Unique identifier for the event
+            record_id: Record ID associated with the event
+            app_name: Name of the app
+            app_version: Version of the app
+            start_timestamp: Start timestamp of the event
+            timestamp: End timestamp of the event
+            span_type: Type of span (default: "retrieval")
+            query: Query text (default: "What is the best coffee?")
+            cost: Cost of the operation (default: 420.0)
+            num_tokens: Number of tokens used (default: 101)
+            model: Model used (default: "text-embedding-ada-002-v2")
+            return_value: List of return values (default: None)
+            retrieved_contexts: List of retrieved contexts (default: None)
+
+        Returns:
+            An Event object with the specified attributes
+        """
+        if return_value is None:
+            return_value = ["Sample response"]
+        if retrieved_contexts is None:
+            retrieved_contexts = ["Sample context"]
+
+        # Load template file
+        template_path = (
+            Path(__file__).parent
+            / "data"
+            / "test_otel_spans"
+            / "template_retrieval_span.json"
+        )
+        with open(template_path, "r") as f:
+            template = f.read()
+
+        # Fill in template values
+        event_data = (
+            template.replace("{{event_id}}", event_id)
+            .replace("{{app_name}}", app_name)
+            .replace("{{app_version}}", app_version)
+            .replace("{{query}}", query)
+            .replace("{{return_value}}", json.dumps(return_value))
+            .replace("{{cost}}", str(cost))
+            .replace("{{model}}", model)
+            .replace("{{num_tokens}}", str(num_tokens))
+            .replace("{{record_id}}", record_id)
+            .replace("{{retrieved_contexts}}", json.dumps(retrieved_contexts))
+            .replace("{{span_type}}", span_type)
+            .replace("{{start_timestamp}}", start_timestamp)
+            .replace("{{timestamp}}", timestamp)
+            .replace("{{span_id}}", f"span_{record_id}")
+        )
+
+        return Event.model_validate(json.loads(event_data))
+
     # Tests
     def test_get_records_and_feedback_otel_empty(self):
         """Test _get_records_and_feedback_otel with an empty database."""
@@ -520,3 +676,105 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
                 self.GEN_NUM_CALLS,
                 self.GEN_COST_CURRENCY,
             )
+
+    def test_get_paginated_record_ids_otel(self):
+        """Test that _get_paginated_record_ids_otel correctly paginates and filters record IDs."""
+        # Load example spans from test_otel_spans
+        event_files = [
+            "record_root_span.json",
+            "generation_span.json",
+            "retrieval_span.json",
+        ]
+        events = self._load_events_from_json(event_files)
+
+        # Create a second app with multiple records
+        second_app_name = "second_app"
+        second_app_version = "1.0.0"
+        second_record_ids = [
+            "second_record_1",
+            "second_record_2",
+            "second_record_3",
+        ]
+
+        # Create events for the second app using the template
+        for record_id in second_record_ids:
+            event = self._create_event_from_template(
+                event_id=f"event_{record_id}",
+                record_id=record_id,
+                app_name=second_app_name,
+                app_version=second_app_version,
+                start_timestamp="2025-04-11 10:19:55.993997",
+                timestamp="2025-04-11 10:19:56.356310",
+            )
+            events.append(event)
+
+        # Insert all Events into the database
+        for event in events:
+            self.db.insert_event(event)
+
+        with self.db.session.begin() as session:
+            # Test without pagination or filtering - should get all record IDs
+            stmt = self.db._get_paginated_record_ids_otel(session)
+            results = session.execute(stmt).all()
+            self.assertEqual(
+                len(results), 4
+            )  # 1 from first app + 3 from second app
+            # Verify all record IDs are present
+            record_ids = {r.record_id for r in results}
+            self.assertEqual(
+                record_ids, {self.STATIC_RECORD_ID, *second_record_ids}
+            )
+
+            # Test with first app_name filtering
+            stmt = self.db._get_paginated_record_ids_otel(
+                session, app_name=self.STATIC_APP_NAME
+            )
+            results = session.execute(stmt).all()
+            self.assertEqual(
+                len(results), 1
+            )  # Should get only first app's record
+            self.assertEqual(results[0].record_id, self.STATIC_RECORD_ID)
+
+            # Test with second app_name filtering
+            stmt = self.db._get_paginated_record_ids_otel(
+                session, app_name=second_app_name
+            )
+            results = session.execute(stmt).all()
+            self.assertEqual(
+                len(results), 3
+            )  # Should get all second app's records
+            record_ids = {r.record_id for r in results}
+            self.assertEqual(record_ids, set(second_record_ids))
+
+            # Test with non-matching app_name
+            stmt = self.db._get_paginated_record_ids_otel(
+                session, app_name="non_existent_app"
+            )
+            results = session.execute(stmt).all()
+            self.assertEqual(len(results), 0)  # Should get no results
+
+            # Test with limit
+            stmt = self.db._get_paginated_record_ids_otel(session, limit=2)
+            results = session.execute(stmt).all()
+            self.assertEqual(len(results), 2)  # Should respect limit
+
+            # Test with offset
+            stmt = self.db._get_paginated_record_ids_otel(session, offset=2)
+            results = session.execute(stmt).all()
+            self.assertEqual(len(results), 2)  # Should skip first 2 records
+
+            # Test with both limit and offset
+            stmt = self.db._get_paginated_record_ids_otel(
+                session, limit=2, offset=1
+            )
+            results = session.execute(stmt).all()
+            self.assertEqual(
+                len(results), 2
+            )  # Should get 2 records after skipping 1
+
+            # Test ordering by timestamp
+            stmt = self.db._get_paginated_record_ids_otel(session)
+            results = session.execute(stmt).all()
+            # Verify that results are ordered by start_timestamp in descending order
+            timestamps = [r.start_timestamp for r in results]
+            self.assertEqual(timestamps, sorted(timestamps, reverse=True))
