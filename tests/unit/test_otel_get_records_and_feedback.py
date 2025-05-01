@@ -629,7 +629,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
 
         with self.db.session.begin() as session:
             # Test without pagination or filtering - should get all record IDs
-            stmt = self.db._get_paginated_record_ids_otel(session)
+            stmt = self.db._get_paginated_record_ids_otel()
             results = session.execute(stmt).all()
             self.assertEqual(
                 len(results), 4
@@ -642,7 +642,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
 
             # Test with first app_name filtering
             stmt = self.db._get_paginated_record_ids_otel(
-                session, app_name=self.STATIC_APP_NAME
+                app_name=self.STATIC_APP_NAME
             )
             results = session.execute(stmt).all()
             self.assertEqual(
@@ -652,7 +652,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
 
             # Test with second app_name filtering
             stmt = self.db._get_paginated_record_ids_otel(
-                session, app_name=second_app_name
+                app_name=second_app_name
             )
             results = session.execute(stmt).all()
             self.assertEqual(
@@ -663,33 +663,31 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
 
             # Test with non-matching app_name
             stmt = self.db._get_paginated_record_ids_otel(
-                session, app_name="non_existent_app"
+                app_name="non_existent_app"
             )
             results = session.execute(stmt).all()
             self.assertEqual(len(results), 0)  # Should get no results
 
             # Test with limit
-            stmt = self.db._get_paginated_record_ids_otel(session, limit=2)
+            stmt = self.db._get_paginated_record_ids_otel(limit=2)
             results = session.execute(stmt).all()
             self.assertEqual(len(results), 2)  # Should respect limit
 
             # Test with offset
-            stmt = self.db._get_paginated_record_ids_otel(session, offset=2)
+            stmt = self.db._get_paginated_record_ids_otel(offset=2)
             results = session.execute(stmt).all()
             self.assertEqual(len(results), 2)  # Should skip first 2 records
 
             # Test with both limit and offset
-            stmt = self.db._get_paginated_record_ids_otel(
-                session, limit=2, offset=1
-            )
+            stmt = self.db._get_paginated_record_ids_otel(limit=2, offset=1)
             results = session.execute(stmt).all()
             self.assertEqual(
                 len(results), 2
             )  # Should get 2 records after skipping 1
 
             # Test ordering by timestamp
-            stmt = self.db._get_paginated_record_ids_otel(session)
+            stmt = self.db._get_paginated_record_ids_otel()
             results = session.execute(stmt).all()
             # Verify that results are ordered by start_timestamp in descending order
-            timestamps = [r.start_timestamp for r in results]
+            timestamps = [r.max_start_timestamp for r in results]
             self.assertEqual(timestamps, sorted(timestamps, reverse=True))
