@@ -37,6 +37,6 @@ describe(formatTime.name, () => {
   });
 
   test('formatTime returns expected time string', () => {
-    expect(formatTime(23)).toBe('Wednesday, December 31, 1969 at 4:00:23 PM PST');
+    expect(formatTime(23)).toBe('Wednesday, 12/31/1969, 4:00:23.000 PM PST');
   });
 });

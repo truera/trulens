@@ -7,7 +7,7 @@ interface ThemeProviderProps {
   streamlitTheme?: StreamlitTheme;
 }
 
-const DEFAULT_THEME: StreamlitTheme = {
+export const DEFAULT_THEME: StreamlitTheme = {
   backgroundColor: '#ffffff',
   base: 'light',
   font: '"Source Sans Pro", sans-serif',
