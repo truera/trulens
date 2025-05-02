@@ -1,7 +1,5 @@
 import { Box, SxProps, Theme, Typography } from '@mui/material';
 import { PropsWithChildren, useId, useState } from 'react';
-import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded';
-import KeyboardArrowUpRounded from '@mui/icons-material/KeyboardArrowUpRounded';
 
 type PanelProps = PropsWithChildren<{
   header: string;
