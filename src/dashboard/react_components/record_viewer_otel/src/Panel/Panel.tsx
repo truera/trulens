@@ -1,14 +1,17 @@
 import { Box, SxProps, Theme, Typography } from '@mui/material';
 import { PropsWithChildren, useId, useState } from 'react';
+import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRounded';
+import KeyboardArrowUpRounded from '@mui/icons-material/KeyboardArrowUpRounded';
 
 type PanelProps = PropsWithChildren<{
   header: string;
   id?: string;
+  expanded?: boolean;
 }>;
 
-export default function Panel({ header, children, id }: PanelProps) {
-  // Handle accordion state
-  const [expanded, setExpanded] = useState(true);
+export default function Panel({ header, children, id, expanded: initialExpanded = true }: PanelProps) {
+  // Handle accordion state - use the prop for initial value
+  const [expanded, setExpanded] = useState(initialExpanded);
   const toggleExpand = () => {
     setExpanded(!expanded);
   }
@@ -29,6 +32,7 @@ export default function Panel({ header, children, id }: PanelProps) {
         aria-controls={contentId}
         onClick={toggleExpand}
       >
+        {expanded ? <KeyboardArrowUpRounded /> : <KeyboardArrowDownRounded />}
         <Typography variant="body2" fontWeight="bold" component="h3">
           {header}
         </Typography>
