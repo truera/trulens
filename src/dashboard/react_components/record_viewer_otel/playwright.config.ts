@@ -19,4 +19,6 @@ export default defineConfig({
   },
   // Run all tests in a single worker to avoid interference
   workers: 1,
+  // Configure snapshotPathTemplate to use our snapshots directory
+  snapshotPathTemplate: '{testDir}/snapshots/{arg}{ext}',
 });

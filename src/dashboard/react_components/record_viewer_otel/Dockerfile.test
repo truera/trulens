@@ -1,0 +1,13 @@
+FROM mcr.microsoft.com/playwright:v1.41.0-jammy AS base
+
+WORKDIR /app
+
+# First stage: Install dependencies and Playwright browsers
+COPY package.json package-lock.json ./
+RUN npm ci
+RUN npx playwright install --with-deps chromium
+
+# Second stage: Copy application code and build
+FROM base AS app
+COPY . .
+RUN npm run build-storybook

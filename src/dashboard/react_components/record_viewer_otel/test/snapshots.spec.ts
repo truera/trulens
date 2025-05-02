@@ -18,8 +18,6 @@ try {
   } else if (storybookData.stories) {
     storyIds = Object.keys(storybookData.stories);
   }
-
-  console.log(`Found ${storyIds.length} stories from index.json`);
 } catch (error) {
   console.error('Failed to read storybook index:', error);
 }

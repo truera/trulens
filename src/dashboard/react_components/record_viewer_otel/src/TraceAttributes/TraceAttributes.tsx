@@ -52,5 +52,9 @@ export const TraceAttributes = (props: TraceAttributesProps) => {
       .map((key) => <Fragment key={key}>{results[key]}</Fragment>);
   }, [attributes]);
 
+  if (displayResults.length === 0) {
+    return 'No attributes to display';
+  }
+
   return <>{displayResults}</>;
 };

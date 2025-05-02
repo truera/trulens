@@ -44,13 +44,15 @@
     "eslint-plugin-react-refresh": "^0.4.1",
     "eslint-plugin-simple-import-sort": "^10.0.0",
     "eslint-plugin-storybook": "^0.12.0",
+    "http-server": "^14.1.1",
     "jsdom": "^26.1.0",
     "playwright": "^1.52.0",
     "prettier": "^3.0.0",
     "storybook": "^8.6.12",
     "typescript": "^5.8.2",
     "vite": "^6.3.3",
-    "vitest": "^3.1.2"
+    "vitest": "^3.1.2",
+    "wait-on": "^7.0.1"
   },
   "name": "recordviewer",
   "private": true,
@@ -64,7 +66,10 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test:snapshots": "playwright test",
-    "test:snapshots:update": "playwright test --update-snapshots"
+    "test:snapshots:update": "playwright test --update-snapshots",
+    "test:docker:build": "docker compose -f docker-compose.test.yml build",
+    "test:docker:run": "docker compose -f docker-compose.test.yml build && docker compose -f docker-compose.test.yml run --rm storybook-test",
+    "test:docker:update": "docker compose -f docker-compose.test.yml run --rm storybook-test npx playwright test --update-snapshots"
   },
   "type": "module",
   "version": "0.0.0",

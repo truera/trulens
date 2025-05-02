@@ -1,0 +1,11 @@
+services:
+  storybook-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    volumes:
+      # Mount snapshots to persist and update them
+      - ./test/snapshots:/app/test/snapshots
+    command: sh -c "chmod +x ./test-wrapper.sh && ./test-wrapper.sh"
+    environment:
+      - CI=true

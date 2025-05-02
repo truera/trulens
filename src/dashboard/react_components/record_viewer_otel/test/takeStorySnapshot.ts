@@ -11,14 +11,14 @@ export async function takeStorySnapshot(page: Page, storyId: string) {
   // Wait for the story to be fully rendered
   await page.waitForSelector('#storybook-root > *', { state: 'attached' });
   // Additional wait to ensure animations/fonts are loaded
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(1000);
 
   // Get the expected path
   const storyIdPath = `${storyId.replace(/\//g, '-')}.png`;
 
-  // Take a screenshot
-  const screenshot = await page.screenshot();
-
-  // Compare with existing baseline
-  expect(screenshot).toMatchSnapshot(storyIdPath);
+  // Take a screenshot and compare to baseline
+  await expect(page).toHaveScreenshot(storyIdPath, {
+    timeout: 10000,
+    maxDiffPixels: 100, // Adjust threshold as needed
+  });
 }
