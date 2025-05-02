@@ -1,0 +1,22 @@
+FROM mcr.microsoft.com/playwright:v1.41.0-jammy AS base
+
+WORKDIR /app
+
+# First stage: Copy only what's needed for npm install and Playwright
+COPY package.json package-lock.json playwright.config.* ./
+RUN npm ci
+RUN npx playwright install --with-deps chromium
+
+# Second stage: Copy only files needed for building Storybook
+FROM base AS app
+# Copy source files needed for Storybook
+COPY .storybook/ .storybook/
+COPY src/ src/
+COPY tsconfig*.json vite*  ./
+# Copy test files
+COPY test/ test/
+# Copy the test wrapper script
+COPY test-wrapper.sh ./
+
+# Build Storybook
+RUN npm run build-storybook

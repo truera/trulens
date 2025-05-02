@@ -9,6 +9,7 @@ import Panel from '@/Panel';
 import { useMemo, ReactNode, Fragment } from 'react';
 import { TraceContent } from '@/TraceContent/TraceContent';
 import { processTokenAttributes } from '@/functions/processTokenAttributes';
+import { Typography } from '@mui/material';
 
 export interface TraceAttributesProps {
   attributes: Attributes;
@@ -51,6 +52,10 @@ export const TraceAttributes = (props: TraceAttributesProps) => {
       .sort((a, b) => a.localeCompare(b))
       .map((key) => <Fragment key={key}>{results[key]}</Fragment>);
   }, [attributes]);
+
+  if (displayResults.length === 0) {
+    return <Typography>No attributes to display</Typography>;
+  }
 
   return <>{displayResults}</>;
 };
