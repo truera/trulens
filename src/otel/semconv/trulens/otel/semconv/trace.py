@@ -153,8 +153,9 @@ class SpanAttributes:
 
         ARGS_SPAN_ATTRIBUTE = base + ".args_metadata.span_attribute"
         """
-        Mapping of argument name to the attribute of the span that provided it.
-        Note that this is a scope, and not an attribute by itself.
+        Mapping of argument name to the full span attribute name of the span
+        that provided it. Note that this is a scope, and not an attribute by
+        itself.
 
         E.g. If the function has an argument `x` that came directly from the
         span attribute "xyz", then we would have `ARGS_SPAN_ATTRIBUTE + ".x"`
