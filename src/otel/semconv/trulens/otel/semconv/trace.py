@@ -158,7 +158,8 @@ class SpanAttributes:
         Metadata of arguments of the feedback function. This is a scope, and
         not an attribute by itself. E.g. If the function has an argument `x`
         that came from the span attribute "xyz" directly, then we would have
-        `ARGS_SPAN_ATTRIBUTE + ".x"` with value "xyz".
+        `ARGS_SPAN_ATTRIBUTE + ".x"` with value "xyz". If a span attribute was
+        not used directly, then this is not set.
         """
 
         ERROR = base + ".error"
