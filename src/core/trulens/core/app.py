@@ -747,6 +747,20 @@ class App(
     def __hash__(self):
         return hash(id(self))
 
+    @staticmethod
+    def _is_snowflake_connector(
+        connector: Optional[core_connector.DBConnector],
+    ) -> bool:
+        if connector is None:
+            return False
+        try:
+            from trulens.connectors.snowflake import SnowflakeConnector
+
+            return isinstance(connector, SnowflakeConnector)
+        except Exception:
+            pass
+        return False
+
     def _tru_post_init(self):
         """
         Database-related initialization and additional data checks.
@@ -774,14 +788,21 @@ class App(
                     "No feedback evaluation and logging will occur."
                 )
 
-        if len(self.feedbacks) > 0 and os.getenv(
+        otel_tracing_enabled = os.getenv(
             "TRULENS_OTEL_TRACING", ""
-        ).lower() in ["1", "true"]:
+        ).lower() in [
+            "1",
+            "true",
+        ]
+        if otel_tracing_enabled and len(self.feedbacks) > 0:
             raise ValueError(
                 "Feedback logging is not supported with OpenTelemetry tracing enabled yet!"
             )
 
-        if self.connector is not None:
+        if self.connector is not None and not (
+            self._is_snowflake_connector(self.connector)
+            and otel_tracing_enabled
+        ):
             self.connector.add_app(app=self)
 
             if self.feedback_mode != feedback_schema.FeedbackMode.NONE:
