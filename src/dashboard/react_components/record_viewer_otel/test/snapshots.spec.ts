@@ -20,6 +20,7 @@ try {
   }
 } catch (error) {
   console.error('Failed to read storybook index:', error);
+  throw error;
 }
 
 test.describe('Storybook Visual Tests', () => {
