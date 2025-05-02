@@ -1070,12 +1070,6 @@ class SQLAlchemyDB(core_db.DB):
         Returns:
             A tuple of (records dataframe, feedback column names).
         """
-        print("\n[DEBUG] _get_records_and_feedback_otel called with:")
-        print(f"app_ids: {app_ids}")
-        print(f"app_name: {app_name}")
-        print(f"offset: {offset}")
-        print(f"limit: {limit}")
-
         with self.session.begin() as session:
             # Get paginated record IDs
             record_id_subquery = self._get_paginated_record_ids_otel(
@@ -1091,7 +1085,6 @@ class SQLAlchemyDB(core_db.DB):
 
             # Execute query
             events = session.execute(stmt).scalars().all()
-            print(f"\n[DEBUG] Retrieved {len(events)} events from database")
 
             if not events:
                 # Return empty dataframe with expected columns
@@ -1116,12 +1109,6 @@ class SQLAlchemyDB(core_db.DB):
                 app_id = app_schema.AppDefinition._compute_app_id(
                     app_name, app_version
                 )
-
-                print("\n[DEBUG] Processing event:")
-                print(f"record_id: {record_id}")
-                print(f"app_name: {app_name}")
-                print(f"app_version: {app_version}")
-                print(f"computed app_id: {app_id}")
 
                 if record_id not in record_events:
                     record_events[record_id] = {

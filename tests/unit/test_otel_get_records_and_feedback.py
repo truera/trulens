@@ -727,10 +727,6 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         app2_name = "app2"
         app2_version = "1.0.0"
 
-        print("\n[DEBUG] Creating test data:")
-        print(f"App1: name={app1_name}, version={app1_version}")
-        print(f"App2: name={app2_name}, version={app2_version}")
-
         # Create events for app1
         app1_events = []
         for i in range(3):  # Create 3 records for app1
@@ -748,9 +744,6 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
                 app1_version
             )
             app1_events.append(event)
-            print(
-                f"[DEBUG] Created app1 event {i}: record_id={event.record_attributes.get('ai.observability.record_id')}, app_name={event.record_attributes.get('ai.observability.app_name')}, app_version={event.record_attributes.get('ai.observability.app_version')}"
-            )
 
         # Create events for app2
         app2_events = []
@@ -769,9 +762,6 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
                 app2_version
             )
             app2_events.append(event)
-            print(
-                f"[DEBUG] Created app2 event {i}: record_id={event.record_attributes.get('ai.observability.record_id')}, app_name={event.record_attributes.get('ai.observability.app_name')}, app_version={event.record_attributes.get('ai.observability.app_version')}"
-            )
 
         # Insert all events
         for event in app1_events + app2_events:
@@ -780,80 +770,52 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         # Compute app_ids
         app1_id = AppDefinition._compute_app_id(app1_name, app1_version)
         app2_id = AppDefinition._compute_app_id(app2_name, app2_version)
-        print("\n[DEBUG] Computed app IDs:")
-        print(f"App1 ID: {app1_id}")
-        print(f"App2 ID: {app2_id}")
 
         # Test 1: Get all records without filtering
-        print("\n[DEBUG] Test 1: Getting all records without filtering")
         df, _ = self.db._get_records_and_feedback_otel(limit=10)
-        print(f"Retrieved {len(df)} records")
-        print("Record IDs:", df["record_id"].tolist())
         self.assertEqual(len(df), 6)  # Should get 4 records as requested
 
-        print("\n[DEBUG] Test 1: Getting all records without filtering")
-        print(df.to_string())
         # Test 2: Filter by app1_id with limit=4
-        print("\n[DEBUG] Test 2: Filtering by app1_id")
         df, _ = self.db._get_records_and_feedback_otel(
             app_ids=[app1_id], limit=4
         )
-        print(f"Retrieved {len(df)} records")
-        print("Record IDs:", df["record_id"].tolist())
-        print("App IDs:", df["app_id"].tolist())
         self.assertEqual(
             len(df), 3
         )  # Should get only 3 records (all from app1)
 
         # Test 3: Filter by app2_id with limit=4
-        print("\n[DEBUG] Test 3: Filtering by app2_id")
         df, _ = self.db._get_records_and_feedback_otel(
             app_ids=[app2_id], limit=4
         )
-        print(f"Retrieved {len(df)} records")
-        print("Record IDs:", df["record_id"].tolist())
-        print("App IDs:", df["app_id"].tolist())
         self.assertEqual(
             len(df), 3
         )  # Should get only 3 records (all from app2)
 
         # Test 4: Filter by both app_ids with limit=4
-        print("\n[DEBUG] Test 4: Filtering by both app_ids")
         df, _ = self.db._get_records_and_feedback_otel(
             app_ids=[app1_id, app2_id], limit=4
         )
-        print(f"Retrieved {len(df)} records")
-        print("Record IDs:", df["record_id"].tolist())
-        print("App IDs:", df["app_id"].tolist())
         self.assertEqual(
             len(df), 4
         )  # Should get 4 records (3 from app1, 1 from app2)
 
         # Test 5: Filter by non-existent app_id
-        print("\n[DEBUG] Test 5: Filtering by non-existent app_id")
         df, _ = self.db._get_records_and_feedback_otel(
             app_ids=["non_existent_app_id"], limit=4
         )
-        print(f"Retrieved {len(df)} records")
         self.assertEqual(len(df), 0)  # Should get 0 records
 
         # Test 6: Verify ordering is maintained
-        print("\n[DEBUG] Test 6: Verifying ordering")
         df, _ = self.db._get_records_and_feedback_otel(limit=6)
         timestamps = df["ts"].tolist()
-        print("Timestamps:", timestamps)
-        print("Sorted timestamps:", sorted(timestamps))
         self.assertEqual(
             timestamps, sorted(timestamps)
         )  # Should be ordered by timestamp
 
         # Test 7: Verify offset works correctly with app_id filtering
-        print("\n[DEBUG] Test 7: Verifying offset with app1_id filtering")
         df, _ = self.db._get_records_and_feedback_otel(
             app_ids=[app1_id], limit=2, offset=1
         )
-        print(f"Retrieved {len(df)} records")
-        print("Record IDs:", df["record_id"].tolist())
         self.assertEqual(len(df), 2)  # Should get 2 records from app1
         self.assertEqual(
             df.iloc[0]["record_id"], "app1_record_1"
