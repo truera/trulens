@@ -78,22 +78,22 @@ pipeline {
                     apt-get install -y nodejs npm
                     echo "Using Node $(node --version) and NPM $(npm --version)"
                 '''
-                // sh label: 'Run pre-commit hooks', script: '''
-                //     set -e
-                //     poetry install --only dev --sync
-                //     make run-precommit
-                // '''
-                // sh label: 'Build all packages with zip wheels', script: '''
-                //     set -e
-                //     apt-get update
-                //     apt-get install -y zip
-                //     apt-get install -y unzip
-                //     make build-with-zip-wheels
-                // '''
-                // sh label : 'Install & register the kernel for notebook tests', script: '''
-                // poetry run pip install ipykernel
-                // poetry run python -m ipykernel install --name trulens-llm --display-name trulens-llm --sys-prefix
-                // '''
+                sh label: 'Run pre-commit hooks', script: '''
+                    set -e
+                    poetry install --only dev --sync
+                    make run-precommit
+                '''
+                sh label: 'Build all packages with zip wheels', script: '''
+                    set -e
+                    apt-get update
+                    apt-get install -y zip
+                    apt-get install -y unzip
+                    make build-with-zip-wheels
+                '''
+                sh label : 'Install & register the kernel for notebook tests', script: '''
+                poetry run pip install ipykernel
+                poetry run python -m ipykernel install --name trulens-llm --display-name trulens-llm --sys-prefix
+                '''
             }
         }
         stage('Test Suites') {
