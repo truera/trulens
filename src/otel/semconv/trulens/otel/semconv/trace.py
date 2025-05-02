@@ -139,27 +139,27 @@ class SpanAttributes:
 
         base = BASE_SCOPE + ".eval_root"
 
-        METRIC_NAME = base + ".metric_name"
-        """Name of the feedback definition being evaluated."""
-
         SPAN_GROUP = base + ".span_group"
         """The span group of the inputs to this metric."""
 
         ARGS_SPAN_ID = base + ".args_metadata.span_id"
         """
-        Metadata of arguments of the feedback function. This is a scope, and
-        not an attribute by itself. E.g. If the function has an argument `x`
-        that came from a span with span_id "abc", then we would have
-        `ARGS_SPAN_ID + ".x"` with value "abc".
+        Mapping of argument name to the ID of the span that provided it. Note
+        that this is a scope, and not an attribute by itself.
+
+        E.g. If the function has an argument `x` that came from a span with ID
+        "abc", then we would have `ARGS_SPAN_ID + ".x"` with value "abc".
         """
 
         ARGS_SPAN_ATTRIBUTE = base + ".args_metadata.span_attribute"
         """
-        Metadata of arguments of the feedback function. This is a scope, and
-        not an attribute by itself. E.g. If the function has an argument `x`
-        that came from the span attribute "xyz" directly, then we would have
-        `ARGS_SPAN_ATTRIBUTE + ".x"` with value "xyz". If a span attribute was
-        not used directly, then this is not set.
+        Mapping of argument name to the attribute of the span that provided it.
+        Note that this is a scope, and not an attribute by itself.
+
+        E.g. If the function has an argument `x` that came directly from the
+        span attribute "xyz", then we would have `ARGS_SPAN_ATTRIBUTE + ".x"`
+        with value "xyz". If a span attribute was not used directly, then this
+        is not set.
         """
 
         ERROR = base + ".error"
