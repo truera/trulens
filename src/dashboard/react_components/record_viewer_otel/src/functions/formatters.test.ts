@@ -45,25 +45,26 @@ describe('formatters', () => {
       expect(formatTime(undefined!)).toBe('');
     });
 
-  test('formatDuration returns milliseconds with proper formatting', () => {
-    expect(formatDuration(0.5678)).toBe('567.8 ms');
+    test('formatDuration returns milliseconds with proper formatting', () => {
+      expect(formatDuration(0.5678)).toBe('567.8 ms');
+    });
+
+    test('formatDuration returns seconds if >= 1 second', () => {
+      expect(formatDuration(23)).toBe('23 s');
+    });
   });
 
-  test('formatDuration returns seconds if >= 1 second', () => {
-    expect(formatDuration(23)).toBe('23 s');
-  });
-});
+  describe(formatTime.name, () => {
+    test('formatTime gives empty string with a null timestamp', () => {
+      expect(formatTime(null!)).toBe('');
+    });
 
-describe(formatTime.name, () => {
-  test('formatTime gives empty string with a null timestamp', () => {
-    expect(formatTime(null!)).toBe('');
-  });
+    test('formatTime gives empty string with an undefined timestamp', () => {
+      expect(formatTime(undefined!)).toBe('');
+    });
 
-  test('formatTime gives empty string with an undefined timestamp', () => {
-    expect(formatTime(undefined!)).toBe('');
-  });
-
-  test('formatTime returns expected time string', () => {
-    expect(formatTime(23)).toBe('Wednesday, 12/31/1969, 4:00:23.000 PM PST');
+    test('formatTime returns expected time string', () => {
+      expect(formatTime(23)).toBe('Wednesday, 12/31/1969, 4:00:23.000 PM PST');
+    });
   });
 });
