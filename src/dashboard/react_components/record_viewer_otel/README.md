@@ -104,14 +104,6 @@ Run visual tests in Docker:
 npm run test:docker:run
 ```
 
-#### Updating Snapshots
-
-When component designs change intentionally, update the baseline snapshots:
-
-```bash
-npm run test:docker:update
-```
-
 ### How It Works
 
 1. The Docker container builds a static version of Storybook
