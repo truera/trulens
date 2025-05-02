@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from enum import Enum
 import logging
+import os
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -236,6 +237,11 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
 
     @staticmethod
     def _compute_app_id(app_name, app_version):
+        # NOTE: this plaintext id is used for OTEL tracing
+        if os.getenv("TRULENS_OTEL_TRACING", "").lower() in ["1", "true"]:
+            return "app_hash_" + app_name + "_" + app_version
+
+        # NOTE: this is the default implementation
         return json_utils.obj_id_of_obj(
             obj={"app_name": app_name, "app_version": app_version}, prefix="app"
         )

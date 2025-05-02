@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import datetime
-import hashlib
 import json
 import logging
 import os
@@ -808,22 +807,6 @@ class SQLAlchemyDB(core_db.DB):
         """
         return os.getenv("TRULENS_OTEL_TRACING", "").lower() in ["1", "true"]
 
-    def _compute_app_id_otel(self, app_name: str, app_version: str) -> str:
-        """Compute the app_id from the app_name and app_version.
-
-        This implementation differs from the pre-OTEL computation by using a hash.
-        See trulens/src/core/trulens/core/schema/app.py::_compute_app_id.
-
-        Args:
-            app_name: The name of the app.
-            app_version: The version of the app.
-
-        Returns:
-            str: The computed app_id.
-        """
-        combined = f"{app_name}{app_version}"
-        return "app_hash_" + hashlib.md5(combined.encode()).hexdigest()
-
     def _get_event_record_attributes_otel(self, event: Event) -> Dict[str, Any]:
         """Get the record attributes from the event.
 
@@ -889,6 +872,93 @@ class SQLAlchemyDB(core_db.DB):
         # if currency not in record_events[record_id]["total_cost"]:
         #     record_events[record_id]["total_cost"][currency] = 0.0
         # record_events[record_id]["total_cost"][currency] += cost
+
+    def _json_extract_otel(self, column: str, path: str) -> sa.Column:
+        """Helper function to extract JSON values from the Event.record_attributes column."""
+        return sa.func.json_extract(
+            self.orm.Event.record_attributes, f'$."{path}"'
+        )
+
+    def _get_paginated_record_ids_otel(
+        self,
+        app_ids: Optional[List[str]] = None,
+        app_name: Optional[types_schema.AppName] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> sa.Select:
+        """Get a paginated query for record IDs from the OTEL event table.
+
+        Args:
+            app_ids: List of app IDs to filter by. Defaults to None.
+            app_name: App name to filter by. Defaults to None.
+            offset: Offset for pagination. Defaults to None.
+            limit: Limit for pagination. Defaults to None.
+
+        Returns:
+            A SQLAlchemy select statement for record IDs with pagination applied.
+        """
+
+        # Base select statement for record IDs and timestamps
+        stmt = sa.select(
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.RECORD_ID
+            ).label("record_id"),
+            sa.func.min(self.orm.Event.start_timestamp).label(
+                "min_start_timestamp"
+            ),
+        )
+
+        # Common conditions for filtering
+        conditions = [
+            # Filter for record_root span type events
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.SPAN_TYPE
+            )
+            == SpanAttributes.SpanType.RECORD_ROOT.value,
+            # Filter out NULL and empty record IDs
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.RECORD_ID
+            ).isnot(None),
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.RECORD_ID
+            )
+            != "",
+        ]
+
+        app_name_expr = self._json_extract_otel(
+            "record_attributes", SpanAttributes.APP_NAME
+        )
+
+        # Add app_name filter if provided
+        if app_name:
+            conditions.append(app_name_expr == app_name)
+
+        if app_ids:
+            app_version_expr = self._json_extract_otel(
+                "record_attributes", SpanAttributes.APP_VERSION
+            )
+            # NOTE: this should match the OTEL logic in AppDefinition._compute_app_id
+            computed_app_id = sa.func.concat(
+                "app_hash_", app_name_expr, "_", app_version_expr
+            )
+            conditions.append(computed_app_id.in_(app_ids))
+
+        # Apply all conditions
+        stmt = stmt.where(sa.and_(*conditions))
+
+        # Group by record_id to get unique records
+        stmt = stmt.group_by("record_id")
+
+        # Order by timestamp ascending (oldest first)
+        stmt = stmt.order_by(sa.asc("min_start_timestamp"))
+
+        # Apply pagination
+        if limit is not None:
+            stmt = stmt.limit(limit)
+        if offset is not None:
+            stmt = stmt.offset(offset)
+
+        return stmt
 
     def get_records_and_feedback(
         self,
@@ -979,54 +1049,6 @@ class SQLAlchemyDB(core_db.DB):
 
             return AppsExtractor().get_df_and_cols(records=records)
 
-    def _get_paginated_record_ids_otel(
-        self,
-        app_name: Optional[types_schema.AppName] = None,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None,
-    ) -> sa.Select:
-        """Get a paginated query for record IDs from the OTEL event table.
-
-        Args:
-            app_name: App name to filter by. Defaults to None.
-            offset: Offset for pagination. Defaults to None.
-            limit: Limit for pagination. Defaults to None.
-
-        Returns:
-            A SQLAlchemy select statement for record IDs with pagination applied.
-        """
-        # Get unique record IDs ordered by timestamp
-        stmt = sa.select(
-            sa.func.json_extract(
-                self.orm.Event.record_attributes,
-                f'$."{SpanAttributes.RECORD_ID}"',
-            ).label("record_id"),
-            sa.func.max(self.orm.Event.start_timestamp).label(
-                "max_start_timestamp"
-            ),
-        ).group_by("record_id")
-
-        # Filter by app_name if provided
-        if app_name:
-            stmt = stmt.where(
-                sa.func.json_extract(
-                    self.orm.Event.record_attributes,
-                    f'$."{SpanAttributes.APP_NAME}"',
-                )
-                == app_name
-            )
-
-        # Order by timestamp descending
-        stmt = stmt.order_by(sa.desc("max_start_timestamp"))
-
-        # Apply pagination
-        if limit is not None:
-            stmt = stmt.limit(limit)
-        if offset is not None:
-            stmt = stmt.offset(offset)
-
-        return stmt
-
     def _get_records_and_feedback_otel(
         self,
         app_ids: Optional[List[str]] = None,
@@ -1048,22 +1070,28 @@ class SQLAlchemyDB(core_db.DB):
         Returns:
             A tuple of (records dataframe, feedback column names).
         """
+        print("\n[DEBUG] _get_records_and_feedback_otel called with:")
+        print(f"app_ids: {app_ids}")
+        print(f"app_name: {app_name}")
+        print(f"offset: {offset}")
+        print(f"limit: {limit}")
+
         with self.session.begin() as session:
             # Get paginated record IDs
             record_id_subquery = self._get_paginated_record_ids_otel(
-                app_name, offset, limit
+                app_ids=app_ids, app_name=app_name, offset=offset, limit=limit
             )
 
             # Now get all events for those record IDs
             stmt = sa.select(self.orm.Event).where(
-                sa.func.json_extract(
-                    self.orm.Event.record_attributes,
-                    f'$."{SpanAttributes.RECORD_ID}"',
+                self._json_extract_otel(
+                    "record_attributes", SpanAttributes.RECORD_ID
                 ).in_(sa.select(record_id_subquery.c.record_id))
             )
 
             # Execute query
             events = session.execute(stmt).scalars().all()
+            print(f"\n[DEBUG] Retrieved {len(events)} events from database")
 
             if not events:
                 # Return empty dataframe with expected columns
@@ -1085,15 +1113,15 @@ class SQLAlchemyDB(core_db.DB):
                 app_version = record_attributes.get(
                     SpanAttributes.APP_VERSION, ""
                 )
-                app_id = self._compute_app_id_otel(app_name, app_version)
+                app_id = app_schema.AppDefinition._compute_app_id(
+                    app_name, app_version
+                )
 
-                # NOTE: We filter by app_ids after retrieving events
-                # app_id is not a SpanAttribute, and thus is not queryable from the EVENT table
-                if app_ids and app_id not in app_ids:
-                    logger.warning(
-                        f"Skipping event for app_id: {app_id}, not in {app_ids}"
-                    )
-                    continue
+                print("\n[DEBUG] Processing event:")
+                print(f"record_id: {record_id}")
+                print(f"app_name: {app_name}")
+                print(f"app_version: {app_version}")
+                print(f"computed app_id: {app_id}")
 
                 if record_id not in record_events:
                     record_events[record_id] = {
