@@ -743,8 +743,8 @@ record:
 
 The data used to make this check may be incomplete. If you expect records
 produced by your app to contain the selected content, you can ignore this error
-by setting `selectors_nocheck` in the {app_type} constructor. Alternatively,
-setting `selectors_check_warning` will print out this message but will not raise
+by setting `selector_nocheck` in the {app_type} constructor. Alternatively,
+setting `selector_check_warning` will print out this message but will not raise
 an error.
 
 ## Additional information:

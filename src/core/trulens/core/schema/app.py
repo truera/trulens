@@ -126,6 +126,11 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
     of about the app.
     """
 
+    electors_nocheck: bool = False
+    """
+    Option to bypass electors check.
+    """
+
     def __init__(
         self,
         app_id: Optional[types_schema.AppName] = None,
@@ -151,6 +156,7 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
         kwargs["app_id"] = self._compute_app_id(
             kwargs["app_name"], kwargs["app_version"]
         )
+
         if app_id is not None and kwargs["app_id"] != app_id:
             # Warning for now:
             warnings.warn(
