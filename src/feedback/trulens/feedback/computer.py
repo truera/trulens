@@ -7,11 +7,11 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from opentelemetry.trace import INVALID_SPAN_ID
 import pandas as pd
+from trulens.core.feedback.selector import Selector
 from trulens.core.otel.instrument import OtelFeedbackComputationRecordingContext
 from trulens.experimental.otel_tracing.core.span import (
     set_span_attribute_safely,
 )
-from trulens.feedback.selector import Selector
 from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.otel.semconv.trace import SpanAttributes
 

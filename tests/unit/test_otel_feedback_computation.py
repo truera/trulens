@@ -7,6 +7,7 @@ from typing import List
 import pandas as pd
 import pytest
 from trulens.apps.app import TruApp
+from trulens.core.feedback.selector import Selector
 from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
 from trulens.feedback.computer import MinimalSpanInfo
@@ -16,7 +17,6 @@ from trulens.feedback.computer import _flatten_inputs
 from trulens.feedback.computer import _group_kwargs_by_selectors
 from trulens.feedback.computer import _validate_unflattened_inputs
 from trulens.feedback.computer import compute_feedback_by_span_group
-from trulens.feedback.selector import Selector
 from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.mock_otel_feedback_computation import (

@@ -1,9 +1,9 @@
 from typing import Optional
 
-from trulens.core.instruments.otel import SpanAttributes
-from trulens.feedback.selector import Selector
+from trulens.core.feedback.selector import Selector
+from trulens.otel.semconv.trace import SpanAttributes
 
-from tests.unit.otel import OtelTestCase
+from tests.util.otel_test_case import OtelTestCase
 
 
 class TestOtelSelector(OtelTestCase):
