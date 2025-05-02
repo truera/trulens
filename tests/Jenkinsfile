@@ -28,6 +28,12 @@ def vault_settings = [
     ]
 ]
 
+def reactComponentsUpdated() {
+    def changedFiles = sh(script: 'git diff --name-only HEAD^ HEAD | grep -E "^src/dashboard/react_components/"', returnStatus: true)
+    echo "Changed files in src/dashboard/react_components/: ${changedFiles}"
+    return changedFiles != 0
+}
+
 pipeline {
     agent {
         docker {
@@ -136,20 +142,24 @@ pipeline {
                     }
                 }
                 stage('record-viewer') {
+                    when {
+                        expression {
+                            reactComponentsUpdated()
+                        }
+                    }
+
                     steps {
                         script {
-                            // Check if any files in the src/dashboard/react_components directory have changed
-                            def changedFiles = sh(script: 'git diff --name-only HEAD^ HEAD | grep -E "^src/dashboard/react_components/"', returnStatus: true)
-                            if (changedFiles == 0) {
-                                echo "Changes detected in dashboard react components, running tests"
-                                withVault(vault_settings) {
-                                    sh label: 'Run Jest tests for the OTEL Record viewer', script: '''
-                                        set -e
-                                        make test-record-viewer-otel
-                                    '''
-                                }
-                            } else {
-                                echo "No changes in dashboard react components, skipping test"
+                            withVault(vault_settings) {
+                                sh label: 'Build the OTEL Record viewer', script: '''
+                                    set -e
+                                    make build-record-viewer-otel
+                                '''
+
+                                sh label: 'Run Jest tests for the OTEL Record viewer', script: '''
+                                    set -e
+                                    make test-record-viewer-otel
+                                '''
                             }
                         }
                     }
