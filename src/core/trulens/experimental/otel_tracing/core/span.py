@@ -3,8 +3,9 @@ This file contains utility functions specific to certain span types.
 """
 
 from inspect import signature
+import json
 import logging
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from opentelemetry.baggage import get_baggage
 from opentelemetry.context import Context
@@ -75,6 +76,25 @@ def validate_selector_name(attributes: Dict[str, Any]) -> Dict[str, Any]:
     return result
 
 
+def _stringify_span_attribute(o: Any) -> Tuple[bool, str]:
+    """Converts an object to a string.
+
+    Args:
+        o: object to convert to a string
+
+    Returns:
+        A tuple containing:
+        - A boolean indicating whether the object was jsonified (as opposed to
+          simple stringification)
+        - The string representation of the object.
+    """
+    try:
+        return True, json.dumps(o)
+    except Exception:
+        pass
+    return False, str(o)
+
+
 def _convert_to_valid_span_attribute_type(val: Any) -> AttributeValue:
     if isinstance(val, (bool, int, float, str)):
         return val
@@ -82,8 +102,11 @@ def _convert_to_valid_span_attribute_type(val: Any) -> AttributeValue:
         for curr_type in [bool, int, float, str]:
             if all([isinstance(curr, curr_type) for curr in val]):
                 return val
-        return [str(curr) for curr in val]
-    return str(val)
+        jsonifiable, j = _stringify_span_attribute(val)
+        if jsonifiable:
+            return j
+        return [_stringify_span_attribute(curr)[1] for curr in val]
+    return _stringify_span_attribute(val)[1]
 
 
 def set_span_attribute_safely(

@@ -1,2 +1,6 @@
 default.sqlite
-paul_graham_essay.txt
+mlruns/
+*.zip
+# downloaded large datasets
+**/hotpotqa/
+**/hotpotqa.zip

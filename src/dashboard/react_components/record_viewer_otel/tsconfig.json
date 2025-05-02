@@ -24,8 +24,10 @@
     "baseUrl": "./",
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+
+    "types": ["@testing-library/jest-dom", "node", "react", "react-dom"],
   },
-  "include": ["src"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "include": ["src", "test/takeStorySnapshot.ts"],
+  "references": [{ "path": "./tsconfig.node.json" }],
 }

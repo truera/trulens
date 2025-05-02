@@ -40,17 +40,17 @@ export default function RecordTable({ root, selectedNodeId, setSelectedNodeId }:
 
 const recordTableSx: SxProps<Theme> = {
   borderRadius: 4,
-  border: ({ vars }) => `0.5px solid ${vars.palette.grey[300]}`,
+  border: ({ palette }) => `0.5px solid ${palette.grey[300]}`,
   minWidth: 650,
 
   '& th': {
-    backgroundColor: ({ vars }) => vars.palette.grey[100],
-    color: ({ vars }) => vars.palette.grey[600],
+    backgroundColor: ({ palette }) => palette.grey[100],
+    color: ({ palette }) => palette.grey[600],
     fontWeight: 600,
   },
 
   '& .MuiTableCell-root': {
-    borderRight: ({ vars }) => `1px solid ${vars.palette.grey[300]}`,
+    borderRight: ({ palette }) => `1px solid ${palette.grey[300]}`,
   },
 
   '& .MuiTableCell-root:last-child': {

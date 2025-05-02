@@ -2,6 +2,7 @@ import { createTheme, PaletteOptions, Theme } from '@mui/material';
 import type {} from '@mui/material/themeCssVarsAugmentation';
 
 import * as Colors from '@/utils/colors';
+import { TypographyOptions } from '@mui/material/styles/createTypography';
 
 declare module '@mui/material/styles' {
   interface TypographyVariants {
@@ -66,32 +67,34 @@ const darkPalette: Partial<PaletteOptions> = {
   },
 };
 
-const theme: Theme = createTheme({
-  typography: {
-    fontFamily: '"Source Sans Pro", sans-serif',
-    // Button
-    button: {
-      fontSize: '0.875rem',
-      fontWeight: 600,
-      lineHeight: 1.15, // 115%
-      letterSpacing: '0.03em',
-    },
-    // Detail text
-    subtitle1: {
-      fontSize: '0.75rem',
-      fontWeight: 400,
-      lineHeight: 1.3, // 130%
-      letterSpacing: '0.01em',
-    },
-    code: {
-      color: 'rgb(9,171,59)',
-      fontFamily: '"Source Code Pro", monospace',
-      margin: 0,
-      fontSize: '0.75em',
-      borderRadius: '0.25rem',
-      width: 'fit-content',
-    },
+const typography: TypographyOptions = {
+  fontFamily: '"Source Sans Pro", sans-serif',
+  // Button
+  button: {
+    fontSize: '0.875rem',
+    fontWeight: 600,
+    lineHeight: 1.15, // 115%
+    letterSpacing: '0.03em',
   },
+  // Detail text
+  subtitle1: {
+    fontSize: '0.75rem',
+    fontWeight: 400,
+    lineHeight: 1.3, // 130%
+    letterSpacing: '0.01em',
+  },
+  code: {
+    color: 'rgb(9,171,59)',
+    fontFamily: '"Source Code Pro", monospace',
+    margin: 0,
+    fontSize: '0.75em',
+    borderRadius: '0.25rem',
+    width: 'fit-content',
+  },
+};
+
+const theme: Theme = createTheme({
+  typography,
   cssVariables: {
     colorSchemeSelector: '.mode-%s',
   },

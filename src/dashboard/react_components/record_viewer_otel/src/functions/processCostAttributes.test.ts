@@ -2,6 +2,10 @@ import { SpanAttributes } from '@/constants/span';
 import { describe, it, expect } from 'vitest';
 import { processCostAttributes } from './processCostAttributes';
 
+/**
+ * @jest-environment jsdom
+ */
+
 describe(processCostAttributes.name, () => {
   it('should return early if cost value is not present', () => {
     const attributes = {
