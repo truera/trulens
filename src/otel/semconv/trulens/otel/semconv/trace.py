@@ -139,6 +139,30 @@ class SpanAttributes:
 
         base = BASE_SCOPE + ".eval_root"
 
+        SPAN_GROUP = base + ".span_group"
+        """The span group of the inputs to this metric."""
+
+        ARGS_SPAN_ID = base + ".args_metadata.span_id"
+        """
+        Mapping of argument name to the ID of the span that provided it. Note
+        that this is a scope, and not an attribute by itself.
+
+        E.g. If the function has an argument `x` that came from a span with ID
+        "abc", then we would have `ARGS_SPAN_ID + ".x"` with value "abc".
+        """
+
+        ARGS_SPAN_ATTRIBUTE = base + ".args_metadata.span_attribute"
+        """
+        Mapping of argument name to the full span attribute name of the span
+        that provided it. Note that this is a scope, and not an attribute by
+        itself.
+
+        E.g. If the function has an argument `x` that came directly from the
+        span attribute "xyz", then we would have `ARGS_SPAN_ATTRIBUTE + ".x"`
+        with value "xyz". If a span attribute was not used directly, then this
+        is not set.
+        """
+
         ERROR = base + ".error"
         """Error raised during evaluation."""
 
