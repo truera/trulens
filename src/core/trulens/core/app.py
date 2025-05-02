@@ -774,11 +774,14 @@ class App(
                     "No feedback evaluation and logging will occur."
                 )
 
-        otel_tracing_enabled = os.getenv(
+        if len(self.feedbacks) > 0 and os.getenv(
             "TRULENS_OTEL_TRACING", ""
-        ).lower() in ["1", "true"]
+        ).lower() in ["1", "true"]:
+            raise ValueError(
+                "Feedback logging is not supported with OpenTelemetry tracing enabled yet!"
+            )
 
-        if self.connector is not None and not otel_tracing_enabled:
+        if self.connector is not None:
             self.connector.add_app(app=self)
 
             if self.feedback_mode != feedback_schema.FeedbackMode.NONE:
