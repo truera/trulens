@@ -2,8 +2,8 @@
     "event_id": "{{event_id}}",
     "record": {
         "kind": 1,
-        "name": "__main__.RAG.retrieve_context",
-        "parent_span_id": "random_parent_span_id",
+        "name": "__main__.RAG.query",
+        "parent_span_id": "",
         "status": "STATUS_CODE_UNSET"
     },
     "record_attributes": {
@@ -11,19 +11,14 @@
         "ai.observability.app_version": "{{app_version}}",
         "ai.observability.call.kwargs.query": "{{query}}",
         "ai.observability.call.return": {{return_value}},
-        "ai.observability.cost.cost": {{cost}},
-        "ai.observability.cost.cost_currency": "USD",
-        "ai.observability.cost.model": "{{model}}",
-        "ai.observability.cost.num_completion_tokens": 0,
-        "ai.observability.cost.num_prompt_tokens": 0,
-        "ai.observability.cost.num_tokens": {{num_tokens}},
         "ai.observability.input_id": "42",
         "ai.observability.record_id": "{{record_id}}",
-        "ai.observability.retrieval.query_text": "{{query}}",
-        "ai.observability.retrieval.retrieved_contexts": {{retrieved_contexts}},
+        "ai.observability.record_root.ground_truth_output": "insert ground truth",
+        "ai.observability.record_root.input": "{{query}}",
+        "ai.observability.record_root.output": {{return_value}},
         "ai.observability.run.name": "test run",
         "ai.observability.span_type": "{{span_type}}",
-        "name": "__main__.RAG.retrieve_context"
+        "name": "__main__.RAG.query"
     },
     "record_type": "SPAN",
     "resource_attributes": {
@@ -35,7 +30,7 @@
     "start_timestamp": "{{start_timestamp}}",
     "timestamp": "{{timestamp}}",
     "trace": {
-        "parent_id": "random_parent_span_id",
+        "parent_id": "",
         "span_id": "{{span_id}}",
         "trace_id": "random_trace_id"
     }

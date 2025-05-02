@@ -11,6 +11,7 @@ import pandas as pd
 from trulens.apps.app import TruApp
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
 from trulens.core.otel.instrument import instrument
+from trulens.core.schema.app import AppDefinition
 from trulens.core.schema.event import Event
 from trulens.core.session import TruSession
 from trulens.feedback.computer import RecordGraphNode
@@ -243,13 +244,9 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         app_version: str,
         start_timestamp: str,
         timestamp: str,
-        span_type: str = "retrieval",
+        span_type: str = "record_root",
         query: str = "What is the best coffee?",
-        cost: float = 420.0,
-        num_tokens: int = 101,
-        model: str = "text-embedding-ada-002-v2",
         return_value: List[str] = None,
-        retrieved_contexts: List[str] = None,
     ) -> Event:
         """Create an event by filling in a template span file.
 
@@ -260,28 +257,22 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             app_version: Version of the app
             start_timestamp: Start timestamp of the event
             timestamp: End timestamp of the event
-            span_type: Type of span (default: "retrieval")
+            span_type: Type of span (default: "record_root")
             query: Query text (default: "What is the best coffee?")
-            cost: Cost of the operation (default: 420.0)
-            num_tokens: Number of tokens used (default: 101)
-            model: Model used (default: "text-embedding-ada-002-v2")
             return_value: List of return values (default: None)
-            retrieved_contexts: List of retrieved contexts (default: None)
 
         Returns:
             An Event object with the specified attributes
         """
         if return_value is None:
             return_value = ["Sample response"]
-        if retrieved_contexts is None:
-            retrieved_contexts = ["Sample context"]
 
         # Load template file
         template_path = (
             Path(__file__).parent
             / "data"
             / "test_otel_spans"
-            / "template_retrieval_span.json"
+            / "template_record_root_span.json"
         )
         with open(template_path, "r") as f:
             template = f.read()
@@ -293,18 +284,18 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             .replace("{{app_version}}", app_version)
             .replace("{{query}}", query)
             .replace("{{return_value}}", json.dumps(return_value))
-            .replace("{{cost}}", str(cost))
-            .replace("{{model}}", model)
-            .replace("{{num_tokens}}", str(num_tokens))
             .replace("{{record_id}}", record_id)
-            .replace("{{retrieved_contexts}}", json.dumps(retrieved_contexts))
             .replace("{{span_type}}", span_type)
             .replace("{{start_timestamp}}", start_timestamp)
             .replace("{{timestamp}}", timestamp)
             .replace("{{span_id}}", f"span_{record_id}")
         )
 
-        return Event.model_validate(json.loads(event_data))
+        event = Event.model_validate(json.loads(event_data))
+        # Ensure app name and version are correctly set in record_attributes
+        event.record_attributes["ai.observability.app_name"] = app_name
+        event.record_attributes["ai.observability.app_version"] = app_version
+        return event
 
     # Tests
     def test_get_records_and_feedback_otel_empty(self):
@@ -408,7 +399,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             self.assertEqual(row["latency"], expected_latency)
 
             # Verify that the app_id is correctly computed
-            expected_app_id = self.db._compute_app_id_otel(
+            expected_app_id = AppDefinition._compute_app_id(
                 self.STATIC_APP_NAME, self.STATIC_APP_VERSION
             )
             self.assertEqual(row["app_id"], expected_app_id)
@@ -513,7 +504,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
 
         # Verify that the app_id is correctly computed
         if row is not None:
-            expected_app_id = self.db._compute_app_id_otel(
+            expected_app_id = AppDefinition._compute_app_id(
                 self.app_name, self.app_version
             )
             self.assertEqual(row["app_id"], expected_app_id)
@@ -573,7 +564,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
 
         # Verify that the app_id is correctly computed
         if row is not None:
-            expected_app_id = self.db._compute_app_id_otel(
+            expected_app_id = AppDefinition._compute_app_id(
                 self.app_name, self.app_version
             )
             self.assertEqual(row["app_id"], expected_app_id)
@@ -612,14 +603,14 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         ]
 
         # Create events for the second app using the template
-        for record_id in second_record_ids:
+        for i in range(len(second_record_ids)):
             event = self._create_event_from_template(
-                event_id=f"event_{record_id}",
-                record_id=record_id,
+                event_id=f"event_{second_record_ids[i]}",
+                record_id=second_record_ids[i],
                 app_name=second_app_name,
                 app_version=second_app_version,
-                start_timestamp="2025-04-11 10:19:55.993997",
-                timestamp="2025-04-11 10:19:56.356310",
+                start_timestamp=f"2025-04-11 10:19:5{i}.993997",
+                timestamp="2025-04-11 10:20:30.50",
             )
             events.append(event)
 
@@ -688,6 +679,185 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             # Test ordering by timestamp
             stmt = self.db._get_paginated_record_ids_otel()
             results = session.execute(stmt).all()
-            # Verify that results are ordered by start_timestamp in descending order
-            timestamps = [r.max_start_timestamp for r in results]
-            self.assertEqual(timestamps, sorted(timestamps, reverse=True))
+            # Verify that results are ordered by start_timestamp in ascending order
+            timestamps = [r.min_start_timestamp for r in results]
+            self.assertEqual(timestamps, sorted(timestamps))
+
+    def test_get_paginated_record_ids_otel_without_record_id(self):
+        """Test that _get_paginated_record_ids_otel handles events without record IDs correctly."""
+        # Create an event without a record_id
+        empty_record_id_event = self._create_event_from_template(
+            event_id="event_without_record_id",
+            record_id="",  # Empty record_id
+            app_name=self.app_name,
+            app_version=self.app_version,
+            start_timestamp="2025-04-11 10:19:55.993997",
+            timestamp="2025-04-11 10:19:56.356310",
+        )
+        self.db.insert_event(empty_record_id_event)
+
+        # Create a normal event with a record_id
+        normal_event = self._create_event_from_template(
+            event_id="normal_event",
+            record_id="normal_record_id",
+            app_name=self.app_name,
+            app_version=self.app_version,
+            start_timestamp="2025-04-11 10:19:55.993997",
+            timestamp="2025-04-11 10:19:56.356310",
+        )
+        self.db.insert_event(normal_event)
+
+        with self.db.session.begin() as session:
+            stmt = self.db._get_paginated_record_ids_otel()
+            results = session.execute(stmt).all()
+
+            # Should only return the event with a valid record_id
+            self.assertEqual(len(results), 1)
+            self.assertEqual(results[0].record_id, "normal_record_id")
+
+    def test_get_records_and_feedback_otel_pagination_with_app_ids(self):
+        """Test that _get_records_and_feedback_otel correctly handles pagination with app_id filtering.
+
+        This test verifies that when filtering by app_ids after retrieving records,
+        we may get fewer records than requested by the limit parameter.
+        """
+        # Create multiple apps with different app_ids
+        app1_name = "app1"
+        app1_version = "1.0.0"
+        app2_name = "app2"
+        app2_version = "1.0.0"
+
+        print("\n[DEBUG] Creating test data:")
+        print(f"App1: name={app1_name}, version={app1_version}")
+        print(f"App2: name={app2_name}, version={app2_version}")
+
+        # Create events for app1
+        app1_events = []
+        for i in range(3):  # Create 3 records for app1
+            event = self._create_event_from_template(
+                event_id=f"app1_event_{i}",
+                record_id=f"app1_record_{i}",
+                app_name=app1_name,
+                app_version=app1_version,
+                start_timestamp=f"2025-04-11 10:19:5{i}.993997",
+                timestamp="2025-04-11 10:20:30.50",
+            )
+            # Ensure app name and version are correctly set in record_attributes
+            event.record_attributes["ai.observability.app_name"] = app1_name
+            event.record_attributes["ai.observability.app_version"] = (
+                app1_version
+            )
+            app1_events.append(event)
+            print(
+                f"[DEBUG] Created app1 event {i}: record_id={event.record_attributes.get('ai.observability.record_id')}, app_name={event.record_attributes.get('ai.observability.app_name')}, app_version={event.record_attributes.get('ai.observability.app_version')}"
+            )
+
+        # Create events for app2
+        app2_events = []
+        for i in range(3):  # Create 3 records for app2
+            event = self._create_event_from_template(
+                event_id=f"app2_event_{i}",
+                record_id=f"app2_record_{i}",
+                app_name=app2_name,
+                app_version=app2_version,
+                start_timestamp=f"2025-04-11 10:19:5{i + 3}.993997",
+                timestamp="2025-04-11 10:20:30.50",
+            )
+            # Ensure app name and version are correctly set in record_attributes
+            event.record_attributes["ai.observability.app_name"] = app2_name
+            event.record_attributes["ai.observability.app_version"] = (
+                app2_version
+            )
+            app2_events.append(event)
+            print(
+                f"[DEBUG] Created app2 event {i}: record_id={event.record_attributes.get('ai.observability.record_id')}, app_name={event.record_attributes.get('ai.observability.app_name')}, app_version={event.record_attributes.get('ai.observability.app_version')}"
+            )
+
+        # Insert all events
+        for event in app1_events + app2_events:
+            self.db.insert_event(event)
+
+        # Compute app_ids
+        app1_id = AppDefinition._compute_app_id(app1_name, app1_version)
+        app2_id = AppDefinition._compute_app_id(app2_name, app2_version)
+        print("\n[DEBUG] Computed app IDs:")
+        print(f"App1 ID: {app1_id}")
+        print(f"App2 ID: {app2_id}")
+
+        # Test 1: Get all records without filtering
+        print("\n[DEBUG] Test 1: Getting all records without filtering")
+        df, _ = self.db._get_records_and_feedback_otel(limit=10)
+        print(f"Retrieved {len(df)} records")
+        print("Record IDs:", df["record_id"].tolist())
+        self.assertEqual(len(df), 6)  # Should get 4 records as requested
+
+        print("\n[DEBUG] Test 1: Getting all records without filtering")
+        print(df.to_string())
+        # Test 2: Filter by app1_id with limit=4
+        print("\n[DEBUG] Test 2: Filtering by app1_id")
+        df, _ = self.db._get_records_and_feedback_otel(
+            app_ids=[app1_id], limit=4
+        )
+        print(f"Retrieved {len(df)} records")
+        print("Record IDs:", df["record_id"].tolist())
+        print("App IDs:", df["app_id"].tolist())
+        self.assertEqual(
+            len(df), 3
+        )  # Should get only 3 records (all from app1)
+
+        # Test 3: Filter by app2_id with limit=4
+        print("\n[DEBUG] Test 3: Filtering by app2_id")
+        df, _ = self.db._get_records_and_feedback_otel(
+            app_ids=[app2_id], limit=4
+        )
+        print(f"Retrieved {len(df)} records")
+        print("Record IDs:", df["record_id"].tolist())
+        print("App IDs:", df["app_id"].tolist())
+        self.assertEqual(
+            len(df), 3
+        )  # Should get only 3 records (all from app2)
+
+        # Test 4: Filter by both app_ids with limit=4
+        print("\n[DEBUG] Test 4: Filtering by both app_ids")
+        df, _ = self.db._get_records_and_feedback_otel(
+            app_ids=[app1_id, app2_id], limit=4
+        )
+        print(f"Retrieved {len(df)} records")
+        print("Record IDs:", df["record_id"].tolist())
+        print("App IDs:", df["app_id"].tolist())
+        self.assertEqual(
+            len(df), 4
+        )  # Should get 4 records (3 from app1, 1 from app2)
+
+        # Test 5: Filter by non-existent app_id
+        print("\n[DEBUG] Test 5: Filtering by non-existent app_id")
+        df, _ = self.db._get_records_and_feedback_otel(
+            app_ids=["non_existent_app_id"], limit=4
+        )
+        print(f"Retrieved {len(df)} records")
+        self.assertEqual(len(df), 0)  # Should get 0 records
+
+        # Test 6: Verify ordering is maintained
+        print("\n[DEBUG] Test 6: Verifying ordering")
+        df, _ = self.db._get_records_and_feedback_otel(limit=6)
+        timestamps = df["ts"].tolist()
+        print("Timestamps:", timestamps)
+        print("Sorted timestamps:", sorted(timestamps))
+        self.assertEqual(
+            timestamps, sorted(timestamps)
+        )  # Should be ordered by timestamp
+
+        # Test 7: Verify offset works correctly with app_id filtering
+        print("\n[DEBUG] Test 7: Verifying offset with app1_id filtering")
+        df, _ = self.db._get_records_and_feedback_otel(
+            app_ids=[app1_id], limit=2, offset=1
+        )
+        print(f"Retrieved {len(df)} records")
+        print("Record IDs:", df["record_id"].tolist())
+        self.assertEqual(len(df), 2)  # Should get 2 records from app1
+        self.assertEqual(
+            df.iloc[0]["record_id"], "app1_record_1"
+        )  # Should skip first record
+        self.assertEqual(
+            df.iloc[1]["record_id"], "app1_record_2"
+        )  # Should get second and third records
