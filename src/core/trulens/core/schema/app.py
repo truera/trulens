@@ -237,11 +237,14 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
 
     @staticmethod
     def _compute_app_id(app_name, app_version):
-        # NOTE: this plaintext id is used for OTEL tracing
+        # NOTE: When OTEL tracing is enabled, use a simple concatenation format for ease
+        # of use in nested queries on the Event table record_attributes column
         if os.getenv("TRULENS_OTEL_TRACING", "").lower() in ["1", "true"]:
             return "app_hash_" + app_name + "_" + app_version
 
-        # NOTE: this is the default implementation
+        # Non-OTEL cases, generate a deterministic hash-based ID based on app_name and app_version
+        # NOTE: there is an ongoing discussion about whether to use app_id or directly
+        # use/index on the unique combination of (app_name, app_version) when querying the database.
         return json_utils.obj_id_of_obj(
             obj={"app_name": app_name, "app_version": app_version}, prefix="app"
         )
