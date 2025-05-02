@@ -6,14 +6,14 @@ import KeyboardArrowUpRounded from '@mui/icons-material/KeyboardArrowUpRounded';
 type PanelProps = PropsWithChildren<{
   header: string;
   id?: string;
-  expanded?: boolean;
+  defaultExpanded?: boolean;
 }>;
 
-export default function Panel({ header, children, id, expanded: initialExpanded = true }: PanelProps) {
+export default function Panel({ header, children, id, defaultExpanded = true }: PanelProps) {
   // Handle accordion state - use the prop for initial value
-  const [expanded, setExpanded] = useState(initialExpanded);
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const toggleExpand = () => {
-    setExpanded(!expanded);
+    setExpanded((oldExpanded) => !oldExpanded)
   }
   // Generate a unique ID if one isn't provided
   const reactId = useId();
@@ -31,6 +31,13 @@ export default function Panel({ header, children, id, expanded: initialExpanded 
         aria-expanded={expanded}
         aria-controls={contentId}
         onClick={toggleExpand}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            toggleExpand();
+          }
+        }}
       >
         {expanded ? <KeyboardArrowUpRounded /> : <KeyboardArrowDownRounded />}
         <Typography variant="body2" fontWeight="bold" component="h3">
@@ -55,13 +62,6 @@ const panelSx: SxProps<Theme> = ({ spacing, palette }) => ({
     background: palette.grey[50],
     p: 1,
     borderBottom: `1px solid ${palette.grey[300]}`,
-  },
-
-  '& .panel-accordion-button': {
-    background: 'transparent',
-    border: 'none',
-    cursor: 'pointer',
-    marginRight: spacing(1),
   },
 
   '& .panel-content': {

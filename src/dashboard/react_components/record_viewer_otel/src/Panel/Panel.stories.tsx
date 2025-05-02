@@ -11,7 +11,7 @@ const meta: Meta<typeof Panel> = {
     children: 'Panel Content',
   },
   argTypes: {
-    expanded: {
+    defaultExpanded: {
       control: false,
       table: {
         disable: true
@@ -24,12 +24,12 @@ export default meta;
 
 export const ExpandedContent: Story = {
   args: {
-    expanded: true,
+    defaultExpanded: true,
   },
 };
 
 export const HiddenContent: Story = {
   args: {
-    expanded: false,
+    defaultExpanded: false,
   },
 };
