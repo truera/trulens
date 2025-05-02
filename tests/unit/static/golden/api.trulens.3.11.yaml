@@ -649,6 +649,25 @@ trulens.core.feedback.provider.Provider:
   attributes:
     endpoint: typing.Optional[trulens.core.feedback.endpoint.Endpoint, builtins.NoneType]
     tru_class_info: trulens.core.utils.pyschema.Class
+trulens.core.feedback.selector:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    Selector: builtins.type
+trulens.core.feedback.selector.Selector:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    describes_same_spans: builtins.function
+    function_attribute: builtins.NoneType
+    function_name: builtins.NoneType
+    matches_span: builtins.function
+    process_span: builtins.function
+    span_attribute: builtins.NoneType
+    span_attributes_processor: builtins.NoneType
+    span_name: builtins.NoneType
+    span_type: builtins.NoneType
 trulens.core.guardrails:
   __class__: builtins.module
   highs: {}
@@ -2137,7 +2156,6 @@ trulens.feedback.computer:
     INVALID_SPAN_ID: builtins.int
     MinimalSpanInfo: builtins.type
     RecordGraphNode: builtins.type
-    Selector: builtins.type
     compute_feedback_by_span_group: builtins.function
 trulens.feedback.computer.MinimalSpanInfo:
   __bases__:
@@ -2153,20 +2171,6 @@ trulens.feedback.computer.RecordGraphNode:
   __class__: builtins.type
   attributes:
     build_graph: builtins.staticmethod
-trulens.feedback.computer.Selector:
-  __bases__:
-  - builtins.object
-  __class__: builtins.type
-  attributes:
-    describes_same_spans: builtins.function
-    function_attribute: builtins.NoneType
-    function_name: builtins.NoneType
-    matches_span: builtins.function
-    process_span: builtins.function
-    span_attribute: builtins.NoneType
-    span_attributes_processor: builtins.NoneType
-    span_name: builtins.NoneType
-    span_type: builtins.NoneType
 trulens.feedback.dummy:
   __class__: builtins.module
   highs: {}
