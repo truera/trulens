@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional
 
-from trulens.core.telemetry import SpanAttributes
+from trulens.otel.semconv.trace import SpanAttributes
 
 
 @dataclass
