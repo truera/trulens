@@ -139,6 +139,28 @@ class SpanAttributes:
 
         base = BASE_SCOPE + ".eval_root"
 
+        METRIC_NAME = base + ".metric_name"
+        """Name of the feedback definition being evaluated."""
+
+        SPAN_GROUP = base + ".span_group"
+        """The span group of the inputs to this metric."""
+
+        ARGS_SPAN_ID = base + ".args_metadata.span_id"
+        """
+        Metadata of arguments of the feedback function. This is a scope, and
+        not an attribute by itself. E.g. If the function has an argument `x`
+        that came from a span with span_id "abc", then we would have
+        `ARGS_SPAN_ID + ".x"` with value "abc".
+        """
+
+        ARGS_SPAN_ATTRIBUTE = base + ".args_metadata.span_attribute"
+        """
+        Metadata of arguments of the feedback function. This is a scope, and
+        not an attribute by itself. E.g. If the function has an argument `x`
+        that came from the span attribute "xyz" directly, then we would have
+        `ARGS_SPAN_ATTRIBUTE + ".x"` with value "xyz".
+        """
+
         ERROR = base + ".error"
         """Error raised during evaluation."""
 
