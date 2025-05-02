@@ -9,6 +9,7 @@ import Panel from '@/Panel';
 import { useMemo, ReactNode, Fragment } from 'react';
 import { TraceContent } from '@/TraceContent/TraceContent';
 import { processTokenAttributes } from '@/functions/processTokenAttributes';
+import { Typography } from '@mui/material';
 
 export interface TraceAttributesProps {
   attributes: Attributes;
@@ -53,7 +54,7 @@ export const TraceAttributes = (props: TraceAttributesProps) => {
   }, [attributes]);
 
   if (displayResults.length === 0) {
-    return 'No attributes to display';
+    return <Typography>No attributes to display</Typography>;
   }
 
   return <>{displayResults}</>;

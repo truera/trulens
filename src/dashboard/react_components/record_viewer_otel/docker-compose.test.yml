@@ -6,6 +6,8 @@ services:
     volumes:
       # Mount snapshots to persist and update them
       - ./test/snapshots:/app/test/snapshots
+      # Mount test-results for persistence
+      - ./test/test-results:/app/test/test-results
     command: sh -c "chmod +x ./test-wrapper.sh && ./test-wrapper.sh"
     environment:
       - CI=true
