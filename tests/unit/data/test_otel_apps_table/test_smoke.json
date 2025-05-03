@@ -1,0 +1,129 @@
+{
+    "tru_class_info": {
+        "name": "TruApp",
+        "module": {
+            "package_name": "trulens.apps",
+            "module_name": "trulens.apps.app"
+        },
+        "bases": [
+            {
+                "name": "TruApp",
+                "module": {
+                    "package_name": "trulens.apps",
+                    "module_name": "trulens.apps.app"
+                },
+                "bases": null
+            },
+            {
+                "name": "App",
+                "module": {
+                    "package_name": "trulens.core",
+                    "module_name": "trulens.core.app"
+                },
+                "bases": null
+            },
+            {
+                "name": "AppDefinition",
+                "module": {
+                    "package_name": "trulens.core.schema",
+                    "module_name": "trulens.core.schema.app"
+                },
+                "bases": null
+            },
+            {
+                "name": "WithClassInfo",
+                "module": {
+                    "package_name": "trulens.core.utils",
+                    "module_name": "trulens.core.utils.pyschema"
+                },
+                "bases": null
+            },
+            {
+                "name": "SerialModel",
+                "module": {
+                    "package_name": "trulens.core.utils",
+                    "module_name": "trulens.core.utils.serial"
+                },
+                "bases": null
+            },
+            {
+                "name": "BaseModel",
+                "module": {
+                    "package_name": "pydantic",
+                    "module_name": "pydantic.main"
+                },
+                "bases": null
+            },
+            {
+                "name": "WithInstrumentCallbacks",
+                "module": {
+                    "package_name": "trulens.core",
+                    "module_name": "trulens.core.instruments"
+                },
+                "bases": null
+            },
+            {
+                "name": "Hashable",
+                "module": {
+                    "package_name": "collections",
+                    "module_name": "collections.abc"
+                },
+                "bases": null
+            },
+            {
+                "name": "Generic",
+                "module": {
+                    "package_name": "",
+                    "module_name": "typing"
+                },
+                "bases": null
+            },
+            {
+                "name": "object",
+                "module": {
+                    "package_name": "",
+                    "module_name": "builtins"
+                },
+                "bases": null
+            }
+        ]
+    },
+    "app_id": "app_hash_aa05d4140efd2fd717a2961c517a769a",
+    "app_name": "MyCustomApp",
+    "app_version": "v1",
+    "tags": "-",
+    "metadata": {},
+    "feedback_definitions": [],
+    "feedback_mode": "with_app_thread",
+    "record_ingest_mode": "immediate",
+    "root_class": {
+        "name": "TestApp",
+        "module": {
+            "package_name": "tests.unit",
+            "module_name": "tests.unit.test_otel_tru_custom"
+        },
+        "bases": null
+    },
+    "app": {
+        "__tru_non_serialized_object": {
+            "cls": {
+                "name": "TestApp",
+                "module": {
+                    "package_name": "tests.unit",
+                    "module_name": "tests.unit.test_otel_tru_custom"
+                },
+                "bases": null
+            },
+            "id": 13277293264,
+            "init_bindings": null
+        }
+    },
+    "initial_app_loader_dump": null,
+    "app_extra_json": {},
+    "main_method_name": "respond_to_query",
+    "selector_check_warning": false,
+    "selector_nocheck": false,
+    "snowflake_object_type": null,
+    "snowflake_object_name": null,
+    "snowflake_object_version": null
+}
