@@ -9,6 +9,7 @@
     "record_attributes": {
         "ai.observability.app_name": "{{app_name}}",
         "ai.observability.app_version": "{{app_version}}",
+        "ai.observability.app_id": "{{app_id}}",
         "ai.observability.call.kwargs.query": "{{query}}",
         "ai.observability.call.return": {{return_value}},
         "ai.observability.input_id": "42",

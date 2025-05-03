@@ -70,6 +70,9 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         # Set app name and version
         self.app_name = "test_app"
         self.app_version = "1.0.0"
+        self.app_id = AppDefinition._compute_app_id(
+            self.app_name, self.app_version
+        )
 
         # Define common test constants
         # Constants for static RAG test
@@ -82,6 +85,9 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         )
         self.STATIC_APP_NAME = "coffee_rag"
         self.STATIC_APP_VERSION = "openai"
+        self.STATIC_APP_ID = AppDefinition._compute_app_id(
+            self.STATIC_APP_NAME, self.STATIC_APP_VERSION
+        )
         self.STATIC_NUM_EVENTS = 3
 
         # Constants for static eval test
@@ -242,6 +248,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         record_id: str,
         app_name: str,
         app_version: str,
+        app_id: str,
         start_timestamp: str,
         timestamp: str,
         span_type: str = "record_root",
@@ -255,6 +262,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             record_id: Record ID associated with the event
             app_name: Name of the app
             app_version: Version of the app
+            app_id: ID of the app
             start_timestamp: Start timestamp of the event
             timestamp: End timestamp of the event
             span_type: Type of span (default: "record_root")
@@ -282,6 +290,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             template.replace("{{event_id}}", event_id)
             .replace("{{app_name}}", app_name)
             .replace("{{app_version}}", app_version)
+            .replace("{{app_id}}", app_id)
             .replace("{{query}}", query)
             .replace("{{return_value}}", json.dumps(return_value))
             .replace("{{record_id}}", record_id)
@@ -292,9 +301,6 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         )
 
         event = Event.model_validate(json.loads(event_data))
-        # Ensure app name and version are correctly set in record_attributes
-        event.record_attributes["ai.observability.app_name"] = app_name
-        event.record_attributes["ai.observability.app_version"] = app_version
         return event
 
     # Tests
@@ -398,16 +404,10 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             expected_latency = (end_time - start_time).total_seconds() * 1000
             self.assertEqual(row["latency"], expected_latency)
 
-            # Verify that the app_id is correctly computed
-            expected_app_id = AppDefinition._compute_app_id(
-                self.STATIC_APP_NAME, self.STATIC_APP_VERSION
-            )
-            self.assertEqual(row["app_id"], expected_app_id)
-
             # Verify JSON fields
             self._verify_json_fields(
                 row,
-                expected_app_id,
+                self.STATIC_APP_ID,
                 self.STATIC_QUESTION,
                 self.STATIC_ANSWER,
                 self.STATIC_RECORD_ID,
@@ -470,7 +470,10 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         # Create app
         app = _TestApp()
         tru_app = TruApp(
-            app, app_name=self.app_name, app_version=self.app_version
+            app,
+            app_name=self.app_name,
+            app_version=self.app_version,
+            app_id=self.app_id,
         )
 
         # Record and invoke
@@ -504,14 +507,11 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
 
         # Verify that the app_id is correctly computed
         if row is not None:
-            expected_app_id = AppDefinition._compute_app_id(
-                self.app_name, self.app_version
-            )
-            self.assertEqual(row["app_id"], expected_app_id)
+            self.assertEqual(row["app_id"], self.app_id)
 
             # Verify JSON fields
             self._verify_json_fields(
-                row, expected_app_id, self.GEN_QUESTION, self.GEN_ANSWER
+                row, self.app_id, self.GEN_QUESTION, self.GEN_ANSWER
             )
 
     def test_get_records_and_feedback_otel_gen_eval_spans(self):
@@ -523,7 +523,10 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         # Create app
         app = _TestApp()
         tru_app = TruApp(
-            app, app_name=self.app_name, app_version=self.app_version
+            app,
+            app_name=self.app_name,
+            app_version=self.app_version,
+            app_id=self.app_id,
         )
 
         # Record and invoke the query method
@@ -564,14 +567,11 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
 
         # Verify that the app_id is correctly computed
         if row is not None:
-            expected_app_id = AppDefinition._compute_app_id(
-                self.app_name, self.app_version
-            )
-            self.assertEqual(row["app_id"], expected_app_id)
+            self.assertEqual(row["app_id"], self.app_id)
 
             # Verify JSON fields
             self._verify_json_fields(
-                row, expected_app_id, self.GEN_QUESTION, self.GEN_ANSWER
+                row, self.app_id, self.GEN_QUESTION, self.GEN_ANSWER
             )
 
             # Verify feedback columns
@@ -609,6 +609,9 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
                 record_id=second_record_ids[i],
                 app_name=second_app_name,
                 app_version=second_app_version,
+                app_id=AppDefinition._compute_app_id(
+                    second_app_name, second_app_version
+                ),
                 start_timestamp=f"2025-04-11 10:19:5{i}.993997",
                 timestamp="2025-04-11 10:20:30.50",
             )
@@ -691,6 +694,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             record_id="",  # Empty record_id
             app_name=self.app_name,
             app_version=self.app_version,
+            app_id=self.app_id,
             start_timestamp="2025-04-11 10:19:55.993997",
             timestamp="2025-04-11 10:19:56.356310",
         )
@@ -702,6 +706,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             record_id="normal_record_id",
             app_name=self.app_name,
             app_version=self.app_version,
+            app_id=self.app_id,
             start_timestamp="2025-04-11 10:19:55.993997",
             timestamp="2025-04-11 10:19:56.356310",
         )
@@ -735,6 +740,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
                 record_id=f"app1_record_{i}",
                 app_name=app1_name,
                 app_version=app1_version,
+                app_id=AppDefinition._compute_app_id(app1_name, app1_version),
                 start_timestamp=f"2025-04-11 10:19:5{i}.993997",
                 timestamp="2025-04-11 10:20:30.50",
             )
@@ -753,6 +759,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
                 record_id=f"app2_record_{i}",
                 app_name=app2_name,
                 app_version=app2_version,
+                app_id=AppDefinition._compute_app_id(app2_name, app2_version),
                 start_timestamp=f"2025-04-11 10:19:5{i + 3}.993997",
                 timestamp="2025-04-11 10:20:30.50",
             )

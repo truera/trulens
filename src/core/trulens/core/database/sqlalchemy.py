@@ -925,23 +925,18 @@ class SQLAlchemyDB(core_db.DB):
             != "",
         ]
 
-        app_name_expr = self._json_extract_otel(
-            "record_attributes", SpanAttributes.APP_NAME
-        )
-
         # Add app_name filter if provided
         if app_name:
+            app_name_expr = self._json_extract_otel(
+                "record_attributes", SpanAttributes.APP_NAME
+            )
             conditions.append(app_name_expr == app_name)
 
         if app_ids:
-            app_version_expr = self._json_extract_otel(
-                "record_attributes", SpanAttributes.APP_VERSION
+            app_id_expr = self._json_extract_otel(
+                "record_attributes", SpanAttributes.APP_ID
             )
-            # NOTE: this should match the OTEL logic in AppDefinition._compute_app_id
-            computed_app_id = sa.func.concat(
-                "app_hash_", app_name_expr, "_", app_version_expr
-            )
-            conditions.append(computed_app_id.in_(app_ids))
+            conditions.append(app_id_expr.in_(app_ids))
 
         # Apply all conditions
         stmt = stmt.where(sa.and_(*conditions))
@@ -959,95 +954,6 @@ class SQLAlchemyDB(core_db.DB):
             stmt = stmt.offset(offset)
 
         return stmt
-
-    def get_records_and_feedback(
-        self,
-        app_ids: Optional[List[str]] = None,
-        app_name: Optional[types_schema.AppName] = None,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None,
-        use_otel: Optional[bool] = None,
-    ) -> Tuple[pd.DataFrame, Sequence[str]]:
-        """See [DB.get_records_and_feedback][trulens.core.database.base.DB.get_records_and_feedback].
-
-        Args:
-            app_ids: Optional list of app IDs to filter by. Defaults to None.
-            app_name: Optional app name to filter by. Defaults to None.
-            offset: Optional offset for pagination. Defaults to None.
-            limit: Optional limit for pagination. Defaults to None.
-            use_otel: Optional flag to explicitly choose between OTEL and pre-OTEL implementations. Defaults to None.
-                      If None, the implementation is chosen automatically based on whether OTEL tracing is enabled.
-        """
-
-        # If use_otel is explicitly set, use the specified implementation
-        # Otherwise, determine based on whether OTEL tracing environment variable is enabled
-        if use_otel is None:
-            use_otel = self._is_otel_tracing_enabled()
-            logger.warning(
-                f"use_otel is not explicitly set, checking if OTEL tracing environment variable is enabled (TRULENS_OTEL_TRACING): {use_otel}"
-            )
-
-        if use_otel:
-            return self._get_records_and_feedback_otel(
-                app_ids=app_ids, app_name=app_name, offset=offset, limit=limit
-            )
-
-        # Original implementation for pre-OTEL ORM
-
-        # TODO: Add pagination to this method. Currently the joinedload in
-        # select below disables lazy loading of records which will be a problem
-        # for large databases without the use of pagination.
-
-        with self.session.begin() as session:
-            stmt = sa.select(self.orm.Record)
-            # NOTE: We are selecting records here because offset and limit need
-            # to be with respect to those rows instead of AppDefinition or
-            # FeedbackResult rows.
-
-            if app_ids:
-                stmt = stmt.where(self.orm.Record.app_id.in_(app_ids))
-
-            if app_name:
-                # stmt = stmt.options(joinedload(self.orm.Record.app))
-                stmt = stmt.join(self.orm.Record.app).filter(
-                    self.orm.AppDefinition.app_name == app_name
-                )
-
-            stmt = stmt.options(joinedload(self.orm.Record.feedback_results))
-            stmt = stmt.options(joinedload(self.orm.Record.app))
-            # NOTE(piotrm): The joinedload here makes it so that the
-            # feedback_results and app definitions get loaded eagerly instead if lazily when
-            # accessed later.
-
-            # TODO(piotrm): The subsequent logic in helper methods end up
-            # reading all of the records and feedback_results in order to create
-            # a DataFrame so there is no reason to not eagerly get all of this
-            # data. Ideally, though, we would be making some sort of lazy
-            # DataFrame and then could use the lazy join feature of sqlalchemy.
-
-            stmt = stmt.order_by(
-                self.orm.Record.ts.desc(), self.orm.Record.record_id
-            )
-            # NOTE: feedback_results order is governed by the order_by on the
-            # orm.FeedbackResult.record backref definition. Here, we need to
-            # order Records as we did not use an auto join to retrieve them. If
-            # records were to be retrieved from AppDefinition.records via auto
-            # join, though, the orm backref ordering would be able to take hold.
-
-            # Apply pagination
-            if limit is not None:
-                stmt = stmt.limit(limit)
-            if offset is not None:
-                stmt = stmt.offset(offset)
-
-            ex = session.execute(stmt).unique()
-            # unique needed for joinedload above.
-
-            records = [rec[0] for rec in ex]
-            # TODO: Make the iteration of records lazy in some way. See
-            # TODO(piotrm) above.
-
-            return AppsExtractor().get_df_and_cols(records=records)
 
     def _get_records_and_feedback_otel(
         self,
@@ -1106,8 +1012,11 @@ class SQLAlchemyDB(core_db.DB):
                 app_version = record_attributes.get(
                     SpanAttributes.APP_VERSION, ""
                 )
-                app_id = app_schema.AppDefinition._compute_app_id(
-                    app_name, app_version
+                app_id = record_attributes.get(
+                    SpanAttributes.APP_ID,
+                    app_schema.AppDefinition._compute_app_id(
+                        app_name, app_version
+                    ),
                 )
 
                 if record_id not in record_events:
@@ -1140,10 +1049,7 @@ class SQLAlchemyDB(core_db.DB):
                         SpanAttributes.RECORD_ROOT.OUTPUT, ""
                     )
                     # NOTE: We grab timestamps from the RECORD_ROOT span because it provides a
-                    # more accurate duration than grabbing from the first matching span.
-                    # TODO: revisit if we want to grab the earliest start_timestamp from all
-                    # spans and the latest (end) timestamp from all spans to better represent
-                    # the latency of the record.
+                    # more accurate duration/latency.
                     record_events[record_id]["ts"] = event.start_timestamp
                     record_events[record_id]["latency"] = (
                         event.timestamp - event.start_timestamp
@@ -1243,6 +1149,7 @@ class SQLAlchemyDB(core_db.DB):
                 app_json = {
                     "app_name": record_data["app_name"],
                     "app_version": record_data["app_version"],
+                    "app_id": record_data["app_id"],
                 }
 
                 record_json = {
@@ -1321,6 +1228,95 @@ class SQLAlchemyDB(core_db.DB):
                     df[col] = None
 
             return df, feedback_col_names
+
+    def get_records_and_feedback(
+        self,
+        app_ids: Optional[List[str]] = None,
+        app_name: Optional[types_schema.AppName] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+        use_otel: Optional[bool] = None,
+    ) -> Tuple[pd.DataFrame, Sequence[str]]:
+        """See [DB.get_records_and_feedback][trulens.core.database.base.DB.get_records_and_feedback].
+
+        Args:
+            app_ids: Optional list of app IDs to filter by. Defaults to None.
+            app_name: Optional app name to filter by. Defaults to None.
+            offset: Optional offset for pagination. Defaults to None.
+            limit: Optional limit for pagination. Defaults to None.
+            use_otel: Optional flag to explicitly choose between OTEL and pre-OTEL implementations. Defaults to None.
+                      If None, the implementation is chosen automatically based on whether OTEL tracing is enabled.
+        """
+
+        # If use_otel is explicitly set, use the specified implementation
+        # Otherwise, determine based on whether OTEL tracing environment variable is enabled
+        if use_otel is None:
+            use_otel = self._is_otel_tracing_enabled()
+            logger.warning(
+                f"use_otel is not explicitly set, checking if OTEL tracing environment variable is enabled (TRULENS_OTEL_TRACING): {use_otel}"
+            )
+
+        if use_otel:
+            return self._get_records_and_feedback_otel(
+                app_ids=app_ids, app_name=app_name, offset=offset, limit=limit
+            )
+
+        # Original implementation for pre-OTEL ORM
+
+        # TODO: Add pagination to this method. Currently the joinedload in
+        # select below disables lazy loading of records which will be a problem
+        # for large databases without the use of pagination.
+
+        with self.session.begin() as session:
+            stmt = sa.select(self.orm.Record)
+            # NOTE: We are selecting records here because offset and limit need
+            # to be with respect to those rows instead of AppDefinition or
+            # FeedbackResult rows.
+
+            if app_ids:
+                stmt = stmt.where(self.orm.Record.app_id.in_(app_ids))
+
+            if app_name:
+                # stmt = stmt.options(joinedload(self.orm.Record.app))
+                stmt = stmt.join(self.orm.Record.app).filter(
+                    self.orm.AppDefinition.app_name == app_name
+                )
+
+            stmt = stmt.options(joinedload(self.orm.Record.feedback_results))
+            stmt = stmt.options(joinedload(self.orm.Record.app))
+            # NOTE(piotrm): The joinedload here makes it so that the
+            # feedback_results and app definitions get loaded eagerly instead if lazily when
+            # accessed later.
+
+            # TODO(piotrm): The subsequent logic in helper methods end up
+            # reading all of the records and feedback_results in order to create
+            # a DataFrame so there is no reason to not eagerly get all of this
+            # data. Ideally, though, we would be making some sort of lazy
+            # DataFrame and then could use the lazy join feature of sqlalchemy.
+
+            stmt = stmt.order_by(
+                self.orm.Record.ts.desc(), self.orm.Record.record_id
+            )
+            # NOTE: feedback_results order is governed by the order_by on the
+            # orm.FeedbackResult.record backref definition. Here, we need to
+            # order Records as we did not use an auto join to retrieve them. If
+            # records were to be retrieved from AppDefinition.records via auto
+            # join, though, the orm backref ordering would be able to take hold.
+
+            # Apply pagination
+            if limit is not None:
+                stmt = stmt.limit(limit)
+            if offset is not None:
+                stmt = stmt.offset(offset)
+
+            ex = session.execute(stmt).unique()
+            # unique needed for joinedload above.
+
+            records = [rec[0] for rec in ex]
+            # TODO: Make the iteration of records lazy in some way. See
+            # TODO(piotrm) above.
+
+            return AppsExtractor().get_df_and_cols(records=records)
 
     def insert_ground_truth(
         self, ground_truth: groundtruth_schema.GroundTruth
