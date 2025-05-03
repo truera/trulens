@@ -875,20 +875,29 @@ class SQLAlchemyDB(core_db.DB):
                     SpanAttributes.COST.NUM_TOKENS, 0
                 )
 
-            target_dict["total_cost"] += record_attributes.get(
-                SpanAttributes.COST.COST, 0.0
-            )
-            target_dict["cost_currency"] = record_attributes.get(
+            # Initialize total_cost as a dict if it doesn't exist or is a float
+            if "total_cost" not in target_dict or isinstance(
+                target_dict["total_cost"], (int, float)
+            ):
+                target_dict["total_cost"] = {}
+
+            # Get the cost and currency from the current span
+            cost = record_attributes.get(SpanAttributes.COST.COST, 0.0)
+            currency = record_attributes.get(
                 SpanAttributes.COST.CURRENCY, "USD"
             )
 
-        # TODO(SNOW-2061174): convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
-        # Add to total_cost map
-        # cost = record_attributes.get(SpanAttributes.COST.COST, 0.0)
-        # currency = record_attributes.get(SpanAttributes.COST.CURRENCY, "USD")
-        # if currency not in record_events[record_id]["total_cost"]:
-        #     record_events[record_id]["total_cost"][currency] = 0.0
-        # record_events[record_id]["total_cost"][currency] += cost
+            # Add the cost to the appropriate currency bucket
+            if currency not in target_dict["total_cost"]:
+                target_dict["total_cost"][currency] = 0.0
+            target_dict["total_cost"][currency] += cost
+
+            # If there is only one currency, set cost_currency to the currency
+            # If there are multiple currencies, set cost_currency to "mixed"
+            if len(target_dict["total_cost"]) > 1:
+                target_dict["cost_currency"] = "mixed"
+            else:  # len(target_dict["total_cost"]) == 1
+                target_dict["cost_currency"] = currency
 
     def get_records_and_feedback(
         self,
@@ -1072,7 +1081,8 @@ class SQLAlchemyDB(core_db.DB):
                         "ts": pd.NaT,  # Initialize to empty value, filled below
                         "latency": 0.0,  # Initialize to 0.0, filled below
                         "total_tokens": 0,  # Initialize to 0, calculated below
-                        "total_cost": 0.0,  # Initialize to 0.0, calculated below
+                        # NOTE: this can be a map (multiple currencies) or a float (single currency)
+                        "total_cost": {},  # Initialize to empty map, calculated below
                         "feedback_results": {},  # Initialize to empty map, calculated below
                     }
 
@@ -1137,7 +1147,9 @@ class SQLAlchemyDB(core_db.DB):
                             record_data["feedback_results"][metric_name] = {
                                 "mean_score": 0.0,
                                 "calls": [],
-                                "total_cost": 0.0,
+                                # NOTE: this can be a map (multiple currencies) or a float (single currency)
+                                "total_cost": {},
+                                # NOTE: this can be overriden by the total_cost map
                                 "cost_currency": "USD",
                                 "direction": None,
                             }
@@ -1250,9 +1262,13 @@ class SQLAlchemyDB(core_db.DB):
                     record_row[f"{feedback_name}_calls"] = feedback_result[
                         "calls"
                     ]
-                    record_row[
-                        f"{feedback_name} feedback cost in {feedback_result['cost_currency']}"
-                    ] = feedback_result["total_cost"]
+
+                    # Create a column for each currency
+                    for currency, cost in feedback_result["total_cost"].items():
+                        record_row[
+                            f"{feedback_name} feedback cost in {currency}"
+                        ] = cost
+
                     record_row[f"{feedback_name} direction"] = feedback_result[
                         "direction"
                     ]

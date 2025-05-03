@@ -151,6 +151,36 @@ class DBConnector(ABC, text_utils.WithIdentString):
                 except Exception as e:
                     logger.error("Failed to insert feedback results {}", e)
 
+    def _get_averaged_cost_columns(
+        self, df: pandas.DataFrame
+    ) -> Tuple[pandas.DataFrame, List[str]]:
+        """Helper function to create averaged cost columns for multiple currencies.
+
+        Args:
+            df: DataFrame containing total_cost column which may be a dict of currencies
+
+        Returns:
+            Tuple of:
+            - DataFrame with added avg_cost_{currency} columns
+            - List of column names to include in aggregation
+        """
+        # Single currency case - maintain backward compatibility
+        if not isinstance(df["total_cost"].iloc[0], dict):
+            return df, ["total_cost"]
+
+        # Get all unique currencies across all records
+        all_currencies = set().union(*[
+            cost.keys() for cost in df["total_cost"] if isinstance(cost, dict)
+        ])
+
+        # Create a column for each currency, averaging across all spans
+        for currency in all_currencies:
+            df[f"avg_cost_{currency}"] = df["total_cost"].apply(
+                lambda x: x.get(currency, 0) if isinstance(x, dict) else 0
+            )
+
+        return df, [f"avg_cost_{currency}" for currency in all_currencies]
+
     def add_app(self, app: app_schema.AppDefinition) -> types_schema.AppID:
         """
         Add an app to the database and return its unique id.
@@ -384,8 +414,9 @@ class DBConnector(ABC, text_utils.WithIdentString):
         df["app_name"] = df["app_json"].apply(lambda x: x.get("app_name"))
         df["app_version"] = df["app_json"].apply(lambda x: x.get("app_version"))
 
-        # TODO: refactor implementation for total_cost map in OTEL implementation of _get_records_and_feedback (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
-        col_agg_list = feedback_cols + ["latency", "total_cost"]
+        # Handle multiple currencies in total_cost
+        df, cost_cols = self._get_averaged_cost_columns(df)
+        col_agg_list = feedback_cols + ["latency"] + cost_cols
 
         if group_by_metadata_key is not None:
             df["meta"] = [df["record_json"][i]["meta"] for i in range(len(df))]

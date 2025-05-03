@@ -88,7 +88,6 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         # NOTE: there are 3 total calls for the feedback column, see:
         # test_otel_spans/{eval_root_span.json, eval_span_1.json, eval_span_2.json}
         self.STATIC_NUM_CALLS = 3
-        self.STATIC_COST_CURRENCY = "USD"
 
         # Constants for generated tests
         self.GEN_QUESTION = "What is the capital of France?"
@@ -96,7 +95,6 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         self.GEN_FEEDBACK_NAME = "groundedness"
         # NOTE: there are 3 calls: see tests.util.mock_otel_feedback_computation.feedback_function
         self.GEN_NUM_CALLS = 3
-        self.GEN_COST_CURRENCY = "USD"
 
     # Helper methods
     def _verify_dataframe_structure(self, df, expected_num_rows=1):
@@ -189,7 +187,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         df,
         feedback_name,
         expected_num_calls,
-        cost_currency="USD",
+        cost_currencies=None,
     ):
         """Verify the feedback columns in the dataframe.
 
@@ -198,7 +196,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             df: The dataframe to verify
             feedback_name: Expected feedback name
             expected_num_calls: Expected number of calls
-            cost_currency: Expected cost currency
+            cost_currencies: List of expected cost currencies. If None, no cost columns are expected.
         """
         # Verify feedback columns are properly created
         self.assertEqual(len(feedback_cols), 1)
@@ -209,10 +207,25 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         self.assertEqual(
             len(df[f"{feedback_name}_calls"][0]), expected_num_calls
         )
-        self.assertIn(
-            f"{feedback_name} feedback cost in {cost_currency}",
-            df.columns,
-        )
+
+        # Verify cost columns for each currency
+        if cost_currencies is not None:
+            for currency in cost_currencies:
+                self.assertIn(
+                    f"{feedback_name} feedback cost in {currency}",
+                    df.columns,
+                )
+        else:
+            # If no currencies specified, verify no cost columns exist
+            cost_columns = [
+                col for col in df.columns if "feedback cost in" in col
+            ]
+            self.assertEqual(
+                len(cost_columns),
+                0,
+                "No cost columns should exist when cost_currencies is None",
+            )
+
         self.assertIn(f"{feedback_name} direction", df.columns)
 
     def _load_events_from_json(self, event_files):
@@ -318,8 +331,11 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
                 SpanAttributes.COST.COST
             ]
             expected_total_cost = retrieval_cost + generation_cost
+            expected_cost_currency = "USD"
+
+            # NOTE: the cost_currency has been hardcoded to USD in the static test spans
             self.assertEqual(
-                row["total_cost"],
+                row["total_cost"][expected_cost_currency],
                 expected_total_cost,
                 msg="Total cost should be sum of costs from all spans",
             )
@@ -354,7 +370,9 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             # Verify that the cost_json contains the expected fields
             cost_json = row["cost_json"]
             self.assertEqual(cost_json["n_tokens"], expected_total_tokens)
-            self.assertEqual(cost_json["cost"], expected_total_cost)
+            self.assertEqual(
+                cost_json["cost"][expected_cost_currency], expected_total_cost
+            )
 
             # Verify that the perf_json contains the expected fields
             perf_json = row["perf_json"]
@@ -396,7 +414,6 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             df,
             self.STATIC_FEEDBACK_NAME,
             self.STATIC_NUM_CALLS,
-            self.STATIC_COST_CURRENCY,
         )
 
     def test_get_records_and_feedback_otel_gen_rag_spans(self):
@@ -518,5 +535,145 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
                 df,
                 self.GEN_FEEDBACK_NAME,
                 self.GEN_NUM_CALLS,
-                self.GEN_COST_CURRENCY,
             )
+
+    def test_update_cost_info_otel_single_currency(self):
+        """Test _update_cost_info_otel with a single currency."""
+        target_dict = {"total_tokens": 0, "total_cost": {}}
+        record_attributes = {
+            SpanAttributes.COST.NUM_TOKENS: 10,
+            SpanAttributes.COST.COST: 0.5,
+            SpanAttributes.COST.CURRENCY: "USD",
+        }
+
+        self.db._update_cost_info_otel(
+            target_dict, record_attributes, include_tokens=True
+        )
+
+        self.assertEqual(target_dict["total_tokens"], 10)
+        self.assertEqual(target_dict["total_cost"], {"USD": 0.5})
+
+    def test_update_cost_info_otel_multiple_currencies(self):
+        """Test _update_cost_info_otel with multiple currencies."""
+        target_dict = {"total_tokens": 0, "total_cost": {}}
+
+        # First span with USD
+        record_attributes1 = {
+            SpanAttributes.COST.NUM_TOKENS: 10,
+            SpanAttributes.COST.COST: 0.5,
+            SpanAttributes.COST.CURRENCY: "USD",
+        }
+        self.db._update_cost_info_otel(
+            target_dict, record_attributes1, include_tokens=True
+        )
+
+        # Second span with Yuan
+        record_attributes2 = {
+            SpanAttributes.COST.NUM_TOKENS: 5,
+            SpanAttributes.COST.COST: 3.0,
+            SpanAttributes.COST.CURRENCY: "Yuan",
+        }
+        self.db._update_cost_info_otel(
+            target_dict, record_attributes2, include_tokens=True
+        )
+
+        # Third span with USD again
+        record_attributes3 = {
+            SpanAttributes.COST.NUM_TOKENS: 8,
+            SpanAttributes.COST.COST: 0.4,
+            SpanAttributes.COST.CURRENCY: "USD",
+        }
+        self.db._update_cost_info_otel(
+            target_dict, record_attributes3, include_tokens=True
+        )
+
+        self.assertEqual(target_dict["total_tokens"], 23)  # 10 + 5 + 8
+        self.assertEqual(
+            target_dict["total_cost"], {"USD": 0.9, "Yuan": 3.0}
+        )  # USD: 0.5 + 0.4, Yuan: 3.0
+
+    def test_update_cost_info_otel_no_cost_info(self):
+        """Test _update_cost_info_otel with no cost information."""
+        target_dict = {"total_tokens": 0, "total_cost": {}}
+        record_attributes = {}  # No cost attributes
+
+        self.db._update_cost_info_otel(
+            target_dict, record_attributes, include_tokens=True
+        )
+
+        self.assertEqual(target_dict["total_tokens"], 0)
+        self.assertEqual(target_dict["total_cost"], {})
+
+    def test_get_averaged_cost_columns_single_currency(self):
+        """Test _get_averaged_cost_columns with a single currency."""
+        # Create a DataFrame with single currency costs
+        df = pd.DataFrame({
+            "total_cost": [{"USD": 10}, {"USD": 20}, {"USD": 30}]
+        })
+
+        result_df, cost_columns = (
+            self.session.connector._get_averaged_cost_columns(df)
+        )
+
+        self.assertEqual(cost_columns, ["avg_cost_USD"])
+        self.assertTrue("avg_cost_USD" in result_df.columns)
+        self.assertEqual(result_df["avg_cost_USD"].tolist(), [10, 20, 30])
+
+    def test_get_averaged_cost_columns_multiple_currencies(self):
+        """Test _get_averaged_cost_columns with multiple currencies."""
+        # Create a DataFrame with mixed currency costs
+        df = pd.DataFrame({
+            "total_cost": [
+                {"USD": 10, "Yuan": 6},
+                {"USD": 5, "Yuan": 3},
+                {"USD": 15, "Yuan": 9},
+            ]
+        })
+
+        result_df, cost_columns = (
+            self.session.connector._get_averaged_cost_columns(df)
+        )
+
+        self.assertEqual(set(cost_columns), {"avg_cost_USD", "avg_cost_Yuan"})
+        self.assertTrue("avg_cost_USD" in result_df.columns)
+        self.assertTrue("avg_cost_Yuan" in result_df.columns)
+        self.assertEqual(result_df["avg_cost_USD"].tolist(), [10, 5, 15])
+        self.assertEqual(result_df["avg_cost_Yuan"].tolist(), [6, 3, 9])
+
+    def test_get_averaged_cost_columns_missing_currencies(self):
+        """Test _get_averaged_cost_columns with missing currencies in some rows."""
+        # Create a DataFrame where some rows are missing certain currencies
+        df = pd.DataFrame({
+            "total_cost": [
+                {"USD": 10, "Yuan": 6},
+                {"USD": 5},  # Missing Yuan
+                {"Yuan": 9},  # Missing USD
+            ]
+        })
+
+        result_df, cost_columns = (
+            self.session.connector._get_averaged_cost_columns(df)
+        )
+
+        self.assertEqual(set(cost_columns), {"avg_cost_USD", "avg_cost_Yuan"})
+        self.assertTrue("avg_cost_USD" in result_df.columns)
+        self.assertTrue("avg_cost_Yuan" in result_df.columns)
+        self.assertEqual(
+            result_df["avg_cost_USD"].tolist(), [10, 5, 0]
+        )  # 0 for missing USD
+        self.assertEqual(
+            result_df["avg_cost_Yuan"].tolist(), [6, 0, 9]
+        )  # 0 for missing Yuan
+
+    def test_get_averaged_cost_columns_non_dict(self):
+        """Test _get_averaged_cost_columns with non-dictionary total_cost."""
+        # Create a DataFrame where total_cost is not a dictionary
+        df = pd.DataFrame({"total_cost": [10.0, 20.0, 30.0]})
+
+        result_df, cost_columns = (
+            self.session.connector._get_averaged_cost_columns(df)
+        )
+
+        self.assertEqual(cost_columns, ["total_cost"])
+        self.assertTrue("total_cost" in result_df.columns)
+        self.assertEqual(result_df["total_cost"].tolist(), [10.0, 20.0, 30.0])
