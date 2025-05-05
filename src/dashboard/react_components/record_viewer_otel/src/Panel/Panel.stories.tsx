@@ -10,8 +10,26 @@ const meta: Meta<typeof Panel> = {
     header: 'Panel Header',
     children: 'Panel Content',
   },
+  argTypes: {
+    defaultExpanded: {
+      control: false,
+      table: {
+        disable: true
+      }
+    }
+  }
 };
 
 export default meta;
 
-export const Default: Story = {};
+export const ExpandedContent: Story = {
+  args: {
+    defaultExpanded: true,
+  },
+};
+
+export const HiddenContent: Story = {
+  args: {
+    defaultExpanded: false,
+  },
+};
