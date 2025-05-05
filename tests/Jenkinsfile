@@ -160,6 +160,11 @@ pipeline {
                                     set -e
                                     make test-record-viewer-otel
                                 '''
+
+                                sh label: 'Run Storybook tests', script: '''
+                                    set -e
+                                    make test-storybook
+                                '''
                             }
                         }
                     }
