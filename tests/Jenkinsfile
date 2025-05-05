@@ -29,7 +29,7 @@ def vault_settings = [
 ]
 
 def reactComponentsUpdated() {
-    def changedFiles = sh(script: 'git diff --name-only HEAD^ HEAD | grep -E "^src/dashboard/react_components/" | wc -l', returnStdout: true).trim() as Integer
+    def changedFiles = sh(script: 'git diff --name-only origin/main HEAD | grep -E "^src/dashboard/react_components/" | wc -l', returnStdout: true).trim() as Integer
     echo "Number of changed files in src/dashboard/react_components/: ${changedFiles}"
     return changedFiles > 0
 }
@@ -142,11 +142,11 @@ pipeline {
                 //     }
                 // }
                 stage('record-viewer') {
-                    // when {
-                    //     expression {
-                    //         reactComponentsUpdated()
-                    //     }
-                    // }
+                    when {
+                        expression {
+                            reactComponentsUpdated()
+                        }
+                    }
 
                     steps {
                         script {
@@ -180,7 +180,7 @@ pipeline {
 
                     post {
                         always {
-                            archiveArtifacts  allowEmptyArchive: true, artifacts: '**/*.png'
+                            archiveArtifacts  allowEmptyArchive: true, artifacts: '**/react_components/**/*.png'
                         }
                     }
                 }
