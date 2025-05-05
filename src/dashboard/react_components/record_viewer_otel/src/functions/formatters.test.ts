@@ -64,7 +64,7 @@ describe('formatters', () => {
     });
 
     test('formatTime returns expected time string', () => {
-      expect(formatTime(23)).toBe('Wednesday, 12/31/1969, 4:00:23.000 PM PST');
+      expect(formatTime(23)).toBe('Thursday, 1/1/1970, 12:00:23.000 AM UTC');
     });
   });
 });
