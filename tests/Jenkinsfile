@@ -166,7 +166,10 @@ pipeline {
                                 catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                                     sh label: 'Run Storybook tests', script: '''
                                         set -e
-                                        make test-storybook
+                                        cd src/dashboard/react_components/record_viewer_otel
+                                        npm i
+                                        npm run build-storybook
+                                        ./test-wrapper.sh
                                     '''
                                 }
                             }

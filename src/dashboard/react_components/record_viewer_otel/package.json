@@ -66,8 +66,6 @@
     "test": "TZ=UTC LC_ALL=en-US.UTF-8 vitest",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test:snapshots": "playwright test",
-    "test:snapshots:update": "playwright test --update-snapshots",
     "test:docker:run": "docker compose -f docker-compose.test.yml build && docker compose -f docker-compose.test.yml run --rm storybook-test"
   },
   "type": "module",

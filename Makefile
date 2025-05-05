@@ -341,8 +341,3 @@ test-record-viewer-otel:
 	cd src/dashboard/react_components/record_viewer_otel \
 	 	&& npm install \
 		&& npm run test
-
-test-storybook:
-	cd src/dashboard/react_components/record_viewer_otel \
-	 	&& npm install \
-		&& npm run test:snapshots
