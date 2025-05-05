@@ -115,9 +115,6 @@ class SpanAttributes:
 
         base = BASE_SCOPE + ".record_root"
 
-        SPAN_NAME_PREFIX = base + "."
-        """Span name will end with app name."""
-
         INPUT = base + ".input"
         """Main input to the app."""
 
@@ -142,11 +139,38 @@ class SpanAttributes:
 
         base = BASE_SCOPE + ".eval_root"
 
+        SPAN_GROUP = base + ".span_group"
+        """The span group of the inputs to this metric."""
+
+        ARGS_SPAN_ID = base + ".args_metadata.span_id"
+        """
+        Mapping of argument name to the ID of the span that provided it. Note
+        that this is a scope, and not an attribute by itself.
+
+        E.g. If the function has an argument `x` that came from a span with ID
+        "abc", then we would have `ARGS_SPAN_ID + ".x"` with value "abc".
+        """
+
+        ARGS_SPAN_ATTRIBUTE = base + ".args_metadata.span_attribute"
+        """
+        Mapping of argument name to the full span attribute name of the span
+        that provided it. Note that this is a scope, and not an attribute by
+        itself.
+
+        E.g. If the function has an argument `x` that came directly from the
+        span attribute "xyz", then we would have `ARGS_SPAN_ATTRIBUTE + ".x"`
+        with value "xyz". If a span attribute was not used directly, then this
+        is not set.
+        """
+
         ERROR = base + ".error"
         """Error raised during evaluation."""
 
-        RESULT = base + ".result"
-        """Result of the evaluation."""
+        SCORE = base + ".score"
+        """Score of the evaluation."""
+
+        HIGHER_IS_BETTER = base + ".higher_is_better"
+        """Whether higher is better for this feedback function."""
 
         METADATA = base + ".metadata"
         """Any metadata of the evaluation."""
@@ -202,34 +226,19 @@ class SpanAttributes:
 
         base = BASE_SCOPE + ".call"
 
-        SPAN_NAME_PREFIX = base + "."
-        """Span name will end with the function name."""
-
         FUNCTION = base + ".function"
-        """Function being tracked.
-
-        Serialized from
-        [trulens.core.utils.pyschema.FunctionOrMethod][trulens.core.utils.pyschema.FunctionOrMethod]."""
-
-        ARGS = base + ".args"
-        """Arguments of the function.
-
-        Serialized using
-        [trulens.core.utils.json.jsonify][trulens.core.utils.json.jsonify]. If
-        the function was a method, self will NOT be included in this list.
-        """
+        """Name of function being tracked."""
 
         KWARGS = base + ".kwargs"
-        """Keyword arguments of the function.
-
-        Serialized using [trulens.core.utils.json.jsonify][trulens.core.utils.json.jsonify].
+        """
+        Keyword arguments of the function. This is a scope, and not an
+        attribute by itself. E.g. If the function has an argument `x` that had
+        a value `1`, then we should have an attribute with key `KWARGS + ".x"`
+        with value `1`.
         """
 
         RETURN = base + ".return"
-        """Return value of the function if it executed without error.
-
-        Serialized using [trulens.core.utils.json.jsonify][trulens.core.utils.json.jsonify].
-        """
+        """Return value of the function if it executed without error."""
 
         ERROR = base + ".error"
         """Error raised by the function if it executed with an error.

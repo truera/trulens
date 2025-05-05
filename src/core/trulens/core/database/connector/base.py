@@ -384,6 +384,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
         df["app_name"] = df["app_json"].apply(lambda x: x.get("app_name"))
         df["app_version"] = df["app_json"].apply(lambda x: x.get("app_version"))
 
+        # TODO: refactor implementation for total_cost map in OTEL implementation of _get_records_and_feedback (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
         col_agg_list = feedback_cols + ["latency", "total_cost"]
 
         if group_by_metadata_key is not None:

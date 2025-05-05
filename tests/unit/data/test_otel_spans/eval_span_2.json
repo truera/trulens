@@ -1,0 +1,38 @@
+{
+    "event_id": "5107167242136132510_EVAL_SPAN_2",
+    "record": {
+        "kind": 1,
+        "name": "__main__.RAG.retrieve_context",
+        "parent_span_id": "12203920175536650289",
+        "status": "STATUS_CODE_UNSET"
+    },
+    "record_type": "SPAN",
+    "resource_attributes": {
+        "service.name": "trulens",
+        "telemetry.sdk.language": "python",
+        "telemetry.sdk.name": "opentelemetry",
+        "telemetry.sdk.version": "1.31.0"
+    },
+    "start_timestamp": "2025-04-11 10:19:55.993997",
+    "timestamp": "2025-04-11 10:19:56.356310",
+    "trace": {
+        "parent_id": "12203920175536650289",
+        "span_id": "5107167242136132510_EVAL_SPAN_2",
+        "trace_id": "38285552113882235753580066402372722435"
+    },
+    "record_attributes": {
+        "ai.observability.eval.args": {
+          "ai.observability.record_root.input": "Who is the best basketball player in the world?",
+          "ai.observability.record_root.output": "Michael Jordan is the best basketball player in the world. Lebron James is the second best."
+        },
+        "ai.observability.eval.criteria": "- RESPONSE should be relevant to the question.\n- RESPONSE should be accurate.\n- RESPONSE should be concise.\n",
+        "ai.observability.eval.eval_root_id": "7wvRtVbg",
+        "ai.observability.eval.explanation": "The RESPONSE provides a short list of famous basketball players, but it does not provide enough details about the players.",
+        "ai.observability.eval.llm_judge_name": "llama3.1-70b",
+        "ai.observability.eval.metric_name": "answer_relevance",
+        "ai.observability.eval.score": 0.5,
+        "ai.observability.eval.target_record_id": "dd121e81-ccc2-449f-a3ba-e12467d0d671",
+        "ai.observability.record_id": "dd121e81-ccc2-449f-a3ba-e12467d0d671",
+        "ai.observability.span_type": "eval"
+    }
+}

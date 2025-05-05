@@ -1,5 +1,5 @@
 import os
-from typing import Any, List
+from typing import Any
 import unittest
 
 from langchain_community.chat_models import ChatSnowflakeCortex
@@ -34,6 +34,7 @@ class _TestCortexApp:
             model="mistral-large2",
             prompt=query,
             session=self._snowpark_session,
+            timeout=60,
         )
 
 
@@ -84,7 +85,6 @@ class TestOtelCosts(OtelTestCase):
     def _test_tru_custom_app(
         self,
         app: Any,
-        cost_functions: List[str],
         model: str,
         currency: str,
         num_expected_spans: int = 1,
@@ -141,7 +141,6 @@ class TestOtelCosts(OtelTestCase):
     def test_tru_custom_app_cortex(self):
         self._test_tru_custom_app(
             _TestCortexApp(),
-            ["snowflake.cortex._sse_client.SSEClient.events"],
             "mistral-large2",
             "Snowflake credits",
         )
@@ -149,9 +148,6 @@ class TestOtelCosts(OtelTestCase):
     def test_tru_custom_app_openai(self):
         self._test_tru_custom_app(
             _TestOpenAIApp(),
-            [
-                "openai.resources.chat.completions.completions.Completions.create"
-            ],
             "gpt-3.5-turbo-0125",
             "USD",
         )
@@ -160,10 +156,6 @@ class TestOtelCosts(OtelTestCase):
         model = "gpt-3.5-turbo-0125"
         self._test_tru_custom_app(
             _TestLiteLLMApp(model),
-            [
-                "openai.resources.chat.completions.completions.Completions.create",
-                "litellm.main.completion",
-            ],
             model,
             "USD",
             num_expected_spans=2,
@@ -175,7 +167,6 @@ class TestOtelCosts(OtelTestCase):
         model = "gemini/gemini-2.0-flash-exp"
         self._test_tru_custom_app(
             _TestLiteLLMApp(model),
-            ["litellm.main.completion"],
             model,
             "USD",
             num_expected_spans=2,
@@ -188,7 +179,6 @@ class TestOtelCosts(OtelTestCase):
         model = "huggingface/meta-llama/Meta-Llama-3.1-8B-Instruct"
         self._test_tru_custom_app(
             _TestLiteLLMApp(model),
-            ["litellm.main.completion"],
             model,
             "USD",
             num_expected_spans=2,
