@@ -19,7 +19,7 @@ export default function JSONViewer({ src }: { src: ReactJsonViewProps['src'] }) 
         name={null}
         collapsed={2}
         collapseStringsAfterLength={140}
-        style={{ fontSize: '14px' }}
+        style={{ fontSize: '14px', fontFamily: 'Source Code Pro' }}
         theme={mode === 'light' ? 'rjv-default' : 'harmonic'}
       />
     </div>

@@ -5,18 +5,19 @@ WORKDIR /app
 # First stage: Copy only what's needed for npm install and Playwright
 COPY package.json package-lock.json playwright.config.* ./
 RUN npm ci
-RUN npx playwright install --with-deps chromium
+RUN npx playwright install --with-deps
 
 # Second stage: Copy only files needed for building Storybook
 FROM base AS app
-# Copy source files needed for Storybook
-COPY .storybook/ .storybook/
-COPY src/ src/
-COPY tsconfig*.json vite*  ./
-# Copy test files
-COPY test/ test/
-# Copy the test wrapper script
-COPY test-wrapper.sh ./
+# # Copy source files needed for Storybook
+# COPY .storybook/ .storybook/
+# COPY src/ src/
+# COPY tsconfig*.json vite*  ./
+# # Copy test files
+# COPY test/ test/
+# # Copy the test wrapper script
+# COPY test-wrapper.sh ./
+COPY ./ ./
 
 # Build Storybook
 RUN npm run build-storybook
