@@ -165,7 +165,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
             - List of column names to include in aggregation
         """
         # Single currency case - maintain backward compatibility
-        if not isinstance(df["total_cost"].iloc[0], dict):
+        if len(df) == 0 or not isinstance(df["total_cost"].iloc[0], dict):
             return df, ["total_cost"]
 
         # Get all unique currencies across all records
