@@ -169,6 +169,7 @@ pipeline {
                                         cd src/dashboard/react_components/record_viewer_otel
                                         npm i
                                         npx playwright install
+                                        npx playwright install-deps
                                         npm run build-storybook
                                         ./test-wrapper.sh
                                     '''
