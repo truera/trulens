@@ -156,15 +156,19 @@ pipeline {
                                     make build-record-viewer-otel
                                 '''
 
-                                sh label: 'Run Jest tests for the OTEL Record viewer', script: '''
-                                    set -e
-                                    make test-record-viewer-otel
-                                '''
+                                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                                    sh label: 'Run Jest tests for the OTEL Record viewer', script: '''
+                                        set -e
+                                        make test-record-viewer-otel
+                                    '''
+                                }
 
-                                sh label: 'Run Storybook tests', script: '''
-                                    set -e
-                                    make test-storybook
-                                '''
+                                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                                    sh label: 'Run Storybook tests', script: '''
+                                        set -e
+                                        make test-storybook
+                                    '''
+                                }
                             }
                         }
                     }
