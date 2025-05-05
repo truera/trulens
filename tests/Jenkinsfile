@@ -29,7 +29,15 @@ def vault_settings = [
 ]
 
 def reactComponentsUpdated() {
-    def changedFiles = sh(script: 'git diff --name-only main HEAD | grep -E "^src/dashboard/react_components/" | wc -l', returnStdout: true).trim() as Integer
+    // Fetch main branch without checkout
+    sh(script: 'git fetch origin main:refs/remotes/origin/main', returnStdout: false)
+
+    // Compare changes between current branch and main
+    def changedFiles = sh(
+        script: 'git diff --name-only origin/main HEAD | grep -E "^src/dashboard/react_components/" | wc -l',
+        returnStdout: true
+    ).trim() as Integer
+
     echo "Number of changed files in src/dashboard/react_components/: ${changedFiles}"
     return changedFiles > 0
 }
