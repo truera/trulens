@@ -19,7 +19,7 @@ export default function RecordTable({ root, selectedNodeId, setSelectedNodeId }:
           <TableRow>
             <TableCell width={275}>Method</TableCell>
             <TableCell width={75}>Duration</TableCell>
-            <TableCell width={75}>Type</TableCell>
+            <TableCell width={130}>Type</TableCell>
             <TableCell>Timeline</TableCell>
           </TableRow>
         </TableHead>
