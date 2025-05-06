@@ -18,7 +18,7 @@ export default function LabelAndValue({ label, value, align = 'start', sx = {} }
   return (
     <Box sx={combineSx(containerSx, sx)}>
       <Typography variant="subtitle1" sx={labelSx}>
-        {label}asd
+        {label}
       </Typography>
       <Box
         className={LabelAndValueClasses.value}
