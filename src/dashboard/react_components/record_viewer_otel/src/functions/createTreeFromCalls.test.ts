@@ -4,6 +4,7 @@ import { Span } from '@/types/Span';
 import { SpanAttributes, SpanType } from '@/constants/span';
 import { StackTreeNode } from '@/types/StackTreeNode';
 import { createSpan } from '@/__testing__/createSpan';
+import { ORPHANED_NODES_PARENT_ID } from '@/constants/node';
 
 describe(createTreeFromCalls.name, () => {
   it('should create a tree from spans with a single root node', () => {
@@ -170,7 +171,7 @@ describe(createTreeFromCalls.name, () => {
       }),
     ];
 
-    expect(() => createTreeFromCalls(spans)).toThrow('More than one root node found');
+    expect(() => createTreeFromCalls(spans)).toThrow('Multiple root nodes found');
   });
 
   it('should handle spans that are not in chronological order', () => {
@@ -218,12 +219,35 @@ describe(createTreeFromCalls.name, () => {
         span_id: '2',
         parent_id: 'non_existent',
       }),
+
+      createSpan({
+        record_name: 'disconnected',
+        start_timestamp: 300,
+        timestamp: 400,
+        record_attributes: { [SpanAttributes.SPAN_TYPE]: 'OTHER' },
+        span_id: '3',
+        parent_id: '2',
+      }),
+
+      createSpan({
+        record_name: 'disconnected',
+        start_timestamp: 300,
+        timestamp: 400,
+        record_attributes: { [SpanAttributes.SPAN_TYPE]: 'OTHER' },
+        span_id: '4',
+        parent_id: 'non_existent',
+      }),
     ];
 
-    // The disconnected span won't affect the tree structure as it's not connected to the root
     const result = createTreeFromCalls(spans);
     expect(result.id).toBe('1');
-    expect(result.children.length).toBe(0);
+    expect(result.children.length).toBe(1);
+    expect(result.children[0].id).toBe(ORPHANED_NODES_PARENT_ID);
+    expect(result.children[0].children.length).toBe(2);
+    expect(result.children[0].children[0].id).toBe('2');
+    expect(result.children[0].children[0].children.length).toBe(1);
+    expect(result.children[0].children[0].children[0].id).toBe('3');
+    expect(result.children[0].children[1].id).toBe('4');
   });
 
   it('should correctly process spans with multiple levels of nesting', () => {
