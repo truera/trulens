@@ -19,6 +19,9 @@
         "trace_id": ""
     },
     "record_attributes": {
+        "ai.observability.app_name": "coffee_rag",
+        "ai.observability.app_version": "openai",
+        "ai.observability.app_id": "app_hash_coffee_rag_openai",
         "ai.observability.eval.eval_root_id": "98bbSpP2",
         "ai.observability.eval.llm_judge_name": "llama3.1-70b",
         "ai.observability.eval.metric_name": "answer_relevance",
