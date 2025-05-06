@@ -1,7 +1,7 @@
 import { Stack } from '@mui/material';
 
 import Panel from '@/Panel/Panel';
-import Section from '@/RecordTree/Details/Section';
+import Section from '@/Details/Section';
 import { StackTreeNode } from '@/types/StackTreeNode';
 import { SpanAttributes } from '@/constants/span';
 
