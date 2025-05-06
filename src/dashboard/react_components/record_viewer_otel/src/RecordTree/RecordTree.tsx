@@ -29,6 +29,7 @@ export default function RecordTree({ nodeMap, root, selectedNodeId, setSelectedN
       sx={{
         p: 1,
         overflowY: 'auto',
+        maxHeight: '80vh',
         flexGrow: 0,
         [`& > li`]: {
           minWidth: 'fit-content',
