@@ -52,6 +52,9 @@ class SpanAttributes:
     RECORD_ID = BASE_SCOPE + ".record_id"
     """ID of the record that the span belongs to."""
 
+    APP_ID = BASE_SCOPE + ".app_id"
+    """ID of the app that the span belongs to."""
+
     APP_NAME = BASE_SCOPE + ".app_name"
     """Fully qualified name of the app that the span belongs to."""
 

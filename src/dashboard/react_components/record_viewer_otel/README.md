@@ -101,7 +101,13 @@ We've set up the following components for Docker-based visual testing:
 Run visual tests in Docker:
 
 ```bash
-npm run test:docker:run
+npm run test:docker-storybook:run
+```
+
+Update visual snapshots in Docker:
+
+```bash
+npm run test:docker-storybook:update
 ```
 
 ### How It Works
