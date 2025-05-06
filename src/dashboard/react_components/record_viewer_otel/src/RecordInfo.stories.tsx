@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import RecordInfo from '@/RecordInfo';
 import { createNodeMap } from '@/functions/createNodeMap';
-import { deepNode, mockNestedNode, mockSimpleNode, mockComplexNode } from '@/__testing__/nodes';
+import { mockDeepNode, mockNestedNode, mockSimpleNode, mockComplexNode } from '@/__testing__/nodes';
 
 type Story = StoryObj<typeof RecordInfo>;
 
@@ -37,7 +37,7 @@ export const ComplexTree: Story = {
 
 export const DeepNestedTree: Story = {
   args: {
-    root: deepNode,
-    nodeMap: createNodeMap(deepNode),
+    root: mockDeepNode,
+    nodeMap: createNodeMap(mockDeepNode),
   },
 };

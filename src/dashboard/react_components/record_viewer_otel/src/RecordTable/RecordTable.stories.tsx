@@ -1,11 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import RecordTable from './RecordTable';
+import RecordTable from '@/RecordTable/RecordTable';
 import {
   mockSimpleNode,
   mockLongDurationNode,
   mockNestedNode,
   mockMultipleChildrenNode,
   mockNodeWithOrphanedChildren,
+  mockDeepNode,
 } from '@/__testing__/nodes';
 
 type Story = StoryObj<typeof RecordTable>;
@@ -52,5 +53,11 @@ export const WithMultipleChildren: Story = {
 export const WithOrphanedNodes: Story = {
   args: {
     root: mockNodeWithOrphanedChildren,
+  },
+};
+
+export const WithDeeplyNestedNodes: Story = {
+  args: {
+    root: mockDeepNode,
   },
 };
