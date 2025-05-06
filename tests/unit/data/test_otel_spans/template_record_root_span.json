@@ -1,0 +1,38 @@
+{
+    "event_id": "{{event_id}}",
+    "record": {
+        "kind": 1,
+        "name": "__main__.RAG.query",
+        "parent_span_id": "",
+        "status": "STATUS_CODE_UNSET"
+    },
+    "record_attributes": {
+        "ai.observability.app_name": "{{app_name}}",
+        "ai.observability.app_version": "{{app_version}}",
+        "ai.observability.app_id": "{{app_id}}",
+        "ai.observability.call.kwargs.query": "{{query}}",
+        "ai.observability.call.return": {{return_value}},
+        "ai.observability.input_id": "42",
+        "ai.observability.record_id": "{{record_id}}",
+        "ai.observability.record_root.ground_truth_output": "insert ground truth",
+        "ai.observability.record_root.input": "{{query}}",
+        "ai.observability.record_root.output": {{return_value}},
+        "ai.observability.run.name": "test run",
+        "ai.observability.span_type": "{{span_type}}",
+        "name": "__main__.RAG.query"
+    },
+    "record_type": "SPAN",
+    "resource_attributes": {
+        "service.name": "trulens",
+        "telemetry.sdk.language": "python",
+        "telemetry.sdk.name": "opentelemetry",
+        "telemetry.sdk.version": "1.31.0"
+    },
+    "start_timestamp": "{{start_timestamp}}",
+    "timestamp": "{{timestamp}}",
+    "trace": {
+        "parent_id": "",
+        "span_id": "{{span_id}}",
+        "trace_id": "random_trace_id"
+    }
+}

@@ -9,6 +9,7 @@
     "record_attributes": {
         "ai.observability.app_name": "coffee_rag",
         "ai.observability.app_version": "openai",
+        "ai.observability.app_id": "app_hash_coffee_rag_openai",
         "ai.observability.call.kwargs.query": "What is the best coffee?",
         "ai.observability.call.return": [
             "\nStarbucks Corporation is an American multinational chain of coffeehouses and roastery reserves headquartered in Seattle, Washington.\nAs the world's largest coffeehouse chain, Starbucks is seen to be the main representation of the United States' second wave of coffee culture.\n",

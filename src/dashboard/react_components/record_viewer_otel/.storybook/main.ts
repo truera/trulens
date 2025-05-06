@@ -10,6 +10,7 @@ const config = {
     name: '@storybook/react-vite',
     options: {},
   },
+  staticDirs: ['../src/assets'],
   features: {
     buildStoriesJson: true,
   },
