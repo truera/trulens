@@ -68,7 +68,6 @@
     "build-storybook": "storybook build",
     "test:docker-storybook:run": "docker compose -f docker-compose.test.yml build && docker compose -f docker-compose.test.yml run --rm storybook-test",
     "test:docker-storybook:update": "docker compose -f docker-compose.test.yml build && docker compose -f docker-compose.test.yml run -e UPDATE_SNAPSHOTS=true --rm storybook-test"
-  }
   },
   "type": "module",
   "version": "0.0.0",
