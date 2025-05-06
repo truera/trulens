@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import RecordTree from '@/RecordTree/RecordTree';
 import { createNodeMap } from '@/functions/createNodeMap';
 import {
-  deepNode,
+  mockDeepNode,
   mockLongDurationNode,
   mockMultipleChildrenNode,
   mockNestedNode,
@@ -57,7 +57,7 @@ export const WithMultipleChildren: Story = {
 
 export const DeepNestedTree: Story = {
   args: {
-    root: deepNode,
-    nodeMap: createNodeMap(deepNode),
+    root: mockDeepNode,
+    nodeMap: createNodeMap(mockDeepNode),
   },
 };

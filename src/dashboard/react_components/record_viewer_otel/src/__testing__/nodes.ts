@@ -11,9 +11,9 @@ let currentNode = createStackTreeNode({
   children: [],
 });
 
-const deepNode = currentNode;
+const mockDeepNode = currentNode;
 const nodeMap: Record<string, StackTreeNode> = {};
-nodeMap[deepNode.id] = deepNode;
+nodeMap[mockDeepNode.id] = mockDeepNode;
 
 for (let i = 2; i <= 25; i++) {
   const childNode = createStackTreeNode({
@@ -202,4 +202,4 @@ export const mockLongDurationNode = createStackTreeNode({
   ],
 });
 
-export { deepNode };
+export { mockDeepNode };
