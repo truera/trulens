@@ -8,11 +8,11 @@ import { TraceAttributes } from '@/TraceAttributes/TraceAttributes';
 import { getSpanTypeTitle } from '@/functions/getSpanTypeTitle';
 import { SpanAttributes } from '@/constants/span';
 
-type DetailsProps = {
-  selectedNode: StackTreeNode;
-};
+export interface NodeDetailsProps {
+  selectedNode?: StackTreeNode;
+}
 
-export default function NodeDetails(props: DetailsProps) {
+export default function NodeDetails(props: NodeDetailsProps) {
   const { selectedNode } = props;
 
   if (!selectedNode) return <Typography>Node not found.</Typography>;
