@@ -1,6 +1,6 @@
 import { StackTreeNode } from '@/types/StackTreeNode';
 import { createStackTreeNode } from './createStackTreeNode';
-import { SpanAttributes } from '@/constants/span';
+import { SpanAttributes, SpanType } from '@/constants/span';
 
 // Create a deep tree with over 20 layers
 let currentNode = createStackTreeNode({
@@ -8,7 +8,7 @@ let currentNode = createStackTreeNode({
   name: 'Root Operation',
   startTime: 0,
   endTime: 2000,
-  attributes: { [SpanAttributes.SPAN_TYPE]: 'application' },
+  attributes: { [SpanAttributes.SPAN_TYPE]: SpanType.RECORD_ROOT },
   children: [],
 });
 
@@ -26,14 +26,14 @@ for (let i = 2; i <= 25; i++) {
     attributes: {
       [SpanAttributes.SPAN_TYPE]:
         i % 5 === 0
-          ? 'database'
+          ? SpanType.RETRIEVAL
           : i % 4 === 0
-          ? 'http'
+          ? SpanType.GENERATION
           : i % 3 === 0
-          ? 'processing'
+          ? SpanType.RERANKING
           : i % 2 === 0
-          ? 'computation'
-          : 'function',
+          ? SpanType.TOOL_INVOCATION
+          : SpanType.AGENT_INVOCATION,
     },
     children: [],
     parentId: currentNode.id,
@@ -50,10 +50,10 @@ export const mockSimpleNode = createStackTreeNode({
   startTime: 0,
   endTime: 150,
   attributes: {
-    [SpanAttributes.SPAN_TYPE]: 'http',
-    'http.method': 'GET',
-    'http.path': '/api/data',
-    'http.status_code': 200,
+    [SpanAttributes.SPAN_TYPE]: SpanType.RECORD_ROOT,
+    [SpanAttributes.CALL_FUNCTION]: 'GET',
+    [SpanAttributes.CALL_SIGNATURE]: '/api/data',
+    [SpanAttributes.CALL_RETURN]: 200,
   },
   children: [],
 });
@@ -64,10 +64,10 @@ export const mockNestedNode = createStackTreeNode({
   startTime: 0,
   endTime: 350,
   attributes: {
-    [SpanAttributes.SPAN_TYPE]: 'http',
-    'http.method': 'GET',
-    'http.path': '/api/users',
-    'http.status_code': 200,
+    [SpanAttributes.SPAN_TYPE]: SpanType.RECORD_ROOT,
+    [SpanAttributes.CALL_FUNCTION]: 'GET',
+    [SpanAttributes.CALL_SIGNATURE]: '/api/users',
+    [SpanAttributes.CALL_RETURN]: 200,
   },
   children: [
     createStackTreeNode({
@@ -76,9 +76,8 @@ export const mockNestedNode = createStackTreeNode({
       startTime: 50,
       endTime: 250,
       attributes: {
-        [SpanAttributes.SPAN_TYPE]: 'database',
-        'db.system': 'postgresql',
-        'db.statement': 'SELECT * FROM users',
+        [SpanAttributes.SPAN_TYPE]: SpanType.RETRIEVAL,
+        [SpanAttributes.RETRIEVAL_QUERY_TEXT]: 'SELECT * FROM users',
       },
       children: [
         createStackTreeNode({
@@ -87,8 +86,8 @@ export const mockNestedNode = createStackTreeNode({
           startTime: 80,
           endTime: 200,
           attributes: {
-            [SpanAttributes.SPAN_TYPE]: 'query',
-            'query.name': 'user_retrieval',
+            [SpanAttributes.SPAN_TYPE]: SpanType.RETRIEVAL,
+            [SpanAttributes.SELECTOR_NAME]: 'user_retrieval',
           },
           children: [],
         }),
@@ -104,10 +103,10 @@ export const mockComplexNode = createStackTreeNode({
   startTime: 0,
   endTime: 600,
   attributes: {
-    [SpanAttributes.SPAN_TYPE]: 'http',
-    'http.method': 'POST',
-    'http.path': '/api/process',
-    'http.status_code': 201,
+    [SpanAttributes.SPAN_TYPE]: SpanType.RECORD_ROOT,
+    [SpanAttributes.CALL_FUNCTION]: 'POST',
+    [SpanAttributes.CALL_SIGNATURE]: '/api/process',
+    [SpanAttributes.CALL_RETURN]: 201,
   },
   children: [
     createStackTreeNode({
@@ -116,8 +115,8 @@ export const mockComplexNode = createStackTreeNode({
       startTime: 20,
       endTime: 120,
       attributes: {
-        [SpanAttributes.SPAN_TYPE]: 'auth',
-        'auth.method': 'JWT',
+        [SpanAttributes.SPAN_TYPE]: SpanType.CUSTOM,
+        [SpanAttributes.CALL_CLASS]: 'JWT',
       },
       children: [],
       parentId: 'node-1',
@@ -128,9 +127,8 @@ export const mockComplexNode = createStackTreeNode({
       startTime: 130,
       endTime: 380,
       attributes: {
-        [SpanAttributes.SPAN_TYPE]: 'database',
-        'db.system': 'mongodb',
-        'db.operation': 'insert',
+        [SpanAttributes.SPAN_TYPE]: SpanType.RETRIEVAL,
+        [SpanAttributes.RETRIEVAL_QUERY_TEXT]: 'insert',
       },
       children: [],
       parentId: 'node-1',
@@ -141,8 +139,8 @@ export const mockComplexNode = createStackTreeNode({
       startTime: 390,
       endTime: 540,
       attributes: {
-        [SpanAttributes.SPAN_TYPE]: 'processing',
-        'processor.name': 'JsonFormatter',
+        [SpanAttributes.SPAN_TYPE]: SpanType.GENERATION,
+        [SpanAttributes.GENERATION_MODEL_NAME]: 'JsonFormatter',
       },
       children: [],
       parentId: 'node-1',
@@ -155,14 +153,14 @@ export const mockMultipleChildrenNode = createStackTreeNode({
   name: 'API Request',
   startTime: 0,
   endTime: 600,
-  attributes: { [SpanAttributes.SPAN_TYPE]: 'http' },
+  attributes: { [SpanAttributes.SPAN_TYPE]: SpanType.RECORD_ROOT },
   children: [
     createStackTreeNode({
       id: 'node-2',
       name: 'Authentication',
       startTime: 20,
       endTime: 120,
-      attributes: { [SpanAttributes.SPAN_TYPE]: 'auth' },
+      attributes: { [SpanAttributes.SPAN_TYPE]: SpanType.CUSTOM },
       children: [],
       parentId: 'node-1',
     }),
@@ -171,7 +169,7 @@ export const mockMultipleChildrenNode = createStackTreeNode({
       name: 'Database Query',
       startTime: 130,
       endTime: 380,
-      attributes: { [SpanAttributes.SPAN_TYPE]: 'database' },
+      attributes: { [SpanAttributes.SPAN_TYPE]: SpanType.RETRIEVAL },
       children: [],
       parentId: 'node-1',
     }),
@@ -180,7 +178,7 @@ export const mockMultipleChildrenNode = createStackTreeNode({
       name: 'Response Processing',
       startTime: 390,
       endTime: 540,
-      attributes: { [SpanAttributes.SPAN_TYPE]: 'processing' },
+      attributes: { [SpanAttributes.SPAN_TYPE]: SpanType.GENERATION },
       children: [],
       parentId: 'node-1',
     }),
@@ -192,14 +190,14 @@ export const mockLongDurationNode = createStackTreeNode({
   name: 'Process Data',
   startTime: 0,
   endTime: 1500,
-  attributes: { [SpanAttributes.SPAN_TYPE]: 'function' },
+  attributes: { [SpanAttributes.SPAN_TYPE]: SpanType.RECORD_ROOT },
   children: [
     createStackTreeNode({
       id: 'node-2',
       name: 'Heavy Computation',
       startTime: 100,
       endTime: 1400,
-      attributes: { [SpanAttributes.SPAN_TYPE]: 'computation' },
+      attributes: { [SpanAttributes.SPAN_TYPE]: SpanType.GENERATION },
       children: [],
       parentId: 'node-1',
     }),
