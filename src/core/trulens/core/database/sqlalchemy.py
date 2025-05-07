@@ -1677,7 +1677,7 @@ def _extract_ground_truths(
 class AppsExtractor:
     """Utilities for creating dataframes from orm instances."""
 
-    app_cols = ["app_id", "app_json", "type"]
+    app_cols = ["app_name", "app_version", "app_id", "app_json", "type"]
     rec_cols = [
         "record_id",
         "input",
@@ -1687,6 +1687,7 @@ class AppsExtractor:
         "cost_json",
         "perf_json",
         "ts",
+        "events",
     ]
     extra_cols = ["latency", "total_tokens", "total_cost"]
     all_cols = app_cols + rec_cols + extra_cols
