@@ -53,8 +53,8 @@ export const createSpanTreeFromNodes = (nodes: StackTreeNode[]) => {
     childrenMap.get(node.parentId)?.push(node);
   });
 
-  // Find the root node (node with no parent)
-  const rootNodes = childrenMap.get('') || [];
+  // Find the root node
+  const rootNodes = nodes.filter((node) => node.attributes[SpanAttributes.SPAN_TYPE] === SpanType.RECORD_ROOT);
 
   if (rootNodes.length === 0) throw new Error('No root node found');
   if (rootNodes.length > 1) throw new Error('Multiple root nodes found');
