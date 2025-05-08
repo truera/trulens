@@ -289,6 +289,13 @@ def render_sidebar():
             help="Help us improve TruLens!",
             use_container_width=True,
         )
+
+        st.link_button(
+            "Report a Bug 🐞",
+            "https://github.com/truera/trulens/issues/new?template=bug-report.md",
+            help="Help us fix bugs!",
+            use_container_width=True,
+        )
     if app_name is None:
         st.error("No apps found in the database.")
     return app_name
