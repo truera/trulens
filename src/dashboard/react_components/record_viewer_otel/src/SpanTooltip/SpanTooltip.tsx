@@ -6,6 +6,7 @@ import type { StyledTooltipProps } from '@/StyledTooltip/StyledTooltip';
 import { StackTreeNode } from '@/types/StackTreeNode';
 import { formatTime } from '@/functions/formatters';
 import { getNodeSpanType } from '@/functions/getNodeSpanType';
+import { ORPHANED_NODES_PARENT_ID } from '@/constants/node';
 
 type SpanTooltipProps = {
   node: StackTreeNode;
@@ -14,7 +15,20 @@ type SpanTooltipProps = {
 };
 
 export default function SpanTooltip({ node, children, placement }: SpanTooltipProps) {
-  const { startTime, endTime, name } = node;
+  const { startTime, endTime, name, id } = node;
+
+  if (id === ORPHANED_NODES_PARENT_ID) {
+    return (
+      <StyledTooltip
+        placement={placement}
+        title={
+          'Nodes that are nested under this node belong to the record, but we were unable to determine their relationship to the rest of the nodes. This could be due to missing spans or incorrect span ids.'
+        }
+      >
+        {children}
+      </StyledTooltip>
+    );
+  }
 
   const titleSize = { xs: 3 };
   const valueSize = { xs: 9 };

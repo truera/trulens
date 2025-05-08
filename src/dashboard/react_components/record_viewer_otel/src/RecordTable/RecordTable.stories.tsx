@@ -5,6 +5,7 @@ import {
   mockLongDurationNode,
   mockNestedNode,
   mockMultipleChildrenNode,
+  mockNodeWithOrphanedChildren,
   mockDeepNode,
 } from '@/__testing__/nodes';
 
@@ -46,6 +47,12 @@ export const WithLongDuration: Story = {
 export const WithMultipleChildren: Story = {
   args: {
     root: mockMultipleChildrenNode,
+  },
+};
+
+export const WithOrphanedNodes: Story = {
+  args: {
+    root: mockNodeWithOrphanedChildren,
   },
 };
 
