@@ -176,8 +176,7 @@ pipeline {
                                         set -e
                                         cd src/dashboard/react_components/record_viewer_otel
                                         npm i
-                                        npx playwright install
-                                        npx playwright install-deps
+                                        npx playwright install --with-deps chromium
                                         npm run build-storybook
                                         ./test-wrapper.sh
                                     '''
