@@ -15,6 +15,7 @@ from opentelemetry.trace.span import Span
 from trulens.core.otel.function_call_context_manager import (
     create_function_call_context_manager,
 )
+from trulens.core.schema.app import AppDefinition
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
 from trulens.experimental.otel_tracing.core.span import Attributes
 from trulens.experimental.otel_tracing.core.span import (
@@ -39,10 +40,7 @@ import wrapt
 logger = logging.getLogger(__name__)
 
 
-def _get_func_name(func: Callable, get_only_func_name: bool) -> str:
-    if get_only_func_name:
-        return func.__name__
-
+def _get_func_name(func: Callable) -> str:
     if (
         hasattr(func, "__module__")
         and func.__module__
@@ -204,10 +202,8 @@ class instrument:
         )
         self.must_be_first_wrapper = kwargs.get("must_be_first_wrapper", False)
 
-    def __call__(
-        self, func: Callable, get_only_func_name: bool = True
-    ) -> Callable:
-        func_name = _get_func_name(func, get_only_func_name=get_only_func_name)
+    def __call__(self, func: Callable) -> Callable:
+        func_name = _get_func_name(func)
 
         @wrapt.decorator
         def sync_wrapper(func, instance, args, kwargs):
@@ -421,10 +417,17 @@ class OtelBaseRecordingContext:
     """
 
     def __init__(
-        self, *, app_name: str, app_version: str, run_name: str, input_id: str
+        self,
+        *,
+        app_name: str,
+        app_version: str,
+        app_id: str,
+        run_name: str,
+        input_id: str,
     ):
         self.app_name = app_name
         self.app_version = app_version
+        self.app_id = app_id
         self.run_name = run_name
         self.input_id = input_id
         self.tokens = []
@@ -480,9 +483,11 @@ class OtelRecordingContext(OtelBaseRecordingContext):
         input_id: str,
         ground_truth_output: Optional[str] = None,
     ) -> None:
+        app_id = AppDefinition._compute_app_id(app_name, app_version)
         super().__init__(
             app_name=app_name,
             app_version=app_version,
+            app_id=app_id,
             run_name=run_name,
             input_id=input_id,
         )
@@ -492,6 +497,7 @@ class OtelRecordingContext(OtelBaseRecordingContext):
     def __enter__(self) -> None:
         self.attach_to_context(SpanAttributes.APP_NAME, self.app_name)
         self.attach_to_context(SpanAttributes.APP_VERSION, self.app_version)
+        self.attach_to_context(SpanAttributes.APP_ID, self.app_id)
 
         self.attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
         self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
@@ -516,6 +522,7 @@ class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
         )  # TODO(otel): Should we include this? It's automatically getting added to the span.
         self.attach_to_context(SpanAttributes.APP_NAME, self.app_name)
         self.attach_to_context(SpanAttributes.APP_VERSION, self.app_version)
+        self.attach_to_context(SpanAttributes.APP_ID, self.app_id)
 
         self.attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
         self.attach_to_context(
