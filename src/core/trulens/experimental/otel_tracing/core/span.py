@@ -158,6 +158,7 @@ def set_general_span_attributes(
     set_string_span_attribute_from_baggage(
         span, SpanAttributes.APP_VERSION, context
     )
+    set_string_span_attribute_from_baggage(span, SpanAttributes.APP_ID, context)
     set_string_span_attribute_from_baggage(
         span, SpanAttributes.RECORD_ID, context
     )
