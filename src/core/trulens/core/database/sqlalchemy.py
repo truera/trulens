@@ -1032,6 +1032,7 @@ class SQLAlchemyDB(core_db.DB):
                         "latency": 0.0,  # Initialize to 0.0, filled below
                         "total_tokens": 0,  # Initialize to 0, calculated below
                         "total_cost": 0.0,  # Initialize to 0.0, calculated below
+                        "cost_currency": "USD",  # Initialize to "USD", calculated below
                         "feedback_results": {},  # Initialize to empty map, calculated below
                     }
 
@@ -1094,7 +1095,7 @@ class SQLAlchemyDB(core_db.DB):
                                 "mean_score": 0.0,
                                 "calls": [],
                                 "total_cost": 0.0,
-                                "cost_currency": "USD",
+                                "cost_currency": "USD",  # Initialize to USD, calculated below
                                 "direction": None,
                             }
 
@@ -1194,7 +1195,8 @@ class SQLAlchemyDB(core_db.DB):
                     "total_tokens": record_data["total_tokens"],
                     # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
                     "total_cost": record_data["total_cost"],
-                    "events": record_data["events"],
+                    "cost_currency": record_data["cost_currency"],
+                    "num_events": len(record_data["events"]),
                 }
 
                 # Add feedback results
@@ -1677,7 +1679,7 @@ def _extract_ground_truths(
 class AppsExtractor:
     """Utilities for creating dataframes from orm instances."""
 
-    app_cols = ["app_id", "app_json", "type"]
+    app_cols = ["app_name", "app_version", "app_id", "app_json", "type"]
     rec_cols = [
         "record_id",
         "input",
@@ -1688,7 +1690,7 @@ class AppsExtractor:
         "perf_json",
         "ts",
     ]
-    extra_cols = ["latency", "total_tokens", "total_cost"]
+    extra_cols = ["latency", "total_tokens", "total_cost", "num_events"]
     all_cols = app_cols + rec_cols + extra_cols
 
     def __init__(self):

@@ -352,6 +352,8 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
             app_ids: If given, retrieve only the records for the given apps.
                 Otherwise all apps are retrieved.
 
+            app_name: If given, retrieve only the records for the given app name.
+
             offset: Database row offset.
 
             limit: Limit on rows (records) returned.

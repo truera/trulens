@@ -540,7 +540,7 @@ def render_records(app_name: str):
     # Get records and feedback data
     records_limit = st.session_state.get(ST_RECORDS_LIMIT, None)
     records_df, feedback_col_names = get_records_and_feedback(
-        app_name=app_name, app_ids=app_ids, limit=records_limit
+        app_ids=app_ids, app_name=app_name, limit=records_limit
     )
 
     feedback_col_names = list(feedback_col_names)

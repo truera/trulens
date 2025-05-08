@@ -220,9 +220,12 @@ def _render_advanced_filters(
 
         return app1, app2, value, operator, feedback_col
 
-    with st.expander(
-        "Advanced Filters",
-    ), st.form("advanced_filter_form", border=False):
+    with (
+        st.expander(
+            "Advanced Filters",
+        ),
+        st.form("advanced_filter_form", border=False),
+    ):
         out = None
 
         filters = []
@@ -644,8 +647,8 @@ def _render_version_selectors(
             )
 
             records, feedback_cols = get_records_and_feedback(
-                app_name=app_name,
                 app_ids=current_app_ids,
+                app_name=app_name,
             )
             records = _preprocess_df(records)
             col_data = {
