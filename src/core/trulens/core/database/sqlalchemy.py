@@ -1689,9 +1689,8 @@ class AppsExtractor:
         "cost_json",
         "perf_json",
         "ts",
-        "num_events",
     ]
-    extra_cols = ["latency", "total_tokens", "total_cost"]
+    extra_cols = ["latency", "total_tokens", "total_cost", "num_events"]
     all_cols = app_cols + rec_cols + extra_cols
 
     def __init__(self):
