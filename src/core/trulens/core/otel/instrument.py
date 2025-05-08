@@ -479,12 +479,11 @@ class OtelRecordingContext(OtelBaseRecordingContext):
         *,
         app_name: str,
         app_version: str,
-        app_id: Optional[str] = None,
         run_name: str,
         input_id: str,
         ground_truth_output: Optional[str] = None,
     ) -> None:
-        app_id = app_id or AppDefinition._compute_app_id(app_name, app_version)
+        app_id = AppDefinition._compute_app_id(app_name, app_version)
         super().__init__(
             app_name=app_name,
             app_version=app_version,
