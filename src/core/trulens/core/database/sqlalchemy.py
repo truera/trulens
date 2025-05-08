@@ -1054,7 +1054,7 @@ class SQLAlchemyDB(core_db.DB):
                     record_events[record_id]["ts"] = event.start_timestamp
                     record_events[record_id]["latency"] = (
                         event.timestamp - event.start_timestamp
-                    ).total_seconds() * 1000
+                    ).total_seconds()
 
                 # Check if the span has cost info (tokens, cost, currency), and update record events
                 self._update_cost_info_otel(
@@ -1172,7 +1172,7 @@ class SQLAlchemyDB(core_db.DB):
                 perf_json = {
                     "start_time": record_data["ts"],
                     "end_time": record_data["ts"]
-                    + pd.Timedelta(milliseconds=record_data["latency"]),
+                    + pd.Timedelta(seconds=record_data["latency"]),
                 }
 
                 # Create record row
