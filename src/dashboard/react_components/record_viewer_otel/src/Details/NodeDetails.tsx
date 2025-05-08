@@ -1,19 +1,22 @@
 import { Stack, Typography } from '@mui/material';
 
 import LabelAndValue from '@/LabelAndValue';
-import { summarySx } from '@/RecordTree/Details/styles';
+import { summarySx } from '@/Details/styles';
 import { StackTreeNode } from '@/types/StackTreeNode';
 import { formatDuration } from '@/functions/formatters';
 import { TraceAttributes } from '@/TraceAttributes/TraceAttributes';
 import { getSpanTypeTitle } from '@/functions/getSpanTypeTitle';
 import { SpanAttributes } from '@/constants/span';
 
-type DetailsProps = {
-  selectedNode: StackTreeNode;
-};
+export interface NodeDetailsProps {
+  selectedNode?: StackTreeNode;
+}
 
-export default function NodeDetails(props: DetailsProps) {
+export default function NodeDetails(props: NodeDetailsProps) {
   const { selectedNode } = props;
+
+  if (!selectedNode) return <Typography>Node not found.</Typography>;
+
   const { timeTaken: nodeTime, attributes } = selectedNode;
   const spanTypeTitle = getSpanTypeTitle(attributes[SpanAttributes.SPAN_TYPE]);
   const inputId = attributes[SpanAttributes.INPUT_ID];

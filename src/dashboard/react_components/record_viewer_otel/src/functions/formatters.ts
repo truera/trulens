@@ -13,7 +13,7 @@ export const formatNumber = (value: number, options: Intl.NumberFormatOptions): 
  * @returns Human-readable formatted timestamp string
  */
 export const formatTime = (timestampInSeconds: number) => {
-  if (!timestampInSeconds) return '';
+  if (timestampInSeconds === undefined || timestampInSeconds === null) return '';
 
   const jsDate = new Date(timestampInSeconds * 1000);
 

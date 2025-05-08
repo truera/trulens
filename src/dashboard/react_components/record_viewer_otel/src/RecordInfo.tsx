@@ -3,11 +3,11 @@ import { useState } from 'react';
 
 import JSONViewer from '@/JSONViewer/JSONViewer';
 import RecordTable from '@/RecordTable/RecordTable';
-import Details from '@/RecordTree/Details/Details';
+import NodeDetails from '@/Details/NodeDetails';
 import RecordTree from '@/RecordTree/RecordTree';
 import { Tab, Tabs } from '@/Tabs';
 import { StackTreeNode } from '@/types/StackTreeNode';
-import TracePanel from './RecordTree/Details/TracePanel';
+import TracePanel from '@/Details/TracePanel';
 
 /**
  * Constants and enums for the view
@@ -54,7 +54,7 @@ export default function RecordInfo({ nodeMap, root }: RecordTreeProps) {
       return <TracePanel root={root} />;
     }
 
-    return <Details selectedNode={selectedNode} />;
+    return <NodeDetails selectedNode={selectedNode} />;
   };
 
   const isTimeline = selectedSpanView === SPAN_VIEW.TIMELINE;
