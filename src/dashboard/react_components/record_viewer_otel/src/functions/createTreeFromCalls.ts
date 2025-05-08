@@ -72,17 +72,13 @@ export const createSpanTreeFromNodes = (nodes: StackTreeNode[]) => {
   const orphanedRootCandidates = nodes.filter(
     (node) => !processedIds.has(node.id) && node.parentId && !nodeMap.has(node.parentId)
   );
-  const orphanedNodeIds = new Set<string>(orphanedRootCandidates.map((node) => node.id));
 
   // Group orphaned nodes by their parentId to identify subtrees
   const orphanedNodes: StackTreeNode[] = [];
 
   orphanedRootCandidates.forEach((node) => {
-    // Mark this node as a child of another orphaned node
-    if (!orphanedNodeIds.has(node.parentId)) {
-      buildTreeRecursive(node, childrenMap);
-      orphanedNodes.push(node);
-    }
+    buildTreeRecursive(node, childrenMap);
+    orphanedNodes.push(node);
   });
 
   // If orphaned nodes exist, attach them to a special container
