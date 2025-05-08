@@ -1,6 +1,8 @@
 import os
+from typing import Any, Dict, List, Union
 
 import streamlit.components.v1 as components
+from typing_extensions import TypedDict
 
 # Create a _RELEASE constant. We'll set this to False while we're developing
 # the component, and True when we're ready to package and distribute it.
@@ -21,17 +23,39 @@ _RELEASE = True
 _record_viewer_otel = None
 
 
+class SpanTrace(TypedDict):
+    trace_id: str
+    parent_id: str
+    span_id: str
+
+
+class SpanRecord(TypedDict):
+    name: str
+    parent_span_id: str
+    status: str
+
+
+class OtelSpan(TypedDict):
+    event_id: str
+    record: SpanRecord
+    record_attributes: Dict[str, Any]
+    start_timestamp: Union[int, float]
+    timestamp: Union[int, float]
+    trace: SpanTrace
+
+
 # Create a wrapper function for the component. This is an optional
 # best practice - we could simply expose the component function returned by
 # `declare_component` and call it done. The wrapper allows us to customize
 # our component's API: we can pre-process its input args, post-process its
 # output value, and add a docstring for users.
-def record_viewer_otel(spans, key=None) -> None:
-    """Create a new instance of "record_viewer", which produces a timeline
+def record_viewer_otel(spans: List[OtelSpan], key: str | None = None) -> None:
+    """Create a new instance of "record_viewer_otel", which produces a record viewer for the OTEL spans.
 
     Args:
         spans: List of spans to be displayed in the timeline. It is the caller's responsibility
-               to select the spans to be displayed.
+               to select the spans to be displayed. The simplest way to get the spans is to
+               get the rows from the ORM.Events table, then call to_dict(orient="records") on the rows.
     """
 
     # Call through to our private component function. Arguments we pass here
@@ -62,6 +86,4 @@ def record_viewer_otel(spans, key=None) -> None:
                 "record_viewer_otel", path=build_dir
             )
 
-    component_value = _record_viewer_otel(spans=spans, key=key, default="")
-
-    return component_value
+    _record_viewer_otel(spans=spans, key=key, default="")
