@@ -1032,6 +1032,7 @@ class SQLAlchemyDB(core_db.DB):
                         "latency": 0.0,  # Initialize to 0.0, filled below
                         "total_tokens": 0,  # Initialize to 0, calculated below
                         "total_cost": 0.0,  # Initialize to 0.0, calculated below
+                        "cost_currency": "USD",  # Initialize to "USD", calculated below
                         "feedback_results": {},  # Initialize to empty map, calculated below
                     }
 
@@ -1094,7 +1095,7 @@ class SQLAlchemyDB(core_db.DB):
                                 "mean_score": 0.0,
                                 "calls": [],
                                 "total_cost": 0.0,
-                                "cost_currency": "USD",
+                                "cost_currency": "USD",  # Initialize to USD, calculated below
                                 "direction": None,
                             }
 
@@ -1194,7 +1195,8 @@ class SQLAlchemyDB(core_db.DB):
                     "total_tokens": record_data["total_tokens"],
                     # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
                     "total_cost": record_data["total_cost"],
-                    "events": record_data["events"],
+                    "cost_currency": record_data["cost_currency"],
+                    "num_events": len(record_data["events"]),
                 }
 
                 # Add feedback results
@@ -1687,7 +1689,7 @@ class AppsExtractor:
         "cost_json",
         "perf_json",
         "ts",
-        "events",
+        "num_events",
     ]
     extra_cols = ["latency", "total_tokens", "total_cost"]
     all_cols = app_cols + rec_cols + extra_cols
