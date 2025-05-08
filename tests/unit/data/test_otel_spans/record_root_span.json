@@ -9,7 +9,7 @@
     "record_attributes": {
         "ai.observability.app_name": "coffee_rag",
         "ai.observability.app_version": "openai",
-        "ai.observability.app_id": "app_hash_coffee_rag_openai",
+        "ai.observability.app_id": "app_hash_65b218a1a09632779ea4c5f8ad9709e4",
         "ai.observability.call.kwargs.query": "What is the best coffee?",
         "ai.observability.call.return": "Hello! I'm happy to help. \n\nWhen it comes to the best coffee, it often depends on personal preference. However, Starbucks, as the world's largest coffeehouse chain, is known for its wide variety of coffee options, including espresso drinks, brewed coffee, and seasonal specialties. Many people enjoy their signature blends and the experience of customizing their drinks. If you're looking for a specific type of coffee or flavor profile, I can help you narrow it down further!",
         "ai.observability.input_id": "42",

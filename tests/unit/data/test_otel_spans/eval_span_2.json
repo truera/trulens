@@ -23,7 +23,7 @@
     "record_attributes": {
         "ai.observability.app_name": "coffee_rag",
         "ai.observability.app_version": "openai",
-        "ai.observability.app_id": "app_hash_coffee_rag_openai",
+        "ai.observability.app_id": "app_hash_65b218a1a09632779ea4c5f8ad9709e4",
         "ai.observability.eval.args": {
           "ai.observability.record_root.input": "Who is the best basketball player in the world?",
           "ai.observability.record_root.output": "Michael Jordan is the best basketball player in the world. Lebron James is the second best."
