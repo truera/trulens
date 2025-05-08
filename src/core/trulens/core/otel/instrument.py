@@ -39,10 +39,7 @@ import wrapt
 logger = logging.getLogger(__name__)
 
 
-def _get_func_name(func: Callable, get_only_func_name: bool) -> str:
-    if get_only_func_name:
-        return func.__name__
-
+def _get_func_name(func: Callable) -> str:
     if (
         hasattr(func, "__module__")
         and func.__module__
@@ -204,10 +201,8 @@ class instrument:
         )
         self.must_be_first_wrapper = kwargs.get("must_be_first_wrapper", False)
 
-    def __call__(
-        self, func: Callable, get_only_func_name: bool = True
-    ) -> Callable:
-        func_name = _get_func_name(func, get_only_func_name=get_only_func_name)
+    def __call__(self, func: Callable) -> Callable:
+        func_name = _get_func_name(func)
 
         @wrapt.decorator
         def sync_wrapper(func, instance, args, kwargs):
