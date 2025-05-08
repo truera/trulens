@@ -385,11 +385,13 @@ def _call_feedback_function(
             f"snow.{BASE_SCOPE}.object.version.name"
         ]
         run_name = record_root_attributes[f"snow.{BASE_SCOPE}.run.name"]
+    app_id = record_root_attributes[SpanAttributes.APP_ID]
     input_id = record_root_attributes[SpanAttributes.INPUT_ID]
     target_record_id = record_root_attributes[SpanAttributes.RECORD_ID]
     context_manager = OtelFeedbackComputationRecordingContext(
         app_name=app_name,
         app_version=app_version,
+        app_id=app_id,
         run_name=run_name,
         input_id=input_id,
         target_record_id=target_record_id,
