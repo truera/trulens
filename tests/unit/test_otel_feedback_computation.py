@@ -376,7 +376,6 @@ class TestOtelFeedbackComputation(OtelTestCase):
         tru_recorder.instrumented_invoke_main_method(
             run_name="test run",
             input_id="42",
-            ground_truth_output="Like attention but with more heads.",
             main_method_args=("What is multi-headed attention?",),
         )
         TruSession().force_flush()
