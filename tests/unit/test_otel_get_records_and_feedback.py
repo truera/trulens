@@ -398,10 +398,10 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
                 self.STATIC_START_TIME,
             )
 
-            # Calculate expected latency in milliseconds
+            # Calculate expected latency in seconds
             start_time = datetime.fromisoformat(self.STATIC_START_TIME)
             end_time = datetime.fromisoformat(self.STATIC_END_TIME)
-            expected_latency = (end_time - start_time).total_seconds() * 1000
+            expected_latency = (end_time - start_time).total_seconds()
             self.assertEqual(row["latency"], expected_latency)
 
             # Verify JSON fields
