@@ -585,14 +585,14 @@ class Run(BaseModel):
 
         if len(metrics_status_not_set) == 0:
             # early return cases as status of all metrics are set
-            logger.info("All metrics statuses are set.")
+            logger.info("All metrics statuses are set as expected.")
             return self._resolve_overall_metrics_status(
                 all_existing_metrics, invocation_completion_status
             )
         else:
-            # TODO: this else block should no longer be needed once the orchestrator work is completed
-            logger.info(
-                f"Metrics status not set for: {[metric.name for metric in metrics_status_not_set]}. Checking sproc query status via query history"
+            # TODO: this else block will not be possible to enter once the orchestrator work is completed
+            logger.warning(
+                f"Metrics status not set for: {[metric.name for metric in metrics_status_not_set]}."
             )
             # # multiple metrics can be associated with the same computation
             # computation_id_to_metrics = defaultdict(list)
