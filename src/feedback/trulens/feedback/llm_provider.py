@@ -1798,6 +1798,8 @@ class LLMProvider(core_provider.Provider):
 
         Abstentions will be considered as grounded.
 
+        If all statements are filtered out as trivial, returns 0.0 with a reason indicating no non-trivial statements were found.
+
         Example:
             ```python
             from trulens.core import Feedback
@@ -1883,6 +1885,9 @@ class LLMProvider(core_provider.Provider):
 
         if filter_trivial_statements:
             hypotheses = self._remove_trivial_statements(hypotheses)
+
+            if not hypotheses:
+                return 0.0, {"reason": "No non-trivial statements to evaluate"}
 
         output_space = self._determine_output_space(
             min_score_val, max_score_val
@@ -2000,6 +2005,8 @@ class LLMProvider(core_provider.Provider):
 
         If the question is considered answerable, abstentions will be considered as not grounded and punished with low scores. Otherwise, unanswerable abstentions will be considered grounded.
 
+        If all statements are filtered out as trivial, returns 0.0 with a reason indicating no non-trivial statements were found.
+
         Example:
             ```python
             from trulens.core import Feedback
@@ -2095,6 +2102,9 @@ class LLMProvider(core_provider.Provider):
 
         if filter_trivial_statements:
             hypotheses = self._remove_trivial_statements(hypotheses)
+
+            if not hypotheses:
+                return 0.0, {"reason": "No non-trivial statements to evaluate"}
 
         output_space = self._determine_output_space(
             min_score_val, max_score_val
