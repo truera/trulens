@@ -7,6 +7,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from opentelemetry.trace import INVALID_SPAN_ID
 import pandas as pd
+from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
 from trulens.core.feedback.selector import Selector
 from trulens.core.otel.instrument import OtelFeedbackComputationRecordingContext
 from trulens.experimental.otel_tracing.core.span import (
@@ -83,6 +84,7 @@ def _compute_feedback(
     feedback_inputs = selector_function(record_root)
     record_root_attributes = record_root.current_span.attributes
     for curr in feedback_inputs:
+        curr = {k: FeedbackFunctionInput(value=v) for k, v in curr.items()}
         _call_feedback_function(
             feedback_name, feedback_function, curr, record_root_attributes
         )
@@ -110,7 +112,9 @@ def compute_feedback_by_span_group(
     unflattened_inputs = _collect_inputs_from_events(
         events, kwarg_groups, kwarg_to_selector
     )
-    record_id_to_record_roots = _map_record_id_to_record_roots(events)
+    record_id_to_record_roots = _map_record_id_to_record_roots(
+        events["record_attributes"]
+    )
     unflattened_inputs = _validate_unflattened_inputs(
         unflattened_inputs,
         kwarg_groups,
@@ -158,7 +162,10 @@ def _collect_inputs_from_events(
     events: pd.DataFrame,
     kwarg_groups: List[Tuple[str]],
     kwarg_to_selector: Dict[str, Selector],
-) -> Dict[Tuple[str, Optional[str]], Dict[Tuple, List[Dict[str, Any]]]]:
+) -> Dict[
+    Tuple[str, Optional[str]],
+    Dict[Tuple, List[Dict[str, FeedbackFunctionInput]]],
+]:
     """Collect inputs from events based on selectors.
 
     Args:
@@ -172,8 +179,8 @@ def _collect_inputs_from_events(
     """
     ret = defaultdict(lambda: defaultdict(list))
 
-    for _, row in events.iterrows():
-        record_attributes = row["record_attributes"]
+    for _, curr in events.iterrows():
+        record_attributes = curr["record_attributes"]
         record_id = record_attributes[SpanAttributes.RECORD_ID]
 
         # Handle span groups.
@@ -192,7 +199,7 @@ def _collect_inputs_from_events(
                 # Collect inputs for this kwarg group.
                 kwarg_group_inputs = {
                     kwarg: kwarg_to_selector[kwarg].process_span(
-                        record_attributes
+                        curr["trace"]["span_id"], record_attributes
                     )
                     for kwarg in kwarg_group
                 }
@@ -205,36 +212,39 @@ def _collect_inputs_from_events(
 
 
 def _map_record_id_to_record_roots(
-    events: pd.DataFrame,
-) -> Dict[str, pd.Series]:
+    record_attributes: List[Dict[str, Any]],
+) -> Dict[str, Dict[str, Any]]:
     """Map record_id to record roots.
 
     Args:
-        events: DataFrame containing trace events.
+        record_attributes: List containing record attributes of events.
 
     Returns:
         Mapping from record_id to record roots.
     """
     ret = {}
-    for _, row in events.iterrows():
-        record_attributes = row["record_attributes"]
+    for curr in record_attributes:
         if (
-            record_attributes.get(SpanAttributes.SPAN_TYPE, None)
+            curr.get(SpanAttributes.SPAN_TYPE, None)
             == SpanAttributes.SpanType.RECORD_ROOT
         ):
-            record_id = record_attributes[SpanAttributes.RECORD_ID]
-            ret[record_id] = row
+            record_id = curr[SpanAttributes.RECORD_ID]
+            ret[record_id] = curr
     return ret
 
 
 def _validate_unflattened_inputs(
     unflattened_inputs: Dict[
-        Tuple[str, Optional[str]], Dict[Tuple, List[Dict[str, Any]]]
+        Tuple[str, Optional[str]],
+        Dict[Tuple, List[Dict[str, FeedbackFunctionInput]]],
     ],
     kwarg_groups: List[Tuple[str]],
     record_ids_with_record_roots: List[str],
     feedback_name: str,
-) -> Dict[Tuple[str, Optional[str]], Dict[Tuple, List[Dict[str, Any]]]]:
+) -> Dict[
+    Tuple[str, Optional[str]],
+    Dict[Tuple, List[Dict[str, FeedbackFunctionInput]]],
+]:
     """Validate collected inputs and remove invalid entries.
 
     Args:
@@ -287,9 +297,10 @@ def _validate_unflattened_inputs(
 
 def _flatten_inputs(
     unflattened_inputs: Dict[
-        Tuple[str, Optional[str]], Dict[Tuple, List[Dict[str, Any]]]
+        Tuple[str, Optional[str]],
+        Dict[Tuple, List[Dict[str, FeedbackFunctionInput]]],
     ],
-) -> List[Tuple[str, Optional[str], Dict[str, Any]]]:
+) -> List[Tuple[str, Optional[str], Dict[str, FeedbackFunctionInput]]]:
     """Flatten inputs via cartesian product.
 
     Args:
@@ -317,12 +328,14 @@ def _flatten_inputs(
 
 
 def _run_feedback_on_inputs(
-    flattened_inputs: List[Tuple[str, Optional[str], Dict[str, Any]]],
+    flattened_inputs: List[
+        Tuple[str, Optional[str], Dict[str, FeedbackFunctionInput]]
+    ],
     feedback_name: str,
     feedback_function: Callable[
         [Any], Union[float, Tuple[float, Dict[str, Any]]]
     ],
-    record_id_to_record_root: Dict[str, pd.Series],
+    record_id_to_record_root: Dict[str, Dict[str, Any]],
 ) -> int:
     """Run feedback function on all inputs.
 
@@ -342,7 +355,8 @@ def _run_feedback_on_inputs(
                 feedback_name,
                 feedback_function,
                 inputs,
-                record_id_to_record_root[record_id]["record_attributes"],
+                record_id_to_record_root[record_id],
+                span_group,
             )
             ret += 1
         except Exception as e:
@@ -357,8 +371,9 @@ def _call_feedback_function(
     feedback_function: Callable[
         [Any], Union[float, Tuple[float, Dict[str, Any]]]
     ],
-    kwarg_inputs: Dict[str, Any],
+    kwarg_inputs: Dict[str, FeedbackFunctionInput],
     record_root_attributes: Dict[str, Any],
+    span_group: Optional[str] = None,
 ) -> None:
     """Call feedback function.
 
@@ -399,7 +414,25 @@ def _call_feedback_function(
     )
     with context_manager as eval_root_span:
         try:
-            res = feedback_function(**kwarg_inputs)
+            for k, v in kwarg_inputs.items():
+                if v.span_id is not None:
+                    eval_root_span.set_attribute(
+                        f"{SpanAttributes.EVAL_ROOT.ARGS_SPAN_ID}.{k}",
+                        v.span_id,
+                    )
+                if v.span_attribute is not None:
+                    eval_root_span.set_attribute(
+                        f"{SpanAttributes.EVAL_ROOT.ARGS_SPAN_ATTRIBUTE}.{k}",
+                        v.span_attribute,
+                    )
+                if span_group is not None:
+                    eval_root_span.set_attribute(
+                        f"{SpanAttributes.EVAL_ROOT.SPAN_GROUP}",
+                        span_group,
+                    )
+            res = feedback_function(**{
+                k: v.value for k, v in kwarg_inputs.items()
+            })
         except Exception as e:
             eval_root_span.set_attribute(SpanAttributes.EVAL_ROOT.ERROR, str(e))
             raise e

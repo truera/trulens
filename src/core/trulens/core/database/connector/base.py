@@ -434,3 +434,18 @@ class DBConnector(ABC, text_utils.WithIdentString):
             events: A list of events to add to the database.
         """
         return [self.add_event(event=event) for event in events]
+
+    def get_events(
+        self, app_name: str, app_version: str
+    ) -> List[event_schema.Event]:
+        """
+        Get all events from the database relating to an app name and version.
+
+        Args:
+            app_name: The app name to filter events by.
+            app_version: The app version to filter events by.
+
+        Returns:
+            A list of events associated with the provided app name and version.
+        """
+        return self.db.get_events(app_name, app_version)
