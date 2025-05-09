@@ -1792,13 +1792,11 @@ class LLMProvider(core_provider.Provider):
 
         The statement will first be split by a tokenizer into its component sentences.
 
-        Then, trivial statements are eliminated so as to not dilute the evaluation.
+        Then, trivial statements are eliminated so as to not dilute the evaluation. Note that if all statements are filtered out as trivial, returns 0.0 with a reason indicating no non-trivial statements were found.
 
         The LLM will process each statement, using chain of thought methodology to emit the reasons.
 
         Abstentions will be considered as grounded.
-
-        If all statements are filtered out as trivial, returns 0.0 with a reason indicating no non-trivial statements were found.
 
         Example:
             ```python
@@ -1997,15 +1995,13 @@ class LLMProvider(core_provider.Provider):
 
         The statement will first be split by a tokenizer into its component sentences.
 
-        Then, trivial statements are eliminated so as to not delete the evaluation.
+        Then, trivial statements are eliminated so as to not dilute the evaluation. Note that if all statements are filtered out as trivial, returns 0.0 with a reason indicating no non-trivial statements were found.
 
         The LLM will process each statement, using chain of thought methodology to emit the reasons.
 
         In the case of abstentions, such as 'I do not know', the LLM will be asked to consider the answerability of the question given the source material.
 
         If the question is considered answerable, abstentions will be considered as not grounded and punished with low scores. Otherwise, unanswerable abstentions will be considered grounded.
-
-        If all statements are filtered out as trivial, returns 0.0 with a reason indicating no non-trivial statements were found.
 
         Example:
             ```python
