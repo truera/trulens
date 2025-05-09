@@ -874,10 +874,26 @@ class SQLAlchemyDB(core_db.DB):
         # record_events[record_id]["total_cost"][currency] += cost
 
     def _json_extract_otel(self, column: str, path: str) -> sa.Column:
-        """Helper function to extract JSON values from the Event.record_attributes column."""
-        return sa.func.json_extract(
-            self.orm.Event.record_attributes, f'$."{path}"'
-        )
+        """Helper function to extract JSON values from a JSON column in the Event table.
+
+        Args:
+            column: The name of the JSON column to extract from (e.g. 'record_attributes', 'record', etc.)
+            path: The JSON path to extract from the column
+
+        Returns:
+            A SQLAlchemy column expression that extracts the value at the given path
+
+        Raises:
+            ValueError: If the column doesn't exist or is not a JSON column
+        """
+        if not hasattr(self.orm.Event, column):
+            raise ValueError(f"Column {column} not found in Event table")
+
+        column_obj = getattr(self.orm.Event, column)
+        if not isinstance(column_obj.type, sa.JSON):
+            raise ValueError(f"Column {column} is not a JSON column")
+
+        return sa.func.json_extract(column_obj, f'$."{path}"')
 
     def _get_paginated_record_ids_otel(
         self,
