@@ -62,6 +62,7 @@ from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import signature as signature_utils
 from trulens.core.utils import threading as threading_utils
+from trulens.feedback.computer import compute_feedback_by_span_group
 from trulens.otel.semconv.constants import (
     TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
 )
@@ -794,11 +795,6 @@ class App(
             "1",
             "true",
         ]
-        if otel_tracing_enabled and len(self.feedbacks) > 0:
-            raise ValueError(
-                "Feedback logging is not supported with OpenTelemetry tracing enabled yet!"
-            )
-
         if self.connector is not None and not (
             self._is_snowflake_connector(self.connector)
             and otel_tracing_enabled
@@ -840,7 +836,7 @@ class App(
                         f"Feedback function {f} is not loadable. Cannot use DEFERRED feedback mode. {e}"
                     ) from e
 
-        if not self.selector_nocheck:
+        if not self.selector_nocheck and not otel_tracing_enabled:
             dummy = self.dummy_record()
 
             for feedback in self.feedbacks:
@@ -1902,6 +1898,23 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         raise NotImplementedError(
             "This feature is not yet implemented for non-OTEL TruLens!"
         )
+
+    def compute_feedbacks(self) -> None:
+        if os.getenv("TRULENS_OTEL_TRACING").lower() not in ["1", "true"]:
+            raise ValueError(
+                "This method is only supported for OTEL Tracing. Please enable OTEL tracing in the environment!"
+            )
+        # Get all events associated with this app name and version.
+        # TODO(this_pr): Use ID instead of name and version.
+        # TODO(otel): Should probably handle the case where there are a lot of events with pagination.
+        events = self.connector.get_events(
+            app_name=self.app_name,
+            app_version=self.app_version,
+        )
+        for feedback in self.feedbacks:
+            compute_feedback_by_span_group(
+                events, feedback.name, feedback.imp, feedback.selectors
+            )
 
 
 # NOTE: Cannot App.model_rebuild here due to circular imports involving mod_session.TruSession

@@ -461,3 +461,16 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
             The id of the given event.
         """
         raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_events(self, app_id: str) -> List[event_schema.Event]:
+        """
+        Get all events from the database.
+
+        Args:
+            app_id: The app id to filter events by.
+
+        Returns:
+            A list of events associated with the provided app id.
+        """
+        raise NotImplementedError()

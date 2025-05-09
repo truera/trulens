@@ -7,6 +7,7 @@ from typing import List
 import pandas as pd
 import pytest
 from trulens.apps.app import TruApp
+from trulens.core.feedback import Feedback
 from trulens.core.feedback.selector import Selector
 from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
@@ -337,4 +338,93 @@ class TestOtelFeedbackComputation(OtelTestCase):
                 (record_id, span_group, {"a": 1.1, "b": 2}),
             ],
             res,
+        )
+
+    def test_custom_feedback(self) -> None:
+        # Create feedback function.
+        def custom(input: str, output: str) -> float:
+            if (
+                input == "What is multi-headed attention?"
+                and output == "This is a mocked response for prompt 0."
+            ):
+                return 0.42
+            return 0.0
+
+        f_custom = Feedback(custom, name="custom").on({
+            "input": Selector(
+                span_type=SpanAttributes.SpanType.RECORD_ROOT,
+                span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
+            ),
+            "output": Selector(
+                span_type=SpanAttributes.SpanType.RECORD_ROOT,
+                span_attribute=SpanAttributes.RECORD_ROOT.OUTPUT,
+            ),
+        })
+
+        # Create app.
+        rag_chain = (
+            tests.unit.test_otel_tru_chain.TestOtelTruChain._create_simple_rag()
+        )
+        tru_recorder = TruChain(
+            rag_chain,
+            app_name="Simple RAG",
+            app_version="v1",
+            main_method=rag_chain.invoke,
+            feedbacks=[f_custom],
+        )
+        # Record and invoke.
+        tru_recorder.instrumented_invoke_main_method(
+            run_name="test run",
+            input_id="42",
+            main_method_args=("What is multi-headed attention?",),
+        )
+        TruSession().force_flush()
+        # Compute feedback on record we just ingested.
+        num_events = len(self._get_events())
+        tru_recorder.compute_feedbacks()
+        TruSession().force_flush()
+        # Compare results to expected.
+        events = self._get_events()
+        self.assertEqual(num_events + 1, len(events))
+        self.assertEqual(
+            SpanAttributes.SpanType.RECORD_ROOT,
+            events.iloc[0]["record_attributes"][SpanAttributes.SPAN_TYPE],
+        )
+        record_root_span_id = events.iloc[0]["trace"]["span_id"]
+        last_event_record_attributes = events.iloc[-1]["record_attributes"]
+        self.assertEqual(
+            SpanAttributes.SpanType.EVAL_ROOT,
+            last_event_record_attributes[SpanAttributes.SPAN_TYPE],
+        )
+        self.assertEqual(
+            "custom",
+            last_event_record_attributes[SpanAttributes.EVAL.METRIC_NAME],
+        )
+        self.assertEqual(
+            0.42,
+            last_event_record_attributes[SpanAttributes.EVAL_ROOT.SCORE],
+        )
+        self.assertEqual(
+            record_root_span_id,
+            last_event_record_attributes[
+                SpanAttributes.EVAL_ROOT.ARGS_SPAN_ID + ".input"
+            ],
+        )
+        self.assertEqual(
+            SpanAttributes.RECORD_ROOT.INPUT,
+            last_event_record_attributes[
+                SpanAttributes.EVAL_ROOT.ARGS_SPAN_ATTRIBUTE + ".input"
+            ],
+        )
+        self.assertEqual(
+            record_root_span_id,
+            last_event_record_attributes[
+                SpanAttributes.EVAL_ROOT.ARGS_SPAN_ID + ".output"
+            ],
+        )
+        self.assertEqual(
+            SpanAttributes.RECORD_ROOT.OUTPUT,
+            last_event_record_attributes[
+                SpanAttributes.EVAL_ROOT.ARGS_SPAN_ATTRIBUTE + ".output"
+            ],
         )

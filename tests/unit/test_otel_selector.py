@@ -1,5 +1,6 @@
 from typing import Optional
 
+from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
 from trulens.core.feedback.selector import Selector
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -100,40 +101,58 @@ class TestOtelSelector(OtelTestCase):
             Selector(
                 span_attributes_processor=lambda attributes: "z",
                 function_name="X",
-            ).process_span({}),
-            "z",
+            ).process_span("1", {}),
+            FeedbackFunctionInput(value="z", span_id="1"),
         )
         self.assertEqual(
-            Selector(span_attribute="Z", function_name="X").process_span({}),
-            None,
+            Selector(span_attribute="Z", function_name="X").process_span(
+                "2", {}
+            ),
+            FeedbackFunctionInput(value=None, span_id="2", span_attribute="Z"),
         )
         self.assertEqual(
-            Selector(span_attribute="Z", function_name="X").process_span({
-                "Z": "z"
-            }),
-            "z",
-        )
-        self.assertEqual(
-            Selector(
-                function_attribute="return", function_name="X"
-            ).process_span({}),
-            None,
+            Selector(span_attribute="Z", function_name="X").process_span(
+                "3", {"Z": "z"}
+            ),
+            FeedbackFunctionInput(value="z", span_id="3", span_attribute="Z"),
         )
         self.assertEqual(
             Selector(
                 function_attribute="return", function_name="X"
-            ).process_span({SpanAttributes.CALL.RETURN: "z"}),
-            "z",
+            ).process_span("4", {}),
+            FeedbackFunctionInput(
+                value=None,
+                span_id="4",
+                span_attribute=SpanAttributes.CALL.RETURN,
+            ),
         )
         self.assertEqual(
             Selector(
-                function_attribute="arg1", function_name="X"
-            ).process_span({}),
-            None,
+                function_attribute="return", function_name="X"
+            ).process_span("5", {SpanAttributes.CALL.RETURN: "z"}),
+            FeedbackFunctionInput(
+                value="z",
+                span_id="5",
+                span_attribute=SpanAttributes.CALL.RETURN,
+            ),
         )
         self.assertEqual(
-            Selector(
-                function_attribute="arg1", function_name="X"
-            ).process_span({f"{SpanAttributes.CALL.KWARGS}.arg1": "z"}),
-            "z",
+            Selector(function_attribute="arg1", function_name="X").process_span(
+                "6", {}
+            ),
+            FeedbackFunctionInput(
+                value=None,
+                span_id="6",
+                span_attribute=f"{SpanAttributes.CALL.KWARGS}.arg1",
+            ),
+        )
+        self.assertEqual(
+            Selector(function_attribute="arg1", function_name="X").process_span(
+                "7", {f"{SpanAttributes.CALL.KWARGS}.arg1": "z"}
+            ),
+            FeedbackFunctionInput(
+                value="z",
+                span_id="7",
+                span_attribute=f"{SpanAttributes.CALL.KWARGS}.arg1",
+            ),
         )
