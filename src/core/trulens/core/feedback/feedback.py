@@ -7,7 +7,6 @@ from inspect import signature
 import itertools
 import json
 import logging
-import os
 from pprint import pformat
 import traceback
 from typing import (
@@ -41,6 +40,7 @@ from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import select as select_schema
 from trulens.core.schema import types as types_schema
+from trulens.core.session import is_otel_tracing_enabled
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
@@ -619,10 +619,6 @@ class Feedback(feedback_schema.FeedbackDefinition):
     # alias
     on_output = on_response
 
-    @staticmethod
-    def _otel_enabled() -> bool:
-        return os.getenv("TRULENS_OTEL_TRACING", "").lower() in ["1", "true"]
-
     def on(self, *args, **kwargs) -> Feedback:
         """
         Create a variant of `self` with the same implementation but the given
@@ -630,7 +626,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
         name guessed and those provided as kwargs get their name from the kwargs
         key.
         """
-        if self._otel_enabled():
+        if is_otel_tracing_enabled():
             if len(args) != 1 or len(kwargs) > 0:
                 raise ValueError(
                     "OTEL mode only supports a single positional argument to `on`."

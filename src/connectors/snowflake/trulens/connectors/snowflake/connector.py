@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from functools import cached_property
 import logging
-import os
 import re
 from typing import (
     Any,
@@ -27,6 +26,7 @@ from trulens.core.database.base import DB
 from trulens.core.database.connector.base import DBConnector
 from trulens.core.database.exceptions import DatabaseVersionException
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
+from trulens.core.session import is_otel_tracing_enabled
 from trulens.core.utils import python as python_utils
 
 from snowflake.snowpark import Session
@@ -89,7 +89,7 @@ class SnowflakeConnector(DBConnector):
         self.connection_parameters: Dict[str, str] = connection_parameters
         self.use_staged_packages: bool = init_server_side_with_staged_packages
 
-        if os.getenv("TRULENS_OTEL_TRACING", "").lower() not in ["1", "true"]:
+        if not is_otel_tracing_enabled():
             self._init_with_snowpark_session(
                 snowpark_session,
                 init_server_side,

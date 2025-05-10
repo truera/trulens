@@ -5,7 +5,6 @@ from collections import defaultdict
 from enum import Enum
 import functools
 import importlib
-import os
 from typing import (
     Callable,
     ClassVar,
@@ -21,6 +20,7 @@ from typing import (
 )
 
 import pydantic
+from trulens.core.session import is_otel_tracing_enabled
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import text as text_utils
@@ -443,7 +443,7 @@ class _WithExperimentalSettings(
             ValueError: If any flag is already frozen to a different value than
             provided.
         """
-        if os.getenv("TRULENS_OTEL_TRACING", "").lower() in ["1", "true"]:
+        if is_otel_tracing_enabled():
             self._experimental_feature(
                 Feature.OTEL_TRACING, value=True, freeze=True
             )

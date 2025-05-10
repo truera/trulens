@@ -4,7 +4,6 @@ from collections import defaultdict
 from datetime import datetime
 import json
 import logging
-import os
 from sqlite3 import OperationalError
 from typing import (
     Any,
@@ -48,6 +47,7 @@ from trulens.core.schema import groundtruth as groundtruth_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.schema.event import Event
+from trulens.core.session import is_otel_tracing_enabled
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
@@ -798,15 +798,6 @@ class SQLAlchemyDB(core_db.DB):
 
             return _extract_feedback_results(results)
 
-    # Helper methods for OTEL tracing
-    def _is_otel_tracing_enabled(self) -> bool:
-        """Check if OTEL tracing is enabled.
-
-        Returns:
-            bool: True if OTEL tracing is enabled, False otherwise.
-        """
-        return os.getenv("TRULENS_OTEL_TRACING", "").lower() in ["1", "true"]
-
     def _get_event_record_attributes_otel(self, event: Event) -> Dict[str, Any]:
         """Get the record attributes from the event.
 
@@ -1253,7 +1244,7 @@ class SQLAlchemyDB(core_db.DB):
         # If use_otel is explicitly set, use the specified implementation
         # Otherwise, determine based on whether OTEL tracing environment variable is enabled
         if use_otel is None:
-            use_otel = self._is_otel_tracing_enabled()
+            use_otel = is_otel_tracing_enabled()
             logger.warning(
                 f"use_otel is not explicitly set, checking if OTEL tracing environment variable is enabled (TRULENS_OTEL_TRACING): {use_otel}"
             )
