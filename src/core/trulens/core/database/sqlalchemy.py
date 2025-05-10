@@ -1539,21 +1539,13 @@ class SQLAlchemyDB(core_db.DB):
             )
             return _event.event_id
 
-    def get_events(self, app_name: str, app_version: str) -> pd.DataFrame:
+    def get_events(self, app_id: str) -> pd.DataFrame:
         """See [DB.get_events][trulens.core.database.base.DB.get_events]."""
         with self.session.begin() as session:
-            app_name_expr = self._json_extract_otel(
-                "record_attributes", SpanAttributes.APP_NAME
+            app_id_expr = self._json_extract_otel(
+                "record_attributes", SpanAttributes.APP_ID
             )
-            app_version_expr = self._json_extract_otel(
-                "record_attributes", SpanAttributes.APP_VERSION
-            )
-            q = sa.select(self.orm.Event).where(
-                sa.and_(
-                    app_name_expr == app_name,
-                    app_version_expr == app_version,
-                )
-            )
+            q = sa.select(self.orm.Event).where(app_id_expr == app_id)
             return pd.read_sql(q, session.bind)
 
 

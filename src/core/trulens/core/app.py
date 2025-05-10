@@ -1905,12 +1905,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 "This method is only supported for OTEL Tracing. Please enable OTEL tracing in the environment!"
             )
         # Get all events associated with this app name and version.
-        # TODO(this_pr): Use ID instead of name and version.
         # TODO(otel): Should probably handle the case where there are a lot of events with pagination.
-        events = self.connector.get_events(
-            app_name=self.app_name,
-            app_version=self.app_version,
-        )
+        events = self.connector.get_events(app_id=self.app_id)
         for feedback in self.feedbacks:
             compute_feedback_by_span_group(
                 events, feedback.name, feedback.imp, feedback.selectors
