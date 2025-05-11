@@ -1539,6 +1539,15 @@ class SQLAlchemyDB(core_db.DB):
             )
             return _event.event_id
 
+    def get_events(self, app_id: str) -> pd.DataFrame:
+        """See [DB.get_events][trulens.core.database.base.DB.get_events]."""
+        with self.session.begin() as session:
+            app_id_expr = self._json_extract_otel(
+                "record_attributes", SpanAttributes.APP_ID
+            )
+            q = sa.select(self.orm.Event).where(app_id_expr == app_id)
+            return pd.read_sql(q, session.bind)
+
 
 # Use this Perf for missing Perfs.
 # TODO: Migrate the database instead.
