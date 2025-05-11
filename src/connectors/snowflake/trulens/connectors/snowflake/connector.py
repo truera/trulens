@@ -26,7 +26,7 @@ from trulens.core.database.base import DB
 from trulens.core.database.connector.base import DBConnector
 from trulens.core.database.exceptions import DatabaseVersionException
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
-from trulens.core.session import is_otel_tracing_enabled
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.utils import python as python_utils
 
 from snowflake.snowpark import Session

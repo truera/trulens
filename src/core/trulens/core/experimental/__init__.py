@@ -20,7 +20,7 @@ from typing import (
 )
 
 import pydantic
-from trulens.core.session import is_otel_tracing_enabled
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import text as text_utils

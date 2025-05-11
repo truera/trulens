@@ -7,7 +7,7 @@ Create Date: 2024-12-11 09:32:48.976169
 
 from alembic import op
 import sqlalchemy as sa
-from trulens.core.session import is_otel_tracing_enabled
+from trulens.core.otel.utils import is_otel_tracing_enabled
 
 # revision identifiers, used by Alembic.
 revision = "10"
