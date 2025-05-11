@@ -7,7 +7,6 @@ from inspect import signature
 import itertools
 import json
 import logging
-import os
 from pprint import pformat
 import traceback
 from typing import (
@@ -619,10 +618,6 @@ class Feedback(feedback_schema.FeedbackDefinition):
 
     # alias
     on_output = on_response
-
-    @staticmethod
-    def _otel_enabled() -> bool:
-        return os.getenv("TRULENS_OTEL_TRACING", "").lower() in ["1", "true"]
 
     def on(self, *args, **kwargs) -> Feedback:
         """
