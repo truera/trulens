@@ -6,7 +6,6 @@ from datetime import datetime
 import inspect
 import logging
 from multiprocessing import Process
-import os
 import threading
 from threading import Thread
 from time import sleep
@@ -55,10 +54,6 @@ with import_utils.OptionalImports(messages=optional_utils.REQUIREMENT_TQDM):
     from tqdm.auto import tqdm
 
 logger = logging.getLogger(__name__)
-
-
-def is_otel_tracing_enabled(self) -> bool:
-    return os.getenv("TRULENS_OTEL_TRACING", "").lower() in ["1", "true"]
 
 
 class TruSession(
