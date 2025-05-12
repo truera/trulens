@@ -5,10 +5,9 @@ Revises: 9
 Create Date: 2024-12-11 09:32:48.976169
 """
 
-import os
-
 from alembic import op
 import sqlalchemy as sa
+from trulens.core.otel.utils import is_otel_tracing_enabled
 
 # revision identifiers, used by Alembic.
 revision = "10"
@@ -20,7 +19,7 @@ depends_on = None
 def _use_event_table():
     # We only use event table if specifically enabled as it requires the often
     # unsupported JSON type and is for temporary testing purposes anyway.
-    return os.getenv("TRULENS_OTEL_TRACING", "").lower() in ["1", "true"]
+    return is_otel_tracing_enabled()
 
 
 def upgrade(config) -> None:
