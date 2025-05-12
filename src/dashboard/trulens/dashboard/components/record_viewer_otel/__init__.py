@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 import streamlit.components.v1 as components
 from typing_extensions import TypedDict
@@ -49,7 +49,9 @@ class OtelSpan(TypedDict):
 # `declare_component` and call it done. The wrapper allows us to customize
 # our component's API: we can pre-process its input args, post-process its
 # output value, and add a docstring for users.
-def record_viewer_otel(spans: List[OtelSpan], key: str | None = None) -> None:
+def record_viewer_otel(
+    spans: List[OtelSpan], key: Optional[str] = None
+) -> None:
     """Create a new instance of "record_viewer_otel", which produces a record viewer for the OTEL spans.
 
     Args:
