@@ -1,6 +1,7 @@
 import { StackTreeNode } from '@/types/StackTreeNode';
 import { createStackTreeNode } from './createStackTreeNode';
 import { SpanAttributes, SpanType } from '@/constants/span';
+import { ORPHANED_NODES_PARENT_ID } from '@/constants/node';
 
 let currentNode = createStackTreeNode({
   id: 'deep-1',
@@ -26,12 +27,12 @@ for (let i = 2; i <= 25; i++) {
         i % 5 === 0
           ? SpanType.RETRIEVAL
           : i % 4 === 0
-          ? SpanType.GENERATION
-          : i % 3 === 0
-          ? SpanType.RERANKING
-          : i % 2 === 0
-          ? SpanType.TOOL_INVOCATION
-          : SpanType.AGENT_INVOCATION,
+            ? SpanType.GENERATION
+            : i % 3 === 0
+              ? SpanType.RERANKING
+              : i % 2 === 0
+                ? SpanType.TOOL_INVOCATION
+                : SpanType.AGENT_INVOCATION,
     },
     children: [],
     parentId: currentNode.id,
@@ -197,6 +198,54 @@ export const mockLongDurationNode = createStackTreeNode({
       endTime: 1.4,
       attributes: { [SpanAttributes.SPAN_TYPE]: SpanType.GENERATION },
       children: [],
+      parentId: 'node-1',
+    }),
+  ],
+});
+
+export const mockNodeWithOrphanedChildren = createStackTreeNode({
+  id: 'node-1',
+  name: 'API Request',
+  startTime: 0,
+  endTime: 0.6,
+  attributes: { [SpanAttributes.SPAN_TYPE]: SpanType.RECORD_ROOT },
+  children: [
+    createStackTreeNode({
+      id: 'node-2',
+      name: 'Authentication',
+      startTime: 0.02,
+      endTime: 0.12,
+      attributes: { [SpanAttributes.SPAN_TYPE]: SpanType.CUSTOM },
+      children: [],
+      parentId: 'node-1',
+    }),
+    createStackTreeNode({
+      id: ORPHANED_NODES_PARENT_ID,
+      name: 'Orphaned Nodes',
+      startTime: 0,
+      endTime: 0,
+      attributes: {},
+      children: [
+        createStackTreeNode({
+          id: 'node-4',
+          name: 'Response Processing',
+          startTime: 0.39,
+          endTime: 0.54,
+          attributes: { [SpanAttributes.SPAN_TYPE]: SpanType.GENERATION },
+          children: [
+            createStackTreeNode({
+              id: 'node-5',
+              name: 'Response Processing Nested',
+              startTime: 0.41,
+              endTime: 0.52,
+              attributes: { [SpanAttributes.SPAN_TYPE]: SpanType.GENERATION },
+              children: [],
+              parentId: 'node-4',
+            }),
+          ],
+          parentId: '',
+        }),
+      ],
       parentId: 'node-1',
     }),
   ],

@@ -6,6 +6,7 @@ import {
   mockLongDurationNode,
   mockMultipleChildrenNode,
   mockNestedNode,
+  mockNodeWithOrphanedChildren,
   mockSimpleNode,
 } from '@/__testing__/nodes';
 
@@ -59,5 +60,12 @@ export const DeepNestedTree: Story = {
   args: {
     root: mockDeepNode,
     nodeMap: createNodeMap(mockDeepNode),
+  },
+};
+
+export const OrphanedChildren: Story = {
+  args: {
+    root: mockNodeWithOrphanedChildren,
+    nodeMap: createNodeMap(mockNodeWithOrphanedChildren),
   },
 };
