@@ -158,7 +158,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
 
         # Verify that the dataframe is appropriately grouping the spans by record_id
         if expected_num_events is not None:
-            self.assertEqual(len(row["events"]), expected_num_events)
+            self.assertEqual(row["num_events"], expected_num_events)
 
     def _verify_json_fields(
         self, row, app_id, input_text, output_text, record_id=None

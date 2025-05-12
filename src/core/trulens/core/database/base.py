@@ -352,6 +352,8 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
             app_ids: If given, retrieve only the records for the given apps.
                 Otherwise all apps are retrieved.
 
+            app_name: If given, retrieve only the records for the given app name.
+
             offset: Database row offset.
 
             limit: Limit on rows (records) returned.
@@ -457,5 +459,18 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
 
         Returns:
             The id of the given event.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_events(self, app_id: str) -> List[event_schema.Event]:
+        """
+        Get all events from the database.
+
+        Args:
+            app_id: The app id to filter events by.
+
+        Returns:
+            A list of events associated with the provided app id.
         """
         raise NotImplementedError()

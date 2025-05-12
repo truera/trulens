@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional
 
+from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
 from trulens.otel.semconv.trace import SpanAttributes
 
 
@@ -90,17 +91,23 @@ class Selector:
             )
         return ret
 
-    def process_span(self, attributes: Dict[str, Any]) -> Any:
+    def process_span(
+        self, span_id: str, attributes: Dict[str, Any]
+    ) -> FeedbackFunctionInput:
+        ret = FeedbackFunctionInput(span_id=span_id)
         if self.span_attributes_processor is not None:
-            return self.span_attributes_processor(attributes)
-        if self.span_attribute is not None:
-            return attributes.get(self.span_attribute, None)
-        if self.function_attribute is not None:
-            if self.function_attribute == "return":
-                return attributes.get(SpanAttributes.CALL.RETURN, None)
-            return attributes.get(
-                f"{SpanAttributes.CALL.KWARGS}.{self.function_attribute}", None
-            )
-        raise ValueError(
-            "None of `span_attributes_processor`, `span_attribute`, or `function_attribute` are set!"
-        )
+            ret.value = self.span_attributes_processor(attributes)
+        else:
+            if self.span_attribute is not None:
+                ret.span_attribute = self.span_attribute
+            elif self.function_attribute is not None:
+                if self.function_attribute == "return":
+                    ret.span_attribute = SpanAttributes.CALL.RETURN
+                else:
+                    ret.span_attribute = f"{SpanAttributes.CALL.KWARGS}.{self.function_attribute}"
+            else:
+                raise ValueError(
+                    "None of `span_attributes_processor`, `span_attribute`, or `function_attribute` are set!"
+                )
+            ret.value = attributes.get(ret.span_attribute, None)
+        return ret

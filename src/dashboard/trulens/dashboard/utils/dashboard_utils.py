@@ -153,8 +153,9 @@ def get_session() -> core_session.TruSession:
     ttl=dashboard_constants.CACHE_TTL, show_spinner="Getting record data"
 )
 def get_records_and_feedback(
-    app_name: str,
     app_ids: Optional[List[str]] = None,
+    app_name: Optional[str] = None,
+    offset: Optional[int] = None,
     limit: Optional[int] = None,
     use_otel: Optional[bool] = None,
 ):
@@ -162,12 +163,17 @@ def get_records_and_feedback(
     lms = session.connector.db
     assert lms
 
-    # If use_otel is not provided, use the value from session state
+    # TODELETE(otel_tracing). Delete once otel_tracing is no longer
+    # experimental.
     if use_otel is None:
         use_otel = st.session_state.get("otel_tracing", False)
 
     records_df, feedback_col_names = lms.get_records_and_feedback(
-        app_name=app_name, app_ids=app_ids, limit=limit, use_otel=use_otel
+        app_ids=app_ids,
+        app_name=app_name,
+        offset=offset,
+        limit=limit,
+        use_otel=use_otel,
     )
 
     records_df["record_metadata"] = records_df["record_json"].apply(
@@ -277,10 +283,20 @@ def render_sidebar():
         st.text(f"{mod_core.__package__} {mod_core.__version__}")
         st.text(f"{mod_dashboard.__package__} {mod_dashboard.__version__}")
 
+        FEEDBACK_FORM_URL = "https://forms.gle/HAc4HBk5nZRpgw7C6"
+        BUG_REPORT_URL = "https://github.com/truera/trulens/issues/new?template=bug-report.md"
+
         st.link_button(
             "Share Feedback",
-            "https://forms.gle/HAc4HBk5nZRpgw7C6",
+            FEEDBACK_FORM_URL,
             help="Help us improve TruLens!",
+            use_container_width=True,
+        )
+
+        st.link_button(
+            "Report a Bug 🐞",
+            BUG_REPORT_URL,
+            help="Help us fix bugs! (Emoji: Ladybug)",
             use_container_width=True,
         )
     if app_name is None:
