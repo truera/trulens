@@ -27,12 +27,12 @@ for (let i = 2; i <= 25; i++) {
         i % 5 === 0
           ? SpanType.RETRIEVAL
           : i % 4 === 0
-          ? SpanType.GENERATION
-          : i % 3 === 0
-          ? SpanType.RERANKING
-          : i % 2 === 0
-          ? SpanType.TOOL_INVOCATION
-          : SpanType.AGENT_INVOCATION,
+            ? SpanType.GENERATION
+            : i % 3 === 0
+              ? SpanType.RERANKING
+              : i % 2 === 0
+                ? SpanType.TOOL_INVOCATION
+                : SpanType.AGENT_INVOCATION,
     },
     children: [],
     parentId: currentNode.id,

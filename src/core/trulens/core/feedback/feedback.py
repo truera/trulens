@@ -33,6 +33,8 @@ from rich.markdown import Markdown
 from rich.pretty import pretty_repr
 from trulens.core._utils import pycompat as pycompat_utils
 from trulens.core.feedback import endpoint as core_endpoint
+from trulens.core.feedback.selector import Selector
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
@@ -624,6 +626,34 @@ class Feedback(feedback_schema.FeedbackDefinition):
         name guessed and those provided as kwargs get their name from the kwargs
         key.
         """
+        if is_otel_tracing_enabled():
+            if len(args) != 1 or len(kwargs) > 0:
+                raise ValueError(
+                    "OTEL mode only supports a single positional argument to `on`."
+                )
+            selectors = args[0]
+            if not isinstance(selectors, dict):
+                raise ValueError(
+                    f"OTEL mode only supports dictionary selectors, not {type(selectors)}!"
+                )
+            sig = signature(self.imp)
+            feedback_function_parameters = set(sig.parameters.keys())
+            for k, v in selectors.items():
+                if not isinstance(k, str):
+                    raise ValueError(
+                        f"OTEL mode only supports string keys, not {type(k)}!"
+                    )
+                if k not in feedback_function_parameters:
+                    raise ValueError(
+                        f"Selector key {k} not found in feedback function parameters {feedback_function_parameters}!"
+                    )
+                if not isinstance(v, Selector):
+                    raise ValueError(
+                        f"OTEL mode only supports Selector values, not {type(v)}!"
+                    )
+            ret = self.model_copy()
+            ret.selectors = selectors
+            return ret
 
         new_selectors = self.selectors.copy()
 

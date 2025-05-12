@@ -321,6 +321,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
     def get_records_and_feedback(
         self,
         app_ids: Optional[List[types_schema.AppID]] = None,
+        app_name: Optional[types_schema.AppName] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pandas.DataFrame, List[str]]:
@@ -329,6 +330,9 @@ class DBConnector(ABC, text_utils.WithIdentString):
         Args:
             app_ids: A list of app ids to filter records by. If empty or not given, all
                 apps' records will be returned.
+
+            app_name: A name of the app to filter records by. If given, only records for
+                this app will be returned.
 
             offset: Record row offset.
 
@@ -341,7 +345,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
         """
 
         df, feedback_columns = self.db.get_records_and_feedback(
-            app_ids, offset=offset, limit=limit
+            app_ids=app_ids, app_name=app_name, offset=offset, limit=limit
         )
 
         df["app_name"] = df["app_json"].apply(lambda x: x.get("app_name"))
@@ -430,3 +434,15 @@ class DBConnector(ABC, text_utils.WithIdentString):
             events: A list of events to add to the database.
         """
         return [self.add_event(event=event) for event in events]
+
+    def get_events(self, app_id: str) -> List[event_schema.Event]:
+        """
+        Get all events from the database relating to an app.
+
+        Args:
+            app_id: The app id to filter events by.
+
+        Returns:
+            A list of events associated with the provided app id.
+        """
+        return self.db.get_events(app_id)

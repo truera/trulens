@@ -4,7 +4,6 @@ from collections import defaultdict
 from datetime import datetime
 import json
 import logging
-import os
 from sqlite3 import OperationalError
 from typing import (
     Any,
@@ -40,6 +39,7 @@ from trulens.core.database import orm as db_orm
 from trulens.core.database import utils as db_utils
 from trulens.core.database.legacy import migration as legacy_migration
 from trulens.core.database.migrations import data as data_migrations
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import dataset as dataset_schema
@@ -798,15 +798,6 @@ class SQLAlchemyDB(core_db.DB):
 
             return _extract_feedback_results(results)
 
-    # Helper methods for OTEL tracing
-    def _is_otel_tracing_enabled(self) -> bool:
-        """Check if OTEL tracing is enabled.
-
-        Returns:
-            bool: True if OTEL tracing is enabled, False otherwise.
-        """
-        return os.getenv("TRULENS_OTEL_TRACING", "").lower() in ["1", "true"]
-
     def _get_event_record_attributes_otel(self, event: Event) -> Dict[str, Any]:
         """Get the record attributes from the event.
 
@@ -874,10 +865,26 @@ class SQLAlchemyDB(core_db.DB):
         # record_events[record_id]["total_cost"][currency] += cost
 
     def _json_extract_otel(self, column: str, path: str) -> sa.Column:
-        """Helper function to extract JSON values from the Event.record_attributes column."""
-        return sa.func.json_extract(
-            self.orm.Event.record_attributes, f'$."{path}"'
-        )
+        """Helper function to extract JSON values from a JSON column in the Event table.
+
+        Args:
+            column: The name of the JSON column to extract from (e.g. 'record_attributes', 'record', etc.)
+            path: The JSON path to extract from the column
+
+        Returns:
+            A SQLAlchemy column expression that extracts the value at the given path
+
+        Raises:
+            ValueError: If the column doesn't exist or is not a JSON column
+        """
+        if not hasattr(self.orm.Event, column):
+            raise ValueError(f"Column {column} not found in Event table")
+
+        column_obj = getattr(self.orm.Event, column)
+        if not isinstance(column_obj.type, sa.JSON):
+            raise ValueError(f"Column {column} is not a JSON column")
+
+        return sa.func.json_extract(column_obj, f'$."{path}"')
 
     def _get_paginated_record_ids_otel(
         self,
@@ -1032,6 +1039,7 @@ class SQLAlchemyDB(core_db.DB):
                         "latency": 0.0,  # Initialize to 0.0, filled below
                         "total_tokens": 0,  # Initialize to 0, calculated below
                         "total_cost": 0.0,  # Initialize to 0.0, calculated below
+                        "cost_currency": "USD",  # Initialize to "USD", calculated below
                         "feedback_results": {},  # Initialize to empty map, calculated below
                     }
 
@@ -1053,7 +1061,7 @@ class SQLAlchemyDB(core_db.DB):
                     record_events[record_id]["ts"] = event.start_timestamp
                     record_events[record_id]["latency"] = (
                         event.timestamp - event.start_timestamp
-                    ).total_seconds() * 1000
+                    ).total_seconds()
 
                 # Check if the span has cost info (tokens, cost, currency), and update record events
                 self._update_cost_info_otel(
@@ -1094,7 +1102,7 @@ class SQLAlchemyDB(core_db.DB):
                                 "mean_score": 0.0,
                                 "calls": [],
                                 "total_cost": 0.0,
-                                "cost_currency": "USD",
+                                "cost_currency": "USD",  # Initialize to USD, calculated below
                                 "direction": None,
                             }
 
@@ -1171,7 +1179,7 @@ class SQLAlchemyDB(core_db.DB):
                 perf_json = {
                     "start_time": record_data["ts"],
                     "end_time": record_data["ts"]
-                    + pd.Timedelta(milliseconds=record_data["latency"]),
+                    + pd.Timedelta(seconds=record_data["latency"]),
                 }
 
                 # Create record row
@@ -1194,7 +1202,8 @@ class SQLAlchemyDB(core_db.DB):
                     "total_tokens": record_data["total_tokens"],
                     # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
                     "total_cost": record_data["total_cost"],
-                    "events": record_data["events"],
+                    "cost_currency": record_data["cost_currency"],
+                    "num_events": len(record_data["events"]),
                 }
 
                 # Add feedback results
@@ -1251,7 +1260,7 @@ class SQLAlchemyDB(core_db.DB):
         # If use_otel is explicitly set, use the specified implementation
         # Otherwise, determine based on whether OTEL tracing environment variable is enabled
         if use_otel is None:
-            use_otel = self._is_otel_tracing_enabled()
+            use_otel = is_otel_tracing_enabled()
             logger.warning(
                 f"use_otel is not explicitly set, checking if OTEL tracing environment variable is enabled (TRULENS_OTEL_TRACING): {use_otel}"
             )
@@ -1537,6 +1546,15 @@ class SQLAlchemyDB(core_db.DB):
             )
             return _event.event_id
 
+    def get_events(self, app_id: str) -> pd.DataFrame:
+        """See [DB.get_events][trulens.core.database.base.DB.get_events]."""
+        with self.session.begin() as session:
+            app_id_expr = self._json_extract_otel(
+                "record_attributes", SpanAttributes.APP_ID
+            )
+            q = sa.select(self.orm.Event).where(app_id_expr == app_id)
+            return pd.read_sql(q, session.bind)
+
 
 # Use this Perf for missing Perfs.
 # TODO: Migrate the database instead.
@@ -1677,7 +1695,7 @@ def _extract_ground_truths(
 class AppsExtractor:
     """Utilities for creating dataframes from orm instances."""
 
-    app_cols = ["app_id", "app_json", "type"]
+    app_cols = ["app_name", "app_version", "app_id", "app_json", "type"]
     rec_cols = [
         "record_id",
         "input",
@@ -1688,7 +1706,7 @@ class AppsExtractor:
         "perf_json",
         "ts",
     ]
-    extra_cols = ["latency", "total_tokens", "total_cost"]
+    extra_cols = ["latency", "total_tokens", "total_cost", "num_events"]
     all_cols = app_cols + rec_cols + extra_cols
 
     def __init__(self):

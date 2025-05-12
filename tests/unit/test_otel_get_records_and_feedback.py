@@ -158,7 +158,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
 
         # Verify that the dataframe is appropriately grouping the spans by record_id
         if expected_num_events is not None:
-            self.assertEqual(len(row["events"]), expected_num_events)
+            self.assertEqual(row["num_events"], expected_num_events)
 
     def _verify_json_fields(
         self, row, app_id, input_text, output_text, record_id=None
@@ -398,10 +398,10 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
                 self.STATIC_START_TIME,
             )
 
-            # Calculate expected latency in milliseconds
+            # Calculate expected latency in seconds
             start_time = datetime.fromisoformat(self.STATIC_START_TIME)
             end_time = datetime.fromisoformat(self.STATIC_END_TIME)
-            expected_latency = (end_time - start_time).total_seconds() * 1000
+            expected_latency = (end_time - start_time).total_seconds()
             self.assertEqual(row["latency"], expected_latency)
 
             # Verify JSON fields

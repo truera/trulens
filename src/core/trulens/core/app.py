@@ -10,7 +10,6 @@ from inspect import BoundArguments
 from inspect import Signature
 import json
 import logging
-import os
 import threading
 from typing import (
     Any,
@@ -42,6 +41,7 @@ from trulens.core.database import base as core_db
 from trulens.core.database import connector as core_connector
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback import feedback as core_feedback
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.run import Run
 from trulens.core.run import RunConfig
 from trulens.core.run import validate_dataset_spec
@@ -62,6 +62,7 @@ from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import signature as signature_utils
 from trulens.core.utils import threading as threading_utils
+from trulens.feedback.computer import compute_feedback_by_span_group
 from trulens.otel.semconv.constants import (
     TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
 )
@@ -788,20 +789,9 @@ class App(
                     "No feedback evaluation and logging will occur."
                 )
 
-        otel_tracing_enabled = os.getenv(
-            "TRULENS_OTEL_TRACING", ""
-        ).lower() in [
-            "1",
-            "true",
-        ]
-        if otel_tracing_enabled and len(self.feedbacks) > 0:
-            raise ValueError(
-                "Feedback logging is not supported with OpenTelemetry tracing enabled yet!"
-            )
-
         if self.connector is not None and not (
             self._is_snowflake_connector(self.connector)
-            and otel_tracing_enabled
+            and is_otel_tracing_enabled()
         ):
             self.connector.add_app(app=self)
 
@@ -840,7 +830,7 @@ class App(
                         f"Feedback function {f} is not loadable. Cannot use DEFERRED feedback mode. {e}"
                     ) from e
 
-        if not self.selector_nocheck:
+        if not self.selector_nocheck and not is_otel_tracing_enabled():
             dummy = self.dummy_record()
 
             for feedback in self.feedbacks:
@@ -1902,6 +1892,19 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         raise NotImplementedError(
             "This feature is not yet implemented for non-OTEL TruLens!"
         )
+
+    def compute_feedbacks(self) -> None:
+        if not is_otel_tracing_enabled():
+            raise ValueError(
+                "This method is only supported for OTEL Tracing. Please enable OTEL tracing in the environment!"
+            )
+        # Get all events associated with this app name and version.
+        # TODO(otel): Should probably handle the case where there are a lot of events with pagination.
+        events = self.connector.get_events(app_id=self.app_id)
+        for feedback in self.feedbacks:
+            compute_feedback_by_span_group(
+                events, feedback.name, feedback.imp, feedback.selectors
+            )
 
 
 # NOTE: Cannot App.model_rebuild here due to circular imports involving mod_session.TruSession
