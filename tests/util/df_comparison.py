@@ -171,7 +171,6 @@ def _compare_entity(
                     regex_replacements=regex_replacements,
                 )
                 return
-            # TODO(this_pr): do we still need this?
             for regex, replacement in regex_replacements:
                 expected = re.sub(regex, replacement, expected)
                 actual = re.sub(regex, replacement, actual)
