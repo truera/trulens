@@ -914,23 +914,23 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         self.assertEqual(target_dict["total_tokens"], 0)
         self.assertEqual(target_dict["total_cost"], {})
 
-    def test_get_averaged_cost_columns_single_currency(self):
-        """Test _get_averaged_cost_columns with a single currency."""
+    def test_create_currency_cost_columns_single_currency(self):
+        """Test _create_currency_cost_columns with a single currency."""
         # Create a DataFrame with single currency costs
         df = pd.DataFrame({
             "total_cost": [{"USD": 10}, {"USD": 20}, {"USD": 30}]
         })
 
         result_df, cost_columns = (
-            self.session.connector._get_averaged_cost_columns(df)
+            self.session.connector._create_currency_cost_columns(df)
         )
 
-        self.assertEqual(cost_columns, ["avg_cost_USD"])
-        self.assertTrue("avg_cost_USD" in result_df.columns)
-        self.assertEqual(result_df["avg_cost_USD"].tolist(), [10, 20, 30])
+        self.assertEqual(cost_columns, ["total_cost_USD"])
+        self.assertTrue("total_cost_USD" in result_df.columns)
+        self.assertEqual(result_df["total_cost_USD"].tolist(), [10, 20, 30])
 
-    def test_get_averaged_cost_columns_multiple_currencies(self):
-        """Test _get_averaged_cost_columns with multiple currencies."""
+    def test_create_currency_cost_columns_multiple_currencies(self):
+        """Test _create_currency_cost_columns with multiple currencies."""
         # Create a DataFrame with mixed currency costs
         df = pd.DataFrame({
             "total_cost": [
@@ -941,17 +941,19 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         })
 
         result_df, cost_columns = (
-            self.session.connector._get_averaged_cost_columns(df)
+            self.session.connector._create_currency_cost_columns(df)
         )
 
-        self.assertEqual(set(cost_columns), {"avg_cost_USD", "avg_cost_Yuan"})
-        self.assertTrue("avg_cost_USD" in result_df.columns)
-        self.assertTrue("avg_cost_Yuan" in result_df.columns)
-        self.assertEqual(result_df["avg_cost_USD"].tolist(), [10, 5, 15])
-        self.assertEqual(result_df["avg_cost_Yuan"].tolist(), [6, 3, 9])
+        self.assertEqual(
+            set(cost_columns), {"total_cost_USD", "total_cost_Yuan"}
+        )
+        self.assertTrue("total_cost_USD" in result_df.columns)
+        self.assertTrue("total_cost_Yuan" in result_df.columns)
+        self.assertEqual(result_df["total_cost_USD"].tolist(), [10, 5, 15])
+        self.assertEqual(result_df["total_cost_Yuan"].tolist(), [6, 3, 9])
 
-    def test_get_averaged_cost_columns_missing_currencies(self):
-        """Test _get_averaged_cost_columns with missing currencies in some rows."""
+    def test_create_currency_cost_columns_missing_currencies(self):
+        """Test _create_currency_cost_columns with missing currencies in some rows."""
         # Create a DataFrame where some rows are missing certain currencies
         df = pd.DataFrame({
             "total_cost": [
@@ -962,26 +964,28 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         })
 
         result_df, cost_columns = (
-            self.session.connector._get_averaged_cost_columns(df)
+            self.session.connector._create_currency_cost_columns(df)
         )
 
-        self.assertEqual(set(cost_columns), {"avg_cost_USD", "avg_cost_Yuan"})
-        self.assertTrue("avg_cost_USD" in result_df.columns)
-        self.assertTrue("avg_cost_Yuan" in result_df.columns)
         self.assertEqual(
-            result_df["avg_cost_USD"].tolist(), [10, 5, 0]
+            set(cost_columns), {"total_cost_USD", "total_cost_Yuan"}
+        )
+        self.assertTrue("total_cost_USD" in result_df.columns)
+        self.assertTrue("total_cost_Yuan" in result_df.columns)
+        self.assertEqual(
+            result_df["total_cost_USD"].tolist(), [10, 5, 0]
         )  # 0 for missing USD
         self.assertEqual(
-            result_df["avg_cost_Yuan"].tolist(), [6, 0, 9]
+            result_df["total_cost_Yuan"].tolist(), [6, 0, 9]
         )  # 0 for missing Yuan
 
-    def test_get_averaged_cost_columns_non_dict(self):
-        """Test _get_averaged_cost_columns with non-dictionary total_cost."""
+    def test_create_currency_cost_columns_non_dict(self):
+        """Test _create_currency_cost_columns with non-dictionary total_cost."""
         # Create a DataFrame where total_cost is not a dictionary
         df = pd.DataFrame({"total_cost": [10.0, 20.0, 30.0]})
 
         result_df, cost_columns = (
-            self.session.connector._get_averaged_cost_columns(df)
+            self.session.connector._create_currency_cost_columns(df)
         )
 
         self.assertEqual(cost_columns, ["total_cost"])

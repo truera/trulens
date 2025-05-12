@@ -151,17 +151,17 @@ class DBConnector(ABC, text_utils.WithIdentString):
                 except Exception as e:
                     logger.error("Failed to insert feedback results {}", e)
 
-    def _get_averaged_cost_columns(
+    def _create_currency_cost_columns(
         self, df: pandas.DataFrame
     ) -> Tuple[pandas.DataFrame, List[str]]:
-        """Helper function to create averaged cost columns for multiple currencies.
+        """Helper function to create currency cost columns for multiple currencies.
 
         Args:
             df: DataFrame containing total_cost column which may be a dict of currencies
 
         Returns:
             Tuple of:
-            - DataFrame with added avg_cost_{currency} columns
+            - DataFrame with added total_cost_{currency} columns
             - List of column names to include in aggregation
         """
         # Single currency case - maintain backward compatibility
@@ -175,11 +175,11 @@ class DBConnector(ABC, text_utils.WithIdentString):
 
         # Create a column for each currency, averaging across all spans
         for currency in all_currencies:
-            df[f"avg_cost_{currency}"] = df["total_cost"].apply(
+            df[f"total_cost_{currency}"] = df["total_cost"].apply(
                 lambda x: x.get(currency, 0) if isinstance(x, dict) else 0
             )
 
-        return df, [f"avg_cost_{currency}" for currency in all_currencies]
+        return df, [f"total_cost_{currency}" for currency in all_currencies]
 
     def add_app(self, app: app_schema.AppDefinition) -> types_schema.AppID:
         """
