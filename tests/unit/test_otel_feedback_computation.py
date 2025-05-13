@@ -8,6 +8,7 @@ import pandas as pd
 import pytest
 from trulens.apps.app import TruApp
 from trulens.core.feedback import Feedback
+from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
 from trulens.core.feedback.selector import Selector
 from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
@@ -16,6 +17,7 @@ from trulens.feedback.computer import RecordGraphNode
 from trulens.feedback.computer import _compute_feedback
 from trulens.feedback.computer import _flatten_inputs
 from trulens.feedback.computer import _group_kwargs_by_selectors
+from trulens.feedback.computer import _remove_already_computed_feedbacks
 from trulens.feedback.computer import _validate_unflattened_inputs
 from trulens.feedback.computer import compute_feedback_by_span_group
 from trulens.otel.semconv.trace import SpanAttributes
@@ -340,6 +342,54 @@ class TestOtelFeedbackComputation(OtelTestCase):
             res,
         )
 
+    def test__remove_already_computed_feedbacks(self) -> None:
+        events = pd.DataFrame({
+            "record_attributes": [
+                {
+                    SpanAttributes.SPAN_TYPE: SpanAttributes.SpanType.EVAL_ROOT,
+                    SpanAttributes.EVAL.METRIC_NAME: "feedback1",
+                    SpanAttributes.RECORD_ID: "record_id1",
+                    SpanAttributes.EVAL_ROOT.SPAN_GROUP: "span_group1",
+                    SpanAttributes.EVAL_ROOT.ARGS_SPAN_ID + ".a": "span_id1a",
+                    SpanAttributes.EVAL_ROOT.ARGS_SPAN_ID + ".b": "span_id1b",
+                    SpanAttributes.EVAL_ROOT.ARGS_SPAN_ATTRIBUTE
+                    + ".a": "span_attribute1a",
+                    SpanAttributes.EVAL_ROOT.ARGS_SPAN_ATTRIBUTE
+                    + ".b": "span_attribute1b",
+                },
+            ]
+        })
+        flattened_inputs = [
+            (
+                "record_id1",
+                "span_group1",
+                {
+                    "a": FeedbackFunctionInput(
+                        span_id="span_id1a", span_attribute="span_attribute1a"
+                    ),
+                    "b": FeedbackFunctionInput(
+                        span_id="span_id1b", span_attribute="span_attribute1b"
+                    ),
+                },
+            ),
+            (
+                "record_id1",
+                "span_group1",
+                {
+                    "a": FeedbackFunctionInput(
+                        span_id="span_id1a", span_attribute="span_attribute1a"
+                    ),
+                    "b": FeedbackFunctionInput(
+                        span_id="span_id2b", span_attribute="span_attribute1b"
+                    ),
+                },
+            ),
+        ]
+        res = _remove_already_computed_feedbacks(
+            events, "feedback1", flattened_inputs
+        )
+        self.assertEqual([flattened_inputs[1]], res)
+
     def test_custom_feedback(self) -> None:
         # Create feedback function.
         def custom(input: str, output: str) -> float:
@@ -428,3 +478,11 @@ class TestOtelFeedbackComputation(OtelTestCase):
                 SpanAttributes.EVAL_ROOT.ARGS_SPAN_ATTRIBUTE + ".output"
             ],
         )
+        # Check that when trying to compute feedbacks again, nothing happens.
+        old_num_events = len(self._get_events())
+        tru_recorder.compute_feedbacks(
+            raise_error_on_no_feedbacks_computed=False
+        )
+        TruSession().force_flush()
+        new_num_events = len(self._get_events())
+        self.assertEqual(old_num_events, new_num_events)
