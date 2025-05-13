@@ -1893,7 +1893,15 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             "This feature is not yet implemented for non-OTEL TruLens!"
         )
 
-    def compute_feedbacks(self) -> None:
+    def compute_feedbacks(
+        self, raise_error_on_no_feedbacks_computed: bool = True
+    ) -> None:
+        """Compute feedbacks for the app.
+
+        Args:
+            raise_error_on_no_feedbacks_computed:
+                Raise an error if no feedbacks were computed. Default is True.
+        """
         if not is_otel_tracing_enabled():
             raise ValueError(
                 "This method is only supported for OTEL Tracing. Please enable OTEL tracing in the environment!"
@@ -1903,7 +1911,11 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         events = self.connector.get_events(app_id=self.app_id)
         for feedback in self.feedbacks:
             compute_feedback_by_span_group(
-                events, feedback.name, feedback.imp, feedback.selectors
+                events,
+                feedback.name,
+                feedback.imp,
+                feedback.selectors,
+                raise_error_on_no_feedbacks_computed,
             )
 
 
