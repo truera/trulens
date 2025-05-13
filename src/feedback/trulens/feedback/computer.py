@@ -124,7 +124,6 @@ def compute_feedback_by_span_group(
         feedback_name,
     )
     flattened_inputs = _flatten_inputs(unflattened_inputs)
-    flattened_inputs = _remove_duplicates(flattened_inputs)
     flattened_inputs = _remove_already_computed_feedbacks(
         events, feedback_name, flattened_inputs
     )
@@ -332,33 +331,6 @@ def _flatten_inputs(
             for input_dict in combination:
                 merged_input.update(input_dict)
             ret.append((record_id, span_group, merged_input))
-    return ret
-
-
-# TODO(this_pr): Probably should be removed.
-def _remove_duplicates(
-    flattened_inputs: List[
-        Tuple[str, Optional[str], Dict[str, FeedbackFunctionInput]]
-    ],
-) -> List[Tuple[str, Optional[str], Dict[str, FeedbackFunctionInput]]]:
-    """Remove duplicate inputs.
-
-    Args:
-        flattened_inputs: Flattened inputs to remove duplicates from.
-
-    Returns:
-        List of unique inputs.
-    """
-    seen = set()
-    ret = []
-    for record_id, span_group, inputs in flattened_inputs:
-        curr = [record_id]
-        for k in sorted(inputs.keys()):
-            curr.append((k, inputs[k].span_id, inputs[k].span_attribute))
-        curr = tuple(curr)
-        if curr not in seen:
-            seen.add(curr)
-            ret.append((record_id, span_group, inputs))
     return ret
 
 
