@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 import itertools
 import logging
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 from opentelemetry.trace import INVALID_SPAN_ID
 import pandas as pd
@@ -107,6 +107,8 @@ def compute_feedback_by_span_group(
         feedback_name: Name of the feedback function.
         feedback_function: Function to compute feedback.
         kwarg_to_selector: Mapping from function kwargs to span selectors
+        raise_error_on_no_feedbacks_computed:
+            Raise an error if no feedbacks were computed. Default is True.
     """
     kwarg_groups = _group_kwargs_by_selectors(kwarg_to_selector)
     unflattened_inputs = _collect_inputs_from_events(
@@ -122,6 +124,9 @@ def compute_feedback_by_span_group(
         feedback_name,
     )
     flattened_inputs = _flatten_inputs(unflattened_inputs)
+    flattened_inputs = _remove_already_computed_feedbacks(
+        events, feedback_name, flattened_inputs
+    )
     num_feedbacks_computed = _run_feedback_on_inputs(
         flattened_inputs,
         feedback_name,
@@ -164,14 +169,15 @@ def _collect_inputs_from_events(
     kwarg_to_selector: Dict[str, Selector],
 ) -> Dict[
     Tuple[str, Optional[str]],
-    Dict[Tuple, List[Dict[str, FeedbackFunctionInput]]],
+    Dict[Tuple[str], List[Dict[str, FeedbackFunctionInput]]],
 ]:
     """Collect inputs from events based on selectors.
 
     Args:
         events: DataFrame containing trace events.
-        kwarg_groups: List of list of kwargs. Each sublist contains kwargs that
-                      describe the same spans in their selector.
+        kwarg_groups:
+            List of list of kwargs. Each sublist contains kwargs that describe
+            the same spans in their selector.
         kwarg_to_selector: Mapping from function kwargs to span selectors.
 
     Returns:
@@ -236,24 +242,25 @@ def _map_record_id_to_record_roots(
 def _validate_unflattened_inputs(
     unflattened_inputs: Dict[
         Tuple[str, Optional[str]],
-        Dict[Tuple, List[Dict[str, FeedbackFunctionInput]]],
+        Dict[Tuple[str], List[Dict[str, FeedbackFunctionInput]]],
     ],
     kwarg_groups: List[Tuple[str]],
     record_ids_with_record_roots: List[str],
     feedback_name: str,
 ) -> Dict[
     Tuple[str, Optional[str]],
-    Dict[Tuple, List[Dict[str, FeedbackFunctionInput]]],
+    Dict[Tuple[str], List[Dict[str, FeedbackFunctionInput]]],
 ]:
     """Validate collected inputs and remove invalid entries.
 
     Args:
-        unflattened_inputs: Mapping from (record_id, span_group) to kwarg group
-                            to inputs.
-        kwarg_groups: List of list of kwargs. Each sublist contains kwargs that
-                      describe the same spans in their selector.
-        record_ids_with_record_roots: List of record ids that have record
-                                      roots.
+        unflattened_inputs:
+            Mapping from (record_id, span_group) to kwarg group to inputs.
+        kwarg_groups:
+            List of list of kwargs. Each sublist contains kwargs that describe
+            the same spans in their selector.
+        record_ids_with_record_roots:
+            List of record ids that have record roots.
         feedback_name: Name of the feedback function.
 
     Returns:
@@ -298,7 +305,7 @@ def _validate_unflattened_inputs(
 def _flatten_inputs(
     unflattened_inputs: Dict[
         Tuple[str, Optional[str]],
-        Dict[Tuple, List[Dict[str, FeedbackFunctionInput]]],
+        Dict[Tuple[str], List[Dict[str, FeedbackFunctionInput]]],
     ],
 ) -> List[Tuple[str, Optional[str], Dict[str, FeedbackFunctionInput]]]:
     """Flatten inputs via cartesian product.
@@ -325,6 +332,93 @@ def _flatten_inputs(
                 merged_input.update(input_dict)
             ret.append((record_id, span_group, merged_input))
     return ret
+
+
+def _remove_already_computed_feedbacks(
+    events: pd.DataFrame,
+    feedback_name: str,
+    flattened_inputs: List[
+        Tuple[str, Optional[str], Dict[str, FeedbackFunctionInput]]
+    ],
+) -> List[Tuple[str, Optional[str], Dict[str, FeedbackFunctionInput]]]:
+    """Remove inputs that have already been computed.
+
+    Args:
+        events: DataFrame containing trace events.
+        feedback_name: Name of the feedback function.
+        flattened_inputs:
+            Flattened inputs to remove inputs that have already been computed
+            from.
+
+    Returns:
+        List of inputs that have not already been computed.
+    """
+    attributes = events["record_attributes"]
+    eval_root_attributes = attributes[
+        attributes.apply(
+            lambda curr: curr.get(SpanAttributes.SPAN_TYPE)
+            == SpanAttributes.SpanType.EVAL_ROOT
+        )
+    ]
+    record_id_to_eval_root_attributes = eval_root_attributes.groupby(
+        by=eval_root_attributes.apply(
+            lambda curr: curr.get(SpanAttributes.RECORD_ID)
+        )
+    )
+    ret = []
+    for record_id, span_group, inputs in flattened_inputs:
+        curr_eval_root_attributes = []
+        if record_id in record_id_to_eval_root_attributes.groups:
+            curr_eval_root_attributes = (
+                record_id_to_eval_root_attributes.get_group(record_id)
+            )
+        if not _feedback_already_computed(
+            span_group, inputs, feedback_name, curr_eval_root_attributes
+        ):
+            ret.append((record_id, span_group, inputs))
+    return ret
+
+
+def _feedback_already_computed(
+    span_group: Optional[str],
+    kwarg_inputs: Dict[str, FeedbackFunctionInput],
+    feedback_name: str,
+    eval_root_attributes: Sequence[Dict[str, Any]],
+) -> bool:
+    """Check if feedback has already been computed.
+
+    Args:
+        span_group: Span group of the invocation.
+        kwarg_inputs: kwarg inputs to feedback function.
+        feedback_name: Name of the feedback function.
+        eval_root_attributes: List of eval root spans attributes.
+
+    Returns:
+        True iff feedback has already been computed.
+    """
+    for curr in eval_root_attributes:
+        curr_span_group = curr.get(SpanAttributes.EVAL_ROOT.SPAN_GROUP)
+        if isinstance(curr_span_group, list):
+            valid = span_group in curr_span_group
+        else:
+            valid = span_group == curr_span_group
+        valid = valid and feedback_name == curr.get(
+            SpanAttributes.EVAL.METRIC_NAME
+        )
+        for k, v in kwarg_inputs.items():
+            if not valid:
+                break
+            if v.span_id != curr.get(
+                f"{SpanAttributes.EVAL_ROOT.ARGS_SPAN_ID}.{k}"
+            ):
+                valid = False
+            if v.span_attribute != curr.get(
+                f"{SpanAttributes.EVAL_ROOT.ARGS_SPAN_ATTRIBUTE}.{k}"
+            ):
+                valid = False
+        if valid:
+            return True
+    return False
 
 
 def _run_feedback_on_inputs(
@@ -382,6 +476,7 @@ def _call_feedback_function(
         feedback_function: Function to compute feedback.
         kwarg_inputs: kwarg inputs to feedback function.
         record_root_attributes: Span attributes of record root.
+        span_group: Span group of the invocation.
     """
     if SpanAttributes.APP_NAME in record_root_attributes:
         app_name = record_root_attributes[SpanAttributes.APP_NAME]

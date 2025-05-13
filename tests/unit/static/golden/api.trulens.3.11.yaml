@@ -1945,6 +1945,29 @@ trulens.dashboard.components.record_viewer:
   highs: {}
   lows:
     record_viewer: builtins.function
+trulens.dashboard.components.record_viewer_otel:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    OtelSpan: typing_extensions._TypedDictMeta
+    SpanRecord: typing_extensions._TypedDictMeta
+    SpanTrace: typing_extensions._TypedDictMeta
+    record_viewer_otel: builtins.function
+trulens.dashboard.components.record_viewer_otel.OtelSpan:
+  __bases__:
+  - builtins.dict
+  __class__: typing_extensions._TypedDictMeta
+  attributes: {}
+trulens.dashboard.components.record_viewer_otel.SpanRecord:
+  __bases__:
+  - builtins.dict
+  __class__: typing_extensions._TypedDictMeta
+  attributes: {}
+trulens.dashboard.components.record_viewer_otel.SpanTrace:
+  __bases__:
+  - builtins.dict
+  __class__: typing_extensions._TypedDictMeta
+  attributes: {}
 trulens.dashboard.constants:
   __class__: builtins.module
   highs: {}
