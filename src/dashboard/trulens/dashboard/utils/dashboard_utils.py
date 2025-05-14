@@ -1,4 +1,5 @@
 import argparse
+import json
 import sys
 from typing import Any, Callable, Dict, List, Optional
 
@@ -499,6 +500,62 @@ def render_app_version_filters(
     return filtered_app_versions, app_version_metadata_cols
 
 
+def _parse_json_fields(field: Any) -> Dict[str, Any]:
+    """Parse a JSON field from the database, handling potential errors.
+
+    Args:
+        field: The field to parse, can be a string or dict
+
+    Returns:
+        Parsed dictionary or error dictionary if parsing fails
+    """
+    if isinstance(field, dict):
+        return field
+    if isinstance(field, str):
+        try:
+            return json.loads(field)
+        except Exception as e:
+            return {"error": f"Unable to parse {field}: {e}"}
+    return {"error": f"Invalid {field} format"}
+
+
+def _convert_timestamp(ts: Any) -> int:
+    """Convert various timestamp formats to Unix timestamp in seconds.
+
+    Args:
+        ts: Timestamp in any supported format (int, float, str, pd.Timestamp)
+
+    Returns:
+        Unix timestamp in seconds, or 0 if conversion fails
+    """
+    if pd.isna(ts):
+        return 0
+    elif isinstance(ts, (int, float)):
+        return int(ts)
+    elif isinstance(ts, str):
+        return int(pd.Timestamp(ts).timestamp())
+    elif isinstance(ts, pd.Timestamp):
+        return int(ts.timestamp())
+    else:
+        return 0
+
+
+def _make_serializable(value: Any) -> Any:
+    """Convert a value to a JSON-serializable format.
+
+    Args:
+        value: Any value to convert
+
+    Returns:
+        JSON-serializable version of the value
+    """
+    try:
+        json.dumps({"test": value})
+        return value
+    except (TypeError, OverflowError):
+        return str(value)
+
+
 @st.cache_data(
     ttl=dashboard_constants.CACHE_TTL, show_spinner="Getting events for record"
 )
@@ -515,67 +572,62 @@ def get_events_by_record_id_otel(record_id: str) -> List[OtelSpan]:
     db = session.connector.db
 
     if not db or not hasattr(db, "_get_events_by_record_id_otel"):
-        # If the database doesn't have the method, return empty list
         st.error(
             f"Error getting events for record {record_id}: database must support OTEL spans"
         )
         return []
 
     try:
-        # Get all events for this record ID
         events_df = db._get_events_by_record_id_otel(record_id)
-
-        # Convert to serializable dictionaries
         serializable_spans = []
+
         for _, row in events_df.iterrows():
             try:
-                # Create a simplified, serializable span dict
-                span = {
-                    "event_id": str(row.get("event_id", "")),
-                    "name": str(row.get("name", "")),
-                    "status": str(row.get("status", "")),
-                    "span_id": str(row.get("span_id", "")),
-                    "parent_span_id": str(row.get("parent_span_id", "")),
-                    "trace_id": str(row.get("trace_id", "")),
-                    "start_timestamp": str(row.get("start_timestamp", "")),
-                    "timestamp": str(row.get("timestamp", "")),
+                # Parse record data
+                record_data = _parse_json_fields(row.get("record", {}))
+                span_record = {
+                    "name": str(record_data.get("name", "")),
+                    "parent_span_id": str(
+                        record_data.get("parent_span_id", "")
+                    ),
+                    "status": str(record_data.get("status", "")),
                 }
 
-                # Process record_attributes (ensure it's a serializable dict)
-                record_attributes = row.get("record_attributes", {})
-                if hasattr(record_attributes, "to_dict"):
-                    record_attributes = record_attributes.to_dict()
-                elif isinstance(record_attributes, str):
-                    import json
+                # Parse trace data
+                trace_data = _parse_json_fields(row.get("trace", {}))
+                span_trace = {
+                    "trace_id": str(trace_data.get("trace_id", "")),
+                    "parent_id": str(trace_data.get("parent_id", "")),
+                    "span_id": str(trace_data.get("span_id", "")),
+                }
 
-                    try:
-                        record_attributes = json.loads(record_attributes)
-                    except Exception as e:
-                        record_attributes = {
-                            "error": f"Unable to parse record_attributes: {e}"
-                        }
+                # Process record attributes
+                record_attributes = _parse_json_fields(
+                    row.get("record_attributes", {})
+                )
+                serializable_attributes = {
+                    k: _make_serializable(v)
+                    for k, v in record_attributes.items()
+                }
 
-                # Ensure all values in record_attributes are serializable
-                serializable_attributes = {}
-                for k, v in record_attributes.items():
-                    try:
-                        # Test if serializable
-                        import json
+                # Create span with converted timestamps
+                span = {
+                    "event_id": str(row.get("event_id", "")),
+                    "record": span_record,
+                    "record_attributes": serializable_attributes,
+                    "start_timestamp": _convert_timestamp(
+                        row.get("start_timestamp")
+                    ),
+                    "timestamp": _convert_timestamp(row.get("timestamp")),
+                    "trace": span_trace,
+                }
 
-                        json.dumps({k: v})
-                        serializable_attributes[k] = v
-                    except (TypeError, OverflowError):
-                        serializable_attributes[k] = str(v)
-
-                span["record_attributes"] = serializable_attributes
                 serializable_spans.append(span)
             except Exception as e:
-                # Log error but continue processing other spans
                 st.warning(f"Error processing span: {e}")
                 continue
 
         return serializable_spans
     except Exception as e:
-        # If there's an error, log it and return empty list
         st.error(f"Error getting events for record {record_id}: {e}")
         return []

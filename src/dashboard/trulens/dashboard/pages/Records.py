@@ -159,7 +159,6 @@ def _render_trace(
     elif is_otel_tracing_enabled():
         with trace_details:
             st.subheader("Trace Details")
-            # TODO: get spans
             event_spans = get_events_by_record_id_otel(
                 selected_row["record_id"]
             )
