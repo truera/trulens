@@ -2,13 +2,16 @@ from typing import Dict, List, Optional, Sequence
 
 import pandas as pd
 import streamlit as st
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.dashboard.components.record_viewer import record_viewer
+from trulens.dashboard.components.record_viewer_otel import record_viewer_otel
 from trulens.dashboard.constants import EXTERNAL_APP_COL_NAME
 from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
 from trulens.dashboard.constants import PINNED_COL_NAME
 from trulens.dashboard.constants import RECORDS_PAGE_NAME as page_name
 from trulens.dashboard.utils import streamlit_compat
 from trulens.dashboard.utils.dashboard_utils import ST_RECORDS_LIMIT
+from trulens.dashboard.utils.dashboard_utils import get_events_by_record_id_otel
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
 from trulens.dashboard.utils.dashboard_utils import get_records_and_feedback
 from trulens.dashboard.utils.dashboard_utils import is_sis_compatibility_enabled
@@ -153,7 +156,17 @@ def _render_trace(
 
         st.subheader("App Details")
         st.json(app_json, expanded=1)
-
+    elif is_otel_tracing_enabled():
+        with trace_details:
+            st.subheader("Trace Details")
+            # TODO: get spans
+            event_spans = get_events_by_record_id_otel(
+                selected_row["record_id"]
+            )
+            if event_spans:
+                record_viewer_otel(spans=event_spans, key=None)
+            else:
+                st.info("No trace data available for this record.")
     else:
         with trace_details:
             st.subheader("Trace Details")

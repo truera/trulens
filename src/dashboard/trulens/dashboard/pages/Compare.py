@@ -5,7 +5,9 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.dashboard.components.record_viewer import record_viewer
+from trulens.dashboard.components.record_viewer_otel import record_viewer_otel
 from trulens.dashboard.constants import COMPARE_PAGE_NAME as page_name
 from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
 from trulens.dashboard.constants import PINNED_COL_NAME
@@ -795,6 +797,9 @@ def render_app_comparison(app_name: str):
 
                     st.subheader("App Details")
                     st.json(app_json, expanded=1)
+                elif is_otel_tracing_enabled():
+                    # TODO: get spans
+                    record_viewer_otel(spans=[], key=f"compare_{app_id}")
                 else:
                     record_viewer(
                         record_json,

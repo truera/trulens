@@ -10,6 +10,7 @@ import streamlit as st
 from trulens.core import session as core_session
 from trulens.core.database import base as core_db
 from trulens.core.database.legacy import migration as legacy_migration
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.utils import json as json_utils
@@ -17,6 +18,9 @@ from trulens.core.utils import text as text_utils
 from trulens.dashboard import display as dashboard_display
 from trulens.dashboard.components import (
     record_viewer as dashboard_record_viewer,
+)
+from trulens.dashboard.components import (
+    record_viewer_otel as dashboard_record_viewer_otel,
 )
 from trulens.dashboard.utils import dashboard_utils
 from trulens.dashboard.utils import streamlit_compat
@@ -331,6 +335,9 @@ def trulens_trace(record: record_schema.Record):
         st.warning(
             "TruLens trace view is not enabled when SiS compatibility is enabled."
         )
+    elif is_otel_tracing_enabled():
+        # TODO: get spans
+        dashboard_record_viewer_otel.record_viewer_otel(spans=[], key=None)
     else:
         dashboard_record_viewer.record_viewer(
             record_json=json.loads(json_utils.json_str_of_obj(record)),

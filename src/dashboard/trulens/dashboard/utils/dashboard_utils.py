@@ -12,6 +12,7 @@ from trulens.core import session as core_session
 from trulens.core.database import base as core_db
 from trulens.core.utils import imports as import_utils
 from trulens.dashboard import constants as dashboard_constants
+from trulens.dashboard.components.record_viewer_otel import OtelSpan
 from trulens.dashboard.utils import metadata_utils
 from trulens.dashboard.utils.streamlit_compat import st_columns
 
@@ -496,3 +497,85 @@ def render_app_version_filters(
         )
 
     return filtered_app_versions, app_version_metadata_cols
+
+
+@st.cache_data(
+    ttl=dashboard_constants.CACHE_TTL, show_spinner="Getting events for record"
+)
+def get_events_by_record_id_otel(record_id: str) -> List[OtelSpan]:
+    """Get all event spans for a given record ID.
+
+    Args:
+        record_id: The record ID to get events for.
+
+    Returns:
+        A list of OtelSpans for all events corresponding to the given record ID.
+    """
+    session = get_session()
+    db = session.connector.db
+
+    if not db or not hasattr(db, "_get_events_by_record_id_otel"):
+        # If the database doesn't have the method, return empty list
+        st.error(
+            f"Error getting events for record {record_id}: database must support OTEL spans"
+        )
+        return []
+
+    try:
+        # Get all events for this record ID
+        events_df = db._get_events_by_record_id_otel(record_id)
+
+        # Convert to serializable dictionaries
+        serializable_spans = []
+        for _, row in events_df.iterrows():
+            try:
+                # Create a simplified, serializable span dict
+                span = {
+                    "event_id": str(row.get("event_id", "")),
+                    "name": str(row.get("name", "")),
+                    "status": str(row.get("status", "")),
+                    "span_id": str(row.get("span_id", "")),
+                    "parent_span_id": str(row.get("parent_span_id", "")),
+                    "trace_id": str(row.get("trace_id", "")),
+                    "start_timestamp": str(row.get("start_timestamp", "")),
+                    "timestamp": str(row.get("timestamp", "")),
+                }
+
+                # Process record_attributes (ensure it's a serializable dict)
+                record_attributes = row.get("record_attributes", {})
+                if hasattr(record_attributes, "to_dict"):
+                    record_attributes = record_attributes.to_dict()
+                elif isinstance(record_attributes, str):
+                    import json
+
+                    try:
+                        record_attributes = json.loads(record_attributes)
+                    except Exception as e:
+                        record_attributes = {
+                            "error": f"Unable to parse record_attributes: {e}"
+                        }
+
+                # Ensure all values in record_attributes are serializable
+                serializable_attributes = {}
+                for k, v in record_attributes.items():
+                    try:
+                        # Test if serializable
+                        import json
+
+                        json.dumps({k: v})
+                        serializable_attributes[k] = v
+                    except (TypeError, OverflowError):
+                        serializable_attributes[k] = str(v)
+
+                span["record_attributes"] = serializable_attributes
+                serializable_spans.append(span)
+            except Exception as e:
+                # Log error but continue processing other spans
+                st.warning(f"Error processing span: {e}")
+                continue
+
+        return serializable_spans
+    except Exception as e:
+        # If there's an error, log it and return empty list
+        st.error(f"Error getting events for record {record_id}: {e}")
+        return []

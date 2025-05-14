@@ -798,6 +798,25 @@ class SQLAlchemyDB(core_db.DB):
 
             return _extract_feedback_results(results)
 
+    def _get_events_by_record_id_otel(self, record_id: str) -> pd.DataFrame:
+        """Get all events for a given record ID.
+
+        Args:
+            record_id: The record ID to get events for.
+
+        Returns:
+            A pandas DataFrame containing all events for the given record ID.
+        """
+        with self.session.begin() as session:
+            # Query events where record_attributes contains the record_id
+            record_id_expr = self._json_extract_otel(
+                "record_attributes", SpanAttributes.RECORD_ID
+            )
+            q = sa.select(self.orm.Event).where(record_id_expr == record_id)
+
+            # Execute query and return as DataFrame
+            return pd.read_sql(q, session.bind)
+
     def _get_event_record_attributes_otel(self, event: Event) -> Dict[str, Any]:
         """Get the record attributes from the event.
 
@@ -820,12 +839,6 @@ class SQLAlchemyDB(core_db.DB):
                 )
 
         return record_attributes
-
-    def _datetime_serializer(self, obj: Any) -> str:
-        """Helper function to serialize datetime objects to ISO format strings."""
-        if isinstance(obj, (datetime, pd.Timestamp)):
-            return obj.isoformat()
-        raise TypeError(f"Type {type(obj)} not serializable")
 
     def _update_cost_info_otel(
         self,
@@ -1204,6 +1217,7 @@ class SQLAlchemyDB(core_db.DB):
                     "total_cost": record_data["total_cost"],
                     "cost_currency": record_data["cost_currency"],
                     "num_events": len(record_data["events"]),
+                    # "events": record_data["events"],
                 }
 
                 # Add feedback results
@@ -1227,6 +1241,11 @@ class SQLAlchemyDB(core_db.DB):
 
             # Create dataframe
             df = pd.DataFrame(records_data)
+
+            # # Convert events to list of dictionaries
+            # df["events"] = df["events"].apply(
+            #     lambda x: [event.to_dict(orient="records") for event in x]
+            # )
 
             # Ensure that all expected columns are present
             for col in AppsExtractor.all_cols:
