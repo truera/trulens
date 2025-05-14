@@ -9,6 +9,6 @@ from trulens.core.utils import deprecation as deprecation_utils
 
 deprecation_utils.packages_dep_warn()
 
+from trulens.apps.app import instrument
 from trulens.apps.custom import PLACEHOLDER
 from trulens.apps.custom import TruCustomApp
-from trulens.apps.custom import instrument
