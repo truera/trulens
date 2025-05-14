@@ -62,7 +62,7 @@ To see the core re-architecture changes in action, we've included some usage exa
         ```
 
         ```python
-        from trulens.apps.custom import instrument
+        from trulens.apps.app import instrument
 
         class CustomApp:
 

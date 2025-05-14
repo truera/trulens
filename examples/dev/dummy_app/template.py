@@ -1,6 +1,6 @@
 import logging
 
-from trulens.apps.custom import instrument
+from trulens.apps.app import instrument
 
 from examples.dev.dummy_app.dummy import Dummy
 

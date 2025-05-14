@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 
 # trulens additions
-from trulens.apps.custom import instrument
+from trulens.apps.app import instrument
 
 
 class Activity(BaseModel):

@@ -48,7 +48,7 @@ Read more about Usage Tracking in [Cost API Reference][trulens.core.schema.base.
 !!! example "Using `@instrument`"
 
     ```python
-    from trulens.apps.custom import instrument
+    from trulens.apps.app import instrument
 
     class RAG_from_scratch:
         @instrument
@@ -79,7 +79,7 @@ is via `instrument.method`. See a usage example below:
 !!! example "Using `instrument.method`"
 
     ```python
-    from trulens.apps.custom import instrument
+    from trulens.apps.app import instrument
     from somepackage.from custom_retriever import CustomRetriever
 
     instrument.method(CustomRetriever, "retrieve_chunks")

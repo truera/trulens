@@ -30,7 +30,7 @@ class TruCustomApp(TruApp):
 
 
 warnings.warn(
-    """from trulens.apps.custom import instrument
+    """from trulens.apps.app import instrument
         is being deprecated in the next major version; use from trulens.apps.app import instrument
         instead.""",
     DeprecationWarning,
