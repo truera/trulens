@@ -38,9 +38,7 @@ class TestDummy(mod_test.TruTestCase):
         )  # uses DummyAPI internally
 
         # Create trulens wrapper:
-        ta = custom_app.TruCustomApp(
-            ca, app_name="customapp", app_version="base"
-        )
+        ta = custom_app.TruApp(ca, app_name="customapp", app_version="base")
 
         with ta as recorder:
             ca.respond_to_query("hello")

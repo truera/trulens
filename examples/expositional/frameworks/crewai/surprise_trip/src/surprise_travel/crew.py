@@ -115,7 +115,7 @@ class SurpriseTravelCrew:
     @crew
     def create_crew(self) -> Crew:
         """Creates the SurpriseTravel crew"""
-        # Important: Before wrapping this app with TruCustomApp, assign the
+        # Important: Before wrapping this app with TruApp, assign the
         # result of this method to an attribute of this class as otherwise the
         # Crew class methods will not be instrumented.
 
