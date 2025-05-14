@@ -1308,7 +1308,10 @@ Feedback function signature:
 
 
 class SnowflakeFeedback(Feedback):
-    """Similar to the parent class Feedback except this ensures the feedback is run only on the Snowflake server."""
+    """[DEPRECATED] Similar to the parent class Feedback except this ensures the feedback is run only on the Snowflake server.
+
+    This class is deprecated and will be removed in the next major release. Please use Feedback or [Snowflake AI Observability](https://docs.snowflake.com/en/user-guide/snowflake-cortex/ai-observability/evaluate-ai-applications) instead.
+    """
 
     def __init__(
         self,
@@ -1316,6 +1319,11 @@ class SnowflakeFeedback(Feedback):
         agg: Optional[Callable] = None,
         **kwargs,
     ):
+        warnings.warn(
+            "SnowflakeFeedback is deprecated and will be removed in the next major release. Please use Feedback or [Snowflake AI Observability](https://docs.snowflake.com/en/user-guide/snowflake-cortex/ai-observability/evaluate-ai-applications) instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if (
             not hasattr(imp, "__self__")
             or str(type(imp.__self__))
