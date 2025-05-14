@@ -1217,7 +1217,6 @@ class SQLAlchemyDB(core_db.DB):
                     "total_cost": record_data["total_cost"],
                     "cost_currency": record_data["cost_currency"],
                     "num_events": len(record_data["events"]),
-                    # "events": record_data["events"],
                 }
 
                 # Add feedback results
@@ -1241,11 +1240,6 @@ class SQLAlchemyDB(core_db.DB):
 
             # Create dataframe
             df = pd.DataFrame(records_data)
-
-            # # Convert events to list of dictionaries
-            # df["events"] = df["events"].apply(
-            #     lambda x: [event.to_dict(orient="records") for event in x]
-            # )
 
             # Ensure that all expected columns are present
             for col in AppsExtractor.all_cols:

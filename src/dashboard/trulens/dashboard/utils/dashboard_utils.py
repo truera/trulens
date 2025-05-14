@@ -1,7 +1,7 @@
 import argparse
 import json
 import sys
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import pandas as pd
 import streamlit as st
@@ -14,6 +14,8 @@ from trulens.core.database import base as core_db
 from trulens.core.utils import imports as import_utils
 from trulens.dashboard import constants as dashboard_constants
 from trulens.dashboard.components.record_viewer_otel import OtelSpan
+from trulens.dashboard.components.record_viewer_otel import SpanRecord
+from trulens.dashboard.components.record_viewer_otel import SpanTrace
 from trulens.dashboard.utils import metadata_utils
 from trulens.dashboard.utils.streamlit_compat import st_columns
 
@@ -519,7 +521,7 @@ def _parse_json_fields(field: Any) -> Dict[str, Any]:
     return {"error": f"Invalid {field} format"}
 
 
-def _convert_timestamp(ts: Any) -> int:
+def _convert_timestamp(ts: Any) -> Union[int, float]:
     """Convert various timestamp formats to Unix timestamp in seconds.
 
     Args:
@@ -579,13 +581,13 @@ def get_events_by_record_id_otel(record_id: str) -> List[OtelSpan]:
 
     try:
         events_df = db._get_events_by_record_id_otel(record_id)
-        serializable_spans = []
+        serializable_spans: List[OtelSpan] = []
 
         for _, row in events_df.iterrows():
             try:
                 # Parse record data
                 record_data = _parse_json_fields(row.get("record", {}))
-                span_record = {
+                span_record: SpanRecord = {
                     "name": str(record_data.get("name", "")),
                     "parent_span_id": str(
                         record_data.get("parent_span_id", "")
@@ -595,7 +597,7 @@ def get_events_by_record_id_otel(record_id: str) -> List[OtelSpan]:
 
                 # Parse trace data
                 trace_data = _parse_json_fields(row.get("trace", {}))
-                span_trace = {
+                span_trace: SpanTrace = {
                     "trace_id": str(trace_data.get("trace_id", "")),
                     "parent_id": str(trace_data.get("parent_id", "")),
                     "span_id": str(trace_data.get("span_id", "")),
@@ -611,7 +613,7 @@ def get_events_by_record_id_otel(record_id: str) -> List[OtelSpan]:
                 }
 
                 # Create span with converted timestamps
-                span = {
+                span: OtelSpan = {
                     "event_id": str(row.get("event_id", "")),
                     "record": span_record,
                     "record_attributes": serializable_attributes,
