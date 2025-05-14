@@ -1792,7 +1792,7 @@ class LLMProvider(core_provider.Provider):
 
         The statement will first be split by a tokenizer into its component sentences.
 
-        Then, trivial statements are eliminated so as to not dilute the evaluation.
+        Then, trivial statements are eliminated so as to not dilute the evaluation. Note that if all statements are filtered out as trivial, returns 0.0 with a reason indicating no non-trivial statements were found.
 
         The LLM will process each statement, using chain of thought methodology to emit the reasons.
 
@@ -1883,6 +1883,9 @@ class LLMProvider(core_provider.Provider):
 
         if filter_trivial_statements:
             hypotheses = self._remove_trivial_statements(hypotheses)
+
+            if not hypotheses:
+                return 0.0, {"reason": "No non-trivial statements to evaluate"}
 
         output_space = self._determine_output_space(
             min_score_val, max_score_val
@@ -1992,7 +1995,7 @@ class LLMProvider(core_provider.Provider):
 
         The statement will first be split by a tokenizer into its component sentences.
 
-        Then, trivial statements are eliminated so as to not delete the evaluation.
+        Then, trivial statements are eliminated so as to not dilute the evaluation. Note that if all statements are filtered out as trivial, returns 0.0 with a reason indicating no non-trivial statements were found.
 
         The LLM will process each statement, using chain of thought methodology to emit the reasons.
 
@@ -2095,6 +2098,9 @@ class LLMProvider(core_provider.Provider):
 
         if filter_trivial_statements:
             hypotheses = self._remove_trivial_statements(hypotheses)
+
+            if not hypotheses:
+                return 0.0, {"reason": "No non-trivial statements to evaluate"}
 
         output_space = self._determine_output_space(
             min_score_val, max_score_val
