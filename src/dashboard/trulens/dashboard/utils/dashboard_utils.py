@@ -558,6 +558,72 @@ def _make_serializable(value: Any) -> Any:
         return str(value)
 
 
+def _map_event_to_otel_span(row: pd.Series) -> Optional[OtelSpan]:
+    """Convert an Event ORM table row to an OtelSpan format.
+
+    Args:
+        row: A pandas Series containing the Event ORM table row data
+
+    Returns:
+        An OtelSpan object if conversion is successful, None otherwise
+    """
+    try:
+        # Parse record data
+        record_data = _parse_json_fields(row.get("record", {}))
+        span_record: SpanRecord = {
+            "name": str(record_data.get("name", "")),
+            "parent_span_id": str(record_data.get("parent_span_id", "")),
+            "status": str(record_data.get("status", "")),
+        }
+
+        # Parse trace data
+        trace_data = _parse_json_fields(row.get("trace", {}))
+        span_trace: SpanTrace = {
+            "trace_id": str(trace_data.get("trace_id", "")),
+            "parent_id": str(trace_data.get("parent_id", "")),
+            "span_id": str(trace_data.get("span_id", "")),
+        }
+
+        # Process record attributes
+        record_attributes = _parse_json_fields(row.get("record_attributes", {}))
+        serializable_attributes = {
+            k: _make_serializable(v) for k, v in record_attributes.items()
+        }
+
+        # Create span with converted timestamps
+        span: OtelSpan = {
+            "event_id": str(row.get("event_id", "")),
+            "record": span_record,
+            "record_attributes": serializable_attributes,
+            "start_timestamp": _convert_timestamp(row.get("start_timestamp")),
+            "timestamp": _convert_timestamp(row.get("timestamp")),
+            "trace": span_trace,
+        }
+
+        return span
+    except Exception as e:
+        st.warning(f"Error processing span: {e}")
+        return None
+
+
+def convert_events_to_otel_spans(events_df: pd.DataFrame) -> List[OtelSpan]:
+    """Convert a DataFrame of Event ORM table rows to a list of OtelSpans.
+
+    Args:
+        events_df: DataFrame containing Event ORM table rows
+
+    Returns:
+        A list of OtelSpans for all successfully converted events
+    """
+    serializable_spans: List[OtelSpan] = []
+
+    for _, row in events_df.iterrows():
+        if span := _map_event_to_otel_span(row):
+            serializable_spans.append(span)
+
+    return serializable_spans
+
+
 @st.cache_data(
     ttl=dashboard_constants.CACHE_TTL, show_spinner="Getting events for record"
 )
@@ -581,55 +647,7 @@ def get_events_by_record_id_otel(record_id: str) -> List[OtelSpan]:
 
     try:
         events_df = db._get_events_by_record_id_otel(record_id)
-        serializable_spans: List[OtelSpan] = []
-
-        for _, row in events_df.iterrows():
-            try:
-                # Parse record data
-                record_data = _parse_json_fields(row.get("record", {}))
-                span_record: SpanRecord = {
-                    "name": str(record_data.get("name", "")),
-                    "parent_span_id": str(
-                        record_data.get("parent_span_id", "")
-                    ),
-                    "status": str(record_data.get("status", "")),
-                }
-
-                # Parse trace data
-                trace_data = _parse_json_fields(row.get("trace", {}))
-                span_trace: SpanTrace = {
-                    "trace_id": str(trace_data.get("trace_id", "")),
-                    "parent_id": str(trace_data.get("parent_id", "")),
-                    "span_id": str(trace_data.get("span_id", "")),
-                }
-
-                # Process record attributes
-                record_attributes = _parse_json_fields(
-                    row.get("record_attributes", {})
-                )
-                serializable_attributes = {
-                    k: _make_serializable(v)
-                    for k, v in record_attributes.items()
-                }
-
-                # Create span with converted timestamps
-                span: OtelSpan = {
-                    "event_id": str(row.get("event_id", "")),
-                    "record": span_record,
-                    "record_attributes": serializable_attributes,
-                    "start_timestamp": _convert_timestamp(
-                        row.get("start_timestamp")
-                    ),
-                    "timestamp": _convert_timestamp(row.get("timestamp")),
-                    "trace": span_trace,
-                }
-
-                serializable_spans.append(span)
-            except Exception as e:
-                st.warning(f"Error processing span: {e}")
-                continue
-
-        return serializable_spans
+        return convert_events_to_otel_spans(events_df)
     except Exception as e:
         st.error(f"Error getting events for record {record_id}: {e}")
         return []
