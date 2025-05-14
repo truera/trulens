@@ -6,7 +6,7 @@ RAGs and agents.
 Because TruLens is tech-agnostic, we offer a few different tools for
 instrumentation.
 
-* TruCustomApp gives you the most power to instrument a custom LLM app, and
+* TruApp gives you the most power to instrument a custom LLM app, and
   provides the `instrument` method.
 * TruBasicApp is a simple interface to capture the input and output of a basic
   LLM app.
@@ -87,7 +87,7 @@ is via `instrument.method`. See a usage example below:
     # ... rest of the custom class follows ...
     ```
 
-Read more about instrumenting [custom class applications][trulens.apps.custom.TruCustomApp]
+Read more about instrumenting [custom class applications][trulens.apps.app.TruApp]
 
 ## Tracking input-output applications
 

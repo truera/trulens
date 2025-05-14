@@ -265,7 +265,7 @@ In our suggested workflow, `app_name` represents an objective you’re building 
 !!! example "Track Experiments"
 
     ```python
-    tru_rag = TruCustomApp(
+    tru_rag = TruApp(
     rag,
     app_name="RAG",
     app_version="v1",
