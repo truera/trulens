@@ -25,7 +25,7 @@ class Evaluator:
         self._app_version = app.app_version
         self._thread = None
         self._stop_event = threading.Event()
-        self._record_id_to_event_count = pd.Series([])
+        self._record_id_to_event_count = pd.Series(dtype=int)
         self._start_time = datetime.datetime.now()
 
     def _events_under_record_root(self, events: pd.DataFrame) -> pd.DataFrame:
@@ -54,7 +54,7 @@ class Evaluator:
                 record_roots.append(event)
         # Count events under the record root.
         if len(record_roots) != 1:
-            return []
+            return pd.DataFrame()
         ret = []
         q = [record_roots[0]]
         while q:
