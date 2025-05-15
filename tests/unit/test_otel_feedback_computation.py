@@ -4,7 +4,7 @@ Tests for OTEL Feedback Computation.
 
 import gc
 import time
-from typing import TYPE_CHECKING, Callable, List
+from typing import Callable, List
 import weakref
 
 import pandas as pd
@@ -30,9 +30,6 @@ from tests.util.mock_otel_feedback_computation import (
 )
 from tests.util.mock_otel_feedback_computation import feedback_function
 from tests.util.otel_test_case import OtelTestCase
-
-if TYPE_CHECKING:
-    from trulens.apps.langchain import TruChain
 
 try:
     # These imports require optional dependencies to be installed.
@@ -396,7 +393,7 @@ class TestOtelFeedbackComputation(OtelTestCase):
         )
         self.assertEqual([flattened_inputs[1]], res)
 
-    def _create_invoked_app_with_custom_feedback(self) -> TruChain:
+    def _create_invoked_app_with_custom_feedback(self) -> TruApp:
         # Create feedback function.
         def custom(input: str, output: str) -> float:
             if (
