@@ -102,7 +102,12 @@ class TestOtelTruChain(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
             "tests/unit/static/golden/test_otel_tru_chain__test_smoke.csv"
         )
         # Check garbage collection.
+        # Note that we need to delete `rag_chain` too since `rag_chain` has
+        # instrument decorators that have closures of the `tru_recorder` object.
+        # Specifically the record root has this at the very least as it calls
+        # `TruChain::main_input` for instance.
         tru_recorder_ref = weakref.ref(tru_recorder)
         del tru_recorder
+        del rag_chain
         gc.collect()
         self.assertCollected(tru_recorder_ref)
