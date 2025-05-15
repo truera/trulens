@@ -2,6 +2,9 @@
 Tests for OTEL TruChain app.
 """
 
+import gc
+import weakref
+
 import pytest
 from trulens.core.otel.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
@@ -98,3 +101,8 @@ class TestOtelTruChain(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         self._compare_events_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_chain__test_smoke.csv"
         )
+        # Check garbage collection.
+        tru_recorder_ref = weakref.ref(tru_recorder)
+        del tru_recorder
+        gc.collect()
+        self.assertCollected(tru_recorder_ref)
