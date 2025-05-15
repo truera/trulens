@@ -2,6 +2,9 @@
 Tests for OTEL instrument decorator and custom app.
 """
 
+import gc
+import weakref
+
 from trulens.apps.app import TruApp
 from trulens.core.otel.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
@@ -80,6 +83,11 @@ class TestOtelTruCustom(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         self._compare_events_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_custom__test_smoke.csv"
         )
+        # Check garbage collection.
+        custom_app_ref = weakref.ref(custom_app)
+        del custom_app
+        gc.collect()
+        self.assertCollected(custom_app_ref)
 
     def test_incorrect_span_attributes(self) -> None:
         class MyProblematicApp:
