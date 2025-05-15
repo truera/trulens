@@ -1897,9 +1897,6 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             "This feature is not yet implemented for non-OTEL TruLens!"
         )
 
-    # TODO(next_pr): Allow for single process/thread mode where we can assume the exporter sees all spans.
-    # TODO(next_pr): Probably should allow for specific record it to be computed again.
-    # TODO(next_pr): Probably should allow for all records to be computed again.
     def compute_feedbacks(
         self,
         raise_error_on_no_feedbacks_computed: bool = True,
