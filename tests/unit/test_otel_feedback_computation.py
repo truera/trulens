@@ -510,7 +510,6 @@ class TestOtelFeedbackComputation(OtelTestCase):
         tru_recorder_ref = weakref.ref(tru_recorder)
         evaluator_ref = weakref.ref(tru_recorder._evaluator)
         thread_ref = weakref.ref(tru_recorder._evaluator._thread)
-        # thread = tru_recorder._evaluator._thread
         del tru_recorder
         gc.collect()
         self.assertCollected(tru_recorder_ref)

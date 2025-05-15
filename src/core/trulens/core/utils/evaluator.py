@@ -76,7 +76,6 @@ class Evaluator:
             A dict from record id to a pandas DataFrame of all events from that
             record. Only records that aren't fully processed will be included.
         """
-        # TODO(otel): This is a rather slow approach!
         events = self._app_ref().connector.get_events(
             app_id=self._app_ref().app_id, start_time=self._start_time
         )
