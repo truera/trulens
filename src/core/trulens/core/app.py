@@ -521,6 +521,15 @@ class App(
 
         super().__init__(**kwargs)
 
+        if (
+            is_otel_tracing_enabled()
+            and self.feedback_mode
+            != feedback_schema.FeedbackMode.WITH_APP_THREAD
+        ):
+            raise ValueError(
+                "Cannot use `feedback_mode` other than `WITH_APP_THREAD` with OTel tracing!"
+            )
+
         if main_method:
             self.main_method_name = main_method.__name__  # for serialization
 
@@ -562,7 +571,10 @@ class App(
             pass
 
         if self.feedback_mode == feedback_schema.FeedbackMode.WITH_APP_THREAD:
-            self._start_manage_pending_feedback_results()
+            if is_otel_tracing_enabled():
+                self.start_evaluator()
+            else:
+                self._start_manage_pending_feedback_results()
 
         self._tru_post_init()
 
