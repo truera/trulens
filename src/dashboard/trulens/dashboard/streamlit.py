@@ -24,7 +24,7 @@ from trulens.dashboard.components import (
 )
 from trulens.dashboard.utils import dashboard_utils
 from trulens.dashboard.utils import streamlit_compat
-from trulens.dashboard.utils.dashboard_utils import get_events_by_record_id_otel
+from trulens.dashboard.utils.dashboard_utils import _get_event_otel_spans
 from trulens.dashboard.utils.streamlit_compat import st_columns
 from trulens.dashboard.ux import components as dashboard_components
 from trulens.dashboard.ux import styles as dashboard_styles
@@ -340,7 +340,7 @@ def trulens_trace(record: record_schema.Record):
         # NOTE: Given that this method relies on the Record table, I'm unsure if this block will ever
         # get called because OTEL spans use the Event table instead of the Record table.
         # TODO: Consider writing a separate method for OTEL.
-        event_spans = get_events_by_record_id_otel(record.record_id)
+        event_spans = _get_event_otel_spans(record.record_id)
         if event_spans:
             dashboard_record_viewer_otel.record_viewer_otel(
                 spans=event_spans, key=None

@@ -11,7 +11,7 @@ from trulens.dashboard.components.record_viewer_otel import record_viewer_otel
 from trulens.dashboard.constants import COMPARE_PAGE_NAME as page_name
 from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
 from trulens.dashboard.constants import PINNED_COL_NAME
-from trulens.dashboard.utils.dashboard_utils import get_events_by_record_id_otel
+from trulens.dashboard.utils.dashboard_utils import _get_event_otel_spans
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
 from trulens.dashboard.utils.dashboard_utils import get_records_and_feedback
 from trulens.dashboard.utils.dashboard_utils import is_sis_compatibility_enabled
@@ -799,7 +799,7 @@ def render_app_comparison(app_name: str):
                     st.subheader("App Details")
                     st.json(app_json, expanded=1)
                 elif is_otel_tracing_enabled():
-                    event_spans = get_events_by_record_id_otel(
+                    event_spans = _get_event_otel_spans(
                         selected_row["record_id"]
                     )
                     if event_spans:

@@ -11,7 +11,7 @@ from trulens.dashboard.constants import PINNED_COL_NAME
 from trulens.dashboard.constants import RECORDS_PAGE_NAME as page_name
 from trulens.dashboard.utils import streamlit_compat
 from trulens.dashboard.utils.dashboard_utils import ST_RECORDS_LIMIT
-from trulens.dashboard.utils.dashboard_utils import get_events_by_record_id_otel
+from trulens.dashboard.utils.dashboard_utils import _get_event_otel_spans
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
 from trulens.dashboard.utils.dashboard_utils import get_records_and_feedback
 from trulens.dashboard.utils.dashboard_utils import is_sis_compatibility_enabled
@@ -159,9 +159,7 @@ def _render_trace(
     elif is_otel_tracing_enabled():
         with trace_details:
             st.subheader("Trace Details")
-            event_spans = get_events_by_record_id_otel(
-                selected_row["record_id"]
-            )
+            event_spans = _get_event_otel_spans(selected_row["record_id"])
             if event_spans:
                 record_viewer_otel(spans=event_spans, key=None)
             else:

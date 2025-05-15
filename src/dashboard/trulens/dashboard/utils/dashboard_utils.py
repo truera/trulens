@@ -606,7 +606,7 @@ def _map_event_to_otel_span(row: pd.Series) -> Optional[OtelSpan]:
         return None
 
 
-def convert_events_to_otel_spans(events_df: pd.DataFrame) -> List[OtelSpan]:
+def _convert_events_to_otel_spans(events_df: pd.DataFrame) -> List[OtelSpan]:
     """Convert a DataFrame of Event ORM table rows to a list of OtelSpans.
 
     Args:
@@ -627,7 +627,7 @@ def convert_events_to_otel_spans(events_df: pd.DataFrame) -> List[OtelSpan]:
 @st.cache_data(
     ttl=dashboard_constants.CACHE_TTL, show_spinner="Getting events for record"
 )
-def get_events_by_record_id_otel(record_id: str) -> List[OtelSpan]:
+def _get_event_otel_spans(record_id: str) -> List[OtelSpan]:
     """Get all event spans for a given record ID.
 
     Args:
@@ -647,7 +647,7 @@ def get_events_by_record_id_otel(record_id: str) -> List[OtelSpan]:
 
     try:
         events_df = db._get_events_by_record_id_otel(record_id)
-        return convert_events_to_otel_spans(events_df)
+        return _convert_events_to_otel_spans(events_df)
     except Exception as e:
         st.error(f"Error getting events for record {record_id}: {e}")
         return []
