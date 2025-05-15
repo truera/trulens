@@ -30,6 +30,7 @@ from trulens.core._utils import optional as optional_utils
 from trulens.core._utils.pycompat import Future  # code style exception
 from trulens.core.database import connector as core_connector
 from trulens.core.feedback import feedback as core_feedback
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import feedback as feedback_schema
@@ -38,7 +39,6 @@ from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import imports as import_utils
-from trulens.core.utils import otel as otel_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
@@ -930,7 +930,7 @@ class TruSession(
 
             [MAX_THREADS][trulens.core.utils.threading.TP.MAX_THREADS]
         """
-        if otel_utils.is_otel_tracing_enabled():
+        if is_otel_tracing_enabled():
             raise ValueError(
                 "Deferred evaluator not supported with OTEL tracing!"
             )
