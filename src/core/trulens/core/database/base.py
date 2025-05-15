@@ -463,14 +463,17 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_events(self, app_id: str) -> List[event_schema.Event]:
+    def get_events(
+        self, app_id: str, start_time: Optional[datetime] = None
+    ) -> pd.DataFrame:
         """
-        Get all events from the database.
+        Get events from the database.
 
         Args:
             app_id: The app id to filter events by.
+            start_time: The minimum time to consider events from.
 
         Returns:
-            A list of events associated with the provided app id.
+            A pandas DataFrame of events associated with the provided app id.
         """
         raise NotImplementedError()

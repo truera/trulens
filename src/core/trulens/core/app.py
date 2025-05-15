@@ -55,6 +55,7 @@ from trulens.core.utils import asynchro as asynchro_utils
 from trulens.core.utils import constants as constant_utils
 from trulens.core.utils import containers as container_utils
 from trulens.core.utils import deprecation as deprecation_utils
+from trulens.core.utils import evaluator as evaluator_utils
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
@@ -526,6 +527,8 @@ class App(
         self._current_context_manager_lock = threading.Lock()
         self._current_context_manager = None
 
+        self._evaluator = evaluator_utils.Evaluator(self)
+
         if connector and _can_import("trulens.connectors.snowflake"):
             from trulens.connectors.snowflake import SnowflakeConnector
             from trulens.connectors.snowflake.dao.enums import ObjectType
@@ -565,6 +568,7 @@ class App(
 
     def __del__(self):
         """Shut down anything associated with this app that might persist otherwise."""
+        self.stop_evaluator()
         try:
             # Use object.__getattribute__ to avoid triggering __getattr__
             m_thread = object.__getattribute__(
@@ -1894,21 +1898,27 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         )
 
     def compute_feedbacks(
-        self, raise_error_on_no_feedbacks_computed: bool = True
+        self,
+        raise_error_on_no_feedbacks_computed: bool = True,
+        events: Optional[pd.DataFrame] = None,
     ) -> None:
         """Compute feedbacks for the app.
 
         Args:
             raise_error_on_no_feedbacks_computed:
                 Raise an error if no feedbacks were computed. Default is True.
+            events:
+                The events to compute feedbacks from. If None, uses all
+                events from the app.
         """
         if not is_otel_tracing_enabled():
             raise ValueError(
                 "This method is only supported for OTEL Tracing. Please enable OTEL tracing in the environment!"
             )
-        # Get all events associated with this app name and version.
-        # TODO(otel): Should probably handle the case where there are a lot of events with pagination.
-        events = self.connector.get_events(app_id=self.app_id)
+        if events is None:
+            # Get all events associated with this app name and version.
+            # TODO(otel): Should probably handle the case where there are a lot of events with pagination.
+            events = self.connector.get_events(app_id=self.app_id)
         for feedback in self.feedbacks:
             compute_feedback_by_span_group(
                 events,
@@ -1917,6 +1927,14 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 feedback.selectors,
                 raise_error_on_no_feedbacks_computed,
             )
+
+    def start_evaluator(self) -> None:
+        """Start the evaluator for the app."""
+        self._evaluator.start_evaluator()
+
+    def stop_evaluator(self) -> None:
+        """Stop the evaluator for the app."""
+        self._evaluator.stop_evaluator()
 
 
 # NOTE: Cannot App.model_rebuild here due to circular imports involving mod_session.TruSession
