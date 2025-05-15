@@ -8,11 +8,18 @@
     "[python]": {
         "editor.defaultFormatter": "charliermarsh.ruff",
         "editor.formatOnSave": true,
+        "editor.rulers": [80],
+        "editor.wordWrapColumn": 80
     },
     "files.exclude": {
         "**/.venv": true
     },
     "cSpell.words": [
         "behaviour"
+    ],
+    "ruff.lineLength": 80,
+    "ruff.format.preview": true,
+    "flake8.args": [
+        "--max-line-length=80"
     ],
 }
