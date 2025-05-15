@@ -671,6 +671,8 @@ trulens.core.feedback.selector:
   __class__: builtins.module
   highs: {}
   lows:
+    RECORD_ROOT_INPUT: trulens.core.feedback.selector.Selector
+    RECORD_ROOT_OUTPUT: trulens.core.feedback.selector.Selector
     Selector: builtins.type
 trulens.core.feedback.selector.Selector:
   __bases__:
