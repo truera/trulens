@@ -38,6 +38,7 @@ from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import imports as import_utils
+from trulens.core.utils import otel as otel_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
@@ -929,6 +930,10 @@ class TruSession(
 
             [MAX_THREADS][trulens.core.utils.threading.TP.MAX_THREADS]
         """
+        if otel_utils.is_otel_tracing_enabled():
+            raise ValueError(
+                "Deferred evaluator not supported with OTEL tracing!"
+            )
 
         assert not fork, "Fork mode not yet implemented."
         assert (
