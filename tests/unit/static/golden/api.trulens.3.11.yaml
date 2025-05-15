@@ -157,6 +157,8 @@ trulens.core.app.App:
     snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
+    start_evaluator: builtins.function
+    stop_evaluator: builtins.function
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1354,6 +1356,18 @@ trulens.core.utils.deprecation:
     moved: builtins.function
     packages_dep_warn: builtins.function
     staticmethod_renamed: builtins.function
+trulens.core.utils.evaluator:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    Evaluator: builtins.type
+trulens.core.utils.evaluator.Evaluator:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    start_evaluator: builtins.function
+    stop_evaluator: builtins.function
 trulens.core.utils.imports:
   __class__: builtins.module
   highs: {}
