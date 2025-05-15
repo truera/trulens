@@ -1,12 +1,12 @@
+"""
+Tests for OTEL Feedback methods.
+"""
+
 from trulens.core.feedback import Feedback
 from trulens.core.feedback.selector import RECORD_ROOT_INPUT
 from trulens.core.feedback.selector import RECORD_ROOT_OUTPUT
 
 from tests.util.otel_test_case import OtelTestCase
-
-"""
-Tests for OTEL Feedback methods.
-"""
 
 
 class TestOtelFeedback(OtelTestCase):
