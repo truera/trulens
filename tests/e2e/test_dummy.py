@@ -7,7 +7,7 @@ DummyAPI for its requests.
 
 from pathlib import Path
 
-from trulens.apps import custom as custom_app
+from trulens.apps import app
 from trulens.core import session as core_session
 
 from examples.dev.dummy_app.app import DummyApp
@@ -38,7 +38,7 @@ class TestDummy(mod_test.TruTestCase):
         )  # uses DummyAPI internally
 
         # Create trulens wrapper:
-        ta = custom_app.TruApp(ca, app_name="customapp", app_version="base")
+        ta = app.TruApp(ca, app_name="customapp", app_version="base")
 
         with ta as recorder:
             ca.respond_to_query("hello")
