@@ -122,7 +122,7 @@ class Evaluator:
                     TruSession().force_flush()
                     if self._stop_event.is_set():
                         break
-                for _ in range(60):
+                for _ in range(10):
                     if self._stop_event.is_set():
                         break
                     time.sleep(1)
