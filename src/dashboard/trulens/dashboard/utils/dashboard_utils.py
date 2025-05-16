@@ -639,14 +639,14 @@ def _get_event_otel_spans(record_id: str) -> List[OtelSpan]:
     session = get_session()
     db = session.connector.db
 
-    if not db or not hasattr(db, "_get_events_by_record_id_otel"):
+    if not db or not hasattr(db, "get_events_by_record_id"):
         st.error(
-            f"Error getting events for record {record_id}: database must support OTEL spans"
+            f"Error getting events by record {record_id}: database must support OTEL spans"
         )
         return []
 
     try:
-        events_df = db._get_events_by_record_id_otel(record_id)
+        events_df = db.get_events_by_record_id(record_id)
         return _convert_events_to_otel_spans(events_df)
     except Exception as e:
         st.error(f"Error getting events for record {record_id}: {e}")
