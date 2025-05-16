@@ -1,6 +1,7 @@
 import argparse
+import json
 import sys
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import pandas as pd
 import streamlit as st
@@ -12,6 +13,9 @@ from trulens.core import session as core_session
 from trulens.core.database import base as core_db
 from trulens.core.utils import imports as import_utils
 from trulens.dashboard import constants as dashboard_constants
+from trulens.dashboard.components.record_viewer_otel import OtelSpan
+from trulens.dashboard.components.record_viewer_otel import SpanRecord
+from trulens.dashboard.components.record_viewer_otel import SpanTrace
 from trulens.dashboard.utils import metadata_utils
 from trulens.dashboard.utils.streamlit_compat import st_columns
 
@@ -496,3 +500,154 @@ def render_app_version_filters(
         )
 
     return filtered_app_versions, app_version_metadata_cols
+
+
+def _parse_json_fields(field: Any) -> Dict[str, Any]:
+    """Parse a JSON field from the database, handling potential errors.
+
+    Args:
+        field: The field to parse, can be a string or dict
+
+    Returns:
+        Parsed dictionary or error dictionary if parsing fails
+    """
+    if isinstance(field, dict):
+        return field
+    if isinstance(field, str):
+        try:
+            return json.loads(field)
+        except Exception as e:
+            return {"error": f"Unable to parse {field}: {e}"}
+    return {"error": f"Invalid {field} format"}
+
+
+def _convert_timestamp(ts: Any) -> Union[int, float]:
+    """Convert various timestamp formats to Unix timestamp in seconds.
+
+    Args:
+        ts: Timestamp in any supported format (int, float, str, pd.Timestamp)
+
+    Returns:
+        Unix timestamp in seconds, or 0 if conversion fails
+    """
+    if pd.isna(ts):
+        return 0
+    elif isinstance(ts, (int, float)):
+        return int(ts)
+    elif isinstance(ts, str):
+        return int(pd.Timestamp(ts).timestamp())
+    elif isinstance(ts, pd.Timestamp):
+        return int(ts.timestamp())
+    else:
+        return 0
+
+
+def _make_serializable(value: Any) -> Any:
+    """Convert a value to a JSON-serializable format.
+
+    Args:
+        value: Any value to convert
+
+    Returns:
+        JSON-serializable version of the value
+    """
+    try:
+        json.dumps({"test": value})
+        return value
+    except (TypeError, OverflowError):
+        return str(value)
+
+
+def _map_event_to_otel_span(row: pd.Series) -> Optional[OtelSpan]:
+    """Convert an Event ORM table row to an OtelSpan format.
+
+    Args:
+        row: A pandas Series containing the Event ORM table row data
+
+    Returns:
+        An OtelSpan object if conversion is successful, None otherwise
+    """
+    try:
+        # Parse record data
+        record_data = _parse_json_fields(row.get("record", {}))
+        span_record: SpanRecord = {
+            "name": str(record_data.get("name", "")),
+            "parent_span_id": str(record_data.get("parent_span_id", "")),
+            "status": str(record_data.get("status", "")),
+        }
+
+        # Parse trace data
+        trace_data = _parse_json_fields(row.get("trace", {}))
+        span_trace: SpanTrace = {
+            "trace_id": str(trace_data.get("trace_id", "")),
+            "parent_id": str(trace_data.get("parent_id", "")),
+            "span_id": str(trace_data.get("span_id", "")),
+        }
+
+        # Process record attributes
+        record_attributes = _parse_json_fields(row.get("record_attributes", {}))
+        serializable_attributes = {
+            k: _make_serializable(v) for k, v in record_attributes.items()
+        }
+
+        # Create span with converted timestamps
+        span: OtelSpan = {
+            "event_id": str(row.get("event_id", "")),
+            "record": span_record,
+            "record_attributes": serializable_attributes,
+            "start_timestamp": _convert_timestamp(row.get("start_timestamp")),
+            "timestamp": _convert_timestamp(row.get("timestamp")),
+            "trace": span_trace,
+        }
+
+        return span
+    except Exception as e:
+        st.warning(f"Error processing span: {e}")
+        return None
+
+
+def _convert_events_to_otel_spans(events_df: pd.DataFrame) -> List[OtelSpan]:
+    """Convert a DataFrame of Event ORM table rows to a list of OtelSpans.
+
+    Args:
+        events_df: DataFrame containing Event ORM table rows
+
+    Returns:
+        A list of OtelSpans for all successfully converted events
+    """
+    serializable_spans: List[OtelSpan] = []
+
+    for _, row in events_df.iterrows():
+        if span := _map_event_to_otel_span(row):
+            serializable_spans.append(span)
+
+    return serializable_spans
+
+
+@st.cache_data(
+    ttl=dashboard_constants.CACHE_TTL, show_spinner="Getting events for record"
+)
+def _get_event_otel_spans(record_id: str) -> List[OtelSpan]:
+    """Get all event spans for a given record ID.
+
+    Args:
+        record_id: The record ID to get events for.
+
+    Returns:
+        A list of OtelSpans for all events corresponding to the given record ID.
+    """
+    session = get_session()
+    db = session.connector.db
+
+    if not db or not hasattr(db, "get_events_by_record_id"):
+        st.error(
+            f"Error getting events by record {record_id}: database must support OTEL spans"
+        )
+        return []
+
+    try:
+        events_df = db.get_events_by_record_id(record_id)
+        return _convert_events_to_otel_spans(events_df)
+    except Exception as e:
+        st.error(f"Error getting events for record {record_id}: {e}")
+        return []

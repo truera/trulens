@@ -821,12 +821,6 @@ class SQLAlchemyDB(core_db.DB):
 
         return record_attributes
 
-    def _datetime_serializer(self, obj: Any) -> str:
-        """Helper function to serialize datetime objects to ISO format strings."""
-        if isinstance(obj, (datetime, pd.Timestamp)):
-            return obj.isoformat()
-        raise TypeError(f"Type {type(obj)} not serializable")
-
     def _update_cost_info_otel(
         self,
         target_dict: dict,
@@ -1562,6 +1556,25 @@ class SQLAlchemyDB(core_db.DB):
                     self.orm.Event.start_timestamp >= start_time,
                 )
             q = sa.select(self.orm.Event).where(where_clause)
+            return pd.read_sql(q, session.bind)
+
+    def get_events_by_record_id(self, record_id: str) -> pd.DataFrame:
+        """Get all events for a given record ID.
+
+        Args:
+            record_id: The record ID to get events for.
+
+        Returns:
+            A pandas DataFrame containing all events for the given record ID.
+        """
+        with self.session.begin() as session:
+            # Query events where record_attributes contains the record_id
+            record_id_expr = self._json_extract_otel(
+                "record_attributes", SpanAttributes.RECORD_ID
+            )
+            q = sa.select(self.orm.Event).where(record_id_expr == record_id)
+
+            # Execute query and return as DataFrame
             return pd.read_sql(q, session.bind)
 
 
