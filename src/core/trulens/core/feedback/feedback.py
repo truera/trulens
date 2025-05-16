@@ -316,10 +316,17 @@ class Feedback(feedback_schema.FeedbackDefinition):
         num_remaining_parameters = len(
             list(k for k in sig.parameters.keys() if k not in self.selectors)
         )
+        if num_remaining_parameters == 0:
+            return self
         if num_remaining_parameters == 1:
-            return self.on_response()
+            # If there is only one parameter left, we assume it is the output.
+            return self.on_output()
         if num_remaining_parameters == 2:
+            # If there are two parameters left, we assume they are the input
+            # and output.
             return self.on_input_output()
+        # If there are more than two parameters left, we cannot guess what to
+        # do.
         raise RuntimeError(
             f"Cannot determine default paths for feedback function arguments. "
             f"The feedback function has signature {sig}."
