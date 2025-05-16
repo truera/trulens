@@ -497,7 +497,6 @@ class TestOtelFeedbackComputation(OtelTestCase):
     def test_evaluator(self) -> None:
         tru_recorder = self._create_invoked_app_with_custom_feedback()
         num_events = len(self._get_events())
-        tru_recorder.start_evaluator()
         # Wait for there to be a feedback computed.
         self._wait(lambda: len(self._get_events()) > num_events)
         events = self._get_events()
