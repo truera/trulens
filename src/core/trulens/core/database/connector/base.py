@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 from concurrent import futures
+import datetime
 import logging
 import queue
 from threading import Thread
@@ -16,7 +17,7 @@ from typing import (
     Union,
 )
 
-import pandas
+import pandas as pd
 from trulens.core._utils.pycompat import Future  # code style exception
 from trulens.core.database import base as core_db
 from trulens.core.schema import app as app_schema
@@ -324,7 +325,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
         app_name: Optional[types_schema.AppName] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
-    ) -> Tuple[pandas.DataFrame, List[str]]:
+    ) -> Tuple[pd.DataFrame, List[str]]:
         """Get records, their feedback results, and feedback names.
 
         Args:
@@ -359,7 +360,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
         group_by_metadata_key: Optional[str] = None,
         limit: Optional[int] = None,
         offset: Optional[int] = None,
-    ) -> pandas.DataFrame:
+    ) -> pd.DataFrame:
         """Get a leaderboard for the given apps.
 
         Args:
@@ -435,14 +436,17 @@ class DBConnector(ABC, text_utils.WithIdentString):
         """
         return [self.add_event(event=event) for event in events]
 
-    def get_events(self, app_id: str) -> List[event_schema.Event]:
+    def get_events(
+        self, app_id: str, start_time: Optional[datetime.datetime] = None
+    ) -> pd.DataFrame:
         """
-        Get all events from the database relating to an app.
+        Get events from the database.
 
         Args:
             app_id: The app id to filter events by.
+            start_time: The minimum time to consider events from.
 
         Returns:
-            A list of events associated with the provided app id.
+            A pandas DataFrame of events associated with the provided app id.
         """
         return self.db.get_events(app_id)

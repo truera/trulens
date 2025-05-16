@@ -111,3 +111,14 @@ class Selector:
                 )
             ret.value = attributes.get(ret.span_attribute, None)
         return ret
+
+
+# Common Selectors.
+RECORD_ROOT_INPUT = Selector(
+    span_type=SpanAttributes.SpanType.RECORD_ROOT,
+    span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
+)
+RECORD_ROOT_OUTPUT = Selector(
+    span_type=SpanAttributes.SpanType.RECORD_ROOT,
+    span_attribute=SpanAttributes.RECORD_ROOT.OUTPUT,
+)
