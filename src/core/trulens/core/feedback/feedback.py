@@ -33,6 +33,8 @@ from rich.markdown import Markdown
 from rich.pretty import pretty_repr
 from trulens.core._utils import pycompat as pycompat_utils
 from trulens.core.feedback import endpoint as core_endpoint
+from trulens.core.feedback.selector import RECORD_ROOT_INPUT
+from trulens.core.feedback.selector import RECORD_ROOT_OUTPUT
 from trulens.core.feedback.selector import Selector
 from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import app as app_schema
@@ -306,13 +308,34 @@ class Feedback(feedback_schema.FeedbackDefinition):
         Returns a new Feedback object with this specification.
         """
 
-        ret = Feedback.model_copy(self)
-
-        ret._default_selectors()
-
-        return ret
+        if self.imp is None:
+            raise ValueError(
+                "Feedback function implementation is required to determine default argument names."
+            )
+        sig: Signature = signature(self.imp)
+        num_remaining_parameters = len(
+            list(k for k in sig.parameters.keys() if k not in self.selectors)
+        )
+        if num_remaining_parameters == 0:
+            return self
+        if num_remaining_parameters == 1:
+            # If there is only one parameter left, we assume it is the output.
+            return self.on_output()
+        if num_remaining_parameters == 2:
+            # If there are two parameters left, we assume they are the input
+            # and output.
+            return self.on_input_output()
+        # If there are more than two parameters left, we cannot guess what to
+        # do.
+        raise RuntimeError(
+            f"Cannot determine default paths for feedback function arguments. "
+            f"The feedback function has signature {sig}."
+        )
 
     def _print_guessed_selector(self, par_name, par_path):
+        if is_otel_tracing_enabled():
+            return
+
         if par_path == select_schema.Select.RecordCalls:
             alias_info = " or `Select.RecordCalls`"
         elif par_path == select_schema.Select.RecordInput:
@@ -326,54 +349,6 @@ class Feedback(feedback_schema.FeedbackDefinition):
             f"{text_utils.UNICODE_CHECK} In {self.supplied_name if self.supplied_name is not None else self.name}, "
             f"input {par_name} will be set to {par_path}{alias_info} ."
         )
-
-    def _default_selectors(self):
-        """
-        Fill in default selectors for any remaining feedback function arguments.
-        """
-
-        assert (
-            self.imp is not None
-        ), "Feedback function implementation is required to determine default argument names."
-
-        sig: Signature = signature(self.imp)
-        par_names = list(
-            k for k in sig.parameters.keys() if k not in self.selectors
-        )
-
-        if len(par_names) == 1:
-            # A single argument remaining. Assume it is record output.
-            selectors = {par_names[0]: select_schema.Select.RecordOutput}
-            self._print_guessed_selector(
-                par_names[0], select_schema.Select.RecordOutput
-            )
-
-            # TODO: replace with on_output ?
-
-        elif len(par_names) == 2:
-            # Two arguments remaining. Assume they are record input and output
-            # respectively.
-            selectors = {
-                par_names[0]: select_schema.Select.RecordInput,
-                par_names[1]: select_schema.Select.RecordOutput,
-            }
-            self._print_guessed_selector(
-                par_names[0], select_schema.Select.RecordInput
-            )
-            self._print_guessed_selector(
-                par_names[1], select_schema.Select.RecordOutput
-            )
-
-            # TODO: replace on_input_output ?
-        else:
-            # Otherwise give up.
-
-            raise RuntimeError(
-                f"Cannot determine default paths for feedback function arguments. "
-                f"The feedback function has signature {sig}."
-            )
-
-        self.selectors = selectors
 
     @staticmethod
     def evaluate_deferred(
@@ -585,7 +560,10 @@ class Feedback(feedback_schema.FeedbackDefinition):
             arg = self._next_unselected_arg_name()
             self._print_guessed_selector(arg, select_schema.Select.RecordInput)
 
-        new_selectors[arg] = select_schema.Select.RecordInput
+        if is_otel_tracing_enabled():
+            new_selectors[arg] = RECORD_ROOT_INPUT
+        else:
+            new_selectors[arg] = select_schema.Select.RecordInput
 
         ret = self.model_copy()
 
@@ -608,7 +586,10 @@ class Feedback(feedback_schema.FeedbackDefinition):
             arg = self._next_unselected_arg_name()
             self._print_guessed_selector(arg, select_schema.Select.RecordOutput)
 
-        new_selectors[arg] = select_schema.Select.RecordOutput
+        if is_otel_tracing_enabled():
+            new_selectors[arg] = RECORD_ROOT_OUTPUT
+        else:
+            new_selectors[arg] = select_schema.Select.RecordOutput
 
         ret = self.model_copy()
 
@@ -638,6 +619,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
                 )
             sig = signature(self.imp)
             feedback_function_parameters = set(sig.parameters.keys())
+            new_selectors = self.selectors.copy()
             for k, v in selectors.items():
                 if not isinstance(k, str):
                     raise ValueError(
@@ -651,8 +633,9 @@ class Feedback(feedback_schema.FeedbackDefinition):
                     raise ValueError(
                         f"OTEL mode only supports Selector values, not {type(v)}!"
                     )
+                new_selectors[k] = v
             ret = self.model_copy()
-            ret.selectors = selectors
+            ret.selectors = new_selectors
             return ret
 
         new_selectors = self.selectors.copy()
