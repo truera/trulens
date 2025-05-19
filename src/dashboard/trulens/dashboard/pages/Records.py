@@ -163,7 +163,7 @@ def _render_trace(
             if event_spans:
                 record_viewer_otel(spans=event_spans, key=None)
             else:
-                st.info("No trace data available for this record.")
+                st.warning("No trace data available for this record.")
     else:
         with trace_details:
             st.subheader("Trace Details")

@@ -346,7 +346,7 @@ def trulens_trace(record: record_schema.Record):
                 spans=event_spans, key=None
             )
         else:
-            st.info("No trace data available for this record.")
+            st.warning("No trace data available for this record.")
     else:
         dashboard_record_viewer.record_viewer(
             record_json=json.loads(json_utils.json_str_of_obj(record)),
