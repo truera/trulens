@@ -10,6 +10,7 @@ import streamlit as st
 from trulens.core import session as core_session
 from trulens.core.database import base as core_db
 from trulens.core.database.legacy import migration as legacy_migration
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.utils import json as json_utils
@@ -18,8 +19,12 @@ from trulens.dashboard import display as dashboard_display
 from trulens.dashboard.components import (
     record_viewer as dashboard_record_viewer,
 )
+from trulens.dashboard.components import (
+    record_viewer_otel as dashboard_record_viewer_otel,
+)
 from trulens.dashboard.utils import dashboard_utils
 from trulens.dashboard.utils import streamlit_compat
+from trulens.dashboard.utils.dashboard_utils import _get_event_otel_spans
 from trulens.dashboard.utils.streamlit_compat import st_columns
 from trulens.dashboard.ux import components as dashboard_components
 from trulens.dashboard.ux import styles as dashboard_styles
@@ -331,6 +336,17 @@ def trulens_trace(record: record_schema.Record):
         st.warning(
             "TruLens trace view is not enabled when SiS compatibility is enabled."
         )
+    elif is_otel_tracing_enabled():
+        # NOTE: Given that this method relies on the Record table, I'm unsure if this block will ever
+        # get called because OTEL spans use the Event table instead of the Record table.
+        # TODO: Consider writing a separate method for OTEL.
+        event_spans = _get_event_otel_spans(record.record_id)
+        if event_spans:
+            dashboard_record_viewer_otel.record_viewer_otel(
+                spans=event_spans, key=None
+            )
+        else:
+            st.warning("No trace data available for this record.")
     else:
         dashboard_record_viewer.record_viewer(
             record_json=json.loads(json_utils.json_str_of_obj(record)),
