@@ -1125,6 +1125,7 @@ class SQLAlchemyDB(core_db.DB):
 
                         # Add call data
                         call_data = {
+                            # NOTE: Call data may not be populated in the OTEL spans yet
                             "kwargs": record_attributes.get(
                                 SpanAttributes.CALL.KWARGS, {}
                             ),
