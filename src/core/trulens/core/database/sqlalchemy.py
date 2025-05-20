@@ -1115,7 +1115,7 @@ class SQLAlchemyDB(core_db.DB):
                                     SpanAttributes.EVAL_ROOT.SCORE, 0.0
                                 )
                             )
-                            # NOTE: HIGHER_IS_BETTER has not been populated in the OTEL spans yet
+                            # TODO(SNOW-2112879): HIGHER_IS_BETTER has not been populated in the OTEL spans yet
                             feedback_result["direction"] = (
                                 record_attributes.get(
                                     SpanAttributes.EVAL_ROOT.HIGHER_IS_BETTER,
@@ -1125,7 +1125,7 @@ class SQLAlchemyDB(core_db.DB):
 
                         # Add call data
                         call_data = {
-                            # NOTE: Call data may not be populated in the OTEL spans yet
+                            # TODO(SNOW-2112879): Call data may not be populated in the OTEL spans yet
                             "args": record_attributes.get(
                                 SpanAttributes.CALL.KWARGS, {}
                             ),
