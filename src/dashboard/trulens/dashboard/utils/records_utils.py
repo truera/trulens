@@ -62,7 +62,6 @@ def display_feedback_call(
         # multiple rows, one for each element, but if the
         # second or other column is a list, it will not do
         # this.
-
         for c in call:
             args: Dict = c["args"]
             for k, v in args.items():
