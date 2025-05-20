@@ -193,6 +193,7 @@ Function <function CustomLLM.generate at 0x1779471f0> was not found during instr
 
 import inspect
 import logging
+import os
 from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Optional, Set
 
@@ -201,7 +202,6 @@ from pydantic import Field
 from trulens.core import app as core_app
 from trulens.core import experimental as core_experimental
 from trulens.core import instruments as core_instruments
-from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.session import TruSession
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
@@ -472,7 +472,7 @@ class TruApp(core_app.App):
         return main_method(human)
 
 
-class legacy_instrument(core_instruments.instrument):
+class instrument(core_instruments.instrument):
     """
     Decorator for marking methods to be instrumented in custom classes that are
     wrapped by TruApp.
@@ -487,11 +487,9 @@ class legacy_instrument(core_instruments.instrument):
         TruApp.functions_to_instrument.add(getattr(inst_cls, name))
 
 
-if is_otel_tracing_enabled():
+if os.getenv("TRULENS_OTEL_TRACING", "").lower() in ["1", "true"]:
     from trulens.core.otel.instrument import instrument as otel_instrument
 
-    instrument = otel_instrument()
-else:
-    instrument = legacy_instrument
+    instrument = otel_instrument
 
 TruApp.model_rebuild()
