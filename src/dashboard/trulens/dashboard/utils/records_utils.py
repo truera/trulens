@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional, Sequence
 import pandas as pd
 import streamlit as st
 from trulens.core.database.base import MULTI_CALL_NAME_DELIMITER
-from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.dashboard.display import expand_groundedness_df
 from trulens.dashboard.display import highlight
 from trulens.dashboard.ux.styles import CATEGORY
@@ -64,16 +63,13 @@ def display_feedback_call(
         # second or other column is a list, it will not do
         # this.
 
-        # NOTE: see https://github.com/truera/trulens/pull/1939#discussion_r2061174909
-        args_col_name = "kwargs" if is_otel_tracing_enabled() else "args"
-
         for c in call:
-            args: Dict = c[args_col_name]
+            args: Dict = c["args"]
             for k, v in args.items():
                 if not isinstance(v, str):
                     args[k] = pp.pformat(v)
 
-        df = pd.DataFrame.from_records(c[args_col_name] for c in call)
+        df = pd.DataFrame.from_records(c["args"] for c in call)
 
         df["score"] = pd.DataFrame([
             float(call[i]["ret"]) if call[i]["ret"] is not None else -1
