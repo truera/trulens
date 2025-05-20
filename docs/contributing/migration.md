@@ -8,7 +8,7 @@ schema.
 If upgrading DB, You must do this step!!
 
 1. Make desired changes to SQLAlchemy orm models in `src/core/trulens/core/database/orm.py`.
-1. Run automatic alembic revision script generator. This will generate a new python script in `src/core/trulens/core/database/migrations`.
+1. Run automatic alembic revision script generator. This will generate a new Python script in `src/core/trulens/core/database/migrations`.
    1. `cd src/core/trulens/core/database/migrations`
    1. `SQLALCHEMY_URL="sqlite:///../../../../../../default.sqlite" alembic revision --autogenerate -m "<short_description>" --rev-id "<next_integer_version>"`
 1. Check over the automatically generated script in `src/core/trulens/core/database/migration/versions` to make sure it looks correct.

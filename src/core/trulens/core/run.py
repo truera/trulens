@@ -1,5 +1,6 @@
 from __future__ import annotations  # defers evaluation of annotations
 
+from collections import defaultdict
 from enum import Enum
 import inspect
 import json
@@ -53,8 +54,8 @@ DATASET_RESERVED_FIELDS: Set[str] = {
 }
 
 
-INVOCATION_TIMEOUT_IN_MS = (
-    5 * 60 * 1000
+EXPECTED_TELEMETRY_LATENCY_IN_MS = (
+    2 * 60 * 1000
 )  # expected latency from the telemetry pipeline before ingested rows show up in event table
 
 
@@ -73,7 +74,8 @@ class RunStatus(str, Enum):
 
     CREATED = "CREATED"
     FAILED = "FAILED"
-    UNKNOWN = "UNKNOWN"  # TODO: do we want to show this to users?
+    CANCELLED = "CANCELLED"
+    UNKNOWN = "UNKNOWN"
 
 
 class SupportedEntryType(str, Enum):
@@ -82,11 +84,7 @@ class SupportedEntryType(str, Enum):
     METRICS = "metrics"
 
 
-SUPPORTED_ENTRY_TYPES = [
-    SupportedEntryType.INVOCATIONS,
-    SupportedEntryType.COMPUTATIONS,
-    SupportedEntryType.METRICS,
-]
+SUPPORTED_ENTRY_TYPES = [e.value for e in SupportedEntryType]
 
 
 def validate_dataset_spec(
@@ -206,13 +204,18 @@ class Run(BaseModel):
         description="Unique name of the run. This name should be unique within the object.",
     )
 
+    run_status: Optional[str] = Field(
+        default=None,
+        description="The status of the run on the entity level. Currently it can only be ACTIVE or CANCELLED.",
+    )
+
     description: Optional[str] = Field(
         default=None, description="A description for the run."
     )
 
     class RunMetadata(BaseModel):
-        labels: List[Optional[str]] = Field(
-            default=[],
+        labels: Optional[List[str]] = Field(
+            default=None,
             description="Text label to group the runs. Take a single label for now",
         )
         llm_judge_name: Optional[str] = Field(
@@ -343,9 +346,13 @@ class Run(BaseModel):
         if run_metadata_df.empty:
             raise ValueError(f"Run {self.run_name} not found.")
 
-        return json.loads(
+        raw_json = json.loads(
             list(run_metadata_df.to_dict(orient="records")[0].values())[0]
         )
+
+        # remove / hide entity-level run_status field to avoid customer's confusion
+        raw_json.pop("run_status", None)
+        return raw_json
 
     def delete(self) -> None:
         """
@@ -362,6 +369,10 @@ class Run(BaseModel):
         """
         Check if the run is in a state that allows starting a new invocation.
         """
+        if self._is_cancelled():
+            logger.warning("Cannot start a new invocation for a cancelled run.")
+            return False
+
         return current_run_status in [
             RunStatus.CREATED,
             RunStatus.INVOCATION_PARTIALLY_COMPLETED,
@@ -375,18 +386,24 @@ class Run(BaseModel):
         """
         Check if the run is in a state that allows starting a new metric computation.
         """
+        if self._is_cancelled():
+            logger.warning(
+                "Cannot start a new metric computation for a cancelled run."
+            )
+            return False
+
         if current_run_status == RunStatus.COMPUTATION_IN_PROGRESS:
             logger.warning(
                 "Previous computation(s) still in progress. Starting another new metric computation when computation is in progress."
             )
-        # TODO: verify if we allow starting a new compute query when in-progress computation exists
+
         return current_run_status in [
             RunStatus.INVOCATION_COMPLETED,
             RunStatus.INVOCATION_PARTIALLY_COMPLETED,
             RunStatus.COMPUTATION_IN_PROGRESS,
             RunStatus.COMPLETED,
             RunStatus.PARTIALLY_COMPLETED,
-            RunStatus.UNKNOWN,  # TODO: verify if this is allowed behavior
+            RunStatus.FAILED,
         ]
 
     def _is_invocation_started(self, run: Run) -> bool:
@@ -432,14 +449,25 @@ class Run(BaseModel):
             f"Current ingested records count: {current_ingested_records_count}"
         )
 
+        latest_record_root_timestamp_in_ms = (
+            self.run_dao.read_latest_record_root_timestamp_in_ms(
+                object_name=self.object_name, run_name=self.run_name
+            )
+        )
+
+        logger.debug(
+            f"Latest record root timestamp in ms: {latest_record_root_timestamp_in_ms}"
+        )
+
         if (
             latest_invocation.input_records_count
             and current_ingested_records_count
-            == latest_invocation.input_records_count
+            >= latest_invocation.input_records_count
         ):
+            # greater than or equal to input records count to account for the edge case where multiple tru recorders are set on the same run
             # happy case, add end time and update status
             self.run_dao.upsert_run_metadata_fields(
-                entry_type=SupportedEntryType.INVOCATIONS,
+                entry_type=SupportedEntryType.INVOCATIONS.value,
                 entry_id=latest_invocation.id,
                 input_records_count=latest_invocation.input_records_count,
                 start_time_ms=latest_invocation.start_time_ms,
@@ -458,13 +486,14 @@ class Run(BaseModel):
 
         elif (
             latest_invocation.start_time_ms
-            and time.time() * 1000 - latest_invocation.start_time_ms
-            > INVOCATION_TIMEOUT_IN_MS
+            and latest_record_root_timestamp_in_ms
+            and time.time() * 1000 - latest_record_root_timestamp_in_ms
+            > EXPECTED_TELEMETRY_LATENCY_IN_MS
         ):
             # inconclusive case, timeout reached and add end time and update completion status in DPO
-            logger.warning("Invocation timeout reached and concluded")
+            logger.warning("Invocation timed out.")
             self.run_dao.upsert_run_metadata_fields(
-                entry_type=SupportedEntryType.INVOCATIONS,
+                entry_type=SupportedEntryType.INVOCATIONS.value,
                 entry_id=latest_invocation.id,
                 input_records_count=latest_invocation.input_records_count,
                 start_time_ms=latest_invocation.start_time_ms,
@@ -488,14 +517,56 @@ class Run(BaseModel):
                 else RunStatus.UNKNOWN
             )
 
-    def _is_computation_started(self, run: Run) -> bool:
+    def _metrics_computation_started(self, run: Run) -> bool:
         return (
-            run.run_metadata.computations is not None
-            and len(run.run_metadata.computations) > 0
+            run.run_metadata.metrics is not None
+            and len(run.run_metadata.metrics) > 0
         )
 
+    def _resolve_overall_metrics_status(
+        self, all_metrics, invocation_completion_status
+    ):
+        """
+        Given the list of all metrics, resolve and return the overall metrics status.
+        """
+        if all(
+            metric.completion_status
+            and metric.completion_status.status
+            == Run.CompletionStatusStatus.COMPLETED
+            for metric in all_metrics
+        ):
+            return (
+                RunStatus.COMPLETED
+                if invocation_completion_status
+                == Run.CompletionStatusStatus.COMPLETED
+                else RunStatus.PARTIALLY_COMPLETED
+            )
+        elif all(
+            metric.completion_status
+            and metric.completion_status.status
+            == Run.CompletionStatusStatus.FAILED
+            for metric in all_metrics
+        ):
+            return RunStatus.FAILED
+        elif all(
+            metric.completion_status
+            and metric.completion_status.status
+            in [
+                Run.CompletionStatusStatus.COMPLETED,
+                Run.CompletionStatusStatus.FAILED,
+            ]
+            for metric in all_metrics
+        ):
+            return RunStatus.PARTIALLY_COMPLETED
+        else:
+            logger.warning(
+                "Cannot determine run status. Metrics: %s",
+                [metric.name for metric in all_metrics],
+            )
+            return RunStatus.UNKNOWN
+
     def _compute_overall_computations_status(self, run: Run) -> RunStatus:
-        all_computations = run.run_metadata.computations.values()
+        all_existing_metrics = run.run_metadata.metrics.values()
 
         latest_invocation = max(
             run.run_metadata.invocations.values(),
@@ -505,139 +576,122 @@ class Run(BaseModel):
             latest_invocation.completion_status.status
         )
 
-        computation_sproc_query_ids_to_query_status = {}
-        for computation in all_computations:
-            query_id = computation.query_id
-            query_status = self.run_dao.fetch_query_execution_status_by_id(
-                query_start_time_ms=computation.start_time_ms,
-                query_id=query_id,
-            )
+        # check all metrics and see if their completion status are set or not
+        metrics_status_not_set = [
+            metric
+            for metric in all_existing_metrics
+            if not metric.completion_status
+            or not metric.completion_status.status
+        ]
 
-            if query_status == "IN_PROGRESS":
-                logger.info(
-                    f"Computation {computation.id} is still running or being queued."
-                )
-                # Returning early to avoid unnecessary checks as long as at least one computation is still running
-                return RunStatus.COMPUTATION_IN_PROGRESS
-            computation_sproc_query_ids_to_query_status[query_id] = query_status
-        # all computations are done, update DPO computations metadata
-        for computation in all_computations:
-            self.run_dao.upsert_run_metadata_fields(
-                entry_type=SupportedEntryType.COMPUTATIONS,
-                entry_id=computation.id,
-                query_id=computation.query_id,
-                start_time_ms=computation.start_time_ms,
-                end_time_ms=self._get_current_time_in_ms(),
-                run_name=self.run_name,
-                object_name=self.object_name,
-                object_type=self.object_type,
-                object_version=self.object_version,
+        if len(metrics_status_not_set) == 0:
+            # early return cases as status of all metrics are set
+            logger.info("All metrics statuses are set.")
+            return self._resolve_overall_metrics_status(
+                all_existing_metrics, invocation_completion_status
             )
-
-        if all(
-            status == "SUCCESS"
-            for status in computation_sproc_query_ids_to_query_status.values()
-        ):
-            overall_computation_status = (
-                RunStatus.COMPLETED
-                if invocation_completion_status
-                == Run.CompletionStatusStatus.COMPLETED
-                else RunStatus.PARTIALLY_COMPLETED
+        else:
+            logger.info(
+                f"Metrics status not set for: {[metric.name for metric in metrics_status_not_set]}. Checking sproc query status via query history"
             )
+            # multiple metrics can be associated with the same computation
+            computation_id_to_metrics = defaultdict(list)
+            for metric in metrics_status_not_set:
+                computation_id_to_metrics[metric.computation_id].append(metric)
 
+            all_computations = run.run_metadata.computations.values()
+            # Check the status of sproc query with metrics that are not complete,
+            # update the ones that are done.
+
+            some_computation_in_progress = False
             for computation in all_computations:
-                query_id = computation.query_id
-
-                result_rows = (
-                    self.run_dao.fetch_computation_job_results_by_query_id(
-                        query_id
+                if computation.id in computation_id_to_metrics:
+                    query_id = computation.query_id
+                    query_status = (
+                        self.run_dao.fetch_query_execution_status_by_id(
+                            query_start_time_ms=computation.start_time_ms,
+                            query_id=query_id,
+                        )
                     )
-                )
-                for i, row in result_rows.iterrows():
-                    row_msg = row["MESSAGE"]
-
-                    computed_records_count = int(
-                        row_msg.split(" ")[1]
-                    )  # TODO change to regex or directly read the field when available
-                    metric_status = row["STATUS"]
-                    metric_metatada_id = str(uuid.uuid4())
-                    if metric_status == "SUCCESS":
+                    if query_status == "IN_PROGRESS":
                         logger.info(
-                            f"Metrics computation for {row['METRIC']} succeeded."
+                            f"Computation {computation.id} is still running or being queued."
                         )
+                        some_computation_in_progress = True
 
-                        self.run_dao.upsert_run_metadata_fields(
-                            entry_type=SupportedEntryType.METRICS,
-                            entry_id=metric_metatada_id,
-                            computation_id=computation.id,
-                            name=row["METRIC"],
-                            completion_status=Run.CompletionStatus(
-                                status=Run.CompletionStatusStatus.COMPLETED,
-                                record_count=computed_records_count,
-                            ).model_dump(),
-                            run_name=self.run_name,
-                            object_name=self.object_name,
-                            object_type=self.object_type,
-                            object_version=self.object_version,
-                        )
-
-                    elif metric_status == "FAILURE":
+                    elif query_status == "FAILED" or query_status == "SUCCESS":
                         logger.warning(
-                            f"Metrics computation for {row['METRIC']} failed."
+                            f"Computation query_id: {query_id} finished with status: {query_status}. Updating run metadata."
                         )
 
                         self.run_dao.upsert_run_metadata_fields(
-                            entry_type=SupportedEntryType.METRICS,
-                            entry_id=metric_metatada_id,
-                            computation_id=computation.id,
-                            name=row["METRIC"],
-                            completion_status=Run.CompletionStatus(
-                                status=Run.CompletionStatusStatus.FAILED,
-                                record_count=computed_records_count,
-                            ).model_dump(),
+                            entry_type=SupportedEntryType.COMPUTATIONS.value,
+                            entry_id=computation.id,
+                            query_id=query_id,
+                            start_time_ms=computation.start_time_ms,
+                            end_time_ms=self._get_current_time_in_ms(),
                             run_name=self.run_name,
                             object_name=self.object_name,
                             object_type=self.object_type,
                             object_version=self.object_version,
                         )
+                        metrics_in_computation = computation_id_to_metrics[
+                            computation.id
+                        ]
+                        result_rows = self.run_dao.fetch_computation_job_results_by_query_id(
+                            query_id
+                        )
 
-            return overall_computation_status
-        if all(
-            status == "FAILED"
-            for status in computation_sproc_query_ids_to_query_status.values()
-        ):
-            logger.warning("All computations failed.")
-            return RunStatus.FAILED
-        if (
-            all(
-                status == "SUCCESS" or status == "FAILED"
-                for status in computation_sproc_query_ids_to_query_status.values()
-            )
-            and self.run_dao.read_spans_count_from_event_table(
-                object_name=self.object_name,
-                run_name=self.run_name,
-                span_type="eval_root",
-            )
-            == 0
-        ):
-            # metric (eval) result ingestion failed for some reason
-            logger.warning(
-                "All computations concluded, but no metric results ingested."
-            )
-            return RunStatus.FAILED
-        if (
-            invocation_completion_status == Run.CompletionStatusStatus.COMPLETED
-            or invocation_completion_status
-            == Run.CompletionStatusStatus.PARTIALLY_COMPLETED
-        ) and not any(
-            status == "IN_PROGRESS"
-            for status in computation_sproc_query_ids_to_query_status.values()
-        ):
-            return RunStatus.PARTIALLY_COMPLETED
+                        metric_name_to_status = {
+                            row["METRIC"]: row["STATUS"]
+                            for _, row in result_rows.iterrows()
+                        }
 
-        logger.warning("Cannot determine run status")
+                        metric_name_to_computed_records_count = {
+                            row["METRIC"]: int(
+                                row["MESSAGE"].split(" ")[
+                                    1
+                                ]  # TODO unbrittel this - directly read the field when available
+                            )
+                            for _, row in result_rows.iterrows()
+                        }
 
-        return RunStatus.UNKNOWN
+                        for metric in metrics_in_computation:
+                            if (
+                                metric.name in metric_name_to_status
+                                and metric.name
+                                in metric_name_to_computed_records_count
+                            ):
+                                logger.info(
+                                    f"Updating metric {metric.name} metadata."
+                                )
+                                self.run_dao.upsert_run_metadata_fields(
+                                    entry_type=SupportedEntryType.METRICS.value,
+                                    entry_id=metric.id,
+                                    computation_id=computation.id,
+                                    name=metric.name,
+                                    completion_status=Run.CompletionStatus(
+                                        status=Run.CompletionStatusStatus.COMPLETED
+                                        if metric_name_to_status[metric.name]
+                                        == "SUCCESS"
+                                        else Run.CompletionStatusStatus.FAILED,
+                                        record_count=metric_name_to_computed_records_count[
+                                            metric.name
+                                        ],  # TODO: read from event table if possible
+                                    ).model_dump(),
+                                    run_name=self.run_name,
+                                    object_name=self.object_name,
+                                    object_type=self.object_type,
+                                    object_version=self.object_version,
+                                )
+
+            if some_computation_in_progress:
+                return RunStatus.COMPUTATION_IN_PROGRESS
+            else:
+                logger.info("All computations concluded.")
+                return self._resolve_overall_metrics_status(
+                    all_existing_metrics, invocation_completion_status
+                )
 
     def start(self, input_df: Optional[pd.DataFrame] = None):
         """
@@ -655,7 +709,6 @@ class Run(BaseModel):
             logger.info(
                 "No input dataframe provided. Fetching input data from source."
             )
-            # TODO: update the source_info.source_type to 'TABLE'
             rows = self.run_dao.session.sql(
                 f"SELECT * FROM {self.source_info.name}"
             ).collect()
@@ -685,7 +738,7 @@ class Run(BaseModel):
         )
 
         self.run_dao.upsert_run_metadata_fields(
-            entry_type=SupportedEntryType.INVOCATIONS,
+            entry_type=SupportedEntryType.INVOCATIONS.value,
             entry_id=invocation_metadata_id,
             start_time_ms=start_time_ms,
             end_time_ms=0,  # required field
@@ -738,7 +791,7 @@ class Run(BaseModel):
             )
 
             self.run_dao.upsert_run_metadata_fields(
-                entry_type=SupportedEntryType.INVOCATIONS,
+                entry_type=SupportedEntryType.INVOCATIONS.value,
                 entry_id=invocation_metadata_id,
                 start_time_ms=start_time_ms,
                 input_records_count=input_records_count,
@@ -761,8 +814,6 @@ class Run(BaseModel):
         return int(round(time.time() * 1000))
 
     def get_status(self) -> RunStatus:
-        # first read from DPO backend, and decide if we need to update status.
-        # TODO: potentially an expensive call, and should optimize in the near future.
         run_metadata_df = self.run_dao.get_run(
             run_name=self.run_name,
             object_name=self.object_name,
@@ -780,26 +831,113 @@ class Run(BaseModel):
             },
         )
 
+        if run.run_status == "CANCELLED":
+            return RunStatus.CANCELLED
+
         if not self._is_invocation_started(run):
             logger.info("Run is created, no invocation nor computation yet.")
             return RunStatus.CREATED
-        elif self._is_computation_started(run):
+        elif self._metrics_computation_started(run):
             logger.info(
-                "Run is created, invocation done, and computation started."
+                "Run is created, invocation done, and some or all metrics computed."
             )
+
             return self._compute_overall_computations_status(run)
 
         else:
             logger.info("Run is created, invocation started.")
+
             return self._compute_latest_invocation_status(run)
 
-    def compute_metrics(self, metrics: List[str]):
+    def _should_skip_computation(self, metric_name: str, run: Run) -> bool:
+        if run.run_metadata.metrics is None:
+            return False
+
+        statuses = []  # will store statuses for all matching metric entries
+        for metric_metadata in run.run_metadata.metrics.values():
+            if metric_metadata.name == metric_name:
+                # If completion_status is not set, we treat it as "in progress"
+                if metric_metadata.completion_status is None:
+                    statuses.append("IN_PROGRESS")
+                else:
+                    statuses.append(metric_metadata.completion_status.status)
+
+        # If no matching metric entries found, don't skip.
+        if not statuses:
+            return False
+
+        if any(s == Run.CompletionStatusStatus.COMPLETED for s in statuses):
+            logger.info(
+                f"Metric {metric_name} already computed successfully (one entry COMPLETED); skipping computation."
+            )
+            return True
+
+        # If any metric is in progress (i.e. no completion status), we skip because it's still computing.
+        if any(s == "IN_PROGRESS" for s in statuses):
+            logger.info(
+                f"Metric {metric_name} is in progress (at least one entry not complete); skipping computation."
+            )
+            return True
+
+        # If all matching metrics are FAILED, then allow re-computation.
+        if all(s == Run.CompletionStatusStatus.FAILED for s in statuses):
+            logger.info(
+                f"All metric entries for {metric_name} have FAILED; allowing re-computation."
+            )
+            return False
+
+        logger.warning(
+            "Unknown state for metric computation; skipping computation."
+        )
+        return True
+
+    def compute_metrics(self, metrics: List[str]) -> str:
         run_status = self.get_status()
 
         logger.info(f"Current run status: {run_status}")
         if not self._can_start_new_metric_computation(run_status):
             return f"""Cannot start a new metric computation when in run status: {run_status}. Valid statuses are: {RunStatus.INVOCATION_COMPLETED}, {RunStatus.INVOCATION_PARTIALLY_COMPLETED},
-        {RunStatus.COMPUTATION_IN_PROGRESS}, {RunStatus.COMPLETED}, {RunStatus.PARTIALLY_COMPLETED}."""
+        {RunStatus.COMPUTATION_IN_PROGRESS}, {RunStatus.COMPLETED}, {RunStatus.PARTIALLY_COMPLETED}, {RunStatus.FAILED}."""
+
+        run_metadata_df = self.run_dao.get_run(
+            run_name=self.run_name,
+            object_name=self.object_name,
+            object_type=self.object_type,
+            object_version=self.object_version,
+        )
+
+        run = Run.from_metadata_df(
+            run_metadata_df,
+            {
+                "app": self,
+                "main_method_name": self.main_method_name,
+                "run_dao": self.run_dao,
+                "tru_session": self.tru_session,
+            },
+        )
+
+        computation_metadata_id = str(uuid.uuid4())
+
+        for metric_name in metrics:
+            if not self._should_skip_computation(metric_name, run):
+                logger.info(
+                    f"Adding metric: {metric_name} to run metadata for computation."
+                )
+                # add placeholder entries to metrics field in run metadata
+                metric_metadata_id = str(uuid.uuid4())
+                self.run_dao.upsert_run_metadata_fields(
+                    entry_type=SupportedEntryType.METRICS.value,
+                    entry_id=metric_metadata_id,
+                    computation_id=computation_metadata_id,
+                    name=metric_name,
+                    completion_status=None,  # starting w/ null, will be updated after the computation
+                    run_name=self.run_name,
+                    object_name=self.object_name,
+                    object_type=self.object_type,
+                    object_version=self.object_version,
+                )
+
+        computation_start_time_ms = self._get_current_time_in_ms()
 
         async_job = self.run_dao.call_compute_metrics_query(
             metrics=metrics,
@@ -812,13 +950,8 @@ class Run(BaseModel):
         query_id = async_job.query_id
 
         logger.info(f"Query id for metrics computation: {query_id}")
-
-        computation_metadata_id = str(uuid.uuid4())
-
-        computation_start_time_ms = self._get_current_time_in_ms()
-
         self.run_dao.upsert_run_metadata_fields(
-            entry_type=SupportedEntryType.COMPUTATIONS,
+            entry_type=SupportedEntryType.COMPUTATIONS.value,
             entry_id=computation_metadata_id,
             query_id=query_id,
             start_time_ms=computation_start_time_ms,
@@ -830,10 +963,27 @@ class Run(BaseModel):
         )
 
         logger.info("Metrics computation job started")
-        return async_job
+        return "Metrics computation in progress."
+
+    def _is_cancelled(self) -> bool:
+        return self.get_status() == RunStatus.CANCELLED
 
     def cancel(self):
-        raise NotImplementedError("cancel is not implemented yet.")
+        if self._is_cancelled():
+            logger.warning(f"Run {self.run_name} is already cancelled.")
+            return
+
+        update_fields = {"run_status": "CANCELLED"}
+
+        self.run_dao.upsert_run_metadata_fields(
+            run_name=self.run_name,
+            object_name=self.object_name,
+            object_type=self.object_type,
+            object_version=self.object_version,
+            **update_fields,
+        )
+
+        logger.info(f"Run {self.run_name} cancelled.")
 
     def update(
         self, description: Optional[str] = None, label: Optional[str] = None
@@ -841,7 +991,22 @@ class Run(BaseModel):
         """
         Only description and label are allowed to be updated at the moment.
         """
-        raise NotImplementedError("update is not implemented yet.")
+        update_fields = {}
+        if description is not None:
+            logger.info(f"Updating run description to {description}")
+            update_fields["description"] = description
+        if label is not None:
+            logger.info(f"Updating run label to {label}")
+            update_fields["labels"] = [label]
+
+        if update_fields:
+            self.run_dao.upsert_run_metadata_fields(
+                run_name=self.run_name,
+                object_name=self.object_name,
+                object_type=self.object_type,
+                object_version=self.object_version,
+                **update_fields,
+            )
 
     @classmethod
     def from_metadata_df(

@@ -4,7 +4,7 @@
    supported libraries, give them some value with the minimal effort beyond that
    app.
 
-Currently to get going, a user needs to add  4 lines of python:
+Currently to get going, a user needs to add  4 lines of Python:
 
 ```python
 from trulens.dashboard import run_dashboard # line 1
@@ -31,7 +31,7 @@ function [jsonify][trulens.core.utils.json.jsonify] is the root of this process.
 
 #### class/system specific
 
-##### pydantic (langchain)
+##### pydantic (LangChain)
 
 Classes inheriting [BaseModel][pydantic.BaseModel] come with serialization
 to/from json in the form of [model_dump][pydantic.BaseModel.model_dump] and
@@ -54,7 +54,7 @@ use/serialize them using their field information.
 
 Placeholder. No present special handling.
 
-##### generic python (portions of llama_index and all else)
+##### generic Python (portions of llama_index and all else)
 
 #### TruLens-specific Data
 
@@ -75,7 +75,7 @@ various classes.
 
 #### class/system specific
 
-##### pydantic (langchain)
+##### pydantic (LangChain)
 
 Most if not all *LangChain* components use pydantic which imposes some
 restrictions but also provides some utilities. Classes inheriting
@@ -97,7 +97,7 @@ instrumented versions.
     Might incur much overhead and all calls and other event types get
     intercepted and result in a callback.
 
-- langchain/llama_index callbacks. Each of these packages come with some
+- LangChain/llama_index callbacks. Each of these packages come with some
   callback system that lets one get various intermediate app results. The
   drawbacks is the need to handle different callback systems for each system and
   potentially missing information not exposed by them.
@@ -105,7 +105,7 @@ instrumented versions.
 - `wrapt` package (see <https://pypi.org/project/wrapt/>)
 
     This is only for wrapping functions or classes to resemble their original
-    but does not help us with wrapping existing methods in langchain, for
+    but does not help us with wrapping existing methods in LangChain, for
     example. We might be able to use it as part of our own wrapping scheme though.
 
 ### Calls
@@ -158,7 +158,7 @@ our reliance on info stored on the stack. Therefore we have a limitation:
   [ThreadPoolExecutor][trulens.core.utils.threading.ThreadPoolExecutor] also
   defined in `utils/threading.py` in order for instrumented methods called in a
   thread to be tracked. As we rely on call stack for call instrumentation we
-  need to preserve the stack before a thread start which python does not do.
+  need to preserve the stack before a thread start which Python does not do.
 
 #### Async
 
@@ -204,7 +204,7 @@ functions that seem to not involve [Task][asyncio.Task] do use tasks, such as
 
 #### Alternatives
 
-- langchain/llama_index callbacks. These provide information about component
+- LangChain/llama_index callbacks. These provide information about component
   invocations but the drawbacks are need to cover disparate callback systems and
   possibly missing information not covered.
 
@@ -214,7 +214,7 @@ Our tracking of calls uses instrumentated versions of methods to manage the
 recording of inputs/outputs. The instrumented methods must distinguish
 themselves from invocations of apps that are being tracked from those not being
 tracked, and of those that are tracked, where in the call stack a instrumented
-method invocation is. To achieve this, we rely on inspecting the python call
+method invocation is. To achieve this, we rely on inspecting the Python call
 stack for specific frames:
 
 - Prior frame -- Each instrumented call searches for the topmost instrumented

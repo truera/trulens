@@ -1,5 +1,5 @@
 {% set name = "trulens-feedback" %}
-{% set version = "1.4.4" %}
+{% set version = "1.4.9" %}
 
 package:
   name: {{ name|lower }}
@@ -11,7 +11,7 @@ source:
   {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-feedback/#files
-  sha256: 37e9eb6d60d7de6107fc564eb375dc1557f59a9a5cddd7a84395b2fe743f5fd2
+  sha256: 4b0bc4c5691a0f995fc0eee90c00af9882ccf042897e209ce51a161d64eae5d7
   {% endif %}
 
 build:
@@ -28,10 +28,10 @@ requirements:
     - python >=3.9,<3.12
     - trulens-core >=1.0.0,<2.0.0
     - nltk >=3.9.1,<4.0.0
-    - pydantic >=2.0.0,<3.0.0
-    - numpy >=1.23.0,<2.0.0
+    - pydantic >=2.4.2,<3.0.0
+    - numpy >=1.23.0
     - scikit-learn >=1.3.0,<2
-    - scipy >=1.10.1,<2
+    - scipy >=1.11.1,<2
     - requests >=2.31.0,<3.0.0
 test:
   imports:

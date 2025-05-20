@@ -2,6 +2,8 @@
 
 Interested in contributing to TruLens? Here's how to get started!
 
+Step 1: Join the [community](https://snowflake.discourse.group/c/ai-research-and-development-community/89).
+
 ## What can you work on?
 
 1. 💪 Add new [feedback
@@ -13,10 +15,6 @@ Interested in contributing to TruLens? Here's how to get started!
 6. 📄 Improve code quality & documentation
 7. ⛅ Address open issues.
 
-Also, join the [AI Quality Slack
-community](https://communityinviter.com/apps/aiqualityforum/josh) for ideas and
-discussions.
-
 ## 💪 Add new [feedback functions][trulens.core.feedback.provider.Provider]
 
 Feedback functions are the backbone of TruLens, and evaluating unique LLM apps
@@ -26,7 +24,7 @@ functions library so others can benefit!
 - To add a feedback function for an existing model provider, you can add it to
   an existing provider module. You can read more about the structure of a
   feedback function in this
-  [guide](https://www.trulens.org/trulens/custom_feedback_functions/).
+  [guide](https://www.trulens.org/component_guides/evaluation/feedback_implementations/custom_feedback_functions/).
 - New methods can either take a single text (str) as a parameter or two
   different texts (str), such as prompt and retrieved context. It should return
   a float, or a dict of multiple floats. Each output value should be a float on
@@ -56,9 +54,7 @@ assign an issue to yourself.
 ## 🎉 Add Usage Examples
 
 If you have applied TruLens to track and evaluate a unique use-case, we would
-love your contribution in the form of an example notebook: e.g. [Evaluating
-Pinecone Configuration Choices on Downstream App
-Performance](https://colab.research.google.com/github/truera/trulens/blob/main/examples/expositional/vector-dbs/pinecone/pinecone_evals_build_better_rags.ipynb)
+love your contribution to the cookbook in the form of an example notebook: e.g. [Evaluating Weaviate Query Agents](https://www.trulens.org/cookbook/vector_stores/weaviate/weaviate_query_agent/)
 
 All example notebooks are expected to:
 
@@ -73,6 +69,8 @@ All example notebooks are expected to:
 If you have a crazy idea, make a PR for it! Whether if it's the latest research,
 or what you thought of in the shower, we'd love to see creative ways to improve
 TruLens.
+
+Community contributions that have been accepted in the past include the SQLAlchemy logging connection and the LiteLLM provider.
 
 ## 📄 Improve Code Quality & Documentation
 

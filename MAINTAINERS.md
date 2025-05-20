@@ -8,6 +8,7 @@ The current maintainers of _TruLens_ are:
 | Garett Tok Ern Liang | Snowflake | sfc-gh-gtokernliang  |
 | Josh Reini | Snowflake | sfc-gh-jreini |
 | Piotr Mardziel | Snowflake | sfc-gh-pmardziel |
+| Nikhil Vytla | Snowflake | sfc-gh-nvytla |
 | Prudhvi Dharmana | Snowflake | sfc-gh-pdharmana |
 | Ricardo Aravena | Snowflake | sfc-gh-raravena |
 | Shayak Sen | Snowflake | sfc-gh-shsen |

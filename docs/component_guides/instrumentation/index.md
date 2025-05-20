@@ -12,7 +12,7 @@ instrumentation.
   LLM app.
 * TruChain instruments LangChain apps. [Read more](langchain.md).
 * TruLlama instruments LlamaIndex apps. [Read more](llama_index.md).
-* TruRails instruments NVIDIA Nemo Guardrails apps. [Read more](nemo.md).
+* TruRails instruments NVIDIA NeMo Guardrails apps. [Read more](nemo.md).
 
 In any framework you can track (and evaluate) the inputs, outputs and
 instrumented internals, along with a wide variety of usage metrics and metadata,

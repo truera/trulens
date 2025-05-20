@@ -398,6 +398,9 @@ class WithJSONTestCase(TestCase):
 
         ps = str(path)
 
+        if ps in skips:
+            return
+
         self.assertIsInstance(j1, type(j2), ps)
 
         if isinstance(j1, serial_utils.JSON_BASES):

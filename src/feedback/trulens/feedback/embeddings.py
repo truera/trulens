@@ -15,7 +15,7 @@ opt.assert_installed(sklearn.metrics)
 
 with import_utils.OptionalImports(
     messages=import_utils.format_import_errors(
-        "llama-index", purpose="using llama-index embedding models"
+        "llama-index", purpose="using LlamaIndex embedding models"
     )
 ) as opt:
     import llama_index.core.base.embeddings.base
@@ -32,7 +32,7 @@ class Embeddings(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
         """Instantiates embeddings for feedback functions.
         !!! example
 
-            Below is just one example. Embedders from llama-index are supported:
+            Below is just one example. Embedders from LlamaIndex are supported:
             https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
 
             ```python
@@ -45,7 +45,7 @@ class Embeddings(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
             ```
 
         Args:
-            embed_model: Supports embedders from llama-index: https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
+            embed_model: Supports embedders from LlamaIndex: https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
         """
         super().__init__()
         self._embed_model = embed_model
@@ -57,7 +57,7 @@ class Embeddings(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
         Runs cosine distance on the query and document embeddings
 
         Example:
-            Below is just one example. Embedders from llama-index are supported:
+            Below is just one example. Embedders from LlamaIndex are supported:
             https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
 
 
@@ -104,7 +104,7 @@ class Embeddings(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
         Runs L1 distance on the query and document embeddings
 
         Example:
-            Below is just one example. Embedders from llama-index are supported:
+            Below is just one example. Embedders from LlamaIndex are supported:
             https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
 
             ```python
@@ -150,7 +150,7 @@ class Embeddings(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
         Runs L2 distance on the query and document embeddings
 
         Example:
-            Below is just one example. Embedders from llama-index are supported:
+            Below is just one example. Embedders from LlamaIndex are supported:
             https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
 
             ```python

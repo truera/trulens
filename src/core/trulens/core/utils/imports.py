@@ -1,6 +1,6 @@
 """Import utilities for required and optional imports.
 
-Utilities for importing python modules and optional importing.
+Utilities for importing Python modules and optional importing.
 """
 
 import builtins
@@ -33,7 +33,7 @@ pp = PrettyPrinter()
 
 def safe_importlib_package_name(package_name: str) -> str:
     """Convert a package name that may have periods in it to one that uses
-    hyphens for periods but only if the python version is old."""
+    hyphens for periods but only if the Python version is old."""
 
     return (
         package_name
@@ -529,7 +529,7 @@ class OptionalImports:
                 from llama_index import query_engine
         ```
 
-        The above python block will not raise any errors but once anything else
+        The above Python block will not raise any errors but once anything else
         about llama_index or query_engine gets accessed, an error is raised with the
         specified message (unless llama_index is installed of course).
     """

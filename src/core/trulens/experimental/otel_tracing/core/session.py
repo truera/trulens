@@ -110,9 +110,8 @@ class _TruSession(core_session.TruSession):
         module,
         method: str,
         cost_computer: Callable[[Any], Dict[str, Any]],
-        span_type: SpanAttributes.SpanType,
     ):
-        from trulens.core.otel.instrument import instrument_method
+        from trulens.core.otel.instrument import instrument_cost_computer
 
         for cls in dir(module):
             obj = python_utils.safer_getattr(module, cls)
@@ -121,33 +120,29 @@ class _TruSession(core_session.TruSession):
                 and isinstance(obj, type)
                 and hasattr(obj, method)
             ):
-                instrument_method(
+                instrument_cost_computer(
                     obj,
                     method,
-                    span_type=span_type,
                     attributes=lambda ret,
                     exception,
                     *args,
                     **kwargs: cost_computer(ret),
-                    must_be_first_wrapper=True,
                 )
 
     @staticmethod
     def _track_costs():
         if _can_import("trulens.providers.cortex.endpoint"):
             from snowflake.cortex._sse_client import SSEClient
-            from trulens.core.otel.instrument import instrument_method
+            from trulens.core.otel.instrument import instrument_cost_computer
             from trulens.providers.cortex.endpoint import CortexCostComputer
 
-            instrument_method(
+            instrument_cost_computer(
                 SSEClient,
                 "events",
-                span_type=SpanAttributes.SpanType.UNKNOWN,
                 attributes=lambda ret,
                 exception,
                 *args,
                 **kwargs: CortexCostComputer.handle_response(ret),
-                must_be_first_wrapper=True,
             )
         if _can_import("trulens.providers.openai.endpoint"):
             import openai
@@ -160,7 +155,6 @@ class _TruSession(core_session.TruSession):
                     module,
                     "create",
                     OpenAICostComputer.handle_response,
-                    SpanAttributes.SpanType.UNKNOWN,
                 )
         if _can_import("trulens.providers.litellm.endpoint"):
             import litellm

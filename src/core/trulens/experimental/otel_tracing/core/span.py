@@ -3,15 +3,15 @@ This file contains utility functions specific to certain span types.
 """
 
 from inspect import signature
+import json
 import logging
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from opentelemetry.baggage import get_baggage
 from opentelemetry.context import Context
 from opentelemetry.trace.span import Span
 from opentelemetry.util.types import AttributeValue
 from trulens.core.utils import signature as signature_utils
-from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
@@ -76,6 +76,25 @@ def validate_selector_name(attributes: Dict[str, Any]) -> Dict[str, Any]:
     return result
 
 
+def _stringify_span_attribute(o: Any) -> Tuple[bool, str]:
+    """Converts an object to a string.
+
+    Args:
+        o: object to convert to a string
+
+    Returns:
+        A tuple containing:
+        - A boolean indicating whether the object was jsonified (as opposed to
+          simple stringification)
+        - The string representation of the object.
+    """
+    try:
+        return True, json.dumps(o)
+    except Exception:
+        pass
+    return False, str(o)
+
+
 def _convert_to_valid_span_attribute_type(val: Any) -> AttributeValue:
     if isinstance(val, (bool, int, float, str)):
         return val
@@ -83,8 +102,11 @@ def _convert_to_valid_span_attribute_type(val: Any) -> AttributeValue:
         for curr_type in [bool, int, float, str]:
             if all([isinstance(curr, curr_type) for curr in val]):
                 return val
-        return [str(curr) for curr in val]
-    return str(val)
+        jsonifiable, j = _stringify_span_attribute(val)
+        if jsonifiable:
+            return j
+        return [_stringify_span_attribute(curr)[1] for curr in val]
+    return _stringify_span_attribute(val)[1]
 
 
 def set_span_attribute_safely(
@@ -136,6 +158,7 @@ def set_general_span_attributes(
     set_string_span_attribute_from_baggage(
         span, SpanAttributes.APP_VERSION, context
     )
+    set_string_span_attribute_from_baggage(span, SpanAttributes.APP_ID, context)
     set_string_span_attribute_from_baggage(
         span, SpanAttributes.RECORD_ID, context
     )
@@ -159,10 +182,12 @@ def set_general_span_attributes(
 def set_function_call_attributes(
     span: Span,
     ret: Any,
+    func_name: str,
     func_exception: Optional[Exception],
     all_kwargs: Dict[str, Any],
 ) -> None:
     set_span_attribute_safely(span, SpanAttributes.CALL.RETURN, ret)
+    set_span_attribute_safely(span, SpanAttributes.CALL.FUNCTION, func_name)
     set_span_attribute_safely(span, SpanAttributes.CALL.ERROR, func_exception)
     for k, v in all_kwargs.items():
         set_span_attribute_safely(span, f"{SpanAttributes.CALL.KWARGS}.{k}", v)
@@ -176,16 +201,35 @@ def set_user_defined_attributes(
 ) -> None:
     final_attributes = validate_attributes(attributes)
 
+    cost_attributes = {}
     for key, value in final_attributes.items():
-        span.set_attribute(key, value)
-        if (
-            key != SpanAttributes.SELECTOR_NAME_KEY
-            and SpanAttributes.SELECTOR_NAME_KEY in final_attributes
-        ):
-            span.set_attribute(
-                f"{BASE_SCOPE}.{final_attributes[SpanAttributes.SELECTOR_NAME_KEY]}.{key}",
-                value,
-            )
+        if key.startswith(f"{SpanAttributes.COST.base}."):
+            cost_attributes[key] = value
+        else:
+            span.set_attribute(key, value)
+    if cost_attributes:
+        attributes_so_far = dict(getattr(span, "attributes", {}))
+        if attributes_so_far:
+            for cost_field in [
+                SpanAttributes.COST.COST,
+                SpanAttributes.COST.NUM_TOKENS,
+                SpanAttributes.COST.NUM_PROMPT_TOKENS,
+                SpanAttributes.COST.NUM_COMPLETION_TOKENS,
+            ]:
+                cost_attributes[cost_field] = cost_attributes.get(
+                    cost_field, 0
+                ) + attributes_so_far.get(cost_field, 0)
+            currency = attributes_so_far.get(SpanAttributes.COST.CURRENCY, None)
+            model = attributes_so_far.get(SpanAttributes.COST.MODEL, None)
+            if currency not in [
+                None,
+                cost_attributes[SpanAttributes.COST.CURRENCY],
+            ]:
+                cost_attributes[SpanAttributes.COST.CURRENCY] = "mixed"
+            if model not in [None, cost_attributes[SpanAttributes.COST.MODEL]]:
+                cost_attributes[SpanAttributes.COST.MODEL] = "mixed"
+            for k, v in cost_attributes.items():
+                span.set_attribute(k, v)
 
 
 """

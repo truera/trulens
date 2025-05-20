@@ -11,7 +11,7 @@
 General and 🦑_TruLens_-specific concepts.
 
 - `Agent`. A `Component` of an `Application` or the entirety of an application
-  that providers a natural language interface to some set of capabilities
+  that provides a natural language interface to some set of capabilities
   typically incorporating `Tools` to invoke or query local or remote services,
   while maintaining its state via `Memory`. The user of an agent may be a human, a
   tool, or another agent. See also `Multi Agent System`.
@@ -68,7 +68,7 @@ General and 🦑_TruLens_-specific concepts.
   can improve the performance of the `LLM` on data that sufficiently deviates or
   specializes its original training data. Fine-tuning aims to preserve the
   generality of the original and transfer of its capabilities to specialized
-  tasks. Examples include fining-tuning on:
+  tasks. Examples include fine-tuning on:
 
   - financial articles
 
@@ -93,28 +93,28 @@ General and 🦑_TruLens_-specific concepts.
   or intended completions (see `Shots`). A prompt that does not include examples
   is said to be `Zero Shot`.
 
-- `Language Model`. A model whose tasks is to model text distributions typically
+- `Language Model`. A model whose task is to model text distributions typically
   in the form of predicting token distributions for text that follows the given
-  prefix. Propriety models usually do not give users access to token
+  prefix. Proprietary models usually do not give users access to token
   distributions and instead `Complete` a piece of input text via multiple token
   predictions and methods such as beam search.
 
 - `LLM`, `Large Language Model` (see `Language Model`). The `Component` of an
-  `Application` that performs `Completion`. LLM's are usually trained on a large
+  `Application` that performs `Completion`. LLMs are usually trained on a large
   amount of text across multiple natural and synthetic languages. They are also
   trained to follow instructions provided in their `Instruction Prompt`. This
   makes them general in that they can be applied to many structured or
   unstructured tasks and even tasks which they have not seen in their training
   data (See `Instruction Prompt`, `In-Context Learning`). LLMs can be further
-  improved to rare/specialized settings using `Fine-Tuning`.
+  improved for rare/specialized settings using `Fine-Tuning`.
 
 - `Memory`. The state maintained by an `Application` or an `Agent` indicating
   anything relevant to continuing, refining, or guiding it towards its
   goals. `Memory` is provided as `Context` in `Prompts` and is updated when new
   relevant context is processed, be it a user prompt or the results of the
   invocation of some `Tool`. As `Memory` is included in `Prompts`, it can be a
-  natural language description of the state of the app/agent. To limit to size
-  if memory, `Summarization` is often used.
+  natural language description of the state of the app/agent. To limit the size
+  of memory, `Summarization` is often used.
 
 - `Multi-Agent System`. The use of multiple `Agents` incentivized to interact
   with each other to implement some capability. While the term predates `LLMs`,
@@ -150,7 +150,7 @@ General and 🦑_TruLens_-specific concepts.
 
 - `Retrieval`, `Retriever`. The process or result (or the `Component` that
   performs this) of looking up pieces of text relevant to a `Prompt` to provide
-  as `Context` to an `LLM`. Typically this is done using an `Embedding`
+  as `Context` to an `LLM`. Typically this is done using `Embedding`
   representations.
 
 - `Selector` (🦑_TruLens_-specific concept). A specification of the source
@@ -162,8 +162,8 @@ General and 🦑_TruLens_-specific concepts.
   prompts that do not have any examples and only offer a natural language
   description of the task to be solved, while `<Quantity>-Shot` indicate some
   `<Quantity>` of examples are provided. The "shot" terminology predates
-  instruction-based LLM's where techniques then used other information to handle
-  unseed classes such as label descriptions in the seen/trained data.
+  instruction-based LLMs where techniques then used other information to handle
+  unseen classes such as label descriptions in the seen/trained data.
   `In-context Learning` is the recent term that describes the use of examples in
   `Instruction Prompts`.
 
@@ -173,13 +173,13 @@ General and 🦑_TruLens_-specific concepts.
 - `Summarization`. The task of condensing some natural language text into a
   smaller bit of natural language text that preserves the most important parts
   of the text. This can be targeted towards humans or otherwise. It can also be
-  used to maintain consize `Memory` in an `LLM` `Application` or `Agent`.
+  used to maintain concise `Memory` in an `LLM` `Application` or `Agent`.
   Summarization can be performed by an `LLM` using a specific `Instruction Prompt`.
 
 - `Tool`. A piece of functionality that can be invoked by an `Application` or
   `Agent`. This commonly includes interfaces to services such as search (generic
-  search via google or more specific like IMDB for movies). Tools may also
-  perform actions such as submitting comments to github issues. A `Tool` may
+  search via Google or more specific like IMDB for movies). Tools may also
+  perform actions such as submitting comments to GitHub issues. A `Tool` may
   also encapsulate an interface to an `Agent` for use as a component in a larger
   `Application`.
 

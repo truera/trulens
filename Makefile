@@ -55,8 +55,10 @@ env-tests-optional: env env-tests
 		llama-index-embeddings-openai \
 		unstructured
 
+
 env-tests-snowflake: env-tests-optional
 	poetry install --with snowflake
+	poetry run pip install certifi==2025.1.31
 
 env-tests-db: env-tests
 	poetry run pip install \
@@ -68,7 +70,9 @@ env-tests-notebook: env-tests env-tests-optional
 	poetry run pip install \
 		faiss-cpu \
 		ipytree \
-		llama-index-readers-web
+		llama-index-readers-web \
+		markdown
+
 
 # Lock the poetry dependencies for all the subprojects.
 lock: $(POETRY_DIRS)
@@ -221,12 +225,19 @@ test-%-basic: env-tests-basic
 test-%-optional: env-tests-optional
 	SKIP_BASIC_TESTS=1 TEST_OPTIONAL=true make test-$*
 
+# Requires the full optional environment to be set up.
+test-%-huggingface: env-tests-optional
+	SKIP_BASIC_TESTS=1 TEST_HUGGINGFACE=true make test-$*
+
 # Requires the full optional environment to be set up, with Snowflake specific packages.
-test-unit-snowflake: env-tests-snowflake
-	SKIP_BASIC_TESTS=1 TEST_SNOWFLAKE=true make test-unit
+test-%-snowflake: env-tests-snowflake
+	SKIP_BASIC_TESTS=1 TEST_SNOWFLAKE=true make test-$*
+
+test-%-stable: env-tests env-tests-optional env-tests-snowflake
+	TEST_OPTIONAL=true TEST_SNOWFLAKE=true TEST_HUGGINGFACE=false make test-$*
 
 test-%-all: env-tests env-tests-optional env-tests-snowflake
-	TEST_OPTIONAL=true TEST_SNOWFLAKE=true make test-$*
+	TEST_OPTIONAL=true TEST_SNOWFLAKE=true TEST_HUGGINGFACE=true make test-$*
 
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline
 # frequently.
@@ -238,7 +249,7 @@ test-e2e:
 	$(PYTEST) tests/e2e/*
 
 # Runs the notebook test
-test-notebook:
+test-notebook: env-tests-notebook
 	$(PYTEST) tests/docs_notebooks/*
 
 install-wheels:
@@ -320,3 +331,13 @@ upload-testpypi-all: clean build
 		&& make build \
 		&& poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl \
 		&& poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.tar.gz
+
+build-record-viewer-otel:
+	cd src/dashboard/react_components/record_viewer_otel \
+		&& npm install \
+		&& npm run build
+
+test-record-viewer-otel:
+	cd src/dashboard/react_components/record_viewer_otel \
+	 	&& npm install \
+		&& npm run test

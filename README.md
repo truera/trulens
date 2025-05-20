@@ -1,7 +1,7 @@
 ![PyPI - Version](https://img.shields.io/pypi/v/trulens?label=trulens&link=https%3A%2F%2Fpypi.org%2Fproject%2Ftrulens%2F)
 [![Azure Build Status](https://dev.azure.com/truera/trulens/_apis/build/status%2FTruLens%20E2E%20Tests?branchName=main)](https://dev.azure.com/truera/trulens/_build/latest?definitionId=8&branchName=main)
 ![GitHub](https://img.shields.io/github/license/truera/trulens)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/trulens)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/trulens-core)
 [![Discourse](https://img.shields.io/discourse/users?server=https://snowflake.discourse.group/)](https://snowflake.discourse.group/c/ai-research-and-development-community/trulens/97)
 [![Docs](https://img.shields.io/badge/docs-trulens.org-blue)](https://www.trulens.org/getting_started/)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/examples/quickstart/langchain_quickstart.ipynb)
@@ -10,7 +10,7 @@
 
 ![TruLens](https://www.trulens.org/assets/images/Neural_Network_Explainability.png)
 
-**Don't just vibe-check your llm app!** Systematically evaluate and track your
+**Don't just vibe-check your LLM app!** Systematically evaluate and track your
 LLM experiments with TruLens. As you develop your app including prompts, models,
 retrievers, knowledge sources and more, *TruLens* is the tool you need to
 understand its performance.
@@ -52,7 +52,7 @@ Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.
 ### 💡 Contributing & Community
 
 Interested in contributing? See our [contributing
-guide](https://www.trulens.org/trulens/contributing/) for more details.
+guide](https://www.trulens.org/contributing/) for more details.
 
 The best way to support TruLens is to give us a ⭐ on
 [GitHub](https://www.github.com/truera/trulens) and join our [discourse

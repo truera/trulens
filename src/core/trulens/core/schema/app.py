@@ -235,7 +235,12 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
         return cls(**app_definition_json)
 
     @staticmethod
-    def _compute_app_id(app_name, app_version):
+    def _compute_app_id(app_name: str, app_version: str) -> str:
+        # Generate a deterministic hash-based ID based on app_name and
+        # app_version.
+        # NOTE: there is an ongoing discussion about whether to use app_id or
+        # directly use/index on the unique combination of
+        # (app_name, app_version) when querying the database.
         return json_utils.obj_id_of_obj(
             obj={"app_name": app_name, "app_version": app_version}, prefix="app"
         )

@@ -10,7 +10,6 @@ from inspect import BoundArguments
 from inspect import Signature
 import json
 import logging
-import os
 import threading
 from typing import (
     Any,
@@ -42,6 +41,7 @@ from trulens.core.database import base as core_db
 from trulens.core.database import connector as core_connector
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback import feedback as core_feedback
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.run import Run
 from trulens.core.run import RunConfig
 from trulens.core.run import validate_dataset_spec
@@ -55,6 +55,7 @@ from trulens.core.utils import asynchro as asynchro_utils
 from trulens.core.utils import constants as constant_utils
 from trulens.core.utils import containers as container_utils
 from trulens.core.utils import deprecation as deprecation_utils
+from trulens.core.utils import evaluator as evaluator_utils
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
@@ -62,6 +63,7 @@ from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import signature as signature_utils
 from trulens.core.utils import threading as threading_utils
+from trulens.feedback.computer import compute_feedback_by_span_group
 from trulens.otel.semconv.constants import (
     TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
 )
@@ -519,11 +521,22 @@ class App(
 
         super().__init__(**kwargs)
 
+        if (
+            is_otel_tracing_enabled()
+            and self.feedback_mode
+            != feedback_schema.FeedbackMode.WITH_APP_THREAD
+        ):
+            raise ValueError(
+                "Cannot use `feedback_mode` other than `WITH_APP_THREAD` with OTel tracing!"
+            )
+
         if main_method:
             self.main_method_name = main_method.__name__  # for serialization
 
         self._current_context_manager_lock = threading.Lock()
         self._current_context_manager = None
+
+        self._evaluator = evaluator_utils.Evaluator(self)
 
         if connector and _can_import("trulens.connectors.snowflake"):
             from trulens.connectors.snowflake import SnowflakeConnector
@@ -558,12 +571,16 @@ class App(
             pass
 
         if self.feedback_mode == feedback_schema.FeedbackMode.WITH_APP_THREAD:
-            self._start_manage_pending_feedback_results()
+            if is_otel_tracing_enabled():
+                self.start_evaluator()
+            else:
+                self._start_manage_pending_feedback_results()
 
         self._tru_post_init()
 
     def __del__(self):
         """Shut down anything associated with this app that might persist otherwise."""
+        self.stop_evaluator()
         try:
             # Use object.__getattribute__ to avoid triggering __getattr__
             m_thread = object.__getattribute__(
@@ -747,6 +764,20 @@ class App(
     def __hash__(self):
         return hash(id(self))
 
+    @staticmethod
+    def _is_snowflake_connector(
+        connector: Optional[core_connector.DBConnector],
+    ) -> bool:
+        if connector is None:
+            return False
+        try:
+            from trulens.connectors.snowflake import SnowflakeConnector
+
+            return isinstance(connector, SnowflakeConnector)
+        except Exception:
+            pass
+        return False
+
     def _tru_post_init(self):
         """
         Database-related initialization and additional data checks.
@@ -774,11 +805,10 @@ class App(
                     "No feedback evaluation and logging will occur."
                 )
 
-        otel_tracing_enabled = os.getenv(
-            "TRULENS_OTEL_TRACING", ""
-        ).lower() in ["1", "true"]
-
-        if self.connector is not None and not otel_tracing_enabled:
+        if self.connector is not None and not (
+            self._is_snowflake_connector(self.connector)
+            and is_otel_tracing_enabled()
+        ):
             self.connector.add_app(app=self)
 
             if self.feedback_mode != feedback_schema.FeedbackMode.NONE:
@@ -816,7 +846,7 @@ class App(
                         f"Feedback function {f} is not loadable. Cannot use DEFERRED feedback mode. {e}"
                     ) from e
 
-        if not self.selector_nocheck:
+        if not self.selector_nocheck and not is_otel_tracing_enabled():
             dummy = self.dummy_record()
 
             for feedback in self.feedbacks:
@@ -1805,10 +1835,17 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             )
         return runs
 
-    def delete_snowflake_app(self) -> None:
-        """Delete the snowflake App (managing object) in snowflake, if applicable."""
+    def delete(self) -> None:
+        """Delete the snowflake App (external agent) in snowflake. All versions will be removed"""
         self._check_snowflake_dao()
         self.snowflake_app_dao.drop_agent(self.snowflake_object_name)
+
+    def delete_version(self) -> None:
+        """Delete the current version of the snowflake App (external agent) in snowflake.
+        Only the non-default version can be deleted.
+        """
+        self._check_snowflake_dao()
+        self.snowflake_app_dao.drop_current_version(self.snowflake_object_name)
 
     def run(self, run_name: str):
         if self.session.experimental_feature(
@@ -1871,6 +1908,45 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         raise NotImplementedError(
             "This feature is not yet implemented for non-OTEL TruLens!"
         )
+
+    def compute_feedbacks(
+        self,
+        raise_error_on_no_feedbacks_computed: bool = True,
+        events: Optional[pd.DataFrame] = None,
+    ) -> None:
+        """Compute feedbacks for the app.
+
+        Args:
+            raise_error_on_no_feedbacks_computed:
+                Raise an error if no feedbacks were computed. Default is True.
+            events:
+                The events to compute feedbacks from. If None, uses all
+                events from the app.
+        """
+        if not is_otel_tracing_enabled():
+            raise ValueError(
+                "This method is only supported for OTEL Tracing. Please enable OTEL tracing in the environment!"
+            )
+        if events is None:
+            # Get all events associated with this app name and version.
+            # TODO(otel): Should probably handle the case where there are a lot of events with pagination.
+            events = self.connector.get_events(app_id=self.app_id)
+        for feedback in self.feedbacks:
+            compute_feedback_by_span_group(
+                events,
+                feedback.name,
+                feedback.imp,
+                feedback.selectors,
+                raise_error_on_no_feedbacks_computed,
+            )
+
+    def start_evaluator(self) -> None:
+        """Start the evaluator for the app."""
+        self._evaluator.start_evaluator()
+
+    def stop_evaluator(self) -> None:
+        """Stop the evaluator for the app."""
+        self._evaluator.stop_evaluator()
 
 
 # NOTE: Cannot App.model_rebuild here due to circular imports involving mod_session.TruSession

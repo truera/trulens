@@ -2,6 +2,9 @@
 Tests for OTEL TruLlama app.
 """
 
+import gc
+import weakref
+
 import pytest
 from trulens.otel.semconv.constants import (
     TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
@@ -93,6 +96,16 @@ class TestOtelTruLlama(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
                 (_CONTEXT_RETRIEVAL_REGEX, _CONTEXT_RETRIEVAL_REPLACEMENT)
             ],
         )
+        # Check garbage collection.
+        # Note that we need to delete `rag` too since `rag` has instrument
+        # decorators that have closures of the `tru_recorder` object.
+        # Specifically the record root has this at the very least as it calls
+        # `TruLlama::main_input`.
+        tru_recorder_ref = weakref.ref(tru_recorder)
+        del tru_recorder
+        del rag
+        gc.collect()
+        self.assertCollected(tru_recorder_ref)
 
     def test_app_specific_record_root(self) -> None:
         rag1 = self._create_simple_rag()

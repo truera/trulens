@@ -136,6 +136,55 @@ class TestExternalAgentDao(unittest.TestCase):
         self.assertIn(expected_add_query, queries)
         self.assertEqual(mock_execute_query.call_count, 3)
 
+    @patch("trulens.connectors.snowflake.dao.external_agent.execute_query")
+    def test_delete_agent(self, mock_execute_query):
+        # Simulate that the agent exists.
+        mock_execute_query.side_effect = [
+            [DummyRow({"name": "AGENT1"})],  # list_agents call
+        ]
+
+        self.dao.drop_agent("agent1")
+
+        expected_drop_query = 'DROP EXTERNAL AGENT "AGENT1";'
+        calls = mock_execute_query.call_args_list
+        queries = [call[0][1] for call in calls]
+        self.assertIn(expected_drop_query, queries)
+        self.assertEqual(mock_execute_query.call_count, 1)
+
+    @patch("trulens.connectors.snowflake.dao.external_agent.execute_query")
+    def test_drop_default_version_raise(self, mock_execute_query):
+        mock_execute_query.side_effect = [
+            [
+                DummyRow({
+                    "name": "v1",
+                    "aliases": ["LAST", "DEFAULT", "FIRST"],
+                })
+            ],  # list_agent_versions call
+            [],
+        ]
+
+        with self.assertRaises(ValueError):
+            # cannot drop default version
+            self.dao.drop_current_version("agent1")
+
+    @patch("trulens.connectors.snowflake.dao.external_agent.execute_query")
+    def test_drop_current_version(self, mock_execute_query):
+        mock_execute_query.side_effect = [
+            [
+                DummyRow({"name": "v2", "aliases": ["LAST"]})
+            ],  # list_agent_versions call
+            [],
+        ]
+        self.dao.drop_current_version("agent1")
+        expected_query = (
+            'ALTER EXTERNAL AGENT if exists "AGENT1" DROP VERSION "v2";'
+        )
+        calls = mock_execute_query.call_args_list
+        queries = [call[0][1] for call in calls]
+        self.assertIn(expected_query, queries)
+
+        self.assertEqual(mock_execute_query.call_count, 2)
+
     def test_is_valid_object(self):
         self.assertTrue(ObjectType.EXTERNAL_AGENT == "EXTERNAL AGENT")
         self.assertTrue(ObjectType.is_valid_object("EXTERNAL AGENT"))

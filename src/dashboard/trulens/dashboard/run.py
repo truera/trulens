@@ -44,6 +44,7 @@ def run_dashboard(
     address: Optional[str] = None,
     force: bool = False,
     sis_compatibility_mode: bool = False,
+    otel_tracing: bool = False,
     _dev: Optional[Path] = None,
     _watch_changes: bool = False,
 ) -> Process:
@@ -57,6 +58,8 @@ def run_dashboard(
         force (bool): Stop existing dashboard(s) first. Defaults to `False`.
 
         sis_compatibility_mode (bool): Flag to enable compatibility with Streamlit in Snowflake (SiS). SiS runs on Python 3.8, Streamlit 1.35.0, and does not support bidirectional custom components. As a result, enabling this flag will replace custom components in the dashboard with native Streamlit components. Defaults to `False`.
+
+        otel_tracing (bool): Flag to enable OTEL tracing in the dashboard. When enabled, the dashboard will use OTEL traces instead of the pre-OTEL ORM. Defaults to `False`.
 
         _dev (Path): If given, runs the dashboard with the given `PYTHONPATH`. This can be used to run the dashboard from outside of its pip package installation folder. Defaults to `None`.
 
@@ -143,6 +146,8 @@ def run_dashboard(
     ]
     if sis_compatibility_mode:
         args += ["--sis-compatibility"]
+    if otel_tracing:
+        args += ["--otel-tracing"]
 
     proc = subprocess.Popen(
         args,
@@ -329,6 +334,7 @@ def run_dashboard_sis(
     session: Optional[core_session.TruSession] = None,
     warehouse: Optional[str] = None,
     init_server_side_with_staged_packages: bool = False,
+    otel_tracing: bool = False,
 ):
     with import_utils.OptionalImports(
         messages=import_utils.format_import_errors(
@@ -349,6 +355,7 @@ def run_dashboard_sis(
             session.connector.snowpark_session,
             warehouse=warehouse,
             init_server_side_with_staged_packages=init_server_side_with_staged_packages,
+            otel_tracing=otel_tracing,
         )
     else:
         raise ValueError(

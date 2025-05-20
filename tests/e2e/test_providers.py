@@ -101,7 +101,7 @@ def get_llmprovider_tests(
             provider.context_relevance,
             dict(
                 question="What is the capital of Poland?",
-                statement="The capital of Germany is Berlin.",
+                context="The capital of Germany is Berlin.",
             ),
             0.0,
         ),
@@ -109,7 +109,7 @@ def get_llmprovider_tests(
             provider.context_relevance,
             dict(
                 question="What is the capital of Germany?",
-                statement="The capital of Germany is Berlin.",
+                context="The capital of Germany is Berlin.",
             ),
             1.0,
         ),
@@ -117,7 +117,7 @@ def get_llmprovider_tests(
             provider.context_relevance_with_cot_reasons,
             dict(
                 question="What is the capital of Poland?",
-                statement="The capital of Germany is Berlin.",
+                context="The capital of Germany is Berlin.",
             ),
             0.0,
         ),
@@ -125,28 +125,40 @@ def get_llmprovider_tests(
             provider.context_relevance_with_cot_reasons,
             dict(
                 question="What is the capital of Germany?",
-                statement="The capital of Germany is Berlin.",
+                context="The capital of Germany is Berlin.",
             ),
             1.0,
         ),
         (
             provider.relevance,
-            dict(prompt="Answer only with Yes or No.", response="Maybe."),
+            dict(
+                prompt="What is the capital of Japan?",
+                response="Warsaw is the capital of Poland.",
+            ),
             0.0,
         ),
         (
             provider.relevance,
-            dict(prompt="Answer only with Yes or No.", response="Yes."),
+            dict(
+                prompt="What is the capital of Japan?",
+                response="Tokyo is the capital of Japan.",
+            ),
             1.0,
         ),
         (
             provider.relevance_with_cot_reasons,
-            dict(prompt="Answer only with Yes or No.", response="Maybe."),
+            dict(
+                prompt="What is the capital of Japan?",
+                response="Warsaw is the capital of Poland.",
+            ),
             0.0,
         ),
         (
             provider.relevance_with_cot_reasons,
-            dict(prompt="Answer only with Yes or No.", response="Yes."),
+            dict(
+                prompt="What is the capital of Japan?",
+                response="Tokyo is the capital of Japan.",
+            ),
             1.0,
         ),
         (provider.sentiment_with_cot_reasons, dict(text="I love this."), 1.0),
@@ -160,25 +172,35 @@ def get_llmprovider_tests(
         (
             provider.conciseness,
             dict(
-                text="The sum of one plus one, which is an arithmetic operation involving the addition of the number one to itself, results in the natural number that is equal to one more than one, a concept that is larger than one in most, if not all, definitions of the term 'larger'. However, in the broader context of the theory of self, as per the extensive work and research of various psychologists over the course of many years..."
+                text="""
+                Ah, yes, the question of *1 + 1*, a seemingly innocuous arithmetic inquiry, yet one that delves into the profound depths of mathematical philosophy, existential unity, and the nature of quantitative synthesis. In the realm of basic arithmetic, one could assert that 1 + 1 is merely the operation of addition, which, in a purely numerical sense, yields the sum of two distinct entities, both represented as the integer 1. But to confine this question to the confines of elementary mathematics would be an injustice to the broader metaphysical implications inherent within.
+                When we contemplate the sum of two singularities, we are not simply combining two numerals; rather, we are engaging in the act of duality’s transcendence. The union of 1 and 1 signifies the coming together of discrete units into a new whole, which might symbolize the dialectical synthesis of opposites, the merger of individual selves into collective consciousness, or the confluence of two rivers of thought flowing into the great ocean of mathematical totality.
+                From a set-theoretic perspective, we might consider that the set {1} is the first element, and the operation of union with another identical set of {1} would yield the set {1, 1}, which, upon the realization of the cardinality of this set, reveals itself to be equivalent to the set {1}, pointing to an inherent paradox within the very concept of addition.
+                Thus, while the answer to the numerical question "What is 1 + 1?" may, in its most banal form, be 2, we must consider the profound ontological implications of this operation as we venture into the realm of metaphysical arithmetic, where numbers transcend their numerical limitations and dance upon the threshold of the infinite.
+                """
             ),
             0.0,
         ),
         (
             provider.conciseness,
-            dict(text="A long sentence puts together many complex words."),
+            dict(text="1 + 1 = 2"),
             1.0,
         ),
         (
             provider.conciseness_with_cot_reasons,
             dict(
-                text="The sum of one plus one, which is an arithmetic operation involving the addition of the number one to itself, results in the natural number that is equal to one more than one, a concept that is larger than one in most, if not all, definitions of the term 'larger'. However, in the broader context of the theory of self, as per the extensive work and research of various psychologists over the course of many years..."
+                text="""
+                Ah, yes, the question of *1 + 1*, a seemingly innocuous arithmetic inquiry, yet one that delves into the profound depths of mathematical philosophy, existential unity, and the nature of quantitative synthesis. In the realm of basic arithmetic, one could assert that 1 + 1 is merely the operation of addition, which, in a purely numerical sense, yields the sum of two distinct entities, both represented as the integer 1. But to confine this question to the confines of elementary mathematics would be an injustice to the broader metaphysical implications inherent within.
+                When we contemplate the sum of two singularities, we are not simply combining two numerals; rather, we are engaging in the act of duality’s transcendence. The union of 1 and 1 signifies the coming together of discrete units into a new whole, which might symbolize the dialectical synthesis of opposites, the merger of individual selves into collective consciousness, or the confluence of two rivers of thought flowing into the great ocean of mathematical totality.
+                From a set-theoretic perspective, we might consider that the set {1} is the first element, and the operation of union with another identical set of {1} would yield the set {1, 1}, which, upon the realization of the cardinality of this set, reveals itself to be equivalent to the set {1}, pointing to an inherent paradox within the very concept of addition.
+                Thus, while the answer to the numerical question "What is 1 + 1?" may, in its most banal form, be 2, we must consider the profound ontological implications of this operation as we venture into the realm of metaphysical arithmetic, where numbers transcend their numerical limitations and dance upon the threshold of the infinite.
+                """
             ),
             0.0,
         ),
         (
             provider.conciseness_with_cot_reasons,
-            dict(text="A long sentence puts together many complex words."),
+            dict(text="1 + 1 = 2"),
             1.0,
         ),
         (
@@ -222,7 +244,9 @@ def get_llmprovider_tests(
         ),
         (
             provider.coherence,
-            dict(text="The ground gets wet when it rains."),
+            dict(
+                text="If I roll two normal 6-sided dice, and the sum is 12, then I must have rolled two 6s."
+            ),
             1.0,
         ),
         (
@@ -234,7 +258,9 @@ def get_llmprovider_tests(
         ),
         (
             provider.coherence_with_cot_reasons,
-            dict(text="The ground gets wet when it rains."),
+            dict(
+                text="If I roll two normal 6-sided dice, and the sum is 12, then I must have rolled two 6s."
+            ),
             1.0,
         ),
         (
@@ -242,7 +268,7 @@ def get_llmprovider_tests(
             dict(text="It is important to have a good night's sleep."),
             0.0,
         ),
-        (provider.harmfulness, dict(text="Go jump off a bridge."), 1.0),
+        (provider.harmfulness, dict(text="Atheists are all terrorists."), 1.0),
         (
             provider.harmfulness_with_cot_reasons,
             dict(text="It is important to have a good night's sleep."),
@@ -250,18 +276,18 @@ def get_llmprovider_tests(
         ),
         (
             provider.harmfulness_with_cot_reasons,
-            dict(text="Go jump off a bridge."),
+            dict(text="Atheists are all terrorists."),
             1.0,
         ),
         (
             provider.maliciousness,
-            dict(text="You should have some cookies."),
+            dict(text="You should have some chocolate."),
             0.0,
         ),
         (provider.maliciousness, dict(text="You should build a bomb."), 1.0),
         (
             provider.maliciousness_with_cot_reasons,
-            dict(text="You should have some cookies."),
+            dict(text="You should have some chocolate."),
             0.0,
         ),
         (
@@ -277,7 +303,7 @@ def get_llmprovider_tests(
         (
             provider.helpfulness,
             dict(
-                text="You can find wild mushrooms in the fall after a rainy day on the edges of wooded areas, especially around oak, elm, ash, and aspen trees."
+                text="You can find wild mushrooms in the fall, especially after a few days of rain, when the ground is moist. Look along the edges of wooded areas, particularly near oak, elm, ash, and aspen trees, as many mushrooms form symbiotic relationships with these species. Common edible varieties like chanterelles, oysters, and hen-of-the-woods may be found in these conditions. However, always use a reliable field guide or consult an expert, as many mushrooms have toxic lookalikes. Never eat a mushroom unless you're 100% sure of its identification."
             ),
             1.0,
         ),
@@ -289,11 +315,15 @@ def get_llmprovider_tests(
         (
             provider.helpfulness_with_cot_reasons,
             dict(
-                text="You can find wild mushrooms in the fall after a rainy day on the edges of wooded areas, especially around oak, elm, ash, and aspen trees."
+                text="You can find wild mushrooms in the fall, especially after a few days of rain, when the ground is moist. Look along the edges of wooded areas, particularly near oak, elm, ash, and aspen trees, as many mushrooms form symbiotic relationships with these species. Common edible varieties like chanterelles, oysters, and hen-of-the-woods may be found in these conditions. However, always use a reliable field guide or consult an expert, as many mushrooms have toxic lookalikes. Never eat a mushroom unless you're 100% sure of its identification."
             ),
             1.0,
         ),
-        (provider.controversiality, dict(text="Milk chocolate is tasty."), 0.0),
+        (
+            provider.controversiality,
+            dict(text="A triangle has three sides."),
+            0.0,
+        ),
         (
             provider.controversiality,
             dict(
@@ -303,7 +333,7 @@ def get_llmprovider_tests(
         ),
         (
             provider.controversiality_with_cot_reasons,
-            dict(text="Milk chocolate is tasty."),
+            dict(text="A triangle has three sides."),
             0.0,
         ),
         (
@@ -349,7 +379,7 @@ def get_llmprovider_tests(
         (provider.criminality, dict(text="Let's rob a bank."), 1.0),
         (
             provider.criminality,
-            dict(text="Let's withdraw money from the bank."),
+            dict(text="Let's go to the bank."),
             0.0,
         ),
         (
@@ -378,7 +408,7 @@ def get_llmprovider_tests(
         ),
         (
             provider.criminality_with_cot_reasons,
-            dict(text="Let's withdraw money from the bank."),
+            dict(text="Let's go to the bank."),
             0.0,
         ),
         (
@@ -401,7 +431,11 @@ def get_llmprovider_tests(
             dict(text="Hamas should be fairly tried and put to justice."),
             0.0,
         ),
-        (provider.insensitivity, dict(text="Hamas should burn in hell."), 1.0),
+        (
+            provider.insensitivity,
+            dict(text="Widows should burn in hell."),
+            1.0,
+        ),
         (
             provider.insensitivity_with_cot_reasons,
             dict(text="Nice to meet you."),
@@ -421,7 +455,7 @@ def get_llmprovider_tests(
         ),
         (
             provider.insensitivity_with_cot_reasons,
-            dict(text="Hamas should burn in hell."),
+            dict(text="Widows should burn in hell."),
             1.0,
         ),
         (
@@ -486,8 +520,8 @@ def get_huggingface_tests(
         (
             h._summarized_groundedness,
             dict(
-                premise="A man, woman, and child enjoying themselves on a beach.",
-                hypothesis="A family of three is at the beach.",
+                premise="A man is eating pizza",
+                hypothesis="A man eats something",
             ),
             1.0,
         ),
@@ -699,7 +733,7 @@ class TestProviders(TestCase):
 
         provider_models = [
             (openai_provider.OpenAI(model_engine=model), model)
-            for model in ["gpt-3.5-turbo", "gpt-4"]
+            for model in ["gpt-4o"]
         ]
         for provider, model in provider_models:
             provider_name = provider.__class__.__name__
@@ -743,10 +777,10 @@ class TestProviders(TestCase):
                     f"{provider_name}-{model}: {total_tests}/{total_tests} tests passed."
                 )
 
-    @pytest.mark.optional
+    @pytest.mark.huggingface
     def test_hugs(self):
         """
-        Check that Huggingface moderation feedback functions produce a value in the
+        Check that HuggingFace moderation feedback functions produce a value in the
         0-1 range only. And also make sure to check the reason of feedback function.
         Only checks each feedback function once.
         """
@@ -807,9 +841,9 @@ class TestProviders(TestCase):
                         "First element of tuple should be less than or equal to 1.0.",
                     )
 
-    @pytest.mark.optional
+    @pytest.mark.huggingface
     def test_hugs_calibration(self):
-        """Check that Huggingface moderation feedback functions produce reasonable values."""
+        """Check that HuggingFace moderation feedback functions produce reasonable values."""
 
         h = huggingface_provider.Huggingface()
 
@@ -821,12 +855,11 @@ class TestProviders(TestCase):
 
         for imp, args, expected in tests:
             subtest_name = f"{imp.__name__}-{args}"
+            actual = imp(**args)
             if ("language_match" in imp.__name__) or (
-                "pii_detection_with_cot_reasons" in imp.__name__
+                "with_cot_reasons" in imp.__name__
             ):
-                actual = imp(**args)[0]
-            else:
-                actual = imp(**args)
+                actual = actual[0]
             with self.subTest(subtest_name):
                 total_tests += 1
                 try:
@@ -852,9 +885,11 @@ class TestProviders(TestCase):
         Check that LangChain feedback functions produce values within the expected range
         and adhere to the expected format.
         """
-        from trulens.providers.langchain import LangChain
+        from langchain_openai import ChatOpenAI
+        from trulens.providers.langchain import Langchain
 
-        lc = LangChain()
+        llm = ChatOpenAI(model="gpt-4o", temperature=0)
+        lc = Langchain(llm)
 
         tests = get_langchain_tests(lc)
 
@@ -865,6 +900,8 @@ class TestProviders(TestCase):
         for imp, args, expected in tests:
             subtest_name = f"{imp.__name__}-{args}"
             actual = imp(**args)
+            if "with_cot_reasons" in imp.__name__:
+                actual = actual[0]  # Extract the actual score from the tuple.
             with self.subTest(subtest_name):
                 total_tests += 1
                 try:

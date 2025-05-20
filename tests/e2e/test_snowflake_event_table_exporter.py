@@ -12,6 +12,7 @@ from trulens.apps.langchain import TruChain
 from trulens.apps.llamaindex import TruLlama
 from trulens.connectors import snowflake as snowflake_connector
 from trulens.core.app import App
+from trulens.core.otel.instrument import instrument
 from trulens.core.run import Run
 from trulens.core.run import RunConfig
 from trulens.core.session import TruSession
@@ -34,10 +35,12 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
     @classmethod
     def setUpClass(cls) -> None:
         os.environ["TRULENS_OTEL_TRACING"] = "1"
+        instrument.enable_all_instrumentation()
         super().setUpClass()
 
     @classmethod
     def tearDownClass(cls) -> None:
+        instrument.disable_all_instrumentation()
         del os.environ["TRULENS_OTEL_TRACING"]
         super().tearDownClass()
 

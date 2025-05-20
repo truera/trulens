@@ -46,7 +46,7 @@ has the following signature:
 
 That is,
 [context_relevance][trulens.providers.openai.provider.OpenAI.context_relevance]
-is a plain python method that accepts the prompt and context, both strings, and
+is a plain Python method that accepts the prompt and context, both strings, and
 produces a float (assumed to be between 0.0 and 1.0).
 
 Read more about [feedback implementations](./feedback_implementations/index.md)

@@ -12,22 +12,22 @@ some derive from [LLMProvider][trulens.feedback.llm_provider.LLMProvider].
     pip install trulens-providers-cortex
     ```
 
-- [Langchain][trulens.providers.langchain.provider.Langchain] in package
+- [LangChain][trulens.providers.langchain.provider.LangChain] in package
   `trulens-providers-langchain`.
 
     ```bash
     pip install trulens-providers-langchain
     ```
 
-- [Bedrock][trulens.providers.bedrock.provider.Bedrock]  in package
+- [Bedrock][trulens.providers.bedrock.provider.Bedrock] in package
   `trulens-providers-bedrock`.
 
     ```bash
     pip install trulens-providers-bedrock
     ```
 
-- [Huggingface][trulens.providers.huggingface.provider.Huggingface],
-  [HuggingfaceLocal][trulens.providers.huggingface.provider.HuggingfaceLocal] in
+- [HuggingFace][trulens.providers.huggingface.provider.Huggingface],
+  [HuggingFaceLocal][trulens.providers.huggingface.provider.HuggingfaceLocal] in
   package `trulens-providers-huggingface`.
 
     ```bash

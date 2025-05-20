@@ -197,9 +197,14 @@ def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
         try:
             v = v.fget(obj)
             return v
-
+        except NotImplementedError:
+            # some properties (like Chain._chain_type) deliberately raise
+            # NotImplementedError to signal "no saving" — just skip them
+            return None
         except Exception as e:
-            raise RuntimeError(f"Failed to get property {k}.") from e
+            raise RuntimeError(
+                f"Failed to get property {k} due to {str(e)}"
+            ) from e
 
     else:
         return v
@@ -613,7 +618,7 @@ def _future_target_wrapper(stack, func, *args, **kwargs):
     """Wrapper for a function that is started by threads.
 
     This is needed to record the call stack prior to thread creation as in
-    python threads do not inherit the stack. Our instrumentation, however,
+    Python threads do not inherit the stack. Our instrumentation, however,
     relies on walking the stack and need to do this to the frames prior to
     thread starts.
     """

@@ -97,18 +97,18 @@ Example:
 
 ## API Usage Tracking
 
-Uses of python libraries for common LLMs like OpenAI are tracked in custom class
+Uses of Python libraries for common LLMs like OpenAI are tracked in custom class
 apps.
 
 ### Covered LLM Libraries
 
-- Official OpenAI python package (https://github.com/openai/openai-python).
+- Official OpenAI Python package (https://github.com/openai/openai-python).
 - Snowflake Cortex (https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex.html).
 - Amazon Bedrock (https://docs.aws.amazon.com/code-library/latest/ug/python_3_bedrock_code_examples.html).
 
-### Huggingface
+### HuggingFace
 
-Uses of huggingface inference APIs are tracked as long as requests are made
+Uses of HuggingFace inference APIs are tracked as long as requests are made
 through the `requests` class's `post` method to the URL
 https://api-inference.huggingface.co .
 
@@ -127,7 +127,7 @@ https://api-inference.huggingface.co .
   not recorded or available in dashboard. This can be alleviated to some extent
   with the `app_extra_json` argument to `TruCustomClass` as it allows one to
   specify in the form of json additional information to store alongside the
-  component hierarchy. Json-like (json bases like string, int, and containers
+  component hierarchy. JSON-like (JSON bases like string, int, and containers
   like sequences and dicts are included).
 
 ## What can go wrong
@@ -187,7 +187,7 @@ Function <function CustomLLM.generate at 0x1779471f0> was not found during instr
   APIs we track and make some assumptions with regards to accessible APIs
   through lower-level interfaces. Specifically, we only instrument the
   `requests` module's `post` method for the lower level tracking. Please file an
-  issue on github with your use cases so we can work out a more complete
+  issue on GitHub with your use cases so we can work out a more complete
   solution as needed.
 """
 

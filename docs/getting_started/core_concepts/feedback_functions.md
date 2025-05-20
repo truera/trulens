@@ -6,7 +6,7 @@ implementation of feedback functions wrap a supported provider’s model, such a
 a relevance model or a sentiment classifier, that is repurposed to provide
 evaluations. Often, for the most flexibility, this model can be another LLM.
 
-It can be useful to think of the range of evaluations on two axis: Scalable and Meaningful.
+It can be useful to think of the range of evaluations on two axes: Scalable and Meaningful.
 
 ![Range of Feedback Functions](../../assets/images/Range_of_Feedback_Functions.png)
 
@@ -25,7 +25,7 @@ to run ground truth evaluations with TruLens.
 
 After you have completed early evaluations and have gained more confidence in
 your app, it is often useful to gather human feedback. This can often be in the
-form of binary (up/down) feedback provided by your users. This is more slightly
+form of binary (up/down) feedback provided by your users. This is slightly more
 scalable than ground truth evals, but struggles with variance and can still be
 expensive to collect.
 

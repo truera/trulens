@@ -2,9 +2,9 @@
 
 ## Classification-based
 
-### 🤗 Huggingface
+### 🤗 HuggingFace
 
-API Reference: [Huggingface][trulens.providers.huggingface.Huggingface].
+API Reference: [HuggingFace][trulens.providers.huggingface.Huggingface].
 
 ### OpenAI
 

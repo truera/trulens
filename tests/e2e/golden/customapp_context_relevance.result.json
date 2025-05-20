@@ -10,20 +10,20 @@
     }
   ],
   "cost": {
-    "cost": 0.0,
+    "cost": 0.0613,
     "cost_currency": "USD",
     "n_classes": 0,
     "n_classification_requests": 0,
-    "n_completion_requests": 0,
-    "n_completion_tokens": 0,
+    "n_completion_requests": 1,
+    "n_completion_tokens": 38,
     "n_cortex_guardrails_tokens": 0,
     "n_embedding_requests": 0,
     "n_embeddings": 0,
-    "n_prompt_tokens": 0,
-    "n_requests": 0,
+    "n_prompt_tokens": 237,
+    "n_requests": 1,
     "n_stream_chunks": 0,
-    "n_successful_requests": 0,
-    "n_tokens": 0
+    "n_successful_requests": 1,
+    "n_tokens": 275
   },
   "error": null,
   "feedback_definition_id": "feedback_definition_hash_178ad41fde59d05dfa60f6898865a00c",

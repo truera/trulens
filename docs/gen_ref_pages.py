@@ -26,7 +26,7 @@ _SPECIAL_FORMATTING = {
     "huggingface": f"{pack_symbol} HuggingFace",
     "langchain": f"{pack_symbol} LangChain",
     "llamaindex": f"{pack_symbol} LlamaIndex",
-    "nemo": f"{pack_symbol} Nemo Guardrails",
+    "nemo": f"{pack_symbol} NeMo Guardrails",
     "cortex": f"{pack_symbol} Snowflake Cortex",
     "bedrock": f"{pack_symbol} Amazon Bedrock",
     "snowflake": f"{pack_symbol} Snowflake",

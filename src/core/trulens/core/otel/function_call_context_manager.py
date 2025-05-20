@@ -1,3 +1,4 @@
+from typing import Union
 import uuid
 
 from opentelemetry import trace
@@ -5,12 +6,21 @@ from opentelemetry.baggage import get_baggage
 from opentelemetry.baggage import remove_baggage
 from opentelemetry.baggage import set_baggage
 import opentelemetry.context as context_api
+from opentelemetry.trace import get_current_span
 from opentelemetry.trace.span import Span
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
 from trulens.otel.semconv.trace import SpanAttributes
 
 
-class FunctionCallContextManager:
+class UseCurrentSpanFunctionCallContextManager:
+    def __enter__(self):
+        return get_current_span()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+
+class CreateSpanFunctionCallContextManager:
     def __init__(self, span_name: str, is_record_root: bool):
         self.span_name = span_name
         self.is_record_root = is_record_root
@@ -59,3 +69,16 @@ class FunctionCallContextManager:
         # Throw any errors we found.
         if e_ret is not None:
             raise e_ret
+
+
+def create_function_call_context_manager(
+    create_new_span: bool,
+    span_name: str,
+    is_record_root: bool,
+) -> Union[
+    UseCurrentSpanFunctionCallContextManager,
+    CreateSpanFunctionCallContextManager,
+]:
+    if create_new_span:
+        return CreateSpanFunctionCallContextManager(span_name, is_record_root)
+    return UseCurrentSpanFunctionCallContextManager()

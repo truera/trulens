@@ -16,7 +16,7 @@ or the libraries you use were not covered by our existing remedies.
 ## Threads
 
 If using threads, use the replacement threading classes included in _TruLens_
-that stand in place of python classes:
+that stand in place of Python classes:
 
 - [trulens.core.utils.threading.Thread][trulens.core.utils.threading.Thread]
   instead of [threading.Thread][threading.Thread].
@@ -48,7 +48,7 @@ Thread(target=copy_context().run, args=(your_thread_target, yourargs, ...), kwar
 ## Async Tasks
 
 If using async Tasks, make sure that the default `copy_context` behaviour of
-`Task` is being used. This only applies to python >= 3.11:
+`Task` is being used. This only applies to Python >= 3.11:
 
 !!! example
 
@@ -67,7 +67,7 @@ If using async Tasks, make sure that the default `copy_context` behaviour of
     task = loop.create_task(your_coroutine, ...) # use default context behaviour
     ```
 
-If you are using python prior to 3.11, `copy_context` is the fixed behaviour
+If you are using Python prior to 3.11, `copy_context` is the fixed behaviour
 which cannot be changed.
 
 ## Other issues

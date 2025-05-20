@@ -3,11 +3,19 @@ def vault_settings = [
         [
             path: 'ml-platform/snowml/e2etests-trulens-jenkins-credentials',
             secretValues: [
+                // LLM API keys
                 [envVar: 'OPENAI_API_KEY', vaultKey: 'OPENAI_API_KEY'],
                 [envVar: 'HUGGINGFACEHUB_API_TOKEN', vaultKey: 'HUGGINGFACEHUB_API_TOKEN'],
                 [envVar: 'HUGGINGFACE_API_KEY', vaultKey: 'HUGGINGFACE_API_KEY'],
+                // Azure OpenAI credentials
+                [envVar: 'AZURE_OPENAI_API_KEY', vaultKey: 'AZURE_OPENAI_API_KEY'],
+                [envVar: 'AZURE_OPENAI_DEPLOYMENT', vaultKey: 'AZURE_OPENAI_DEPLOYMENT'],
+                [envVar: 'AZURE_OPENAI_ENDPOINT', vaultKey: 'AZURE_OPENAI_ENDPOINT'],
+                [envVar: 'OPENAI_API_VERSION', vaultKey: 'OPENAI_API_VERSION'],
+                // Pinecone credentials
                 [envVar: 'PINECONE_API_KEY', vaultKey: 'PINECONE_API_KEY'],
                 [envVar: 'PINECONE_ENV', vaultKey: 'PINECONE_ENV'],
+                // Snowflake credentials
                 [envVar: 'SNOWFLAKE_ACCOUNT', vaultKey: 'SNOWFLAKE_ACCOUNT'],
                 [envVar: 'SNOWFLAKE_DATABASE', vaultKey: 'SNOWFLAKE_DATABASE'],
                 [envVar: 'SNOWFLAKE_ROLE', vaultKey: 'SNOWFLAKE_ROLE'],
@@ -20,6 +28,20 @@ def vault_settings = [
     ]
 ]
 
+def reactComponentsUpdated() {
+    // Fetch main branch without checkout
+    sh(script: 'git fetch origin main:refs/remotes/origin/main', returnStdout: false)
+
+    // Compare changes between current branch and main
+    def changedFiles = sh(
+        script: 'git diff --name-only origin/main HEAD | grep -E "^src/dashboard/react_components/" | wc -l',
+        returnStdout: true
+    ).trim() as Integer
+
+    echo "Number of changed files in src/dashboard/react_components/: ${changedFiles}"
+    return changedFiles > 0
+}
+
 pipeline {
     agent {
         docker {
@@ -29,6 +51,12 @@ pipeline {
             alwaysPull false
             args '-u root'
         }
+    }
+
+    environment {
+        // NOTE: Increase timeout for HTTP requests to avoid issues with slow downloads
+        // See: https://github.com/python-poetry/poetry/blob/master/src/poetry/utils/constants.py
+        POETRY_REQUESTS_TIMEOUT=120
     }
 
     options {
@@ -45,10 +73,18 @@ pipeline {
                     curl -sSL https://install.python-poetry.org | python3 -
                     ln -s /root/.local/bin/poetry /usr/local/bin/poetry
                     echo "Using $(python --version) ($(which python)) $(poetry -V)"
+
+                    poetry config requests.max-retries 3
                     poetry config virtualenvs.create false
+
                     poetry run pip install pip==24.1.2
                     poetry run python --version
                     poetry run pip --version
+
+                    # Install Node.js and npm
+                    apt-get update
+                    apt-get install -y nodejs npm
+                    echo "Using Node $(node --version) and NPM $(npm --version)"
                 '''
                 sh label: 'Run pre-commit hooks', script: '''
                     set -e
@@ -62,27 +98,96 @@ pipeline {
                     apt-get install -y unzip
                     make build-with-zip-wheels
                 '''
+                sh label : 'Install & register the kernel for notebook tests', script: '''
+                poetry run pip install ipykernel
+                poetry run python -m ipykernel install --name trulens-llm --display-name trulens-llm --sys-prefix
+                '''
             }
         }
         stage('Test Suites') {
-            parallel {
+            // NOTE: As of PR#1904, we now run test suites sequentially to avoid a known race condition with parallel CI Poetry installs (https://github.com/python-poetry/poetry/issues/8159).
+            // NOTE: Another proposed workaround is to set `poetry config installer.parallel false`, but this would (1) slow down all CI jobs and (2) does not fix the issue with parallel CI stages.
+            // TODO(SNOW-2034894): Re-enable parallel CI stages with fully separated nodes.
+            stages {
                 stage('e2e') {
                     steps {
-                        withVault(vault_settings) {
-                            sh label: 'Run Optional "e2e" Test Suite', script: '''
-                                set -e
-                                make test-e2e-optional
-                            '''
+                        // NOTE: As of PR#1904, this is a temporary workaround to ensure we are still able to run both e2e and notebook stages even if one fails (while sequential).
+                        // We will revisit this once we re-enable parallelism.
+                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                            withVault(vault_settings) {
+                                sh label: 'Run stable "e2e" Test Suite', script: '''
+                                    set -e
+
+                                    make test-e2e-stable
+                                '''
+                            }
+                        }
+                    }
+                }
+                stage('huggingface') {
+                    steps {
+                        // NOTE: HuggingFace Inference API is unstable and may fail due to rate limiting.
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+                            withVault(vault_settings) {
+                                sh label: 'Run huggingface "e2e" Test Suite', script: '''
+                                    set -e
+
+                                    make test-e2e-huggingface
+                                '''
+                            }
                         }
                     }
                 }
                 stage('notebook') {
                     steps {
                         withVault(vault_settings) {
-                            sh label: 'Run Optional "test" Test Suite', script: '''
+                            sh label: 'Run optional "notebook" Test Suite', script: '''
                                 set -e
-                                make test-notebook-optional
+
+                                make test-notebook-stable
                             '''
+                        }
+                    }
+                }
+                stage('record-viewer') {
+                    when {
+                        expression {
+                            reactComponentsUpdated()
+                        }
+                    }
+
+                    steps {
+                        script {
+                            withVault(vault_settings) {
+                                sh label: 'Build the OTEL Record viewer', script: '''
+                                    set -e
+                                    make build-record-viewer-otel
+                                '''
+
+                                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                                    sh label: 'Run Jest tests for the OTEL Record viewer', script: '''
+                                        set -e
+                                        make test-record-viewer-otel
+                                    '''
+                                }
+
+                                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                                    sh label: 'Run Storybook tests', script: '''
+                                        set -e
+                                        cd src/dashboard/react_components/record_viewer_otel
+                                        npm i
+                                        npx playwright install --with-deps chromium
+                                        npm run build-storybook
+                                        ./test-wrapper.sh
+                                    '''
+                                }
+                            }
+                        }
+                    }
+
+                    post {
+                        always {
+                            archiveArtifacts  allowEmptyArchive: true, artifacts: '**/react_components/**/*.png'
                         }
                     }
                 }

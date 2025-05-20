@@ -318,6 +318,10 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
 
         if client is None:
             # Pass kwargs to client.
+            if "_register_instance" in kwargs:
+                # This argument is not allowed by the `openai.OpenAI`
+                # constructor.
+                del kwargs["_register_instance"]
             client = openai.OpenAI(**kwargs)
             self_kwargs["client"] = OpenAIClient(client=client)
 

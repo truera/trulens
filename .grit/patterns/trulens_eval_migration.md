@@ -562,7 +562,7 @@ from trulens.apps.custom import TruCustomApp
 from trulens.apps.basic import TruBasicApp
 ```
 
-## Updates to working with Langchain
+## Updates to working with LangChain
 
 ```python
 from trulens_eval import TruChain
@@ -573,7 +573,7 @@ from trulens.apps.langchain.tru_chain import TruChain
 from trulens.apps.langchain.guardrails import WithFeedbackFilterDocuments
 ```
 
-## Updates to working with Llama-Index
+## Updates to working with LlamaIndex
 
 ```python
 from trulens_eval import TruLlama
@@ -680,7 +680,7 @@ from trulens_eval.feedback.provider.cortex import Cortex
 from trulens.providers.cortex.provider import Cortex
 ```
 
-## Using Langchain Provider
+## Using LangChain Provider
 ```python
 from trulens_eval import Cortex
 ```
@@ -688,7 +688,7 @@ from trulens_eval import Cortex
 from trulens.providers.cortex.provider import Cortex
 ```
 
-## Using Langchain Provider Full Import Path
+## Using LangChain Provider Full Import Path
 ```python
 from trulens_eval.feedback.provider.langchain import Langchain
 ```

@@ -30,6 +30,7 @@ from trulens.core._utils import optional as optional_utils
 from trulens.core._utils.pycompat import Future  # code style exception
 from trulens.core.database import connector as core_connector
 from trulens.core.feedback import feedback as core_feedback
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import feedback as feedback_schema
@@ -767,6 +768,7 @@ class TruSession(
     def get_records_and_feedback(
         self,
         app_ids: Optional[List[types_schema.AppID]] = None,
+        app_name: Optional[types_schema.AppName] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pandas.DataFrame, List[str]]:
@@ -775,6 +777,9 @@ class TruSession(
         Args:
             app_ids: A list of app ids to filter records by. If empty or not given, all
                 apps' records will be returned.
+
+            app_name: A name of the app to filter records by. If given, only records for
+                this app will be returned.
 
             offset: Record row offset.
 
@@ -786,7 +791,7 @@ class TruSession(
             List of feedback names that are columns in the DataFrame.
         """
         return self.connector.get_records_and_feedback(
-            app_ids=app_ids, offset=offset, limit=limit
+            app_ids=app_ids, app_name=app_name, offset=offset, limit=limit
         )
 
     def get_leaderboard(
@@ -925,6 +930,10 @@ class TruSession(
 
             [MAX_THREADS][trulens.core.utils.threading.TP.MAX_THREADS]
         """
+        if is_otel_tracing_enabled():
+            raise ValueError(
+                "Deferred evaluator not supported with OTEL tracing!"
+            )
 
         assert not fork, "Fork mode not yet implemented."
         assert (

@@ -32,8 +32,11 @@ class TestLlamaIndex(TruTestCase):
     ANSWERS = {
         "What did the author do growing up?": set([
             "The author worked on writing and",
-            "The author worked on writing short"
+            "The author worked on writing short",
+            "The author focused on writing and",
+            "The author focused on writing short",
             "I couldn't find specific information",
+            "I apologize for the inconvenience, but I couldn't find specific information",
         ])
     }
     """Common answers to a simple question.

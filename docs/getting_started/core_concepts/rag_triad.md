@@ -1,7 +1,7 @@
 # The RAG Triad
 
 RAGs have become the standard architecture for providing LLMs with context in
-order to avoid hallucinations. However even RAGs can suffer from hallucination,
+order to avoid hallucinations. However, even RAGs can suffer from hallucination,
 as is often the case when the retrieval fails to retrieve sufficient context or
 even retrieves irrelevant context that is then weaved into the LLM’s response.
 

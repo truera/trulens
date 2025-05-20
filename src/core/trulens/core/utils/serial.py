@@ -641,7 +641,7 @@ class ParseException(Exception):
 
     def __str__(self) -> str:
         return (
-            f'Failed to parse expression `{self.exp_string}` as a `Lens`.'
+            f"Failed to parse expression `{self.exp_string}` as a `Lens`."
             f"\nAST={dump(self.exp_ast) if self.exp_ast is not None else 'AST is None'}"
         )
 
@@ -650,7 +650,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
     # Not using SerialModel as we have special handling of serialization to/from
     # strings for this class which interferes with SerialModel mechanisms.
     """
-    Lenses into python objects.
+    Lenses into Python objects.
 
     Example:
         ```python
@@ -743,7 +743,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
     @staticmethod
     def of_string(s: str) -> Lens:
         """
-        Convert a string representing a python expression into a Lens.
+        Convert a string representing a Python expression into a Lens.
         """
 
         # NOTE(piotrm): we use python parser for this which means only things

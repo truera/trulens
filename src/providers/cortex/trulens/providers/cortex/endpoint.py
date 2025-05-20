@@ -18,6 +18,8 @@ pp = pprint.PrettyPrinter()
 class CortexCostComputer:
     @staticmethod
     def handle_response(response: Any) -> Dict[str, Any]:
+        model = None
+        usage = {}
         for curr in response:
             data = json.loads(curr.data)
             choice = data["choices"][0]
@@ -25,6 +27,10 @@ class CortexCostComputer:
                 model = data["model"]
                 usage = data["usage"]
                 break
+
+        if model is None or not usage:
+            logger.warning("No model usage found in response.")
+
         endpoint = CortexEndpoint()
         callback = CortexCallback(endpoint=endpoint)
         return {
@@ -49,7 +55,7 @@ class CortexCallback(core_endpoint.EndpointCallback):
     # TODO (Daniel): cost tracking for Cortex finetuned models is not yet implemented.
 
     def _compute_credits_consumed(
-        self, cortex_model_name: str, n_tokens: int
+        self, cortex_model_name: Optional[str], n_tokens: int
     ) -> float:
         try:
             if self._model_costs is None:
@@ -66,7 +72,7 @@ class CortexCallback(core_endpoint.EndpointCallback):
                 ) as file:
                     self._model_costs = json.load(file)
 
-            if cortex_model_name in self._model_costs:
+            if cortex_model_name and cortex_model_name in self._model_costs:
                 return (
                     self._model_costs[cortex_model_name] * n_tokens / 1e6
                 )  # we maintain config per-1M-token cost
@@ -151,12 +157,20 @@ class CortexEndpoint(core_endpoint.Endpoint):
             raise e
 
         if isinstance(response_dict, dict) and "usage" in response_dict:
-            counted_something = True
+            if "choices" in response_dict:
+                choice = response_dict["choices"][0]
+                if (
+                    "finish_reason" in choice
+                    and choice["finish_reason"] == "stop"
+                ):
+                    counted_something = True
 
-            self.global_callback.handle_generation(response=response_dict)
+                    self.global_callback.handle_generation(
+                        response=response_dict
+                    )
 
-            if callback is not None:
-                callback.handle_generation(response=response_dict)
+                    if callback is not None:
+                        callback.handle_generation(response=response_dict)
 
         if not counted_something:
             logger.warning(

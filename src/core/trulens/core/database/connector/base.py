@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 from concurrent import futures
+import datetime
 import logging
 import queue
 from threading import Thread
@@ -16,7 +17,7 @@ from typing import (
     Union,
 )
 
-import pandas
+import pandas as pd
 from trulens.core._utils.pycompat import Future  # code style exception
 from trulens.core.database import base as core_db
 from trulens.core.schema import app as app_schema
@@ -321,14 +322,18 @@ class DBConnector(ABC, text_utils.WithIdentString):
     def get_records_and_feedback(
         self,
         app_ids: Optional[List[types_schema.AppID]] = None,
+        app_name: Optional[types_schema.AppName] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
-    ) -> Tuple[pandas.DataFrame, List[str]]:
+    ) -> Tuple[pd.DataFrame, List[str]]:
         """Get records, their feedback results, and feedback names.
 
         Args:
             app_ids: A list of app ids to filter records by. If empty or not given, all
                 apps' records will be returned.
+
+            app_name: A name of the app to filter records by. If given, only records for
+                this app will be returned.
 
             offset: Record row offset.
 
@@ -341,7 +346,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
         """
 
         df, feedback_columns = self.db.get_records_and_feedback(
-            app_ids, offset=offset, limit=limit
+            app_ids=app_ids, app_name=app_name, offset=offset, limit=limit
         )
 
         df["app_name"] = df["app_json"].apply(lambda x: x.get("app_name"))
@@ -355,7 +360,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
         group_by_metadata_key: Optional[str] = None,
         limit: Optional[int] = None,
         offset: Optional[int] = None,
-    ) -> pandas.DataFrame:
+    ) -> pd.DataFrame:
         """Get a leaderboard for the given apps.
 
         Args:
@@ -384,6 +389,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
         df["app_name"] = df["app_json"].apply(lambda x: x.get("app_name"))
         df["app_version"] = df["app_json"].apply(lambda x: x.get("app_version"))
 
+        # TODO: refactor implementation for total_cost map in OTEL implementation of _get_records_and_feedback (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
         col_agg_list = feedback_cols + ["latency", "total_cost"]
 
         if group_by_metadata_key is not None:
@@ -429,3 +435,18 @@ class DBConnector(ABC, text_utils.WithIdentString):
             events: A list of events to add to the database.
         """
         return [self.add_event(event=event) for event in events]
+
+    def get_events(
+        self, app_id: str, start_time: Optional[datetime.datetime] = None
+    ) -> pd.DataFrame:
+        """
+        Get events from the database.
+
+        Args:
+            app_id: The app id to filter events by.
+            start_time: The minimum time to consider events from.
+
+        Returns:
+            A pandas DataFrame of events associated with the provided app id.
+        """
+        return self.db.get_events(app_id)
