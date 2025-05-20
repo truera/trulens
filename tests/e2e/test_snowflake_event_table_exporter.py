@@ -146,7 +146,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             TruApp,
             {"input": "custom_input"},
             pd.DataFrame({"custom_input": ["Kojikun", "Nolan"]}),
-            10,
+            8,
         )
 
     def test_tru_llama(self):

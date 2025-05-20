@@ -57,11 +57,7 @@ class TestApp:
     def nested3(self, query: str) -> str:
         if query == "throw":
             raise ValueError("nested3 exception")
-        return self.nested4(query)
-
-    @instrument
-    def nested4(self, query: str) -> str:
-        return "nested4"
+        return "nested3"
 
 
 class TestOtelTruCustom(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
