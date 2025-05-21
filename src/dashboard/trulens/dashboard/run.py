@@ -333,7 +333,6 @@ def run_dashboard_sis(
     session: Optional[core_session.TruSession] = None,
     warehouse: Optional[str] = None,
     init_server_side_with_staged_packages: bool = False,
-    otel_tracing: bool = False,
 ):
     with import_utils.OptionalImports(
         messages=import_utils.format_import_errors(
@@ -354,7 +353,6 @@ def run_dashboard_sis(
             session.connector.snowpark_session,
             warehouse=warehouse,
             init_server_side_with_staged_packages=init_server_side_with_staged_packages,
-            otel_tracing=otel_tracing,
         )
     else:
         raise ValueError(
