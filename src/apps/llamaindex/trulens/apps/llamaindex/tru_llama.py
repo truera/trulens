@@ -27,7 +27,7 @@ from trulens.core._utils.pycompat import (
     getmembers_static,  # import style exception
 )
 from trulens.core.instruments import InstrumentedMethod
-from trulens.core.otel.utils import is_otel_backwards_compatibility_enabled
+from trulens.core.otel.utils import is_otel_allow_no_main_method
 from trulens.core.otel.utils import is_otel_tracing_enabled
 
 # TODO: Do we need to depend on this?
@@ -418,7 +418,7 @@ class TruLlama(core_app.App):
         if (
             is_otel_tracing_enabled()
             and main_method is None
-            and not is_otel_backwards_compatibility_enabled()
+            and not is_otel_allow_no_main_method()
         ):
             raise ValueError(
                 "When OTEL_TRACING is enabled, 'main_method' must be provided in App constructor."
