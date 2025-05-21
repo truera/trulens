@@ -5,7 +5,7 @@ from typing import Any, Callable, List, Optional, Tuple, Union
 
 import pandas as pd
 from pydantic import BaseModel
-from trulens.apps import custom as custom_app
+from trulens.apps import app
 from trulens.core.feedback import feedback as core_feedback
 from trulens.core.schema import select as select_schema
 
@@ -90,7 +90,7 @@ class TruBenchmarkExperiment:
             for agg_func in agg_funcs
         ]
 
-    @custom_app.instrument
+    @app.instrument
     def run_score_generation_on_single_row(
         self,
         feedback_fn: Callable,
@@ -143,7 +143,7 @@ class TruBenchmarkExperiment:
             traceback.print_exc()
             return float("nan")  # return NaN to indicate an invalid result
 
-    @custom_app.instrument
+    @app.instrument
     def __call__(
         self,
         ground_truth: pd.DataFrame,
@@ -217,8 +217,8 @@ def create_benchmark_experiment_app(
     app_version: str,
     benchmark_experiment: TruBenchmarkExperiment,
     **kwargs,
-) -> custom_app.TruCustomApp:
-    """Create a Custom app for special use case: benchmarking feedback
+) -> app.TruApp:
+    """Create an app for special use case: benchmarking feedback
     functions.
 
     Args:
@@ -239,7 +239,7 @@ def create_benchmark_experiment_app(
             feedback functions.
     """
 
-    return custom_app.TruCustomApp(
+    return app.TruApp(
         benchmark_experiment,
         app_name=app_name,
         app_version=app_version,

@@ -7,8 +7,8 @@ import unittest
 
 import pytest
 from snowflake.snowpark import Session
-from trulens.apps.custom import TruCustomApp
-from trulens.apps.custom import instrument
+from trulens.apps.app import TruApp
+from trulens.apps.app import instrument
 from trulens.connectors.snowflake import SnowflakeConnector
 from trulens.core import TruSession
 
@@ -55,7 +55,7 @@ class TestContextVariables(unittest.TestCase):
 
         # Set up trulens.
         rag = FailingRAG()
-        tru_rag = TruCustomApp(
+        tru_rag = TruApp(
             rag,
             app_name="FailingRAG",
             app_version="base",
