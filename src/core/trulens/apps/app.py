@@ -495,7 +495,7 @@ class legacy_instrument(core_instruments.instrument):
 if is_otel_tracing_enabled():
     from trulens.core.otel.instrument import instrument as otel_instrument
 
-    instrument = otel_instrument(allow_as_record_root=True)
+    instrument = otel_instrument()
 else:
     instrument = legacy_instrument
 

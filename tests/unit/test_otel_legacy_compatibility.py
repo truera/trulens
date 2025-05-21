@@ -108,6 +108,8 @@ class TestOtelLegacyCompatibility(OtelTestCase):
         TruSession().force_flush()
         events = self._get_events()
         self.assertEqual(4, len(events))
+        self.assertIsNone(recording)
+        # Verify first span.
         record_attributes = events["record_attributes"].iloc[0]
         self.assertEqual(
             SpanAttributes.SpanType.RECORD_ROOT,
@@ -120,4 +122,10 @@ class TestOtelLegacyCompatibility(OtelTestCase):
             "response to test",
             record_attributes[SpanAttributes.RECORD_ROOT.OUTPUT],
         )
-        self.assertIsNone(recording)
+        # Verify other spans.
+        for i in range(1, events.shape[0]):
+            record_attributes = events["record_attributes"].iloc[i]
+            self.assertEqual(
+                SpanAttributes.SpanType.UNKNOWN,
+                record_attributes[SpanAttributes.SPAN_TYPE],
+            )

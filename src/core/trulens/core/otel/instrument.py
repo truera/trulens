@@ -196,7 +196,6 @@ class instrument:
             attributes = {}
         self.attributes = attributes
         self.is_record_root = span_type == SpanAttributes.SpanType.RECORD_ROOT
-        self.allow_as_record_root = kwargs.get("allow_as_record_root", False)
         self.is_app_specific_record_root = kwargs.get(
             "is_app_specific_record_root", False
         )
@@ -229,10 +228,7 @@ class instrument:
 
         def convert_to_generator(func, instance, args, kwargs):
             with create_function_call_context_manager(
-                self.create_new_span,
-                func_name,
-                self.is_record_root,
-                self.allow_as_record_root,
+                self.create_new_span, func_name, self.is_record_root
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
@@ -275,10 +271,7 @@ class instrument:
             if not self.enabled:
                 return await func(*args, **kwargs)
             with create_function_call_context_manager(
-                self.create_new_span,
-                func_name,
-                self.is_record_root,
-                self.allow_as_record_root,
+                self.create_new_span, func_name, self.is_record_root
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
@@ -313,10 +306,7 @@ class instrument:
                     yield curr
                 return
             with create_function_call_context_manager(
-                self.create_new_span,
-                func_name,
-                self.is_record_root,
-                self.allow_as_record_root,
+                self.create_new_span, func_name, self.is_record_root
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
