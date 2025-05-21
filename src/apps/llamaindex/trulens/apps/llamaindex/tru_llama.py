@@ -21,13 +21,14 @@ import llama_index
 from pydantic import Field
 from trulens.apps.langchain import tru_chain as mod_tru_chain
 from trulens.core import app as core_app
-from trulens.core import experimental as core_experimental
 from trulens.core import instruments as core_instruments
 from trulens.core._utils.pycompat import EmptyType  # import style exception
 from trulens.core._utils.pycompat import (
     getmembers_static,  # import style exception
 )
 from trulens.core.instruments import InstrumentedMethod
+from trulens.core.otel.utils import is_otel_backwards_compatibility_enabled
+from trulens.core.otel.utils import is_otel_tracing_enabled
 
 # TODO: Do we need to depend on this?
 from trulens.core.session import TruSession
@@ -408,21 +409,23 @@ class TruLlama(core_app.App):
     ):
         # TruLlama specific:
         kwargs["app"] = app
-        tru_session = (
+        # Create `TruSession` if not already created.
+        if "connector" in kwargs:
+            TruSession(connector=kwargs["connector"])
+        else:
             TruSession()
-            if "connector" not in kwargs
-            else TruSession(connector=kwargs["connector"])
-        )
+        # Check `main_method` is provided.
         if (
-            tru_session.experimental_feature(
-                core_experimental.Feature.OTEL_TRACING
-            )
+            is_otel_tracing_enabled()
             and main_method is None
+            and not is_otel_backwards_compatibility_enabled()
         ):
             raise ValueError(
                 "When OTEL_TRACING is enabled, 'main_method' must be provided in App constructor."
             )
-        kwargs["main_method"] = main_method
+
+        if main_method is not None:
+            kwargs["main_method"] = main_method
         kwargs["root_class"] = pyschema_utils.Class.of_object(
             app
         )  # TODO: make class property

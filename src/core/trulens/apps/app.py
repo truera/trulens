@@ -201,6 +201,7 @@ from pydantic import Field
 from trulens.core import app as core_app
 from trulens.core import experimental as core_experimental
 from trulens.core import instruments as core_instruments
+from trulens.core.otel.utils import is_otel_backwards_compatibility_enabled
 from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.session import TruSession
 from trulens.core.utils import pyschema as pyschema_utils
@@ -367,11 +368,15 @@ class TruApp(core_app.App):
             for _, method in inspect.getmembers(app, inspect.ismethod):
                 if self._has_record_root_instrumentation(method):
                     main_methods.add(method)
-            if len(main_methods) != 1:
+            if len(main_methods) != 1 and (
+                len(main_methods) != 0
+                or not is_otel_backwards_compatibility_enabled()
+            ):
                 raise ValueError(
                     f"Must have exactly one main method or method decorated with span type 'record_root'! Found: {list(main_methods)}"
                 )
-            main_method = main_methods.pop()
+            if len(main_methods) == 1:
+                main_method = main_methods.pop()
         if main_method is not None:
             kwargs["main_method"] = main_method
         kwargs["root_class"] = pyschema_utils.Class.of_object(app)
@@ -490,7 +495,7 @@ class legacy_instrument(core_instruments.instrument):
 if is_otel_tracing_enabled():
     from trulens.core.otel.instrument import instrument as otel_instrument
 
-    instrument = otel_instrument()
+    instrument = otel_instrument(allow_as_record_root=True)
 else:
     instrument = legacy_instrument
 

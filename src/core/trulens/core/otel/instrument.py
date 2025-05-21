@@ -88,6 +88,13 @@ def _set_span_attributes(
     ret: Any,
     only_set_user_defined_attributes: bool = False,
 ):
+    if (
+        hasattr(span, "attributes")
+        and span.attributes is not None
+        and SpanAttributes.SPAN_TYPE in span.attributes
+    ):
+        # If the span already has a span type, we override what we were given.
+        span_type = span.attributes[SpanAttributes.SPAN_TYPE]
     # Determine args/kwargs to pass to the attributes
     # callable.
     sig = inspect.signature(func)
@@ -125,11 +132,7 @@ def _set_span_attributes(
     )
     if resolved_attributes:
         # Set the user-provided attributes.
-        set_user_defined_attributes(
-            span,
-            span_type=span_type,
-            attributes=resolved_attributes,
-        )
+        set_user_defined_attributes(span, attributes=resolved_attributes)
 
 
 def _set_span_attributes_and_handle_exceptions(
@@ -193,6 +196,7 @@ class instrument:
             attributes = {}
         self.attributes = attributes
         self.is_record_root = span_type == SpanAttributes.SpanType.RECORD_ROOT
+        self.allow_as_record_root = kwargs.get("allow_as_record_root", False)
         self.is_app_specific_record_root = kwargs.get(
             "is_app_specific_record_root", False
         )
@@ -225,7 +229,10 @@ class instrument:
 
         def convert_to_generator(func, instance, args, kwargs):
             with create_function_call_context_manager(
-                self.create_new_span, func_name, self.is_record_root
+                self.create_new_span,
+                func_name,
+                self.is_record_root,
+                self.allow_as_record_root,
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
@@ -268,7 +275,10 @@ class instrument:
             if not self.enabled:
                 return await func(*args, **kwargs)
             with create_function_call_context_manager(
-                self.create_new_span, func_name, self.is_record_root
+                self.create_new_span,
+                func_name,
+                self.is_record_root,
+                self.allow_as_record_root,
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
@@ -303,7 +313,10 @@ class instrument:
                     yield curr
                 return
             with create_function_call_context_manager(
-                self.create_new_span, func_name, self.is_record_root
+                self.create_new_span,
+                func_name,
+                self.is_record_root,
+                self.allow_as_record_root,
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None

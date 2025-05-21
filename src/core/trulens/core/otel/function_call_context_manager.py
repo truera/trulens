@@ -21,17 +21,22 @@ class UseCurrentSpanFunctionCallContextManager:
 
 
 class CreateSpanFunctionCallContextManager:
-    def __init__(self, span_name: str, is_record_root: bool):
+    def __init__(
+        self, span_name: str, is_record_root: bool, allow_as_record_root: bool
+    ) -> None:
         self.span_name = span_name
         self.is_record_root = is_record_root
+        self.allow_as_record_root = allow_as_record_root
         self.span_context_manager = None
         self.token = None
 
     def __enter__(self) -> Span:
         # Set record_id into context.
-        if self.is_record_root:
+        started_record = False
+        if self.is_record_root or self.allow_as_record_root:
             record_id = get_baggage(SpanAttributes.RECORD_ID)
             if not record_id:
+                started_record = True
                 record_id = str(uuid.uuid4())
                 self.token = context_api.attach(
                     set_baggage(SpanAttributes.RECORD_ID, record_id)
@@ -43,7 +48,7 @@ class CreateSpanFunctionCallContextManager:
             .start_as_current_span(name=self.span_name)
         )
         span = self.span_context_manager.__enter__()
-        if self.is_record_root:
+        if started_record:
             span.set_attribute(
                 SpanAttributes.SPAN_TYPE, SpanAttributes.SpanType.RECORD_ROOT
             )
@@ -75,10 +80,13 @@ def create_function_call_context_manager(
     create_new_span: bool,
     span_name: str,
     is_record_root: bool,
+    allow_as_record_root: bool,
 ) -> Union[
     UseCurrentSpanFunctionCallContextManager,
     CreateSpanFunctionCallContextManager,
 ]:
     if create_new_span:
-        return CreateSpanFunctionCallContextManager(span_name, is_record_root)
+        return CreateSpanFunctionCallContextManager(
+            span_name, is_record_root, allow_as_record_root
+        )
     return UseCurrentSpanFunctionCallContextManager()

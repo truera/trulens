@@ -196,7 +196,6 @@ def set_function_call_attributes(
 def set_user_defined_attributes(
     span: Span,
     *,
-    span_type: SpanAttributes.SpanType,
     attributes: Dict[str, Any],
 ) -> None:
     final_attributes = validate_attributes(attributes)
