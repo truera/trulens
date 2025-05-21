@@ -1105,16 +1105,16 @@ class SQLAlchemyDB(core_db.DB):
                             metric_name
                         ]
 
+                        eval_root_score = record_attributes.get(
+                            SpanAttributes.EVAL_ROOT.SCORE, 0.0
+                        )
+
                         if (
                             record_attributes.get(SpanAttributes.SPAN_TYPE)
                             == SpanAttributes.SpanType.EVAL_ROOT.value
                         ):
                             # NOTE: EVAL_ROOT.SCORE should provide the mean score of all related EVAL spans
-                            feedback_result["mean_score"] = (
-                                record_attributes.get(
-                                    SpanAttributes.EVAL_ROOT.SCORE, 0.0
-                                )
-                            )
+                            feedback_result["mean_score"] = eval_root_score
                             # TODO(SNOW-2112879): HIGHER_IS_BETTER has not been populated in the OTEL spans yet
                             feedback_result["direction"] = (
                                 record_attributes.get(
@@ -1126,16 +1126,28 @@ class SQLAlchemyDB(core_db.DB):
                         # Add call data
                         call_data = {
                             # TODO(SNOW-2112879): Call data may not be populated in the OTEL spans yet
-                            "args": record_attributes.get(
-                                SpanAttributes.CALL.KWARGS, {}
+                            "args": {
+                                "kwargs": record_attributes.get(
+                                    SpanAttributes.CALL.KWARGS, None
+                                ),
+                                "input": record_data["input"],
+                                "output": record_data["output"],
+                            },
+                            # NOTE: Some feedbacks may not have sub-scores, so we use the EVAL_ROOT score as a fallback
+                            "ret": (
+                                record_attributes.get(SpanAttributes.EVAL.SCORE)
+                                if SpanAttributes.EVAL.SCORE
+                                in record_attributes
+                                else eval_root_score
                             ),
-                            "ret": record_attributes.get(
-                                SpanAttributes.EVAL.SCORE, 0.0
-                            ),
-                            "meta": record_attributes.get(
-                                SpanAttributes.EVAL.EXPLANATION,
-                                {},
-                            ),
+                            "meta": {
+                                "criteria": record_attributes.get(
+                                    SpanAttributes.EVAL.CRITERIA, None
+                                ),
+                                "explanation": record_attributes.get(
+                                    SpanAttributes.EVAL.EXPLANATION, None
+                                ),
+                            },
                         }
                         feedback_result["calls"].append(call_data)
 
