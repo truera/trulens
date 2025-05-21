@@ -105,7 +105,7 @@ class TestOtelTruCustom(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
             test_app.respond_to_query("throw")
         self.assertIsNone(recording)
         # Compare results to expected.
-        self._compare_events_to_golden_dataframe(
+        self._compare_record_attributes_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_custom__test_smoke.csv"
         )
 

@@ -125,6 +125,6 @@ class TestOtelTruChain(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
             rag_chain.invoke("What is multi-headed attention?")
         self.assertIsNone(recording)
         # Compare results to expected.
-        self._compare_events_to_golden_dataframe(
+        self._compare_record_attributes_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_chain__test_smoke.csv"
         )
