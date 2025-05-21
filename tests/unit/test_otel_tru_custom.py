@@ -10,6 +10,7 @@ from trulens.core.otel.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
 
 import tests.util.otel_tru_app_test_case
+from tests.utils import enable_otel_backwards_compatibility
 
 
 class TestApp:
@@ -88,6 +89,22 @@ class TestOtelTruCustom(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         del custom_app
         gc.collect()
         self.assertCollected(custom_app_ref)
+
+    @enable_otel_backwards_compatibility
+    def test_legacy_app(self) -> None:
+        # Create and run app.
+        test_app = TestApp()
+        custom_app = TruApp(test_app)
+        with custom_app as recording:
+            test_app.respond_to_query("test")
+        self.assertIsNone(recording)
+        with custom_app as recording:
+            test_app.respond_to_query("throw")
+        self.assertIsNone(recording)
+        # Compare results to expected.
+        self._compare_events_to_golden_dataframe(
+            "tests/unit/static/golden/test_otel_tru_custom__test_smoke.csv"
+        )
 
     def test_incorrect_span_attributes(self) -> None:
         class MyProblematicApp:
