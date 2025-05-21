@@ -16,7 +16,9 @@ try:
     from langchain.chains import LLMChain
     from langchain.llms.fake import FakeListLLM
     from langchain.prompts import PromptTemplate
+    from llama_index.core.llms.mock import MockLLM
     from trulens.apps.langchain import TruChain
+    from trulens.apps.llamaindex import TruLlama
 except Exception:
     pass
 
@@ -51,7 +53,7 @@ class TestOtelLegacyCompatibility(OtelTestCase):
         finally:
             os.environ["TRULENS_OTEL_TRACING"] = "1"
 
-    def test_legacy_custom_app(self) -> None:
+    def test_legacy_tru_custom_app(self) -> None:
         importlib.reload(trulens.apps.app)
         from trulens.apps.app import instrument
 
@@ -66,7 +68,7 @@ class TestOtelLegacyCompatibility(OtelTestCase):
                 return n * n
 
         app = TestApp()
-        tru_app = TruApp(app, app_name="MyApp", app_version="v1")
+        tru_app = TruApp(app, app_name="MyTruCustomApp", app_version="v1")
         with tru_app as recording:
             app.respond_to_query("test")
         TruSession().force_flush()
@@ -102,7 +104,7 @@ class TestOtelLegacyCompatibility(OtelTestCase):
         llm = FakeListLLM(responses=responses)
         prompt = PromptTemplate(input_variables=["query"], template="{query}")
         app = LLMChain(llm=llm, prompt=prompt)
-        tru_app = TruChain(app, app_name="MyTruChain", app_version="v1")
+        tru_app = TruChain(app, app_name="MyTruChainApp", app_version="v1")
         with tru_app as recording:
             app.run("test")
         TruSession().force_flush()
@@ -129,3 +131,32 @@ class TestOtelLegacyCompatibility(OtelTestCase):
                 SpanAttributes.SpanType.UNKNOWN,
                 record_attributes[SpanAttributes.SPAN_TYPE],
             )
+
+    def test_legacy_tru_llama_app(self) -> None:
+        llm = MockLLM()
+        tru_app = TruLlama(llm, app_name="MyTruLlamaApp", app_version="v1")
+        with tru_app as recording:
+            llm("test")
+        TruSession().force_flush()
+        events = self._get_events()
+        self.assertEqual(2, len(events))
+        self.assertIsNone(recording)
+        # Verify first span.
+        record_attributes = events["record_attributes"].iloc[0]
+        self.assertEqual(
+            SpanAttributes.SpanType.RECORD_ROOT,
+            record_attributes[SpanAttributes.SPAN_TYPE],
+        )
+        self.assertEqual(
+            "test", record_attributes[SpanAttributes.RECORD_ROOT.INPUT]
+        )
+        self.assertEqual(
+            "response to test",
+            record_attributes[SpanAttributes.RECORD_ROOT.OUTPUT],
+        )
+        # Verify second span.
+        record_attributes = events["record_attributes"].iloc[1]
+        self.assertEqual(
+            SpanAttributes.SpanType.UNKNOWN,
+            record_attributes[SpanAttributes.SPAN_TYPE],
+        )

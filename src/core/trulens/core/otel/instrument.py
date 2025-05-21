@@ -92,6 +92,8 @@ def _set_span_attributes(
         hasattr(span, "attributes")
         and span.attributes is not None
         and SpanAttributes.SPAN_TYPE in span.attributes
+        and span.attributes[SpanAttributes.SPAN_TYPE]
+        not in [None, "", SpanAttributes.SpanType.UNKNOWN]
     ):
         # If the span already has a span type, we override what we were given.
         span_type = span.attributes[SpanAttributes.SPAN_TYPE]

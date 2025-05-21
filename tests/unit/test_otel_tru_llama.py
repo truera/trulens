@@ -11,6 +11,7 @@ from trulens.otel.semconv.constants import (
 )
 
 import tests.util.otel_tru_app_test_case
+from tests.utils import enable_otel_backwards_compatibility
 
 try:
     # These imports require optional dependencies to be installed.
@@ -100,12 +101,33 @@ class TestOtelTruLlama(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         # Note that we need to delete `rag` too since `rag` has instrument
         # decorators that have closures of the `tru_recorder` object.
         # Specifically the record root has this at the very least as it calls
-        # `TruLlama::main_input`.
+        # `TruLlama::main_input` for instance.
         tru_recorder_ref = weakref.ref(tru_recorder)
         del tru_recorder
         del rag
         gc.collect()
         self.assertCollected(tru_recorder_ref)
+
+    @enable_otel_backwards_compatibility
+    def test_legacy_app(self) -> None:
+        # Create app.
+        rag = self._create_simple_rag()
+        tru_recorder = TruLlama(rag, app_name="Simple RAG", app_version="v1")
+        # Record and invoke.
+        with tru_recorder as recording:
+            rag.query("What is multi-headed attention?")
+        self.assertIsNone(recording)
+        # Compare results to expected.
+        self._compare_events_to_golden_dataframe(
+            "tests/unit/static/golden/test_otel_tru_llama__test_smoke.csv",
+            regex_replacements=[
+                # This changes [Node ID <UUID>: <TEXT_WE_WANT> Score: <SCORE>]
+                # strings to just <TEXT_WE_WANT>. We don't want the SCORE
+                # due to precision issues causing it to be slightly different
+                # in some runs.
+                (_CONTEXT_RETRIEVAL_REGEX, _CONTEXT_RETRIEVAL_REPLACEMENT)
+            ],
+        )
 
     def test_app_specific_record_root(self) -> None:
         rag1 = self._create_simple_rag()
