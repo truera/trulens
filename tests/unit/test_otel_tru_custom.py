@@ -83,6 +83,9 @@ class TestOtelTruCustom(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         self._compare_events_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_custom__test_smoke.csv"
         )
+        # Check we can still call the app after recording once.
+        with custom_app:
+            test_app.respond_to_query("throw")
         # Check garbage collection.
         custom_app_ref = weakref.ref(custom_app)
         del custom_app
