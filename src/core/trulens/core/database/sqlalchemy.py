@@ -836,16 +836,16 @@ class SQLAlchemyDB(core_db.DB):
         Returns:
             Dict[str, Any]: The resource attributes from the event.
         """
-        record_attributes = event.record_attributes
-        if not isinstance(record_attributes, dict):
+        resource_attributes = event.resource_attributes
+        if not isinstance(resource_attributes, dict):
             try:
-                record_attributes = json.loads(record_attributes)
+                resource_attributes = json.loads(resource_attributes)
             except (json.JSONDecodeError, TypeError):
                 logger.error(
-                    f"Failed to decode record attributes as JSON: {record_attributes}",
+                    f"Failed to decode resource attributes as JSON: {resource_attributes}",
                 )
 
-        return record_attributes
+        return resource_attributes
 
     def _update_cost_info_otel(
         self,
