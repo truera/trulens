@@ -90,6 +90,7 @@ class OpenAICostComputer:
         if hasattr(response, "__iter__") and not hasattr(response, "model"):
             try:
                 first_chunk = next(response)
+                model_name = first_chunk.model
                 response = prepend_first_chunk(response, first_chunk)
             except Exception:
                 logger.exception(
