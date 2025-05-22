@@ -1124,12 +1124,18 @@ class SQLAlchemyDB(core_db.DB):
                             )
 
                         # Add call data
+                        # Extract kwargs by finding all attributes that start with the KWARGS prefix
+                        kwargs_prefix = SpanAttributes.CALL.KWARGS + "."
+                        kwargs = {
+                            key[len(kwargs_prefix) :]: value
+                            for key, value in record_attributes.items()
+                            if key.startswith(kwargs_prefix)
+                        }
+
                         call_data = {
                             # TODO(SNOW-2112879): Call data may not be populated in the OTEL spans yet
                             "args": {
-                                "kwargs": record_attributes.get(
-                                    SpanAttributes.CALL.KWARGS, None
-                                ),
+                                "kwargs": kwargs,
                                 "input": record_data["input"],
                                 "output": record_data["output"],
                             },
