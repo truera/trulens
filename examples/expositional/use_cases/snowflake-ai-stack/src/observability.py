@@ -1,8 +1,9 @@
 from trulens.core import TruSession
 from trulens.core import Feedback
-from trulens.core import Select
+from trulens.core.feedback.selector import Selector
 from trulens.feedback.llm_provider import LLMProvider
 from trulens.providers.openai import OpenAI
+from trulens.otel.semconv.trace import SpanAttributes
 
 from dotenv import load_dotenv
 
@@ -23,7 +24,12 @@ def create_evals(provider: LLMProvider = None):
         Feedback(
             provider.groundedness_measure_with_cot_reasons, name="Groundedness"
         )
-        .on(Select.RecordCalls.retrieve.rets.collect())
+        .on({
+            "source": Selector(
+                span_type=SpanAttributes.SpanType.RETRIEVAL,
+                span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
+            ),
+        })
         .on_output()
     )
     # Question/answer relevance between overall question and answer.
@@ -47,8 +53,18 @@ def create_evals(provider: LLMProvider = None):
             provider.context_relevance, name="Context Relevance",
             criteria = context_relevance_custom_criteria,
         )
-        .on(Select.Record.app.retrieve.args.query)
-        .on(Select.RecordCalls.retrieve.rets[:])
+        .on({
+            "query": Selector(
+                span_type=SpanAttributes.SpanType.RETRIEVAL,
+                span_attribute=SpanAttributes.RETRIEVAL.QUERY_TEXT,
+            ),
+        })
+        .on({
+            "context": Selector(
+                span_type=SpanAttributes.SpanType.RETRIEVAL,
+                span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
+            ),
+        })
         .aggregate(np.mean)  # choose a different aggregation method if you wish
     )
 

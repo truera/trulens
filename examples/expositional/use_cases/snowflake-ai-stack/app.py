@@ -92,7 +92,7 @@ if user_input:
                         message_area.markdown(full_response)
             # Display TruLens feedback and metrics
             record = recording.get()
-            trulens_st.trulens_feedback(record=record)
+            # trulens_st.trulens_feedback(record=record)
             trulens_st.trulens_trace(record=record)
 
         # Add the assistant response to session state - only once!
