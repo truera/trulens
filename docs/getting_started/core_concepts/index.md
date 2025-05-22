@@ -23,7 +23,7 @@ General and 🦑_TruLens_-specific concepts.
   [TruLlama][trulens.apps.llamaindex.TruLlama], and _NeMo Guardrails_ via
   [TruRails][trulens.apps.nemo.TruRails] `Applications` as well as custom
   apps via [TruBasicApp][trulens.apps.basic.TruBasicApp] or
-  [TruCustomApp][trulens.apps.custom.TruCustomApp], and apps that
+  [TruApp][trulens.apps.app.TruApp], and apps that
   already come with `Trace`s via
   [TruVirtual][trulens.apps.virtual.TruVirtual].
 

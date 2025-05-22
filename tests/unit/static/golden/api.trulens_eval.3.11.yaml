@@ -993,6 +993,8 @@ trulens_eval.TruApp:
     snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
+    start_evaluator: builtins.function
+    stop_evaluator: builtins.function
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1106,6 +1108,8 @@ trulens_eval.TruBasicApp:
     snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
+    start_evaluator: builtins.function
+    stop_evaluator: builtins.function
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1220,6 +1224,8 @@ trulens_eval.TruChain:
     snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
+    start_evaluator: builtins.function
+    stop_evaluator: builtins.function
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1333,6 +1339,8 @@ trulens_eval.TruCustomApp:
     snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
+    start_evaluator: builtins.function
+    stop_evaluator: builtins.function
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1446,6 +1454,8 @@ trulens_eval.TruLlama:
     snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
+    start_evaluator: builtins.function
+    stop_evaluator: builtins.function
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1558,6 +1568,8 @@ trulens_eval.TruRails:
     snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
+    start_evaluator: builtins.function
+    stop_evaluator: builtins.function
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1672,6 +1684,8 @@ trulens_eval.TruVirtual:
     snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
+    start_evaluator: builtins.function
+    stop_evaluator: builtins.function
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1816,6 +1830,8 @@ trulens_eval.app.App:
     snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
+    start_evaluator: builtins.function
+    stop_evaluator: builtins.function
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -2182,6 +2198,7 @@ trulens_eval.database.sqlalchemy.SQLAlchemyDB:
     get_datasets: builtins.function
     get_db_revision: builtins.function
     get_events: builtins.function
+    get_events_by_record_id: builtins.function
     get_feedback: builtins.function
     get_feedback_count_by_status: builtins.function
     get_feedback_defs: builtins.function
@@ -7299,6 +7316,8 @@ trulens_eval.tru_basic_app.TruBasicApp:
     snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
+    start_evaluator: builtins.function
+    stop_evaluator: builtins.function
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7457,6 +7476,8 @@ trulens_eval.tru_chain.TruChain:
     snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
+    start_evaluator: builtins.function
+    stop_evaluator: builtins.function
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7578,6 +7599,8 @@ trulens_eval.tru_custom_app.TruCustomApp:
     snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
+    start_evaluator: builtins.function
+    stop_evaluator: builtins.function
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7722,6 +7745,8 @@ trulens_eval.tru_llama.TruLlama:
     snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
+    start_evaluator: builtins.function
+    stop_evaluator: builtins.function
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7900,6 +7925,8 @@ trulens_eval.tru_rails.TruRails:
     snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
+    start_evaluator: builtins.function
+    stop_evaluator: builtins.function
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -8022,6 +8049,8 @@ trulens_eval.tru_virtual.TruVirtual:
     snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
+    start_evaluator: builtins.function
+    stop_evaluator: builtins.function
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class

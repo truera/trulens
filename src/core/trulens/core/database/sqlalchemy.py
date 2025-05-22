@@ -821,12 +821,6 @@ class SQLAlchemyDB(core_db.DB):
 
         return record_attributes
 
-    def _datetime_serializer(self, obj: Any) -> str:
-        """Helper function to serialize datetime objects to ISO format strings."""
-        if isinstance(obj, (datetime, pd.Timestamp)):
-            return obj.isoformat()
-        raise TypeError(f"Type {type(obj)} not serializable")
-
     def _update_cost_info_otel(
         self,
         target_dict: dict,
@@ -1133,7 +1127,7 @@ class SQLAlchemyDB(core_db.DB):
                                     SpanAttributes.EVAL_ROOT.SCORE, 0.0
                                 )
                             )
-                            # NOTE: HIGHER_IS_BETTER has not been populated in the OTEL spans yet
+                            # TODO(SNOW-2112879): HIGHER_IS_BETTER has not been populated in the OTEL spans yet
                             feedback_result["direction"] = (
                                 record_attributes.get(
                                     SpanAttributes.EVAL_ROOT.HIGHER_IS_BETTER,
@@ -1143,7 +1137,8 @@ class SQLAlchemyDB(core_db.DB):
 
                         # Add call data
                         call_data = {
-                            "kwargs": record_attributes.get(
+                            # TODO(SNOW-2112879): Call data may not be populated in the OTEL spans yet
+                            "args": record_attributes.get(
                                 SpanAttributes.CALL.KWARGS, {}
                             ),
                             "ret": record_attributes.get(
@@ -1562,13 +1557,41 @@ class SQLAlchemyDB(core_db.DB):
             )
             return _event.event_id
 
-    def get_events(self, app_id: str) -> pd.DataFrame:
+    def get_events(
+        self, app_id: str, start_time: Optional[datetime.datetime] = None
+    ) -> pd.DataFrame:
         """See [DB.get_events][trulens.core.database.base.DB.get_events]."""
         with self.session.begin() as session:
             app_id_expr = self._json_extract_otel(
                 "record_attributes", SpanAttributes.APP_ID
             )
-            q = sa.select(self.orm.Event).where(app_id_expr == app_id)
+            if start_time is None:
+                where_clause = app_id_expr == app_id
+            else:
+                where_clause = sa.and_(
+                    app_id_expr == app_id,
+                    self.orm.Event.start_timestamp >= start_time,
+                )
+            q = sa.select(self.orm.Event).where(where_clause)
+            return pd.read_sql(q, session.bind)
+
+    def get_events_by_record_id(self, record_id: str) -> pd.DataFrame:
+        """Get all events for a given record ID.
+
+        Args:
+            record_id: The record ID to get events for.
+
+        Returns:
+            A pandas DataFrame containing all events for the given record ID.
+        """
+        with self.session.begin() as session:
+            # Query events where record_attributes contains the record_id
+            record_id_expr = self._json_extract_otel(
+                "record_attributes", SpanAttributes.RECORD_ID
+            )
+            q = sa.select(self.orm.Event).where(record_id_expr == record_id)
+
+            # Execute query and return as DataFrame
             return pd.read_sql(q, session.bind)
 
 

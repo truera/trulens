@@ -2,7 +2,10 @@
 Tests for OTEL Feedback Computation.
 """
 
-from typing import List
+import gc
+import time
+from typing import Callable, List
+import weakref
 
 import pandas as pd
 import pytest
@@ -134,6 +137,7 @@ class TestOtelFeedbackComputation(OtelTestCase):
             record_root,
             "baby_grader",
             feedback_function,
+            True,
             all_retrieval_span_attributes,
         )
         TruSession().force_flush()
@@ -167,6 +171,7 @@ class TestOtelFeedbackComputation(OtelTestCase):
             events,
             "blah1",
             lambda a1, b1: 0.9 if a1 == b1 else 0.1,
+            True,
             {"a1": get_selector("a1"), "b1": get_selector("b1")},
         )
         # Case 2. Attributes across functions with span groups.
@@ -174,6 +179,7 @@ class TestOtelFeedbackComputation(OtelTestCase):
             events,
             "blah2",
             lambda a2, a0: 0.9 if 2 * a2 == a0 else 0.1,
+            True,
             {"a2": get_selector("a2"), "a0": get_selector("a0")},
         )
         # Case 3. Attributes across functions with span groups where one
@@ -183,6 +189,7 @@ class TestOtelFeedbackComputation(OtelTestCase):
             events,
             "blah3",
             lambda a3, a0: 0.9 if 3 * a3 == a0 else 0.1,
+            True,
             {"a3": get_selector("a3"), "a0": get_selector("a0")},
         )
         # Case 4. Attributes across functions where both functions are invoked
@@ -195,6 +202,7 @@ class TestOtelFeedbackComputation(OtelTestCase):
                 events,
                 "blah4",
                 lambda a4, a0: 0.9 if 4 * a4 == a0 else 0.1,
+                True,
                 {"a4": get_selector("a4"), "a0": get_selector("a0")},
             )
         # Compare results to expected.
@@ -390,7 +398,9 @@ class TestOtelFeedbackComputation(OtelTestCase):
         )
         self.assertEqual([flattened_inputs[1]], res)
 
-    def test_custom_feedback(self) -> None:
+    def _create_invoked_app_with_custom_feedback(
+        self, higher_is_better: bool = True
+    ) -> TruApp:
         # Create feedback function.
         def custom(input: str, output: str) -> float:
             if (
@@ -400,7 +410,9 @@ class TestOtelFeedbackComputation(OtelTestCase):
                 return 0.42
             return 0.0
 
-        f_custom = Feedback(custom, name="custom").on({
+        f_custom = Feedback(
+            custom, name="custom", higher_is_better=higher_is_better
+        ).on({
             "input": Selector(
                 span_type=SpanAttributes.SpanType.RECORD_ROOT,
                 span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
@@ -429,6 +441,12 @@ class TestOtelFeedbackComputation(OtelTestCase):
             main_method_args=("What is multi-headed attention?",),
         )
         TruSession().force_flush()
+        return tru_recorder
+
+    def test_custom_feedback(self) -> None:
+        tru_recorder = self._create_invoked_app_with_custom_feedback(
+            higher_is_better=False
+        )
         # Compute feedback on record we just ingested.
         num_events = len(self._get_events())
         tru_recorder.compute_feedbacks()
@@ -478,6 +496,11 @@ class TestOtelFeedbackComputation(OtelTestCase):
                 SpanAttributes.EVAL_ROOT.ARGS_SPAN_ATTRIBUTE + ".output"
             ],
         )
+        self.assertFalse(
+            last_event_record_attributes[
+                SpanAttributes.EVAL_ROOT.HIGHER_IS_BETTER
+            ],
+        )
         # Check that when trying to compute feedbacks again, nothing happens.
         old_num_events = len(self._get_events())
         tru_recorder.compute_feedbacks(
@@ -486,3 +509,40 @@ class TestOtelFeedbackComputation(OtelTestCase):
         TruSession().force_flush()
         new_num_events = len(self._get_events())
         self.assertEqual(old_num_events, new_num_events)
+
+    def test_evaluator(self) -> None:
+        tru_recorder = self._create_invoked_app_with_custom_feedback()
+        num_events = len(self._get_events())
+        # Wait for there to be a feedback computed.
+        self._wait(lambda: len(self._get_events()) > num_events)
+        events = self._get_events()
+        self.assertEqual(num_events + 1, len(events))
+        self.assertEqual(
+            SpanAttributes.SpanType.RECORD_ROOT,
+            events.iloc[0]["record_attributes"][SpanAttributes.SPAN_TYPE],
+        )
+        # Ensure thread to be stopped when app is garbage collected.
+        tru_recorder_ref = weakref.ref(tru_recorder)
+        evaluator_ref = weakref.ref(tru_recorder._evaluator)
+        thread_ref = weakref.ref(tru_recorder._evaluator._thread)
+        del tru_recorder
+        gc.collect()
+        self.assertCollected(tru_recorder_ref)
+        self._wait(lambda: thread_ref() is None)
+        self.assertCollected(evaluator_ref)
+        self.assertCollected(thread_ref)
+
+    @staticmethod
+    def _wait(
+        f: Callable[[], bool],
+        timeout_in_seconds: float = 30,
+        cooldown_in_seconds: float = 1,
+    ):
+        start_time = time.time()
+        while time.time() - start_time < timeout_in_seconds:
+            if f():
+                return
+            time.sleep(cooldown_in_seconds)
+        raise TimeoutError(
+            f"Timed out waiting for condition to be met after {timeout_in_seconds} seconds."
+        )
