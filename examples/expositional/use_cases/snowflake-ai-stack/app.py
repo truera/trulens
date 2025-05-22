@@ -82,10 +82,6 @@ if user_input:
         message_area = message_container.empty()
         full_response = ""  # Initialize to collect the full response
 
-        # Before streaming, get the set of existing record IDs
-        records_before, _ = st.session_state.tru_session.get_records_and_feedback()
-        existing_ids = set(records_before["record_id"]) if not records_before.empty else set()
-
         # Use TruLens to track the RAG application with streaming enabled
         with st.session_state.tru_rag as recording:
             with st.spinner("Thinking..."):
