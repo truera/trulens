@@ -234,11 +234,10 @@ class instrument:
                     result = func(*args, **kwargs)
                     if isinstance(result, types.GeneratorType):
                         yield "is_generator"
-                        collected = []
+                        ret = []
                         for curr in result:
-                            collected.append(curr)
+                            ret.append(curr)
                             yield curr
-                        ret = collected
                     else:
                         yield "is_not_generator"
                         ret = result
