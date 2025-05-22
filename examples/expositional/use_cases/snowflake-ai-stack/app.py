@@ -98,22 +98,8 @@ if user_input:
                         full_response += chunk
                         message_area.markdown(full_response)
 
-                # After streaming, poll for a new record
-                timeout = 10  # seconds
-                poll_interval = 0.5  # seconds
-                start_time = time.time()
-                last_record_id = None
-
-                while time.time() - start_time < timeout:
-                    records_after, _ = st.session_state.tru_session.get_records_and_feedback()
-                    if not records_after.empty:
-                        # Find new record IDs
-                        new_ids = set(records_after["record_id"]) - existing_ids
-                        if new_ids:
-                            # Get the most recent new record
-                            last_record_id = records_after[records_after["record_id"].isin(new_ids)].iloc[-1]["record_id"]
-                            break
-                    time.sleep(poll_interval)
+                # After streaming, wait for a new record using the TruSession method
+                last_record_id = st.session_state.tru_session.wait_for_new_record_id()
 
                 if last_record_id is not None:
                     trulens_st.trulens_trace(record=last_record_id)

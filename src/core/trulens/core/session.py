@@ -9,6 +9,7 @@ from multiprocessing import Process
 import threading
 from threading import Thread
 from time import sleep
+from time import time
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -1170,6 +1171,39 @@ class TruSession(
             self._evaluator_stop = None
 
         self._evaluator_proc = None
+
+    def wait_for_new_record_id(tru_session, timeout=10, poll_interval=0.5):
+        """
+        Wait for a new record to appear in the TruLens session.
+
+        Args:
+            tru_session: The TruLens session object (with get_records_and_feedback method).
+            timeout (float): Maximum time to wait in seconds.
+            poll_interval (float): How often to poll in seconds.
+
+        Returns:
+            The new record_id if found, else None.
+        """
+        # Get the set of existing record IDs before the operation
+        records_before, _ = tru_session.get_records_and_feedback()
+        existing_ids = (
+            set(records_before["record_id"])
+            if not records_before.empty
+            else set()
+        )
+
+        start_time = time()
+        while time() - start_time < timeout:
+            records_after, _ = tru_session.get_records_and_feedback()
+            if not records_after.empty:
+                new_ids = set(records_after["record_id"]) - existing_ids
+                if new_ids:
+                    # Return the most recent new record
+                    return records_after[
+                        records_after["record_id"].isin(new_ids)
+                    ].iloc[-1]["record_id"]
+            sleep(poll_interval)
+        return None
 
 
 def Tru(*args, **kwargs) -> TruSession:
