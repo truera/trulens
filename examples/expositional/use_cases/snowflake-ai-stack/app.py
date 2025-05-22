@@ -95,7 +95,7 @@ if user_input:
 
         st.session_state.tru_session.force_flush()
         record_id = recording.get()
-        st.session_state.tru_session.wait_for_record(record_id) # This would wait for the events to show up in the table.
+        st.session_state.tru_session.wait_for_record(record_id)
         trulens_st.trulens_trace(record=record_id)
 
         # Add the assistant response to session state - only once!
