@@ -87,23 +87,11 @@ class OpenAICostComputer:
         callback = OpenAICallback(endpoint=endpoint)
         model_name = ""
 
-        print(
-            f"OpenAICostComputer.handle_response: response type: {type(response)}"
-        )
         if hasattr(response, "__iter__") and not hasattr(response, "model"):
-            print(
-                "OpenAICostComputer: This is a stream, peeking at first chunk..."
-            )
             try:
-                print("Peeking at first chunk...")
                 first_chunk = next(response)
-                print(f"First chunk: {first_chunk}")
                 response = prepend_first_chunk(response, first_chunk)
-                print(
-                    f"Returning reconstructed stream: {response}, type: {type(response)}"
-                )
-            except Exception as e:
-                print(f"OpenAICostComputer: Exception peeking at stream: {e}")
+            except Exception:
                 response = []
         elif getattr(response, "model", None):
             model_name = response.model

@@ -4,7 +4,6 @@ from typing import List
 from openai import OpenAI
 
 from dotenv import load_dotenv
-import streamlit as st
 load_dotenv()
 
 openai_client = OpenAI()
@@ -41,7 +40,6 @@ class ChatModel:
 
 
     def generate_stream(self, messages: List):
-        print("Entered generate_stream")
         response = openai_client.chat.completions.create(
             model=self.generation_model_name,
             messages=messages,
@@ -53,11 +51,9 @@ class ChatModel:
                 "include_usage": True
             },
         )
-        print(f"Response type: {type(response)}")
         for chunk in response:
             if (
                 len(choices := chunk.choices) > 0
                 and (content := choices[0].delta.content) is not None
             ):
-                print(f"Streaming chunk: {content}")  # <--- Add this line
                 yield content

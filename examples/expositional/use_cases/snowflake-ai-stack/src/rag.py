@@ -93,7 +93,6 @@ class Rag:
         },
     )
     def retrieve_and_generate_stream(self, query: str, message_history: list = None):
-        print("Entered retrieve_and_generate_stream")
         # Retrieve similar document chunks
         retrieved_chunks = self.retrieve(query)
         if len(retrieved_chunks) == 0:
