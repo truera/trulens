@@ -1093,7 +1093,7 @@ class SQLAlchemyDB(core_db.DB):
                         # Initialize feedback result if not present
                         if metric_name not in record_data["feedback_results"]:
                             record_data["feedback_results"][metric_name] = {
-                                "mean_score": 0.0,
+                                "mean_score": None,
                                 "calls": [],
                                 "total_cost": 0.0,
                                 "cost_currency": "USD",  # Initialize to USD, calculated below
@@ -1106,7 +1106,7 @@ class SQLAlchemyDB(core_db.DB):
                         ]
 
                         eval_root_score = record_attributes.get(
-                            SpanAttributes.EVAL_ROOT.SCORE, 0.0
+                            SpanAttributes.EVAL_ROOT.SCORE, None
                         )
 
                         if (
