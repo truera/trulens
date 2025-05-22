@@ -93,7 +93,7 @@ class TestOtelInstrument(unittest.TestCase):
             spans[0].name,
             f"tests.unit.test_otel_instrument.TestOtelInstrument.{test_name}.<locals>.my_function",
         )
-        self.assertSequenceEqual(
+        self.assertTupleEqual(
             spans[0].attributes[f"{SpanAttributes.UNKNOWN.base}.best_babies"],
             ("Kojikun", "Nolan", "Sachiboy"),
         )
@@ -113,10 +113,9 @@ class TestOtelInstrument(unittest.TestCase):
             spans[1].name,
             f"tests.unit.test_otel_instrument.TestOtelInstrument.{test_name}.<locals>.my_function",
         )
-        self.assertNotIn(
-            f"{SpanAttributes.UNKNOWN.base}.best_babies",
-            spans[1].attributes,
-            "Attribute should not be present after partial consumption",
+        self.assertTupleEqual(
+            spans[1].attributes[f"{SpanAttributes.UNKNOWN.base}.best_babies"],
+            ("Kojikun", "Nolan"),
         )
 
     def test_sync_generator_function(self) -> None:
@@ -226,9 +225,10 @@ class TestOtelInstrument(unittest.TestCase):
             spans[1].name,
             "tests.unit.test_otel_instrument.TestOtelInstrument.test_async_generator_function.<locals>.my_function",
         )
-        self.assertTupleEqual(
-            spans[1].attributes[f"{SpanAttributes.UNKNOWN.base}.best_babies"],
-            ("Kojikun", "Nolan"),
+        self.assertNotIn(
+            f"{SpanAttributes.UNKNOWN.base}.best_babies",
+            spans[1].attributes,
+            "Attribute should not be present after partial consumption",
         )
 
     def test_disabled_instrumentation(self) -> None:
