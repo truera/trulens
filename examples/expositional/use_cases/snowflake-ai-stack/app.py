@@ -9,10 +9,6 @@ from trulens.providers.openai import OpenAI
 from trulens.apps.app import TruApp
 from trulens.dashboard import streamlit as trulens_st
 import os
-import time
-import logging
-
-logging.getLogger("trulens.providers.openai.endpoint").setLevel(logging.DEBUG)
 
 st.set_page_config(page_title="Snowflake AI Stack", page_icon="❄️", layout="centered", initial_sidebar_state="collapsed", menu_items=None)
 
