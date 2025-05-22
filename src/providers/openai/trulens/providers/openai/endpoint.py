@@ -92,6 +92,9 @@ class OpenAICostComputer:
                 first_chunk = next(response)
                 response = prepend_first_chunk(response, first_chunk)
             except Exception:
+                logger.exception(
+                    "Exception occurred while consuming the first chunk from a streamed response."
+                )
                 response = []
         elif getattr(response, "model", None):
             model_name = response.model
