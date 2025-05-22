@@ -10,6 +10,9 @@ from trulens.apps.app import TruApp
 from trulens.dashboard import streamlit as trulens_st
 import os
 import time
+import logging
+
+logging.getLogger("trulens.providers.openai.endpoint").setLevel(logging.DEBUG)
 
 st.set_page_config(page_title="Snowflake AI Stack", page_icon="❄️", layout="centered", initial_sidebar_state="collapsed", menu_items=None)
 
@@ -88,7 +91,7 @@ if user_input:
         existing_ids = set(records_before["record_id"]) if not records_before.empty else set()
 
         # Use TruLens to track the RAG application with streaming enabled
-        with st.session_state.tru_rag:
+        with st.session_state.tru_rag as recording:
             with st.spinner("Thinking..."):
                 # full_response = st.session_state.rag.retrieve_and_generate(user_input, st.session_state.messages)
                 # message_area.markdown(full_response)
@@ -98,13 +101,10 @@ if user_input:
                         full_response += chunk
                         message_area.markdown(full_response)
 
-                # After streaming, wait for a new record using the TruSession method
-                last_record_id = st.session_state.tru_session.wait_for_new_record_id()
-
-                if last_record_id is not None:
-                    trulens_st.trulens_trace(record=last_record_id)
-                else:
-                    st.warning("No new record found after streaming.")
+        st.session_state.tru_session.force_flush()
+        record_id = recording.get()
+        st.session_state.tru_session.wait_for_record(record_id) # This would wait for the events to show up in the table.
+        trulens_st.trulens_trace(record=record_id)
 
         # Add the assistant response to session state - only once!
         st.session_state.messages.append({"role": "assistant", "content": full_response})

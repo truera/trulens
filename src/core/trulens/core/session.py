@@ -1172,40 +1172,30 @@ class TruSession(
 
         self._evaluator_proc = None
 
-    def wait_for_new_record_id(
+    def wait_for_record(
         self,
+        record_id: str,
         timeout: float = 10,
         poll_interval: float = 0.5,
     ):
         """
-        Wait for a new record to appear in the TruLens session.
+        Wait for a specific record_id to appear in the TruLens session.
 
         Args:
-            tru_session: The TruLens session.
+            record_id: The record_id to wait for.
             timeout: Maximum time to wait in seconds.
             poll_interval: How often to poll in seconds.
 
         Returns:
-            The new record_id if found, else None.
+            The record_id if found, else None.
         """
-        # Get the set of existing record IDs before the operation
-        records_before, _ = self.get_records_and_feedback()
-        existing_ids = (
-            set(records_before["record_id"])
-            if not records_before.empty
-            else set()
-        )
-
         start_time = time()
         while time() - start_time < timeout:
-            records_after, _ = self.get_records_and_feedback()
-            if not records_after.empty:
-                new_ids = set(records_after["record_id"]) - existing_ids
-                if new_ids:
-                    # Return the most recent new record
-                    return records_after[
-                        records_after["record_id"].isin(new_ids)
-                    ].iloc[-1]["record_id"]
+            records_df, _ = self.get_records_and_feedback()
+            if not records_df.empty and record_id in set(
+                records_df["record_id"]
+            ):
+                return record_id
             sleep(poll_interval)
         return None
 
