@@ -9,6 +9,7 @@ from trulens.providers.openai import OpenAI
 from trulens.apps.app import TruApp
 from trulens.dashboard import streamlit as trulens_st
 import os
+import time
 
 st.set_page_config(page_title="Snowflake AI Stack", page_icon="❄️", layout="centered", initial_sidebar_state="collapsed", menu_items=None)
 
@@ -82,6 +83,10 @@ if user_input:
         message_area = message_container.empty()
         full_response = ""  # Initialize to collect the full response
 
+        # Before streaming, get the set of existing record IDs
+        records_before, _ = st.session_state.tru_session.get_records_and_feedback()
+        existing_ids = set(records_before["record_id"]) if not records_before.empty else set()
+
         # Use TruLens to track the RAG application with streaming enabled
         with st.session_state.tru_rag:
             with st.spinner("Thinking..."):
@@ -92,10 +97,28 @@ if user_input:
                     if chunk is not None:
                         full_response += chunk
                         message_area.markdown(full_response)
-            # Display TruLens feedback and metrics
-            # record = recording.get()
-            # trulens_st.trulens_feedback(record=record)
-            # trulens_st.trulens_trace(record=record)
+
+                # After streaming, poll for a new record
+                timeout = 10  # seconds
+                poll_interval = 0.5  # seconds
+                start_time = time.time()
+                last_record_id = None
+
+                while time.time() - start_time < timeout:
+                    records_after, _ = st.session_state.tru_session.get_records_and_feedback()
+                    if not records_after.empty:
+                        # Find new record IDs
+                        new_ids = set(records_after["record_id"]) - existing_ids
+                        if new_ids:
+                            # Get the most recent new record
+                            last_record_id = records_after[records_after["record_id"].isin(new_ids)].iloc[-1]["record_id"]
+                            break
+                    time.sleep(poll_interval)
+
+                if last_record_id is not None:
+                    trulens_st.trulens_trace(record=last_record_id)
+                else:
+                    st.warning("No new record found after streaming.")
 
         # Add the assistant response to session state - only once!
         st.session_state.messages.append({"role": "assistant", "content": full_response})
