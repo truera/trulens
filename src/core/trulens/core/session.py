@@ -1182,7 +1182,7 @@ class TruSession(
         Wait for a new record to appear in the TruLens session.
 
         Args:
-            tru_session: The TruLens session object (with get_records_and_feedback method).
+            tru_session: The TruLens session.
             timeout: Maximum time to wait in seconds.
             poll_interval: How often to poll in seconds.
 
