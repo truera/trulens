@@ -113,9 +113,10 @@ class TestOtelInstrument(unittest.TestCase):
             spans[1].name,
             f"tests.unit.test_otel_instrument.TestOtelInstrument.{test_name}.<locals>.my_function",
         )
-        self.assertSequenceEqual(
-            spans[1].attributes[f"{SpanAttributes.UNKNOWN.base}.best_babies"],
-            ("Kojikun", "Nolan"),
+        self.assertNotIn(
+            f"{SpanAttributes.UNKNOWN.base}.best_babies",
+            spans[1].attributes,
+            "Attribute should not be present after partial consumption",
         )
 
     def test_sync_generator_function(self) -> None:
