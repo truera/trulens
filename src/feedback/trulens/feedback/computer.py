@@ -65,6 +65,7 @@ def _compute_feedback(
     feedback_function: Callable[
         [Any], Union[float, Tuple[float, Dict[str, Any]]]
     ],
+    higher_is_better: bool,
     selector_function: Callable[[RecordGraphNode], List[Dict[str, Any]]],
 ) -> None:
     """
@@ -75,6 +76,7 @@ def _compute_feedback(
         record: Record to compute feedback for.
         feedback_name: Name of feedback.
         feedback_function: Function to compute feedback.
+        higher_is_better: Whether higher values are better.
         selector_function:
             Function to select inputs for feedback computation. Given a record
             in graph form, it returns a list of inputs to the feedback
@@ -86,7 +88,11 @@ def _compute_feedback(
     for curr in feedback_inputs:
         curr = {k: FeedbackFunctionInput(value=v) for k, v in curr.items()}
         _call_feedback_function(
-            feedback_name, feedback_function, curr, record_root_attributes
+            feedback_name,
+            feedback_function,
+            higher_is_better,
+            curr,
+            record_root_attributes,
         )
 
 
@@ -96,6 +102,7 @@ def compute_feedback_by_span_group(
     feedback_function: Callable[
         [Any], Union[float, Tuple[float, Dict[str, Any]]]
     ],
+    higher_is_better: bool,
     kwarg_to_selector: Dict[str, Selector],
     raise_error_on_no_feedbacks_computed: bool = True,
 ) -> None:
@@ -106,6 +113,7 @@ def compute_feedback_by_span_group(
         events: DataFrame containing trace events.
         feedback_name: Name of the feedback function.
         feedback_function: Function to compute feedback.
+        higher_is_better: Whether higher values are better.
         kwarg_to_selector: Mapping from function kwargs to span selectors
         raise_error_on_no_feedbacks_computed:
             Raise an error if no feedbacks were computed. Default is True.
@@ -131,6 +139,7 @@ def compute_feedback_by_span_group(
         flattened_inputs,
         feedback_name,
         feedback_function,
+        higher_is_better,
         record_id_to_record_roots,
     )
     if raise_error_on_no_feedbacks_computed and num_feedbacks_computed == 0:
@@ -429,6 +438,7 @@ def _run_feedback_on_inputs(
     feedback_function: Callable[
         [Any], Union[float, Tuple[float, Dict[str, Any]]]
     ],
+    higher_is_better: bool,
     record_id_to_record_root: Dict[str, Dict[str, Any]],
 ) -> int:
     """Run feedback function on all inputs.
@@ -437,6 +447,7 @@ def _run_feedback_on_inputs(
         flattened_inputs: Flattened inputs. Each entry is a tuple of (record_id, span_group, inputs).
         feedback_name: Name of the feedback function.
         feedback_function: Function to compute feedback.
+        higher_is_better: Whether higher values are better.
         record_id_to_record_root: Mapping from record_id to record root.
 
     Returns:
@@ -448,6 +459,7 @@ def _run_feedback_on_inputs(
             _call_feedback_function(
                 feedback_name,
                 feedback_function,
+                higher_is_better,
                 inputs,
                 record_id_to_record_root[record_id],
                 span_group,
@@ -465,6 +477,7 @@ def _call_feedback_function(
     feedback_function: Callable[
         [Any], Union[float, Tuple[float, Dict[str, Any]]]
     ],
+    higher_is_better: bool,
     kwarg_inputs: Dict[str, FeedbackFunctionInput],
     record_root_attributes: Dict[str, Any],
     span_group: Optional[str] = None,
@@ -474,6 +487,7 @@ def _call_feedback_function(
     Args:
         feedback_name: Name of the feedback function.
         feedback_function: Function to compute feedback.
+        higher_is_better: Whether higher values are better.
         kwarg_inputs: kwarg inputs to feedback function.
         record_root_attributes: Span attributes of record root.
         span_group: Span group of the invocation.
@@ -525,6 +539,9 @@ def _call_feedback_function(
                         f"{SpanAttributes.EVAL_ROOT.SPAN_GROUP}",
                         span_group,
                     )
+                eval_root_span.set_attribute(
+                    SpanAttributes.EVAL_ROOT.HIGHER_IS_BETTER, higher_is_better
+                )
             res = feedback_function(**{
                 k: v.value for k, v in kwarg_inputs.items()
             })

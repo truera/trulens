@@ -546,6 +546,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             record_root,
             self.GEN_FEEDBACK_NAME,
             feedback_function,
+            True,
             all_retrieval_span_attributes,
         )
         self.session.force_flush()
