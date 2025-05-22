@@ -11,7 +11,7 @@ from opentelemetry.proto.trace.v1.trace_pb2 import Status
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.trace import StatusCode
 from trulens.core.schema import event as event_schema
-from trulens.otel.semconv.trace import SpanAttributes
+from trulens.otel.semconv.trace import ResourceAttributes
 
 logger = logging.getLogger(__name__)
 
@@ -115,9 +115,9 @@ def check_if_trulens_span(span: ReadableSpan) -> bool:
     Returns:
         bool: True if the span contains the TruLens-specific attribute, False otherwise.
     """
-    if not span.attributes:
+    if span.resource is None or not span.resource.attributes:
         return False
-    app_name = span.attributes.get(SpanAttributes.APP_NAME)
+    app_name = span.resource.attributes.get(ResourceAttributes.APP_NAME)
     return bool(app_name)
 
 

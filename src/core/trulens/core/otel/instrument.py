@@ -34,6 +34,7 @@ from trulens.otel.semconv.constants import TRULENS_INSTRUMENT_WRAPPER_FLAG
 from trulens.otel.semconv.constants import (
     TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
 )
+from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 import wrapt
 
@@ -495,9 +496,9 @@ class OtelRecordingContext(OtelBaseRecordingContext):
 
     # For use as a context manager.
     def __enter__(self) -> None:
-        self.attach_to_context(SpanAttributes.APP_NAME, self.app_name)
-        self.attach_to_context(SpanAttributes.APP_VERSION, self.app_version)
-        self.attach_to_context(SpanAttributes.APP_ID, self.app_id)
+        self.attach_to_context(ResourceAttributes.APP_NAME, self.app_name)
+        self.attach_to_context(ResourceAttributes.APP_VERSION, self.app_version)
+        self.attach_to_context(ResourceAttributes.APP_ID, self.app_id)
 
         self.attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
         self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
@@ -520,9 +521,9 @@ class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
         self.attach_to_context(
             SpanAttributes.RECORD_ID, self.target_record_id
         )  # TODO(otel): Should we include this? It's automatically getting added to the span.
-        self.attach_to_context(SpanAttributes.APP_NAME, self.app_name)
-        self.attach_to_context(SpanAttributes.APP_VERSION, self.app_version)
-        self.attach_to_context(SpanAttributes.APP_ID, self.app_id)
+        self.attach_to_context(ResourceAttributes.APP_NAME, self.app_name)
+        self.attach_to_context(ResourceAttributes.APP_VERSION, self.app_version)
+        self.attach_to_context(ResourceAttributes.APP_ID, self.app_id)
 
         self.attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
         self.attach_to_context(

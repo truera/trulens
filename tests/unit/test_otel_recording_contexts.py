@@ -3,6 +3,7 @@ from typing import Optional
 from trulens.apps.app import TruApp
 from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
+from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.otel_test_case import OtelTestCase
@@ -38,17 +39,24 @@ class TestOtelRecordingContexts(OtelTestCase):
             SpanAttributes.RECORD_ID
         ]
         attribute_values = [
-            (SpanAttributes.RECORD_ID, record_id),
-            (SpanAttributes.APP_NAME, "Greeter"),
-            (SpanAttributes.APP_VERSION, "v1"),
+            (SpanAttributes.RECORD_ID, record_id, False),
+            (ResourceAttributes.APP_NAME, "Greeter", True),
+            (ResourceAttributes.APP_VERSION, "v1", True),
         ]
         if run_name:
-            attribute_values.append((SpanAttributes.RUN_NAME, run_name))
+            attribute_values.append((SpanAttributes.RUN_NAME, run_name, False))
         if input_id:
-            attribute_values.append((SpanAttributes.INPUT_ID, input_id))
+            attribute_values.append((SpanAttributes.INPUT_ID, input_id, False))
         for _, event in events.iterrows():
-            for attribute, value in attribute_values:
-                self.assertEqual(value, event["record_attributes"][attribute])
+            for attribute, value, is_resource_attribute in attribute_values:
+                if is_resource_attribute:
+                    self.assertEqual(
+                        value, event["resource_attributes"][attribute]
+                    )
+                else:
+                    self.assertEqual(
+                        value, event["record_attributes"][attribute]
+                    )
 
     def test_legacy(self):
         with self._tru_recorder:

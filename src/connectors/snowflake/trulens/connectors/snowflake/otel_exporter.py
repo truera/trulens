@@ -19,6 +19,7 @@ from trulens.experimental.otel_tracing.core.exporter.utils import (
 from trulens.experimental.otel_tracing.core.exporter.utils import (
     convert_readable_span_to_proto,
 )
+from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 from snowflake.snowpark import Session
@@ -83,8 +84,8 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         app_and_run_info_to_spans = defaultdict(list)
         for span in spans:
             key = (
-                span.attributes.get(SpanAttributes.APP_NAME),
-                span.attributes.get(SpanAttributes.APP_VERSION),
+                span.resource.attributes.get(ResourceAttributes.APP_NAME),
+                span.resource.attributes.get(ResourceAttributes.APP_VERSION),
                 span.attributes.get(SpanAttributes.RUN_NAME),
             )
             app_and_run_info_to_spans[key].append(span)

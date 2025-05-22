@@ -12,6 +12,7 @@ from opentelemetry.context import Context
 from opentelemetry.trace.span import Span
 from opentelemetry.util.types import AttributeValue
 from trulens.core.utils import signature as signature_utils
+from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
@@ -122,10 +123,13 @@ def set_string_span_attribute_from_baggage(
     span: Span,
     key: str,
     context: Optional[Context] = None,
+    also_write_to_resource_attributes: bool = False,  # TODO(otel): This is for backwards compatibility, remove in the future!
 ) -> None:
     value = get_baggage(key, context)
     if value is not None:
         span.set_attribute(key, str(value))
+        if also_write_to_resource_attributes:
+            span.resource.attributes[key] = str(value)
 
 
 def validate_attributes(attributes: Dict[str, Any]) -> Dict[str, Any]:
@@ -153,12 +157,23 @@ def set_general_span_attributes(
     span.set_attribute(SpanAttributes.SPAN_TYPE, span_type)
 
     set_string_span_attribute_from_baggage(
-        span, SpanAttributes.APP_NAME, context
+        span,
+        ResourceAttributes.APP_NAME,
+        context,
+        also_write_to_resource_attributes=True,
     )
     set_string_span_attribute_from_baggage(
-        span, SpanAttributes.APP_VERSION, context
+        span,
+        ResourceAttributes.APP_VERSION,
+        context,
+        also_write_to_resource_attributes=True,
     )
-    set_string_span_attribute_from_baggage(span, SpanAttributes.APP_ID, context)
+    set_string_span_attribute_from_baggage(
+        span,
+        ResourceAttributes.APP_ID,
+        context,
+        also_write_to_resource_attributes=True,
+    )
     set_string_span_attribute_from_baggage(
         span, SpanAttributes.RECORD_ID, context
     )

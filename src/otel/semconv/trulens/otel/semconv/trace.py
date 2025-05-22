@@ -17,13 +17,18 @@ Relevant links:
 
 from enum import Enum
 
+BASE_SCOPE = "ai.observability"
+
 
 class ResourceAttributes:
-    # TODO: Some Span attributes should be moved here.
-    pass
+    APP_ID = BASE_SCOPE + ".app_id"
+    """ID of the app that the span belongs to."""
 
+    APP_NAME = BASE_SCOPE + ".app_name"
+    """Fully qualified name of the app that the span belongs to."""
 
-BASE_SCOPE = "ai.observability"
+    APP_VERSION = BASE_SCOPE + ".app_version"
+    """Name of the version that the span belongs to."""
 
 
 class SpanAttributes:
@@ -51,15 +56,6 @@ class SpanAttributes:
 
     RECORD_ID = BASE_SCOPE + ".record_id"
     """ID of the record that the span belongs to."""
-
-    APP_ID = BASE_SCOPE + ".app_id"
-    """ID of the app that the span belongs to."""
-
-    APP_NAME = BASE_SCOPE + ".app_name"
-    """Fully qualified name of the app that the span belongs to."""
-
-    APP_VERSION = BASE_SCOPE + ".app_version"
-    """Name of the version that the span belongs to."""
 
     RUN_NAME = BASE_SCOPE + ".run.name"
     """Name of the run that the span belongs to."""

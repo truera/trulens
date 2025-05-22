@@ -11,6 +11,7 @@ import requests
 from trulens.apps.app import TruApp
 from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
+from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.otel_test_case import OtelTestCase
@@ -112,8 +113,15 @@ class TestOtelDistributed(OtelTestCase):
             actual.iloc[1]["record_attributes"]["process_id"],
         )
         for attribute in [
-            SpanAttributes.APP_NAME,
-            SpanAttributes.APP_VERSION,
+            ResourceAttributes.APP_NAME,
+            ResourceAttributes.APP_VERSION,
+            ResourceAttributes.APP_ID,
+        ]:
+            self.assertEqual(
+                actual.iloc[0]["resource_attributes"][attribute],
+                actual.iloc[1]["resource_attributes"][attribute],
+            )
+        for attribute in [
             SpanAttributes.RECORD_ID,
             SpanAttributes.RUN_NAME,
             SpanAttributes.INPUT_ID,
