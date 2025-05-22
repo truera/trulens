@@ -77,20 +77,44 @@ T = TypeVar("T")  # TODO bound
 class OpenAICostComputer:
     @staticmethod
     def handle_response(response: Any) -> Dict[str, Any]:
+        # Handle legacy response if needed
         if isinstance(response, openai._legacy_response.LegacyAPIResponse):
             if response.http_response.status_code != 200:
                 raise ValueError("OpenAI API returned non-200 status code!")
             response = response.parse()
+
         endpoint = OpenAIEndpoint()
         callback = OpenAICallback(endpoint=endpoint)
         model_name = ""
-        if getattr(response, "model"):
+
+        print(
+            f"OpenAICostComputer.handle_response: response type: {type(response)}"
+        )
+        if hasattr(response, "__iter__") and not hasattr(response, "model"):
+            print(
+                "OpenAICostComputer: This is a stream, peeking at first chunk..."
+            )
+            try:
+                print("Peeking at first chunk...")
+                first_chunk = next(response)
+                print(f"First chunk: {first_chunk}")
+                response = prepend_first_chunk(response, first_chunk)
+                print(
+                    f"Returning reconstructed stream: {response}, type: {type(response)}"
+                )
+            except Exception as e:
+                print(f"OpenAICostComputer: Exception peeking at stream: {e}")
+                response = []
+        elif getattr(response, "model", None):
             model_name = response.model
+
+        # Send response and model to callback
         OpenAIEndpoint._handle_response(
             model_name=model_name,
             response=response,
             callbacks=[callback],
         )
+
         ret = {
             SpanAttributes.COST.COST: callback.cost.cost,
             SpanAttributes.COST.CURRENCY: callback.cost.cost_currency,
@@ -481,3 +505,16 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
             )
 
         return response
+
+
+def prepend_first_chunk(stream, first_chunk):
+    # Save the original iterator
+    original_iter = stream._iterator
+
+    # Create a new iterator that yields the first chunk, then the rest
+    def new_iter():
+        yield first_chunk
+        yield from original_iter
+
+    stream._iterator = new_iter()
+    return stream

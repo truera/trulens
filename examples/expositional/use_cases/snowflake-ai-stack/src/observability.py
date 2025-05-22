@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import numpy as np
+import os
 
 def start_observability():
     session = TruSession()
@@ -54,7 +55,7 @@ def create_evals(provider: LLMProvider = None):
             criteria = context_relevance_custom_criteria,
         )
         .on({
-            "query": Selector(
+            "question": Selector(
                 span_type=SpanAttributes.SpanType.RETRIEVAL,
                 span_attribute=SpanAttributes.RETRIEVAL.QUERY_TEXT,
             ),

@@ -83,17 +83,19 @@ if user_input:
         full_response = ""  # Initialize to collect the full response
 
         # Use TruLens to track the RAG application with streaming enabled
-        with st.session_state.tru_rag as recording:
+        with st.session_state.tru_rag:
             with st.spinner("Thinking..."):
+                # full_response = st.session_state.rag.retrieve_and_generate(user_input, st.session_state.messages)
+                # message_area.markdown(full_response)
                 generator = st.session_state.rag.retrieve_and_generate_stream(user_input, st.session_state.messages)
                 for chunk in generator:
                     if chunk is not None:
                         full_response += chunk
                         message_area.markdown(full_response)
             # Display TruLens feedback and metrics
-            record = recording.get()
+            # record = recording.get()
             # trulens_st.trulens_feedback(record=record)
-            trulens_st.trulens_trace(record=record)
+            # trulens_st.trulens_trace(record=record)
 
         # Add the assistant response to session state - only once!
         st.session_state.messages.append({"role": "assistant", "content": full_response})

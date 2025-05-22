@@ -70,20 +70,20 @@ class Rag:
         # Generate and return the answer from the chat model
         return self.chat_model.generate_answer(messages)
 
-    @instrument(
-        span_type=SpanAttributes.SpanType.RECORD_ROOT,
-        attributes={
-            SpanAttributes.RECORD_ROOT.INPUT: "query",
-            SpanAttributes.RECORD_ROOT.OUTPUT: "return",
-        },
-    )
-    def retrieve_and_generate(self, query: str, message_history: list = None):
-        # Retrieve similar document chunks based on the query
-        retrieved_chunks = self.retrieve(query)
-        if len(retrieved_chunks) == 0:
-            return "I'm sorry, I don't have the information I need to answer that question."
-        # Generate and return the answer from the chat model
-        return self.generate(query, retrieved_chunks, message_history)
+    # @instrument(
+    #     span_type=SpanAttributes.SpanType.RECORD_ROOT,
+    #     attributes={
+    #         SpanAttributes.RECORD_ROOT.INPUT: "query",
+    #         SpanAttributes.RECORD_ROOT.OUTPUT: "return",
+    #     },
+    # )
+    # def retrieve_and_generate(self, query: str, message_history: list = None):
+    #     # Retrieve similar document chunks based on the query
+    #     retrieved_chunks = self.retrieve(query)
+    #     if len(retrieved_chunks) == 0:
+    #         return "I'm sorry, I don't have the information I need to answer that question."
+    #     # Generate and return the answer from the chat model
+    #     return self.generate(query, retrieved_chunks, message_history)
 
     @instrument(
         span_type=SpanAttributes.SpanType.RECORD_ROOT,
@@ -93,6 +93,7 @@ class Rag:
         },
     )
     def retrieve_and_generate_stream(self, query: str, message_history: list = None):
+        print("Entered retrieve_and_generate_stream")
         # Retrieve similar document chunks
         retrieved_chunks = self.retrieve(query)
         if len(retrieved_chunks) == 0:

@@ -232,12 +232,20 @@ class instrument:
                 # Run function.
                 try:
                     result = func(*args, **kwargs)
+                    print(
+                        f"Type of result in convert_to_generator: {type(result)}"
+                    )
                     if isinstance(result, types.GeneratorType):
                         yield "is_generator"
-                        ret = []
+                        collected = []
+                        print(
+                            f"convert_to_generator: about to iterate over result: {result}"
+                        )
                         for curr in result:
-                            ret.append(curr)
+                            print(f"convert_to_generator: got chunk: {curr}")
+                            collected.append(curr)
                             yield curr
+                        ret = collected
                     else:
                         yield "is_not_generator"
                         ret = result
