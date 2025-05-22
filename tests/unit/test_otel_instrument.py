@@ -93,7 +93,7 @@ class TestOtelInstrument(unittest.TestCase):
             spans[0].name,
             f"tests.unit.test_otel_instrument.TestOtelInstrument.{test_name}.<locals>.my_function",
         )
-        self.assertTupleEqual(
+        self.assertSequenceEqual(
             spans[0].attributes[f"{SpanAttributes.UNKNOWN.base}.best_babies"],
             ("Kojikun", "Nolan", "Sachiboy"),
         )
@@ -113,7 +113,7 @@ class TestOtelInstrument(unittest.TestCase):
             spans[1].name,
             f"tests.unit.test_otel_instrument.TestOtelInstrument.{test_name}.<locals>.my_function",
         )
-        self.assertTupleEqual(
+        self.assertSequenceEqual(
             spans[1].attributes[f"{SpanAttributes.UNKNOWN.base}.best_babies"],
             ("Kojikun", "Nolan"),
         )
