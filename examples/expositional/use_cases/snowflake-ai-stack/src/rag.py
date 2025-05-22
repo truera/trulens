@@ -63,7 +63,7 @@ class Rag:
         else:
             return self._retrieve_plain(query)
 
-    instrument(span_type=SpanAttributes.SpanType.GENERATION)
+    @instrument(span_type=SpanAttributes.SpanType.GENERATION)
     def generate(self, query: str, retrieved_chunks, message_history: list = None):
         # Construct prompt messages with query and retrieved chunks
         messages = self.chat_model.construct_prompt(query, retrieved_chunks, message_history)
