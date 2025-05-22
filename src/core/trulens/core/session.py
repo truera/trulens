@@ -1172,14 +1172,19 @@ class TruSession(
 
         self._evaluator_proc = None
 
-    def wait_for_new_record_id(tru_session, timeout=10, poll_interval=0.5):
+    def wait_for_new_record_id(
+        self,
+        tru_session: TruSession,
+        timeout: float = 10,
+        poll_interval: float = 0.5,
+    ):
         """
         Wait for a new record to appear in the TruLens session.
 
         Args:
             tru_session: The TruLens session object (with get_records_and_feedback method).
-            timeout (float): Maximum time to wait in seconds.
-            poll_interval (float): How often to poll in seconds.
+            timeout: Maximum time to wait in seconds.
+            poll_interval: How often to poll in seconds.
 
         Returns:
             The new record_id if found, else None.
