@@ -26,10 +26,10 @@ _logger = logging.getLogger(__name__)
 # from an event table row.
 @dataclass
 class MinimalSpanInfo:
-    span_id: Optional[int] = None
-    parent_span_id: Optional[int] = None
-    attributes: Dict[str, Any] = {}
-    resource_attributes: Dict[str, Any] = {}
+    span_id: Optional[int]
+    parent_span_id: Optional[int]
+    attributes: Dict[str, Any]
+    resource_attributes: Dict[str, Any]
 
 
 class RecordGraphNode:
