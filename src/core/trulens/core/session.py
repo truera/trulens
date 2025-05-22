@@ -1174,7 +1174,6 @@ class TruSession(
 
     def wait_for_new_record_id(
         self,
-        tru_session: TruSession,
         timeout: float = 10,
         poll_interval: float = 0.5,
     ):
@@ -1190,7 +1189,7 @@ class TruSession(
             The new record_id if found, else None.
         """
         # Get the set of existing record IDs before the operation
-        records_before, _ = tru_session.get_records_and_feedback()
+        records_before, _ = self.get_records_and_feedback()
         existing_ids = (
             set(records_before["record_id"])
             if not records_before.empty
@@ -1199,7 +1198,7 @@ class TruSession(
 
         start_time = time()
         while time() - start_time < timeout:
-            records_after, _ = tru_session.get_records_and_feedback()
+            records_after, _ = self.get_records_and_feedback()
             if not records_after.empty:
                 new_ids = set(records_after["record_id"]) - existing_ids
                 if new_ids:
