@@ -395,6 +395,29 @@ def instrument_cost_computer(
     setattr(cls, method_name, wrapper(getattr(cls, method_name)))
 
 
+class Recording:
+    record_ids: List[str]
+
+    def __init__(self) -> None:
+        self.record_ids = []
+
+    def add_record_id(self, record_id: str) -> None:
+        self.record_ids.append(record_id)
+
+    def get(self) -> str:
+        if len(self.record_ids) == 0:
+            raise RuntimeError("No record IDs found!")
+        if len(self.record_ids) != 1:
+            raise RuntimeError("There are multiple records!")
+        return self.record_ids[0]
+
+    def __getitem__(self, index: int) -> str:
+        return self.record_ids[index]
+
+    def __len__(self) -> int:
+        return len(self.record_ids)
+
+
 class OtelBaseRecordingContext:
     run_name: str
     """
@@ -499,13 +522,15 @@ class OtelRecordingContext(OtelBaseRecordingContext):
         self.attach_to_context(ResourceAttributes.APP_NAME, self.app_name)
         self.attach_to_context(ResourceAttributes.APP_VERSION, self.app_version)
         self.attach_to_context(ResourceAttributes.APP_ID, self.app_id)
-
         self.attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
         self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
         self.attach_to_context(
             SpanAttributes.RECORD_ROOT.GROUND_TRUTH_OUTPUT,
             self.ground_truth_output,
         )
+        ret = Recording()
+        self.attach_to_context("__trulens_recording__", ret)
+        return ret
 
 
 class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
