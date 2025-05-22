@@ -51,9 +51,19 @@ class TestOtelRecordingContexts(OtelTestCase):
                 self.assertEqual(value, event["record_attributes"][attribute])
 
     def test_legacy(self):
-        with self._tru_recorder:
+        with self._tru_recorder as recording:
             self._app.greet(name="Kojikun")
         self._validate()
+        events = self._get_events()
+        self.assertEqual(len(recording), 1)
+        self.assertEqual(
+            events.iloc[0]["record_attributes"][SpanAttributes.RECORD_ID],
+            recording.get(),
+        )
+        self.assertEqual(
+            events.iloc[0]["record_attributes"][SpanAttributes.RECORD_ID],
+            recording[0],
+        )
 
     def test_new(self):
         with self._tru_recorder.run("test_run"):

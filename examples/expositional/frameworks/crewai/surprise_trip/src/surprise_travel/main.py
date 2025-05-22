@@ -13,7 +13,7 @@ from trulens.core import TruSession
 
 session = TruSession()
 
-if os.environ.get("WITH_OTEL_TRACING") is not None:
+if os.environ.get("TRULENS_OTEL_TRACING") is not None:
     session.experimental_enable_feature("otel_tracing")
 
 session.reset_database()
