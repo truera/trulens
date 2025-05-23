@@ -1299,6 +1299,7 @@ trulens.core.session.TruSession:
     stop_dashboard: builtins.function
     stop_evaluator: builtins.function
     update_record: builtins.function
+    wait_for_record: builtins.function
 trulens.core.utils:
   __class__: builtins.module
   highs: {}
