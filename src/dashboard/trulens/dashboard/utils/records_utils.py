@@ -77,6 +77,10 @@ def display_feedback_call(
         df["meta"] = pd.Series([call[i]["meta"] for i in range(len(call))])
         df = df.join(df.meta.apply(lambda m: pd.Series(m))).drop(columns="meta")
 
+        # Filter to only show the latest results for calls with the same args_span_id and args_span_attribute
+        # NOTE: this is an optimization to not show duplicate calls in the UI (e.g. when a feedback function is recomputed on the same metric name and inputs)
+        df = _filter_duplicate_span_calls(df)
+
         # note: improve conditional to not rely on the feedback name
         if "groundedness" in feedback_name.lower():
             df = expand_groundedness_df(df)
@@ -101,6 +105,63 @@ def display_feedback_call(
             st.dataframe(styled_df, hide_index=True)
     else:
         st.warning("No feedback details found.")
+
+
+def _filter_duplicate_span_calls(df: pd.DataFrame) -> pd.DataFrame:
+    """Filter to only show rows from the most recent eval_root_id for calls with the same args_span_id and args_span_attribute.
+
+    Args:
+        df: DataFrame containing feedback call data with potential duplicates
+
+    Returns:
+        DataFrame with duplicate span calls filtered to show only rows from the most recent eval_root_id
+    """
+    if (
+        "eval_root_id" in df.columns
+        and "args_span_id" in df.columns
+        and "args_span_attribute" in df.columns
+        and "timestamp" in df.columns
+        and not df.empty
+    ):
+        # Convert dictionary columns to strings for grouping (since dicts are not hashable)
+        df_for_grouping = df.copy()
+        df_for_grouping["args_span_id_str"] = df_for_grouping[
+            "args_span_id"
+        ].apply(lambda x: str(x) if x is not None else "None")
+        df_for_grouping["args_span_attribute_str"] = df_for_grouping[
+            "args_span_attribute"
+        ].apply(lambda x: str(x) if x is not None else "None")
+
+        # Group by the combination of args_span_id and args_span_attribute
+        grouped = df_for_grouping.groupby([
+            "args_span_id_str",
+            "args_span_attribute_str",
+        ])
+
+        # Only keep rows from the most recent eval_root_id for groups that have more than one row
+        indices_to_keep = []
+        for group_name, group_df in grouped:
+            if len(group_df) > 1:
+                # Multiple rows with same args_span_id and args_span_attribute
+                # Find the most recent eval_root_id based on timestamp
+                eval_root_max_timestamps = group_df.groupby("eval_root_id")[
+                    "timestamp"
+                ].max()
+                most_recent_eval_root_id = eval_root_max_timestamps.idxmax()
+
+                # Keep all rows from the most recent eval_root_id
+                recent_rows = group_df[
+                    group_df["eval_root_id"] == most_recent_eval_root_id
+                ]
+                indices_to_keep.extend(recent_rows.index.tolist())
+            else:
+                # Single row - keep it as-is
+                indices_to_keep.extend(group_df.index.tolist())
+
+        if indices_to_keep:
+            return df.loc[indices_to_keep]
+
+    return df
 
 
 def _render_feedback_pills(

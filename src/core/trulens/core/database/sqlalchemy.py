@@ -1124,13 +1124,20 @@ class SQLAlchemyDB(core_db.DB):
                             )
 
                         # Add call data
-                        # Extract kwargs by finding all attributes that start with the KWARGS prefix
-                        kwargs_prefix = SpanAttributes.CALL.KWARGS + "."
-                        kwargs = {
-                            key[len(kwargs_prefix) :]: value
-                            for key, value in record_attributes.items()
-                            if key.startswith(kwargs_prefix)
-                        }
+                        # Extract namespaced attributes using the helper method
+                        kwargs = self._extract_namespaced_attributes(
+                            record_attributes, SpanAttributes.CALL.KWARGS
+                        )
+                        args_span_id = self._extract_namespaced_attributes(
+                            record_attributes,
+                            SpanAttributes.EVAL_ROOT.ARGS_SPAN_ID,
+                        )
+                        args_span_attribute = (
+                            self._extract_namespaced_attributes(
+                                record_attributes,
+                                SpanAttributes.EVAL_ROOT.ARGS_SPAN_ATTRIBUTE,
+                            )
+                        )
 
                         call_data = {
                             # TODO(SNOW-2112879): Call data may not be populated in the OTEL spans yet
@@ -1153,6 +1160,12 @@ class SQLAlchemyDB(core_db.DB):
                                 "explanation": record_attributes.get(
                                     SpanAttributes.EVAL.EXPLANATION, None
                                 ),
+                                "eval_root_id": record_attributes.get(
+                                    SpanAttributes.EVAL.EVAL_ROOT_ID, None
+                                ),
+                                "timestamp": record_data["ts"],
+                                "args_span_id": args_span_id,
+                                "args_span_attribute": args_span_attribute,
                             },
                         }
                         feedback_result["calls"].append(call_data)
@@ -1595,6 +1608,25 @@ class SQLAlchemyDB(core_db.DB):
 
             # Execute query and return as DataFrame
             return pd.read_sql(q, session.bind)
+
+    def _extract_namespaced_attributes(
+        self, record_attributes: Dict[str, Any], namespace_prefix: str
+    ) -> Dict[str, Any]:
+        """Extract attributes that are namespaced under a given prefix.
+
+        Args:
+            record_attributes: Dictionary of all span attributes
+            namespace_prefix: The namespace prefix to look for (e.g., "ai.observability.call.kwargs")
+
+        Returns:
+            Dictionary with namespace-stripped keys and their values
+        """
+        prefix_with_dot = namespace_prefix + "."
+        return {
+            key[len(prefix_with_dot) :]: value
+            for key, value in record_attributes.items()
+            if key.startswith(prefix_with_dot)
+        }
 
 
 # Use this Perf for missing Perfs.
