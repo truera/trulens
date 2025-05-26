@@ -98,12 +98,10 @@ class TestOtelTruCustom(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         # Create and run app.
         test_app = TestApp()
         custom_app = TruApp(test_app)
-        with custom_app as recording:
+        with custom_app:
             test_app.respond_to_query("test")
-        self.assertIsNone(recording)
-        with custom_app as recording:
+        with custom_app:
             test_app.respond_to_query("throw")
-        self.assertIsNone(recording)
         # Compare results to expected.
         self._compare_record_attributes_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_custom__test_smoke.csv"

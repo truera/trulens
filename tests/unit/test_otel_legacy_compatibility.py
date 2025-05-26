@@ -98,7 +98,6 @@ class TestOtelLegacyCompatibility(OtelTestCase):
         )
         self.assertEqual(49, record_attributes[SpanAttributes.CALL.RETURN])
         # Verify recording.
-        self.assertIsNone(recording)
         self.assertEqual(1, len(recording))
         self.assertEqual(
             record_attributes[SpanAttributes.RECORD_ID], recording.get()
@@ -110,12 +109,11 @@ class TestOtelLegacyCompatibility(OtelTestCase):
         prompt = PromptTemplate(input_variables=["query"], template="{query}")
         app = LLMChain(llm=llm, prompt=prompt)
         tru_app = TruChain(app, app_name="MyTruChainApp", app_version="v1")
-        with tru_app as recording:
+        with tru_app:
             app.run("test")
         TruSession().force_flush()
         events = self._get_events()
         self.assertEqual(4, len(events))
-        self.assertIsNone(recording)
         # Verify first span.
         record_attributes = events["record_attributes"].iloc[0]
         self.assertEqual(
@@ -140,12 +138,11 @@ class TestOtelLegacyCompatibility(OtelTestCase):
     def test_legacy_tru_llama_app(self) -> None:
         llm = MockLLM()
         tru_app = TruLlama(llm, app_name="MyTruLlamaApp", app_version="v1")
-        with tru_app as recording:
+        with tru_app:
             llm("test")
         TruSession().force_flush()
         events = self._get_events()
         self.assertEqual(2, len(events))
-        self.assertIsNone(recording)
         # Verify first span.
         record_attributes = events["record_attributes"].iloc[0]
         self.assertEqual(

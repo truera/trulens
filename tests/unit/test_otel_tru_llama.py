@@ -114,9 +114,8 @@ class TestOtelTruLlama(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         rag = self._create_simple_rag()
         tru_recorder = TruLlama(rag, app_name="Simple RAG", app_version="v1")
         # Record and invoke.
-        with tru_recorder as recording:
+        with tru_recorder:
             rag.query("What is multi-headed attention?")
-        self.assertIsNone(recording)
         # Compare results to expected.
         self._compare_record_attributes_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_llama__test_smoke.csv"
