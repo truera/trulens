@@ -90,7 +90,7 @@ def _compute_feedback(
     feedback functions quite arbitrarily and so is quite powerful.
 
     Args:
-        record: Record to compute feedback for.
+        record_root: Record root of record to compute feedback for.
         feedback_name: Name of feedback.
         feedback_function: Function to compute feedback.
         higher_is_better: Whether higher values are better.
