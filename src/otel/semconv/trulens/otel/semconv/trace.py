@@ -198,6 +198,9 @@ class SpanAttributes:
         EXPLANATION = base + ".explanation"
         """Explanation for the score for this sub-step."""
 
+        METADATA = base + ".metadata"
+        """Any metadata for this sub-step."""
+
         SCORE = base + ".score"
         """Score for this sub-step."""
 
