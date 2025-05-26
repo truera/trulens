@@ -71,7 +71,7 @@ def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
     # Fetch the descriptor or raw attribute without invoking it
     v = inspect.getattr_static(obj, k)
 
-    # Detect both plain @propertystdlib cached_property
+    # Detect both plain @property and stdlib cached_property
     is_prop = isinstance(v, property)
     is_std_cached = isinstance(v, functools.cached_property)
 
