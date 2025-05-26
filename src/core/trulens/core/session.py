@@ -9,6 +9,7 @@ from multiprocessing import Process
 import threading
 from threading import Thread
 from time import sleep
+from time import time
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -1170,6 +1171,33 @@ class TruSession(
             self._evaluator_stop = None
 
         self._evaluator_proc = None
+
+    def wait_for_record(
+        self,
+        record_id: str,
+        timeout: float = 10,
+        poll_interval: float = 0.5,
+    ):
+        """
+        Wait for a specific record_id to appear in the TruLens session.
+
+        Args:
+            record_id: The record_id to wait for.
+            timeout: Maximum time to wait in seconds.
+            poll_interval: How often to poll in seconds.
+
+        Returns:
+            The record_id if found, else None.
+        """
+        start_time = time()
+        while time() - start_time < timeout:
+            records_df, _ = self.get_records_and_feedback()
+            if not records_df.empty and record_id in set(
+                records_df["record_id"]
+            ):
+                return record_id
+            sleep(poll_interval)
+        return None
 
 
 def Tru(*args, **kwargs) -> TruSession:

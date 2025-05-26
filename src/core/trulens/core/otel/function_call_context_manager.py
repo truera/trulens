@@ -39,6 +39,9 @@ class CreateSpanFunctionCallContextManager:
                 self.token = context_api.attach(
                     set_baggage(SpanAttributes.RECORD_ID, record_id)
                 )
+                recording = get_baggage("__trulens_recording__")
+                if recording is not None:
+                    recording.add_record_id(record_id)
         # Create span.
         self.span_context_manager = (
             trace.get_tracer_provider()

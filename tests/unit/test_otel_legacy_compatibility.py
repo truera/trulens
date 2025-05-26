@@ -74,7 +74,6 @@ class TestOtelLegacyCompatibility(OtelTestCase):
         TruSession().force_flush()
         events = self._get_events()
         self.assertEqual(2, len(events))
-        self.assertIsNone(recording)
         # Verify first span.
         record_attributes = events["record_attributes"].iloc[0]
         self.assertEqual(
@@ -98,6 +97,12 @@ class TestOtelLegacyCompatibility(OtelTestCase):
             7, record_attributes[SpanAttributes.CALL.KWARGS + ".n"]
         )
         self.assertEqual(49, record_attributes[SpanAttributes.CALL.RETURN])
+        # Verify recording.
+        self.assertIsNone(recording)
+        self.assertEqual(1, len(recording))
+        self.assertEqual(
+            record_attributes[SpanAttributes.RECORD_ID], recording.get()
+        )
 
     def test_legacy_tru_chain_app(self) -> None:
         responses = ["response to test"]

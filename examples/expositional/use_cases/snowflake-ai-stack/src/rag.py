@@ -1,6 +1,7 @@
 from src.generation import ChatModel
 from langchain_core.vectorstores import VectorStore
-from trulens.apps.app import instrument
+from trulens.core.otel.instrument import instrument
+from trulens.otel.semconv.trace import SpanAttributes
 from trulens.core import Feedback
 from trulens.core.guardrails.base import context_filter
 from trulens.providers.openai import OpenAI
@@ -49,30 +50,48 @@ class Rag:
         results = self.vector_store.search(query)
         return [result.page_content for result in results]
 
-    @instrument
+    @instrument(
+        span_type=SpanAttributes.SpanType.RETRIEVAL,
+        attributes={
+            SpanAttributes.RETRIEVAL.QUERY_TEXT: "query",
+            SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: "return",
+        },
+    )
     def retrieve(self, query: str):
         if int(self.use_context_filter)==1:
             return self._retrieve_filtered(query)
         else:
             return self._retrieve_plain(query)
 
-    @instrument
+    @instrument(span_type=SpanAttributes.SpanType.GENERATION)
     def generate(self, query: str, retrieved_chunks, message_history: list = None):
         # Construct prompt messages with query and retrieved chunks
         messages = self.chat_model.construct_prompt(query, retrieved_chunks, message_history)
         # Generate and return the answer from the chat model
         return self.chat_model.generate_answer(messages)
 
-    @instrument
-    def retrieve_and_generate(self, query: str, message_history: list = None):
-        # Retrieve similar document chunks based on the query
-        retrieved_chunks = self.retrieve(query)
-        if len(retrieved_chunks) == 0:
-            return "I'm sorry, I don't have the information I need to answer that question."
-        # Generate and return the answer from the chat model
-        return self.generate(query, retrieved_chunks, message_history)
+    # @instrument(
+    #     span_type=SpanAttributes.SpanType.RECORD_ROOT,
+    #     attributes={
+    #         SpanAttributes.RECORD_ROOT.INPUT: "query",
+    #         SpanAttributes.RECORD_ROOT.OUTPUT: "return",
+    #     },
+    # )
+    # def retrieve_and_generate(self, query: str, message_history: list = None):
+    #     # Retrieve similar document chunks based on the query
+    #     retrieved_chunks = self.retrieve(query)
+    #     if len(retrieved_chunks) == 0:
+    #         return "I'm sorry, I don't have the information I need to answer that question."
+    #     # Generate and return the answer from the chat model
+    #     return self.generate(query, retrieved_chunks, message_history)
 
-    @instrument
+    @instrument(
+        span_type=SpanAttributes.SpanType.RECORD_ROOT,
+        attributes={
+            SpanAttributes.RECORD_ROOT.INPUT: "query",
+            SpanAttributes.RECORD_ROOT.OUTPUT: "return",
+        },
+    )
     def retrieve_and_generate_stream(self, query: str, message_history: list = None):
         # Retrieve similar document chunks
         retrieved_chunks = self.retrieve(query)
@@ -82,37 +101,3 @@ class Rag:
         # Stream tokens from the chat model
         thread = self.chat_model.generate_stream(messages)
         return thread
-
-    @instrument
-    def decompose_query(self, query: str) -> list:
-        """
-        Decomposes the input query into multiple sub-queries.
-        """
-        prompt = (
-            "You are a helpful assistant that generates no more than 3 sub-questions needed to answer the input question. \n"
-            "The goal is to break down the input into a set of sub-problems / sub-questions that can be answered in isolation. \n"
-            "Generate the needed sub-questions for: {question} \n"
-        ).format(question=query)
-        system_message = {"role": "system", "content": prompt}
-        subqueries_response = self.chat_model.generate_answer([system_message])
-        return [sq.strip() for sq in subqueries_response.split("\n") if sq.strip()]
-
-    @instrument
-    def retrieve_and_generate_decomposed(self, query: str, message_history: list = None):
-        # Use the separate function to decompose the query into sub-questions
-        subqueries = self.decompose_query(query)
-        all_retrieved_chunks = []
-        for subquery in subqueries:
-            retrieved_chunks = self.retrieve(subquery)
-            if retrieved_chunks:
-                all_retrieved_chunks.extend(retrieved_chunks)
-
-        # deduplicate
-        deduplicated_chunks = list(set(all_retrieved_chunks))
-        all_retrieved_chunks = sorted(deduplicated_chunks, key=lambda x: all_retrieved_chunks.index(x))
-
-        if len(all_retrieved_chunks) == 0:
-            return "I'm sorry, I don't have the information I need to answer that question."
-
-        # Generate the final answer using the original query and all aggregated retrieved chunks
-        return self.generate(query, all_retrieved_chunks, message_history)

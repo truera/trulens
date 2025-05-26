@@ -225,7 +225,10 @@ def set_user_defined_attributes(
                 cost_attributes[SpanAttributes.COST.CURRENCY],
             ]:
                 cost_attributes[SpanAttributes.COST.CURRENCY] = "mixed"
-            if model not in [None, cost_attributes[SpanAttributes.COST.MODEL]]:
+            if model not in [
+                None,
+                cost_attributes.get(SpanAttributes.COST.MODEL),
+            ]:
                 cost_attributes[SpanAttributes.COST.MODEL] = "mixed"
             for k, v in cost_attributes.items():
                 span.set_attribute(k, v)
