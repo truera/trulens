@@ -535,13 +535,10 @@ class TestOtelFeedbackComputation(OtelTestCase):
 
     def test_aggregation(self) -> None:
         # Create feedback function.
-        def custom(a: float, b: float) -> float:
-            return a * b
-
         def custom_with_explanations(a: float, b: float) -> Tuple[float, dict]:
             return a * b, {"explanation": f"{a} * {b}"}
 
-        f_custom = Feedback(custom, name="custom").on({
+        f_custom = Feedback(custom_with_explanations, name="custom").on({
             "a": Selector(
                 span_type=SpanAttributes.SpanType.RECORD_ROOT,
                 function_attribute="xs",
@@ -594,6 +591,16 @@ class TestOtelFeedbackComputation(OtelTestCase):
             expected_sub_scores,
             [
                 curr["record_attributes"][SpanAttributes.EVAL.SCORE]
+                for _, curr in events.iloc[2:].iterrows()
+            ],
+        )
+        expected_explanations = ["2 * 5", "2 * 7", "3 * 5", "3 * 7"]
+        self.assertListEqual(
+            expected_explanations,
+            [
+                curr["record_attributes"][
+                    f"{SpanAttributes.EVAL.METADATA}.explanation"
+                ]
                 for _, curr in events.iloc[2:].iterrows()
             ],
         )

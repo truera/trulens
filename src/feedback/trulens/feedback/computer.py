@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 import itertools
 import logging
+import numbers
 from typing import (
     Any,
     Callable,
@@ -647,7 +648,7 @@ def _call_feedback_function_with_span(
         if isinstance(res, tuple):
             if (
                 len(res) != 2
-                or not isinstance(res[0], float)
+                or not isinstance(res[0], numbers.Number)
                 or not isinstance(res[1], dict)
                 or not all([isinstance(curr, str) for curr in res[1].keys()])
             ):
@@ -655,11 +656,16 @@ def _call_feedback_function_with_span(
                     "Feedback functions must be of type `Callable[Any, Union[float, Tuple[float, Dict[str, Any]]]]`!"
                 )
             res, metadata = res[0], res[1]
+        res = float(res)
         span.set_attribute(span_attribute_scope.SCORE, res)
         for k, v in metadata.items():
             set_span_attribute_safely(
                 span, f"{span_attribute_scope.METADATA}.{k}", v
             )
+            if k in ["explanation", "explanations", "reason", "reasons"]:
+                set_span_attribute_safely(
+                    span, span_attribute_scope.EXPLANATION, v
+                )
         return res
     except Exception as e:
         span.set_attribute(span_attribute_scope.ERROR, str(e))
