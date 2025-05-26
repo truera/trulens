@@ -1189,6 +1189,8 @@ class TruSession(
         Returns:
             The record_id if found, else None.
         """
+        if is_otel_tracing_enabled():
+            self.force_flush()
         start_time = time()
         while time() - start_time < timeout:
             records_df, _ = self.get_records_and_feedback()
