@@ -1939,6 +1939,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 feedback.imp,
                 feedback.higher_is_better,
                 feedback.selectors,
+                feedback.aggregator,
                 raise_error_on_no_feedbacks_computed,
             )
 

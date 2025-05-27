@@ -20,6 +20,13 @@ class Selector:
     span_attribute: Optional[str] = None
     function_attribute: Optional[str] = None
 
+    # If this selector describes a list, which of the following two should we
+    # do:
+    # 1. [default] Call the feedback function once passing in the entire list.
+    # 2. Call the feedback function separately for each entry in the list and
+    #    aggregate.
+    call_feedback_function_per_entry_in_list: bool = False
+
     def __init__(
         self,
         function_name: Optional[str] = None,
@@ -30,6 +37,7 @@ class Selector:
         ] = None,
         span_attribute: Optional[str] = None,
         function_attribute: Optional[str] = None,
+        call_feedback_function_per_entry_in_list: bool = False,
     ):
         if function_name is None and span_name is None and span_type is None:
             raise ValueError(
@@ -52,6 +60,9 @@ class Selector:
         self.span_attributes_processor = span_attributes_processor
         self.span_attribute = span_attribute
         self.function_attribute = function_attribute
+        self.call_feedback_function_per_entry_in_list = (
+            call_feedback_function_per_entry_in_list
+        )
 
     def describes_same_spans(self, other: Selector) -> bool:
         return (
@@ -94,7 +105,10 @@ class Selector:
     def process_span(
         self, span_id: str, attributes: Dict[str, Any]
     ) -> FeedbackFunctionInput:
-        ret = FeedbackFunctionInput(span_id=span_id)
+        ret = FeedbackFunctionInput(
+            span_id=span_id,
+            call_feedback_function_per_entry_in_list=self.call_feedback_function_per_entry_in_list,
+        )
         if self.span_attributes_processor is not None:
             ret.value = self.span_attributes_processor(attributes)
         else:
