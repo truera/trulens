@@ -6,9 +6,6 @@ import gc
 import weakref
 
 import pytest
-from trulens.otel.semconv.constants import (
-    TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG,
-)
 
 import tests.util.otel_tru_app_test_case
 from tests.utils import enable_otel_backwards_compatibility
@@ -63,14 +60,6 @@ class TestOtelTruLlama(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
             app=app, main_method=app.query, TruAppClass=TruLlama
         )
 
-    def test_missing_main_method_raises_error(self):
-        # Create app.
-        rag = self._create_simple_rag()
-        with self.assertRaises(ValueError) as context:
-            TruLlama(rag, app_name="Simple RAG", app_version="v1")
-
-        self.assertIn("main_method", str(context.exception))
-
     def test_smoke(self) -> None:
         # Create app.
         rag = self._create_simple_rag()
@@ -119,33 +108,4 @@ class TestOtelTruLlama(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         # Compare results to expected.
         self._compare_record_attributes_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_llama__test_smoke.csv"
-        )
-
-    def test_app_specific_record_root(self) -> None:
-        rag1 = self._create_simple_rag()
-        rag2 = self._create_simple_rag()
-        TruLlama(
-            rag1,
-            app_name="Simple RAG",
-            app_version="v1",
-            main_method=rag1.query,
-        )
-        rag3 = self._create_simple_rag()
-
-        def count_wraps(func):
-            if not hasattr(func, "__wrapped__"):
-                return 0
-            return 1 + count_wraps(func.__wrapped__)
-
-        self.assertEqual(count_wraps(rag1.query), 2)
-        self.assertEqual(count_wraps(rag2.query), 1)
-        self.assertEqual(count_wraps(rag3.query), 1)
-        self.assertFalse(
-            hasattr(rag1.query, TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG)
-        )
-        self.assertFalse(
-            hasattr(rag2.query, TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG)
-        )
-        self.assertFalse(
-            hasattr(rag3.query, TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG)
         )

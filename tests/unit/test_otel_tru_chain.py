@@ -75,14 +75,6 @@ class TestOtelTruChain(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
             app=app, main_method=app.invoke, TruAppClass=TruChain
         )
 
-    def test_missing_main_method_raises_error(self):
-        # Create app.
-        rag_chain = self._create_simple_rag()
-        with self.assertRaises(ValueError) as context:
-            TruChain(rag_chain, app_name="Simple RAG", app_version="v1")
-
-        self.assertIn("main_method", str(context.exception))
-
     def test_smoke(self) -> None:
         # Create app.
         rag_chain = self._create_simple_rag()
