@@ -1,6 +1,7 @@
 import importlib
 import os
 
+import pytest
 import trulens.apps.app
 from trulens.apps.app import TruApp
 from trulens.apps.app import legacy_instrument
@@ -101,6 +102,7 @@ class TestOtelLegacyCompatibility(OtelTestCase):
             record_attributes[SpanAttributes.RECORD_ID], recording.get()
         )
 
+    @pytest.mark.optional
     def test_legacy_tru_chain_app(self) -> None:
         responses = ["response to test"]
         llm = FakeListLLM(responses=responses)
@@ -133,7 +135,8 @@ class TestOtelLegacyCompatibility(OtelTestCase):
                 record_attributes[SpanAttributes.SPAN_TYPE],
             )
 
-    # TODO(this_pr): fix this!
+    # TODO(otel): create a test like this for TruLlama.
+    # @pytest.mark.optional
     # def test_legacy_tru_llama_app(self) -> None:
     #     llm = MockLLM()
     #     tru_app = TruLlama(llm, app_name="MyTruLlamaApp", app_version="v1")
