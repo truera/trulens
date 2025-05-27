@@ -1177,7 +1177,7 @@ class TruSession(
         record_id: str,
         timeout: float = 10,
         poll_interval: float = 0.5,
-    ):
+    ) -> None:
         """
         Wait for a specific record_id to appear in the TruLens session.
 
@@ -1185,19 +1185,18 @@ class TruSession(
             record_id: The record_id to wait for.
             timeout: Maximum time to wait in seconds.
             poll_interval: How often to poll in seconds.
-
-        Returns:
-            The record_id if found, else None.
         """
+        if is_otel_tracing_enabled():
+            self.force_flush()
         start_time = time()
         while time() - start_time < timeout:
             records_df, _ = self.get_records_and_feedback()
             if not records_df.empty and record_id in set(
                 records_df["record_id"]
             ):
-                return record_id
+                return
             sleep(poll_interval)
-        return None
+        raise RuntimeError(f"Record with ID {record_id} not found in database!")
 
 
 def Tru(*args, **kwargs) -> TruSession:

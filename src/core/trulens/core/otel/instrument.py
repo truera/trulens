@@ -16,6 +16,7 @@ from trulens.core.otel.function_call_context_manager import (
     create_function_call_context_manager,
 )
 from trulens.core.schema.app import AppDefinition
+from trulens.core.session import TruSession
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
 from trulens.experimental.otel_tracing.core.span import Attributes
 from trulens.experimental.otel_tracing.core.span import (
@@ -403,14 +404,27 @@ class Recording:
     def add_record_id(self, record_id: str) -> None:
         self.record_ids.append(record_id)
 
-    def get(self) -> str:
+    def get(self, wait_for_record: bool = True) -> str:
+        """
+        Assumes there is exactly one record ID in the recording and returns it.
+
+        Args:
+            wait_for_record:
+                Whether to wait until the record is in the database.
+
+        Returns:
+            The single record ID of the recording.
+        """
         if len(self.record_ids) == 0:
             raise RuntimeError("No record IDs found!")
         if len(self.record_ids) != 1:
             raise RuntimeError("There are multiple records!")
+        if wait_for_record:
+            TruSession().wait_for_record(self.record_ids[0], timeout=180)
         return self.record_ids[0]
 
     def __getitem__(self, index: int) -> str:
+        TruSession().wait_for_record(self.record_ids[index], timeout=180)
         return self.record_ids[index]
 
     def __len__(self) -> int:
