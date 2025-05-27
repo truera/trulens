@@ -612,4 +612,6 @@ class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
             root_span, SpanAttributes.SpanType.EVAL_ROOT
         )
 
+        self.attach_to_context("__trulens_recording__", True)
+
         return root_span
