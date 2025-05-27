@@ -11,7 +11,6 @@ from langchain_core.tools import tool
 from langchain_experimental.utilities import PythonREPL
 from langchain_openai import ChatOpenAI
 from langgraph.graph import START
-from langgraph.graph import MessagesState
 from langgraph.graph import StateGraph
 from langgraph.prebuilt import create_react_agent
 from langgraph.types import Command
@@ -20,21 +19,7 @@ from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.otel.semconv.trace import SpanAttributes
 import json
 from src.agentic_evals import chart_eval_node, research_eval_node, traj_eval_node
-
-# Custom State class with specific keys
-class State(MessagesState):
-    execution_trace: Optional[Dict[int, List[Dict[str, Any]]]]
-    user_query: Optional[str]
-    current_step: int
-    last_reason: Optional[str]
-
-# Helper method to append entries to Execution Trace
-def append_to_step_trace(state, step: int, new_entry: Dict[str, Any]) -> Dict[int, List[Dict[str, Any]]]:
-    trace = state.get("execution_trace", {}) or {}
-    if step not in trace:
-        trace[step] = []
-    trace[step].append(new_entry)
-    return trace
+from src.util import State, append_to_step_trace
 
 
 

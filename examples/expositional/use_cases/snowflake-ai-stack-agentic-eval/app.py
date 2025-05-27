@@ -21,8 +21,8 @@ if "tru_agent" not in st.session_state:
     st.session_state.tru_agent = None
 if "tru_agentic_eval_app" not in st.session_state:
     st.session_state.tru_agentic_eval_app = None
-# if "messages" not in st.session_state:
-#     st.session_state.messages = []
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
 
 

@@ -8,8 +8,8 @@ from langgraph.types import Command
 from langgraph.graph import END
 from langchain_core.messages import HumanMessage
 
-from src.graph import State, build_graph
-from src.graph import append_to_step_trace
+from src.util import State
+from src.util import append_to_step_trace
 
 import json
 
@@ -46,20 +46,20 @@ def research_eval_node(state) -> Command[Literal["orchestrator"]]:
     result = {
         "context_relevance": {
             "score": context_rel_score,
-            "reason": context_rel_reason["reasons"]
+            "reason": context_rel_reason
         },
         "groundedness": {
             "score": grounded_score,
-            "reason": grounded_reason["reasons"]
+            "reason": grounded_reason
         },
         "answer_relevance": {
             "score": answer_score,
-            "reason": answer_reason["reasons"]
+            "reason": answer_reason
         }
     }
 
     try:
-        parsed_eval = json.loads(result.content)
+        parsed_eval = result
     except json.JSONDecodeError:
         # fallback if malformed output
         parsed_eval = {
@@ -101,7 +101,7 @@ class CustomChartEval(OpenAI):
         2: The chart is mostly correct with minor, non-critical errors.
         3: The chart is completely accurate: correct data, correct relationships, correct calculations.
         """
-        user_prompt = f""" Please score the code based on the context. Code: {code}. \n Context: {context}. \n {prompts.cot_reasons_template}
+        user_prompt = f""" Please score the code based on the context. Code: {code}. \n Context: {context}. \n {prompts.COT_REASONS_TEMPLATE}
         """
         return self.generate_score_and_reasons(system_prompt=system_prompt, user_prompt=user_prompt, min_score_val = 0, max_score_val = 3)
     def chart_formatting_with_cot_reasons(self, code: str) -> Tuple[float, Dict]:
@@ -112,7 +112,7 @@ class CustomChartEval(OpenAI):
         2: The chart is mostly clean and readable with only minor formatting issues.
         3: The chart is well-formatted with clear titles, labeled axes, readable scales, appropriate legends, and an overall clean presentation.
         """
-        user_prompt = f""" Please score the code. Code: {code}. \n {prompts.cot_reasons_template}
+        user_prompt = f""" Please score the code. Code: {code}. \n {prompts.COT_REASONS_TEMPLATE}
         """
         return self.generate_score_and_reasons(system_prompt=system_prompt, user_prompt=user_prompt, min_score_val = 0, max_score_val = 3)
     def chart_relevance_with_cot_reasons(self, code: str, query: str, response: str) -> Tuple[float, Dict]:
@@ -123,7 +123,7 @@ class CustomChartEval(OpenAI):
         2: The chart and response mostly answers the user query but could be more precise or complete.
         3: The chart and response directly and fully answers the user query with an appropriate and complete visual representation.
         """
-        user_prompt = f""" Please score the relevance of the chart and response to the query. Code: {code}. \n Response: {response}. Query: {query} \n {prompts.cot_reasons_template}
+        user_prompt = f""" Please score the relevance of the chart and response to the query. Code: {code}. \n Response: {response}. Query: {query} \n {prompts.COT_REASONS_TEMPLATE}
         """
         return self.generate_score_and_reasons(system_prompt=system_prompt, user_prompt=user_prompt, min_score_val = 0, max_score_val = 3)
 
@@ -194,7 +194,7 @@ class CustomTrajEval(OpenAI):
         2: Some minor inefficiencies or unclear transitions. Moments of stalled progress, but ultimately resolved. The agents mostly fulfilled their roles, and the conversation mostly fulfilled answering the query.
         3: Agent handoffs were well-timed and logical. Tool calls were necessary, sufficient, and accurate. No redundancies, missteps, or dead ends. Progress toward the user query was smooth and continuous. No hallucination or incorrect outputs
         """
-        user_prompt = f""" Please score the execution trace. Execution Trace: {trace}. \n {prompts.cot_reasons_template}
+        user_prompt = f""" Please score the execution trace. Execution Trace: {trace}. \n {prompts.COT_REASONS_TEMPLATE}
         """
         return self.generate_score_and_reasons(system_prompt=system_prompt, user_prompt=user_prompt, min_score_val = 0, max_score_val = 3)
 
