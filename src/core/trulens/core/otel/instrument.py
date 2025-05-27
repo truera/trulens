@@ -405,6 +405,16 @@ class Recording:
         self.record_ids.append(record_id)
 
     def get(self, wait_till_in_database: bool = True) -> str:
+        """
+        Assumes there is exactly one record ID in the recording and returns it.
+
+        Args:
+            wait_till_in_database:
+                Whether to wait until the record is in the database.
+
+        Returns:
+            The single record ID of the recording.
+        """
         if len(self.record_ids) == 0:
             raise RuntimeError("No record IDs found!")
         if len(self.record_ids) != 1:
