@@ -129,7 +129,7 @@ def chart_eval_node(state) -> Command[Literal["orchestrator"]]:
     formatting_score, formatting_reason = chart_provider.chart_formatting_with_cot_reasons(code=code)
     relevance_score, relevance_reason = chart_provider.chart_relevance_with_cot_reasons(code=code, query=query, response=response)
 
-    result = {
+    parsed_eval = {
         "accuracy": {
             "score": accuracy_rel_score,
             "reason": accuracy_rel_reason["reasons"]
@@ -143,15 +143,7 @@ def chart_eval_node(state) -> Command[Literal["orchestrator"]]:
             "reason": relevance_reason["reasons"]
         }
     }
-    try:
-        parsed_eval = json.loads(result.content)
-    except json.JSONDecodeError:
-        # fallback if LLM gives malformed output
-        parsed_eval = {
-            "accuracy": {"score": 0, "reason": "Could not parse LLM response."},
-            "formatting": {"score": 0, "reason": "Could not parse LLM response."},
-            "answer_relevance": {"score": 0, "reason": "Could not parse LLM response."}
-        }
+
     eval_entry = {
         "step": state.get("current_step"),
         "agent": "chart_eval",
