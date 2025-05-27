@@ -1,5 +1,5 @@
 import streamlit as st
-from trulens.providers.openai import OpenAI
+from trulens.core import TruSession
 from trulens.apps.app import TruApp
 from trulens.dashboard import streamlit as trulens_st
 from src.graph import TruAgent
@@ -11,7 +11,8 @@ st.subheader("Using the ❄️ AI Stack to build agentic workflows and evaluate 
 
 # Initialize TruLens for observability (similar to notebook example)
 if "tru_session" not in st.session_state:
-    st.session_state.tru_session = start_observability()
+    tru_session = TruSession()
+    st.session_state.tru_session = tru_session
     # Reset database on app startup
     st.session_state.tru_session.reset_database()
 
@@ -37,6 +38,7 @@ if st.session_state.tru_agent is None:
         st.session_state.tru_agent,
         app_name="Langgraph Agentic Evaluation",
         app_version="trajectory-eval-oss",
+        main_method=st.session_state.tru_agent.invoke_agent_graph,
     )
     st.success("Langgraph workflow compiled!")
 
@@ -58,16 +60,14 @@ if user_input:
         message_area = message_container.empty()
         full_response = ""  # Initialize to collect the full response
 
-        # Use TruLens to track the RAG application with streaming enabled
-        with st.session_state.tru_rag as recording:
-            with st.spinner("Thinking..."):
-                # full_response = st.session_state.rag.retrieve_and_generate(user_input, st.session_state.messages)
-                # message_area.markdown(full_response)
-                generator = st.session_state.rag.retrieve_and_generate_stream(user_input, st.session_state.messages)
-                for chunk in generator:
-                    if chunk is not None:
-                        full_response += chunk
-                        message_area.markdown(full_response)
+        with st.spinner("Thinking..."):
+            # full_response = st.session_state.rag.retrieve_and_generate(user_input, st.session_state.messages)
+            # message_area.markdown(full_response)
+            generator = st.session_state.rag.retrieve_and_generate_stream(user_input, st.session_state.messages)
+            for chunk in generator:
+                if chunk is not None:
+                    full_response += chunk
+                    message_area.markdown(full_response)
 
         st.session_state.tru_session.force_flush()
         record_id = recording.get()
