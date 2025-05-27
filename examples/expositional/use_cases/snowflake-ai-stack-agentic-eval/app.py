@@ -21,8 +21,8 @@ if "tru_agent" not in st.session_state:
     st.session_state.tru_agent = None
 if "tru_agentic_eval_app" not in st.session_state:
     st.session_state.tru_agentic_eval_app = None
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+# if "messages" not in st.session_state:
+#     st.session_state.messages = []
 
 
 
@@ -60,14 +60,14 @@ if user_input:
         message_area = message_container.empty()
         full_response = ""  # Initialize to collect the full response
 
-        with st.spinner("Thinking..."):
-            # full_response = st.session_state.rag.retrieve_and_generate(user_input, st.session_state.messages)
-            # message_area.markdown(full_response)
-            generator = st.session_state.rag.retrieve_and_generate_stream(user_input, st.session_state.messages)
-            for chunk in generator:
-                if chunk is not None:
-                    full_response += chunk
-                    message_area.markdown(full_response)
+        # Use TruLens to track the RAG application with streaming enabled
+        with st.session_state.tru_agentic_eval_app as recording:
+            with st.spinner("Thinking..."):
+                # TODO: messages for chat history not used in the agent graph yet
+                # TODO: streaming output?
+                final_agent_output_str = st.session_state.tru_agent.invoke_agent_graph(user_input)
+
+                message_area.markdown(final_agent_output_str)
 
         st.session_state.tru_session.force_flush()
         record_id = recording.get()
