@@ -67,10 +67,10 @@ if user_input:
 
                 message_area.markdown(final_agent_output_str)
 
-            st.session_state.tru_session.force_flush()
-            record_id = recording.get()
-            st.session_state.tru_session.wait_for_record(record_id)
-            trulens_st.trulens_trace(record=record_id)
+        st.session_state.tru_session.force_flush()
+        record_id = recording.get()
+        st.session_state.tru_session.wait_for_record(record_id)
+        trulens_st.trulens_trace(record=record_id)
 
-            # Add the assistant response to session state - only once!
-            st.session_state.messages.append({"role": "assistant", "content": final_agent_output_str})
+        # Add the assistant response to session state - only once!
+        st.session_state.messages.append({"role": "assistant", "content": final_agent_output_str})
