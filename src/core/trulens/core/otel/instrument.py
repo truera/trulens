@@ -404,12 +404,12 @@ class Recording:
     def add_record_id(self, record_id: str) -> None:
         self.record_ids.append(record_id)
 
-    def get(self, wait_till_in_database: bool = True) -> str:
+    def get(self, wait_for_record: bool = True) -> str:
         """
         Assumes there is exactly one record ID in the recording and returns it.
 
         Args:
-            wait_till_in_database:
+            wait_for_record:
                 Whether to wait until the record is in the database.
 
         Returns:
@@ -419,21 +419,13 @@ class Recording:
             raise RuntimeError("No record IDs found!")
         if len(self.record_ids) != 1:
             raise RuntimeError("There are multiple records!")
-        if wait_till_in_database:
-            self._wait_for_record(self.record_ids[0])
+        if wait_for_record:
+            TruSession().wait_for_record(self.record_ids[0], timeout=180)
         return self.record_ids[0]
 
     def __getitem__(self, index: int) -> str:
-        self._wait_for_record(self.record_ids[index])
+        TruSession().wait_for_record(self.record_ids[index], timeout=180)
         return self.record_ids[index]
-
-    @staticmethod
-    def _wait_for_record(record_id: str) -> None:
-        res = TruSession().wait_for_record(record_id, timeout=180)
-        if res is None:
-            raise RuntimeError(
-                f"Record with ID {record_id} not found in database!"
-            )
 
     def __len__(self) -> int:
         return len(self.record_ids)
