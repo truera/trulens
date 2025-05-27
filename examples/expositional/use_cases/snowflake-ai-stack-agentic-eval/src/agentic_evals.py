@@ -43,7 +43,7 @@ def research_eval_node(state) -> Command[Literal["orchestrator"]]:
     grounded_score, grounded_reason = groundedness(context_list, response)
     answer_score, answer_reason = answer_relevance(query, response)
 
-    result = {
+    parsed_eval = {
         "context_relevance": {
             "score": context_rel_score,
             "reason": context_rel_reason
@@ -57,16 +57,6 @@ def research_eval_node(state) -> Command[Literal["orchestrator"]]:
             "reason": answer_reason
         }
     }
-
-    try:
-        parsed_eval = result
-    except json.JSONDecodeError:
-        # fallback if malformed output
-        parsed_eval = {
-            "context_relevance": {"score": 0, "reason": "Could not parse LLM response."},
-            "groundedness": {"score": 0, "reason": "Could not parse LLM response."},
-            "answer_relevance": {"score": 0, "reason": "Could not parse LLM response."}
-        }
 
     # Create new entry for execution_trace
     eval_entry = {
@@ -198,23 +188,16 @@ class CustomTrajEval(OpenAI):
         """
         return self.generate_score_and_reasons(system_prompt=system_prompt, user_prompt=user_prompt, min_score_val = 0, max_score_val = 3)
 
-traj_eval_provider = CustomTrajEval(model_engine="o1")
+traj_eval_provider = CustomTrajEval(model_engine="gpt-4o") # TODO: temperature is not supported for reasoning model
 
 def traj_eval_node(state: State) -> Command[Literal[END]]:
     score, reason = traj_eval_provider.traj_execution_with_cot_reasons(state.get("execution_trace"))
-    result = {
+    parsed_eval = {
         "trajectory_execution": {
             "score": score,
-            "reason": reason["reasons"]
+            "reason": reason
         }
     }
-    try:
-        parsed_eval = json.loads(result.content)
-    except json.JSONDecodeError:
-        # fallback if LLM gives malformed output
-        parsed_eval = {
-            "trajectory_execution": {"score": 0, "reason": "Could not parse LLM response."},
-        }
     # Build entry to add to execution trace
     eval_entry = {
         "step": state.get("current_step"),
