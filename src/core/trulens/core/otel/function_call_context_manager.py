@@ -8,7 +8,6 @@ from opentelemetry.baggage import set_baggage
 import opentelemetry.context as context_api
 from opentelemetry.trace import get_current_span
 from opentelemetry.trace.span import Span
-from trulens.core.otel.utils import is_otel_allow_no_main_method
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -22,26 +21,24 @@ class UseCurrentSpanFunctionCallContextManager:
 
 
 class CreateSpanFunctionCallContextManager:
-    def __init__(self, span_name: str, is_record_root: bool) -> None:
+    def __init__(self, span_name: str) -> None:
         self.span_name = span_name
-        self.is_record_root = is_record_root
         self.span_context_manager = None
         self.token = None
 
     def __enter__(self) -> Span:
         # Set record_id into context.
         started_record = False
-        if self.is_record_root or is_otel_allow_no_main_method():
-            record_id = get_baggage(SpanAttributes.RECORD_ID)
-            if not record_id:
-                started_record = True
-                record_id = str(uuid.uuid4())
-                self.token = context_api.attach(
-                    set_baggage(SpanAttributes.RECORD_ID, record_id)
-                )
-                recording = get_baggage("__trulens_recording__")
-                if recording is not None:
-                    recording.add_record_id(record_id)
+        record_id = get_baggage(SpanAttributes.RECORD_ID)
+        if not record_id:
+            started_record = True
+            record_id = str(uuid.uuid4())
+            self.token = context_api.attach(
+                set_baggage(SpanAttributes.RECORD_ID, record_id)
+            )
+            recording = get_baggage("__trulens_recording__")
+            if recording is not None:
+                recording.add_record_id(record_id)
         # Create span.
         self.span_context_manager = (
             trace.get_tracer_provider()
@@ -78,11 +75,11 @@ class CreateSpanFunctionCallContextManager:
 
 
 def create_function_call_context_manager(
-    create_new_span: bool, span_name: str, is_record_root: bool
+    create_new_span: bool, span_name: str
 ) -> Union[
     UseCurrentSpanFunctionCallContextManager,
     CreateSpanFunctionCallContextManager,
 ]:
     if create_new_span:
-        return CreateSpanFunctionCallContextManager(span_name, is_record_root)
+        return CreateSpanFunctionCallContextManager(span_name)
     return UseCurrentSpanFunctionCallContextManager()

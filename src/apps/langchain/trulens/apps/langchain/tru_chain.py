@@ -27,8 +27,6 @@ from trulens.apps.langchain import guardrails as langchain_guardrails
 from trulens.core import app as core_app
 from trulens.core import instruments as core_instruments
 from trulens.core.instruments import InstrumentedMethod
-from trulens.core.otel.utils import is_otel_allow_no_main_method
-from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import select as select_schema
 from trulens.core.session import TruSession
 from trulens.core.utils import json as json_utils
@@ -254,15 +252,6 @@ class TruChain(core_app.App):
             TruSession(connector=kwargs["connector"])
         else:
             TruSession()
-        # Check `main_method` is provided.
-        if (
-            is_otel_tracing_enabled()
-            and main_method is None
-            and not is_otel_allow_no_main_method()
-        ):
-            raise ValueError(
-                "When OTEL_TRACING is enabled, 'main_method' must be provided in App constructor."
-            )
 
         if main_method is not None:
             kwargs["main_method"] = main_method

@@ -7,7 +7,7 @@ import weakref
 
 import pytest
 from trulens.otel.semconv.constants import (
-    TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
+    TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG,
 )
 
 import tests.util.otel_tru_app_test_case
@@ -141,11 +141,11 @@ class TestOtelTruLlama(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         self.assertEqual(count_wraps(rag2.query), 1)
         self.assertEqual(count_wraps(rag3.query), 1)
         self.assertFalse(
-            hasattr(rag1.query, TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG)
+            hasattr(rag1.query, TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG)
         )
         self.assertFalse(
-            hasattr(rag2.query, TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG)
+            hasattr(rag2.query, TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG)
         )
         self.assertFalse(
-            hasattr(rag3.query, TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG)
+            hasattr(rag3.query, TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG)
         )

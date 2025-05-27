@@ -65,9 +65,9 @@ from trulens.core.utils import signature as signature_utils
 from trulens.core.utils import threading as threading_utils
 from trulens.feedback.computer import compute_feedback_by_span_group
 from trulens.otel.semconv.constants import (
-    TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
+    TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG,
 )
-from trulens.otel.semconv.trace import SpanAttributes
+from trulens.otel.semconv.constants import TRULENS_INSTRUMENT_WRAPPER_FLAG
 
 logger = logging.getLogger(__name__)
 
@@ -517,8 +517,6 @@ class App(
                             f"main_method `{main_method.__name__}` must be bound to the provided `app` instance."
                         )
 
-                self._wrap_main_function(app, main_method.__name__)
-
         super().__init__(**kwargs)
 
         if (
@@ -576,6 +574,9 @@ class App(
             else:
                 self._start_manage_pending_feedback_results()
 
+        if otel_enabled and main_method is not None:
+            self._wrap_main_function(app, main_method.__name__)
+
         self._tru_post_init()
 
     def __del__(self):
@@ -606,9 +607,11 @@ class App(
                 pass
 
     @staticmethod
-    def _has_record_root_instrumentation(func: Callable) -> bool:
+    def _has_instrumentation(func: Callable) -> bool:
         while hasattr(func, "__wrapped__"):
-            if hasattr(func, TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG):
+            if hasattr(func, TRULENS_INSTRUMENT_WRAPPER_FLAG) or hasattr(
+                func, TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG
+            ):
                 return True
             func = func.__wrapped__
         return False
@@ -622,22 +625,9 @@ class App(
             if not hasattr(app, method_name):
                 raise ValueError(f"App must have an `{method_name}` method!")
             func = getattr(app, method_name)
-            if self._has_record_root_instrumentation(func):
+            if self._has_instrumentation(func):
                 return
-            sig = inspect.signature(func)
-            wrapper = instrument(
-                span_type=SpanAttributes.SpanType.RECORD_ROOT,
-                attributes=lambda ret, exception, *args, **kwargs: {
-                    # langchain has specific main input/output logic.
-                    SpanAttributes.RECORD_ROOT.INPUT: self.main_input(
-                        func, sig, sig.bind_partial(**kwargs)
-                    ),
-                    SpanAttributes.RECORD_ROOT.OUTPUT: self.main_output(
-                        func, sig, sig.bind_partial(**kwargs), ret
-                    ),
-                },
-                is_app_specific_record_root=True,
-            )
+            wrapper = instrument(is_app_specific_instrumentation=True)
             # HACK!: This is a major hack to get around the fact that we can't
             # set the desired method on the app object due to Pydantic only
             # allowing fields to be set on the class, not on the instance for
@@ -1077,6 +1067,7 @@ class App(
                         "Already recording with a context manager, cannot nest!"
                     )
                 self._current_context_manager = OtelRecordingContext(
+                    tru_app=self,
                     app_name=self.app_name,
                     app_version=self.app_version,
                     run_name="",
@@ -1855,6 +1846,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             from trulens.core.otel.instrument import OtelRecordingContext
 
             return OtelRecordingContext(
+                tru_app=self,
                 app_name=self.app_name,
                 app_version=self.app_version,
                 run_name=run_name,
@@ -1871,6 +1863,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             from trulens.core.otel.instrument import OtelRecordingContext
 
             return OtelRecordingContext(
+                tru_app=self,
                 app_name=self.app_name,
                 app_version=self.app_version,
                 run_name=None,
@@ -1894,6 +1887,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             from trulens.core.otel.instrument import OtelRecordingContext
 
             with OtelRecordingContext(
+                tru_app=self,
                 app_name=self.app_name,
                 app_version=self.app_version,
                 run_name=run_name,

@@ -191,7 +191,6 @@ Function <function CustomLLM.generate at 0x1779471f0> was not found during instr
   solution as needed.
 """
 
-import inspect
 import logging
 from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Optional, Set
@@ -199,9 +198,7 @@ from typing import Any, Callable, ClassVar, Optional, Set
 import pydantic
 from pydantic import Field
 from trulens.core import app as core_app
-from trulens.core import experimental as core_experimental
 from trulens.core import instruments as core_instruments
-from trulens.core.otel.utils import is_otel_allow_no_main_method
 from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.session import TruSession
 from trulens.core.utils import pyschema as pyschema_utils
@@ -354,28 +351,12 @@ class TruApp(core_app.App):
         **kwargs: Any,
     ):
         kwargs["app"] = app
-        tru_session = (
+        # Create `TruSession` if not already created.
+        if "connector" in kwargs:
+            TruSession(connector=kwargs["connector"])
+        else:
             TruSession()
-            if "connector" not in kwargs
-            else TruSession(connector=kwargs["connector"])
-        )
-        if tru_session.experimental_feature(
-            core_experimental.Feature.OTEL_TRACING
-        ):
-            main_methods = set()
-            if main_method is not None:
-                main_methods.add(main_method)
-            for _, method in inspect.getmembers(app, inspect.ismethod):
-                if self._has_record_root_instrumentation(method):
-                    main_methods.add(method)
-            if len(main_methods) != 1 and (
-                len(main_methods) != 0 or not is_otel_allow_no_main_method()
-            ):
-                raise ValueError(
-                    f"Must have exactly one main method or method decorated with span type 'record_root'! Found: {list(main_methods)}"
-                )
-            if len(main_methods) == 1:
-                main_method = main_methods.pop()
+
         if main_method is not None:
             kwargs["main_method"] = main_method
         kwargs["root_class"] = pyschema_utils.Class.of_object(app)
