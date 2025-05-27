@@ -132,15 +132,15 @@ def chart_eval_node(state) -> Command[Literal["orchestrator"]]:
     parsed_eval = {
         "accuracy": {
             "score": accuracy_rel_score,
-            "reason": accuracy_rel_reason["reasons"]
+            "reason": accuracy_rel_reason
         },
         "formatting": {
             "score": formatting_score,
-            "reason": formatting_reason["reasons"]
+            "reason": formatting_reason
         },
         "answer_relevance": {
             "score": relevance_score,
-            "reason": relevance_reason["reasons"]
+            "reason": relevance_reason
         }
     }
 
