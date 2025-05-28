@@ -111,7 +111,7 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
                 "messages": result["messages"],
                 "execution_trace": append_to_step_trace(state, state.get('current_step'), new_context),
             },
-            goto="research_eval"
+            goto=goto
         )
 
 
@@ -231,21 +231,11 @@ class TruAgent:
             SpanAttributes.RECORD_ROOT.OUTPUT: "return",
         },
     )
-    def invoke_agent_graph(self, query: str) -> str:
-        events = self.graph.stream(
+    def invoke_agent_graph(self, query: str) -> List[Any]:
+        return self.graph.stream(
             {
                 "messages": [("user", query)],
             },
             # Maximum number of steps to take in the graph
             {"recursion_limit": 150},
-        )
-
-        # resp_messages = []
-
-        for event in events:
-            messages = list(event.values())[0]["messages"]
-        return (
-            messages[-1].content
-            if messages and hasattr(messages[-1], "content")
-            else ""
         )
