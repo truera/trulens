@@ -3,13 +3,30 @@ from __future__ import annotations
 from collections import defaultdict
 import itertools
 import logging
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+import numbers
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+)
 
+from opentelemetry import trace
 from opentelemetry.trace import INVALID_SPAN_ID
+from opentelemetry.trace.span import Span
 import pandas as pd
 from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
 from trulens.core.feedback.selector import Selector
 from trulens.core.otel.instrument import OtelFeedbackComputationRecordingContext
+from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
+from trulens.experimental.otel_tracing.core.span import (
+    set_general_span_attributes,
+)
 from trulens.experimental.otel_tracing.core.span import (
     set_span_attribute_safely,
 )
@@ -65,6 +82,7 @@ def _compute_feedback(
     feedback_function: Callable[
         [Any], Union[float, Tuple[float, Dict[str, Any]]]
     ],
+    higher_is_better: bool,
     selector_function: Callable[[RecordGraphNode], List[Dict[str, Any]]],
 ) -> None:
     """
@@ -72,9 +90,10 @@ def _compute_feedback(
     feedback functions quite arbitrarily and so is quite powerful.
 
     Args:
-        record: Record to compute feedback for.
+        record_root: Record root of record to compute feedback for.
         feedback_name: Name of feedback.
         feedback_function: Function to compute feedback.
+        higher_is_better: Whether higher values are better.
         selector_function:
             Function to select inputs for feedback computation. Given a record
             in graph form, it returns a list of inputs to the feedback
@@ -86,7 +105,12 @@ def _compute_feedback(
     for curr in feedback_inputs:
         curr = {k: FeedbackFunctionInput(value=v) for k, v in curr.items()}
         _call_feedback_function(
-            feedback_name, feedback_function, curr, record_root_attributes
+            feedback_name,
+            feedback_function,
+            higher_is_better,
+            None,
+            curr,
+            record_root_attributes,
         )
 
 
@@ -96,7 +120,9 @@ def compute_feedback_by_span_group(
     feedback_function: Callable[
         [Any], Union[float, Tuple[float, Dict[str, Any]]]
     ],
+    higher_is_better: bool,
     kwarg_to_selector: Dict[str, Selector],
+    feedback_aggregator: Optional[Callable[[List[float]], float]] = None,
     raise_error_on_no_feedbacks_computed: bool = True,
 ) -> None:
     """
@@ -106,7 +132,9 @@ def compute_feedback_by_span_group(
         events: DataFrame containing trace events.
         feedback_name: Name of the feedback function.
         feedback_function: Function to compute feedback.
+        higher_is_better: Whether higher values are better.
         kwarg_to_selector: Mapping from function kwargs to span selectors
+        feedback_aggregator: Aggregator function to combine feedback scores.
         raise_error_on_no_feedbacks_computed:
             Raise an error if no feedbacks were computed. Default is True.
     """
@@ -131,6 +159,8 @@ def compute_feedback_by_span_group(
         flattened_inputs,
         feedback_name,
         feedback_function,
+        higher_is_better,
+        feedback_aggregator,
         record_id_to_record_roots,
     )
     if raise_error_on_no_feedbacks_computed and num_feedbacks_computed == 0:
@@ -429,6 +459,8 @@ def _run_feedback_on_inputs(
     feedback_function: Callable[
         [Any], Union[float, Tuple[float, Dict[str, Any]]]
     ],
+    higher_is_better: bool,
+    feedback_aggregator: Optional[Callable[[List[float]], float]],
     record_id_to_record_root: Dict[str, Dict[str, Any]],
 ) -> int:
     """Run feedback function on all inputs.
@@ -437,6 +469,8 @@ def _run_feedback_on_inputs(
         flattened_inputs: Flattened inputs. Each entry is a tuple of (record_id, span_group, inputs).
         feedback_name: Name of the feedback function.
         feedback_function: Function to compute feedback.
+        higher_is_better: Whether higher values are better.
+        feedback_aggregator: Aggregator function to combine feedback scores.
         record_id_to_record_root: Mapping from record_id to record root.
 
     Returns:
@@ -448,6 +482,8 @@ def _run_feedback_on_inputs(
             _call_feedback_function(
                 feedback_name,
                 feedback_function,
+                higher_is_better,
+                feedback_aggregator,
                 inputs,
                 record_id_to_record_root[record_id],
                 span_group,
@@ -465,6 +501,8 @@ def _call_feedback_function(
     feedback_function: Callable[
         [Any], Union[float, Tuple[float, Dict[str, Any]]]
     ],
+    higher_is_better: bool,
+    feedback_aggregator: Optional[Callable[[List[float]], float]],
     kwarg_inputs: Dict[str, FeedbackFunctionInput],
     record_root_attributes: Dict[str, Any],
     span_group: Optional[str] = None,
@@ -474,6 +512,8 @@ def _call_feedback_function(
     Args:
         feedback_name: Name of the feedback function.
         feedback_function: Function to compute feedback.
+        higher_is_better: Whether higher values are better.
+        feedback_aggregator: Aggregator function to combine feedback scores.
         kwarg_inputs: kwarg inputs to feedback function.
         record_root_attributes: Span attributes of record root.
         span_group: Span group of the invocation.
@@ -509,6 +549,16 @@ def _call_feedback_function(
     )
     with context_manager as eval_root_span:
         try:
+            if span_group is not None:
+                eval_root_span.set_attribute(
+                    f"{SpanAttributes.EVAL_ROOT.SPAN_GROUP}",
+                    span_group,
+                )
+            eval_root_span.set_attribute(
+                SpanAttributes.EVAL_ROOT.HIGHER_IS_BETTER, higher_is_better
+            )
+            expanded_kwargs_inputs = [{}]
+            aggregate = False
             for k, v in kwarg_inputs.items():
                 if v.span_id is not None:
                     eval_root_span.set_attribute(
@@ -520,22 +570,85 @@ def _call_feedback_function(
                         f"{SpanAttributes.EVAL_ROOT.ARGS_SPAN_ATTRIBUTE}.{k}",
                         v.span_attribute,
                     )
-                if span_group is not None:
-                    eval_root_span.set_attribute(
-                        f"{SpanAttributes.EVAL_ROOT.SPAN_GROUP}",
-                        span_group,
-                    )
-            res = feedback_function(**{
-                k: v.value for k, v in kwarg_inputs.items()
-            })
+                if (
+                    isinstance(v.value, list)
+                    and v.call_feedback_function_per_entry_in_list
+                ):
+                    aggregate = True
+                    new_expanded_kwargs_inputs = []
+                    for curr in expanded_kwargs_inputs:
+                        for val in v.value:
+                            curr[k] = val
+                            new_expanded_kwargs_inputs.append(curr.copy())
+                    expanded_kwargs_inputs = new_expanded_kwargs_inputs
+                else:
+                    for curr in expanded_kwargs_inputs:
+                        curr[k] = v.value
+            if not aggregate:
+                res = _call_feedback_function_with_span(
+                    feedback_function,
+                    expanded_kwargs_inputs[0],
+                    eval_root_span,
+                    SpanAttributes.EVAL_ROOT,
+                )
+            else:
+                res = []
+                for i, curr in enumerate(expanded_kwargs_inputs):
+                    with (
+                        trace.get_tracer_provider()
+                        .get_tracer(TRULENS_SERVICE_NAME)
+                        .start_as_current_span(f"eval-{i}")
+                    ) as eval_span:
+                        set_general_span_attributes(
+                            eval_span, SpanAttributes.SpanType.EVAL
+                        )
+                        res.append(
+                            _call_feedback_function_with_span(
+                                feedback_function,
+                                curr,
+                                eval_span,
+                                SpanAttributes.EVAL,
+                            )
+                        )
+                if feedback_aggregator is not None:
+                    res = feedback_aggregator(res)
+                else:
+                    res = sum(res) / len(res) if res else 0.0
+                eval_root_span.set_attribute(
+                    SpanAttributes.EVAL_ROOT.SCORE, res
+                )
         except Exception as e:
             eval_root_span.set_attribute(SpanAttributes.EVAL_ROOT.ERROR, str(e))
             raise e
+
+
+def _call_feedback_function_with_span(
+    feedback_function: Callable[
+        [Any], Union[float, Tuple[float, Dict[str, Any]]]
+    ],
+    kwargs: Dict[str, Any],
+    span: Span,
+    span_attribute_scope: Type,
+) -> float:
+    """
+    Call a feedback function with the provided kwargs and return the score.
+
+    Args:
+        feedback_function: The feedback function to call.
+        kwargs: The keyword arguments to pass to the feedback function.
+        span: The span to use for recording the feedback function call.
+        span_attribute_scope: The scope for span attributes.
+
+    Returns:
+        The score returned by the feedback function.
+    """
+    try:
+        res = feedback_function(**kwargs)
         metadata = {}
         if isinstance(res, tuple):
             if (
                 len(res) != 2
-                or not isinstance(res[0], float)
+                or not isinstance(res[0], numbers.Number)
                 or not isinstance(res[1], dict)
                 or not all([isinstance(curr, str) for curr in res[1].keys()])
             ):
@@ -543,10 +656,17 @@ def _call_feedback_function(
                     "Feedback functions must be of type `Callable[Any, Union[float, Tuple[float, Dict[str, Any]]]]`!"
                 )
             res, metadata = res[0], res[1]
-        eval_root_span.set_attribute(SpanAttributes.EVAL_ROOT.SCORE, res)
+        res = float(res)
+        span.set_attribute(span_attribute_scope.SCORE, res)
         for k, v in metadata.items():
             set_span_attribute_safely(
-                eval_root_span,
-                f"{SpanAttributes.EVAL_ROOT.METADATA}.{k}",
-                v,
+                span, f"{span_attribute_scope.METADATA}.{k}", v
             )
+            if k in ["explanation", "explanations", "reason", "reasons"]:
+                set_span_attribute_safely(
+                    span, span_attribute_scope.EXPLANATION, v
+                )
+        return res
+    except Exception as e:
+        span.set_attribute(span_attribute_scope.ERROR, str(e))
+        raise e

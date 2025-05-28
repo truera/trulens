@@ -62,6 +62,7 @@ class TestOtelLegacyCompatibility(OtelTestCase):
             "response to test",
             record_attributes[SpanAttributes.RECORD_ROOT.OUTPUT],
         )
-        self.assertIsNone(
-            recording
-        )  # TODO(otel): This is not backwards compatible!
+        self.assertEqual(1, len(recording))
+        self.assertEqual(
+            record_attributes[SpanAttributes.RECORD_ID], recording.get()
+        )

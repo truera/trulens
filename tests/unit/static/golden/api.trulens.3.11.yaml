@@ -652,6 +652,7 @@ trulens.core.feedback.feedback_function_input.FeedbackFunctionInput:
   - builtins.object
   __class__: builtins.type
   attributes:
+    call_feedback_function_per_entry_in_list: builtins.bool
     span_attribute: builtins.NoneType
     span_id: builtins.NoneType
     value: builtins.NoneType
@@ -680,6 +681,7 @@ trulens.core.feedback.selector.Selector:
   - builtins.object
   __class__: builtins.type
   attributes:
+    call_feedback_function_per_entry_in_list: builtins.bool
     describes_same_spans: builtins.function
     function_attribute: builtins.NoneType
     function_name: builtins.NoneType
@@ -1299,6 +1301,7 @@ trulens.core.session.TruSession:
     stop_dashboard: builtins.function
     stop_evaluator: builtins.function
     update_record: builtins.function
+    wait_for_record: builtins.function
 trulens.core.utils:
   __class__: builtins.module
   highs: {}
@@ -2212,6 +2215,7 @@ trulens.feedback.computer:
     INVALID_SPAN_ID: builtins.int
     MinimalSpanInfo: builtins.type
     RecordGraphNode: builtins.type
+    TRULENS_SERVICE_NAME: builtins.str
     compute_feedback_by_span_group: builtins.function
 trulens.feedback.computer.MinimalSpanInfo:
   __bases__:

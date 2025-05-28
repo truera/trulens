@@ -1104,6 +1104,7 @@ class App(
                 if self._current_context_manager is None:
                     raise RuntimeError("Unknown recording context manager!")
                 context_manager = self._current_context_manager
+                self._current_context_manager = None
             return context_manager.__exit__(exc_type, exc_value, exc_tb)
 
         self._prevent_invalid_otel_syntax()
@@ -1936,7 +1937,9 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 events,
                 feedback.name,
                 feedback.imp,
+                feedback.higher_is_better,
                 feedback.selectors,
+                feedback.aggregator,
                 raise_error_on_no_feedbacks_computed,
             )
 

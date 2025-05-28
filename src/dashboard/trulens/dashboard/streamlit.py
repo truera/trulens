@@ -3,14 +3,13 @@ import asyncio
 import json
 import math
 import sys
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from pydantic import BaseModel
 import streamlit as st
 from trulens.core import session as core_session
 from trulens.core.database import base as core_db
 from trulens.core.database.legacy import migration as legacy_migration
-from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.utils import json as json_utils
@@ -310,43 +309,42 @@ def trulens_feedback(record: record_schema.Record):
         st.dataframe(styled_df, hide_index=True)
 
 
-def trulens_trace(record: record_schema.Record):
+def trulens_trace(record: Union[record_schema.Record, str]):
     """Display the trace view for a record.
 
     Args:
-
-        record: A trulens record.
+        record: Either a trulens record (non-OTel) or a record_id string (OTel).
 
     Example:
         ```python
         from trulens.core import streamlit as trulens_st
 
+        # Using with Record object
         with tru_llm as recording:
             response = llm.invoke(input_text)
-
         record, response = recording.get()
-
         trulens_st.trulens_trace(record=record)
+
+        # Using with record_id string
+        trulens_st.trulens_trace(record="record_123")
         ```
     """
 
     session = core_session.TruSession()
-    app = session.get_app(app_id=record.app_id)
+    if isinstance(record, record_schema.Record):
+        app = session.get_app(app_id=record.app_id)
     if dashboard_utils.is_sis_compatibility_enabled():
         st.warning(
             "TruLens trace view is not enabled when SiS compatibility is enabled."
         )
-    elif is_otel_tracing_enabled():
-        # NOTE: Given that this method relies on the Record table, I'm unsure if this block will ever
-        # get called because OTEL spans use the Event table instead of the Record table.
-        # TODO: Consider writing a separate method for OTEL.
-        event_spans = _get_event_otel_spans(record.record_id)
+    elif isinstance(record, str):
+        event_spans = _get_event_otel_spans(record)
         if event_spans:
             dashboard_record_viewer_otel.record_viewer_otel(
                 spans=event_spans, key=None
             )
         else:
-            st.warning("No trace data available for this record.")
+            st.warning("No OTel trace data available for this record.")
     else:
         dashboard_record_viewer.record_viewer(
             record_json=json.loads(json_utils.json_str_of_obj(record)),
