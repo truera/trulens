@@ -1,5 +1,4 @@
 import streamlit as st
-from langchain_community.document_loaders import WebBaseLoader
 from src.retrieval import VectorStore
 from src.generation import ChatModel
 from src.rag import Rag
