@@ -15,6 +15,11 @@ import json
 
 provider = OpenAI(model_engine="gpt-4o")
 
+def extract_reason(val):
+    if isinstance(val, dict) and 'reason' in val:
+        return val['reason']
+    return str(val)
+
 def context_relevance(query, context_list):
     score, reason = provider.context_relevance_with_cot_reasons(
             question=query,
@@ -68,9 +73,9 @@ def research_eval_node(state) -> Command[Literal["orchestrator"]]:
     # Build a natural language summary
     summary = (
         f"Research Evaluation:\n"
-        f"- Context Relevance: {parsed_eval['context_relevance']['score']}/3 — {parsed_eval['context_relevance']['reason']}\n"
-        f"- Groundedness: {parsed_eval['groundedness']['score']}/3 — {parsed_eval['groundedness']['reason']}\n"
-        f"- Answer Relevance: {parsed_eval['answer_relevance']['score']}/3 — {parsed_eval['answer_relevance']['reason']}"
+        f"- Context Relevance: {float(str(parsed_eval['context_relevance']['score']))*3}/3 — {extract_reason(parsed_eval['context_relevance']['reason'])}\n"
+        f"- Groundedness: {float(str(parsed_eval['groundedness']['score']))*3}/3 — {extract_reason(parsed_eval['groundedness']['reason'])}\n"
+        f"- Answer Relevance: {float(str(parsed_eval['answer_relevance']['score']))*3}/3 — {extract_reason(parsed_eval['answer_relevance']['reason'])}"
     )
     eval_msg = HumanMessage(content=summary, name="research_eval")
 
@@ -168,9 +173,9 @@ def chart_eval_node(state) -> Command[Literal["orchestrator"]]:
     # Build a natural language summary
     summary = (
         f"Chart Evaluation:\n"
-        f"- Accuracy: {parsed_eval['accuracy']['score']}/3 — {parsed_eval['accuracy']['reason']}\n"
-        f"- Formatting: {parsed_eval['formatting']['score']}/3 — {parsed_eval['formatting']['reason']}\n"
-        f"- Answer Relevance: {parsed_eval['answer_relevance']['score']}/3 — {parsed_eval['answer_relevance']['reason']}"
+        f"- Accuracy: {float(str(parsed_eval['accuracy']['score']))*3}/3 — {extract_reason(parsed_eval['accuracy']['reason'])}\n"
+        f"- Formatting: {float(str(parsed_eval['formatting']['score']))*3}/3 — {extract_reason(parsed_eval['formatting']['reason'])}\n"
+        f"- Answer Relevance: {float(str(parsed_eval['answer_relevance']['score']))*3}/3 — {extract_reason(parsed_eval['answer_relevance']['reason'])}"
     )
     eval_msg = HumanMessage(content=summary, name="chart_eval")
     goto = "orchestrator"
@@ -226,9 +231,14 @@ def traj_eval_node(state: State) -> Command[Literal[END]]:
         "metrics": parsed_eval
     }
     # Build a natural language summary
+    reason_val = parsed_eval['trajectory_execution']['reason']
+    if isinstance(reason_val, dict) and 'reason' in reason_val:
+        reason_str = reason_val['reason']
+    else:
+        reason_str = str(reason_val)
     summary = (
         f"Final Evaluation:\n"
-        f"- Trajectory Execution: {parsed_eval['trajectory_execution']['score']}/3 — {parsed_eval['trajectory_execution']['reason']}\n"
+        f"Trajectory Execution: {float(str(parsed_eval['trajectory_execution']['score']))*3}/3\n\n{reason_str}\n"
     )
     eval_msg = HumanMessage(content=summary, name="traj_eval")
     return Command(
