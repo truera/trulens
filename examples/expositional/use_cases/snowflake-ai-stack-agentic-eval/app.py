@@ -2,7 +2,7 @@ import streamlit as st
 from trulens.core import TruSession
 from trulens.apps.app import TruApp
 from trulens.dashboard import streamlit as trulens_st
-from src.graph import TruAgent
+from src.graph import MultiAgentWorkflow
 import os
 
 st.set_page_config(page_title="Snowflake Agentic Evaluation Demo", page_icon="❄️", layout="centered", initial_sidebar_state="collapsed", menu_items=None)
@@ -17,8 +17,8 @@ if "tru_session" not in st.session_state:
     st.session_state.tru_session.reset_database()
 
 # Initialize session state if not already set
-if "tru_agent" not in st.session_state:
-    st.session_state.tru_agent = None
+if "muti_agent_workflow" not in st.session_state:
+    st.session_state.muti_agent_workflow = None
 if "tru_agentic_eval_app" not in st.session_state:
     st.session_state.tru_agentic_eval_app = None
 if "messages" not in st.session_state:
@@ -27,15 +27,15 @@ if "messages" not in st.session_state:
 
 
 # Create the TruAgent instance only once
-if st.session_state.tru_agent is None:
-    st.session_state.tru_agent = TruAgent(
+if st.session_state.muti_agent_workflow is None:
+    st.session_state.muti_agent_workflow = MultiAgentWorkflow(
         search_max_results=int(os.environ.get("SEARCH_MAX_RESULTS", "5")),
         llm_model=os.environ.get("LLM_MODEL_NAME", "gpt-4o"),
         reasoning_model=os.environ.get("REASONING_MODEL_NAME", "o1"),
     )
 
     st.session_state.tru_agentic_eval_app = TruApp(
-        st.session_state.tru_agent,
+        st.session_state.muti_agent_workflow,
         app_name="Langgraph Agentic Evaluation",
         app_version="trajectory-eval-oss",
         # TODO main method?
@@ -62,8 +62,7 @@ if user_input:
         with st.session_state.tru_agentic_eval_app as recording:
             with st.spinner("Thinking..."):
                 # TODO: messages for chat history not used in the agent graph yet
-                # TODO: streaming output?
-                events = st.session_state.tru_agent.invoke_agent_graph(user_input)
+                events = st.session_state.muti_agent_workflow.invoke_agent_graph(user_input)
 
                 for event in events:
                     full_response += list(event.values())[0]["messages"][0].content

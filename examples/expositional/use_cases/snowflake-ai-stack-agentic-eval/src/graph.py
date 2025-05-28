@@ -220,7 +220,7 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
     return graph
 
 
-class TruAgent:
+class MultiAgentWorkflow:
     def __init__(self, search_max_results: int = 5, llm_model: str = "gpt-4o", reasoning_model: str = "o1"):
         self.graph = build_graph(search_max_results=search_max_results, llm_model=llm_model, reasoning_model=reasoning_model)
 
