@@ -7,9 +7,9 @@ import os
 import json
 import re
 
-st.set_page_config(page_title="Snowflake Agentic Evaluation Demo", page_icon="❄️", layout="centered", initial_sidebar_state="collapsed", menu_items=None)
+st.set_page_config(page_title="Trustworthy Deep Research Agent", page_icon="❄️", layout="centered", initial_sidebar_state="collapsed", menu_items=None)
 
-st.subheader("Using the ❄️ AI Stack to build agentic workflows and evaluate them with TruLens")
+st.subheader("❄️ Trustworthy Deep Research Agent")
 
 # Initialize TruLens for observability (similar to notebook example)
 if "tru_session" not in st.session_state:
