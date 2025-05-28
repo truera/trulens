@@ -138,12 +138,10 @@ class TestOtelSpan(TestCase):
 
     def test_set_user_defined_attributes(self) -> None:
         span = Mock()
-        span_type = SpanAttributes.SpanType.UNKNOWN
         with self.subTest("Dictionary attributes"):
             attributes_dict = {"key2": "value2"}
             set_user_defined_attributes(
                 span,
-                span_type=span_type,
                 attributes=attributes_dict,
             )
         with self.subTest("Invalid attributes"):
@@ -151,7 +149,6 @@ class TestOtelSpan(TestCase):
             with self.assertRaises(ValueError):
                 set_user_defined_attributes(
                     span,
-                    span_type=span_type,
                     attributes=attributes_invalid,  # type: ignore
                 )
 

@@ -90,7 +90,7 @@ class _TestApp:
             self.call0(span_group, 4 * a4, 4 * b4, 4 * c4)
         return [a4, b4, c4]
 
-    @instrument(span_type=SpanAttributes.SpanType.RECORD_ROOT)
+    @instrument()
     def query(self, question: str) -> str:
         # 1. Many attributes from one span that there are many of.
         self.call1(1, 1, 1)
@@ -150,7 +150,9 @@ class TestOtelFeedbackComputation(OtelTestCase):
     def test_compute_feedback_by_span_group(self) -> None:
         # Create app.
         app = _TestApp()
-        tru_app = TruApp(app, app_name="Test App", app_version="v1")
+        tru_app = TruApp(
+            app, app_name="Test App", app_version="v1", main_method=app.query
+        )
         # Record and invoke.
         tru_app.instrumented_invoke_main_method(
             run_name="test run",
