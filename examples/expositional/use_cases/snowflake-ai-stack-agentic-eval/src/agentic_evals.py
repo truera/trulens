@@ -1,13 +1,8 @@
 from typing import Literal, Dict, Tuple
 from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.core.otel.instrument import instrument
-from trulens.core import Feedback
-from trulens.core.feedback.selector import Selector
-from trulens.feedback.llm_provider import LLMProvider
 from trulens.providers.openai import OpenAI
 from trulens.feedback import prompts
-from trulens.otel.semconv.trace import SpanAttributes
-
 
 from langgraph.types import Command
 from langgraph.graph import END
@@ -17,56 +12,76 @@ from src.util import State
 from src.util import append_to_step_trace
 
 import json
-import numpy as np
-
 
 provider = OpenAI(model_engine="gpt-4o")
 
-
-def create_rag_triad_evals(provider: LLMProvider = None):
-    if provider is None:
-        provider = OpenAI(model_engine="gpt-4o")
-
-    # Define a groundedness feedback function
-    f_groundedness = (
-        Feedback(
-            provider.groundedness_measure_with_cot_reasons, name="Groundedness"
+def context_relevance(query, context_list):
+    score, reason = provider.context_relevance_with_cot_reasons(
+            question=query,
+            context=context_list,
         )
-        .on({
-            "source": Selector(
-                span_type=SpanAttributes.SpanType.RETRIEVAL,
-                span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
-            ),
-        })
-        .on_output()
+    return score, reason
+
+def answer_relevance(query, response):
+    score, reason = provider.relevance_with_cot_reasons(prompt=query, response=response)
+    return score, reason
+
+def groundedness(context_list, response):
+    combined_context = " ".join(context_list)
+    score, reason = provider.groundedness_measure_with_cot_reasons(
+        source=combined_context,
+        statement=response
     )
-    # Question/answer relevance between overall question and answer.
-    f_answer_relevance = (
-        Feedback(provider.relevance_with_cot_reasons, name="Answer Relevance")
-        .on_input()
-        .on_output()
+    return score, reason
+
+# TODO: convert to use trulens feedback functions to perform offline evals instead of inline evals
+def research_eval_node(state) -> Command[Literal["orchestrator"]]:
+    query = state.get("user_query")
+    context_list = state.get("execution_trace")[state.get("current_step")][-1]["tool_calls"]
+    response = state.get("execution_trace")[state.get("current_step")][-1]["output"]
+
+    context_rel_score, context_rel_reason = context_relevance(query, context_list)
+    grounded_score, grounded_reason = groundedness(context_list, response)
+    answer_score, answer_reason = answer_relevance(query, response)
+
+    parsed_eval = {
+        "context_relevance": {
+            "score": context_rel_score,
+            "reason": context_rel_reason
+        },
+        "groundedness": {
+            "score": grounded_score,
+            "reason": grounded_reason
+        },
+        "answer_relevance": {
+            "score": answer_score,
+            "reason": answer_reason
+        }
+    }
+
+    # Create new entry for execution_trace
+    eval_entry = {
+        "step": state.get("current_step"),
+        "agent": "research_eval",
+        "metrics": parsed_eval,
+    }
+    # Build a natural language summary
+    summary = (
+        f"Research Evaluation:\n"
+        f"- Context Relevance: {parsed_eval['context_relevance']['score']}/3 — {parsed_eval['context_relevance']['reason']}\n"
+        f"- Groundedness: {parsed_eval['groundedness']['score']}/3 — {parsed_eval['groundedness']['reason']}\n"
+        f"- Answer Relevance: {parsed_eval['answer_relevance']['score']}/3 — {parsed_eval['answer_relevance']['reason']}"
+    )
+    eval_msg = HumanMessage(content=summary, name="research_eval")
+
+    return Command(
+        update={
+            "messages": [eval_msg],
+            "execution_trace": append_to_step_trace(state, state.get("current_step"), eval_entry)
+        },
+        goto="orchestrator"
     )
 
-    f_context_relevance = (
-        Feedback(
-            provider.context_relevance, name="Context Relevance",
-        )
-        .on({
-            "question": Selector(
-                span_type=SpanAttributes.SpanType.RETRIEVAL,
-                span_attribute=SpanAttributes.RETRIEVAL.QUERY_TEXT,
-            ),
-        })
-        .on({
-            "context": Selector(
-                span_type=SpanAttributes.SpanType.RETRIEVAL,
-                span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
-            ),
-        })
-        .aggregate(np.mean)  # choose a different aggregation method if you wish
-    )
-
-    return [f_context_relevance, f_groundedness, f_answer_relevance]
 
 class CustomChartEval(OpenAI):
     def chart_accuracy_with_cot_reasons(self, code: str, context: str) -> Tuple[float, Dict]:
