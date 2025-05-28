@@ -61,36 +61,31 @@ def noserio(obj: Any, **extra: Dict) -> Dict:
 # TODO: rename as functionality optionally produces JSONLike .
 def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
     """
-    Try to get the attribute `k` of the given object. This may evaluate some
-    code if the attribute is a property and may fail. In that case, an dict
-    indicating so is returned.
+    Try to get the attribute `k` of the given object. If it’s a @property or
+    functools.cached_property (including OpenAI’s cached_property shim), this
+    will invoke the descriptor to compute and return the value.
 
-    If `get_prop` is False, will not return contents of properties (will raise
-    `ValueException`).
+    If `get_prop` is False, will raise ValueError for any property/descriptor.
+    On exceptions, returns a dict with an ERROR key.
     """
-
+    # Fetch the descriptor or raw attribute without invoking it
     v = inspect.getattr_static(obj, k)
 
-    is_prop = False
-    try:
-        # OpenAI version 1 classes may cause this isinstance test to raise an
-        # exception.
-        is_prop = isinstance(v, property)
-    except Exception as e:
-        return {constant_utils.ERROR: Obj.of_object(e)}
+    # Detect both plain @property and stdlib cached_property
+    is_prop = isinstance(v, property)
+    is_std_cached = isinstance(v, functools.cached_property)
 
-    if is_prop:
+    if is_prop or is_std_cached:
         if not get_prop:
-            raise ValueError(f"{k} is a property")
-
+            raise ValueError(f"{k} is a property/descriptor")
         try:
-            v = v.fget(obj)
-            return v
-
+            # Invoke the descriptor protocol to compute (and cache) the value
+            return v.__get__(obj, type(obj))
         except Exception as e:
             return {constant_utils.ERROR: Obj.of_object(e)}
-    else:
-        return v
+
+    # Not a property/descriptor we care about—return the raw value
+    return v
 
 
 def clean_attributes(obj, include_props: bool = False) -> Dict[str, Any]:
