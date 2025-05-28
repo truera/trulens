@@ -22,7 +22,6 @@ from opentelemetry.baggage import get_baggage
 from opentelemetry.context import Context
 from opentelemetry.trace.span import Span
 from opentelemetry.util.types import AttributeValue
-from trulens.core.utils import signature as signature_utils
 from trulens.otel.semconv.trace import SpanAttributes
 
 if TYPE_CHECKING:
@@ -251,12 +250,6 @@ def set_user_defined_attributes(
 """
 RECORD_ROOT SPAN
 """
-
-
-def get_main_input(func: Callable, args: tuple, kwargs: dict) -> str:
-    sig = signature(func)
-    bindings = signature(func).bind(*args, **kwargs)
-    return signature_utils.main_input(func, sig, bindings)
 
 
 def set_record_root_span_attributes(
