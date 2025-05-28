@@ -1,4 +1,4 @@
-from typing import Optional, List, Dict, Any, Annotated, Literal
+from typing import Iterator, Optional, List, Dict, Any, Annotated, Literal
 
 from IPython.display import Image
 from IPython.display import display
@@ -87,6 +87,20 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
         """),
     )
 
+    @instrument(
+        span_type="RESEARCH_NODE",
+        attributes=lambda ret, exception, *args, **kwargs: {
+            f"{BASE_SCOPE}.execution_trace": args[0].get("execution_trace", {}),
+            f"{BASE_SCOPE}.user_query": args[0].get("user_query", {}),
+            f"{BASE_SCOPE}.current_step": args[0].get("current_step", 0),
+            f"{BASE_SCOPE}.last_reason": args[0].get("last_reason", ""),
+             f"{BASE_SCOPE}.research_node_response": ret.update["messages"][
+                -1
+            ].content
+            if hasattr(ret, "update")
+            else json.dumps(ret, indent=4, sort_keys=True),
+        },
+    )
     def research_node(
         state: State,
     ) -> Command[Literal["research_eval"]]:
@@ -149,6 +163,16 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
             }}
         """)
 
+
+    @instrument(
+        span_type="ORCHESTRATOR_NODE",
+        attributes=lambda ret, exception, *args, **kwargs: {
+            f"{BASE_SCOPE}.execution_trace": args[0].get("execution_trace", {}),
+            f"{BASE_SCOPE}.user_query": args[0].get("user_query", {}),
+            f"{BASE_SCOPE}.current_step": args[0].get("current_step", 0),
+            f"{BASE_SCOPE}.last_reason": args[0].get("last_reason", ""),
+        },
+    )
     def orchestrator_node(
         state: State,
     ) -> Command[Literal["researcher", "chart_generator", "traj_eval"]]:
@@ -184,6 +208,16 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
         ),
     )
 
+    @instrument(
+        span_type="CHART_GENERATOR_NODE",
+        attributes=lambda ret, exception, *args, **kwargs: {
+            f"{BASE_SCOPE}.execution_trace": args[0].get("execution_trace", {}),
+            f"{BASE_SCOPE}.user_query": args[0].get("user_query", {}),
+            f"{BASE_SCOPE}.current_step": args[0].get("current_step", 0),
+            f"{BASE_SCOPE}.last_reason": args[0].get("last_reason", ""),
+            f"{BASE_SCOPE}.chart_generator_response": ret.update["messages"][-1].content
+        },
+    )
     def chart_node(state: State) -> Command[Literal["chart_eval"]]:
         with st.spinner("Chart Generator step..."):
             result = chart_agent.invoke(state)
@@ -234,11 +268,12 @@ class MultiAgentWorkflow:
             SpanAttributes.RECORD_ROOT.OUTPUT: "return",
         },
     )
-    def invoke_agent_graph(self, query: str) -> List[Any]:
+    def invoke_agent_graph(self, query: str) -> Iterator[dict[str, Any] | Any]:
         return self.graph.stream(
             {
                 "messages": [("user", query)],
             },
             # Maximum number of steps to take in the graph
             {"recursion_limit": 150},
+            stream_mode="updates"
         )

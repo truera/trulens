@@ -64,8 +64,12 @@ if user_input:
             events = st.session_state.muti_agent_workflow.invoke_agent_graph(user_input)
 
             for event in events:
-                full_response += list(event.values())[0]["messages"][0].content
-                message_area.markdown(full_response)
+                st.write(event)
+
+                # TODO: ideally we should render messages differently based on the node being invoked (i.e. orchestrator vs researcher vs chart generator)
+                # if event is not None:
+                #     full_response += list(event.values())[0]["messages"][-1].content + "\n\n"
+                #     message_area.markdown(full_response)
 
         st.session_state.tru_session.force_flush()
         record_id = recording.get()
