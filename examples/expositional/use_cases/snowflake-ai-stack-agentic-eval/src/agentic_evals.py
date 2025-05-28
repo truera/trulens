@@ -68,56 +68,6 @@ def create_rag_triad_evals(provider: LLMProvider = None):
 
     return [f_context_relevance, f_groundedness, f_answer_relevance]
 
-
-# TODO: convert to use trulens feedback functions to perform offline evals instead of inline evals
-def research_eval_node(state) -> Command[Literal["orchestrator"]]:
-    query = state.get("user_query")
-    context_list = state.get("execution_trace")[state.get("current_step")][-1]["tool_calls"]
-    response = state.get("execution_trace")[state.get("current_step")][-1]["output"]
-
-    context_rel_score, context_rel_reason = context_relevance(query, context_list)
-    grounded_score, grounded_reason = groundedness(context_list, response)
-    answer_score, answer_reason = answer_relevance(query, response)
-
-    parsed_eval = {
-        "context_relevance": {
-            "score": context_rel_score,
-            "reason": context_rel_reason
-        },
-        "groundedness": {
-            "score": grounded_score,
-            "reason": grounded_reason
-        },
-        "answer_relevance": {
-            "score": answer_score,
-            "reason": answer_reason
-        }
-    }
-
-    # Create new entry for execution_trace
-    eval_entry = {
-        "step": state.get("current_step"),
-        "agent": "research_eval",
-        "metrics": parsed_eval,
-    }
-    # Build a natural language summary
-    summary = (
-        f"Research Evaluation:\n"
-        f"- Context Relevance: {parsed_eval['context_relevance']['score']}/3 — {parsed_eval['context_relevance']['reason']}\n"
-        f"- Groundedness: {parsed_eval['groundedness']['score']}/3 — {parsed_eval['groundedness']['reason']}\n"
-        f"- Answer Relevance: {parsed_eval['answer_relevance']['score']}/3 — {parsed_eval['answer_relevance']['reason']}"
-    )
-    eval_msg = HumanMessage(content=summary, name="research_eval")
-
-    return Command(
-        update={
-            "messages": [eval_msg],
-            "execution_trace": append_to_step_trace(state, state.get("current_step"), eval_entry)
-        },
-        goto="orchestrator"
-    )
-
-
 class CustomChartEval(OpenAI):
     def chart_accuracy_with_cot_reasons(self, code: str, context: str) -> Tuple[float, Dict]:
         system_prompt = f"""
