@@ -121,10 +121,10 @@ def _render_trace(
 
     input_col, output_col = st_columns(2)
     with input_col.expander("Record Input"):
-        st_code(selected_row["input"], wrap_lines=True, language="plaintext")
+        st_code(selected_row["input"], wrap_lines=True)
 
     with output_col.expander("Record Output"):
-        st_code(selected_row["output"], wrap_lines=True, language="plaintext")
+        st_code(selected_row["output"], wrap_lines=True)
 
     _render_record_metrics(records_df, selected_row)
 

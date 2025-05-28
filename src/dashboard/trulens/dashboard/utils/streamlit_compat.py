@@ -1,3 +1,5 @@
+from typing import Optional
+
 from packaging.version import Version
 import streamlit as st
 
@@ -23,7 +25,7 @@ def st_columns(
 
 def st_code(
     body,
-    language: str = "python",
+    language: Optional[str] = None,
     *,
     line_numbers: bool = False,
     wrap_lines: bool = False,

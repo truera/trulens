@@ -722,9 +722,6 @@ def _render_list_tab(
                 ] = [app_id]
                 st.switch_page("pages/Records.py")
 
-        # with st.expander("Model metadata"):
-        #    st.markdown(draw_metadata(metadata))
-
         st.markdown("""---""")
 
 
