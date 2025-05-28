@@ -104,7 +104,7 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
     def research_node(
         state: State,
     ) -> Command[Literal["research_eval"]]:
-        with st.spinner("Researcher step..."):
+        with st.spinner("Researching..."):
             result = research_agent.invoke(state)
         goto = "research_eval"
         # wrap in a human message, as not all providers allow
@@ -177,7 +177,7 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
         state: State,
     ) -> Command[Literal["researcher", "chart_generator", "traj_eval"]]:
         full_prompt = [orchestrator_prompt(state)]
-        with st.spinner("Orchestrator step..."):
+        with st.spinner("Choosing next action..."):
             result = reasoning_llm.invoke(full_prompt)
 
         try:
@@ -219,7 +219,7 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
         },
     )
     def chart_node(state: State) -> Command[Literal["chart_eval"]]:
-        with st.spinner("Chart Generator step..."):
+        with st.spinner("Generating chart..."):
             result = chart_agent.invoke(state)
         result["messages"][-1] = HumanMessage(
             content=result["messages"][-1].content, name="chart_generator"

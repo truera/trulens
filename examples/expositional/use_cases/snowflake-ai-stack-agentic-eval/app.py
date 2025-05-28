@@ -4,6 +4,7 @@ from trulens.apps.app import TruApp
 from trulens.dashboard import streamlit as trulens_st
 from src.graph import MultiAgentWorkflow
 import os
+import json
 
 st.set_page_config(page_title="Snowflake Agentic Evaluation Demo", page_icon="❄️", layout="centered", initial_sidebar_state="collapsed", menu_items=None)
 
@@ -64,12 +65,35 @@ if user_input:
             events = st.session_state.multi_agent_workflow.invoke_agent_graph(user_input)
 
             for event in events:
-                st.write(event)
+                if not event:
+                    continue
+                node_name = list(event.keys())[0]
+                update = event[node_name]
+                messages = update.get("messages", [])
+                if not messages:
+                    continue
+                last_msg = messages[-1]
+                content = last_msg.content
+                role = getattr(last_msg, "name", node_name)  # fallback to node_name
 
-                # TODO: ideally we should render messages differently based on the node being invoked (i.e. orchestrator vs researcher vs chart generator)
-                # if event is not None:
-                #     full_response += list(event.values())[0]["messages"][-1].content + "\n\n"
-                #     message_area.markdown(full_response)
+                if node_name == "orchestrator":
+                    # Try to parse the content as JSON to extract 'goto' and 'reason'
+                    try:
+                        parsed = json.loads(content)
+                        goto = parsed.get("goto", "[missing]")
+                        reason = parsed.get("reason", "[missing]")
+                        st.chat_message("orchestrator", avatar = "🧑‍💼").markdown(f"**Orchestrator:**\n- **Next node:** `{goto}`\n- **Reason:** {reason}")
+                    except Exception:
+                        st.chat_message("orchestrator", avatar = "🧑‍💼").write(f"**Orchestrator:** {content}")
+                elif node_name == "researcher":
+                    st.chat_message("researcher", avatar = "🔬").write(f"**Researcher:** {content}")
+                elif node_name == "chart_generator":
+                    st.chat_message("chart_generator", avatar = "📊").write(f"**Chart Generator:**")
+                    st.chat_message("chart_generator", avatar = "📊").write(content)
+                elif node_name.endswith("_eval"):
+                    st.chat_message("eval", avatar="📝").write(f"**Evaluation:** {content}")
+                else:
+                    st.chat_message("assistant").write(content)
 
         st.session_state.tru_session.force_flush()
         record_id = recording.get()
