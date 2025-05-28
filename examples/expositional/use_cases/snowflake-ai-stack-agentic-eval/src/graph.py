@@ -135,7 +135,7 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
         if step == 0:
             step_evals = []
         else:
-            step_evals = state.get("execution_trace")[step][-1]["metrics"]
+            step_evals = state.get("execution_trace")#[step][-1]#["metrics"]
         return HumanMessage(content=f"""
             You are the Orchestrator in a multi-agent system with three agents: `researcher`, `chart_generator`, and `traj_eval`.
 
