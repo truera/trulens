@@ -20,7 +20,7 @@ def context_relevance(query, context_list):
             question=query,
             context=context_list,
         )
-    return score, reason # [reasons: ...]
+    return score, reason
 
 def answer_relevance(query, response):
     score, reason = provider.relevance_with_cot_reasons(prompt=query, response=response)
