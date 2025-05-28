@@ -20,7 +20,7 @@ from trulens.otel.semconv.trace import SpanAttributes
 import json
 from src.agentic_evals import chart_eval_node, research_eval_node, traj_eval_node
 from src.util import State, append_to_step_trace
-
+import streamlit as st
 
 
 def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -> StateGraph:
@@ -90,7 +90,8 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
     def research_node(
         state: State,
     ) -> Command[Literal["research_eval"]]:
-        result = research_agent.invoke(state)
+        with st.spinner("Researcher step..."):
+            result = research_agent.invoke(state)
         goto = "research_eval"
         # wrap in a human message, as not all providers allow
         # AI message at the last position of the input messages list
@@ -152,7 +153,8 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
         state: State,
     ) -> Command[Literal["researcher", "chart_generator", "traj_eval"]]:
         full_prompt = [orchestrator_prompt(state)]
-        result = reasoning_llm.invoke(full_prompt)
+        with st.spinner("Orchestrator step..."):
+            result = reasoning_llm.invoke(full_prompt)
 
         try:
             parsed = json.loads(result.content)
@@ -183,7 +185,8 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
     )
 
     def chart_node(state: State) -> Command[Literal["chart_eval"]]:
-        result = chart_agent.invoke(state)
+        with st.spinner("Chart Generator step..."):
+            result = chart_agent.invoke(state)
         result["messages"][-1] = HumanMessage(
             content=result["messages"][-1].content, name="chart_generator"
         )

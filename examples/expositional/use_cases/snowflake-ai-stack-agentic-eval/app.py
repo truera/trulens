@@ -60,13 +60,12 @@ if user_input:
         message_area = message_container.empty()
         full_response = ""
         with st.session_state.tru_agentic_eval_app as recording:
-            with st.spinner("Thinking..."):
-                # TODO: messages for chat history not used in the agent graph yet
-                events = st.session_state.muti_agent_workflow.invoke_agent_graph(user_input)
+                # TODO: messages for chat history not used in the agent graph for now
+            events = st.session_state.muti_agent_workflow.invoke_agent_graph(user_input)
 
-                for event in events:
-                    full_response += list(event.values())[0]["messages"][0].content
-                    message_area.markdown(full_response)
+            for event in events:
+                full_response += list(event.values())[0]["messages"][0].content
+                message_area.markdown(full_response)
 
         st.session_state.tru_session.force_flush()
         record_id = recording.get()
