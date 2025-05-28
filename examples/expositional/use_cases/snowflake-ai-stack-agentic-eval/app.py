@@ -3,6 +3,9 @@ from trulens.core import TruSession
 from trulens.apps.app import TruApp
 from trulens.dashboard import streamlit as trulens_st
 from src.graph import MultiAgentWorkflow
+from src.agentic_evals import create_rag_triad_evals
+from trulens.providers.openai import OpenAI
+
 import os
 
 st.set_page_config(page_title="Snowflake Agentic Evaluation Demo", page_icon="❄️", layout="centered", initial_sidebar_state="collapsed", menu_items=None)
@@ -33,12 +36,19 @@ if st.session_state.multi_agent_workflow is None:
         llm_model=os.environ.get("LLM_MODEL_NAME", "gpt-4o"),
         reasoning_model=os.environ.get("REASONING_MODEL_NAME", "o1"),
     )
+    provider = OpenAI(
+        model_engine=os.environ.get("LLM_MODEL_NAME"),
+        api_key=os.environ.get("OPENAI_API_KEY")
+    )
+
+    rag_triad_evals = create_rag_triad_evals(
+        provider=provider)
 
     st.session_state.tru_agentic_eval_app = TruApp(
         st.session_state.multi_agent_workflow,
         app_name="Langgraph Agentic Evaluation",
         app_version="trajectory-eval-oss",
-        # TODO main method?
+        feedbacks=rag_triad_evals
     )
     st.success("Langgraph workflow compiled!")
 

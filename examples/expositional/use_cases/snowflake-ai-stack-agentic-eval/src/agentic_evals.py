@@ -1,8 +1,13 @@
 from typing import Literal, Dict, Tuple
 from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.core.otel.instrument import instrument
+from trulens.core import Feedback
+from trulens.core.feedback.selector import Selector
+from trulens.feedback.llm_provider import LLMProvider
 from trulens.providers.openai import OpenAI
 from trulens.feedback import prompts
+from trulens.otel.semconv.trace import SpanAttributes
+
 
 from langgraph.types import Command
 from langgraph.graph import END
@@ -12,27 +17,57 @@ from src.util import State
 from src.util import append_to_step_trace
 
 import json
+import numpy as np
+
 
 provider = OpenAI(model_engine="gpt-4o")
 
-def context_relevance(query, context_list):
-    score, reason = provider.context_relevance_with_cot_reasons(
-            question=query,
-            context=context_list,
+
+def create_rag_triad_evals(provider: LLMProvider = None):
+    if provider is None:
+        provider = OpenAI(model_engine="gpt-4o")
+
+    # Define a groundedness feedback function
+    f_groundedness = (
+        Feedback(
+            provider.groundedness_measure_with_cot_reasons, name="Groundedness"
         )
-    return score, reason
-
-def answer_relevance(query, response):
-    score, reason = provider.relevance_with_cot_reasons(prompt=query, response=response)
-    return score, reason
-
-def groundedness(context_list, response):
-    combined_context = " ".join(context_list)
-    score, reason = provider.groundedness_measure_with_cot_reasons(
-        source=combined_context,
-        statement=response
+        .on({
+            "source": Selector(
+                span_type=SpanAttributes.SpanType.RETRIEVAL,
+                span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
+            ),
+        })
+        .on_output()
     )
-    return score, reason
+    # Question/answer relevance between overall question and answer.
+    f_answer_relevance = (
+        Feedback(provider.relevance_with_cot_reasons, name="Answer Relevance")
+        .on_input()
+        .on_output()
+    )
+
+    f_context_relevance = (
+        Feedback(
+            provider.context_relevance, name="Context Relevance",
+        )
+        .on({
+            "question": Selector(
+                span_type=SpanAttributes.SpanType.RETRIEVAL,
+                span_attribute=SpanAttributes.RETRIEVAL.QUERY_TEXT,
+            ),
+        })
+        .on({
+            "context": Selector(
+                span_type=SpanAttributes.SpanType.RETRIEVAL,
+                span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
+            ),
+        })
+        .aggregate(np.mean)  # choose a different aggregation method if you wish
+    )
+
+    return [f_context_relevance, f_groundedness, f_answer_relevance]
+
 
 # TODO: convert to use trulens feedback functions to perform offline evals instead of inline evals
 def research_eval_node(state) -> Command[Literal["orchestrator"]]:
