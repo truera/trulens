@@ -36,7 +36,7 @@ def groundedness(context_list, response):
 
 # TODO: convert to use trulens feedback functions to perform offline evals instead of inline evals
 def research_eval_node(state) -> Command[Literal["orchestrator"]]:
-    query = {state.get("user_query")}
+    query = state.get("user_query")
     context_list = state.get("execution_trace")[state.get("current_step")][-1]["tool_calls"]
     response = state.get("execution_trace")[state.get("current_step")][-1]["output"]
 
