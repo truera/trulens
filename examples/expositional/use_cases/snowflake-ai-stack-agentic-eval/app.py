@@ -118,7 +118,7 @@ if user_input:
                         # For other evals, use previous logic
                         score_match = re.search(r"(\d+(?:\.\d+)?/3)", content)
                         score_str = score_match.group(1) if score_match else ""
-                        expander_title = f"**{eval_name} ({score_str}**)" if score_str else eval_name
+                        expander_title = f"**{eval_name} ({score_str})**" if score_str else eval_name
                         with st.expander(expander_title, expanded=False):
                             st.markdown(content)
                 else:
