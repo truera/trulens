@@ -18,7 +18,7 @@ from trulens.core.otel.instrument import instrument
 from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.otel.semconv.trace import SpanAttributes
 import json
-from src.agentic_evals import chart_eval_node, research_eval_node, traj_eval_node
+from src.agentic_evals import chart_eval_node, traj_eval_node
 from src.util import State, append_to_step_trace
 import streamlit as st
 
@@ -103,10 +103,10 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
     )
     def research_node(
         state: State,
-    ) -> Command[Literal["research_eval"]]:
-        with st.spinner("Researching..."):
+    ) -> Command[Literal["orchestrator"]]:
+        with st.spinner("Researcher step..."):
             result = research_agent.invoke(state)
-        goto = "research_eval"
+        goto = "orchestrator"
         # wrap in a human message, as not all providers allow
         # AI message at the last position of the input messages list
         result["messages"][-1] = HumanMessage(
@@ -246,7 +246,6 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
     workflow.add_node("researcher", research_node)
     workflow.add_node("chart_generator", chart_node)
     workflow.add_node("chart_eval", chart_eval_node)
-    workflow.add_node("research_eval", research_eval_node)
     workflow.add_node("traj_eval", traj_eval_node)
 
     workflow.add_edge(START, "orchestrator")
