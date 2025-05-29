@@ -219,11 +219,9 @@ def _render_grid(
                     df[dashboard_constants.PINNED_COL_NAME], "app_version"
                 ].apply(lambda x: f"📌 {x}")
 
-            height = 1000 if len(df) > 20 else 45 * len(df) + 100
             event = st_aggrid.AgGrid(
                 df,
                 key=grid_key,
-                height=height,
                 columns_state=columns_state,
                 gridOptions=_build_grid_options(
                     df=df,
