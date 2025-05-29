@@ -59,41 +59,51 @@ class TestOtelSelector(OtelTestCase):
             span_attribute="Z",
         )
         self.assertTrue(
-            selector.matches_span({
-                SpanAttributes.CALL.FUNCTION: "AA.BB.CC",
-                SpanAttributes.SPAN_TYPE: "span_type",
-                "name": "XX.YY.ZZ",
-            })
+            selector.matches_span(
+                "XX.YY.ZZ",
+                {
+                    SpanAttributes.CALL.FUNCTION: "AA.BB.CC",
+                    SpanAttributes.SPAN_TYPE: "span_type",
+                },
+            )
         )
         self.assertFalse(
-            selector.matches_span({
-                SpanAttributes.SPAN_TYPE: "span_type",
-                "name": "XX.YY.ZZ",
-            })
+            selector.matches_span(
+                "XX.YY.ZZ",
+                {
+                    SpanAttributes.SPAN_TYPE: "span_type",
+                },
+            )
         )
         self.assertFalse(
-            selector.matches_span({
-                SpanAttributes.CALL.FUNCTION: "AA.BB.CC",
-                "name": "XX.YY.ZZ",
-            })
+            selector.matches_span(
+                "XX.YY.ZZ",
+                {
+                    SpanAttributes.CALL.FUNCTION: "AA.BB.CC",
+                    # TODO(this_pr)
+                },
+            )
         )
         self.assertFalse(
-            selector.matches_span({
-                SpanAttributes.CALL.FUNCTION: "AA.BB.CC",
-                SpanAttributes.SPAN_TYPE: "span_type",
-            })
+            selector.matches_span(
+                None,
+                {
+                    SpanAttributes.CALL.FUNCTION: "AA.BB.CC",
+                    SpanAttributes.SPAN_TYPE: "span_type",
+                },
+            )
         )
         self.assertTrue(
-            Selector(function_name="CC", span_attribute="Z").matches_span({
-                SpanAttributes.CALL.FUNCTION: "AA.BB.CC",
-                SpanAttributes.SPAN_TYPE: "span_type",
-                "name": "XX.YY.ZZ",
-            })
+            Selector(function_name="CC", span_attribute="Z").matches_span(
+                "XX.YY.ZZ",
+                {
+                    SpanAttributes.CALL.FUNCTION: "AA.BB.CC",
+                    SpanAttributes.SPAN_TYPE: "span_type",
+                },
+            )
         )
         self.assertTrue(
-            Selector(span_name="Y", span_attribute="Z").matches_span({
-                "name": "Y"
-            })
+            Selector(span_name="Y", span_attribute="Z").matches_span("Y", {})
         )
 
     def test_process_span(self) -> None:
