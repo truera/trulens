@@ -138,13 +138,68 @@ class Selector:
             ret.value = attributes.get(ret.span_attribute, None)
         return ret
 
+    @staticmethod
+    def select_record_input() -> Selector:
+        """Returns a `Selector` that gets the record input.
 
-# Common Selectors.
-RECORD_ROOT_INPUT = Selector(
-    span_type=SpanAttributes.SpanType.RECORD_ROOT,
-    span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
-)
-RECORD_ROOT_OUTPUT = Selector(
-    span_type=SpanAttributes.SpanType.RECORD_ROOT,
-    span_attribute=SpanAttributes.RECORD_ROOT.OUTPUT,
-)
+        Returns:
+            `Selector` that gets the record input.
+        """
+        return Selector(
+            span_type=SpanAttributes.SpanType.RECORD_ROOT,
+            span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
+        )
+
+    @staticmethod
+    def select_record_output() -> Selector:
+        """Returns a `Selector` that gets the record output.
+
+        Returns:
+            `Selector` that gets the record output.
+        """
+        return Selector(
+            span_type=SpanAttributes.SpanType.RECORD_ROOT,
+            span_attribute=SpanAttributes.RECORD_ROOT.OUTPUT,
+        )
+
+    @staticmethod
+    def select_context(
+        *, call_feedback_function_per_entry_in_list: bool
+    ) -> Selector:
+        """Returns a `Selector` that tries to retrieve contexts.
+
+        Args:
+            call_feedback_function_per_entry_in_list:
+                Assuming the returned `Selector` describes a list of strings,
+                whether to call the feedback function separately for each entry
+                in the list and aggregate the results, or to call it once giving
+                the entire list as input.
+
+        Returns:
+            `Selector` that tries to retrieve contexts.
+        """
+
+        def context_retrieval_processor(
+            attributes: Dict[str, Any],
+        ) -> List[str]:
+            for curr in [
+                SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
+                SpanAttributes.CALL.RETURN,
+            ]:
+                ret = attributes.get(curr)
+                if (
+                    ret is not None
+                    and isinstance(ret, list)
+                    and all(isinstance(item, str) for item in ret)
+                ):
+                    return ret
+            raise ValueError(
+                f"Could not find contexts in attributes: {attributes}"
+            )
+
+        return Selector(
+            span_type=SpanAttributes.SpanType.RETRIEVAL,
+            span_attributes_processor=context_retrieval_processor,
+            call_feedback_function_per_entry_in_list=call_feedback_function_per_entry_in_list,
+            match_only_if_no_ancestor_matched=True,
+        )

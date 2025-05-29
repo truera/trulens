@@ -33,8 +33,6 @@ from rich.markdown import Markdown
 from rich.pretty import pretty_repr
 from trulens.core._utils import pycompat as pycompat_utils
 from trulens.core.feedback import endpoint as core_endpoint
-from trulens.core.feedback.selector import RECORD_ROOT_INPUT
-from trulens.core.feedback.selector import RECORD_ROOT_OUTPUT
 from trulens.core.feedback.selector import Selector
 from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import app as app_schema
@@ -561,7 +559,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
             self._print_guessed_selector(arg, select_schema.Select.RecordInput)
 
         if is_otel_tracing_enabled():
-            new_selectors[arg] = RECORD_ROOT_INPUT
+            new_selectors[arg] = Selector.select_record_input()
         else:
             new_selectors[arg] = select_schema.Select.RecordInput
 
@@ -587,7 +585,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
             self._print_guessed_selector(arg, select_schema.Select.RecordOutput)
 
         if is_otel_tracing_enabled():
-            new_selectors[arg] = RECORD_ROOT_OUTPUT
+            new_selectors[arg] = Selector.select_record_output()
         else:
             new_selectors[arg] = select_schema.Select.RecordOutput
 
