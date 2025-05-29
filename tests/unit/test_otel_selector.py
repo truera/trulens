@@ -70,18 +70,13 @@ class TestOtelSelector(OtelTestCase):
         self.assertFalse(
             selector.matches_span(
                 "XX.YY.ZZ",
-                {
-                    SpanAttributes.SPAN_TYPE: "span_type",
-                },
+                {SpanAttributes.SPAN_TYPE: "span_type"},
             )
         )
         self.assertFalse(
             selector.matches_span(
                 "XX.YY.ZZ",
-                {
-                    SpanAttributes.CALL.FUNCTION: "AA.BB.CC",
-                    # TODO(this_pr)
-                },
+                {SpanAttributes.CALL.FUNCTION: "AA.BB.CC"},
             )
         )
         self.assertFalse(
