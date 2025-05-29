@@ -100,7 +100,9 @@ class Selector:
             return False
         return actual[-len(expected) :] == expected
 
-    def matches_span(self, name: str, attributes: Dict[str, Any]) -> bool:
+    def matches_span(
+        self, name: Optional[str], attributes: Dict[str, Any]
+    ) -> bool:
         ret = True
         if self.function_name is not None:
             ret = ret and self._matches_function_name(
