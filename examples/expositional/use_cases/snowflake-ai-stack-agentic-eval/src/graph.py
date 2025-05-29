@@ -62,8 +62,20 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
         """Use this to execute python code. If you want to see the output of a value,
         you should print it out with `print(...)`. This is visible to the user."""
 
+        import matplotlib.pyplot as plt
+        import uuid
+        import os
+        plot_path = None
         try:
             result = repl.run(code)
+            # Try to save the current matplotlib figure if one exists
+            fig = plt.gcf()
+            if fig.get_axes():
+                images_dir = "images"
+                os.makedirs(images_dir, exist_ok=True)
+                plot_path = os.path.join(images_dir, f"chart_{uuid.uuid4().hex}.png")
+                fig.savefig(plot_path)
+                plt.close(fig)
         except BaseException as e:
             return f"Failed to execute. Error: {repr(e)}"
         result_str = (
