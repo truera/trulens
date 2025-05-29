@@ -108,6 +108,26 @@ class OtelTestCase(TruTestCase):
             regex_replacements=regex_replacements,
         )
 
+    def _compare_record_attributes_to_golden_dataframe(
+        self,
+        golden_filename: str,
+        keys_to_check: List[str] = ["name", SpanAttributes.SPAN_TYPE],
+    ) -> None:
+        TruSession().force_flush()
+        expected = self.load_golden(golden_filename)
+        self._convert_column_types(expected)
+        actual = self._get_events()
+        self.assertEqual(expected.shape, actual.shape)
+        for i in range(len(actual)):
+            expected_record_attributes = expected.iloc[i]["record_attributes"]
+            actual_record_attributes = actual.iloc[i]["record_attributes"]
+            for key in keys_to_check:
+                self.assertEqual(
+                    expected_record_attributes[key],
+                    actual_record_attributes[key],
+                    f"Record attributes do not match for key: {key}",
+                )
+
     def _check_costs(
         self,
         record_attributes: Dict[str, AttributeValue],

@@ -11,6 +11,7 @@ from langchain_core.tools import tool
 from langchain_experimental.utilities import PythonREPL
 from langchain_openai import ChatOpenAI
 from langgraph.graph import START
+from langgraph.graph import END
 from langgraph.graph import StateGraph
 from langgraph.prebuilt import create_react_agent
 from langgraph.types import Command
@@ -18,7 +19,7 @@ from trulens.core.otel.instrument import instrument
 from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.otel.semconv.trace import SpanAttributes
 import json
-from src.agentic_evals import chart_eval_node, research_eval_node, traj_eval_node
+from src.agentic_evals import chart_eval_node, research_eval_node
 from src.util import State, append_to_step_trace
 import streamlit as st
 
@@ -47,6 +48,7 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
 
     @tool
     @instrument(
+        name="python_repl_tool",
         span_type="PYTHON_REPL_TOOL",
         attributes={
             f"{BASE_SCOPE}.python_tool_input_code": "code",
@@ -60,8 +62,20 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
         """Use this to execute python code. If you want to see the output of a value,
         you should print it out with `print(...)`. This is visible to the user."""
 
+        import matplotlib.pyplot as plt
+        import uuid
+        import os
+        plot_path = None
         try:
             result = repl.run(code)
+            # Try to save the current matplotlib figure if one exists
+            fig = plt.gcf()
+            if fig.get_axes():
+                images_dir = "images"
+                os.makedirs(images_dir, exist_ok=True)
+                plot_path = os.path.join(images_dir, f"chart_{uuid.uuid4().hex}.png")
+                fig.savefig(plot_path)
+                plt.close(fig)
         except BaseException as e:
             return f"Failed to execute. Error: {repr(e)}"
         result_str = (
@@ -88,23 +102,26 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
     )
 
     @instrument(
+        name="research_node",
         span_type="RESEARCH_NODE",
         attributes=lambda ret, exception, *args, **kwargs: {
-            f"{BASE_SCOPE}.execution_trace": args[0].get("execution_trace", {}),
-            f"{BASE_SCOPE}.user_query": args[0].get("user_query", {}),
+            f"{BASE_SCOPE}.execution_trace": json.dumps(args[0].get("execution_trace", {})),
             f"{BASE_SCOPE}.current_step": args[0].get("current_step", 0),
             f"{BASE_SCOPE}.last_reason": args[0].get("last_reason", ""),
-             f"{BASE_SCOPE}.research_node_response": ret.update["messages"][
+            f"{BASE_SCOPE}.research_node_response": ret.update["messages"][
                 -1
             ].content
             if hasattr(ret, "update")
             else json.dumps(ret, indent=4, sort_keys=True),
+            f"{BASE_SCOPE}.research_node_output": ret.update.get("evaluation_fields", {}).get("output", ""),
+            f"{BASE_SCOPE}.research_node_context": ret.update.get("evaluation_fields", {}).get("context", []),
+            f"{BASE_SCOPE}.research_node_user_query": args[0].get("user_query", {}),
         },
     )
     def research_node(
         state: State,
     ) -> Command[Literal["research_eval"]]:
-        with st.spinner("Researcher step..."):
+        with st.spinner("Researching..."):
             result = research_agent.invoke(state)
         goto = "research_eval"
         # wrap in a human message, as not all providers allow
@@ -123,6 +140,10 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
 
         return Command(
             update={
+                "evaluation_fields": {
+                    "output":new_context["output"],
+                    "context": new_context["tool_calls"] if new_context["tool_calls"] else None,
+                },
                 "messages": result["messages"],
                 "execution_trace": append_to_step_trace(state, state.get('current_step'), new_context),
             },
@@ -135,13 +156,14 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
         if step == 0:
             step_evals = []
         else:
-            step_evals = state.get("execution_trace")[step][-1]["metrics"]
+            step_evals = state.get("execution_trace")[step][-1]["metrics"] if "metrics" in state.get("execution_trace")[step][-1] else []
         return HumanMessage(content=f"""
-            You are the Orchestrator in a multi-agent system with three agents: `researcher`, `chart_generator`, and `traj_eval`.
+            You are the Orchestrator in a multi-agent system with 2 agents: `researcher` and `chart_generator`, and END node.
 
             Your responsibilities:
-            1. Decide which agent to call next (`goto`: one of `"researcher"`, `"chart_generator"`, `"traj_eval"`).
+            1. Decide which agent to call next (`goto`: one of `"researcher"` or `"chart_generator"` or `END`).
             2. Provide a 1-sentence justification for your decision (`reason`: string).
+            3. If no further action is needed or you deem the user query can not be progressed further, return `goto: END` to end the workflow.
 
             Use the evaluation scores, execution trace, and current step to inform your decision.
 
@@ -151,7 +173,7 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
             - If multiple failures have occurred with no improvement, move on to the next agent with your existing knowledge.
 
             Inputs:
-            - User query: {state.get("user_query", "[Missing]")}
+            - User query: {state.get("user_query", state)}
             - Evaluations for previous step: {step_evals}
             - Previous step: {step}
 
@@ -165,19 +187,20 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
 
 
     @instrument(
+        name="orchestrator_node",
         span_type="ORCHESTRATOR_NODE",
         attributes=lambda ret, exception, *args, **kwargs: {
-            f"{BASE_SCOPE}.execution_trace": args[0].get("execution_trace", {}),
-            f"{BASE_SCOPE}.user_query": args[0].get("user_query", {}),
+            f"{BASE_SCOPE}.execution_trace": json.dumps(args[0].get("execution_trace", {})),
+            f"{BASE_SCOPE}.user_query": args[0],
             f"{BASE_SCOPE}.current_step": args[0].get("current_step", 0),
             f"{BASE_SCOPE}.last_reason": args[0].get("last_reason", ""),
         },
     )
     def orchestrator_node(
         state: State,
-    ) -> Command[Literal["researcher", "chart_generator", "traj_eval"]]:
+    ) -> Command[Literal["researcher", "chart_generator", END]]:
         full_prompt = [orchestrator_prompt(state)]
-        with st.spinner("Orchestrator step..."):
+        with st.spinner("Choosing next action..."):
             result = reasoning_llm.invoke(full_prompt)
 
         try:
@@ -188,8 +211,11 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
             raise ValueError(f"Invalid orchestrator JSON: {result.content}") from e
 
         step = state.get("current_step", 0)
+        state["user_query"] = state["messages"][0].content
 
         updates = {
+            "user_query": state.get("user_query", state["messages"][0].content),
+            "execution_trace": state.get("execution_trace", []),
             "messages": [HumanMessage(content=result.content, name="orchestrator")],
             "last_reason": reason,
         }
@@ -209,9 +235,10 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
     )
 
     @instrument(
+        name="chart_generator_node",
         span_type="CHART_GENERATOR_NODE",
         attributes=lambda ret, exception, *args, **kwargs: {
-            f"{BASE_SCOPE}.execution_trace": args[0].get("execution_trace", {}),
+            f"{BASE_SCOPE}.execution_trace": json.dumps(args[0].get("execution_trace", {})),
             f"{BASE_SCOPE}.user_query": args[0].get("user_query", {}),
             f"{BASE_SCOPE}.current_step": args[0].get("current_step", 0),
             f"{BASE_SCOPE}.last_reason": args[0].get("last_reason", ""),
@@ -219,7 +246,7 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
         },
     )
     def chart_node(state: State) -> Command[Literal["chart_eval"]]:
-        with st.spinner("Chart Generator step..."):
+        with st.spinner("Generating chart..."):
             result = chart_agent.invoke(state)
         result["messages"][-1] = HumanMessage(
             content=result["messages"][-1].content, name="chart_generator"
@@ -247,7 +274,7 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
     workflow.add_node("chart_generator", chart_node)
     workflow.add_node("chart_eval", chart_eval_node)
     workflow.add_node("research_eval", research_eval_node)
-    workflow.add_node("traj_eval", traj_eval_node)
+
 
     workflow.add_edge(START, "orchestrator")
 
