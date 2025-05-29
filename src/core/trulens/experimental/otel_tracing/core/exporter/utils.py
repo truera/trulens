@@ -115,9 +115,10 @@ def check_if_trulens_span(span: ReadableSpan) -> bool:
     Returns:
         bool: True if the span contains the TruLens-specific attribute, False otherwise.
     """
-    if span.resource is None or not span.resource.attributes:
+    if not span.attributes:
         return False
-    app_name = span.resource.attributes.get(ResourceAttributes.APP_NAME)
+    # TODO(otel, semconv): Should have this in `span.resource.attributes`!
+    app_name = span.attributes.get(ResourceAttributes.APP_NAME)
     return bool(app_name)
 
 
@@ -128,7 +129,7 @@ def construct_event(span: ReadableSpan) -> event_schema.Event:
     if context is None:
         raise ValueError("Span context is None")
 
-    return event_schema.Event(
+    ret = event_schema.Event(
         event_id=str(context.span_id),
         record={
             "name": span.name,
@@ -149,3 +150,13 @@ def construct_event(span: ReadableSpan) -> event_schema.Event:
             "parent_id": str(parent.span_id if parent else ""),
         },
     )
+    # TODO(otel, semconv):
+    # This is only a workaround for now until we can direclty put these into the
+    # resource attributes.
+    for k in [
+        ResourceAttributes.APP_ID,
+        ResourceAttributes.APP_NAME,
+        ResourceAttributes.APP_VERSION,
+    ]:
+        ret.resource_attributes[k] = ret.record_attributes[k]
+    return ret
