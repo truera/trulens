@@ -86,7 +86,10 @@ def display_feedback_call(
             try:
                 df = expand_groundedness_df(df)
             except ValueError:
-                pass
+                st.error(
+                    "Error expanding groundedness DataFrame. "
+                    "Please ensure the DataFrame is in the correct format."
+                )
 
         if df.empty:
             st.warning("No feedback details found.")

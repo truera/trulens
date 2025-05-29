@@ -290,7 +290,10 @@ def trulens_feedback(record: record_schema.Record):
             try:
                 df = dashboard_display.expand_groundedness_df(df)
             except ValueError:
-                pass
+                st.error(
+                    "Error expanding groundedness DataFrame. "
+                    "Please ensure the DataFrame is in the correct format."
+                )
 
         # Apply the highlight function row-wise
         styled_df = df.style.apply(
