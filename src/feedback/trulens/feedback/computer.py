@@ -258,8 +258,11 @@ def _dfs_collect_inputs_from_events(
             Mapping from (record_id, span_group) to kwarg group to inputs. This
             is what will be updated throughout the DFS.
     """
+    # Convenience variables.
     record_attributes = curr_event["record_attributes"]
     record_id = record_attributes[SpanAttributes.RECORD_ID]
+    selector = kwarg_to_selector[kwarg_group[0]]
+    span_id = curr_event["trace"]["span_id"]
     # Handle span groups.
     span_groups = record_attributes.get(SpanAttributes.SPAN_GROUPS, [None])
     if isinstance(span_groups, str):
@@ -267,26 +270,29 @@ def _dfs_collect_inputs_from_events(
     elif span_groups is None:
         span_groups = [None]
     # Check if row satisfies selector conditions.
-    if kwarg_to_selector[kwarg_group[0]].matches_span(record_attributes):
+    matched = False
+    if selector.matches_span(record_attributes):
         # Collect inputs for this kwarg group.
         kwarg_group_inputs = {
             kwarg: kwarg_to_selector[kwarg].process_span(
-                curr_event["trace"]["span_id"], record_attributes
+                span_id, record_attributes
             )
             for kwarg in kwarg_group
         }
         # Place the inputs for this record id and every span group.
         for span_group in span_groups:
             ret[(record_id, span_group)][kwarg_group].append(kwarg_group_inputs)
-    # Recurse on child events.
-    for child_event in span_id_to_child_events[curr_event["trace"]["span_id"]]:
-        _dfs_collect_inputs_from_events(
-            kwarg_group,
-            kwarg_to_selector,
-            span_id_to_child_events,
-            child_event,
-            ret,
-        )
+        matched = True
+    # Recurse on child events if necessary.
+    if not matched or not selector.match_only_if_no_ancestor_matched:
+        for child_event in span_id_to_child_events[span_id]:
+            _dfs_collect_inputs_from_events(
+                kwarg_group,
+                kwarg_to_selector,
+                span_id_to_child_events,
+                child_event,
+                ret,
+            )
 
 
 def _map_record_id_to_record_roots(
