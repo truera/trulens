@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
 from trulens.apps import virtual as virtual_app
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.utils import text as text_utils
 from trulens.dashboard import constants as dashboard_constants
@@ -551,21 +552,16 @@ def _render_grid_tab(
         st.switch_page("pages/Records.py")
     # Compare App Versions
     if len(selected_app_ids) < Compare_page.MIN_COMPARATORS:
-        _compare_button_label = (
-            f"Min {Compare_page.MIN_COMPARATORS} App Versions"
-        )
         _compare_button_disabled = True
         help_msg = f"Select at least {Compare_page.MIN_COMPARATORS} app versions to compare."
     elif len(selected_app_ids) > Compare_page.MAX_COMPARATORS:
-        _compare_button_label = (
-            f"Max {Compare_page.MAX_COMPARATORS} App Versions"
-        )
         _compare_button_disabled = True
         help_msg = f"Deselect to at most {Compare_page.MAX_COMPARATORS} app versions to compare."
     else:
-        _compare_button_label = "Compare"
         _compare_button_disabled = False
         help_msg = None
+
+    _compare_button_label = "Compare"
 
     if c4.button(
         _compare_button_label,
@@ -588,18 +584,20 @@ def _render_grid_tab(
     ):
         handle_add_metadata(selected_rows, version_metadata_col_names)
 
-    # Add Virtual App
-    if c6.button(
-        "Add Virtual App",
-        use_container_width=True,
-        key=f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.add_virtual_app_button",
-    ):
-        handle_add_virtual_app(
-            app_name,
-            feedback_col_names,
-            feedback_defs,
-            version_metadata_col_names,
-        )
+    # Virtual apps do not work in OTEL world.
+    if not is_otel_tracing_enabled():
+        # Add Virtual App
+        if c6.button(
+            "Add Virtual App",
+            use_container_width=True,
+            key=f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.add_virtual_app_button",
+        ):
+            handle_add_virtual_app(
+                app_name,
+                feedback_col_names,
+                feedback_defs,
+                version_metadata_col_names,
+            )
 
 
 @streamlit_compat.st_fragment
@@ -716,16 +714,13 @@ def _render_list_tab(
 
         with select_app_col:
             if st.button(
-                "Select App",
-                key=f"select_app_{app_id}",
+                "Select App Version",
+                key=f"select_app_version_{app_id}",
             ):
                 st.session_state[
                     f"{dashboard_constants.RECORDS_PAGE_NAME}.app_ids"
                 ] = [app_id]
                 st.switch_page("pages/Records.py")
-
-        # with st.expander("Model metadata"):
-        #    st.markdown(draw_metadata(metadata))
 
         st.markdown("""---""")
 
