@@ -246,6 +246,18 @@ def _dfs_collect_inputs_from_events(
         Dict[Tuple[str], List[Dict[str, FeedbackFunctionInput]]],
     ],
 ) -> None:
+    """DFS collect inputs from events.
+
+    Args:
+        kwarg_group:
+            List of kwargs that describe the same spans in their selector.
+        kwarg_to_selector: Mapping from function kwargs to span selectors.
+        span_id_to_child_events: Mapping from span id to child events.
+        curr_event: Current event to process.
+        ret:
+            Mapping from (record_id, span_group) to kwarg group to inputs. This
+            is what will be updated throughout the DFS.
+    """
     record_attributes = curr_event["record_attributes"]
     record_id = record_attributes[SpanAttributes.RECORD_ID]
     # Handle span groups.
@@ -266,6 +278,7 @@ def _dfs_collect_inputs_from_events(
         # Place the inputs for this record id and every span group.
         for span_group in span_groups:
             ret[(record_id, span_group)][kwarg_group].append(kwarg_group_inputs)
+    # Recurse on child events.
     for child_event in span_id_to_child_events[curr_event["trace"]["span_id"]]:
         _dfs_collect_inputs_from_events(
             kwarg_group,
