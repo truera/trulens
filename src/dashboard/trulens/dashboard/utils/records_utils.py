@@ -75,11 +75,7 @@ def display_feedback_call(
             for i in range(len(call))
         ])
         df["meta"] = pd.Series([call[i]["meta"] for i in range(len(call))])
-        df = (
-            df.join(df.meta.apply(lambda m: pd.Series(m)))
-            .drop(columns="meta")
-            .drop(columns="criteria")
-        )
+        df = df.join(df.meta.apply(lambda m: pd.Series(m))).drop(columns="meta")
 
         # note: improve conditional to not rely on the feedback name
         if "groundedness" in feedback_name.lower():
