@@ -580,6 +580,7 @@ trulens.core.feedback.feedback.Feedback:
     min_score_val: typing.Optional[builtins.int, builtins.NoneType]
     of_feedback_definition: builtins.staticmethod
     'on': builtins.function
+    on_context: builtins.function
     on_default: builtins.function
     on_input: builtins.function
     on_input_output: builtins.function
@@ -674,8 +675,6 @@ trulens.core.feedback.selector:
   __class__: builtins.module
   highs: {}
   lows:
-    RECORD_ROOT_INPUT: trulens.core.feedback.selector.Selector
-    RECORD_ROOT_OUTPUT: trulens.core.feedback.selector.Selector
     Selector: builtins.type
 trulens.core.feedback.selector.Selector:
   __bases__:
@@ -686,8 +685,12 @@ trulens.core.feedback.selector.Selector:
     describes_same_spans: builtins.function
     function_attribute: builtins.NoneType
     function_name: builtins.NoneType
+    match_only_if_no_ancestor_matched: builtins.bool
     matches_span: builtins.function
     process_span: builtins.function
+    select_context: builtins.staticmethod
+    select_record_input: builtins.staticmethod
+    select_record_output: builtins.staticmethod
     span_attribute: builtins.NoneType
     span_attributes_processor: builtins.NoneType
     span_name: builtins.NoneType

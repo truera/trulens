@@ -34,26 +34,12 @@ def set_page_config(page_title: Optional[str] = None):
     if is_sis_compatibility_enabled():
         pass
     else:
-        if st.get_option("theme.base") == "dark":
-            logo = str(
-                import_utils.static_resource(
-                    "dashboard", "ux/trulens_logo_light.svg"
-                )
-            )
-            logo_small = str(
-                import_utils.static_resource(
-                    "dashboard", "ux/trulens_squid_light.svg"
-                )
-            )
-        else:
-            logo = str(
-                import_utils.static_resource("dashboard", "ux/trulens_logo.svg")
-            )
-            logo_small = str(
-                import_utils.static_resource(
-                    "dashboard", "ux/trulens_squid.svg"
-                )
-            )
+        logo = str(
+            import_utils.static_resource("dashboard", "ux/trulens_logo.svg")
+        )
+        logo_small = str(
+            import_utils.static_resource("dashboard", "ux/trulens_squid.svg")
+        )
         st.logo(logo, icon_image=logo_small, link="https://www.trulens.org/")
 
     if ST_RECORDS_LIMIT not in st.session_state:
@@ -287,15 +273,7 @@ def render_sidebar():
         st.text(f"{mod_core.__package__} {mod_core.__version__}")
         st.text(f"{mod_dashboard.__package__} {mod_dashboard.__version__}")
 
-        FEEDBACK_FORM_URL = "https://forms.gle/HAc4HBk5nZRpgw7C6"
         BUG_REPORT_URL = "https://github.com/truera/trulens/issues/new?template=bug-report.md"
-
-        st.link_button(
-            "Share Feedback",
-            FEEDBACK_FORM_URL,
-            help="Help us improve TruLens!",
-            use_container_width=True,
-        )
 
         st.link_button(
             "Report a Bug 🐞",
