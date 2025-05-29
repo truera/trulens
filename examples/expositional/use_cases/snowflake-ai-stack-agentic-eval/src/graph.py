@@ -62,13 +62,28 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
         """Use this to execute python code. If you want to see the output of a value,
         you should print it out with `print(...)`. This is visible to the user."""
 
+        import matplotlib.pyplot as plt
+        import uuid
+        import os
+        plot_path = None
         try:
             result = repl.run(code)
+            # Try to save the current matplotlib figure if one exists
+            fig = plt.gcf()
+            if fig.get_axes():
+                images_dir = "images"
+                os.makedirs(images_dir, exist_ok=True)
+                plot_path = os.path.join(images_dir, f"chart_{uuid.uuid4().hex}.png")
+                fig.savefig(plot_path)
+                plt.close(fig)
         except BaseException as e:
             return f"Failed to execute. Error: {repr(e)}"
         result_str = (
             f"Successfully executed:\n```python\n{code}\n```\nStdout: {result}"
         )
+        if plot_path:
+            # Return a marker string so the app can find and display the image
+            result_str += f"\n[MATPLOTLIB_PLOT]:{plot_path}"
         return (
             result_str
             + "\n\nIf you have completed all tasks, respond with FINAL ANSWER."
@@ -218,7 +233,7 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
         llm,
         [python_repl_tool],
         prompt=make_system_prompt(
-            "You are a Chart Generator. You can only generate charts using simple Python. Try to avoid importing external libraries. You are working with a researcher colleague."
+            "You are a Chart Generator. You can only generate charts using python to be displayed in a streamlit app. Try to avoid importing external libraries other than streamlit. You are working with a researcher colleague."
         ),
     )
 

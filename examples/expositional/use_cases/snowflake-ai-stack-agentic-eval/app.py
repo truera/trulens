@@ -8,6 +8,7 @@ from src.agentic_evals import create_traj_eval
 import os
 import json
 import re
+import glob
 
 st.set_page_config(page_title="Trustworthy Deep Research Agent", page_icon="❄️", layout="centered", initial_sidebar_state="collapsed", menu_items=None)
 
@@ -89,11 +90,26 @@ if user_input:
                         reason = parsed.get("reason", "[missing]")
                         st.chat_message("orchestrator", avatar = "🧑‍💼").markdown(f"**Orchestrator:**\n- **Next node:** `{goto}`\n- **Reason:** {reason}")
                     except Exception:
-                        st.chat_message("orchestrator", avatar = "🧑‍💼").markdown(f"**Orchestrator:** {content}")
+                        st.chat_message("orchestrator", avatar = "🧑‍💼").markdown(f"**Orchestrator:** \n{content}")
                 elif node_name == "researcher":
-                    st.chat_message("researcher", avatar = "🔬").write(f"**Researcher:** {content}")
+                    st.chat_message("researcher", avatar = "🔬").write(f"**Researcher:** \n {content}")
                 elif node_name == "chart_generator":
-                    st.chat_message("chart_generator", avatar = "📊").write(f"**Chart Generator:** {content}")
+                    st.write("Chart Generator")
+                    # Always show the text output
+                    st.chat_message("chart_generator", avatar = "📊").write(f"**Chart Generator:** \n{content}")
+                    # Find and display the most recent .png file in images/
+                    images_dir = "images"
+                    png_files = glob.glob(os.path.join(images_dir, "*.png"))
+                    if png_files:
+                        latest_png = max(png_files, key=os.path.getmtime)
+                        try:
+                            with open(latest_png, "rb") as img_file:
+                                img_bytes = img_file.read()
+                            st.image(img_bytes)
+                        except Exception as e:
+                            st.warning(f"Could not display chart image: {e}")
+                    else:
+                        st.warning("No chart image found to display.")
                 elif node_name.endswith("_eval"):
                     # Try to extract the score and eval name for the expander title
                     eval_name = role.replace("_", " ").title() if role else node_name.replace("_", " ").title()
