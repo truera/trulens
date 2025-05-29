@@ -252,9 +252,10 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
 
     workflow.add_node("orchestrator", orchestrator_node)
     workflow.add_node("researcher", research_node)
-    workflow.add_node("research_eval", research_eval_node)
     workflow.add_node("chart_generator", chart_node)
     workflow.add_node("chart_eval", chart_eval_node)
+    workflow.add_node("research_eval", research_eval_node)
+
 
     workflow.add_edge(START, "orchestrator")
 

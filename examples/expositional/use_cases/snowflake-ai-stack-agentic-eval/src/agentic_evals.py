@@ -23,6 +23,10 @@ import numpy as np
 
 provider = OpenAI(model_engine="gpt-4o")
 
+def extract_reason(val):
+    if isinstance(val, dict) and 'reason' in val:
+        return val['reason']
+    return str(val)
 
 def context_relevance(query, context_list):
     score, reason = provider.context_relevance_with_cot_reasons(
