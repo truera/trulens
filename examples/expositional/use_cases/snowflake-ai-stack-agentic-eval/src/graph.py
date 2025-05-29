@@ -81,9 +81,6 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
         result_str = (
             f"Successfully executed:\n```python\n{code}\n```\nStdout: {result}"
         )
-        if plot_path:
-            # Return a marker string so the app can find and display the image
-            result_str += f"\n[MATPLOTLIB_PLOT]:{plot_path}"
         return (
             result_str
             + "\n\nIf you have completed all tasks, respond with FINAL ANSWER."
