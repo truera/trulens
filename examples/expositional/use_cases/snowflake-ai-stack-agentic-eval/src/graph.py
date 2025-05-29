@@ -233,7 +233,7 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
         llm,
         [python_repl_tool],
         prompt=make_system_prompt(
-            "You are a Chart Generator. You can only generate charts using python to be displayed in a streamlit app. Try to avoid importing external libraries other than streamlit. You are working with a researcher colleague."
+            "You are a Chart Generator. You can only generate charts using simple Python. Try to avoid importing external libraries. You are working with a researcher colleague."
         ),
     )
 

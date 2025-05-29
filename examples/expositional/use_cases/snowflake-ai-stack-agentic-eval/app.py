@@ -94,7 +94,6 @@ if user_input:
                 elif node_name == "researcher":
                     st.chat_message("researcher", avatar = "🔬").write(f"**Researcher:** \n {content}")
                 elif node_name == "chart_generator":
-                    st.write("Chart Generator")
                     # Always show the text output
                     st.chat_message("chart_generator", avatar = "📊").write(f"**Chart Generator:** \n{content}")
                     # Find and display the most recent .png file in images/
