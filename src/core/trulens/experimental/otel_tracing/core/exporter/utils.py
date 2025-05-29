@@ -19,16 +19,16 @@ logger = logging.getLogger(__name__)
 def convert_to_any_value(value: Any) -> AnyValue:
     """
     Converts a given value to an AnyValue object.
-    This function takes a value of various types (str, bool, int, float, bytes, list, dict)
-    and converts it into an AnyValue object. If the value is a list or a dictionary, it
-    recursively converts the elements or key-value pairs. Tuples are converted into lists.
+    This function takes a value of various types (str, bool, int, float, bytes,
+    list, dict) and converts it into an AnyValue object. If the value is a list
+    or a dictionary, it recursively converts the elements or key-value pairs.
+    Tuples are converted into lists.
     Args:
-        value (Any): The value to be converted. It can be of type str, bool, int, float,
-                     bytes, list, tuple, or dict.
+        value:
+            The value to be converted. It can be of type str, bool, int, float,
+            bytes, list, tuple, or dict.
     Returns:
-        AnyValue: The converted AnyValue object.
-    Raises:
-        ValueError: If the value type is unsupported.
+        The converted AnyValue object.
     """
     if isinstance(value, tuple):
         value = list(value)
@@ -65,7 +65,7 @@ def convert_readable_span_to_proto(span: ReadableSpan) -> SpanProto:
     """
     Converts a ReadableSpan object to a protobuf object for a Span.
     Args:
-        span (ReadableSpan): The span to be converted.
+        span: The span to be converted.
     Returns:
         SpanProto: The converted span in SpanProto format.
     """
@@ -111,9 +111,9 @@ def check_if_trulens_span(span: ReadableSpan) -> bool:
     contains a TruLens-specific attribute, identified by the presence of
     `SpanAttributes.RECORD_ID`.
     Args:
-        span (ReadableSpan): The span to be checked.
+        span: The span to be checked.
     Returns:
-        bool: True if the span contains the TruLens-specific attribute, False otherwise.
+        True if the span contains the TruLens-specific attribute, False otherwise.
     """
     if not span.attributes:
         return False
