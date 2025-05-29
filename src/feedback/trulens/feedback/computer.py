@@ -263,6 +263,7 @@ def _dfs_collect_inputs_from_events(
     record_id = record_attributes[SpanAttributes.RECORD_ID]
     selector = kwarg_to_selector[kwarg_group[0]]
     span_id = curr_event["trace"]["span_id"]
+    span_name = curr_event["record"]["name"]
     # Handle span groups.
     span_groups = record_attributes.get(SpanAttributes.SPAN_GROUPS, [None])
     if isinstance(span_groups, str):
@@ -271,7 +272,7 @@ def _dfs_collect_inputs_from_events(
         span_groups = [None]
     # Check if row satisfies selector conditions.
     matched = False
-    if selector.matches_span(record_attributes):
+    if selector.matches_span(span_name, record_attributes):
         # Collect inputs for this kwarg group.
         kwarg_group_inputs = {
             kwarg: kwarg_to_selector[kwarg].process_span(
