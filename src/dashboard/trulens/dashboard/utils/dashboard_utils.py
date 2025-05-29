@@ -34,26 +34,12 @@ def set_page_config(page_title: Optional[str] = None):
     if is_sis_compatibility_enabled():
         pass
     else:
-        if st.get_option("theme.base") == "dark":
-            logo = str(
-                import_utils.static_resource(
-                    "dashboard", "ux/trulens_logo_light.svg"
-                )
-            )
-            logo_small = str(
-                import_utils.static_resource(
-                    "dashboard", "ux/trulens_squid_light.svg"
-                )
-            )
-        else:
-            logo = str(
-                import_utils.static_resource("dashboard", "ux/trulens_logo.svg")
-            )
-            logo_small = str(
-                import_utils.static_resource(
-                    "dashboard", "ux/trulens_squid.svg"
-                )
-            )
+        logo = str(
+            import_utils.static_resource("dashboard", "ux/trulens_logo.svg")
+        )
+        logo_small = str(
+            import_utils.static_resource("dashboard", "ux/trulens_squid.svg")
+        )
         st.logo(logo, icon_image=logo_small, link="https://www.trulens.org/")
 
     if ST_RECORDS_LIMIT not in st.session_state:

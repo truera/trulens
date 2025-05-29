@@ -111,7 +111,7 @@ class OtelTestCase(TruTestCase):
     def _compare_record_attributes_to_golden_dataframe(
         self,
         golden_filename: str,
-        keys_to_check: List[str] = ["name", SpanAttributes.SPAN_TYPE],
+        keys_to_check: List[str] = [SpanAttributes.SPAN_TYPE],
     ) -> None:
         TruSession().force_flush()
         expected = self.load_golden(golden_filename)
@@ -119,12 +119,14 @@ class OtelTestCase(TruTestCase):
         actual = self._get_events()
         self.assertEqual(expected.shape, actual.shape)
         for i in range(len(actual)):
-            expected_record_attributes = expected.iloc[i]["record_attributes"]
-            actual_record_attributes = actual.iloc[i]["record_attributes"]
+            self.assertEqual(
+                expected.iloc[i]["record"]["name"],
+                actual.iloc[i]["record"]["name"],
+            )
             for key in keys_to_check:
                 self.assertEqual(
-                    expected_record_attributes[key],
-                    actual_record_attributes[key],
+                    expected.iloc[i]["record_attributes"][key],
+                    actual.iloc[i]["record_attributes"][key],
                     f"Record attributes do not match for key: {key}",
                 )
 
