@@ -79,7 +79,11 @@ def display_feedback_call(
 
         # note: improve conditional to not rely on the feedback name
         if "groundedness" in feedback_name.lower():
-            df = expand_groundedness_df(df)
+            try:
+                df = expand_groundedness_df(df)
+            except ValueError:
+                pass
+
         if df.empty:
             st.warning("No feedback details found.")
         else:

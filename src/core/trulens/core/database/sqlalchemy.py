@@ -1078,7 +1078,7 @@ class SQLAlchemyDB(core_db.DB):
                         == SpanAttributes.SpanType.EVAL_ROOT.value
                     ):
                         metric_name = record_attributes.get(
-                            SpanAttributes.EVAL.METRIC_NAME, ""
+                            SpanAttributes.EVAL.METRIC_NAME
                         )
                         if not metric_name:
                             logger.warning(
@@ -1150,11 +1150,8 @@ class SQLAlchemyDB(core_db.DB):
                                 "metadata": record_attributes.get(
                                     SpanAttributes.EVAL_ROOT.METADATA, {}
                                 ),
-                                "criteria": record_attributes.get(
-                                    SpanAttributes.EVAL.CRITERIA, None
-                                ),
                                 "explanation": record_attributes.get(
-                                    SpanAttributes.EVAL_ROOT.EXPLANATION, None
+                                    SpanAttributes.EVAL_ROOT.EXPLANATION
                                 ),
                             },
                         }
