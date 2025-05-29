@@ -63,8 +63,6 @@ if user_input:
     if st.session_state.tru_agentic_eval_app is None:
         st.error("Please build the multi-agent workflow graph first.")
     else:
-        message_container = st.chat_message("assistant")
-        message_area = message_container.empty()
         full_response = ""
         with st.session_state.tru_agentic_eval_app as recording:
                 # TODO: messages for chat history not used in the agent graph for now
@@ -92,7 +90,8 @@ if user_input:
                     except Exception:
                         st.chat_message("orchestrator", avatar = "🧑‍💼").markdown(f"**Orchestrator:** \n{content}")
                 elif node_name == "researcher":
-                    st.chat_message("researcher", avatar = "🔬").write(f"**Researcher:** \n {content}")
+                    with st.expander("🔬 Researcher Output", expanded=False):
+                        st.write(f"\n {content}")
                 elif node_name == "chart_generator":
                     # Always show the text output
                     st.chat_message("chart_generator", avatar = "📊").write(f"**Chart Generator:** \n{content}")
