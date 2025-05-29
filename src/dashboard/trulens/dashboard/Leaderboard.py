@@ -33,7 +33,6 @@ def init_page_state():
     dashboard_utils.read_query_params_into_session_state(
         page_name=dashboard_constants.LEADERBOARD_PAGE_NAME,
         transforms={
-            "metadata_to_front": lambda x: x == "True",
             "only_show_pinned": lambda x: x == "True",
             "metadata_cols": lambda x: x.split(","),
         },
@@ -482,20 +481,10 @@ def _render_grid_tab(
     ):
         metadata_cols.append(dashboard_constants.PINNED_COL_NAME)
 
-    if metadata_to_front := c1.toggle(
-        "Metadata to Front",
-        key=f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.metadata_to_front",
-    ):
-        df = order_columns(
-            df,
-            APP_COLS + metadata_cols + APP_AGG_COLS + feedback_col_names,
-        )
-    else:
-        df = order_columns(
-            df,
-            APP_COLS + APP_AGG_COLS + feedback_col_names + metadata_cols,
-        )
-    st.query_params["metadata_to_front"] = str(metadata_to_front)
+    df = order_columns(
+        df,
+        APP_COLS + APP_AGG_COLS + feedback_col_names + metadata_cols,
+    )
 
     if only_show_pinned := c1.toggle(
         "Only Show Pinned",

@@ -118,7 +118,6 @@ def _set_span_attributes(
     all_kwargs = {**kwargs, **bound_args}
     if not only_set_user_defined_attributes:
         # Set general span attributes.
-        span.set_attribute("name", func_name)
         set_general_span_attributes(span, span_type)
         # Set record root span attributes if necessary.
         if span_type == SpanAttributes.SpanType.RECORD_ROOT:
@@ -617,7 +616,6 @@ class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
         )
 
         # Set general span attributes
-        root_span.set_attribute("name", "eval_root")
         set_general_span_attributes(
             root_span, SpanAttributes.SpanType.EVAL_ROOT
         )
