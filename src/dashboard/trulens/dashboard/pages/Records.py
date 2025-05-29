@@ -116,8 +116,10 @@ def _render_trace(
     st.divider()
 
     # Breadcrumbs
-    st.caption(f"{selected_row['app_id']} / {selected_row['record_id']}")
-    st.markdown(f"#### {selected_row['record_id']}")
+    st.caption(
+        f"{selected_row['app_name']} / {selected_row['app_version']} / Record: {selected_row['record_id']}"
+    )
+    st.markdown(f"#### Record ID: {selected_row['record_id']}")
 
     input_col, output_col = st_columns(2)
     with input_col.expander("Record Input"):
@@ -254,14 +256,14 @@ def _build_grid_options(
 
     gb.configure_column(
         "input",
-        header_name="User Input",
+        header_name="Record Input",
         wrapText=True,
         autoHeight=True,
         filter="agMultiColumnFilter",
     )
     gb.configure_column(
         "output",
-        header_name="Response",
+        header_name="Record Output",
         wrapText=True,
         autoHeight=True,
         filter="agMultiColumnFilter",
