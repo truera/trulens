@@ -48,6 +48,7 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
 
     @tool
     @instrument(
+        name="python_repl_tool",
         span_type="PYTHON_REPL_TOOL",
         attributes={
             f"{BASE_SCOPE}.python_tool_input_code": "code",
@@ -89,6 +90,7 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
     )
 
     @instrument(
+        name="research_node",
         span_type="RESEARCH_NODE",
         attributes=lambda ret, exception, *args, **kwargs: {
             f"{BASE_SCOPE}.execution_trace": json.dumps(args[0].get("execution_trace", {})),
@@ -173,6 +175,7 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
 
 
     @instrument(
+        name="orchestrator_node",
         span_type="ORCHESTRATOR_NODE",
         attributes=lambda ret, exception, *args, **kwargs: {
             f"{BASE_SCOPE}.execution_trace": json.dumps(args[0].get("execution_trace", {})),
@@ -220,6 +223,7 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
     )
 
     @instrument(
+        name="chart_generator_node",
         span_type="CHART_GENERATOR_NODE",
         attributes=lambda ret, exception, *args, **kwargs: {
             f"{BASE_SCOPE}.execution_trace": json.dumps(args[0].get("execution_trace", {})),
