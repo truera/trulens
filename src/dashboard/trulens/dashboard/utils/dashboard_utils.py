@@ -465,11 +465,13 @@ def render_app_version_filters(
                     metadata_selections[metadata_key]
                 )
             ]
-        filtered_app_versions = filtered_app_versions[
-            filtered_app_versions["tags"].apply(
-                lambda x: any(tag in x for tag in selected_tags)
-            )
-        ]
+
+        if len(selected_tags):
+            filtered_app_versions = filtered_app_versions.loc[
+                filtered_app_versions["tags"].apply(
+                    lambda x: any(tag in x for tag in selected_tags)
+                )
+            ]
 
     if len(active_adv_filters):
         col2.button(
