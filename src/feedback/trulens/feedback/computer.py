@@ -214,37 +214,66 @@ def _collect_inputs_from_events(
         Mapping from (record_id, span_group) to kwarg group to inputs.
     """
     ret = defaultdict(lambda: defaultdict(list))
-
+    span_id_to_child_events = defaultdict(list)
     for _, curr in events.iterrows():
-        record_attributes = curr["record_attributes"]
-        record_id = record_attributes[SpanAttributes.RECORD_ID]
-
-        # Handle span groups.
-        span_groups = record_attributes.get(SpanAttributes.SPAN_GROUPS, [None])
-        if isinstance(span_groups, str):
-            span_groups = [span_groups]
-        elif span_groups is None:
-            span_groups = [None]
-
-        # Process each kwarg group.
-        for kwarg_group in kwarg_groups:
-            # Check if row satisfies selector conditions.
-            if kwarg_to_selector[kwarg_group[0]].matches_span(
-                record_attributes
-            ):
-                # Collect inputs for this kwarg group.
-                kwarg_group_inputs = {
-                    kwarg: kwarg_to_selector[kwarg].process_span(
-                        curr["trace"]["span_id"], record_attributes
-                    )
-                    for kwarg in kwarg_group
-                }
-                # Place the inputs for this record id and every span group.
-                for span_group in span_groups:
-                    ret[(record_id, span_group)][kwarg_group].append(
-                        kwarg_group_inputs
-                    )
+        parent_span_id = curr["trace"]["parent_id"]
+        span_id_to_child_events[parent_span_id].append(curr)
+    record_roots = [
+        curr
+        for _, curr in events.iterrows()
+        if curr["record_attributes"].get(SpanAttributes.SPAN_TYPE)
+        == SpanAttributes.SpanType.RECORD_ROOT
+    ]
+    for kwarg_group in kwarg_groups:
+        for record_root in record_roots:
+            _dfs_collect_inputs_from_events(
+                kwarg_group,
+                kwarg_to_selector,
+                span_id_to_child_events,
+                record_root,
+                ret,
+            )
     return ret
+
+
+def _dfs_collect_inputs_from_events(
+    kwarg_group: Tuple[str],
+    kwarg_to_selector: Dict[str, Selector],
+    span_id_to_child_events: Dict[str, List[pd.Series]],
+    curr_event: pd.Series,
+    ret: Dict[
+        Tuple[str, Optional[str]],
+        Dict[Tuple[str], List[Dict[str, FeedbackFunctionInput]]],
+    ],
+) -> None:
+    record_attributes = curr_event["record_attributes"]
+    record_id = record_attributes[SpanAttributes.RECORD_ID]
+    # Handle span groups.
+    span_groups = record_attributes.get(SpanAttributes.SPAN_GROUPS, [None])
+    if isinstance(span_groups, str):
+        span_groups = [span_groups]
+    elif span_groups is None:
+        span_groups = [None]
+    # Check if row satisfies selector conditions.
+    if kwarg_to_selector[kwarg_group[0]].matches_span(record_attributes):
+        # Collect inputs for this kwarg group.
+        kwarg_group_inputs = {
+            kwarg: kwarg_to_selector[kwarg].process_span(
+                curr_event["trace"]["span_id"], record_attributes
+            )
+            for kwarg in kwarg_group
+        }
+        # Place the inputs for this record id and every span group.
+        for span_group in span_groups:
+            ret[(record_id, span_group)][kwarg_group].append(kwarg_group_inputs)
+    for child_event in span_id_to_child_events[curr_event["trace"]["span_id"]]:
+        _dfs_collect_inputs_from_events(
+            kwarg_group,
+            kwarg_to_selector,
+            span_id_to_child_events,
+            child_event,
+            ret,
+        )
 
 
 def _map_record_id_to_record_roots(
@@ -261,10 +290,14 @@ def _map_record_id_to_record_roots(
     ret = {}
     for curr in record_attributes:
         if (
-            curr.get(SpanAttributes.SPAN_TYPE, None)
+            curr.get(SpanAttributes.SPAN_TYPE)
             == SpanAttributes.SpanType.RECORD_ROOT
         ):
             record_id = curr[SpanAttributes.RECORD_ID]
+            if record_id in ret:
+                _logger.warning(
+                    f"Multiple record roots found for record_id={record_id}!"
+                )
             ret[record_id] = curr
     return ret
 

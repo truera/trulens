@@ -27,6 +27,12 @@ class Selector:
     #    aggregate.
     call_feedback_function_per_entry_in_list: bool = False
 
+    # Whether to only match spans where no ancestor span also matched as well.
+    # This is useful for cases where we may have multiple spans match a criteria
+    # but we only want to match the first one in a stack trace. For example, in
+    # recursive functions, we would only match the first call to the function.
+    match_only_if_no_ancestor_matched: bool = False
+
     def __init__(
         self,
         function_name: Optional[str] = None,
@@ -38,6 +44,7 @@ class Selector:
         span_attribute: Optional[str] = None,
         function_attribute: Optional[str] = None,
         call_feedback_function_per_entry_in_list: bool = False,
+        match_only_if_no_ancestor_matched: bool = False,
     ):
         if function_name is None and span_name is None and span_type is None:
             raise ValueError(
@@ -63,12 +70,17 @@ class Selector:
         self.call_feedback_function_per_entry_in_list = (
             call_feedback_function_per_entry_in_list
         )
+        self.match_only_if_no_ancestor_matched = (
+            match_only_if_no_ancestor_matched
+        )
 
     def describes_same_spans(self, other: Selector) -> bool:
         return (
             self.function_name == other.function_name
             and self.span_name == other.span_name
             and self.span_type == other.span_type
+            and self.match_only_if_no_ancestor_matched
+            == other.match_only_if_no_ancestor_matched
         )
 
     @staticmethod
