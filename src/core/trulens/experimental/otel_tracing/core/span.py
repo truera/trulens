@@ -2,18 +2,31 @@
 This file contains utility functions specific to certain span types.
 """
 
+from __future__ import annotations
+
 from inspect import signature
 import json
 import logging
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 from opentelemetry.baggage import get_baggage
 from opentelemetry.context import Context
 from opentelemetry.trace.span import Span
 from opentelemetry.util.types import AttributeValue
-from trulens.core.utils import signature as signature_utils
 from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
+
+if TYPE_CHECKING:
+    from trulens.core.app import App
 
 logger = logging.getLogger(__name__)
 
@@ -211,7 +224,6 @@ def set_function_call_attributes(
 def set_user_defined_attributes(
     span: Span,
     *,
-    span_type: SpanAttributes.SpanType,
     attributes: Dict[str, Any],
 ) -> None:
     final_attributes = validate_attributes(attributes)
@@ -241,7 +253,10 @@ def set_user_defined_attributes(
                 cost_attributes[SpanAttributes.COST.CURRENCY],
             ]:
                 cost_attributes[SpanAttributes.COST.CURRENCY] = "mixed"
-            if model not in [None, cost_attributes[SpanAttributes.COST.MODEL]]:
+            if model not in [
+                None,
+                cost_attributes.get(SpanAttributes.COST.MODEL),
+            ]:
                 cost_attributes[SpanAttributes.COST.MODEL] = "mixed"
             for k, v in cost_attributes.items():
                 span.set_attribute(k, v)
@@ -250,12 +265,6 @@ def set_user_defined_attributes(
 """
 RECORD_ROOT SPAN
 """
-
-
-def get_main_input(func: Callable, args: tuple, kwargs: dict) -> str:
-    sig = signature(func)
-    bindings = signature(func).bind(*args, **kwargs)
-    return signature_utils.main_input(func, sig, bindings)
 
 
 def set_record_root_span_attributes(
@@ -267,10 +276,12 @@ def set_record_root_span_attributes(
     ret: Any,
     exception: Optional[Exception],
 ) -> None:
+    tru_app: App = get_baggage("__trulens_app__")
+    sig = signature(func)
     set_span_attribute_safely(
         span,
         SpanAttributes.RECORD_ROOT.INPUT,
-        get_main_input(func, args, kwargs),
+        tru_app.main_input(func, sig, sig.bind_partial(*args, **kwargs)),
     )
     ground_truth_output = get_baggage(
         SpanAttributes.RECORD_ROOT.GROUND_TRUTH_OUTPUT
@@ -289,5 +300,7 @@ def set_record_root_span_attributes(
         set_span_attribute_safely(
             span,
             SpanAttributes.RECORD_ROOT.OUTPUT,
-            signature_utils.main_output(func, ret),
+            tru_app.main_output(
+                func, sig, sig.bind_partial(*args, **kwargs), ret
+            ),
         )

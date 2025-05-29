@@ -171,6 +171,9 @@ class SpanAttributes:
         HIGHER_IS_BETTER = base + ".higher_is_better"
         """Whether higher is better for this feedback function."""
 
+        EXPLANATION = base + ".explanation"
+        """Explanation for the score of the evaluation."""
+
         METADATA = base + ".metadata"
         """Any metadata of the evaluation."""
 
@@ -194,8 +197,14 @@ class SpanAttributes:
         EXPLANATION = base + ".explanation"
         """Explanation for the score for this sub-step."""
 
+        METADATA = base + ".metadata"
+        """Any metadata for this sub-step."""
+
         SCORE = base + ".score"
         """Score for this sub-step."""
+
+        ERROR = base + ".error"
+        """Error raised during this sub-step."""
 
     class COST:
         """Attributes for spans with a cost."""

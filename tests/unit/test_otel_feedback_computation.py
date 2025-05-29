@@ -4,9 +4,10 @@ Tests for OTEL Feedback Computation.
 
 import gc
 import time
-from typing import Callable, List
+from typing import Callable, List, Tuple
 import weakref
 
+import numpy as np
 import pandas as pd
 import pytest
 from trulens.apps.app import TruApp
@@ -89,7 +90,7 @@ class _TestApp:
             self.call0(span_group, 4 * a4, 4 * b4, 4 * c4)
         return [a4, b4, c4]
 
-    @instrument(span_type=SpanAttributes.SpanType.RECORD_ROOT)
+    @instrument()
     def query(self, question: str) -> str:
         # 1. Many attributes from one span that there are many of.
         self.call1(1, 1, 1)
@@ -149,7 +150,9 @@ class TestOtelFeedbackComputation(OtelTestCase):
     def test_compute_feedback_by_span_group(self) -> None:
         # Create app.
         app = _TestApp()
-        tru_app = TruApp(app, app_name="Test App", app_version="v1")
+        tru_app = TruApp(
+            app, app_name="Test App", app_version="v1", main_method=app.query
+        )
         # Record and invoke.
         tru_app.instrumented_invoke_main_method(
             run_name="test run",
@@ -532,12 +535,84 @@ class TestOtelFeedbackComputation(OtelTestCase):
         self.assertCollected(evaluator_ref)
         self.assertCollected(thread_ref)
 
+    def test_aggregation(self) -> None:
+        # Create feedback function.
+        def custom_with_explanations(a: float, b: float) -> Tuple[float, dict]:
+            return a * b, {"explanation": f"{a} * {b}"}
+
+        f_custom = Feedback(custom_with_explanations, name="custom").on({
+            "a": Selector(
+                span_type=SpanAttributes.SpanType.RECORD_ROOT,
+                function_attribute="xs",
+                call_feedback_function_per_entry_in_list=True,
+            ),
+            "b": Selector(
+                span_type=SpanAttributes.SpanType.RECORD_ROOT,
+                function_attribute="ys",
+                call_feedback_function_per_entry_in_list=True,
+            ),
+        })
+
+        # Create app.
+        class _App:
+            @instrument(span_type=SpanAttributes.SpanType.RECORD_ROOT)
+            def invoke(self, xs: List[int], ys: List[int]) -> float:
+                return 0.0
+
+        app = _App()
+        tru_app = TruApp(
+            app, app_name="Simple App", app_version="v1", feedbacks=[f_custom]
+        )
+        # Record and invoke.
+        with tru_app:
+            app.invoke([2, 3], [5, 7])
+        TruSession().force_flush()
+        # Compute feedback on record we just ingested.
+        tru_app.compute_feedbacks()
+        TruSession().force_flush()
+        # Compare results to expected.
+        events = self._get_events()
+        self.assertEqual(len(events), 6)
+        expected_span_types = [
+            SpanAttributes.SpanType.RECORD_ROOT,
+            SpanAttributes.SpanType.EVAL_ROOT,
+        ] + 4 * [SpanAttributes.SpanType.EVAL]
+        self.assertListEqual(
+            expected_span_types,
+            [
+                curr["record_attributes"][SpanAttributes.SPAN_TYPE]
+                for _, curr in events.iterrows()
+            ],
+        )
+        expected_sub_scores = [2 * 5, 2 * 7, 3 * 5, 3 * 7]
+        self.assertEqual(
+            np.mean(expected_sub_scores),
+            events.iloc[1]["record_attributes"][SpanAttributes.EVAL_ROOT.SCORE],
+        )
+        self.assertListEqual(
+            expected_sub_scores,
+            [
+                curr["record_attributes"][SpanAttributes.EVAL.SCORE]
+                for _, curr in events.iloc[2:].iterrows()
+            ],
+        )
+        expected_explanations = ["2 * 5", "2 * 7", "3 * 5", "3 * 7"]
+        self.assertListEqual(
+            expected_explanations,
+            [
+                curr["record_attributes"][
+                    f"{SpanAttributes.EVAL.METADATA}.explanation"
+                ]
+                for _, curr in events.iloc[2:].iterrows()
+            ],
+        )
+
     @staticmethod
     def _wait(
         f: Callable[[], bool],
         timeout_in_seconds: float = 30,
         cooldown_in_seconds: float = 1,
-    ):
+    ) -> None:
         start_time = time.time()
         while time.time() - start_time < timeout_in_seconds:
             if f():

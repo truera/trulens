@@ -10,6 +10,7 @@ from trulens.core.otel.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
 
 import tests.util.otel_tru_app_test_case
+from tests.utils import enable_otel_backwards_compatibility
 
 try:
     # These imports require optional dependencies to be installed.
@@ -74,14 +75,6 @@ class TestOtelTruChain(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
             app=app, main_method=app.invoke, TruAppClass=TruChain
         )
 
-    def test_missing_main_method_raises_error(self):
-        # Create app.
-        rag_chain = self._create_simple_rag()
-        with self.assertRaises(ValueError) as context:
-            TruChain(rag_chain, app_name="Simple RAG", app_version="v1")
-
-        self.assertIn("main_method", str(context.exception))
-
     def test_smoke(self) -> None:
         # Create app.
         rag_chain = self._create_simple_rag()
@@ -111,3 +104,18 @@ class TestOtelTruChain(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         del rag_chain
         gc.collect()
         self.assertCollected(tru_recorder_ref)
+
+    @enable_otel_backwards_compatibility
+    def test_legacy_app(self) -> None:
+        # Create app.
+        rag_chain = self._create_simple_rag()
+        tru_recorder = TruChain(
+            rag_chain, app_name="Simple RAG", app_version="v1"
+        )
+        # Record and invoke.
+        with tru_recorder:
+            rag_chain.invoke("What is multi-headed attention?")
+        # Compare results to expected.
+        self._compare_record_attributes_to_golden_dataframe(
+            "tests/unit/static/golden/test_otel_tru_chain__test_smoke.csv"
+        )

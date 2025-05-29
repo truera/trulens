@@ -3,8 +3,7 @@ Tests for OTEL Feedback methods.
 """
 
 from trulens.core.feedback import Feedback
-from trulens.core.feedback.selector import RECORD_ROOT_INPUT
-from trulens.core.feedback.selector import RECORD_ROOT_OUTPUT
+from trulens.core.feedback.selector import Selector
 
 from tests.util.otel_test_case import OtelTestCase
 
@@ -21,19 +20,31 @@ class TestOtelFeedback(OtelTestCase):
 
     def test_on_input(self) -> None:
         feedback = Feedback(self._mock_feedback_function_1).on_input()
-        self.assertEqual(feedback.selectors, {"x": RECORD_ROOT_INPUT})
+        self.assertEqual(
+            feedback.selectors, {"x": Selector.select_record_input()}
+        )
         feedback = Feedback(self._mock_feedback_function_2).on_input()
-        self.assertEqual(feedback.selectors, {"x": RECORD_ROOT_INPUT})
+        self.assertEqual(
+            feedback.selectors, {"x": Selector.select_record_input()}
+        )
         feedback = Feedback(self._mock_feedback_function_3).on_input()
-        self.assertEqual(feedback.selectors, {"x": RECORD_ROOT_INPUT})
+        self.assertEqual(
+            feedback.selectors, {"x": Selector.select_record_input()}
+        )
 
     def test_on_output(self) -> None:
         feedback = Feedback(self._mock_feedback_function_1).on_output()
-        self.assertEqual(feedback.selectors, {"x": RECORD_ROOT_OUTPUT})
+        self.assertEqual(
+            feedback.selectors, {"x": Selector.select_record_output()}
+        )
         feedback = Feedback(self._mock_feedback_function_2).on_output()
-        self.assertEqual(feedback.selectors, {"x": RECORD_ROOT_OUTPUT})
+        self.assertEqual(
+            feedback.selectors, {"x": Selector.select_record_output()}
+        )
         feedback = Feedback(self._mock_feedback_function_3).on_output()
-        self.assertEqual(feedback.selectors, {"x": RECORD_ROOT_OUTPUT})
+        self.assertEqual(
+            feedback.selectors, {"x": Selector.select_record_output()}
+        )
 
     def test_on_input_output(self) -> None:
         with self.assertRaises(TypeError):
@@ -41,21 +52,32 @@ class TestOtelFeedback(OtelTestCase):
         feedback = Feedback(self._mock_feedback_function_2).on_input_output()
         self.assertEqual(
             feedback.selectors,
-            {"x": RECORD_ROOT_INPUT, "y": RECORD_ROOT_OUTPUT},
+            {
+                "x": Selector.select_record_input(),
+                "y": Selector.select_record_output(),
+            },
         )
         feedback = Feedback(self._mock_feedback_function_3).on_input_output()
         self.assertEqual(
             feedback.selectors,
-            {"x": RECORD_ROOT_INPUT, "y": RECORD_ROOT_OUTPUT},
+            {
+                "x": Selector.select_record_input(),
+                "y": Selector.select_record_output(),
+            },
         )
 
     def test_on_default(self) -> None:
         feedback = Feedback(self._mock_feedback_function_1).on_default()
-        self.assertEqual(feedback.selectors, {"x": RECORD_ROOT_OUTPUT})
+        self.assertEqual(
+            feedback.selectors, {"x": Selector.select_record_output()}
+        )
         feedback = Feedback(self._mock_feedback_function_2).on_default()
         self.assertEqual(
             feedback.selectors,
-            {"x": RECORD_ROOT_INPUT, "y": RECORD_ROOT_OUTPUT},
+            {
+                "x": Selector.select_record_input(),
+                "y": Selector.select_record_output(),
+            },
         )
         with self.assertRaises(RuntimeError):
             Feedback(self._mock_feedback_function_3).on_default()

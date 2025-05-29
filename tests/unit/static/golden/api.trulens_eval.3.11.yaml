@@ -890,6 +890,7 @@ trulens_eval.Tru:
     update_forward_refs: builtins.classmethod
     update_record: builtins.function
     validate: builtins.classmethod
+    wait_for_record: builtins.function
 trulens_eval.TruApp:
   __bases__:
   - trulens.core.app.App
@@ -7205,6 +7206,7 @@ trulens_eval.tru.Tru:
     update_forward_refs: builtins.classmethod
     update_record: builtins.function
     validate: builtins.classmethod
+    wait_for_record: builtins.function
 trulens_eval.tru_basic_app:
   __class__: builtins.module
   highs: {}
