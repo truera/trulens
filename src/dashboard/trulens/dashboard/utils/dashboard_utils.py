@@ -147,23 +147,16 @@ def get_records_and_feedback(
     app_name: Optional[str] = None,
     offset: Optional[int] = None,
     limit: Optional[int] = None,
-    use_otel: Optional[bool] = None,
 ):
     session = get_session()
     lms = session.connector.db
     assert lms
-
-    # TODELETE(otel_tracing). Delete once otel_tracing is no longer
-    # experimental.
-    if use_otel is None:
-        use_otel = st.session_state.get("otel_tracing", False)
 
     records_df, feedback_col_names = lms.get_records_and_feedback(
         app_ids=app_ids,
         app_name=app_name,
         offset=offset,
         limit=limit,
-        use_otel=use_otel,
     )
 
     records_df["record_metadata"] = records_df["record_json"].apply(
