@@ -1172,7 +1172,7 @@ def all_queries(obj: Any, query: Lens = None) -> Iterable[Lens]:
     elif isinstance(obj, pydantic.BaseModel):
         yield query
 
-        for k in obj.model_fields:
+        for k in type(obj).model_fields:
             v = getattr(obj, k)
             sub_query = query[k]
             yield from all_queries(v, sub_query)
@@ -1208,7 +1208,7 @@ def all_objects(obj: Any, query: Lens = None) -> Iterable[Tuple[Lens, Any]]:
         pass
 
     elif isinstance(obj, pydantic.BaseModel):
-        for k in obj.model_fields:
+        for k in type(obj).model_fields:
             v = getattr(obj, k)
             sub_query = query[k]
             yield from all_objects(v, sub_query)

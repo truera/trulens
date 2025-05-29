@@ -1190,7 +1190,7 @@ class Instrument:
                 # NOTE(piotrm): This will not include private fields like
                 # llama_index's LLMPredictor._llm which might be useful to
                 # include:
-                attrs = obj.model_fields.keys()
+                attrs = type(obj).model_fields.keys()
 
             if isinstance(obj, v1BaseModel):
                 attrs = obj.__fields__.keys()
