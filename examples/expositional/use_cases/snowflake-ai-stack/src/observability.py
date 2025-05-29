@@ -18,7 +18,7 @@ def start_observability():
 
 def create_evals(provider: LLMProvider = None):
     if provider is None:
-        provider = OpenAI(model_engine="gpt-4o")
+        provider = OpenAI(model_engine="gpt-4.1", api_key=os.environ.get("OPENAI_API_KEY"))
 
     # Define a groundedness feedback function
     f_groundedness = (

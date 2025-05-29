@@ -3,6 +3,8 @@ from trulens.core import TruSession
 from trulens.apps.app import TruApp
 from trulens.dashboard import streamlit as trulens_st
 from src.graph import MultiAgentWorkflow
+from src.agentic_evals import create_traj_eval
+
 import os
 import json
 import re
@@ -36,11 +38,13 @@ if st.session_state.multi_agent_workflow is None:
         reasoning_model=os.environ.get("REASONING_MODEL_NAME", "o1"),
     )
 
+    f_traj_eval = create_traj_eval()
+
     st.session_state.tru_agentic_eval_app = TruApp(
         st.session_state.multi_agent_workflow,
         app_name="Langgraph Agentic Evaluation",
         app_version="trajectory-eval-oss",
-        # TODO main method?
+        feedbacks=[f_traj_eval]
     )
     st.success("Langgraph workflow compiled!")
 
@@ -129,6 +133,7 @@ if user_input:
 
         st.session_state.tru_session.wait_for_record(record_id)
         trulens_st.trulens_trace(record=record_id)
+        # trulens_st.trulens_feedback(record=record_id) # TODO make trulens feedback work with otel eval spans
 
         # Add the assistant response to session state - only once!
         st.session_state.messages.append({"role": "assistant", "content": full_response})
