@@ -4,10 +4,12 @@ from trulens.apps.app import TruApp
 from trulens.dashboard import streamlit as trulens_st
 from src.graph import MultiAgentWorkflow
 import os
+import json
+import re
 
-st.set_page_config(page_title="Snowflake Agentic Evaluation Demo", page_icon="❄️", layout="centered", initial_sidebar_state="collapsed", menu_items=None)
+st.set_page_config(page_title="Trustworthy Deep Research Agent", page_icon="❄️", layout="centered", initial_sidebar_state="collapsed", menu_items=None)
 
-st.subheader("Using the ❄️ AI Stack to build agentic workflows and evaluate them with TruLens")
+st.subheader("❄️ Trustworthy Deep Research Agent")
 
 # Initialize TruLens for observability (similar to notebook example)
 if "tru_session" not in st.session_state:
@@ -64,12 +66,63 @@ if user_input:
             events = st.session_state.multi_agent_workflow.invoke_agent_graph(user_input)
 
             for event in events:
-                st.write(event)
+                if not event:
+                    continue
+                node_name = list(event.keys())[0]
+                update = event[node_name]
+                messages = update.get("messages", [])
+                if not messages:
+                    continue
+                last_msg = messages[-1]
+                content = last_msg.content
+                role = getattr(last_msg, "name", node_name)  # fallback to node_name
 
-                # TODO: ideally we should render messages differently based on the node being invoked (i.e. orchestrator vs researcher vs chart generator)
-                # if event is not None:
-                #     full_response += list(event.values())[0]["messages"][-1].content + "\n\n"
-                #     message_area.markdown(full_response)
+                if node_name == "orchestrator":
+                    # Try to parse the content as JSON to extract 'goto' and 'reason'
+                    try:
+                        parsed = json.loads(content)
+                        goto = parsed.get("goto", "[missing]")
+                        reason = parsed.get("reason", "[missing]")
+                        st.chat_message("orchestrator", avatar = "🧑‍💼").markdown(f"**Orchestrator:**\n- **Next node:** `{goto}`\n- **Reason:** {reason}")
+                    except Exception:
+                        st.chat_message("orchestrator", avatar = "🧑‍💼").markdown(f"**Orchestrator:** {content}")
+                elif node_name == "researcher":
+                    st.chat_message("researcher", avatar = "🔬").write(f"**Researcher:** {content}")
+                elif node_name == "chart_generator":
+                    st.chat_message("chart_generator", avatar = "📊").write(f"**Chart Generator:** {content}")
+                elif node_name.endswith("_eval"):
+                    # Try to extract the score and eval name for the expander title
+                    eval_name = role.replace("_", " ").title() if role else node_name.replace("_", " ").title()
+                    # For research_eval and chart_eval, split into individual metrics
+                    if node_name in ["research_eval", "chart_eval"]:
+                        # Split by lines and group by metric
+                        lines = content.split("\n")
+                        current_metric = None
+                        metric_lines = {}
+                        for line in lines:
+                            metric_match = re.match(r"-?\s*([A-Za-z ]+): ([0-9.]+/3) — (.*)", line)
+                            if metric_match:
+                                current_metric = metric_match.group(1).strip()
+                                score = metric_match.group(2).strip()
+                                reason = metric_match.group(3).strip()
+                                metric_lines[current_metric] = {"score": score, "reason": reason}
+                            elif current_metric and line.strip():
+                                # Append additional lines to the reason
+                                metric_lines[current_metric]["reason"] += "\n" + line.strip()
+                        # Render each metric in its own expander
+                        for metric, data in metric_lines.items():
+                            expander_title = f"**{metric} ({data['score']})**"
+                            with st.expander(expander_title, expanded=False):
+                                st.markdown(data["reason"])
+                    else:
+                        # For other evals, use previous logic
+                        score_match = re.search(r"(\d+(?:\.\d+)?/3)", content)
+                        score_str = score_match.group(1) if score_match else ""
+                        expander_title = f"**{eval_name} ({score_str})**" if score_str else eval_name
+                        with st.expander(expander_title, expanded=False):
+                            st.markdown(content)
+                else:
+                    st.chat_message("assistant").write(content)
 
         st.session_state.tru_session.force_flush()
         record_id = recording.get()
