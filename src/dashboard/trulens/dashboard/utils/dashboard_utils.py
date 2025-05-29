@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import sys
 from typing import Any, Callable, Dict, List, Optional, Union
 
@@ -11,6 +12,7 @@ from trulens.core import experimental as core_experimental
 from trulens.core import experimental as mod_experimental
 from trulens.core import session as core_session
 from trulens.core.database import base as core_db
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.utils import imports as import_utils
 from trulens.dashboard import constants as dashboard_constants
 from trulens.dashboard.components.record_viewer_otel import OtelSpan
@@ -134,7 +136,8 @@ def get_session() -> core_session.TruSession:
         )
 
     # Store the otel_tracing flag in the session state
-    st.session_state["otel_tracing"] = args.otel_tracing
+    if args.otel_tracing:
+        os.environ["TRULENS_OTEL_TRACING"] = "1"
 
     return session
 
@@ -156,7 +159,7 @@ def get_records_and_feedback(
     # TODELETE(otel_tracing). Delete once otel_tracing is no longer
     # experimental.
     if use_otel is None:
-        use_otel = st.session_state.get("otel_tracing", False)
+        use_otel = is_otel_tracing_enabled()
 
     records_df, feedback_col_names = lms.get_records_and_feedback(
         app_ids=app_ids,
