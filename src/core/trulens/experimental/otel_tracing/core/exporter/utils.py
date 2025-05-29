@@ -91,6 +91,10 @@ def convert_readable_span_to_proto(span: ReadableSpan) -> SpanProto:
         else None,
         status=Status(code=Status.StatusCode.STATUS_CODE_UNSET),
     )
+    # TODO(otel): Remove this once the Snowflake backend no longer uses this!
+    span_proto.attributes.append(
+        KeyValue(key="name", value=convert_to_any_value(span.name))
+    )
     return span_proto
 
 
