@@ -1,60 +1,61 @@
 import os
-from typing import List, Literal, Dict, Tuple
+from typing import Literal, Dict, Tuple
 from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.core.otel.instrument import instrument
 from trulens.core import Feedback
 from trulens.core.feedback.selector import Selector
-from trulens.feedback.llm_provider import LLMProvider
 from trulens.providers.openai import OpenAI
 from trulens.feedback import prompts
-from trulens.otel.semconv.trace import SpanAttributes
 
 
 from langgraph.types import Command
-from langgraph.graph import END
 from langchain_core.messages import HumanMessage
 
-from src.util import State
 from src.util import append_to_step_trace
 
 import json
-import numpy as np
 
-
-provider = OpenAI(model_engine="gpt-4o")
 
 def extract_reason(val):
     if isinstance(val, dict) and 'reason' in val:
         return val['reason']
+    if isinstance(val, dict) and 'reasons' in val:
+        return val['reasons']
     return str(val)
 
-def context_relevance(query, context_list):
-    score, reason = provider.context_relevance_with_cot_reasons(
-            question=query,
-            context=context_list,
-        )
-    return score, reason
-
-def answer_relevance(query, response):
-    score, reason = provider.relevance_with_cot_reasons(prompt=query, response=response)
-    return score, reason
-
-def groundedness(context_list, response):
-    combined_context = " ".join(context_list)
-    score, reason = provider.groundedness_measure_with_cot_reasons(
-        source=combined_context,
-        statement=response
-    )
-    return score, reason
-
+@instrument(
+    name="research_eval_node",
+    description="Evaluates the research agent's output based on context relevance, groundedness, and answer relevance.",
+    attributes=lambda ret, exception, *args, **kwargs: {
+        f"{BASE_SCOPE}.execution_trace": json.dumps(args[0].get("execution_trace", {})),
+        f"{BASE_SCOPE}.user_query": args[0].get("user_query", {}),
+        f"{BASE_SCOPE}.current_step": args[0].get("current_step", 0),
+        f"{BASE_SCOPE}.last_reason": args[0].get("last_reason", ""),
+            f"{BASE_SCOPE}.research_eval_node_response": ret.update["messages"][
+            -1
+        ].content
+        if hasattr(ret, "update")
+        else json.dumps(ret, indent=4, sort_keys=True),
+    },
+)
 def research_eval_node(state) -> Command[Literal["orchestrator"]]:
     query = state.get("user_query")
     context_list = state.get("execution_trace")[state.get("current_step")][-1]["tool_calls"]
     response = state.get("execution_trace")[state.get("current_step")][-1]["output"]
 
-    context_rel_score, context_rel_reason = context_relevance(query, context_list)
-    grounded_score, grounded_reason = groundedness(context_list, response)
-    answer_score, answer_reason = answer_relevance(query, response)
+    provider = OpenAI(model_engine="gpt-4.1", api_key=os.environ.get("OPENAI_API_KEY"))
+
+
+    context_rel_score, context_rel_reason = provider.context_relevance_with_cot_reasons(
+            question=query,
+            context=context_list,
+        )
+    grounded_score, grounded_reason = provider.groundedness_measure_with_cot_reasons(
+        source=" ".join(context_list),
+        statement=response
+    )
+    answer_score, answer_reason = provider.relevance_with_cot_reasons(prompt=query, response=response)
+
     goto = "orchestrator"
     parsed_eval = {
         "context_relevance": {

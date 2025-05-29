@@ -159,7 +159,7 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
             - If multiple failures have occurred with no improvement, move on to the next agent with your existing knowledge.
 
             Inputs:
-            - User query: {state}
+            - User query: {state.get("user_query", state)}
             - Evaluations for previous step: {step_evals}
             - Previous step: {step}
 
@@ -196,8 +196,11 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
             raise ValueError(f"Invalid orchestrator JSON: {result.content}") from e
 
         step = state.get("current_step", 0)
+        state["user_query"] = state["messages"][0].content
 
         updates = {
+            "user_query": state.get("user_query", state["messages"][0].content),
+            "execution_trace": state.get("execution_trace", []),
             "messages": [HumanMessage(content=result.content, name="orchestrator")],
             "last_reason": reason,
         }
