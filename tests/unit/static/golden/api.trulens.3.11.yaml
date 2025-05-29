@@ -86,7 +86,8 @@ trulens.core.app:
     Memory: trulens.core.app.ComponentViewMeta
     Other: trulens.core.app.ComponentViewMeta
     Prompt: trulens.core.app.ComponentViewMeta
-    TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG: builtins.str
+    TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG: builtins.str
+    TRULENS_INSTRUMENT_WRAPPER_FLAG: builtins.str
     Tool: trulens.core.app.ComponentViewMeta
     TrulensComponent: trulens.core.app.ComponentViewMeta
     instrumented_component_views: builtins.function

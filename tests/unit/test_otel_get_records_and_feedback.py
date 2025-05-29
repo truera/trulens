@@ -31,7 +31,7 @@ except ImportError:
 
 
 class _TestApp:
-    @instrument(span_type=SpanAttributes.SpanType.RECORD_ROOT)
+    @instrument()
     def query(self, question: str) -> str:
         # Call retrieval and generation methods
         self.retrieve(question)
@@ -474,6 +474,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             app_name=self.app_name,
             app_version=self.app_version,
             app_id=self.app_id,
+            main_method=app.query,
         )
 
         # Record and invoke
@@ -527,6 +528,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             app_name=self.app_name,
             app_version=self.app_version,
             app_id=self.app_id,
+            main_method=app.query,
         )
 
         # Record and invoke the query method

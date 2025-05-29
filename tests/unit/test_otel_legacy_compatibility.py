@@ -1,9 +1,10 @@
 import importlib
 import os
 
+import pytest
 import trulens.apps.app
 from trulens.apps.app import TruApp
-from trulens.apps.app import instrument as legacy_instrument
+from trulens.apps.app import legacy_instrument
 from trulens.core.otel.instrument import instrument as otel_instrument
 from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.session import TruSession
@@ -11,11 +12,14 @@ from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.otel_test_case import OtelTestCase
 
-
-class _LegacyTestApp:
-    @legacy_instrument
-    def respond_to_query(self, query: str) -> str:
-        return f"response to {query}"
+try:
+    # These imports require optional dependencies to be installed.
+    from langchain.chains import LLMChain
+    from langchain.llms.fake import FakeListLLM
+    from langchain.prompts import PromptTemplate
+    from trulens.apps.langchain import TruChain
+except Exception:
+    pass
 
 
 class TestOtelLegacyCompatibility(OtelTestCase):
@@ -25,31 +29,51 @@ class TestOtelLegacyCompatibility(OtelTestCase):
             raise ValueError(
                 "TRULENS_OTEL_TRACING must be disabled *initially* for these tests!"
             )
-        os.environ["TRULENS_OTEL_TRACING"] = "1"
+        os.environ["TRULENS_OTEL_BACKWARDS_COMPATIBILITY"] = "1"
         super().setUpClass()
 
-    def test_import(self) -> None:
-        from trulens.apps.app import instrument
+    @classmethod
+    def tearDownClass(self) -> None:
+        del os.environ["TRULENS_OTEL_BACKWARDS_COMPATIBILITY"]
+        super().tearDownClass()
 
-        self.assertIs(instrument, legacy_instrument)
+    def test_import(self) -> None:
+        try:
+            os.environ["TRULENS_OTEL_TRACING"] = "0"
+            importlib.reload(trulens.apps.app)
+            from trulens.apps.app import instrument
+
+            self.assertEqual(instrument.__class__, legacy_instrument.__class__)
+            os.environ["TRULENS_OTEL_TRACING"] = "1"
+            importlib.reload(trulens.apps.app)
+            from trulens.apps.app import instrument
+
+            self.assertIsInstance(instrument, otel_instrument)
+        finally:
+            os.environ["TRULENS_OTEL_TRACING"] = "1"
+
+    def test_legacy_tru_custom_app(self) -> None:
         importlib.reload(trulens.apps.app)
         from trulens.apps.app import instrument
 
-        self.assertIsInstance(instrument, otel_instrument)
+        class TestApp:
+            @instrument
+            def respond_to_query(self, query: str) -> str:
+                self.square(7)
+                return f"response to {query}"
 
-    def test_legacy_app(self) -> None:
-        app = _LegacyTestApp()
-        tru_app = TruApp(
-            app,
-            main_method=app.respond_to_query,  # TODO(otel): This is not backwards compatible!
-            app_name="MyCustomApp",
-            app_version="v1",
-        )
+            @instrument
+            def square(self, n: int) -> int:
+                return n * n
+
+        app = TestApp()
+        tru_app = TruApp(app, app_name="MyTruCustomApp", app_version="v1")
         with tru_app as recording:
             app.respond_to_query("test")
         TruSession().force_flush()
         events = self._get_events()
-        self.assertEqual(1, len(events))
+        self.assertEqual(2, len(events))
+        # Verify first span.
         record_attributes = events["record_attributes"].iloc[0]
         self.assertEqual(
             SpanAttributes.SpanType.RECORD_ROOT,
@@ -62,7 +86,81 @@ class TestOtelLegacyCompatibility(OtelTestCase):
             "response to test",
             record_attributes[SpanAttributes.RECORD_ROOT.OUTPUT],
         )
+        # Verify second span.
+        record_attributes = events["record_attributes"].iloc[1]
+        self.assertEqual(
+            SpanAttributes.SpanType.UNKNOWN,
+            record_attributes[SpanAttributes.SPAN_TYPE],
+        )
+        self.assertEqual(
+            7, record_attributes[SpanAttributes.CALL.KWARGS + ".n"]
+        )
+        self.assertEqual(49, record_attributes[SpanAttributes.CALL.RETURN])
+        # Verify recording.
         self.assertEqual(1, len(recording))
         self.assertEqual(
             record_attributes[SpanAttributes.RECORD_ID], recording.get()
         )
+
+    @pytest.mark.optional
+    def test_legacy_tru_chain_app(self) -> None:
+        responses = ["response to test"]
+        llm = FakeListLLM(responses=responses)
+        prompt = PromptTemplate(input_variables=["query"], template="{query}")
+        app = LLMChain(llm=llm, prompt=prompt)
+        tru_app = TruChain(app, app_name="MyTruChainApp", app_version="v1")
+        with tru_app:
+            app.run("test")
+        TruSession().force_flush()
+        events = self._get_events()
+        self.assertEqual(4, len(events))
+        # Verify first span.
+        record_attributes = events["record_attributes"].iloc[0]
+        self.assertEqual(
+            SpanAttributes.SpanType.RECORD_ROOT,
+            record_attributes[SpanAttributes.SPAN_TYPE],
+        )
+        self.assertEqual(
+            "test", record_attributes[SpanAttributes.RECORD_ROOT.INPUT]
+        )
+        self.assertEqual(
+            "response to test",
+            record_attributes[SpanAttributes.RECORD_ROOT.OUTPUT],
+        )
+        # Verify other spans.
+        for i in range(1, events.shape[0]):
+            record_attributes = events["record_attributes"].iloc[i]
+            self.assertEqual(
+                SpanAttributes.SpanType.UNKNOWN,
+                record_attributes[SpanAttributes.SPAN_TYPE],
+            )
+
+    # TODO(otel): create a test like this for TruLlama.
+    # @pytest.mark.optional
+    # def test_legacy_tru_llama_app(self) -> None:
+    #     llm = MockLLM()
+    #     tru_app = TruLlama(llm, app_name="MyTruLlamaApp", app_version="v1")
+    #     with tru_app:
+    #         llm("test")
+    #     TruSession().force_flush()
+    #     events = self._get_events()
+    #     self.assertEqual(2, len(events))
+    #     # Verify first span.
+    #     record_attributes = events["record_attributes"].iloc[0]
+    #     self.assertEqual(
+    #         SpanAttributes.SpanType.RECORD_ROOT,
+    #         record_attributes[SpanAttributes.SPAN_TYPE],
+    #     )
+    #     self.assertEqual(
+    #         "test", record_attributes[SpanAttributes.RECORD_ROOT.INPUT]
+    #     )
+    #     self.assertEqual(
+    #         "response to test",
+    #         record_attributes[SpanAttributes.RECORD_ROOT.OUTPUT],
+    #     )
+    #     # Verify second span.
+    #     record_attributes = events["record_attributes"].iloc[1]
+    #     self.assertEqual(
+    #         SpanAttributes.SpanType.UNKNOWN,
+    #         record_attributes[SpanAttributes.SPAN_TYPE],
+    #     )
