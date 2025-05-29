@@ -745,11 +745,9 @@ def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
             x=_df,
             xbins={
                 "size": 0.1,
-                "start": 0,
-                "end": 1.0,
             },
-            histfunc="count",
             texttemplate="%{y}",
+            name="",  # Stops trace {i} from showing up in popup annotation.
         )
         fig.add_trace(
             plot,
@@ -776,7 +774,11 @@ def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
         bargap=0.05,
     )
     fig.update_yaxes(fixedrange=True, showgrid=False)
-    fig.update_xaxes(fixedrange=True, showgrid=False, range=[0, 1])
+    # Histogram bins are [start_inclusive, end_exclusive), so extend the range
+    # by the step to the right.
+    fig.update_xaxes(
+        fixedrange=True, showgrid=False, autorangeoptions={"include": [0, 1]}
+    )
     st.plotly_chart(fig, use_container_width=True)
 
 
