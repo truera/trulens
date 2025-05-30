@@ -86,7 +86,6 @@ export const mockNestedNode = createStackTreeNode({
           endTime: 0.2,
           attributes: {
             [SpanAttributes.SPAN_TYPE]: SpanType.RETRIEVAL,
-            [SpanAttributes.SELECTOR_NAME]: 'user_retrieval',
           },
           children: [],
         }),
