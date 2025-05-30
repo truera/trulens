@@ -52,43 +52,6 @@ General utilites for all spans
 """
 
 
-def validate_selector_name(attributes: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Utility function to validate the selector name in the attributes.
-
-    It does the following:
-    1. Ensure that the selector name is a string.
-    2. Ensure that the selector name is keyed with either the trulens/non-trulens key variations.
-    3. Ensure that the selector name is not set in both the trulens and non-trulens key variations.
-    """
-
-    result = attributes.copy()
-
-    if (
-        SpanAttributes.SELECTOR_NAME_KEY in result
-        and SpanAttributes.SELECTOR_NAME in result
-    ):
-        raise ValueError(
-            f"Both {SpanAttributes.SELECTOR_NAME_KEY} and {SpanAttributes.SELECTOR_NAME} cannot be set."
-        )
-
-    if SpanAttributes.SELECTOR_NAME in result:
-        # Transfer the trulens-namespaced key to the non-trulens-namespaced key.
-        result[SpanAttributes.SELECTOR_NAME_KEY] = result[
-            SpanAttributes.SELECTOR_NAME
-        ]
-        del result[SpanAttributes.SELECTOR_NAME]
-
-    if SpanAttributes.SELECTOR_NAME_KEY in result:
-        selector_name = result[SpanAttributes.SELECTOR_NAME_KEY]
-        if not isinstance(selector_name, str):
-            raise ValueError(
-                f"Selector name must be a string, not {type(selector_name)}"
-            )
-
-    return result
-
-
 def _stringify_span_attribute(o: Any) -> Tuple[bool, str]:
     """Converts an object to a string.
 
@@ -153,8 +116,8 @@ def validate_attributes(attributes: Dict[str, Any]) -> Dict[str, Any]:
     if SpanAttributes.SPAN_TYPE in attributes:
         raise ValueError("Span type should not be set in attributes.")
 
-    return validate_selector_name(attributes)
     # TODO: validate Span type attributes.
+    return attributes
 
 
 def set_general_span_attributes(

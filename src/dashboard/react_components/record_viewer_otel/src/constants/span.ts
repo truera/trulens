@@ -37,7 +37,6 @@ export const SpanAttributes = {
 
   // Attributes that are common to spans within a record
   SPAN_TYPE: `${BASE_SCOPE}.span_type`,
-  SELECTOR_NAME: `${BASE_SCOPE}.selector_name`,
   RECORD_ID: `${BASE_SCOPE}.record_id`,
   APP_NAME: `${BASE_SCOPE}.app_name`,
   APP_VERSION: `${BASE_SCOPE}.app_version`,
