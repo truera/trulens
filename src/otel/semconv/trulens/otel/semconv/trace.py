@@ -37,18 +37,6 @@ class SpanAttributes:
     Span type attribute.
     """
 
-    SELECTOR_NAME_KEY = "selector_name"
-    """
-    Key for the user-defined selector name for the current span.
-    Here to help us check both trulens.selector_name and selector_name
-    to verify the user attributes and make corrections if necessary.
-    """
-
-    SELECTOR_NAME = BASE_SCOPE + "." + SELECTOR_NAME_KEY
-    """
-    User-defined selector name for the current span.
-    """
-
     RECORD_ID = BASE_SCOPE + ".record_id"
     """ID of the record that the span belongs to."""
 
@@ -175,6 +163,9 @@ class SpanAttributes:
         HIGHER_IS_BETTER = base + ".higher_is_better"
         """Whether higher is better for this feedback function."""
 
+        EXPLANATION = base + ".explanation"
+        """Explanation for the score of the evaluation."""
+
         METADATA = base + ".metadata"
         """Any metadata of the evaluation."""
 
@@ -198,8 +189,14 @@ class SpanAttributes:
         EXPLANATION = base + ".explanation"
         """Explanation for the score for this sub-step."""
 
+        METADATA = base + ".metadata"
+        """Any metadata for this sub-step."""
+
         SCORE = base + ".score"
         """Score for this sub-step."""
+
+        ERROR = base + ".error"
+        """Error raised during this sub-step."""
 
     class COST:
         """Attributes for spans with a cost."""

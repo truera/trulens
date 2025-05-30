@@ -33,8 +33,6 @@ from rich.markdown import Markdown
 from rich.pretty import pretty_repr
 from trulens.core._utils import pycompat as pycompat_utils
 from trulens.core.feedback import endpoint as core_endpoint
-from trulens.core.feedback.selector import RECORD_ROOT_INPUT
-from trulens.core.feedback.selector import RECORD_ROOT_OUTPUT
 from trulens.core.feedback.selector import Selector
 from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import app as app_schema
@@ -553,22 +551,16 @@ class Feedback(feedback_schema.FeedbackDefinition):
         Create a variant of `self` that will take in the main app input or
         "prompt" as input, sending it as an argument `arg` to implementation.
         """
-
         new_selectors = self.selectors.copy()
-
         if arg is None:
             arg = self._next_unselected_arg_name()
             self._print_guessed_selector(arg, select_schema.Select.RecordInput)
-
         if is_otel_tracing_enabled():
-            new_selectors[arg] = RECORD_ROOT_INPUT
+            new_selectors[arg] = Selector.select_record_input()
         else:
             new_selectors[arg] = select_schema.Select.RecordInput
-
         ret = self.model_copy()
-
         ret.selectors = new_selectors
-
         return ret
 
     # alias
@@ -579,26 +571,46 @@ class Feedback(feedback_schema.FeedbackDefinition):
         Create a variant of `self` that will take in the main app output or
         "response" as input, sending it as an argument `arg` to implementation.
         """
-
         new_selectors = self.selectors.copy()
-
         if arg is None:
             arg = self._next_unselected_arg_name()
             self._print_guessed_selector(arg, select_schema.Select.RecordOutput)
-
         if is_otel_tracing_enabled():
-            new_selectors[arg] = RECORD_ROOT_OUTPUT
+            new_selectors[arg] = Selector.select_record_output()
         else:
             new_selectors[arg] = select_schema.Select.RecordOutput
-
         ret = self.model_copy()
-
         ret.selectors = new_selectors
-
         return ret
 
     # alias
     on_output = on_response
+
+    def on_context(
+        self,
+        arg: Optional[str] = None,
+        *,
+        call_feedback_function_per_entry_in_list: bool,
+    ):
+        """
+        Create a variant of `self` that will attempt to take in the context from
+        a context retrieval as input, sending it as an argument `arg` to
+        implementation.
+        """
+        if not is_otel_tracing_enabled():
+            raise RuntimeError(
+                "Context feedback functions are only supported in OTel mode!"
+            )
+        new_selectors = self.selectors.copy()
+        if arg is None:
+            arg = self._next_unselected_arg_name()
+            self._print_guessed_selector(arg, select_schema.Select.RecordOutput)
+        new_selectors[arg] = Selector.select_context(
+            call_feedback_function_per_entry_in_list=call_feedback_function_per_entry_in_list
+        )
+        ret = self.model_copy()
+        ret.selectors = new_selectors
+        return ret
 
     def on(self, *args, **kwargs) -> Feedback:
         """
