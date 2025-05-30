@@ -45,7 +45,7 @@ def research_eval_node(state) -> Command[Literal["orchestrator"]]:
     context_list = state.get("execution_trace")[state.get("current_step")][-1]["tool_calls"]
     response = state.get("execution_trace")[state.get("current_step")][-1]["output"]
 
-    provider = OpenAI(model_engine="gpt-4.1", api_key=os.environ.get("OPENAI_API_KEY"), base_url="https://api.openai.com/v1")
+    provider = OpenAI(model_engine=os.environ.get("LLM_MODEL_NAME"))
 
     with st.spinner("Evaluating research..."):
         context_rel_score, context_rel_reason = provider.context_relevance_with_cot_reasons(
@@ -133,7 +133,7 @@ class CustomChartEval(OpenAI):
         """
         return self.generate_score_and_reasons(system_prompt=system_prompt, user_prompt=user_prompt, min_score_val = 0, max_score_val = 3)
 
-chart_provider = CustomChartEval(model_engine="gpt-4o", base_url="https://api.openai.com/v1")
+chart_provider = CustomChartEval(model_engine=os.environ.get("LLM_MODEL_NAME"))#, base_url="https://api.openai.com/v1")
 
 @instrument(
     name="chart_eval_node",
@@ -215,7 +215,7 @@ class CustomTrajEval(OpenAI):
 
 
 def create_traj_eval() -> Feedback:
-    provider = CustomTrajEval(model_engine=os.environ.get("LLM_MODEL_NAME"), base_url="https://api.openai.com/v1") # note: reasoning model is not yet supported in TruLens OpenAI provider
+    provider = CustomTrajEval(model_engine=os.environ.get("LLM_MODEL_NAME"))
 
     return (
         Feedback(provider.traj_execution_with_cot_reasons, name="Agent Trajectory Evaluation")
