@@ -373,6 +373,7 @@ def _build_grid_options(
                 feedback_col + " direction",
                 cellDataType="text",
                 valueGetter=f"data['{feedback_col} direction'] ? 'Higher is Better' : 'Lower is Better'",
+                hide=True,
             )
 
     for col in df.columns:
