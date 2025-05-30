@@ -3,6 +3,6 @@ export REASONING_MODEL_NAME="qwen2.5-32b"
 export LLM_MODEL_NAME="qwen2.5-32b"
 export TAVILY_API_KEY="tvly-dev-..."
 export TRULENS_OTEL_TRACING="1"
-export STREAMLIT_SERVER_PORT=9001
-export INCLUDE_EVAL_NODES="0"
+export STREAMLIT_SERVER_PORT=9002
+export INCLUDE_EVAL_NODES="1"
 streamlit run app.py
