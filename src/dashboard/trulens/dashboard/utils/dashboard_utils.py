@@ -106,11 +106,6 @@ def get_session() -> core_session.TruSession:
     parser.add_argument("--database-url", default=None)
     parser.add_argument("--sis-compatibility", action="store_true")
     parser.add_argument(
-        "--otel-tracing",
-        action="store_true",
-        help="Enable OTEL tracing in the dashboard",
-    )
-    parser.add_argument(
         "--database-prefix", default=core_db.DEFAULT_DATABASE_PREFIX
     )
 
@@ -132,9 +127,6 @@ def get_session() -> core_session.TruSession:
         session.experimental_enable_feature(
             mod_experimental.Feature.SIS_COMPATIBILITY
         )
-
-    # Store the otel_tracing flag in the session state
-    st.session_state["otel_tracing"] = args.otel_tracing
 
     return session
 
