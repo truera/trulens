@@ -451,22 +451,22 @@ def _render_grid_tab(
     ]
 
     # Validate metadata_cols
-    if metadata_cols := st.session_state.get(
+    if metadata_col_values := st.session_state.get(
         f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.metadata_cols", []
     ):
-        st.session_state[
-            f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.metadata_cols"
-        ] = [
+        metadata_select_options = [
             col_name
-            for col_name in metadata_cols
+            for col_name in metadata_col_values
             if col_name in _metadata_options
         ]
+    else:
+        metadata_select_options = _metadata_options
 
     metadata_cols = st.multiselect(
         label="Display Metadata Columns",
         key=f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.metadata_cols",
-        options=_metadata_options,
-        default=_metadata_options,
+        options=metadata_select_options,
+        default=metadata_select_options,
     )
     if len(metadata_cols) != len(_metadata_options):
         st.query_params["metadata_cols"] = ",".join(metadata_cols)
