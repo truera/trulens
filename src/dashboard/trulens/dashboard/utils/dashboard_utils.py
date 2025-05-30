@@ -12,7 +12,6 @@ from trulens.core import experimental as core_experimental
 from trulens.core import experimental as mod_experimental
 from trulens.core import session as core_session
 from trulens.core.database import base as core_db
-from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.utils import imports as import_utils
 from trulens.dashboard import constants as dashboard_constants
 from trulens.dashboard.components.record_viewer_otel import OtelSpan
@@ -110,6 +109,11 @@ def get_session() -> core_session.TruSession:
     parser.add_argument(
         "--database-prefix", default=core_db.DEFAULT_DATABASE_PREFIX
     )
+    parser.add_argument(
+        "--otel-tracing",
+        action="store_true",
+        help="Enable OTEL tracing in the dashboard",
+    )
 
     try:
         args = parser.parse_args()
@@ -133,7 +137,7 @@ def get_session() -> core_session.TruSession:
     # Store the otel_tracing flag in the session state
     if args.otel_tracing:
         os.environ["TRULENS_OTEL_TRACING"] = "1"
-        
+
     return session
 
 
