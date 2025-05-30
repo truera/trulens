@@ -87,7 +87,9 @@ def _render_record_metrics(
         st.metric(
             label=f"Total cost ({cost_currency})",
             value=_format_cost(cost, cost_currency),
-            delta=f"{cost:.3g} {cost_currency}" if delta_cost != 0 else None,
+            delta=f"{delta_cost:.3g} {cost_currency}"
+            if delta_cost != 0
+            else None,
             delta_color="inverse",
             help=f"Cost of the app execution measured in {cost_currency}. Delta is relative to average cost for the app.",
         )
