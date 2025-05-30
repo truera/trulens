@@ -214,7 +214,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         # Assert that all expected feedback columns exist
         self.assertIn(f"{feedback_name}_calls", df.columns)
         self.assertEqual(
-            len(df[f"{feedback_name}_calls"][0]), expected_num_calls
+            len(df[f"{feedback_name}_calls"][0]), len(feedback_cols)
         )
         self.assertIn(
             f"{feedback_name} feedback cost in {cost_currency}",
@@ -928,7 +928,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
                 "ai.observability.app_version": self.app_version,
                 "ai.observability.app_id": self.app_id,
                 "ai.observability.record_id": record_id,
-                "ai.observability.span_type": SpanAttributes.SpanType.EVAL.value,
+                "ai.observability.span_type": SpanAttributes.SpanType.EVAL_ROOT.value,
                 "ai.observability.eval.metric_name": "test_metric",
                 "ai.observability.eval.score": 0.8,
                 # Multiple kwargs attributes for the feedback function
