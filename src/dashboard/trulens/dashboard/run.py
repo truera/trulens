@@ -144,8 +144,6 @@ def run_dashboard(
     ]
     if sis_compatibility_mode:
         args += ["--sis-compatibility"]
-    # if is_otel_tracing_enabled():
-    #     args += ["--otel-tracing"]
 
     proc = subprocess.Popen(
         args,
