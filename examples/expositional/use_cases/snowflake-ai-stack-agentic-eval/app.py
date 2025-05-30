@@ -51,6 +51,8 @@ if st.session_state.multi_agent_workflow is None:
     )
     st.success("Langgraph workflow compiled!")
 
+st.image(st.session_state.multi_agent_workflow.graph.get_graph().draw_mermaid_png())
+
 st.markdown("---")
 
 # Render existing conversation history

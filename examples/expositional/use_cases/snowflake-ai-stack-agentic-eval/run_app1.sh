@@ -1,4 +1,3 @@
-export OPENAI_API_KEY="sk-proj-..."
 export OPENAI_BASE_URL=https://gtc-demo-1.metac2.us-west-2.aws-dev.app.snowflake.com/v1
 export REASONING_MODEL_NAME="qwen2.5-32b"
 export LLM_MODEL_NAME="qwen2.5-32b"
