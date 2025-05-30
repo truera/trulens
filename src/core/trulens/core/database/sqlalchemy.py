@@ -1267,9 +1267,7 @@ class SQLAlchemyDB(core_db.DB):
             limit: Optional limit for pagination. Defaults to None.
         """
 
-        use_otel = is_otel_tracing_enabled()
-
-        if use_otel:
+        if is_otel_tracing_enabled():
             return self._get_records_and_feedback_otel(
                 app_ids=app_ids, app_name=app_name, offset=offset, limit=limit
             )
