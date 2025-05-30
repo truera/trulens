@@ -45,7 +45,7 @@ def research_eval_node(state) -> Command[Literal["orchestrator"]]:
     context_list = state.get("execution_trace")[state.get("current_step")][-1]["tool_calls"]
     response = state.get("execution_trace")[state.get("current_step")][-1]["output"]
 
-    provider = OpenAI(model_engine="gpt-4.1", api_key=os.environ.get("OPENAI_API_KEY"))
+    provider = OpenAI(model_engine="gpt-4.1", api_key=os.environ.get("OPENAI_API_KEY"), base_url="https://api.openai.com/v1")
 
     with st.spinner("Evaluating research..."):
         context_rel_score, context_rel_reason = provider.context_relevance_with_cot_reasons(
@@ -102,7 +102,7 @@ class CustomChartEval(OpenAI):
     def chart_accuracy_with_cot_reasons(self, code: str, context: str) -> Tuple[float, Dict]:
         system_prompt = f"""
         Use the following rubric to evaluate chart accuracy based on context:
-        0: The chart does not reflect the data or plots incorrect values/relationships.
+        0: The chart does not reflect the data, plots incorrect values/relationships, or plots hypothetical data.
         1: The chart has significant errors (e.g., wrong labels, major mismatches in data) but shows some partial attempt.
         2: The chart is mostly correct with minor, non-critical errors.
         3: The chart is completely accurate: correct data, correct relationships, correct calculations.
@@ -116,7 +116,7 @@ class CustomChartEval(OpenAI):
         0: The chart is poorly formatted: missing important elements like titles, axis labels, or has unreadable text.
         1: Basic elements are present but formatting is cluttered, confusing, or difficult to read.
         2: The chart is mostly clean and readable with only minor formatting issues.
-        3: The chart is well-formatted with clear titles, labeled axes, readable scales, appropriate legends, and an overall clean presentation.
+        3: The chart is well-formatted with clear titles, labeled axes with reasonable units, readable scales, appropriate legends, and an overall clean presentation.
         """
         user_prompt = f""" Please score the code. Code: {code}. \n {prompts.COT_REASONS_TEMPLATE}
         """
@@ -133,7 +133,7 @@ class CustomChartEval(OpenAI):
         """
         return self.generate_score_and_reasons(system_prompt=system_prompt, user_prompt=user_prompt, min_score_val = 0, max_score_val = 3)
 
-chart_provider = CustomChartEval(model_engine="gpt-4o")
+chart_provider = CustomChartEval(model_engine="gpt-4o", base_url="https://api.openai.com/v1")
 
 @instrument(
     name="chart_eval_node",
@@ -215,7 +215,7 @@ class CustomTrajEval(OpenAI):
 
 
 def create_traj_eval() -> Feedback:
-    provider = CustomTrajEval(model_engine=os.environ.get("LLM_MODEL_NAME")) # note: reasoning model is not yet supported in TruLens OpenAI provider
+    provider = CustomTrajEval(model_engine=os.environ.get("LLM_MODEL_NAME"), base_url="https://api.openai.com/v1") # note: reasoning model is not yet supported in TruLens OpenAI provider
 
     return (
         Feedback(provider.traj_execution_with_cot_reasons, name="Agent Trajectory Evaluation")
