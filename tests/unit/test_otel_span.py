@@ -13,7 +13,6 @@ from trulens.experimental.otel_tracing.core.span import (
     set_user_defined_attributes,
 )
 from trulens.experimental.otel_tracing.core.span import validate_attributes
-from trulens.experimental.otel_tracing.core.span import validate_selector_name
 from trulens.otel.semconv.trace import SpanAttributes
 
 
@@ -53,48 +52,6 @@ class TestOtelSpan(TestCase):
                     args=(),
                     all_kwargs={"value2": "Kojikun"},
                 ),
-            )
-
-    def test_validate_selector_name(self) -> None:
-        with self.subTest("No selector name"):
-            self.assertEqual(
-                validate_selector_name({}),
-                {},
-            )
-
-        with self.subTest(
-            f"Both {SpanAttributes.SELECTOR_NAME_KEY} and {SpanAttributes.SELECTOR_NAME} cannot be set."
-        ):
-            self.assertRaises(
-                ValueError,
-                validate_selector_name,
-                {
-                    SpanAttributes.SELECTOR_NAME_KEY: "key",
-                    SpanAttributes.SELECTOR_NAME: "name",
-                },
-            )
-
-        with self.subTest("Non-string"):
-            self.assertRaises(
-                ValueError,
-                validate_selector_name,
-                {
-                    SpanAttributes.SELECTOR_NAME_KEY: 42,
-                },
-            )
-
-        with self.subTest(f"Valid {SpanAttributes.SELECTOR_NAME}"):
-            self.assertEqual(
-                validate_selector_name({SpanAttributes.SELECTOR_NAME: "name"}),
-                {SpanAttributes.SELECTOR_NAME_KEY: "name"},
-            )
-
-        with self.subTest(f"Valid {SpanAttributes.SELECTOR_NAME_KEY}"):
-            self.assertEqual(
-                validate_selector_name({
-                    SpanAttributes.SELECTOR_NAME_KEY: "name"
-                }),
-                {SpanAttributes.SELECTOR_NAME_KEY: "name"},
             )
 
     def test_validate_attributes(self) -> None:

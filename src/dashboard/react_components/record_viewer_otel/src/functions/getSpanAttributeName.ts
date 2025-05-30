@@ -5,7 +5,6 @@ export const getSpanAttributeName = (key: string) => {
   const mapping: Record<string, string> = {
     [SpanAttributes.RUN_NAME]: 'Run Name',
     [SpanAttributes.SPAN_TYPE]: 'Span Type',
-    [SpanAttributes.SELECTOR_NAME]: 'Selector Name',
     [SpanAttributes.RECORD_ID]: 'Record ID',
     [SpanAttributes.APP_NAME]: 'App Name',
     [SpanAttributes.APP_VERSION]: 'App Version',

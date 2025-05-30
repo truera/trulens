@@ -42,18 +42,6 @@ class SpanAttributes:
     Span type attribute.
     """
 
-    SELECTOR_NAME_KEY = "selector_name"
-    """
-    Key for the user-defined selector name for the current span.
-    Here to help us check both trulens.selector_name and selector_name
-    to verify the user attributes and make corrections if necessary.
-    """
-
-    SELECTOR_NAME = BASE_SCOPE + "." + SELECTOR_NAME_KEY
-    """
-    User-defined selector name for the current span.
-    """
-
     RECORD_ID = BASE_SCOPE + ".record_id"
     """ID of the record that the span belongs to."""
 
