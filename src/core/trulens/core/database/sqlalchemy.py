@@ -1257,7 +1257,6 @@ class SQLAlchemyDB(core_db.DB):
         app_name: Optional[types_schema.AppName] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
-        use_otel: Optional[bool] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """See [DB.get_records_and_feedback][trulens.core.database.base.DB.get_records_and_feedback].
 
@@ -1266,19 +1265,9 @@ class SQLAlchemyDB(core_db.DB):
             app_name: Optional app name to filter by. Defaults to None.
             offset: Optional offset for pagination. Defaults to None.
             limit: Optional limit for pagination. Defaults to None.
-            use_otel: Optional flag to explicitly choose between OTEL and pre-OTEL implementations. Defaults to None.
-                      If None, the implementation is chosen automatically based on whether OTEL tracing is enabled.
         """
 
-        # If use_otel is explicitly set, use the specified implementation
-        # Otherwise, determine based on whether OTEL tracing environment variable is enabled
-        if use_otel is None:
-            use_otel = is_otel_tracing_enabled()
-            logger.warning(
-                f"use_otel is not explicitly set, checking if OTEL tracing environment variable is enabled (TRULENS_OTEL_TRACING): {use_otel}"
-            )
-
-        if use_otel:
+        if is_otel_tracing_enabled():
             return self._get_records_and_feedback_otel(
                 app_ids=app_ids, app_name=app_name, offset=offset, limit=limit
             )

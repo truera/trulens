@@ -108,11 +108,6 @@ def get_session() -> core_session.TruSession:
     parser.add_argument("--database-url", default=None)
     parser.add_argument("--sis-compatibility", action="store_true")
     parser.add_argument(
-        "--otel-tracing",
-        action="store_true",
-        help="Enable OTEL tracing in the dashboard",
-    )
-    parser.add_argument(
         "--database-prefix", default=core_db.DEFAULT_DATABASE_PREFIX
     )
 
@@ -138,7 +133,7 @@ def get_session() -> core_session.TruSession:
     # Store the otel_tracing flag in the session state
     if args.otel_tracing:
         os.environ["TRULENS_OTEL_TRACING"] = "1"
-
+        
     return session
 
 
@@ -150,23 +145,16 @@ def get_records_and_feedback(
     app_name: Optional[str] = None,
     offset: Optional[int] = None,
     limit: Optional[int] = None,
-    use_otel: Optional[bool] = None,
 ):
     session = get_session()
     lms = session.connector.db
     assert lms
-
-    # TODELETE(otel_tracing). Delete once otel_tracing is no longer
-    # experimental.
-    if use_otel is None:
-        use_otel = is_otel_tracing_enabled()
 
     records_df, feedback_col_names = lms.get_records_and_feedback(
         app_ids=app_ids,
         app_name=app_name,
         offset=offset,
         limit=limit,
-        use_otel=use_otel,
     )
 
     records_df["record_metadata"] = records_df["record_json"].apply(
