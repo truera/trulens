@@ -1197,6 +1197,8 @@ class TruSession(
             self.force_flush()
         start_time = time()
         while time() - start_time < timeout:
+            # TODO: There's really no need to fetch everything, we should just
+            #       check the existence of the record_ids.
             records_df, _ = self.get_records_and_feedback(
                 record_ids=record_ids,
             )

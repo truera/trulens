@@ -726,10 +726,16 @@ class App(
             A dataframe with records as rows and feedbacks as columns.
         """
         TruSession().force_flush()
-        TruSession().wait_for_records(record_ids=record_ids, timeout=timeout)
-        self._evaluator.compute_now(record_ids)
-        res = TruSession().get_records_and_feedback(record_ids=record_ids)
-        return res[0][res[1]]
+        if record_ids is not None:
+            TruSession().wait_for_records(
+                record_ids=record_ids, timeout=timeout
+            )
+            self._evaluator.compute_now(record_ids)
+        records_df, feedback_cols = TruSession().get_records_and_feedback(
+            record_ids=record_ids
+        )
+        records_df.set_index("record_id", inplace=True)
+        return records_df[feedback_cols]
 
     @classmethod
     def select_context(cls, app: Optional[Any] = None) -> serial_utils.Lens:

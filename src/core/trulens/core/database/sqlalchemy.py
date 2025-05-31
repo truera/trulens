@@ -1617,7 +1617,7 @@ class SQLAlchemyDB(core_db.DB):
                 record_id_expr = self._json_extract_otel(
                     "record_attributes", SpanAttributes.RECORD_ID
                 )
-                where_clauses.append(record_id_expr in record_ids)
+                where_clauses.append(record_id_expr.in_(record_ids))
             if start_time is not None:
                 where_clauses.append(
                     self.orm.Event.start_timestamp >= start_time

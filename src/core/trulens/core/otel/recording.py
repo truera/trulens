@@ -111,7 +111,9 @@ class Record:
 
     def _wait_for_record(self) -> None:
         if not self._in_database:
-            TruSession().wait_for_records([self.record_id], timeout=180)
+            TruSession().wait_for_records(
+                record_ids=[self.record_id], timeout=180
+            )
             self._in_database = True
 
     def _get_events(self, refresh: bool = False) -> pd.DataFrame:
