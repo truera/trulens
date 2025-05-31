@@ -719,7 +719,8 @@ class App(
         """Retrieve feedback results for all records in the app.
 
         Args:
-            record_ids: List of record ids to retrieve feedback results for.
+            record_ids: List of record ids to retrieve feedback results for. If
+                None, retrieves whatever results are available now.
             timeout: Timeout in seconds to wait.
 
         Returns:
