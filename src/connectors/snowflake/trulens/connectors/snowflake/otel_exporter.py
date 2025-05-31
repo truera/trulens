@@ -84,7 +84,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         app_and_run_info_to_spans = defaultdict(list)
         for span in spans:
             key = (
-                # TODO(otel, semconv): Should have this in `span.resource.attributes`!
+                # TODO(otel, semconv, SNOW-2130988): Should have this in `span.resource.attributes`!
                 span.attributes.get(ResourceAttributes.APP_NAME),
                 span.attributes.get(ResourceAttributes.APP_VERSION),
                 span.attributes.get(SpanAttributes.RUN_NAME),
