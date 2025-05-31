@@ -1103,13 +1103,13 @@ class SQLAlchemyDB(core_db.DB):
                         event
                     )
 
-                    # Check if the span is of type EVAL or EVAL_ROOT
-                    if record_attributes.get(SpanAttributes.SPAN_TYPE) in [
-                        SpanAttributes.SpanType.EVAL.value,
-                        SpanAttributes.SpanType.EVAL_ROOT.value,
-                    ]:
+                    # Check if the span is of type EVAL_ROOT
+                    if (
+                        record_attributes.get(SpanAttributes.SPAN_TYPE)
+                        == SpanAttributes.SpanType.EVAL_ROOT.value
+                    ):
                         metric_name = record_attributes.get(
-                            SpanAttributes.EVAL.METRIC_NAME, ""
+                            SpanAttributes.EVAL.METRIC_NAME
                         )
                         if not metric_name:
                             logger.warning(
@@ -1178,11 +1178,11 @@ class SQLAlchemyDB(core_db.DB):
                                 else eval_root_score
                             ),
                             "meta": {
-                                "criteria": record_attributes.get(
-                                    SpanAttributes.EVAL.CRITERIA, None
+                                "metadata": record_attributes.get(
+                                    SpanAttributes.EVAL_ROOT.METADATA, {}
                                 ),
                                 "explanation": record_attributes.get(
-                                    SpanAttributes.EVAL.EXPLANATION, None
+                                    SpanAttributes.EVAL_ROOT.EXPLANATION
                                 ),
                             },
                         }
