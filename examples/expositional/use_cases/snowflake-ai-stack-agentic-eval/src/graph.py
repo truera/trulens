@@ -1,4 +1,4 @@
-from typing import Iterator, Optional, List, Dict, Any, Annotated, Literal
+from typing import Iterator, Optional, List, Dict, Any, Annotated, Literal, Union
 
 from IPython.display import Image
 from IPython.display import display
@@ -22,7 +22,10 @@ import json
 from src.agentic_evals import chart_eval_node, research_eval_node
 from src.util import State, append_to_step_trace
 import streamlit as st
+import re
+import os
 
+INCLUDE_EVAL_NODES = os.environ.get("INCLUDE_EVAL_NODES", "1") == "1"
 
 def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -> StateGraph:
     llm = ChatOpenAI(
@@ -120,10 +123,10 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
     )
     def research_node(
         state: State,
-    ) -> Command[Literal["research_eval"]]:
+    ) -> Command[Union[Literal["research_eval"], Literal["orchestrator"]]]:
         with st.spinner("Researching..."):
             result = research_agent.invoke(state)
-        goto = "research_eval"
+        goto = "research_eval" if INCLUDE_EVAL_NODES else "orchestrator"
         # wrap in a human message, as not all providers allow
         # AI message at the last position of the input messages list
         result["messages"][-1] = HumanMessage(
@@ -204,7 +207,12 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
             result = reasoning_llm.invoke(full_prompt)
 
         try:
-            parsed = json.loads(result.content)
+            content = result.content
+            if isinstance(content, list):
+                # If the LLM returns a list, join into a string
+                content = "\n".join(str(x) for x in content)
+            content = clean_json_response(content)
+            parsed = json.loads(content)
             goto = parsed["goto"]
             reason = parsed["reason"]
         except Exception as e:
@@ -245,7 +253,9 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
             f"{BASE_SCOPE}.chart_generator_response": ret.update["messages"][-1].content
         },
     )
-    def chart_node(state: State) -> Command[Literal["chart_eval"]]:
+    def chart_node(state: State) -> Command[Union[Literal["chart_eval"], Literal["orchestrator"]]]:
+        goto = "chart_eval" if INCLUDE_EVAL_NODES else "orchestrator"
+
         with st.spinner("Generating chart..."):
             result = chart_agent.invoke(state)
         result["messages"][-1] = HumanMessage(
@@ -263,7 +273,7 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
                 "messages": result["messages"],
                 "execution_trace": append_to_step_trace(state, state.get("current_step"), chart_log)
             },
-            goto="chart_eval"
+            goto=goto
         )
 
 
@@ -272,9 +282,12 @@ def build_graph(search_max_results: int, llm_model: str, reasoning_model: str) -
     workflow.add_node("orchestrator", orchestrator_node)
     workflow.add_node("researcher", research_node)
     workflow.add_node("chart_generator", chart_node)
-    workflow.add_node("chart_eval", chart_eval_node)
-    workflow.add_node("research_eval", research_eval_node)
 
+    # Conditionally add eval nodes based on environment variable
+    include_eval_nodes = os.environ.get("INCLUDE_EVAL_NODES", "1") == "1"
+    if include_eval_nodes:
+        workflow.add_node("chart_eval", chart_eval_node)
+        workflow.add_node("research_eval", research_eval_node)
 
     workflow.add_edge(START, "orchestrator")
 
@@ -304,3 +317,12 @@ class MultiAgentWorkflow:
             {"recursion_limit": 150},
             stream_mode="updates"
         )
+
+
+def clean_json_response(content: str) -> str:
+    # Remove all code block markers (``` or ```json) at the start/end of the string, and strip whitespace
+    content = re.sub(r"^```(?:json)?\s*", "", content.strip(), flags=re.IGNORECASE)
+    content = re.sub(r"\s*```$", "", content, flags=re.IGNORECASE)
+    # Remove any stray backticks at the start/end
+    content = content.strip("` \n")
+    return content
