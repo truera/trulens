@@ -323,6 +323,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
         self,
         app_ids: Optional[List[types_schema.AppID]] = None,
         app_name: Optional[types_schema.AppName] = None,
+        record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, List[str]]:
@@ -335,6 +336,8 @@ class DBConnector(ABC, text_utils.WithIdentString):
             app_name: A name of the app to filter records by. If given, only records for
                 this app will be returned.
 
+            record_ids: An optional list of record ids to filter records by.
+
             offset: Record row offset.
 
             limit: Limit on the number of records to return.
@@ -346,7 +349,11 @@ class DBConnector(ABC, text_utils.WithIdentString):
         """
 
         df, feedback_columns = self.db.get_records_and_feedback(
-            app_ids=app_ids, app_name=app_name, offset=offset, limit=limit
+            app_ids=app_ids,
+            app_name=app_name,
+            record_ids=record_ids,
+            offset=offset,
+            limit=limit,
         )
 
         df["app_name"] = df["app_json"].apply(lambda x: x.get("app_name"))
@@ -437,16 +444,22 @@ class DBConnector(ABC, text_utils.WithIdentString):
         return [self.add_event(event=event) for event in events]
 
     def get_events(
-        self, app_id: str, start_time: Optional[datetime.datetime] = None
+        self,
+        app_id: Optional[str] = None,
+        record_ids: Optional[List[str]] = None,
+        start_time: Optional[datetime.datetime] = None,
     ) -> pd.DataFrame:
         """
         Get events from the database.
 
         Args:
             app_id: The app id to filter events by.
+            record_ids: The record ids to filter events by.
             start_time: The minimum time to consider events from.
 
         Returns:
-            A pandas DataFrame of events associated with the provided app id.
+            A pandas DataFrame of all relevant events.
         """
-        return self.db.get_events(app_id)
+        return self.db.get_events(
+            app_id=app_id, record_ids=record_ids, start_time=start_time
+        )

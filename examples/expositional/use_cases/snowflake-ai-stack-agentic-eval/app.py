@@ -143,10 +143,8 @@ if user_input:
                     st.chat_message("assistant").write(content)
 
         st.session_state.tru_session.force_flush()
-        record_id = recording.get()
-
-        st.session_state.tru_session.wait_for_record(record_id)
-        trulens_st.trulens_trace(record=record_id)
+        record = recording.get()
+        trulens_st.trulens_trace(record=record.record_id)
         # trulens_st.trulens_feedback(record=record_id) # TODO make trulens feedback work with otel eval spans
 
         # Add the assistant response to session state - only once!

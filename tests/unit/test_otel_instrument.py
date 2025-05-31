@@ -13,9 +13,9 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
 import pandas as pd
-from trulens.core.otel.instrument import Recording
 from trulens.core.otel.instrument import _get_func_name
 from trulens.core.otel.instrument import instrument
+from trulens.core.otel.recording import Recording
 from trulens.experimental.otel_tracing.core.session import (
     _set_up_tracer_provider,
 )
@@ -45,7 +45,7 @@ class TestOtelInstrument(unittest.TestCase):
         self.tokens = []
         self.tokens.append(
             context_api.attach(
-                set_baggage("__trulens_recording__", Recording())
+                set_baggage("__trulens_recording__", Recording(None))
             )
         )
         self.tokens.append(

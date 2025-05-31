@@ -17,7 +17,7 @@ from tests.util.otel_test_case import OtelTestCase
 
 @pytest.mark.optional
 class TestOtelEvaluator(OtelTestCase):
-    def test_evaluator_lifecycle(self):
+    def test_evaluator_lifecycle(self) -> None:
         # Create a mock app.
         mock_app = MagicMock()
         mock_app.app_name = "Test App"
@@ -40,7 +40,7 @@ class TestOtelEvaluator(OtelTestCase):
         self.assertCollected(evaluator_ref)
         self.assertCollected(thread_ref)
 
-    def test_evaluator_processes_events(self):
+    def test_evaluator_processes_events(self) -> None:
         # Create a mock app.
         mock_app = MagicMock()
         mock_app.app_name = "App"
@@ -77,7 +77,7 @@ class TestOtelEvaluator(OtelTestCase):
         # Stop evaluator
         evaluator.stop_evaluator()
 
-    def test_evaluator_error_handling(self):
+    def test_evaluator_error_handling(self) -> None:
         """Test that evaluator handles errors gracefully."""
         # Create a mock app that raises an error when compute_feedbacks is
         # called.
@@ -105,7 +105,7 @@ class TestOtelEvaluator(OtelTestCase):
         # Verify compute_feedbacks was called even though it raised an error.
         mock_app.compute_feedbacks.assert_called()
 
-    def test_evaluator_invalid_start(self):
+    def test_evaluator_invalid_start(self) -> None:
         mock_app = MagicMock()
         mock_app.app_name = "Test App"
         mock_app.app_version = "v1"
@@ -122,3 +122,60 @@ class TestOtelEvaluator(OtelTestCase):
         ):
             with self.assertRaises(ValueError):
                 evaluator.start_evaluator()
+
+    def test__get_record_id_to_unprocessed_events(self) -> None:
+        mock_app = MagicMock()
+        mock_app.app_name = "Test App"
+        mock_app.app_version = "v1"
+        evaluator = Evaluator(mock_app)
+        # Mock the connector to return test events.
+        test_events = pd.DataFrame([
+            {
+                "trace": {"span_id": "span1", "parent_id": None},
+                "record_attributes": {
+                    SpanAttributes.SPAN_TYPE: SpanAttributes.SpanType.RECORD_ROOT,
+                    SpanAttributes.RECORD_ID: "test_record_id",
+                },
+            },
+            {
+                "trace": {"span_id": "span2", "parent_id": "span1"},
+                "record_attributes": {
+                    SpanAttributes.RECORD_ID: "test_record_id"
+                },
+            },
+        ])
+        mock_app.connector.get_events.return_value = test_events
+        # Get unprocessed events.
+        record_id_to_events = evaluator._get_record_id_to_unprocessed_events(
+            record_ids=["test_record_id"]
+        )
+        self.assertIn("test_record_id", record_id_to_events)
+        pd.testing.assert_frame_equal(
+            test_events, record_id_to_events["test_record_id"]
+        )
+
+    def test_compute_now(self) -> None:
+        mock_app = MagicMock()
+        mock_app.app_name = "Compute Now App"
+        mock_app.app_version = "v1"
+        evaluator = Evaluator(mock_app)
+        evaluator.stop_evaluator()
+        evaluator._get_record_id_to_unprocessed_events = MagicMock()
+        evaluator._get_record_id_to_unprocessed_events.return_value = {
+            "test_record_id": pd.DataFrame({
+                "record_attributes": [
+                    {SpanAttributes.RECORD_ID: "test_record_id"}
+                ]
+            })
+        }
+        evaluator.compute_now(record_ids=["test_record_id"])
+        mock_app.compute_feedbacks.assert_called_once()
+        self.assertEqual(
+            ["test_record_id"],
+            [
+                curr["record_attributes"][SpanAttributes.RECORD_ID]
+                for _, curr in mock_app.compute_feedbacks.call_args_list[0]
+                .kwargs["events"]
+                .iterrows()
+            ],
+        )

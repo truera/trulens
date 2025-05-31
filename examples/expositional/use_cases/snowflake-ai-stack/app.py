@@ -2,6 +2,7 @@ import streamlit as st
 from src.retrieval import VectorStore
 from src.generation import ChatModel
 from src.rag import Rag
+
 # Add imports for observability
 from src.observability import start_observability, create_evals
 from trulens.providers.openai import OpenAI
@@ -9,7 +10,13 @@ from trulens.apps.app import TruApp
 from trulens.dashboard import streamlit as trulens_st
 import os
 
-st.set_page_config(page_title="Snowflake AI Stack", page_icon="❄️", layout="centered", initial_sidebar_state="collapsed", menu_items=None)
+st.set_page_config(
+    page_title="Snowflake AI Stack",
+    page_icon="❄️",
+    layout="centered",
+    initial_sidebar_state="collapsed",
+    menu_items=None,
+)
 
 st.subheader("Using the ❄️ AI Stack")
 
@@ -29,6 +36,7 @@ if "tru_rag" not in st.session_state:
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+
 @st.cache_resource
 def setup_vector_store():
     vector_store = VectorStore()
@@ -37,29 +45,32 @@ def setup_vector_store():
     vector_store.add_chunks(chunks)
     return vector_store
 
+
 if st.session_state.vector_store is None:
     st.session_state.vector_store = setup_vector_store()
 
 # Create the RAG instance only once
 if st.session_state.vector_store is not None and st.session_state.rag is None:
-    chat_model = ChatModel(generation_model_name=os.environ.get("GENERATION_MODEL_NAME"))
+    chat_model = ChatModel(
+        generation_model_name=os.environ.get("GENERATION_MODEL_NAME")
+    )
     st.session_state.rag = Rag(
         chat_model=chat_model,
         vector_store=st.session_state.vector_store,
-        use_context_filter=os.environ.get("USE_CONTEXT_FILTER")
+        use_context_filter=os.environ.get("USE_CONTEXT_FILTER"),
     )
 
     # Set up TruLens observability
     provider = OpenAI(
         model_engine=os.environ.get("GENERATION_MODEL_NAME"),
-        api_key=os.environ.get("OPENAI_API_KEY")
+        api_key=os.environ.get("OPENAI_API_KEY"),
     )
     evals = create_evals(provider=provider)
     st.session_state.tru_rag = TruApp(
         st.session_state.rag,
         app_name="RAG",
         app_version="snowflake-oss",
-        feedbacks=evals
+        feedbacks=evals,
     )
     st.success("Knowledge Base Loaded!")
 
@@ -86,16 +97,20 @@ if user_input:
             with st.spinner("Thinking..."):
                 # full_response = st.session_state.rag.retrieve_and_generate(user_input, st.session_state.messages)
                 # message_area.markdown(full_response)
-                generator = st.session_state.rag.retrieve_and_generate_stream(user_input, st.session_state.messages)
+                generator = st.session_state.rag.retrieve_and_generate_stream(
+                    user_input, st.session_state.messages
+                )
                 for chunk in generator:
                     if chunk is not None:
                         full_response += chunk
                         message_area.markdown(full_response)
 
         st.session_state.tru_session.force_flush()
-        record_id = recording.get()
-        st.session_state.tru_session.wait_for_record(record_id)
-        trulens_st.trulens_trace(record=record_id)
+        record = recording.get()
+        trulens_st.trulens_trace(record=record.record_id)
 
         # Add the assistant response to session state - only once!
-        st.session_state.messages.append({"role": "assistant", "content": full_response})
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": full_response,
+        })
