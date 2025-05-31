@@ -2225,10 +2225,7 @@ trulens.feedback.computer.MinimalSpanInfo:
   __bases__:
   - builtins.object
   __class__: builtins.type
-  attributes:
-    attributes: builtins.dict
-    parent_span_id: builtins.NoneType
-    span_id: builtins.NoneType
+  attributes: {}
 trulens.feedback.computer.RecordGraphNode:
   __bases__:
   - builtins.object
