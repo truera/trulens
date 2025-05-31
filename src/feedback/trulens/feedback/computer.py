@@ -320,7 +320,7 @@ def _map_record_id_to_record_roots(
             record_attributes.get(SpanAttributes.SPAN_TYPE)
             == SpanAttributes.SpanType.RECORD_ROOT
         ):
-            record_id = record_attributes[SpanAttributes.RECORD_ID]
+            record_id = record_attributes.get(SpanAttributes.RECORD_ID)
             if record_id in ret:
                 _logger.warning(
                     f"Multiple record roots found for record_id={record_id}!"
@@ -578,7 +578,7 @@ def _call_feedback_function(
         feedback_aggregator: Aggregator function to combine feedback scores.
         kwarg_inputs: kwarg inputs to feedback function.
         record_root_attributes: Span attributes of record root.
-        record_root_attributes: Resource attributes of record root.
+        record_root_resource_attributes: Resource attributes of record root.
         span_group: Span group of the invocation.
     """
     app_name, app_version, app_id, run_name = _get_app_and_run_info(

@@ -519,7 +519,7 @@ class OtelRecordingContext(OtelBaseRecordingContext):
         self.ground_truth_output = ground_truth_output
 
     # For use as a context manager.
-    def __enter__(self) -> None:
+    def __enter__(self) -> Recording:
         self.attach_to_context("__trulens_app__", self.tru_app)
         self.attach_to_context(ResourceAttributes.APP_NAME, self.app_name)
         self.attach_to_context(ResourceAttributes.APP_VERSION, self.app_version)
