@@ -154,8 +154,8 @@ def construct_event(span: ReadableSpan) -> event_schema.Event:
             "parent_id": str(parent.span_id if parent else ""),
         },
     )
-    # TODO(otel, semconv):
-    # This is only a workaround for now until we can direclty put these into the
+    # TODO(otel, semconv, SNOW-2130988):
+    # This is only a workaround for now until we can directly put these into the
     # resource attributes.
     for k in [
         ResourceAttributes.APP_ID,
