@@ -327,11 +327,11 @@ def jsonify(
         new_dicted[id(obj)] = forward_value
         forward_value.update({
             k: recur(python_utils.safe_getattr(obj, k))
-            for k, v in obj.model_fields.items()
+            for k, v in type(obj).model_fields.items()
             if (not skip_excluded or not v.exclude) and recur_key(k)
         })
 
-        for k, _ in obj.model_computed_fields.items():
+        for k, _ in type(obj).model_computed_fields.items():
             if recur_key(k):
                 forward_value[k] = recur(python_utils.safe_getattr(obj, k))
 

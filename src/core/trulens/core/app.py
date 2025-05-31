@@ -310,7 +310,7 @@ def instrumented_component_views(
     for q, o in serial_utils.all_objects(obj):
         if (
             isinstance(o, pydantic.BaseModel)
-            and constant_utils.CLASS_INFO in o.model_fields
+            and constant_utils.CLASS_INFO in type(o).model_fields
         ):
             yield q, ComponentView.of_json(json=o)
 
