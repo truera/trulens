@@ -58,7 +58,7 @@ class TestOtelRagTriad(OtelTestCase):
         # Create Feedbacks.
         f_groundedness = (
             Feedback(mock_groundedness, name="Groundedness")
-            .on_context(call_feedback_function_per_entry_in_list=False)
+            .on_context(collect_list=True)
             .on_output()
         )
         f_answer_relevance = (
@@ -69,7 +69,7 @@ class TestOtelRagTriad(OtelTestCase):
         f_context_relevance = (
             Feedback(mock_context_relevance, name="Context Relevance")
             .on_input()
-            .on_context(call_feedback_function_per_entry_in_list=True)
+            .on_context(collect_list=False)
             .aggregate(np.mean)
         )
         # Create app.

@@ -22,10 +22,10 @@ class Selector:
 
     # If this selector describes a list, which of the following two should we
     # do:
-    # 1. [default] Call the feedback function once passing in the entire list.
-    # 2. Call the feedback function separately for each entry in the list and
-    #    aggregate.
-    call_feedback_function_per_entry_in_list: bool = False
+    # 1. [True] Call the feedback function once passing in the entire list.
+    # 2. [False] Call the feedback function separately for each entry in the
+    #            list and aggregate.
+    collect_list: bool = True
 
     # Whether to only match spans where no ancestor span also matched as well.
     # This is useful for cases where we may have multiple spans match a criteria
@@ -43,7 +43,7 @@ class Selector:
         ] = None,
         span_attribute: Optional[str] = None,
         function_attribute: Optional[str] = None,
-        call_feedback_function_per_entry_in_list: bool = False,
+        collect_list: bool = True,
         match_only_if_no_ancestor_matched: bool = False,
     ):
         if function_name is None and span_name is None and span_type is None:
@@ -67,9 +67,7 @@ class Selector:
         self.span_attributes_processor = span_attributes_processor
         self.span_attribute = span_attribute
         self.function_attribute = function_attribute
-        self.call_feedback_function_per_entry_in_list = (
-            call_feedback_function_per_entry_in_list
-        )
+        self.collect_list = collect_list
         self.match_only_if_no_ancestor_matched = (
             match_only_if_no_ancestor_matched
         )
@@ -120,8 +118,7 @@ class Selector:
         self, span_id: str, attributes: Dict[str, Any]
     ) -> FeedbackFunctionInput:
         ret = FeedbackFunctionInput(
-            span_id=span_id,
-            call_feedback_function_per_entry_in_list=self.call_feedback_function_per_entry_in_list,
+            span_id=span_id, collect_list=self.collect_list
         )
         if self.span_attributes_processor is not None:
             ret.value = self.span_attributes_processor(attributes)
@@ -165,17 +162,18 @@ class Selector:
         )
 
     @staticmethod
-    def select_context(
-        *, call_feedback_function_per_entry_in_list: bool
-    ) -> Selector:
+    def select_context(*, collect_list: bool) -> Selector:
         """Returns a `Selector` that tries to retrieve contexts.
 
         Args:
-            call_feedback_function_per_entry_in_list:
+            collect_list:
                 Assuming the returned `Selector` describes a list of strings,
-                whether to call the feedback function separately for each entry
-                in the list and aggregate the results, or to call it once giving
-                the entire list as input.
+                whether to call the feedback function:
+                1. [if collect_list is True]:
+                        Once giving the entire list as input.
+                2. [if collect_list is False]:
+                        Separately for each entry in the list and aggregate the
+                        results.
 
         Returns:
             `Selector` that tries to retrieve contexts.
@@ -202,6 +200,6 @@ class Selector:
         return Selector(
             span_type=SpanAttributes.SpanType.RETRIEVAL,
             span_attributes_processor=context_retrieval_processor,
-            call_feedback_function_per_entry_in_list=call_feedback_function_per_entry_in_list,
+            collect_list=collect_list,
             match_only_if_no_ancestor_matched=True,
         )

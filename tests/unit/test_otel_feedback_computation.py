@@ -544,12 +544,12 @@ class TestOtelFeedbackComputation(OtelTestCase):
             "a": Selector(
                 span_type=SpanAttributes.SpanType.RECORD_ROOT,
                 function_attribute="xs",
-                call_feedback_function_per_entry_in_list=True,
+                collect_list=False,
             ),
             "b": Selector(
                 span_type=SpanAttributes.SpanType.RECORD_ROOT,
                 function_attribute="ys",
-                call_feedback_function_per_entry_in_list=True,
+                collect_list=False,
             ),
         })
 
