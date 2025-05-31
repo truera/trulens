@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import sys
 from typing import Any, Callable, Dict, List, Optional, Union
 
@@ -108,6 +109,11 @@ def get_session() -> core_session.TruSession:
     parser.add_argument(
         "--database-prefix", default=core_db.DEFAULT_DATABASE_PREFIX
     )
+    parser.add_argument(
+        "--otel-tracing",
+        action="store_true",
+        help="Enable OTEL tracing in the dashboard",
+    )
 
     try:
         args = parser.parse_args()
@@ -127,6 +133,10 @@ def get_session() -> core_session.TruSession:
         session.experimental_enable_feature(
             mod_experimental.Feature.SIS_COMPATIBILITY
         )
+
+    # Store the otel_tracing flag in the session state
+    if args.otel_tracing:
+        os.environ["TRULENS_OTEL_TRACING"] = "1"
 
     return session
 
