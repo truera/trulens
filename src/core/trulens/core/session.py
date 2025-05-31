@@ -770,6 +770,7 @@ class TruSession(
         self,
         app_ids: Optional[List[types_schema.AppID]] = None,
         app_name: Optional[types_schema.AppName] = None,
+        record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pandas.DataFrame, List[str]]:
@@ -782,6 +783,8 @@ class TruSession(
             app_name: A name of the app to filter records by. If given, only records for
                 this app will be returned.
 
+            record_ids: An optional list of record ids to filter records by.
+
             offset: Record row offset.
 
             limit: Limit on the number of records to return.
@@ -792,7 +795,11 @@ class TruSession(
             List of feedback names that are columns in the DataFrame.
         """
         return self.connector.get_records_and_feedback(
-            app_ids=app_ids, app_name=app_name, offset=offset, limit=limit
+            app_ids=app_ids,
+            app_name=app_name,
+            record_ids=record_ids,
+            offset=offset,
+            limit=limit,
         )
 
     def get_leaderboard(
@@ -1172,17 +1179,17 @@ class TruSession(
 
         self._evaluator_proc = None
 
-    def wait_for_record(
+    def wait_for_records(
         self,
-        record_id: str,
+        record_ids: List[str],
         timeout: float = 10,
         poll_interval: float = 0.5,
     ) -> None:
         """
-        Wait for a specific record_id to appear in the TruLens session.
+        Wait for specific record_ids to appear in the TruLens session.
 
         Args:
-            record_id: The record_id to wait for.
+            record_ids: The record ids to wait for.
             timeout: Maximum time to wait in seconds.
             poll_interval: How often to poll in seconds.
         """
@@ -1190,13 +1197,18 @@ class TruSession(
             self.force_flush()
         start_time = time()
         while time() - start_time < timeout:
-            records_df, _ = self.get_records_and_feedback()
-            if not records_df.empty and record_id in set(
-                records_df["record_id"]
+            records_df, _ = self.get_records_and_feedback(
+                record_ids=record_ids,
+            )
+            known_record_ids = set(records_df["record_id"])
+            if not records_df.empty and all(
+                record_id in known_record_ids for record_id in record_ids
             ):
                 return
             sleep(poll_interval)
-        raise RuntimeError(f"Record with ID {record_id} not found in database!")
+        raise RuntimeError(
+            f"Could not find all record IDs: {record_ids} in database!"
+        )
 
 
 def Tru(*args, **kwargs) -> TruSession:

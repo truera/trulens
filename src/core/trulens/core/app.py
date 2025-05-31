@@ -701,7 +701,10 @@ class App(
         call will block until finished and if new records are produced while
         this is running, it will include them.
         """
-
+        if is_otel_tracing_enabled():
+            raise RuntimeError(
+                "`wait_for_feedback_results` is not supported with OTel tracing enabled, and is deprecated in favor of `retrieve_feedback_results`."
+            )
         while (
             record := self.records_with_pending_feedback_results.pop(
                 blocking=False
@@ -709,6 +712,24 @@ class App(
         ) is not None:
             record.wait_for_feedback_results(feedback_timeout=feedback_timeout)
             yield record
+
+    def retrieve_feedback_results(
+        self, record_ids: Optional[List[str]] = None, timeout: float = 180
+    ) -> pd.DataFrame:
+        """Retrieve feedback results for all records in the app.
+
+        Args:
+            record_ids: List of record ids to retrieve feedback results for.
+            timeout: Timeout in seconds to wait.
+
+        Returns:
+            A dataframe with records as rows and feedbacks as columns.
+        """
+        TruSession().force_flush()
+        TruSession().wait_for_records(record_ids=record_ids, timeout=timeout)
+        self._evaluator.compute_now(record_ids)
+        res = TruSession().get_records_and_feedback(record_ids=record_ids)
+        return res[0][res[1]]
 
     @classmethod
     def select_context(cls, app: Optional[Any] = None) -> serial_utils.Lens:

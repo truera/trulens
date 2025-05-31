@@ -343,6 +343,7 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
         self,
         app_ids: Optional[List[types_schema.AppID]] = None,
         app_name: Optional[types_schema.AppName] = None,
+        record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
@@ -351,11 +352,9 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
         Args:
             app_ids: If given, retrieve only the records for the given apps.
                 Otherwise all apps are retrieved.
-
             app_name: If given, retrieve only the records for the given app name.
-
+            record_ids: Optional list of record IDs to filter by. Defaults to None.
             offset: Database row offset.
-
             limit: Limit on rows (records) returned.
 
         Returns:
@@ -464,16 +463,20 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
 
     @abc.abstractmethod
     def get_events(
-        self, app_id: str, start_time: Optional[datetime] = None
+        self,
+        app_id: Optional[str],
+        record_ids: Optional[List[str]],
+        start_time: Optional[datetime],
     ) -> pd.DataFrame:
         """
         Get events from the database.
 
         Args:
             app_id: The app id to filter events by.
+            record_ids: The record ids to filter events by.
             start_time: The minimum time to consider events from.
 
         Returns:
-            A pandas DataFrame of events associated with the provided app id.
+            A pandas DataFrame of all relevant events.
         """
         raise NotImplementedError()
