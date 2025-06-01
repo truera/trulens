@@ -147,7 +147,7 @@ if user_input:
 
         st.session_state.tru_session.wait_for_record(record_id)
         trulens_st.trulens_trace(record=record_id)
-        # trulens_st.trulens_feedback(record=record_id) # TODO make trulens feedback work with otel eval spans
+        trulens_st.trulens_feedback(record_id=record_id)
 
         # Add the assistant response to session state - only once!
         st.session_state.messages.append({"role": "assistant", "content": full_response})
