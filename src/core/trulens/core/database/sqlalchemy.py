@@ -1150,8 +1150,16 @@ class SQLAlchemyDB(core_db.DB):
                                 "criteria": record_attributes.get(
                                     SpanAttributes.EVAL.CRITERIA, None
                                 ),
-                                "explanation": record_attributes.get(
-                                    SpanAttributes.EVAL.EXPLANATION, None
+                                "explanation": (
+                                    record_attributes.get(
+                                        SpanAttributes.EVAL.EXPLANATION
+                                    )
+                                    if SpanAttributes.EVAL.EXPLANATION
+                                    in record_attributes
+                                    else record_attributes.get(
+                                        SpanAttributes.EVAL_ROOT.EXPLANATION,
+                                        None,
+                                    )
                                 ),
                             },
                         }

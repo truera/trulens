@@ -208,7 +208,7 @@ class CustomTrajEval(OpenAI):
         user_prompt = f""" Please score the execution trace. Execution Trace (possible in json str format): {trace}. \n
         {prompts.COT_REASONS_TEMPLATE}
         """
-        return self.generate_score_and_reasons(system_prompt=system_prompt, user_prompt=user_prompt)
+        return self.generate_score_and_reasons(system_prompt=system_prompt, user_prompt=user_prompt, min_score_val = 0, max_score_val = 3)
 
 
 def create_traj_eval(provider) -> Feedback:
