@@ -17,13 +17,18 @@ Relevant links:
 
 from enum import Enum
 
+BASE_SCOPE = "ai.observability"
+
 
 class ResourceAttributes:
-    # TODO: Some Span attributes should be moved here.
-    pass
+    APP_ID = BASE_SCOPE + ".app_id"
+    """ID of the app that the span belongs to."""
 
+    APP_NAME = BASE_SCOPE + ".app_name"
+    """Fully qualified name of the app that the span belongs to."""
 
-BASE_SCOPE = "ai.observability"
+    APP_VERSION = BASE_SCOPE + ".app_version"
+    """Name of the version that the span belongs to."""
 
 
 class SpanAttributes:
@@ -37,29 +42,8 @@ class SpanAttributes:
     Span type attribute.
     """
 
-    SELECTOR_NAME_KEY = "selector_name"
-    """
-    Key for the user-defined selector name for the current span.
-    Here to help us check both trulens.selector_name and selector_name
-    to verify the user attributes and make corrections if necessary.
-    """
-
-    SELECTOR_NAME = BASE_SCOPE + "." + SELECTOR_NAME_KEY
-    """
-    User-defined selector name for the current span.
-    """
-
     RECORD_ID = BASE_SCOPE + ".record_id"
     """ID of the record that the span belongs to."""
-
-    APP_ID = BASE_SCOPE + ".app_id"
-    """ID of the app that the span belongs to."""
-
-    APP_NAME = BASE_SCOPE + ".app_name"
-    """Fully qualified name of the app that the span belongs to."""
-
-    APP_VERSION = BASE_SCOPE + ".app_version"
-    """Name of the version that the span belongs to."""
 
     RUN_NAME = BASE_SCOPE + ".run.name"
     """Name of the run that the span belongs to."""

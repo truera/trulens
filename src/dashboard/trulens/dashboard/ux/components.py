@@ -14,6 +14,7 @@ from trulens.core.utils import json as json_utils
 from trulens.core.utils import keys as key_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
+from trulens.dashboard import constants as dashboard_constants
 
 
 def write_or_json(st, obj):
@@ -79,8 +80,21 @@ def draw_metadata_and_tags(
 ) -> str:
     if isinstance(metadata, Dict):
         metadata["tags"] = tags
+
+        # Make the boolean column names more user-friendly
+        if metadata.get(dashboard_constants.EXTERNAL_APP_COL_NAME) is not None:
+            metadata["External App?"] = metadata.pop(
+                dashboard_constants.EXTERNAL_APP_COL_NAME
+            )
+
+        if metadata.get(dashboard_constants.PINNED_COL_NAME) is not None:
+            metadata["Pinned?"] = metadata.pop(
+                dashboard_constants.PINNED_COL_NAME
+            )
+
         return dict_to_md(metadata)
     else:
+        # We shouldn't ever get here since types_schema.Metadata is a Dict.
         return str(metadata) + "\n" + str(tags)
 
 

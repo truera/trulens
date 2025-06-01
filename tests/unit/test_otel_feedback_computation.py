@@ -46,12 +46,12 @@ def _convert_events_to_MinimalSpanInfos(
 ) -> List[MinimalSpanInfo]:
     ret = []
     for _, row in events.iterrows():
-        span = MinimalSpanInfo()
-        span.span_id = row["trace"]["span_id"]
-        span.parent_span_id = row["record"]["parent_span_id"]
-        if not span.parent_span_id:
-            span.parent_span_id = None
-        span.attributes = row["record_attributes"]
+        span = MinimalSpanInfo(
+            span_id=row["trace"]["span_id"],
+            parent_span_id=row["record"]["parent_span_id"] or None,
+            attributes=row["record_attributes"],
+            resource_attributes=row["resource_attributes"],
+        )
         ret.append(span)
     return ret
 

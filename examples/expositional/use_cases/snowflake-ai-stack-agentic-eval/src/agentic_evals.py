@@ -15,6 +15,8 @@ from src.util import append_to_step_trace
 
 import json
 
+import streamlit as st
+
 
 def extract_reason(val):
     if isinstance(val, dict) and 'reason' in val:
@@ -45,16 +47,16 @@ def research_eval_node(state) -> Command[Literal["orchestrator"]]:
 
     provider = OpenAI(model_engine="gpt-4.1", api_key=os.environ.get("OPENAI_API_KEY"))
 
-
-    context_rel_score, context_rel_reason = provider.context_relevance_with_cot_reasons(
-            question=query,
-            context=context_list,
+    with st.spinner("Evaluating research..."):
+        context_rel_score, context_rel_reason = provider.context_relevance_with_cot_reasons(
+                question=query,
+                context=context_list,
+            )
+        grounded_score, grounded_reason = provider.groundedness_measure_with_cot_reasons(
+            source=" ".join(context_list),
+            statement=response
         )
-    grounded_score, grounded_reason = provider.groundedness_measure_with_cot_reasons(
-        source=" ".join(context_list),
-        statement=response
-    )
-    answer_score, answer_reason = provider.relevance_with_cot_reasons(prompt=query, response=response)
+        answer_score, answer_reason = provider.relevance_with_cot_reasons(prompt=query, response=response)
 
     goto = "orchestrator"
     parsed_eval = {
@@ -154,9 +156,10 @@ def chart_eval_node(state) -> Command[Literal["orchestrator"]]:
     query = state.get("user_query")
     response = state.get("execution_trace")[state.get("current_step")][-1]["output"]
 
-    accuracy_rel_score, accuracy_rel_reason = chart_provider.chart_accuracy_with_cot_reasons(code=code, context=context)
-    formatting_score, formatting_reason = chart_provider.chart_formatting_with_cot_reasons(code=code)
-    relevance_score, relevance_reason = chart_provider.chart_relevance_with_cot_reasons(code=code, query=query, response=response)
+    with st.spinner("Evaluating chart..."):
+        accuracy_rel_score, accuracy_rel_reason = chart_provider.chart_accuracy_with_cot_reasons(code=code, context=context)
+        formatting_score, formatting_reason = chart_provider.chart_formatting_with_cot_reasons(code=code)
+        relevance_score, relevance_reason = chart_provider.chart_relevance_with_cot_reasons(code=code, query=query, response=response)
 
     parsed_eval = {
         "accuracy": {

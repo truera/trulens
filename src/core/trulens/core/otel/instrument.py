@@ -44,6 +44,7 @@ from trulens.otel.semconv.constants import (
     TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG,
 )
 from trulens.otel.semconv.constants import TRULENS_INSTRUMENT_WRAPPER_FLAG
+from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 import wrapt
 
@@ -118,7 +119,6 @@ def _set_span_attributes(
     all_kwargs = {**kwargs, **bound_args}
     if not only_set_user_defined_attributes:
         # Set general span attributes.
-        span.set_attribute("name", func_name)
         set_general_span_attributes(span, span_type)
         # Set record root span attributes if necessary.
         if span_type == SpanAttributes.SpanType.RECORD_ROOT:
@@ -565,10 +565,9 @@ class OtelRecordingContext(OtelBaseRecordingContext):
     # For use as a context manager.
     def __enter__(self) -> Recording:
         self.attach_to_context("__trulens_app__", self.tru_app)
-        self.attach_to_context(SpanAttributes.APP_NAME, self.app_name)
-        self.attach_to_context(SpanAttributes.APP_VERSION, self.app_version)
-        self.attach_to_context(SpanAttributes.APP_ID, self.app_id)
-
+        self.attach_to_context(ResourceAttributes.APP_NAME, self.app_name)
+        self.attach_to_context(ResourceAttributes.APP_VERSION, self.app_version)
+        self.attach_to_context(ResourceAttributes.APP_ID, self.app_id)
         self.attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
         self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
         self.attach_to_context(
@@ -593,9 +592,9 @@ class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
         self.attach_to_context(
             SpanAttributes.RECORD_ID, self.target_record_id
         )  # TODO(otel): Should we include this? It's automatically getting added to the span.
-        self.attach_to_context(SpanAttributes.APP_NAME, self.app_name)
-        self.attach_to_context(SpanAttributes.APP_VERSION, self.app_version)
-        self.attach_to_context(SpanAttributes.APP_ID, self.app_id)
+        self.attach_to_context(ResourceAttributes.APP_NAME, self.app_name)
+        self.attach_to_context(ResourceAttributes.APP_VERSION, self.app_version)
+        self.attach_to_context(ResourceAttributes.APP_ID, self.app_id)
 
         self.attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
         self.attach_to_context(
@@ -617,7 +616,6 @@ class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
         )
 
         # Set general span attributes
-        root_span.set_attribute("name", "eval_root")
         set_general_span_attributes(
             root_span, SpanAttributes.SpanType.EVAL_ROOT
         )
