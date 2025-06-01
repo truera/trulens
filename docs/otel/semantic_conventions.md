@@ -14,6 +14,7 @@
 | `ai.observability.record_root.error` | Error thrown by app for this record. Exclusive with main output. | Never | | Any (but usually str) |
 | `ai.observability.record_root.ground_truth_output` | Ground truth of the record. | Never | | Any (but usually str) |
 | `ai.observability.eval_root` | Namespace for attributes specific to the root span of a feedback evaluation. | Never | Y | |
+| `ai.observability.eval_root.metric_name` | Name of the feedback definition being evaluated. | Always for eval_root spans | | str |
 | `ai.observability.eval_root.span_group` | Span group of the inputs to this metric. | Never | | str |
 | `ai.observability.eval_root.args_metadata.span_id` | Mapping of argument name of the feedback function to the ID of the span that provided it. E.g. if the feedback function has an input `x` that came from a span with id "123", then `ai.observability.eval_root.args_metadata.span_id.x` will have value "123". | Always for evaluation root spans | Y | str -> str |
 | `ai.observability.eval_root.args_metadata.span_attribute` | Mapping of argument name of the feedback function to the attribute of the span that provided it. E.g. if the feedback function has an input `x` that came from a span attribute "abc", then `ai.observability.eval_root.args_metadata.span_attribute.x` will have value "abc". | Never | Y | str -> str |
@@ -24,7 +25,6 @@
 | `ai.observability.eval` | Namespace for attributes specific to feedback function evaluation spans. | | Y | |
 | `ai.observability.eval.target_record_id` | Record id of the record being evaluated. | Never | | str |
 | `ai.observability.eval.eval_root_id` | Span id for the "eval_root" span this span is under. | Always for eval or eval_root spans | | str |
-| `ai.observability.eval.metric_name` | Name of the feedback definition being evaluated. | Always for eval or eval_root spans | | str |
 | `ai.observability.eval.criteria` | Criteria for this sub-step. | Never | | str |
 | `ai.observability.eval.explanation` | Explanation for the score for this sub-step. | Never | | str |
 | `ai.observability.eval.score` | Score for this sub-step. | Never | | float |
