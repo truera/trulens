@@ -233,10 +233,6 @@ def trulens_feedback(record_id: str):
         trulens_st.trulens_feedback(record=record)
         ```
     """
-    # feedback_cols = []
-    # feedbacks = {}
-    # icons = []
-    # default_direction = "HIGHER_IS_BETTER"
     session = core_session.TruSession()
     lms = session.connector.db
 
@@ -261,74 +257,6 @@ def trulens_feedback(record_id: str):
             selected_record_row,
             feedback_directions=feedback_directions,
         )
-
-    # feedback_directions = {
-    #     (
-    #         row.feedback_json.get("supplied_name", "")
-    #         or row.feedback_json["implementation"]["name"]
-    #     ): (
-    #         "HIGHER_IS_BETTER"
-    #         if row.feedback_json.get("higher_is_better", True)
-    #         else "LOWER_IS_BETTER"
-    #     )
-    #     for _, row in feedback_defs.iterrows()
-    # }
-
-    # for feedback, feedback_result in record.wait_for_feedback_results().items():
-    #     call_data = {
-    #         "feedback_definition": feedback,
-    #         "feedback_name": feedback.name,
-    #         "result": feedback_result.result,
-    #     }
-    #     feedback_cols.append(call_data["feedback_name"])
-    #     feedbacks[call_data["feedback_name"]] = FeedbackDisplay(
-    #         score=call_data["result"],
-    #         calls=[],
-    #         icon=dashboard_display.get_icon(
-    #             fdef=feedback, result=feedback_result.result
-    #         ),
-    #     )
-    #     icons.append(feedbacks[call_data["feedback_name"]].icon)
-
-    # format_func = lambda fcol: f"{fcol} {feedbacks[fcol].score:.4f}"
-    # if hasattr(st, "pills"):
-    #     # Use native streamlit pills, released in 1.40.0
-    #     selected_feedback = st.pills(
-    #         "Feedback Functions", feedback_cols, format_func=format_func
-    #     )
-    # else:
-    #     selected_feedback = st.selectbox(
-    #         "Feedback Functions",
-    #         feedback_cols,
-    #         index=None,
-    #         format_func=format_func,
-    #     )
-    # if selected_feedback is not None:
-
-    # df = dashboard_display.get_feedback_result(
-    #     record, feedback_name=selected_feedback
-    # )
-    # if "groundedness" in selected_feedback.lower():
-    #     df = dashboard_display.expand_groundedness_df(df)
-    # else:
-    #     pass
-
-    # # Apply the highlight function row-wise
-    # styled_df = df.style.apply(
-    #     lambda row: dashboard_display.highlight(
-    #         row,
-    #         selected_feedback=selected_feedback,
-    #         feedback_directions=feedback_directions,
-    #         default_direction=default_direction,
-    #     ),
-    #     axis=1,
-    # )
-
-    # # Format only numeric columns
-    # for col in df.select_dtypes(include=["number"]).columns:
-    #     styled_df = styled_df.format({col: "{:.2f}"})
-
-    # st.dataframe(styled_df, hide_index=True)
 
 
 def trulens_trace(record: Union[record_schema.Record, str]):
