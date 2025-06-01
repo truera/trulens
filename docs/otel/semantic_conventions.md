@@ -5,8 +5,8 @@
 | `ai.observability.app_id` | App ID. | Always | | str |
 | `ai.observability.app_name` | App name. | Always | | str |
 | `ai.observability.app_version` | App version. | Always | | str |
-| `ai.observability.run.name` | Run name. Runs represent a set of invocations to the app. | Always for Snowflake PuPr for non-evaluation spans | | str |
-| `ai.observability.input_id` | ID of the input to the app for this record. | Always for Snowflake PuPr for non-evaluation spans | | str |
+| `ai.observability.run.name` | Run name. Runs represent a set of invocations to the app. | Always for Snowflake for non-evaluation spans | | str |
+| `ai.observability.input_id` | ID of the input to the app for this record. | Always for Snowflake for non-evaluation spans | | str |
 | `ai.observability.span_groups` | List of groups that the span belongs to. This is primarily used for metric computation. | Never | | str \| List[str] |
 | `ai.observability.record_root` | Namespace for attributes specific to the record root. | | Y | |
 | `ai.observability.record_root.input` | Main input to the app for this record. | Never | | Any (but usually str) |
