@@ -698,6 +698,8 @@ def _call_feedback_function_under_eval_span(
             res = feedback_function(**kwargs)
             metadata = {}
             if isinstance(res, tuple):
+                # If the result is a tuple, it must be (score, metadata) where
+                # the metadata has string keys.
                 if (
                     len(res) != 2
                     or not isinstance(res[0], numbers.Number)
