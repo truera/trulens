@@ -52,6 +52,7 @@ from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
+from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
@@ -821,6 +822,31 @@ class SQLAlchemyDB(core_db.DB):
 
         return record_attributes
 
+    def _get_event_resource_attributes_otel(
+        self, event: Event
+    ) -> Dict[str, Any]:
+        """Get the resource attributes from the event.
+
+        This implementation differs from the pre-OTEL implementation by using the
+        `resource_attributes` field of the event.
+
+        Args:
+            event: The event to extract the resource attributes from.
+
+        Returns:
+            Dict[str, Any]: The resource attributes from the event.
+        """
+        resource_attributes = event.resource_attributes
+        if not isinstance(resource_attributes, dict):
+            try:
+                resource_attributes = json.loads(resource_attributes)
+            except (json.JSONDecodeError, TypeError):
+                logger.error(
+                    f"Failed to decode resource attributes as JSON: {resource_attributes}",
+                )
+
+        return resource_attributes
+
     def _update_cost_info_otel(
         self,
         target_dict: dict,
@@ -929,13 +955,13 @@ class SQLAlchemyDB(core_db.DB):
         # Add app_name filter if provided
         if app_name:
             app_name_expr = self._json_extract_otel(
-                "record_attributes", SpanAttributes.APP_NAME
+                "resource_attributes", ResourceAttributes.APP_NAME
             )
             conditions.append(app_name_expr == app_name)
 
         if app_ids:
             app_id_expr = self._json_extract_otel(
-                "record_attributes", SpanAttributes.APP_ID
+                "resource_attributes", ResourceAttributes.APP_ID
             )
             conditions.append(app_id_expr.in_(app_ids))
 
@@ -1006,15 +1032,20 @@ class SQLAlchemyDB(core_db.DB):
                 record_attributes = self._get_event_record_attributes_otel(
                     event
                 )
+                resource_attributes = self._get_event_resource_attributes_otel(
+                    event
+                )
                 record_id = record_attributes.get(SpanAttributes.RECORD_ID)
                 if not record_id:
                     continue
-                app_name = record_attributes.get(SpanAttributes.APP_NAME, "")
-                app_version = record_attributes.get(
-                    SpanAttributes.APP_VERSION, ""
+                app_name = resource_attributes.get(
+                    ResourceAttributes.APP_NAME, ""
                 )
-                app_id = record_attributes.get(
-                    SpanAttributes.APP_ID,
+                app_version = resource_attributes.get(
+                    ResourceAttributes.APP_VERSION, ""
+                )
+                app_id = resource_attributes.get(
+                    ResourceAttributes.APP_ID,
                     app_schema.AppDefinition._compute_app_id(
                         app_name, app_version
                     ),
@@ -1078,7 +1109,7 @@ class SQLAlchemyDB(core_db.DB):
                         SpanAttributes.SpanType.EVAL_ROOT.value,
                     ]:
                         metric_name = record_attributes.get(
-                            SpanAttributes.EVAL.METRIC_NAME, ""
+                            SpanAttributes.EVAL.METRIC_NAME
                         )
                         if not metric_name:
                             logger.warning(
@@ -1147,11 +1178,11 @@ class SQLAlchemyDB(core_db.DB):
                                 else eval_root_score
                             ),
                             "meta": {
-                                "criteria": record_attributes.get(
-                                    SpanAttributes.EVAL.CRITERIA, None
+                                "metadata": record_attributes.get(
+                                    SpanAttributes.EVAL_ROOT.METADATA, {}
                                 ),
                                 "explanation": record_attributes.get(
-                                    SpanAttributes.EVAL.EXPLANATION, None
+                                    SpanAttributes.EVAL_ROOT.EXPLANATION
                                 ),
                             },
                         }
@@ -1257,7 +1288,6 @@ class SQLAlchemyDB(core_db.DB):
         app_name: Optional[types_schema.AppName] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
-        use_otel: Optional[bool] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """See [DB.get_records_and_feedback][trulens.core.database.base.DB.get_records_and_feedback].
 
@@ -1266,19 +1296,9 @@ class SQLAlchemyDB(core_db.DB):
             app_name: Optional app name to filter by. Defaults to None.
             offset: Optional offset for pagination. Defaults to None.
             limit: Optional limit for pagination. Defaults to None.
-            use_otel: Optional flag to explicitly choose between OTEL and pre-OTEL implementations. Defaults to None.
-                      If None, the implementation is chosen automatically based on whether OTEL tracing is enabled.
         """
 
-        # If use_otel is explicitly set, use the specified implementation
-        # Otherwise, determine based on whether OTEL tracing environment variable is enabled
-        if use_otel is None:
-            use_otel = is_otel_tracing_enabled()
-            logger.warning(
-                f"use_otel is not explicitly set, checking if OTEL tracing environment variable is enabled (TRULENS_OTEL_TRACING): {use_otel}"
-            )
-
-        if use_otel:
+        if is_otel_tracing_enabled():
             return self._get_records_and_feedback_otel(
                 app_ids=app_ids, app_name=app_name, offset=offset, limit=limit
             )
@@ -1565,7 +1585,7 @@ class SQLAlchemyDB(core_db.DB):
         """See [DB.get_events][trulens.core.database.base.DB.get_events]."""
         with self.session.begin() as session:
             app_id_expr = self._json_extract_otel(
-                "record_attributes", SpanAttributes.APP_ID
+                "resource_attributes", ResourceAttributes.APP_ID
             )
             if start_time is None:
                 where_clause = app_id_expr == app_id

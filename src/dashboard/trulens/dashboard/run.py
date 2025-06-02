@@ -12,7 +12,6 @@ from typing import Optional
 
 from trulens.core import session as core_session
 from trulens.core.database.connector.base import DBConnector
-from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.utils import imports as import_utils
 from trulens.dashboard.utils import notebook_utils
 from typing_extensions import Annotated
@@ -145,8 +144,6 @@ def run_dashboard(
     ]
     if sis_compatibility_mode:
         args += ["--sis-compatibility"]
-    if is_otel_tracing_enabled():
-        args += ["--otel-tracing"]
 
     proc = subprocess.Popen(
         args,

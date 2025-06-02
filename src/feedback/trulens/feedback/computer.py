@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from dataclasses import dataclass
 import itertools
 import logging
 import numbers
@@ -31,6 +32,7 @@ from trulens.experimental.otel_tracing.core.span import (
     set_span_attribute_safely,
 )
 from trulens.otel.semconv.trace import BASE_SCOPE
+from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 _logger = logging.getLogger(__name__)
@@ -39,10 +41,12 @@ _logger = logging.getLogger(__name__)
 # If we could just have `opentelemetry.sdk.trace.ReadableSpan` it would be
 # better, but this is all we need and it's easier to fill only this info
 # from an event table row.
+@dataclass
 class MinimalSpanInfo:
-    span_id: Optional[int] = None
-    parent_span_id: Optional[int] = None
-    attributes: Dict[str, Any] = {}
+    span_id: Optional[int]
+    parent_span_id: Optional[int]
+    attributes: Dict[str, Any]
+    resource_attributes: Dict[str, Any]
 
 
 class RecordGraphNode:
@@ -102,6 +106,9 @@ def _compute_feedback(
     """
     feedback_inputs = selector_function(record_root)
     record_root_attributes = record_root.current_span.attributes
+    record_root_resource_attributes = (
+        record_root.current_span.resource_attributes
+    )
     for curr in feedback_inputs:
         curr = {k: FeedbackFunctionInput(value=v) for k, v in curr.items()}
         _call_feedback_function(
@@ -111,6 +118,7 @@ def _compute_feedback(
             None,
             curr,
             record_root_attributes,
+            record_root_resource_attributes,
         )
 
 
@@ -142,13 +150,11 @@ def compute_feedback_by_span_group(
     unflattened_inputs = _collect_inputs_from_events(
         events, kwarg_groups, kwarg_to_selector
     )
-    record_id_to_record_roots = _map_record_id_to_record_roots(
-        events["record_attributes"]
-    )
+    record_id_to_record_root = _map_record_id_to_record_roots(events)
     unflattened_inputs = _validate_unflattened_inputs(
         unflattened_inputs,
         kwarg_groups,
-        list(record_id_to_record_roots.keys()),
+        list(record_id_to_record_root.keys()),
         feedback_name,
     )
     flattened_inputs = _flatten_inputs(unflattened_inputs)
@@ -161,7 +167,7 @@ def compute_feedback_by_span_group(
         feedback_function,
         higher_is_better,
         feedback_aggregator,
-        record_id_to_record_roots,
+        record_id_to_record_root,
     )
     if raise_error_on_no_feedbacks_computed and num_feedbacks_computed == 0:
         raise ValueError("No feedbacks were computed!")
@@ -297,23 +303,24 @@ def _dfs_collect_inputs_from_events(
 
 
 def _map_record_id_to_record_roots(
-    record_attributes: List[Dict[str, Any]],
-) -> Dict[str, Dict[str, Any]]:
+    events: pd.DataFrame,
+) -> Dict[str, pd.Series]:
     """Map record_id to record roots.
 
     Args:
-        record_attributes: List containing record attributes of events.
+        events: DataFrame containing trace events.
 
     Returns:
-        Mapping from record_id to record roots.
+        Mapping from record_id to record root.
     """
     ret = {}
-    for curr in record_attributes:
+    for _, curr in events.iterrows():
+        record_attributes = curr["record_attributes"]
         if (
-            curr.get(SpanAttributes.SPAN_TYPE)
+            record_attributes.get(SpanAttributes.SPAN_TYPE)
             == SpanAttributes.SpanType.RECORD_ROOT
         ):
-            record_id = curr[SpanAttributes.RECORD_ID]
+            record_id = record_attributes.get(SpanAttributes.RECORD_ID)
             if record_id in ret:
                 _logger.warning(
                     f"Multiple record roots found for record_id={record_id}!"
@@ -514,7 +521,7 @@ def _run_feedback_on_inputs(
     ],
     higher_is_better: bool,
     feedback_aggregator: Optional[Callable[[List[float]], float]],
-    record_id_to_record_root: Dict[str, Dict[str, Any]],
+    record_id_to_record_root: Dict[str, pd.Series],
 ) -> int:
     """Run feedback function on all inputs.
 
@@ -538,7 +545,8 @@ def _run_feedback_on_inputs(
                 higher_is_better,
                 feedback_aggregator,
                 inputs,
-                record_id_to_record_root[record_id],
+                record_id_to_record_root[record_id]["record_attributes"],
+                record_id_to_record_root[record_id]["resource_attributes"],
                 span_group,
             )
             ret += 1
@@ -558,6 +566,7 @@ def _call_feedback_function(
     feedback_aggregator: Optional[Callable[[List[float]], float]],
     kwarg_inputs: Dict[str, FeedbackFunctionInput],
     record_root_attributes: Dict[str, Any],
+    record_root_resource_attributes: Dict[str, Any],
     span_group: Optional[str] = None,
 ) -> None:
     """Call feedback function.
@@ -569,26 +578,19 @@ def _call_feedback_function(
         feedback_aggregator: Aggregator function to combine feedback scores.
         kwarg_inputs: kwarg inputs to feedback function.
         record_root_attributes: Span attributes of record root.
+        record_root_resource_attributes: Resource attributes of record root.
         span_group: Span group of the invocation.
     """
-    if SpanAttributes.APP_NAME in record_root_attributes:
-        app_name = record_root_attributes[SpanAttributes.APP_NAME]
-        app_version = record_root_attributes[SpanAttributes.APP_VERSION]
-        run_name = record_root_attributes[SpanAttributes.RUN_NAME]
-    elif f"snow.{BASE_SCOPE}.object.name" in record_root_attributes:
-        # TODO(otel, dhuang): need to use these when getting the object entity!
-        # database_name = record_root_attributes[
-        #    f"snow.{BASE_SCOPE}.database.name"
-        # ]
-        # schema_name = record_root_attributes[
-        #    f"snow.{BASE_SCOPE}.schema.name"
-        # ]
-        app_name = record_root_attributes[f"snow.{BASE_SCOPE}.object.name"]
-        app_version = record_root_attributes[
-            f"snow.{BASE_SCOPE}.object.version.name"
-        ]
-        run_name = record_root_attributes[f"snow.{BASE_SCOPE}.run.name"]
-    app_id = record_root_attributes[SpanAttributes.APP_ID]
+    app_name, app_version, app_id, run_name = _get_app_and_run_info(
+        record_root_attributes, record_root_resource_attributes
+    )
+    # TODO(otel, dhuang): need to use these when getting the object entity!
+    # database_name = record_root_attributes[
+    #    f"snow.{BASE_SCOPE}.database.name"
+    # ]
+    # schema_name = record_root_attributes[
+    #    f"snow.{BASE_SCOPE}.schema.name"
+    # ]
     input_id = record_root_attributes[SpanAttributes.INPUT_ID]
     target_record_id = record_root_attributes[SpanAttributes.RECORD_ID]
     context_manager = OtelFeedbackComputationRecordingContext(
@@ -723,3 +725,39 @@ def _call_feedback_function_with_span(
     except Exception as e:
         span.set_attribute(span_attribute_scope.ERROR, str(e))
         raise e
+
+
+def _get_app_and_run_info(
+    attributes: Dict[str, Any], resource_attributes: Dict[str, Any]
+) -> Tuple[str, str, str, str]:
+    """Get app info from attributes.
+
+    Args:
+        attributes: Span attributes of record root.
+        resource_attributes: Resource attributes of record root.
+
+    Returns:
+        Tuple of: app name, app version, and app id, run name.
+    """
+
+    def get_value(keys: List[str]) -> Optional[str]:
+        for key in keys:
+            for attr in [resource_attributes, attributes]:
+                if key in attr:
+                    return attr[key]
+        return None
+
+    app_name = get_value([
+        f"snow.{BASE_SCOPE}.object.name",
+        ResourceAttributes.APP_NAME,
+    ])
+    app_version = get_value([
+        f"snow.{BASE_SCOPE}.object.version.name",
+        ResourceAttributes.APP_VERSION,
+    ])
+    app_id = get_value([ResourceAttributes.APP_ID])
+    run_name = get_value([
+        f"snow.{BASE_SCOPE}.run.name",
+        SpanAttributes.RUN_NAME,
+    ])
+    return app_name, app_version, app_id, run_name

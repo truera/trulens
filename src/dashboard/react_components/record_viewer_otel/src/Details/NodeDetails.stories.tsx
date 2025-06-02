@@ -88,7 +88,6 @@ export const WithoutInputId: Story = {
       endTime: 0.18, // 180ms in seconds
       attributes: {
         [SpanAttributes.SPAN_TYPE]: SpanType.CUSTOM,
-        [SpanAttributes.SELECTOR_NAME]: 'Processing Chain',
       },
     }),
   },
