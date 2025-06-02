@@ -106,8 +106,6 @@ def display_feedback_call(
                 styled_df = styled_df.format({col: "{:.2f}"})
 
             st.dataframe(styled_df, hide_index=True)
-
-            # st.dataframe(df, hide_index=True)
     else:
         st.warning("No feedback details found.")
 
