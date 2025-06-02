@@ -625,10 +625,7 @@ def _call_feedback_function(
                         f"{SpanAttributes.EVAL_ROOT.ARGS_SPAN_ATTRIBUTE}.{k}",
                         v.span_attribute,
                     )
-                if (
-                    isinstance(v.value, list)
-                    and v.call_feedback_function_per_entry_in_list
-                ):
+                if isinstance(v.value, list) and not v.collect_list:
                     aggregate = True
                     new_expanded_kwargs_inputs = []
                     for curr in expanded_kwargs_inputs:
