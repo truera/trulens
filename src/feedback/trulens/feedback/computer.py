@@ -678,8 +678,10 @@ def _call_feedback_function_under_eval_span(
     Args:
         feedback_function: The feedback function to call.
         kwargs: The keyword arguments to pass to the feedback function.
-        span: The span to use for recording the feedback function call.
-        span_attribute_scope: The scope for span attributes.
+        eval_root_span: The root span for the evaluation.
+        is_only_child:
+            Whether this is the only child eval span of the evaluation root.
+        eval_child_idx: Index of this eval child span in the evaluation root.
 
     Returns:
         The score returned by the feedback function.
