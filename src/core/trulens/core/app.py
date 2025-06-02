@@ -948,7 +948,8 @@ class App(
     ):
         """Called by instrumentation system for every function requested to be
         instrumented by this app."""
-
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         if id(obj) in self.instrumented_methods:
             funcs = self.instrumented_methods[id(obj)]
 
@@ -1198,6 +1199,8 @@ class App(
         See
         [WithInstrumentCallbacks.on_new_record][trulens.core.instruments.WithInstrumentCallbacks.on_new_record].
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         ctx = self.recording_contexts.get(contextvars.Token.MISSING)
 
         while ctx is not contextvars.Token.MISSING:
@@ -1224,6 +1227,8 @@ class App(
         See
         [WithInstrumentCallbacks.on_add_record][trulens.core.instruments.WithInstrumentCallbacks.on_add_record].
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         def build_record(
             calls: Iterable[record_schema.RecordAppCall],
@@ -1315,6 +1320,8 @@ class App(
         Issue a warning and some instructions if a function that has not been
         instrumented is being used in a `with_` call.
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         if not isinstance(func, Callable):
             raise TypeError(
@@ -1391,6 +1398,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         Call the given `func` with the given `*args` and `**kwargs`, producing
         its results as well as a record of the execution.
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         if not isinstance(func, Callable):
             if hasattr(func, "__call__"):
@@ -1420,6 +1429,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         Call the given `func` with the given `*args` and `**kwargs`, producing
         its results as well as a record of the execution.
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         if not isinstance(func, Callable):
             if hasattr(func, "__call__"):
@@ -1490,6 +1501,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
         See [_handle_record][trulens.core.app.App._handle_record].
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         if isinstance(future_or_result, Future):
             res = future_or_result.result()
@@ -1626,6 +1639,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             - `app_id` is taken from this recorder.
             - `calls` field is constructed based on instrumented methods.
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         calls = []
 
@@ -1681,6 +1696,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         """
         Iteration over instrumented components and their categories.
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         for q, c in instrumented_component_views(self.model_dump()):
             # Add the chain indicator so the resulting paths can be specified
