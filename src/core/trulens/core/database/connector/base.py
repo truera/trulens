@@ -20,6 +20,7 @@ from typing import (
 import pandas as pd
 from trulens.core._utils.pycompat import Future  # code style exception
 from trulens.core.database import base as core_db
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import event as event_schema
 from trulens.core.schema import feedback as feedback_schema
@@ -91,6 +92,8 @@ class DBConnector(ABC, text_utils.WithIdentString):
             Unique record identifier [str][] .
 
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         if record is None:
             record = record_schema.Record(**kwargs)
@@ -103,6 +106,8 @@ class DBConnector(ABC, text_utils.WithIdentString):
         record: record_schema.Record,
     ) -> None:
         """Add a record to the queue to be inserted in the next batch."""
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         if self.batch_thread is None:
             self.batch_thread = Thread(target=self._batch_loop, daemon=True)
             self.batch_thread.start()
@@ -222,6 +227,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
             A unique result identifier [str][].
 
         """
+        # TODO(this_pr)
 
         if feedback_result_or_future is None:
             if "result" in kwargs and "status" not in kwargs:
@@ -272,6 +278,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
             List of unique result identifiers [str][] in the same order as input
                 `feedback_results`.
         """
+        # TODO(this_pr)
 
         return [
             self.add_feedback(

@@ -392,6 +392,8 @@ class SQLAlchemyDB(core_db.DB):
         self, record: record_schema.Record
     ) -> types_schema.RecordID:
         """See [DB.insert_record][trulens.core.database.base.DB.insert_record]."""
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         # TODO: thread safety
 
         _rec = self.orm.Record.parse(record, redact_keys=self.redact_keys)
@@ -414,6 +416,8 @@ class SQLAlchemyDB(core_db.DB):
     def batch_insert_record(
         self, records: List[record_schema.Record]
     ) -> List[types_schema.RecordID]:
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         """See [DB.batch_insert_record][trulens.core.database.base.DB.batch_insert_record]."""
         with self.session.begin() as session:
             records_list = [
@@ -573,6 +577,8 @@ class SQLAlchemyDB(core_db.DB):
         self, feedback_result: feedback_schema.FeedbackResult
     ) -> types_schema.FeedbackResultID:
         """See [DB.insert_feedback][trulens.core.database.base.DB.insert_feedback]."""
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         # TODO: thread safety
 
@@ -637,6 +643,8 @@ class SQLAlchemyDB(core_db.DB):
         self, feedback_results: List[feedback_schema.FeedbackResult]
     ) -> List[types_schema.FeedbackResultID]:
         """See [DB.batch_insert_feedback][trulens.core.database.base.DB.batch_insert_feedback]."""
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         # The Snowflake stored procedure connector isn't currently capable of
         # handling None qmark-bound to an `INSERT INTO` or `UPDATE` statement
         # for nullable numeric columns. Thus, as a hack, we get around this by
@@ -756,7 +764,8 @@ class SQLAlchemyDB(core_db.DB):
         run_location: Optional[feedback_schema.FeedbackRunLocation] = None,
     ) -> Dict[feedback_schema.FeedbackResultStatus, int]:
         """See [DB.get_feedback_count_by_status][trulens.core.database.base.DB.get_feedback_count_by_status]."""
-
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         with self.session.begin() as session:
             q = self._feedback_query(
                 count_by_status=True,
@@ -789,7 +798,8 @@ class SQLAlchemyDB(core_db.DB):
         run_location: Optional[feedback_schema.FeedbackRunLocation] = None,
     ) -> pd.DataFrame:
         """See [DB.get_feedback][trulens.core.database.base.DB.get_feedback]."""
-
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         with self.session.begin() as session:
             q = self._feedback_query(
                 **python_utils.locals_except("self", "session")
@@ -1911,6 +1921,8 @@ class AppsExtractor:
     def extract_records(
         self, records: Iterable["db_orm.ORM.Record"]
     ) -> Iterable[pd.Series]:
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         for _rec in records:
             calls = defaultdict(list)
             values = defaultdict(list)
