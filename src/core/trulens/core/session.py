@@ -710,7 +710,8 @@ class TruSession(
             A unique result identifier [str][].
 
         """
-        # TODO(this_pr)
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         return self.connector.add_feedback(
             feedback_result_or_future=feedback_result_or_future, **kwargs
         )
@@ -734,7 +735,8 @@ class TruSession(
             List of unique result identifiers [str][] in the same order as input
                 `feedback_results`.
         """
-        # TODO(this_pr)
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         return self.connector.add_feedbacks(feedback_results=feedback_results)
 
     def get_app(

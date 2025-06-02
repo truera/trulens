@@ -227,8 +227,8 @@ class DBConnector(ABC, text_utils.WithIdentString):
             A unique result identifier [str][].
 
         """
-        # TODO(this_pr)
-
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         if feedback_result_or_future is None:
             if "result" in kwargs and "status" not in kwargs:
                 # If result already present, set status to done.
@@ -278,8 +278,8 @@ class DBConnector(ABC, text_utils.WithIdentString):
             List of unique result identifiers [str][] in the same order as input
                 `feedback_results`.
         """
-        # TODO(this_pr)
-
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         return [
             self.add_feedback(
                 feedback_result_or_future=feedback_result_or_future
