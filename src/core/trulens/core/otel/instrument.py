@@ -575,6 +575,9 @@ class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
         set_general_span_attributes(
             root_span, SpanAttributes.SpanType.EVAL_ROOT
         )
+        root_span.set_attribute(
+            SpanAttributes.EVAL_ROOT.METRIC_NAME, self.feedback_name
+        )
 
         self.attach_to_context("__trulens_recording__", True)
 
