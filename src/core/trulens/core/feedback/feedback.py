@@ -590,7 +590,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
         self,
         arg: Optional[str] = None,
         *,
-        call_feedback_function_per_entry_in_list: bool,
+        collect_list: bool,
     ):
         """
         Create a variant of `self` that will attempt to take in the context from
@@ -605,9 +605,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
         if arg is None:
             arg = self._next_unselected_arg_name()
             self._print_guessed_selector(arg, select_schema.Select.RecordOutput)
-        new_selectors[arg] = Selector.select_context(
-            call_feedback_function_per_entry_in_list=call_feedback_function_per_entry_in_list
-        )
+        new_selectors[arg] = Selector.select_context(collect_list=collect_list)
         ret = self.model_copy()
         ret.selectors = new_selectors
         return ret
