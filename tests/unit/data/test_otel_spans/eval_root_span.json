@@ -28,6 +28,7 @@
         "ai.observability.eval.eval_root_id": "98bbSpP2",
         "ai.observability.eval.llm_judge_name": "llama3.1-70b",
         "ai.observability.eval.metric_name": "answer_relevance",
+        "ai.observability.eval_root.metric_name": "answer_relevance",
         "ai.observability.eval.target_record_id": "dd121e81-ccc2-449f-a3ba-e12467d0d671",
         "ai.observability.eval_root.n_calls": 1,
         "ai.observability.eval_root.score": 0.75,

@@ -493,7 +493,7 @@ def _feedback_already_computed(
         else:
             valid = span_group == curr_span_group
         valid = valid and feedback_name == curr.get(
-            SpanAttributes.EVAL.METRIC_NAME
+            SpanAttributes.EVAL_ROOT.METRIC_NAME
         )
         for k, v in kwarg_inputs.items():
             if not valid:
