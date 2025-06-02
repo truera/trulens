@@ -30,6 +30,7 @@ import pandas as pd
 import pydantic
 from pydantic import BaseModel
 from trulens.core._utils.pycompat import ReferenceType
+from trulens.core.session import TruSession
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 import yaml
@@ -667,3 +668,14 @@ class TruTestCase(WithJSONTestCase, TestCase):
             print("    " + str(thread))
 
         super().tearDownClass()
+
+    @classmethod
+    def clear_TruSession_singleton(cls) -> None:
+        # [HACK!] Clean up any instances of `TruSession` so tests don't
+        # interfere with each other.
+        for key in [
+            curr
+            for curr in TruSession._singleton_instances
+            if curr[0] == "trulens.core.session.TruSession"
+        ]:
+            del TruSession._singleton_instances[key]

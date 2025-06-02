@@ -21,17 +21,6 @@ from tests.util.df_comparison import (
 
 class OtelTestCase(TruTestCase):
     @classmethod
-    def clear_TruSession_singleton(cls) -> None:
-        # [HACK!] Clean up any instances of `TruSession` so tests don't
-        # interfere with each other.
-        for key in [
-            curr
-            for curr in TruSession._singleton_instances
-            if curr[0] == "trulens.core.session.TruSession"
-        ]:
-            del TruSession._singleton_instances[key]
-
-    @classmethod
     def setUpClass(cls) -> None:
         os.environ["TRULENS_OTEL_TRACING"] = "1"
         instrument.enable_all_instrumentation()

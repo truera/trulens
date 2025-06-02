@@ -45,6 +45,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         super().tearDownClass()
 
     def setUp(self) -> None:
+        self.clear_TruSession_singleton()
         super().setUp()
         self.create_and_use_schema(
             "TestSnowflakeEventTableExporter", append_uuid=True
