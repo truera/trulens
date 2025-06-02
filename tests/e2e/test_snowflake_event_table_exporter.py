@@ -145,8 +145,11 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             app.respond_to_query,
             TruApp,
             {"input": "custom_input"},
-            pd.DataFrame({"custom_input": ["Kojikun", "Nolan"]}),
-            8,
+            pd.DataFrame({"custom_input": ["test", "throw"]}),
+            pd.read_csv(
+                "tests/unit/static/golden/test_otel_tru_custom__test_smoke.csv",
+                index_col=0,
+            ).shape[0],
         )
 
     def test_tru_llama(self):
@@ -159,7 +162,10 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             TruLlama,
             {"input": "custom_input"},
             pd.DataFrame({"custom_input": ["What is multi-headed attention?"]}),
-            7,
+            pd.read_csv(
+                "tests/unit/static/golden/test_otel_tru_llama__test_smoke.csv",
+                index_col=0,
+            ).shape[0],
         )
 
     def test_tru_chain(self):
@@ -172,7 +178,10 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             TruChain,
             {"record_root.input": "custom_input"},
             pd.DataFrame({"custom_input": ["What is multi-headed attention?"]}),
-            9,
+            pd.read_csv(
+                "tests/unit/static/golden/test_otel_tru_chain__test_smoke.csv",
+                index_col=0,
+            ).shape[0],
         )
 
     def test_feedback_computation(self) -> None:
@@ -191,13 +200,16 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
                 "custom_input": ["What is multi-headed attention?"],
                 "expected_response": ["Like attention but with more heads."],
             }),
-            9,
+            pd.read_csv(
+                "tests/unit/static/golden/test_otel_tru_chain__test_smoke.csv",
+                index_col=0,
+            ).shape[0],
         )
         run.compute_metrics([
             "context_relevance",
             "groundedness",
             "answer_relevance",
             "coherence",
-            # "correctness",
+            "correctness",
         ])
-        self._validate_results(app_name, 20)
+        self._validate_results(app_name, 23)

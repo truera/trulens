@@ -986,6 +986,7 @@ class SQLAlchemyDB(core_db.DB):
         self,
         app_ids: Optional[List[str]] = None,
         app_name: Optional[types_schema.AppName] = None,
+        record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
@@ -997,6 +998,7 @@ class SQLAlchemyDB(core_db.DB):
         Args:
             app_ids: List of app IDs to filter by. Defaults to None.
             app_name: App name to filter by. Defaults to None.
+            record_ids: List of record IDs to filter by. Defaults to None.
             offset: Offset for pagination. Defaults to None.
             limit: Limit for pagination. Defaults to None.
 
@@ -1005,15 +1007,22 @@ class SQLAlchemyDB(core_db.DB):
         """
         with self.session.begin() as session:
             # Get paginated record IDs
-            record_id_subquery = self._get_paginated_record_ids_otel(
-                app_ids=app_ids, app_name=app_name, offset=offset, limit=limit
-            )
+            if record_ids is None:
+                record_id_subquery = self._get_paginated_record_ids_otel(
+                    app_ids=app_ids,
+                    app_name=app_name,
+                    offset=offset,
+                    limit=limit,
+                )
+                record_ids_sql = sa.select(record_id_subquery.c.record_id)
+            else:
+                record_ids_sql = record_ids
 
             # Now get all events for those record IDs
             stmt = sa.select(self.orm.Event).where(
                 self._json_extract_otel(
                     "record_attributes", SpanAttributes.RECORD_ID
-                ).in_(sa.select(record_id_subquery.c.record_id))
+                ).in_(record_ids_sql)
             )
 
             # Execute query
@@ -1109,7 +1118,7 @@ class SQLAlchemyDB(core_db.DB):
                         SpanAttributes.SpanType.EVAL_ROOT.value,
                     ]:
                         metric_name = record_attributes.get(
-                            SpanAttributes.EVAL.METRIC_NAME, ""
+                            SpanAttributes.EVAL.METRIC_NAME
                         )
                         if not metric_name:
                             logger.warning(
@@ -1178,8 +1187,8 @@ class SQLAlchemyDB(core_db.DB):
                                 else eval_root_score
                             ),
                             "meta": {
-                                "criteria": record_attributes.get(
-                                    SpanAttributes.EVAL.CRITERIA, None
+                                "metadata": record_attributes.get(
+                                    SpanAttributes.EVAL_ROOT.METADATA, {}
                                 ),
                                 "explanation": (
                                     record_attributes.get(
@@ -1292,8 +1301,9 @@ class SQLAlchemyDB(core_db.DB):
 
     def get_records_and_feedback(
         self,
-        app_ids: Optional[List[str]] = None,
+        app_ids: Optional[List[types_schema.AppID]] = None,
         app_name: Optional[types_schema.AppName] = None,
+        record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
@@ -1302,13 +1312,18 @@ class SQLAlchemyDB(core_db.DB):
         Args:
             app_ids: Optional list of app IDs to filter by. Defaults to None.
             app_name: Optional app name to filter by. Defaults to None.
+            record_ids: Optional list of record IDs to filter by. Defaults to None.
             offset: Optional offset for pagination. Defaults to None.
             limit: Optional limit for pagination. Defaults to None.
         """
 
         if is_otel_tracing_enabled():
             return self._get_records_and_feedback_otel(
-                app_ids=app_ids, app_name=app_name, offset=offset, limit=limit
+                app_ids=app_ids,
+                app_name=app_name,
+                record_ids=record_ids,
+                offset=offset,
+                limit=limit,
             )
 
         # Original implementation for pre-OTEL ORM
@@ -1316,6 +1331,11 @@ class SQLAlchemyDB(core_db.DB):
         # TODO: Add pagination to this method. Currently the joinedload in
         # select below disables lazy loading of records which will be a problem
         # for large databases without the use of pagination.
+
+        if record_ids is not None:
+            raise NotImplementedError(
+                "`record_ids` is not supported in the pre-OTEL implementation."
+            )
 
         with self.session.begin() as session:
             stmt = sa.select(self.orm.Record)
@@ -1588,21 +1608,35 @@ class SQLAlchemyDB(core_db.DB):
             return _event.event_id
 
     def get_events(
-        self, app_id: str, start_time: Optional[datetime.datetime] = None
+        self,
+        app_id: Optional[str],
+        record_ids: Optional[List[str]],
+        start_time: Optional[datetime],
     ) -> pd.DataFrame:
         """See [DB.get_events][trulens.core.database.base.DB.get_events]."""
         with self.session.begin() as session:
-            app_id_expr = self._json_extract_otel(
-                "resource_attributes", ResourceAttributes.APP_ID
-            )
-            if start_time is None:
-                where_clause = app_id_expr == app_id
-            else:
-                where_clause = sa.and_(
-                    app_id_expr == app_id,
-                    self.orm.Event.start_timestamp >= start_time,
+            where_clauses = []
+            if app_id is not None:
+                app_id_expr = self._json_extract_otel(
+                    "resource_attributes", ResourceAttributes.APP_ID
                 )
-            q = sa.select(self.orm.Event).where(where_clause)
+                where_clauses.append(app_id_expr == app_id)
+            if record_ids is not None:
+                record_id_expr = self._json_extract_otel(
+                    "record_attributes", SpanAttributes.RECORD_ID
+                )
+                where_clauses.append(record_id_expr.in_(record_ids))
+            if start_time is not None:
+                where_clauses.append(
+                    self.orm.Event.start_timestamp >= start_time
+                )
+
+            if len(where_clauses) == 0:
+                q = sa.select(self.orm.Event)
+            elif len(where_clauses) == 1:
+                q = sa.select(self.orm.Event).where(where_clauses[0])
+            else:
+                q = sa.select(self.orm.Event).where(sa.and_(*where_clauses))
             return pd.read_sql(q, session.bind)
 
     def get_events_by_record_id(self, record_id: str) -> pd.DataFrame:

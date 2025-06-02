@@ -147,6 +147,7 @@ trulens.core.app.App:
     record_ingest_mode: trulens.core.schema.app.RecordIngestMode
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
+    retrieve_feedback_results: builtins.function
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
     select_context: builtins.classmethod
@@ -654,7 +655,7 @@ trulens.core.feedback.feedback_function_input.FeedbackFunctionInput:
   - builtins.object
   __class__: builtins.type
   attributes:
-    call_feedback_function_per_entry_in_list: builtins.bool
+    collect_list: builtins.bool
     span_attribute: builtins.NoneType
     span_id: builtins.NoneType
     value: builtins.NoneType
@@ -681,7 +682,7 @@ trulens.core.feedback.selector.Selector:
   - builtins.object
   __class__: builtins.type
   attributes:
-    call_feedback_function_per_entry_in_list: builtins.bool
+    collect_list: builtins.bool
     describes_same_spans: builtins.function
     function_attribute: builtins.NoneType
     function_name: builtins.NoneType
@@ -1305,7 +1306,7 @@ trulens.core.session.TruSession:
     stop_dashboard: builtins.function
     stop_evaluator: builtins.function
     update_record: builtins.function
-    wait_for_record: builtins.function
+    wait_for_records: builtins.function
 trulens.core.utils:
   __class__: builtins.module
   highs: {}
@@ -1376,6 +1377,7 @@ trulens.core.utils.evaluator.Evaluator:
   - builtins.object
   __class__: builtins.type
   attributes:
+    compute_now: builtins.function
     start_evaluator: builtins.function
     stop_evaluator: builtins.function
 trulens.core.utils.imports:
