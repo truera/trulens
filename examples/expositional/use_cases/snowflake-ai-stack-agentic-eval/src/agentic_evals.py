@@ -221,7 +221,7 @@ def create_traj_eval(provider) -> Feedback:
             "trace": Selector(
                 span_type="ORCHESTRATOR_NODE",
                 span_attribute=f"{BASE_SCOPE}.execution_trace",
-                call_feedback_function_per_entry_in_list=True,
+                collect_list=True,
             ),
         })
     )
