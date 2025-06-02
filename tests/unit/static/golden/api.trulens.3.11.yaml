@@ -655,7 +655,7 @@ trulens.core.feedback.feedback_function_input.FeedbackFunctionInput:
   - builtins.object
   __class__: builtins.type
   attributes:
-    call_feedback_function_per_entry_in_list: builtins.bool
+    collect_list: builtins.bool
     span_attribute: builtins.NoneType
     span_id: builtins.NoneType
     value: builtins.NoneType
@@ -682,7 +682,7 @@ trulens.core.feedback.selector.Selector:
   - builtins.object
   __class__: builtins.type
   attributes:
-    call_feedback_function_per_entry_in_list: builtins.bool
+    collect_list: builtins.bool
     describes_same_spans: builtins.function
     function_attribute: builtins.NoneType
     function_name: builtins.NoneType
