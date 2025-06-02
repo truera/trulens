@@ -513,6 +513,8 @@ class TruSession(
             [trulens.core.session.TruSession.connector][trulens.core.session.TruSession.connector] [.db.insert_record][trulens.core.database.base.DB.insert_record]
             instead.
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         assert self.connector is not None
         return self.connector.db.insert_record(*args, **kwargs)
 
@@ -554,6 +556,8 @@ class TruSession(
             Unique record identifier [str][] .
 
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         return self.connector.add_record(record=record, **kwargs)
 
     def add_record_nowait(
@@ -561,6 +565,8 @@ class TruSession(
         record: record_schema.Record,
     ) -> None:
         """Add a record to the queue to be inserted in the next batch."""
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         return self.connector.add_record_nowait(record)
 
     def run_feedback_functions(
@@ -595,6 +601,8 @@ class TruSession(
                 [FeedbackResult][trulens.core.schema.feedback.FeedbackResult] if `wait`
                 is disabled.
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         if not isinstance(record, record_schema.Record):
             raise ValueError(
@@ -702,6 +710,8 @@ class TruSession(
             A unique result identifier [str][].
 
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         return self.connector.add_feedback(
             feedback_result_or_future=feedback_result_or_future, **kwargs
         )
@@ -725,6 +735,8 @@ class TruSession(
             List of unique result identifiers [str][] in the same order as input
                 `feedback_results`.
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         return self.connector.add_feedbacks(feedback_results=feedback_results)
 
     def get_app(
