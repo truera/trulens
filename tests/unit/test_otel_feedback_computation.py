@@ -226,7 +226,9 @@ class TestOtelFeedbackComputation(OtelTestCase):
             self.assertEqual(curr[SpanAttributes.EVAL_ROOT.SCORE], 0.9)
         for i in range(len(expected_case_number)):
             self.assertEqual(
-                eval_root_record_attributes[i][SpanAttributes.EVAL.METRIC_NAME],
+                eval_root_record_attributes[i][
+                    SpanAttributes.EVAL_ROOT.METRIC_NAME
+                ],
                 f"blah{expected_case_number[i]}",
             )
 
@@ -358,7 +360,7 @@ class TestOtelFeedbackComputation(OtelTestCase):
             "record_attributes": [
                 {
                     SpanAttributes.SPAN_TYPE: SpanAttributes.SpanType.EVAL_ROOT,
-                    SpanAttributes.EVAL.METRIC_NAME: "feedback1",
+                    SpanAttributes.EVAL_ROOT.METRIC_NAME: "feedback1",
                     SpanAttributes.RECORD_ID: "record_id1",
                     SpanAttributes.EVAL_ROOT.SPAN_GROUP: "span_group1",
                     SpanAttributes.EVAL_ROOT.ARGS_SPAN_ID + ".a": "span_id1a",
@@ -469,7 +471,7 @@ class TestOtelFeedbackComputation(OtelTestCase):
         )
         self.assertEqual(
             "custom",
-            last_event_record_attributes[SpanAttributes.EVAL.METRIC_NAME],
+            last_event_record_attributes[SpanAttributes.EVAL_ROOT.METRIC_NAME],
         )
         self.assertEqual(
             0.42,

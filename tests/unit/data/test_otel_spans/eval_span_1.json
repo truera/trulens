@@ -35,7 +35,6 @@
         "ai.observability.eval.eval_root_id": "7wvRtVbg",
         "ai.observability.eval.explanation": "The RESPONSE provides a detailed list of topics discussed in an FOMC meeting, but it is for January 2024, not February 2024. Although the RESPONSE is well-structured and provides relevant context to the main topics typically discussed in an FOMC meeting, it does not match the specific meeting mentioned in the PROMPT. The RESPONSE does not provide any information about the February 2024 meeting.\n",
         "ai.observability.eval.llm_judge_name": "llama3.1-70b",
-        "ai.observability.eval.metric_name": "answer_relevance",
         "ai.observability.eval.score": 1,
         "ai.observability.eval.target_record_id": "dd121e81-ccc2-449f-a3ba-e12467d0d671",
         "ai.observability.record_id": "dd121e81-ccc2-449f-a3ba-e12467d0d671",

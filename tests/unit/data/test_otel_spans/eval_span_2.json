@@ -35,7 +35,6 @@
         "ai.observability.eval.eval_root_id": "7wvRtVbg",
         "ai.observability.eval.explanation": "The RESPONSE provides a short list of famous basketball players, but it does not provide enough details about the players.",
         "ai.observability.eval.llm_judge_name": "llama3.1-70b",
-        "ai.observability.eval.metric_name": "answer_relevance",
         "ai.observability.eval.score": 0.5,
         "ai.observability.eval.target_record_id": "dd121e81-ccc2-449f-a3ba-e12467d0d671",
         "ai.observability.record_id": "dd121e81-ccc2-449f-a3ba-e12467d0d671",
