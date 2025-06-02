@@ -66,11 +66,11 @@ class TestOtelRecordingContexts(OtelTestCase):
         self.assertEqual(len(recording), 1)
         self.assertEqual(
             events.iloc[0]["record_attributes"][SpanAttributes.RECORD_ID],
-            recording.get(),
+            recording.get().record_id,
         )
         self.assertEqual(
             events.iloc[0]["record_attributes"][SpanAttributes.RECORD_ID],
-            recording[0],
+            recording[0].record_id,
         )
 
     def test_new(self):
