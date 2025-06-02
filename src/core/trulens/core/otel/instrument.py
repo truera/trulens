@@ -55,7 +55,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _get_func_name(func: Callable) -> str:
+def get_func_name(func: Callable) -> str:
     if (
         hasattr(func, "__module__")
         and func.__module__
@@ -226,7 +226,7 @@ class instrument:
         self.must_be_first_wrapper = kwargs.get("must_be_first_wrapper", False)
 
     def __call__(self, func: Callable) -> Callable:
-        func_name = _get_func_name(func)
+        func_name = get_func_name(func)
 
         @wrapt.decorator
         def sync_wrapper(func, instance, args, kwargs):
