@@ -30,20 +30,17 @@ class OtelTestCase(TruTestCase):
     def tearDownClass(cls) -> None:
         instrument.disable_all_instrumentation()
         del os.environ["TRULENS_OTEL_TRACING"]
-        cls.clear_TruSession_singleton()
         return super().tearDownClass()
 
     def setUp(self) -> None:
-        self.clear_TruSession_singleton()
+        super().setUp()
         tru_session = TruSession()
         tru_session.reset_database()
-        return super().setUp()
 
     def tearDown(self) -> None:
         tru_session = TruSession()
         tru_session.force_flush()
         tru_session._experimental_otel_span_processor.shutdown()
-        self.clear_TruSession_singleton()
         return super().tearDown()
 
     @staticmethod

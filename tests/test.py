@@ -583,6 +583,10 @@ class TruTestCase(WithJSONTestCase, TestCase):
                     print(f"Reference path from test frame to {ref}:")
                     test_utils.print_referent_lens(origin=alls, lens=path)
 
+    def setUp(self) -> None:
+        super().setUp()
+        self.clear_TruSession_singleton()
+
     def tearDown(self):
         """Check for running tasks and non-main threads after each test.
 
@@ -593,6 +597,7 @@ class TruTestCase(WithJSONTestCase, TestCase):
             AssertionError: If there are any non-main threads running and the
                 environment variable `TEST_THREADS_CLEANUP` is set.
         """
+        self.clear_TruSession_singleton()
 
         # GC here to make sure we don't have any references to tasks or threads
         # that are keeping them alive.

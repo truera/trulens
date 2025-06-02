@@ -18,6 +18,7 @@ from tests.test import TruTestCase
 
 class SnowflakeTestCase(TruTestCase):
     def setUp(self):
+        super().setUp()
         self._logger = logging.getLogger(__name__)
         self._database = os.environ["SNOWFLAKE_DATABASE"]
         self._snowflake_connection_parameters: Dict[str, str] = {
