@@ -557,6 +557,9 @@ class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
             SpanAttributes.EVAL.TARGET_RECORD_ID, self.target_record_id
         )
         self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
+        self.attach_to_context(
+            SpanAttributes.EVAL.METRIC_NAME, self.feedback_name
+        )
 
         # Use start_as_current_span as a context manager
         self.span_context = tracer.start_as_current_span("eval_root")

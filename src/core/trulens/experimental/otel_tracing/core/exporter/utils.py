@@ -12,7 +12,6 @@ from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.trace import StatusCode
 from trulens.core.schema import event as event_schema
 from trulens.otel.semconv.trace import ResourceAttributes
-from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
@@ -92,20 +91,7 @@ def convert_readable_span_to_proto(span: ReadableSpan) -> SpanProto:
         else None,
         status=Status(code=Status.StatusCode.STATUS_CODE_UNSET),
     )
-    # TODO(otel): Remove this once the Snowflake backend no longer uses these!
-    if (
-        span.attributes
-        and span.attributes.get(SpanAttributes.EVAL_ROOT.METRIC_NAME)
-        and not span.attributes.get("ai.observability.eval.metric_name")
-    ):
-        span_proto.attributes.append(
-            KeyValue(
-                key="ai.observability.eval.metric_name",
-                value=convert_to_any_value(
-                    span.attributes[SpanAttributes.EVAL_ROOT.METRIC_NAME]
-                ),
-            )
-        )
+    # TODO(otel): Remove this once the Snowflake backend no longer uses this!
     span_proto.attributes.append(
         KeyValue(key="name", value=convert_to_any_value(span.name))
     )

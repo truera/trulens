@@ -32,6 +32,7 @@ export const getSpanAttributeName = (key: string) => {
     [SpanAttributes.EVAL_ROOT_ERROR]: 'Error',
     [SpanAttributes.EVAL_ROOT_SCORE]: 'Score',
     [SpanAttributes.EVAL_EVAL_ROOT_ID]: 'Evaluation Root ID',
+    [SpanAttributes.EVAL_FEEDBACK_NAME]: 'Metric Name',
     [SpanAttributes.EVAL_ARGS]: 'Evaluation Arguments',
     [SpanAttributes.EVAL_CRITERIA]: 'Evaluation Criteria',
     [SpanAttributes.EVAL_TARGET_RECORD_ID]: 'Target Record ID',

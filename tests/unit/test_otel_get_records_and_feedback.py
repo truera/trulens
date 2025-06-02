@@ -932,6 +932,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
                 "ai.observability.app_id": self.app_id,
                 "ai.observability.record_id": record_id,
                 "ai.observability.span_type": SpanAttributes.SpanType.EVAL.value,
+                "ai.observability.eval.metric_name": "test_metric",
                 "ai.observability.eval.score": 0.8,
                 # Multiple kwargs attributes for the feedback function
                 "ai.observability.call.kwargs.question": "What is the weather?",

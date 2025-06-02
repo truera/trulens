@@ -81,6 +81,7 @@ export const EvalAttributes: Story = {
     attributes: {
       [SpanAttributes.SPAN_TYPE]: SpanType.EVAL,
       [SpanAttributes.RECORD_ID]: 'record-567890',
+      [SpanAttributes.EVAL_FEEDBACK_NAME]: 'relevance',
       [SpanAttributes.EVAL_CRITERIA]: 'Evaluate if the response is relevant to the query',
       [SpanAttributes.EVAL_SCORE]: 0.85,
       [SpanAttributes.EVAL_EXPLANATION]:
