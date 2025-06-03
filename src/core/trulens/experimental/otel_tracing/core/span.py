@@ -22,6 +22,7 @@ from opentelemetry.baggage import get_baggage
 from opentelemetry.context import Context
 from opentelemetry.trace.span import Span
 from opentelemetry.util.types import AttributeValue
+from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 if TYPE_CHECKING:
@@ -95,9 +96,7 @@ def set_span_attribute_safely(
 
 
 def set_string_span_attribute_from_baggage(
-    span: Span,
-    key: str,
-    context: Optional[Context] = None,
+    span: Span, key: str, context: Optional[Context] = None
 ) -> None:
     value = get_baggage(key, context)
     if value is not None:
@@ -129,12 +128,14 @@ def set_general_span_attributes(
     span.set_attribute(SpanAttributes.SPAN_TYPE, span_type)
 
     set_string_span_attribute_from_baggage(
-        span, SpanAttributes.APP_NAME, context
+        span, ResourceAttributes.APP_NAME, context
     )
     set_string_span_attribute_from_baggage(
-        span, SpanAttributes.APP_VERSION, context
+        span, ResourceAttributes.APP_VERSION, context
     )
-    set_string_span_attribute_from_baggage(span, SpanAttributes.APP_ID, context)
+    set_string_span_attribute_from_baggage(
+        span, ResourceAttributes.APP_ID, context
+    )
     set_string_span_attribute_from_baggage(
         span, SpanAttributes.RECORD_ID, context
     )

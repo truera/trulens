@@ -41,7 +41,10 @@
         "service.name": "trulens",
         "telemetry.sdk.language": "python",
         "telemetry.sdk.name": "opentelemetry",
-        "telemetry.sdk.version": "1.31.0"
+        "telemetry.sdk.version": "1.31.0",
+        "ai.observability.app_name": "coffee_rag",
+        "ai.observability.app_version": "openai",
+        "ai.observability.app_id": "app_hash_65b218a1a09632779ea4c5f8ad9709e4"
     },
     "start_timestamp": "2025-04-11 10:19:55.993997",
     "timestamp": "2025-04-11 10:19:56.356310",

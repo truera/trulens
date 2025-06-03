@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from dataclasses import dataclass
 import itertools
 import logging
 import numbers
@@ -12,7 +13,6 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
-    Type,
     Union,
 )
 
@@ -23,7 +23,11 @@ import pandas as pd
 from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
 from trulens.core.feedback.selector import Selector
 from trulens.core.otel.instrument import OtelFeedbackComputationRecordingContext
+from trulens.core.otel.instrument import get_func_name
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
+from trulens.experimental.otel_tracing.core.span import (
+    set_function_call_attributes,
+)
 from trulens.experimental.otel_tracing.core.span import (
     set_general_span_attributes,
 )
@@ -31,18 +35,24 @@ from trulens.experimental.otel_tracing.core.span import (
     set_span_attribute_safely,
 )
 from trulens.otel.semconv.trace import BASE_SCOPE
+from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 _logger = logging.getLogger(__name__)
 
 
+_EXPLANATION_KEYS = ["explanation", "explanations", "reason", "reasons"]
+
+
 # If we could just have `opentelemetry.sdk.trace.ReadableSpan` it would be
 # better, but this is all we need and it's easier to fill only this info
 # from an event table row.
+@dataclass
 class MinimalSpanInfo:
-    span_id: Optional[int] = None
-    parent_span_id: Optional[int] = None
-    attributes: Dict[str, Any] = {}
+    span_id: Optional[int]
+    parent_span_id: Optional[int]
+    attributes: Dict[str, Any]
+    resource_attributes: Dict[str, Any]
 
 
 class RecordGraphNode:
@@ -102,6 +112,9 @@ def _compute_feedback(
     """
     feedback_inputs = selector_function(record_root)
     record_root_attributes = record_root.current_span.attributes
+    record_root_resource_attributes = (
+        record_root.current_span.resource_attributes
+    )
     for curr in feedback_inputs:
         curr = {k: FeedbackFunctionInput(value=v) for k, v in curr.items()}
         _call_feedback_function(
@@ -111,6 +124,7 @@ def _compute_feedback(
             None,
             curr,
             record_root_attributes,
+            record_root_resource_attributes,
         )
 
 
@@ -142,13 +156,11 @@ def compute_feedback_by_span_group(
     unflattened_inputs = _collect_inputs_from_events(
         events, kwarg_groups, kwarg_to_selector
     )
-    record_id_to_record_roots = _map_record_id_to_record_roots(
-        events["record_attributes"]
-    )
+    record_id_to_record_root = _map_record_id_to_record_roots(events)
     unflattened_inputs = _validate_unflattened_inputs(
         unflattened_inputs,
         kwarg_groups,
-        list(record_id_to_record_roots.keys()),
+        list(record_id_to_record_root.keys()),
         feedback_name,
     )
     flattened_inputs = _flatten_inputs(unflattened_inputs)
@@ -161,7 +173,7 @@ def compute_feedback_by_span_group(
         feedback_function,
         higher_is_better,
         feedback_aggregator,
-        record_id_to_record_roots,
+        record_id_to_record_root,
     )
     if raise_error_on_no_feedbacks_computed and num_feedbacks_computed == 0:
         raise ValueError("No feedbacks were computed!")
@@ -297,23 +309,24 @@ def _dfs_collect_inputs_from_events(
 
 
 def _map_record_id_to_record_roots(
-    record_attributes: List[Dict[str, Any]],
-) -> Dict[str, Dict[str, Any]]:
+    events: pd.DataFrame,
+) -> Dict[str, pd.Series]:
     """Map record_id to record roots.
 
     Args:
-        record_attributes: List containing record attributes of events.
+        events: DataFrame containing trace events.
 
     Returns:
-        Mapping from record_id to record roots.
+        Mapping from record_id to record root.
     """
     ret = {}
-    for curr in record_attributes:
+    for _, curr in events.iterrows():
+        record_attributes = curr["record_attributes"]
         if (
-            curr.get(SpanAttributes.SPAN_TYPE)
+            record_attributes.get(SpanAttributes.SPAN_TYPE)
             == SpanAttributes.SpanType.RECORD_ROOT
         ):
-            record_id = curr[SpanAttributes.RECORD_ID]
+            record_id = record_attributes.get(SpanAttributes.RECORD_ID)
             if record_id in ret:
                 _logger.warning(
                     f"Multiple record roots found for record_id={record_id}!"
@@ -486,7 +499,7 @@ def _feedback_already_computed(
         else:
             valid = span_group == curr_span_group
         valid = valid and feedback_name == curr.get(
-            SpanAttributes.EVAL.METRIC_NAME
+            SpanAttributes.EVAL_ROOT.METRIC_NAME
         )
         for k, v in kwarg_inputs.items():
             if not valid:
@@ -514,7 +527,7 @@ def _run_feedback_on_inputs(
     ],
     higher_is_better: bool,
     feedback_aggregator: Optional[Callable[[List[float]], float]],
-    record_id_to_record_root: Dict[str, Dict[str, Any]],
+    record_id_to_record_root: Dict[str, pd.Series],
 ) -> int:
     """Run feedback function on all inputs.
 
@@ -538,7 +551,8 @@ def _run_feedback_on_inputs(
                 higher_is_better,
                 feedback_aggregator,
                 inputs,
-                record_id_to_record_root[record_id],
+                record_id_to_record_root[record_id]["record_attributes"],
+                record_id_to_record_root[record_id]["resource_attributes"],
                 span_group,
             )
             ret += 1
@@ -558,6 +572,7 @@ def _call_feedback_function(
     feedback_aggregator: Optional[Callable[[List[float]], float]],
     kwarg_inputs: Dict[str, FeedbackFunctionInput],
     record_root_attributes: Dict[str, Any],
+    record_root_resource_attributes: Dict[str, Any],
     span_group: Optional[str] = None,
 ) -> None:
     """Call feedback function.
@@ -569,26 +584,19 @@ def _call_feedback_function(
         feedback_aggregator: Aggregator function to combine feedback scores.
         kwarg_inputs: kwarg inputs to feedback function.
         record_root_attributes: Span attributes of record root.
+        record_root_resource_attributes: Resource attributes of record root.
         span_group: Span group of the invocation.
     """
-    if SpanAttributes.APP_NAME in record_root_attributes:
-        app_name = record_root_attributes[SpanAttributes.APP_NAME]
-        app_version = record_root_attributes[SpanAttributes.APP_VERSION]
-        run_name = record_root_attributes[SpanAttributes.RUN_NAME]
-    elif f"snow.{BASE_SCOPE}.object.name" in record_root_attributes:
-        # TODO(otel, dhuang): need to use these when getting the object entity!
-        # database_name = record_root_attributes[
-        #    f"snow.{BASE_SCOPE}.database.name"
-        # ]
-        # schema_name = record_root_attributes[
-        #    f"snow.{BASE_SCOPE}.schema.name"
-        # ]
-        app_name = record_root_attributes[f"snow.{BASE_SCOPE}.object.name"]
-        app_version = record_root_attributes[
-            f"snow.{BASE_SCOPE}.object.version.name"
-        ]
-        run_name = record_root_attributes[f"snow.{BASE_SCOPE}.run.name"]
-    app_id = record_root_attributes[SpanAttributes.APP_ID]
+    app_name, app_version, app_id, run_name = _get_app_and_run_info(
+        record_root_attributes, record_root_resource_attributes
+    )
+    # TODO(otel, dhuang): need to use these when getting the object entity!
+    # database_name = record_root_attributes[
+    #    f"snow.{BASE_SCOPE}.database.name"
+    # ]
+    # schema_name = record_root_attributes[
+    #    f"snow.{BASE_SCOPE}.schema.name"
+    # ]
     input_id = record_root_attributes[SpanAttributes.INPUT_ID]
     target_record_id = record_root_attributes[SpanAttributes.RECORD_ID]
     context_manager = OtelFeedbackComputationRecordingContext(
@@ -623,10 +631,7 @@ def _call_feedback_function(
                         f"{SpanAttributes.EVAL_ROOT.ARGS_SPAN_ATTRIBUTE}.{k}",
                         v.span_attribute,
                     )
-                if (
-                    isinstance(v.value, list)
-                    and v.call_feedback_function_per_entry_in_list
-                ):
+                if isinstance(v.value, list) and not v.collect_list:
                     aggregate = True
                     new_expanded_kwargs_inputs = []
                     for curr in expanded_kwargs_inputs:
@@ -637,51 +642,38 @@ def _call_feedback_function(
                 else:
                     for curr in expanded_kwargs_inputs:
                         curr[k] = v.value
-            if not aggregate:
-                res = _call_feedback_function_with_span(
-                    feedback_function,
-                    expanded_kwargs_inputs[0],
-                    eval_root_span,
-                    SpanAttributes.EVAL_ROOT,
+            res = []
+            for i, curr in enumerate(expanded_kwargs_inputs):
+                res.append(
+                    _call_feedback_function_under_eval_span(
+                        feedback_function,
+                        curr,
+                        eval_root_span,
+                        is_only_child=len(expanded_kwargs_inputs) == 1,
+                        eval_child_idx=i,
+                    )
                 )
-            else:
-                res = []
-                for i, curr in enumerate(expanded_kwargs_inputs):
-                    with (
-                        trace.get_tracer_provider()
-                        .get_tracer(TRULENS_SERVICE_NAME)
-                        .start_as_current_span(f"eval-{i}")
-                    ) as eval_span:
-                        set_general_span_attributes(
-                            eval_span, SpanAttributes.SpanType.EVAL
-                        )
-                        res.append(
-                            _call_feedback_function_with_span(
-                                feedback_function,
-                                curr,
-                                eval_span,
-                                SpanAttributes.EVAL,
-                            )
-                        )
+            if aggregate:
                 if feedback_aggregator is not None:
                     res = feedback_aggregator(res)
                 else:
                     res = sum(res) / len(res) if res else 0.0
-                eval_root_span.set_attribute(
-                    SpanAttributes.EVAL_ROOT.SCORE, res
-                )
+            else:
+                res = res[0]
+            eval_root_span.set_attribute(SpanAttributes.EVAL_ROOT.SCORE, res)
         except Exception as e:
             eval_root_span.set_attribute(SpanAttributes.EVAL_ROOT.ERROR, str(e))
             raise e
 
 
-def _call_feedback_function_with_span(
+def _call_feedback_function_under_eval_span(
     feedback_function: Callable[
         [Any], Union[float, Tuple[float, Dict[str, Any]]]
     ],
     kwargs: Dict[str, Any],
-    span: Span,
-    span_attribute_scope: Type,
+    eval_root_span: Span,
+    is_only_child: bool,
+    eval_child_idx: int,
 ) -> float:
     """
     Call a feedback function with the provided kwargs and return the score.
@@ -689,37 +681,102 @@ def _call_feedback_function_with_span(
     Args:
         feedback_function: The feedback function to call.
         kwargs: The keyword arguments to pass to the feedback function.
-        span: The span to use for recording the feedback function call.
-        span_attribute_scope: The scope for span attributes.
+        eval_root_span: The root span for the evaluation.
+        is_only_child:
+            Whether this is the only child eval span of the evaluation root.
+        eval_child_idx: Index of this eval child span in the evaluation root.
 
     Returns:
         The score returned by the feedback function.
     """
-    try:
-        res = feedback_function(**kwargs)
-        metadata = {}
-        if isinstance(res, tuple):
-            if (
-                len(res) != 2
-                or not isinstance(res[0], numbers.Number)
-                or not isinstance(res[1], dict)
-                or not all([isinstance(curr, str) for curr in res[1].keys()])
-            ):
-                raise ValueError(
-                    "Feedback functions must be of type `Callable[Any, Union[float, Tuple[float, Dict[str, Any]]]]`!"
-                )
-            res, metadata = res[0], res[1]
-        res = float(res)
-        span.set_attribute(span_attribute_scope.SCORE, res)
-        for k, v in metadata.items():
-            set_span_attribute_safely(
-                span, f"{span_attribute_scope.METADATA}.{k}", v
+    with (
+        trace.get_tracer_provider()
+        .get_tracer(TRULENS_SERVICE_NAME)
+        .start_as_current_span(f"eval-{eval_child_idx}")
+    ) as eval_span:
+        set_general_span_attributes(eval_span, SpanAttributes.SpanType.EVAL)
+        res = None
+        exc = None
+        try:
+            res = feedback_function(**kwargs)
+            metadata = {}
+            if isinstance(res, tuple):
+                # If the result is a tuple, it must be (score, metadata) where
+                # the metadata has string keys.
+                if (
+                    len(res) != 2
+                    or not isinstance(res[0], numbers.Number)
+                    or not isinstance(res[1], dict)
+                    or not all([
+                        isinstance(curr, str) for curr in res[1].keys()
+                    ])
+                ):
+                    raise ValueError(
+                        "Feedback functions must be of type `Callable[Any, Union[float, Tuple[float, Dict[str, Any]]]]`!"
+                    )
+                res, metadata = res[0], res[1]
+            res = float(res)
+            eval_span.set_attribute(SpanAttributes.EVAL.SCORE, res)
+            _set_metadata_attributes(eval_span, metadata)
+            if is_only_child:
+                _set_metadata_attributes(eval_root_span, metadata)
+            return res
+        except Exception as e:
+            exc = e
+            eval_span.set_attribute(SpanAttributes.EVAL.ERROR, str(e))
+            raise e
+        finally:
+            set_function_call_attributes(
+                eval_span, res, get_func_name(feedback_function), exc, kwargs
             )
-            if k in ["explanation", "explanations", "reason", "reasons"]:
-                set_span_attribute_safely(
-                    span, span_attribute_scope.EXPLANATION, v
-                )
-        return res
-    except Exception as e:
-        span.set_attribute(span_attribute_scope.ERROR, str(e))
-        raise e
+
+
+def _set_metadata_attributes(span: Span, metadata: Dict[str, Any]) -> None:
+    """Set metadata attributes on a span.
+
+    Args:
+        span: Span to set attributes on.
+        metadata: Metadata to extract attributes from.
+    """
+    for k, v in metadata.items():
+        set_span_attribute_safely(
+            span, f"{SpanAttributes.EVAL.METADATA}.{k}", v
+        )
+        if k in _EXPLANATION_KEYS:
+            set_span_attribute_safely(span, SpanAttributes.EVAL.EXPLANATION, v)
+
+
+def _get_app_and_run_info(
+    attributes: Dict[str, Any], resource_attributes: Dict[str, Any]
+) -> Tuple[str, str, str, str]:
+    """Get app info from attributes.
+
+    Args:
+        attributes: Span attributes of record root.
+        resource_attributes: Resource attributes of record root.
+
+    Returns:
+        Tuple of: app name, app version, and app id, run name.
+    """
+
+    def get_value(keys: List[str]) -> Optional[str]:
+        for key in keys:
+            for attr in [resource_attributes, attributes]:
+                if key in attr:
+                    return attr[key]
+        return None
+
+    app_name = get_value([
+        f"snow.{BASE_SCOPE}.object.name",
+        ResourceAttributes.APP_NAME,
+    ])
+    app_version = get_value([
+        f"snow.{BASE_SCOPE}.object.version.name",
+        ResourceAttributes.APP_VERSION,
+    ])
+    app_id = get_value([ResourceAttributes.APP_ID])
+    run_name = get_value([
+        f"snow.{BASE_SCOPE}.run.name",
+        SpanAttributes.RUN_NAME,
+    ])
+    return app_name, app_version, app_id, run_name

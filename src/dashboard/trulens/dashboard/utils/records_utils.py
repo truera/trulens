@@ -75,11 +75,7 @@ def display_feedback_call(
             for i in range(len(call))
         ])
         df["meta"] = pd.Series([call[i]["meta"] for i in range(len(call))])
-        df = (
-            df.join(df.meta.apply(lambda m: pd.Series(m)))
-            .drop(columns="meta")
-            .drop(columns="criteria")
-        )
+        df = df.join(df.meta.apply(lambda m: pd.Series(m))).drop(columns="meta")
 
         # Filter to only show the latest results for calls with the same args_span_id and args_span_attribute
         # NOTE: this is an optimization to not show duplicate calls in the UI (e.g. when a feedback function is recomputed on the same metric name and inputs)
@@ -87,7 +83,14 @@ def display_feedback_call(
 
         # note: improve conditional to not rely on the feedback name
         if "groundedness" in feedback_name.lower():
-            df = expand_groundedness_df(df)
+            try:
+                df = expand_groundedness_df(df)
+            except ValueError:
+                st.error(
+                    "Error expanding groundedness DataFrame. "
+                    "Please ensure the DataFrame is in the correct format."
+                )
+
         if df.empty:
             st.warning("No feedback details found.")
         else:

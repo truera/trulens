@@ -21,17 +21,6 @@ from tests.util.df_comparison import (
 
 class OtelTestCase(TruTestCase):
     @classmethod
-    def clear_TruSession_singleton(cls) -> None:
-        # [HACK!] Clean up any instances of `TruSession` so tests don't
-        # interfere with each other.
-        for key in [
-            curr
-            for curr in TruSession._singleton_instances
-            if curr[0] == "trulens.core.session.TruSession"
-        ]:
-            del TruSession._singleton_instances[key]
-
-    @classmethod
     def setUpClass(cls) -> None:
         os.environ["TRULENS_OTEL_TRACING"] = "1"
         instrument.enable_all_instrumentation()
@@ -41,20 +30,17 @@ class OtelTestCase(TruTestCase):
     def tearDownClass(cls) -> None:
         instrument.disable_all_instrumentation()
         del os.environ["TRULENS_OTEL_TRACING"]
-        cls.clear_TruSession_singleton()
         return super().tearDownClass()
 
     def setUp(self) -> None:
-        self.clear_TruSession_singleton()
+        super().setUp()
         tru_session = TruSession()
         tru_session.reset_database()
-        return super().setUp()
 
     def tearDown(self) -> None:
         tru_session = TruSession()
         tru_session.force_flush()
         tru_session._experimental_otel_span_processor.shutdown()
-        self.clear_TruSession_singleton()
         return super().tearDown()
 
     @staticmethod

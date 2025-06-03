@@ -24,8 +24,8 @@ from opentelemetry.trace.span import Span
 from trulens.core.otel.function_call_context_manager import (
     create_function_call_context_manager,
 )
+from trulens.core.otel.recording import Recording
 from trulens.core.schema.app import AppDefinition
-from trulens.core.session import TruSession
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
 from trulens.experimental.otel_tracing.core.span import Attributes
 from trulens.experimental.otel_tracing.core.span import (
@@ -44,6 +44,7 @@ from trulens.otel.semconv.constants import (
     TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG,
 )
 from trulens.otel.semconv.constants import TRULENS_INSTRUMENT_WRAPPER_FLAG
+from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 import wrapt
 
@@ -54,7 +55,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _get_func_name(func: Callable) -> str:
+def get_func_name(func: Callable) -> str:
     if (
         hasattr(func, "__module__")
         and func.__module__
@@ -225,7 +226,7 @@ class instrument:
         self.must_be_first_wrapper = kwargs.get("must_be_first_wrapper", False)
 
     def __call__(self, func: Callable) -> Callable:
-        func_name = _get_func_name(func)
+        func_name = get_func_name(func)
 
         @wrapt.decorator
         def sync_wrapper(func, instance, args, kwargs):
@@ -416,50 +417,6 @@ def instrument_cost_computer(
     setattr(cls, method_name, wrapper(getattr(cls, method_name)))
 
 
-class Recording:
-    record_ids: List[str]
-
-    def __init__(self) -> None:
-        self.record_ids = []
-
-    def add_record_id(self, record_id: str) -> None:
-        self.record_ids.append(record_id)
-
-    def get(self, wait_for_record: bool = True) -> str:
-        """
-        Assumes there is exactly one record ID in the recording and returns it.
-
-        Args:
-            wait_for_record:
-                Whether to wait until the record is in the database.
-
-        Returns:
-            The single record ID of the recording.
-        """
-        if len(self.record_ids) == 0:
-            raise RuntimeError("No record IDs found!")
-        if len(self.record_ids) != 1:
-            raise RuntimeError("There are multiple records!")
-        if wait_for_record:
-            TruSession().wait_for_record(self.record_ids[0], timeout=180)
-        return self.record_ids[0]
-
-    def __getitem__(self, index: int) -> str:
-        TruSession().wait_for_record(self.record_ids[index], timeout=180)
-        return self.record_ids[index]
-
-    @staticmethod
-    def _wait_for_record(record_id: str) -> None:
-        res = TruSession().wait_for_record(record_id, timeout=180)
-        if res is None:
-            raise RuntimeError(
-                f"Record with ID {record_id} not found in database!"
-            )
-
-    def __len__(self) -> int:
-        return len(self.record_ids)
-
-
 class OtelBaseRecordingContext:
     run_name: str
     """
@@ -564,17 +521,16 @@ class OtelRecordingContext(OtelBaseRecordingContext):
     # For use as a context manager.
     def __enter__(self) -> Recording:
         self.attach_to_context("__trulens_app__", self.tru_app)
-        self.attach_to_context(SpanAttributes.APP_NAME, self.app_name)
-        self.attach_to_context(SpanAttributes.APP_VERSION, self.app_version)
-        self.attach_to_context(SpanAttributes.APP_ID, self.app_id)
-
+        self.attach_to_context(ResourceAttributes.APP_NAME, self.app_name)
+        self.attach_to_context(ResourceAttributes.APP_VERSION, self.app_version)
+        self.attach_to_context(ResourceAttributes.APP_ID, self.app_id)
         self.attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
         self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
         self.attach_to_context(
             SpanAttributes.RECORD_ROOT.GROUND_TRUTH_OUTPUT,
             self.ground_truth_output,
         )
-        ret = Recording()
+        ret = Recording(self.tru_app)
         self.attach_to_context("__trulens_recording__", ret)
         return ret
 
@@ -592,9 +548,9 @@ class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
         self.attach_to_context(
             SpanAttributes.RECORD_ID, self.target_record_id
         )  # TODO(otel): Should we include this? It's automatically getting added to the span.
-        self.attach_to_context(SpanAttributes.APP_NAME, self.app_name)
-        self.attach_to_context(SpanAttributes.APP_VERSION, self.app_version)
-        self.attach_to_context(SpanAttributes.APP_ID, self.app_id)
+        self.attach_to_context(ResourceAttributes.APP_NAME, self.app_name)
+        self.attach_to_context(ResourceAttributes.APP_VERSION, self.app_version)
+        self.attach_to_context(ResourceAttributes.APP_ID, self.app_id)
 
         self.attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
         self.attach_to_context(
@@ -618,6 +574,9 @@ class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
         # Set general span attributes
         set_general_span_attributes(
             root_span, SpanAttributes.SpanType.EVAL_ROOT
+        )
+        root_span.set_attribute(
+            SpanAttributes.EVAL_ROOT.METRIC_NAME, self.feedback_name
         )
 
         self.attach_to_context("__trulens_recording__", True)

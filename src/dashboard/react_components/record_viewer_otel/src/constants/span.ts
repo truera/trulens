@@ -79,6 +79,7 @@ export const SpanAttributes = {
   EVAL_ROOT_TARGET_TRACE_ID: `${BASE_SCOPE}.${SpanType.EVAL_ROOT}.target_trace_id`,
   EVAL_ROOT_TARGET_SPAN_ID: `${BASE_SCOPE}.${SpanType.EVAL_ROOT}.target_span_id`,
   EVAL_ROOT_FEEDBACK_DEFINITION_ID: `${BASE_SCOPE}.${SpanType.EVAL_ROOT}.feedback_definition_id`,
+  EVAL_ROOT_FEEDBACK_NAME: `${BASE_SCOPE}.${SpanType.EVAL_ROOT}.metric_name`,
   EVAL_ROOT_STATUS: `${BASE_SCOPE}.${SpanType.EVAL_ROOT}.status`,
   EVAL_ROOT_TOTAL_COST: `${BASE_SCOPE}.${SpanType.EVAL_ROOT}.total_cost`,
   EVAL_ROOT_ERROR: `${BASE_SCOPE}.${SpanType.EVAL_ROOT}.error`,
