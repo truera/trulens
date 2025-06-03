@@ -560,6 +560,7 @@ trulens.core.feedback.feedback.Feedback:
     aggregate: builtins.function
     aggregator: typing.Union[trulens.core.utils.pyschema.Function, trulens.core.utils.pyschema.Method,
       builtins.NoneType]
+    check_otel_selectors: builtins.function
     check_selectors: builtins.function
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
