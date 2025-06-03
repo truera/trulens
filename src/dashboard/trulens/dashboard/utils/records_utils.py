@@ -134,16 +134,19 @@ def _filter_duplicate_span_calls(df: pd.DataFrame) -> pd.DataFrame:
         df_for_grouping = df.copy()
         df_for_grouping["args_span_id_str"] = df_for_grouping[
             "args_span_id"
-        ].apply(lambda x: str(x) if x is not None else "None")
+        ].apply(lambda x: str(x) if x is not None else None)
         df_for_grouping["args_span_attribute_str"] = df_for_grouping[
             "args_span_attribute"
-        ].apply(lambda x: str(x) if x is not None else "None")
+        ].apply(lambda x: str(x) if x is not None else None)
 
         # Group by the combination of args_span_id and args_span_attribute
-        grouped = df_for_grouping.groupby([
-            "args_span_id_str",
-            "args_span_attribute_str",
-        ])
+        grouped = df_for_grouping.groupby(
+            [
+                "args_span_id_str",
+                "args_span_attribute_str",
+            ],
+            dropna=False,
+        )
 
         # Only keep rows from the most recent eval_root_id for groups that have more than one row
         indices_to_keep = []
