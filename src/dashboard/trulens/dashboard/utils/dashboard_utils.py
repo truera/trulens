@@ -12,6 +12,7 @@ from trulens.core import experimental as core_experimental
 from trulens.core import experimental as mod_experimental
 from trulens.core import session as core_session
 from trulens.core.database import base as core_db
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.utils import imports as import_utils
 from trulens.dashboard import constants as dashboard_constants
 from trulens.dashboard.components.record_viewer_otel import OtelSpan
@@ -626,3 +627,78 @@ def _get_event_otel_spans(record_id: str) -> List[OtelSpan]:
     except Exception as e:
         st.error(f"Error getting events for record {record_id}: {e}")
         return []
+
+
+def _check_cross_format_records(
+    app_name: Optional[str] = None,
+    app_ids: Optional[List[str]] = None,
+) -> tuple[int, int]:
+    """Check record counts in both OTEL and non-OTEL formats.
+
+    Returns:
+        Tuple of (otel_count, non_otel_count)
+    """
+    session = get_session()
+    otel_count = 0
+    non_otel_count = 0
+
+    try:
+        import sqlalchemy as sa
+        from trulens.core.database.sqlalchemy import SQLAlchemyDB
+
+        if isinstance(session.connector.db, SQLAlchemyDB):
+            db = session.connector.db  # type: ignore
+
+            with db.session.begin() as session_ctx:  # type: ignore
+                # Build WHERE clause for filtering
+                where_clause = ""
+                if app_name:
+                    where_clause = f" WHERE app_name = '{app_name}'"
+                elif app_ids:
+                    app_ids_str = "', '".join(app_ids)
+                    where_clause = f" WHERE app_id IN ('{app_ids_str}')"
+
+                # Check OTEL records (EVENT table)
+                try:
+                    query = f"SELECT COUNT(*) FROM event{where_clause}"
+                    result = session_ctx.execute(sa.text(query)).scalar()
+                    otel_count = result or 0
+                except Exception:
+                    pass
+
+                # Check non-OTEL records (RECORD table)
+                try:
+                    query = f"SELECT COUNT(*) FROM record{where_clause}"
+                    result = session_ctx.execute(sa.text(query)).scalar()
+                    non_otel_count = result or 0
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+    return otel_count, non_otel_count
+
+
+def show_no_records_error(
+    app_name: str, app_ids: Optional[List[str]] = None
+) -> None:
+    """Show helpful error message when no records found, with cross-format record counts."""
+    is_otel_mode = is_otel_tracing_enabled()
+    otel_count, non_otel_count = _check_cross_format_records(app_name, app_ids)
+
+    if is_otel_mode and otel_count == 0 and non_otel_count > 0:
+        st.error(
+            f"No records found for app `{app_name}` in OTEL mode. "
+            f"However, {non_otel_count} records exist in non-OTEL format. "
+            f"Restart without `TRULENS_OTEL_TRACING` to access them.",
+            icon="🔄",
+        )
+    elif not is_otel_mode and non_otel_count == 0 and otel_count > 0:
+        st.error(
+            f"No records found for app `{app_name}` in non-OTEL mode. "
+            f"However, {otel_count} records exist in OTEL format. "
+            f"Set `TRULENS_OTEL_TRACING=1` to access them.",
+            icon="🔄",
+        )
+    else:
+        st.error(f"No records found for app `{app_name}`.")
