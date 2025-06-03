@@ -21,7 +21,7 @@ from trulens.dashboard.ux import components as dashboard_components
 from trulens.dashboard.ux import styles as dashboard_styles
 
 APP_COLS = ["app_version", "app_id", "app_name"]
-APP_AGG_COLS = ["Records", "Average Latency"]
+APP_AGG_COLS = ["Records", "Average Latency (s)"]
 
 
 def init_page_state():
@@ -62,7 +62,7 @@ def _preprocess_df(
 
     agg_dict = {
         "Records": ("record_id", "count"),
-        "Average Latency": ("latency", "mean"),
+        "Average Latency (s)": ("latency", "mean"),
         "Total Cost (USD)": ("total_cost_usd", "sum"),
         "Total Cost (Snowflake Credits)": ("total_cost_sf", "sum"),
         "Total Tokens": ("total_tokens", "sum"),
@@ -191,9 +191,7 @@ def _build_grid_options(
     )
     gb.configure_pagination(enabled=True, paginationPageSize=25)
     gb.configure_side_bar()
-    gb.configure_grid_options(
-        autoSizeStrategy={"type": "fitCellContents", "skipHeader": False}
-    )
+    gb.configure_grid_options(autoSizeStrategy={"type": "fitGridWidth"})
     return gb.build()
 
 
@@ -219,11 +217,9 @@ def _render_grid(
                     df[dashboard_constants.PINNED_COL_NAME], "app_version"
                 ].apply(lambda x: f"📌 {x}")
 
-            height = 1000 if len(df) > 20 else 45 * len(df) + 100
             event = st_aggrid.AgGrid(
                 df,
                 key=grid_key,
-                height=height,
                 columns_state=columns_state,
                 gridOptions=_build_grid_options(
                     df=df,
@@ -629,7 +625,7 @@ def _render_list_tab(
         ) = st_columns([1, 1, 1, 1, 1])
         n_records_col.metric("Records", app_row["Records"])
 
-        latency_mean = app_row["Average Latency"]
+        latency_mean = app_row["Average Latency (s)"]
         latency_col.metric(
             "Average Latency (Seconds)",
             (

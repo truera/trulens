@@ -26,6 +26,7 @@ export const getSpanAttributeName = (key: string) => {
     [SpanAttributes.EVAL_ROOT_TARGET_TRACE_ID]: 'Target Trace ID',
     [SpanAttributes.EVAL_ROOT_TARGET_SPAN_ID]: 'Target Span ID',
     [SpanAttributes.EVAL_ROOT_FEEDBACK_DEFINITION_ID]: 'Feedback Definition ID',
+    [SpanAttributes.EVAL_ROOT_FEEDBACK_NAME]: 'Metric Name',
     [SpanAttributes.EVAL_ROOT_STATUS]: 'Status',
     [SpanAttributes.EVAL_ROOT_TOTAL_COST]: 'Total Cost',
     [SpanAttributes.EVAL_ROOT_ERROR]: 'Error',

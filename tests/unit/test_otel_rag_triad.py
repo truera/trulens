@@ -109,7 +109,7 @@ class TestOtelRagTriad(OtelTestCase):
         self.assertListEqual(
             ["Answer Relevance", "Context Relevance", "Groundedness"],
             sorted([
-                curr["record_attributes"][SpanAttributes.EVAL.METRIC_NAME]
+                curr["record_attributes"][SpanAttributes.EVAL_ROOT.METRIC_NAME]
                 for curr in eval_roots
             ]),
         )
