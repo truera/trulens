@@ -650,26 +650,36 @@ def _check_cross_format_records(
             db = session.connector.db  # type: ignore
 
             with db.session.begin() as session_ctx:  # type: ignore
-                # Build WHERE clause for filtering
+                # Build parameterized queries
+                params = {}
                 where_clause = ""
+
                 if app_name:
-                    where_clause = f" WHERE app_name = '{app_name}'"
+                    where_clause = " WHERE app_name = :app_name"
+                    params["app_name"] = app_name
                 elif app_ids:
-                    app_ids_str = "', '".join(app_ids)
-                    where_clause = f" WHERE app_id IN ('{app_ids_str}')"
+                    # Use IN clause with parameterized list
+                    placeholders = ",".join([
+                        f":app_id_{i}" for i in range(len(app_ids))
+                    ])
+                    where_clause = f" WHERE app_id IN ({placeholders})"
+                    for i, app_id in enumerate(app_ids):
+                        params[f"app_id_{i}"] = app_id
 
                 # Check OTEL records (EVENT table)
                 try:
-                    query = f"SELECT COUNT(*) FROM event{where_clause}"
-                    result = session_ctx.execute(sa.text(query)).scalar()
+                    query = sa.text(f"SELECT COUNT(*) FROM event{where_clause}")
+                    result = session_ctx.execute(query, params).scalar()
                     otel_count = result or 0
                 except Exception:
                     pass
 
                 # Check non-OTEL records (RECORD table)
                 try:
-                    query = f"SELECT COUNT(*) FROM record{where_clause}"
-                    result = session_ctx.execute(sa.text(query)).scalar()
+                    query = sa.text(
+                        f"SELECT COUNT(*) FROM record{where_clause}"
+                    )
+                    result = session_ctx.execute(query, params).scalar()
                     non_otel_count = result or 0
                 except Exception:
                     pass
