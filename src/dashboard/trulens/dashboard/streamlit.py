@@ -258,6 +258,7 @@ def trulens_feedback(record_id: str):
             feedback_directions=feedback_directions,
         )
 
+
 def trulens_trace(record: Union[record_schema.Record, str]):
     """Display the trace view for a record.
 
