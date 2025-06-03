@@ -349,6 +349,7 @@ trulens_eval.Feedback:
     of_feedback_definition: builtins.staticmethod
     of_object: builtins.staticmethod
     'on': builtins.function
+    on_context: builtins.function
     on_default: builtins.function
     on_input: builtins.function
     on_input_output: builtins.function
@@ -978,6 +979,7 @@ trulens_eval.TruApp:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
@@ -1093,6 +1095,7 @@ trulens_eval.TruBasicApp:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
@@ -1209,6 +1212,7 @@ trulens_eval.TruChain:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
@@ -1324,6 +1328,7 @@ trulens_eval.TruCustomApp:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
@@ -1438,6 +1443,7 @@ trulens_eval.TruLlama:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
@@ -1553,6 +1559,7 @@ trulens_eval.TruRails:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
@@ -1669,6 +1676,7 @@ trulens_eval.TruVirtual:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: trulens.core.utils.pyschema.Method
     root_class: typing.Any
     run: builtins.function
@@ -1816,6 +1824,7 @@ trulens_eval.app.App:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
     schema: builtins.classmethod
@@ -2643,6 +2652,7 @@ trulens_eval.feedback.Feedback:
     of_feedback_definition: builtins.staticmethod
     of_object: builtins.staticmethod
     'on': builtins.function
+    on_context: builtins.function
     on_default: builtins.function
     on_input: builtins.function
     on_input_output: builtins.function
@@ -3195,6 +3205,7 @@ trulens_eval.feedback.feedback.Feedback:
     of_feedback_definition: builtins.staticmethod
     of_object: builtins.staticmethod
     'on': builtins.function
+    on_context: builtins.function
     on_default: builtins.function
     on_input: builtins.function
     on_input_output: builtins.function
@@ -7302,6 +7313,7 @@ trulens_eval.tru_basic_app.TruBasicApp:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
@@ -7462,6 +7474,7 @@ trulens_eval.tru_chain.TruChain:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
@@ -7585,6 +7598,7 @@ trulens_eval.tru_custom_app.TruCustomApp:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
@@ -7730,6 +7744,7 @@ trulens_eval.tru_llama.TruLlama:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
@@ -7911,6 +7926,7 @@ trulens_eval.tru_rails.TruRails:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
@@ -8035,6 +8051,7 @@ trulens_eval.tru_virtual.TruVirtual:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: trulens.core.utils.pyschema.Method
     root_class: typing.Any
     run: builtins.function
