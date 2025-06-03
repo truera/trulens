@@ -41,6 +41,9 @@ from trulens.otel.semconv.trace import SpanAttributes
 _logger = logging.getLogger(__name__)
 
 
+_EXPLANATION_KEYS = ["explanation", "explanations", "reason", "reasons"]
+
+
 # If we could just have `opentelemetry.sdk.trace.ReadableSpan` it would be
 # better, but this is all we need and it's easier to fill only this info
 # from an event table row.
@@ -739,7 +742,7 @@ def _set_metadata_attributes(span: Span, metadata: Dict[str, Any]) -> None:
         set_span_attribute_safely(
             span, f"{SpanAttributes.EVAL.METADATA}.{k}", v
         )
-        if k in ["explanation", "explanations", "reason", "reasons"]:
+        if k in _EXPLANATION_KEYS:
             set_span_attribute_safely(span, SpanAttributes.EVAL.EXPLANATION, v)
 
 
