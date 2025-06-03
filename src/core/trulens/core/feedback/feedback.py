@@ -686,6 +686,46 @@ class Feedback(feedback_schema.FeedbackDefinition):
 
         return signature(self.imp)
 
+    def check_otel_selectors(self):
+        if self.imp is None:
+            raise RuntimeError(
+                "Cannot check selectors of feedback function without its definition."
+            )
+
+        sig = signature(self.imp)
+        function_args = list(sig.parameters.keys())
+        required_function_args = [
+            param_name
+            for param_name, param in sig.parameters.items()
+            if param.default == inspect.Parameter.empty
+        ]
+        error_msg = ""
+        # Check for extra selectors. Technically, this shouldn't happen ever
+        # since we'd fail before this point, but we check it anyway in case
+        # things change.
+        extra_selectors = []
+        for selector in self.selectors:
+            if selector not in function_args:
+                extra_selectors.append(selector)
+        if extra_selectors:
+            error_msg += f"Feedback function `{self.name}` has selectors that are not in the function signature:\n"
+            error_msg += f"Extra selectors: {extra_selectors}\n"
+            error_msg += f"Function args: {function_args}\n"
+        # Check for missing selectors.
+        missing_selectors = []
+        for required_function_arg in required_function_args:
+            if required_function_arg not in self.selectors:
+                missing_selectors.append(required_function_arg)
+        if missing_selectors:
+            error_msg += (
+                f"Feedback function `{self.name}` has missing selectors:\n"
+            )
+            error_msg += f"Missing selectors: {missing_selectors}\n"
+            error_msg += f"Required function args: {required_function_args}\n"
+        # Throw error if there are any issues.
+        if error_msg:
+            raise ValueError(error_msg)
+
     def check_selectors(
         self,
         app: Union[app_schema.AppDefinition, serial_utils.JSON],
