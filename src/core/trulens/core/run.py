@@ -180,7 +180,9 @@ class Run(BaseModel):
     )
 
     main_method_name: Optional[str] = Field(
-        default=None, description="Main method of the app.", exclude=True
+        default=None,
+        description="Main method of the app (optional).",
+        exclude=True,
     )
 
     tru_session: Any = Field(
