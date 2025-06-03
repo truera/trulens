@@ -13,7 +13,7 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
 import pandas as pd
-from trulens.core.otel.instrument import _get_func_name
+from trulens.core.otel.instrument import get_func_name
 from trulens.core.otel.instrument import instrument
 from trulens.core.otel.recording import Recording
 from trulens.experimental.otel_tracing.core.session import (
@@ -63,17 +63,17 @@ class TestOtelInstrument(unittest.TestCase):
             context_api.detach(token)
         return super().tearDown()
 
-    def test__get_func_name(self) -> None:
+    def test_get_func_name(self) -> None:
         self.assertEqual(
-            _get_func_name(lambda: None),
-            "tests.unit.test_otel_instrument.TestOtelInstrument.test__get_func_name.<locals>.<lambda>",
+            get_func_name(lambda: None),
+            "tests.unit.test_otel_instrument.TestOtelInstrument.test_get_func_name.<locals>.<lambda>",
         )
         self.assertEqual(
-            _get_func_name(self.test__get_func_name),
-            "tests.unit.test_otel_instrument.TestOtelInstrument.test__get_func_name",
+            get_func_name(self.test_get_func_name),
+            "tests.unit.test_otel_instrument.TestOtelInstrument.test_get_func_name",
         )
         self.assertEqual(
-            _get_func_name(pd.DataFrame.transpose),
+            get_func_name(pd.DataFrame.transpose),
             "pandas.core.frame.DataFrame.transpose",
         )
 

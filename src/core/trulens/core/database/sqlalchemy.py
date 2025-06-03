@@ -1151,6 +1151,7 @@ class SQLAlchemyDB(core_db.DB):
                             }
 
                         # Update feedback result
+                        # TODO(otel): This isn't going to work if there are multiple with the same name.
                         feedback_result = record_data["feedback_results"][
                             metric_name
                         ]
@@ -1174,51 +1175,38 @@ class SQLAlchemyDB(core_db.DB):
                             )
 
                         # Add call data
-                        # Extract kwargs by finding all attributes that start with the KWARGS prefix
-                        kwargs_prefix = SpanAttributes.CALL.KWARGS + "."
-                        kwargs = {
-                            key[len(kwargs_prefix) :]: value
-                            for key, value in record_attributes.items()
-                            if key.startswith(kwargs_prefix)
-                        }
+                        if (
+                            record_attributes.get(SpanAttributes.SPAN_TYPE)
+                            == SpanAttributes.SpanType.EVAL.value
+                        ):
+                            # Extract kwargs by finding all attributes that start with the KWARGS prefix
+                            kwargs_prefix = SpanAttributes.CALL.KWARGS + "."
+                            kwargs = {
+                                key[len(kwargs_prefix) :]: value
+                                for key, value in record_attributes.items()
+                                if key.startswith(kwargs_prefix)
+                            }
 
-                        call_data = {
-                            # TODO(SNOW-2112879): Call data may not be populated in the OTEL spans yet
-                            "args": {
-                                "kwargs": kwargs,
-                                "input": record_data["input"],
-                                "output": record_data["output"],
-                            },
-                            # NOTE: Some feedbacks may not have sub-scores, so we use the EVAL_ROOT score as a fallback
-                            "ret": (
-                                record_attributes.get(SpanAttributes.EVAL.SCORE)
-                                if SpanAttributes.EVAL.SCORE
-                                in record_attributes
-                                else eval_root_score
-                            ),
-                            "meta": {
-                                "metadata": record_attributes.get(
-                                    SpanAttributes.EVAL_ROOT.METADATA, {}
+                            call_data = {
+                                "args": kwargs,
+                                "ret": record_attributes.get(
+                                    SpanAttributes.EVAL.SCORE
                                 ),
-                                "explanation": (
-                                    record_attributes.get(
+                                "meta": {
+                                    "explanation": record_attributes.get(
                                         SpanAttributes.EVAL.EXPLANATION
-                                    )
-                                    if SpanAttributes.EVAL.EXPLANATION
-                                    in record_attributes
-                                    else record_attributes.get(
-                                        SpanAttributes.EVAL_ROOT.EXPLANATION,
-                                        None,
-                                    )
-                                ),
-                            },
-                        }
-                        feedback_result["calls"].append(call_data)
+                                    ),
+                                    "metadata": record_attributes.get(
+                                        SpanAttributes.EVAL.METADATA, {}
+                                    ),
+                                },
+                            }
+                            feedback_result["calls"].append(call_data)
 
-                        # Update feedback result with cost info if available
-                        self._update_cost_info_otel(
-                            feedback_result, record_attributes
-                        )
+                            # Update feedback result with cost info if available
+                            self._update_cost_info_otel(
+                                feedback_result, record_attributes
+                            )
 
             # Create dataframe
             records_data = []
