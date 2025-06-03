@@ -14,7 +14,7 @@
         <link rel="prev" href="../../">
       
       
-        <link rel="next" href="../../archive/2024/">
+        <link rel="next" href="../../archive/2025/">
       
       
       <link rel="icon" href="../../../img/favicon.ico">
@@ -10702,6 +10702,8 @@
       
         
       
+        
+      
     
     
     
@@ -10740,6 +10742,31 @@
             Archive
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    
+  
+  
+    <li class="md-nav__item">
+      <a href="../../archive/2025/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    2025
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -10910,6 +10937,232 @@
       <header class="md-typeset">
         <h1 id="general">General<a class="headerlink" href="#general" title="Permanent link">&para;</a></h1>
       </header>
+      
+        <article class="md-post md-post--excerpt">
+  <header class="md-post__header">
+    
+    <div class="md-post__meta md-meta">
+      <ul class="md-meta__list">
+        <li class="md-meta__item">
+          <time datetime="2025-06-02 00:00:00+00:00">June 2, 2025</time></li>
+        
+          <li class="md-meta__item">
+            in
+            
+              <a href="./" class="md-meta__link">General</a></li>
+        
+        
+          
+          <li class="md-meta__item">
+            
+              4 min read
+            
+          </li>
+        
+      </ul>
+      
+    </div>
+  </header>
+  <div class="md-post__content md-typeset">
+    <h2 id="telemetry-for-the-agentic-world-trulens-opentelemetry"><a class="toclink" href="../../2025/06/02/telemetry-for-the-agentic-world-trulens--opentelemetry/">Telemetry for the Agentic World: TruLens + OpenTelemetry</a></h2>
+<p>Agents are rapidly gaining traction across AI applications. With this growth comes a new set of challenges: how do we trace, observe, and evaluate these dynamic, distributed systems?
+Today, we’re excited to share that <strong>TruLens now supports <a href="https://opentelemetry.io/">OpenTelemetry</a> (OTel)</strong>, unlocking powerful, interoperable observability for the agentic world.</p>
+<hr />
+<h3 id="challenge-for-tracing-agents"><a class="toclink" href="../../2025/06/02/telemetry-for-the-agentic-world-trulens--opentelemetry/#challenge-for-tracing-agents">Challenge for Tracing Agents</a></h3>
+<p>Tracing agentic applications is fundamentally different from tracing traditional software systems:</p>
+<ul>
+<li><strong>Language-agnostic</strong>: Agents can be written in Python, Go, Java, or more, requiring tracing that transcends language boundaries.</li>
+<li><strong>Distributed by nature</strong>: Multi-agent systems often span multiple machines or processes.</li>
+<li><strong>Existing telemetry stacks</strong>: Many developers and enterprises already use OpenTelemetry, so tracing compatibility is essential.</li>
+<li><strong>Dynamic execution</strong>: Unlike traditional apps, agents often make decisions on the fly, with branching workflows that can’t be fully known in advance.</li>
+<li><strong>Interoperability standards</strong>: As frameworks like Model Context Protocol (MCP) and Agent2Agent Protocol (A2A) emerge, tracing must support agents working across different systems.</li>
+<li><strong>Repeated tool usage</strong>: Agents may call the same function or tool multiple times in a single execution trace, requiring fine-grained visibility into span grouping to understand what’s happening and why.</li>
+</ul>
+<hr />
+<h3 id="what-is-trulens"><a class="toclink" href="../../2025/06/02/telemetry-for-the-agentic-world-trulens--opentelemetry/#what-is-trulens">What is TruLens</a></h3>
+<p><strong>TruLens</strong> is an open source library for evaluating and tracing AI agents, including RAG systems and other LLM applications. It combines OpenTelemetry-based tracing with trustworthy evaluations, including both ground truth metrics and reference-free (LLM-as-a-Judge) feedback.</p>
+<p>TruLens pioneered the <strong>RAG Triad</strong>—a structured evaluation of:</p>
+<ul>
+<li>Context relevance</li>
+<li>Groundedness</li>
+<li>Answer relevance</li>
+</ul>
+<p>These evaluations provide a foundation for understanding the performance of RAGs and agentic RAGs, supported by <a href="https://www.snowflake.com/en/engineering-blog/benchmarking-LLM-as-a-judge-RAG-triad-metrics/">benchmarks</a> like <strong>LLM-AggreFact</strong>, <strong>TREC-DL</strong>, and <strong>HotPotQA</strong>.</p>
+<p>This combination of trusted evaluators and open standard tracing gives you tools to both <strong>improve your application offline</strong> and <strong>monitor once it reaches production</strong>.</p>
+<hr />
+<h3 id="how-trulens-augments-opentelemetry"><a class="toclink" href="../../2025/06/02/telemetry-for-the-agentic-world-trulens--opentelemetry/#how-trulens-augments-opentelemetry">How TruLens Augments OpenTelemetry</a></h3>
+<p>As AI applications become increasingly agentic, TruLens’ shift to OpenTelemetry enables observability that is:</p>
+<ul>
+<li><strong>Interoperable with existing telemetry stacks</strong></li>
+<li><strong>Compatible across languages and frameworks</strong></li>
+<li><strong>Capable of tracing dynamic agent workflows</strong></li>
+</ul>
+<p>TruLens now accepts any span that adheres to the OTel standard.</p>
+<hr />
+<h3 id="what-is-opentelemetry"><a class="toclink" href="../../2025/06/02/telemetry-for-the-agentic-world-trulens--opentelemetry/#what-is-opentelemetry">What is OpenTelemetry?</a></h3>
+<p><strong>OpenTelemetry (OTel)</strong> is an open-source observability framework for generating, collecting, and exporting telemetry data such as traces, metrics, and logs.</p>
+<p>In LLM and agentic contexts, OpenTelemetry enables language-agnostic, interoperable tracing for:</p>
+<ul>
+<li>Multi-agent systems</li>
+<li>Distributed environments</li>
+<li>Tooling interoperability</li>
+</ul>
+<blockquote>
+<p><strong>What is a span?</strong>
+A span represents a single unit of work. In LLM apps, this might be: planning, routing, retrieval, tool usage, or generation.</p>
+</blockquote>
+<hr />
+<h3 id="trulens-defines-semantic-conventions-for-the-agentic-world"><a class="toclink" href="../../2025/06/02/telemetry-for-the-agentic-world-trulens--opentelemetry/#trulens-defines-semantic-conventions-for-the-agentic-world">TruLens Defines Semantic Conventions for the Agentic World</a></h3>
+<p>TruLens maps <strong>span attributes</strong> to common definitions using semantic conventions to ensure:</p>
+<ul>
+<li>Cross-framework interoperability</li>
+<li>Shared instrumentation for MCP and A2A</li>
+<li>Consistent evaluation across implementations</li>
+</ul>
+<p>Read more about <a href="https://www.trulens.org/otel/semantic_conventions/">TruLens Semantic Conventions</a>.</p>
+<hr />
+<h3 id="using-semantic-conventions-to-compute-evaluation-metrics"><a class="toclink" href="../../2025/06/02/telemetry-for-the-agentic-world-trulens--opentelemetry/#using-semantic-conventions-to-compute-evaluation-metrics">Using Semantic Conventions to Compute Evaluation Metrics</a></h3>
+<p>TruLens allows evaluation of metrics based on span instrumentation.</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@instrument</span><span class="p">(</span>
+    <span class="n">span_type</span><span class="o">=</span><span class="n">SpanAttributes</span><span class="o">.</span><span class="n">SpanType</span><span class="o">.</span><span class="n">RETRIEVAL</span><span class="p">,</span>
+    <span class="n">attributes</span><span class="o">=</span><span class="p">{</span>
+        <span class="n">SpanAttributes</span><span class="o">.</span><span class="n">RETRIEVAL</span><span class="o">.</span><span class="n">QUERY_TEXT</span><span class="p">:</span> <span class="s2">&quot;query&quot;</span><span class="p">,</span>
+        <span class="n">SpanAttributes</span><span class="o">.</span><span class="n">RETRIEVAL</span><span class="o">.</span><span class="n">RETRIEVED_CONTEXTS</span><span class="p">:</span> <span class="s2">&quot;return&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">retrieve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">vector_store</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">query_texts</span><span class="o">=</span><span class="n">query</span><span class="p">,</span> <span class="n">n_results</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">doc</span> <span class="k">for</span> <span class="n">sublist</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;documents&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">sublist</span><span class="p">]</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="n">f_context_relevance</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">context_relevance_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Context Relevance&quot;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">on_input</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">on_context</span><span class="p">(</span><span class="n">call_feedback_function_per_entry_in_list</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
+<span class="p">)</span>
+</code></pre></div>
+<hr />
+<h3 id="computing-metrics-on-complex-execution-flows"><a class="toclink" href="../../2025/06/02/telemetry-for-the-agentic-world-trulens--opentelemetry/#computing-metrics-on-complex-execution-flows">Computing Metrics on Complex Execution Flows</a></h3>
+<p>TruLens introduces <strong>span groups</strong> to handle repeated tool calls within a trace.</p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">App</span><span class="p">:</span>
+
+    <span class="nd">@instrument</span><span class="p">(</span><span class="n">attributes</span><span class="o">=</span><span class="p">{</span><span class="n">SpanAttributes</span><span class="o">.</span><span class="n">SPAN_GROUPS</span><span class="p">:</span> <span class="s2">&quot;idx&quot;</span><span class="p">})</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean_up_question</span><span class="p">(</span><span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="nd">@instrument</span><span class="p">(</span><span class="n">attributes</span><span class="o">=</span><span class="p">{</span><span class="n">SpanAttributes</span><span class="o">.</span><span class="n">SPAN_GROUPS</span><span class="p">:</span> <span class="s2">&quot;idx&quot;</span><span class="p">})</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean_up_response</span><span class="p">(</span><span class="n">response</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="nd">@instrument</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">combine_responses</span><span class="p">(</span><span class="n">cleaned_responses</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="nd">@instrument</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">query</span><span class="p">(</span><span class="n">complex_question</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">questions</span> <span class="o">=</span> <span class="n">break_question_down</span><span class="p">(</span><span class="n">complex_question</span><span class="p">)</span>
+        <span class="n">cleaned_responses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">question</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">questions</span><span class="p">):</span>
+            <span class="n">cleaned_question</span> <span class="o">=</span> <span class="n">clean_up_question</span><span class="p">(</span><span class="n">question</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">call_llm</span><span class="p">(</span><span class="n">cleaned_question</span><span class="p">)</span>
+            <span class="n">cleaned_response</span> <span class="o">=</span> <span class="n">clean_up_response</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+            <span class="n">cleaned_responses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cleaned_response</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">combine_responses</span><span class="p">(</span><span class="n">cleaned_responses</span><span class="p">)</span>
+</code></pre></div>
+<hr />
+<h3 id="how-to-examine-execution-flows-in-trulens"><a class="toclink" href="../../2025/06/02/telemetry-for-the-agentic-world-trulens--opentelemetry/#how-to-examine-execution-flows-in-trulens">How to Examine Execution Flows in TruLens</a></h3>
+<p>Run:</p>
+<div class="highlight"><pre><span></span><code><span class="n">session</span><span class="o">.</span><span class="n">run_dashboard</span><span class="p">()</span>
+</code></pre></div>
+<p>…and visually inspect execution traces. Span types are shown directly in the dashboard to help identify branching, errors, or performance issues.</p>
+<p><img alt="TruLens Trace" src="../../assets/trulens_otel/langgraph_trace.png" /></p>
+<hr />
+<h3 id="how-to-get-started"><a class="toclink" href="../../2025/06/02/telemetry-for-the-agentic-world-trulens--opentelemetry/#how-to-get-started">How to Get Started</a></h3>
+<p>Ready to get started?</p>
+<p>Today, we are launching a pre-release of TruLens on Otel. Below is a minimal walkthrough of using TruLens with OpenTelemetry. You can also find a curated list of examples of working with TruLens and Otel in this <a href="https://github.com/truera/trulens/tree/main/examples/experimental/otel">folder</a>, including a new LangGraph quickstart - showing how to trace and evaluate a multi-agent graph.</p>
+<ol>
+<li><strong>Install TruLens</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>trulens-core<span class="o">==</span><span class="m">1</span>.5.0
+</code></pre></div>
+<ol>
+<li><strong>Enable OpenTelemetry</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;TRULENS_OTEL_TRACING&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;1&quot;</span>
+</code></pre></div>
+<ol>
+<li><strong>Instrument Methods</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">trulens.core.otel.instrument</span><span class="w"> </span><span class="kn">import</span> <span class="n">instrument</span>
+
+<span class="nd">@instrument</span><span class="p">(</span>
+    <span class="n">attributes</span><span class="o">=</span><span class="p">{</span>
+        <span class="n">SpanAttributes</span><span class="o">.</span><span class="n">RECORD_ROOT</span><span class="o">.</span><span class="n">INPUT</span><span class="p">:</span> <span class="s2">&quot;query&quot;</span><span class="p">,</span>
+        <span class="n">SpanAttributes</span><span class="o">.</span><span class="n">RECORD_ROOT</span><span class="o">.</span><span class="n">OUTPUT</span><span class="p">:</span> <span class="s2">&quot;return&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">context_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">)</span>
+    <span class="n">completion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_completion</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">,</span> <span class="n">context_str</span><span class="o">=</span><span class="n">context_str</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">completion</span>
+</code></pre></div>
+<ol>
+<li><strong>Add Evaluations</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="n">f_answer_relevance</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">relevance_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Answer Relevance&quot;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">on_input</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">on_output</span><span class="p">()</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>Using selectors:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">trulens.core.feedback.selector</span><span class="w"> </span><span class="kn">import</span> <span class="n">Selector</span>
+
+<span class="n">f_answer_relevance</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">relevance_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Answer Relevance&quot;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">on</span><span class="p">({</span>
+        <span class="s2">&quot;prompt&quot;</span><span class="p">:</span> <span class="n">Selector</span><span class="p">(</span>
+            <span class="n">span_type</span><span class="o">=</span><span class="n">SpanAttributes</span><span class="o">.</span><span class="n">SpanType</span><span class="o">.</span><span class="n">RECORD_ROOT</span><span class="p">,</span>
+            <span class="n">span_attribute</span><span class="o">=</span><span class="n">SpanAttributes</span><span class="o">.</span><span class="n">RECORD_ROOT</span><span class="o">.</span><span class="n">INPUT</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">})</span>
+    <span class="o">.</span><span class="n">on</span><span class="p">({</span>
+        <span class="s2">&quot;response&quot;</span><span class="p">:</span> <span class="n">Selector</span><span class="p">(</span>
+            <span class="n">span_type</span><span class="o">=</span><span class="n">SpanAttributes</span><span class="o">.</span><span class="n">SpanType</span><span class="o">.</span><span class="n">RECORD_ROOT</span><span class="p">,</span>
+            <span class="n">span_attribute</span><span class="o">=</span><span class="n">SpanAttributes</span><span class="o">.</span><span class="n">RECORD_ROOT</span><span class="o">.</span><span class="n">OUTPUT</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">})</span>
+<span class="p">)</span>
+</code></pre></div>
+<ol>
+<li><strong>Register Your App</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">trulens.apps.app</span><span class="w"> </span><span class="kn">import</span> <span class="n">TruApp</span>
+
+<span class="n">rag</span> <span class="o">=</span> <span class="n">RAG</span><span class="p">(</span><span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;gpt-4.1-mini&quot;</span><span class="p">)</span>
+
+<span class="n">tru_rag</span> <span class="o">=</span> <span class="n">TruApp</span><span class="p">(</span>
+    <span class="n">rag</span><span class="p">,</span>
+    <span class="n">app_name</span><span class="o">=</span><span class="s2">&quot;OTEL-RAG&quot;</span><span class="p">,</span>
+    <span class="n">app_version</span><span class="o">=</span><span class="s2">&quot;4.1-mini&quot;</span><span class="p">,</span>
+    <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_groundedness</span><span class="p">,</span> <span class="n">f_answer_relevance</span><span class="p">,</span> <span class="n">f_context_relevance</span><span class="p">],</span>
+<span class="p">)</span>
+</code></pre></div>
+<ol>
+<li><strong>Run the Dashboard</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">trulens.dashboard</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_dashboard</span>
+
+<span class="n">run_dashboard</span><span class="p">(</span><span class="n">session</span><span class="p">)</span>
+</code></pre></div>
+<hr />
+<h3 id="concluding-thoughts"><a class="toclink" href="../../2025/06/02/telemetry-for-the-agentic-world-trulens--opentelemetry/#concluding-thoughts">Concluding Thoughts</a></h3>
+<p>By building on top of <strong>OpenTelemetry</strong>, TruLens delivers a <strong>universal tracing and evaluation platform</strong> for modern AI systems. Whether your agents are built in Python, composed via MCP, or distributed across systems—TruLens provides a common observability layer for telemetry and evaluation.</p>
+<p>Try our new TruLens-OTel quickstarts for <a href="https://github.com/truera/trulens/tree/main/examples/experimental/otel/quickstart_otel.ipynb">custom python apps</a>, <a href="https://github.com/truera/trulens/tree/main/examples/experimental/otel/langgraph_quickstart_otel.ipynb">LangGraph</a>, and <a href="https://github.com/truera/trulens/tree/main/examples/experimental/otel/llama_index_quickstart_otel.ipynb">Llama-Index</a>.</p>
+<p><strong>Let’s build the future of trustworthy agentic AI together.</strong></p>
+    
+  </div>
+</article>
       
         <article class="md-post md-post--excerpt">
   <header class="md-post__header">
