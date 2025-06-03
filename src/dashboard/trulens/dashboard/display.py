@@ -123,7 +123,14 @@ def expand_groundedness_df(df: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: The expanded DataFrame.
     """
     # Split the reasons value into separate rows and columns
-    reasons = df["reasons"].iloc[0]
+    if "explanation" in df.columns:
+        reasons = df["explanation"].iloc[0]
+    elif "reasons" in df.columns:
+        reasons = df["reasons"].iloc[0]
+    else:
+        raise ValueError(
+            "Missing 'explanation' or 'reasons' column from feedbacks."
+        )
     # Split the reasons into separate statements
     statements = reasons.split("STATEMENT")
     data = []

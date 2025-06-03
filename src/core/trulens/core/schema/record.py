@@ -250,7 +250,6 @@ class Record(serial_utils.SerialModel, Hashable):
         Returns:
             A mapping of feedback functions to their results.
         """
-
         if feedback_timeout is None:
             feedback_timeout = threading_utils.TP.DEBUG_TIMEOUT
 

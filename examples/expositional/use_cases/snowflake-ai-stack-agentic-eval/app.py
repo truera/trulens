@@ -10,6 +10,8 @@ import json
 import re
 import glob
 
+INCLUDE_EVAL_NODES = os.environ.get("INCLUDE_EVAL_NODES", "1") == "1"
+
 st.set_page_config(page_title="Trustworthy Deep Research Agent", page_icon="❄️", layout="centered", initial_sidebar_state="collapsed", menu_items=None)
 
 st.subheader("❄️ Trustworthy Deep Research Agent")
@@ -48,6 +50,8 @@ if st.session_state.multi_agent_workflow is None:
         feedbacks=[f_traj_eval]
     )
     st.success("Langgraph workflow compiled!")
+
+st.image(st.session_state.multi_agent_workflow.graph.get_graph().draw_mermaid_png())
 
 st.markdown("---")
 
@@ -109,44 +113,44 @@ if user_input:
                     else:
                         st.warning("No chart image found to display.")
                 elif node_name.endswith("_eval"):
-                    # Try to extract the score and eval name for the expander title
-                    eval_name = role.replace("_", " ").title() if role else node_name.replace("_", " ").title()
-                    # For research_eval and chart_eval, split into individual metrics
-                    if node_name in ["research_eval", "chart_eval"]:
-                        # Split by lines and group by metric
-                        lines = content.split("\n")
-                        current_metric = None
-                        metric_lines = {}
-                        for line in lines:
-                            metric_match = re.match(r"-?\s*([A-Za-z ]+): ([0-9.]+/3) — (.*)", line)
-                            if metric_match:
-                                current_metric = metric_match.group(1).strip()
-                                score = metric_match.group(2).strip()
-                                reason = metric_match.group(3).strip()
-                                metric_lines[current_metric] = {"score": score, "reason": reason}
-                            elif current_metric and line.strip():
-                                # Append additional lines to the reason
-                                metric_lines[current_metric]["reason"] += "\n" + line.strip()
-                        # Render each metric in its own expander
-                        for metric, data in metric_lines.items():
-                            expander_title = f"**{metric} ({data['score']})**"
+                    # Only render eval nodes if included
+                    if INCLUDE_EVAL_NODES:
+                        eval_name = role.replace("_", " ").title() if role else node_name.replace("_", " ").title()
+                        # For research_eval and chart_eval, split into individual metrics
+                        if node_name in ["research_eval", "chart_eval"]:
+                            # Split by lines and group by metric
+                            lines = content.split("\n")
+                            current_metric = None
+                            metric_lines = {}
+                            for line in lines:
+                                metric_match = re.match(r"-?\s*([A-Za-z ]+): ([0-9.]+/3) — (.*)", line)
+                                if metric_match:
+                                    current_metric = metric_match.group(1).strip()
+                                    score = metric_match.group(2).strip()
+                                    reason = metric_match.group(3).strip()
+                                    metric_lines[current_metric] = {"score": score, "reason": reason}
+                                elif current_metric and line.strip():
+                                    # Append additional lines to the reason
+                                    metric_lines[current_metric]["reason"] += "\n" + line.strip()
+                            # Render each metric in its own expander
+                            for metric, data in metric_lines.items():
+                                expander_title = f"**{metric} ({data['score']})**"
+                                with st.expander(expander_title, expanded=False):
+                                    st.markdown(data["reason"])
+                        else:
+                            # For other evals, use previous logic
+                            score_match = re.search(r"(\d+(?:\.\d+)?/3)", content)
+                            score_str = score_match.group(1) if score_match else ""
+                            expander_title = f"**{eval_name} ({score_str})**" if score_str else eval_name
                             with st.expander(expander_title, expanded=False):
-                                st.markdown(data["reason"])
-                    else:
-                        # For other evals, use previous logic
-                        score_match = re.search(r"(\d+(?:\.\d+)?/3)", content)
-                        score_str = score_match.group(1) if score_match else ""
-                        expander_title = f"**{eval_name} ({score_str})**" if score_str else eval_name
-                        with st.expander(expander_title, expanded=False):
-                            st.markdown(content)
+                                st.markdown(content)
+                    # If eval nodes are not included, skip rendering
                 else:
                     st.chat_message("assistant").write(content)
 
         st.session_state.tru_session.force_flush()
-        record_id = recording.get()
-
-        st.session_state.tru_session.wait_for_record(record_id)
-        trulens_st.trulens_trace(record=record_id)
+        record = recording.get()
+        trulens_st.trulens_trace(record=record.record_id)
         # trulens_st.trulens_feedback(record=record_id) # TODO make trulens feedback work with otel eval spans
 
         # Add the assistant response to session state - only once!

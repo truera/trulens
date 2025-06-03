@@ -40,6 +40,7 @@ markdown_extensions:
   - markdown_include.include:
       base_path: docs
   - attr_list
+  - tables
 
 watch:
   - src
@@ -279,6 +280,7 @@ nav:
       - Uninstalling TruLens: component_guides/other/uninstalling.md
   - 📚 API Reference: reference/
   - 🧑‍🍳 Cookbook: cookbook/
+  - 🔭 OpenTelemetry: otel/
   - 🤝 Contributing:
       - contributing/index.md
       - 🧭 Design: contributing/design.md
