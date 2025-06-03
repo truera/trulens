@@ -5,7 +5,6 @@ Test class to use for Snowflake testing.
 import logging
 import os
 from typing import Any, Dict, List, Optional
-from unittest import TestCase
 import uuid
 
 from snowflake.snowpark import Session
@@ -14,9 +13,12 @@ from trulens.connectors import snowflake as snowflake_connector
 from trulens.core import session as core_session
 from trulens.providers.cortex.provider import Cortex
 
+from tests.test import TruTestCase
 
-class SnowflakeTestCase(TestCase):
+
+class SnowflakeTestCase(TruTestCase):
     def setUp(self):
+        super().setUp()
         self._logger = logging.getLogger(__name__)
         self._database = os.environ["SNOWFLAKE_DATABASE"]
         self._snowflake_connection_parameters: Dict[str, str] = {
