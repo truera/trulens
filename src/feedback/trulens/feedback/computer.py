@@ -13,7 +13,6 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
-    Type,
     Union,
 )
 
@@ -24,7 +23,11 @@ import pandas as pd
 from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
 from trulens.core.feedback.selector import Selector
 from trulens.core.otel.instrument import OtelFeedbackComputationRecordingContext
+from trulens.core.otel.instrument import get_func_name
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
+from trulens.experimental.otel_tracing.core.span import (
+    set_function_call_attributes,
+)
 from trulens.experimental.otel_tracing.core.span import (
     set_general_span_attributes,
 )
@@ -36,6 +39,9 @@ from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 _logger = logging.getLogger(__name__)
+
+
+_EXPLANATION_KEYS = ["explanation", "explanations", "reason", "reasons"]
 
 
 # If we could just have `opentelemetry.sdk.trace.ReadableSpan` it would be
@@ -493,7 +499,7 @@ def _feedback_already_computed(
         else:
             valid = span_group == curr_span_group
         valid = valid and feedback_name == curr.get(
-            SpanAttributes.EVAL.METRIC_NAME
+            SpanAttributes.EVAL_ROOT.METRIC_NAME
         )
         for k, v in kwarg_inputs.items():
             if not valid:
@@ -636,51 +642,38 @@ def _call_feedback_function(
                 else:
                     for curr in expanded_kwargs_inputs:
                         curr[k] = v.value
-            if not aggregate:
-                res = _call_feedback_function_with_span(
-                    feedback_function,
-                    expanded_kwargs_inputs[0],
-                    eval_root_span,
-                    SpanAttributes.EVAL_ROOT,
+            res = []
+            for i, curr in enumerate(expanded_kwargs_inputs):
+                res.append(
+                    _call_feedback_function_under_eval_span(
+                        feedback_function,
+                        curr,
+                        eval_root_span,
+                        is_only_child=len(expanded_kwargs_inputs) == 1,
+                        eval_child_idx=i,
+                    )
                 )
-            else:
-                res = []
-                for i, curr in enumerate(expanded_kwargs_inputs):
-                    with (
-                        trace.get_tracer_provider()
-                        .get_tracer(TRULENS_SERVICE_NAME)
-                        .start_as_current_span(f"eval-{i}")
-                    ) as eval_span:
-                        set_general_span_attributes(
-                            eval_span, SpanAttributes.SpanType.EVAL
-                        )
-                        res.append(
-                            _call_feedback_function_with_span(
-                                feedback_function,
-                                curr,
-                                eval_span,
-                                SpanAttributes.EVAL,
-                            )
-                        )
+            if aggregate:
                 if feedback_aggregator is not None:
                     res = feedback_aggregator(res)
                 else:
                     res = sum(res) / len(res) if res else 0.0
-                eval_root_span.set_attribute(
-                    SpanAttributes.EVAL_ROOT.SCORE, res
-                )
+            else:
+                res = res[0]
+            eval_root_span.set_attribute(SpanAttributes.EVAL_ROOT.SCORE, res)
         except Exception as e:
             eval_root_span.set_attribute(SpanAttributes.EVAL_ROOT.ERROR, str(e))
             raise e
 
 
-def _call_feedback_function_with_span(
+def _call_feedback_function_under_eval_span(
     feedback_function: Callable[
         [Any], Union[float, Tuple[float, Dict[str, Any]]]
     ],
     kwargs: Dict[str, Any],
-    span: Span,
-    span_attribute_scope: Type,
+    eval_root_span: Span,
+    is_only_child: bool,
+    eval_child_idx: int,
 ) -> float:
     """
     Call a feedback function with the provided kwargs and return the score.
@@ -688,40 +681,69 @@ def _call_feedback_function_with_span(
     Args:
         feedback_function: The feedback function to call.
         kwargs: The keyword arguments to pass to the feedback function.
-        span: The span to use for recording the feedback function call.
-        span_attribute_scope: The scope for span attributes.
+        eval_root_span: The root span for the evaluation.
+        is_only_child:
+            Whether this is the only child eval span of the evaluation root.
+        eval_child_idx: Index of this eval child span in the evaluation root.
 
     Returns:
         The score returned by the feedback function.
     """
-    try:
-        res = feedback_function(**kwargs)
-        metadata = {}
-        if isinstance(res, tuple):
-            if (
-                len(res) != 2
-                or not isinstance(res[0], numbers.Number)
-                or not isinstance(res[1], dict)
-                or not all([isinstance(curr, str) for curr in res[1].keys()])
-            ):
-                raise ValueError(
-                    "Feedback functions must be of type `Callable[Any, Union[float, Tuple[float, Dict[str, Any]]]]`!"
-                )
-            res, metadata = res[0], res[1]
-        res = float(res)
-        span.set_attribute(span_attribute_scope.SCORE, res)
-        for k, v in metadata.items():
-            set_span_attribute_safely(
-                span, f"{span_attribute_scope.METADATA}.{k}", v
+    with (
+        trace.get_tracer_provider()
+        .get_tracer(TRULENS_SERVICE_NAME)
+        .start_as_current_span(f"eval-{eval_child_idx}")
+    ) as eval_span:
+        set_general_span_attributes(eval_span, SpanAttributes.SpanType.EVAL)
+        res = None
+        exc = None
+        try:
+            res = feedback_function(**kwargs)
+            metadata = {}
+            if isinstance(res, tuple):
+                # If the result is a tuple, it must be (score, metadata) where
+                # the metadata has string keys.
+                if (
+                    len(res) != 2
+                    or not isinstance(res[0], numbers.Number)
+                    or not isinstance(res[1], dict)
+                    or not all([
+                        isinstance(curr, str) for curr in res[1].keys()
+                    ])
+                ):
+                    raise ValueError(
+                        "Feedback functions must be of type `Callable[Any, Union[float, Tuple[float, Dict[str, Any]]]]`!"
+                    )
+                res, metadata = res[0], res[1]
+            res = float(res)
+            eval_span.set_attribute(SpanAttributes.EVAL.SCORE, res)
+            _set_metadata_attributes(eval_span, metadata)
+            if is_only_child:
+                _set_metadata_attributes(eval_root_span, metadata)
+            return res
+        except Exception as e:
+            exc = e
+            eval_span.set_attribute(SpanAttributes.EVAL.ERROR, str(e))
+            raise e
+        finally:
+            set_function_call_attributes(
+                eval_span, res, get_func_name(feedback_function), exc, kwargs
             )
-            if k in ["explanation", "explanations", "reason", "reasons"]:
-                set_span_attribute_safely(
-                    span, span_attribute_scope.EXPLANATION, v
-                )
-        return res
-    except Exception as e:
-        span.set_attribute(span_attribute_scope.ERROR, str(e))
-        raise e
+
+
+def _set_metadata_attributes(span: Span, metadata: Dict[str, Any]) -> None:
+    """Set metadata attributes on a span.
+
+    Args:
+        span: Span to set attributes on.
+        metadata: Metadata to extract attributes from.
+    """
+    for k, v in metadata.items():
+        set_span_attribute_safely(
+            span, f"{SpanAttributes.EVAL.METADATA}.{k}", v
+        )
+        if k in _EXPLANATION_KEYS:
+            set_span_attribute_safely(span, SpanAttributes.EVAL.EXPLANATION, v)
 
 
 def _get_app_and_run_info(

@@ -126,6 +126,9 @@ class SpanAttributes:
 
         base = BASE_SCOPE + ".eval_root"
 
+        METRIC_NAME = base + ".metric_name"
+        """Name of the feedback definition being evaluated."""
+
         SPAN_GROUP = base + ".span_group"
         """The span group of the inputs to this metric."""
 
