@@ -3,7 +3,7 @@ from trulens.core import TruSession
 from trulens.apps.app import TruApp
 from trulens.dashboard import streamlit as trulens_st
 from src.graph import MultiAgentWorkflow
-from src.agentic_evals import create_traj_eval
+from src.agentic_evals import CustomTrajEval, create_traj_eval
 
 import os
 import json
@@ -40,8 +40,9 @@ if st.session_state.multi_agent_workflow is None:
         llm_model=os.environ.get("LLM_MODEL_NAME", "gpt-4o"),
         reasoning_model=os.environ.get("REASONING_MODEL_NAME", "o1"),
     )
+    traj_provider = CustomTrajEval(model_engine=os.environ.get("LLM_MODEL_NAME", "gpt-4o")) # note: reasoning model is not yet supported in TruLens OpenAI provider
 
-    f_traj_eval = create_traj_eval()
+    f_traj_eval = create_traj_eval(provider=traj_provider)
 
     st.session_state.tru_agentic_eval_app = TruApp(
         st.session_state.multi_agent_workflow,
@@ -151,7 +152,7 @@ if user_input:
         st.session_state.tru_session.force_flush()
         record = recording.get()
         trulens_st.trulens_trace(record=record.record_id)
-        # trulens_st.trulens_feedback(record=record_id) # TODO make trulens feedback work with otel eval spans
+        trulens_st.trulens_feedback(record_id=record.record_id)
 
         # Add the assistant response to session state - only once!
         st.session_state.messages.append({"role": "assistant", "content": full_response})
