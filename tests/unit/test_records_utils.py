@@ -46,9 +46,12 @@ class TestFilterDuplicateSpanCalls(unittest.TestCase):
 
         # Should keep both rows from eval_2 (the most recent eval_root_id)
         self.assertEqual(len(result), 2)
-        self.assertTrue(all(result["eval_root_id"] == "eval_2"))
         self.assertIn("row1_eval2", result["other_data"].values)
         self.assertIn("row2_eval2", result["other_data"].values)
+        # Metadata columns should be dropped
+        self.assertNotIn("eval_root_id", result.columns)
+        self.assertNotIn("args_span_id", result.columns)
+        self.assertNotIn("args_span_attribute", result.columns)
 
     def test_filter_duplicate_span_calls_keeps_unique_combinations(self):
         """Test that rows with unique args_span_id/args_span_attribute combinations are kept regardless of eval_root_id."""
@@ -113,8 +116,9 @@ class TestFilterDuplicateSpanCalls(unittest.TestCase):
 
         # Should keep only the row from the most recent eval_root_id
         self.assertEqual(len(result), 1)
-        self.assertEqual(result["eval_root_id"].iloc[0], "eval_2")
         self.assertEqual(result["other_data"].iloc[0], "none_row_2")
+        # Metadata columns should be dropped
+        self.assertNotIn("eval_root_id", result.columns)
 
     def test_filter_duplicate_span_calls_missing_columns(self):
         """Test that function returns original DataFrame when required columns are missing."""
@@ -239,9 +243,6 @@ class TestFilterDuplicateSpanCalls(unittest.TestCase):
 
         # Should keep only the row from the most recent eval_root_id
         self.assertEqual(len(result), 1)
-        self.assertEqual(result["eval_root_id"].iloc[0], "eval_2")
         self.assertEqual(result["other_data"].iloc[0], "string_row_2")
-
-
-if __name__ == "__main__":
-    unittest.main()
+        # Metadata columns should be dropped
+        self.assertNotIn("eval_root_id", result.columns)

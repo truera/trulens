@@ -1173,16 +1173,7 @@ class SQLAlchemyDB(core_db.DB):
                                     None,
                                 )
                             )
-
-                        # Add call data
-                        if (
-                            record_attributes.get(SpanAttributes.SPAN_TYPE)
-                            == SpanAttributes.SpanType.EVAL.value
-                        ):
-                            # Extract namespaced attributes using the helper method
-                            kwargs = self._extract_namespaced_attributes(
-                                record_attributes, SpanAttributes.CALL.KWARGS
-                            )
+                            # Add call data for EVAL_ROOT spans
                             args_span_id = self._extract_namespaced_attributes(
                                 record_attributes,
                                 SpanAttributes.EVAL_ROOT.ARGS_SPAN_ID,
@@ -1193,10 +1184,38 @@ class SQLAlchemyDB(core_db.DB):
                             )
 
                             call_data = {
+                                "eval_root_id": record_attributes.get(
+                                    SpanAttributes.EVAL.EVAL_ROOT_ID
+                                ),
+                                "timestamp": record_data["ts"],
+                                "args_span_id": args_span_id,
+                                "args_span_attribute": args_span_attribute,
+                            }
+                            feedback_result["calls"].append(call_data)
+
+                            # Update feedback result with cost info if available
+                            self._update_cost_info_otel(
+                                feedback_result, record_attributes
+                            )
+
+                        if (
+                            record_attributes.get(SpanAttributes.SPAN_TYPE)
+                            == SpanAttributes.SpanType.EVAL.value
+                        ):
+                            # Extract namespaced attributes using the helper method
+                            kwargs = self._extract_namespaced_attributes(
+                                record_attributes, SpanAttributes.CALL.KWARGS
+                            )
+
+                            call_data = {
                                 "args": kwargs,
                                 "ret": record_attributes.get(
                                     SpanAttributes.EVAL.SCORE
                                 ),
+                                "eval_root_id": record_attributes.get(
+                                    SpanAttributes.EVAL.EVAL_ROOT_ID
+                                ),
+                                "timestamp": record_data["ts"],
                                 "meta": {
                                     "explanation": record_attributes.get(
                                         SpanAttributes.EVAL.EXPLANATION
@@ -1204,12 +1223,6 @@ class SQLAlchemyDB(core_db.DB):
                                     "metadata": record_attributes.get(
                                         SpanAttributes.EVAL.METADATA, {}
                                     ),
-                                    "eval_root_id": record_attributes.get(
-                                        SpanAttributes.EVAL.EVAL_ROOT_ID, None
-                                    ),
-                                    "timestamp": record_data["ts"],
-                                    "args_span_id": args_span_id,
-                                    "args_span_attribute": args_span_attribute,
                                 },
                             }
                             feedback_result["calls"].append(call_data)

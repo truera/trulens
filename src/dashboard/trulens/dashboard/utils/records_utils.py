@@ -116,8 +116,19 @@ def display_feedback_call(
         st.warning("No feedback details found.")
 
 
+def _drop_metadata_columns(
+    df: pd.DataFrame, columns_to_drop: List[str]
+) -> pd.DataFrame:
+    """Helper to drop metadata columns that exist in the dataframe."""
+    existing_columns = [col for col in columns_to_drop if col in df.columns]
+    return df.drop(columns=existing_columns) if existing_columns else df
+
+
 def _filter_duplicate_span_calls(df: pd.DataFrame) -> pd.DataFrame:
-    """Filter to only show rows from the most recent eval_root_id for calls with the same args_span_id and args_span_attribute.
+    """Filter to only show rows from the most recent eval_root_id for duplicate evaluations.
+
+    Groups EVAL_ROOT spans by (args_span_id, args_span_attribute) to identify unique evaluation inputs,
+    then keeps only the EVAL_ROOT and EVAL rows belonging to the most recent eval_root_id based on timestamp.
 
     Args:
         df: DataFrame containing feedback call data with potential duplicates
@@ -125,53 +136,59 @@ def _filter_duplicate_span_calls(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         DataFrame with duplicate span calls filtered to show only rows from the most recent eval_root_id
     """
-    if (
-        "eval_root_id" in df.columns
-        and "args_span_id" in df.columns
-        and "args_span_attribute" in df.columns
-        and "timestamp" in df.columns
-        and not df.empty
-    ):
-        # Convert dictionary columns to strings for grouping (since dicts are not hashable)
-        df_for_grouping = df.copy()
-        df_for_grouping["args_span_id_str"] = df_for_grouping[
-            "args_span_id"
-        ].apply(lambda x: str(x) if x is not None else None)
-        df_for_grouping["args_span_attribute_str"] = df_for_grouping[
-            "args_span_attribute"
-        ].apply(lambda x: str(x) if x is not None else None)
+    # Early exit if required columns are missing
+    if not {"eval_root_id", "timestamp"}.issubset(df.columns) or df.empty:
+        return df
 
-        # Group by the combination of args_span_id and args_span_attribute
-        grouped = df_for_grouping.groupby(
-            [
-                "args_span_id_str",
-                "args_span_attribute_str",
-            ],
-            dropna=False,
+    # If we have args_span_id and args_span_attribute columns, do sophisticated deduplication
+    if {"args_span_id", "args_span_attribute"}.issubset(df.columns):
+        # Avoid full copy - create string columns directly without modifying original df
+        args_span_id_str = (
+            df["args_span_id"]
+            .astype(str)
+            .where(df["args_span_id"].notna(), None)
+        )
+        args_span_attribute_str = (
+            df["args_span_attribute"]
+            .astype(str)
+            .where(df["args_span_attribute"].notna(), None)
         )
 
-        # Only keep rows from the most recent eval_root_id for groups that have more than one row
-        indices_to_keep = []
-        for group_name, group_df in grouped:
-            if len(group_df) > 1:
-                # Multiple rows with same args_span_id and args_span_attribute
-                # Find the most recent eval_root_id based on timestamp
-                eval_root_max_timestamps = group_df.groupby("eval_root_id")[
-                    "timestamp"
-                ].max()
-                most_recent_eval_root_id = eval_root_max_timestamps.idxmax()
+        # Group by the combination of args_span_id and args_span_attribute
+        grouped = df.groupby(
+            [args_span_id_str, args_span_attribute_str], dropna=False
+        )
 
-                # Keep all rows from the most recent eval_root_id
+        # Find the most recent eval_root_id for each group and collect indices
+        indices_to_keep = []
+        for _, group_df in grouped:
+            if len(group_df) <= 1:
+                # Single eval_root_id - keep all rows
+                indices_to_keep.extend(group_df.index)
+            else:
+                # Multiple eval_root_ids - keep only the most recent one
+                most_recent_eval_root_id = group_df.loc[
+                    group_df["timestamp"].idxmax(), "eval_root_id"
+                ]
                 recent_rows = group_df[
                     group_df["eval_root_id"] == most_recent_eval_root_id
                 ]
-                indices_to_keep.extend(recent_rows.index.tolist())
-            else:
-                # Single row - keep it as-is
-                indices_to_keep.extend(group_df.index.tolist())
+                indices_to_keep.extend(recent_rows.index)
 
+        # Filter and clean up
         if indices_to_keep:
-            return df.loc[indices_to_keep]
+            filtered_df = df.loc[indices_to_keep]
+            return _drop_metadata_columns(
+                filtered_df,
+                ["eval_root_id", "args_span_id", "args_span_attribute"],
+            )
+    else:
+        # Simple case: just keep rows from the most recent eval_root_id
+        most_recent_eval_root_id = df.loc[
+            df["timestamp"].idxmax(), "eval_root_id"
+        ]
+        filtered_df = df[df["eval_root_id"] == most_recent_eval_root_id].copy()
+        return _drop_metadata_columns(filtered_df, ["eval_root_id"])
 
     return df
 
