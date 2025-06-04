@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 import sys
 from typing import Any, Callable, Dict, List, Optional, Union
 
@@ -34,26 +35,12 @@ def set_page_config(page_title: Optional[str] = None):
     if is_sis_compatibility_enabled():
         pass
     else:
-        if st.get_option("theme.base") == "dark":
-            logo = str(
-                import_utils.static_resource(
-                    "dashboard", "ux/trulens_logo_light.svg"
-                )
-            )
-            logo_small = str(
-                import_utils.static_resource(
-                    "dashboard", "ux/trulens_squid_light.svg"
-                )
-            )
-        else:
-            logo = str(
-                import_utils.static_resource("dashboard", "ux/trulens_logo.svg")
-            )
-            logo_small = str(
-                import_utils.static_resource(
-                    "dashboard", "ux/trulens_squid.svg"
-                )
-            )
+        logo = str(
+            import_utils.static_resource("dashboard", "ux/trulens_logo.svg")
+        )
+        logo_small = str(
+            import_utils.static_resource("dashboard", "ux/trulens_squid.svg")
+        )
         st.logo(logo, icon_image=logo_small, link="https://www.trulens.org/")
 
     if ST_RECORDS_LIMIT not in st.session_state:
@@ -120,12 +107,12 @@ def get_session() -> core_session.TruSession:
     parser.add_argument("--database-url", default=None)
     parser.add_argument("--sis-compatibility", action="store_true")
     parser.add_argument(
+        "--database-prefix", default=core_db.DEFAULT_DATABASE_PREFIX
+    )
+    parser.add_argument(
         "--otel-tracing",
         action="store_true",
         help="Enable OTEL tracing in the dashboard",
-    )
-    parser.add_argument(
-        "--database-prefix", default=core_db.DEFAULT_DATABASE_PREFIX
     )
 
     try:
@@ -148,7 +135,8 @@ def get_session() -> core_session.TruSession:
         )
 
     # Store the otel_tracing flag in the session state
-    st.session_state["otel_tracing"] = args.otel_tracing
+    if args.otel_tracing:
+        os.environ["TRULENS_OTEL_TRACING"] = "1"
 
     return session
 
@@ -161,23 +149,16 @@ def get_records_and_feedback(
     app_name: Optional[str] = None,
     offset: Optional[int] = None,
     limit: Optional[int] = None,
-    use_otel: Optional[bool] = None,
 ):
     session = get_session()
     lms = session.connector.db
     assert lms
-
-    # TODELETE(otel_tracing). Delete once otel_tracing is no longer
-    # experimental.
-    if use_otel is None:
-        use_otel = st.session_state.get("otel_tracing", False)
 
     records_df, feedback_col_names = lms.get_records_and_feedback(
         app_ids=app_ids,
         app_name=app_name,
         offset=offset,
         limit=limit,
-        use_otel=use_otel,
     )
 
     records_df["record_metadata"] = records_df["record_json"].apply(
@@ -476,11 +457,13 @@ def render_app_version_filters(
                     metadata_selections[metadata_key]
                 )
             ]
-        filtered_app_versions = filtered_app_versions[
-            filtered_app_versions["tags"].apply(
-                lambda x: any(tag in x for tag in selected_tags)
-            )
-        ]
+
+        if len(selected_tags):
+            filtered_app_versions = filtered_app_versions.loc[
+                filtered_app_versions["tags"].apply(
+                    lambda x: any(tag in x for tag in selected_tags)
+                )
+            ]
 
     if len(active_adv_filters):
         col2.button(

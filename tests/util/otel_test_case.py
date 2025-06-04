@@ -21,17 +21,6 @@ from tests.util.df_comparison import (
 
 class OtelTestCase(TruTestCase):
     @classmethod
-    def clear_TruSession_singleton(cls) -> None:
-        # [HACK!] Clean up any instances of `TruSession` so tests don't
-        # interfere with each other.
-        for key in [
-            curr
-            for curr in TruSession._singleton_instances
-            if curr[0] == "trulens.core.session.TruSession"
-        ]:
-            del TruSession._singleton_instances[key]
-
-    @classmethod
     def setUpClass(cls) -> None:
         os.environ["TRULENS_OTEL_TRACING"] = "1"
         instrument.enable_all_instrumentation()
@@ -41,20 +30,17 @@ class OtelTestCase(TruTestCase):
     def tearDownClass(cls) -> None:
         instrument.disable_all_instrumentation()
         del os.environ["TRULENS_OTEL_TRACING"]
-        cls.clear_TruSession_singleton()
         return super().tearDownClass()
 
     def setUp(self) -> None:
-        self.clear_TruSession_singleton()
+        super().setUp()
         tru_session = TruSession()
         tru_session.reset_database()
-        return super().setUp()
 
     def tearDown(self) -> None:
         tru_session = TruSession()
         tru_session.force_flush()
         tru_session._experimental_otel_span_processor.shutdown()
-        self.clear_TruSession_singleton()
         return super().tearDown()
 
     @staticmethod
@@ -111,7 +97,7 @@ class OtelTestCase(TruTestCase):
     def _compare_record_attributes_to_golden_dataframe(
         self,
         golden_filename: str,
-        keys_to_check: List[str] = ["name", SpanAttributes.SPAN_TYPE],
+        keys_to_check: List[str] = [SpanAttributes.SPAN_TYPE],
     ) -> None:
         TruSession().force_flush()
         expected = self.load_golden(golden_filename)
@@ -119,12 +105,14 @@ class OtelTestCase(TruTestCase):
         actual = self._get_events()
         self.assertEqual(expected.shape, actual.shape)
         for i in range(len(actual)):
-            expected_record_attributes = expected.iloc[i]["record_attributes"]
-            actual_record_attributes = actual.iloc[i]["record_attributes"]
+            self.assertEqual(
+                expected.iloc[i]["record"]["name"],
+                actual.iloc[i]["record"]["name"],
+            )
             for key in keys_to_check:
                 self.assertEqual(
-                    expected_record_attributes[key],
-                    actual_record_attributes[key],
+                    expected.iloc[i]["record_attributes"][key],
+                    actual.iloc[i]["record_attributes"][key],
                     f"Record attributes do not match for key: {key}",
                 )
 

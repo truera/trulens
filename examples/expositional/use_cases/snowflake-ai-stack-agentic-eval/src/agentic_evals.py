@@ -15,6 +15,8 @@ from src.util import append_to_step_trace
 
 import json
 
+import streamlit as st
+
 
 def extract_reason(val):
     if isinstance(val, dict) and 'reason' in val:
@@ -43,18 +45,18 @@ def research_eval_node(state) -> Command[Literal["orchestrator"]]:
     context_list = state.get("execution_trace")[state.get("current_step")][-1]["tool_calls"]
     response = state.get("execution_trace")[state.get("current_step")][-1]["output"]
 
-    provider = OpenAI(model_engine="gpt-4.1", api_key=os.environ.get("OPENAI_API_KEY"))
+    provider = OpenAI(model_engine=os.environ.get("LLM_MODEL_NAME"))
 
-
-    context_rel_score, context_rel_reason = provider.context_relevance_with_cot_reasons(
-            question=query,
-            context=context_list,
+    with st.spinner("Evaluating research..."):
+        context_rel_score, context_rel_reason = provider.context_relevance_with_cot_reasons(
+                question=query,
+                context=context_list,
+            )
+        grounded_score, grounded_reason = provider.groundedness_measure_with_cot_reasons(
+            source=" ".join(context_list),
+            statement=response
         )
-    grounded_score, grounded_reason = provider.groundedness_measure_with_cot_reasons(
-        source=" ".join(context_list),
-        statement=response
-    )
-    answer_score, answer_reason = provider.relevance_with_cot_reasons(prompt=query, response=response)
+        answer_score, answer_reason = provider.relevance_with_cot_reasons(prompt=query, response=response)
 
     goto = "orchestrator"
     parsed_eval = {
@@ -100,7 +102,7 @@ class CustomChartEval(OpenAI):
     def chart_accuracy_with_cot_reasons(self, code: str, context: str) -> Tuple[float, Dict]:
         system_prompt = f"""
         Use the following rubric to evaluate chart accuracy based on context:
-        0: The chart does not reflect the data or plots incorrect values/relationships.
+        0: The chart does not reflect the data, plots incorrect values/relationships, or plots hypothetical data.
         1: The chart has significant errors (e.g., wrong labels, major mismatches in data) but shows some partial attempt.
         2: The chart is mostly correct with minor, non-critical errors.
         3: The chart is completely accurate: correct data, correct relationships, correct calculations.
@@ -114,7 +116,7 @@ class CustomChartEval(OpenAI):
         0: The chart is poorly formatted: missing important elements like titles, axis labels, or has unreadable text.
         1: Basic elements are present but formatting is cluttered, confusing, or difficult to read.
         2: The chart is mostly clean and readable with only minor formatting issues.
-        3: The chart is well-formatted with clear titles, labeled axes, readable scales, appropriate legends, and an overall clean presentation.
+        3: The chart is well-formatted with clear titles, labeled axes with reasonable units, readable scales, appropriate legends, and an overall clean presentation.
         """
         user_prompt = f""" Please score the code. Code: {code}. \n {prompts.COT_REASONS_TEMPLATE}
         """
@@ -131,7 +133,7 @@ class CustomChartEval(OpenAI):
         """
         return self.generate_score_and_reasons(system_prompt=system_prompt, user_prompt=user_prompt, min_score_val = 0, max_score_val = 3)
 
-chart_provider = CustomChartEval(model_engine="gpt-4o")
+chart_provider = CustomChartEval(model_engine=os.environ.get("LLM_MODEL_NAME"))#, base_url="https://api.openai.com/v1")
 
 @instrument(
     name="chart_eval_node",
@@ -154,9 +156,10 @@ def chart_eval_node(state) -> Command[Literal["orchestrator"]]:
     query = state.get("user_query")
     response = state.get("execution_trace")[state.get("current_step")][-1]["output"]
 
-    accuracy_rel_score, accuracy_rel_reason = chart_provider.chart_accuracy_with_cot_reasons(code=code, context=context)
-    formatting_score, formatting_reason = chart_provider.chart_formatting_with_cot_reasons(code=code)
-    relevance_score, relevance_reason = chart_provider.chart_relevance_with_cot_reasons(code=code, query=query, response=response)
+    with st.spinner("Evaluating chart..."):
+        accuracy_rel_score, accuracy_rel_reason = chart_provider.chart_accuracy_with_cot_reasons(code=code, context=context)
+        formatting_score, formatting_reason = chart_provider.chart_formatting_with_cot_reasons(code=code)
+        relevance_score, relevance_reason = chart_provider.chart_relevance_with_cot_reasons(code=code, query=query, response=response)
 
     parsed_eval = {
         "accuracy": {
@@ -205,21 +208,19 @@ class CustomTrajEval(OpenAI):
         2: Some minor inefficiencies or unclear transitions. Moments of stalled progress, but ultimately resolved. The agents mostly fulfilled their roles, and the conversation mostly fulfilled answering the query.
         3: Agent handoffs were well-timed and logical. Tool calls were necessary, sufficient, and accurate. No redundancies, missteps, or dead ends. Progress toward the user query was smooth and continuous. No hallucination or incorrect outputs
         """
-        user_prompt = f""" Please score the execution trace. Execution Trace: {trace}. \n {prompts.COT_REASONS_TEMPLATE}
+        user_prompt = f""" Please score the execution trace. Execution Trace (possible in json str format): {trace}. \n
+        {prompts.COT_REASONS_TEMPLATE}
         """
-        score, meta =  self.generate_score_and_reasons(system_prompt=system_prompt, user_prompt=user_prompt)
-        return score/3, meta
+        return self.generate_score_and_reasons(system_prompt=system_prompt, user_prompt=user_prompt, min_score_val = 0, max_score_val = 3)
 
-
-def create_traj_eval() -> Feedback:
-    provider = CustomTrajEval(model_engine=os.environ.get("LLM_MODEL_NAME")) # note: reasoning model is not yet supported in TruLens OpenAI provider
-
+def create_traj_eval(provider) -> Feedback:
     return (
-        Feedback(provider.traj_execution_with_cot_reasons, name="Agent Trajectory Evaluation")
+        Feedback(provider.traj_execution_with_cot_reasons, name="Trajectory Evaluation")
         .on({
             "trace": Selector(
                 span_type="ORCHESTRATOR_NODE",
                 span_attribute=f"{BASE_SCOPE}.execution_trace",
+                collect_list=True,
             ),
         })
     )

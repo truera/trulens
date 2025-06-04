@@ -3,12 +3,14 @@ from trulens.core import TruSession
 from trulens.apps.app import TruApp
 from trulens.dashboard import streamlit as trulens_st
 from src.graph import MultiAgentWorkflow
-from src.agentic_evals import create_traj_eval
+from src.agentic_evals import CustomTrajEval, create_traj_eval
 
 import os
 import json
 import re
 import glob
+
+INCLUDE_EVAL_NODES = os.environ.get("INCLUDE_EVAL_NODES", "1") == "1"
 
 st.set_page_config(page_title="Trustworthy Deep Research Agent", page_icon="❄️", layout="centered", initial_sidebar_state="collapsed", menu_items=None)
 
@@ -38,8 +40,9 @@ if st.session_state.multi_agent_workflow is None:
         llm_model=os.environ.get("LLM_MODEL_NAME", "gpt-4o"),
         reasoning_model=os.environ.get("REASONING_MODEL_NAME", "o1"),
     )
+    traj_provider = CustomTrajEval(model_engine=os.environ.get("LLM_MODEL_NAME", "gpt-4o")) # note: reasoning model is not yet supported in TruLens OpenAI provider
 
-    f_traj_eval = create_traj_eval()
+    f_traj_eval = create_traj_eval(provider=traj_provider)
 
     st.session_state.tru_agentic_eval_app = TruApp(
         st.session_state.multi_agent_workflow,
@@ -48,6 +51,8 @@ if st.session_state.multi_agent_workflow is None:
         feedbacks=[f_traj_eval]
     )
     st.success("Langgraph workflow compiled!")
+
+st.image(st.session_state.multi_agent_workflow.graph.get_graph().draw_mermaid_png())
 
 st.markdown("---")
 
@@ -109,45 +114,45 @@ if user_input:
                     else:
                         st.warning("No chart image found to display.")
                 elif node_name.endswith("_eval"):
-                    # Try to extract the score and eval name for the expander title
-                    eval_name = role.replace("_", " ").title() if role else node_name.replace("_", " ").title()
-                    # For research_eval and chart_eval, split into individual metrics
-                    if node_name in ["research_eval", "chart_eval"]:
-                        # Split by lines and group by metric
-                        lines = content.split("\n")
-                        current_metric = None
-                        metric_lines = {}
-                        for line in lines:
-                            metric_match = re.match(r"-?\s*([A-Za-z ]+): ([0-9.]+/3) — (.*)", line)
-                            if metric_match:
-                                current_metric = metric_match.group(1).strip()
-                                score = metric_match.group(2).strip()
-                                reason = metric_match.group(3).strip()
-                                metric_lines[current_metric] = {"score": score, "reason": reason}
-                            elif current_metric and line.strip():
-                                # Append additional lines to the reason
-                                metric_lines[current_metric]["reason"] += "\n" + line.strip()
-                        # Render each metric in its own expander
-                        for metric, data in metric_lines.items():
-                            expander_title = f"**{metric} ({data['score']})**"
+                    # Only render eval nodes if included
+                    if INCLUDE_EVAL_NODES:
+                        eval_name = role.replace("_", " ").title() if role else node_name.replace("_", " ").title()
+                        # For research_eval and chart_eval, split into individual metrics
+                        if node_name in ["research_eval", "chart_eval"]:
+                            # Split by lines and group by metric
+                            lines = content.split("\n")
+                            current_metric = None
+                            metric_lines = {}
+                            for line in lines:
+                                metric_match = re.match(r"-?\s*([A-Za-z ]+): ([0-9.]+/3) — (.*)", line)
+                                if metric_match:
+                                    current_metric = metric_match.group(1).strip()
+                                    score = metric_match.group(2).strip()
+                                    reason = metric_match.group(3).strip()
+                                    metric_lines[current_metric] = {"score": score, "reason": reason}
+                                elif current_metric and line.strip():
+                                    # Append additional lines to the reason
+                                    metric_lines[current_metric]["reason"] += "\n" + line.strip()
+                            # Render each metric in its own expander
+                            for metric, data in metric_lines.items():
+                                expander_title = f"**{metric} ({data['score']})**"
+                                with st.expander(expander_title, expanded=False):
+                                    st.markdown(data["reason"])
+                        else:
+                            # For other evals, use previous logic
+                            score_match = re.search(r"(\d+(?:\.\d+)?/3)", content)
+                            score_str = score_match.group(1) if score_match else ""
+                            expander_title = f"**{eval_name} ({score_str})**" if score_str else eval_name
                             with st.expander(expander_title, expanded=False):
-                                st.markdown(data["reason"])
-                    else:
-                        # For other evals, use previous logic
-                        score_match = re.search(r"(\d+(?:\.\d+)?/3)", content)
-                        score_str = score_match.group(1) if score_match else ""
-                        expander_title = f"**{eval_name} ({score_str})**" if score_str else eval_name
-                        with st.expander(expander_title, expanded=False):
-                            st.markdown(content)
+                                st.markdown(content)
+                    # If eval nodes are not included, skip rendering
                 else:
                     st.chat_message("assistant").write(content)
 
         st.session_state.tru_session.force_flush()
-        record_id = recording.get()
-
-        st.session_state.tru_session.wait_for_record(record_id)
-        trulens_st.trulens_trace(record=record_id)
-        # trulens_st.trulens_feedback(record=record_id) # TODO make trulens feedback work with otel eval spans
+        record = recording.get()
+        trulens_st.trulens_trace(record=record.record_id)
+        trulens_st.trulens_feedback(record=record.record_id)
 
         # Add the assistant response to session state - only once!
         st.session_state.messages.append({"role": "assistant", "content": full_response})

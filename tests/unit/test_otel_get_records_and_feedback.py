@@ -92,9 +92,9 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
 
         # Constants for static eval test
         self.STATIC_FEEDBACK_NAME = "answer_relevance"
-        # NOTE: there are 3 total calls for the feedback column, see:
-        # test_otel_spans/{eval_root_span.json, eval_span_1.json, eval_span_2.json}
-        self.STATIC_NUM_CALLS = 3
+        # NOTE: there are 2 total calls for the feedback column, see:
+        # test_otel_spans/{eval_span_1.json, eval_span_2.json}
+        self.STATIC_NUM_CALLS = 2
         self.STATIC_COST_CURRENCY = "USD"
 
         # Constants for generated tests
@@ -877,6 +877,9 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
                 "telemetry.sdk.language": "python",
                 "telemetry.sdk.name": "opentelemetry",
                 "telemetry.sdk.version": "1.31.0",
+                "ai.observability.app_name": self.app_name,
+                "ai.observability.app_version": self.app_version,
+                "ai.observability.app_id": self.app_id,
             },
             "start_timestamp": start_time,
             "timestamp": end_time,
@@ -973,10 +976,9 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
 
         # Verify the call data structure
         self.assertIn("args", call_data)
-        self.assertIn("kwargs", call_data["args"])
 
         # This is the key test - verify that kwargs were properly extracted
-        extracted_kwargs = call_data["args"]["kwargs"]
+        extracted_kwargs = call_data["args"]
 
         # Verify that all expected kwargs are present and have correct values
         expected_kwargs = {

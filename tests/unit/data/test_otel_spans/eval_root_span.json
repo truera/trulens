@@ -9,7 +9,10 @@
         "service.name": "trulens",
         "telemetry.sdk.language": "python",
         "telemetry.sdk.name": "opentelemetry",
-        "telemetry.sdk.version": "1.31.0"
+        "telemetry.sdk.version": "1.31.0",
+        "ai.observability.app_name": "coffee_rag",
+        "ai.observability.app_version": "openai",
+        "ai.observability.app_id": "app_hash_65b218a1a09632779ea4c5f8ad9709e4"
     },
     "start_timestamp": "2025-04-11 10:19:55.993997",
     "timestamp": "2025-04-11 10:19:56.356310",
@@ -25,6 +28,7 @@
         "ai.observability.eval.eval_root_id": "98bbSpP2",
         "ai.observability.eval.llm_judge_name": "llama3.1-70b",
         "ai.observability.eval.metric_name": "answer_relevance",
+        "ai.observability.eval_root.metric_name": "answer_relevance",
         "ai.observability.eval.target_record_id": "dd121e81-ccc2-449f-a3ba-e12467d0d671",
         "ai.observability.eval_root.n_calls": 1,
         "ai.observability.eval_root.score": 0.75,

@@ -87,9 +87,13 @@ def _render_record_metrics(
         st.metric(
             label=f"Total cost ({cost_currency})",
             value=_format_cost(cost, cost_currency),
-            delta=f"{delta_cost:3g}" if delta_cost != 0 else None,
+            delta=f"{delta_cost:.3g} {cost_currency}"
+            if delta_cost != 0
+            else None,
             delta_color="inverse",
-            help=f"Cost of the app execution measured in {cost_currency}. Delta is relative to average cost for the app.",
+            help=f"Cost of the app execution measured in {cost_currency}. Delta is relative to average cost for the app."
+            if delta_cost != 0
+            else f"Cost of the app execution measured in {cost_currency}.",
         )
 
     latency = selected_row["latency"]
@@ -101,7 +105,9 @@ def _render_record_metrics(
             value=f"{selected_row['latency']}s",
             delta=f"{delta_latency:.3g}s" if delta_latency != 0 else None,
             delta_color="inverse",
-            help="Latency of the app execution. Delta is relative to average latency for the app.",
+            help="Latency of the app execution. Delta is relative to average latency for the app."
+            if delta_latency != 0
+            else "Latency of the app execution.",
         )
 
 
@@ -116,8 +122,10 @@ def _render_trace(
     st.divider()
 
     # Breadcrumbs
-    st.caption(f"{selected_row['app_id']} / {selected_row['record_id']}")
-    st.markdown(f"#### {selected_row['record_id']}")
+    st.caption(
+        f"{selected_row['app_name']} / {selected_row['app_version']} / Record: {selected_row['record_id']}"
+    )
+    st.markdown(f"#### Record ID: {selected_row['record_id']}")
 
     input_col, output_col = st_columns(2)
     with input_col.expander("Record Input"):
@@ -254,22 +262,24 @@ def _build_grid_options(
 
     gb.configure_column(
         "input",
-        header_name="User Input",
+        header_name="Record Input",
         wrapText=True,
         autoHeight=True,
         filter="agMultiColumnFilter",
     )
     gb.configure_column(
         "output",
-        header_name="Response",
+        header_name="Record Output",
         wrapText=True,
         autoHeight=True,
         filter="agMultiColumnFilter",
     )
+
     gb.configure_column(
         "record_metadata",
         header_name="Record Metadata",
         filter="agTextColumnFilter",
+        valueGetter="JSON.stringify(data.record_metadata)",
     )
 
     gb.configure_column(
@@ -332,6 +342,10 @@ def _build_grid_options(
         hide=True,
         filter="agTextColumnFilter",
     )
+    gb.configure_column(
+        "num_events",
+        header_name="Number of Events",
+    )
 
     for metadata_col in version_metadata_col_names:
         gb.configure_column(
@@ -361,6 +375,12 @@ def _build_grid_options(
                 feedback_col + "_calls",
                 hide=True,
             )
+            gb.configure_column(
+                feedback_col + " direction",
+                cellDataType="text",
+                valueGetter=f"data['{feedback_col} direction'] ? 'Higher is Better' : 'Lower is Better'",
+                hide=True,
+            )
 
     for col in df.columns:
         if "feedback cost" in col:
@@ -378,6 +398,7 @@ def _build_grid_options(
     )
     gb.configure_pagination(enabled=True)
     gb.configure_side_bar()
+
     return gb.build()
 
 
@@ -393,11 +414,8 @@ def _render_grid(
             from st_aggrid.shared import ColumnsAutoSizeMode
             from st_aggrid.shared import DataReturnMode
 
-            height = 1000 if len(df) > 20 else 45 * len(df) + 100
-
             event = st_aggrid.AgGrid(
                 df,
-                height=height,
                 gridOptions=_build_grid_options(
                     df=df,
                     feedback_col_names=feedback_col_names,
