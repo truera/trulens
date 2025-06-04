@@ -214,12 +214,11 @@ def trulens_leaderboard(app_ids: Optional[List[str]] = None):
 
 
 @streamlit_compat.st_fragment(run_every=2)
-def trulens_feedback(record_id: str):
+def trulens_feedback(record: Union[record_schema.Record, str]):
     """Render clickable feedback pills for a given record.
 
     Args:
-
-        record_id: A trulens OTEL record ID.
+        record: Either a trulens record (non-OTel) or a record_id string (OTel).
 
     Example:
         ```python
@@ -237,6 +236,12 @@ def trulens_feedback(record_id: str):
     lms = session.connector.db
 
     _, feedback_directions = dashboard_utils.get_feedback_defs()
+
+    if isinstance(record, record_schema.Record):
+        record_id = record.record_id
+    elif isinstance(record, str):
+        record_id = record
+
     records_df, feedback_col_names = lms.get_records_and_feedback()
     # TODO: filter by record id
     selected_record_row = records_df[records_df["record_id"] == record_id]
