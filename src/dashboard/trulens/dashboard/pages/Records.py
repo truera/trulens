@@ -91,7 +91,9 @@ def _render_record_metrics(
             if delta_cost != 0
             else None,
             delta_color="inverse",
-            help=f"Cost of the app execution measured in {cost_currency}. Delta is relative to average cost for the app.",
+            help=f"Cost of the app execution measured in {cost_currency}. Delta is relative to average cost for the app."
+            if delta_cost != 0
+            else f"Cost of the app execution measured in {cost_currency}.",
         )
 
     latency = selected_row["latency"]
@@ -103,7 +105,9 @@ def _render_record_metrics(
             value=f"{selected_row['latency']}s",
             delta=f"{delta_latency:.3g}s" if delta_latency != 0 else None,
             delta_color="inverse",
-            help="Latency of the app execution. Delta is relative to average latency for the app.",
+            help="Latency of the app execution. Delta is relative to average latency for the app."
+            if delta_latency != 0
+            else "Latency of the app execution.",
         )
 
 
