@@ -5,6 +5,7 @@ import sys
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import pandas as pd
+import sqlalchemy as sa
 import streamlit as st
 from trulens import core as mod_core
 from trulens import dashboard as mod_dashboard
@@ -12,6 +13,7 @@ from trulens.core import experimental as core_experimental
 from trulens.core import experimental as mod_experimental
 from trulens.core import session as core_session
 from trulens.core.database import base as core_db
+from trulens.core.database.sqlalchemy import SQLAlchemyDB
 from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.utils import imports as import_utils
 from trulens.dashboard import constants as dashboard_constants
@@ -20,6 +22,7 @@ from trulens.dashboard.components.record_viewer_otel import SpanRecord
 from trulens.dashboard.components.record_viewer_otel import SpanTrace
 from trulens.dashboard.utils import metadata_utils
 from trulens.dashboard.utils.streamlit_compat import st_columns
+from trulens.otel.semconv.trace import ResourceAttributes
 
 ST_APP_NAME = "app_name"
 ST_RECORDS_LIMIT = "records_limit"
@@ -642,55 +645,48 @@ def _check_cross_format_records(
     otel_count = 0
     non_otel_count = 0
 
-    try:
-        import sqlalchemy as sa
-        from trulens.core.database.sqlalchemy import SQLAlchemyDB
+    if isinstance(session.connector.db, SQLAlchemyDB):
+        db = session.connector.db  # type: ignore
 
-        if isinstance(session.connector.db, SQLAlchemyDB):
-            db = session.connector.db  # type: ignore
+        with db.session.begin() as session_ctx:  # type: ignore
+            # Check OTEL records (EVENT table)
+            query = sa.select(sa.func.count(db.orm.Event.event_id))  # type: ignore
 
-            with db.session.begin() as session_ctx:  # type: ignore
-                # Build parameterized queries
-                params = {}
-                where_clause = ""
+            if app_name:
+                # For OTEL events, app_name is in resource_attributes JSON
+                app_name_expr = db._json_extract_otel(
+                    "resource_attributes", ResourceAttributes.APP_NAME
+                )
+                query = query.where(app_name_expr == app_name)
+            elif app_ids:
+                # For OTEL events, app_id is in resource_attributes JSON
+                app_id_expr = db._json_extract_otel(
+                    "resource_attributes", ResourceAttributes.APP_ID
+                )
+                query = query.where(app_id_expr.in_(app_ids))
 
-                if app_name:
-                    where_clause = " WHERE app_name = :app_name"
-                    params["app_name"] = app_name
-                elif app_ids:
-                    # Use IN clause with parameterized list
-                    placeholders = ",".join([
-                        f":app_id_{i}" for i in range(len(app_ids))
-                    ])
-                    where_clause = f" WHERE app_id IN ({placeholders})"
-                    for i, app_id in enumerate(app_ids):
-                        params[f"app_id_{i}"] = app_id
+            result = session_ctx.execute(query).scalar()
+            otel_count = result or 0
 
-                # Check OTEL records (EVENT table)
-                try:
-                    query = sa.text(f"SELECT COUNT(*) FROM event{where_clause}")
-                    result = session_ctx.execute(query, params).scalar()
-                    otel_count = result or 0
-                except Exception:
-                    pass
+            # Check non-OTEL records (RECORD table)
+            query = sa.select(sa.func.count(db.orm.Record.record_id))  # type: ignore
 
-                # Check non-OTEL records (RECORD table)
-                try:
-                    query = sa.text(
-                        f"SELECT COUNT(*) FROM record{where_clause}"
-                    )
-                    result = session_ctx.execute(query, params).scalar()
-                    non_otel_count = result or 0
-                except Exception:
-                    pass
-    except Exception:
-        pass
+            if app_name:
+                # For non-OTEL records, need to join with AppDefinition
+                query = query.join(db.orm.Record.app).where(  # type: ignore
+                    db.orm.AppDefinition.app_name == app_name  # type: ignore
+                )
+            elif app_ids:
+                query = query.where(db.orm.Record.app_id.in_(app_ids))  # type: ignore
+
+            result = session_ctx.execute(query).scalar()
+            non_otel_count = result or 0
 
     return otel_count, non_otel_count
 
 
 def show_no_records_error(
-    app_name: str, app_ids: Optional[List[str]] = None
+    app_name: Optional[str] = None, app_ids: Optional[List[str]] = None
 ) -> None:
     """Show helpful error message when no records found, with cross-format record counts."""
     is_otel_mode = is_otel_tracing_enabled()
