@@ -208,21 +208,19 @@ class CustomTrajEval(OpenAI):
         2: Some minor inefficiencies or unclear transitions. Moments of stalled progress, but ultimately resolved. The agents mostly fulfilled their roles, and the conversation mostly fulfilled answering the query.
         3: Agent handoffs were well-timed and logical. Tool calls were necessary, sufficient, and accurate. No redundancies, missteps, or dead ends. Progress toward the user query was smooth and continuous. No hallucination or incorrect outputs
         """
-        user_prompt = f""" Please score the execution trace. Execution Trace: {trace}. \n {prompts.COT_REASONS_TEMPLATE}
+        user_prompt = f""" Please score the execution trace. Execution Trace (possible in json str format): {trace}. \n
+        {prompts.COT_REASONS_TEMPLATE}
         """
-        score, meta =  self.generate_score_and_reasons(system_prompt=system_prompt, user_prompt=user_prompt)
-        return score/3, meta
+        return self.generate_score_and_reasons(system_prompt=system_prompt, user_prompt=user_prompt, min_score_val = 0, max_score_val = 3)
 
-
-def create_traj_eval() -> Feedback:
-    provider = CustomTrajEval(model_engine=os.environ.get("LLM_MODEL_NAME"))
-
+def create_traj_eval(provider) -> Feedback:
     return (
-        Feedback(provider.traj_execution_with_cot_reasons, name="Agent Trajectory Evaluation")
+        Feedback(provider.traj_execution_with_cot_reasons, name="Trajectory Evaluation")
         .on({
             "trace": Selector(
                 span_type="ORCHESTRATOR_NODE",
                 span_attribute=f"{BASE_SCOPE}.execution_trace",
+                collect_list=True,
             ),
         })
     )
