@@ -864,7 +864,10 @@ class App(
                         f"Feedback function {f} is not loadable. Cannot use DEFERRED feedback mode. {e}"
                     ) from e
 
-        if not self.selector_nocheck and not is_otel_tracing_enabled():
+        if is_otel_tracing_enabled():
+            for feedback in self.feedbacks:
+                feedback.check_otel_selectors()
+        elif not self.selector_nocheck and not is_otel_tracing_enabled():
             dummy = self.dummy_record()
 
             for feedback in self.feedbacks:
