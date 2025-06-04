@@ -106,7 +106,7 @@ class Cost(serial_utils.SerialModel, pydantic.BaseModel):
             if k != "cost_currency"
             and isinstance(getattr(self, k), (int, float))
             else getattr(other, k)
-            for k in Cost.model_fields.keys()
+            for k in type(self).model_fields.keys()
         }
         if other.cost_currency != self.cost_currency:
             if self.cost == 0:
