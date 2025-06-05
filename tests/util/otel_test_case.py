@@ -40,7 +40,6 @@ class OtelTestCase(TruTestCase):
     def tearDown(self) -> None:
         tru_session = TruSession()
         tru_session.force_flush()
-        tru_session._experimental_otel_span_processor.shutdown()
         return super().tearDown()
 
     @staticmethod
