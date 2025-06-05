@@ -453,6 +453,7 @@ class TestOtelFeedbackComputation(OtelTestCase):
             higher_is_better=False
         )
         # Compute feedback on record we just ingested.
+        time.sleep(3)
         num_events = len(self._get_events())
         tru_recorder.compute_feedbacks()
         TruSession().force_flush()

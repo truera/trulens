@@ -46,6 +46,7 @@ class OtelTestCase(TruTestCase):
     @staticmethod
     def _get_events() -> pd.DataFrame:
         tru_session = TruSession()
+        tru_session.force_flush()
         db = tru_session.connector.db
         with db.session.begin() as db_session:
             q = sa.select(db.orm.Event).order_by(db.orm.Event.start_timestamp)
