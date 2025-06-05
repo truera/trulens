@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-core"
-version = "1.5.0"
+version = "1.5.1"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -46,6 +46,7 @@ python-dotenv = ">=0.21,<2.0"
 requests = "^2.31"
 packaging = ">=23.0"
 importlib-resources = "^6.0"
+wrapt = ">=1.17.0"
 
 [tool.poetry.group.tqdm]
 optional = true
