@@ -453,7 +453,6 @@ class TestOtelFeedbackComputation(OtelTestCase):
             higher_is_better=False
         )
         # Compute feedback on record we just ingested.
-        time.sleep(3)
         num_events = len(self._get_events())
         tru_recorder.compute_feedbacks()
         TruSession().force_flush()
@@ -579,7 +578,6 @@ class TestOtelFeedbackComputation(OtelTestCase):
         tru_app = TruApp(
             app, app_name="Simple App", app_version="v1", feedbacks=[f_custom]
         )
-        tru_app.stop_evaluator()
         # Record and invoke.
         with tru_app:
             app.invoke([2, 3], [5, 7])
