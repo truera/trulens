@@ -578,6 +578,7 @@ class TestOtelFeedbackComputation(OtelTestCase):
         tru_app = TruApp(
             app, app_name="Simple App", app_version="v1", feedbacks=[f_custom]
         )
+        tru_app.stop_evaluator()
         # Record and invoke.
         with tru_app:
             app.invoke([2, 3], [5, 7])
