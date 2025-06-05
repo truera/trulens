@@ -46,6 +46,7 @@ python-dotenv = ">=0.21,<2.0"
 requests = "^2.31"
 packaging = ">=23.0"
 importlib-resources = "^6.0"
+wrapt = ">=1.17.0"
 
 [tool.poetry.group.tqdm]
 optional = true
