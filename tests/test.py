@@ -146,7 +146,7 @@ def canonical(obj: T, skips: Set[str]) -> Union[T, Dict, Tuple]:
 
     elif isinstance(obj, BaseModel):
         ret = OrderedDict()
-        for f in sorted(obj.model_fields):
+        for f in sorted(type(obj).model_fields):
             if f in skips:
                 continue
 
@@ -454,7 +454,7 @@ class WithJSONTestCase(TestCase):
                     )
 
         elif isinstance(j1, BaseModel):
-            for f in j1.model_fields:
+            for f in type(j1).model_fields:
                 if f in skips:
                     continue
 
