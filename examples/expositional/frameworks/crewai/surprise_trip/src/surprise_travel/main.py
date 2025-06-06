@@ -8,17 +8,17 @@ dotenv.load_dotenv()
 
 surprise_travel_crew = SurpriseTravelCrew()
 
-from trulens.apps.custom import TruCustomApp
+from trulens.apps.app import TruApp
 from trulens.core import TruSession
 
 session = TruSession()
 
-if os.environ.get("WITH_OTEL_TRACING") is not None:
+if os.environ.get("TRULENS_OTEL_TRACING") is not None:
     session.experimental_enable_feature("otel_tracing")
 
 session.reset_database()
 
-tru_surprise_travel_crew = TruCustomApp(
+tru_surprise_travel_crew = TruApp(
     surprise_travel_crew,
     app_name="SurpriseTravelCrew",
     app_version="1.0.0",

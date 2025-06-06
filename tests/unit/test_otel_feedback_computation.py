@@ -2,11 +2,17 @@
 Tests for OTEL Feedback Computation.
 """
 
-from typing import List
+import gc
+import time
+from typing import Callable, List, Tuple
+import weakref
 
+import numpy as np
 import pandas as pd
 import pytest
 from trulens.apps.app import TruApp
+from trulens.core.feedback import Feedback
+from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
 from trulens.core.feedback.selector import Selector
 from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
@@ -15,6 +21,7 @@ from trulens.feedback.computer import RecordGraphNode
 from trulens.feedback.computer import _compute_feedback
 from trulens.feedback.computer import _flatten_inputs
 from trulens.feedback.computer import _group_kwargs_by_selectors
+from trulens.feedback.computer import _remove_already_computed_feedbacks
 from trulens.feedback.computer import _validate_unflattened_inputs
 from trulens.feedback.computer import compute_feedback_by_span_group
 from trulens.otel.semconv.trace import SpanAttributes
@@ -39,12 +46,12 @@ def _convert_events_to_MinimalSpanInfos(
 ) -> List[MinimalSpanInfo]:
     ret = []
     for _, row in events.iterrows():
-        span = MinimalSpanInfo()
-        span.span_id = row["trace"]["span_id"]
-        span.parent_span_id = row["record"]["parent_span_id"]
-        if not span.parent_span_id:
-            span.parent_span_id = None
-        span.attributes = row["record_attributes"]
+        span = MinimalSpanInfo(
+            span_id=row["trace"]["span_id"],
+            parent_span_id=row["record"]["parent_span_id"] or None,
+            attributes=row["record_attributes"],
+            resource_attributes=row["resource_attributes"],
+        )
         ret.append(span)
     return ret
 
@@ -83,7 +90,7 @@ class _TestApp:
             self.call0(span_group, 4 * a4, 4 * b4, 4 * c4)
         return [a4, b4, c4]
 
-    @instrument(span_type=SpanAttributes.SpanType.RECORD_ROOT)
+    @instrument()
     def query(self, question: str) -> str:
         # 1. Many attributes from one span that there are many of.
         self.call1(1, 1, 1)
@@ -131,6 +138,7 @@ class TestOtelFeedbackComputation(OtelTestCase):
             record_root,
             "baby_grader",
             feedback_function,
+            True,
             all_retrieval_span_attributes,
         )
         TruSession().force_flush()
@@ -142,7 +150,9 @@ class TestOtelFeedbackComputation(OtelTestCase):
     def test_compute_feedback_by_span_group(self) -> None:
         # Create app.
         app = _TestApp()
-        tru_app = TruApp(app, app_name="Test App", app_version="v1")
+        tru_app = TruApp(
+            app, app_name="Test App", app_version="v1", main_method=app.query
+        )
         # Record and invoke.
         tru_app.instrumented_invoke_main_method(
             run_name="test run",
@@ -164,6 +174,7 @@ class TestOtelFeedbackComputation(OtelTestCase):
             events,
             "blah1",
             lambda a1, b1: 0.9 if a1 == b1 else 0.1,
+            True,
             {"a1": get_selector("a1"), "b1": get_selector("b1")},
         )
         # Case 2. Attributes across functions with span groups.
@@ -171,6 +182,7 @@ class TestOtelFeedbackComputation(OtelTestCase):
             events,
             "blah2",
             lambda a2, a0: 0.9 if 2 * a2 == a0 else 0.1,
+            True,
             {"a2": get_selector("a2"), "a0": get_selector("a0")},
         )
         # Case 3. Attributes across functions with span groups where one
@@ -180,6 +192,7 @@ class TestOtelFeedbackComputation(OtelTestCase):
             events,
             "blah3",
             lambda a3, a0: 0.9 if 3 * a3 == a0 else 0.1,
+            True,
             {"a3": get_selector("a3"), "a0": get_selector("a0")},
         )
         # Case 4. Attributes across functions where both functions are invoked
@@ -192,6 +205,7 @@ class TestOtelFeedbackComputation(OtelTestCase):
                 events,
                 "blah4",
                 lambda a4, a0: 0.9 if 4 * a4 == a0 else 0.1,
+                True,
                 {"a4": get_selector("a4"), "a0": get_selector("a0")},
             )
         # Compare results to expected.
@@ -212,7 +226,9 @@ class TestOtelFeedbackComputation(OtelTestCase):
             self.assertEqual(curr[SpanAttributes.EVAL_ROOT.SCORE], 0.9)
         for i in range(len(expected_case_number)):
             self.assertEqual(
-                eval_root_record_attributes[i][SpanAttributes.EVAL.METRIC_NAME],
+                eval_root_record_attributes[i][
+                    SpanAttributes.EVAL_ROOT.METRIC_NAME
+                ],
                 f"blah{expected_case_number[i]}",
             )
 
@@ -337,4 +353,286 @@ class TestOtelFeedbackComputation(OtelTestCase):
                 (record_id, span_group, {"a": 1.1, "b": 2}),
             ],
             res,
+        )
+
+    def test__remove_already_computed_feedbacks(self) -> None:
+        events = pd.DataFrame({
+            "record_attributes": [
+                {
+                    SpanAttributes.SPAN_TYPE: SpanAttributes.SpanType.EVAL_ROOT,
+                    SpanAttributes.EVAL_ROOT.METRIC_NAME: "feedback1",
+                    SpanAttributes.RECORD_ID: "record_id1",
+                    SpanAttributes.EVAL_ROOT.SPAN_GROUP: "span_group1",
+                    SpanAttributes.EVAL_ROOT.ARGS_SPAN_ID + ".a": "span_id1a",
+                    SpanAttributes.EVAL_ROOT.ARGS_SPAN_ID + ".b": "span_id1b",
+                    SpanAttributes.EVAL_ROOT.ARGS_SPAN_ATTRIBUTE
+                    + ".a": "span_attribute1a",
+                    SpanAttributes.EVAL_ROOT.ARGS_SPAN_ATTRIBUTE
+                    + ".b": "span_attribute1b",
+                },
+            ]
+        })
+        flattened_inputs = [
+            (
+                "record_id1",
+                "span_group1",
+                {
+                    "a": FeedbackFunctionInput(
+                        span_id="span_id1a", span_attribute="span_attribute1a"
+                    ),
+                    "b": FeedbackFunctionInput(
+                        span_id="span_id1b", span_attribute="span_attribute1b"
+                    ),
+                },
+            ),
+            (
+                "record_id1",
+                "span_group1",
+                {
+                    "a": FeedbackFunctionInput(
+                        span_id="span_id1a", span_attribute="span_attribute1a"
+                    ),
+                    "b": FeedbackFunctionInput(
+                        span_id="span_id2b", span_attribute="span_attribute1b"
+                    ),
+                },
+            ),
+        ]
+        res = _remove_already_computed_feedbacks(
+            events, "feedback1", flattened_inputs
+        )
+        self.assertEqual([flattened_inputs[1]], res)
+
+    def _create_invoked_app_with_custom_feedback(
+        self, higher_is_better: bool = True
+    ) -> TruApp:
+        # Create feedback function.
+        def custom(input: str, output: str) -> float:
+            if (
+                input == "What is multi-headed attention?"
+                and output == "This is a mocked response for prompt 0."
+            ):
+                return 0.42
+            return 0.0
+
+        f_custom = Feedback(
+            custom, name="custom", higher_is_better=higher_is_better
+        ).on({
+            "input": Selector(
+                span_type=SpanAttributes.SpanType.RECORD_ROOT,
+                span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
+            ),
+            "output": Selector(
+                span_type=SpanAttributes.SpanType.RECORD_ROOT,
+                span_attribute=SpanAttributes.RECORD_ROOT.OUTPUT,
+            ),
+        })
+
+        # Create app.
+        rag_chain = (
+            tests.unit.test_otel_tru_chain.TestOtelTruChain._create_simple_rag()
+        )
+        tru_recorder = TruChain(
+            rag_chain,
+            app_name="Simple RAG",
+            app_version="v1",
+            main_method=rag_chain.invoke,
+            feedbacks=[f_custom],
+        )
+        # Record and invoke.
+        tru_recorder.instrumented_invoke_main_method(
+            run_name="test run",
+            input_id="42",
+            main_method_args=("What is multi-headed attention?",),
+        )
+        TruSession().force_flush()
+        return tru_recorder
+
+    def test_custom_feedback(self) -> None:
+        tru_recorder = self._create_invoked_app_with_custom_feedback(
+            higher_is_better=False
+        )
+        # Compute feedback on record we just ingested.
+        num_events = len(self._get_events())
+        tru_recorder.compute_feedbacks()
+        TruSession().force_flush()
+        # Compare results to expected.
+        events = self._get_events()
+        self.assertEqual(num_events + 2, len(events))
+        self.assertEqual(
+            SpanAttributes.SpanType.RECORD_ROOT,
+            events.iloc[0]["record_attributes"][SpanAttributes.SPAN_TYPE],
+        )
+        record_root_span_id = events.iloc[0]["trace"]["span_id"]
+        eval_root_record_attributes = events.iloc[-2]["record_attributes"]
+        self.assertEqual(
+            SpanAttributes.SpanType.EVAL_ROOT,
+            eval_root_record_attributes[SpanAttributes.SPAN_TYPE],
+        )
+        self.assertEqual(
+            "custom",
+            eval_root_record_attributes[SpanAttributes.EVAL_ROOT.METRIC_NAME],
+        )
+        self.assertEqual(
+            0.42,
+            eval_root_record_attributes[SpanAttributes.EVAL_ROOT.SCORE],
+        )
+        self.assertEqual(
+            record_root_span_id,
+            eval_root_record_attributes[
+                SpanAttributes.EVAL_ROOT.ARGS_SPAN_ID + ".input"
+            ],
+        )
+        self.assertEqual(
+            SpanAttributes.RECORD_ROOT.INPUT,
+            eval_root_record_attributes[
+                SpanAttributes.EVAL_ROOT.ARGS_SPAN_ATTRIBUTE + ".input"
+            ],
+        )
+        self.assertEqual(
+            record_root_span_id,
+            eval_root_record_attributes[
+                SpanAttributes.EVAL_ROOT.ARGS_SPAN_ID + ".output"
+            ],
+        )
+        self.assertEqual(
+            SpanAttributes.RECORD_ROOT.OUTPUT,
+            eval_root_record_attributes[
+                SpanAttributes.EVAL_ROOT.ARGS_SPAN_ATTRIBUTE + ".output"
+            ],
+        )
+        self.assertFalse(
+            eval_root_record_attributes[
+                SpanAttributes.EVAL_ROOT.HIGHER_IS_BETTER
+            ],
+        )
+        eval_record_attributes = events.iloc[-1]["record_attributes"]
+        self.assertEqual(
+            SpanAttributes.SpanType.EVAL,
+            eval_record_attributes[SpanAttributes.SPAN_TYPE],
+        )
+        self.assertEqual(
+            "custom",
+            eval_record_attributes[SpanAttributes.EVAL.METRIC_NAME],
+        )
+        self.assertEqual(
+            0.42,
+            eval_record_attributes[SpanAttributes.EVAL.SCORE],
+        )
+        # Check that when trying to compute feedbacks again, nothing happens.
+        old_num_events = len(self._get_events())
+        tru_recorder.compute_feedbacks(
+            raise_error_on_no_feedbacks_computed=False
+        )
+        TruSession().force_flush()
+        new_num_events = len(self._get_events())
+        self.assertEqual(old_num_events, new_num_events)
+
+    def test_evaluator(self) -> None:
+        tru_recorder = self._create_invoked_app_with_custom_feedback()
+        num_events = len(self._get_events())
+        # Wait for there to be a feedback computed.
+        self._wait(lambda: len(self._get_events()) > num_events)
+        events = self._get_events()
+        self.assertEqual(num_events + 2, len(events))
+        self.assertEqual(
+            SpanAttributes.SpanType.RECORD_ROOT,
+            events.iloc[0]["record_attributes"][SpanAttributes.SPAN_TYPE],
+        )
+        # Ensure thread to be stopped when app is garbage collected.
+        tru_recorder_ref = weakref.ref(tru_recorder)
+        evaluator_ref = weakref.ref(tru_recorder._evaluator)
+        thread_ref = weakref.ref(tru_recorder._evaluator._thread)
+        del tru_recorder
+        gc.collect()
+        self.assertCollected(tru_recorder_ref)
+        self._wait(lambda: thread_ref() is None)
+        self.assertCollected(evaluator_ref)
+        self.assertCollected(thread_ref)
+
+    def test_aggregation(self) -> None:
+        # Create feedback function.
+        def custom_with_explanations(a: float, b: float) -> Tuple[float, dict]:
+            return a * b, {"explanation": f"{a} * {b}"}
+
+        f_custom = Feedback(custom_with_explanations, name="custom").on({
+            "a": Selector(
+                span_type=SpanAttributes.SpanType.RECORD_ROOT,
+                function_attribute="xs",
+                collect_list=False,
+            ),
+            "b": Selector(
+                span_type=SpanAttributes.SpanType.RECORD_ROOT,
+                function_attribute="ys",
+                collect_list=False,
+            ),
+        })
+
+        # Create app.
+        class _App:
+            @instrument(span_type=SpanAttributes.SpanType.RECORD_ROOT)
+            def invoke(self, xs: List[int], ys: List[int]) -> float:
+                return 0.0
+
+        app = _App()
+        tru_app = TruApp(
+            app, app_name="Simple App", app_version="v1", feedbacks=[f_custom]
+        )
+        # Record and invoke.
+        with tru_app:
+            app.invoke([2, 3], [5, 7])
+        TruSession().force_flush()
+        # Compute feedback on record we just ingested.
+        tru_app.compute_feedbacks()
+        TruSession().force_flush()
+        # Compare results to expected.
+        events = self._get_events()
+        self.assertEqual(len(events), 6)
+        expected_span_types = [
+            SpanAttributes.SpanType.RECORD_ROOT,
+            SpanAttributes.SpanType.EVAL_ROOT,
+        ] + 4 * [SpanAttributes.SpanType.EVAL]
+        self.assertListEqual(
+            expected_span_types,
+            [
+                curr["record_attributes"][SpanAttributes.SPAN_TYPE]
+                for _, curr in events.iterrows()
+            ],
+        )
+        expected_sub_scores = [2 * 5, 2 * 7, 3 * 5, 3 * 7]
+        self.assertEqual(
+            np.mean(expected_sub_scores),
+            events.iloc[1]["record_attributes"][SpanAttributes.EVAL_ROOT.SCORE],
+        )
+        self.assertListEqual(
+            expected_sub_scores,
+            [
+                curr["record_attributes"][SpanAttributes.EVAL.SCORE]
+                for _, curr in events.iloc[2:].iterrows()
+            ],
+        )
+        expected_explanations = ["2 * 5", "2 * 7", "3 * 5", "3 * 7"]
+        self.assertListEqual(
+            expected_explanations,
+            [
+                curr["record_attributes"][
+                    f"{SpanAttributes.EVAL.METADATA}.explanation"
+                ]
+                for _, curr in events.iloc[2:].iterrows()
+            ],
+        )
+
+    @staticmethod
+    def _wait(
+        f: Callable[[], bool],
+        timeout_in_seconds: float = 30,
+        cooldown_in_seconds: float = 1,
+    ) -> None:
+        start_time = time.time()
+        while time.time() - start_time < timeout_in_seconds:
+            if f():
+                return
+            time.sleep(cooldown_in_seconds)
+        raise TimeoutError(
+            f"Timed out waiting for condition to be met after {timeout_in_seconds} seconds."
         )

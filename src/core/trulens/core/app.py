@@ -10,7 +10,6 @@ from inspect import BoundArguments
 from inspect import Signature
 import json
 import logging
-import os
 import threading
 from typing import (
     Any,
@@ -42,6 +41,7 @@ from trulens.core.database import base as core_db
 from trulens.core.database import connector as core_connector
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback import feedback as core_feedback
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.run import Run
 from trulens.core.run import RunConfig
 from trulens.core.run import validate_dataset_spec
@@ -55,6 +55,7 @@ from trulens.core.utils import asynchro as asynchro_utils
 from trulens.core.utils import constants as constant_utils
 from trulens.core.utils import containers as container_utils
 from trulens.core.utils import deprecation as deprecation_utils
+from trulens.core.utils import evaluator as evaluator_utils
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
@@ -62,10 +63,11 @@ from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import signature as signature_utils
 from trulens.core.utils import threading as threading_utils
+from trulens.feedback.computer import compute_feedback_by_span_group
 from trulens.otel.semconv.constants import (
-    TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
+    TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG,
 )
-from trulens.otel.semconv.trace import SpanAttributes
+from trulens.otel.semconv.constants import TRULENS_INSTRUMENT_WRAPPER_FLAG
 
 logger = logging.getLogger(__name__)
 
@@ -515,15 +517,24 @@ class App(
                             f"main_method `{main_method.__name__}` must be bound to the provided `app` instance."
                         )
 
-                self._wrap_main_function(app, main_method.__name__)
-
         super().__init__(**kwargs)
+
+        if (
+            is_otel_tracing_enabled()
+            and self.feedback_mode
+            != feedback_schema.FeedbackMode.WITH_APP_THREAD
+        ):
+            raise ValueError(
+                "Cannot use `feedback_mode` other than `WITH_APP_THREAD` with OTel tracing!"
+            )
 
         if main_method:
             self.main_method_name = main_method.__name__  # for serialization
 
         self._current_context_manager_lock = threading.Lock()
         self._current_context_manager = None
+
+        self._evaluator = evaluator_utils.Evaluator(self)
 
         if connector and _can_import("trulens.connectors.snowflake"):
             from trulens.connectors.snowflake import SnowflakeConnector
@@ -558,12 +569,19 @@ class App(
             pass
 
         if self.feedback_mode == feedback_schema.FeedbackMode.WITH_APP_THREAD:
-            self._start_manage_pending_feedback_results()
+            if is_otel_tracing_enabled():
+                self.start_evaluator()
+            else:
+                self._start_manage_pending_feedback_results()
+
+        if otel_enabled and main_method is not None:
+            self._wrap_main_function(app, main_method.__name__)
 
         self._tru_post_init()
 
     def __del__(self):
         """Shut down anything associated with this app that might persist otherwise."""
+        self.stop_evaluator()
         try:
             # Use object.__getattribute__ to avoid triggering __getattr__
             m_thread = object.__getattribute__(
@@ -589,9 +607,11 @@ class App(
                 pass
 
     @staticmethod
-    def _has_record_root_instrumentation(func: Callable) -> bool:
+    def _has_instrumentation(func: Callable) -> bool:
         while hasattr(func, "__wrapped__"):
-            if hasattr(func, TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG):
+            if hasattr(func, TRULENS_INSTRUMENT_WRAPPER_FLAG) or hasattr(
+                func, TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG
+            ):
                 return True
             func = func.__wrapped__
         return False
@@ -605,22 +625,9 @@ class App(
             if not hasattr(app, method_name):
                 raise ValueError(f"App must have an `{method_name}` method!")
             func = getattr(app, method_name)
-            if self._has_record_root_instrumentation(func):
+            if self._has_instrumentation(func):
                 return
-            sig = inspect.signature(func)
-            wrapper = instrument(
-                span_type=SpanAttributes.SpanType.RECORD_ROOT,
-                attributes=lambda ret, exception, *args, **kwargs: {
-                    # langchain has specific main input/output logic.
-                    SpanAttributes.RECORD_ROOT.INPUT: self.main_input(
-                        func, sig, sig.bind_partial(**kwargs)
-                    ),
-                    SpanAttributes.RECORD_ROOT.OUTPUT: self.main_output(
-                        func, sig, sig.bind_partial(**kwargs), ret
-                    ),
-                },
-                is_app_specific_record_root=True,
-            )
+            wrapper = instrument(is_app_specific_instrumentation=True)
             # HACK!: This is a major hack to get around the fact that we can't
             # set the desired method on the app object due to Pydantic only
             # allowing fields to be set on the class, not on the instance for
@@ -694,7 +701,10 @@ class App(
         call will block until finished and if new records are produced while
         this is running, it will include them.
         """
-
+        if is_otel_tracing_enabled():
+            raise RuntimeError(
+                "`wait_for_feedback_results` is not supported with OTel tracing enabled, and is deprecated in favor of `retrieve_feedback_results`."
+            )
         while (
             record := self.records_with_pending_feedback_results.pop(
                 blocking=False
@@ -702,6 +712,31 @@ class App(
         ) is not None:
             record.wait_for_feedback_results(feedback_timeout=feedback_timeout)
             yield record
+
+    def retrieve_feedback_results(
+        self, record_ids: Optional[List[str]] = None, timeout: float = 180
+    ) -> pd.DataFrame:
+        """Retrieve feedback results for all records in the app.
+
+        Args:
+            record_ids: List of record ids to retrieve feedback results for. If
+                None, retrieves whatever results are available now.
+            timeout: Timeout in seconds to wait.
+
+        Returns:
+            A dataframe with records as rows and feedbacks as columns.
+        """
+        TruSession().force_flush()
+        if record_ids is not None:
+            TruSession().wait_for_records(
+                record_ids=record_ids, timeout=timeout
+            )
+            self._evaluator.compute_now(record_ids)
+        records_df, feedback_cols = TruSession().get_records_and_feedback(
+            record_ids=record_ids
+        )
+        records_df.set_index("record_id", inplace=True)
+        return records_df[feedback_cols]
 
     @classmethod
     def select_context(cls, app: Optional[Any] = None) -> serial_utils.Lens:
@@ -788,20 +823,9 @@ class App(
                     "No feedback evaluation and logging will occur."
                 )
 
-        otel_tracing_enabled = os.getenv(
-            "TRULENS_OTEL_TRACING", ""
-        ).lower() in [
-            "1",
-            "true",
-        ]
-        if otel_tracing_enabled and len(self.feedbacks) > 0:
-            raise ValueError(
-                "Feedback logging is not supported with OpenTelemetry tracing enabled yet!"
-            )
-
         if self.connector is not None and not (
             self._is_snowflake_connector(self.connector)
-            and otel_tracing_enabled
+            and is_otel_tracing_enabled()
         ):
             self.connector.add_app(app=self)
 
@@ -840,7 +864,10 @@ class App(
                         f"Feedback function {f} is not loadable. Cannot use DEFERRED feedback mode. {e}"
                     ) from e
 
-        if not self.selector_nocheck:
+        if is_otel_tracing_enabled():
+            for feedback in self.feedbacks:
+                feedback.check_otel_selectors()
+        elif not self.selector_nocheck and not is_otel_tracing_enabled():
             dummy = self.dummy_record()
 
             for feedback in self.feedbacks:
@@ -924,7 +951,8 @@ class App(
     ):
         """Called by instrumentation system for every function requested to be
         instrumented by this app."""
-
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         if id(obj) in self.instrumented_methods:
             funcs = self.instrumented_methods[id(obj)]
 
@@ -1071,6 +1099,7 @@ class App(
                         "Already recording with a context manager, cannot nest!"
                     )
                 self._current_context_manager = OtelRecordingContext(
+                    tru_app=self,
                     app_name=self.app_name,
                     app_version=self.app_version,
                     run_name="",
@@ -1098,6 +1127,7 @@ class App(
                 if self._current_context_manager is None:
                     raise RuntimeError("Unknown recording context manager!")
                 context_manager = self._current_context_manager
+                self._current_context_manager = None
             return context_manager.__exit__(exc_type, exc_value, exc_tb)
 
         self._prevent_invalid_otel_syntax()
@@ -1172,6 +1202,8 @@ class App(
         See
         [WithInstrumentCallbacks.on_new_record][trulens.core.instruments.WithInstrumentCallbacks.on_new_record].
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         ctx = self.recording_contexts.get(contextvars.Token.MISSING)
 
         while ctx is not contextvars.Token.MISSING:
@@ -1198,6 +1230,8 @@ class App(
         See
         [WithInstrumentCallbacks.on_add_record][trulens.core.instruments.WithInstrumentCallbacks.on_add_record].
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         def build_record(
             calls: Iterable[record_schema.RecordAppCall],
@@ -1289,6 +1323,8 @@ class App(
         Issue a warning and some instructions if a function that has not been
         instrumented is being used in a `with_` call.
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         if not isinstance(func, Callable):
             raise TypeError(
@@ -1365,6 +1401,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         Call the given `func` with the given `*args` and `**kwargs`, producing
         its results as well as a record of the execution.
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         if not isinstance(func, Callable):
             if hasattr(func, "__call__"):
@@ -1394,6 +1432,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         Call the given `func` with the given `*args` and `**kwargs`, producing
         its results as well as a record of the execution.
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         if not isinstance(func, Callable):
             if hasattr(func, "__call__"):
@@ -1464,6 +1504,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
         See [_handle_record][trulens.core.app.App._handle_record].
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         if isinstance(future_or_result, Future):
             res = future_or_result.result()
@@ -1600,6 +1642,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             - `app_id` is taken from this recorder.
             - `calls` field is constructed based on instrumented methods.
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         calls = []
 
@@ -1655,6 +1699,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         """
         Iteration over instrumented components and their categories.
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         for q, c in instrumented_component_views(self.model_dump()):
             # Add the chain indicator so the resulting paths can be specified
@@ -1848,6 +1894,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             from trulens.core.otel.instrument import OtelRecordingContext
 
             return OtelRecordingContext(
+                tru_app=self,
                 app_name=self.app_name,
                 app_version=self.app_version,
                 run_name=run_name,
@@ -1864,6 +1911,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             from trulens.core.otel.instrument import OtelRecordingContext
 
             return OtelRecordingContext(
+                tru_app=self,
                 app_name=self.app_name,
                 app_version=self.app_version,
                 run_name=None,
@@ -1887,6 +1935,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             from trulens.core.otel.instrument import OtelRecordingContext
 
             with OtelRecordingContext(
+                tru_app=self,
                 app_name=self.app_name,
                 app_version=self.app_version,
                 run_name=run_name,
@@ -1902,6 +1951,47 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         raise NotImplementedError(
             "This feature is not yet implemented for non-OTEL TruLens!"
         )
+
+    def compute_feedbacks(
+        self,
+        raise_error_on_no_feedbacks_computed: bool = True,
+        events: Optional[pd.DataFrame] = None,
+    ) -> None:
+        """Compute feedbacks for the app.
+
+        Args:
+            raise_error_on_no_feedbacks_computed:
+                Raise an error if no feedbacks were computed. Default is True.
+            events:
+                The events to compute feedbacks from. If None, uses all
+                events from the app.
+        """
+        if not is_otel_tracing_enabled():
+            raise ValueError(
+                "This method is only supported for OTEL Tracing. Please enable OTEL tracing in the environment!"
+            )
+        if events is None:
+            # Get all events associated with this app name and version.
+            # TODO(otel): Should probably handle the case where there are a lot of events with pagination.
+            events = self.connector.get_events(app_id=self.app_id)
+        for feedback in self.feedbacks:
+            compute_feedback_by_span_group(
+                events,
+                feedback.name,
+                feedback.imp,
+                feedback.higher_is_better,
+                feedback.selectors,
+                feedback.aggregator,
+                raise_error_on_no_feedbacks_computed,
+            )
+
+    def start_evaluator(self) -> None:
+        """Start the evaluator for the app."""
+        self._evaluator.start_evaluator()
+
+    def stop_evaluator(self) -> None:
+        """Stop the evaluator for the app."""
+        self._evaluator.stop_evaluator()
 
 
 # NOTE: Cannot App.model_rebuild here due to circular imports involving mod_session.TruSession

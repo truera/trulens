@@ -2,11 +2,15 @@
 Tests for OTEL instrument decorator and custom app.
 """
 
+import gc
+import weakref
+
 from trulens.apps.app import TruApp
 from trulens.core.otel.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
 
 import tests.util.otel_tru_app_test_case
+from tests.utils import enable_otel_backwards_compatibility
 
 
 class TestApp:
@@ -78,6 +82,28 @@ class TestOtelTruCustom(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
             test_app.respond_to_query("throw")
         # Compare results to expected.
         self._compare_events_to_golden_dataframe(
+            "tests/unit/static/golden/test_otel_tru_custom__test_smoke.csv"
+        )
+        # Check we can still call the app after recording once.
+        with custom_app:
+            test_app.respond_to_query("throw")
+        # Check garbage collection.
+        custom_app_ref = weakref.ref(custom_app)
+        del custom_app
+        gc.collect()
+        self.assertCollected(custom_app_ref)
+
+    @enable_otel_backwards_compatibility
+    def test_legacy_app(self) -> None:
+        # Create and run app.
+        test_app = TestApp()
+        custom_app = TruApp(test_app)
+        with custom_app:
+            test_app.respond_to_query("test")
+        with custom_app:
+            test_app.respond_to_query("throw")
+        # Compare results to expected.
+        self._compare_record_attributes_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_custom__test_smoke.csv"
         )
 

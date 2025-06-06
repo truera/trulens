@@ -13,13 +13,13 @@ export default function RecordTable({ root, selectedNodeId, setSelectedNodeId }:
   const { timeTaken: totalTime, startTime: treeStart } = root;
 
   return (
-    <TableContainer>
+    <TableContainer sx={recordTableContainerSx}>
       <Table sx={recordTableSx} aria-label="Table breakdown of the components in the current app" size="small">
         <TableHead>
           <TableRow>
             <TableCell width={275}>Method</TableCell>
             <TableCell width={75}>Duration</TableCell>
-            <TableCell width={75}>Type</TableCell>
+            <TableCell width={130}>Type</TableCell>
             <TableCell>Timeline</TableCell>
           </TableRow>
         </TableHead>
@@ -37,6 +37,11 @@ export default function RecordTable({ root, selectedNodeId, setSelectedNodeId }:
     </TableContainer>
   );
 }
+
+const recordTableContainerSx: SxProps<Theme> = {
+  overflow: 'auto',
+  maxHeight: '70vh',
+};
 
 const recordTableSx: SxProps<Theme> = {
   borderRadius: 4,

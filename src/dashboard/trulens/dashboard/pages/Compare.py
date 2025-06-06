@@ -5,10 +5,13 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.dashboard.components.record_viewer import record_viewer
+from trulens.dashboard.components.record_viewer_otel import record_viewer_otel
 from trulens.dashboard.constants import COMPARE_PAGE_NAME as page_name
 from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
 from trulens.dashboard.constants import PINNED_COL_NAME
+from trulens.dashboard.utils.dashboard_utils import _get_event_otel_spans
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
 from trulens.dashboard.utils.dashboard_utils import get_records_and_feedback
 from trulens.dashboard.utils.dashboard_utils import is_sis_compatibility_enabled
@@ -795,6 +798,16 @@ def render_app_comparison(app_name: str):
 
                     st.subheader("App Details")
                     st.json(app_json, expanded=1)
+                elif is_otel_tracing_enabled():
+                    event_spans = _get_event_otel_spans(
+                        selected_row["record_id"]
+                    )
+                    if event_spans:
+                        record_viewer_otel(
+                            spans=event_spans, key=f"compare_{app_id}"
+                        )
+                    else:
+                        st.warning("No trace data available for this record.")
                 else:
                     record_viewer(
                         record_json,

@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 
 # trulens additions
-from trulens.apps.custom import instrument
+from trulens.apps.app import instrument
 
 
 class Activity(BaseModel):
@@ -115,7 +115,7 @@ class SurpriseTravelCrew:
     @crew
     def create_crew(self) -> Crew:
         """Creates the SurpriseTravel crew"""
-        # Important: Before wrapping this app with TruCustomApp, assign the
+        # Important: Before wrapping this app with TruApp, assign the
         # result of this method to an attribute of this class as otherwise the
         # Crew class methods will not be instrumented.
 

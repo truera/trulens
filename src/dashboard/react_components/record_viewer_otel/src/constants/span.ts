@@ -37,7 +37,6 @@ export const SpanAttributes = {
 
   // Attributes that are common to spans within a record
   SPAN_TYPE: `${BASE_SCOPE}.span_type`,
-  SELECTOR_NAME: `${BASE_SCOPE}.selector_name`,
   RECORD_ID: `${BASE_SCOPE}.record_id`,
   APP_NAME: `${BASE_SCOPE}.app_name`,
   APP_VERSION: `${BASE_SCOPE}.app_version`,
@@ -80,6 +79,7 @@ export const SpanAttributes = {
   EVAL_ROOT_TARGET_TRACE_ID: `${BASE_SCOPE}.${SpanType.EVAL_ROOT}.target_trace_id`,
   EVAL_ROOT_TARGET_SPAN_ID: `${BASE_SCOPE}.${SpanType.EVAL_ROOT}.target_span_id`,
   EVAL_ROOT_FEEDBACK_DEFINITION_ID: `${BASE_SCOPE}.${SpanType.EVAL_ROOT}.feedback_definition_id`,
+  EVAL_ROOT_FEEDBACK_NAME: `${BASE_SCOPE}.${SpanType.EVAL_ROOT}.metric_name`,
   EVAL_ROOT_STATUS: `${BASE_SCOPE}.${SpanType.EVAL_ROOT}.status`,
   EVAL_ROOT_TOTAL_COST: `${BASE_SCOPE}.${SpanType.EVAL_ROOT}.total_cost`,
   EVAL_ROOT_ERROR: `${BASE_SCOPE}.${SpanType.EVAL_ROOT}.error`,

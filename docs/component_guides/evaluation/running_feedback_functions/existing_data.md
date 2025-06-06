@@ -17,7 +17,7 @@ In the case that you have already logged a run of your application with TruLens 
 !!! example
 
     ```python
-    tru_rag = TruCustomApp(rag, app_name="RAG", app_version="v1")
+    tru_rag = TruApp(rag, app_name="RAG", app_version="v1")
 
     result, record = tru_rag.with_record(rag.query, "How many professors are at UW in Seattle?")
     feedback_results = tru.run_feedback_functions(record, feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance])

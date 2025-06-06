@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 from concurrent import futures
+import datetime
 import logging
 import queue
 from threading import Thread
@@ -16,9 +17,10 @@ from typing import (
     Union,
 )
 
-import pandas
+import pandas as pd
 from trulens.core._utils.pycompat import Future  # code style exception
 from trulens.core.database import base as core_db
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import event as event_schema
 from trulens.core.schema import feedback as feedback_schema
@@ -90,6 +92,8 @@ class DBConnector(ABC, text_utils.WithIdentString):
             Unique record identifier [str][] .
 
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         if record is None:
             record = record_schema.Record(**kwargs)
@@ -102,6 +106,8 @@ class DBConnector(ABC, text_utils.WithIdentString):
         record: record_schema.Record,
     ) -> None:
         """Add a record to the queue to be inserted in the next batch."""
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         if self.batch_thread is None:
             self.batch_thread = Thread(target=self._batch_loop, daemon=True)
             self.batch_thread.start()
@@ -221,7 +227,8 @@ class DBConnector(ABC, text_utils.WithIdentString):
             A unique result identifier [str][].
 
         """
-
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         if feedback_result_or_future is None:
             if "result" in kwargs and "status" not in kwargs:
                 # If result already present, set status to done.
@@ -271,7 +278,8 @@ class DBConnector(ABC, text_utils.WithIdentString):
             List of unique result identifiers [str][] in the same order as input
                 `feedback_results`.
         """
-
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         return [
             self.add_feedback(
                 feedback_result_or_future=feedback_result_or_future
@@ -322,9 +330,10 @@ class DBConnector(ABC, text_utils.WithIdentString):
         self,
         app_ids: Optional[List[types_schema.AppID]] = None,
         app_name: Optional[types_schema.AppName] = None,
+        record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
-    ) -> Tuple[pandas.DataFrame, List[str]]:
+    ) -> Tuple[pd.DataFrame, List[str]]:
         """Get records, their feedback results, and feedback names.
 
         Args:
@@ -333,6 +342,8 @@ class DBConnector(ABC, text_utils.WithIdentString):
 
             app_name: A name of the app to filter records by. If given, only records for
                 this app will be returned.
+
+            record_ids: An optional list of record ids to filter records by.
 
             offset: Record row offset.
 
@@ -345,7 +356,11 @@ class DBConnector(ABC, text_utils.WithIdentString):
         """
 
         df, feedback_columns = self.db.get_records_and_feedback(
-            app_ids=app_ids, app_name=app_name, offset=offset, limit=limit
+            app_ids=app_ids,
+            app_name=app_name,
+            record_ids=record_ids,
+            offset=offset,
+            limit=limit,
         )
 
         df["app_name"] = df["app_json"].apply(lambda x: x.get("app_name"))
@@ -359,7 +374,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
         group_by_metadata_key: Optional[str] = None,
         limit: Optional[int] = None,
         offset: Optional[int] = None,
-    ) -> pandas.DataFrame:
+    ) -> pd.DataFrame:
         """Get a leaderboard for the given apps.
 
         Args:
@@ -434,3 +449,24 @@ class DBConnector(ABC, text_utils.WithIdentString):
             events: A list of events to add to the database.
         """
         return [self.add_event(event=event) for event in events]
+
+    def get_events(
+        self,
+        app_id: Optional[str] = None,
+        record_ids: Optional[List[str]] = None,
+        start_time: Optional[datetime.datetime] = None,
+    ) -> pd.DataFrame:
+        """
+        Get events from the database.
+
+        Args:
+            app_id: The app id to filter events by.
+            record_ids: The record ids to filter events by.
+            start_time: The minimum time to consider events from.
+
+        Returns:
+            A pandas DataFrame of all relevant events.
+        """
+        return self.db.get_events(
+            app_id=app_id, record_ids=record_ids, start_time=start_time
+        )

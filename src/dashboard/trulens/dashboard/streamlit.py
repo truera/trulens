@@ -3,7 +3,7 @@ import asyncio
 import json
 import math
 import sys
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from pydantic import BaseModel
 import streamlit as st
@@ -14,12 +14,17 @@ from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import text as text_utils
-from trulens.dashboard import display as dashboard_display
 from trulens.dashboard.components import (
     record_viewer as dashboard_record_viewer,
 )
+from trulens.dashboard.components import (
+    record_viewer_otel as dashboard_record_viewer_otel,
+)
 from trulens.dashboard.utils import dashboard_utils
 from trulens.dashboard.utils import streamlit_compat
+from trulens.dashboard.utils.dashboard_utils import _get_event_otel_spans
+from trulens.dashboard.utils.records_utils import _render_feedback_call
+from trulens.dashboard.utils.records_utils import _render_feedback_pills
 from trulens.dashboard.utils.streamlit_compat import st_columns
 from trulens.dashboard.ux import components as dashboard_components
 from trulens.dashboard.ux import styles as dashboard_styles
@@ -209,12 +214,11 @@ def trulens_leaderboard(app_ids: Optional[List[str]] = None):
 
 
 @streamlit_compat.st_fragment(run_every=2)
-def trulens_feedback(record: record_schema.Record):
+def trulens_feedback(record: Union[record_schema.Record, str]):
     """Render clickable feedback pills for a given record.
 
     Args:
-
-        record: A trulens record.
+        record: Either a trulens record (non-OTel) or a record_id string (OTel).
 
     Example:
         ```python
@@ -228,109 +232,74 @@ def trulens_feedback(record: record_schema.Record):
         trulens_st.trulens_feedback(record=record)
         ```
     """
-    feedback_cols = []
-    feedbacks = {}
-    icons = []
-    default_direction = "HIGHER_IS_BETTER"
     session = core_session.TruSession()
     lms = session.connector.db
-    feedback_defs = lms.get_feedback_defs()
 
-    feedback_directions = {
-        (
-            row.feedback_json.get("supplied_name", "")
-            or row.feedback_json["implementation"]["name"]
-        ): (
-            "HIGHER_IS_BETTER"
-            if row.feedback_json.get("higher_is_better", True)
-            else "LOWER_IS_BETTER"
-        )
-        for _, row in feedback_defs.iterrows()
-    }
+    _, feedback_directions = dashboard_utils.get_feedback_defs()
 
-    for feedback, feedback_result in record.wait_for_feedback_results().items():
-        call_data = {
-            "feedback_definition": feedback,
-            "feedback_name": feedback.name,
-            "result": feedback_result.result,
-        }
-        feedback_cols.append(call_data["feedback_name"])
-        feedbacks[call_data["feedback_name"]] = FeedbackDisplay(
-            score=call_data["result"],
-            calls=[],
-            icon=dashboard_display.get_icon(
-                fdef=feedback, result=feedback_result.result
-            ),
-        )
-        icons.append(feedbacks[call_data["feedback_name"]].icon)
+    if isinstance(record, record_schema.Record):
+        record_id = record.record_id
+    elif isinstance(record, str):
+        record_id = record
 
-    format_func = lambda fcol: f"{fcol} {feedbacks[fcol].score:.4f}"
-    if hasattr(st, "pills"):
-        # Use native streamlit pills, released in 1.40.0
-        selected_feedback = st.pills(
-            "Feedback Functions", feedback_cols, format_func=format_func
-        )
+    records_df, feedback_col_names = lms.get_records_and_feedback()
+    # TODO: filter by record id
+    selected_record_row = records_df[records_df["record_id"] == record_id]
+
+    if not selected_record_row.empty:
+        selected_record_row = selected_record_row.iloc[0]
     else:
-        selected_feedback = st.selectbox(
-            "Feedback Functions",
-            feedback_cols,
-            index=None,
-            format_func=format_func,
+        st.warning(f"No record found with record_id: {record_id}")
+        return
+
+    if selected_ff := _render_feedback_pills(
+        feedback_col_names=feedback_col_names,
+        selected_row=selected_record_row,
+        feedback_directions=feedback_directions,
+    ):
+        _render_feedback_call(
+            selected_ff,
+            selected_record_row,
+            feedback_directions=feedback_directions,
         )
 
-    if selected_feedback is not None:
-        df = dashboard_display.get_feedback_result(
-            record, feedback_name=selected_feedback
-        )
-        if "groundedness" in selected_feedback.lower():
-            df = dashboard_display.expand_groundedness_df(df)
-        else:
-            pass
 
-        # Apply the highlight function row-wise
-        styled_df = df.style.apply(
-            lambda row: dashboard_display.highlight(
-                row,
-                selected_feedback=selected_feedback,
-                feedback_directions=feedback_directions,
-                default_direction=default_direction,
-            ),
-            axis=1,
-        )
-
-        # Format only numeric columns
-        for col in df.select_dtypes(include=["number"]).columns:
-            styled_df = styled_df.format({col: "{:.2f}"})
-
-        st.dataframe(styled_df, hide_index=True)
-
-
-def trulens_trace(record: record_schema.Record):
+def trulens_trace(record: Union[record_schema.Record, str]):
     """Display the trace view for a record.
 
     Args:
-
-        record: A trulens record.
+        record: Either a trulens record (non-OTel) or a record_id string (OTel).
 
     Example:
         ```python
         from trulens.core import streamlit as trulens_st
 
+        # Using with Record object
         with tru_llm as recording:
             response = llm.invoke(input_text)
-
         record, response = recording.get()
-
         trulens_st.trulens_trace(record=record)
+
+        # Using with record_id string
+        trulens_st.trulens_trace(record="record_123")
         ```
     """
 
     session = core_session.TruSession()
-    app = session.get_app(app_id=record.app_id)
+    if isinstance(record, record_schema.Record):
+        app = session.get_app(app_id=record.app_id)
     if dashboard_utils.is_sis_compatibility_enabled():
         st.warning(
             "TruLens trace view is not enabled when SiS compatibility is enabled."
         )
+    elif isinstance(record, str):
+        event_spans = _get_event_otel_spans(record)
+        if event_spans:
+            dashboard_record_viewer_otel.record_viewer_otel(
+                spans=event_spans, key=None
+            )
+        else:
+            st.warning("No OTel trace data available for this record.")
     else:
         dashboard_record_viewer.record_viewer(
             record_json=json.loads(json_utils.json_str_of_obj(record)),

@@ -62,7 +62,7 @@ To see the core re-architecture changes in action, we've included some usage exa
         ```
 
         ```python
-        from trulens.apps.custom import instrument
+        from trulens.apps.app import instrument
 
         class CustomApp:
 
@@ -265,7 +265,7 @@ In our suggested workflow, `app_name` represents an objective you’re building 
 !!! example "Track Experiments"
 
     ```python
-    tru_rag = TruCustomApp(
+    tru_rag = TruApp(
     rag,
     app_name="RAG",
     app_version="v1",

@@ -22,6 +22,7 @@ from trulens.core.run import Run
 from trulens.core.run import RunConfig
 from trulens.core.run import RunStatus
 from trulens.core.session import TruSession
+from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.snowflake_test_case import SnowflakeTestCase
@@ -263,7 +264,7 @@ class TestSnowflake(SnowflakeTestCase):
                 if not parent_span_id:
                     raise ValueError()
                 curr["RECORD"]["parent_span_id"] = parent_span_id
-            curr["RECORD_ATTRIBUTES"][SpanAttributes.APP_NAME] = app_name
+            curr["RESOURCE_ATTRIBUTES"][ResourceAttributes.APP_NAME] = app_name
             curr["RECORD_ATTRIBUTES"][SpanAttributes.RUN_NAME] = run_name
             curr["RECORD_ATTRIBUTES"][SpanAttributes.RECORD_ID] = record_id
             if (
@@ -338,7 +339,7 @@ class TestSnowflake(SnowflakeTestCase):
                 )
             # Handle "snow.*" attributes.
             attributes = event["RECORD_ATTRIBUTES"]
-            attributes[SpanAttributes.APP_VERSION] = attributes[
+            attributes[ResourceAttributes.APP_VERSION] = attributes[
                 "snow.ai.observability.object.version.name"
             ]
             attributes = {

@@ -5,9 +5,11 @@ from __future__ import annotations
 import builtins
 from collections import namedtuple
 import ctypes
+from functools import wraps
 import gc
 import importlib
 import inspect
+import os
 import pkgutil
 from queue import Queue
 from types import ModuleType
@@ -827,3 +829,21 @@ def print_referent_lens(lens: Optional[serial_utils.Lens], origin) -> None:
             )
         else:
             print("  ", type(step).__name__, repr(step), obj_ident)
+
+
+def enable_otel_backwards_compatibility(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        original_value = os.getenv("TRULENS_OTEL_BACKWARDS_COMPATIBILITY")
+        os.environ["TRULENS_OTEL_BACKWARDS_COMPATIBILITY"] = "1"
+        try:
+            return func(*args, **kwargs)
+        finally:
+            if original_value is not None:
+                os.environ["TRULENS_OTEL_BACKWARDS_COMPATIBILITY"] = (
+                    original_value
+                )
+            else:
+                del os.environ["TRULENS_OTEL_BACKWARDS_COMPATIBILITY"]
+
+    return wrapper

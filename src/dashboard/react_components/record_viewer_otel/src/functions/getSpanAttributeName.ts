@@ -5,7 +5,6 @@ export const getSpanAttributeName = (key: string) => {
   const mapping: Record<string, string> = {
     [SpanAttributes.RUN_NAME]: 'Run Name',
     [SpanAttributes.SPAN_TYPE]: 'Span Type',
-    [SpanAttributes.SELECTOR_NAME]: 'Selector Name',
     [SpanAttributes.RECORD_ID]: 'Record ID',
     [SpanAttributes.APP_NAME]: 'App Name',
     [SpanAttributes.APP_VERSION]: 'App Version',
@@ -27,6 +26,7 @@ export const getSpanAttributeName = (key: string) => {
     [SpanAttributes.EVAL_ROOT_TARGET_TRACE_ID]: 'Target Trace ID',
     [SpanAttributes.EVAL_ROOT_TARGET_SPAN_ID]: 'Target Span ID',
     [SpanAttributes.EVAL_ROOT_FEEDBACK_DEFINITION_ID]: 'Feedback Definition ID',
+    [SpanAttributes.EVAL_ROOT_FEEDBACK_NAME]: 'Metric Name',
     [SpanAttributes.EVAL_ROOT_STATUS]: 'Status',
     [SpanAttributes.EVAL_ROOT_TOTAL_COST]: 'Total Cost',
     [SpanAttributes.EVAL_ROOT_ERROR]: 'Error',

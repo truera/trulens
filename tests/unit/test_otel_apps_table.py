@@ -17,7 +17,7 @@ class TestOtelAppsTable(OtelTestCase):
             q = sa.select(db.orm.AppDefinition)
             return pd.read_sql(q, db_session.bind)
 
-    def test_smoke(self):
+    def test_smoke(self) -> None:
         app = tests.unit.test_otel_tru_custom.TestApp()
         TruApp(
             app,

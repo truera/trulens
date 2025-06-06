@@ -40,6 +40,7 @@ markdown_extensions:
   - markdown_include.include:
       base_path: docs
   - attr_list
+  - tables
 
 watch:
   - src
@@ -161,6 +162,7 @@ plugins:
         trulens/groundtruth_evals.md: getting_started/quickstarts/groundtruth_evals.ipynb
         trulens/human_feedback.md: getting_started/quickstarts/human_feedback.ipynb
         trulens/release_blog_1dot.md: blog/posts/release_blog_1dot.md
+        blog/otel_for_the_agentic_world.md: blog/posts/trulens_otel.md
 
 theme:
   name: material
@@ -279,6 +281,7 @@ nav:
       - Uninstalling TruLens: component_guides/other/uninstalling.md
   - 📚 API Reference: reference/
   - 🧑‍🍳 Cookbook: cookbook/
+  - 🔭 OpenTelemetry: otel/
   - 🤝 Contributing:
       - contributing/index.md
       - 🧭 Design: contributing/design.md

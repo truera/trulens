@@ -1,6 +1,7 @@
 from opentelemetry import trace
 from trulens.apps.app import TruApp
 from trulens.core.session import TruSession
+from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.otel_test_case import OtelTestCase
@@ -43,9 +44,17 @@ class TestOtelSpanProcessor(OtelTestCase):
             "Kojikun", events.iloc[1]["record_attributes"]["best_baby"]
         )
         for curr in [
+            ResourceAttributes.APP_NAME,
+            ResourceAttributes.APP_VERSION,
+            ResourceAttributes.APP_ID,
+        ]:
+            self.assertTrue(bool(events.iloc[1]["resource_attributes"][curr]))
+            self.assertEqual(
+                events.iloc[0]["resource_attributes"][curr],
+                events.iloc[1]["resource_attributes"][curr],
+            )
+        for curr in [
             SpanAttributes.RECORD_ID,
-            SpanAttributes.APP_NAME,
-            SpanAttributes.APP_VERSION,
             SpanAttributes.RUN_NAME,
             SpanAttributes.INPUT_ID,
         ]:

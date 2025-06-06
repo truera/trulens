@@ -77,20 +77,36 @@ T = TypeVar("T")  # TODO bound
 class OpenAICostComputer:
     @staticmethod
     def handle_response(response: Any) -> Dict[str, Any]:
+        # Handle legacy response if needed
         if isinstance(response, openai._legacy_response.LegacyAPIResponse):
             if response.http_response.status_code != 200:
                 raise ValueError("OpenAI API returned non-200 status code!")
             response = response.parse()
+
         endpoint = OpenAIEndpoint()
         callback = OpenAICallback(endpoint=endpoint)
         model_name = ""
-        if getattr(response, "model"):
+
+        if hasattr(response, "__iter__") and not hasattr(response, "model"):
+            try:
+                first_chunk = next(response)
+                model_name = first_chunk.model
+                response = prepend_first_chunk(response, first_chunk)
+            except Exception:
+                logger.exception(
+                    "Exception occurred while consuming the first chunk from a streamed response."
+                )
+                response = []
+        elif getattr(response, "model", None):
             model_name = response.model
+
+        # Send response and model to callback
         OpenAIEndpoint._handle_response(
             model_name=model_name,
             response=response,
             callbacks=[callback],
         )
+
         ret = {
             SpanAttributes.COST.COST: callback.cost.cost,
             SpanAttributes.COST.CURRENCY: callback.cost.cost_currency,
@@ -481,3 +497,16 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
             )
 
         return response
+
+
+def prepend_first_chunk(stream, first_chunk):
+    # Save the original iterator
+    original_iter = stream._iterator
+
+    # Create a new iterator that yields the first chunk, then the rest
+    def new_iter():
+        yield first_chunk
+        yield from original_iter
+
+    stream._iterator = new_iter()
+    return stream

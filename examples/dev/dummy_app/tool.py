@@ -1,7 +1,7 @@
 import inspect
 from typing import Callable, List, Optional
 
-from trulens.apps.custom import instrument
+from trulens.apps.app import instrument
 from trulens.core.utils import python as python_utils
 
 from examples.dev.dummy_app.dummy import Dummy

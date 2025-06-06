@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
 from trulens.apps import virtual as virtual_app
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.utils import text as text_utils
 from trulens.dashboard import constants as dashboard_constants
@@ -20,7 +21,7 @@ from trulens.dashboard.ux import components as dashboard_components
 from trulens.dashboard.ux import styles as dashboard_styles
 
 APP_COLS = ["app_version", "app_id", "app_name"]
-APP_AGG_COLS = ["Records", "Average Latency"]
+APP_AGG_COLS = ["Records", "Average Latency (s)"]
 
 
 def init_page_state():
@@ -32,7 +33,6 @@ def init_page_state():
     dashboard_utils.read_query_params_into_session_state(
         page_name=dashboard_constants.LEADERBOARD_PAGE_NAME,
         transforms={
-            "metadata_to_front": lambda x: x == "True",
             "only_show_pinned": lambda x: x == "True",
             "metadata_cols": lambda x: x.split(","),
         },
@@ -62,7 +62,7 @@ def _preprocess_df(
 
     agg_dict = {
         "Records": ("record_id", "count"),
-        "Average Latency": ("latency", "mean"),
+        "Average Latency (s)": ("latency", "mean"),
         "Total Cost (USD)": ("total_cost_usd", "sum"),
         "Total Cost (Snowflake Credits)": ("total_cost_sf", "sum"),
         "Total Tokens": ("total_tokens", "sum"),
@@ -191,9 +191,7 @@ def _build_grid_options(
     )
     gb.configure_pagination(enabled=True, paginationPageSize=25)
     gb.configure_side_bar()
-    gb.configure_grid_options(
-        autoSizeStrategy={"type": "fitCellContents", "skipHeader": False}
-    )
+    gb.configure_grid_options(autoSizeStrategy={"type": "fitGridWidth"})
     return gb.build()
 
 
@@ -219,11 +217,9 @@ def _render_grid(
                     df[dashboard_constants.PINNED_COL_NAME], "app_version"
                 ].apply(lambda x: f"📌 {x}")
 
-            height = 1000 if len(df) > 20 else 45 * len(df) + 100
             event = st_aggrid.AgGrid(
                 df,
                 key=grid_key,
-                height=height,
                 columns_state=columns_state,
                 gridOptions=_build_grid_options(
                     df=df,
@@ -451,22 +447,22 @@ def _render_grid_tab(
     ]
 
     # Validate metadata_cols
-    if metadata_cols := st.session_state.get(
+    if metadata_col_values := st.session_state.get(
         f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.metadata_cols", []
     ):
-        st.session_state[
-            f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.metadata_cols"
-        ] = [
+        metadata_select_options = [
             col_name
-            for col_name in metadata_cols
+            for col_name in metadata_col_values
             if col_name in _metadata_options
         ]
+    else:
+        metadata_select_options = _metadata_options
 
     metadata_cols = st.multiselect(
         label="Display Metadata Columns",
         key=f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.metadata_cols",
-        options=_metadata_options,
-        default=_metadata_options,
+        options=metadata_select_options,
+        default=metadata_select_options,
     )
     if len(metadata_cols) != len(_metadata_options):
         st.query_params["metadata_cols"] = ",".join(metadata_cols)
@@ -481,20 +477,10 @@ def _render_grid_tab(
     ):
         metadata_cols.append(dashboard_constants.PINNED_COL_NAME)
 
-    if metadata_to_front := c1.toggle(
-        "Metadata to Front",
-        key=f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.metadata_to_front",
-    ):
-        df = order_columns(
-            df,
-            APP_COLS + metadata_cols + APP_AGG_COLS + feedback_col_names,
-        )
-    else:
-        df = order_columns(
-            df,
-            APP_COLS + APP_AGG_COLS + feedback_col_names + metadata_cols,
-        )
-    st.query_params["metadata_to_front"] = str(metadata_to_front)
+    df = order_columns(
+        df,
+        APP_COLS + APP_AGG_COLS + feedback_col_names + metadata_cols,
+    )
 
     if only_show_pinned := c1.toggle(
         "Only Show Pinned",
@@ -551,21 +537,16 @@ def _render_grid_tab(
         st.switch_page("pages/Records.py")
     # Compare App Versions
     if len(selected_app_ids) < Compare_page.MIN_COMPARATORS:
-        _compare_button_label = (
-            f"Min {Compare_page.MIN_COMPARATORS} App Versions"
-        )
         _compare_button_disabled = True
         help_msg = f"Select at least {Compare_page.MIN_COMPARATORS} app versions to compare."
     elif len(selected_app_ids) > Compare_page.MAX_COMPARATORS:
-        _compare_button_label = (
-            f"Max {Compare_page.MAX_COMPARATORS} App Versions"
-        )
         _compare_button_disabled = True
         help_msg = f"Deselect to at most {Compare_page.MAX_COMPARATORS} app versions to compare."
     else:
-        _compare_button_label = "Compare"
         _compare_button_disabled = False
         help_msg = None
+
+    _compare_button_label = "Compare"
 
     if c4.button(
         _compare_button_label,
@@ -588,18 +569,20 @@ def _render_grid_tab(
     ):
         handle_add_metadata(selected_rows, version_metadata_col_names)
 
-    # Add Virtual App
-    if c6.button(
-        "Add Virtual App",
-        use_container_width=True,
-        key=f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.add_virtual_app_button",
-    ):
-        handle_add_virtual_app(
-            app_name,
-            feedback_col_names,
-            feedback_defs,
-            version_metadata_col_names,
-        )
+    # Virtual apps do not work in OTEL world.
+    if not is_otel_tracing_enabled():
+        # Add Virtual App
+        if c6.button(
+            "Add Virtual App",
+            use_container_width=True,
+            key=f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.add_virtual_app_button",
+        ):
+            handle_add_virtual_app(
+                app_name,
+                feedback_col_names,
+                feedback_defs,
+                version_metadata_col_names,
+            )
 
 
 @streamlit_compat.st_fragment
@@ -642,7 +625,7 @@ def _render_list_tab(
         ) = st_columns([1, 1, 1, 1, 1])
         n_records_col.metric("Records", app_row["Records"])
 
-        latency_mean = app_row["Average Latency"]
+        latency_mean = app_row["Average Latency (s)"]
         latency_col.metric(
             "Average Latency (Seconds)",
             (
@@ -716,16 +699,13 @@ def _render_list_tab(
 
         with select_app_col:
             if st.button(
-                "Select App",
-                key=f"select_app_{app_id}",
+                "Select App Version",
+                key=f"select_app_version_{app_id}",
             ):
                 st.session_state[
                     f"{dashboard_constants.RECORDS_PAGE_NAME}.app_ids"
                 ] = [app_id]
                 st.switch_page("pages/Records.py")
-
-        # with st.expander("Model metadata"):
-        #    st.markdown(draw_metadata(metadata))
 
         st.markdown("""---""")
 
@@ -750,11 +730,9 @@ def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
             x=_df,
             xbins={
                 "size": 0.1,
-                "start": 0,
-                "end": 1.0,
             },
-            histfunc="count",
             texttemplate="%{y}",
+            name="",  # Stops trace {i} from showing up in popup annotation.
         )
         fig.add_trace(
             plot,
@@ -781,7 +759,11 @@ def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
         bargap=0.05,
     )
     fig.update_yaxes(fixedrange=True, showgrid=False)
-    fig.update_xaxes(fixedrange=True, showgrid=False, range=[0, 1])
+    # Histogram bins are [start_inclusive, end_exclusive), so extend the range
+    # by the step to the right.
+    fig.update_xaxes(
+        fixedrange=True, showgrid=False, autorangeoptions={"include": [0, 1]}
+    )
     st.plotly_chart(fig, use_container_width=True)
 
 

@@ -31,7 +31,7 @@ except ImportError:
 
 
 class _TestApp:
-    @instrument(span_type=SpanAttributes.SpanType.RECORD_ROOT)
+    @instrument()
     def query(self, question: str) -> str:
         # Call retrieval and generation methods
         self.retrieve(question)
@@ -92,9 +92,9 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
 
         # Constants for static eval test
         self.STATIC_FEEDBACK_NAME = "answer_relevance"
-        # NOTE: there are 3 total calls for the feedback column, see:
-        # test_otel_spans/{eval_root_span.json, eval_span_1.json, eval_span_2.json}
-        self.STATIC_NUM_CALLS = 3
+        # NOTE: there are 2 total calls for the feedback column, see:
+        # test_otel_spans/{eval_span_1.json, eval_span_2.json}
+        self.STATIC_NUM_CALLS = 2
         self.STATIC_COST_CURRENCY = "USD"
 
         # Constants for generated tests
@@ -398,10 +398,10 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
                 self.STATIC_START_TIME,
             )
 
-            # Calculate expected latency in milliseconds
+            # Calculate expected latency in seconds
             start_time = datetime.fromisoformat(self.STATIC_START_TIME)
             end_time = datetime.fromisoformat(self.STATIC_END_TIME)
-            expected_latency = (end_time - start_time).total_seconds() * 1000
+            expected_latency = (end_time - start_time).total_seconds()
             self.assertEqual(row["latency"], expected_latency)
 
             # Verify JSON fields
@@ -474,6 +474,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             app_name=self.app_name,
             app_version=self.app_version,
             app_id=self.app_id,
+            main_method=app.query,
         )
 
         # Record and invoke
@@ -527,6 +528,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             app_name=self.app_name,
             app_version=self.app_version,
             app_id=self.app_id,
+            main_method=app.query,
         )
 
         # Record and invoke the query method
@@ -546,6 +548,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             record_root,
             self.GEN_FEEDBACK_NAME,
             feedback_function,
+            True,
             all_retrieval_span_attributes,
         )
         self.session.force_flush()
@@ -830,3 +833,174 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         self.assertEqual(
             df.iloc[1]["record_id"], "app1_record_2"
         )  # Should get second and third records
+
+    def test_get_records_and_feedback_otel_kwargs_extraction(self):
+        """Test that _get_records_and_feedback_otel correctly extracts kwargs from span attributes.
+
+        This test verifies that the kwargs prefix logic correctly extracts individual
+        kwargs parameters from span attributes that use the SpanAttributes.CALL.KWARGS prefix.
+        """
+        # Create a test event with multiple kwargs attributes
+        event_id = "test_kwargs_event"
+        record_id = "test_kwargs_record"
+        start_time = "2025-04-11 10:19:55.993955"
+        end_time = "2025-04-11 10:19:58.166175"
+
+        # Create a custom event with multiple kwargs attributes
+        event_data = {
+            "event_id": event_id,
+            "record": {
+                "kind": 1,
+                "name": "__main__.TestApp.query",
+                "parent_span_id": "",
+                "status": "STATUS_CODE_UNSET",
+            },
+            "record_attributes": {
+                "ai.observability.app_name": self.app_name,
+                "ai.observability.app_version": self.app_version,
+                "ai.observability.app_id": self.app_id,
+                "ai.observability.record_id": record_id,
+                "ai.observability.span_type": SpanAttributes.SpanType.RECORD_ROOT.value,
+                "ai.observability.record_root.input": "What is the weather?",
+                "ai.observability.record_root.output": "It's sunny today",
+                # Multiple kwargs attributes with the prefix
+                "ai.observability.call.kwargs.temperature": 0.7,
+                "ai.observability.call.kwargs.max_tokens": 100,
+                "ai.observability.call.kwargs.model": "gpt-4",
+                "ai.observability.call.kwargs.top_p": 0.9,
+                "ai.observability.call.kwargs.frequency_penalty": 0.0,
+                "ai.observability.call.return": "It's sunny today",
+            },
+            "record_type": "SPAN",
+            "resource_attributes": {
+                "service.name": "trulens",
+                "telemetry.sdk.language": "python",
+                "telemetry.sdk.name": "opentelemetry",
+                "telemetry.sdk.version": "1.31.0",
+                "ai.observability.app_name": self.app_name,
+                "ai.observability.app_version": self.app_version,
+                "ai.observability.app_id": self.app_id,
+            },
+            "start_timestamp": start_time,
+            "timestamp": end_time,
+            "trace": {
+                "parent_id": "",
+                "span_id": f"span_{record_id}",
+                "trace_id": "random_trace_id",
+            },
+        }
+
+        event = Event.model_validate(event_data)
+
+        # Insert the event into the database
+        self.db.insert_event(event)
+
+        # Get records and feedback
+        df, feedback_cols = self.db._get_records_and_feedback_otel()
+
+        # Verify dataframe structure
+        row = self._verify_dataframe_structure(df)
+
+        # Verify basic record information
+        self._verify_record_information(
+            row,
+            self.app_name,
+            self.app_version,
+            "What is the weather?",
+            "It's sunny today",
+            expected_num_events=1,
+        )
+
+        # This is the main test - verify that kwargs are properly extracted
+        # Since this is a record_root span, there should be no feedback calls,
+        # but if there were eval spans, the kwargs would be in the feedback calls
+        # For now, we can verify the functionality by checking the call_data structure
+        # by looking at the internal data structures used during processing
+
+        # We'll test this by creating a mock eval span and verifying its call data
+        eval_event_data = {
+            "event_id": "eval_event_id",
+            "record": {
+                "kind": 1,
+                "name": "feedback_function",
+                "parent_span_id": f"span_{record_id}",
+                "status": "STATUS_CODE_UNSET",
+            },
+            "record_attributes": {
+                "ai.observability.app_name": self.app_name,
+                "ai.observability.app_version": self.app_version,
+                "ai.observability.app_id": self.app_id,
+                "ai.observability.record_id": record_id,
+                "ai.observability.span_type": SpanAttributes.SpanType.EVAL.value,
+                "ai.observability.eval.metric_name": "test_metric",
+                "ai.observability.eval.score": 0.8,
+                # Multiple kwargs attributes for the feedback function
+                "ai.observability.call.kwargs.question": "What is the weather?",
+                "ai.observability.call.kwargs.answer": "It's sunny today",
+                "ai.observability.call.kwargs.context": "Weather information",
+                "ai.observability.call.kwargs.criteria": "relevance",
+                "ai.observability.call.return": 0.8,
+            },
+            "record_type": "SPAN",
+            "resource_attributes": {
+                "service.name": "trulens",
+                "telemetry.sdk.language": "python",
+                "telemetry.sdk.name": "opentelemetry",
+                "telemetry.sdk.version": "1.31.0",
+            },
+            "start_timestamp": start_time,
+            "timestamp": end_time,
+            "trace": {
+                "parent_id": f"span_{record_id}",
+                "span_id": "eval_span_id",
+                "trace_id": "random_trace_id",
+            },
+        }
+
+        eval_event = Event.model_validate(eval_event_data)
+        self.db.insert_event(eval_event)
+
+        # Get records and feedback again with the eval span
+        df, feedback_cols = self.db._get_records_and_feedback_otel()
+
+        # Verify feedback columns exist
+        self.assertEqual(len(feedback_cols), 1)
+        self.assertEqual(feedback_cols[0], "test_metric")
+
+        # Verify the feedback calls contain properly extracted kwargs
+        row = df.iloc[0]
+        feedback_calls = row["test_metric_calls"]
+
+        self.assertEqual(len(feedback_calls), 1)
+        call_data = feedback_calls[0]
+
+        # Verify the call data structure
+        self.assertIn("args", call_data)
+
+        # This is the key test - verify that kwargs were properly extracted
+        extracted_kwargs = call_data["args"]
+
+        # Verify that all expected kwargs are present and have correct values
+        expected_kwargs = {
+            "question": "What is the weather?",
+            "answer": "It's sunny today",
+            "context": "Weather information",
+            "criteria": "relevance",
+        }
+
+        for key, expected_value in expected_kwargs.items():
+            self.assertIn(
+                key, extracted_kwargs, f"Expected kwargs key '{key}' not found"
+            )
+            self.assertEqual(
+                extracted_kwargs[key],
+                expected_value,
+                f"Expected kwargs['{key}'] to be '{expected_value}', got '{extracted_kwargs[key]}'",
+            )
+
+        # Verify that no unexpected keys are present (should only have the expected kwargs)
+        self.assertEqual(
+            set(extracted_kwargs.keys()),
+            set(expected_kwargs.keys()),
+            "Extracted kwargs contains unexpected keys",
+        )
