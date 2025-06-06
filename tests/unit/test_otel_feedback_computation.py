@@ -226,7 +226,9 @@ class TestOtelFeedbackComputation(OtelTestCase):
             self.assertEqual(curr[SpanAttributes.EVAL_ROOT.SCORE], 0.9)
         for i in range(len(expected_case_number)):
             self.assertEqual(
-                eval_root_record_attributes[i][SpanAttributes.EVAL.METRIC_NAME],
+                eval_root_record_attributes[i][
+                    SpanAttributes.EVAL_ROOT.METRIC_NAME
+                ],
                 f"blah{expected_case_number[i]}",
             )
 
@@ -358,7 +360,7 @@ class TestOtelFeedbackComputation(OtelTestCase):
             "record_attributes": [
                 {
                     SpanAttributes.SPAN_TYPE: SpanAttributes.SpanType.EVAL_ROOT,
-                    SpanAttributes.EVAL.METRIC_NAME: "feedback1",
+                    SpanAttributes.EVAL_ROOT.METRIC_NAME: "feedback1",
                     SpanAttributes.RECORD_ID: "record_id1",
                     SpanAttributes.EVAL_ROOT.SPAN_GROUP: "span_group1",
                     SpanAttributes.EVAL_ROOT.ARGS_SPAN_ID + ".a": "span_id1a",
@@ -456,53 +458,66 @@ class TestOtelFeedbackComputation(OtelTestCase):
         TruSession().force_flush()
         # Compare results to expected.
         events = self._get_events()
-        self.assertEqual(num_events + 1, len(events))
+        self.assertEqual(num_events + 2, len(events))
         self.assertEqual(
             SpanAttributes.SpanType.RECORD_ROOT,
             events.iloc[0]["record_attributes"][SpanAttributes.SPAN_TYPE],
         )
         record_root_span_id = events.iloc[0]["trace"]["span_id"]
-        last_event_record_attributes = events.iloc[-1]["record_attributes"]
+        eval_root_record_attributes = events.iloc[-2]["record_attributes"]
         self.assertEqual(
             SpanAttributes.SpanType.EVAL_ROOT,
-            last_event_record_attributes[SpanAttributes.SPAN_TYPE],
+            eval_root_record_attributes[SpanAttributes.SPAN_TYPE],
         )
         self.assertEqual(
             "custom",
-            last_event_record_attributes[SpanAttributes.EVAL.METRIC_NAME],
+            eval_root_record_attributes[SpanAttributes.EVAL_ROOT.METRIC_NAME],
         )
         self.assertEqual(
             0.42,
-            last_event_record_attributes[SpanAttributes.EVAL_ROOT.SCORE],
+            eval_root_record_attributes[SpanAttributes.EVAL_ROOT.SCORE],
         )
         self.assertEqual(
             record_root_span_id,
-            last_event_record_attributes[
+            eval_root_record_attributes[
                 SpanAttributes.EVAL_ROOT.ARGS_SPAN_ID + ".input"
             ],
         )
         self.assertEqual(
             SpanAttributes.RECORD_ROOT.INPUT,
-            last_event_record_attributes[
+            eval_root_record_attributes[
                 SpanAttributes.EVAL_ROOT.ARGS_SPAN_ATTRIBUTE + ".input"
             ],
         )
         self.assertEqual(
             record_root_span_id,
-            last_event_record_attributes[
+            eval_root_record_attributes[
                 SpanAttributes.EVAL_ROOT.ARGS_SPAN_ID + ".output"
             ],
         )
         self.assertEqual(
             SpanAttributes.RECORD_ROOT.OUTPUT,
-            last_event_record_attributes[
+            eval_root_record_attributes[
                 SpanAttributes.EVAL_ROOT.ARGS_SPAN_ATTRIBUTE + ".output"
             ],
         )
         self.assertFalse(
-            last_event_record_attributes[
+            eval_root_record_attributes[
                 SpanAttributes.EVAL_ROOT.HIGHER_IS_BETTER
             ],
+        )
+        eval_record_attributes = events.iloc[-1]["record_attributes"]
+        self.assertEqual(
+            SpanAttributes.SpanType.EVAL,
+            eval_record_attributes[SpanAttributes.SPAN_TYPE],
+        )
+        self.assertEqual(
+            "custom",
+            eval_record_attributes[SpanAttributes.EVAL.METRIC_NAME],
+        )
+        self.assertEqual(
+            0.42,
+            eval_record_attributes[SpanAttributes.EVAL.SCORE],
         )
         # Check that when trying to compute feedbacks again, nothing happens.
         old_num_events = len(self._get_events())
@@ -519,7 +534,7 @@ class TestOtelFeedbackComputation(OtelTestCase):
         # Wait for there to be a feedback computed.
         self._wait(lambda: len(self._get_events()) > num_events)
         events = self._get_events()
-        self.assertEqual(num_events + 1, len(events))
+        self.assertEqual(num_events + 2, len(events))
         self.assertEqual(
             SpanAttributes.SpanType.RECORD_ROOT,
             events.iloc[0]["record_attributes"][SpanAttributes.SPAN_TYPE],
@@ -544,12 +559,12 @@ class TestOtelFeedbackComputation(OtelTestCase):
             "a": Selector(
                 span_type=SpanAttributes.SpanType.RECORD_ROOT,
                 function_attribute="xs",
-                call_feedback_function_per_entry_in_list=True,
+                collect_list=False,
             ),
             "b": Selector(
                 span_type=SpanAttributes.SpanType.RECORD_ROOT,
                 function_attribute="ys",
-                call_feedback_function_per_entry_in_list=True,
+                collect_list=False,
             ),
         })
 

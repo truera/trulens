@@ -58,7 +58,7 @@ class TestOtelRagTriad(OtelTestCase):
         # Create Feedbacks.
         f_groundedness = (
             Feedback(mock_groundedness, name="Groundedness")
-            .on_context(call_feedback_function_per_entry_in_list=False)
+            .on_context(collect_list=True)
             .on_output()
         )
         f_answer_relevance = (
@@ -69,7 +69,7 @@ class TestOtelRagTriad(OtelTestCase):
         f_context_relevance = (
             Feedback(mock_context_relevance, name="Context Relevance")
             .on_input()
-            .on_context(call_feedback_function_per_entry_in_list=True)
+            .on_context(collect_list=False)
             .aggregate(np.mean)
         )
         # Create app.
@@ -109,7 +109,7 @@ class TestOtelRagTriad(OtelTestCase):
         self.assertListEqual(
             ["Answer Relevance", "Context Relevance", "Groundedness"],
             sorted([
-                curr["record_attributes"][SpanAttributes.EVAL.METRIC_NAME]
+                curr["record_attributes"][SpanAttributes.EVAL_ROOT.METRIC_NAME]
                 for curr in eval_roots
             ]),
         )
@@ -120,9 +120,9 @@ class TestOtelRagTriad(OtelTestCase):
                 for curr in eval_roots
             ]),
         )
-        self.assertEqual(4, len(evals))
+        self.assertEqual(6, len(evals))
         self.assertListEqual(
-            [0, 0.25, 0.75, 1],
+            [0, 0.25, 0.75, 0.98, 0.99, 1],
             sorted([
                 curr["record_attributes"][SpanAttributes.EVAL.SCORE]
                 for curr in evals

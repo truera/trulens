@@ -4,7 +4,7 @@ trulens:
   lows: {}
 trulens.benchmark:
   __class__: builtins.module
-  __version__: 1.4.9
+  __version__: 1.5.0
   highs: {}
   lows:
     __version__: builtins.str
@@ -60,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 1.4.9
+  __version__: 1.5.0
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -147,6 +147,7 @@ trulens.core.app.App:
     record_ingest_mode: trulens.core.schema.app.RecordIngestMode
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
+    retrieve_feedback_results: builtins.function
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
     select_context: builtins.classmethod
@@ -559,6 +560,7 @@ trulens.core.feedback.feedback.Feedback:
     aggregate: builtins.function
     aggregator: typing.Union[trulens.core.utils.pyschema.Function, trulens.core.utils.pyschema.Method,
       builtins.NoneType]
+    check_otel_selectors: builtins.function
     check_selectors: builtins.function
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
@@ -654,7 +656,7 @@ trulens.core.feedback.feedback_function_input.FeedbackFunctionInput:
   - builtins.object
   __class__: builtins.type
   attributes:
-    call_feedback_function_per_entry_in_list: builtins.bool
+    collect_list: builtins.bool
     span_attribute: builtins.NoneType
     span_id: builtins.NoneType
     value: builtins.NoneType
@@ -681,7 +683,7 @@ trulens.core.feedback.selector.Selector:
   - builtins.object
   __class__: builtins.type
   attributes:
-    call_feedback_function_per_entry_in_list: builtins.bool
+    collect_list: builtins.bool
     describes_same_spans: builtins.function
     function_attribute: builtins.NoneType
     function_name: builtins.NoneType
@@ -1305,7 +1307,7 @@ trulens.core.session.TruSession:
     stop_dashboard: builtins.function
     stop_evaluator: builtins.function
     update_record: builtins.function
-    wait_for_record: builtins.function
+    wait_for_records: builtins.function
 trulens.core.utils:
   __class__: builtins.module
   highs: {}
@@ -1376,6 +1378,7 @@ trulens.core.utils.evaluator.Evaluator:
   - builtins.object
   __class__: builtins.type
   attributes:
+    compute_now: builtins.function
     start_evaluator: builtins.function
     stop_evaluator: builtins.function
 trulens.core.utils.imports:
@@ -1891,7 +1894,7 @@ trulens.core.utils.trulens.Other:
   attributes: {}
 trulens.dashboard:
   __class__: builtins.module
-  __version__: 1.4.9
+  __version__: 1.5.0
   highs:
     run_dashboard: builtins.function
     run_dashboard_sis: builtins.function
@@ -2202,7 +2205,7 @@ trulens.dashboard.ux.styles.ResultCategoryType:
     value: enum.property
 trulens.feedback:
   __class__: builtins.module
-  __version__: 1.4.9
+  __version__: 1.5.0
   highs:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
@@ -3105,7 +3108,7 @@ trulens.feedback.v2.provider.base.Provider:
     tru_class_info: trulens.core.utils.pyschema.Class
 trulens.hotspots:
   __class__: builtins.module
-  __version__: 1.4.9
+  __version__: 1.5.0
   highs:
     HotspotsConfig: builtins.type
     get_skipped_columns: builtins.function

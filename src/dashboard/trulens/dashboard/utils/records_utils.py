@@ -76,7 +76,7 @@ def display_feedback_call(
         ])
         df["meta"] = pd.Series([call[i]["meta"] for i in range(len(call))])
         df = df.join(df.meta.apply(lambda m: pd.Series(m))).drop(
-            columns="metadata"
+            columns=["meta", "output", "metadata"], errors="ignore"
         )
 
         # drop all empty columns

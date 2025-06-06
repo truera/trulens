@@ -99,7 +99,8 @@ class TestOtelLegacyCompatibility(OtelTestCase):
         # Verify recording.
         self.assertEqual(1, len(recording))
         self.assertEqual(
-            record_attributes[SpanAttributes.RECORD_ID], recording.get()
+            record_attributes[SpanAttributes.RECORD_ID],
+            recording.get().record_id,
         )
 
     @pytest.mark.optional
