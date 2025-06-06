@@ -12,6 +12,7 @@ from trulens.dashboard.constants import RECORDS_PAGE_NAME as page_name
 from trulens.dashboard.utils import streamlit_compat
 from trulens.dashboard.utils.dashboard_utils import ST_RECORDS_LIMIT
 from trulens.dashboard.utils.dashboard_utils import _get_event_otel_spans
+from trulens.dashboard.utils.dashboard_utils import _show_no_records_error
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
 from trulens.dashboard.utils.dashboard_utils import get_records_and_feedback
 from trulens.dashboard.utils.dashboard_utils import is_sis_compatibility_enabled
@@ -21,7 +22,6 @@ from trulens.dashboard.utils.dashboard_utils import (
 from trulens.dashboard.utils.dashboard_utils import render_app_version_filters
 from trulens.dashboard.utils.dashboard_utils import render_sidebar
 from trulens.dashboard.utils.dashboard_utils import set_page_config
-from trulens.dashboard.utils.dashboard_utils import _show_no_records_error
 from trulens.dashboard.utils.records_utils import _render_feedback_call
 from trulens.dashboard.utils.records_utils import _render_feedback_pills
 from trulens.dashboard.utils.streamlit_compat import st_code
