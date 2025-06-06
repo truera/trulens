@@ -76,7 +76,7 @@ def display_feedback_call(
         ])
         df["meta"] = pd.Series([call[i]["meta"] for i in range(len(call))])
         df = df.join(df.meta.apply(lambda m: pd.Series(m))).drop(
-            columns=["meta", "output", "metadata"]
+            columns=["meta", "output", "metadata"], errors="ignore"
         )
 
         # Filter to only show the latest results for calls with the same args_span_id and args_span_attribute

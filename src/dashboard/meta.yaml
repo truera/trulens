@@ -1,5 +1,5 @@
 {% set name = "trulens-dashboard" %}
-{% set version = "1.4.9" %}
+{% set version = "1.5.1" %}
 
 package:
   name: {{ name|lower }}
@@ -11,7 +11,7 @@ source:
   {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-dashboard/#files
-  sha256: 48f0a488ec37996aa21f7dcd495c945e24a02b57002920de76222c24765694fa
+  sha256: f9247bcaf020518db4a8dc4519976806452acf3b41fecbfa7605f2d7feae8797
   {% endif %}
 
 build:

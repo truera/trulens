@@ -1,5 +1,5 @@
 {% set name = "trulens-core" %}
-{% set version = "1.4.9" %}
+{% set version = "1.5.1" %}
 
 package:
   name: {{ name|lower }}
@@ -11,7 +11,7 @@ source:
   {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-core/#files
-  sha256: 9890e15fd493846d21a096fe01823e0ff5bebdfd4c95a22976d4ae8a16e1c3a2
+  sha256: 58f2efa8d4734c0b67b926236bab64215139f4333a21d7c4e739be207a9a6f9a
   {% endif %}
 
 build:
@@ -44,6 +44,7 @@ requirements:
     - requests >=2.31.0,<3.0.0
     - packaging >=23.0
     - importlib-resources >=6.0.0
+    - wrapt >=1.17.0
   run_constrained:
     - tqdm >=4.2.0
     - openai >=1.0.0
