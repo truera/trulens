@@ -21,7 +21,7 @@ from trulens.dashboard.utils.dashboard_utils import (
 from trulens.dashboard.utils.dashboard_utils import render_app_version_filters
 from trulens.dashboard.utils.dashboard_utils import render_sidebar
 from trulens.dashboard.utils.dashboard_utils import set_page_config
-from trulens.dashboard.utils.dashboard_utils import show_no_records_error
+from trulens.dashboard.utils.dashboard_utils import _show_no_records_error
 from trulens.dashboard.utils.records_utils import _render_feedback_call
 from trulens.dashboard.utils.records_utils import _render_feedback_pills
 from trulens.dashboard.utils.streamlit_compat import st_code
@@ -591,7 +591,7 @@ def render_records(app_name: str):
             st.error(f"No records found for app version(s): {versions_str}.")
         else:
             # Check for cross-format records before showing generic error
-            show_no_records_error(app_name=app_name, app_ids=app_ids)
+            _show_no_records_error(app_name=app_name, app_ids=app_ids)
         return
     elif records_limit is not None and len(records_df) >= records_limit:
         cols = st_columns([0.9, 0.1], vertical_alignment="center")

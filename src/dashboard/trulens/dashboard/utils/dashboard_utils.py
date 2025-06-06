@@ -685,7 +685,7 @@ def _check_cross_format_records(
     return otel_count, non_otel_count
 
 
-def show_no_records_error(
+def _show_no_records_error(
     app_name: Optional[str] = None, app_ids: Optional[List[str]] = None
 ) -> None:
     """Show helpful error message when no records found, with cross-format record counts."""

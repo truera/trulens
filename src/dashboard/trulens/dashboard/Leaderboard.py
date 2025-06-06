@@ -16,7 +16,7 @@ from trulens.dashboard.utils import dashboard_utils
 from trulens.dashboard.utils import metadata_utils
 from trulens.dashboard.utils import streamlit_compat
 from trulens.dashboard.utils.dashboard_utils import is_sis_compatibility_enabled
-from trulens.dashboard.utils.dashboard_utils import show_no_records_error
+from trulens.dashboard.utils.dashboard_utils import _show_no_records_error
 from trulens.dashboard.utils.streamlit_compat import st_columns
 from trulens.dashboard.ux import components as dashboard_components
 from trulens.dashboard.ux import styles as dashboard_styles
@@ -795,7 +795,7 @@ def render_leaderboard(app_name: str):
     )
     if records_df.empty:
         # Check for cross-format records before showing generic error
-        show_no_records_error(app_name=app_name, app_ids=app_ids)
+        _show_no_records_error(app_name=app_name, app_ids=app_ids)
         return
     elif records_limit is not None and len(records_df) >= records_limit:
         cols = st_columns([0.9, 0.1], vertical_alignment="center")
