@@ -106,7 +106,7 @@ def run_dashboard(
         "--server.headless=True",
         "--theme.base=dark",
         "--theme.primaryColor=#E0735C",
-        "--theme.font=sans serif",
+        "--theme.font=sans-serif",
     ]
     if _watch_changes:
         args.extend([
