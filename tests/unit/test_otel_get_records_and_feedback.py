@@ -94,7 +94,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         self.STATIC_FEEDBACK_NAME = "answer_relevance"
         # NOTE: there are 2 total calls for the feedback column, see:
         # test_otel_spans/{eval_span_1.json, eval_span_2.json}
-        self.STATIC_NUM_CALLS = 2
+        self.STATIC_NUM_CALLS = 3
         self.STATIC_COST_CURRENCY = "USD"
 
         # Constants for generated tests
@@ -102,7 +102,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         self.GEN_ANSWER = "Answer to: What is the capital of France?"
         self.GEN_FEEDBACK_NAME = "groundedness"
         # NOTE: there are 3 calls: see tests.util.mock_otel_feedback_computation.feedback_function
-        self.GEN_NUM_CALLS = 3
+        self.GEN_NUM_CALLS = 4
         self.GEN_COST_CURRENCY = "USD"
 
     # Helper methods
