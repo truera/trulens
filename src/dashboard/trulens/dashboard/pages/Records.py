@@ -12,6 +12,7 @@ from trulens.dashboard.constants import RECORDS_PAGE_NAME as page_name
 from trulens.dashboard.utils import streamlit_compat
 from trulens.dashboard.utils.dashboard_utils import ST_RECORDS_LIMIT
 from trulens.dashboard.utils.dashboard_utils import _get_event_otel_spans
+from trulens.dashboard.utils.dashboard_utils import _show_no_records_error
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
 from trulens.dashboard.utils.dashboard_utils import get_records_and_feedback
 from trulens.dashboard.utils.dashboard_utils import is_sis_compatibility_enabled
@@ -589,7 +590,8 @@ def render_records(app_name: str):
             versions_str = "**`" + "`**, **`".join(app_versions) + "`**"
             st.error(f"No records found for app version(s): {versions_str}.")
         else:
-            st.error(f"No records found for app `{app_name}`.")
+            # Check for cross-format records before showing generic error
+            _show_no_records_error(app_name=app_name, app_ids=app_ids)
         return
     elif records_limit is not None and len(records_df) >= records_limit:
         cols = st_columns([0.9, 0.1], vertical_alignment="center")
