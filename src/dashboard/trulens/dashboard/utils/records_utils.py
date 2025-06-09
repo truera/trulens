@@ -116,14 +116,6 @@ def display_feedback_call(
         st.warning("No feedback details found.")
 
 
-def _drop_metadata_columns(
-    df: pd.DataFrame, columns_to_drop: List[str]
-) -> pd.DataFrame:
-    """Helper to drop metadata columns that exist in the dataframe."""
-    existing_columns = [col for col in columns_to_drop if col in df.columns]
-    return df.drop(columns=existing_columns) if existing_columns else df
-
-
 def _filter_duplicate_span_calls(df: pd.DataFrame) -> pd.DataFrame:
     """Filter to only show rows from the most recent eval_root_id for duplicate evaluations.
 
@@ -178,9 +170,13 @@ def _filter_duplicate_span_calls(df: pd.DataFrame) -> pd.DataFrame:
         # Filter and clean up
         if indices_to_keep:
             filtered_df = df.loc[indices_to_keep]
-            return _drop_metadata_columns(
-                filtered_df,
-                ["eval_root_id", "args_span_id", "args_span_attribute"],
+            return filtered_df.drop(
+                columns=[
+                    "eval_root_id",
+                    "args_span_id",
+                    "args_span_attribute",
+                ],
+                errors="ignore",
             )
     else:
         # Simple case: just keep rows from the most recent eval_root_id
@@ -188,7 +184,7 @@ def _filter_duplicate_span_calls(df: pd.DataFrame) -> pd.DataFrame:
             df["timestamp"].idxmax(), "eval_root_id"
         ]
         filtered_df = df[df["eval_root_id"] == most_recent_eval_root_id].copy()
-        return _drop_metadata_columns(filtered_df, ["eval_root_id"])
+        return filtered_df.drop(columns=["eval_root_id"], errors="ignore")
 
     return df
 
