@@ -328,6 +328,7 @@ def _build_grid_options(
     agg_diff_col: str,
     diff_cols: List[str],
     record_id_cols: List[str],
+    num_comparators: int,
 ):
     from st_aggrid.grid_options_builder import GridOptionsBuilder
 
@@ -347,15 +348,27 @@ def _build_grid_options(
         hide=True,
         filter="agSetColumnFilter",
     )
+
+    # Determine tooltip text based on number of comparators
+    if num_comparators == 2:
+        agg_tooltip = "Mean Diff: Average of absolute differences between the two app versions"
+        diff_tooltip = "Diff: Absolute difference between the two app versions (|version1 - version2|)"
+    else:
+        agg_tooltip = f"Mean Variance: Average variance across all {num_comparators} app versions"
+        diff_tooltip = f"Variance: Statistical variance of values across all {num_comparators} app versions"
+
     gb.configure_column(
         agg_diff_col,
         cellClassRules=diff_cell_rules,
         filter="agNumberColumnFilter",
+        tooltipField=agg_diff_col,
+        headerTooltip=agg_tooltip,
     )
     gb.configure_columns(
         diff_cols,
         cellClassRules=diff_cell_rules,
         filter="agNumberColumnFilter",
+        headerTooltip=diff_tooltip,
     )
 
     gb.configure_grid_options(
@@ -377,6 +390,7 @@ def _render_grid(
     agg_diff_col: str,
     diff_cols: List[str],
     record_id_cols: List[str],
+    num_comparators: int,
     grid_key: Optional[str] = None,
 ):
     if not is_sis_compatibility_enabled():
@@ -399,6 +413,7 @@ def _render_grid(
                     agg_diff_col=agg_diff_col,
                     diff_cols=diff_cols,
                     record_id_cols=record_id_cols,
+                    num_comparators=num_comparators,
                 ),
                 custom_css={**aggrid_css, **radio_button_css, **diff_cell_css},
                 update_on=["selectionChanged"],
@@ -409,11 +424,31 @@ def _render_grid(
             # Fallback to st.dataframe if st_aggrid is not installed
             pass
 
-    column_order = ["input", *diff_cols, *agg_diff_col]
+    # Configure column help text for st.dataframe fallback
+    column_config = {}
+    if num_comparators == 2:
+        agg_help = (
+            "Average of absolute differences between the two app versions"
+        )
+        diff_help = "Absolute difference between the two app versions (|version1 - version2|)"
+    else:
+        agg_help = f"Average variance across all {num_comparators} app versions"
+        diff_help = f"Statistical variance of values across all {num_comparators} app versions"
+
+    column_config[agg_diff_col] = st.column_config.NumberColumn(
+        help=agg_help, format="%.3f"
+    )
+    for diff_col in diff_cols:
+        column_config[diff_col] = st.column_config.NumberColumn(
+            help=diff_help, format="%.3f"
+        )
+
+    column_order = ["input", *diff_cols, agg_diff_col]
     column_order = [col for col in column_order if col in df.columns]
     event = st.dataframe(
         df[column_order],
         column_order=column_order,
+        column_config=column_config,
         selection_mode="single-row",
         on_select="rerun",
         hide_index=True,
@@ -507,6 +542,7 @@ def _render_shared_records(
         agg_diff_col,
         diff_cols,
         record_id_cols,
+        len(col_data),
         grid_key="compare_grid",
     )
 
