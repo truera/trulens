@@ -338,7 +338,7 @@ def _get_query_args_handler(key: str, max_options: Optional[int] = None):
         if key in st.query_params:
             del st.query_params[key]
         return
-    if isinstance(new_val, list):
+    elif isinstance(new_val, list):
         if len(new_val) == max_options:
             # don't need to explicitly add query args as default is all options
             if key in st.query_params:
