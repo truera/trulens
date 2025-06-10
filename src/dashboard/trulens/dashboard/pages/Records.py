@@ -548,6 +548,7 @@ def render_records(app_name: str):
     # Get app versions
     record_query = st.text_input(
         "Search Records",
+        value=st.session_state.get(f"{page_name}.record_search", ""),
         key=f"{page_name}.record_search",
         on_change=_handle_record_query_change,
     )

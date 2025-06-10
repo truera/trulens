@@ -235,6 +235,8 @@ def _handle_app_selection(app_names: List[str]):
 def render_refresh_button():
     if st.sidebar.button("↻ Refresh Data", use_container_width=True):
         st.cache_data.clear()
+        st.query_params.clear()
+        st.session_state.clear()
         st.rerun()
 
 
@@ -401,6 +403,7 @@ def render_app_version_filters(
         active_adv_filters = []
     if version_str_query := col0.text_input(
         "Search App Version",
+        value=st.session_state.get("filter.search", ""),
         key="filter.search",
         on_change=_get_query_args_handler,
         args=("filter.search",),
