@@ -13,16 +13,6 @@ class TestDataFactory:
     """Factory for creating test data across all Streamlit tests."""
 
     @staticmethod
-    def create_basic_app_data(app_ids=None, size=2):
-        """Create basic app data structure."""
-        app_ids = app_ids or [f"app_{i + 1}" for i in range(size)]
-        return {
-            "app_ids": app_ids,
-            "app_names": ["Test App"] * size,
-            "app_versions": [f"v{i + 1}.0" for i in range(size)],
-        }
-
-    @staticmethod
     def create_versions_df(app_ids=None, versions=None, names=None):
         """Create a mock versions dataframe."""
         app_ids = app_ids or ["app_1", "app_2"]
@@ -398,53 +388,6 @@ class MockManager:
             with MockManager.mock_leaderboard_components():
                 with MockManager.mock_otel_tracing():
                     yield
-
-
-class StreamlitTestScenarios:
-    """Common test scenarios and patterns."""
-
-    @staticmethod
-    def test_component_with_no_data(component_function: Callable):
-        """Test a component with no data."""
-        with MockManager.mock_all_common_dependencies(empty_data=True):
-
-            def test_app():
-                component_function()
-
-            app = AppTestHelper.create_and_run_app(test_app)
-            AppTestHelper.assert_no_errors(app)
-            return app
-
-    @staticmethod
-    def test_component_with_sample_data(
-        component_function: Callable, mock_data=None
-    ):
-        """Test a component with sample data."""
-        with MockManager.mock_all_common_dependencies(mock_data):
-
-            def test_app():
-                component_function()
-
-            app = AppTestHelper.create_and_run_app(test_app)
-            AppTestHelper.assert_no_errors(app)
-            return app
-
-    @staticmethod
-    def test_component_error_handling(
-        component_function: Callable, error_message: str
-    ):
-        """Test component error handling."""
-
-        def test_app():
-            try:
-                component_function()
-            except Exception:
-                import streamlit as st
-
-                st.error(error_message)
-
-        app = AppTestHelper.create_and_run_app(test_app, should_raise=True)
-        return app
 
 
 def create_mock_data_dict(app_ids=None, feedback_names=None, size=2):

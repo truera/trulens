@@ -14,7 +14,7 @@ class TestStreamlitComponents:
     @pytest.fixture
     def mock_data(self):
         """Mock data for testing streamlit components."""
-        return create_mock_data_dict(include_app_json=True)
+        return create_mock_data_dict()
 
     def test_trulens_leaderboard_no_records(self):
         """Test trulens_leaderboard function with no records."""
@@ -45,7 +45,8 @@ class TestStreamlitComponents:
     def test_trulens_leaderboard_with_app_ids_filter(self, mock_data):
         """Test trulens_leaderboard function with specific app_ids filter."""
         filtered_data = create_mock_data_dict(
-            app_ids=["app_1"], size=1, include_app_json=True
+            app_ids=["app_1"],
+            size=1,
         )
 
         with MockManager.mock_tru_session(mock_data=filtered_data):
@@ -89,7 +90,6 @@ class TestStreamlitComponents:
         # Create data with distance feedback
         distance_data = create_mock_data_dict(
             feedback_names=["feedback_score", "relevance", "distance_score"],
-            include_app_json=True,
         )
 
         # Modify the records to include distance scores
@@ -170,7 +170,7 @@ class TestStreamlitComponentsIntegration:
     @pytest.fixture
     def mock_data(self):
         """Mock data for testing streamlit components."""
-        return create_mock_data_dict(include_app_json=True)
+        return create_mock_data_dict()
 
     def test_component_state_management(self, mock_data):
         """Test that component state is properly managed."""
