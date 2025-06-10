@@ -447,9 +447,7 @@ class StreamlitTestScenarios:
         return app
 
 
-def create_mock_data_dict(
-    app_ids=None, feedback_names=None, include_app_json=False, size=2
-):
+def create_mock_data_dict(app_ids=None, feedback_names=None, size=2):
     """Create a complete mock data dictionary for tests."""
     app_ids = app_ids or ["app_1", "app_2"]
     feedback_names = feedback_names or ["feedback_score", "relevance"]

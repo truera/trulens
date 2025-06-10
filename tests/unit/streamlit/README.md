@@ -66,7 +66,7 @@ pytest tests/unit/streamlit/ --cov=trulens.dashboard.streamlit --cov-report=html
 ### 🟢 Nice to Have (Lower Priority)
 
 - Accessibility compliance
-- Internationalization 
+- Internationalization
 - Visual regression testing
 - Mobile responsiveness
 
@@ -106,7 +106,7 @@ def test_component_with_scenario(self, mock_data):
         def test_app():
             # Your component test code
             pass
-        
+
         app = AppTestHelper.create_and_run_app(test_app)
         AppTestHelper.assert_no_errors(app)
         # Add specific assertions
@@ -155,4 +155,4 @@ app = AppTestHelper.create_and_run_app(test_function, should_raise=True)
 
 ---
 
-💡 **Tip**: Start with existing test patterns in `test_streamlit_utils.py` before creating new testing approaches. 
+💡 **Tip**: Start with existing test patterns in `test_streamlit_utils.py` before creating new testing approaches.
