@@ -332,7 +332,12 @@ def get_app_versions(app_name: str):
 
 
 def _get_query_args_handler(key: str, max_options: Optional[int] = None):
-    new_val = st.session_state.get(key)
+    new_val = st.session_state.get(key, None)
+    if not new_val:
+        # if no new value, remove query param
+        if key in st.query_params:
+            del st.query_params[key]
+        return
     if isinstance(new_val, list):
         if len(new_val) == max_options:
             # don't need to explicitly add query args as default is all options
@@ -401,9 +406,10 @@ def render_app_version_filters(
         active_adv_filters = [k for k, v in other_query_params_kv.items() if v]
     else:
         active_adv_filters = []
+
+    st.session_state.setdefault("filter.search", "")
     if version_str_query := col0.text_input(
         "Search App Version",
-        value=st.session_state.get("filter.search", ""),
         key="filter.search",
         on_change=_get_query_args_handler,
         args=("filter.search",),
