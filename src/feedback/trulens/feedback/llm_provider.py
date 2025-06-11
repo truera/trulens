@@ -15,6 +15,9 @@ from trulens.feedback import generated as feedback_generated
 from trulens.feedback import prompts as feedback_prompts
 from trulens.feedback.v2 import feedback as feedback_v2
 
+from .prompts import GOAL_COMPLETENESS_SYSTEM_PROMPT
+from .prompts import TRAJECTORY_EVAL_SYSTEM_PROMPT
+
 logger = logging.getLogger(__name__)
 
 
@@ -2184,3 +2187,83 @@ class LLMProvider(core_provider.Provider):
         )
 
         return average_groundedness_score, {"reasons": reasons_str}
+
+    def experimental_trajectory_execution_with_cot_reasons(
+        self,
+        trace: str,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+    ) -> Tuple[float, Dict]:
+        """
+        Evaluate the quality of an agentic execution trace using a rubric focused on process quality and progress toward the user goal.
+
+        The rubric is as follows:
+            0: Agents made wrong or unnecessary calls. Critical steps were skipped or repeated without purpose. Generated outputs were off-topic, hallucinated, or contradictory. Confusion between agent roles. User goal was not meaningfully addressed.
+            1: Several unnecessary or misordered agent/tool use. Some factual errors or under-specified steps. Redundant or partially irrelevant tool calls. Weak or ambiguous agent outputs at one or more steps.
+            2: Some minor inefficiencies or unclear transitions. Moments of stalled progress, but ultimately resolved. The agents mostly fulfilled their roles, and the conversation mostly fulfilled answering the query.
+            3: Agent handoffs were well-timed and logical. Tool calls were necessary, sufficient, and accurate. No redundancies, missteps, or dead ends. Progress toward the user query was smooth and continuous. No hallucination or incorrect outputs.
+
+        Args:
+            trace (str): The execution trace to evaluate (e.g., as a JSON string or formatted log).
+            min_score_val (int): Minimum score value (default 0).
+            max_score_val (int): Maximum score value (default 3).
+            temperature (float): LLM temperature for the evaluation (default 0.0).
+
+        Returns:
+            Tuple[float, Dict]: Normalized score and a dictionary with reasoning/explanation.
+
+        Example:
+            >>> provider = OpenAI()
+            >>> score, reasons = provider.traj_execution_with_cot_reasons(trace)
+        """
+        system_prompt = TRAJECTORY_EVAL_SYSTEM_PROMPT
+        user_prompt = f"""Please score the execution trace. Execution Trace: {trace}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
+
+    def experimental_goal_completeness_with_cot_reasons(
+        self,
+        user_goal: str,
+        final_output: str,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+    ) -> Tuple[float, Dict]:
+        """
+        Evaluate whether the final output fully and accurately meets the user's goal, using a rubric focused on completeness and correctness.
+
+        The rubric is as follows:
+            0: The output does not address the user's goal at all, is off-topic, or is factually incorrect. Major requirements are missing or misunderstood.
+            1: The output partially addresses the goal but misses key requirements, contains significant errors, or is incomplete in important ways.
+            2: The output mostly fulfills the goal, with only minor omissions or inaccuracies. All major requirements are met, but some details could be improved.
+            3: The output fully and accurately meets the user's goal. All requirements are satisfied, the answer is correct, complete, and well-presented.
+
+        Args:
+            user_goal (str): The user's original goal or task description.
+            final_output (str): The final output/result to evaluate.
+            min_score_val (int): Minimum score value (default 0).
+            max_score_val (int): Maximum score value (default 3).
+            temperature (float): LLM temperature for the evaluation (default 0.0).
+
+        Returns:
+            Tuple[float, Dict]: Normalized score and a dictionary with reasoning/explanation.
+
+        Example:
+            >>> provider = OpenAI()
+            >>> score, reasons = provider.goal_completeness_with_cot_reasons(user_goal, final_output)
+        """
+        system_prompt = GOAL_COMPLETENESS_SYSTEM_PROMPT
+        user_prompt = f"""Please score the final output for goal completeness.\nUser Goal: {user_goal}\nFinal Output: {final_output}\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )

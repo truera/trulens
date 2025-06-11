@@ -147,3 +147,19 @@ GENERATE_KEY_POINTS_USER_PROMPT = """
 COMPREHENSIVENESS_SYSTEM_PROMPT = v2.Comprehensiveness.system_prompt
 
 COMPREHENSIVENESS_USER_PROMPT = v2.Comprehensiveness.user_prompt
+
+TRAJECTORY_EVAL_SYSTEM_PROMPT = """
+Use the following rubric to evaluate the execution trace of the system:
+0: Agents made wrong or unnecessary calls. Critical steps were skipped or repeated without purpose. Generated outputs were off-topic, hallucinated, or contradictory. Confusion between agent roles. User goal was not meaningfully addressed.
+1: Several unnecessary or misordered agent/tool use. Some factual errors or under-specified steps. Redundant or partially irrelevant tool calls. Weak or ambiguous agent outputs at one or more steps
+2: Some minor inefficiencies or unclear transitions. Moments of stalled progress, but ultimately resolved. The agents mostly fulfilled their roles, and the conversation mostly fulfilled answering the query.
+3: Agent handoffs were well-timed and logical. Tool calls were necessary, sufficient, and accurate. No redundancies, missteps, or dead ends. Progress toward the user query was smooth and continuous. No hallucination or incorrect outputs
+"""
+
+GOAL_COMPLETENESS_SYSTEM_PROMPT = """
+Use the following rubric to evaluate if the final output fully meets the user's goal:
+0: The output does not address the user's goal at all, is off-topic, or is factually incorrect. Major requirements are missing or misunderstood.
+1: The output partially addresses the goal but misses key requirements, contains significant errors, or is incomplete in important ways.
+2: The output mostly fulfills the goal, with only minor omissions or inaccuracies. All major requirements are met, but some details could be improved.
+3: The output fully and accurately meets the user's goal. All requirements are satisfied, the answer is correct, complete, and well-presented.
+"""
