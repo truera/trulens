@@ -222,7 +222,7 @@ class Selector:
             if "record_attributes" in attrs:
                 attrs = attrs["record_attributes"]
             if not isinstance(attrs, dict):
-                pass
+                return ""
             span_type = attrs.get(SpanAttributes.SPAN_TYPE)
             if span_type in (
                 SpanAttributes.SpanType.RECORD_ROOT,
