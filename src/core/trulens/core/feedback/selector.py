@@ -46,9 +46,13 @@ class Selector:
         collect_list: bool = True,
         match_only_if_no_ancestor_matched: bool = False,
     ):
-        if function_name is None and span_name is None and span_type is None:
+        # Only require at least one selector if not using a processor that handles all spans
+        if (
+            function_name is None and span_name is None and span_type is None
+            and span_attributes_processor is None
+        ):
             raise ValueError(
-                "Must specify at least one of `function_name`, `span_name`, or `span_type`!"
+                "Must specify at least one of `function_name`, `span_name`, or `span_type`, unless using a span_attributes_processor!"
             )
         if (
             sum([
@@ -202,4 +206,38 @@ class Selector:
             span_attributes_processor=context_retrieval_processor,
             collect_list=collect_list,
             match_only_if_no_ancestor_matched=True,
+        )
+
+    @staticmethod
+    def select_trace(collect_list: bool = True) -> Selector:
+        """
+        Returns a Selector that matches all spans, returning a string summary for each non-root, non-eval span.
+        The system will collect these into a list (if collect_list=True), with each string describing a step: function name, input, and output.
+        """
+        from trulens.otel.semconv.trace import SpanAttributes
+        def trace_processor(attrs: dict) -> str:
+            if "record_attributes" in attrs:
+                attrs = attrs["record_attributes"]
+            if not isinstance(attrs, dict):
+                return ""
+            span_type = attrs.get(SpanAttributes.SPAN_TYPE)
+            if span_type in (
+                    SpanAttributes.SpanType.RECORD_ROOT,
+                    SpanAttributes.SpanType.EVAL,
+                    SpanAttributes.SpanType.EVAL_ROOT,
+                    "record_root",
+                    "eval",
+                    "eval_root"
+            ):
+                return ""
+            # Extract function name, input, output if available
+            name = attrs.get(SpanAttributes.CALL.FUNCTION, "<unknown>")
+            input_val = attrs.get(SpanAttributes.RECORD_ROOT.INPUT, attrs.get("input", "?"))
+            output_val = attrs.get(SpanAttributes.CALL.RETURN, attrs.get("output", "?"))
+            return f"{name}(input={input_val}, output={output_val})"
+        return Selector(
+            span_type=None,
+            span_attributes_processor=trace_processor,
+            collect_list=collect_list,
+            match_only_if_no_ancestor_matched=False
         )

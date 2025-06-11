@@ -609,6 +609,20 @@ class Feedback(feedback_schema.FeedbackDefinition):
         ret = self.model_copy()
         ret.selectors = new_selectors
         return ret
+    
+    def on_trace(self, arg: Optional[str] = "trace"):
+        """
+        The selector will return a list of dicts as expected by select_trace.
+        """
+        from trulens.core.otel.utils import is_otel_tracing_enabled
+        if not is_otel_tracing_enabled():
+            raise RuntimeError("on_trace is only supported in OTel mode.")
+        from trulens.core.feedback.selector import Selector
+        new_selectors = self.selectors.copy()
+        new_selectors[arg] = Selector.select_trace()
+        ret = self.model_copy()
+        ret.selectors = new_selectors
+        return ret
 
     def on(self, *args, **kwargs) -> Feedback:
         """
@@ -1338,7 +1352,6 @@ Feedback function signature:
                 app=app, record=record, source_data=source_data
             )
         )
-
 
 class SnowflakeFeedback(Feedback):
     """[DEPRECATED] Similar to the parent class Feedback except this ensures the feedback is run only on the Snowflake server.
