@@ -572,7 +572,7 @@ def _run_feedback_on_inputs(
                     span_group,
                 )
             return len(group_map)
-    # Default: call per input (old behavior)
+
     ret = 0
     for record_id, span_group, inputs in flattened_inputs:
         try:
