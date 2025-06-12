@@ -353,7 +353,7 @@ def _build_grid_options(
     if num_comparators == 2:
         agg_tooltip = "Mean Diff: Average of absolute differences between the two app versions"
         diff_tooltip = "Diff: Absolute difference between the two app versions (|version1 - version2|)"
-    else:
+    elif num_comparators > 2:
         agg_tooltip = f"Mean Variance: Average variance across all {num_comparators} app versions"
         diff_tooltip = f"Variance: Statistical variance of values across all {num_comparators} app versions"
 
@@ -431,7 +431,7 @@ def _render_grid(
             "Average of absolute differences between the two app versions"
         )
         diff_help = "Absolute difference between the two app versions (|version1 - version2|)"
-    else:
+    elif num_comparators > 2:
         agg_help = f"Average variance across all {num_comparators} app versions"
         diff_help = f"Statistical variance of values across all {num_comparators} app versions"
 
