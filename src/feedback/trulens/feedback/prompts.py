@@ -147,3 +147,26 @@ GENERATE_KEY_POINTS_USER_PROMPT = """
 COMPREHENSIVENESS_SYSTEM_PROMPT = v2.Comprehensiveness.system_prompt
 
 COMPREHENSIVENESS_USER_PROMPT = v2.Comprehensiveness.user_prompt
+
+TRAJECTORY_EVAL_SYSTEM_PROMPT = """
+Evaluate the quality of the system’s execution trace using the rubric below:
+
+0 — Failed Execution: Agents made incorrect or unnecessary tool calls. Critical steps were skipped, repeated without purpose, or confused between roles. Outputs were off-topic, hallucinated, or internally contradictory. The user’s goal was not meaningfully addressed.
+
+1 — Disorganized Execution: Multiple misordered, redundant, or irrelevant tool calls. Some factual errors or vague agent actions. Several steps lacked clear purpose or precision. Progress toward the goal was inconsistent.
+
+2 — Mostly Coherent Execution: The trace included minor inefficiencies, unclear transitions, or temporary stalls. Agent actions mostly aligned with their roles. The system ultimately made meaningful progress toward the goal, despite occasional lapses.
+
+3 — Effective Execution: Agents coordinated smoothly with logical handoffs. Tool use was accurate, necessary, and sufficient. No hallucinations, dead ends, or redundant steps. The trace shows steady, purposeful progress toward fully addressing the user’s goal.
+"""
+
+GOAL_COMPLETENESS_SYSTEM_PROMPT = """
+Use the following rubric to evaluate if the final output fully meets the user's goal:
+0 — Completely Inadequate: The output is off-topic, factually incorrect, or fails to address the user's goal in any meaningful way. Major requirements are missing or misunderstood.
+
+1 — Partially Complete: The output addresses the goal in a limited way but contains significant errors, omissions, or misunderstandings. Key requirements are unmet.
+
+2 — Mostly Complete: The output meets all major requirements with only minor issues. It may contain small inaccuracies or incomplete details, but the goal is largely fulfilled.
+
+3 — Fully Complete: The output is correct, comprehensive, and clearly presented. It satisfies all aspects of the user's goal without errors or omissions.
+"""
