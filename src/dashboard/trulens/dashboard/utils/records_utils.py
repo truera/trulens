@@ -79,6 +79,10 @@ def display_feedback_call(
             columns=["meta", "output", "metadata"], errors="ignore"
         )
 
+        # drop all empty columns
+        df = df.replace("{}", None)
+        df = df.dropna(axis=1, how="all")
+
         # note: improve conditional to not rely on the feedback name
         if "groundedness" in feedback_name.lower():
             try:
