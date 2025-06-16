@@ -79,6 +79,10 @@ def display_feedback_call(
             columns=["meta", "output", "metadata"], errors="ignore"
         )
 
+        # Filter to only show the latest results for calls with the same args_span_id and args_span_attribute
+        # NOTE: this is an optimization to not show duplicate calls in the UI (e.g. when a feedback function is recomputed on the same metric name and inputs)
+        df = _filter_duplicate_span_calls(df)
+
         # note: improve conditional to not rely on the feedback name
         if "groundedness" in feedback_name.lower():
             try:
@@ -110,6 +114,79 @@ def display_feedback_call(
             st.dataframe(styled_df, hide_index=True)
     else:
         st.warning("No feedback details found.")
+
+
+def _filter_duplicate_span_calls(df: pd.DataFrame) -> pd.DataFrame:
+    """Filter to only show rows from the most recent eval_root_id for duplicate evaluations.
+
+    Groups EVAL_ROOT spans by (args_span_id, args_span_attribute) to identify unique evaluation inputs,
+    then keeps only the EVAL_ROOT and EVAL rows belonging to the most recent eval_root_id based on timestamp.
+
+    Args:
+        df: DataFrame containing feedback call data with potential duplicates
+
+    Returns:
+        DataFrame with duplicate span calls filtered to show only rows from the most recent eval_root_id
+    """
+    # Early exit if required columns are missing
+    if not {"eval_root_id", "timestamp"}.issubset(df.columns) or df.empty:
+        return df
+
+    # If we have args_span_id and args_span_attribute columns, do sophisticated deduplication
+    if {"args_span_id", "args_span_attribute"}.issubset(df.columns):
+        # Avoid full copy - create string columns directly without modifying original df
+        args_span_id_str = (
+            df["args_span_id"]
+            .astype(str)
+            .where(df["args_span_id"].notna(), None)
+        )
+        args_span_attribute_str = (
+            df["args_span_attribute"]
+            .astype(str)
+            .where(df["args_span_attribute"].notna(), None)
+        )
+
+        # Group by the combination of args_span_id and args_span_attribute
+        grouped = df.groupby(
+            [args_span_id_str, args_span_attribute_str], dropna=False
+        )
+
+        # Find the most recent eval_root_id for each group and collect indices
+        indices_to_keep = []
+        for _, group_df in grouped:
+            if len(group_df) <= 1:
+                # Single eval_root_id - keep all rows
+                indices_to_keep.extend(group_df.index)
+            else:
+                # Multiple eval_root_ids - keep only the most recent one
+                most_recent_eval_root_id = group_df.loc[
+                    group_df["timestamp"].idxmax(), "eval_root_id"
+                ]
+                recent_rows = group_df[
+                    group_df["eval_root_id"] == most_recent_eval_root_id
+                ]
+                indices_to_keep.extend(recent_rows.index)
+
+        # Filter and clean up
+        if indices_to_keep:
+            filtered_df = df.loc[indices_to_keep]
+            return filtered_df.drop(
+                columns=[
+                    "eval_root_id",
+                    "args_span_id",
+                    "args_span_attribute",
+                ],
+                errors="ignore",
+            )
+    else:
+        # Simple case: just keep rows from the most recent eval_root_id
+        most_recent_eval_root_id = df.loc[
+            df["timestamp"].idxmax(), "eval_root_id"
+        ]
+        filtered_df = df[df["eval_root_id"] == most_recent_eval_root_id].copy()
+        return filtered_df.drop(columns=["eval_root_id"], errors="ignore")
+
+    return df
 
 
 def _render_feedback_pills(

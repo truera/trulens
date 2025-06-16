@@ -1604,9 +1604,10 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         except AttributeError:
             pass
 
-        app = self.app
+        if __name == "app":
+            return None
 
-        if python_utils.safe_hasattr(app, __name):
+        if python_utils.safe_hasattr(self.app, __name):
             msg = ATTRIBUTE_ERROR_MESSAGE.format(
                 attribute_name=__name,
                 class_name=type(self).__name__,
@@ -1991,7 +1992,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
     def stop_evaluator(self) -> None:
         """Stop the evaluator for the app."""
-        self._evaluator.stop_evaluator()
+        if hasattr(self, "_evaluator") and self._evaluator is not None:
+            self._evaluator.stop_evaluator()
 
 
 # NOTE: Cannot App.model_rebuild here due to circular imports involving mod_session.TruSession
