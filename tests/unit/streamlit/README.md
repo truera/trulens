@@ -45,30 +45,20 @@ pytest tests/unit/streamlit/ --cov=trulens.dashboard.streamlit --cov-report=html
 
 ## Testing Gaps & Priorities
 
-### 🔴 Critical (High Impact, Missing)
-
 | Gap | Impact | Effort |
 |-----|---------|---------|
-| **Page Navigation** | High | Medium |
-| **Authentication Flow** | High | High |
-| **Real-time Updates** | High | Medium |
-| **Performance with Large Data** | High | Medium |
-
-### 🟡 Important (Medium Priority)
-
-| Gap | Impact | Effort |
-|-----|---------|---------|
-| **Advanced UI Interactions** | Medium | Low |
-| **End-to-end Workflows** | Medium | High |
-| **Cross-browser Testing** | Medium | High |
-| **Error Edge Cases** | Medium | Medium |
-
-### 🟢 Nice to Have (Lower Priority)
-
-- Accessibility compliance
-- Internationalization
-- Visual regression testing
-- Mobile responsiveness
+| Page Navigation | 🔴 High | Medium |
+| Authentication Flow | 🔴 High | High |
+| Real-time Updates | 🔴 High | Medium |
+| Performance with Large Data | 🔴 High | Medium |
+| Advanced UI Interactions | 🟡 Medium | Low |
+| End-to-end Workflows | 🟡 Medium | High |
+| Cross-browser Testing | 🟡 Medium | High |
+| Error Edge Cases | 🟡 Medium | Medium |
+| Accessibility compliance | 🟢 Low | Medium |
+| Internationalization | 🟢 Low | Medium |
+| Visual regression testing | 🟢 Low | Medium |
+| Mobile responsiveness | 🟢 Low | Medium |
 
 ## Next Steps Roadmap
 
