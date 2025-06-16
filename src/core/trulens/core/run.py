@@ -716,15 +716,6 @@ class Run(BaseModel):
 
         dataset_spec = self.source_info.column_spec
 
-        # Preprocess the dataset_spec to create mappings for input columns
-        # and map the inputs for reserved fields only once, before the iteration over rows.
-
-        reserved_field_column_mapping = {}
-
-        # Process dataset column spec to handle subscripting logic for input columns
-        for reserved_field, user_column in dataset_spec.items():
-            reserved_field_column_mapping[reserved_field] = user_column
-
         input_records_count = len(input_df)
 
         invocation_metadata_id = self.run_dao._compute_invocation_metadata_id(
