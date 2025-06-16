@@ -361,7 +361,6 @@ def _build_grid_options(
         agg_diff_col,
         cellClassRules=diff_cell_rules,
         filter="agNumberColumnFilter",
-        tooltipField=agg_diff_col,
         headerTooltip=agg_tooltip,
     )
     gb.configure_columns(
@@ -443,7 +442,7 @@ def _render_grid(
             help=diff_help, format="%.3f"
         )
 
-    column_order = ["input", *diff_cols, agg_diff_col]
+    column_order = ["input", agg_diff_col, *diff_cols]
     column_order = [col for col in column_order if col in df.columns]
     event = st.dataframe(
         df[column_order],
