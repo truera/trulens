@@ -354,8 +354,8 @@ def _build_grid_options(
         agg_tooltip = "Mean Diff: Average of absolute differences between the two app versions"
         diff_tooltip = "Diff: Absolute difference between the two app versions (|version1 - version2|)"
     elif num_comparators > 2:
-        agg_tooltip = f"Mean Variance: Average variance across all {num_comparators} app versions"
-        diff_tooltip = f"Variance: Statistical variance of values across all {num_comparators} app versions"
+        agg_tooltip = f"Mean Std Dev: Average standard deviation across all {num_comparators} app versions"
+        diff_tooltip = f"Std Dev: Standard deviation of values across all {num_comparators} app versions"
 
     gb.configure_column(
         agg_diff_col,
@@ -432,8 +432,8 @@ def _render_grid(
         )
         diff_help = "Absolute difference between the two app versions (|version1 - version2|)"
     elif num_comparators > 2:
-        agg_help = f"Average variance across all {num_comparators} app versions"
-        diff_help = f"Statistical variance of values across all {num_comparators} app versions"
+        agg_help = f"Average standard deviation across all {num_comparators} app versions"
+        diff_help = f"Standard deviation of values across all {num_comparators} app versions"
 
     column_config[agg_diff_col] = st.column_config.NumberColumn(
         help=agg_help, format="%.3f"
@@ -510,7 +510,7 @@ def _render_shared_records(
     if len(col_data) == 2:
         col_suffix = "Diff"
     else:
-        col_suffix = "Variance"
+        col_suffix = "Std Dev"
     for feedback_col_name in feedback_cols:
         diff_col_name = f"{feedback_col_name} {col_suffix}"
         diff_cols.append(diff_col_name)
@@ -524,10 +524,10 @@ def _render_shared_records(
                 .iloc[:, 1]
             )
         else:
-            diff_col_name = feedback_col_name + " Variance"
+            diff_col_name = feedback_col_name + " Std Dev"
             query_col[diff_col_name] = query_col.iloc[
                 :, query_col.columns.str.startswith(feedback_col_name)
-            ].var(axis=1)
+            ].std(axis=1)
 
     agg_diff_col = f"Mean {col_suffix}"
     query_col[agg_diff_col] = query_col[diff_cols].mean(axis=1)
