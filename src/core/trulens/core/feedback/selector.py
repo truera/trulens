@@ -228,9 +228,6 @@ class Selector:
                 SpanAttributes.SpanType.RECORD_ROOT,
                 SpanAttributes.SpanType.EVAL,
                 SpanAttributes.SpanType.EVAL_ROOT,
-                "record_root",
-                "eval",
-                "eval_root",
             ):
                 return ""
             # Extract function name, input, output if available
