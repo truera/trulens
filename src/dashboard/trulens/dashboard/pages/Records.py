@@ -12,6 +12,7 @@ from trulens.dashboard.constants import RECORDS_PAGE_NAME as page_name
 from trulens.dashboard.utils import streamlit_compat
 from trulens.dashboard.utils.dashboard_utils import ST_RECORDS_LIMIT
 from trulens.dashboard.utils.dashboard_utils import _get_event_otel_spans
+from trulens.dashboard.utils.dashboard_utils import _show_no_records_error
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
 from trulens.dashboard.utils.dashboard_utils import get_records_and_feedback
 from trulens.dashboard.utils.dashboard_utils import is_sis_compatibility_enabled
@@ -87,9 +88,13 @@ def _render_record_metrics(
         st.metric(
             label=f"Total cost ({cost_currency})",
             value=_format_cost(cost, cost_currency),
-            delta=f"{delta_cost:3g}" if delta_cost != 0 else None,
+            delta=f"{delta_cost:.3g} {cost_currency}"
+            if delta_cost != 0
+            else None,
             delta_color="inverse",
-            help=f"Cost of the app execution measured in {cost_currency}. Delta is relative to average cost for the app.",
+            help=f"Cost of the app execution measured in {cost_currency}. Delta is relative to average cost for the app."
+            if delta_cost != 0
+            else f"Cost of the app execution measured in {cost_currency}.",
         )
 
     latency = selected_row["latency"]
@@ -101,7 +106,9 @@ def _render_record_metrics(
             value=f"{selected_row['latency']}s",
             delta=f"{delta_latency:.3g}s" if delta_latency != 0 else None,
             delta_color="inverse",
-            help="Latency of the app execution. Delta is relative to average latency for the app.",
+            help="Latency of the app execution. Delta is relative to average latency for the app."
+            if delta_latency != 0
+            else "Latency of the app execution.",
         )
 
 
@@ -539,6 +546,7 @@ def render_records(app_name: str):
     st.markdown(f"Showing app `{app_name}`")
 
     # Get app versions
+    st.session_state.setdefault(f"{page_name}.record_search", "")
     record_query = st.text_input(
         "Search Records",
         key=f"{page_name}.record_search",
@@ -583,7 +591,8 @@ def render_records(app_name: str):
             versions_str = "**`" + "`**, **`".join(app_versions) + "`**"
             st.error(f"No records found for app version(s): {versions_str}.")
         else:
-            st.error(f"No records found for app `{app_name}`.")
+            # Check for cross-format records before showing generic error
+            _show_no_records_error(app_name=app_name, app_ids=app_ids)
         return
     elif records_limit is not None and len(records_df) >= records_limit:
         cols = st_columns([0.9, 0.1], vertical_alignment="center")

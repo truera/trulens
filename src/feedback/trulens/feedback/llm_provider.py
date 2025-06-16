@@ -1,4 +1,3 @@
-from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
 import logging
 import re
@@ -11,6 +10,7 @@ import numpy as np
 from trulens.core.feedback import feedback as core_feedback
 from trulens.core.feedback import provider as core_provider
 from trulens.core.utils import deprecation as deprecation_utils
+from trulens.core.utils.threading import ThreadPoolExecutor
 from trulens.feedback import generated as feedback_generated
 from trulens.feedback import prompts as feedback_prompts
 from trulens.feedback.v2 import feedback as feedback_v2
