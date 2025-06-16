@@ -546,6 +546,7 @@ def render_records(app_name: str):
     st.markdown(f"Showing app `{app_name}`")
 
     # Get app versions
+    st.session_state.setdefault(f"{page_name}.record_search", "")
     record_query = st.text_input(
         "Search Records",
         key=f"{page_name}.record_search",
