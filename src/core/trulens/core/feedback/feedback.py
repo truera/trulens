@@ -620,8 +620,6 @@ class Feedback(feedback_schema.FeedbackDefinition):
 
         if not is_otel_tracing_enabled():
             raise RuntimeError("on_trace is only supported in OTel mode.")
-        from trulens.core.feedback.selector import Selector
-
         new_selectors = self.selectors.copy()
         new_selectors[arg] = Selector.select_trace(collect_list=collect_list)
         ret = self.model_copy()
