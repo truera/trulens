@@ -81,9 +81,9 @@ def test_filter_duplicate_span_calls():
     data = {
         "eval_root_id": ["root1", "root2", "root1"],
         "timestamp": [
-            datetime.now().isoformat(),
-            datetime.now().isoformat(),
-            datetime.now().isoformat(),
+            "2023-01-01T01:00:00",
+            "2023-02-01T02:00:00",
+            "2023-03-01T03:00:00",
         ],
         "args_span_id": ["span1", "span1", "span1"],
         "args_span_attribute": ["attr1", "attr1", "attr1"],
