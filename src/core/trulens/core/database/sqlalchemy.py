@@ -1184,6 +1184,9 @@ class SQLAlchemyDB(core_db.DB):
                             )
 
                             call_data = {
+                                "span_type": record_attributes.get(
+                                    SpanAttributes.SPAN_TYPE
+                                ),
                                 "eval_root_id": record_attributes.get(
                                     SpanAttributes.EVAL.EVAL_ROOT_ID
                                 ),
@@ -1208,6 +1211,9 @@ class SQLAlchemyDB(core_db.DB):
                             )
 
                             call_data = {
+                                "span_type": record_attributes.get(
+                                    SpanAttributes.SPAN_TYPE
+                                ),
                                 "args": kwargs,
                                 "ret": record_attributes.get(
                                     SpanAttributes.EVAL.SCORE
