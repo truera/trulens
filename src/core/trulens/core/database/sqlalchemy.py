@@ -1183,11 +1183,6 @@ class SQLAlchemyDB(core_db.DB):
                                 SpanAttributes.EVAL_ROOT.ARGS_SPAN_ATTRIBUTE,
                             )
 
-                            # Extract namespaced attributes using the helper method
-                            kwargs = self._extract_namespaced_attributes(
-                                record_attributes, SpanAttributes.CALL.KWARGS
-                            )
-
                             call_data = {
                                 "span_type": record_attributes.get(
                                     SpanAttributes.SPAN_TYPE
