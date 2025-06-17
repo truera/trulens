@@ -219,10 +219,6 @@ class Selector:
         from trulens.otel.semconv.trace import SpanAttributes
 
         def trace_processor(attrs: dict) -> str:
-            if "record_attributes" in attrs:
-                attrs = attrs["record_attributes"]
-            if not isinstance(attrs, dict):
-                return ""
             span_type = attrs.get(SpanAttributes.SPAN_TYPE)
             if span_type in (
                 SpanAttributes.SpanType.RECORD_ROOT,
@@ -235,7 +231,7 @@ class Selector:
             output_val = attrs.get(
                 SpanAttributes.CALL.RETURN, attrs.get("output", "?")
             )
-            return f"{name}: {output_val}"
+            return f"TRACE STEP: {name} \n STEP OUTPUT: \n {output_val}"
 
         return Selector(
             span_type=None,
