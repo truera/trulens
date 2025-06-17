@@ -916,21 +916,23 @@ class Run(BaseModel):
                 logger.info(f"Skipping computation for metric: {metric}")
 
         logger.info(f"Metrics to compute: {metrics_to_compute}.")
-        sql_cmd = self.run_dao.session.sql(f"""
-        CALL SYSTEM$EXECUTE_AI_OBSERVABILITY_RUN(
-            OBJECT_CONSTRUCT(
-            'object_name', '{self.object_name}',
-            'object_type', '{self.object_type}',
-            'object_version', '{self.object_version}'
-            ),
-            OBJECT_CONSTRUCT(
-            'run_name', '{self.run_name}'
-            ),
-            OBJECT_CONSTRUCT('type', 'stage_file'),
-            ARRAY_CONSTRUCT({", ".join([f"'{m}'" for m in metrics_to_compute])}),
-            ARRAY_CONSTRUCT('COMPUTE_METRICS')
-        );
-        """)
+        sql_cmd = self.run_dao.session.sql(
+            f"""
+            CALL SYSTEM$EXECUTE_AI_OBSERVABILITY_RUN(
+                OBJECT_CONSTRUCT(
+                'object_name', '{self.object_name}',
+                'object_type', '{self.object_type}',
+                'object_version', '{self.object_version}'
+                ),
+                OBJECT_CONSTRUCT(
+                'run_name', '{self.run_name}'
+                ),
+                OBJECT_CONSTRUCT('type', 'stage_file'),
+                ARRAY_CONSTRUCT({", ".join([f"'{m}'" for m in metrics_to_compute])}),
+                ARRAY_CONSTRUCT('COMPUTE_METRICS')
+            );
+            """
+        )
         logger.info(f"Executing SQL command for metrics computation: {sql_cmd}")
         logger.debug(sql_cmd.collect()[0][0])
 
