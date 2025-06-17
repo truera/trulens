@@ -185,7 +185,9 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
             """,
             params=[
                 # OBJECT_CONSTRUCT( … )
-                f"{database}.{schema}.{app_name.upper()}",  # object_name
+                f"{database}.{schema}.{app_name.upper()}"
+                if app_name
+                else "",  # object_name
                 app_version,  # object_version
                 # OBJECT_CONSTRUCT( … )
                 run_name,  # run_name
