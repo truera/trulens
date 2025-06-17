@@ -393,9 +393,8 @@ class Run(BaseModel):
 
         if current_run_status == RunStatus.COMPUTATION_IN_PROGRESS:
             logger.warning(
-                "Previous computation(s) still in progress. We do not allow another new metric computation when computation is in progress."
+                "Previous computation(s) still in progress. Starting another new metric computation when computation is in progress."
             )
-            return False
 
         return current_run_status in [
             RunStatus.INVOCATION_COMPLETED,
@@ -863,7 +862,6 @@ class Run(BaseModel):
 
             return self._compute_latest_invocation_status(run)
 
-    # todo: (dhuang) no longer used, should remove
     def _should_skip_computation(self, metric_name: str, run: Run) -> bool:
         if run.run_metadata.metrics is None:
             return False
@@ -910,6 +908,14 @@ class Run(BaseModel):
             return f"""Cannot start a new metric computation when in run status: {run_status}. Valid statuses are: {RunStatus.INVOCATION_COMPLETED}, {RunStatus.INVOCATION_PARTIALLY_COMPLETED},
         {RunStatus.COMPUTATION_IN_PROGRESS}, {RunStatus.COMPLETED}, {RunStatus.PARTIALLY_COMPLETED}, {RunStatus.FAILED}."""
 
+        metrics_to_compute = []
+        for metric in metrics:
+            if not self._should_skip_computation(metric, self):
+                metrics_to_compute.append(metric)
+            else:
+                logger.info(f"Skipping computation for metric: {metric}")
+
+        logger.info(f"Metrics to compute: {metrics_to_compute}.")
         sql_cmd = self.run_dao.session.sql(f"""
         CALL SYSTEM$EXECUTE_AI_OBSERVABILITY_RUN(
             OBJECT_CONSTRUCT(
@@ -921,7 +927,7 @@ class Run(BaseModel):
             'run_name', '{self.run_name}'
             ),
             OBJECT_CONSTRUCT('type', 'stage_file'),
-            ARRAY_CONSTRUCT({", ".join([f"'{m}'" for m in metrics])}),
+            ARRAY_CONSTRUCT({", ".join([f"'{m}'" for m in metrics_to_compute])}),
             ARRAY_CONSTRUCT('COMPUTE_METRICS')
         );
         """)
