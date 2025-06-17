@@ -429,6 +429,8 @@ class Run(BaseModel):
                 == Run.CompletionStatusStatus.PARTIALLY_COMPLETED
             ):
                 return RunStatus.INVOCATION_PARTIALLY_COMPLETED
+            elif completion_status == Run.CompletionStatusStatus.STARTED:
+                return RunStatus.INVOCATION_IN_PROGRESS
             elif completion_status == Run.CompletionStatusStatus.FAILED:
                 return RunStatus.FAILED
             else:
@@ -437,84 +439,84 @@ class Run(BaseModel):
                 )
                 return RunStatus.UNKNOWN
 
-        current_ingested_records_count = (
-            self.run_dao.read_spans_count_from_event_table(
-                object_name=self.object_name,
-                run_name=self.run_name,
-                span_type="record_root",
-            )
-        )
-        logger.info(
-            f"Current ingested records count: {current_ingested_records_count}"
-        )
+        # current_ingested_records_count = (
+        #     self.run_dao.read_spans_count_from_event_table(
+        #         object_name=self.object_name,
+        #         run_name=self.run_name,
+        #         span_type="record_root",
+        #     )
+        # )
+        # logger.info(
+        #     f"Current ingested records count: {current_ingested_records_count}"
+        # )
 
-        latest_record_root_timestamp_in_ms = (
-            self.run_dao.read_latest_record_root_timestamp_in_ms(
-                object_name=self.object_name, run_name=self.run_name
-            )
-        )
+        # latest_record_root_timestamp_in_ms = (
+        #     self.run_dao.read_latest_record_root_timestamp_in_ms(
+        #         object_name=self.object_name, run_name=self.run_name
+        #     )
+        # )
 
-        logger.debug(
-            f"Latest record root timestamp in ms: {latest_record_root_timestamp_in_ms}"
-        )
+        # logger.debug(
+        #     f"Latest record root timestamp in ms: {latest_record_root_timestamp_in_ms}"
+        # )
 
-        if (
-            latest_invocation.input_records_count
-            and current_ingested_records_count
-            >= latest_invocation.input_records_count
-        ):
-            # greater than or equal to input records count to account for the edge case where multiple tru recorders are set on the same run
-            # happy case, add end time and update status
-            self.run_dao.upsert_run_metadata_fields(
-                entry_type=SupportedEntryType.INVOCATIONS.value,
-                entry_id=latest_invocation.id,
-                input_records_count=latest_invocation.input_records_count,
-                start_time_ms=latest_invocation.start_time_ms,
-                end_time_ms=self._get_current_time_in_ms(),
-                completion_status=Run.CompletionStatus(
-                    status=Run.CompletionStatusStatus.COMPLETED,
-                    record_count=current_ingested_records_count,
-                ).model_dump(),
-                run_name=self.run_name,
-                object_name=self.object_name,
-                object_type=self.object_type,
-                object_version=self.object_version,
-            )
+        # if (
+        #     latest_invocation.input_records_count
+        #     and current_ingested_records_count
+        #     >= latest_invocation.input_records_count
+        # ):
+        #     # greater than or equal to input records count to account for the edge case where multiple tru recorders are set on the same run
+        #     # happy case, add end time and update status
+        #     self.run_dao.upsert_run_metadata_fields(
+        #         entry_type=SupportedEntryType.INVOCATIONS.value,
+        #         entry_id=latest_invocation.id,
+        #         input_records_count=latest_invocation.input_records_count,
+        #         start_time_ms=latest_invocation.start_time_ms,
+        #         end_time_ms=self._get_current_time_in_ms(),
+        #         completion_status=Run.CompletionStatus(
+        #             status=Run.CompletionStatusStatus.COMPLETED,
+        #             record_count=current_ingested_records_count,
+        #         ).model_dump(),
+        #         run_name=self.run_name,
+        #         object_name=self.object_name,
+        #         object_type=self.object_type,
+        #         object_version=self.object_version,
+        #     )
 
-            return RunStatus.INVOCATION_COMPLETED
+        # return RunStatus.INVOCATION_COMPLETED
 
-        elif (
-            latest_invocation.start_time_ms
-            and latest_record_root_timestamp_in_ms
-            and time.time() * 1000 - latest_record_root_timestamp_in_ms
-            > EXPECTED_TELEMETRY_LATENCY_IN_MS
-        ):
-            # inconclusive case, timeout reached and add end time and update completion status in DPO
-            logger.warning("Invocation timed out.")
-            self.run_dao.upsert_run_metadata_fields(
-                entry_type=SupportedEntryType.INVOCATIONS.value,
-                entry_id=latest_invocation.id,
-                input_records_count=latest_invocation.input_records_count,
-                start_time_ms=latest_invocation.start_time_ms,
-                end_time_ms=self._get_current_time_in_ms(),
-                completion_status=Run.CompletionStatus(
-                    status=Run.CompletionStatusStatus.PARTIALLY_COMPLETED,
-                    record_count=current_ingested_records_count,
-                ).model_dump(),
-                run_name=self.run_name,
-                object_name=self.object_name,
-                object_type=self.object_type,
-                object_version=self.object_version,
-            )
+        # elif (
+        #     latest_invocation.start_time_ms
+        #     and latest_record_root_timestamp_in_ms
+        #     and time.time() * 1000 - latest_record_root_timestamp_in_ms
+        #     > EXPECTED_TELEMETRY_LATENCY_IN_MS
+        # ):
+        #     # inconclusive case, timeout reached and add end time and update completion status in DPO
+        #     logger.warning("Invocation timed out.")
+        #     self.run_dao.upsert_run_metadata_fields(
+        #         entry_type=SupportedEntryType.INVOCATIONS.value,
+        #         entry_id=latest_invocation.id,
+        #         input_records_count=latest_invocation.input_records_count,
+        #         start_time_ms=latest_invocation.start_time_ms,
+        #         end_time_ms=self._get_current_time_in_ms(),
+        #         completion_status=Run.CompletionStatus(
+        #             status=Run.CompletionStatusStatus.PARTIALLY_COMPLETED,
+        #             record_count=current_ingested_records_count,
+        #         ).model_dump(),
+        #         run_name=self.run_name,
+        #         object_name=self.object_name,
+        #         object_type=self.object_type,
+        #         object_version=self.object_version,
+        #     )
 
-            return RunStatus.INVOCATION_PARTIALLY_COMPLETED
+        #     return RunStatus.INVOCATION_PARTIALLY_COMPLETED
 
-        else:
-            return (
-                RunStatus.INVOCATION_IN_PROGRESS
-                if latest_invocation.end_time_ms == 0
-                else RunStatus.UNKNOWN
-            )
+        # else:
+        #     return (
+        #         RunStatus.INVOCATION_IN_PROGRESS
+        #         if latest_invocation.end_time_ms == 0
+        #         else RunStatus.UNKNOWN
+        #     )
 
     def _metrics_computation_started(self, run: Run) -> bool:
         return (
