@@ -88,6 +88,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                 span.attributes.get(ResourceAttributes.APP_NAME),
                 span.attributes.get(ResourceAttributes.APP_VERSION),
                 span.attributes.get(SpanAttributes.RUN_NAME),
+                span.attributes.get(SpanAttributes.INPUT_RECORDS_COUNT),
             )
             app_and_run_info_to_spans[key].append(span)
 
@@ -95,12 +96,18 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
             app_name,
             app_version,
             run_name,
+            input_records_count,
         ), spans in app_and_run_info_to_spans.items():
             logger.debug(
                 f"Logging {len(spans)} for app:{app_name} version:{app_version} run:{run_name}"
             )
             res = self._export_to_snowflake_stage_for_app_and_run(
-                app_name, app_version, run_name, spans, dry_run
+                app_name,
+                app_version,
+                run_name,
+                input_records_count,
+                spans,
+                dry_run,
             )
             if res == SpanExportResult.FAILURE:
                 return res
@@ -142,6 +149,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         app_name: str,
         app_version: str,
         run_name: str,
+        input_records_count: int,
         dry_run: bool,
     ):
         database = clean_up_snowflake_identifier(
@@ -152,27 +160,38 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         )
         sql_cmd = snowpark_session.sql(
             f"""
-            CALL SYSTEM$INGEST_AI_OBSERVABILITY_SPANS(
-                BUILD_SCOPED_FILE_URL(
-                    @{database}.{schema}.trulens_spans,
-                    ?
+            CALL SYSTEM$EXECUTE_AI_OBSERVABILITY_RUN(
+                OBJECT_CONSTRUCT(
+                    'object_name', ?,
+                    'object_type', 'External Agent',
+                    'object_version', ?
                 ),
-                ?,
-                ?,
-                ?,
-                ?,
-                ?
+                OBJECT_CONSTRUCT(
+                    'run_name', ?
+                ),
+                OBJECT_CONSTRUCT(
+                    'type', 'stage_file',
+                    'stage_file_path', 'stage_file_path',
+                    'scoped_url', BUILD_SCOPED_FILE_URL(
+                        @{database}.{schema}.trulens_spans,
+                        ?
+                    ),
+                    'input_record_count', ?,
+                    'attempt', 1
+                ),
+                ARRAY_CONSTRUCT(),
+                ARRAY_CONSTRUCT('INGESTION')
             )
             """,
             params=[
-                tmp_file_basename + ".gz",
-                database,  # TODO(otel, dhuang): This should be the database of the object entity!
-                schema,  # TODO(otel, dhuang): This should the schema of the object entity!
-                (
-                    app_name or ""
-                ).upper(),  # object name is converted to uppercase
-                app_version or "",
-                run_name or "",
+                # OBJECT_CONSTRUCT( … )
+                f"{database}.{schema}.{app_name.upper()}",  # object_name
+                app_version,  # object_version
+                # OBJECT_CONSTRUCT( … )
+                run_name,  # run_name
+                # OBJECT_CONSTRUCT( … )
+                tmp_file_basename + ".gz",  # for BUILD_SCOPED_FILE_URL
+                input_records_count,  # input_record_count
             ],
         )
         if not dry_run:
@@ -183,6 +202,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         app_name: str,
         app_version: str,
         run_name: str,
+        input_records_count: int,
         spans: Sequence[ReadableSpan],
         dry_run: bool,
     ) -> SpanExportResult:
@@ -213,6 +233,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                 app_name,
                 app_version,
                 run_name,
+                input_records_count,
                 dry_run,
             )
         except Exception as e:

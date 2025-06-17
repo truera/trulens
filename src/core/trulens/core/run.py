@@ -718,27 +718,27 @@ class Run(BaseModel):
 
         input_records_count = len(input_df)
 
-        invocation_metadata_id = self.run_dao._compute_invocation_metadata_id(
-            dataset_name=self.source_info.name,
-            input_records_count=input_records_count,
-        )
-        start_time_ms = self._get_current_time_in_ms()
+        # invocation_metadata_id = self.run_dao._compute_invocation_metadata_id(
+        #     dataset_name=self.source_info.name,
+        #     input_records_count=input_records_count,
+        # )
+        # start_time_ms = self._get_current_time_in_ms()
 
         logger.info(
             f"Creating or updating invocation metadata with {input_records_count} records from input."
         )
 
-        self.run_dao.upsert_run_metadata_fields(
-            entry_type=SupportedEntryType.INVOCATIONS.value,
-            entry_id=invocation_metadata_id,
-            start_time_ms=start_time_ms,
-            end_time_ms=0,  # required field
-            run_name=self.run_name,
-            input_records_count=input_records_count,
-            object_name=self.object_name,
-            object_type=self.object_type,
-            object_version=self.object_version,
-        )
+        # self.run_dao.upsert_run_metadata_fields(
+        #     entry_type=SupportedEntryType.INVOCATIONS.value,
+        #     entry_id=invocation_metadata_id,
+        #     start_time_ms=start_time_ms,
+        #     end_time_ms=0,  # required field
+        #     run_name=self.run_name,
+        #     input_records_count=input_records_count,
+        #     object_name=self.object_name,
+        #     object_type=self.object_type,
+        #     object_version=self.object_version,
+        # )
 
         # user app invocation - will block until the app completes
         try:
@@ -770,6 +770,7 @@ class Run(BaseModel):
                 self.app.instrumented_invoke_main_method(
                     run_name=self.run_name,
                     input_id=input_id,
+                    input_records_count=input_records_count,
                     ground_truth_output=ground_truth_output,
                     main_method_args=tuple(
                         main_method_args
@@ -781,24 +782,25 @@ class Run(BaseModel):
                 f"Error encountered during invoking app main method: {e}."
             )
 
-            self.run_dao.upsert_run_metadata_fields(
-                entry_type=SupportedEntryType.INVOCATIONS.value,
-                entry_id=invocation_metadata_id,
-                start_time_ms=start_time_ms,
-                input_records_count=input_records_count,
-                end_time_ms=self._get_current_time_in_ms(),
-                completion_status=Run.CompletionStatus(
-                    status=Run.CompletionStatusStatus.FAILED,
-                ).model_dump(),
-                run_name=self.run_name,
-                object_name=self.object_name,
-                object_type=self.object_type,
-                object_version=self.object_version,
-            )
+            # self.run_dao.upsert_run_metadata_fields(
+            #     entry_type=SupportedEntryType.INVOCATIONS.value,
+            #     entry_id=invocation_metadata_id,
+            #     start_time_ms=start_time_ms,
+            #     input_records_count=input_records_count,
+            #     end_time_ms=self._get_current_time_in_ms(),
+            #     completion_status=Run.CompletionStatus(
+            #         status=Run.CompletionStatusStatus.FAILED,
+            #     ).model_dump(),
+            #     run_name=self.run_name,
+            #     object_name=self.object_name,
+            #     object_type=self.object_type,
+            #     object_version=self.object_version,
+            # )
 
             raise
 
         self.tru_session.force_flush()
+
         logger.info("Run started, invocation done and ingestion in process.")
 
     def _get_current_time_in_ms(self) -> int:
