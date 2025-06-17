@@ -368,7 +368,8 @@ class TruApp(core_app.App):
                 raise ValueError(
                     f"Must not have more than one main method or method decorated with span type 'record_root'! Found: {list(main_methods)}"
                 )
-            main_method = main_methods.pop()
+            if len(main_methods) > 0:
+                main_method = main_methods.pop()
 
         if main_method is not None:
             kwargs["main_method"] = main_method
