@@ -1,6 +1,6 @@
 from functools import partial
 import pprint as pp
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import pandas as pd
 import streamlit as st
@@ -39,13 +39,111 @@ def df_cell_highlight(
     return [f"background-color: {cat.color}"] * n_cells
 
 
+def _identify_span_types(
+    call: List[Dict[str, Any]],
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """Identify and separate EVAL_ROOT and EVAL spans from the call list.
+
+    Args:
+        call: List of call dictionaries containing span information
+
+    Returns:
+        Tuple of (eval_root_calls, eval_calls) lists
+    """
+    eval_root_calls = []
+    eval_calls = []
+
+    for c in call:
+        # For OTel spans, use explicit span_type field
+        if c.get("span_type") == "EVAL_ROOT":
+            eval_root_calls.append(c)
+        elif c.get("span_type") == "EVAL":
+            eval_calls.append(c)
+        # For legacy spans (pre-OTel), all calls should contain the following fields: args, ret, and meta
+        elif "args" in c and "ret" in c and "meta" in c:
+            eval_calls.append(c)
+
+    return eval_root_calls, eval_calls
+
+
+def _filter_eval_calls_by_root(
+    eval_root_calls: List[Dict[str, Any]], eval_calls: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """Filter EVAL calls to only those belonging to the most recent EVAL_ROOT spans.
+
+    Args:
+        eval_root_calls: List of EVAL_ROOT span dictionaries
+        eval_calls: List of EVAL span dictionaries
+
+    Returns:
+        Filtered list of EVAL span dictionaries
+
+    Raises:
+        KeyError: If eval_root_id is missing from any EVAL_ROOT or EVAL call
+    """
+    if not eval_root_calls:
+        return eval_calls
+
+    eval_root_df = pd.DataFrame(eval_root_calls)
+    if "eval_root_id" not in eval_root_df.columns:
+        raise KeyError("eval_root_id column missing from EVAL_ROOT spans")
+
+    if eval_root_df.empty:
+        return eval_calls
+
+    eval_root_df = _filter_duplicate_span_calls(eval_root_df)
+    most_recent_eval_root_ids = set(eval_root_df["eval_root_id"].unique())
+
+    # Verify all eval_calls have eval_root_id
+    for c in eval_calls:
+        if "eval_root_id" not in c:
+            raise KeyError("eval_root_id missing from EVAL spans")
+
+    return [
+        c for c in eval_calls if c["eval_root_id"] in most_recent_eval_root_ids
+    ]
+
+
+def _process_eval_calls_for_display(
+    eval_calls: List[Dict[str, Any]],
+) -> pd.DataFrame:
+    """Process EVAL calls into a displayable DataFrame.
+
+    Args:
+        eval_calls: List of EVAL span dictionaries
+
+    Returns:
+        DataFrame ready for display
+    """
+    # Convert non-string args to formatted strings
+    for c in eval_calls:
+        args: Dict = c["args"]
+        for k, v in args.items():
+            if not isinstance(v, str):
+                args[k] = pp.pformat(v)
+
+    # Create DataFrame from processed calls
+    df = pd.DataFrame.from_records(c["args"] for c in eval_calls)
+    df["score"] = pd.DataFrame([
+        float(eval_calls[i]["ret"]) if eval_calls[i]["ret"] is not None else -1
+        for i in range(len(eval_calls))
+    ])
+    df["meta"] = pd.Series([
+        eval_calls[i]["meta"] for i in range(len(eval_calls))
+    ])
+
+    return df.join(df.meta.apply(lambda m: pd.Series(m))).drop(
+        columns=["meta", "output", "metadata"], errors="ignore"
+    )
+
+
 def display_feedback_call(
     record_id: str,
     call: List[Dict[str, Any]],
     feedback_name: str,
     feedback_directions: Dict[str, bool],
 ):
-    """Display the feedback call details in a DataFrame.
+    """Display feedback call details in a DataFrame. For OTel spans, this function filters and displays EVAL spans only, not EVAL_ROOT spans.
 
     Args:
         record_id (str): The record ID.
@@ -53,67 +151,54 @@ def display_feedback_call(
         feedback_name (str): The feedback name.
         feedback_directions (Dict[str, bool]): A dictionary mapping feedback names to their directions. True if higher is better, False otherwise.
     """
-    if call is not None and len(call) > 0:
-        # NOTE(piotrm for garett): converting feedback
-        # function inputs to strings here as other
-        # structures get rendered as [object Object] in the
-        # javascript downstream. If the first input/column
-        # is a list, the DataFrame.from_records does create
-        # multiple rows, one for each element, but if the
-        # second or other column is a list, it will not do
-        # this.
-        for c in call:
-            args: Dict = c["args"]
-            for k, v in args.items():
-                if not isinstance(v, str):
-                    args[k] = pp.pformat(v)
-
-        df = pd.DataFrame.from_records(c["args"] for c in call)
-
-        df["score"] = pd.DataFrame([
-            float(call[i]["ret"]) if call[i]["ret"] is not None else -1
-            for i in range(len(call))
-        ])
-        df["meta"] = pd.Series([call[i]["meta"] for i in range(len(call))])
-        df = df.join(df.meta.apply(lambda m: pd.Series(m))).drop(
-            columns=["meta", "output", "metadata"], errors="ignore"
-        )
-
-        # Filter to only show the latest results for calls with the same args_span_id and args_span_attribute
-        # NOTE: this is an optimization to not show duplicate calls in the UI (e.g. when a feedback function is recomputed on the same metric name and inputs)
-        df = _filter_duplicate_span_calls(df)
-
-        # note: improve conditional to not rely on the feedback name
-        if "groundedness" in feedback_name.lower():
-            try:
-                df = expand_groundedness_df(df)
-            except ValueError:
-                st.error(
-                    "Error expanding groundedness DataFrame. "
-                    "Please ensure the DataFrame is in the correct format."
-                )
-
-        if df.empty:
-            st.warning("No feedback details found.")
-        else:
-            style_highlight_fn = partial(
-                highlight,
-                selected_feedback=feedback_name,
-                feedback_directions=feedback_directions,
-                default_direction=default_direction,
-            )
-            styled_df = df.style.apply(
-                style_highlight_fn,
-                axis=1,
-            )
-
-            # Format only numeric columns
-            for col in df.select_dtypes(include=["number"]).columns:
-                styled_df = styled_df.format({col: "{:.2f}"})
-
-            st.dataframe(styled_df, hide_index=True)
-    else:
+    if not call:
         st.warning("No feedback details found.")
+        return
+
+    # First, identify and separate EVAL_ROOT and feedback calls (EVAL spans)
+    eval_root_calls, eval_calls = _identify_span_types(call)
+
+    # For OTel spans only: filter EVAL_ROOT spans to get most recent ones
+    eval_calls = _filter_eval_calls_by_root(eval_root_calls, eval_calls)
+
+    if not eval_calls:
+        st.warning("No feedback details found.")
+        return
+
+    # Process feedback calls (EVAL spans) for display
+    df = _process_eval_calls_for_display(eval_calls)
+
+    # Handle groundedness feedback specially
+    if "groundedness" in feedback_name.lower():
+        try:
+            df = expand_groundedness_df(df)
+        except ValueError:
+            st.error(
+                "Error expanding groundedness DataFrame. "
+                "Please ensure the DataFrame is in the correct format."
+            )
+
+    if df.empty:
+        st.warning("No feedback details found.")
+        return
+
+    # Style and display the DataFrame
+    style_highlight_fn = partial(
+        highlight,
+        selected_feedback=feedback_name,
+        feedback_directions=feedback_directions,
+        default_direction=default_direction,
+    )
+    styled_df = df.style.apply(
+        style_highlight_fn,
+        axis=1,
+    )
+
+    # Format only numeric columns
+    for col in df.select_dtypes(include=["number"]).columns:
+        styled_df = styled_df.format({col: "{:.2f}"})
+
+    st.dataframe(styled_df, hide_index=True)
 
 
 def _filter_duplicate_span_calls(df: pd.DataFrame) -> pd.DataFrame:
@@ -127,14 +212,27 @@ def _filter_duplicate_span_calls(df: pd.DataFrame) -> pd.DataFrame:
 
     Returns:
         DataFrame with duplicate span calls filtered to show only rows from the most recent eval_root_id
+
+    Raises:
+        KeyError: If required columns (eval_root_id, timestamp) are missing
+        ValueError: If timestamps are invalid (None or not parseable)
     """
     # Early exit if required columns are missing
-    if not {"eval_root_id", "timestamp"}.issubset(df.columns) or df.empty:
+    required_columns = {"eval_root_id", "timestamp"}
+    missing_columns = required_columns - set(df.columns)
+    if missing_columns:
+        raise KeyError(f"Required columns missing: {missing_columns}")
+
+    if df.empty:
         return df
+
+    # Verify timestamps are valid
+    if df["timestamp"].isna().any():
+        raise ValueError("Invalid timestamps: None values found")
 
     # If we have args_span_id and args_span_attribute columns, do sophisticated deduplication
     if {"args_span_id", "args_span_attribute"}.issubset(df.columns):
-        # Avoid full copy - create string columns directly without modifying original df
+        # Create string columns for grouping
         args_span_id_str = (
             df["args_span_id"]
             .astype(str)
@@ -151,42 +249,32 @@ def _filter_duplicate_span_calls(df: pd.DataFrame) -> pd.DataFrame:
             [args_span_id_str, args_span_attribute_str], dropna=False
         )
 
-        # Find the most recent eval_root_id for each group and collect indices
-        indices_to_keep = []
+        # Find the most recent eval_root_id for each group
+        most_recent_indices = []
         for _, group_df in grouped:
             if len(group_df) <= 1:
                 # Single eval_root_id - keep all rows
-                indices_to_keep.extend(group_df.index)
+                most_recent_indices.extend(group_df.index)
             else:
                 # Multiple eval_root_ids - keep only the most recent one
-                most_recent_eval_root_id = group_df.loc[
-                    group_df["timestamp"].idxmax(), "eval_root_id"
-                ]
-                recent_rows = group_df[
-                    group_df["eval_root_id"] == most_recent_eval_root_id
-                ]
-                indices_to_keep.extend(recent_rows.index)
+                most_recent_idx = group_df["timestamp"].idxmax()
+                most_recent_indices.append(most_recent_idx)
 
-        # Filter and clean up
-        if indices_to_keep:
-            filtered_df = df.loc[indices_to_keep]
-            return filtered_df.drop(
-                columns=[
-                    "eval_root_id",
-                    "args_span_id",
-                    "args_span_attribute",
-                ],
-                errors="ignore",
-            )
+        # Filter to keep only the most recent rows
+        filtered_df = df.loc[most_recent_indices].copy()
+
+        # Drop columns that were only needed for filtering, but keep eval_root_id
+        return filtered_df.drop(
+            columns=["args_span_id", "args_span_attribute", "timestamp"],
+            errors="ignore",
+        )
     else:
         # Simple case: just keep rows from the most recent eval_root_id
         most_recent_eval_root_id = df.loc[
             df["timestamp"].idxmax(), "eval_root_id"
         ]
         filtered_df = df[df["eval_root_id"] == most_recent_eval_root_id].copy()
-        return filtered_df.drop(columns=["eval_root_id"], errors="ignore")
-
-    return df
+        return filtered_df.drop(columns=["timestamp"], errors="ignore")
 
 
 def _render_feedback_pills(
