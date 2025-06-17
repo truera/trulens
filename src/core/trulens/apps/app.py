@@ -191,6 +191,7 @@ Function <function CustomLLM.generate at 0x1779471f0> was not found during instr
   solution as needed.
 """
 
+import inspect
 import logging
 from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Optional, Set
@@ -356,6 +357,18 @@ class TruApp(core_app.App):
             TruSession(connector=kwargs["connector"])
         else:
             TruSession()
+        if is_otel_tracing_enabled():
+            main_methods = set()
+            if main_method is not None:
+                main_methods.add(main_method)
+            for _, method in inspect.getmembers(app, inspect.ismethod):
+                if self._has_record_root_instrumentation(method):
+                    main_methods.add(method)
+            if len(main_methods) > 1:
+                raise ValueError(
+                    f"Must not have more than one main method or method decorated with span type 'record_root'! Found: {list(main_methods)}"
+                )
+            main_method = main_methods.pop()
 
         if main_method is not None:
             kwargs["main_method"] = main_method
