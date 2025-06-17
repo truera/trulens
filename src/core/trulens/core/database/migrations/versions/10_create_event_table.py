@@ -31,16 +31,26 @@ def upgrade(config) -> None:
     if prefix is None:
         raise RuntimeError("trulens.table_prefix is not set")
 
+    # Check if the database is Snowflake
+    dict_type = sa.JSON()
+    is_snowflake = config.get_main_option("sqlalchemy.url", "").startswith(
+        "snowflake"
+    )
+    if is_snowflake:
+        # Snowflake does not support JSON type, so we use TEXT instead
+        # for compatibility with the rest of the code.
+        dict_type = sa.TEXT()
+
     op.create_table(
         prefix + "events",
         sa.Column("event_id", sa.VARCHAR(length=256), nullable=False),
-        sa.Column("record", sa.JSON(), nullable=False),
-        sa.Column("record_attributes", sa.JSON(), nullable=False),
+        sa.Column("record", dict_type, nullable=False),
+        sa.Column("record_attributes", dict_type, nullable=False),
         sa.Column("record_type", sa.VARCHAR(length=256), nullable=False),
-        sa.Column("resource_attributes", sa.JSON(), nullable=False),
+        sa.Column("resource_attributes", dict_type, nullable=False),
         sa.Column("start_timestamp", sa.TIMESTAMP(), nullable=False),
         sa.Column("timestamp", sa.TIMESTAMP(), nullable=False),
-        sa.Column("trace", sa.JSON(), nullable=False),
+        sa.Column("trace", dict_type, nullable=False),
         sa.PrimaryKeyConstraint("event_id"),
     )
 
