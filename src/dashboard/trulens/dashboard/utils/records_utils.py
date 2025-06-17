@@ -269,12 +269,9 @@ def _filter_duplicate_span_calls(df: pd.DataFrame) -> pd.DataFrame:
             errors="ignore",
         )
     else:
-        # Simple case: just keep rows from the most recent eval_root_id
-        most_recent_eval_root_id = df.loc[
-            df["timestamp"].idxmax(), "eval_root_id"
-        ]
-        filtered_df = df[df["eval_root_id"] == most_recent_eval_root_id].copy()
-        return filtered_df.drop(columns=["timestamp"], errors="ignore")
+        # If we only have spans with no args_span_id or args_span_attribute,
+        # return all spans without filtering
+        return df.drop(columns=["timestamp"], errors="ignore")
 
 
 def _render_feedback_pills(
