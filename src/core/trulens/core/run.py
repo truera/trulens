@@ -393,8 +393,9 @@ class Run(BaseModel):
 
         if current_run_status == RunStatus.COMPUTATION_IN_PROGRESS:
             logger.warning(
-                "Previous computation(s) still in progress. Starting another new metric computation when computation is in progress."
+                "Previous computation(s) still in progress. We do not allow another new metric computation when computation is in progress."
             )
+            return False
 
         return current_run_status in [
             RunStatus.INVOCATION_COMPLETED,
@@ -862,43 +863,44 @@ class Run(BaseModel):
 
             return self._compute_latest_invocation_status(run)
 
-    # def _should_skip_computation(self, metric_name: str, run: Run) -> bool:
-    #     if run.run_metadata.metrics is None:
-    #         return False
+    # todo: (dhuang) no longer used, should remove
+    def _should_skip_computation(self, metric_name: str, run: Run) -> bool:
+        if run.run_metadata.metrics is None:
+            return False
 
-    #     statuses = []  # will store statuses for all matching metric entries
-    #     for metric_metadata in run.run_metadata.metrics.values():
-    #         if metric_metadata.name == metric_name:
-    #             statuses.append(metric_metadata.completion_status.status)
+        statuses = []  # will store statuses for all matching metric entries
+        for metric_metadata in run.run_metadata.metrics.values():
+            if metric_metadata.name == metric_name:
+                statuses.append(metric_metadata.completion_status.status)
 
-    #     # If no matching metric entries found, don't skip.
-    #     if not statuses:
-    #         return False
+        # If no matching metric entries found, don't skip.
+        if not statuses:
+            return False
 
-    #     if any(s == Run.CompletionStatusStatus.COMPLETED for s in statuses):
-    #         logger.info(
-    #             f"Metric {metric_name} already computed successfully (one entry COMPLETED); skipping computation."
-    #         )
-    #         return True
+        if any(s == Run.CompletionStatusStatus.COMPLETED for s in statuses):
+            logger.info(
+                f"Metric {metric_name} already computed successfully (one entry COMPLETED); skipping computation."
+            )
+            return True
 
-    #     # If any metric is in progress (i.e. started), we skip because it's still computing.
-    #     if any(s == Run.CompletionStatusStatus.STARTED for s in statuses):
-    #         logger.info(
-    #             f"Metric {metric_name} is in progress (at least one entry not complete); skipping computation."
-    #         )
-    #         return True
+        # If any metric is in progress (i.e. started), we skip because it's still computing.
+        if any(s == Run.CompletionStatusStatus.STARTED for s in statuses):
+            logger.info(
+                f"Metric {metric_name} is in progress (at least one entry not complete); skipping computation."
+            )
+            return True
 
-    #     # If all matching metrics are FAILED, then allow re-computation.
-    #     if all(s == Run.CompletionStatusStatus.FAILED for s in statuses):
-    #         logger.info(
-    #             f"All metric entries for {metric_name} have FAILED; allowing re-computation."
-    #         )
-    #         return False
+        # If all matching metrics are FAILED, then allow re-computation.
+        if all(s == Run.CompletionStatusStatus.FAILED for s in statuses):
+            logger.info(
+                f"All metric entries for {metric_name} have FAILED; allowing re-computation."
+            )
+            return False
 
-    #     logger.warning(
-    #         "Unknown state for metric computation; skipping computation."
-    #     )
-    #     return True
+        logger.warning(
+            "Unknown state for metric computation; skipping computation."
+        )
+        return True
 
     def compute_metrics(self, metrics: List[str]) -> str:
         run_status = self.get_status()
