@@ -6,7 +6,6 @@ import json
 import logging
 import time
 from typing import Any, ClassVar, Dict, List, Optional, Set, Type
-import uuid
 
 import pandas as pd
 import pydantic
@@ -892,68 +891,23 @@ class Run(BaseModel):
             return f"""Cannot start a new metric computation when in run status: {run_status}. Valid statuses are: {RunStatus.INVOCATION_COMPLETED}, {RunStatus.INVOCATION_PARTIALLY_COMPLETED},
         {RunStatus.COMPUTATION_IN_PROGRESS}, {RunStatus.COMPLETED}, {RunStatus.PARTIALLY_COMPLETED}, {RunStatus.FAILED}."""
 
-        run_metadata_df = self.run_dao.get_run(
-            run_name=self.run_name,
-            object_name=self.object_name,
-            object_type=self.object_type,
-            object_version=self.object_version,
-        )
-
-        run = Run.from_metadata_df(
-            run_metadata_df,
-            {
-                "app": self,
-                "main_method_name": self.main_method_name,
-                "run_dao": self.run_dao,
-                "tru_session": self.tru_session,
-            },
-        )
-
-        computation_metadata_id = str(uuid.uuid4())
-
-        for metric_name in metrics:
-            if not self._should_skip_computation(metric_name, run):
-                logger.info(
-                    f"Adding metric: {metric_name} to run metadata for computation."
-                )
-                # add placeholder entries to metrics field in run metadata
-                metric_metadata_id = str(uuid.uuid4())
-                self.run_dao.upsert_run_metadata_fields(
-                    entry_type=SupportedEntryType.METRICS.value,
-                    entry_id=metric_metadata_id,
-                    computation_id=computation_metadata_id,
-                    name=metric_name,
-                    completion_status=None,  # starting w/ null, will be updated after the computation
-                    run_name=self.run_name,
-                    object_name=self.object_name,
-                    object_type=self.object_type,
-                    object_version=self.object_version,
-                )
-
-        computation_start_time_ms = self._get_current_time_in_ms()
-
-        async_job = self.run_dao.call_compute_metrics_query(
-            metrics=metrics,
-            object_name=self.object_name,
-            object_version=self.object_version,
-            object_type=self.object_type,
-            run_name=self.run_name,
-        )
-
-        query_id = async_job.query_id
-
-        logger.info(f"Query id for metrics computation: {query_id}")
-        self.run_dao.upsert_run_metadata_fields(
-            entry_type=SupportedEntryType.COMPUTATIONS.value,
-            entry_id=computation_metadata_id,
-            query_id=query_id,
-            start_time_ms=computation_start_time_ms,
-            end_time_ms=0,
-            run_name=self.run_name,
-            object_name=self.object_name,
-            object_type=self.object_type,
-            object_version=self.object_version,
-        )
+        sql_cmd = self.run_dao.session.sql(f"""
+        CALL SYSTEM$EXECUTE_AI_OBSERVABILITY_RUN(
+            OBJECT_CONSTRUCT(
+            'object_name', '{self.object_name}',
+            'object_type', '{self.object_type}',
+            'object_version', '{self.object_version}'
+            ),
+            OBJECT_CONSTRUCT(
+            'run_name', '{self.run_name}'
+            ),
+            OBJECT_CONSTRUCT('type', 'stage_file'),
+            ARRAY_CONSTRUCT({", ".join([f"'{m}'" for m in metrics])}),
+            ARRAY_CONSTRUCT('COMPUTE_METRICS')
+        );
+        """)
+        logger.info(f"Executing SQL command for metrics computation: {sql_cmd}")
+        logger.debug(sql_cmd.collect()[0][0])
 
         logger.info("Metrics computation job started")
         return "Metrics computation in progress."
