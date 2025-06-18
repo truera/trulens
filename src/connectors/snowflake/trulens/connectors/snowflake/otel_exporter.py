@@ -162,6 +162,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         schema = clean_up_snowflake_identifier(
             snowpark_session.get_current_schema()
         )
+
         sql_cmd = snowpark_session.sql(
             f"""
             CALL SYSTEM$EXECUTE_AI_OBSERVABILITY_RUN(
