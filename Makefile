@@ -81,6 +81,10 @@ lock: $(POETRY_DIRS)
 		poetry lock -C $$dir; \
 	done
 
+# Install all the subprojects using pip.
+pip-install: $(POETRY_DIRS)
+	pip install $(POETRY_DIRS)
+
 # Test build of conda packages against the Snowflake channel
 # This does not publish packages, only builds them locally.
 conda-build: $(CONDA_BUILD_DIRS)
