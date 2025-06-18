@@ -679,3 +679,48 @@ class RunDao:
         curr = self.session.connection.cursor()
         curr.get_results_from_sfqid(query_id)
         return curr.fetch_pandas_all()
+
+    def call_compute_metrics_query(
+        self,
+        metrics: List[str],
+        object_name: str,
+        object_version: str,
+        object_type: str,
+        run_name: str,
+    ) -> None:
+        database = clean_up_snowflake_identifier(
+            self.session.get_current_database()
+        )
+        schema = clean_up_snowflake_identifier(
+            self.session.get_current_schema()
+        )
+
+        fq_object_name = f"{database}.{schema}.{object_name.upper()}"
+
+        try:
+            sql_cmd = self.session.sql(
+                f"""
+                CALL SYSTEM$EXECUTE_AI_OBSERVABILITY_RUN(
+                    OBJECT_CONSTRUCT(
+                    'object_name', '{fq_object_name}',
+                    'object_type', '{object_type}',
+                    'object_version', '{object_version}'
+                    ),
+                    OBJECT_CONSTRUCT(
+                    'run_name', '{run_name}'
+                    ),
+                    OBJECT_CONSTRUCT('type', 'stage_file'),
+                    ARRAY_CONSTRUCT({", ".join([f"'{m}'" for m in metrics])}),
+                    ARRAY_CONSTRUCT('COMPUTE_METRICS')
+                );
+                """
+            )
+            logger.info(
+                f"Executing SQL command for metrics computation: {sql_cmd}"
+            )
+            logger.debug(sql_cmd.collect()[0][0])
+        except Exception as e:
+            logger.exception(
+                f"Error encountered during calling compute metrics query: {e}."
+            )
+            raise

@@ -12,9 +12,6 @@ import pydantic
 from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
-from trulens.connectors.snowflake.dao.sql_utils import (
-    clean_up_snowflake_identifier,
-)
 from trulens.core.utils.json import obj_id_of_obj
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -708,34 +705,13 @@ class Run(BaseModel):
 
         logger.info(f"Metrics to compute: {metrics}.")
 
-        database = clean_up_snowflake_identifier(
-            self.run_dao.session.get_current_database()
+        self.run_dao.call_compute_metrics_query(
+            metrics=metrics,
+            object_name=self.object_name,
+            object_type=self.object_type,
+            object_version=self.object_version,
+            run_name=self.run_name,
         )
-        schema = clean_up_snowflake_identifier(
-            self.run_dao.session.get_current_schema()
-        )
-
-        fq_object_name = f"{database}.{schema}.{self.object_name.upper()}"
-
-        sql_cmd = self.run_dao.session.sql(
-            f"""
-            CALL SYSTEM$EXECUTE_AI_OBSERVABILITY_RUN(
-                OBJECT_CONSTRUCT(
-                'object_name', '{fq_object_name}',
-                'object_type', '{self.object_type}',
-                'object_version', '{self.object_version}'
-                ),
-                OBJECT_CONSTRUCT(
-                'run_name', '{self.run_name}'
-                ),
-                OBJECT_CONSTRUCT('type', 'stage_file'),
-                ARRAY_CONSTRUCT({", ".join([f"'{m}'" for m in metrics])}),
-                ARRAY_CONSTRUCT('COMPUTE_METRICS')
-            );
-            """
-        )
-        logger.info(f"Executing SQL command for metrics computation: {sql_cmd}")
-        logger.debug(sql_cmd.collect()[0][0])
 
         logger.info("Metrics computation job started")
         return "Metrics computation in progress."
