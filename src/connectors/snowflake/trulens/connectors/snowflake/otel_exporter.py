@@ -175,8 +175,8 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                 ),
                 OBJECT_CONSTRUCT(
                     'type', 'stage_file',
-                    'stage_file_path', 'stage_file_path',
-                    'scoped_url', BUILD_SCOPED_FILE_URL(
+                    'stage_file_path',
+                    BUILD_SCOPED_FILE_URL(
                         @{database}.{schema}.trulens_spans,
                         ?
                     ),
