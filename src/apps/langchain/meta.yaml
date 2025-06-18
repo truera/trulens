@@ -10,7 +10,7 @@ source:
   # path: .
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-apps-langchain/#files
-  sha256: 2032fe4228458c1c3c72ee274a2b0cc8799e77fd3bbf87bddeeb88f027853265
+  sha256: 00db8abcfa07fcba4c86e1720a1b115edb9732058c7bb994f54513bd95cfbd9d
 
 build:
   noarch: python
