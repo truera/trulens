@@ -164,7 +164,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         )
 
         sql_cmd = snowpark_session.sql(
-            f"""
+            """
             CALL SYSTEM$EXECUTE_AI_OBSERVABILITY_RUN(
                 OBJECT_CONSTRUCT(
                     'object_name', ?,
@@ -176,11 +176,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                 ),
                 OBJECT_CONSTRUCT(
                     'type', 'stage_file',
-                    'stage_file_path',
-                    BUILD_SCOPED_FILE_URL(
-                        @{database}.{schema}.trulens_spans,
-                        ?
-                    ),
+                    'stage_file_path', ?,
                     'input_record_count', ?
                 ),
                 ARRAY_CONSTRUCT(),
@@ -188,14 +184,11 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
             )
             """,
             params=[
-                # OBJECT_CONSTRUCT( … )
-                f"{database}.{schema}.{app_name.upper()}",  # object_name
-                app_version,  # object_version
-                # OBJECT_CONSTRUCT( … )
-                run_name,  # run_name
-                # OBJECT_CONSTRUCT( … )
-                tmp_file_basename + ".gz",  # for BUILD_SCOPED_FILE_URL
-                input_records_count,  # input_record_count
+                f"{database}.{schema}.{app_name.upper()}",
+                app_version,
+                run_name,
+                f"@{database}.{schema}.trulens_spans/{tmp_file_basename}.gz",
+                input_records_count,
             ],
         )
         if not dry_run:
