@@ -28,11 +28,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9,!=3.9.7"
-trulens-core = { version = "^1.0.0", extras = [
-  "otel",
-  "tqdm",
-  "openai",
-] }
+trulens-core = { version = "^1.0.0" }
 trulens-feedback = { version = "^1.0.0" }
 trulens-dashboard = { version = "^1.0.0", extras = [
   "full",
@@ -78,16 +74,16 @@ trulens-apps-nemo = { path = "src/apps/nemo", develop = true, python = "<3.13" }
 [tool.poetry.group.providers.dependencies]
 trulens-providers-bedrock = { path = "src/providers/bedrock", develop = true }
 trulens-providers-langchain = { path = "src/providers/langchain", develop = true }
-trulens-providers-cortex = { path = "src/providers/cortex", develop = true, python = "<3.12" }
+trulens-providers-cortex = { path = "src/providers/cortex", develop = true, python = "<3.13" }
 trulens-providers-huggingface = { path = "src/providers/huggingface", develop = true }
 trulens-providers-openai = { path = "src/providers/openai", develop = true }
 trulens-providers-litellm = { path = "src/providers/litellm", develop = true }
 
 [tool.poetry.group.connectors.dependencies]
-trulens-connectors-snowflake = { path = "src/connectors/snowflake", develop = true, python = "<3.12" }
+trulens-connectors-snowflake = { path = "src/connectors/snowflake", develop = true, python = "<3.13" }
 
 [tool.poetry.group.snowflake.dependencies]
-trulens-connectors-snowflake = { path = "src/connectors/snowflake", develop = true, python = "<3.12" }
+trulens-connectors-snowflake = { path = "src/connectors/snowflake", develop = true, python = "<3.13" }
 
 [tool.poetry.group.hotspots.dependencies]
 trulens-hotspots = { path = "src/hotspots", develop = true }
