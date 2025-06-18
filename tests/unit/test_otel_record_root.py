@@ -60,3 +60,24 @@ class TestOtelRecordRoot(OtelTestCase):
         self.assertEqual(1, count_wraps(app3.query_b))
         self.assertEqual(0, count_wraps(app4.query_a))
         self.assertEqual(1, count_wraps(app4.query_b))
+
+    def test_pupr_record_root(self):
+        class _App:
+            @instrument(span_type=SpanAttributes.SpanType.RECORD_ROOT)
+            def query(self, question: str) -> str:
+                return "Kojikun"
+
+        app = _App()
+        tru_app = TruApp(app=app)
+        tru_app.instrumented_invoke_main_method(
+            run_name="test run",
+            input_id="42",
+            main_method_args=("Who is the cutest baby in the world?",),
+        )
+        TruSession().force_flush()
+        events = self._get_events()
+        self.assertEqual(1, len(events))
+        self.assertEqual(
+            SpanAttributes.SpanType.RECORD_ROOT,
+            events.iloc[0]["record_attributes"][SpanAttributes.SPAN_TYPE],
+        )
