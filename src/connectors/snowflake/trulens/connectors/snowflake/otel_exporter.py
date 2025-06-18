@@ -176,8 +176,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                         @{database}.{schema}.trulens_spans,
                         ?
                     ),
-                    'input_record_count', ?,
-                    'attempt', 1
+                    'input_record_count', ?
                 ),
                 ARRAY_CONSTRUCT(),
                 ARRAY_CONSTRUCT('INGESTION')
