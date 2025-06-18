@@ -702,18 +702,25 @@ class RunDao:
                 f"""
                 CALL SYSTEM$EXECUTE_AI_OBSERVABILITY_RUN(
                     OBJECT_CONSTRUCT(
-                    'object_name', '{fq_object_name}',
-                    'object_type', '{object_type}',
-                    'object_version', '{object_version}'
+                        'object_name', ?,
+                        'object_type', ?,
+                        'object_version', ?
                     ),
                     OBJECT_CONSTRUCT(
-                    'run_name', '{run_name}'
+                        'run_name', ?
                     ),
                     OBJECT_CONSTRUCT('type', 'stage_file'),
-                    ARRAY_CONSTRUCT({", ".join([f"'{m}'" for m in metrics])}),
+                    ARRAY_CONSTRUCT({", ".join(["?"] * len(metrics))}),
                     ARRAY_CONSTRUCT('COMPUTE_METRICS')
                 );
-                """
+                """,
+                params=[
+                    fq_object_name,
+                    object_type,
+                    object_version,
+                    run_name,
+                    *metrics,
+                ],
             )
             logger.info(
                 f"Executing SQL command for metrics computation: {sql_cmd}"
