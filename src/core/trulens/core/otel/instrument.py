@@ -534,6 +534,7 @@ class OtelRecordingContext(OtelBaseRecordingContext):
         self.attach_to_context(ResourceAttributes.APP_ID, self.app_id)
         self.attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
         self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
+
         self.attach_to_context(
             SpanAttributes.INPUT_RECORDS_COUNT,
             self.input_records_count,

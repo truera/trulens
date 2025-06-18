@@ -12,6 +12,9 @@ import pydantic
 from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
+from trulens.connectors.snowflake.dao.sql_utils import (
+    clean_up_snowflake_identifier,
+)
 from trulens.core.utils.json import obj_id_of_obj
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -694,11 +697,21 @@ class Run(BaseModel):
                 logger.info(f"Skipping computation for metric: {metric}")
 
         logger.info(f"Metrics to compute: {metrics_to_compute}.")
+
+        database = clean_up_snowflake_identifier(
+            self.run_dao.session.get_current_database()
+        )
+        schema = clean_up_snowflake_identifier(
+            self.run_dao.session.get_current_schema()
+        )
+
+        fq_object_name = f"{database}.{schema}.{self.object_name.upper()}"
+
         sql_cmd = self.run_dao.session.sql(
             f"""
             CALL SYSTEM$EXECUTE_AI_OBSERVABILITY_RUN(
                 OBJECT_CONSTRUCT(
-                'object_name', '{self.object_name}',
+                'object_name', '{fq_object_name}',
                 'object_type', '{self.object_type}',
                 'object_version', '{self.object_version}'
                 ),
