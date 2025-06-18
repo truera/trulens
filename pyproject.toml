@@ -28,11 +28,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9,!=3.9.7"
-trulens-core = { version = "^1.0.0", extras = [
-  "otel",
-  "tqdm",
-  "openai",
-] }
+trulens-core = { version = "^1.0.0" }
 trulens-feedback = { version = "^1.0.0" }
 trulens-dashboard = { version = "^1.0.0", extras = [
   "full",
