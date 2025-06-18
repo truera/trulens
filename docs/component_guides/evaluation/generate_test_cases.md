@@ -1,11 +1,11 @@
 # Generating Test Cases
 
-Generating a sufficient test set for evaluating an app is an early change in the
+Generating a sufficient test set for evaluating an app is an early step in the
 development phase.
 
 TruLens allows you to generate a test set of a specified breadth and depth,
-tailored to your app and data. Resulting test set will be a list of test prompts
-of length `depth`, for `breadth` categories of prompts. Resulting test set will
+tailored to your app and data. The resulting test set will be a list of test prompts
+of length `depth`, for `breadth` categories of prompts. This test set will
 be made up of `breadth` X `depth` prompts organized by prompt category.
 
 !!! example

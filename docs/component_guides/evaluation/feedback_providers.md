@@ -8,17 +8,17 @@ evaluation task.
 
 This page documents the feedback providers available in _TruLens_.
 
-There are three categories of such providers as well as combination providers
+There are three categories of such providers as well as provider combinations
 that make use of one or more of these providers to offer additional feedback
-functions based capabilities of the constituent providers.
+functions capabilities based on the constituent providers.
 
 ## Classification-based Providers
 
-Some feedback functions rely on classification typically tailor made for task, unlike LLM models.
+Some feedback functions rely on classification typically tailor-made for evaluation tasks, unlike LLM models.
 
-- [HuggingFace provider][trulens.providers.huggingface.Huggingface]
+- [Hugging Face provider][trulens.providers.huggingface.Huggingface]
   containing a variety of classification-based feedback functions runnable on the remote HuggingFace API.
-  - [HuggingFace Local provider][trulens.providers.huggingface.HuggingfaceLocal]
+  - [Hugging Face Local provider][trulens.providers.huggingface.HuggingfaceLocal]
   containing a variety of classification-based feedback functions runnable locally.
 - [OpenAI provider][trulens.providers.openai.OpenAI] (and
   subclasses) features moderation feedback functions.
@@ -33,7 +33,7 @@ Providers which use large language models for feedback evaluation:
 - [LiteLLM provider][trulens.providers.litellm.LiteLLM]
 - [_LangChain_ provider][trulens.providers.langchain.Langchain]
 
-Feedback functions in common across these providers are in their abstract class
+Feedback functions common to these providers are found in the abstract class
 [LLMProvider][trulens.feedback.LLMProvider].
 
 ## Embedding-based Providers
