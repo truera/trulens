@@ -51,6 +51,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         self.connector.snowpark_session.sql("SELECT 20240131").collect()
         if verify_via_dry_run:
             test_span = ReadableSpan(name="test_span")
+            test_span.attributes[ResourceAttributes.APP_NAME] = "test_app"
             res = self.export([test_span], dry_run=True)
             if res != SpanExportResult.SUCCESS:
                 # This shouldn't happen since we should have been thrown errors.
@@ -184,9 +185,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
             """,
             params=[
                 # OBJECT_CONSTRUCT( … )
-                f"{database}.{schema}.{app_name.upper()}"
-                if app_name
-                else "",  # object_name
+                f"{database}.{schema}.{app_name.upper()}",  # object_name
                 app_version,  # object_version
                 # OBJECT_CONSTRUCT( … )
                 run_name,  # run_name
