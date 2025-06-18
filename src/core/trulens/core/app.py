@@ -68,6 +68,9 @@ from trulens.otel.semconv.constants import (
     TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG,
 )
 from trulens.otel.semconv.constants import TRULENS_INSTRUMENT_WRAPPER_FLAG
+from trulens.otel.semconv.constants import (
+    TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -612,6 +615,14 @@ class App(
             if hasattr(func, TRULENS_INSTRUMENT_WRAPPER_FLAG) or hasattr(
                 func, TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG
             ):
+                return True
+            func = func.__wrapped__
+        return False
+
+    @staticmethod
+    def _has_record_root_instrumentation(func: Callable) -> bool:
+        while hasattr(func, "__wrapped__"):
+            if hasattr(func, TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG):
                 return True
             func = func.__wrapped__
         return False

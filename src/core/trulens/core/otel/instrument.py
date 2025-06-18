@@ -44,6 +44,9 @@ from trulens.otel.semconv.constants import (
     TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG,
 )
 from trulens.otel.semconv.constants import TRULENS_INSTRUMENT_WRAPPER_FLAG
+from trulens.otel.semconv.constants import (
+    TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
+)
 from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 import wrapt
@@ -207,12 +210,13 @@ class instrument:
             A dictionary or a callable that returns a dictionary of attributes
             (i.e. a `typing.Dict[str, typing.Any]`) to be set on the span.
         """
+        self.user_specified_span_type = span_type
         self.span_type = span_type
         if span_type == SpanAttributes.SpanType.RECORD_ROOT:
             logger.warning(
                 "Cannot explicitly set 'record_root' span type, setting to 'unknown'."
             )
-            span_type = SpanAttributes.SpanType.UNKNOWN
+            self.span_type = SpanAttributes.SpanType.UNKNOWN
         if attributes is None:
             attributes = {}
         self.attributes = attributes
@@ -376,6 +380,8 @@ class instrument:
         else:
             ret = sync_wrapper(func)
         ret.__dict__[TRULENS_INSTRUMENT_WRAPPER_FLAG] = True
+        if self.user_specified_span_type == SpanAttributes.SpanType.RECORD_ROOT:
+            ret.__dict__[TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG] = True
         if self.is_app_specific_instrumentation:
             ret.__dict__[TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG] = True
         return ret
