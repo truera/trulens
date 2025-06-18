@@ -81,6 +81,13 @@ lock: $(POETRY_DIRS)
 		poetry lock -C $$dir; \
 	done
 
+# Lock the poetry dependencies for all the subprojects.
+pip-install: $(POETRY_DIRS)
+	for dir in $(POETRY_DIRS); do \
+		echo "Installing $$dir/pyproject.toml"; \
+		pip install $$dir; \
+	done
+
 # Test build of conda packages against the Snowflake channel
 # This does not publish packages, only builds them locally.
 conda-build: $(CONDA_BUILD_DIRS)
