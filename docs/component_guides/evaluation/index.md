@@ -6,7 +6,7 @@ Measuring the performance of LLM apps is a critical step in the path from develo
 
 However, unlike in traditional machine learning, ground truth is sparse and often entirely unavailable.
 
-Without ground truth for computing metrics on our LLM apps, feedback functions can be used to compute metrics for LLM applications.
+Without ground truth for computing metrics on our LLM apps, we can instead use feedback functions to compute metrics for LLM applications.
 
 ## What is a feedback function?
 

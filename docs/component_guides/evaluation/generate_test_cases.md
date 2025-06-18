@@ -1,7 +1,7 @@
 # Generating Test Cases
 
 Generating a sufficient test set for evaluating an app is an early step in the
-development phase.
+development cycle.
 
 TruLens allows you to generate a test set of a specified breadth and depth,
 tailored to your app and data. The resulting test set will be a list of test prompts

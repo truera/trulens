@@ -10,7 +10,7 @@ This page documents the feedback providers available in _TruLens_.
 
 There are three categories of such providers as well as provider combinations
 that make use of one or more of these providers to offer additional feedback
-functions capabilities based on the constituent providers.
+function capabilities based on the constituent providers.
 
 ## Classification-based Providers
 
