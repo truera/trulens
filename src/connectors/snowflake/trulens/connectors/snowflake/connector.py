@@ -58,6 +58,7 @@ class SnowflakeConnector(DBConnector):
         database_prefix: Optional[str] = None,
         database_args: Optional[Dict[str, Any]] = None,
         database_check_revision: bool = True,
+        use_account_event_table: bool = True,
     ):
         connection_parameters = {
             "account": account,
@@ -89,7 +90,7 @@ class SnowflakeConnector(DBConnector):
         self.connection_parameters: Dict[str, str] = connection_parameters
         self.use_staged_packages: bool = init_server_side_with_staged_packages
 
-        if not is_otel_tracing_enabled():
+        if not is_otel_tracing_enabled() or not use_account_event_table:
             self._init_with_snowpark_session(
                 snowpark_session,
                 init_server_side,
