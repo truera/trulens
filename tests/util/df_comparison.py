@@ -96,7 +96,7 @@ def _compare_entity(
     ignore_locators: Optional[Sequence[str]],
     regex_replacements: List[Tuple[str, str]],
 ) -> None:
-    if ignore_locators and locator in ignore_locators:
+    if ignore_locators and _remove_row_from_locator(locator) in ignore_locators:
         return
     test_case.assertEqual(
         type(expected),
@@ -179,3 +179,12 @@ def _compare_entity(
             actual,
             f"{locator} does not match!\nEXPECTED: {expected}\nACTUAL: {actual}",
         )
+
+
+def _remove_row_from_locator(locator: str) -> str:
+    # if locator starts with `df.iloc[i]` remove it.
+    match = re.match(r"^df\.iloc\[\d+\](.*)$", locator)
+    if match:
+        print(f"Removing row from locator: {locator}, {match.group(1)}")
+        return match.group(1)
+    return locator

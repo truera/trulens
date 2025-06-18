@@ -73,6 +73,7 @@ class OtelTestCase(TruTestCase):
     def _compare_events_to_golden_dataframe(
         self,
         golden_filename: str,
+        ignore_locators: Optional[List[str]] = None,
         regex_replacements: Optional[List[Tuple[str, str]]] = None,
     ) -> None:
         tru_session = TruSession()
@@ -81,14 +82,14 @@ class OtelTestCase(TruTestCase):
         self.write_golden(golden_filename, actual)
         expected = self.load_golden(golden_filename)
         self._convert_column_types(expected)
+        if ignore_locators is None:
+            ignore_locators = []
+        ignore_locators += ["[resource_attributes][telemetry.sdk.version]"]
         compare_dfs_accounting_for_ids_and_timestamps(
             self,
             expected,
             actual,
-            ignore_locators=[
-                f"df.iloc[{i}][resource_attributes][telemetry.sdk.version]"
-                for i in range(len(expected))
-            ],
+            ignore_locators=ignore_locators,
             timestamp_tol=pd.Timedelta("0.02s"),
             regex_replacements=regex_replacements,
         )

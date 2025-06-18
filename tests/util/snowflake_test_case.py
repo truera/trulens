@@ -80,6 +80,9 @@ class SnowflakeTestCase(TruTestCase):
         schema_name: Optional[str] = None,
         schema_already_exists: bool = False,
         connect_via_snowpark_session: bool = True,
+        init_server_side: bool = True,
+        init_server_side_with_staged_packages: bool = True,
+        use_account_event_table: bool = True,
     ) -> core_session.TruSession:
         if bool(app_base_name) == bool(schema_name):
             raise ValueError(
@@ -100,16 +103,18 @@ class SnowflakeTestCase(TruTestCase):
             connector = snowflake_connector.SnowflakeConnector(
                 schema=self._schema,
                 **self._snowflake_connection_parameters,
-                init_server_side=True,
-                init_server_side_with_staged_packages=True,
+                init_server_side=init_server_side,
+                init_server_side_with_staged_packages=init_server_side_with_staged_packages,
+                use_account_event_table=use_account_event_table,
             )
         else:
             if not schema_already_exists:
                 self.create_and_use_schema(self._schema)
             connector = snowflake_connector.SnowflakeConnector(
                 snowpark_session=self._snowpark_session,
-                init_server_side=True,
-                init_server_side_with_staged_packages=True,
+                init_server_side=init_server_side,
+                init_server_side_with_staged_packages=init_server_side_with_staged_packages,
+                use_account_event_table=use_account_event_table,
             )
         session = core_session.TruSession(connector=connector)
         self.assertIn(self._schema, self.list_schemas())
