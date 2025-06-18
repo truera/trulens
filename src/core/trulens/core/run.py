@@ -644,13 +644,19 @@ class Run(BaseModel):
             return self._compute_latest_invocation_status(run)
 
     def _should_skip_computation(self, metric_name: str, run: Run) -> bool:
-        if run.run_metadata.metrics is None:
+        metrics_metadata = (
+            run.describe().get("run_metadata", {}).get("metrics", {})
+        )
+
+        if metrics_metadata is None:
             return False
 
         statuses = []  # will store statuses for all matching metric entries
-        for metric_metadata in run.run_metadata.metrics.values():
-            if metric_metadata.name == metric_name:
-                statuses.append(metric_metadata.completion_status.status)
+        for metric_metadata in metrics_metadata.values():
+            if metric_metadata.get("name", "") == metric_name:
+                statuses.append(
+                    metric_metadata.get("completion_status", {}).get("status")
+                )
 
         # If no matching metric entries found, don't skip.
         if not statuses:
@@ -689,14 +695,18 @@ class Run(BaseModel):
             return f"""Cannot start a new metric computation when in run status: {run_status}. Valid statuses are: {RunStatus.INVOCATION_COMPLETED}, {RunStatus.INVOCATION_PARTIALLY_COMPLETED},
         {RunStatus.COMPUTATION_IN_PROGRESS}, {RunStatus.COMPLETED}, {RunStatus.PARTIALLY_COMPLETED}, {RunStatus.FAILED}."""
 
-        metrics_to_compute = []
+        computed_metrics = []
         for metric in metrics:
-            if not self._should_skip_computation(metric, self):
-                metrics_to_compute.append(metric)
-            else:
-                logger.info(f"Skipping computation for metric: {metric}")
+            if self._should_skip_computation(metric, self):
+                computed_metrics.append(metric)
 
-        logger.info(f"Metrics to compute: {metrics_to_compute}.")
+        if computed_metrics:
+            return (
+                f"Cannot compute metrics because the following metric(s) are already computed or in progress: "
+                f"{', '.join(computed_metrics)}. If you want to recompute, please cancel the run and start a new one."
+            )
+
+        logger.info(f"Metrics to compute: {metrics}.")
 
         database = clean_up_snowflake_identifier(
             self.run_dao.session.get_current_database()
@@ -719,7 +729,7 @@ class Run(BaseModel):
                 'run_name', '{self.run_name}'
                 ),
                 OBJECT_CONSTRUCT('type', 'stage_file'),
-                ARRAY_CONSTRUCT({", ".join([f"'{m}'" for m in metrics_to_compute])}),
+                ARRAY_CONSTRUCT({", ".join([f"'{m}'" for m in metrics])}),
                 ARRAY_CONSTRUCT('COMPUTE_METRICS')
             );
             """
