@@ -685,6 +685,11 @@ class Run(BaseModel):
         return True
 
     def compute_metrics(self, metrics: List[str]) -> str:
+        if not metrics:
+            raise ValueError(
+                "No metrics provided. Please provide at least one metric to compute."
+            )
+
         run_status = self.get_status()
 
         logger.info(f"Current run status: {run_status}")
