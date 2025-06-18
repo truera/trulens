@@ -81,7 +81,7 @@ lock: $(POETRY_DIRS)
 		poetry lock -C $$dir; \
 	done
 
-# Lock the poetry dependencies for all the subprojects.
+# Install all the subprojects using pip.
 pip-install: $(POETRY_DIRS)
 	pip install $(POETRY_DIRS)
 
