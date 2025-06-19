@@ -1,5 +1,5 @@
 {% set name = "trulens-core" %}
-{% set version = "1.5.1" %}
+{% set version = "1.5.2" %}
 
 package:
   name: {{ name|lower }}
