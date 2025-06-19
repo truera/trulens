@@ -14,6 +14,7 @@ from trulens.apps.app import TruApp
 from trulens.core.feedback import Feedback
 from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
 from trulens.core.feedback.selector import Selector
+from trulens.core.feedback.selector import Trace
 from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
 from trulens.feedback.computer import MinimalSpanInfo
@@ -527,6 +528,104 @@ class TestOtelFeedbackComputation(OtelTestCase):
         TruSession().force_flush()
         new_num_events = len(self._get_events())
         self.assertEqual(old_num_events, new_num_events)
+
+    def test_trace_level_feedback(self) -> None:
+        # Create feedback.
+        def custom(trace: Trace) -> float:
+            if not isinstance(trace, Trace):
+                return -1
+            if [
+                curr["record_attributes"][SpanAttributes.CALL.FUNCTION].split(
+                    "."
+                )[-1]
+                for _, curr in trace.events.iterrows()
+            ] != ["b", "d", "e"]:
+                return -2
+            if len(trace.processed_content_roots) != 2:
+                return -3
+            b = trace.processed_content_roots[0]
+            d = b.children[0]
+            e = trace.processed_content_roots[1]
+            bde = [b, d, e]
+            if [curr.content for curr in bde] != ["B", "D", "E"]:
+                return -4
+            if [curr.parent for curr in bde] != [None, b, None]:
+                return -5
+            if [curr.children for curr in bde] != [[d], [], []]:
+                return -6
+            for i in range(len(trace.events)):
+                if not pd.Series.equals(bde[i].event, trace.events.iloc[i]):
+                    return -7
+            return 0.21
+
+        f_custom = Feedback(custom, name="custom").on({
+            "trace": Selector(
+                trace_level=True,
+                span_type=SpanAttributes.SpanType.RETRIEVAL,
+                span_attributes_processor=lambda attr: attr[
+                    SpanAttributes.CALL.FUNCTION
+                ]
+                .split(".")[-1]
+                .upper(),
+            )
+        })
+
+        # Create app.
+        class _App:
+            @instrument()
+            def a(self) -> None:
+                self.b()
+                self.e()
+
+            @instrument(span_type=SpanAttributes.SpanType.RETRIEVAL)
+            def b(self) -> None:
+                self.c()
+
+            @instrument()
+            def c(self) -> None:
+                self.d()
+
+            @instrument(span_type=SpanAttributes.SpanType.RETRIEVAL)
+            def d(self) -> None:
+                pass
+
+            @instrument(span_type=SpanAttributes.SpanType.RETRIEVAL)
+            def e(self) -> None:
+                pass
+
+        app = _App()
+        tru_app = TruApp(
+            app,
+            app_name="test_trace_level_feedback",
+            app_version="v1",
+            feedbacks=[f_custom],
+        )
+        # Record and invoke.
+        tru_app.stop_evaluator()
+        with tru_app:
+            app.a()
+        # Compute feedback on record we just ingested.
+        TruSession().force_flush()
+        tru_app.compute_feedbacks()
+        TruSession().force_flush()
+        # Ensure feedback was computed.
+        events = self._get_events()
+        self.assertEqual(7, len(events))
+        self.assertEqual(
+            ["a", "b", "c", "d", "e", "", "custom"],
+            [
+                curr["record_attributes"]
+                .get(SpanAttributes.CALL.FUNCTION, ".")
+                .split(".")[-1]
+                for _, curr in events.iterrows()
+            ],
+        )
+        self.assertEqual(
+            0.21,
+            events.iloc[-2]["record_attributes"][
+                SpanAttributes.EVAL_ROOT.SCORE
+            ],
+        )
 
     def test_evaluator(self) -> None:
         tru_recorder = self._create_invoked_app_with_custom_feedback()
