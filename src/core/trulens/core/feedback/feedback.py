@@ -610,6 +610,22 @@ class Feedback(feedback_schema.FeedbackDefinition):
         ret.selectors = new_selectors
         return ret
 
+    def on_trace(
+        self, arg: Optional[str] = "trace", *, collect_list: bool = True
+    ):
+        """
+        The selector will return a list of dicts as expected by select_trace.
+        """
+        from trulens.core.otel.utils import is_otel_tracing_enabled
+
+        if not is_otel_tracing_enabled():
+            raise RuntimeError("on_trace is only supported in OTel mode.")
+        new_selectors = self.selectors.copy()
+        new_selectors[arg] = Selector.select_trace(collect_list=collect_list)
+        ret = self.model_copy()
+        ret.selectors = new_selectors
+        return ret
+
     def on(self, *args, **kwargs) -> Feedback:
         """
         Create a variant of `self` with the same implementation but the given

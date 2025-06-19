@@ -542,6 +542,37 @@ def _run_feedback_on_inputs(
     Returns:
         Number of feedbacks computed.
     """
+    if flattened_inputs:
+        first_inputs = flattened_inputs[0][2]
+        if (
+            len(first_inputs) == 1
+            and hasattr(list(first_inputs.values())[0], "collect_list")
+            and list(first_inputs.values())[0].collect_list
+        ):
+            key = list(first_inputs.keys())[0]
+            # Group by span_group
+            group_map = defaultdict(list)
+            for record_id, span_group, inputs in flattened_inputs:
+                if key in inputs:
+                    group_map[(record_id, span_group)].append(inputs[key].value)
+            for (record_id, span_group), all_values in group_map.items():
+                inputs = {
+                    key: FeedbackFunctionInput(
+                        value=all_values, collect_list=True
+                    )
+                }
+                _call_feedback_function(
+                    feedback_name,
+                    feedback_function,
+                    higher_is_better,
+                    feedback_aggregator,
+                    inputs,
+                    record_id_to_record_root[record_id]["record_attributes"],
+                    record_id_to_record_root[record_id]["resource_attributes"],
+                    span_group,
+                )
+            return len(group_map)
+
     ret = 0
     for record_id, span_group, inputs in flattened_inputs:
         try:
