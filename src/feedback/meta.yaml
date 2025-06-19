@@ -1,4 +1,5 @@
 {% set name = "trulens-feedback" %}
+{% set pyname = name.replace('-', '.') %}
 {% set version = "1.5.2" %}
 
 package:
@@ -25,7 +26,7 @@ requirements:
     - poetry-core <2.0.0
     - pip
   run:
-    - python >=3.9,<3.12
+    - python >=3.9,<3.13
     - trulens-core >=1.0.0,<2.0.0
     - nltk >=3.9.1,<4.0.0
     - pydantic >=2.4.2,<3.0.0
@@ -35,10 +36,12 @@ requirements:
     - requests >=2.31.0,<3.0.0
 test:
   imports:
-    - trulens.feedback
+    - {{ pyname }}
   commands:
     - pip check
+    - python -c 'import {{ pyname }}; assert {{ pyname }}.__version__ == "{{ version }}", "Installed version does not match expected version"'
   requires:
+    - python >=3.9,<3.13
     - pip
 
 about:
