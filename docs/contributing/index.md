@@ -78,7 +78,7 @@ We would love your help in making the project cleaner, more robust, and more
 understandable. If you find something confusing, it most likely is for other
 people as well. Help us be better!
 
-Large portions of the of the codebase currently do not follow the code standards outlined
+Large portions of the codebase currently do not follow the code standards outlined
 in the [Standards index](standards.md). Many good contributions can be made in
 adapting us to the standards.
 
