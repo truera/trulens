@@ -36,7 +36,7 @@ Classes inheriting [BaseModel][pydantic.BaseModel] come with serialization
 to/from JSON in the form of [model_dump][pydantic.BaseModel.model_dump] and
 [model_validate][pydantic.BaseModel.model_validate]. We do not use the
 serialization to JSON part of this capability as many *LangChain* components
-fail serialization with a "will not serialize" message. However, we use make
+fail serialization with a "will not serialize" message. However, we make
 use of Pydantic `fields` to enumerate components of an object ourselves saving
 us from having to filter out irrelevant internals that are not declared as
 fields.
