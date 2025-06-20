@@ -1,8 +1,8 @@
 # 🦜️🔗 _LangChain_ Integration
 
-TruLens provides TruChain, a deep integration with _LangChain_ that allows you to 
-inspect and evaluate the internals of your _LangChain_-built applications. This 
-integration provides automatic instrumentation of key _LangChain_ classes, enabling 
+TruLens provides TruChain, a deep integration with _LangChain_ that allows you to
+inspect and evaluate the internals of your _LangChain_-built applications. This
+integration provides automatic instrumentation of key _LangChain_ classes, enabling
 detailed tracking and evaluation without manual setup.
 
 To see a list of classes instrumented, see *Appendix: Instrumented _LangChain_ Classes and

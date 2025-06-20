@@ -71,9 +71,9 @@ Read more about Usage Tracking in [Cost API Reference][trulens.core.schema.base.
 
     ```
 
-In cases when you do not have access to directly modify the source code of a class 
-(e.g. adding decorations for tracking), you can use static instrumentation methods 
-instead: for example, the alternative for making sure the custom retriever gets 
+In cases when you do not have access to directly modify the source code of a class
+(e.g. adding decorations for tracking), you can use static instrumentation methods
+instead: for example, the alternative for making sure the custom retriever gets
 instrumented is via `instrument.method`. See a usage example below:
 
 !!! example "Using `instrument.method`"
