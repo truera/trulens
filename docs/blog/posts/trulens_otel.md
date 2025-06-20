@@ -250,6 +250,6 @@ run_dashboard(session)
 
 By building on top of **OpenTelemetry**, TruLens delivers a **universal tracing and evaluation platform** for modern AI systems. Whether your agents are built in Python, composed via MCP, or distributed across systems—TruLens provides a common observability layer for telemetry and evaluation.
 
-Try our new TruLens-OTel quickstarts for [custom python apps](https://github.com/truera/trulens/tree/main/examples/experimental/otel/quickstart/quickstart_otel.ipynb), [LangGraph](https://github.com/truera/trulens/tree/main/examples/experimental/otel/quickstart/langgraph_quickstart_otel.ipynb), and [Llama-Index](https://github.com/truera/trulens/tree/main/examples/experimental/otel/quickstart/llama_index_quickstart_otel.ipynb).
+Try our new TruLens-OTel quickstarts for [custom python apps](https://github.com/truera/trulens/tree/main/examples/experimental/otel/quickstart/quickstart_otel.ipynb), [LangGraph](https://github.com/truera/trulens/tree/main/examples/experimental/otel/quickstart/langgraph_quickstart_otel.ipynb), and [LlamaIndex](https://github.com/truera/trulens/tree/main/examples/experimental/otel/quickstart/llama_index_quickstart_otel.ipynb).
 
 **Let’s build the future of trustworthy agentic AI together.**
