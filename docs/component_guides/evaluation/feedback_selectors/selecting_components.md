@@ -1,13 +1,13 @@
 # Selecting Components
 
 LLM applications come in all shapes and sizes and with a variety of different
-control flows. As a result it’s a challenge to consistently evaluate parts of an
+control flows. As a result, it’s a challenge to consistently evaluate parts of an
 LLM application trace.
 
 Therefore, we’ve adapted the use of [lenses](https://en.wikipedia.org/wiki/Bidirectional_transformation)
 to refer to parts of an LLM stack trace and use those when defining evaluations.
 For example, the following lens refers to the input to the retrieve step of the
-app called query.
+app called `query`.
 
 !!! example
 
@@ -29,12 +29,12 @@ Such lenses can then be used to define evaluations as so:
     )
     ```
 
-In most cases, the Select object produces only a single item but can also
+In most cases, the [Select][trulens.core.Select] object produces only a single item but can also
 address multiple items.
 
 For example: `Select.RecordCalls.retrieve.args.query` refers to only one item.
 
-However, `Select.RecordCalls.retrieve.rets` refers to multiple items. In this case,
+However, `Select.RecordCalls.retrieve.rets` refers to multiple items - in this case,
 the documents returned by the `retrieve` method. These items can be evaluated separately,
 as shown above, or can be collected into an array for evaluation with `.collect()`.
 This is most commonly used for groundedness evaluations.
@@ -50,10 +50,10 @@ This is most commonly used for groundedness evaluations.
     ```
 
 Selectors can also access multiple calls to the same component. In agentic applications,
-this is an increasingly common practice. For example, an agent could complete multiple
+this is an increasingly common practice. For example, an agent could make multiple
 calls to a `retrieve` method to complete the task required.
 
-For example, the following method returns only the returned context documents from
+For example, the following method returns only the previously-returned context documents from
 the first invocation of `retrieve`.
 
 !!! example
@@ -79,7 +79,7 @@ Because LLM apps have a wide variation in their structure, the feedback selector
 can also vary widely. To construct the feedback selector, you must first understand the structure
 of your application.
 
-In python, you can access the JSON structure with `with_record` methods and then calling
+In Python, you can access the JSON structure by using `with_record` methods and then calling
 `layout_calls_as_app`.
 
 !!! example
@@ -139,10 +139,10 @@ lists in key/index positions. In that case, the feedback function is evaluated
 multiple times, its outputs collected, and finally aggregated into a main
 feedback result.
 
-The collection of values for each argument of feedback implementation is
-collected and every combination of argument-to-value mapping is evaluated with a
+Values for each argument of a feedback implementation are
+collected, and every combination of argument-to-value mapping is evaluated with a
 feedback definition. This may produce a large number of evaluations if more than
-one argument names multiple values. In the dashboard, all individual invocations
+one argument references multiple values. In the dashboard, all individual invocations
 of a feedback implementation are shown alongside the final aggregate result.
 
 ## App/Record Organization (What can be selected)

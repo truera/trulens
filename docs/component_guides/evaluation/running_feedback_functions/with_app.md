@@ -36,7 +36,7 @@ the app itself. These make up the `recorder`.
 Now that you've included the evaluations as a component of your `recorder`, they
 are able to be run with your application. By default, feedback functions will be
 run in the same process as the app. This is known as the feedback mode:
-`with_app_thread`.
+`WITH_APP_THREAD`.
 
 !!! example
 
@@ -45,7 +45,7 @@ run in the same process as the app. This is known as the feedback mode:
         chain(""What is langchain?")
     ```
 
-In addition to `with_app_thread`, there are a number of other manners of running
+In addition to `WITH_APP_THREAD`, there are a number of other manners of running
 feedback functions. These are accessed by the feedback mode and included when
 you construct the recorder.
 

@@ -5,7 +5,7 @@ application to evaluate.
 
 This is useful because today's LLM applications are increasingly complex.
 Chaining together components such as planning, retrieval, tool selection,
-synthesis, and more; each component can be a source of error.
+synthesis, and more, each component can be a source of error.
 
 This also makes the instrumentation and evaluation of LLM applications inseparable.
 To evaluate the inner components of an application, we first need access to them.
@@ -25,8 +25,8 @@ of components for evaluation. We'll cover that in a later section.
 The selector, `on_input_output`, specifies how the `language_match` arguments
 are to be determined from an app record or app definition. The general form of
 this specification is done using `on` but several shorthands are provided.
-`on_input_output` states that the first two argument to `language_match`
-(`text1` and `text2`) are to be the main app input and the main output,
+`on_input_output` states that the first two arguments to `language_match`
+(`text1` and `text2`) are to be the main app input and the main app output,
 respectively.
 
 This flexibility to select and evaluate any component of your application allows
