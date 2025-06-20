@@ -1,10 +1,10 @@
 # Instrumentation Overview
 
-TruLens is a framework that helps you instrument and evaluate LLM apps including
-RAGs and agents.
+TruLens is a framework designed to help you instrument and evaluate LLM applications, including RAGs and agents.
 
-Because TruLens is tech-agnostic, we offer a few different tools for
-instrumentation.
+This instrumentation capability allows you to track inputs, outputs, internal operations, and performance metrics across your LLM applications.
+
+Because TruLens is framework-agnostic, we provide several specialized tools for different use cases:
 
 * TruApp gives you the most power to instrument a custom LLM app, and
   provides the `instrument` method.
@@ -35,7 +35,7 @@ Read more about Usage Tracking in [Cost API Reference][trulens.core.schema.base.
 
 * App ID (app_id) - user supplied string or automatically generated hash
 * Tags (tags) - user supplied string
-* Model metadata - user supplied json
+* Model metadata - user supplied JSON
 
 ### Record Metadata
 
@@ -71,10 +71,10 @@ Read more about Usage Tracking in [Cost API Reference][trulens.core.schema.base.
 
     ```
 
-In cases you do not have access to a class to make the necessary decorations for
-tracking, you can instead use one of the static methods of instrument, for
-example, the alternative for making sure the custom retriever gets instrumented
-is via `instrument.method`. See a usage example below:
+In cases when you do not have access to directly modify the source code of a class 
+(e.g. adding decorations for tracking), you can use static instrumentation methods 
+instead: for example, the alternative for making sure the custom retriever gets 
+instrumented is via `instrument.method`. See a usage example below:
 
 !!! example "Using `instrument.method`"
 
