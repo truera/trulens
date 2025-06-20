@@ -511,6 +511,7 @@ class OtelRecordingContext(OtelBaseRecordingContext):
         app_version: str,
         run_name: str,
         input_id: str,
+        input_records_count: Optional[int] = None,
         ground_truth_output: Optional[str] = None,
     ) -> None:
         app_id = AppDefinition._compute_app_id(app_name, app_version)
@@ -522,6 +523,7 @@ class OtelRecordingContext(OtelBaseRecordingContext):
             input_id=input_id,
         )
         self.tru_app = tru_app
+        self.input_records_count = input_records_count
         self.ground_truth_output = ground_truth_output
 
     # For use as a context manager.
@@ -532,6 +534,11 @@ class OtelRecordingContext(OtelBaseRecordingContext):
         self.attach_to_context(ResourceAttributes.APP_ID, self.app_id)
         self.attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
         self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
+
+        self.attach_to_context(
+            SpanAttributes.INPUT_RECORDS_COUNT,
+            self.input_records_count,
+        )
         self.attach_to_context(
             SpanAttributes.RECORD_ROOT.GROUND_TRUTH_OUTPUT,
             self.ground_truth_output,

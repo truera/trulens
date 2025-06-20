@@ -4,7 +4,6 @@ import time
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
-from snowflake.snowpark import AsyncJob
 from snowflake.snowpark import Session
 from snowflake.snowpark.row import Row
 from trulens.connectors.snowflake.dao.enums import SourceType
@@ -688,16 +687,47 @@ class RunDao:
         object_version: str,
         object_type: str,
         run_name: str,
-    ) -> AsyncJob:
-        if not metrics:
-            raise ValueError("Metrics list cannot be empty")
+    ) -> None:
+        database = clean_up_snowflake_identifier(
+            self.session.get_current_database()
+        )
+        schema = clean_up_snowflake_identifier(
+            self.session.get_current_schema()
+        )
 
-        current_db = self.session.get_current_database()
-        current_schema = self.session.get_current_schema()
+        fq_object_name = f"{database}.{schema}.{object_name.upper()}"
 
-        metrics_str = ",".join([f"'{metric}'" for metric in metrics])
-        compute_metrics_query = f"CALL COMPUTE_AI_OBSERVABILITY_METRICS('{current_db}', '{current_schema}', '{object_name}', '{object_version}', '{object_type}', '{run_name}', ARRAY_CONSTRUCT({metrics_str}));"
-
-        compute_query = self.session.sql(compute_metrics_query)
-
-        return compute_query.collect_nowait()
+        try:
+            sql_cmd = self.session.sql(
+                f"""
+                CALL SYSTEM$EXECUTE_AI_OBSERVABILITY_RUN(
+                    OBJECT_CONSTRUCT(
+                        'object_name', ?,
+                        'object_type', ?,
+                        'object_version', ?
+                    ),
+                    OBJECT_CONSTRUCT(
+                        'run_name', ?
+                    ),
+                    OBJECT_CONSTRUCT('type', 'stage_file'),
+                    ARRAY_CONSTRUCT({", ".join(["?"] * len(metrics))}),
+                    ARRAY_CONSTRUCT('COMPUTE_METRICS')
+                );
+                """,
+                params=[
+                    fq_object_name,
+                    object_type,
+                    object_version,
+                    run_name,
+                    *metrics,
+                ],
+            )
+            logger.info(
+                f"Executing SQL command for metrics computation: {sql_cmd}"
+            )
+            logger.debug(sql_cmd.collect()[0][0])
+        except Exception as e:
+            logger.exception(
+                f"Error encountered during calling compute metrics query: {e}."
+            )
+            raise

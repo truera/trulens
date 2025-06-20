@@ -1937,6 +1937,9 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         self,
         run_name: str,
         input_id: str,
+        input_records_count: Optional[
+            int
+        ] = None,  # total expected number of input records for the run
         ground_truth_output: Optional[str] = None,
         main_method_args: Optional[Sequence[Any]] = None,
         main_method_kwargs: Optional[Dict[str, Any]] = None,
@@ -1952,6 +1955,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 app_version=self.app_version,
                 run_name=run_name,
                 input_id=input_id,
+                input_records_count=input_records_count,
                 ground_truth_output=ground_truth_output,
             ):
                 f = getattr(self.app, self.main_method_name)
