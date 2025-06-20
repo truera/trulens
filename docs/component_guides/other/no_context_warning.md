@@ -9,7 +9,7 @@ If you see this warning/error, _TruLens_ attempted to execute an instrumented
 method in a context different from the one in which your app was instrumented. A
 different context here means either a different `threading.Thread` or a
 different `asyncio.Task`. While we include several remedies to this problem to
-allow use of threaded and/or asynchronous apps, these remedies may not cover all cases. 
+allow use of threaded and/or asynchronous apps, these remedies may not cover all cases.
 This document aims to help you resolve issues when your app or libraries aren't covered by our existing remedies.
 
 ## Threads
@@ -69,5 +69,5 @@ Note: for Python < 3.11, `copy_context` is a fixed behavior and cannot be change
 ## Other issues
 
 If you are still seeing the _Cannot find TruLens context_ warning and none of the solutions
-above address the problem, please file a [GitHub Issue](https://github.com/truera/trulens/issues/new?template=bug-report.md) or 
+above address the problem, please file a [GitHub Issue](https://github.com/truera/trulens/issues/new?template=bug-report.md) or
 add a new discussion on the [Snowflake Community Forums](https://snowflake.discourse.group/).

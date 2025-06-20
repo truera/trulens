@@ -34,7 +34,7 @@ functions library so others can benefit!
 
 Feedback functions often rely on a model provider, such as OpenAI or
 HuggingFace. If you need a new model provider to utilize feedback functions for
-your use case, we'd love if you added a new provider class, e.g. Ollama.
+your use case, we'd love it if you added a new provider class, e.g. Ollama.
 
 You can do so by creating a new provider module in this
 [folder](https://github.com/truera/trulens/blob/main/src/providers/).
@@ -44,29 +44,29 @@ provider you need!
 
 ## 🐛 Fix Bugs
 
-Most bugs are reported and tracked in the Github [Issues](https://github.com/truera/trulens/issues) Page. We try our best in
+Most bugs are reported and tracked in the [GitHub Issues](https://github.com/truera/trulens/issues) page. We try our best in
 triaging and tagging these issues:
 
-Issues tagged as bug are confirmed bugs. New contributors may want to start with
-issues tagged with good first issue. Please feel free to open an issue and/or
+Issues tagged as "bug" are confirmed bugs. New contributors may want to start with
+issues tagged with "good first issue". Please feel free to open an issue and/or
 assign an issue to yourself.
 
 ## 🎉 Add Usage Examples
 
-If you have applied TruLens to track and evaluate a unique use-case, we would
+If you have applied TruLens to track and evaluate a unique use case, we would
 love your contribution to the cookbook in the form of an example notebook: e.g. [Evaluating Weaviate Query Agents](https://www.trulens.org/cookbook/vector_stores/weaviate/weaviate_query_agent/)
 
 All example notebooks are expected to:
 
 - Start with a title and description of the example
-- Include a commented out list of dependencies and their versions, e.g. `# !pip
+- Include a commented-out list of dependencies and their versions, e.g. `# !pip
   install trulens==0.10.0 langchain==0.0.268`
-- Include a linked button to a Google colab version of the notebook
+- Include a linked button to a Google Colab version of the notebook
 - Add any additional requirements
 
 ## 🧪 Add Experimental Features
 
-If you have a crazy idea, make a PR for it! Whether if it's the latest research,
+If you have a crazy idea, make a PR for it! Whether it's the latest research,
 or what you thought of in the shower, we'd love to see creative ways to improve
 TruLens.
 
@@ -78,8 +78,8 @@ We would love your help in making the project cleaner, more robust, and more
 understandable. If you find something confusing, it most likely is for other
 people as well. Help us be better!
 
-Big parts of the code base currently do not follow the code standards outlined
-in [Standards index](standards.md). Many good contributions can be made in
+Large portions of the of the codebase currently do not follow the code standards outlined
+in the [Standards index](standards.md). Many good contributions can be made in
 adapting us to the standards.
 
 ## ⛅ Address Open Issues
@@ -110,7 +110,7 @@ the [Standards index](standards.md).
 
 ### 💣 Tech Debt
 
-Parts of the code are nuanced in ways should be avoided by new contributors.
+Parts of the code are nuanced in ways that should be avoided by new contributors.
 Discussions of these points are welcome to help the project rid itself of these
 problematic designs. See [Tech debt index](techdebt.md).
 
