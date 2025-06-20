@@ -88,7 +88,7 @@ us to evaluate for metrics including context relevance and groundedness.
 For NeMo applications with a knowledge base, use `select_context`
 to access the retrieved text for evaluation.
 
-!!! example "Evaluate retreived context in NeMo apps"
+!!! example "Evaluate retrieved context in NeMo apps"
 
     ```python
     import numpy as np
