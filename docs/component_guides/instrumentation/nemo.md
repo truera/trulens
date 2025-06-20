@@ -8,7 +8,7 @@ Methods*.
 
 In addition to the default instrumentation, TruRails exposes the
 *select_context* method for evaluations that require access to retrieved
-context. Exposing *select_context* bypasses the need to know the json structure
+context. Exposing *select_context* bypasses the need to know the JSON structure
 of your app ahead of time, and makes your evaluations reusable across different
 apps.
 
@@ -63,11 +63,11 @@ Below is a quick example of usage. First, we'll create a standard NeMo app.
     from nemoguardrails import LLMRails
     from nemoguardrails import RailsConfig
 
-    config = RailsConfig.from_path(".")
+    config = RailsConfig.from_path("path/to/config")
     rails = LLMRails(config)
     ```
 
-To instrument an LLM chain, all that's required is to wrap it using TruChain.
+To instrument an LLM chain, all that's required is to wrap it using TruRails.
 
 !!! example "Instrument a NeMo app"
 
@@ -85,10 +85,10 @@ To properly evaluate LLM apps we often need to point our evaluation at an
 internal step of our application, such as the retrieved context. Doing so allows
 us to evaluate for metrics including context relevance and groundedness.
 
-For NeMo applications with a knowledge base, `select_context` can
-be used to access the retrieved text for evaluation.
+For NeMo applications with a knowledge base, use `select_context`
+to access the retrieved text for evaluation.
 
-!!! example "Instrument a NeMo app"
+!!! example "Evaluate retrieved context in NeMo apps"
 
     ```python
     import numpy as np
@@ -111,7 +111,7 @@ For examples of using `TruRails`, check out the [_TruLens_ Cookbook](../../cookb
 
 ## Appendix: Instrumented NeMo Classes and Methods
 
-The modules, classes, and methods that trulens instruments can be retrieved from
+The modules, classes, and methods that TruLens instruments can be retrieved from
 the appropriate Instrument subclass.
 
 !!! example
