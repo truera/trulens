@@ -85,8 +85,8 @@ To properly evaluate LLM apps we often need to point our evaluation at an
 internal step of our application, such as the retrieved context. Doing so allows
 us to evaluate for metrics including context relevance and groundedness.
 
-For NeMo applications with a knowledge base, `select_context` can
-be used to access the retrieved text for evaluation.
+For NeMo applications with a knowledge base, use `select_context`
+to access the retrieved text for evaluation.
 
 !!! example "Evaluate retreived context in NeMo apps"
 

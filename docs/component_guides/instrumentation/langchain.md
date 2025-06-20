@@ -80,7 +80,7 @@ To properly evaluate LLM apps, we often need to point our evaluation at an
 internal step of our application, such as the retrieved context. Doing so allows
 us to evaluate for metrics including context relevance and groundedness.
 
-For LangChain applications using BaseRetriever, `select_context` allows you
+For LangChain applications using BaseRetriever, use `select_context`
 to access the retrieved text for evaluation.
 
 !!! example "Evaluating retrieved context in LangChain"
