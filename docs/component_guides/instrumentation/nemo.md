@@ -111,7 +111,7 @@ For examples of using `TruRails`, check out the [_TruLens_ Cookbook](../../cookb
 
 ## Appendix: Instrumented NeMo Classes and Methods
 
-The modules, classes, and methods that trulens instruments can be retrieved from
+The modules, classes, and methods that TruLens instruments can be retrieved from
 the appropriate Instrument subclass.
 
 !!! example
