@@ -1,5 +1,6 @@
 {% set name = "trulens-core" %}
-{% set version = "1.5.1" %}
+{% set pyname = name.replace('-', '.') %}
+{% set version = "1.5.2" %}
 
 package:
   name: {{ name|lower }}
@@ -25,7 +26,7 @@ requirements:
     - poetry-core <2.0.0
     - pip
   run:
-    - python >=3.9,<3.12
+    - python >=3.9,<3.13
     - trulens-otel-semconv >=1.4.7,<2.0.0
     - opentelemetry-api >=1.23.0
     - opentelemetry-sdk >=1.23.0
@@ -52,10 +53,12 @@ requirements:
 
 test:
   imports:
-    - trulens.core
+    - {{ pyname }}
   commands:
     - pip check
+    - python -c 'import {{ pyname }}; assert {{ pyname }}.__version__ == "{{ version }}", "Installed version does not match expected version"'
   requires:
+    - python >=3.9,<3.13
     - pip
 
 about:
