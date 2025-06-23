@@ -1,20 +1,14 @@
 # 🦜️🔗 _LangChain_ Integration
 
-TruLens provides TruChain, a deep integration with _LangChain_ that allows you to 
-inspect and evaluate the internals of your _LangChain_-built applications. This 
-integration provides automatic instrumentation of key _LangChain_ classes, enabling 
+TruLens provides TruChain, a deep integration with _LangChain_ that allows you to
+inspect and evaluate the internals of your _LangChain_-built applications. This
+integration provides automatic instrumentation of key _LangChain_ classes, enabling
 detailed tracking and evaluation without manual setup.
 
 To see a list of classes instrumented, see *Appendix: Instrumented _LangChain_ Classes and
 Methods*.
 
-In addition to the default instrumentation, TruChain exposes the
-*select_context* method for evaluations that require access to retrieved
-context. Exposing *select_context* bypasses the need to know the JSON structure
-of your app ahead of time, and makes your evaluations reusable across different
-apps.
-
-## Example Usage
+## Instrumenting LangChain apps
 
 To demonstrate usage, we'll create a standard RAG defined with LangChain Expression Language (LCEL).
 
@@ -76,12 +70,12 @@ To instrument an LLM chain, all that's required is to wrap it using TruChain.
     tru_recorder = TruChain(rag_chain)
     ```
 
-To properly evaluate LLM apps, we often need to point our evaluation at an
-internal step of our application, such as the retrieved context. Doing so allows
-us to evaluate for metrics including context relevance and groundedness.
+## Evaluating Langchain Apps
 
-For LangChain applications using BaseRetriever, use `select_context`
-to access the retrieved text for evaluation.
+To properly evaluate LLM apps, we often need to point our evaluation at an
+internal step of our application, such as the retrieved context.
+
+`TruChain` supports `on_input`, `on_output`, and `on_context`, allowing you to easily evaluate the RAG triad.
 
 !!! example "Evaluating retrieved context in LangChain"
 
@@ -97,12 +91,13 @@ to access the retrieved text for evaluation.
     f_context_relevance = (
         Feedback(provider.context_relevance)
         .on_input()
-        .on(context)
+        .on_context(collect_list=False)
         .aggregate(np.mean)
     )
     ```
 
 You can find the full quickstart available here: [LangChain Quickstart](../../getting_started/quickstarts/langchain_quickstart.ipynb)
+
 
 ## Async Support
 
@@ -166,22 +161,4 @@ the appropriate Instrument subclass.
 ### Instrumenting other classes/methods
 
 Additional classes and methods can be instrumented by use of the
-`trulens.core.instruments.Instrument` methods and decorators. Examples of
-such usage can be found in the custom app used in the `custom_example.ipynb`
-notebook which can be found in
-`examples/expositional/end2end_apps/custom_app/custom_app.py`. More
-information about these decorators can be found in the
-`docs/tracking/instrumentation/index.ipynb` notebook.
-
-### Inspecting instrumentation
-
-The specific objects (of the above classes) and methods instrumented for a
-particular app can be inspected using the `App.print_instrumented` as
-exemplified in the next cell. Unlike `Instrument.print_instrumentation`, this
-function only shows what in an app was actually instrumented.
-
-!!! example "Print instrumented methods"
-
-    ```python
-    async_tc_recorder.print_instrumented()
-    ```
+`trulens.core.otel.instrument` methods and decorators.
