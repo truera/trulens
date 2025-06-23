@@ -53,11 +53,11 @@ f_answer_relevance = (
 )
 ```
 
-In the example above, you can see how a dictionary is passed to `on()` that maps the feedback function argument to a span attribute, accessed via a `Selector()`.
+In the example above, you can see how a dictionary is passed to `on()` that maps the feedback function argument to a span attribute, accessed via a `Selector`.
 
 ## Using Shortcuts to Evaluate Pre-defined Span Attributes
 
-Span attributes can pre-defined to refer to particular parts of an execution flow via the [TruLens semantic conventions](../../../otel/semantic_conventions.md). To ease the evaluation of particular span attributes, TruLens creates shortcuts to evaluate commonly used semantic conventions. These shortcuts are supported via `TruApp`, as well as `TruLlama` and `TruChain` when using `LangChain` and `LlamaIndex` frameworks.
+Span attributes can pre-defined to refer to particular parts of an execution flow via the [TruLens semantic conventions](../../../otel/semantic_conventions.md). To ease the evaluation of particular span attributes, TruLens creates shortcuts to evaluate commonly used semantic conventions. These shortcuts are supported via `TruApp`, as well as `TruChain` and `TruLlama` when using `LangChain` and `LlamaIndex` frameworks, respectively.
 
 !!! note
 
@@ -154,4 +154,4 @@ Additionally, in the above you see we set the `collect_list` argument in `on_con
 
 When set to `False`, each piece of context will be evaluated individually.
 
-The `on_context()` shortcut can also be used for `LangChain` and `LlamaIndex` apps to refer to the retrieved context. Doing so does not require annotating your app with the `RETRIEVAL.RETRIEVED_CONTEXT` span attribute, as that is done for you.
+The `on_context()` shortcut can also be used for `LangChain` and `LlamaIndex` apps to refer to the retrieved contexts. Doing so does not require annotating your app with the `RETRIEVAL.RETRIEVED_CONTEXT` span attribute, as that is done for you.
