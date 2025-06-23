@@ -70,7 +70,7 @@ To instrument an LLM chain, all that's required is to wrap it using TruChain.
     tru_recorder = TruChain(rag_chain)
     ```
 
-## Evaluating Langchain Apps
+## Evaluating LangChain Apps
 
 To properly evaluate LLM apps, we often need to point our evaluation at an
 internal step of our application, such as the retrieved context.
