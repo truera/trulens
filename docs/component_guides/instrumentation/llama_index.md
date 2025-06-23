@@ -6,12 +6,6 @@ This is done through the instrumentation of key LlamaIndex classes and methods.
 To see all classes and methods instrumented, see *Appendix: LlamaIndex
 Instrumented Classes and Methods*.
 
-In addition to the default instrumentation, TruLlama exposes the
-*select_context* and *select_source_nodes* methods for evaluations that require
-access to retrieved context or source nodes. Exposing these methods bypasses the
-need to know the JSON structure of your app ahead of time, and makes your
-evaluations reusable across different apps.
-
 ## Example usage
 
 Below is a quick example of usage. First, we'll create a standard LlamaIndex query engine from Paul Graham's Essay, *What I Worked On*:
@@ -47,8 +41,9 @@ To properly evaluate LLM apps, we often need to point our evaluation at an
 internal step of our application, such as the retrieved context. Doing so allows
 us to evaluate for metrics including context relevance and groundedness.
 
-For LlamaIndex applications using source nodes, use `select_context` 
-to access the retrieved text for evaluation.
+`TruLlama` supports `on_input`, `on_output`, and `on_context`, allowing you to easily evaluate the RAG triad.
+
+Using `on_context` allows to access the retrieved text for evaluation via the source nodes of the LlamaIndex app.
 
 !!! example "Evaluating retrieved context for LlamaIndex query engines"
 
@@ -64,7 +59,7 @@ to access the retrieved text for evaluation.
     f_context_relevance = (
         Feedback(provider.context_relevance)
         .on_input()
-        .on(context)
+        .on_context(collect_list=False)
         .aggregate(np.mean)
     )
     ```
@@ -153,16 +148,8 @@ the appropriate Instrument subclass.
     LlamaInstrument().print_instrumentation()
     ```
 
-### Instrumenting other classes/methods.
-Additional classes and methods can be instrumented by use of the
-`trulens.core.instruments.Instrument` methods and decorators. Examples of
-such usage can be found in the custom app used in the `custom_example.ipynb`
-notebook which can be found in
-`examples/expositional/end2end_apps/custom_app/custom_app.py`. More
-information about these decorators can be found in the
-`docs/trulens/tracking/instrumentation/index.ipynb` notebook.
-
 ### Inspecting instrumentation
+
 The specific objects (of the above classes) and methods instrumented for a
 particular app can be inspected using the `App.print_instrumented` as
 exemplified in the next cell. Unlike `Instrument.print_instrumentation`, this
@@ -173,3 +160,8 @@ function only shows specific objects and methods within an app that are actually
     ```python
     tru_chat_engine_recorder.print_instrumented()
     ```
+
+### Instrumenting other classes/methods
+
+Additional classes and methods can be instrumented by use of the
+`trulens.core.otel.instrument` methods and decorators.
