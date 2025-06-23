@@ -114,17 +114,4 @@ STYLE_NAME_FONT_WEIGHT = "bold"
 STYLE_NAME_FONT_SIZE = "110%"
 
 # --- Accessibility tweaks: higher contrast and larger font size ---
-STYLE_BLOCK_BG = {
-    "root": "#fff",
-    "child": "#f3f4f8",  # Slightly higher contrast
-}
-STYLE_BLOCK_BORDER_RADIUS = "8px"  # More visible
-STYLE_BLOCK_PADDING = "12px"  # More space
-STYLE_BLOCK_MARGIN = "6px"
-STYLE_STATUS_FONT_SIZE = "100%"
-STYLE_ATTR_FONT_SIZE = "105%"
-STYLE_EVENT_FONT_SIZE = "105%"
-STYLE_TREE_MARKER_COLOR = "#444"  # Higher contrast
-STYLE_DURATION_COLOR = "#444"
-STYLE_NAME_FONT_WEIGHT = "bold"
-STYLE_NAME_FONT_SIZE = "110%"
+# Removed duplicate style constants. Refer to the consolidated definitions above (lines 101-114).
