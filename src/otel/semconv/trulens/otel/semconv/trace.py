@@ -51,6 +51,9 @@ class SpanAttributes:
     INPUT_ID = BASE_SCOPE + ".input_id"
     """ID of the input that the span belongs to."""
 
+    INPUT_RECORDS_COUNT = BASE_SCOPE + ".input_records_count"
+    """To track the number of records processed in a run."""
+
     SPAN_GROUPS = BASE_SCOPE + ".span_groups"
     """List of groups that the span belongs to."""
 
