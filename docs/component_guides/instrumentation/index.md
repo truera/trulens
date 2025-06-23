@@ -137,7 +137,7 @@ instrumented is via `instrument_method`. See a usage example below:
 
     ```python
     from trulens.core.otel.instrument import instrument_method
-    from somepackage.from custom_retriever import CustomRetriever
+    from somepackage.custom_retriever import CustomRetriever
 
     instrument_method(
         cls = CustomRetriever,
