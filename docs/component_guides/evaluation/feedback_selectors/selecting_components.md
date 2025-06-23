@@ -1,183 +1,157 @@
-# Selecting Components
+# Selecting Spans for Evaluation
 
 LLM applications come in all shapes and sizes and with a variety of different
 control flows. As a result it’s a challenge to consistently evaluate parts of an
 LLM application trace.
 
-Therefore, we’ve adapted the use of [lenses](https://en.wikipedia.org/wiki/Bidirectional_transformation)
-to refer to parts of an LLM stack trace and use those when defining evaluations.
-For example, the following lens refers to the input to the retrieve step of the
-app called query.
+Therefore, we’ve adapted the use of [OpenTelemetry spans](https://opentelemetry.io/docs/specs/otel/overview/#spans)
+to refer to parts of an execution flow when defining evaluations.
 
-!!! example
+## Selecting Span Attributes for Evaluation
 
-    ```python
-    Select.RecordCalls.retrieve.args.query
-    ```
+When defining evaluations, we want to evaluate particular span attributes, such as retrieved context, or an agent's plan.
 
-Such lenses can then be used to define evaluations as so:
+This happens in two phases:
 
-!!! example
+1. Instrumentation is used to annotate span attributes. This is covered in detail in the [instrumentation guide](../../instrumentation/index.md).
+2. Then when defining the evaluation, you can refer to those span attributes using the `Selector`.
 
-    ```python
-    # Context relevance between question and each context chunk.
-    f_context_relevance = (
-        Feedback(provider.context_relevance_with_cot_reasons, name = "Context Relevance")
-        .on(Select.RecordCalls.retrieve.args.query)
-        .on(Select.RecordCalls.retrieve.rets)
-        .aggregate(np.mean)
+Let's walk through an example. Take this example where a method named `query` is instrumented. In this example, we annotate both the span type, and set span attributes to refer to the `query` argument to the function and the `return` of the function.
+
+```python
+@instrument(
+    attributes={
+        SpanAttributes.RECORD_ROOT.INPUT: "query",
+        SpanAttributes.RECORD_ROOT.OUTPUT: "return",
+    },
+)
+def query(self, query: str) -> str:
+    context_str = self.retrieve(query=query)
+    completion = self.generate_completion(query=query, context_str=context_str)
+    return completion
+```
+
+Once we've done this, now we can map the inputs to a feedback function to these span attributes:
+
+```python
+from trulens.core.feedback.selector import Selector
+
+f_answer_relevance = (
+    Feedback(provider.relevance_with_cot_reasons, name="Answer Relevance")
+    .on({
+        "prompt": Selector(
+            span_type=SpanAttributes.SpanType.RECORD_ROOT,
+            span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
+        ),
+    })
+    .on({
+        "response": Selector(
+            span_type=SpanAttributes.SpanType.RECORD_ROOT,
+            span_attribute=SpanAttributes.RECORD_ROOT.OUTPUT,
+        ),
+    })
+)
+```
+
+In the example above, you can see how a dictionary is passed to `on()` that maps the feedback function argument to a span attribute, accessed via a `Selector()`.
+
+## Using Shortcuts to Evaluate Pre-defined Span Attributes
+
+Span attributes can pre-defined to refer to particular parts of an execution flow via the [TruLens semantic conventions](../../../otel/semantic_conventions.md). To ease the evaluation of particular span attributes, TruLens creates shortcuts to evaluate commonly used semantic conventions. These shortcuts are supported via `TruApp`, as well as `TruLlama` and `TruChain` when using `LangChain` and `LlamaIndex` frameworks.
+
+!!! note
+
+    Use of selector shortcuts respects the order of arguments passed to the feedback function, rather than requiring the use of named arguments.
+
+### Evaluating App Input
+
+To evaluate the application input, you can use the selector shortcut `on_input()` to refer to the span attribute `RECORD_ROOT.INPUT`.
+
+This means that the following feedback function using the `Selector`:
+
+```python
+f_answer_relevance = (
+    Feedback(provider.coherence, name="Coherence")
+    .on({
+        "text": Selector(
+            span_type=SpanAttributes.SpanType.RECORD_ROOT,
+            span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
+        ),
+    })
+)
+```
+
+...is equivalent to using the shortcut `on_input()`.
+
+```python
+f_answer_relevance = (
+    Feedback(provider.coherence, name="Coherence")
+    .on_input()
+)
+```
+
+### Evaluating App Output
+
+Likewise, to evaluate the application output, you can use the selector shortcut `on_output()` to refer to the span attribute `RECORD_ROOT.OUTPUT`.
+
+This means that the following feedback function using the `Selector`:
+
+```python
+f_coherence = (
+    Feedback(provider.coherence, name="Coherence")
+    .on({
+        "text": Selector(
+            span_type=SpanAttributes.SpanType.RECORD_ROOT,
+            span_attribute=SpanAttributes.RECORD_ROOT.OUTPUT,
+        ),
+    })
+)
+```
+
+...is equivalent to using the shortcut `on_output()`.
+
+```python
+f_coherence = (
+    Feedback(provider.coherence, name="Coherence")
+    .on_output()
+)
+```
+
+### Evaluating Retrieved Context
+
+To evaluate the retrieved context, you can use the selector shortcut `on_context()` to refer to the span attribute `RECORD_ROOT.INPUT`.
+
+This means that the following feedback function using the `Selector`:
+
+```python
+f_groundedness = (
+    Feedback(
+        provider.groundedness_measure_with_cot_reasons, name="Groundedness"
     )
-    ```
+    .on({
+        "context": Selector(
+            span_type=SpanAttributes.SpanType.RETRIEVAL,
+            span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
+        ),
+    })
+    .on_output()
+)
+```
 
-In most cases, the Select object produces only a single item but can also
-address multiple items.
+...is equivalent to using the shortcut `on_context()`.
 
-For example: `Select.RecordCalls.retrieve.args.query` refers to only one item.
-
-However, `Select.RecordCalls.retrieve.rets` refers to multiple items. In this case,
-the documents returned by the `retrieve` method. These items can be evaluated separately,
-as shown above, or can be collected into an array for evaluation with `.collect()`.
-This is most commonly used for groundedness evaluations.
-
-!!! example
-
-    ```python
-    f_groundedness = (
-        Feedback(provider.groundedness_measure_with_cot_reasons, name = "Groundedness")
-        .on(Select.RecordCalls.retrieve.rets.collect())
-        .on_output()
+```python
+f_groundedness = (
+    Feedback(
+        provider.groundedness_measure_with_cot_reasons, name="Groundedness"
     )
-    ```
+    .on_context(collect_list=True)
+    .on_output()
+)
+```
 
-Selectors can also access multiple calls to the same component. In agentic applications,
-this is an increasingly common practice. For example, an agent could complete multiple
-calls to a `retrieve` method to complete the task required.
+Additionally, in the above you see we set the `collect_list` argument in `on_context()`. This allows us to concatenate the selected span attributes into a single blob for evaluation when set to `True`.
 
-For example, the following method returns only the returned context documents from
-the first invocation of `retrieve`.
+When set to `False`, each piece of context will be evaluated individually.
 
-!!! example
-
-    ```python
-    context = Select.RecordCalls.retrieve.rets.rets[:]
-    ```
-
-Alternatively, adding `[:]` after the method name `retrieve` returns context documents
-from all invocations of `retrieve`.
-
-!!! example
-
-    ```python
-    context_all_calls = Select.RecordCalls.retrieve[:].rets.rets[:]
-    ```
-
-See also other [Select][trulens.core.Select] shortcuts.
-
-### Understanding the structure of your app
-
-Because LLM apps have a wide variation in their structure, the feedback selector construction
-can also vary widely. To construct the feedback selector, you must first understand the structure
-of your application.
-
-In python, you can access the JSON structure with `with_record` methods and then calling
-`layout_calls_as_app`.
-
-!!! example
-
-    ```python
-    response = my_llm_app(query)
-
-    from trulens.apps.langchain import TruChain
-    tru_recorder = TruChain(
-        my_llm_app,
-        app_name='ChatApplication',
-        app_version="Chain1",
-    )
-
-    response, tru_record = tru_recorder.with_record(my_llm_app, query)
-    json_like = tru_record.layout_calls_as_app()
-    ```
-
-If a selector looks like the below:
-
-!!! example
-
-    ```python
-    Select.Record.app.combine_documents_chain._call
-    ```
-
-It can be accessed via the JSON-like via:
-
-!!! example
-
-    ```python
-    json_like['app']['combine_documents_chain']['_call']
-    ```
-
-The application structure can also be viewed in the TruLens user interface.
-You can view this structure on the `Evaluations` page by scrolling down to the
-`Timeline`.
-
-The top level record also contains these helper accessors
-
-- `RecordInput = Record.main_input` -- points to the main input part of a
-  Record. This is the first argument to the root method of an app (for
-  _LangChain_ Chains this is the `__call__` method).
-
-- `RecordOutput = Record.main_output` -- points to the main output part of a
-  Record. This is the output of the root method of an app (i.e. `__call__`
-  for _LangChain_ Chains).
-
-- `RecordCalls = Record.app` -- points to the root of the app-structured
-  mirror of calls in a record. See **App-organized Calls** Section above.
-
-## Multiple Inputs Per Argument
-
-As in the `f_context_relevance` example, a selector for a _single_ argument may point
-to more than one aspect of a record/app. These are specified using the slice or
-lists in key/index positions. In that case, the feedback function is evaluated
-multiple times, its outputs collected, and finally aggregated into a main
-feedback result.
-
-The collection of values for each argument of feedback implementation is
-collected and every combination of argument-to-value mapping is evaluated with a
-feedback definition. This may produce a large number of evaluations if more than
-one argument names multiple values. In the dashboard, all individual invocations
-of a feedback implementation are shown alongside the final aggregate result.
-
-## App/Record Organization (What can be selected)
-
-The top level JSON attributes are defined by the class structures.
-
-For a Record:
-
-::: trulens.core.schema.Record
-
-
-For an App:
-
-::: trulens.core.schema.AppDefinition
-
-
-For your app, you can inspect the JSON-like structure by using the `dict`
-method:
-
-!!! example
-
-    ```python
-    json_like = ... # your app, extending App
-    print(json_like.dict())
-    ```
-
-### Calls made by App Components
-
-When evaluating a feedback function, Records are augmented with
-app/component calls. For example, if the instrumented app
-contains a component `combine_docs_chain` then `app.combine_docs_chain` will
-contain calls to methods of this component. `app.combine_docs_chain._call` will
-contain a `RecordAppCall` (see schema.py) with information about the inputs/outputs/metadata
-regarding the `_call` call to that component. Selecting this information is the
-reason behind the `Select.RecordCalls` alias.
-
-You can inspect the components making up your app via the `App` method
-`print_instrumented`.
+The `on_context()` shortcut can also be used for `LangChain` and `LlamaIndex` apps to refer to the retrieved context. Doing so does not require annotating your app with the `RETRIEVAL.RETRIEVED_CONTEXT` span attribute, as that is done for you.
