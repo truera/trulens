@@ -15,5 +15,5 @@ To uninstall all TruLens packages, you can use the following command.
 !!! example
 
     ```bash
-    pip freeze | grep "trulens*" | xargs pip uninstall -y
+    pip freeze | grep "^trulens" | xargs pip uninstall -y
     ```
