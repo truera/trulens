@@ -13,8 +13,8 @@ of components for evaluation.
 The selector, `on_input_output`, specifies how the `language_match` arguments
 are to be determined from an app record or app definition. The general form of
 this specification is done using `on` but several shorthands are provided.
-`on_input_output` states that the first two argument to `language_match`
-(`text1` and `text2`) are to be the main app input and the main output,
+`on_input_output` states that the first two arguments to `language_match`
+(`text1` and `text2`) are to be the main app input and the main app output,
 respectively.
 
 Several utility methods starting with `.on` provide shorthands:
@@ -29,7 +29,7 @@ Several utility methods starting with `.on` provide shorthands:
   arguments of implementation should be the main app input and main app output,
   respectively.
 
-- `on_default()` -- depending on signature of implementation uses either
+- `on_default()` -- depending on the signature of the implementation uses either
   `on_output()` if it has a single argument, or `on_input_output` if it has two
   arguments.
 

@@ -10,11 +10,15 @@ API Reference: [HuggingFace][trulens.providers.huggingface.Huggingface].
 
 API Reference: [OpenAI][trulens.providers.openai.OpenAI].
 
-## Generation-based: LLMProvider
+## Generation-based
+
+### LLMProvider
 
 API Reference: [LLMProvider][trulens.feedback.LLMProvider].
 
 ## Embedding-based
+
+### Embeddings
 
 API Reference: [Embeddings][trulens.feedback.embeddings].
 
