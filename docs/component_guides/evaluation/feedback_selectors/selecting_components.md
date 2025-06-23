@@ -119,7 +119,7 @@ f_coherence = (
 
 ### Evaluating Retrieved Context
 
-To evaluate the retrieved context, you can use the selector shortcut `on_context()` to refer to the span attribute `RECORD_ROOT.INPUT`.
+To evaluate the retrieved context, you can use the selector shortcut `on_context()` to refer to the span attribute `RETRIEVAL.RETRIEVED_CONTEXTS`.
 
 This means that the following feedback function using the `Selector`:
 
