@@ -1,13 +1,17 @@
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
 import logging
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 from pydantic import BaseModel
 from trulens.apps import app
 from trulens.core.feedback import feedback as core_feedback
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import select as select_schema
+
+if is_otel_tracing_enabled():
+    from trulens.core.feedback.selector import Selector as OTelSelector
 
 log = logging.getLogger(__name__)
 
@@ -78,14 +82,27 @@ class TruBenchmarkExperiment:
         self.feedback_fn = feedback_fn
         self.benchmark_params = benchmark_params
 
+        if is_otel_tracing_enabled():
+            # In OTEL mode, selectors are dictionaries mapping feedback function
+            # argument names to `Selector` objects. The feedback implementation
+            # function is `lambda x: x`, so the dictionary has one key, `'x'`.
+            # The value for this key is a selector that points to the return
+            # value of `run_score_generation_on_single_row`.
+            on_selector = {
+                "x": OTelSelector(
+                    function_name="TruBenchmarkExperiment.run_score_generation_on_single_row",
+                    function_attribute="return",
+                )
+            }
+        else:
+            on_selector = select_schema.Select.RecordCalls.run_score_generation_on_single_row.rets
+
         self.f_benchmark_metrics: List[core_feedback.Feedback] = [
             core_feedback.Feedback(
                 lambda x: x,
                 name=f"metric_{agg_func.__name__}",
             )
-            .on(
-                select_schema.Select.RecordCalls.run_score_generation_on_single_row.rets
-            )
+            .on(on_selector)
             .aggregate(agg_func)
             for agg_func in agg_funcs
         ]
@@ -166,7 +183,7 @@ class TruBenchmarkExperiment:
         meta_scores = []
         with ThreadPoolExecutor() as executor:
             future_to_index = {}
-            index_to_results = {}
+            index_to_results: Dict[int, List] = {}
 
             for index, row in ground_truth.iterrows():
                 if "expected_chunks" in row:

@@ -1,6 +1,6 @@
 # ❄️ Logging in Snowflake
 
-Snowflake’s fully managed [data warehouse](https://www.snowflake.com/en/data-cloud/workloads/data-warehouse/?utm_cta=website-homepage-workload-card-data-warehouse) provides automatic provisioning, availability, tuning, data protection and more—across clouds and regions—for an unlimited number of users and jobs.
+Snowflake's fully managed [data warehouse](https://www.snowflake.com/en/data-cloud/workloads/data-warehouse/?utm_cta=website-homepage-workload-card-data-warehouse) provides automatic provisioning, availability, tuning, data protection and more—across clouds and regions—for an unlimited number of users and jobs.
 
 TruLens can write and read from a Snowflake database using a SQLAlchemy connection. This allows you to read, write, persist and share _TruLens_ logs in a _Snowflake_ database.
 
@@ -25,13 +25,13 @@ Connecting TruLens to a Snowflake database for logging traces and evaluations on
     from trulens.connectors.snowflake import SnowflakeConnector
     from trulens.core import TruSession
     connection_parameters = {
-        account: "<account>",
-        user: "<user>",
-        password: "<password>",
-        database: "<database>",
-        schema: "<schema>",
-        warehouse: "<warehouse>",
-        role: "<role>",
+        "account": "<account>",
+        "user": "<user>",
+        "password": "<password>",
+        "database": "<database>",
+        "schema": "<schema>",
+        "warehouse": "<warehouse>",
+        "role": "<role>",
     }
     # Here we create a new Snowpark session, but if we already have one we can use that instead.
     snowpark_session = Session.builder.configs(connection_parameters).create()
@@ -58,25 +58,28 @@ Connecting TruLens to a Snowflake database for logging traces and evaluations on
     session = TruSession(connector=conn)
     ```
 
-Once you've instantiated the `TruSession` object with your Snowflake connection, all _TruLens_ traces and evaluations will logged to Snowflake.
+Once you've instantiated the `TruSession` object with your Snowflake connection, all _TruLens_ traces and evaluations will be logged to Snowflake.
 
 ## Connect TruLens to the Snowflake database using an engine
 
-In some cases such as when using [key-pair authentication](https://docs.snowflake.com/en/developer-guide/python-connector/sqlalchemy#key-pair-authentication-support), the SQL-alchemy URL does not support the credentials required. In this case, you can instead create and pass a database engine.
+In some cases such as when using [key-pair authentication](https://docs.snowflake.com/en/developer-guide/python-connector/sqlalchemy#key-pair-authentication-support), the SQLAlchemy URL does not support the credentials required. In this case, you can instead create and pass a database engine. 
 
 When the database engine is created, the private key is then passed through the `connection_args`.
 
 !!! example "Connect TruLens to Snowflake with a database engine"
 
     ```python
-    from trulens.core import Tru
+    from trulens.core import TruSession
     from sqlalchemy import create_engine
     from snowflake.sqlalchemy import URL
     from cryptography.hazmat.backends import default_backend
     from cryptography.hazmat.primitives import serialization
+    from dotenv import load_dotenv
 
     load_dotenv()
 
+    # Before using key-pair authentication, ensure you have generated a private key and configured it in your Snowflake account.
+    # See https://docs.snowflake.com/en/user-guide/key-pair-auth for details.
     with open("rsa_key.p8", "rb") as key:
         p_key= serialization.load_pem_private_key(
             key.read(),
@@ -89,18 +92,18 @@ When the database engine is created, the private key is then passed through the 
         format=serialization.PrivateFormat.PKCS8,
         encryption_algorithm=serialization.NoEncryption())
 
-    engine = create_engine(URL(
-    account=os.environ["SNOWFLAKE_ACCOUNT"],
-    warehouse=os.environ["SNOWFLAKE_WAREHOUSE"],
-    database=os.environ["SNOWFLAKE_DATABASE"],
-    schema=os.environ["SNOWFLAKE_SCHEMA"],
-    user=os.environ["SNOWFLAKE_USER"],),
-    connect_args={
+    engine = create_engine(
+        URL(
+            account=os.environ["SNOWFLAKE_ACCOUNT"],
+            warehouse=os.environ["SNOWFLAKE_WAREHOUSE"],
+            database=os.environ["SNOWFLAKE_DATABASE"],
+            schema=os.environ["SNOWFLAKE_SCHEMA"],
+            user=os.environ["SNOWFLAKE_USER"],
+        ),
+        connect_args={
             'private_key': pkb,
-            },
+        },
     )
-
-    from trulens.core import TruSession
 
     session = TruSession(
         database_engine = engine
