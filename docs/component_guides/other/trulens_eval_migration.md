@@ -46,28 +46,3 @@ As a result of these changes, the package structure for TruLens differs from Tru
 | `Tru().run_dashboard()` | [`trulens.dashboard.run_dashboard()`][trulens.dashboard.run_dashboard] | `trulens-dashboard` |
 
 To find a specific definition, use the search functionality or go directly to the [API Reference](../../reference/index.md).
-
-## Automatic Migration with Grit
-
-To assist you in migrating your codebase to _TruLens_ v1.0, we've published a `grit` pattern. You can migrate your codebase [online](https://docs.grit.io/patterns/library/trulens_eval_migration#migrate-and-use-tru-session), or by using `grit` on the command line.
-
-To use Grit on the command line, follow these instructions:
-
-### Install `grit`
-
-You can install the Grit CLI from NPM:
-```bash
-npm install --location=global @getgrit/cli
-```
-Alternatively, you can install Grit with an installation script:
-```bash
-curl -fsSL https://docs.grit.io/install | bash
-```
-
-### Apply automatic changes
-
-```bash
-grit apply trulens_eval_migration
-```
-
-Review and audit all changes carefully before committing. We recommend ensuring you have a clean working tree and recent backup before running the migration.
