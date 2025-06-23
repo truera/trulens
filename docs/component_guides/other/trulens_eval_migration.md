@@ -1,7 +1,6 @@
-
 # Moving from `trulens-eval`
 
-This document highlights the changes required to move from `trulens-eval` to `trulens`.
+This document highlights the changes required to migrate from `trulens-eval` (any version) to `trulens` v1.0+.
 
 The biggest change is that the `trulens` library now consists of several interoperable modules, each of which can be installed and used independently. This allows users to mix and match components to suit their needs without needing to install the entire library.
 
@@ -30,7 +29,7 @@ To find a full list of providers, please refer to the [API Reference](../../refe
 
 ## Common Import Changes
 
-As a result of these changes, the package structure for the TruLens varies from TruLens-Eval. Here are some common import changes you may need to make:
+As a result of these changes, the package structure for TruLens differs from TruLens-Eval. Here are some common import changes you may need to make:
 
 | TruLens Eval | TruLens | Additional Dependencies |
 |------------|-------------|------------------|
@@ -50,9 +49,9 @@ To find a specific definition, use the search functionality or go directly to th
 
 ## Automatic Migration with Grit
 
-To assist you in migrating your codebase to _TruLens_ to v1.0, we've published a `grit` pattern. You can migrate your codebase [online](https://docs.grit.io/patterns/library/trulens_eval_migration#migrate-and-use-tru-session), or by using `grit` on the command line.
+To assist you in migrating your codebase to _TruLens_ v1.0, we've published a `grit` pattern. You can migrate your codebase [online](https://docs.grit.io/patterns/library/trulens_eval_migration#migrate-and-use-tru-session), or by using `grit` on the command line.
 
-To use on the command line, follow these instructions:
+To use Grit on the command line, follow these instructions:
 
 ### Install `grit`
 
@@ -60,7 +59,7 @@ You can install the Grit CLI from NPM:
 ```bash
 npm install --location=global @getgrit/cli
 ```
-Alternatively, you can also install Grit with an installation script:
+Alternatively, you can install Grit with an installation script:
 ```bash
 curl -fsSL https://docs.grit.io/install | bash
 ```
@@ -71,4 +70,4 @@ curl -fsSL https://docs.grit.io/install | bash
 grit apply trulens_eval_migration
 ```
 
-Be sure to audit its changes: we suggest ensuring you have a clean working tree beforehand.
+Review and audit all changes carefully before committing. We recommend ensuring you have a clean working tree and recent backup before running the migration.
