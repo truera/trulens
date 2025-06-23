@@ -1,7 +1,7 @@
 # Selecting Spans for Evaluation
 
 LLM applications come in all shapes and sizes and with a variety of different
-control flows. As a result it’s a challenge to consistently evaluate parts of an
+control flows. As a result, it’s a challenge to consistently evaluate parts of an
 LLM application trace.
 
 Therefore, we’ve adapted the use of [OpenTelemetry spans](https://opentelemetry.io/docs/specs/otel/overview/#spans)
@@ -16,7 +16,7 @@ This happens in two phases:
 1. Instrumentation is used to annotate span attributes. This is covered in detail in the [instrumentation guide](../../instrumentation/index.md).
 2. Then when defining the evaluation, you can refer to those span attributes using the `Selector`.
 
-Let's walk through an example. Take this example where a method named `query` is instrumented. In this example, we annotate both the span type, and set span attributes to refer to the `query` argument to the function and the `return` of the function.
+Let's walk through an example. Take this example where a method named `query` is instrumented. In this example, we annotate both the span type, and set span attributes to refer to the `query` argument to the function and the `return` argument of the function.
 
 ```python
 @instrument(
@@ -154,4 +154,4 @@ Additionally, in the above you see we set the `collect_list` argument in `on_con
 
 When set to `False`, each piece of context will be evaluated individually.
 
-The `on_context()` shortcut can also be used for `LangChain` and `LlamaIndex` apps to refer to the retrieved contexts. Doing so does not require annotating your app with the `RETRIEVAL.RETRIEVED_CONTEXT` span attribute, as that is done for you.
+The `on_context()` shortcut can also be used for `LangChain` and `LlamaIndex` apps to refer to the retrieved contexts. Doing so does not require annotating your app with the `RETRIEVAL.RETRIEVED_CONTEXTS` span attribute, as that is done for you.
