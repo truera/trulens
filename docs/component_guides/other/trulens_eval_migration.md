@@ -47,9 +47,10 @@ As a result of these changes, the package structure for TruLens differs from Tru
 
 To find a specific definition, use the search functionality or go directly to the [API Reference](../../reference/index.md).
 
+
 ## Automatic Migration with Grit
 
-To assist you in migrating your codebase to _TruLens_ v1.0, we've published a `grit` pattern. You can migrate your codebase [online](https://docs.grit.io/patterns/library/trulens_eval_migration#migrate-and-use-tru-session), or by using `grit` on the command line.
+To assist you in migrating your codebase to _TruLens_ v1.0, we've published a `grit` pattern. You can migrate your codebase by using `grit` on the command line. See the TruLens migration grit pattern in the [stdlib repo](https://github.com/honeycombio/stdlib/blob/main/.grit/patterns/python/trulens_eval_migration.md).
 
 To use Grit on the command line, follow these instructions:
 
