@@ -680,6 +680,89 @@ class RunDao:
         curr.get_results_from_sfqid(query_id)
         return curr.fetch_pandas_all()
 
+    def setup_ingestion_query(
+        self,
+        object_name: str,
+        object_version: str,
+        object_type: str,
+        run_name: str,
+        input_records_count: int,
+    ) -> None:
+        database = clean_up_snowflake_identifier(
+            self.session.get_current_database()
+        )
+        schema = clean_up_snowflake_identifier(
+            self.session.get_current_schema()
+        )
+
+        fq_object_name = f"{database}.{schema}.{object_name.upper()}"
+
+        sql_cmd = self.session.sql(
+            """
+            CALL SYSTEM$EXECUTE_AI_OBSERVABILITY_RUN(
+                OBJECT_CONSTRUCT(
+                    'object_name', ?,
+                    'object_type', ?,
+                    'object_version', ?
+                ),
+                OBJECT_CONSTRUCT(
+                    'run_name', ?
+                ),
+                OBJECT_CONSTRUCT('type', 'stage_file', 'input_record_count', ?),
+                ARRAY_CONSTRUCT(),
+                ARRAY_CONSTRUCT('SETUP_INGESTION')
+            );
+            """,
+            params=[
+                fq_object_name,
+                object_type,
+                object_version,
+                run_name,
+                input_records_count,
+            ],
+        )
+        logger.info(f"Executing SQL query to setup ingestion: {sql_cmd}")
+        logger.debug(sql_cmd.collect()[0][0])
+
+    def update_ingestion_status_query(
+        self,
+        object_name: str,
+        object_version: str,
+        object_type: str,
+        run_name: str,
+    ) -> None:
+        database = clean_up_snowflake_identifier(
+            self.session.get_current_database()
+        )
+        schema = clean_up_snowflake_identifier(
+            self.session.get_current_schema()
+        )
+
+        fq_object_name = f"{database}.{schema}.{object_name.upper()}"
+
+        sql_cmd = self.session.sql(
+            """
+            CALL SYSTEM$EXECUTE_AI_OBSERVABILITY_RUN(
+                OBJECT_CONSTRUCT(
+                    'object_name', ?,
+                    'object_type', ?,
+                    'object_version', ?
+                ),
+                OBJECT_CONSTRUCT(
+                    'run_name', ?
+                ),
+                OBJECT_CONSTRUCT('type', 'stage_file'),
+                ARRAY_CONSTRUCT(),
+                ARRAY_CONSTRUCT('INGESTION_STATUS_UPDATE')
+            );
+            """,
+            params=[fq_object_name, object_type, object_version, run_name],
+        )
+        logger.info(
+            f"Executing SQL query to update ingestion status: {sql_cmd}"
+        )
+        logger.debug(sql_cmd.collect()[0][0])
+
     def call_compute_metrics_query(
         self,
         metrics: List[str],

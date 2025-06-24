@@ -180,7 +180,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                     'input_record_count', ?
                 ),
                 ARRAY_CONSTRUCT(),
-                ARRAY_CONSTRUCT('INGESTION')
+                ARRAY_CONSTRUCT('INGESTION_MULTIPLE_BATCHES')
             )
             """,
             params=[
