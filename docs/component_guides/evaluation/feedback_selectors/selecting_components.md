@@ -172,7 +172,7 @@ f_groundedness = (
 
 ### Using `collect_list`
 
-In the above examples you see we set the `collect_list` argument in the `Selector` and in `on_context`. Setting `collect_list` to True This concatenates the selected span attributes into a single blob for evaluation. Alternatively, when set to `False` each span attribute selected will be evaluated individually.
+In the above examples you see we set the `collect_list` argument in the `Selector` and in `on_context`. Setting `collect_list` to True concatenates the selected span attributes into a single blob for evaluation. Alternatively, when set to `False` each span attribute selected will be evaluated individually.
 
 Using `collect_list` is particularly advantageous when working with retrieved context. When evaluating context relevance, we evaluate each context individually (by setting `collect_list=False`). Alternatively, when evaluating groundedness we assess if each LLM claim can be attributed to any evidence from the entire set of retrieved contexts (by setting `collect_list=True`).
 
