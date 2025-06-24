@@ -6,12 +6,11 @@ https://www.trulens.org/component_guides/other/no_context_warning for more infor
 ```
 
 If you see this warning/error, _TruLens_ attempted to execute an instrumented
-method in a context different than the one in which your app was instrumented. A
+method in a context different from the one in which your app was instrumented. A
 different context here means either a different `threading.Thread` or a
 different `asyncio.Task`. While we include several remedies to this problem to
-allow use of threaded and/or asynchronous apps, these remedies may not cover all
-of the cases. This document is here to help you fix the issue in case your app
-or the libraries you use were not covered by our existing remedies.
+allow use of threaded and/or asynchronous apps, these remedies may not cover all cases.
+This document aims to help you resolve issues when your app or libraries aren't covered by our existing remedies.
 
 ## Threads
 
@@ -28,11 +27,10 @@ that stand in place of Python classes:
 You can also import either from their builtin locations as long as you import
 _TruLens_ first.
 
-Alternatively, use the utility methods in the [TP
-class][trulens.core.utils.threading.TP] such as
+Alternatively, use the utility methods in the [TP class][trulens.core.utils.threading.TP] such as
 [submit][trulens.core.utils.threading.TP.submit].
 
-Alternatively, target [Context.run][contextvars.Context.run] in your threads,
+Alternatively, use [Context.run][contextvars.Context.run] in your threads,
 with the original target being the first argument to `run`:
 
 ```python
@@ -47,8 +45,7 @@ Thread(target=copy_context().run, args=(your_thread_target, yourargs, ...), kwar
 
 ## Async Tasks
 
-If using async Tasks, make sure that the default `copy_context` behaviour of
-`Task` is being used. This only applies to Python >= 3.11:
+If using async tasks, ensure `Task` uses the default `copy_context` behavior. This only applies to Python >= 3.11:
 
 !!! example
 
@@ -64,15 +61,13 @@ If using async Tasks, make sure that the default `copy_context` behaviour of
     # after:
     task = loop.create_task(your_coroutine, ..., context=copy_context())
     # or:
-    task = loop.create_task(your_coroutine, ...) # use default context behaviour
+    task = loop.create_task(your_coroutine, ...) # use default context behavior
     ```
 
-If you are using Python prior to 3.11, `copy_context` is the fixed behaviour
-which cannot be changed.
+Note: for Python < 3.11, `copy_context` is a fixed behavior and cannot be changed.
 
 ## Other issues
 
 If you are still seeing the _Cannot find TruLens context_ warning and none of the solutions
-above address the problem, please post a [GitHub
-issue](https://github.com/truera/trulens/issues) or a slack post on the
-[AIQuality Forum](https://communityinviter.com/apps/aiqualityforum/josh).
+above address the problem, please file a [GitHub Issue](https://github.com/truera/trulens/issues/new?template=bug-report.md) or
+add a new discussion on the [Snowflake Community Forums](https://snowflake.discourse.group/).
