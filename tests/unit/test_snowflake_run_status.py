@@ -1,7 +1,6 @@
 import unittest
 from unittest.mock import MagicMock
 
-import pandas as pd
 import pytest
 
 try:
@@ -50,26 +49,7 @@ class TestRunStatusOrchestration(unittest.TestCase):
             return
 
         self.base_run_dao = MagicMock()
-        # # Set default returns for methods used in _compute_overall_computations_status.
-        # self.base_run_dao.fetch_query_execution_status_by_id.return_value = (
-        #     "SUCCESS"
-        # )
-        self.base_run_dao.fetch_computation_job_results_by_query_id.return_value = pd.DataFrame([
-            {
-                "METRIC": "answer_relevance",
-                "STATUS": "SUCCESS",
-                "MESSAGE": "Computed 10 records.",
-            }
-        ])
         self.base_run_dao.upsert_run_metadata_fields = MagicMock()
-
-        self.fixed_time = 9999999999
-        fixed_time = self.fixed_time
-        self._orig_get_current_time = Run._get_current_time_in_ms
-        Run._get_current_time_in_ms = lambda self: fixed_time
-
-    def tearDown(self):
-        Run._get_current_time_in_ms = self._orig_get_current_time
 
     def attach_run_dao(self, run: Run):
         run.run_dao = self.base_run_dao
