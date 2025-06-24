@@ -19,6 +19,9 @@ This happens in two phases:
 Let's walk through an example. Take this example where a method named `query` is instrumented. In this example, we annotate both the span type, and set span attributes to refer to the `query` argument to the function and the `return` argument of the function.
 
 ```python
+from trulens.core.otel.instrument import instrument
+from trulens.otel.semconv.trace import SpanAttributes
+
 @instrument(
     attributes={
         SpanAttributes.RECORD_ROOT.INPUT: "query",
@@ -34,6 +37,7 @@ def query(self, query: str) -> str:
 Once we've done this, now we can map the inputs to a feedback function to these span attributes:
 
 ```python
+from trulens.core import Feedback
 from trulens.core.feedback.selector import Selector
 
 f_answer_relevance = (
@@ -70,6 +74,9 @@ To evaluate the application input, you can use the selector shortcut `on_input()
 This means that the following feedback function using the `Selector`:
 
 ```python
+from trulens.core import Feedback
+from trulens.core.feedback.selector import Selector
+
 f_answer_relevance = (
     Feedback(provider.coherence, name="Coherence")
     .on({
@@ -84,6 +91,8 @@ f_answer_relevance = (
 ...is equivalent to using the shortcut `on_input()`.
 
 ```python
+from trulens.core import Feedback
+
 f_answer_relevance = (
     Feedback(provider.coherence, name="Coherence")
     .on_input()
@@ -97,6 +106,9 @@ Likewise, to evaluate the application output, you can use the selector shortcut 
 This means that the following feedback function using the `Selector`:
 
 ```python
+from trulens.core import Feedback
+from trulens.core.feedback.selector import Selector
+
 f_coherence = (
     Feedback(provider.coherence, name="Coherence")
     .on({
@@ -111,6 +123,8 @@ f_coherence = (
 ...is equivalent to using the shortcut `on_output()`.
 
 ```python
+from trulens.core import Feedback
+
 f_coherence = (
     Feedback(provider.coherence, name="Coherence")
     .on_output()
@@ -124,6 +138,9 @@ To evaluate the retrieved context, you can use the selector shortcut `on_context
 This means that the following feedback function using the `Selector`:
 
 ```python
+from trulens.core import Feedback
+from trulens.core.feedback.selector import Selector
+
 f_groundedness = (
     Feedback(
         provider.groundedness_measure_with_cot_reasons, name="Groundedness"
@@ -142,6 +159,8 @@ f_groundedness = (
 ...is equivalent to using the shortcut `on_context()`.
 
 ```python
+from trulens.core import Feedback
+
 f_groundedness = (
     Feedback(
         provider.groundedness_measure_with_cot_reasons, name="Groundedness"
