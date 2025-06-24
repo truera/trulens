@@ -555,6 +555,14 @@ class Run(BaseModel):
         )
 
         # user app invocation - will block until the app completes
+        self.run_dao.setup_ingestion_query(
+            object_name=self.object_name,
+            object_type=self.object_type,
+            object_version=self.object_version,
+            run_name=self.run_name,
+            input_records_count=input_records_count,
+        )
+
         try:
             for i, row in input_df.iterrows():
                 main_method_args = []
@@ -596,8 +604,18 @@ class Run(BaseModel):
                 f"Error encountered during invoking app main method: {e}."
             )
             raise
+        finally:
+            self.tru_session.force_flush()
+            logger.info(
+                f"Flushed all spans for the run {self.run_name}; and exported them to the telemetry pipeline."
+            )
 
-        self.tru_session.force_flush()
+            self.run_dao.update_ingestion_status_query(
+                object_name=self.object_name,
+                object_type=self.object_type,
+                object_version=self.object_version,
+                run_name=self.run_name,
+            )
 
         logger.info("Run started, invocation done and ingestion in process.")
 
