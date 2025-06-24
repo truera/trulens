@@ -170,7 +170,7 @@ f_groundedness = (
 )
 ```
 
-### Using `colect_list`
+### Using `collect_list`
 
 In the above examples you see we set the `collect_list` argument in the `Selector` and in `on_context`. Setting `collect_list` to True This concatenates the selected span attributes into a single blob for evaluation. Alternatively, when set to `False` each span attribute selected will be evaluated individually.
 
