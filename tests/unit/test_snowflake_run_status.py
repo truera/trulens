@@ -253,6 +253,7 @@ class TestRunStatusOrchestration(unittest.TestCase):
             "metrics": {},
         }
         run = create_dummy_run(base_run_metadata)
+        self.attach_run_dao(run)
         run.run_metadata.metrics = None
         result = run._should_skip_computation("answer_relevance", run)
         self.assertFalse(result)
@@ -277,6 +278,8 @@ class TestRunStatusOrchestration(unittest.TestCase):
             },
         }
         run = create_dummy_run(base_run_metadata)
+        self.attach_run_dao(run)
+
         result = run._should_skip_computation("answer_relevance", run)
         self.assertFalse(result)
 
@@ -300,6 +303,8 @@ class TestRunStatusOrchestration(unittest.TestCase):
             },
         }
         run = create_dummy_run(base_run_metadata)
+        self.attach_run_dao(run)
+
         result = run._should_skip_computation("answer_relevance", run)
         self.assertTrue(result)
 
@@ -320,6 +325,8 @@ class TestRunStatusOrchestration(unittest.TestCase):
             },
         }
         run = create_dummy_run(base_run_metadata)
+        self.attach_run_dao(run)
+
         result = run._should_skip_computation("answer_relevance", run)
         self.assertTrue(result)
 
@@ -343,6 +350,7 @@ class TestRunStatusOrchestration(unittest.TestCase):
             },
         }
         run = create_dummy_run(base_run_metadata)
+        self.attach_run_dao(run)
         result = run._should_skip_computation("answer_relevance", run)
         self.assertFalse(result)
 
@@ -372,6 +380,7 @@ class TestRunStatusOrchestration(unittest.TestCase):
             },
         }
         run = create_dummy_run(base_run_metadata)
+        self.attach_run_dao(run)
         result = run._should_skip_computation("answer_relevance", run)
         self.assertTrue(result)
 
@@ -404,5 +413,6 @@ class TestRunStatusOrchestration(unittest.TestCase):
             },
         }
         run = create_dummy_run(base_run_metadata)
+        self.attach_run_dao(run)
         result = run._should_skip_computation("answer_relevance", run)
         self.assertTrue(result)
