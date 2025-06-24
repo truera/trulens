@@ -132,6 +132,7 @@ f_groundedness = (
         "context": Selector(
             span_type=SpanAttributes.SpanType.RETRIEVAL,
             span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
+            collect_list=True
         ),
     })
     .on_output()
@@ -150,8 +151,12 @@ f_groundedness = (
 )
 ```
 
-Additionally, in the above you see we set the `collect_list` argument in `on_context()`. This allows us to concatenate the selected span attributes into a single blob for evaluation when set to `True`.
+### Using `colect_list`
 
-When set to `False`, each piece of context will be evaluated individually.
+In the above examples you see we set the `collect_list` argument in the `Selector` and in `on_context`. Setting `collect_list` to True This concatenates the selected span attributes into a single blob for evaluation. Alternatively, when set to `False` each span attribute selected will be evaluated individually.
+
+Using `collect_list` is particularly advantageous when working with retrieved context. When evaluating context relevance, we evaluate each context individually (by setting `collect_list=False`). Alternatively, when evaluating groundedness we assess if each LLM claim can be attributed to any evidence from the entire set of retrieved contexts (by setting `collect_list=True`).
+
+### Evaluating retrieved context from other frameworks
 
 The `on_context()` shortcut can also be used for `LangChain` and `LlamaIndex` apps to refer to the retrieved contexts. Doing so does not require annotating your app with the `RETRIEVAL.RETRIEVED_CONTEXTS` span attribute, as that is done for you.
