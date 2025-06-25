@@ -15,6 +15,7 @@ This means that the following feedback function using the `Selector`:
 ```python
 from trulens.core import Feedback
 from trulens.core.feedback.selector import Selector
+from trulens.otel.semconv.trace import SpanAttributes
 
 f_answer_relevance = (
     Feedback(provider.coherence, name="Coherence")
@@ -47,6 +48,7 @@ This means that the following feedback function using the `Selector`:
 ```python
 from trulens.core import Feedback
 from trulens.core.feedback.selector import Selector
+from trulens.otel.semconv.trace import SpanAttributes
 
 f_coherence = (
     Feedback(provider.coherence, name="Coherence")
@@ -79,6 +81,7 @@ This means that the following feedback function using the `Selector`:
 ```python
 from trulens.core import Feedback
 from trulens.core.feedback.selector import Selector
+from trulens.otel.semconv.trace import SpanAttributes
 
 f_groundedness = (
     Feedback(

@@ -61,7 +61,7 @@ In the example above, you can see how a dictionary is passed to `on()` that maps
 
 ### Using `collect_list`
 
-In the above examples you see we set the `collect_list` argument in the `Selector` and in `on_context`. Setting `collect_list` to True concatenates the selected span attributes into a single blob for evaluation. Alternatively, when set to `False` each span attribute selected will be evaluated individually.
+In the above examples you see we set the `collect_list` argument in the `Selector` and in `on_context`. Setting `collect_list` to `True` concatenates the selected span attributes into a single blob for evaluation. Alternatively, when set to `False` each span attribute selected will be evaluated individually.
 
 Using `collect_list` is particularly advantageous when working with retrieved context. When evaluating context relevance, we evaluate each context individually (by setting `collect_list=False`).
 
