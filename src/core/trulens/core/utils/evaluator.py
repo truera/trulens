@@ -85,7 +85,8 @@ class Evaluator:
             record. Only records that aren't fully processed will be included.
         """
         events = self._app_ref().connector.get_events(
-            app_id=self._app_ref().app_id,
+            app_name=self._app_ref().app_name,
+            app_version=self._app_ref().app_version,
             record_ids=record_ids,
             start_time=self._start_time,
         )

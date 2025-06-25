@@ -794,7 +794,7 @@ class App(
         return hash(id(self))
 
     @staticmethod
-    def _is_snowflake_connector(
+    def _is_account_level_event_table_snowflake_connector(
         connector: Optional[core_connector.DBConnector],
     ) -> bool:
         if connector is None:
@@ -802,7 +802,9 @@ class App(
         try:
             from trulens.connectors.snowflake import SnowflakeConnector
 
-            return isinstance(connector, SnowflakeConnector)
+            if not isinstance(connector, SnowflakeConnector):
+                return False
+            return connector.use_account_event_table
         except Exception:
             pass
         return False
@@ -835,7 +837,9 @@ class App(
                 )
 
         if self.connector is not None and not (
-            self._is_snowflake_connector(self.connector)
+            self._is_account_level_event_table_snowflake_connector(
+                self.connector
+            )
             and is_otel_tracing_enabled()
         ):
             self.connector.add_app(app=self)
@@ -1989,7 +1993,9 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         if events is None:
             # Get all events associated with this app name and version.
             # TODO(otel): Should probably handle the case where there are a lot of events with pagination.
-            events = self.connector.get_events(app_id=self.app_id)
+            events = self.connector.get_events(
+                app_name=self.app_name, app_version=self.app_version
+            )
         for feedback in self.feedbacks:
             compute_feedback_by_span_group(
                 events,
