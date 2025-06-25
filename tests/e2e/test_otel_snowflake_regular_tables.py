@@ -65,8 +65,15 @@ class TestOtelSnowflakeRegularTables(OtelTestCase, SnowflakeTestCase):
         tru_session.force_flush()
         events = self._get_events()
         new_num_events = len(events)
-        self.assertEqual(2 * 3 + orig_num_events, new_num_events)
-        num_eval_events = (
+        EXPECTED_NUM_EVAL_ROOT_EVENTS = 3
+        EXPECTED_NUM_EVAL_EVENTS = 3
+        self.assertEqual(
+            EXPECTED_NUM_EVAL_ROOT_EVENTS
+            + EXPECTED_NUM_EVAL_EVENTS
+            + orig_num_events,
+            new_num_events,
+        )
+        num_eval_and_eval_root_events = (
             events["record_attributes"]
             .apply(
                 lambda curr: 1
@@ -79,7 +86,10 @@ class TestOtelSnowflakeRegularTables(OtelTestCase, SnowflakeTestCase):
             )
             .sum()
         )
-        self.assertEqual(num_eval_events, 2 * 3)
+        self.assertEqual(
+            EXPECTED_NUM_EVAL_ROOT_EVENTS + EXPECTED_NUM_EVAL_EVENTS,
+            num_eval_and_eval_root_events,
+        )
         # Check garbage collection.
         custom_app_ref = weakref.ref(tru_app)
         del tru_app
