@@ -21,7 +21,9 @@ from opentelemetry.trace import INVALID_SPAN_ID
 from opentelemetry.trace.span import Span
 import pandas as pd
 from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
+from trulens.core.feedback.selector import ProcessedContentNode
 from trulens.core.feedback.selector import Selector
+from trulens.core.feedback.selector import Trace
 from trulens.core.otel.instrument import OtelFeedbackComputationRecordingContext
 from trulens.core.otel.instrument import get_func_name
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
@@ -225,7 +227,6 @@ def _collect_inputs_from_events(
     Returns:
         Mapping from (record_id, span_group) to kwarg group to inputs.
     """
-    ret = defaultdict(lambda: defaultdict(list))
     span_id_to_child_events = defaultdict(list)
     for _, curr in events.iterrows():
         parent_span_id = curr["trace"]["parent_id"]
@@ -236,16 +237,105 @@ def _collect_inputs_from_events(
         if curr["record_attributes"].get(SpanAttributes.SPAN_TYPE)
         == SpanAttributes.SpanType.RECORD_ROOT
     ]
-    for kwarg_group in kwarg_groups:
+    if _is_trace_level(kwarg_to_selector):
+        sole_kwarg = kwarg_groups[0][0]
+        ret = defaultdict(
+            lambda: defaultdict(
+                lambda: [{sole_kwarg: FeedbackFunctionInput(value=Trace())}]
+            )
+        )
         for record_root in record_roots:
-            _dfs_collect_inputs_from_events(
-                kwarg_group,
-                kwarg_to_selector,
+            _dfs_collect_trace_level_inputs_from_events(
+                sole_kwarg,
+                kwarg_to_selector[sole_kwarg],
                 span_id_to_child_events,
                 record_root,
+                None,
                 ret,
             )
+    else:
+        ret = defaultdict(lambda: defaultdict(list))
+        for kwarg_group in kwarg_groups:
+            for record_root in record_roots:
+                _dfs_collect_inputs_from_events(
+                    kwarg_group,
+                    kwarg_to_selector,
+                    span_id_to_child_events,
+                    record_root,
+                    ret,
+                )
     return ret
+
+
+def _is_trace_level(kwarg_to_selector: Dict[str, Selector]) -> bool:
+    """Check if any selectors are at a trace level.
+
+    Args:
+        kwarg_to_selector: Mapping from function kwargs to span selectors.
+
+    Returns:
+        True iff any selector is at a trace level. Will throw an error if there
+        are multiple kwargs.
+    """
+    if any(curr.trace_level for curr in kwarg_to_selector.values()):
+        if len(kwarg_to_selector) != 1:
+            raise ValueError(
+                "Cannot have multiple `Selectors` if any are trace level!"
+            )
+        return True
+    return False
+
+
+def _dfs_collect_trace_level_inputs_from_events(
+    sole_kwarg,
+    sole_selector,
+    span_id_to_child_events: Dict[str, List[pd.Series]],
+    curr_event: pd.Series,
+    parent_processed_content_node: Optional[ProcessedContentNode],
+    ret: Dict[
+        Tuple[str, Optional[str]],
+        Dict[Tuple[str], List[Dict[str, FeedbackFunctionInput]]],
+    ],
+) -> None:
+    """DFS collect inputs from events based on a single trace level `Selector`.
+
+    Args:
+        sole_kwarg: Sole kwarg to the feedback function.
+        sole_selector: Selector for sole kwarg to the feedback function.
+        span_id_to_child_events: Mapping from span id to child events.
+        curr_event: Current event to process.
+        parent_processed_content_node:
+            Parent `ProcessedContentNode` of the current event to process.
+        ret:
+            Mapping from (record_id, None) to kwarg group to inputs. This is
+            what will be updated throughout the DFS.
+    """
+    # Convenience variables.
+    record_attributes = curr_event["record_attributes"]
+    record_id = record_attributes[SpanAttributes.RECORD_ID]
+    span_id = curr_event["trace"]["span_id"]
+    span_name = curr_event["record"]["name"]
+    # Check if row satisfies selector conditions.
+    curr_processed_content_node = None
+    if sole_selector.matches_span(span_name, record_attributes):
+        processed_content = sole_selector.process_span(
+            span_id, record_attributes
+        ).value
+        curr_processed_content_node = ret[(record_id, None)][(sole_kwarg,)][0][
+            sole_kwarg
+        ].value.add_event(
+            processed_content, curr_event, parent_processed_content_node
+        )
+    # Recurse on child events.
+    for child_event in span_id_to_child_events[span_id]:
+        _dfs_collect_trace_level_inputs_from_events(
+            sole_kwarg,
+            sole_selector,
+            span_id_to_child_events,
+            child_event,
+            curr_processed_content_node or parent_processed_content_node,
+            ret,
+        )
 
 
 def _dfs_collect_inputs_from_events(
