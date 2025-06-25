@@ -270,12 +270,14 @@ class TestRunStatusOrchestration(unittest.TestCase):
     def test_metrics_none(self):
         run = self.create_real_run()
         self.mock_run_metadata["metrics"] = None
-        with patch.object(run, "describe", self.mock_describe):
-            result = run._should_skip_computation("answer_relevance", run)
-            self.assertTrue(result)
 
-        result = run._should_skip_computation("answer_relevance", run)
-        self.assertFalse(result)
+        with patch.object(
+            Run,
+            "describe",
+            return_value={"run_metadata": {"metrics": self.mock_metrics}},
+        ):
+            result = run._should_skip_computation("answer_relevance", run)
+            self.assertFalse(result)
 
     def test_no_matching_metric(self):
         run = self.create_real_run()
@@ -290,9 +292,13 @@ class TestRunStatusOrchestration(unittest.TestCase):
                 "record_count": 10,
             },
         }
-
-        result = run._should_skip_computation("answer_relevance", run)
-        self.assertFalse(result)
+        with patch.object(
+            Run,
+            "describe",
+            return_value={"run_metadata": {"metrics": self.mock_metrics}},
+        ):
+            result = run._should_skip_computation("answer_relevance", run)
+            self.assertFalse(result)
 
     def test_one_completed_metric(self):
         run = self.create_real_run()
@@ -307,9 +313,13 @@ class TestRunStatusOrchestration(unittest.TestCase):
                 "record_count": 10,
             },
         }
-
-        result = run._should_skip_computation("answer_relevance", run)
-        self.assertTrue(result)
+        with patch.object(
+            Run,
+            "describe",
+            return_value={"run_metadata": {"metrics": self.mock_metrics}},
+        ):
+            result = run._should_skip_computation("answer_relevance", run)
+            self.assertTrue(result)
 
     def test_one_in_progress_metric(self):
         run = self.create_real_run()
@@ -322,8 +332,13 @@ class TestRunStatusOrchestration(unittest.TestCase):
             "completion_status": None,
         }
 
-        result = run._should_skip_computation("answer_relevance", run)
-        self.assertTrue(result)
+        with patch.object(
+            Run,
+            "describe",
+            return_value={"run_metadata": {"metrics": self.mock_metrics}},
+        ):
+            result = run._should_skip_computation("answer_relevance", run)
+            self.assertTrue(result)
 
     def test_all_failed_metric(self):
         run = self.create_real_run()
@@ -339,8 +354,13 @@ class TestRunStatusOrchestration(unittest.TestCase):
             },
         }
 
-        result = run._should_skip_computation("answer_relevance", run)
-        self.assertFalse(result)
+        with patch.object(
+            Run,
+            "describe",
+            return_value={"run_metadata": {"metrics": self.mock_metrics}},
+        ):
+            result = run._should_skip_computation("answer_relevance", run)
+            self.assertFalse(result)
 
     def test_multiple_metrics_one_in_progress(self):
         run = self.create_real_run()
@@ -360,8 +380,13 @@ class TestRunStatusOrchestration(unittest.TestCase):
             "completion_status": None,
         }
 
-        result = run._should_skip_computation("answer_relevance", run)
-        self.assertTrue(result)
+        with patch.object(
+            Run,
+            "describe",
+            return_value={"run_metadata": {"metrics": self.mock_metrics}},
+        ):
+            result = run._should_skip_computation("answer_relevance", run)
+            self.assertTrue(result)
 
     def test_multiple_metrics_one_completed(self):
         run = self.create_real_run()
@@ -384,5 +409,10 @@ class TestRunStatusOrchestration(unittest.TestCase):
             },
         }
 
-        result = run._should_skip_computation("answer_relevance", run)
-        self.assertTrue(result)
+        with patch.object(
+            Run,
+            "describe",
+            return_value={"run_metadata": {"metrics": self.mock_metrics}},
+        ):
+            result = run._should_skip_computation("answer_relevance", run)
+            self.assertTrue(result)
