@@ -315,22 +315,6 @@ class TestRunStatusOrchestration(unittest.TestCase):
             result = run._should_skip_computation("answer_relevance", run)
             self.assertTrue(result)
 
-    def test_one_in_progress_metric(self):
-        run = self.create_real_run()
-
-        self.mock_metrics["met1"] = {
-            "name": "answer_relevance",
-            "completion_status": None,
-        }
-
-        with patch.object(
-            Run,
-            "describe",
-            return_value={"run_metadata": {"metrics": self.mock_metrics}},
-        ):
-            result = run._should_skip_computation("answer_relevance", run)
-            self.assertTrue(result)
-
     def test_all_failed_metric(self):
         run = self.create_real_run()
 
@@ -350,6 +334,22 @@ class TestRunStatusOrchestration(unittest.TestCase):
             result = run._should_skip_computation("answer_relevance", run)
             self.assertFalse(result)
 
+    def test_one_in_progress_metric(self):
+        run = self.create_real_run()
+
+        self.mock_metrics["met1"] = {
+            "name": "answer_relevance",
+            "completion_status": {},
+        }
+
+        with patch.object(
+            Run,
+            "describe",
+            return_value={"run_metadata": {"metrics": self.mock_metrics}},
+        ):
+            result = run._should_skip_computation("answer_relevance", run)
+            self.assertTrue(result)
+
     def test_multiple_metrics_one_in_progress(self):
         run = self.create_real_run()
 
@@ -362,7 +362,7 @@ class TestRunStatusOrchestration(unittest.TestCase):
         }
         self.mock_metrics["met2"] = {
             "name": "answer_relevance",
-            "completion_status": None,
+            "completion_status": {},
         }
 
         with patch.object(
