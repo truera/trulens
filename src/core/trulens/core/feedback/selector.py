@@ -64,11 +64,16 @@ class Trace:
         event: pd.Series,
         parent_processed_content_node: Optional[ProcessedContentNode],
     ) -> ProcessedContentNode:
+        event_with_processed_content = event.copy()
+        event_with_processed_content["processed_content"] = processed_content
         if self.events is None:
-            self.events = pd.DataFrame(event).transpose()
+            self.events = pd.DataFrame(event_with_processed_content).transpose()
         else:
             self.events = pd.concat(
-                [self.events, pd.DataFrame(event).transpose()],
+                [
+                    self.events,
+                    pd.DataFrame(event_with_processed_content).transpose(),
+                ],
                 ignore_index=True,
             )
         node = ProcessedContentNode(
