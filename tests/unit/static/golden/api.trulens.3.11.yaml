@@ -678,7 +678,14 @@ trulens.core.feedback.selector:
   __class__: builtins.module
   highs: {}
   lows:
+    ProcessedContentNode: builtins.type
     Selector: builtins.type
+    Trace: builtins.type
+trulens.core.feedback.selector.ProcessedContentNode:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes: {}
 trulens.core.feedback.selector.Selector:
   __bases__:
   - builtins.object
@@ -698,6 +705,13 @@ trulens.core.feedback.selector.Selector:
     span_attributes_processor: builtins.NoneType
     span_name: builtins.NoneType
     span_type: builtins.NoneType
+    trace_level: builtins.bool
+trulens.core.feedback.selector.Trace:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    add_event: builtins.function
 trulens.core.guardrails:
   __class__: builtins.module
   highs: {}
