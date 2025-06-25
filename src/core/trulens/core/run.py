@@ -600,6 +600,21 @@ class Run(BaseModel):
             )
             raise
 
+        # Wait for app to complete any lingering operations
+        logger.info("Waiting for app operations to complete...")
+
+        # Try to wait for completion, but don't fail if it's not available
+        try:
+            if hasattr(self.app, "wait_for_completion"):
+                success = self.app.wait_for_completion(timeout=60.0)
+                if not success:
+                    logger.warning(
+                        "App operations did not complete within timeout"
+                    )
+        except Exception as e:
+            logger.warning(f"Could not wait for app completion: {e}")
+
+        # Now force flush to ensure any remaining spans are exported
         self.tru_session.force_flush()
 
         logger.info("Run started, invocation done and ingestion in process.")
