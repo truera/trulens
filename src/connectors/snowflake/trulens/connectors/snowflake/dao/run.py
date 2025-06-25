@@ -697,7 +697,7 @@ class RunDao:
         object_version: str,
         run_name: str,
         stage_file_params: Optional[dict] = None,
-        array_params: Optional[List[Any]] = None,
+        metrics_lst: Optional[List[Any]] = None,
         evaluation_phases: Optional[List[str]] = None,
     ):
         """
@@ -705,8 +705,8 @@ class RunDao:
         """
         if stage_file_params is None:
             stage_file_params = {"type": STAGE_FILE_TYPE}
-        if array_params is None:
-            array_params = []
+        if metrics_lst is None:
+            metrics_lst = []
         if evaluation_phases is None:
             evaluation_phases = []
 
@@ -721,7 +721,7 @@ class RunDao:
                     'run_name', ?
                 ),
                 OBJECT_CONSTRUCT({", ".join([f"'{k}', ?" for k in stage_file_params.keys()])}),
-                ARRAY_CONSTRUCT({", ".join(["?"] * len(array_params))}),
+                ARRAY_CONSTRUCT({", ".join(["?"] * len(metrics_lst))}),
                 ARRAY_CONSTRUCT({", ".join([f"'{a}'" for a in evaluation_phases])})
             );
         """
@@ -731,7 +731,7 @@ class RunDao:
             object_version,
             run_name,
             *stage_file_params.values(),
-            *array_params,
+            *metrics_lst,
         ]
         sql_cmd = self.session.sql(sql, params=params)
         logger.info(f"Executing SQL: {sql_cmd}")
@@ -808,6 +808,6 @@ class RunDao:
             object_version=object_version,
             run_name=run_name,
             stage_file_params={"type": STAGE_FILE_TYPE},
-            array_params=metrics,
+            metrics_lst=metrics,
             evaluation_phases=[EvaluationPhase.COMPUTE_METRICS.name],
         )
