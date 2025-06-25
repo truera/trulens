@@ -914,6 +914,8 @@ class SQLAlchemyDB(core_db.DB):
         if not isinstance(column_obj.type, sa.JSON):
             raise ValueError(f"Column {column} is not a JSON column")
 
+        if self.engine.dialect.name == "snowflake":
+            return sa.func.json_extract_path_text(column_obj, f'"{path}"')
         return sa.func.json_extract(column_obj, f'$."{path}"')
 
     def _get_paginated_record_ids_otel(
@@ -1637,18 +1639,24 @@ class SQLAlchemyDB(core_db.DB):
 
     def get_events(
         self,
-        app_id: Optional[str],
+        app_name: Optional[str],
+        app_version: Optional[str],
         record_ids: Optional[List[str]],
         start_time: Optional[datetime],
     ) -> pd.DataFrame:
         """See [DB.get_events][trulens.core.database.base.DB.get_events]."""
         with self.session.begin() as session:
             where_clauses = []
-            if app_id is not None:
-                app_id_expr = self._json_extract_otel(
-                    "resource_attributes", ResourceAttributes.APP_ID
+            if app_name is not None:
+                app_name_expr = self._json_extract_otel(
+                    "resource_attributes", ResourceAttributes.APP_NAME
                 )
-                where_clauses.append(app_id_expr == app_id)
+                where_clauses.append(app_name_expr == app_name)
+            if app_version is not None:
+                app_version_expr = self._json_extract_otel(
+                    "resource_attributes", ResourceAttributes.APP_VERSION
+                )
+                where_clauses.append(app_version_expr == app_version)
             if record_ids is not None:
                 record_id_expr = self._json_extract_otel(
                     "record_attributes", SpanAttributes.RECORD_ID
