@@ -914,7 +914,9 @@ class SQLAlchemyDB(core_db.DB):
         if not isinstance(column_obj.type, sa.JSON):
             raise ValueError(f"Column {column} is not a JSON column")
 
-        return sa.func.json_extract_path_text(column_obj, f'"{path}"')
+        if self.engine.dialect.name == "snowflake":
+            return sa.func.json_extract_path_text(column_obj, f'"{path}"')
+        return sa.func.json_extract(column_obj, f'$."{path}"')
 
     def _get_paginated_record_ids_otel(
         self,
