@@ -464,7 +464,8 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
     @abc.abstractmethod
     def get_events(
         self,
-        app_id: Optional[str],
+        app_name: Optional[str],
+        app_version: Optional[str],
         record_ids: Optional[List[str]],
         start_time: Optional[datetime],
     ) -> pd.DataFrame:
@@ -472,7 +473,8 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
         Get events from the database.
 
         Args:
-            app_id: The app id to filter events by.
+            app_name: The app name to filter events by.
+            app_version: The app version to filter events by.
             record_ids: The record ids to filter events by.
             start_time: The minimum time to consider events from.
 
