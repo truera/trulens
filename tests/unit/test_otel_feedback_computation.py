@@ -554,7 +554,9 @@ class TestOtelFeedbackComputation(OtelTestCase):
             if [curr.children for curr in bde] != [[d], [], []]:
                 return -6
             for i in range(len(trace.events)):
-                if not pd.Series.equals(bde[i].event, trace.events.iloc[i]):
+                if not pd.Series.equals(
+                    bde[i].event, trace.events.iloc[i].drop("processed_content")
+                ):
                     return -7
             return 0.21
 
