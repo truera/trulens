@@ -1,6 +1,5 @@
 import json
 import logging
-import time
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
@@ -14,7 +13,6 @@ from trulens.connectors.snowflake.dao.sql_utils import execute_query
 from trulens.core.run import SUPPORTED_ENTRY_TYPES
 from trulens.core.run import SupportedEntryType
 from trulens.core.utils import json as json_utils
-from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
@@ -527,158 +525,6 @@ class RunDao:
             parameters=(req_payload_json,),
         )
         logger.info("Deleted run '%s'.", run_name)
-
-    def read_spans_count_from_event_table(
-        self, object_name: str, run_name: str, span_type: str
-    ) -> int:
-        query = """
-            SELECT
-                COUNT(*) AS record_count
-            FROM
-                table(snowflake.local.GET_AI_OBSERVABILITY_EVENTS(
-                    ?,
-                    ?,
-                    ?,
-                    'EXTERNAL AGENT'
-                ))
-            WHERE
-                RECORD_ATTRIBUTES:"snow.ai.observability.run.name" = ? AND
-                RECORD_ATTRIBUTES:"ai.observability.span_type" = ?
-        """
-        try:
-            result_df = self.session.sql(
-                query,
-                params=[
-                    clean_up_snowflake_identifier(
-                        self.session.get_current_database()
-                    ),
-                    clean_up_snowflake_identifier(
-                        self.session.get_current_schema()
-                    ),
-                    object_name,
-                    run_name,
-                    span_type,
-                ],
-            ).to_pandas()
-
-            if "record_count" in result_df.columns:
-                count_value = result_df["record_count"].iloc[0]
-            else:
-                count_value = result_df.iloc[0, 0]
-            return int(count_value)
-        except Exception as e:
-            logger.exception(
-                f"Error encountered during reading record count from event table: {e}."
-            )
-            raise
-
-    def read_latest_record_root_timestamp_in_ms(
-        self, object_name: str, run_name: str
-    ) -> Optional[int]:
-        """
-        Retrieve the timestamp of the latest record_root from the event table.
-
-        Args:
-            object_name: The name of the managing object.
-            run_name: The unique name of the run.
-
-        Returns:
-            The timestamp of the latest record_root, or None if no records are found.
-        """
-        query = f"""
-            SELECT
-                MAX(TIMESTAMP) AS LATEST_TIMESTAMP
-            FROM
-                table(snowflake.local.GET_AI_OBSERVABILITY_EVENTS(
-                    ?,
-                    ?,
-                    ?,
-                    'EXTERNAL AGENT'
-                ))
-            WHERE
-                RECORD_ATTRIBUTES:"snow.ai.observability.run.name" = ? AND
-                RECORD_ATTRIBUTES:"{SpanAttributes.SPAN_TYPE}" = '{SpanAttributes.SpanType.RECORD_ROOT}';
-        """
-
-        try:
-            result_df = self.session.sql(
-                query,
-                params=[
-                    clean_up_snowflake_identifier(
-                        self.session.get_current_database()
-                    ),
-                    clean_up_snowflake_identifier(
-                        self.session.get_current_schema()
-                    ),
-                    object_name,
-                    run_name,
-                ],
-            ).to_pandas()
-
-            if "LATEST_TIMESTAMP" in result_df.columns and not result_df.empty:
-                latest_timestamp = result_df["LATEST_TIMESTAMP"].iloc[0]
-
-                return (
-                    int(pd.Timestamp(latest_timestamp).timestamp() * 1000)
-                    if latest_timestamp is not None
-                    and not pd.isna(latest_timestamp)
-                    else None
-                )
-            return None
-        except Exception as e:
-            logger.exception(
-                f"Error encountered during reading latest record_root timestamp from event table: {e}."
-            )
-            raise
-
-    def fetch_query_execution_status_by_id(
-        self, query_start_time_ms: int, query_id: str
-    ) -> str:
-        try:
-            # NOTE: information_schema.query_history does not always return the latest query status, even within 7 days
-            # and account_usage.query_history has higher latency, hence going with snowflake python connector API get_query_status here
-            if (
-                int(round(time.time() * 1000)) - query_start_time_ms
-                > PERSISTED_QUERY_RESULTS_TIMEOUT_IN_MS
-            ):
-                # https://docs.snowflake.com/en/user-guide/querying-persisted-results
-
-                logger.warning(
-                    f"Query {query_id} started almost a day ago, results may not be cached so try to fetch using ACCOUNT_USAGE."
-                )
-                query = "select EXECUTION_STATUS from snowflake.account_usage.query_history where query_id = ?;"
-                ret = self.session.sql(query, params=[query_id]).collect()
-                raw_status = ret[0]["EXECUTION_STATUS"]
-
-            else:
-                logger.info(
-                    "query status using snowflake connector get_query_status()"
-                )
-                query_status = self.session.connection.get_query_status(
-                    query_id
-                )
-
-                raw_status = query_status.name
-
-            # resuming_warehouse, running, queued, blocked, success, failed_with_error, or failed_with_incident.
-            if "success" in raw_status.lower():
-                return "SUCCESS"
-            elif "failed" in raw_status.lower():
-                return "FAILED"
-            else:
-                return "IN_PROGRESS"
-        except Exception as e:
-            logger.exception(
-                f"Error encountered during reading query status from query history: {e}."
-            )
-            raise
-
-    def fetch_computation_job_results_by_query_id(
-        self, query_id: str
-    ) -> pd.DataFrame:
-        curr = self.session.connection.cursor()
-        curr.get_results_from_sfqid(query_id)
-        return curr.fetch_pandas_all()
 
     def call_compute_metrics_query(
         self,
