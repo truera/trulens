@@ -1,70 +1,117 @@
-As a reminder, a typical feedback definition looks like this:
+# Using Shortcuts to Evaluate Pre-defined Span Attributes
 
-!!! example
+Span attributes can be pre-defined to refer to particular parts of an execution flow via the [TruLens semantic conventions](../../../otel/semantic_conventions.md). To ease the evaluation of particular span attributes, TruLens creates shortcuts to evaluate commonly used semantic conventions. These shortcuts are supported via `TruApp`, as well as `TruChain` and `TruLlama` when using `LangChain` and `LlamaIndex` frameworks, respectively.
 
-    ```python
-    f_lang_match = Feedback(hugs.language_match)
-          .on_input_output()
-    ```
+!!! note
 
-`on_input_output` is one of many available shortcuts to simplify the selection
-of components for evaluation.
+    Use of selector shortcuts respects the order of arguments passed to the feedback function, rather than requiring the use of named arguments.
 
-The selector, `on_input_output`, specifies how the `language_match` arguments
-are to be determined from an app record or app definition. The general form of
-this specification is done using `on` but several shorthands are provided.
-`on_input_output` states that the first two arguments to `language_match`
-(`text1` and `text2`) are to be the main app input and the main app output,
-respectively.
+## Evaluating App Input
 
-Several utility methods starting with `.on` provide shorthands:
+To evaluate the application input, you can use the selector shortcut `on_input()` to refer to the span attribute `RECORD_ROOT.INPUT`.
 
-- `on_input(arg) == on_prompt(arg: Optional[str])` -- both specify that the next
-  unspecified argument or `arg` should be the main app input.
+This means that the following feedback function using the `Selector`:
 
-- `on_output(arg) == on_response(arg: Optional[str])` -- specify that the next
-  argument or `arg` should be the main app output.
+```python
+from trulens.core import Feedback
+from trulens.core.feedback.selector import Selector
+from trulens.otel.semconv.trace import SpanAttributes
 
-- `on_input_output() == on_input().on_output()` -- specifies that the first two
-  arguments of implementation should be the main app input and main app output,
-  respectively.
+f_answer_relevance = (
+    Feedback(provider.coherence, name="Coherence")
+    .on({
+        "text": Selector(
+            span_type=SpanAttributes.SpanType.RECORD_ROOT,
+            span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
+        ),
+    })
+)
+```
 
-- `on_default()` -- depending on the signature of the implementation uses either
-  `on_output()` if it has a single argument, or `on_input_output` if it has two
-  arguments.
+...is equivalent to using the shortcut `on_input()`.
 
-Some wrappers include additional shorthands:
+```python
+from trulens.core import Feedback
 
-## LlamaIndex specific selectors
+f_answer_relevance = (
+    Feedback(provider.coherence, name="Coherence")
+    .on_input()
+)
+```
 
-`TruLlama.select_source_nodes()` -- outputs the selector of the source
-  documents part of the engine output.
+## Evaluating App Output
 
-!!! example
+Likewise, to evaluate the application output, you can use the selector shortcut `on_output()` to refer to the span attribute `RECORD_ROOT.OUTPUT`.
 
-    ```python
-    from trulens.apps.llamaindex import TruLlama
-    source_nodes = TruLlama.select_source_nodes(query_engine)
-    ```
+This means that the following feedback function using the `Selector`:
 
-`TruLlama.select_context()` -- outputs the selector of the context part of the
-  engine output.
+```python
+from trulens.core import Feedback
+from trulens.core.feedback.selector import Selector
+from trulens.otel.semconv.trace import SpanAttributes
 
-!!! example
+f_coherence = (
+    Feedback(provider.coherence, name="Coherence")
+    .on({
+        "text": Selector(
+            span_type=SpanAttributes.SpanType.RECORD_ROOT,
+            span_attribute=SpanAttributes.RECORD_ROOT.OUTPUT,
+        ),
+    })
+)
+```
 
-    ```python
-    from trulens.apps.llamaindex import TruLlama
-    context = TruLlama.select_context(query_engine)
-    ```
+...is equivalent to using the shortcut `on_output()`.
 
-## _LangChain_ specific selectors
+```python
+from trulens.core import Feedback
 
-`TruChain.select_context()` -- outputs the selector of the context part of the
-  engine output.
+f_coherence = (
+    Feedback(provider.coherence, name="Coherence")
+    .on_output()
+)
+```
 
-!!! example
+## Evaluating Retrieved Context
 
-    ```python
-    from trulens.apps.langchain import TruChain
-    context = TruChain.select_context(retriever_chain)
-    ```
+To evaluate the retrieved context, you can use the selector shortcut `on_context()` to refer to the span attribute `RETRIEVAL.RETRIEVED_CONTEXTS`.
+
+This means that the following feedback function using the `Selector`:
+
+```python
+from trulens.core import Feedback
+from trulens.core.feedback.selector import Selector
+from trulens.otel.semconv.trace import SpanAttributes
+
+f_groundedness = (
+    Feedback(
+        provider.groundedness_measure_with_cot_reasons, name="Groundedness"
+    )
+    .on({
+        "context": Selector(
+            span_type=SpanAttributes.SpanType.RETRIEVAL,
+            span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
+            collect_list=True
+        ),
+    })
+    .on_output()
+)
+```
+
+...is equivalent to using the shortcut `on_context()`.
+
+```python
+from trulens.core import Feedback
+
+f_groundedness = (
+    Feedback(
+        provider.groundedness_measure_with_cot_reasons, name="Groundedness"
+    )
+    .on_context(collect_list=True)
+    .on_output()
+)
+```
+
+!!! note
+
+    `collect_list` can also be passed as an argument to `on_context` to achieve the same effect as when passed to `Selector`.

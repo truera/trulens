@@ -19,6 +19,9 @@ This happens in two phases:
 Let's walk through an example. Take this example where a method named `query` is instrumented. In this example, we annotate both the span type, and set span attributes to refer to the `query` argument to the function and the `return` argument of the function.
 
 ```python
+from trulens.core.otel.instrument import instrument
+from trulens.otel.semconv.trace import SpanAttributes
+
 @instrument(
     attributes={
         SpanAttributes.RECORD_ROOT.INPUT: "query",
@@ -34,6 +37,7 @@ def query(self, query: str) -> str:
 Once we've done this, now we can map the inputs to a feedback function to these span attributes:
 
 ```python
+from trulens.core import Feedback
 from trulens.core.feedback.selector import Selector
 
 f_answer_relevance = (
@@ -55,75 +59,37 @@ f_answer_relevance = (
 
 In the example above, you can see how a dictionary is passed to `on()` that maps the feedback function argument to a span attribute, accessed via a `Selector`.
 
-## Using Shortcuts to Evaluate Pre-defined Span Attributes
+### Using `collect_list`
 
-Span attributes can pre-defined to refer to particular parts of an execution flow via the [TruLens semantic conventions](../../../otel/semantic_conventions.md). To ease the evaluation of particular span attributes, TruLens creates shortcuts to evaluate commonly used semantic conventions. These shortcuts are supported via `TruApp`, as well as `TruChain` and `TruLlama` when using `LangChain` and `LlamaIndex` frameworks, respectively.
+In the above examples you see we set the `collect_list` argument in the `Selector` and in `on_context`. Setting `collect_list` to `True` concatenates the selected span attributes into a single blob for evaluation. Alternatively, when set to `False` each span attribute selected will be evaluated individually.
 
-!!! note
-
-    Use of selector shortcuts respects the order of arguments passed to the feedback function, rather than requiring the use of named arguments.
-
-### Evaluating App Input
-
-To evaluate the application input, you can use the selector shortcut `on_input()` to refer to the span attribute `RECORD_ROOT.INPUT`.
-
-This means that the following feedback function using the `Selector`:
+Using `collect_list` is particularly advantageous when working with retrieved context. When evaluating context relevance, we evaluate each context individually (by setting `collect_list=False`).
 
 ```python
-f_answer_relevance = (
-    Feedback(provider.coherence, name="Coherence")
-    .on({
-        "text": Selector(
-            span_type=SpanAttributes.SpanType.RECORD_ROOT,
-            span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
-        ),
-    })
-)
-```
+from trulens.core import Feedback
+from trulens.core.feedback.selector import Selector
 
-...is equivalent to using the shortcut `on_input()`.
-
-```python
-f_answer_relevance = (
-    Feedback(provider.coherence, name="Coherence")
+f_context_relevance = (
+    Feedback(
+        provider.context_relevance_with_cot_reasons, name="Context Relevance"
+    )
     .on_input()
-)
-```
-
-### Evaluating App Output
-
-Likewise, to evaluate the application output, you can use the selector shortcut `on_output()` to refer to the span attribute `RECORD_ROOT.OUTPUT`.
-
-This means that the following feedback function using the `Selector`:
-
-```python
-f_coherence = (
-    Feedback(provider.coherence, name="Coherence")
     .on({
-        "text": Selector(
-            span_type=SpanAttributes.SpanType.RECORD_ROOT,
-            span_attribute=SpanAttributes.RECORD_ROOT.OUTPUT,
+        "context": Selector(
+            span_type=SpanAttributes.SpanType.RETRIEVAL,
+            span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
+            collect_list=False
         ),
     })
 )
 ```
 
-...is equivalent to using the shortcut `on_output()`.
+Alternatively, when evaluating groundedness we assess if each LLM claim can be attributed to any evidence from the entire set of retrieved contexts (by setting `collect_list=True`).
 
 ```python
-f_coherence = (
-    Feedback(provider.coherence, name="Coherence")
-    .on_output()
-)
-```
+from trulens.core import Feedback
+from trulens.core.feedback.selector import Selector
 
-### Evaluating Retrieved Context
-
-To evaluate the retrieved context, you can use the selector shortcut `on_context()` to refer to the span attribute `RETRIEVAL.RETRIEVED_CONTEXTS`.
-
-This means that the following feedback function using the `Selector`:
-
-```python
 f_groundedness = (
     Feedback(
         provider.groundedness_measure_with_cot_reasons, name="Groundedness"
@@ -132,26 +98,13 @@ f_groundedness = (
         "context": Selector(
             span_type=SpanAttributes.SpanType.RETRIEVAL,
             span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
+            collect_list=True
         ),
     })
     .on_output()
 )
 ```
 
-...is equivalent to using the shortcut `on_context()`.
-
-```python
-f_groundedness = (
-    Feedback(
-        provider.groundedness_measure_with_cot_reasons, name="Groundedness"
-    )
-    .on_context(collect_list=True)
-    .on_output()
-)
-```
-
-Additionally, in the above you see we set the `collect_list` argument in `on_context()`. This allows us to concatenate the selected span attributes into a single blob for evaluation when set to `True`.
-
-When set to `False`, each piece of context will be evaluated individually.
+### Evaluating retrieved context from other frameworks
 
 The `on_context()` shortcut can also be used for `LangChain` and `LlamaIndex` apps to refer to the retrieved contexts. Doing so does not require annotating your app with the `RETRIEVAL.RETRIEVED_CONTEXTS` span attribute, as that is done for you.
