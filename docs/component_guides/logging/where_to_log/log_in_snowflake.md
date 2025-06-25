@@ -62,7 +62,7 @@ Once you've instantiated the `TruSession` object with your Snowflake connection,
 
 ## Connect TruLens to the Snowflake database using an engine
 
-In some cases such as when using [key-pair authentication](https://docs.snowflake.com/en/developer-guide/python-connector/sqlalchemy#key-pair-authentication-support), the SQLAlchemy URL does not support the credentials required. In this case, you can instead create and pass a database engine. 
+In some cases such as when using [key-pair authentication](https://docs.snowflake.com/en/developer-guide/python-connector/sqlalchemy#key-pair-authentication-support), the SQLAlchemy URL does not support the credentials required. In this case, you can instead create and pass a database engine.
 
 When the database engine is created, the private key is then passed through the `connection_args`.
 

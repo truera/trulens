@@ -304,6 +304,8 @@ def _dfs_collect_trace_level_inputs_from_events(
         sole_selector: Selector for sole kwarg to the feedback function.
         span_id_to_child_events: Mapping from span id to child events.
         curr_event: Current event to process.
+        parent_processed_content_node:
+            Parent `ProcessedContentNode` of the current event to process.
         ret:
             Mapping from (record_id, None) to kwarg group to inputs. This is
             what will be updated throughout the DFS.

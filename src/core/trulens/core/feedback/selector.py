@@ -141,7 +141,8 @@ class Selector:
                 "Must specify at least one of `function_name`, `span_name`, or `span_type` if `trace_level` is `False`!"
             )
         if (
-            sum([
+            not trace_level
+            and sum([
                 span_attributes_processor is not None,
                 span_attribute is not None,
                 function_attribute is not None,
@@ -222,7 +223,7 @@ class Selector:
                     ret.span_attribute = SpanAttributes.CALL.RETURN
                 else:
                     ret.span_attribute = f"{SpanAttributes.CALL.KWARGS}.{self.function_attribute}"
-            else:
+            elif not self.trace_level:
                 raise ValueError(
                     "None of `span_attributes_processor`, `span_attribute`, or `function_attribute` are set!"
                 )
