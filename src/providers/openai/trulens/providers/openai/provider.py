@@ -1,5 +1,5 @@
 import logging
-from typing import ClassVar, Dict, Optional, Sequence
+from typing import ClassVar, Dict, Optional, Sequence, Type
 
 import pydantic
 from trulens.core.feedback import endpoint as core_endpoint
@@ -42,7 +42,7 @@ class OpenAI(llm_provider.LLMProvider):
 
     # Endpoint cannot presently be serialized but is constructed in __init__
     # below so it is ok.
-    endpoint: core_endpoint.Endpoint = pydantic.Field(exclude=True)
+    endpoint: openai_endpoint.OpenAIEndpoint = pydantic.Field(exclude=True)
 
     def __init__(
         self,
@@ -79,8 +79,9 @@ class OpenAI(llm_provider.LLMProvider):
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
+        response_format: Optional[Type[pydantic.BaseModel]] = None,
         **kwargs,
-    ) -> str:
+    ) -> str | pydantic.BaseModel | None:
         if "model" not in kwargs:
             kwargs["model"] = self.model_engine
 
@@ -91,19 +92,22 @@ class OpenAI(llm_provider.LLMProvider):
             kwargs["seed"] = 123
 
         if messages is not None:
-            completion = self.endpoint.client.chat.completions.create(
-                messages=messages, **kwargs
-            )
-
+            input_messages = messages
         elif prompt is not None:
-            completion = self.endpoint.client.chat.completions.create(
-                messages=[{"role": "system", "content": prompt}], **kwargs
-            )
-
+            input_messages = [{"role": "system", "content": prompt}]
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
 
-        return completion.choices[0].message.content
+        if response_format is not None:
+            response = self.endpoint.client.responses.parse(
+                input=input_messages, text_format=response_format, **kwargs
+            )
+            return response.output_parsed
+        else:
+            completion = self.endpoint.client.chat.completions.create(
+                messages=input_messages, **kwargs
+            )
+            return completion.choices[0].message.content
 
     def _moderation(self, text: str):
         # See https://platform.openai.com/docs/guides/moderation/overview .

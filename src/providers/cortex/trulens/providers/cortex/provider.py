@@ -1,12 +1,9 @@
 import json
-from typing import (
-    ClassVar,
-    Dict,
-    Optional,
-    Sequence,
-)
+from typing import ClassVar, Dict, Optional, Sequence, Type
 
 from packaging.version import Version
+from pydantic import BaseModel
+from snowflake.cortex import CompleteOptions
 from snowflake.cortex import complete
 import snowflake.ml.version
 from snowflake.snowpark import Session
@@ -142,12 +139,23 @@ class Cortex(
         model: str,
         temperature: float,
         messages: Optional[Sequence[Dict]] = None,
+        response_schema: Optional[Dict] = None,
     ) -> str:
         # Ensure messages are formatted as a JSON array string
         if messages is None:
             messages = []
 
-        options = {"temperature": temperature}
+        if response_schema is not None:
+            response_format = {
+                "type": "json",
+                "schema": response_schema,
+            }
+        else:
+            response_format = None
+
+        options = CompleteOptions(
+            temperature=temperature, response_format=response_format
+        )
 
         completion_res: str = complete(
             model=model,
@@ -169,6 +177,7 @@ class Cortex(
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
+        response_format: Optional[Type[BaseModel]] = None,
         **kwargs,
     ) -> str:
         if "model" not in kwargs:
@@ -178,6 +187,9 @@ class Cortex(
 
         if messages is not None:
             kwargs["messages"] = messages
+
+        if response_format is not None:
+            kwargs["response_format"] = response_format
 
         elif prompt is not None:
             kwargs["messages"] = [{"role": "system", "content": prompt}]
