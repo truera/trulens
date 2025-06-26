@@ -4,7 +4,7 @@ trulens:
   lows: {}
 trulens.benchmark:
   __class__: builtins.module
-  __version__: 1.5.2
+  __version__: 1.4.9
   highs: {}
   lows:
     __version__: builtins.str
@@ -60,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 1.5.2
+  __version__: 1.4.9
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -1910,7 +1910,7 @@ trulens.core.utils.trulens.Other:
   attributes: {}
 trulens.dashboard:
   __class__: builtins.module
-  __version__: 1.5.2
+  __version__: 1.4.9
   highs:
     run_dashboard: builtins.function
     run_dashboard_sis: builtins.function
@@ -2221,7 +2221,7 @@ trulens.dashboard.ux.styles.ResultCategoryType:
     value: enum.property
 trulens.feedback:
   __class__: builtins.module
-  __version__: 1.5.2
+  __version__: 1.4.9
   highs:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
@@ -2478,6 +2478,26 @@ trulens.feedback.llm_provider.LLMProvider:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
+trulens.feedback.output_schemas:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    BaseFeedbackResponse: pydantic._internal._model_construction.ModelMetaclass
+    ChainOfThoughtResponse: pydantic._internal._model_construction.ModelMetaclass
+trulens.feedback.output_schemas.BaseFeedbackResponse:
+  __bases__:
+  - pydantic.main.BaseModel
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    score: builtins.int
+trulens.feedback.output_schemas.ChainOfThoughtResponse:
+  __bases__:
+  - pydantic.main.BaseModel
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    criteria: builtins.str
+    score: builtins.int
+    supporting_evidence: builtins.str
 trulens.feedback.prompts:
   __class__: builtins.module
   highs: {}
@@ -3124,7 +3144,7 @@ trulens.feedback.v2.provider.base.Provider:
     tru_class_info: trulens.core.utils.pyschema.Class
 trulens.hotspots:
   __class__: builtins.module
-  __version__: 1.5.2
+  __version__: 1.4.9
   highs:
     HotspotsConfig: builtins.type
     get_skipped_columns: builtins.function
@@ -3245,3 +3265,42 @@ trulens.hotspots.tru_hotspots:
   highs: {}
   lows:
     get_hotspots: builtins.function
+trulens.semconv:
+  __class__: builtins.module
+  __version__: 1.2.8
+  highs: {}
+  lows:
+    __version__: builtins.str
+trulens.semconv.trace:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    ResourceAttributes: builtins.type
+    SpanAttributes: builtins.type
+trulens.semconv.trace.ResourceAttributes:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes: {}
+trulens.semconv.trace.SpanAttributes:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    AGENT_INVOCATION: builtins.type
+    CALL: builtins.type
+    COST: builtins.type
+    EMBEDDING: builtins.type
+    EVAL_ROOT: builtins.type
+    GENERATION: builtins.type
+    MEMORIZATION: builtins.type
+    RECORD: builtins.type
+    RECORDING: builtins.type
+    RECORD_ROOT: builtins.type
+    RERANKING: builtins.type
+    RETRIEVAL: builtins.type
+    SEMANTIC: builtins.type
+    SPAN_TYPES: builtins.str
+    SpanType: enum.EnumType
+    TOOL_INVOCATION: builtins.type
+    UNKNOWN: builtins.type

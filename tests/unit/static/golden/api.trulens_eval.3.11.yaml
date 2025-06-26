@@ -56,7 +56,7 @@ trulens_eval.AzureOpenAI:
     criminality_with_cot_reasons: builtins.function
     deployment_name: builtins.str
     dict: builtins.function
-    endpoint: trulens.core.feedback.endpoint.Endpoint
+    endpoint: trulens.providers.openai.endpoint.OpenAIEndpoint
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -301,6 +301,7 @@ trulens_eval.Feedback:
     aggregate: builtins.function
     aggregator: typing.Union[trulens.core.utils.pyschema.Function, trulens.core.utils.pyschema.Method,
       builtins.NoneType]
+    check_otel_selectors: builtins.function
     check_selectors: builtins.function
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
@@ -349,6 +350,7 @@ trulens_eval.Feedback:
     of_feedback_definition: builtins.staticmethod
     of_object: builtins.staticmethod
     'on': builtins.function
+    on_context: builtins.function
     on_default: builtins.function
     on_input: builtins.function
     on_input_output: builtins.function
@@ -676,7 +678,7 @@ trulens_eval.OpenAI:
     criminality: builtins.function
     criminality_with_cot_reasons: builtins.function
     dict: builtins.function
-    endpoint: trulens.core.feedback.endpoint.Endpoint
+    endpoint: trulens.providers.openai.endpoint.OpenAIEndpoint
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -978,6 +980,7 @@ trulens_eval.TruApp:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
@@ -1093,6 +1096,7 @@ trulens_eval.TruBasicApp:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
@@ -1209,6 +1213,7 @@ trulens_eval.TruChain:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
@@ -1324,6 +1329,7 @@ trulens_eval.TruCustomApp:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
@@ -1438,6 +1444,7 @@ trulens_eval.TruLlama:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
@@ -1553,6 +1560,7 @@ trulens_eval.TruRails:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
@@ -1669,6 +1677,7 @@ trulens_eval.TruVirtual:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: trulens.core.utils.pyschema.Method
     root_class: typing.Any
     run: builtins.function
@@ -1816,6 +1825,7 @@ trulens_eval.app.App:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
     schema: builtins.classmethod
@@ -2305,7 +2315,7 @@ trulens_eval.feedback.AzureOpenAI:
     criminality_with_cot_reasons: builtins.function
     deployment_name: builtins.str
     dict: builtins.function
-    endpoint: trulens.core.feedback.endpoint.Endpoint
+    endpoint: trulens.providers.openai.endpoint.OpenAIEndpoint
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -2595,6 +2605,7 @@ trulens_eval.feedback.Feedback:
     aggregate: builtins.function
     aggregator: typing.Union[trulens.core.utils.pyschema.Function, trulens.core.utils.pyschema.Method,
       builtins.NoneType]
+    check_otel_selectors: builtins.function
     check_selectors: builtins.function
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
@@ -2643,6 +2654,7 @@ trulens_eval.feedback.Feedback:
     of_feedback_definition: builtins.staticmethod
     of_object: builtins.staticmethod
     'on': builtins.function
+    on_context: builtins.function
     on_default: builtins.function
     on_input: builtins.function
     on_input_output: builtins.function
@@ -3009,7 +3021,7 @@ trulens_eval.feedback.OpenAI:
     criminality: builtins.function
     criminality_with_cot_reasons: builtins.function
     dict: builtins.function
-    endpoint: trulens.core.feedback.endpoint.Endpoint
+    endpoint: trulens.providers.openai.endpoint.OpenAIEndpoint
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -3147,6 +3159,7 @@ trulens_eval.feedback.feedback.Feedback:
     aggregate: builtins.function
     aggregator: typing.Union[trulens.core.utils.pyschema.Function, trulens.core.utils.pyschema.Method,
       builtins.NoneType]
+    check_otel_selectors: builtins.function
     check_selectors: builtins.function
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
@@ -3195,6 +3208,7 @@ trulens_eval.feedback.feedback.Feedback:
     of_feedback_definition: builtins.staticmethod
     of_object: builtins.staticmethod
     'on': builtins.function
+    on_context: builtins.function
     on_default: builtins.function
     on_input: builtins.function
     on_input_output: builtins.function
@@ -3374,7 +3388,7 @@ trulens_eval.feedback.provider.AzureOpenAI:
     criminality_with_cot_reasons: builtins.function
     deployment_name: builtins.str
     dict: builtins.function
-    endpoint: trulens.core.feedback.endpoint.Endpoint
+    endpoint: trulens.providers.openai.endpoint.OpenAIEndpoint
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -3893,7 +3907,7 @@ trulens_eval.feedback.provider.OpenAI:
     criminality: builtins.function
     criminality_with_cot_reasons: builtins.function
     dict: builtins.function
-    endpoint: trulens.core.feedback.endpoint.Endpoint
+    endpoint: trulens.providers.openai.endpoint.OpenAIEndpoint
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -4860,7 +4874,7 @@ trulens_eval.feedback.provider.endpoint.OpenAIEndpoint:
     apace_me: builtins.function
     callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
     callback_name: builtins.str
-    client: trulens.providers.openai.endpoint.OpenAIClient
+    client: openai.OpenAI
     construct: builtins.classmethod
     copy: builtins.function
     delete_instances: builtins.classmethod
@@ -5809,7 +5823,7 @@ trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint:
     apace_me: builtins.function
     callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
     callback_name: builtins.str
-    client: trulens.providers.openai.endpoint.OpenAIClient
+    client: openai.OpenAI
     construct: builtins.classmethod
     copy: builtins.function
     delete_instances: builtins.classmethod
@@ -6286,7 +6300,7 @@ trulens_eval.feedback.provider.openai.AzureOpenAI:
     criminality_with_cot_reasons: builtins.function
     deployment_name: builtins.str
     dict: builtins.function
-    endpoint: trulens.core.feedback.endpoint.Endpoint
+    endpoint: trulens.providers.openai.endpoint.OpenAIEndpoint
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -6376,7 +6390,7 @@ trulens_eval.feedback.provider.openai.OpenAI:
     criminality: builtins.function
     criminality_with_cot_reasons: builtins.function
     dict: builtins.function
-    endpoint: trulens.core.feedback.endpoint.Endpoint
+    endpoint: trulens.providers.openai.endpoint.OpenAIEndpoint
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -7302,6 +7316,7 @@ trulens_eval.tru_basic_app.TruBasicApp:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
@@ -7462,6 +7477,7 @@ trulens_eval.tru_chain.TruChain:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
@@ -7585,6 +7601,7 @@ trulens_eval.tru_custom_app.TruCustomApp:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
@@ -7730,6 +7747,7 @@ trulens_eval.tru_llama.TruLlama:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
@@ -7911,6 +7929,7 @@ trulens_eval.tru_rails.TruRails:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     run: builtins.function
@@ -8035,6 +8054,7 @@ trulens_eval.tru_virtual.TruVirtual:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
+    retrieve_feedback_results: builtins.function
     root_callable: trulens.core.utils.pyschema.Method
     root_class: typing.Any
     run: builtins.function
