@@ -4874,7 +4874,7 @@ trulens_eval.feedback.provider.endpoint.OpenAIEndpoint:
     apace_me: builtins.function
     callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
     callback_name: builtins.str
-    client: openai.OpenAI
+    client: trulens.providers.openai.endpoint.OpenAIClient
     construct: builtins.classmethod
     copy: builtins.function
     delete_instances: builtins.classmethod
@@ -5823,7 +5823,7 @@ trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint:
     apace_me: builtins.function
     callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
     callback_name: builtins.str
-    client: openai.OpenAI
+    client: trulens.providers.openai.endpoint.OpenAIClient
     construct: builtins.classmethod
     copy: builtins.function
     delete_instances: builtins.classmethod
