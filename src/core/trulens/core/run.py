@@ -602,16 +602,15 @@ class Run(BaseModel):
                 f"Flushed all spans for the run {self.run_name}; and exported them to the telemetry pipeline."
             )
 
-            # we start the ingestion sproc after the app invocation is done, so that
-            # app invocation time does not count toward the ingestion timeout set on the task orchestration layer.
-            self.run_dao.start_ingestion_query(
-                object_name=self.object_name,
-                object_type=self.object_type,
-                object_version=self.object_version,
-                run_name=self.run_name,
-                input_records_count=input_records_count,
-            )
-
+        # we start the ingestion sproc after the app invocation is done, so that
+        # app invocation time does not count toward the ingestion timeout set on the task orchestration layer.
+        self.run_dao.start_ingestion_query(
+            object_name=self.object_name,
+            object_type=self.object_type,
+            object_version=self.object_version,
+            run_name=self.run_name,
+            input_records_count=input_records_count,
+        )
         logger.info("Run started, invocation done and ingestion in process.")
 
     def _get_current_time_in_ms(self) -> int:
