@@ -1,5 +1,5 @@
 import logging
-from typing import ClassVar, Dict, Optional, Sequence, Type
+from typing import ClassVar, Dict, Optional, Sequence, Type, Union
 
 import pydantic
 from trulens.core.feedback import endpoint as core_endpoint
@@ -81,7 +81,7 @@ class OpenAI(llm_provider.LLMProvider):
         messages: Optional[Sequence[Dict]] = None,
         response_format: Optional[Type[pydantic.BaseModel]] = None,
         **kwargs,
-    ) -> str | pydantic.BaseModel | None:
+    ) -> Optional[Union[str, pydantic.BaseModel]]:
         if "model" not in kwargs:
             kwargs["model"] = self.model_engine
 
