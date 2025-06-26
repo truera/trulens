@@ -95,7 +95,8 @@ class Selector:
     # If `trace_level` is True, then this `Selector` doesn't describe a single
     # span but any number of spans in the trace. It will describe all spans
     # unless further filtered by `function_name`, `span_name`, or `span_type`.
-    # If `trace_level` is False, then this `Selector` describes a single span.
+    # If `trace_level` is False, then this `Selector` describes a single span
+    # determined by `function_name`, `span_name`, and `span_type`.
     trace_level: bool = False
     function_name: Optional[str] = None
     span_name: Optional[str] = None
@@ -106,6 +107,11 @@ class Selector:
     span_attributes_processor: Optional[Callable[[Dict[str, Any]], Any]] = None
     span_attribute: Optional[str] = None
     function_attribute: Optional[str] = None
+
+    # If the value extracted from the span is None (i.e. from
+    # `span_attributes_processor`, `span_attribute`, or `function_attribute`),
+    # then whether to ignore it or not.
+    ignore_none_values: bool = True
 
     # If this selector describes a list, which of the following two should we
     # do:
@@ -136,15 +142,6 @@ class Selector:
         collect_list: bool = True,
         match_only_if_no_ancestor_matched: bool = False,
     ):
-        if (
-            not trace_level
-            and function_name is None
-            and span_name is None
-            and span_type is None
-        ):
-            raise ValueError(
-                "Must specify at least one of `function_name`, `span_name`, or `span_type` if `trace_level` is `False`!"
-            )
         if (
             not trace_level
             and sum([
