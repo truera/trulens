@@ -34,6 +34,19 @@ from snowflake.sqlalchemy import URL
 
 logger = logging.getLogger(__name__)
 
+# [HACK!] To have sqlalchemy.JSON work with Snowflake, we need to monkey patch
+# the SnowflakeDialect to have the JSON serializer and deserializer set to None.
+# This is because by default, SQLAlchemy will set these correctly if they're set
+# to None.
+try:
+    from snowflake.sqlalchemy.snowdialect import SnowflakeDialect
+
+    for attr in ["_json_deserializer", "_json_serializer"]:
+        if not hasattr(SnowflakeDialect, attr):
+            setattr(SnowflakeDialect, attr, None)
+except ImportError:
+    pass
+
 
 class SnowflakeConnector(DBConnector):
     """Connector to snowflake databases."""
@@ -89,6 +102,7 @@ class SnowflakeConnector(DBConnector):
         self.snowpark_session: Session = snowpark_session
         self.connection_parameters: Dict[str, str] = connection_parameters
         self.use_staged_packages: bool = init_server_side_with_staged_packages
+        self.use_account_event_table: bool = use_account_event_table
 
         if not is_otel_tracing_enabled() or not use_account_event_table:
             self._init_with_snowpark_session(
