@@ -522,7 +522,7 @@ class LLMProvider(core_provider.Provider):
     def sentiment(
         self,
         text: str,
-        criteria: str = None,
+        criteria: Optional[str] = None,
         examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -571,7 +571,7 @@ class LLMProvider(core_provider.Provider):
     def sentiment_with_cot_reasons(
         self,
         text: str,
-        criteria: str = None,
+        criteria: Optional[str] = None,
         examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -661,10 +661,10 @@ class LLMProvider(core_provider.Provider):
     def _langchain_evaluate(
         self,
         text: str,
-        criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        criteria: str,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A general function that completes a template
@@ -719,9 +719,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: str,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A general function that completes a template
@@ -776,9 +776,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -810,9 +810,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
@@ -842,9 +842,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -875,9 +875,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
@@ -909,9 +909,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a
@@ -942,9 +942,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
@@ -976,9 +976,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -1009,9 +1009,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
@@ -1044,9 +1044,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -1078,9 +1078,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a
@@ -1112,9 +1112,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -1145,9 +1145,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
@@ -1179,9 +1179,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -1215,9 +1215,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
@@ -1249,9 +1249,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -1282,9 +1282,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
@@ -1316,9 +1316,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -1350,9 +1350,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
@@ -1384,9 +1384,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -1417,9 +1417,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
@@ -1569,9 +1569,9 @@ class LLMProvider(core_provider.Provider):
         source: str,
         summary: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that tries to distill main points
@@ -1633,9 +1633,9 @@ class LLMProvider(core_provider.Provider):
         prompt: str,
         response: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
