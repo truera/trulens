@@ -139,23 +139,25 @@ class Cortex(
         model: str,
         temperature: float,
         messages: Optional[Sequence[Dict]] = None,
-        response_schema: Optional[Dict] = None,
+        response_format: Optional[Type[BaseModel]] = None,
     ) -> str:
         # Ensure messages are formatted as a JSON array string
         if messages is None:
             messages = []
 
-        if response_schema is not None:
-            response_format = {
-                "type": "json",
-                "schema": response_schema,
-            }
+        if (
+            Version(snowflake.ml.version.VERSION) >= Version("1.8.0")
+            and response_format is not None
+        ):
+            options = CompleteOptions(
+                temperature=temperature,
+                response_format={
+                    "type": "json",
+                    "schema": response_format.model_json_schema(),
+                },
+            )
         else:
-            response_format = None
-
-        options = CompleteOptions(
-            temperature=temperature, response_format=response_format
-        )
+            options = CompleteOptions(temperature=temperature)
 
         completion_res: str = complete(
             model=model,

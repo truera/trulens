@@ -171,13 +171,12 @@ class LLMProvider(core_provider.Provider):
             response_format=feedback_output_schemas.ChainOfThoughtResponse,
         )
 
-        if isinstance(response, feedback_output_schemas.ChainOfThoughtResponse):
-            score = response.score
-            assert (
-                min_score_val <= score <= max_score_val
-            ), f"Score {score} is not in the range [{min_score_val}, {max_score_val}]."
-            criteria = response.criteria or ""
-            supporting_evidence = response.supporting_evidence or ""
+        if isinstance(response, dict):
+            score = response.get("score", None)
+            if score is None:
+                raise ValueError("Expected 'score' in response dictionary.")
+            criteria = response.get("criteria", "")
+            supporting_evidence = response.get("supporting_evidence", "")
 
             reasons = {
                 "reason": (
@@ -186,96 +185,84 @@ class LLMProvider(core_provider.Provider):
                 )
             }
 
-        elif isinstance(response, str):
-            if "Supporting Evidence" in response:
-                score = -1
-                supporting_evidence = None
-                criteria = None
-                lines = response.split("\n")
-                for i, line in enumerate(lines):
+        elif "Supporting Evidence" in response:
+            score = -1
+            supporting_evidence = None
+            criteria = None
+            lines = response.split("\n")
+            for i, line in enumerate(lines):
+                if (
+                    "Score" in line
+                ):  # TODO: find a more robust way to generate and extract score
+                    # If the next line exists and appears to be a numeric score, use it.
                     if (
-                        "Score" in line
-                    ):  # TODO: find a more robust way to generate and extract score
-                        # If the next line exists and appears to be a numeric score, use it.
-                        if (
-                            i + 1 < len(lines)
-                            and lines[i + 1]
-                            .strip()
-                            .replace(".", "", 1)
-                            .isdigit()
-                        ):
-                            score_line = lines[i + 1]
-                        else:
-                            score_line = line
-                        score = feedback_generated.re_configured_rating(
-                            score_line,
-                            min_score_val=min_score_val,
-                            max_score_val=max_score_val,
-                        )
-
-                    criteria_lines = []
-                    supporting_evidence_lines = []
-                    collecting_criteria = False
-                    collecting_evidence = False
-
-                    for line in response.split("\n"):
-                        if "Criteria:" in line:
-                            criteria_lines.append(
-                                line.split("Criteria:", 1)[1].strip()
-                            )
-                            collecting_criteria = True
-                            collecting_evidence = False
-                        elif "Supporting Evidence:" in line:
-                            supporting_evidence_lines.append(
-                                line.split("Supporting Evidence:", 1)[1].strip()
-                            )
-                            collecting_evidence = True
-                            collecting_criteria = False
-                        elif collecting_criteria:
-                            if "Supporting Evidence:" not in line:
-                                criteria_lines.append(line.strip())
-                            else:
-                                collecting_criteria = False
-                        elif collecting_evidence:
-                            if "Criteria:" not in line:
-                                supporting_evidence_lines.append(line.strip())
-                            else:
-                                collecting_evidence = False
-
-                    criteria = "\n".join(criteria_lines).strip()
-                    supporting_evidence = "\n".join(
-                        supporting_evidence_lines
-                    ).strip()
-                reasons = {
-                    "reason": (
-                        f"{'Criteria: ' + str(criteria)}\n"
-                        f"{'Supporting Evidence: ' + str(supporting_evidence)}"
+                        i + 1 < len(lines)
+                        and lines[i + 1].strip().replace(".", "", 1).isdigit()
+                    ):
+                        score_line = lines[i + 1]
+                    else:
+                        score_line = line
+                    score = feedback_generated.re_configured_rating(
+                        score_line,
+                        min_score_val=min_score_val,
+                        max_score_val=max_score_val,
                     )
-                }
-            else:
-                raise ValueError(
-                    "Expected string or structured response but got:\n"
-                    f"{response}"
-                )
 
-            # Normalize score to [0, 1] range
-            score = (score - min_score_val) / (max_score_val - min_score_val)
-            return score, reasons
+                criteria_lines = []
+                supporting_evidence_lines = []
+                collecting_criteria = False
+                collecting_evidence = False
+
+                for line in response.split("\n"):
+                    if "Criteria:" in line:
+                        criteria_lines.append(
+                            line.split("Criteria:", 1)[1].strip()
+                        )
+                        collecting_criteria = True
+                        collecting_evidence = False
+                    elif "Supporting Evidence:" in line:
+                        supporting_evidence_lines.append(
+                            line.split("Supporting Evidence:", 1)[1].strip()
+                        )
+                        collecting_evidence = True
+                        collecting_criteria = False
+                    elif collecting_criteria:
+                        if "Supporting Evidence:" not in line:
+                            criteria_lines.append(line.strip())
+                        else:
+                            collecting_criteria = False
+                    elif collecting_evidence:
+                        if "Criteria:" not in line:
+                            supporting_evidence_lines.append(line.strip())
+                        else:
+                            collecting_evidence = False
+
+                criteria = "\n".join(criteria_lines).strip()
+                supporting_evidence = "\n".join(
+                    supporting_evidence_lines
+                ).strip()
+            reasons = {
+                "reason": (
+                    f"{'Criteria: ' + str(criteria)}\n"
+                    f"{'Supporting Evidence: ' + str(supporting_evidence)}"
+                )
+            }
 
         else:
-            score = (
-                feedback_generated.re_configured_rating(
-                    response,
-                    min_score_val=min_score_val,
-                    max_score_val=max_score_val,
-                )
-                - min_score_val
-            ) / (max_score_val - min_score_val)
+            score = feedback_generated.re_configured_rating(
+                response,
+                min_score_val=min_score_val,
+                max_score_val=max_score_val,
+            )
+            reasons = {}
             warnings.warn(
                 "No supporting evidence provided. Returning score only.",
                 UserWarning,
             )
-            return score, {}
+
+        # Normalize score to [0, 1] range
+        score = (score - min_score_val) / (max_score_val - min_score_val)
+        return score, reasons
 
     def _determine_output_space(
         self, min_score_val: int, max_score_val: int

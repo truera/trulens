@@ -310,7 +310,7 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
 
     """
 
-    client: openai.OpenAI
+    client: OpenAIClient
 
     def __init__(
         self,
