@@ -1,5 +1,4 @@
-from enum import StrEnum
-from enum import auto
+from enum import Enum
 import json
 import logging
 from typing import Any, Dict, List, Optional
@@ -39,13 +38,14 @@ RUN_METADATA_NON_MAP_FIELD_MASKS = [
 ]
 RUN_ENTITY_EDITABLE_ATTRIBUTES = ["description", "run_status"]
 
-STAGE_FILE_TYPE = "stage_file"
+# constants for task orchestration sprocs
+INPUT_RECORD_COUNT = "input_record_count"  # note this is currently singular 'input_record_count' on backend sproc side, while in SDK it's plural 'input_records_count'
+STAGE_FILE = "stage_file"
 
 
-class EvaluationPhase(StrEnum):
-    SETUP_INGESTION = auto()
-    INGESTION_STATUS_UPDATE = auto()
-    COMPUTE_METRICS = auto()
+class EvaluationPhase(str, Enum):
+    START_INGESTION = "START_INGESTION"
+    COMPUTE_METRICS = "COMPUTE_METRICS"
 
 
 class RunDao:
@@ -536,61 +536,13 @@ class RunDao:
         )
         logger.info("Deleted run '%s'.", run_name)
 
-   
-    def _execute_ai_observability_run(
-        self,
-        fq_object_name: str,
-        object_type: str,
-        object_version: str,
-        run_name: str,
-        stage_file_params: Optional[dict] = None,
-        metrics_lst: Optional[List[Any]] = None,
-        evaluation_phases: Optional[List[str]] = None,
-    ):
-        """
-        Helper to invoke sproc SYSTEM$EXECUTE_AI_OBSERVABILITY_RUN with common parameters.
-        """
-        if stage_file_params is None:
-            stage_file_params = {"type": STAGE_FILE_TYPE}
-        if metrics_lst is None:
-            metrics_lst = []
-        if evaluation_phases is None:
-            evaluation_phases = []
-
-        sql = f"""
-            CALL SYSTEM$EXECUTE_AI_OBSERVABILITY_RUN(
-                OBJECT_CONSTRUCT(
-                    'object_name', ?,
-                    'object_type', ?,
-                    'object_version', ?
-                ),
-                OBJECT_CONSTRUCT(
-                    'run_name', ?
-                ),
-                OBJECT_CONSTRUCT({", ".join([f"'{k}', ?" for k in stage_file_params.keys()])}),
-                ARRAY_CONSTRUCT({", ".join(["?"] * len(metrics_lst))}),
-                ARRAY_CONSTRUCT({", ".join([f"'{a}'" for a in evaluation_phases])})
-            );
-        """
-        params = [
-            fq_object_name,
-            object_type,
-            object_version,
-            run_name,
-            *stage_file_params.values(),
-            *metrics_lst,
-        ]
-        sql_cmd = self.session.sql(sql, params=params)
-        logger.info(f"Executing SQL: {sql_cmd}")
-        logger.debug(sql_cmd.collect()[0][0])
-
-    def setup_ingestion_query(
+    def start_ingestion_query(
         self,
         object_name: str,
         object_version: str,
         object_type: str,
         run_name: str,
-        input_record_count: int,
+        input_records_count: int,
     ) -> None:
         database = clean_up_snowflake_identifier(
             self.session.get_current_database()
@@ -598,19 +550,42 @@ class RunDao:
         schema = clean_up_snowflake_identifier(
             self.session.get_current_schema()
         )
-        fq_object_name = f"{database}.{schema}.{object_name.upper()}"
-        self._execute_ai_observability_run(
-            fq_object_name=fq_object_name,
-            object_type=object_type,
-            object_version=object_version,
-            run_name=run_name,
-            stage_file_params={
-                "type": STAGE_FILE_TYPE,
-                "input_record_count": input_record_count,
-            },
-            evaluation_phases=[EvaluationPhase.SETUP_INGESTION.name],
-        )
 
+        fq_object_name = f"{database}.{schema}.{object_name.upper()}"
+        try:
+            sql_cmd = self.session.sql(
+                f"""
+                CALL SYSTEM$EXECUTE_AI_OBSERVABILITY_RUN(
+                    OBJECT_CONSTRUCT(
+                        'object_name', ?,
+                        'object_type', ?,
+                        'object_version', ?
+                    ),
+                    OBJECT_CONSTRUCT(
+                        'run_name', ?
+                    ),
+                    OBJECT_CONSTRUCT('type', '{STAGE_FILE}', '{INPUT_RECORD_COUNT}', ?),
+                    ARRAY_CONSTRUCT(),
+                    ARRAY_CONSTRUCT('{EvaluationPhase.START_INGESTION}')
+                );
+                """,
+                params=[
+                    fq_object_name,
+                    object_type,
+                    object_version,
+                    run_name,
+                    input_records_count,
+                ],
+            )
+            logger.info(f"Executing SQL query to setup ingestion: {sql_cmd}")
+            logger.debug(
+                sql_cmd.collect()[0][0]
+            )  # this needs to be synchronous
+        except Exception as e:
+            logger.exception(
+                f"Error encountered during calling start ingestion query: {e}."
+            )
+            raise
 
     def call_compute_metrics_query(
         self,
@@ -627,12 +602,37 @@ class RunDao:
             self.session.get_current_schema()
         )
         fq_object_name = f"{database}.{schema}.{object_name.upper()}"
-        self._execute_ai_observability_run(
-            fq_object_name=fq_object_name,
-            object_type=object_type,
-            object_version=object_version,
-            run_name=run_name,
-            stage_file_params={"type": STAGE_FILE_TYPE},
-            metrics_lst=metrics,
-            evaluation_phases=[EvaluationPhase.COMPUTE_METRICS.name],
-        )
+        try:
+            sql_cmd = self.session.sql(
+                f"""
+                CALL SYSTEM$EXECUTE_AI_OBSERVABILITY_RUN(
+                    OBJECT_CONSTRUCT(
+                        'object_name', ?,
+                        'object_type', ?,
+                        'object_version', ?
+                    ),
+                    OBJECT_CONSTRUCT(
+                        'run_name', ?
+                    ),
+                    OBJECT_CONSTRUCT('type', '{STAGE_FILE}'),
+                    ARRAY_CONSTRUCT({", ".join(["?"] * len(metrics))}),
+                    ARRAY_CONSTRUCT('{EvaluationPhase.COMPUTE_METRICS}')
+                );
+                """,
+                params=[
+                    fq_object_name,
+                    object_type,
+                    object_version,
+                    run_name,
+                    *metrics,
+                ],
+            )
+            logger.info(
+                f"Executing SQL command for metrics computation: {sql_cmd}"
+            )
+            sql_cmd.collect_nowait()  # metric computation query can be asynchronous
+        except Exception as e:
+            logger.exception(
+                f"Error encountered during calling compute metrics query: {e}."
+            )
+            raise
