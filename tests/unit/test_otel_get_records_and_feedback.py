@@ -729,11 +729,13 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         This test verifies that when filtering by app_ids after retrieving records,
         we may get fewer records than requested by the limit parameter.
         """
-        # Create multiple apps with different app_ids
+        # Create multiple apps with different app_ids and versions
         app1_name = "app1"
         app1_version = "1.0.0"
         app2_name = "app2"
         app2_version = "1.0.0"
+        app3_name = "app1"  # Same name as app1 but different version
+        app3_version = "2.0.0"
 
         # Create events for app1
         app1_events = []
@@ -773,17 +775,37 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             )
             app2_events.append(event)
 
+        # Create events for app3 (same name as app1, different version)
+        app3_events = []
+        for i in range(2):  # Create 2 records for app3
+            event = self._create_event_from_template(
+                event_id=f"app3_event_{i}",
+                record_id=f"app3_record_{i}",
+                app_name=app3_name,
+                app_version=app3_version,
+                app_id=AppDefinition._compute_app_id(app3_name, app3_version),
+                start_timestamp=f"2025-04-11 10:19:5{i + 6}.993997",
+                timestamp="2025-04-11 10:20:30.50",
+            )
+            # Ensure app name and version are correctly set in record_attributes
+            event.record_attributes["ai.observability.app_name"] = app3_name
+            event.record_attributes["ai.observability.app_version"] = (
+                app3_version
+            )
+            app3_events.append(event)
+
         # Insert all events
-        for event in app1_events + app2_events:
+        for event in app1_events + app2_events + app3_events:
             self.db.insert_event(event)
 
         # Compute app_ids
         app1_id = AppDefinition._compute_app_id(app1_name, app1_version)
         app2_id = AppDefinition._compute_app_id(app2_name, app2_version)
+        app3_id = AppDefinition._compute_app_id(app3_name, app3_version)
 
         # Test 1: Get all records without filtering
         df, _ = self.db._get_records_and_feedback_otel(limit=10)
-        self.assertEqual(len(df), 6)  # Should get 4 records as requested
+        self.assertEqual(len(df), 8)  # Should get all 8 records
 
         # Test 2: Filter by app1_id with limit=4
         df, _ = self.db._get_records_and_feedback_otel(
@@ -801,7 +823,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             len(df), 3
         )  # Should get only 3 records (all from app2)
 
-        # Test 4: Filter by both app_ids with limit=4
+        # Test 4: Filter by both app1_id and app2_id with limit=4
         df, _ = self.db._get_records_and_feedback_otel(
             app_ids=[app1_id, app2_id], limit=4
         )
@@ -816,7 +838,7 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         self.assertEqual(len(df), 0)  # Should get 0 records
 
         # Test 6: Verify ordering is maintained
-        df, _ = self.db._get_records_and_feedback_otel(limit=6)
+        df, _ = self.db._get_records_and_feedback_otel(limit=8)
         timestamps = df["ts"].tolist()
         self.assertEqual(
             timestamps, sorted(timestamps)
@@ -833,6 +855,23 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
         self.assertEqual(
             df.iloc[1]["record_id"], "app1_record_2"
         )  # Should get second and third records
+
+        # Test 8: Combine app_name and app_version filtering
+        df, _ = self.db._get_records_and_feedback_otel(
+            app_name=app1_name, app_version=app1_version
+        )
+        self.assertEqual(len(df), 3)
+        self.assertTrue(
+            all(row["app_id"] == app1_id for _, row in df.iterrows())
+        )
+
+        df, _ = self.db._get_records_and_feedback_otel(
+            app_name=app3_name, app_version=app3_version
+        )
+        self.assertEqual(len(df), 2)
+        self.assertTrue(
+            all(row["app_id"] == app3_id for _, row in df.iterrows())
+        )
 
     def test_get_records_and_feedback_otel_kwargs_extraction(self):
         """Test that _get_records_and_feedback_otel correctly extracts kwargs from span attributes.
@@ -1003,4 +1042,62 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             set(extracted_kwargs.keys()),
             set(expected_kwargs.keys()),
             "Extracted kwargs contains unexpected keys",
+        )
+
+    def test_get_records_and_feedback_otel_app_version_filtering(self):
+        """Test app_version filtering in both pagination and records retrieval methods."""
+        # Create apps with different versions
+        app_name = "test_app"
+        versions = ["1.0.0", "2.0.0"]
+
+        for i, version in enumerate(versions):
+            for j in range(2):  # 2 records per version
+                event = self._create_event_from_template(
+                    event_id=f"event_{version}_{j}",
+                    record_id=f"record_{version}_{j}",
+                    app_name=app_name,
+                    app_version=version,
+                    app_id=AppDefinition._compute_app_id(app_name, version),
+                    start_timestamp=f"2025-04-11 10:19:5{i * 2 + j}.993997",
+                    timestamp="2025-04-11 10:20:30.50",
+                    query=f"Question for {version}",
+                    return_value=[f"Answer for {version}"],
+                )
+                self.db.insert_event(event)
+
+        # Test pagination method filtering
+        with self.db.session.begin() as session:
+            stmt = self.db._get_paginated_record_ids_otel(app_version="1.0.0")
+            results = session.execute(stmt).all()
+            self.assertEqual(len(results), 2)
+
+            stmt = self.db._get_paginated_record_ids_otel(
+                app_version="nonexistent"
+            )
+            results = session.execute(stmt).all()
+            self.assertEqual(len(results), 0)
+
+        # Test records retrieval method filtering
+        df, _ = self.db._get_records_and_feedback_otel(app_version="1.0.0")
+        self.assertEqual(len(df), 2)
+        self.assertTrue(
+            all(row["app_version"] == "1.0.0" for _, row in df.iterrows())
+        )
+
+        df, _ = self.db._get_records_and_feedback_otel(
+            app_version="2.0.0", limit=1
+        )
+        self.assertEqual(len(df), 1)
+        self.assertEqual(df.iloc[0]["app_version"], "2.0.0")
+
+        # Test combined filtering
+        df, _ = self.db._get_records_and_feedback_otel(
+            app_name=app_name, app_version="1.0.0"
+        )
+        self.assertEqual(len(df), 2)
+        self.assertTrue(
+            all(
+                row["app_name"] == app_name and row["app_version"] == "1.0.0"
+                for _, row in df.iterrows()
+            )
         )
