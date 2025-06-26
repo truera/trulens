@@ -321,11 +321,15 @@ def _dfs_collect_trace_level_inputs_from_events(
         processed_content = sole_selector.process_span(
             span_id, record_attributes
         ).value
-        curr_processed_content_node = ret[(record_id, None)][(sole_kwarg,)][0][
-            sole_kwarg
-        ].value.add_event(
-            processed_content, curr_event, parent_processed_content_node
-        )
+        if (
+            processed_content is not None
+            or not sole_selector.ignore_none_values
+        ):
+            curr_processed_content_node = ret[(record_id, None)][(sole_kwarg,)][
+                0
+            ][sole_kwarg].value.add_event(
+                processed_content, curr_event, parent_processed_content_node
+            )
     # Recurse on child events.
     for child_event in span_id_to_child_events[span_id]:
         _dfs_collect_trace_level_inputs_from_events(
@@ -376,16 +380,26 @@ def _dfs_collect_inputs_from_events(
     matched = False
     if selector.matches_span(span_name, record_attributes):
         # Collect inputs for this kwarg group.
-        kwarg_group_inputs = {
-            kwarg: kwarg_to_selector[kwarg].process_span(
+        ignore = False
+        kwarg_group_inputs = {}
+        for kwarg in kwarg_group:
+            val = kwarg_to_selector[kwarg].process_span(
                 span_id, record_attributes
             )
-            for kwarg in kwarg_group
-        }
-        # Place the inputs for this record id and every span group.
-        for span_group in span_groups:
-            ret[(record_id, span_group)][kwarg_group].append(kwarg_group_inputs)
-        matched = True
+            kwarg_group_inputs[kwarg] = val
+            if (
+                val.value is None
+                and kwarg_to_selector[kwarg].ignore_none_values
+            ):
+                ignore = True
+                break
+        if not ignore:
+            # Place the inputs for this record id and every span group.
+            for span_group in span_groups:
+                ret[(record_id, span_group)][kwarg_group].append(
+                    kwarg_group_inputs
+                )
+            matched = True
     # Recurse on child events if necessary.
     if not matched or not selector.match_only_if_no_ancestor_matched:
         for child_event in span_id_to_child_events[span_id]:
