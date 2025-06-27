@@ -566,7 +566,7 @@ class RunDao:
                     ),
                     OBJECT_CONSTRUCT('type', '{STAGE_FILE}', '{INPUT_RECORD_COUNT}', ?),
                     ARRAY_CONSTRUCT(),
-                    ARRAY_CONSTRUCT('{EvaluationPhase.START_INGESTION}')
+                    ARRAY_CONSTRUCT('{EvaluationPhase.START_INGESTION.value}')
                 );
                 """,
                 params=[
@@ -616,7 +616,7 @@ class RunDao:
                     ),
                     OBJECT_CONSTRUCT('type', '{STAGE_FILE}'),
                     ARRAY_CONSTRUCT({", ".join(["?"] * len(metrics))}),
-                    ARRAY_CONSTRUCT('{EvaluationPhase.COMPUTE_METRICS}')
+                    ARRAY_CONSTRUCT('{EvaluationPhase.COMPUTE_METRICS.value}')
                 );
                 """,
                 params=[
