@@ -105,6 +105,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
             logger.debug(
                 f"Logging {len(spans)} for app:{app_name} version:{app_version} run:{run_name}"
             )
+
             res = self._export_to_snowflake_stage_for_app_and_run(
                 app_name,
                 app_version,
@@ -180,7 +181,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                     'input_record_count', ?
                 ),
                 ARRAY_CONSTRUCT(),
-                ARRAY_CONSTRUCT('INGESTION')
+                ARRAY_CONSTRUCT('INGESTION_MULTIPLE_BATCHES')
             )
             """,
             params=[
@@ -192,7 +193,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
             ],
         )
         if not dry_run:
-            logger.debug(sql_cmd.collect()[0][0])
+            sql_cmd.collect_nowait()
 
     def _export_to_snowflake_stage_for_app_and_run(
         self,
