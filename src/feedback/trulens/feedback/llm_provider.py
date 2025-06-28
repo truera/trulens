@@ -171,12 +171,12 @@ class LLMProvider(core_provider.Provider):
             response_format=feedback_output_schemas.ChainOfThoughtResponse,
         )
 
-        if isinstance(response, dict):
-            score = response.get("score", None)
+        if isinstance(response, feedback_output_schemas.ChainOfThoughtResponse):
+            score = response.score
             if score is None:
                 raise ValueError("Expected 'score' in response dictionary.")
-            criteria = response.get("criteria", "")
-            supporting_evidence = response.get("supporting_evidence", "")
+            criteria = response.criteria
+            supporting_evidence = response.supporting_evidence
 
             reasons = {
                 "reason": (

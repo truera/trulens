@@ -88,9 +88,6 @@ class OpenAI(llm_provider.LLMProvider):
         if "temperature" not in kwargs:
             kwargs["temperature"] = 0.0
 
-        if "seed" not in kwargs:
-            kwargs["seed"] = 123
-
         if messages is not None:
             input_messages = messages
         elif prompt is not None:
@@ -104,6 +101,9 @@ class OpenAI(llm_provider.LLMProvider):
             )
             return response.output_parsed
         else:
+            if "seed" not in kwargs:
+                kwargs["seed"] = 123
+
             completion = self.endpoint.client.chat.completions.create(
                 messages=input_messages, **kwargs
             )

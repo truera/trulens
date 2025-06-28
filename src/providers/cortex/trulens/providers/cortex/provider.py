@@ -167,6 +167,11 @@ class Cortex(
             stream=False,
             timeout=self.retry_timeout,
         )
+
+        if response_format is not None:
+            # If response_format is provided, we expect the response to be a JSON string
+            # that can be parsed into the specified response_format.
+            completion_res = response_format.model_validate_json(completion_res)
         if Version(snowflake.ml.version.VERSION) >= Version("1.7.1"):
             return completion_res
         # As per https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex#returns,
@@ -186,13 +191,10 @@ class Cortex(
             kwargs["model"] = self.model_engine
         if "temperature" not in kwargs:
             kwargs["temperature"] = 0.0
-
-        if messages is not None:
-            kwargs["messages"] = messages
-
         if response_format is not None:
             kwargs["response_format"] = response_format
-
+        if messages is not None:
+            kwargs["messages"] = messages
         elif prompt is not None:
             kwargs["messages"] = [{"role": "system", "content": prompt}]
         else:
