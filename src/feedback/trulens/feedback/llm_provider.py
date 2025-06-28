@@ -149,8 +149,6 @@ class LLMProvider(core_provider.Provider):
 
             temperature: The temperature for the LLM response.
 
-            response_format: The Pydantic class of the response from the LLM used in structured output, if applicable.
-
         Returns:
             The score on a 0-1 scale.
 
@@ -171,6 +169,8 @@ class LLMProvider(core_provider.Provider):
             response_format=feedback_output_schemas.ChainOfThoughtResponse,
         )
 
+        criteria_field = "Criteria"
+        supporting_evidence_field = "Supporting Evidence"
         if isinstance(response, feedback_output_schemas.ChainOfThoughtResponse):
             score = response.score
             if score is None:
@@ -180,8 +180,8 @@ class LLMProvider(core_provider.Provider):
 
             reasons = {
                 "reason": (
-                    f"{'Criteria: ' + str(criteria)}\n"
-                    f"{'Supporting Evidence: ' + str(supporting_evidence)}"
+                    f"{criteria_field}: {criteria}\n"
+                    f"{supporting_evidence_field}: {supporting_evidence}"
                 )
             }
 
@@ -214,25 +214,27 @@ class LLMProvider(core_provider.Provider):
                 collecting_evidence = False
 
                 for line in response.split("\n"):
-                    if "Criteria:" in line:
+                    if f"{criteria_field}:" in line:
                         criteria_lines.append(
-                            line.split("Criteria:", 1)[1].strip()
+                            line.split(f"{criteria_field}:", 1)[1].strip()
                         )
                         collecting_criteria = True
                         collecting_evidence = False
-                    elif "Supporting Evidence:" in line:
+                    elif f"{supporting_evidence_field}:" in line:
                         supporting_evidence_lines.append(
-                            line.split("Supporting Evidence:", 1)[1].strip()
+                            line.split(f"{supporting_evidence_field}:", 1)[
+                                1
+                            ].strip()
                         )
                         collecting_evidence = True
                         collecting_criteria = False
                     elif collecting_criteria:
-                        if "Supporting Evidence:" not in line:
+                        if f"{supporting_evidence_field}:" not in line:
                             criteria_lines.append(line.strip())
                         else:
                             collecting_criteria = False
                     elif collecting_evidence:
-                        if "Criteria:" not in line:
+                        if f"{criteria_field}:" not in line:
                             supporting_evidence_lines.append(line.strip())
                         else:
                             collecting_evidence = False
@@ -243,8 +245,8 @@ class LLMProvider(core_provider.Provider):
                 ).strip()
             reasons = {
                 "reason": (
-                    f"{'Criteria: ' + str(criteria)}\n"
-                    f"{'Supporting Evidence: ' + str(supporting_evidence)}"
+                    f"{criteria_field}: {criteria}\n"
+                    f"{supporting_evidence_field}: {supporting_evidence}"
                 )
             }
 
