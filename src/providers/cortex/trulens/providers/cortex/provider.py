@@ -140,7 +140,7 @@ class Cortex(
         temperature: float,
         messages: Optional[Sequence[Dict]] = None,
         response_format: Optional[Type[BaseModel]] = None,
-    ) -> str:
+    ) -> str | BaseModel:
         # Ensure messages are formatted as a JSON array string
         if messages is None:
             messages = []
@@ -171,9 +171,12 @@ class Cortex(
         if response_format is not None:
             # If response_format is provided, we expect the response to be a JSON string
             # that can be parsed into the specified response_format.
-            completion_res = response_format.model_validate_json(completion_res)
+            completion_obj = response_format.model_validate_json(completion_res)
+        else:
+            completion_obj = completion_res
+
         if Version(snowflake.ml.version.VERSION) >= Version("1.7.1"):
-            return completion_res
+            return completion_obj
         # As per https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex#returns,
         # the response is a JSON string with a `choices` key containing an
         # array of completions due to `options` being specified. Currently the
@@ -186,7 +189,7 @@ class Cortex(
         messages: Optional[Sequence[Dict]] = None,
         response_format: Optional[Type[BaseModel]] = None,
         **kwargs,
-    ) -> str:
+    ) -> str | BaseModel:
         if "model" not in kwargs:
             kwargs["model"] = self.model_engine
         if "temperature" not in kwargs:
