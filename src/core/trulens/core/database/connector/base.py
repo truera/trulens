@@ -330,6 +330,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
         self,
         app_ids: Optional[List[types_schema.AppID]] = None,
         app_name: Optional[types_schema.AppName] = None,
+        app_version: Optional[types_schema.AppVersion] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
@@ -358,6 +359,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
         df, feedback_columns = self.db.get_records_and_feedback(
             app_ids=app_ids,
             app_name=app_name,
+            app_version=app_version,
             record_ids=record_ids,
             offset=offset,
             limit=limit,
