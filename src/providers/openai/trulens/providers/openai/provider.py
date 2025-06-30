@@ -2,7 +2,6 @@ import logging
 from typing import ClassVar, Dict, Optional, Sequence, Type, Union
 
 import pydantic
-from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.utils import constants as constant_utils
 from trulens.core.utils import pace as pace_utils
 from trulens.feedback import llm_provider
@@ -379,7 +378,7 @@ class AzureOpenAI(OpenAI):
     def __init__(
         self,
         deployment_name: str,
-        endpoint: Optional[core_endpoint.Endpoint] = None,
+        endpoint: Optional[openai_endpoint.OpenAIEndpoint] = None,
         **kwargs: dict,
     ):
         # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
