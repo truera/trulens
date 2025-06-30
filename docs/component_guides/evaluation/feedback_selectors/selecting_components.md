@@ -18,7 +18,7 @@ This happens in two phases:
 
 Let's walk through an example. Take this example where a method named `query` is instrumented. In this example, we annotate both the span type, and set span attributes to refer to the `query` argument to the function and the `return` argument of the function.
 
-! example "Setting Span Attributes in Instrumentation"
+!!! example "Setting Span Attributes in Instrumentation"
 
     ```python
     from trulens.core.otel.instrument import instrument
@@ -38,7 +38,7 @@ Let's walk through an example. Take this example where a method named `query` is
 
 Once we've done this, now we can map the inputs to a feedback function to these span attributes:
 
-! example "Selecting Instrumented Span Attributes for Evaluation"
+!!! example "Selecting Instrumented Span Attributes for Evaluation"
 
     ```python
     from trulens.core import Feedback
