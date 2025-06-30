@@ -73,6 +73,26 @@ class OpenAI(llm_provider.LLMProvider):
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
+    def _structured_output_supported(self) -> bool:
+        """Whether the provider supports structured output. This is analogous to model support for OpenAI's Responses API.
+        For more details: https://platform.openai.com/docs/guides/structured-outputs?api-mode=responses#structured-outputs-vs-json-mode
+        """
+        if (
+            # gpt-3.5, gpt-3.5-turbo do not support structured output
+            self.model_engine.startswith("gpt-3.5")
+            # gpt-4, gpt-4-turbo do not support structured output
+            or (
+                self.model_engine.startswith("gpt-4")
+                and not self.model_engine.startswith("gpt-4o")
+            )
+            # gpt-4o-2024-05-13 does not support structured output
+            or self.model_engine == "gpt-4o-2024-05-13"
+            # NOTE (corey, 2025-06-30): Unclear if deep-research will support structured output in the future.
+            or self.model_engine.endswith("-deep-research")
+        ):
+            return False
+        return True
+
     # LLMProvider requirement
     def _create_chat_completion(
         self,
@@ -94,7 +114,7 @@ class OpenAI(llm_provider.LLMProvider):
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
 
-        if response_format is not None:
+        if response_format is not None and self._structured_output_supported():
             response = self.endpoint.client.responses.parse(
                 input=input_messages, text_format=response_format, **kwargs
             )
