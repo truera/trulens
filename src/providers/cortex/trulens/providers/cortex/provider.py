@@ -1,5 +1,5 @@
 import json
-from typing import ClassVar, Dict, Optional, Sequence, Type
+from typing import ClassVar, Dict, Optional, Sequence, Type, Union
 
 from packaging.version import Version
 from pydantic import BaseModel
@@ -140,7 +140,7 @@ class Cortex(
         temperature: float,
         messages: Optional[Sequence[Dict]] = None,
         response_format: Optional[Type[BaseModel]] = None,
-    ) -> str | BaseModel:
+    ) -> Union[str, BaseModel]:
         # Ensure messages are formatted as a JSON array string
         if messages is None:
             messages = []
@@ -189,7 +189,7 @@ class Cortex(
         messages: Optional[Sequence[Dict]] = None,
         response_format: Optional[Type[BaseModel]] = None,
         **kwargs,
-    ) -> str | BaseModel:
+    ) -> Union[str, BaseModel]:
         if "model" not in kwargs:
             kwargs["model"] = self.model_engine
         if "temperature" not in kwargs:
