@@ -74,7 +74,9 @@ class OpenAI(llm_provider.LLMProvider):
         )  # need to include pydantic.BaseModel.__init__
 
     def _structured_output_supported(self) -> bool:
-        """Whether the provider supports structured output. This is analogous to model support for OpenAI's Responses API"""
+        """Whether the provider supports structured output. This is analogous to model support for OpenAI's Responses API.
+        For more details: https://platform.openai.com/docs/guides/structured-outputs?api-mode=responses#structured-outputs-vs-json-mode
+        """
         if (
             # gpt-3.5, gpt-3.5-turbo do not support structured output
             self.model_engine.startswith("gpt-3.5")
