@@ -1,5 +1,6 @@
 {% set name = "trulens-connectors-snowflake" %}
-{% set version = "1.5.1" %}
+{% set pyname = name.replace('-', '.') %}
+{% set version = "1.5.2" %}
 
 package:
   name: {{ name|lower }}
@@ -21,21 +22,23 @@ build:
 
 requirements:
   host:
-    - python >=3.9,<3.12
+    - python >=3.9
     - poetry-core <2.0.0
     - pip
   run:
-    - python >=3.9,<3.12
+    - python >=3.9,<3.13
     - trulens-core >=1.0.0,<2.0.0
     - snowflake-snowpark-python >=1.18.0,<2.0.0
     - snowflake-sqlalchemy >=1.6.0,<2.0.0
 
 test:
   imports:
-    - trulens.connectors.snowflake
+    - {{ pyname }}
   commands:
     - pip check
+    - python -c 'import {{ pyname }}; assert {{ pyname }}.__version__ == "{{ version }}", "Installed version does not match expected version"'
   requires:
+    - python >=3.9,<3.13
     - pip
 
 about:

@@ -330,6 +330,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
         self,
         app_ids: Optional[List[types_schema.AppID]] = None,
         app_name: Optional[types_schema.AppName] = None,
+        app_version: Optional[types_schema.AppVersion] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
@@ -358,6 +359,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
         df, feedback_columns = self.db.get_records_and_feedback(
             app_ids=app_ids,
             app_name=app_name,
+            app_version=app_version,
             record_ids=record_ids,
             offset=offset,
             limit=limit,
@@ -452,7 +454,8 @@ class DBConnector(ABC, text_utils.WithIdentString):
 
     def get_events(
         self,
-        app_id: Optional[str] = None,
+        app_name: Optional[str] = None,
+        app_version: Optional[str] = None,
         record_ids: Optional[List[str]] = None,
         start_time: Optional[datetime.datetime] = None,
     ) -> pd.DataFrame:
@@ -460,7 +463,8 @@ class DBConnector(ABC, text_utils.WithIdentString):
         Get events from the database.
 
         Args:
-            app_id: The app id to filter events by.
+            app_name: The app name to filter events by.
+            app_version: The app version to filter events by.
             record_ids: The record ids to filter events by.
             start_time: The minimum time to consider events from.
 
@@ -468,5 +472,8 @@ class DBConnector(ABC, text_utils.WithIdentString):
             A pandas DataFrame of all relevant events.
         """
         return self.db.get_events(
-            app_id=app_id, record_ids=record_ids, start_time=start_time
+            app_name=app_name,
+            app_version=app_version,
+            record_ids=record_ids,
+            start_time=start_time,
         )
