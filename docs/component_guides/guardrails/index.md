@@ -1,6 +1,6 @@
 # Guardrails
 
-Guardrails play a crucial role in ensuring that only high quality output is produced by LLM apps. By setting guardrail thresholds based on feedback functions, we can directly leverage the same trusted evaluation metrics used for observability, *at inference time*.
+Guardrails play a crucial role in ensuring that only high-quality output is produced by LLM apps. By setting guardrail thresholds based on feedback functions, we can directly leverage the same trusted evaluation metrics used for observability, *at inference time*.
 
 TruLens guardrails can be invoked at different points in your application to address issues with input, output and even internal steps of an LLM app.
 
@@ -145,6 +145,6 @@ If we consider a RAG, context filter guardrails can be used to evaluate the *con
 
 !!! warning
 
-    Feedback function used as a guardrail must only return a float score, and cannot also return reasons.
+    A feedback function used as a guardrail must only return a float score, and cannot also return reasons.
 
 TruLens has native Python and framework-specific tooling for implementing guardrails. Read more about the available guardrails in [native Python][trulens.core.guardrails.base], [LangChain][trulens.apps.langchain.guardrails] and [LlamaIndex][trulens.apps.llamaindex.guardrails].

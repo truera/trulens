@@ -581,6 +581,30 @@ class TestProviders(TestCase):
         )
 
     @pytest.mark.optional
+    def test_openai_structured_output_check(self):
+        """Check structured output check for OpenAI feedback functions."""
+
+        o = openai_provider.OpenAI()
+
+        models_supported = {
+            "gpt-3.5-turbo": False,
+            "gpt-4": False,
+            "gpt-4o": True,
+            "gpt-4o-mini-2024-07-18": True,
+            "gpt-4o-2024-08-06": True,
+            "o1": True,
+        }
+        for model, expected in models_supported.items():
+            with self.subTest(f"Model: {model}"):
+                o.model_engine = model
+                actual = o._structured_output_supported()
+                self.assertEqual(
+                    actual,
+                    expected,
+                    f"Expected structured output support for {model} to be {expected}, but got {actual}.",
+                )
+
+    @pytest.mark.optional
     def test_openai_moderation(self):
         """Check that OpenAI moderation feedback functions produce a value in the
         0-1 range only. Only checks each feedback function once."""

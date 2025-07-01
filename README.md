@@ -5,6 +5,7 @@
 [![Discourse](https://img.shields.io/discourse/users?server=https://snowflake.discourse.group/)](https://snowflake.discourse.group/c/ai-research-and-development-community/trulens/97)
 [![Docs](https://img.shields.io/badge/docs-trulens.org-blue)](https://www.trulens.org/getting_started/)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/examples/quickstart/langchain_quickstart.ipynb)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/truera/trulens)
 
 # 🦑 Welcome to TruLens!
 

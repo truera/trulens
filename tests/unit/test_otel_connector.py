@@ -24,7 +24,9 @@ class TestOtelConnector(OtelTestCase):
         sachiboy_record_id = recording[2].record_id
         connector = TruSession().connector
         # Test no record id.
-        res = connector.get_events(app_id=tru_app.app_id)
+        res = connector.get_events(
+            app_name=tru_app.app_name, app_version=tru_app.app_version
+        )
         self.assertEqual(len(res), 3)
         self.assertEqual(
             {kojikun_record_id, nolan_record_id, sachiboy_record_id},
@@ -43,7 +45,8 @@ class TestOtelConnector(OtelTestCase):
         )
         # Test multiple record ids.
         res = connector.get_events(
-            app_id=tru_app.app_id,
+            app_name=tru_app.app_name,
+            app_version=tru_app.app_version,
             record_ids=[kojikun_record_id, sachiboy_record_id],
         )
         self.assertEqual(len(res), 2)

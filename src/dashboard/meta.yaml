@@ -1,5 +1,6 @@
 {% set name = "trulens-dashboard" %}
-{% set version = "1.5.1" %}
+{% set pyname = name.replace('-', '.') %}
+{% set version = "1.5.3" %}
 
 package:
   name: {{ name|lower }}
@@ -11,7 +12,7 @@ source:
   {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-dashboard/#files
-  sha256: c29e536ae6a26808fb3d902237f21240abc16371f95b6612d95fa12ca5e2930a
+  sha256: a2d908463b03f4add90d62c1ac78d48035b13bbf33bfc9ee030ede3d9503e3cd
   {% endif %}
 
 build:
@@ -21,11 +22,11 @@ build:
 
 requirements:
   host:
-    - python >=3.9,<3.12
+    - python >=3.9
     - poetry-core <2.0.0
     - pip
   run:
-    - python >=3.9,<3.12
+    - python >=3.9,<3.13
     - trulens-core >=1.0.0,<2.0.0
     - ipywidgets >=7.1.2
     - jupyter >=1.0.0,<2.0.0
@@ -43,10 +44,12 @@ requirements:
 
 test:
   imports:
-    - trulens.dashboard
+    - {{ pyname }}
   commands:
     - pip check
+    - python -c 'import {{ pyname }}; assert {{ pyname }}.__version__ == "{{ version }}", "Installed version does not match expected version"'
   requires:
+    - python >=3.9,<3.13
     - pip
 
 about:

@@ -1,6 +1,6 @@
 # ✅ Standards
 
-Enumerations of standards for code and its documentation to be maintained in
+Standards for code and its documentation to be maintained in
 `trulens`. Ongoing work aims at adapting these standards to existing code.
 
 ## Proper Names
@@ -8,7 +8,7 @@ Enumerations of standards for code and its documentation to be maintained in
 In natural language text, style/format proper names using italics if available.
 In Markdown, this can be done with a single underscore character on both sides
 of the term. In unstyled text, use the capitalization as below. This does not
-apply when referring to things like package names, classes, methods.
+apply when referring to things like package names, classes, or methods.
 
 - _TruLens_
 
@@ -40,14 +40,14 @@ apply when referring to things like package names, classes, methods.
   import statements.
 
 - Generally import modules only as per
-  <https://google.github.io/styleguide/pyguide.html#22-imports>. That us:
+  <https://google.github.io/styleguide/pyguide.html#22-imports>. That is:
 
     ```python
     from trulens.schema.record import Record # don't do this
     from trulens.schema import record as record_schema # do this instead
     ```
 
-    This prevents the `record` module from being loaded until something inside it
+    This approach prevents the `record` module from being loaded until something inside it
     is needed. If your uses of `record_schema.Record` are inside functions, this
     loading can be delayed as far as the execution of that function.
 
@@ -58,7 +58,7 @@ apply when referring to things like package names, classes, methods.
     from trulens.schema import record as record_schema # do this
     ```
 
-    This is especially important for module names which might cause name
+    This is especially important for module names, which might cause name
     collisions with other things such as variables named `record`.
 
 - Keep module renames consistent using the following patterns (see `src/core/trulens/_mods.py` for the full list):
@@ -125,7 +125,7 @@ apply when referring to things like package names, classes, methods.
 #### Circular imports
 
 Circular imports may become an issue (error when executing your/`trulens` code,
-indicated by phrase "likely due to circular imports"). The Import guideline
+indicated by the phrase "likely due to circular imports"). The Import guideline
 above may help alleviate the problem. A few more things can help:
 
 - Use annotations feature flag:
@@ -134,7 +134,7 @@ above may help alleviate the problem. A few more things can help:
     from __future__ import annotations
     ```
 
-    However, if your module contains `pydantic` models, you may need to run
+    However, if your module contains `Pydantic` models, you may need to run
     `model_rebuild`:
 
     ```python
@@ -167,7 +167,7 @@ above may help alleviate the problem. A few more things can help:
 ````markdown
 """Summary line.
 
-More details if necessary.
+Additional details can be provided here if necessary.
 
 Design:
 
@@ -189,7 +189,7 @@ Deprecated:
 ````markdown
 """Summary line.
 
-More details if necessary.
+Additional details can be provided here if necessary.
 
 Examples:
 
@@ -204,7 +204,7 @@ Attrs:
 """
 ````
 
-For pydantic classes, provide the attribute description as a long string right
+For Pydantic classes, provide the attribute description as a long string right
 after the attribute definition:
 
 ```python
@@ -332,8 +332,8 @@ See `tests/unit/static`.
 Static tests run on multiple versions of Python: `3.8`, `3.9`, `3.10`, `3.11`,
 and being a subset of unit tests, are also run on latest supported Python,
 `3.12` . Some tests that require all optional packages to be installed run only
-on `3.11` as the latter Python version does not support some of those optional
-packages.
+on `3.11` as the latter Python version (`3.12`) does not support some of those optional
+packages. Note: this is in the process of being updated.
 
 ### Test pipelines
 

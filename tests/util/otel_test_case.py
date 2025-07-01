@@ -36,6 +36,7 @@ class OtelTestCase(TruTestCase):
         super().setUp()
         tru_session = TruSession()
         tru_session.reset_database()
+        self.clear_TruSession_singleton()
 
     def tearDown(self) -> None:
         tru_session = TruSession()

@@ -1,5 +1,6 @@
 {% set name = "trulens-otel-semconv" %}
-{% set version = "1.5.1" %}
+{% set pyname = name.replace('-', '.') %}
+{% set version = "1.5.3" %}
 
 package:
   name: {{ name|lower }}
@@ -11,7 +12,7 @@ source:
   {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-otel-semconv/#files
-  sha256: fd1d681b0c8d56c8df794628063759731d9603ee7d37199e13174d43da206a28
+  sha256: 80d66bae550006a40a77046ef450cdbef303a9633b08254e9a09aa86e98a9eb9
   {% endif %}
 
 build:
@@ -21,19 +22,21 @@ build:
 
 requirements:
   host:
-    - python >=3.9,<3.12
+    - python >=3.9
     - poetry-core <2.0.0
     - pip
   run:
-    - python >=3.9,<3.12
+    - python >=3.9,<3.13
     - opentelemetry-semantic-conventions >=0.36b0
 
 test:
   imports:
-    - trulens.otel.semconv
+    - {{ pyname }}
   commands:
     - pip check
+    - python -c 'import {{ pyname }}; assert {{ pyname }}.__version__ == "{{ version }}", "Installed version does not match expected version"'
   requires:
+    - python >=3.9,<3.13
     - pip
 
 about:

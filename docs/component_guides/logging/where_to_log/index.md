@@ -4,7 +4,7 @@ By default, all data is logged to the current working directory to `default.sqli
 
 ## Connecting with a Database URL
 
-Data can be logged to a SQLAlchemy-compatible referred to by `database_url` in the format `dialect+driver://username:password@host:port/database`.
+Data can be logged to a SQLAlchemy-compatible database referred to by `database_url` in the format `dialect+driver://username:password@host:port/database`.
 
 See [this article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls) for more details on SQLAlchemy database URLs.
 
@@ -43,8 +43,6 @@ See [this article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-
     )
     connector = DefaultDBConnector(database_engine = database_engine)
     session = TruSession(connector = connector)
-
-    session = TruSession(database_engine=engine)
     ```
 
 After which you should receive the following message:

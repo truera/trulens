@@ -70,7 +70,10 @@ class _TruSession(core_session.TruSession):
                 TruLensSnowflakeSpanExporter,
             )
 
-            if isinstance(connector, SnowflakeConnector):
+            if (
+                isinstance(connector, SnowflakeConnector)
+                and connector.use_account_event_table
+            ):
                 exporter = TruLensSnowflakeSpanExporter(connector)
         if not exporter:
             exporter = TruLensOtelSpanExporter(connector)

@@ -142,8 +142,6 @@ class CortexEndpoint(core_endpoint.Endpoint):
         response: Any,
         callback: Optional[core_endpoint.EndpointCallback],
     ) -> Any:
-        counted_something = False
-
         response_dict = None, None
 
         try:
@@ -163,16 +161,13 @@ class CortexEndpoint(core_endpoint.Endpoint):
                     "finish_reason" in choice
                     and choice["finish_reason"] == "stop"
                 ):
-                    counted_something = True
-
                     self.global_callback.handle_generation(
                         response=response_dict
                     )
 
                     if callback is not None:
                         callback.handle_generation(response=response_dict)
-
-        if not counted_something:
+        else:
             logger.warning(
                 "Unrecognized Cortex response format. It did not have usage information:\n%s",
                 pp.pformat(response_dict),

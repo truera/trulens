@@ -6,12 +6,6 @@ This is done through the instrumentation of key LlamaIndex classes and methods.
 To see all classes and methods instrumented, see *Appendix: LlamaIndex
 Instrumented Classes and Methods*.
 
-In addition to the default instrumentation, TruLlama exposes the
-*select_context* and *select_source_nodes* methods for evaluations that require
-access to retrieved context or source nodes. Exposing these methods bypasses the
-need to know the json structure of your app ahead of time, and makes your
-evaluations reusable across different apps.
-
 ## Example usage
 
 Below is a quick example of usage. First, we'll create a standard LlamaIndex query engine from Paul Graham's Essay, *What I Worked On*:
@@ -30,7 +24,7 @@ Below is a quick example of usage. First, we'll create a standard LlamaIndex que
     query_engine = index.as_query_engine()
     ```
 
-To instrument an LlamaIndex query engine, all that's required is to wrap it using TruLlama.
+To instrument a LlamaIndex query engine, all that's required is to wrap it using TruLlama.
 
 !!! example "Instrument a LlamaIndex Query Engine"
 
@@ -43,12 +37,13 @@ To instrument an LlamaIndex query engine, all that's required is to wrap it usin
         print(query_engine.query("What did the author do growing up?"))
     ```
 
-To properly evaluate LLM apps we often need to point our evaluation at an
+To properly evaluate LLM apps, we often need to point our evaluation at an
 internal step of our application, such as the retrieved context. Doing so allows
 us to evaluate for metrics including context relevance and groundedness.
 
-For LlamaIndex applications where the source nodes are used, `select_context`
-can be used to access the retrieved text for evaluation.
+`TruLlama` supports `on_input`, `on_output`, and `on_context`, allowing you to easily evaluate the RAG triad.
+
+Using `on_context` allows to access the retrieved text for evaluation via the source nodes of the LlamaIndex app.
 
 !!! example "Evaluating retrieved context for LlamaIndex query engines"
 
@@ -64,7 +59,7 @@ can be used to access the retrieved text for evaluation.
     f_context_relevance = (
         Feedback(provider.context_relevance)
         .on_input()
-        .on(context)
+        .on_context(collect_list=False)
         .aggregate(np.mean)
     )
     ```
@@ -122,7 +117,7 @@ As an example, below is an LlamaIndex query engine with streaming.
     chat_engine = index.as_chat_engine(streaming=True)
     ```
 
-Just like with other methods, just wrap your streaming query engine with TruLlama and operate like before.
+As with other methods, simply wrap your streaming query engine with TruLlama and operate like before.
 
 You can also print the response tokens as they are generated using the `response_gen` attribute.
 
@@ -142,7 +137,7 @@ For examples of using `TruLlama`, check out the [_TruLens_ Cookbook](../../cookb
 
 ## Appendix: LlamaIndex Instrumented Classes and Methods
 
-The modules, classes, and methods that trulens instruments can be retrieved from
+The modules, classes, and methods that TruLens instruments can be retrieved from
 the appropriate Instrument subclass.
 
 !!! example
@@ -153,23 +148,20 @@ the appropriate Instrument subclass.
     LlamaInstrument().print_instrumentation()
     ```
 
-### Instrumenting other classes/methods.
-Additional classes and methods can be instrumented by use of the
-`trulens.core.instruments.Instrument` methods and decorators. Examples of
-such usage can be found in the custom app used in the `custom_example.ipynb`
-notebook which can be found in
-`examples/expositional/end2end_apps/custom_app/custom_app.py`. More
-information about these decorators can be found in the
-`docs/trulens/tracking/instrumentation/index.ipynb` notebook.
-
 ### Inspecting instrumentation
+
 The specific objects (of the above classes) and methods instrumented for a
 particular app can be inspected using the `App.print_instrumented` as
 exemplified in the next cell. Unlike `Instrument.print_instrumentation`, this
-function only shows what in an app was actually instrumented.
+function only shows specific objects and methods within an app that are actually instrumented.
 
 !!! example
 
     ```python
     tru_chat_engine_recorder.print_instrumented()
     ```
+
+### Instrumenting other classes/methods
+
+Additional classes and methods can be instrumented by use of the
+`trulens.core.otel.instrument` methods and decorators.

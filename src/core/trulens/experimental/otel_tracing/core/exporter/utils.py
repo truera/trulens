@@ -162,5 +162,6 @@ def construct_event(span: ReadableSpan) -> event_schema.Event:
         ResourceAttributes.APP_NAME,
         ResourceAttributes.APP_VERSION,
     ]:
-        ret.resource_attributes[k] = ret.record_attributes[k]
+        if k in ret.record_attributes:
+            ret.resource_attributes[k] = ret.record_attributes[k]
     return ret
