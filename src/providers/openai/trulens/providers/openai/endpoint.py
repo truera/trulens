@@ -129,6 +129,10 @@ class OpenAIClient(serial_utils.SerialModel):
     `openai.OpenAI` instance.
     """
 
+    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
+        arbitrary_types_allowed=True
+    )
+
     REDACTED_KEYS: ClassVar[List[str]] = ["api_key", "default_headers"]
     """Parameters of the OpenAI client that will not be serialized because they
     contain secrets."""
