@@ -596,11 +596,11 @@ class Run(BaseModel):
                 f"Error encountered during invoking app main method: {e}."
             )
             raise
-        finally:
-            self.tru_session.force_flush()
-            logger.info(
-                f"Flushed all spans for the run {self.run_name}; and exported them to the telemetry pipeline."
-            )
+
+        self.tru_session.force_flush()
+        logger.info(
+            f"Flushed all spans for the run {self.run_name}; and exported them to the telemetry pipeline."
+        )
 
         # we start the ingestion sproc after the app invocation is done, so that
         # app invocation time does not count toward the ingestion timeout set on the task orchestration layer.
