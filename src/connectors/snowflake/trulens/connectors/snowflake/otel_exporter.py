@@ -9,6 +9,7 @@ from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExporter
 from opentelemetry.sdk.trace.export import SpanExportResult
 from trulens.connectors.snowflake import SnowflakeConnector
+from trulens.connectors.snowflake.dao.run import EvaluationPhase
 from trulens.connectors.snowflake.dao.sql_utils import (
     clean_up_snowflake_identifier,
 )
@@ -165,7 +166,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         )
 
         sql_cmd = snowpark_session.sql(
-            """
+            f"""
             CALL SYSTEM$EXECUTE_AI_OBSERVABILITY_RUN(
                 OBJECT_CONSTRUCT(
                     'object_name', ?,
@@ -181,7 +182,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                     'input_record_count', ?
                 ),
                 ARRAY_CONSTRUCT(),
-                ARRAY_CONSTRUCT('INGESTION_MULTIPLE_BATCHES')
+                ARRAY_CONSTRUCT('{EvaluationPhase.INGESTION_MULTIPLE_BATCHES.value}')
             )
             """,
             params=[
