@@ -1,8 +1,9 @@
 import logging
 import os
-from typing import ClassVar, Dict, Optional, Sequence
+from typing import ClassVar, Dict, Optional, Sequence, Type
 
 import pydantic
+from pydantic import BaseModel
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.feedback import llm_provider as llm_provider
 from trulens.providers.litellm import endpoint as litellm_endpoint
@@ -92,6 +93,7 @@ class LiteLLM(llm_provider.LLMProvider):
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
+        response_format: Optional[Type[BaseModel]] = None,
         **kwargs,
     ) -> str:
         completion_args = kwargs

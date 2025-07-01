@@ -1,8 +1,7 @@
 import logging
-from typing import ClassVar, Dict, Optional, Sequence
+from typing import ClassVar, Dict, Optional, Sequence, Type, Union
 
 import pydantic
-from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.utils import constants as constant_utils
 from trulens.core.utils import pace as pace_utils
 from trulens.feedback import llm_provider
@@ -42,7 +41,7 @@ class OpenAI(llm_provider.LLMProvider):
 
     # Endpoint cannot presently be serialized but is constructed in __init__
     # below so it is ok.
-    endpoint: core_endpoint.Endpoint = pydantic.Field(exclude=True)
+    endpoint: openai_endpoint.OpenAIEndpoint = pydantic.Field(exclude=True)
 
     def __init__(
         self,
@@ -74,36 +73,60 @@ class OpenAI(llm_provider.LLMProvider):
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
+    def _structured_output_supported(self) -> bool:
+        """Whether the provider supports structured output. This is analogous to model support for OpenAI's Responses API.
+        For more details: https://platform.openai.com/docs/guides/structured-outputs?api-mode=responses#structured-outputs-vs-json-mode
+        """
+        if (
+            # gpt-3.5, gpt-3.5-turbo do not support structured output
+            self.model_engine.startswith("gpt-3.5")
+            # gpt-4, gpt-4-turbo do not support structured output
+            or (
+                self.model_engine.startswith("gpt-4")
+                and not self.model_engine.startswith("gpt-4o")
+            )
+            # gpt-4o-2024-05-13 does not support structured output
+            or self.model_engine == "gpt-4o-2024-05-13"
+            # NOTE (corey, 2025-06-30): Unclear if deep-research will support structured output in the future.
+            or self.model_engine.endswith("-deep-research")
+        ):
+            return False
+        return True
+
     # LLMProvider requirement
     def _create_chat_completion(
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
+        response_format: Optional[Type[pydantic.BaseModel]] = None,
         **kwargs,
-    ) -> str:
+    ) -> Optional[Union[str, pydantic.BaseModel]]:
         if "model" not in kwargs:
             kwargs["model"] = self.model_engine
 
         if "temperature" not in kwargs:
             kwargs["temperature"] = 0.0
 
-        if "seed" not in kwargs:
-            kwargs["seed"] = 123
-
         if messages is not None:
-            completion = self.endpoint.client.chat.completions.create(
-                messages=messages, **kwargs
-            )
-
+            input_messages = messages
         elif prompt is not None:
-            completion = self.endpoint.client.chat.completions.create(
-                messages=[{"role": "system", "content": prompt}], **kwargs
-            )
-
+            input_messages = [{"role": "system", "content": prompt}]
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
 
-        return completion.choices[0].message.content
+        if response_format is not None and self._structured_output_supported():
+            response = self.endpoint.client.responses.parse(
+                input=input_messages, text_format=response_format, **kwargs
+            )
+            return response.output_parsed
+        else:
+            if "seed" not in kwargs:
+                kwargs["seed"] = 123
+
+            completion = self.endpoint.client.chat.completions.create(
+                messages=input_messages, **kwargs
+            )
+            return completion.choices[0].message.content
 
     def _moderation(self, text: str):
         # See https://platform.openai.com/docs/guides/moderation/overview .
@@ -375,7 +398,7 @@ class AzureOpenAI(OpenAI):
     def __init__(
         self,
         deployment_name: str,
-        endpoint: Optional[core_endpoint.Endpoint] = None,
+        endpoint: Optional[openai_endpoint.OpenAIEndpoint] = None,
         **kwargs: dict,
     ):
         # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
