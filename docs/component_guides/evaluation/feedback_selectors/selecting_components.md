@@ -144,6 +144,36 @@ Each filter field (e.g., function_name) accepts a single value (not a list). Fil
     )
     ```
 
+### Example: Filtering Spans by Function Name
+
+You can filter spans at the trace level by specifying a function name. This is useful if you want to evaluate only those spans in a trace that correspond to a particular function.
+
+!!! example "Filtering Spans by Function Name at the Trace Level"
+
+    ```python
+    from trulens.core import Feedback
+    from trulens.core.feedback.selector import Selector
+
+    # Example feedback function that counts the number of selected spans
+    def count_spans(trace):
+        # trace is a ProcessedContentNode representing the filtered trace
+        def count_nodes(node):
+            return 1 + sum(count_nodes(child) for child in getattr(node, 'children', []))
+        return count_nodes(trace)
+
+    f_filtered_trace = (
+        Feedback(count_spans, name="Count Query Spans")
+        .on({
+            "trace": Selector(
+                trace_level=True,
+                function_name="query"
+            ),
+        })
+    )
+    ```
+
+In this example, the feedback function `count_spans` will receive a tree of spans (as a `ProcessedContentNode`) filtered to only those with `function_name="query"`, and will return the total count of such spans in the trace.
+
 ### When to Use Trace-Level Selection
 
 Use trace-level selection when your feedback metric needs to consider the relationships between multiple spans, or when you want to aggregate information across an entire trace, such as holistic trace quality.
