@@ -1,7 +1,7 @@
 import inspect
 import logging
 import pprint
-from typing import Any, Callable, ClassVar, Iterable, Optional
+from typing import Any, Callable, Iterable, Optional
 
 import boto3
 from botocore.client import ClientCreator
@@ -15,8 +15,6 @@ pp = pprint.PrettyPrinter()
 
 
 class BedrockCallback(core_endpoint.EndpointCallback):
-    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
-
     def handle_generation_chunk(self, response: Any) -> None:
         super().handle_generation_chunk(response)
 

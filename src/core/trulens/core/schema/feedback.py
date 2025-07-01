@@ -323,7 +323,9 @@ class FeedbackDefinition(
     [Feedback][trulens.core.Feedback] class.
     """
 
-    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
+    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
+        arbitrary_types_allowed=True
+    )
 
     implementation: Optional[
         Union[pyschema_utils.Function, pyschema_utils.Method]

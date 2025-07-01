@@ -379,8 +379,6 @@ class TruRails(core_app.App):
         app: A _NeMo Guardrails_ application.
     """
 
-    model_config: ClassVar[dict] = {"arbitrary_types_allowed": True}
-
     app: LLMRails
 
     # TODEP

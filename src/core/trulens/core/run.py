@@ -10,8 +10,8 @@ from typing import Any, ClassVar, Dict, List, Optional, Set, Type
 import pandas as pd
 import pydantic
 from pydantic import BaseModel
-from pydantic import ConfigDict
 from pydantic import Field
+from pydantic import field_serializer
 from trulens.core.utils.json import obj_id_of_obj
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -271,7 +271,10 @@ class Run(BaseModel):
         record_count: Optional[int] = Field(
             default=None, description="The count of records processed."
         )
-        model_config = ConfigDict(json_encoders={Enum: lambda o: o.value})
+
+        @field_serializer("status")
+        def serialize_status(self, status: Run.CompletionStatusStatus, _info):
+            return status.value
 
     class InvocationMetadata(BaseModel):
         input_records_count: Optional[int] = Field(

@@ -1,7 +1,7 @@
 import inspect
 import logging
 import pprint
-from typing import Any, Callable, ClassVar, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 import pydantic
 from trulens.core.feedback import endpoint as core_endpoint
@@ -32,8 +32,6 @@ class LiteLLMCostComputer:
 
 
 class LiteLLMCallback(core_endpoint.EndpointCallback):
-    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
-
     def handle_classification(self, response: pydantic.BaseModel) -> None:
         super().handle_classification(response)
 
