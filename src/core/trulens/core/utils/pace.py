@@ -7,8 +7,8 @@ from threading import Lock
 import time
 from typing import ClassVar, Deque, Optional
 
+import pydantic
 from pydantic import BaseModel
-from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import PrivateAttr
 
@@ -69,7 +69,7 @@ class Pace(BaseModel):
     _alock: asyncio.Lock = PrivateAttr(default_factory=asyncio.Lock)
     """Asyncio Lock to ensure amark method details run only one at a time."""
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(
+    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         arbitrary_types_allowed=True
     )
 

@@ -7,8 +7,8 @@ import warnings
 import nltk
 from nltk.tokenize import sent_tokenize
 import numpy as np
+import pydantic
 from pydantic import BaseModel
-from pydantic import ConfigDict
 from trulens.core.feedback import feedback as core_feedback
 from trulens.core.feedback import provider as core_provider
 from trulens.core.utils import deprecation as deprecation_utils
@@ -44,7 +44,9 @@ class LLMProvider(core_provider.Provider):
     # warnings if we try to override some internal pydantic name.
     model_engine: str
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(protected_namespaces=())
+    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
+        protected_namespaces=()
+    )
 
     def __init__(self, *args, **kwargs):
         # TODO: why was self_kwargs required here independently of kwargs?
