@@ -3,7 +3,7 @@ import json
 import logging
 import os
 import pprint
-from typing import Any, Callable, ClassVar, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 from snowflake.cortex._sse_client import Event
 from snowflake.cortex._sse_client import SSEClient
@@ -50,7 +50,6 @@ class CortexCostComputer:
 
 
 class CortexCallback(core_endpoint.EndpointCallback):
-    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
     _model_costs: Optional[dict] = None
     # TODO (Daniel): cost tracking for Cortex finetuned models is not yet implemented.
 

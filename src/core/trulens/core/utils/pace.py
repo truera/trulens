@@ -8,6 +8,7 @@ import time
 from typing import ClassVar, Deque, Optional
 
 from pydantic import BaseModel
+from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import PrivateAttr
 
@@ -68,7 +69,9 @@ class Pace(BaseModel):
     _alock: asyncio.Lock = PrivateAttr(default_factory=asyncio.Lock)
     """Asyncio Lock to ensure amark method details run only one at a time."""
 
-    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        arbitrary_types_allowed=True
+    )
 
     _warned: bool = False
     """Whether the long delay warning has already been issued.
