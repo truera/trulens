@@ -224,7 +224,7 @@ nav:
           - getting_started/quickstarts/blocking_guardrails.ipynb
           - getting_started/quickstarts/groundtruth_dataset_persistence.ipynb
           - getting_started/quickstarts/streaming_apps.ipynb
-                    - getting_started/quickstarts/text2text_quickstart.ipynb
+          - getting_started/quickstarts/text2text_quickstart.ipynb
       - ⭐ Core Concepts:
           - getting_started/core_concepts/index.md
           - ☔ Feedback Functions: getting_started/core_concepts/feedback_functions.md
