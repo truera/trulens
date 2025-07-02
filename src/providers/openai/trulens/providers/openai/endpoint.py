@@ -129,11 +129,13 @@ class OpenAIClient(serial_utils.SerialModel):
     `openai.OpenAI` instance.
     """
 
+    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
+        arbitrary_types_allowed=True
+    )
+
     REDACTED_KEYS: ClassVar[List[str]] = ["api_key", "default_headers"]
     """Parameters of the OpenAI client that will not be serialized because they
     contain secrets."""
-
-    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     client: Union[openai.OpenAI, openai.AzureOpenAI] = pydantic.Field(
         exclude=True
@@ -226,8 +228,6 @@ class OpenAIClient(serial_utils.SerialModel):
 
 
 class OpenAICallback(core_endpoint.EndpointCallback):
-    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
-
     langchain_handler: OpenAICallbackHandler = pydantic.Field(
         default_factory=OpenAICallbackHandler, exclude=True
     )

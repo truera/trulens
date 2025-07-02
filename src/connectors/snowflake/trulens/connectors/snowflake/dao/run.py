@@ -1,3 +1,4 @@
+from enum import Enum
 import json
 import logging
 from typing import Any, Dict, List, Optional
@@ -36,6 +37,16 @@ RUN_METADATA_NON_MAP_FIELD_MASKS = [
     "llm_judge_name",
 ]
 RUN_ENTITY_EDITABLE_ATTRIBUTES = ["description", "run_status"]
+
+# constants for task orchestration sprocs
+INPUT_RECORD_COUNT = "input_record_count"  # note this is currently singular 'input_record_count' on backend sproc side, while in SDK it's plural 'input_records_count'
+STAGE_FILE = "stage_file"
+
+
+class EvaluationPhase(str, Enum):
+    START_INGESTION = "START_INGESTION"
+    INGESTION_MULTIPLE_BATCHES = "INGESTION_MULTIPLE_BATCHES"
+    COMPUTE_METRICS = "COMPUTE_METRICS"
 
 
 class RunDao:
@@ -526,6 +537,57 @@ class RunDao:
         )
         logger.info("Deleted run '%s'.", run_name)
 
+    def start_ingestion_query(
+        self,
+        object_name: str,
+        object_version: str,
+        object_type: str,
+        run_name: str,
+        input_records_count: int,
+    ) -> None:
+        database = clean_up_snowflake_identifier(
+            self.session.get_current_database()
+        )
+        schema = clean_up_snowflake_identifier(
+            self.session.get_current_schema()
+        )
+
+        fq_object_name = f"{database}.{schema}.{object_name.upper()}"
+        try:
+            sql_cmd = self.session.sql(
+                f"""
+                CALL SYSTEM$EXECUTE_AI_OBSERVABILITY_RUN(
+                    OBJECT_CONSTRUCT(
+                        'object_name', ?,
+                        'object_type', ?,
+                        'object_version', ?
+                    ),
+                    OBJECT_CONSTRUCT(
+                        'run_name', ?
+                    ),
+                    OBJECT_CONSTRUCT('type', '{STAGE_FILE}', '{INPUT_RECORD_COUNT}', ?),
+                    ARRAY_CONSTRUCT(),
+                    ARRAY_CONSTRUCT('{EvaluationPhase.START_INGESTION.value}')
+                );
+                """,
+                params=[
+                    fq_object_name,
+                    object_type,
+                    object_version,
+                    run_name,
+                    input_records_count,
+                ],
+            )
+            logger.info(f"Executing SQL query to setup ingestion: {sql_cmd}")
+            logger.debug(
+                sql_cmd.collect()[0][0]
+            )  # this needs to be synchronous
+        except Exception as e:
+            logger.exception(
+                f"Error encountered during calling start ingestion query: {e}."
+            )
+            raise
+
     def call_compute_metrics_query(
         self,
         metrics: List[str],
@@ -540,9 +602,7 @@ class RunDao:
         schema = clean_up_snowflake_identifier(
             self.session.get_current_schema()
         )
-
         fq_object_name = f"{database}.{schema}.{object_name.upper()}"
-
         try:
             sql_cmd = self.session.sql(
                 f"""
@@ -555,9 +615,9 @@ class RunDao:
                     OBJECT_CONSTRUCT(
                         'run_name', ?
                     ),
-                    OBJECT_CONSTRUCT('type', 'stage_file'),
+                    OBJECT_CONSTRUCT('type', '{STAGE_FILE}'),
                     ARRAY_CONSTRUCT({", ".join(["?"] * len(metrics))}),
-                    ARRAY_CONSTRUCT('COMPUTE_METRICS')
+                    ARRAY_CONSTRUCT('{EvaluationPhase.COMPUTE_METRICS.value}')
                 );
                 """,
                 params=[
@@ -571,7 +631,7 @@ class RunDao:
             logger.info(
                 f"Executing SQL command for metrics computation: {sql_cmd}"
             )
-            logger.debug(sql_cmd.collect()[0][0])
+            sql_cmd.collect_nowait()  # metric computation query can be asynchronous
         except Exception as e:
             logger.exception(
                 f"Error encountered during calling compute metrics query: {e}."

@@ -10,8 +10,8 @@ from typing import Any, ClassVar, Dict, List, Optional, Set, Type
 import pandas as pd
 import pydantic
 from pydantic import BaseModel
-from pydantic import ConfigDict
 from pydantic import Field
+from pydantic import field_serializer
 from trulens.core.utils.json import obj_id_of_obj
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -271,7 +271,10 @@ class Run(BaseModel):
         record_count: Optional[int] = Field(
             default=None, description="The count of records processed."
         )
-        model_config = ConfigDict(json_encoders={Enum: lambda o: o.value})
+
+        @field_serializer("status")
+        def serialize_status(self, status: Run.CompletionStatusStatus, _info):
+            return status.value
 
     class InvocationMetadata(BaseModel):
         input_records_count: Optional[int] = Field(
@@ -598,7 +601,19 @@ class Run(BaseModel):
             raise
 
         self.tru_session.force_flush()
+        logger.info(
+            f"Flushed all spans for the run {self.run_name}; and exported them to the telemetry pipeline."
+        )
 
+        # we start the ingestion sproc after the app invocation is done, so that
+        # app invocation time does not count toward the ingestion timeout set on the task orchestration layer.
+        self.run_dao.start_ingestion_query(
+            object_name=self.object_name,
+            object_type=self.object_type,
+            object_version=self.object_version,
+            run_name=self.run_name,
+            input_records_count=input_records_count,
+        )
         logger.info("Run started, invocation done and ingestion in process.")
 
     def _get_current_time_in_ms(self) -> int:

@@ -235,10 +235,9 @@ nav:
   - 🗺️ Component Guides:
     - Instrumentation:
         - component_guides/instrumentation/index.md
-        # Titles set inside notebooks and will be overridden if provider here.
+        # Titles set inside notebooks and will be overridden if provided here.
         - component_guides/instrumentation/langchain.md
         - component_guides/instrumentation/llama_index.md
-        - component_guides/instrumentation/nemo.md
     - Logging:
         - component_guides/logging/where_to_log/index.md
         - ❄️ Logging in Snowflake: component_guides/logging/where_to_log/log_in_snowflake.md
