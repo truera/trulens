@@ -1,7 +1,7 @@
 # 🔨 Installation
 
 !!! info
-    TruLens 1.0 is now available. [Read more](../blog/posts/release_blog_1dot.md) and check out the [migration guide](../component_guides/other/trulens_eval_migration.md)
+    TruLens now operates on OpenTelemetry traces. [Read more](../blog/posts/trulens_otel.md).
 
 These installation instructions assume that you have conda installed and added
 to your path.

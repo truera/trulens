@@ -220,16 +220,11 @@ nav:
           # Title labels of these notebooks come from within the notebooks
           # themselves and will be overridden if specified here.
           - getting_started/quickstarts/quickstart.ipynb
-          - getting_started/quickstarts/add_dataframe_quickstart.ipynb
-          - getting_started/quickstarts/existing_data_quickstart.ipynb
-          - getting_started/quickstarts/langchain_quickstart.ipynb
-          - getting_started/quickstarts/llama_index_quickstart.ipynb
-          - getting_started/quickstarts/text2text_quickstart.ipynb
           - getting_started/quickstarts/groundtruth_evals.ipynb
-          - getting_started/quickstarts/human_feedback.ipynb
-          - getting_started/quickstarts/groundtruth_evals_for_retrieval_systems.ipynb
+          - getting_started/quickstarts/blocking_guardrails.ipynb
           - getting_started/quickstarts/groundtruth_dataset_persistence.ipynb
-          - getting_started/quickstarts/custom_stream.ipynb
+          - getting_started/quickstarts/streaming_apps.ipynb
+          - getting_started/quickstarts/text2text_quickstart.ipynb
       - ⭐ Core Concepts:
           - getting_started/core_concepts/index.md
           - ☔ Feedback Functions: getting_started/core_concepts/feedback_functions.md
@@ -247,6 +242,7 @@ nav:
         - component_guides/logging/where_to_log/index.md
         - ❄️ Logging in Snowflake: component_guides/logging/where_to_log/log_in_snowflake.md
         - Logging Methods: component_guides/logging/logging.ipynb
+        - Exporting Spans: component_guides/logging/exporting_spans.md
     - 🎯 Evaluation:
         - component_guides/evaluation/index.md
         - Anatomy of a Feedback Function: component_guides/evaluation/feedback_anatomy.md
