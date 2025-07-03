@@ -1,6 +1,7 @@
 import logging
 from typing import ClassVar, Optional
 
+import pydantic
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
@@ -57,7 +58,9 @@ class Provider(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
         ```
     """
 
-    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
+    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
+        arbitrary_types_allowed=True
+    )
 
     endpoint: Optional[core_endpoint.Endpoint] = None
     """Endpoint supporting this provider.

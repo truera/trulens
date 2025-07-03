@@ -1,17 +1,20 @@
 from concurrent.futures import as_completed
 import logging
 import re
-from typing import ClassVar, Dict, List, Optional, Sequence, Tuple
+from typing import ClassVar, Dict, List, Optional, Sequence, Tuple, Type
 import warnings
 
 import nltk
 from nltk.tokenize import sent_tokenize
 import numpy as np
+import pydantic
+from pydantic import BaseModel
 from trulens.core.feedback import feedback as core_feedback
 from trulens.core.feedback import provider as core_provider
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils.threading import ThreadPoolExecutor
 from trulens.feedback import generated as feedback_generated
+from trulens.feedback import output_schemas as feedback_output_schemas
 from trulens.feedback import prompts as feedback_prompts
 from trulens.feedback.v2 import feedback as feedback_v2
 
@@ -45,7 +48,9 @@ class LLMProvider(core_provider.Provider):
     # warnings if we try to override some internal pydantic name.
     model_engine: str
 
-    model_config: ClassVar[dict] = dict(protected_namespaces=())
+    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
+        protected_namespaces=()
+    )
 
     def __init__(self, *args, **kwargs):
         # TODO: why was self_kwargs required here independently of kwargs?
@@ -60,6 +65,7 @@ class LLMProvider(core_provider.Provider):
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
+        response_format: Optional[Type[BaseModel]] = None,
         **kwargs,
     ) -> str:
         """
@@ -110,16 +116,23 @@ class LLMProvider(core_provider.Provider):
             func=self._create_chat_completion,
             messages=llm_messages,
             temperature=temperature,
+            response_format=feedback_output_schemas.BaseFeedbackResponse,
         )
 
-        return (
-            feedback_generated.re_configured_rating(
+        if isinstance(response, feedback_output_schemas.BaseFeedbackResponse):
+            score = response.score
+        elif isinstance(response, str):
+            score = feedback_generated.re_configured_rating(
                 response,
                 min_score_val=min_score_val,
                 max_score_val=max_score_val,
             )
-            - min_score_val
-        ) / (max_score_val - min_score_val)
+        else:
+            raise ValueError(
+                f"Expected string or structured response but got:\n{response}"
+            )
+
+        return (score - min_score_val) / (max_score_val - min_score_val)
 
     def generate_score_and_reasons(
         self,
@@ -160,8 +173,26 @@ class LLMProvider(core_provider.Provider):
             func=self._create_chat_completion,
             messages=llm_messages,
             temperature=temperature,
+            response_format=feedback_output_schemas.ChainOfThoughtResponse,
         )
-        if "Supporting Evidence" in response:
+
+        criteria_field = "Criteria"
+        supporting_evidence_field = "Supporting Evidence"
+        if isinstance(response, feedback_output_schemas.ChainOfThoughtResponse):
+            score = response.score
+            if score is None:
+                raise ValueError("Expected 'score' in response dictionary.")
+            criteria = response.criteria
+            supporting_evidence = response.supporting_evidence
+
+            reasons = {
+                "reason": (
+                    f"{criteria_field}: {criteria}\n"
+                    f"{supporting_evidence_field}: {supporting_evidence}"
+                )
+            }
+
+        elif "Supporting Evidence" in response:
             score = -1
             supporting_evidence = None
             criteria = None
@@ -178,39 +209,39 @@ class LLMProvider(core_provider.Provider):
                         score_line = lines[i + 1]
                     else:
                         score_line = line
-                    score = (
-                        feedback_generated.re_configured_rating(
-                            score_line,
-                            min_score_val=min_score_val,
-                            max_score_val=max_score_val,
-                        )
-                        - min_score_val
-                    ) / (max_score_val - min_score_val)
+                    score = feedback_generated.re_configured_rating(
+                        score_line,
+                        min_score_val=min_score_val,
+                        max_score_val=max_score_val,
+                    )
+
                 criteria_lines = []
                 supporting_evidence_lines = []
                 collecting_criteria = False
                 collecting_evidence = False
 
                 for line in response.split("\n"):
-                    if "Criteria:" in line:
+                    if f"{criteria_field}:" in line:
                         criteria_lines.append(
-                            line.split("Criteria:", 1)[1].strip()
+                            line.split(f"{criteria_field}:", 1)[1].strip()
                         )
                         collecting_criteria = True
                         collecting_evidence = False
-                    elif "Supporting Evidence:" in line:
+                    elif f"{supporting_evidence_field}:" in line:
                         supporting_evidence_lines.append(
-                            line.split("Supporting Evidence:", 1)[1].strip()
+                            line.split(f"{supporting_evidence_field}:", 1)[
+                                1
+                            ].strip()
                         )
                         collecting_evidence = True
                         collecting_criteria = False
                     elif collecting_criteria:
-                        if "Supporting Evidence:" not in line:
+                        if f"{supporting_evidence_field}:" not in line:
                             criteria_lines.append(line.strip())
                         else:
                             collecting_criteria = False
                     elif collecting_evidence:
-                        if "Criteria:" not in line:
+                        if f"{criteria_field}:" not in line:
                             supporting_evidence_lines.append(line.strip())
                         else:
                             collecting_evidence = False
@@ -221,26 +252,26 @@ class LLMProvider(core_provider.Provider):
                 ).strip()
             reasons = {
                 "reason": (
-                    f"{'Criteria: ' + str(criteria)}\n"
-                    f"{'Supporting Evidence: ' + str(supporting_evidence)}"
+                    f"{criteria_field}: {criteria}\n"
+                    f"{supporting_evidence_field}: {supporting_evidence}"
                 )
             }
-            return score, reasons
 
         else:
-            score = (
-                feedback_generated.re_configured_rating(
-                    response,
-                    min_score_val=min_score_val,
-                    max_score_val=max_score_val,
-                )
-                - min_score_val
-            ) / (max_score_val - min_score_val)
+            score = feedback_generated.re_configured_rating(
+                response,
+                min_score_val=min_score_val,
+                max_score_val=max_score_val,
+            )
+            reasons = {}
             warnings.warn(
                 "No supporting evidence provided. Returning score only.",
                 UserWarning,
             )
-            return score, {}
+
+        # Normalize score to [0, 1] range
+        score = (score - min_score_val) / (max_score_val - min_score_val)
+        return score, reasons
 
     def _determine_output_space(
         self, min_score_val: int, max_score_val: int
@@ -526,7 +557,7 @@ class LLMProvider(core_provider.Provider):
     def sentiment(
         self,
         text: str,
-        criteria: str = None,
+        criteria: Optional[str] = None,
         examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -575,7 +606,7 @@ class LLMProvider(core_provider.Provider):
     def sentiment_with_cot_reasons(
         self,
         text: str,
-        criteria: str = None,
+        criteria: Optional[str] = None,
         examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -665,10 +696,10 @@ class LLMProvider(core_provider.Provider):
     def _langchain_evaluate(
         self,
         text: str,
-        criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        criteria: str,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A general function that completes a template
@@ -723,9 +754,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: str,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A general function that completes a template
@@ -780,9 +811,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -814,9 +845,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
@@ -846,9 +877,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -879,9 +910,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
@@ -913,9 +944,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a
@@ -946,9 +977,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
@@ -980,9 +1011,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -1013,9 +1044,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
@@ -1048,9 +1079,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -1082,9 +1113,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a
@@ -1116,9 +1147,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -1149,9 +1180,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
@@ -1183,9 +1214,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -1219,9 +1250,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
@@ -1253,9 +1284,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -1286,9 +1317,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
@@ -1320,9 +1351,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -1354,9 +1385,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
@@ -1388,9 +1419,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -1421,9 +1452,9 @@ class LLMProvider(core_provider.Provider):
         self,
         text: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
@@ -1573,9 +1604,9 @@ class LLMProvider(core_provider.Provider):
         source: str,
         summary: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that tries to distill main points
@@ -1637,9 +1668,9 @@ class LLMProvider(core_provider.Provider):
         prompt: str,
         response: str,
         criteria: Optional[str] = None,
-        min_score_val: Optional[int] = 0,
-        max_score_val: Optional[int] = 3,
-        temperature: Optional[float] = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to

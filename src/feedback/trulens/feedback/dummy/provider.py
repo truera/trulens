@@ -1,6 +1,7 @@
 import json
-from typing import Dict, Optional, Sequence
+from typing import Dict, Optional, Sequence, Type
 
+from pydantic import BaseModel
 from trulens.core.utils import python as python_utils
 from trulens.feedback import llm_provider
 from trulens.feedback.dummy.endpoint import DummyEndpoint
@@ -67,6 +68,7 @@ class DummyProvider(llm_provider.LLMProvider):
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
+        response_format: Optional[Type[BaseModel]] = None,
         **kwargs,
     ) -> str:
         """

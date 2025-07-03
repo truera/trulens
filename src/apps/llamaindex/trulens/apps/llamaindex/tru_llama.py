@@ -392,8 +392,6 @@ class TruLlama(core_app.App):
             and [AppDefinition][trulens.core.schema.app.AppDefinition].
     """
 
-    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
-
     app: Union[BaseQueryEngine, BaseChatEngine]
 
     # TODEP

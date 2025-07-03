@@ -69,6 +69,10 @@ class EndpointCallback(serial_utils.SerialModel):
     like token usage.
     """
 
+    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
+        arbitrary_types_allowed=True
+    )
+
     endpoint: Endpoint = Field(exclude=True)
     """The endpoint owning this callback."""
 

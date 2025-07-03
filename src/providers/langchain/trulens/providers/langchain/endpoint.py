@@ -1,6 +1,6 @@
 import inspect
 import logging
-from typing import Any, Callable, ClassVar, Dict, Optional, Union
+from typing import Any, Callable, Dict, Optional, Union
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.language_models.llms import BaseLLM
@@ -10,8 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 class LangchainCallback(core_endpoint.EndpointCallback):
-    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
-
     def handle_classification(self, response: Dict) -> None:
         super().handle_classification(response)
 

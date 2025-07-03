@@ -914,12 +914,15 @@ class SQLAlchemyDB(core_db.DB):
         if not isinstance(column_obj.type, sa.JSON):
             raise ValueError(f"Column {column} is not a JSON column")
 
+        if self.engine.dialect.name == "snowflake":
+            return sa.func.json_extract_path_text(column_obj, f'"{path}"')
         return sa.func.json_extract(column_obj, f'$."{path}"')
 
     def _get_paginated_record_ids_otel(
         self,
         app_ids: Optional[List[str]] = None,
         app_name: Optional[types_schema.AppName] = None,
+        app_version: Optional[types_schema.AppVersion] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> sa.Select:
@@ -928,6 +931,7 @@ class SQLAlchemyDB(core_db.DB):
         Args:
             app_ids: List of app IDs to filter by. Defaults to None.
             app_name: App name to filter by. Defaults to None.
+            app_version: App version to filter by. Defaults to None.
             offset: Offset for pagination. Defaults to None.
             limit: Limit for pagination. Defaults to None.
 
@@ -969,6 +973,12 @@ class SQLAlchemyDB(core_db.DB):
             )
             conditions.append(app_name_expr == app_name)
 
+        if app_version:
+            app_version_expr = self._json_extract_otel(
+                "resource_attributes", ResourceAttributes.APP_VERSION
+            )
+            conditions.append(app_version_expr == app_version)
+
         if app_ids:
             app_id_expr = self._json_extract_otel(
                 "resource_attributes", ResourceAttributes.APP_ID
@@ -996,6 +1006,7 @@ class SQLAlchemyDB(core_db.DB):
         self,
         app_ids: Optional[List[str]] = None,
         app_name: Optional[types_schema.AppName] = None,
+        app_version: Optional[types_schema.AppVersion] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
@@ -1008,6 +1019,7 @@ class SQLAlchemyDB(core_db.DB):
         Args:
             app_ids: List of app IDs to filter by. Defaults to None.
             app_name: App name to filter by. Defaults to None.
+            app_version: App version to filter by. Defaults to None.
             record_ids: List of record IDs to filter by. Defaults to None.
             offset: Offset for pagination. Defaults to None.
             limit: Limit for pagination. Defaults to None.
@@ -1021,6 +1033,7 @@ class SQLAlchemyDB(core_db.DB):
                 record_id_subquery = self._get_paginated_record_ids_otel(
                     app_ids=app_ids,
                     app_name=app_name,
+                    app_version=app_version,
                     offset=offset,
                     limit=limit,
                 )
@@ -1331,6 +1344,7 @@ class SQLAlchemyDB(core_db.DB):
         self,
         app_ids: Optional[List[types_schema.AppID]] = None,
         app_name: Optional[types_schema.AppName] = None,
+        app_version: Optional[types_schema.AppVersion] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
@@ -1340,6 +1354,7 @@ class SQLAlchemyDB(core_db.DB):
         Args:
             app_ids: Optional list of app IDs to filter by. Defaults to None.
             app_name: Optional app name to filter by. Defaults to None.
+            app_version: Optional app version to filter by. Defaults to None.
             record_ids: Optional list of record IDs to filter by. Defaults to None.
             offset: Optional offset for pagination. Defaults to None.
             limit: Optional limit for pagination. Defaults to None.
@@ -1349,6 +1364,7 @@ class SQLAlchemyDB(core_db.DB):
             return self._get_records_and_feedback_otel(
                 app_ids=app_ids,
                 app_name=app_name,
+                app_version=app_version,
                 record_ids=record_ids,
                 offset=offset,
                 limit=limit,
@@ -1378,6 +1394,12 @@ class SQLAlchemyDB(core_db.DB):
                 # stmt = stmt.options(joinedload(self.orm.Record.app))
                 stmt = stmt.join(self.orm.Record.app).filter(
                     self.orm.AppDefinition.app_name == app_name
+                )
+
+            if app_version:
+                # stmt = stmt.options(joinedload(self.orm.Record.app))
+                stmt = stmt.join(self.orm.Record.app).filter(
+                    self.orm.AppDefinition.app_version == app_version
                 )
 
             stmt = stmt.options(joinedload(self.orm.Record.feedback_results))
@@ -1637,18 +1659,24 @@ class SQLAlchemyDB(core_db.DB):
 
     def get_events(
         self,
-        app_id: Optional[str],
+        app_name: Optional[str],
+        app_version: Optional[str],
         record_ids: Optional[List[str]],
         start_time: Optional[datetime],
     ) -> pd.DataFrame:
         """See [DB.get_events][trulens.core.database.base.DB.get_events]."""
         with self.session.begin() as session:
             where_clauses = []
-            if app_id is not None:
-                app_id_expr = self._json_extract_otel(
-                    "resource_attributes", ResourceAttributes.APP_ID
+            if app_name is not None:
+                app_name_expr = self._json_extract_otel(
+                    "resource_attributes", ResourceAttributes.APP_NAME
                 )
-                where_clauses.append(app_id_expr == app_id)
+                where_clauses.append(app_name_expr == app_name)
+            if app_version is not None:
+                app_version_expr = self._json_extract_otel(
+                    "resource_attributes", ResourceAttributes.APP_VERSION
+                )
+                where_clauses.append(app_version_expr == app_version)
             if record_ids is not None:
                 record_id_expr = self._json_extract_otel(
                     "record_attributes", SpanAttributes.RECORD_ID

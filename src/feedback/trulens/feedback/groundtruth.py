@@ -61,7 +61,9 @@ class GroundTruthAgreement(
 
     ground_truth_imp: Optional[Callable] = pydantic.Field(None, exclude=True)
 
-    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
+    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
+        arbitrary_types_allowed=True
+    )
 
     def __init__(
         self,
@@ -744,7 +746,7 @@ class GroundTruthAgreement(
 class GroundTruthAggregator(
     pyschema_utils.WithClassInfo, serial_utils.SerialModel
 ):
-    model_config: ClassVar[dict] = dict(
+    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         arbitrary_types_allowed=True, extra="allow"
     )
     """Aggregate benchmarking metrics for ground-truth-based evaluation on feedback functions."""

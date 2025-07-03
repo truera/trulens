@@ -3,7 +3,7 @@ import json
 import logging
 import os
 import pprint
-from typing import Any, Callable, ClassVar, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 from snowflake.cortex._sse_client import Event
 from snowflake.cortex._sse_client import SSEClient
@@ -50,7 +50,6 @@ class CortexCostComputer:
 
 
 class CortexCallback(core_endpoint.EndpointCallback):
-    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
     _model_costs: Optional[dict] = None
     # TODO (Daniel): cost tracking for Cortex finetuned models is not yet implemented.
 
@@ -142,8 +141,6 @@ class CortexEndpoint(core_endpoint.Endpoint):
         response: Any,
         callback: Optional[core_endpoint.EndpointCallback],
     ) -> Any:
-        counted_something = False
-
         response_dict = None, None
 
         try:
@@ -163,16 +160,13 @@ class CortexEndpoint(core_endpoint.Endpoint):
                     "finish_reason" in choice
                     and choice["finish_reason"] == "stop"
                 ):
-                    counted_something = True
-
                     self.global_callback.handle_generation(
                         response=response_dict
                     )
 
                     if callback is not None:
                         callback.handle_generation(response=response_dict)
-
-        if not counted_something:
+        else:
             logger.warning(
                 "Unrecognized Cortex response format. It did not have usage information:\n%s",
                 pp.pformat(response_dict),

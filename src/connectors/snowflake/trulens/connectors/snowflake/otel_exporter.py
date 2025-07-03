@@ -9,6 +9,7 @@ from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExporter
 from opentelemetry.sdk.trace.export import SpanExportResult
 from trulens.connectors.snowflake import SnowflakeConnector
+from trulens.connectors.snowflake.dao.run import EvaluationPhase
 from trulens.connectors.snowflake.dao.sql_utils import (
     clean_up_snowflake_identifier,
 )
@@ -105,6 +106,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
             logger.debug(
                 f"Logging {len(spans)} for app:{app_name} version:{app_version} run:{run_name}"
             )
+
             res = self._export_to_snowflake_stage_for_app_and_run(
                 app_name,
                 app_version,
@@ -164,7 +166,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         )
 
         sql_cmd = snowpark_session.sql(
-            """
+            f"""
             CALL SYSTEM$EXECUTE_AI_OBSERVABILITY_RUN(
                 OBJECT_CONSTRUCT(
                     'object_name', ?,
@@ -180,7 +182,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                     'input_record_count', ?
                 ),
                 ARRAY_CONSTRUCT(),
-                ARRAY_CONSTRUCT('INGESTION')
+                ARRAY_CONSTRUCT('{EvaluationPhase.INGESTION_MULTIPLE_BATCHES.value}')
             )
             """,
             params=[
@@ -192,7 +194,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
             ],
         )
         if not dry_run:
-            logger.debug(sql_cmd.collect()[0][0])
+            sql_cmd.collect_nowait()
 
     def _export_to_snowflake_stage_for_app_and_run(
         self,

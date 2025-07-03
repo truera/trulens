@@ -1,11 +1,12 @@
 import logging
-from typing import Dict, Optional, Sequence, Union
+from typing import Dict, Optional, Sequence, Type, Union
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.language_models.llms import BaseLLM
 from langchain_core.messages import AIMessage
 from langchain_core.messages import BaseMessage
 from langchain_core.messages import HumanMessage
+from pydantic import BaseModel
 from trulens.feedback import llm_provider
 from trulens.providers.langchain import endpoint as langchain_endpoint
 
@@ -58,6 +59,7 @@ class Langchain(llm_provider.LLMProvider):
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
+        response_format: Optional[Type[BaseModel]] = None,
         **kwargs,
     ) -> str:
         if prompt is not None:

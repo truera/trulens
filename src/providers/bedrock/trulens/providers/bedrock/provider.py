@@ -1,7 +1,8 @@
 import json
 import logging
-from typing import ClassVar, Dict, Optional, Sequence, Tuple, Union
+from typing import ClassVar, Dict, Optional, Sequence, Tuple, Type, Union
 
+from pydantic import BaseModel
 from trulens.feedback import generated as feedback_generated
 from trulens.feedback import llm_provider
 from trulens.providers.bedrock import endpoint as bedrock_endpoint
@@ -60,6 +61,7 @@ class Bedrock(llm_provider.LLMProvider):
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
+        response_format: Optional[Type[BaseModel]] = None,
         **kwargs,
     ) -> str:
         assert self.endpoint is not None
