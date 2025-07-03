@@ -17,6 +17,7 @@ from trulens.feedback import generated as feedback_generated
 from trulens.feedback import output_schemas as feedback_output_schemas
 from trulens.feedback import prompts as feedback_prompts
 from trulens.feedback.v2 import feedback as feedback_v2
+from trulens.core.feedback.selector import Trace
 
 logger = logging.getLogger(__name__)
 
@@ -2218,10 +2219,9 @@ class LLMProvider(core_provider.Provider):
 
     def trajectory_step_relevance_with_cot_reasons(
         self,
-        query: str,
-        trace: str,
+        trace: Trace,
         min_score_val: int = 0,
-        max_score_val: int = 3,
+        max_score_val: int = 2,
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
@@ -2237,16 +2237,14 @@ class LLMProvider(core_provider.Provider):
             f_step_relevance = (
                 Feedback(provider.trajectory_step_relevance_with_cot_reasons)
                 .on({
-                    "query": Selector.select_record_input(),
                     "trace": Selector(trace_level=True),
                 })
             ```
 
         Args:
-            query (str): The user query or goal to evaluate against.
             trace (str): The execution trace to evaluate (e.g., as a JSON string or formatted log).
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
-            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 2.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (no step relevance) and 1.0 (complete step relevance) and a dictionary containing the reasons for the evaluation.
@@ -2254,7 +2252,7 @@ class LLMProvider(core_provider.Provider):
         system_prompt = (
             feedback_prompts.TRAJECTORY_EVAL_STEP_RELEVANCE_SYSTEM_PROMPT
         )
-        user_prompt = f"""Please score the execution trace. Query: {query}. Execution Trace: {trace}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
+        user_prompt = f"""Please score the execution trace. Execution Trace: {trace}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
         return self.generate_score_and_reasons(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
@@ -2265,9 +2263,9 @@ class LLMProvider(core_provider.Provider):
 
     def trajectory_logical_consistency_with_cot_reasons(
         self,
-        trace: str,
+        trace: Trace,
         min_score_val: int = 0,
-        max_score_val: int = 3,
+        max_score_val: int = 2,
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
@@ -2290,7 +2288,7 @@ class LLMProvider(core_provider.Provider):
         Args:
             trace (str): The execution trace to evaluate (e.g., as a JSON string or formatted log).
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
-            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 2.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (no logical consistency) and 1.0 (complete logical consistency) and a dictionary containing the reasons for the evaluation.
@@ -2309,9 +2307,9 @@ class LLMProvider(core_provider.Provider):
 
     def trajectory_workflow_efficiency_with_cot_reasons(
         self,
-        trace: str,
+        trace: Trace,
         min_score_val: int = 0,
-        max_score_val: int = 3,
+        max_score_val: int = 2,
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
@@ -2334,7 +2332,7 @@ class LLMProvider(core_provider.Provider):
         Args:
             trace (str): The execution trace to evaluate (e.g., as a JSON string or formatted log).
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
-            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 2.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (highly inefficient workflow) and 1.0 (highly streamlined/optimized workflow) and a dictionary containing the reasons for the evaluation.
