@@ -18,6 +18,7 @@ from trulens.feedback import generated as feedback_generated
 from trulens.feedback import output_schemas as feedback_output_schemas
 from trulens.feedback import prompts as feedback_prompts
 from trulens.feedback.v2 import feedback as feedback_v2
+from trulens.core.feedback.selector import Trace
 
 logger = logging.getLogger(__name__)
 
@@ -2308,7 +2309,7 @@ class LLMProvider(core_provider.Provider):
         criteria: Optional[str] = None,
         examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
-        max_score_val: int = 3,
+        max_score_val: int = 2,
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
@@ -2333,7 +2334,7 @@ class LLMProvider(core_provider.Provider):
             criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
             examples (Optional[List[Tuple[Dict[str, str], int]]]): Optional few-shot examples for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
-            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 2.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (no step relevance) and 1.0 (complete step relevance) and a dictionary containing the reasons for the evaluation.
@@ -2384,7 +2385,7 @@ class LLMProvider(core_provider.Provider):
         criteria: Optional[str] = None,
         examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
-        max_score_val: int = 3,
+        max_score_val: int = 2,
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
@@ -2409,7 +2410,7 @@ class LLMProvider(core_provider.Provider):
             criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
             examples (Optional[List[Tuple[Dict[str, str], int]]]): Optional few-shot examples for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
-            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 2.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (no logical consistency) and 1.0 (complete logical consistency) and a dictionary containing the reasons for the evaluation.
@@ -2462,7 +2463,7 @@ class LLMProvider(core_provider.Provider):
         criteria: Optional[str] = None,
         examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
-        max_score_val: int = 3,
+        max_score_val: int = 2,
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
@@ -2487,7 +2488,7 @@ class LLMProvider(core_provider.Provider):
             criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
             examples (Optional[List[Tuple[Dict[str, str], int]]): Optional few-shot examples for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
-            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 2.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (highly inefficient workflow) and 1.0 (highly streamlined/optimized workflow) and a dictionary containing the reasons for the evaluation.
