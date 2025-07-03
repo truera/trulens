@@ -18,6 +18,10 @@ from trulens.feedback import output_schemas as feedback_output_schemas
 from trulens.feedback import prompts as feedback_prompts
 from trulens.feedback.v2 import feedback as feedback_v2
 
+from .prompts import TRAJECTORY_EVAL_LOGICAL_CONSISTENCY_SYSTEM_PROMPT
+from .prompts import TRAJECTORY_EVAL_STEP_RELEVANCE_SYSTEM_PROMPT
+from .prompts import TRAJECTORY_EVAL_WORKFLOW_EFFICIENCY_SYSTEM_PROMPT
+
 logger = logging.getLogger(__name__)
 
 
@@ -2215,3 +2219,111 @@ class LLMProvider(core_provider.Provider):
         )
 
         return average_groundedness_score, {"reasons": reasons_str}
+
+    def trajectory_step_relevance_with_cot_reasons(
+        self,
+        query: str,
+        trace: str,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+    ) -> Tuple[float, Dict]:
+        """
+        Evaluate the quality of an agentic execution trace using a rubric focused on step relevance and progress toward the user goal.
+        The rubric is as follows:
+            3: Each step is essential towards directly advancing or clearly enabling the goal. Setup, verification, and exploration (if present) are justified in relation to the goal's completion. No actions that are unrelated to the stated goal are present.
+            2: Few steps have weak, tangential, or ambiguous links to the user's goal, but do not distract from completion. All required (core) goal steps are present.
+            1: Multiple steps have little to no clear connection to the goal. There are notable detours, tangents, or superfluous elements. Some goal-critical steps may still be present.
+            0: The majority of steps are not necessary for the user's goal, or critical goal-essential steps are absent. The process lacks clear orientation to the stated goal.
+
+        Args:
+            query (str): The user query or goal to evaluate against.
+            trace (str): The execution trace to evaluate (e.g., as a JSON string or formatted log).
+            min_score_val (int): Minimum score value (default 0).
+            max_score_val (int): Maximum score value (default 3).
+            temperature (float): LLM temperature for the evaluation (default 0.0).
+        Returns:
+            Tuple[float, Dict]: Normalized score and a dictionary with reasoning/explanation.
+        Example:
+            >>> provider = OpenAI()
+            >>> score, reasons = provider.trajectory_step_relevance_with_cot_reasons(query, trace)
+        """
+        system_prompt = TRAJECTORY_EVAL_STEP_RELEVANCE_SYSTEM_PROMPT
+        user_prompt = f"""Please score the execution trace. Query: {query}. Execution Trace: {trace}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
+
+    def trajectory_logical_consistency_with_cot_reasons(
+        self,
+        trace: str,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+    ) -> Tuple[float, Dict]:
+        """
+        Evaluate the quality of an agentic execution trace using a rubric focused on step relevance and progress toward the user goal.
+        The rubric is as follows:
+            3: Every action and transition in the workflow is logically justified in context and follows from previous steps. There are no contradictory, circular, or unjustified leaps. All implicit assumptions are reasonable and made explicit if needed. Uncertainty, risk, or alternative approaches are properly addressed when applicable.
+            2: Few minor lapses in logic (such as a questionable assumption, minor gap in explanation, or omission of risk), but the core reasoning remains sound and consistent. There are no major contradictions in the flow of reasoning.
+            1: Several lapses in logic, unclear or missing justifications, or contradictory transitions. These can include flawed, unsupported, or inconsistent rationales, but the overall logical sequence is not entirely arbitrary.
+            0: The chain of logic is frequently broken, with major contradictions, missing or invalid assumptions, or arbitrary transitions. Little or no coherent line of reasoning can be reconstructed.
+        Args:
+            trace (str): The execution trace to evaluate (e.g., as a JSON string or formatted log).
+            min_score_val (int): Minimum score value (default 0).
+            max_score_val (int): Maximum score value (default 3).
+            temperature (float): LLM temperature for the evaluation (default 0.0).
+        Returns:
+            Tuple[float, Dict]: Normalized score and a dictionary with reasoning/explanation.
+        Example:
+            >>> provider = OpenAI()
+            >>> score, reasons = provider.trajectory_logical_consistency_with_cot_reasons(query, trace)
+        """
+        system_prompt = TRAJECTORY_EVAL_LOGICAL_CONSISTENCY_SYSTEM_PROMPT
+        user_prompt = f"""Please score the execution trace. Execution Trace: {trace}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
+
+    def trajectory_workflow_efficiency_with_cot_reasons(
+        self,
+        trace: str,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+    ) -> Tuple[float, Dict]:
+        """
+        Evaluate the quality of an agentic execution trace using a rubric focused on step relevance and progress toward the user goal.
+        The rubric is as follows:
+            3: All relevant actions are executed exactly once, in a streamlined and optimized sequence. There is no unnecessary busywork, overthinking, repetition, backtracking, parallelism/serialization, or wasted computation/resources. Error handling is appropriately lean and resolves as quickly as possible.
+            2: Few instances of minor workflow inefficiency: a single redundant action, non-ideal ordering of steps, slightly excessive error handling, or minor missed opportunity for consolidation. The impact on the overall process is negligible.
+            1: Several instances of recognizable inefficiency: repeated operations, excessive loops, missed opportunities for task consolidation, unnecessary resource use, or inefficient error management.
+            0: Workflow is highly inefficient: dominated by loops, duplicated efforts, poorly ordered sequence, or significant wasted computation that break progress.
+        Args:
+            trace (str): The execution trace to evaluate (e.g., as a JSON string or formatted log).
+            min_score_val (int): Minimum score value (default 0).
+            max_score_val (int): Maximum score value (default 3).
+            temperature (float): LLM temperature for the evaluation (default 0.0).
+        Returns:
+            Tuple[float, Dict]: Normalized score and a dictionary with reasoning/explanation.
+        Example:
+            >>> provider = OpenAI()
+            >>> score, reasons = provider.trajectory_workflow_efficiency_with_cot_reasons(query, trace)
+        """
+        system_prompt = TRAJECTORY_EVAL_WORKFLOW_EFFICIENCY_SYSTEM_PROMPT
+        user_prompt = f"""Please score the execution trace. Execution Trace: {trace}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
