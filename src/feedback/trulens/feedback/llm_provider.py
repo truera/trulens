@@ -2249,7 +2249,7 @@ class LLMProvider(core_provider.Provider):
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
         Returns:
-            Tuple[float, str]: A tuple containing a value between 0.0 (no step relevance) and 1.0 (complete step relevance) and a string containing the reasons for the evaluation.
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (no step relevance) and 1.0 (complete step relevance) and a dictionary containing the reasons for the evaluation.
         """
         system_prompt = (
             feedback_prompts.TRAJECTORY_EVAL_STEP_RELEVANCE_SYSTEM_PROMPT
@@ -2293,7 +2293,7 @@ class LLMProvider(core_provider.Provider):
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
         Returns:
-            Tuple[float, str]: A tuple containing a value between 0.0 (no logical consistency) and 1.0 (complete logical consistency) and a string containing the reasons for the evaluation.
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (no logical consistency) and 1.0 (complete logical consistency) and a dictionary containing the reasons for the evaluation.
         """
         system_prompt = (
             feedback_prompts.TRAJECTORY_EVAL_LOGICAL_CONSISTENCY_SYSTEM_PROMPT
@@ -2337,7 +2337,7 @@ class LLMProvider(core_provider.Provider):
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
         Returns:
-            Tuple[float, str]: A tuple containing a value between 0.0 (highly inefficient workflow) and 1.0 (highly streamlined/optimized workflow) and a string containing the reasons for the evaluation.
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (highly inefficient workflow) and 1.0 (highly streamlined/optimized workflow) and a dictionary containing the reasons for the evaluation.
         """
         system_prompt = (
             feedback_prompts.TRAJECTORY_EVAL_WORKFLOW_EFFICIENCY_SYSTEM_PROMPT
