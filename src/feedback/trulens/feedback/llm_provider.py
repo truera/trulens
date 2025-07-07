@@ -18,7 +18,6 @@ from trulens.feedback import generated as feedback_generated
 from trulens.feedback import output_schemas as feedback_output_schemas
 from trulens.feedback import prompts as feedback_prompts
 from trulens.feedback.v2 import feedback as feedback_v2
-from trulens.core.feedback.selector import Trace
 
 logger = logging.getLogger(__name__)
 
@@ -2389,26 +2388,25 @@ class LLMProvider(core_provider.Provider):
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
-        Evaluate the quality of an agentic execution trace using a rubric focused on logical consistency and reasoning toward the user goal.
+        <<<<<<< HEAD
+                Evaluate the quality of an agentic execution trace using a rubric focused on logical consistency and reasoning toward the user goal.
 
-        Example:
-            ```python
-            from trulens.core import Feedback
-            from trulens.providers.openai import OpenAI
+                Example:
+                    ```python
+                    from trulens.core import Feedback
+                    from trulens.providers.openai import OpenAI
 
-            provider = OpenAI()
+                    provider = OpenAI()
 
-            f_logical_consistency = (
-                Feedback(provider.trajectory_logical_consistency_with_cot_reasons)
-                .on({
-                    "trace": Selector(trace_level=True),
-                })
-            ```
+                    f_logical_consistency = (
+                        Feedback(provider.trajectory_logical_consistency_with_cot_reasons)
+                        .on({
+                            "trace": Selector(trace_level=True),
+                        })
+                    ```
 
         Args:
-            trace (Union[Trace, str]): The execution trace to evaluate (e.g., as a JSON string or formatted log).
-            criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
-            examples (Optional[List[Tuple[Dict[str, str], int]]]): Optional few-shot examples for evaluation. Defaults to None.
+            trace (str): The execution trace to evaluate (e.g., as a JSON string or formatted log).
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 2.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
@@ -2467,21 +2465,22 @@ class LLMProvider(core_provider.Provider):
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
-        Evaluate the quality of an agentic execution trace using a rubric focused on workflow efficiency toward the user goal.
+        <<<<<<< HEAD
+                Evaluate the quality of an agentic execution trace using a rubric focused on workflow efficiency toward the user goal.
 
-        Example:
-            ```python
-            from trulens.core import Feedback
-            from trulens.providers.openai import OpenAI
+                Example:
+                    ```python
+                    from trulens.core import Feedback
+                    from trulens.providers.openai import OpenAI
 
-            provider = OpenAI()
+                    provider = OpenAI()
 
-            f_workflow_efficiency = (
-                Feedback(provider.trajectory_workflow_efficiency_with_cot_reasons)
-                .on({
-                    "trace": Selector(trace_level=True),
-                })
-            ```
+                    f_workflow_efficiency = (
+                        Feedback(provider.trajectory_workflow_efficiency_with_cot_reasons)
+                        .on({
+                            "trace": Selector(trace_level=True),
+                        })
+                    ```
 
         Args:
             trace (Union[Trace, str]): The execution trace to evaluate (e.g., as a JSON string or formatted log).
