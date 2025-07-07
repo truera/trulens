@@ -18,10 +18,6 @@ from trulens.feedback import output_schemas as feedback_output_schemas
 from trulens.feedback import prompts as feedback_prompts
 from trulens.feedback.v2 import feedback as feedback_v2
 
-from .prompts import TRAJECTORY_EVAL_LOGICAL_CONSISTENCY_SYSTEM_PROMPT
-from .prompts import TRAJECTORY_EVAL_STEP_RELEVANCE_SYSTEM_PROMPT
-from .prompts import TRAJECTORY_EVAL_WORKFLOW_EFFICIENCY_SYSTEM_PROMPT
-
 logger = logging.getLogger(__name__)
 
 
@@ -104,9 +100,9 @@ class LLMProvider(core_provider.Provider):
         """
 
         assert self.endpoint is not None, "Endpoint is not set."
-        assert (
-            max_score_val > min_score_val
-        ), "Max score must be greater than min score."
+        assert max_score_val > min_score_val, (
+            "Max score must be greater than min score."
+        )
 
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
@@ -162,9 +158,9 @@ class LLMProvider(core_provider.Provider):
             Reason metadata if returned by the LLM.
         """
         assert self.endpoint is not None, "Endpoint is not set."
-        assert (
-            max_score_val > min_score_val
-        ), "Max score must be greater than min score."
+        assert max_score_val > min_score_val, (
+            "Max score must be greater than min score."
+        )
 
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
@@ -2230,25 +2226,34 @@ class LLMProvider(core_provider.Provider):
     ) -> Tuple[float, Dict]:
         """
         Evaluate the quality of an agentic execution trace using a rubric focused on step relevance and progress toward the user goal.
-        The rubric is as follows:
-            3: Each step is essential towards directly advancing or clearly enabling the goal. Setup, verification, and exploration (if present) are justified in relation to the goal's completion. No actions that are unrelated to the stated goal are present.
-            2: Few steps have weak, tangential, or ambiguous links to the user's goal, but do not distract from completion. All required (core) goal steps are present.
-            1: Multiple steps have little to no clear connection to the goal. There are notable detours, tangents, or superfluous elements. Some goal-critical steps may still be present.
-            0: The majority of steps are not necessary for the user's goal, or critical goal-essential steps are absent. The process lacks clear orientation to the stated goal.
+
+        Example:
+            ```python
+            from trulens.core import Feedback
+            from trulens.providers.openai import OpenAI
+
+            provider = OpenAI()
+
+            f_step_relevance = (
+                Feedback(provider.trajectory_step_relevance_with_cot_reasons)
+                .on({
+                    "query": Selector.select_record_input(),
+                    "trace": Selector(trace_level=True),
+                })
+            ```
 
         Args:
             query (str): The user query or goal to evaluate against.
             trace (str): The execution trace to evaluate (e.g., as a JSON string or formatted log).
-            min_score_val (int): Minimum score value (default 0).
-            max_score_val (int): Maximum score value (default 3).
-            temperature (float): LLM temperature for the evaluation (default 0.0).
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
         Returns:
-            Tuple[float, Dict]: Normalized score and a dictionary with reasoning/explanation.
-        Example:
-            >>> provider = OpenAI()
-            >>> score, reasons = provider.trajectory_step_relevance_with_cot_reasons(query, trace)
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (no step relevance) and 1.0 (complete step relevance) and a dictionary containing the reasons for the evaluation.
         """
-        system_prompt = TRAJECTORY_EVAL_STEP_RELEVANCE_SYSTEM_PROMPT
+        system_prompt = (
+            feedback_prompts.TRAJECTORY_EVAL_STEP_RELEVANCE_SYSTEM_PROMPT
+        )
         user_prompt = f"""Please score the execution trace. Query: {query}. Execution Trace: {trace}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
         return self.generate_score_and_reasons(
             system_prompt=system_prompt,
@@ -2266,24 +2271,33 @@ class LLMProvider(core_provider.Provider):
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
-        Evaluate the quality of an agentic execution trace using a rubric focused on step relevance and progress toward the user goal.
-        The rubric is as follows:
-            3: Every action and transition in the workflow is logically justified in context and follows from previous steps. There are no contradictory, circular, or unjustified leaps. All implicit assumptions are reasonable and made explicit if needed. Uncertainty, risk, or alternative approaches are properly addressed when applicable.
-            2: Few minor lapses in logic (such as a questionable assumption, minor gap in explanation, or omission of risk), but the core reasoning remains sound and consistent. There are no major contradictions in the flow of reasoning.
-            1: Several lapses in logic, unclear or missing justifications, or contradictory transitions. These can include flawed, unsupported, or inconsistent rationales, but the overall logical sequence is not entirely arbitrary.
-            0: The chain of logic is frequently broken, with major contradictions, missing or invalid assumptions, or arbitrary transitions. Little or no coherent line of reasoning can be reconstructed.
+        Evaluate the quality of an agentic execution trace using a rubric focused on logical consistency and reasoning toward the user goal.
+
+        Example:
+            ```python
+            from trulens.core import Feedback
+            from trulens.providers.openai import OpenAI
+
+            provider = OpenAI()
+
+            f_logical_consistency = (
+                Feedback(provider.trajectory_logical_consistency_with_cot_reasons)
+                .on({
+                    "trace": Selector(trace_level=True),
+                })
+            ```
+
         Args:
             trace (str): The execution trace to evaluate (e.g., as a JSON string or formatted log).
-            min_score_val (int): Minimum score value (default 0).
-            max_score_val (int): Maximum score value (default 3).
-            temperature (float): LLM temperature for the evaluation (default 0.0).
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
         Returns:
-            Tuple[float, Dict]: Normalized score and a dictionary with reasoning/explanation.
-        Example:
-            >>> provider = OpenAI()
-            >>> score, reasons = provider.trajectory_logical_consistency_with_cot_reasons(trace)
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (no logical consistency) and 1.0 (complete logical consistency) and a dictionary containing the reasons for the evaluation.
         """
-        system_prompt = TRAJECTORY_EVAL_LOGICAL_CONSISTENCY_SYSTEM_PROMPT
+        system_prompt = (
+            feedback_prompts.TRAJECTORY_EVAL_LOGICAL_CONSISTENCY_SYSTEM_PROMPT
+        )
         user_prompt = f"""Please score the execution trace. Execution Trace: {trace}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
         return self.generate_score_and_reasons(
             system_prompt=system_prompt,
@@ -2301,24 +2315,33 @@ class LLMProvider(core_provider.Provider):
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
-        Evaluate the quality of an agentic execution trace using a rubric focused on step relevance and progress toward the user goal.
-        The rubric is as follows:
-            3: All relevant actions are executed exactly once, in a streamlined and optimized sequence. There is no unnecessary busywork, overthinking, repetition, backtracking, parallelism/serialization, or wasted computation/resources. Error handling is appropriately lean and resolves as quickly as possible.
-            2: Few instances of minor workflow inefficiency: a single redundant action, non-ideal ordering of steps, slightly excessive error handling, or minor missed opportunity for consolidation. The impact on the overall process is negligible.
-            1: Several instances of recognizable inefficiency: repeated operations, excessive loops, missed opportunities for task consolidation, unnecessary resource use, or inefficient error management.
-            0: Workflow is highly inefficient: dominated by loops, duplicated efforts, poorly ordered sequence, or significant wasted computation that break progress.
+        Evaluate the quality of an agentic execution trace using a rubric focused on workflow efficiency toward the user goal.
+
+        Example:
+            ```python
+            from trulens.core import Feedback
+            from trulens.providers.openai import OpenAI
+
+            provider = OpenAI()
+
+            f_workflow_efficiency = (
+                Feedback(provider.trajectory_workflow_efficiency_with_cot_reasons)
+                .on({
+                    "trace": Selector(trace_level=True),
+                })
+            ```
+
         Args:
             trace (str): The execution trace to evaluate (e.g., as a JSON string or formatted log).
-            min_score_val (int): Minimum score value (default 0).
-            max_score_val (int): Maximum score value (default 3).
-            temperature (float): LLM temperature for the evaluation (default 0.0).
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
         Returns:
-            Tuple[float, Dict]: Normalized score and a dictionary with reasoning/explanation.
-        Example:
-            >>> provider = OpenAI()
-            >>> score, reasons = provider.trajectory_workflow_efficiency_with_cot_reasons(trace)
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (highly inefficient workflow) and 1.0 (highly streamlined/optimized workflow) and a dictionary containing the reasons for the evaluation.
         """
-        system_prompt = TRAJECTORY_EVAL_WORKFLOW_EFFICIENCY_SYSTEM_PROMPT
+        system_prompt = (
+            feedback_prompts.TRAJECTORY_EVAL_WORKFLOW_EFFICIENCY_SYSTEM_PROMPT
+        )
         user_prompt = f"""Please score the execution trace. Execution Trace: {trace}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
         return self.generate_score_and_reasons(
             system_prompt=system_prompt,
