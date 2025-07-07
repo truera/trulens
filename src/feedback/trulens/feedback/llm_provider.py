@@ -2281,7 +2281,7 @@ class LLMProvider(core_provider.Provider):
             Tuple[float, Dict]: Normalized score and a dictionary with reasoning/explanation.
         Example:
             >>> provider = OpenAI()
-            >>> score, reasons = provider.trajectory_logical_consistency_with_cot_reasons(query, trace)
+            >>> score, reasons = provider.trajectory_logical_consistency_with_cot_reasons(trace)
         """
         system_prompt = TRAJECTORY_EVAL_LOGICAL_CONSISTENCY_SYSTEM_PROMPT
         user_prompt = f"""Please score the execution trace. Execution Trace: {trace}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
@@ -2316,7 +2316,7 @@ class LLMProvider(core_provider.Provider):
             Tuple[float, Dict]: Normalized score and a dictionary with reasoning/explanation.
         Example:
             >>> provider = OpenAI()
-            >>> score, reasons = provider.trajectory_workflow_efficiency_with_cot_reasons(query, trace)
+            >>> score, reasons = provider.trajectory_workflow_efficiency_with_cot_reasons(trace)
         """
         system_prompt = TRAJECTORY_EVAL_WORKFLOW_EFFICIENCY_SYSTEM_PROMPT
         user_prompt = f"""Please score the execution trace. Execution Trace: {trace}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
