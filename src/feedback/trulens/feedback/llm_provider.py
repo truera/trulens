@@ -103,9 +103,9 @@ class LLMProvider(core_provider.Provider):
         """
 
         assert self.endpoint is not None, "Endpoint is not set."
-        assert max_score_val > min_score_val, (
-            "Max score must be greater than min score."
-        )
+        assert (
+            max_score_val > min_score_val
+        ), "Max score must be greater than min score."
 
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
@@ -156,9 +156,9 @@ class LLMProvider(core_provider.Provider):
                 reason metadata dictionary.
         """
         assert self.endpoint is not None, "Endpoint is not set."
-        assert max_score_val > min_score_val, (
-            "Max score must be greater than min score."
-        )
+        assert (
+            max_score_val > min_score_val
+        ), "Max score must be greater than min score."
 
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
