@@ -129,8 +129,10 @@ class Evaluator:
                         events=events,
                     )
                 except Exception as e:
+                    import traceback
+
                     logger.warning(
-                        f"Error computing feedbacks in evaluator thread (record_id={record_id}): {e}"
+                        f"Error computing feedbacks in evaluator thread (record_id={record_id}): {e}\n{traceback.format_exc()}"
                     )
                 finally:
                     self._record_id_to_event_count[record_id] = len(events)

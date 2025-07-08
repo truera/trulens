@@ -1,6 +1,7 @@
 from concurrent.futures import as_completed
 import logging
 import re
+from trace import Trace
 from typing import ClassVar, Dict, List, Optional, Sequence, Tuple, Type
 import warnings
 
