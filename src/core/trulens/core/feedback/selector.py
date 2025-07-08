@@ -139,7 +139,7 @@ class Selector:
         ] = None,
         span_attribute: Optional[str] = None,
         function_attribute: Optional[str] = None,
-        ignore_none_values: bool = True,
+        ignore_none_values: bool = False,
         collect_list: bool = True,
         match_only_if_no_ancestor_matched: bool = False,
     ):
