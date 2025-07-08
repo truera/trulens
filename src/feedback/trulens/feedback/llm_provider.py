@@ -1,7 +1,6 @@
 from concurrent.futures import as_completed
 import logging
 import re
-from trace import Trace
 from typing import ClassVar, Dict, List, Optional, Sequence, Tuple, Type
 import warnings
 
@@ -12,6 +11,7 @@ import pydantic
 from pydantic import BaseModel
 from trulens.core.feedback import feedback as core_feedback
 from trulens.core.feedback import provider as core_provider
+from trulens.core.feedback.selector import Trace as SelectorTrace
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils.threading import ThreadPoolExecutor
 from trulens.feedback import generated as feedback_generated
@@ -2219,7 +2219,7 @@ class LLMProvider(core_provider.Provider):
 
     def trajectory_step_relevance_with_cot_reasons(
         self,
-        trace: Trace,
+        trace: SelectorTrace,
         min_score_val: int = 0,
         max_score_val: int = 2,
         temperature: float = 0.0,
@@ -2242,17 +2242,18 @@ class LLMProvider(core_provider.Provider):
             ```
 
         Args:
-            trace (str): The execution trace to evaluate (e.g., as a JSON string or formatted log).
+            trace (Trace): The execution trace to evaluate (e.g., as a JSON string or formatted log).
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 2.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (no step relevance) and 1.0 (complete step relevance) and a dictionary containing the reasons for the evaluation.
         """
+        logger.warning(f"trace: {trace.events}")
         system_prompt = (
             feedback_prompts.TRAJECTORY_EVAL_STEP_RELEVANCE_SYSTEM_PROMPT
         )
-        user_prompt = f"""Please score the execution trace. Execution Trace: {trace}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
+        user_prompt = f"""Please score the execution trace. Execution Trace: {trace.events.to_json()}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
         return self.generate_score_and_reasons(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
@@ -2263,7 +2264,7 @@ class LLMProvider(core_provider.Provider):
 
     def trajectory_logical_consistency_with_cot_reasons(
         self,
-        trace: Trace,
+        trace: SelectorTrace,
         min_score_val: int = 0,
         max_score_val: int = 2,
         temperature: float = 0.0,
@@ -2286,7 +2287,7 @@ class LLMProvider(core_provider.Provider):
             ```
 
         Args:
-            trace (str): The execution trace to evaluate (e.g., as a JSON string or formatted log).
+            trace (Trace): The execution trace to evaluate (e.g., as a JSON string or formatted log).
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 2.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
@@ -2307,7 +2308,7 @@ class LLMProvider(core_provider.Provider):
 
     def trajectory_workflow_efficiency_with_cot_reasons(
         self,
-        trace: Trace,
+        trace: SelectorTrace,
         min_score_val: int = 0,
         max_score_val: int = 2,
         temperature: float = 0.0,
@@ -2330,9 +2331,8 @@ class LLMProvider(core_provider.Provider):
                 })
             ```
 
-
         Args:
-            trace (str): The execution trace to evaluate (e.g., as a JSON string or formatted log).
+            trace (Trace): The execution trace to evaluate (e.g., as a JSON string or formatted log).
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 2.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
