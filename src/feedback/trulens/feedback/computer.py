@@ -192,16 +192,17 @@ def compute_feedback_by_span_group(
         list(record_id_to_record_root.keys()),
         feedback_name,
     )
-    _logger.warning(f"feedback_name={feedback_name}")
-    _logger.warning(f"events={events}")
-    _logger.warning(f"kwarg_groups={kwarg_groups}")
-    _logger.warning(f"record_id_to_record_root={record_id_to_record_root}")
-    _logger.warning(f"unflattened_inputs={unflattened_inputs}")
+    # _logger.warning(f"feedback_name={feedback_name}")
+    # _logger.warning(f"events={events}")
+    # _logger.warning(f"kwarg_groups={kwarg_groups}")
+    # _logger.warning(f"kwarg_to_selector={kwarg_to_selector}")
+    # _logger.warning(f"record_id_to_record_root={record_id_to_record_root}")
+    # _logger.warning(f"unflattened_inputs={unflattened_inputs}")
     flattened_inputs = _flatten_inputs(unflattened_inputs)
     flattened_inputs = _remove_already_computed_feedbacks(
         events, feedback_name, flattened_inputs
     )
-    _logger.warning(f"flattened_inputs={flattened_inputs}")
+    # _logger.warning(f"flattened_inputs={flattened_inputs}")
     num_feedbacks_computed = _run_feedback_on_inputs(
         flattened_inputs,
         feedback_name,
@@ -211,7 +212,7 @@ def compute_feedback_by_span_group(
         record_id_to_record_root,
     )
 
-    _logger.warning(f"num_feedbacks_computed={num_feedbacks_computed}")
+    # _logger.warning(f"num_feedbacks_computed={num_feedbacks_computed}")
 
     if raise_error_on_no_feedbacks_computed and num_feedbacks_computed == 0:
         raise ValueError("No feedbacks were computed!")
@@ -267,12 +268,14 @@ def _collect_inputs_from_events(
     for _, curr in events.iterrows():
         parent_span_id = curr["trace"]["parent_id"]
         span_id_to_child_events[parent_span_id].append(curr)
+    # _logger.warning(f"span_id_to_child_events={span_id_to_child_events}")
     record_roots = [
         curr
         for _, curr in events.iterrows()
         if curr["record_attributes"].get(SpanAttributes.SPAN_TYPE)
         == SpanAttributes.SpanType.RECORD_ROOT
     ]
+    # _logger.warning(f"record_roots={record_roots}")
     if _is_trace_level(kwarg_to_selector):
         sole_kwarg = kwarg_groups[0][0]
         ret = defaultdict(
@@ -280,6 +283,7 @@ def _collect_inputs_from_events(
                 lambda: [{sole_kwarg: FeedbackFunctionInput(value=Trace())}]
             )
         )
+        # _logger.warning(f"check in trace level ret={ret}")
         for record_root in record_roots:
             _dfs_collect_trace_level_inputs_from_events(
                 sole_kwarg,

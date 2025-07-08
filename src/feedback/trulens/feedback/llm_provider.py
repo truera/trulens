@@ -1,6 +1,7 @@
 from concurrent.futures import as_completed
 import logging
 import re
+import sys
 from typing import ClassVar, Dict, List, Optional, Sequence, Tuple, Type
 import warnings
 
@@ -19,6 +20,11 @@ from trulens.feedback import output_schemas as feedback_output_schemas
 from trulens.feedback import prompts as feedback_prompts
 from trulens.feedback.v2 import feedback as feedback_v2
 
+logging.basicConfig(
+    stream=sys.stdout,
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 logger = logging.getLogger(__name__)
 
 
@@ -2221,7 +2227,7 @@ class LLMProvider(core_provider.Provider):
         self,
         trace: SelectorTrace,
         min_score_val: int = 0,
-        max_score_val: int = 2,
+        max_score_val: int = 3,
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
@@ -2249,7 +2255,7 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (no step relevance) and 1.0 (complete step relevance) and a dictionary containing the reasons for the evaluation.
         """
-        logger.warning(f"trace: {trace.events}")
+        logger.exception(f"trace: {trace}")
         system_prompt = (
             feedback_prompts.TRAJECTORY_EVAL_STEP_RELEVANCE_SYSTEM_PROMPT
         )
@@ -2266,7 +2272,7 @@ class LLMProvider(core_provider.Provider):
         self,
         trace: SelectorTrace,
         min_score_val: int = 0,
-        max_score_val: int = 2,
+        max_score_val: int = 3,
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
@@ -2310,7 +2316,7 @@ class LLMProvider(core_provider.Provider):
         self,
         trace: SelectorTrace,
         min_score_val: int = 0,
-        max_score_val: int = 2,
+        max_score_val: int = 3,
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """

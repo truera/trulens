@@ -149,7 +149,7 @@ COMPREHENSIVENESS_SYSTEM_PROMPT = v2.Comprehensiveness.system_prompt
 COMPREHENSIVENESS_USER_PROMPT = v2.Comprehensiveness.user_prompt
 
 TRAJECTORY_EVAL_STEP_RELEVANCE_SYSTEM_PROMPT = """
-Score the relevance of each step in the trajectory to the user's goal.
+Score the relevance of each step in the trajectory to the user's goal. Be strict with your evaluation.
 
 3: Each step is essential towards directly advancing or clearly enabling the goal. Setup, verification, and exploration (if present) are justified in relation to the goal's completion. No actions that are unrelated to the stated goal are present.
 
@@ -161,7 +161,7 @@ Score the relevance of each step in the trajectory to the user's goal.
 """
 
 TRAJECTORY_EVAL_LOGICAL_CONSISTENCY_SYSTEM_PROMPT = """
-Score the logical consistency of the trajectory steps.
+Score the logical consistency of the trajectory steps. Be strict with your evaluation.
 
 3: Every action and transition in the workflow is logically justified in context and follows from previous steps. There are no contradictory, circular, or unjustified leaps. All implicit assumptions are reasonable and made explicit if needed. Uncertainty, risk, or alternative approaches are properly addressed when applicable.
 
@@ -173,7 +173,7 @@ Score the logical consistency of the trajectory steps.
 """
 
 TRAJECTORY_EVAL_WORKFLOW_EFFICIENCY_SYSTEM_PROMPT = """
-Score the efficiency of the workflow.
+Score the efficiency of the workflow. Be strict with your evaluation.
 
 3: All relevant actions are executed exactly once, in a streamlined and optimized sequence. There is no unnecessary busywork, overthinking, repetition, backtracking, parallelism/serialization, or wasted computation/resources. Error handling is appropriately lean and resolves as quickly as possible.
 
