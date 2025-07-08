@@ -12,7 +12,6 @@ import pydantic
 from pydantic import BaseModel
 from trulens.core.feedback import feedback as core_feedback
 from trulens.core.feedback import provider as core_provider
-from trulens.core.feedback.selector import Trace
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils.threading import ThreadPoolExecutor
 from trulens.feedback import generated as feedback_generated
@@ -2270,38 +2269,29 @@ class LLMProvider(core_provider.Provider):
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
-        <<<<<<< HEAD
-                Evaluate the quality of an agentic execution trace using a rubric focused on logical consistency and reasoning toward the user goal.
+        Evaluate the quality of an agentic execution trace using a rubric focused on logical consistency and reasoning toward the user goal.
 
-                Example:
-                    ```python
-                    from trulens.core import Feedback
-                    from trulens.providers.openai import OpenAI
+        Example:
+            ```python
+            from trulens.core import Feedback
+            from trulens.providers.openai import OpenAI
 
-                    provider = OpenAI()
+            provider = OpenAI()
 
-                    f_logical_consistency = (
-                        Feedback(provider.trajectory_logical_consistency_with_cot_reasons)
-                        .on({
-                            "trace": Selector(trace_level=True),
-                        })
-                    ```
+            f_logical_consistency = (
+                Feedback(provider.trajectory_logical_consistency_with_cot_reasons)
+                .on({
+                    "trace": Selector(trace_level=True),
+                })
+            ```
 
-        =======
-                Evaluate the logical consistency of an agentic execution trace using a rubric focused on the logical flow of the trace.
-                The rubric is as follows:
-                    3: Every action and transition in the workflow is logically justified in context and follows from previous steps. There are no contradictory, circular, or unjustified leaps. All implicit assumptions are reasonable and made explicit if needed. Uncertainty, risk, or alternative approaches are properly addressed when applicable.
-                    2: Few minor lapses in logic (such as a questionable assumption, minor gap in explanation, or omission of risk), but the core reasoning remains sound and consistent. There are no major contradictions in the flow of reasoning.
-                    1: Several lapses in logic, unclear or missing justifications, or contradictory transitions. These can include flawed, unsupported, or inconsistent rationales, but the overall logical sequence is not entirely arbitrary.
-                    0: The chain of logic is frequently broken, with major contradictions, missing or invalid assumptions, or arbitrary transitions. Little or no coherent line of reasoning can be reconstructed.
-        >>>>>>> f0aca1a2b (changed comments for trajectory evaluations)
-                Args:
-                    trace (str): The execution trace to evaluate (e.g., as a JSON string or formatted log).
-                    min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
-                    max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 2.
-                    temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
-                Returns:
-                    Tuple[float, Dict]: A tuple containing a value between 0.0 (no logical consistency) and 1.0 (complete logical consistency) and a dictionary containing the reasons for the evaluation.
+        Args:
+            trace (str): The execution trace to evaluate (e.g., as a JSON string or formatted log).
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 2.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+        Returns:
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (no logical consistency) and 1.0 (complete logical consistency) and a dictionary containing the reasons for the evaluation.
         """
         system_prompt = (
             feedback_prompts.TRAJECTORY_EVAL_LOGICAL_CONSISTENCY_SYSTEM_PROMPT
@@ -2323,38 +2313,31 @@ class LLMProvider(core_provider.Provider):
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
-        <<<<<<< HEAD
-                Evaluate the quality of an agentic execution trace using a rubric focused on workflow efficiency toward the user goal.
 
-                Example:
-                    ```python
-                    from trulens.core import Feedback
-                    from trulens.providers.openai import OpenAI
+        Evaluate the quality of an agentic execution trace using a rubric focused on workflow efficiency toward the user goal.
 
-                    provider = OpenAI()
+        Example:
+            ```python
+            from trulens.core import Feedback
+            from trulens.providers.openai import OpenAI
 
-                    f_workflow_efficiency = (
-                        Feedback(provider.trajectory_workflow_efficiency_with_cot_reasons)
-                        .on({
-                            "trace": Selector(trace_level=True),
-                        })
-                    ```
+            provider = OpenAI()
 
-        =======
-                Evaluate the efficiency of an agentic execution trace using a rubric focused on minimizing redundant cycles and wasted computation.
-                The rubric is as follows:
-                    3: All relevant actions are executed exactly once, in a streamlined and optimized sequence. There is no unnecessary busywork, overthinking, repetition, backtracking, parallelism/serialization, or wasted computation/resources. Error handling is appropriately lean and resolves as quickly as possible.
-                    2: Few instances of minor workflow inefficiency: a single redundant action, non-ideal ordering of steps, slightly excessive error handling, or minor missed opportunity for consolidation. The impact on the overall process is negligible.
-                    1: Several instances of recognizable inefficiency: repeated operations, excessive loops, missed opportunities for task consolidation, unnecessary resource use, or inefficient error management.
-                    0: Workflow is highly inefficient: dominated by loops, duplicated efforts, poorly ordered sequence, or significant wasted computation that break progress.
-        >>>>>>> f0aca1a2b (changed comments for trajectory evaluations)
-                Args:
-                    trace (str): The execution trace to evaluate (e.g., as a JSON string or formatted log).
-                    min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
-                    max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 2.
-                    temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
-                Returns:
-                    Tuple[float, Dict]: A tuple containing a value between 0.0 (highly inefficient workflow) and 1.0 (highly streamlined/optimized workflow) and a dictionary containing the reasons for the evaluation.
+            f_workflow_efficiency = (
+                Feedback(provider.trajectory_workflow_efficiency_with_cot_reasons)
+                .on({
+                    "trace": Selector(trace_level=True),
+                })
+            ```
+
+
+        Args:
+            trace (str): The execution trace to evaluate (e.g., as a JSON string or formatted log).
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 2.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+        Returns:
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (highly inefficient workflow) and 1.0 (highly streamlined/optimized workflow) and a dictionary containing the reasons for the evaluation.
         """
         system_prompt = (
             feedback_prompts.TRAJECTORY_EVAL_WORKFLOW_EFFICIENCY_SYSTEM_PROMPT
