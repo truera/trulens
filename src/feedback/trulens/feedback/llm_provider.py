@@ -2,6 +2,7 @@ from concurrent.futures import as_completed
 import logging
 import re
 from typing import ClassVar, Dict, List, Optional, Sequence, Tuple, Type, Union
+from trulens.core.feedback.selector import Trace
 import warnings
 
 import nltk
