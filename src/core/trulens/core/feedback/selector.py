@@ -111,7 +111,7 @@ class Selector:
     # If the value extracted from the span is None (i.e. from
     # `span_attributes_processor`, `span_attribute`, or `function_attribute`),
     # then whether to ignore it or not.
-    ignore_none_values: bool = True
+    ignore_none_values: bool = False
 
     # If this selector describes a list, which of the following two should we
     # do:
@@ -139,6 +139,7 @@ class Selector:
         ] = None,
         span_attribute: Optional[str] = None,
         function_attribute: Optional[str] = None,
+        ignore_none_values: bool = False,
         collect_list: bool = True,
         match_only_if_no_ancestor_matched: bool = False,
     ):
@@ -161,6 +162,7 @@ class Selector:
         self.span_attributes_processor = span_attributes_processor
         self.span_attribute = span_attribute
         self.function_attribute = function_attribute
+        self.ignore_none_values = ignore_none_values
         self.collect_list = collect_list
         self.match_only_if_no_ancestor_matched = (
             match_only_if_no_ancestor_matched
