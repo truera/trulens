@@ -11,6 +11,7 @@ import pydantic
 from pydantic import BaseModel
 from trulens.core.feedback import feedback as core_feedback
 from trulens.core.feedback import provider as core_provider
+from trulens.core.feedback.selector import Trace
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils.threading import ThreadPoolExecutor
 from trulens.feedback import generated as feedback_generated
@@ -2215,3 +2216,135 @@ class LLMProvider(core_provider.Provider):
         )
 
         return average_groundedness_score, {"reasons": reasons_str}
+
+    def trajectory_step_relevance_with_cot_reasons(
+        self,
+        trace: Trace,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+    ) -> Tuple[float, Dict]:
+        """
+        Evaluate the quality of an agentic execution trace using a rubric focused on step relevance and progress toward the user goal.
+
+        Example:
+            ```python
+            from trulens.core import Feedback
+            from trulens.providers.openai import OpenAI
+
+            provider = OpenAI()
+
+            f_step_relevance = (
+                Feedback(provider.trajectory_step_relevance_with_cot_reasons)
+                .on({
+                    "trace": Selector(trace_level=True),
+                })
+            ```
+
+        Args:
+            trace (Trace): The execution trace to evaluate (e.g., as a JSON string or formatted log).
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+        Returns:
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (no step relevance) and 1.0 (complete step relevance) and a dictionary containing the reasons for the evaluation.
+        """
+        system_prompt = (
+            feedback_prompts.TRAJECTORY_EVAL_STEP_RELEVANCE_SYSTEM_PROMPT
+        )
+        user_prompt = f"""Please score the execution trace. Execution Trace: {trace.events.to_json()}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
+
+    def trajectory_logical_consistency_with_cot_reasons(
+        self,
+        trace: Trace,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+    ) -> Tuple[float, Dict]:
+        """
+        Evaluate the quality of an agentic execution trace using a rubric focused on logical consistency and reasoning toward the user goal.
+
+        Example:
+            ```python
+            from trulens.core import Feedback
+            from trulens.providers.openai import OpenAI
+
+            provider = OpenAI()
+
+            f_logical_consistency = (
+                Feedback(provider.trajectory_logical_consistency_with_cot_reasons)
+                .on({
+                    "trace": Selector(trace_level=True),
+                })
+            ```
+
+        Args:
+            trace (Trace): The execution trace to evaluate (e.g., as a JSON string or formatted log).
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+        Returns:
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (no logical consistency) and 1.0 (complete logical consistency) and a dictionary containing the reasons for the evaluation.
+        """
+        system_prompt = (
+            feedback_prompts.TRAJECTORY_EVAL_LOGICAL_CONSISTENCY_SYSTEM_PROMPT
+        )
+        user_prompt = f"""Please score the execution trace. Execution Trace: {trace}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
+
+    def trajectory_workflow_efficiency_with_cot_reasons(
+        self,
+        trace: Trace,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+    ) -> Tuple[float, Dict]:
+        """
+        Evaluate the quality of an agentic execution trace using a rubric focused on workflow efficiency toward the user goal.
+
+        Example:
+            ```python
+            from trulens.core import Feedback
+            from trulens.providers.openai import OpenAI
+
+            provider = OpenAI()
+
+            f_workflow_efficiency = (
+                Feedback(provider.trajectory_workflow_efficiency_with_cot_reasons)
+                .on({
+                    "trace": Selector(trace_level=True),
+                })
+            ```
+
+        Args:
+            trace (Trace): The execution trace to evaluate (e.g., as a JSON string or formatted log).
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+        Returns:
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (highly inefficient workflow) and 1.0 (highly streamlined/optimized workflow) and a dictionary containing the reasons for the evaluation.
+        """
+        system_prompt = (
+            feedback_prompts.TRAJECTORY_EVAL_WORKFLOW_EFFICIENCY_SYSTEM_PROMPT
+        )
+        user_prompt = f"""Please score the execution trace. Execution Trace: {trace}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )

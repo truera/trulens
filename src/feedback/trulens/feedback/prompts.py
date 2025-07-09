@@ -147,3 +147,39 @@ GENERATE_KEY_POINTS_USER_PROMPT = """
 COMPREHENSIVENESS_SYSTEM_PROMPT = v2.Comprehensiveness.system_prompt
 
 COMPREHENSIVENESS_USER_PROMPT = v2.Comprehensiveness.user_prompt
+
+TRAJECTORY_EVAL_STEP_RELEVANCE_SYSTEM_PROMPT = """
+Score the relevance of each step in the trajectory to the user's goal. Be strict with your evaluation.
+
+3: Each step is essential towards directly advancing or clearly enabling the goal. Setup, verification, and exploration (if present) are justified in relation to the goal's completion. No actions that are unrelated to the stated goal are present.
+
+2: Few steps have weak, tangential, or ambiguous links to the user's goal, but do not distract from goal completion. All required goal-critical steps are present.
+
+1: Multiple steps have little to no clear connection to the user's goal. There are notable detours, tangents, or superfluous elements. Some goal-critical steps may still be present.
+
+0: The majority of steps are not necessary for the user's goal, or critical goal-essential steps are absent. The process lacks clear orientation to the stated goal.
+"""
+
+TRAJECTORY_EVAL_LOGICAL_CONSISTENCY_SYSTEM_PROMPT = """
+Score the logical consistency of the trajectory steps. Be strict with your evaluation.
+
+3: Every action and transition in the workflow is logically justified in context and follows from previous steps. There are no contradictory, circular, or unjustified leaps. All implicit assumptions are reasonable and made explicit if needed. Uncertainty, risk, or alternative approaches are properly addressed when applicable.
+
+2: Few minor lapses in logic (such as a questionable assumption, minor gap in explanation, or omission of risk), but the core reasoning remains sound and consistent. There are no major contradictions in the flow of reasoning.
+
+1: Several lapses in logic, unclear or missing justifications, or contradictory transitions. These can include flawed, unsupported, or inconsistent rationales, but the overall logical sequence is not entirely arbitrary.
+
+0: The chain of logic is frequently broken, with major contradictions, missing or invalid assumptions, or arbitrary transitions. Little or no coherent line of reasoning can be reconstructed.
+"""
+
+TRAJECTORY_EVAL_WORKFLOW_EFFICIENCY_SYSTEM_PROMPT = """
+Score the efficiency of the workflow. Be strict with your evaluation.
+
+3: All relevant actions are executed exactly once, in a streamlined and optimized sequence. There is no unnecessary busywork, overthinking, repetition, backtracking, parallelism/serialization, or wasted computation/resources. Error handling is appropriately lean and resolves as quickly as possible.
+
+2: Few instances of minor workflow inefficiency: a single redundant action, non-ideal ordering of steps, slightly excessive error handling, or minor missed opportunity for consolidation. The impact on the overall process is negligible.
+
+1: Several instances of recognizable inefficiency: repeated operations, excessive loops, missed opportunities for task consolidation, unnecessary resource use, or inefficient error management.
+
+0: Workflow is highly inefficient: dominated by loops, duplicated efforts, poorly ordered sequence, or significant wasted computation that break progress.
+"""
