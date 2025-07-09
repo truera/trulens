@@ -2334,7 +2334,7 @@ class LLMProvider(core_provider.Provider):
             criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
             examples (Optional[List[Tuple[Dict[str, str], int]]]): Optional few-shot examples for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
-            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 2.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (no step relevance) and 1.0 (complete step relevance) and a dictionary containing the reasons for the evaluation.
@@ -2409,7 +2409,7 @@ class LLMProvider(core_provider.Provider):
         Args:
             trace (str): The execution trace to evaluate (e.g., as a JSON string or formatted log).
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
-            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 2.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (no logical consistency) and 1.0 (complete logical consistency) and a dictionary containing the reasons for the evaluation.
@@ -2488,7 +2488,7 @@ class LLMProvider(core_provider.Provider):
             criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
             examples (Optional[List[Tuple[Dict[str, str], int]]): Optional few-shot examples for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
-            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 2.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (highly inefficient workflow) and 1.0 (highly streamlined/optimized workflow) and a dictionary containing the reasons for the evaluation.
