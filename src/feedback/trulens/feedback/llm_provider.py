@@ -2389,7 +2389,6 @@ class LLMProvider(core_provider.Provider):
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
-        <<<<<<< HEAD
                 Evaluate the quality of an agentic execution trace using a rubric focused on logical consistency and reasoning toward the user goal.
 
                 Example:
@@ -2466,7 +2465,6 @@ class LLMProvider(core_provider.Provider):
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
-        <<<<<<< HEAD
                 Evaluate the quality of an agentic execution trace using a rubric focused on workflow efficiency toward the user goal.
 
                 Example:

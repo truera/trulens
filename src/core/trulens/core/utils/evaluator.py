@@ -149,8 +149,6 @@ class Evaluator:
                         events=events,
                     )
                 except Exception as e:
-                    import traceback
-
                     logger.warning(
                         f"Error computing feedbacks in evaluator thread (record_id={record_id}): {e}\n{traceback.format_exc()}"
                     )
