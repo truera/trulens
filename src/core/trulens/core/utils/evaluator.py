@@ -4,6 +4,7 @@ import datetime
 import logging
 import threading
 import time
+import traceback
 from typing import TYPE_CHECKING, Dict, List, Optional
 import weakref
 
@@ -129,8 +130,6 @@ class Evaluator:
                         events=events,
                     )
                 except Exception as e:
-                    import traceback
-
                     logger.warning(
                         f"Error computing feedbacks in evaluator thread (record_id={record_id}): {e}\n{traceback.format_exc()}"
                     )
