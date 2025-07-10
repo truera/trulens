@@ -286,6 +286,19 @@ class TruSession(
 
             _TruSession._track_costs()
 
+    def _is_langgraph_app(self, app: Any) -> bool:
+        """Helper to check if an app is a LangGraph app using type checking."""
+        try:
+            # Try to import LangGraph types for isinstance checking
+            from langgraph.graph import CompiledStateGraph
+            from langgraph.graph import StateGraph
+            from langgraph.pregel import Pregel
+
+            return isinstance(app, (StateGraph, CompiledStateGraph, Pregel))
+        except ImportError:
+            # Fallback to attribute checking if LangGraph not available
+            return hasattr(app, "graph") and hasattr(app, "run")
+
     def App(self, *args, app: Optional[Any] = None, **kwargs) -> base_app.App:
         """Create an App from the given App constructor arguments by guessing
         which app type they refer to.
@@ -319,6 +332,19 @@ class TruSession(
 
             print(f"{text_utils.UNICODE_SQUID} Instrumenting LangChain app.")
             return tru_chain.TruChain(
+                *args, app=app, connector=self.connector, **kwargs
+            )
+
+        elif app.__module__.startswith("langgraph") or self._is_langgraph_app(
+            app
+        ):
+            with import_utils.OptionalImports(
+                messages=optional_utils.REQUIREMENT_APPS_LANGGRAPH
+            ):
+                from trulens.apps.langgraph import tru_graph
+
+            print(f"{text_utils.UNICODE_SQUID} Instrumenting LangGraph app.")
+            return tru_graph.TruGraph(
                 *args, app=app, connector=self.connector, **kwargs
             )
 
