@@ -53,6 +53,7 @@ env-tests-optional: env env-tests
 		langchain-openai \
 		llama-index-embeddings-huggingface \
 		llama-index-embeddings-openai \
+		langgraph \
 		unstructured
 
 
