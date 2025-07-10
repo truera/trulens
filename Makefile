@@ -50,6 +50,7 @@ env-tests-optional: env env-tests
 	poetry run pip install \
 		chromadb \
 	 	faiss-cpu \
+		langchain-core \
 		langchain-openai \
 		llama-index-embeddings-huggingface \
 		llama-index-embeddings-openai \

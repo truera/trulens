@@ -21,7 +21,8 @@ try:
     from trulens.apps.langgraph import TruGraph  # noqa: F401
 
     LANGGRAPH_AVAILABLE = True
-except Exception:
+except Exception as e:
+    print(f"LangGraph imports failed: {e}")
     LANGGRAPH_AVAILABLE = False
 
 
