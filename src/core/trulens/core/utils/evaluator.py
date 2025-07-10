@@ -30,7 +30,7 @@ class Evaluator:
         self._stop_event = threading.Event()
         self._compute_feedbacks_lock = threading.Lock()
         self._record_id_to_event_count = pd.Series(dtype=int)
-        self._processed_time = datetime.datetime.now() - _PROCESSED_TIME_DELTA
+        self._processed_time = None
 
     def _events_under_record_root(self, events: pd.DataFrame) -> pd.DataFrame:
         """
