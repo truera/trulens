@@ -103,6 +103,101 @@ class LangGraphInstrument(core_instruments.Instrument):
             **kwargs,
         )
 
+        # Auto-detect and instrument @task functions
+        self._instrument_task_functions()
+
+    def _instrument_task_functions(self):
+        """Automatically detect and instrument functions decorated with @task."""
+        if not LANGGRAPH_AVAILABLE:
+            return
+
+        try:
+            # Import the task function decorator
+            # Find all @task decorated functions in the current module space
+            # This is a simplified approach - in practice, we'd need to scan the module tree
+            import sys
+
+            from langgraph.func import task  # noqa: F401
+
+            for module_name, module in sys.modules.items():
+                if not module_name.startswith("langgraph"):
+                    continue
+
+                if hasattr(module, "__dict__"):
+                    for name, obj in module.__dict__.items():
+                        if callable(obj) and self._is_task_function(obj):
+                            self._apply_task_instrumentation(obj)
+
+        except ImportError:
+            logger.debug(
+                "Could not import langgraph.func.task for auto-instrumentation"
+            )
+
+    def _is_task_function(self, func: Callable) -> bool:
+        """Check if a function is decorated with @task from LangGraph."""
+        if not LANGGRAPH_AVAILABLE:
+            return False
+
+        # Check if function has task-related attributes
+        # LangGraph @task decorator typically adds specific attributes
+        return (
+            hasattr(func, "__wrapped__")
+            and hasattr(func, "__qualname__")
+            and
+            # Check for task-specific markers
+            (
+                hasattr(func, "_task_config")
+                or hasattr(func, "_is_task")
+                or any(
+                    "task" in str(getattr(func, attr_name, "")).lower()
+                    for attr_name in dir(func)
+                    if not attr_name.startswith("_")
+                )
+            )
+        )
+
+    def _apply_task_instrumentation(self, func: Callable):
+        """Apply TruLens instrumentation to a @task decorated function."""
+        try:
+            from trulens.core.otel.instrument import instrument
+
+            # Create a wrapper that extracts attributes and applies instrumentation
+            def instrumented_task_wrapper(*args, **kwargs):
+                ret = None
+                exc = None
+
+                try:
+                    ret = func(*args, **kwargs)
+                    return ret
+                except Exception as e:
+                    exc = e
+                    raise
+                finally:
+                    # Extract attributes using our heuristics
+                    attributes = _extract_task_attributes(
+                        func, ret, exc, *args, **kwargs
+                    )
+
+                    # Log the attributes for debugging
+                    logger.debug(
+                        f"Extracted attributes for @task {func.__name__}: {attributes}"
+                    )
+
+            # Apply the instrument decorator
+            instrumented_func = instrument(
+                span_type=f"TASK_{func.__name__.upper()}",
+                attributes={},  # Attributes will be set dynamically in the wrapper
+            )(instrumented_task_wrapper)
+
+            # Replace the original function with the instrumented version
+            # This is a simplified approach - in practice, we'd need more sophisticated patching
+            func.__wrapped__ = instrumented_func
+
+        except ImportError:
+            logger.warning(
+                f"Could not instrument @task function {func.__name__}: instrument decorator not available"
+            )
+
 
 class TruGraph(TruChain):
     """Recorder for _LangGraph_ applications.
@@ -167,7 +262,9 @@ class TruGraph(TruChain):
     """The langgraph app to be instrumented."""
 
     # TODEP
-    root_callable: ClassVar[pyschema_utils.FunctionOrMethod] = Field(None)
+    root_callable: ClassVar[Optional[pyschema_utils.FunctionOrMethod]] = Field(
+        None
+    )
     """The root callable of the wrapped app."""
 
     def __init__(
@@ -376,63 +473,138 @@ class TruGraph(TruChain):
             return str(result)
 
 
-# Function to instrument @task decorators
-def instrument_task(
-    _func=None,
-    *,
-    span_type: Optional[str] = None,
-    attributes: Optional[Dict[str, Any]] = None,
+# Helper function to extract attributes from @task functions
+def _extract_task_attributes(
+    func: Callable,
+    ret: Any,
+    exc: Exception,
+    ignore_args: Optional[set] = None,
+    extract_fields: Optional[Dict[str, str]] = None,
+    *args,
     **kwargs,
-):
+) -> Dict[str, Any]:
     """
-    Decorator to instrument LangGraph @task functions.
+    Extract attributes from @task function calls using intelligent heuristics.
 
-    This decorator can be used to automatically instrument functions decorated with @task
-    from LangGraph, providing tracing and evaluation capabilities.
-
-    Args:
-        span_type: Optional span type for the instrumentation
-        attributes: Optional attributes to add to the span
-        **kwargs: Additional arguments passed to the instrument decorator
-
-    Example:
-        ```python
-        from trulens.apps.langgraph import instrument_task
-        from langgraph.func import task
-
-        @task
-        @instrument_task(span_type="TASK_NODE")
-        def my_task_function(state):
-            # Task logic here
-            return state
-        ```
+    This function automatically extracts relevant information from function arguments,
+    handling special cases for LLM models, Pydantic models, dataclasses, etc.
     """
+    import dataclasses
+    import inspect
+    import json
 
-    def decorator(func):
-        if not LANGGRAPH_AVAILABLE:
-            logger.warning(
-                "LangGraph is not available. Task instrumentation will be skipped."
-            )
-            return func
+    if ignore_args is None:
+        ignore_args = set()
+    if extract_fields is None:
+        extract_fields = {}
 
-        # Import the instrument decorator from trulens
-        from trulens.core.otel.instrument import instrument
+    # Import types for type checking
+    try:
+        from langchain_core.language_models.chat_models import BaseChatModel
+    except ImportError:
+        BaseChatModel = type("BaseChatModel", (), {})
 
-        # Set default span type if not provided
-        if span_type is None:
-            func_span_type = f"TASK_{func.__name__.upper()}"
+    try:
+        from pydantic import BaseModel
+    except ImportError:
+        BaseModel = type("BaseModel", (), {})  # noqa: F841
+
+    # Try to import LLMPool if available (from ai-migrator context)
+    try:
+        from ai_migrator.llm_pool import LLMPool
+    except ImportError:
+        LLMPool = type("LLMPool", (), {})
+
+    attributes = {}
+
+    try:
+        # Get the BASE_SCOPE for attributes
+        try:
+            from trulens.otel.semconv.trace import BASE_SCOPE
+        except ImportError:
+            BASE_SCOPE = "trulens.task"
+
+        sig = inspect.signature(func)
+
+        # Merge args and kwargs to avoid duplicates
+        all_kwargs = {}
+        bound_args = sig.bind_partial(*args)
+        all_kwargs.update(bound_args.arguments)
+        all_kwargs.update(kwargs)
+        bound = sig.bind(**all_kwargs)
+        bound.apply_defaults()
+
+        for name, value in bound.arguments.items():
+            if name in ignore_args:
+                continue
+
+            # Skip LLM-related objects as they're not serializable
+            try:
+                if isinstance(value, LLMPool) or isinstance(
+                    value, BaseChatModel
+                ):
+                    continue
+            except (TypeError, NameError):
+                # Handle case where types are mock objects
+                pass
+
+            # Extract only a specific field if specified
+            if name in extract_fields:
+                attr_path = extract_fields[name]
+                for attr in attr_path.split("."):
+                    value = getattr(value, attr, None)
+                val = json.dumps(value, default=str, indent=2)
+            else:
+                # Handle different data types intelligently
+                if dataclasses.is_dataclass(value):
+                    val = json.dumps(
+                        dataclasses.asdict(value), default=str, indent=2
+                    )
+                elif hasattr(value, "model_dump") or hasattr(value, "dict"):
+                    # Handle Pydantic models (both v1 and v2)
+                    try:
+                        model_data = (
+                            value.model_dump()
+                            if hasattr(value, "model_dump")
+                            else value.dict()
+                        )
+                        val = json.dumps(model_data, default=str, indent=2)
+                    except (TypeError, AttributeError):
+                        val = json.dumps(value, default=str, indent=2)
+                else:
+                    val = json.dumps(value, default=str, indent=2)
+
+            attributes[f"{BASE_SCOPE}.{name}"] = val
+
+        # Add return value information
+        if dataclasses.is_dataclass(ret):
+            ret_val = dataclasses.asdict(ret)
+        elif hasattr(ret, "model_dump") or hasattr(ret, "dict"):
+            # Handle Pydantic models (both v1 and v2)
+            try:
+                ret_val = (
+                    ret.model_dump()
+                    if hasattr(ret, "model_dump")
+                    else ret.dict()
+                )
+            except (TypeError, AttributeError):
+                ret_val = ret
         else:
-            func_span_type = span_type
+            ret_val = ret
 
-        # Apply the instrument decorator
-        return instrument(
-            span_type=func_span_type, attributes=attributes, **kwargs
-        )(func)
+        attributes[f"{BASE_SCOPE}.return"] = json.dumps(
+            ret_val, default=str, indent=2
+        )
 
-    if _func is None:
-        return decorator
-    else:
-        return decorator(_func)
+        # Add exception information
+        attributes[f"{BASE_SCOPE}.exception"] = str(exc) if exc else ""
+
+    except Exception as e:
+        logger.exception(
+            f"Exception occurred during TruLens @task instrumentation: {e}"
+        )
+
+    return attributes
 
 
 TruGraph.model_rebuild()

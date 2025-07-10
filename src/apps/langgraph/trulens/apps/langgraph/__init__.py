@@ -14,7 +14,6 @@ from importlib.metadata import version
 
 from trulens.apps.langgraph.tru_graph import LangGraphInstrument
 from trulens.apps.langgraph.tru_graph import TruGraph
-from trulens.apps.langgraph.tru_graph import instrument_task
 from trulens.core.utils import imports as import_utils
 
 __version__ = version(
@@ -25,5 +24,4 @@ __version__ = version(
 __all__ = [
     "TruGraph",
     "LangGraphInstrument",
-    "instrument_task",
 ]
