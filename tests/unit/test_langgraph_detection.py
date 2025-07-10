@@ -28,7 +28,6 @@ class TestLangGraphDetection:
     def test_langgraph_detection_by_module(self):
         """Test that LangGraph apps are detected by module name."""
 
-        # Create a simple LangGraph app
         def simple_agent(state):
             return {"messages": [AIMessage(content="Hello from agent")]}
 
@@ -47,7 +46,6 @@ class TestLangGraphDetection:
     def test_langgraph_detection_by_type(self):
         """Test that LangGraph apps are detected by type checking."""
 
-        # Create a simple LangGraph app
         def simple_agent(state):
             return {"messages": [AIMessage(content="Hello from agent")]}
 
@@ -66,15 +64,15 @@ class TestLangGraphDetection:
     def test_session_auto_detection(self):
         """Test that TruSession automatically detects and creates TruGraph."""
 
-        # Create a simple LangGraph app
         def echo_agent(state):
             messages = state.get("messages", [])
             if messages:
                 last_message = messages[-1]
-                if hasattr(last_message, "content"):
-                    content = last_message.content
-                else:
-                    content = str(last_message)
+                content = (
+                    last_message.content
+                    if hasattr(last_message, "content")
+                    else str(last_message)
+                )
                 return {"messages": [AIMessage(content=f"Echo: {content}")]}
             return {"messages": [AIMessage(content="Echo: No message")]}
 
@@ -89,13 +87,11 @@ class TestLangGraphDetection:
         session = TruSession()
         tru_app = session.App(graph, app_name="DetectionTest")
 
-        # Should return TruGraph instance
         assert isinstance(
             tru_app, TruGraph
         ), f"Expected TruGraph, got {type(tru_app)}"
         assert tru_app.app_name == "DetectionTest"
 
-        # Test that it actually works
         result = tru_app.app.invoke({
             "messages": [HumanMessage(content="Hello")]
         })
@@ -106,7 +102,6 @@ class TestLangGraphDetection:
     def test_manual_trugraph_creation(self):
         """Test manual TruGraph creation as fallback."""
 
-        # Create a simple LangGraph app
         def simple_agent(state):
             return {"messages": [AIMessage(content="Manual creation works")]}
 
@@ -117,7 +112,6 @@ class TestLangGraphDetection:
 
         graph = workflow.compile()
 
-        # Test manual TruGraph creation
         tru_app = TruGraph(app=graph, app_name="ManualTest", app_version="1.0")
 
         assert isinstance(tru_app, TruGraph)
@@ -143,12 +137,11 @@ class TestLangGraphDetection:
         workflow.add_edge("agent", END)
         workflow.set_entry_point("agent")
 
-        # Don't compile - let TruGraph handle it
+        # let TruGraph handle it without explicitly compiling
         tru_app = TruGraph(
             app=workflow, app_name="UncompiledTest", app_version="1.0"
         )
 
-        # Should work (TruGraph auto-compiles)
         result = tru_app.app.invoke({
             "messages": [HumanMessage(content="Test")]
         })
@@ -158,7 +151,6 @@ class TestLangGraphDetection:
     def test_detection_attributes(self):
         """Test detection using attribute checking."""
 
-        # Create a simple LangGraph app
         def simple_agent(state):
             return {"messages": [AIMessage(content="Hello")]}
 
@@ -176,7 +168,6 @@ class TestLangGraphDetection:
         assert hasattr(
             graph, "invoke"
         ), "Compiled graph should have 'invoke' method"
-        # Note: 'run' method might not exist in all LangGraph versions, so we check invoke instead
 
     def test_detection_with_different_graph_types(self):
         """Test detection with different LangGraph types."""
@@ -203,7 +194,6 @@ class TestLangGraphDetection:
 
         uncompiled_graph = workflow2
 
-        # Both should be detected
         session = TruSession()
 
         is_compiled_detected = session._is_langgraph_app(compiled_graph)
@@ -219,7 +209,6 @@ class TestLangGraphDetection:
         assert isinstance(tru_app1, TruGraph)
         assert isinstance(tru_app2, TruGraph)
 
-        # Both should work
         result1 = tru_app1.app.invoke({
             "messages": [HumanMessage(content="Test1")]
         })
