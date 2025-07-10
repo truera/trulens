@@ -13,7 +13,6 @@ import tests.util.otel_tru_app_test_case
 from tests.utils import enable_otel_backwards_compatibility
 
 try:
-    # These imports require optional dependencies to be installed.
     from langchain_core.messages import AIMessage
     from langchain_core.messages import HumanMessage
     from trulens.apps.langgraph import TruGraph
@@ -91,7 +90,7 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
 
     def test_smoke(self) -> None:
         """Test basic TruGraph functionality."""
-        # Create app.
+
         multi_agent_graph = self._create_simple_multi_agent()
         tru_recorder = TruGraph(
             multi_agent_graph,
@@ -100,7 +99,6 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
             main_method=multi_agent_graph.invoke,
         )
 
-        # Record and invoke.
         tru_recorder.instrumented_invoke_main_method(
             run_name="test run",
             input_id="42",
@@ -109,12 +107,11 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
             ),
         )
 
-        # Compare results to expected.
         self._compare_events_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_graph__test_smoke.csv"
         )
 
-        # Check garbage collection.
+        # Check gc
         tru_recorder_ref = weakref.ref(tru_recorder)
         del tru_recorder
         del multi_agent_graph
@@ -124,13 +121,12 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
     @enable_otel_backwards_compatibility
     def test_legacy_app(self) -> None:
         """Test TruGraph with legacy app interface."""
-        # Create app.
+
         multi_agent_graph = self._create_simple_multi_agent()
         tru_recorder = TruGraph(
             multi_agent_graph, app_name="Simple Multi-Agent", app_version="v1"
         )
 
-        # Record and invoke.
         with tru_recorder:
             multi_agent_graph.invoke({
                 "messages": [HumanMessage(content="What is AI?")]
@@ -143,7 +139,6 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
 
     def test_auto_compilation(self) -> None:
         """Test that TruGraph automatically compiles uncompiled StateGraphs."""
-        # Create uncompiled workflow
         workflow = StateGraph(MessagesState)
 
         def simple_agent(state):
@@ -155,12 +150,11 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
 
         # TruGraph should automatically compile it
         tru_recorder = TruGraph(
-            workflow,  # Pass uncompiled workflow
+            workflow,
             app_name="Auto Compiled",
             app_version="v1",
         )
 
-        # Should work without issues
         result = tru_recorder.app.invoke({
             "messages": [HumanMessage(content="Hello")]
         })
@@ -176,25 +170,20 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
             app_version="v1",
         )
 
-        # Test with HumanMessage
         result1 = tru_recorder.app.invoke({
             "messages": [HumanMessage(content="Test 1")]
         })
         assert "messages" in result1
 
-        # Test with tuple format
         result2 = tru_recorder.app.invoke({"messages": [("user", "Test 2")]})
         assert "messages" in result2
 
-        # Test main_call method (should handle string input)
         result3 = tru_recorder.main_call("Test 3")
         assert isinstance(result3, str)
         assert "Test 3" in result3
 
     def test_error_handling(self) -> None:
         """Test error handling when LangGraph is not available."""
-        # This test would need to be run in an environment without LangGraph
-        # For now, we'll just test that the import error is handled gracefully
         try:
             from trulens.apps.langgraph.tru_graph import LANGGRAPH_AVAILABLE
 
