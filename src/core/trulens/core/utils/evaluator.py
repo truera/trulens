@@ -18,6 +18,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+_PROCESSED_TIME_DELTA = datetime.timedelta(hours=1)
+
 
 class Evaluator:
     def __init__(self, app: App):
@@ -28,7 +30,7 @@ class Evaluator:
         self._stop_event = threading.Event()
         self._compute_feedbacks_lock = threading.Lock()
         self._record_id_to_event_count = pd.Series(dtype=int)
-        self._start_time = datetime.datetime.now()
+        self._processed_time = datetime.datetime.now() - _PROCESSED_TIME_DELTA
 
     def _events_under_record_root(self, events: pd.DataFrame) -> pd.DataFrame:
         """
@@ -71,7 +73,9 @@ class Evaluator:
         return pd.DataFrame(ret)
 
     def _get_record_id_to_unprocessed_events(
-        self, record_ids: Optional[List[str]]
+        self,
+        record_ids: Optional[List[str]],
+        start_time: Optional[datetime.datetime],
     ) -> Dict[str, pd.DataFrame]:
         """
         Get events for the app that weren't yet used for feedback computation.
@@ -89,7 +93,7 @@ class Evaluator:
             app_name=self._app_ref().app_name,
             app_version=self._app_ref().app_version,
             record_ids=record_ids,
-            start_time=self._start_time,
+            start_time=start_time,
         )
         if events is None or len(events) == 0:
             return {}
@@ -121,7 +125,8 @@ class Evaluator:
     ) -> None:
         with self._compute_feedbacks_lock:
             record_id_to_events = self._get_record_id_to_unprocessed_events(
-                record_ids
+                record_ids,
+                self._processed_time,
             )
             for record_id, events in record_id_to_events.items():
                 try:
@@ -138,6 +143,7 @@ class Evaluator:
                     TruSession().force_flush()
                 if in_evaluator_thread and self._stop_event.is_set():
                     break
+        self._processed_time = datetime.datetime.now() - _PROCESSED_TIME_DELTA
 
     def _run_evaluator(self) -> None:
         """Background thread that periodically computes feedback for events."""
