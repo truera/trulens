@@ -103,99 +103,98 @@ class LangGraphInstrument(core_instruments.Instrument):
             **kwargs,
         )
 
-        # Auto-detect and instrument @task functions
-        self._instrument_task_functions()
+        # Monkey-patch the @task decorator to automatically instrument functions
+        self._patch_task_decorator()
 
-    def _instrument_task_functions(self):
-        """Automatically detect and instrument functions decorated with @task."""
+    def _patch_task_decorator(self):
+        """Monkey-patch the @task decorator to automatically instrument decorated functions."""
         if not LANGGRAPH_AVAILABLE:
             return
 
         try:
-            # Import the task function decorator
-            # Find all @task decorated functions in the current module space
-            # This is a simplified approach - in practice, we'd need to scan the module tree
-            import sys
+            import langgraph.func as langgraph_func
 
-            from langgraph.func import task  # noqa: F401
+            if hasattr(langgraph_func.task, "_trulens_patched"):
+                return
 
-            for module_name, module in sys.modules.items():
-                if not module_name.startswith("langgraph"):
-                    continue
+            # Store the original decorator
+            original_task = langgraph_func.task
 
-                if hasattr(module, "__dict__"):
-                    for name, obj in module.__dict__.items():
-                        if callable(obj) and self._is_task_function(obj):
-                            self._apply_task_instrumentation(obj)
+            def instrumented_task(*task_args, **task_kwargs):
+                """Instrumented version of the @task decorator."""
+
+                def decorator(func: Callable) -> Callable:
+                    task_decorated_func = original_task(
+                        *task_args, **task_kwargs
+                    )(func)
+
+                    try:
+                        from trulens.core.otel.instrument import instrument
+
+                        # Create a wrapper that extracts attributes using our heuristics
+                        def trulens_wrapper(*args, **kwargs):
+                            ret = None
+                            exc = None
+
+                            try:
+                                ret = task_decorated_func(*args, **kwargs)
+                                return ret
+                            except Exception as e:
+                                exc = e
+                                raise
+                            finally:
+                                # Extract attributes using our heuristics
+                                try:
+                                    attributes = _extract_task_attributes(
+                                        func, ret, exc, *args, **kwargs
+                                    )
+
+                                    logger.debug(
+                                        f"Extracted @task attributes for {func.__name__}: {list(attributes.keys())}"
+                                    )
+                                except Exception as attr_exc:
+                                    logger.debug(
+                                        f"Failed to extract @task attributes for {func.__name__}: {attr_exc}"
+                                    )
+
+                        # Apply the instrument decorator to get full TruLens tracing
+                        instrumented_func = instrument(
+                            span_type=f"TASK_{func.__name__.upper()}"
+                        )(trulens_wrapper)
+
+                        # Preserve the original function's metadata
+                        instrumented_func.__name__ = func.__name__
+                        instrumented_func.__qualname__ = getattr(
+                            func, "__qualname__", func.__name__
+                        )
+
+                        logger.debug(
+                            f"Successfully instrumented @task function: {func.__name__}"
+                        )
+                        return instrumented_func
+
+                    except ImportError:
+                        logger.debug(
+                            f"TruLens instrumentation not available for @task function {func.__name__}"
+                        )
+                        return task_decorated_func
+
+                return decorator
+
+            langgraph_func.task = instrumented_task
+            langgraph_func.task._trulens_patched = True
+
+            logger.debug(
+                "Successfully monkey-patched LangGraph @task decorator for TruLens instrumentation"
+            )
 
         except ImportError:
             logger.debug(
-                "Could not import langgraph.func.task for auto-instrumentation"
+                "LangGraph @task decorator not available for monkey-patching"
             )
-
-    def _is_task_function(self, func: Callable) -> bool:
-        """Check if a function is decorated with @task from LangGraph."""
-        if not LANGGRAPH_AVAILABLE:
-            return False
-
-        # Check if function has task-related attributes
-        # LangGraph @task decorator typically adds specific attributes
-        return (
-            hasattr(func, "__wrapped__")
-            and hasattr(func, "__qualname__")
-            and
-            # Check for task-specific markers
-            (
-                hasattr(func, "_task_config")
-                or hasattr(func, "_is_task")
-                or any(
-                    "task" in str(getattr(func, attr_name, "")).lower()
-                    for attr_name in dir(func)
-                    if not attr_name.startswith("_")
-                )
-            )
-        )
-
-    def _apply_task_instrumentation(self, func: Callable):
-        """Apply TruLens instrumentation to a @task decorated function."""
-        try:
-            from trulens.core.otel.instrument import instrument
-
-            # Create a wrapper that extracts attributes and applies instrumentation
-            def instrumented_task_wrapper(*args, **kwargs):
-                ret = None
-                exc = None
-
-                try:
-                    ret = func(*args, **kwargs)
-                    return ret
-                except Exception as e:
-                    exc = e
-                    raise
-                finally:
-                    # Extract attributes using our heuristics
-                    attributes = _extract_task_attributes(
-                        func, ret, exc, *args, **kwargs
-                    )
-
-                    # Log the attributes for debugging
-                    logger.debug(
-                        f"Extracted attributes for @task {func.__name__}: {attributes}"
-                    )
-
-            # Apply the instrument decorator
-            instrumented_func = instrument(
-                span_type=f"TASK_{func.__name__.upper()}",
-                attributes={},  # Attributes will be set dynamically in the wrapper
-            )(instrumented_task_wrapper)
-
-            # Replace the original function with the instrumented version
-            # This is a simplified approach - in practice, we'd need more sophisticated patching
-            func.__wrapped__ = instrumented_func
-
-        except ImportError:
+        except Exception as e:
             logger.warning(
-                f"Could not instrument @task function {func.__name__}: instrument decorator not available"
+                f"Failed to monkey-patch LangGraph @task decorator: {e}"
             )
 
 
@@ -261,7 +260,6 @@ class TruGraph(TruChain):
     app: Union[CompiledStateGraph, Pregel, StateGraph]
     """The langgraph app to be instrumented."""
 
-    # TODEP
     root_callable: ClassVar[Optional[pyschema_utils.FunctionOrMethod]] = Field(
         None
     )
@@ -280,7 +278,7 @@ class TruGraph(TruChain):
             )
 
         # For LangGraph apps, we need to check if it's a compiled graph
-        # If it's a StateGraph, we should compile it
+        # compile if it's a StateGraph
         if isinstance(app, StateGraph):
             logger.warning(
                 "Received uncompiled StateGraph. Compiling it for instrumentation. "
@@ -288,10 +286,8 @@ class TruGraph(TruChain):
             )
             app = app.compile()
 
-        # TruGraph specific:
         kwargs["app"] = app
 
-        # Create `TruSession` if not already created.
         if "connector" in kwargs:
             TruSession(connector=kwargs["connector"])
         else:
@@ -310,7 +306,6 @@ class TruGraph(TruChain):
                 langchain_default = LangChainInstrument.Default
                 langgraph_default = LangGraphInstrument.Default
 
-                # Combine modules, classes, and methods
                 combined_modules = langchain_default.MODULES.union(
                     langgraph_default.MODULES
                 )
@@ -367,7 +362,7 @@ class TruGraph(TruChain):
                     return temp["query"]
                 else:
                     # Try to get any string-like value from the input dict
-                    for key, value in temp.items():
+                    for _, value in temp.items():
                         if isinstance(value, str):
                             return value
                     return str(temp)
@@ -405,7 +400,7 @@ class TruGraph(TruChain):
                         return str(last_message)
             else:
                 # Try to get any string-like value from the output dict
-                for key, value in ret.items():
+                for _, value in ret.items():
                     if isinstance(value, str):
                         return value
                 return str(ret)
@@ -419,38 +414,30 @@ class TruGraph(TruChain):
         """
         A single text to a single text invocation of this app.
         """
-        # For LangGraph, we need to format the input appropriately
         # Most LangGraph apps expect a dict with "messages" key
         try:
             # Try the common LangGraph pattern first
             result = self.app.invoke({"messages": [("user", human)]})
             return self._extract_output_from_result(result)
         except Exception:
-            # Fall back to direct string input
             try:
                 result = self.app.invoke(human)
                 return self._extract_output_from_result(result)
             except Exception:
-                # Fall back to the parent method
                 return super().main_call(human)
 
     async def main_acall(self, human: str):
         """
         A single text to a single text async invocation of this app.
         """
-        # For LangGraph, we need to format the input appropriately
-        # Most LangGraph apps expect a dict with "messages" key
         try:
-            # Try the common LangGraph pattern first
             result = await self.app.ainvoke({"messages": [("user", human)]})
             return self._extract_output_from_result(result)
         except Exception:
-            # Fall back to direct string input
             try:
                 result = await self.app.ainvoke(human)
                 return self._extract_output_from_result(result)
             except Exception:
-                # Fall back to the parent method
                 return await super().main_acall(human)
 
     def _extract_output_from_result(self, result: Any) -> str:
@@ -498,7 +485,6 @@ def _extract_task_attributes(
     if extract_fields is None:
         extract_fields = {}
 
-    # Import types for type checking
     try:
         from langchain_core.language_models.chat_models import BaseChatModel
     except ImportError:
@@ -509,16 +495,10 @@ def _extract_task_attributes(
     except ImportError:
         BaseModel = type("BaseModel", (), {})  # noqa: F841
 
-    # Try to import LLMPool if available (from ai-migrator context)
-    try:
-        from ai_migrator.llm_pool import LLMPool
-    except ImportError:
-        LLMPool = type("LLMPool", (), {})
-
     attributes = {}
 
     try:
-        # Get the BASE_SCOPE for attributes
+        # Get the BASE_SCOPE for attributes. TODO: should we allow users to override this?
         try:
             from trulens.otel.semconv.trace import BASE_SCOPE
         except ImportError:
@@ -540,9 +520,7 @@ def _extract_task_attributes(
 
             # Skip LLM-related objects as they're not serializable
             try:
-                if isinstance(value, LLMPool) or isinstance(
-                    value, BaseChatModel
-                ):
+                if isinstance(value, BaseChatModel):
                     continue
             except (TypeError, NameError):
                 # Handle case where types are mock objects
@@ -596,7 +574,6 @@ def _extract_task_attributes(
             ret_val, default=str, indent=2
         )
 
-        # Add exception information
         attributes[f"{BASE_SCOPE}.exception"] = str(exc) if exc else ""
 
     except Exception as e:

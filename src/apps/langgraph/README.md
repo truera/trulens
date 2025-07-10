@@ -38,23 +38,30 @@ with tru_app as recording:
     result = graph.invoke({"messages": [HumanMessage(content="Hello!")]})
 ```
 
-## Automatic @task Detection
+## Automatic @task Instrumentation
 
-TruGraph automatically detects and instruments functions decorated with LangGraph's `@task` decorator:
+TruGraph automatically instruments functions decorated with LangGraph's `@task` decorator by monkey-patching the decorator itself. This follows TruLens instrumentation patterns and ensures seamless integration:
 
 ```python
 from langgraph.func import task
 
-@task  # Automatically instrumented by TruGraph
+@task  # Automatically instrumented by TruGraph when TruGraph is imported
 def my_agent_function(state, config):
     # Your agent logic here
     return updated_state
 ```
 
-The instrumentation extracts intelligent attributes from:
-- Function arguments (dataclasses, Pydantic models, JSON-serializable objects)
-- Return values and exceptions
-- Skips non-serializable objects like LLM instances
+### How it works:
+
+1. **Decorator Monkey-Patching**: TruGraph patches the `@task` decorator at import time
+2. **Intelligent Attribute Extraction**: Automatically extracts information from function arguments:
+   - Handles `BaseChatModel` and `BaseModel` objects
+   - Extracts data from dataclasses and Pydantic models
+   - Skips non-serializable objects like LLM pools
+   - Captures return values and exceptions
+3. **No Code Changes Required**: Works with existing `@task` decorated functions
+
+This approach follows TruLens conventions and is more robust than scanning `sys.modules`.
 
 ## Usage
 
