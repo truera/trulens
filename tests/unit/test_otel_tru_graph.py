@@ -15,11 +15,11 @@ from tests.utils import enable_otel_backwards_compatibility
 try:
     from langchain_core.messages import AIMessage
     from langchain_core.messages import HumanMessage
-    from trulens.apps.langgraph import TruGraph
 
     from langgraph.graph import END
     from langgraph.graph import MessagesState
     from langgraph.graph import StateGraph
+    from trulens.apps.langgraph import TruGraph  # noqa: F401
 
     LANGGRAPH_AVAILABLE = True
 except Exception:
@@ -187,9 +187,9 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         try:
             from trulens.apps.langgraph.tru_graph import LANGGRAPH_AVAILABLE
 
-            assert (
-                LANGGRAPH_AVAILABLE
-            ), "LangGraph should be available in test environment"
+            assert LANGGRAPH_AVAILABLE, (
+                "LangGraph should be available in test environment"
+            )
         except ImportError:
             # This is expected if LangGraph is not installed
             pass

@@ -9,7 +9,7 @@ try:
     # These imports require optional dependencies to be installed.
     from langchain_core.messages import AIMessage
     from langchain_core.messages import HumanMessage
-    from trulens.apps.langgraph import TruGraph
+    from trulens.apps.langgraph import TruGraph  # noqa: F401
 
     from langgraph.graph import END
     from langgraph.graph import MessagesState
