@@ -11,7 +11,7 @@ source:
   # path: .
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-apps-langgraph/#files
-  sha256: 00db8abcfa07fcba4c86e1720a1b115edb9732058c7bb994f54513bd95cfbd9d
+  sha256: TODO-REPLACE-WITH-ACTUAL-SHA256
 
 build:
   noarch: python
@@ -48,5 +48,4 @@ about:
 
 extra:
   recipe-maintainers:
-    - sfc-gh-srudenko
-    - sfc-gh-chu
+    - sfc-gh-dhuang
