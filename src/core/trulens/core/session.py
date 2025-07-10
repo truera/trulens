@@ -289,15 +289,16 @@ class TruSession(
     def _is_langgraph_app(self, app: Any) -> bool:
         """Helper to check if an app is a LangGraph app using type checking."""
         try:
-            # Try to import LangGraph types for isinstance checking
             from langgraph.graph import CompiledStateGraph
             from langgraph.graph import StateGraph
             from langgraph.pregel import Pregel
 
             return isinstance(app, (StateGraph, CompiledStateGraph, Pregel))
         except ImportError:
-            # Fallback to attribute checking if LangGraph not available
-            return hasattr(app, "graph") and hasattr(app, "run")
+            logger.debug(
+                "LangGraph types can't be imported, no LangGraph apps to detect"
+            )
+            return False
 
     def App(self, *args, app: Optional[Any] = None, **kwargs) -> base_app.App:
         """Create an App from the given App constructor arguments by guessing
