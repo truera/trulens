@@ -15,7 +15,6 @@ from tests.utils import enable_otel_backwards_compatibility
 try:
     from langchain_core.messages import AIMessage
     from langchain_core.messages import HumanMessage
-
     from langgraph.graph import END
     from langgraph.graph import MessagesState
     from langgraph.graph import StateGraph
