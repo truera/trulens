@@ -90,6 +90,7 @@ class TestLangGraphDetection:
         assert isinstance(tru_app, TruGraph), (
             f"Expected TruGraph, got {type(tru_app)}"
         )
+
         assert tru_app.app_name == "DetectionTest"
 
         result = tru_app.app.invoke({
