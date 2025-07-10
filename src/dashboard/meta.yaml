@@ -27,7 +27,7 @@ requirements:
     - pip
   run:
     - python >=3.9,<3.13
-    - trulens-core >=1.0.0,<2.0.0
+    - trulens-core >=2.0.0,<3.0.0
     - ipywidgets >=7.1.2
     - jupyter >=1.0.0,<2.0.0
     - pandas >=1.0.0
