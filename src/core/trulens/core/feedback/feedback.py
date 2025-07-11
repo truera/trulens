@@ -1,3 +1,8 @@
+"""
+USER-FACING FEEDBACK CONTAINER: Runtime wrapper that users interact with to create feedback functions.
+Handles execution, parameter management (examples, criteria, scoring), and database integration.
+"""
+
 from __future__ import annotations
 
 from datetime import datetime
