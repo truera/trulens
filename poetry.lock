@@ -10670,7 +10670,7 @@ reference = "pypi-public"
 
 [[package]]
 name = "trulens-apps-langchain"
-version = "1.5.2"
+version = "2.0.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10682,7 +10682,7 @@ develop = true
 langchain = ">=0.2.10"
 langchain-core = ">=0.2.0"
 pydantic = "^2.4.2"
-trulens-core = "^1.0.0"
+trulens-core = "^2.0.0"
 
 [package.source]
 type = "directory"
@@ -10690,7 +10690,7 @@ url = "src/apps/langchain"
 
 [[package]]
 name = "trulens-apps-llamaindex"
-version = "1.5.2"
+version = "2.0.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10705,8 +10705,8 @@ tiktoken = [
     {version = ">=0.3.3", markers = "python_version < \"3.13\""},
     {version = ">=0.8.0", markers = "python_version >= \"3.13\""},
 ]
-trulens-apps-langchain = "^1.0.0"
-trulens-core = "^1.0.0"
+trulens-apps-langchain = "^2.0.0"
+trulens-core = "^2.0.0"
 
 [package.source]
 type = "directory"
@@ -10714,7 +10714,7 @@ url = "src/apps/llamaindex"
 
 [[package]]
 name = "trulens-apps-nemo"
-version = "1.5.2"
+version = "2.0.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9,<3.13"
@@ -10730,8 +10730,8 @@ onnxruntime = [
     {version = ">=1.14.0", markers = "python_version >= \"3.10\""},
 ]
 pydantic = "^2.4.2"
-trulens-apps-langchain = "^1.0.0"
-trulens-core = "^1.0.0"
+trulens-apps-langchain = "^2.0.0"
+trulens-core = "^2.0.0"
 
 [package.source]
 type = "directory"
@@ -10739,7 +10739,7 @@ url = "src/apps/nemo"
 
 [[package]]
 name = "trulens-benchmark"
-version = "1.5.2"
+version = "2.0.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10749,7 +10749,7 @@ develop = true
 
 [package.dependencies]
 poetry = "<2.0.0"
-trulens-core = "^1.0.0"
+trulens-core = "^2.0.0"
 
 [package.source]
 type = "directory"
@@ -10757,7 +10757,7 @@ url = "src/benchmark"
 
 [[package]]
 name = "trulens-connectors-snowflake"
-version = "1.5.2"
+version = "2.0.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9,<3.13"
@@ -10769,7 +10769,7 @@ develop = true
 [package.dependencies]
 snowflake-snowpark-python = "^1.18"
 snowflake-sqlalchemy = "^1.6"
-trulens-core = "^1.0.0"
+trulens-core = "^2.0.0"
 
 [package.source]
 type = "directory"
@@ -10777,7 +10777,7 @@ url = "src/connectors/snowflake"
 
 [[package]]
 name = "trulens-core"
-version = "1.5.2"
+version = "2.0.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10803,7 +10803,7 @@ python-dotenv = ">=0.21,<2.0"
 requests = "^2.31"
 rich = "^13.6.0"
 sqlalchemy = "^2.0"
-trulens-otel-semconv = "^1.4.9"
+trulens-otel-semconv = "^2.0.0"
 typing_extensions = "^4.9"
 wrapt = ">=1.17.0"
 
@@ -10813,7 +10813,7 @@ url = "src/core"
 
 [[package]]
 name = "trulens-dashboard"
-version = "1.5.2"
+version = "2.0.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9,!=3.9.7"
@@ -10832,7 +10832,7 @@ rich = "^13.6"
 streamlit = "^1.35"
 streamlit-aggrid = {version = "^1.0.5", optional = true}
 traitlets = "^5.0.5"
-trulens-core = "^1.0.0"
+trulens-core = "^2.0.0"
 
 [package.extras]
 full = ["streamlit-aggrid (>=1.0.5,<2.0.0)"]
@@ -10843,7 +10843,7 @@ url = "src/dashboard"
 
 [[package]]
 name = "trulens-eval"
-version = "1.5.2"
+version = "2.0.0"
 description = "Backwards-compatibility package for API of trulens_eval<1.0.0 using API of trulens-*>=1.0.0."
 optional = false
 python-versions = "^3.9,!=3.9.7"
@@ -10852,9 +10852,9 @@ files = []
 develop = true
 
 [package.dependencies]
-trulens-core = "^1.0.0"
-trulens-dashboard = "^1.0.0"
-trulens-feedback = "^1.0.0"
+trulens-core = "^2.0.0"
+trulens-dashboard = "^2.0.0"
+trulens-feedback = "^2.0.0"
 
 [package.source]
 type = "directory"
@@ -10862,7 +10862,7 @@ url = "src/trulens_eval"
 
 [[package]]
 name = "trulens-feedback"
-version = "1.5.2"
+version = "2.0.0"
 description = "A TruLens extension package implementing feedback functions for LLM App evaluation."
 optional = false
 python-versions = "^3.9"
@@ -10877,7 +10877,7 @@ pydantic = "^2.4.2"
 requests = "^2.31"
 scikit-learn = "^1.3.0"
 scipy = "^1.11.1"
-trulens-core = "^1.0.0"
+trulens-core = "^2.0.0"
 
 [package.source]
 type = "directory"
@@ -10885,7 +10885,7 @@ url = "src/feedback"
 
 [[package]]
 name = "trulens-hotspots"
-version = "1.5.2"
+version = "2.0.0"
 description = "Library and command-line tool to list features lowering your evaluation score."
 optional = false
 python-versions = "^3.9"
@@ -10897,7 +10897,7 @@ develop = true
 pandas = ">=1.0.0"
 regex = ">2021.8.28"
 scipy = "^1.11.1"
-trulens-core = "^1.0.0"
+trulens-core = "^2.0.0"
 
 [package.source]
 type = "directory"
@@ -10905,7 +10905,7 @@ url = "src/hotspots"
 
 [[package]]
 name = "trulens-otel-semconv"
-version = "1.5.2"
+version = "2.0.0"
 description = "Semantic conventions for spans produced by TruLens."
 optional = false
 python-versions = "^3.9"
@@ -10923,7 +10923,7 @@ url = "src/otel/semconv"
 
 [[package]]
 name = "trulens-providers-bedrock"
-version = "1.5.2"
+version = "2.0.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10934,8 +10934,8 @@ develop = true
 [package.dependencies]
 boto3 = "^1.33"
 botocore = "^1.33"
-trulens-core = "^1.0.0"
-trulens-feedback = "^1.0.0"
+trulens-core = "^2.0.0"
+trulens-feedback = "^2.0.0"
 
 [package.source]
 type = "directory"
@@ -10943,7 +10943,7 @@ url = "src/providers/bedrock"
 
 [[package]]
 name = "trulens-providers-cortex"
-version = "1.5.2"
+version = "2.0.0"
 description = "A TruLens extension package adding Snowflake Cortex support for LLM App evaluation."
 optional = false
 python-versions = "^3.9,<3.13"
@@ -10957,8 +10957,8 @@ packaging = ">=23.0"
 snowflake-connector-python = "^3.11"
 snowflake-ml-python = "^1.7.2"
 snowflake-snowpark-python = "^1.18.0"
-trulens-core = "^1.0.0"
-trulens-feedback = "^1.0.0"
+trulens-core = "^2.0.0"
+trulens-feedback = "^2.0.0"
 
 [package.source]
 type = "directory"
@@ -10966,7 +10966,7 @@ url = "src/providers/cortex"
 
 [[package]]
 name = "trulens-providers-huggingface"
-version = "1.5.2"
+version = "2.0.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10980,8 +10980,8 @@ numpy = ">=1.23.0"
 requests = "^2.31"
 torch = "^2.1.2"
 transformers = "^4.38.1"
-trulens-core = "^1.0.0"
-trulens-feedback = "^1.0.0"
+trulens-core = "^2.0.0"
+trulens-feedback = "^2.0.0"
 
 [package.source]
 type = "directory"
@@ -10989,7 +10989,7 @@ url = "src/providers/huggingface"
 
 [[package]]
 name = "trulens-providers-langchain"
-version = "1.5.2"
+version = "2.0.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10999,8 +10999,8 @@ develop = true
 
 [package.dependencies]
 langchain-core = ">=0.2.0"
-trulens-core = "^1.0.0"
-trulens-feedback = "^1.0.0"
+trulens-core = "^2.0.0"
+trulens-feedback = "^2.0.0"
 
 [package.source]
 type = "directory"
@@ -11008,7 +11008,7 @@ url = "src/providers/langchain"
 
 [[package]]
 name = "trulens-providers-litellm"
-version = "1.5.2"
+version = "2.0.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -11018,8 +11018,8 @@ develop = true
 
 [package.dependencies]
 litellm = "^1.25"
-trulens-core = "^1.0.0"
-trulens-feedback = "^1.0.0"
+trulens-core = "^2.0.0"
+trulens-feedback = "^2.0.0"
 
 [package.source]
 type = "directory"
@@ -11027,7 +11027,7 @@ url = "src/providers/litellm"
 
 [[package]]
 name = "trulens-providers-openai"
-version = "1.5.2"
+version = "2.0.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -11038,8 +11038,8 @@ develop = true
 [package.dependencies]
 langchain-community = ">=0.0.20"
 openai = ">=1.52.1"
-trulens-core = "^1.0.0"
-trulens-feedback = "^1.0.0"
+trulens-core = "^2.0.0"
+trulens-feedback = "^2.0.0"
 
 [package.source]
 type = "directory"
@@ -12032,4 +12032,4 @@ reference = "pypi-public"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.9,!=3.9.7"
-content-hash = "b0c51804c2a065491a87bc3866eac42ca52862c1fb79bf5519db10b2331469e7"
+content-hash = "c3b40e79783029d9f779281dff31c4ff1381e35e7eaa74e830f7eeddab777f8f"
