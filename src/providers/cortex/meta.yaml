@@ -28,7 +28,7 @@ requirements:
   run:
     - python >=3.9,<3.13
     - trulens-core >=2.0.0,<3.0.0
-    - trulens-feedback >=2.0.0,<2.0.0
+    - trulens-feedback >=2.0.0,<3.0.0
     - trulens-otel-semconv >=2.0.0,<3.0.0
     - packaging >=23.0
     - snowflake-connector-python >=3.11.0,<4.0.0
