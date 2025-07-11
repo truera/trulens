@@ -2303,6 +2303,7 @@ class LLMProvider(core_provider.Provider):
     # NOTE: Add user goal to the step relevance feedback (either extract manually from trace, or prompt LLM judge to extract and synthesize)
     def trajectory_step_relevance_with_cot_reasons(
         self,
+        # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
         trace: Union[Trace, str],
         criteria: Optional[str] = None,
         examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
@@ -2378,6 +2379,7 @@ class LLMProvider(core_provider.Provider):
 
     def trajectory_logical_consistency_with_cot_reasons(
         self,
+        # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
         trace: Union[Trace, str],
         criteria: Optional[str] = None,
         examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
@@ -2455,6 +2457,7 @@ class LLMProvider(core_provider.Provider):
 
     def trajectory_workflow_efficiency_with_cot_reasons(
         self,
+        # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
         trace: Union[Trace, str],
         criteria: Optional[str] = None,
         examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
