@@ -1,7 +1,7 @@
 from concurrent.futures import as_completed
 import logging
 import re
-from typing import ClassVar, Dict, List, Optional, Sequence, Tuple, Type
+from typing import ClassVar, Dict, List, Optional, Sequence, Tuple, Type, Union
 import warnings
 
 import nltk
@@ -2302,7 +2302,7 @@ class LLMProvider(core_provider.Provider):
 
     def trajectory_step_relevance_with_cot_reasons(
         self,
-        trace: Trace,
+        trace: Union[Trace, str],
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -2335,7 +2335,14 @@ class LLMProvider(core_provider.Provider):
         system_prompt = (
             feedback_prompts.TRAJECTORY_EVAL_STEP_RELEVANCE_SYSTEM_PROMPT
         )
-        user_prompt = f"""Please score the execution trace. Execution Trace: {trace.events.to_json()}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
+
+        if isinstance(trace, Trace):
+            user_prompt = f"""Please score the execution trace. Execution Trace: {trace.events.to_json()}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
+        elif isinstance(trace, str):
+            user_prompt = f"""Please score the execution trace. Execution Trace: {trace}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
+        else:
+            raise ValueError("Invalid trace type")
+
         return self.generate_score_and_reasons(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
@@ -2346,7 +2353,7 @@ class LLMProvider(core_provider.Provider):
 
     def trajectory_logical_consistency_with_cot_reasons(
         self,
-        trace: Trace,
+        trace: Union[Trace, str],
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -2379,7 +2386,14 @@ class LLMProvider(core_provider.Provider):
         system_prompt = (
             feedback_prompts.TRAJECTORY_EVAL_LOGICAL_CONSISTENCY_SYSTEM_PROMPT
         )
-        user_prompt = f"""Please score the execution trace. Execution Trace: {trace}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
+
+        if isinstance(trace, Trace):
+            user_prompt = f"""Please score the execution trace. Execution Trace: {trace.events.to_json()}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
+        elif isinstance(trace, str):
+            user_prompt = f"""Please score the execution trace. Execution Trace: {trace}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
+        else:
+            raise ValueError("Invalid trace type")
+
         return self.generate_score_and_reasons(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
@@ -2390,7 +2404,7 @@ class LLMProvider(core_provider.Provider):
 
     def trajectory_workflow_efficiency_with_cot_reasons(
         self,
-        trace: Trace,
+        trace: Union[Trace, str],
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -2423,7 +2437,14 @@ class LLMProvider(core_provider.Provider):
         system_prompt = (
             feedback_prompts.TRAJECTORY_EVAL_WORKFLOW_EFFICIENCY_SYSTEM_PROMPT
         )
-        user_prompt = f"""Please score the execution trace. Execution Trace: {trace}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
+
+        if isinstance(trace, Trace):
+            user_prompt = f"""Please score the execution trace. Execution Trace: {trace.events.to_json()}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
+        elif isinstance(trace, str):
+            user_prompt = f"""Please score the execution trace. Execution Trace: {trace}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
+        else:
+            raise ValueError("Invalid trace type")
+
         return self.generate_score_and_reasons(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
