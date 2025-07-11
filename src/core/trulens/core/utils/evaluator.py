@@ -123,6 +123,7 @@ class Evaluator:
         record_ids: Optional[List[str]] = None,
         in_evaluator_thread: bool = True,
     ) -> None:
+        new_processed_time = datetime.datetime.now()
         with self._compute_feedbacks_lock:
             record_id_to_events = self._get_record_id_to_unprocessed_events(
                 record_ids,
@@ -143,7 +144,7 @@ class Evaluator:
                     TruSession().force_flush()
                 if in_evaluator_thread and self._stop_event.is_set():
                     break
-        self._processed_time = datetime.datetime.now() - _PROCESSED_TIME_DELTA
+        self._processed_time = new_processed_time - _PROCESSED_TIME_DELTA
 
     def _run_evaluator(self) -> None:
         """Background thread that periodically computes feedback for events."""
