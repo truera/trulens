@@ -1,0 +1,49 @@
+{% set name = "trulens-apps-langgraph" %}
+{% set pyname = name.replace('-', '.') %}
+{% set version = "1.5.2" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  # Use local path for development builds
+  path: .
+  # For PyPI builds, uncomment the lines below and comment out the path line above
+  # url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
+  # sha256: TODO-REPLACE-WITH-ACTUAL-SHA256
+
+build:
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  number: 0
+
+requirements:
+  host:
+    - python >=3.9
+    - poetry-core <2.0.0
+    - pip
+  run:
+    - python >=3.9,<3.13
+    # Dependencies available in conda-forge
+    - langgraph >=0.4.0
+    - langchain-core >=0.2.0
+    - pydantic >=2.4.2
+    # Note: trulens-core and trulens-apps-langchain need to be installed separately
+    # via pip as they are not available in conda channels yet:
+    # pip install trulens-core trulens-apps-langchain
+
+test:
+  # Skip all tests since trulens-core and trulens-apps-langchain are not available in conda channels
+  # These dependencies need to be installed separately via pip for the package to work
+  commands:
+    - echo "Tests skipped - install trulens-core and trulens-apps-langchain via pip for full functionality"
+
+about:
+  home: https://trulens.org/
+  summary: Library to systematically track and evaluate LangGraph based applications.
+  license: MIT
+
+extra:
+  recipe-maintainers:
+    - sfc-gh-dhuang

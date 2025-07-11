@@ -12,6 +12,9 @@ REQUIREMENT_APPS_LLAMA = import_utils.format_import_errors(
 REQUIREMENT_APPS_LANGCHAIN = import_utils.format_import_errors(
     "trulens-apps-langchain", purpose="instrumenting LangChain apps"
 )
+REQUIREMENT_APPS_LANGGRAPH = import_utils.format_import_errors(
+    "trulens-apps-langgraph", purpose="instrumenting LangGraph apps"
+)
 REQUIREMENT_APPS_NEMO = import_utils.format_import_errors(
     "trulens-apps-nemo", purpose="instrumenting NeMo Guardrails apps"
 )
