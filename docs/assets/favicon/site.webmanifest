@@ -1,6 +1,6 @@
 {
-    "name": "TrueLens",
-    "short_name": "TrueLens",
+    "name": "TruLens",
+    "short_name": "TruLens",
     "icons": [
         {
             "src": "/android-chrome-192x192.png",
