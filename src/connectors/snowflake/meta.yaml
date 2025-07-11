@@ -28,6 +28,7 @@ requirements:
   run:
     - python >=3.9,<3.13
     - trulens-core >=2.0.0,<3.0.0
+    - trulens-otel-semconv >=2.0.0,<3.0.0
     - snowflake-snowpark-python >=1.18.0,<2.0.0
     - snowflake-sqlalchemy >=1.6.0,<2.0.0
 
