@@ -1683,9 +1683,7 @@ class SQLAlchemyDB(core_db.DB):
                 )
                 where_clauses.append(record_id_expr.in_(record_ids))
             if start_time is not None:
-                where_clauses.append(
-                    self.orm.Event.start_timestamp >= start_time
-                )
+                where_clauses.append(self.orm.Event.timestamp >= start_time)
 
             if len(where_clauses) == 0:
                 q = sa.select(self.orm.Event)

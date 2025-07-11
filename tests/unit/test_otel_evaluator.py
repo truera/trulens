@@ -147,7 +147,8 @@ class TestOtelEvaluator(OtelTestCase):
         mock_app.connector.get_events.return_value = test_events
         # Get unprocessed events.
         record_id_to_events = evaluator._get_record_id_to_unprocessed_events(
-            record_ids=["test_record_id"]
+            record_ids=["test_record_id"],
+            start_time=None,
         )
         self.assertIn("test_record_id", record_id_to_events)
         pd.testing.assert_frame_equal(
