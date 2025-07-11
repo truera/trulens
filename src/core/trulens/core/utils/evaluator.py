@@ -18,6 +18,13 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# When computing feedbacks, we only consider events that ended after a certain
+# time so that we don't have to routinely scan all the events. Unfortunately,
+# the event table doesn't have any timestamp for when a row was added so we use
+# the "TIMESTAMP" column which is when the span/event ended.
+# This is still problematic because a span can end and then take a while to be
+# ingested into the event table. To get around this, we subtract a time delta
+# from the last processed time to allow for some leeway.
 _PROCESSED_TIME_DELTA = datetime.timedelta(hours=1)
 
 
@@ -125,6 +132,12 @@ class Evaluator:
     ) -> None:
         new_processed_time = datetime.datetime.now()
         with self._compute_feedbacks_lock:
+            if self._processed_time is None:
+                logger.info("Processing all events.")
+            else:
+                logger.info(
+                    f"Processing all events from {self._processed_time}"
+                )
             record_id_to_events = self._get_record_id_to_unprocessed_events(
                 record_ids,
                 self._processed_time,
