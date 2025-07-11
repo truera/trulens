@@ -7,13 +7,13 @@ package:
   version: {{ version }}
 
 source:
-  # {% if environ.get('CONDA_SOURCE_USE_PATH') == '1' %}
+  {% if environ.get('CONDA_SOURCE_USE_PATH') == '1' %}
   path: ./
-  # {% else %}
-  # url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
-  # # Get SHA256 from https://pypi.org/project/trulens-dashboard/#files
-  # sha256: c29e536ae6a26808fb3d902237f21240abc16371f95b6612d95fa12ca5e2930a
-  # {% endif %}
+  {% else %}
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
+  # Get SHA256 from https://pypi.org/project/trulens-dashboard/#files
+  sha256: c29e536ae6a26808fb3d902237f21240abc16371f95b6612d95fa12ca5e2930a
+  {% endif %}
 
 build:
   noarch: python
@@ -27,7 +27,7 @@ requirements:
     - pip
   run:
     - python >=3.9,<3.13
-    - trulens-core >=1.0.0,<3.0.0
+    - trulens-core >=2.0.0,<3.0.0
     - ipywidgets >=7.1.2
     - jupyter >=1.0.0,<2.0.0
     - pandas >=1.0.0
