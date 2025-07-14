@@ -157,7 +157,8 @@ class Evaluator:
                     TruSession().force_flush()
                 if in_evaluator_thread and self._stop_event.is_set():
                     break
-        self._processed_time = new_processed_time - _PROCESSED_TIME_DELTA
+        if not record_ids:
+            self._processed_time = new_processed_time - _PROCESSED_TIME_DELTA
 
     def _run_evaluator(self) -> None:
         """Background thread that periodically computes feedback for events."""

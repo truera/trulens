@@ -573,7 +573,8 @@ class App(
 
         if self.feedback_mode == feedback_schema.FeedbackMode.WITH_APP_THREAD:
             if is_otel_tracing_enabled():
-                self.start_evaluator()
+                if kwargs.get("start_evaluator", True):
+                    self.start_evaluator()
             else:
                 self._start_manage_pending_feedback_results()
 
