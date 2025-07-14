@@ -1164,11 +1164,11 @@ class TrajectoryLogicalConsistency(
     criteria_template: ClassVar[str] = """
     Score the logical consistency of the trajectory steps. Be strict with your evaluation.
 
-    {max_score}: Every action and transition in the workflow is logically justified in context and follows from previous steps. There are no contradictory, circular, or unjustified leaps. All implicit assumptions are reasonable and made explicit if needed. Uncertainty, risk, or alternative approaches are properly addressed when applicable.
+    {max_score}: Every action and transition in the workflow is logically justified in context and follows from previous steps. There are no contradictory, circular, or unjustified leaps. All implicit assumptions are reasonable and made explicit if needed. Uncertainty, risk, or alternative approaches are properly addressed when applicable. All stated facts are accurate and consistent with the given context or general knowledge.
 
-    Middle scores: Some lapses in logic, questionable assumptions, minor gaps in explanation, or occasional contradictory transitions. These may include flawed or unsupported rationales, but the overall logical sequence maintains some coherence and is not entirely arbitrary.
+    Middle scores: Some lapses in logic, questionable assumptions, minor gaps in explanation, or occasional contradictory transitions. These may include flawed or unsupported rationales, but the overall logical sequence maintains some coherence and is not entirely arbitrary. There are some factual inaccuracies that may impede understanding or lead to questionable conclusions, though the overall logical flow is still understandable.
 
-    {min_score}: The chain of logic is frequently broken, with major contradictions, missing or invalid assumptions, or arbitrary transitions. Little or no coherent line of reasoning can be reconstructed.
+    {min_score}: The chain of logic is frequently broken, with major contradictions, missing or invalid assumptions, or arbitrary transitions. Little or no coherent line of reasoning can be reconstructed. Significant factual errors, or completely invalid assumptions about the external context, lead to completely flawed reasoning.
     """
 
     system_prompt_template: ClassVar[str] = cleandoc(
