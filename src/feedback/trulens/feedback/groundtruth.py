@@ -1020,9 +1020,16 @@ class GroundTruthAggregator(
         Returns:
             float: Brier score
         """
+        # Brier score is mathematically undefined for empty inputs (division by zero).
+        # Return np.nan to accurately represent this undefined state rather than 0.0
+        # which would falsely suggest "perfect calibration" with no predictions.
+        if not scores:
+            return np.nan
+
         if isinstance(scores[0], List):
             scores = [score for score, _ in scores]
         assert len(scores) == len(self.true_labels)
+
         brier_score = 0
 
         for score, truth in zip(scores, self.true_labels):
