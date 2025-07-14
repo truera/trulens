@@ -1225,7 +1225,7 @@ files = [
 
 [[package]]
 name = "trulens-core"
-version = "1.5.2"
+version = "2.0.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -1250,7 +1250,7 @@ python-dotenv = ">=0.21,<2.0"
 requests = "^2.31"
 rich = "^13.6.0"
 sqlalchemy = "^2.0"
-trulens-otel-semconv = "^1.4.9"
+trulens-otel-semconv = "^2.0.0"
 typing_extensions = "^4.9"
 wrapt = ">=1.17.0"
 
@@ -1260,14 +1260,14 @@ url = "../core"
 
 [[package]]
 name = "trulens-otel-semconv"
-version = "1.5.1"
+version = "2.0.0"
 description = "Semantic conventions for spans produced by TruLens."
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main", "dev"]
 files = [
-    {file = "trulens_otel_semconv-1.5.1-py3-none-any.whl", hash = "sha256:be667bb9729bb3d830491b0b0dbac9317cb27796e6b9534fa1e21774b4bfd3f9"},
-    {file = "trulens_otel_semconv-1.5.1.tar.gz", hash = "sha256:fd59986d63c4b42e24f95cf38426f0ae4fa76ca2e2a98a9c6fc3bbe4e28d6dbf"},
+    {file = "trulens_otel_semconv-2.0.0-py3-none-any.whl", hash = "sha256:03d8d23c05c6be4e88bef7bbc78ffa60bdf5b80d6d03c8e2d07274d42159a16b"},
+    {file = "trulens_otel_semconv-2.0.0.tar.gz", hash = "sha256:1c30955bbb2a93112fa4bb3f0646256a5fc857863add17d0ffaaf63f874d6dbe"},
 ]
 
 [package.dependencies]
@@ -1442,4 +1442,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.9"
-content-hash = "161e71edc61497e4a3479b07c9e5f6491553cb998c2afbe63b800166ff2f6a7b"
+content-hash = "d25e8034f5449fd4378ad53ee194ed4ebeb6e9844bf4184cd69d795523df267e"
