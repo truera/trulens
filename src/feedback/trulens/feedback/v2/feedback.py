@@ -1,3 +1,8 @@
+"""
+PROVIDER IMPLEMENTATION TEMPLATES: Class-based feedback definitions with prompts and criteria.
+Used by feedback providers to generate system/user prompts for LLM evaluation calls.
+"""
+
 from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
@@ -1095,4 +1100,155 @@ class Comprehensiveness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         {summary}
         /END OF SUMMARY/
         """
+    )
+
+
+class TrajectoryStepRelevance(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
+    """
+    Evaluates the relevance of each step in a trajectory to the user's goal.
+    """
+
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+    criteria_template: ClassVar[str] = """
+    Score the relevance of each step in the trajectory to the user's goal. Be strict with your evaluation.
+
+    {max_score}: Each step is essential towards directly advancing or clearly enabling the goal. Setup, verification, and exploration (if present) are justified in relation to the goal's completion. No actions that are unrelated to the stated goal are present.
+
+    Middle scores: Some steps have weak, tangential, or ambiguous links to the user's goal, but may not significantly distract from goal completion. Most goal-critical steps are present, though there may be some detours or less relevant actions mixed in.
+
+    {min_score}: The majority of steps are not necessary for the user's goal, or critical goal-essential steps are absent. The process lacks clear orientation to the stated goal.
+    """
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """You are a TRAJECTORY STEP RELEVANCE evaluator; providing a score for how relevant each step in the trajectory is to the user's goal.
+        Respond only as a number from {output_space_prompt}.
+
+        Evaluation criteria:
+        {criteria}
+
+        Be strict with your evaluation and focus on whether each step directly contributes to achieving the stated goal.
+
+        Never elaborate.
+        """
+    )
+
+    user_prompt: ClassVar[str] = cleandoc(
+        """TRAJECTORY STEPS: {trajectory}
+
+        STEP RELEVANCE SCORE:
+        """
+    )
+
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
+    )
+
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt, criteria=criteria
+        )
+    )
+
+
+class TrajectoryLogicalConsistency(
+    Semantics, WithPrompt, CriteriaOutputSpaceMixin
+):
+    """
+    Evaluates the logical consistency of trajectory steps.
+    """
+
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+    criteria_template: ClassVar[str] = """
+    Score the logical consistency of the trajectory steps. Be strict with your evaluation.
+
+    {max_score}: Every action and transition in the workflow is logically justified in context and follows from previous steps. There are no contradictory, circular, or unjustified leaps. All implicit assumptions are reasonable and made explicit if needed. Uncertainty, risk, or alternative approaches are properly addressed when applicable. All stated facts are accurate and consistent with the given context or general knowledge.
+
+    Middle scores: Some lapses in logic, questionable assumptions, minor gaps in explanation, or occasional contradictory transitions. These may include flawed or unsupported rationales, but the overall logical sequence maintains some coherence and is not entirely arbitrary. There are some factual inaccuracies that may impede understanding or lead to questionable conclusions, though the overall logical flow is still understandable.
+
+    {min_score}: The chain of logic is frequently broken, with major contradictions, missing or invalid assumptions, or arbitrary transitions. Little or no coherent line of reasoning can be reconstructed. Significant factual errors, or completely invalid assumptions about the external context, lead to completely flawed reasoning.
+    """
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """You are a TRAJECTORY LOGICAL CONSISTENCY evaluator; providing a score for the logical consistency and flow of trajectory steps.
+        Respond only as a number from {output_space_prompt}.
+
+        Evaluation criteria:
+        {criteria}
+
+        Be strict with your evaluation and focus on the logical flow, consistency, and justification of each step and transition.
+
+        Never elaborate.
+        """
+    )
+
+    user_prompt: ClassVar[str] = cleandoc(
+        """TRAJECTORY STEPS: {trajectory}
+
+        LOGICAL CONSISTENCY SCORE:
+        """
+    )
+
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
+    )
+
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt, criteria=criteria
+        )
+    )
+
+
+class TrajectoryWorkflowEfficiency(
+    Semantics, WithPrompt, CriteriaOutputSpaceMixin
+):
+    """
+    Evaluates the efficiency of a workflow trajectory.
+    """
+
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+    criteria_template: ClassVar[str] = """
+    Score the efficiency of the workflow. Be strict with your evaluation.
+
+    {max_score}: All relevant actions are executed exactly once, in a streamlined and optimized sequence. There is no unnecessary busywork, overthinking, repetition, backtracking, parallelism/serialization, or wasted computation/resources. Error handling is appropriately lean and resolves as quickly as possible.
+
+    Middle scores: Some instances of workflow inefficiency such as redundant actions, non-ideal ordering of steps, excessive error handling, missed opportunities for consolidation, repeated operations, or unnecessary resource use. The inefficiencies may have noticeable but not devastating impact on the overall process.
+
+    {min_score}: Workflow is highly inefficient: dominated by loops, duplicated efforts, poorly ordered sequence, or significant wasted computation that break progress.
+    """
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """You are a TRAJECTORY WORKFLOW EFFICIENCY evaluator, and you must provide a score for how efficiently the workflow executes its steps.
+        Respond only as a number from {output_space_prompt}.
+
+        Evaluation criteria:
+        {criteria}
+
+        Be strict with your evaluation and focus on identifying redundancies, inefficiencies, and missed optimization opportunities.
+
+        Never elaborate.
+        """
+    )
+
+    user_prompt: ClassVar[str] = cleandoc(
+        """WORKFLOW TRAJECTORY: {trajectory}
+
+        WORKFLOW EFFICIENCY SCORE:
+        """
+    )
+
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
+    )
+
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt, criteria=criteria
+        )
     )
