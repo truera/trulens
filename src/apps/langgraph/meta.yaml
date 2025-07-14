@@ -7,11 +7,11 @@ package:
   version: {{ version }}
 
 source:
-  # Use local path for development builds
-  path: .
-  # For PyPI builds, uncomment the lines below and comment out the path line above
-  # url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
-  # sha256: TODO-REPLACE-WITH-ACTUAL-SHA256
+  # Replace url and sha256 with below line to test build locally with `conda build . -c https://conda.anaconda.org/sfe1ed40/``
+  # path: .
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
+  # Get SHA256 from https://pypi.org/project/trulens-apps-langgraph/#files
+  sha256: 00db8abcfa07fcba4c86e1720a1b115edb9732058c7bb994f54513bd95cfbd9d
 
 build:
   noarch: python
@@ -25,23 +25,24 @@ requirements:
     - pip
   run:
     - python >=3.9,<3.13
-    # Dependencies available in conda-forge
-    - langgraph >=0.4.0
+    - trulens-core >=1.0.0,<2.0.0
+    - langgraph >=0.5.2
     - langchain-core >=0.2.0
     - pydantic >=2.4.2
-    # Note: trulens-core and trulens-apps-langchain need to be installed separately
-    # via pip as they are not available in conda channels yet:
-    # pip install trulens-core trulens-apps-langchain
 
 test:
-  # Skip all tests since trulens-core and trulens-apps-langchain are not available in conda channels
-  # These dependencies need to be installed separately via pip for the package to work
+  imports:
+    - {{ pyname }}
   commands:
-    - echo "Tests skipped - install trulens-core and trulens-apps-langchain via pip for full functionality"
+    - pip check
+    - python -c 'import {{ pyname }}; assert {{ pyname }}.__version__ == "{{ version }}", "Installed version does not match expected version"'
+  requires:
+    - python >=3.9,<3.13
+    - pip
 
 about:
   home: https://trulens.org/
-  summary: Library to systematically track and evaluate LangGraph based applications.
+  summary: Library to systematically track and evaluate LLM based applications.
   license: MIT
 
 extra:
