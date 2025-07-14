@@ -304,6 +304,14 @@ def z_to_p_value(z: float) -> float:
 
 
 def utest_z(crank: float, poss: int, negs: int) -> float:
+    # Handle edge cases where Mann-Whitney U test is undefined
+    if poss == 0 or negs == 0:
+        # When feature occurs in ALL samples (negs=0) or NO samples (poss=0),
+        # there's no valid comparison group, making the test undefined.
+        # Return 0.0 as a practical default to ensure such features are
+        # deprioritized (p-value = 0.5) in hotspot ranking.
+        return 0.0
+
     minus_r = poss * (poss + 1.0) / 2.0
     mean = (poss * negs) / 2.0
     sigma = math.sqrt(poss * negs * (poss + negs + 1) / 12.0)
@@ -327,8 +335,11 @@ def get_feature_stat(
 
     return FeatureStats(
         p_value=z_to_p_value(z),
+        # Prevent division by zero: average of empty list is undefined
         average_score=sum((scores[idx] for idx in occurrences), 0.0)
-        / num_occurrences,
+        / num_occurrences
+        if num_occurrences > 0
+        else 0.0,
         num_occurrences=num_occurrences,
     )
 
@@ -412,6 +423,13 @@ def initial_round(
 
 
 def delta(num_total: int, average_score: float, stats: FeatureStats) -> float:
+    # Handle degenerate case where feature appears in ALL samples
+    if num_total == stats.num_occurrences:
+        # Mathematically undefined: no "without feature" group exists for comparison.
+        # Return 0.0 to indicate no discriminating power (not a useful hotspot).
+        # This prevents division by zero in: (total_score - total_poss) / 0
+        return 0.0
+
     total_score = num_total * average_score
     total_poss = stats.num_occurrences * stats.average_score
 
@@ -425,6 +443,13 @@ def delta(num_total: int, average_score: float, stats: FeatureStats) -> float:
 def opportunity(
     num_total: int, average_score: float, stats: FeatureStats
 ) -> float:
+    # Handle degenerate case where feature appears in ALL samples
+    if num_total == stats.num_occurrences:
+        # Mathematically undefined: no "without feature" group exists for comparison.
+        # Return 0.0 to indicate no improvement opportunity.
+        # This prevents division by zero in: (total_score - total_poss) / 0
+        return 0.0
+
     total_score = num_total * average_score
     total_poss = stats.num_occurrences * stats.average_score
 
