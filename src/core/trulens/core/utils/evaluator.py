@@ -18,6 +18,15 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# When computing feedbacks, we only consider events that ended after a certain
+# time so that we don't have to routinely scan all the events. Unfortunately,
+# the event table doesn't have any timestamp for when a row was added so we use
+# the "TIMESTAMP" column which is when the span/event ended.
+# This is still problematic because a span can end and then take a while to be
+# ingested into the event table. To get around this, we subtract a time delta
+# from the last processed time to allow for some leeway.
+_PROCESSED_TIME_DELTA = datetime.timedelta(hours=1)
+
 
 class Evaluator:
     def __init__(self, app: App):
@@ -28,7 +37,7 @@ class Evaluator:
         self._stop_event = threading.Event()
         self._compute_feedbacks_lock = threading.Lock()
         self._record_id_to_event_count = pd.Series(dtype=int)
-        self._start_time = datetime.datetime.now()
+        self._processed_time = None
 
     def _events_under_record_root(self, events: pd.DataFrame) -> pd.DataFrame:
         """
@@ -71,7 +80,9 @@ class Evaluator:
         return pd.DataFrame(ret)
 
     def _get_record_id_to_unprocessed_events(
-        self, record_ids: Optional[List[str]]
+        self,
+        record_ids: Optional[List[str]],
+        start_time: Optional[datetime.datetime],
     ) -> Dict[str, pd.DataFrame]:
         """
         Get events for the app that weren't yet used for feedback computation.
@@ -89,7 +100,7 @@ class Evaluator:
             app_name=self._app_ref().app_name,
             app_version=self._app_ref().app_version,
             record_ids=record_ids,
-            start_time=self._start_time,
+            start_time=start_time,
         )
         if events is None or len(events) == 0:
             return {}
@@ -119,9 +130,17 @@ class Evaluator:
         record_ids: Optional[List[str]] = None,
         in_evaluator_thread: bool = True,
     ) -> None:
+        new_processed_time = datetime.datetime.now()
         with self._compute_feedbacks_lock:
+            if self._processed_time is None:
+                logger.info("Processing all events.")
+            else:
+                logger.info(
+                    f"Processing all events from {self._processed_time}"
+                )
             record_id_to_events = self._get_record_id_to_unprocessed_events(
-                record_ids
+                record_ids,
+                self._processed_time,
             )
             for record_id, events in record_id_to_events.items():
                 try:
@@ -138,6 +157,7 @@ class Evaluator:
                     TruSession().force_flush()
                 if in_evaluator_thread and self._stop_event.is_set():
                     break
+        self._processed_time = new_processed_time - _PROCESSED_TIME_DELTA
 
     def _run_evaluator(self) -> None:
         """Background thread that periodically computes feedback for events."""
