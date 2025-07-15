@@ -1,8 +1,11 @@
+import pandas as pd
 import pytest
 from trulens.apps.app import TruApp
 from trulens.core.feedback import Feedback
 from trulens.core.feedback.selector import Selector
 from trulens.core.otel.instrument import instrument
+from trulens.core.session import TruSession
+from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.otel_test_case import OtelTestCase
 
@@ -19,7 +22,7 @@ except Exception:
 
 @pytest.mark.optional
 class TestOtelInlineEvaluations(OtelTestCase):
-    def test_smoke(self) -> None:
+    def _create_and_invoke_simple_app(self, emit_spans: bool) -> pd.DataFrame:
         # Create feedback function.
         def simple_feedback(text: str) -> float:
             if text == "Kojikun":
@@ -31,7 +34,7 @@ class TestOtelInlineEvaluations(OtelTestCase):
         })
 
         # Create a simple langgraph app.
-        @inline_evaluation(feedback_func)
+        @inline_evaluation(feedback_func, emit_spans=emit_spans)
         @instrument(
             attributes=lambda ret, exception, *args, **kwargs: {
                 "test_output": "Kojikun"
@@ -53,10 +56,41 @@ class TestOtelInlineEvaluations(OtelTestCase):
         initial_state = MessagesState(messages=["Nolan"])
         with tru_app:
             result = graph.invoke(initial_state)
+        TruSession().force_flush()
 
         # Ensure that when calling the app, the state is updated with the
-        # feedback result
+        # feedback result.
         self.assertListEqual(
             ["Nolan", "Sachiboy", "0.42"],
             [curr.content for curr in result["messages"]],
+        )
+
+        return self._get_events()
+
+    def test_unemitted_spans(self) -> None:
+        events = self._create_and_invoke_simple_app(emit_spans=False)
+        self.assertListEqual(
+            [SpanAttributes.SpanType.RECORD_ROOT],
+            [
+                curr[SpanAttributes.SPAN_TYPE]
+                for curr in events["record_attributes"]
+            ],
+        )
+
+    def test_emitted_spans(self) -> None:
+        events = self._create_and_invoke_simple_app(emit_spans=True)
+        self.assertListEqual(
+            [
+                SpanAttributes.SpanType.RECORD_ROOT,
+                SpanAttributes.SpanType.EVAL_ROOT,
+                SpanAttributes.SpanType.EVAL,
+            ],
+            [
+                curr[SpanAttributes.SPAN_TYPE]
+                for curr in events["record_attributes"]
+            ],
+        )
+        self.assertEqual(
+            0.42,
+            events.iloc[1]["record_attributes"][SpanAttributes.EVAL_ROOT.SCORE],
         )

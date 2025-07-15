@@ -4,13 +4,16 @@ from typing import Any, Callable
 from langchain_core.messages import SystemMessage
 from opentelemetry.trace.span import Span
 from trulens.core.feedback import Feedback
+from trulens.feedback.computer import _call_feedback_function
 from trulens.otel.semconv.constants import TRULENS_SPAN_END_CALLBACKS
+from trulens.otel.semconv.trace import SpanAttributes
 import wrapt
 
 
 class inline_evaluation:
-    def __init__(self, feedback: Feedback) -> None:
+    def __init__(self, feedback: Feedback, emit_spans: bool = True) -> None:
         self._feedback = feedback
+        self._emit_spans = emit_spans
 
     def __call__(self, func: Callable) -> Callable:
         @wrapt.decorator
@@ -23,6 +26,7 @@ class inline_evaluation:
                 span_name = getattr(span, "name", None)
 
                 # Try to extract feedback arguments from this span
+                feedback_function_inputs = {}
                 feedback_args = {}
                 for arg_name, selector in self._feedback.selectors.items():
                     if selector.matches_span(span_name, span_attributes):
@@ -34,6 +38,7 @@ class inline_evaluation:
                             feedback_input.value is not None
                             or not selector.ignore_none_values
                         ):
+                            feedback_function_inputs[arg_name] = feedback_input
                             feedback_args[arg_name] = feedback_input.value
                         else:
                             raise ValueError(
@@ -45,8 +50,35 @@ class inline_evaluation:
                             f"{span_name} with attributes {span_attributes}"
                         )
 
-                # Call the feedback function properly
-                feedback_result = self._feedback.imp(**feedback_args)
+                if self._emit_spans:
+                    # Get necessary attributes from the original span.
+                    app_name = span_attributes.get(SpanAttributes.RUN_NAME, "")
+                    app_version = span_attributes.get("app_version", "")
+                    app_id = span_attributes.get("app_id", "")
+                    run_name = span_attributes.get(SpanAttributes.RUN_NAME, "")
+                    input_id = span_attributes.get(SpanAttributes.INPUT_ID, "")
+                    target_record_id = span_attributes.get(
+                        SpanAttributes.RECORD_ID, ""
+                    )
+                    feedback_result = _call_feedback_function(
+                        self._feedback.name,
+                        self._feedback.imp,
+                        self._feedback.higher_is_better,
+                        self._feedback.aggregator,
+                        feedback_function_inputs,
+                        app_name,
+                        app_version,
+                        app_id,
+                        run_name,
+                        input_id,
+                        target_record_id,
+                        None,
+                    )
+                else:
+                    # Call the feedback function without creating spans
+                    feedback_result = self._feedback.imp(**feedback_args)
+
+                # Add feedback result to state messages
                 state = self._get_state_arg(func, instance, args, kwargs)
                 state["messages"].append(SystemMessage(str(feedback_result)))
 
