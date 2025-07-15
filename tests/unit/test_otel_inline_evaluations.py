@@ -1,16 +1,20 @@
-from langchain_core.messages import AIMessage
-from langgraph.graph import END
-from langgraph.graph import START
-from langgraph.graph import MessagesState
-from langgraph.graph import StateGraph
 import pytest
 from trulens.apps.app import TruApp
-from trulens.apps.langgraph.inline_evaluations import inline_evaluation
 from trulens.core.feedback import Feedback
 from trulens.core.feedback.selector import Selector
 from trulens.core.otel.instrument import instrument
 
 from tests.util.otel_test_case import OtelTestCase
+
+try:
+    from langchain_core.messages import AIMessage
+    from langgraph.graph import END
+    from langgraph.graph import START
+    from langgraph.graph import MessagesState
+    from langgraph.graph import StateGraph
+    from trulens.apps.langgraph.inline_evaluations import inline_evaluation
+except Exception:
+    pass
 
 
 @pytest.mark.optional
