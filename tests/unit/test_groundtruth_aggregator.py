@@ -620,7 +620,7 @@ class TestGroundTruthAggregator(TestCase):
     def test_real_world_dataset_sizes(self):
         """Test with realistic dataset sizes used in production."""
         # Use fixed seed for reproducibility
-        with mock.patch("numpy.random.seed") as mock_seed:
+        with mock.patch("numpy.random.seed"):
             np.random.seed(42)  # Set seed for this test only
 
             # Large balanced dataset (common in benchmarking)
@@ -708,7 +708,7 @@ class TestGroundTruthAggregator(TestCase):
     def test_noisy_real_world_data(self):
         """Test with noisy data that reflects real-world conditions."""
         # Use fixed seed for reproducibility
-        with mock.patch("numpy.random.seed") as mock_seed:
+        with mock.patch("numpy.random.seed"):
             np.random.seed(42)  # Set seed for this test only
 
             # Simulate noisy labels (some annotation errors)
@@ -995,7 +995,7 @@ class TestGroundTruthAggregator(TestCase):
         large_size = 10000
 
         # Use fixed seed for reproducibility
-        with mock.patch("numpy.random.seed") as mock_seed:
+        with mock.patch("numpy.random.seed"):
             np.random.seed(42)  # Set seed for this test only
 
             # Create realistic ground truth and scores
