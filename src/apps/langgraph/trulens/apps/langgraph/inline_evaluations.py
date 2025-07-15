@@ -3,9 +3,7 @@ from typing import Any, Callable
 
 from opentelemetry.trace.span import Span
 from trulens.core.feedback import Feedback
-from trulens.otel.semconv.trulens.otel.semconv.constants import (
-    TRULENS_SPAN_END_CALLBACKS,
-)
+from trulens.otel.semconv.constants import TRULENS_SPAN_END_CALLBACKS
 import wrapt
 
 
@@ -42,8 +40,8 @@ class inline_evaluation:
                             )
                     else:
                         raise ValueError(
-                            f"Selector {selector} did not match span {span_name} "
-                            f"with attributes {span_attributes}"
+                            f"Selector {selector} did not match span "
+                            f"{span_name} with attributes {span_attributes}"
                         )
 
                 # Create an evaluation span as a child of the current span
@@ -68,7 +66,7 @@ class inline_evaluation:
 
         Args:
             func: The function to get the state argument from.
-            instance: The instance of the class that the function is
+            instance: The instance of the class that the function is called on.
             args: The positional arguments to the function.
             kwargs: The keyword arguments to the function.
 
