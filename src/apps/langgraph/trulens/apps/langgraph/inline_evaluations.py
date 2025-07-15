@@ -1,8 +1,11 @@
 import inspect
 from typing import Any, Callable
 
-from opentelemetry import trace
+from opentelemetry.trace.span import Span
 from trulens.core.feedback import Feedback
+from trulens.otel.semconv.trulens.otel.semconv.constants import (
+    TRULENS_SPAN_END_CALLBACKS,
+)
 import wrapt
 
 
@@ -13,28 +16,19 @@ class inline_evaluation:
     def __call__(self, func: Callable) -> Callable:
         @wrapt.decorator
         def wrapper(func, instance, args, kwargs):
-            # Execute the original function first
-            result = func(*args, **kwargs)
-
-            # Get the current span (should be the span created by the
-            # decorated function)
-            current_span = trace.get_current_span()
-
-            if current_span and current_span.is_recording():
+            def span_end_callback(span: Span) -> None:
                 # Get span attributes
                 span_attributes = (
-                    dict(current_span.attributes)
-                    if current_span.attributes
-                    else {}
+                    dict(span.attributes) if span.attributes else {}
                 )
-                span_name = getattr(current_span, "name", None)
+                span_name = getattr(span, "name", None)
 
                 # Try to extract feedback arguments from this span
                 feedback_args = {}
                 for arg_name, selector in self._feedback.selectors.items():
                     if selector.matches_span(span_name, span_attributes):
                         feedback_input = selector.process_span(
-                            str(current_span.get_span_context().span_id),
+                            str(span.get_span_context().span_id),
                             span_attributes,
                         )
                         if (
@@ -57,15 +51,20 @@ class inline_evaluation:
                 state = self._get_state_arg(func, instance, args, kwargs)
                 state.append(feedback_result)
 
-            return result
+            span_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
+            span_callbacks.append(span_end_callback)
+            kwargs[TRULENS_SPAN_END_CALLBACKS] = span_callbacks
+
+            # Execute the original function first
+            return func(*args, **kwargs)
 
         return wrapper
 
     @staticmethod
     def _get_state_arg(func, instance, args, kwargs) -> Any:
         """
-        Get the state argument from the function signature. This assumes
-        that it's the first non-instance parameter.
+        Get the state argument from the function signature. This assumes that
+        it's the first non-instance parameter.
 
         Args:
             func: The function to get the state argument from.
