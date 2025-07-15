@@ -335,7 +335,9 @@ def get_feature_stat(
 
     return FeatureStats(
         p_value=z_to_p_value(z),
-        # Prevent division by zero: average of empty list is undefined
+        # Prevent division by zero: average of empty list is mathematically undefined.
+        # Return 0.0 to represent "no signal" when feature has no occurrences.
+        # This maintains consistency with other edge case handling and prevents NaN propagation.
         average_score=sum((scores[idx] for idx in occurrences), 0.0)
         / num_occurrences
         if num_occurrences > 0
