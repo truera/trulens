@@ -215,7 +215,7 @@ class TestHotspots(TestCase):
         df = self._create_test_dataframe([0.1, np.nan, 0.3, np.nan, 0.5])
         config = HotspotsConfig(score_column="score")
 
-        modified_df, avg_score, features = hotspots(config, df)
+        modified_df, avg_score, _ = hotspots(config, df)
 
         # Should filter out NaN scores
         self.assertEqual(len(modified_df), 3)

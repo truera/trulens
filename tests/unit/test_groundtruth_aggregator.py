@@ -1,13 +1,13 @@
 """Tests for GroundTruthAggregator class."""
 
-import unittest
+from unittest import TestCase
 
 import numpy as np
 import pytest
 from trulens.feedback.groundtruth import GroundTruthAggregator
 
 
-class TestGroundTruthAggregator(unittest.TestCase):
+class TestGroundTruthAggregator(TestCase):
     """Tests for GroundTruthAggregator functionality."""
 
     def setUp(self):
