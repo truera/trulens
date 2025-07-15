@@ -68,9 +68,8 @@ def re_configured_rating(
     Raises:
         ParseError: If no integers/floats between 0 and 10 are found in the string.
     """
-    assert (
-        max_score_val > min_score_val
-    ), "Max score must be greater than min score."
+    if max_score_val <= min_score_val:
+        raise ValueError("Max score must be greater than min score.")
 
     matches = PATTERN_NUMBER.findall(s)
     if not matches:

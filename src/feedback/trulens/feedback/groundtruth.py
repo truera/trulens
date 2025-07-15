@@ -807,7 +807,7 @@ class GroundTruthAggregator(
         """
         if isinstance(scores[0], List):
             scores = [score for score, _ in scores]
-        tau, _p_value = stats.kendalltau(scores, self.true_labels).correlation
+        tau = stats.kendalltau(scores, self.true_labels).statistic
         # The two-sided p-value for a hypothesis test whose null hypothesis is an absence of association, tau = 0.
         # TODO: p_value is unused here
         return tau
