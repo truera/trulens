@@ -1,5 +1,6 @@
 """LangGraph app instrumentation."""
 
+import functools
 from inspect import BoundArguments
 from inspect import Signature
 import logging
@@ -123,6 +124,7 @@ class LangGraphInstrument(core_instruments.Instrument):
                         from trulens.core.otel.instrument import instrument
 
                         # Create a wrapper that extracts attributes using our heuristics
+                        @functools.wraps(func)
                         def trulens_wrapper(*args, **kwargs):
                             ret = None
                             exc = None
@@ -136,9 +138,18 @@ class LangGraphInstrument(core_instruments.Instrument):
                             finally:
                                 # Extract attributes using our heuristics
                                 try:
-                                    attributes = _extract_task_attributes(
-                                        func, ret, exc, *args, **kwargs
-                                    )
+                                    if exc is not None:
+                                        attributes = _extract_task_attributes(
+                                            func, ret, exc, *args, **kwargs
+                                        )
+                                    else:
+                                        attributes = _extract_task_attributes(
+                                            func,
+                                            ret,
+                                            Exception("No exception"),
+                                            *args,
+                                            **kwargs,
+                                        )
 
                                     logger.debug(
                                         f"Extracted @task attributes for {func.__name__}: {list(attributes.keys())}"
@@ -152,12 +163,6 @@ class LangGraphInstrument(core_instruments.Instrument):
                         instrumented_func = instrument(
                             span_type=f"TASK_{func.__name__.upper()}"
                         )(trulens_wrapper)
-
-                        # Preserve the original function's metadata
-                        instrumented_func.__name__ = func.__name__
-                        instrumented_func.__qualname__ = getattr(
-                            func, "__qualname__", func.__name__
-                        )
 
                         logger.debug(
                             f"Successfully instrumented @task function: {func.__name__}"
