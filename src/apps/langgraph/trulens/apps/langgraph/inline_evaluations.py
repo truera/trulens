@@ -1,6 +1,7 @@
 import inspect
 from typing import Any, Callable
 
+from langchain_core.messages import SystemMessage
 from opentelemetry.trace.span import Span
 from trulens.core.feedback import Feedback
 from trulens.otel.semconv.constants import TRULENS_SPAN_END_CALLBACKS
@@ -44,19 +45,20 @@ class inline_evaluation:
                             f"{span_name} with attributes {span_attributes}"
                         )
 
-                # Create an evaluation span as a child of the current span
+                # Call the feedback function properly
                 feedback_result = self._feedback.imp(**feedback_args)
                 state = self._get_state_arg(func, instance, args, kwargs)
-                state.append(feedback_result)
+                state["messages"].append(SystemMessage(str(feedback_result)))
 
-            span_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
+            kwargs_copy = kwargs.copy()
+            span_callbacks = kwargs_copy.pop(TRULENS_SPAN_END_CALLBACKS, [])
             span_callbacks.append(span_end_callback)
-            kwargs[TRULENS_SPAN_END_CALLBACKS] = span_callbacks
+            kwargs_copy[TRULENS_SPAN_END_CALLBACKS] = span_callbacks
 
             # Execute the original function first
-            return func(*args, **kwargs)
+            return func(*args, **kwargs_copy)
 
-        return wrapper
+        return wrapper(func)
 
     @staticmethod
     def _get_state_arg(func, instance, args, kwargs) -> Any:
