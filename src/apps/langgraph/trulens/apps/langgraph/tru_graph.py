@@ -23,23 +23,21 @@ from trulens.core.utils import pyschema as pyschema_utils
 
 logger = logging.getLogger(__name__)
 
+E = None
 # LangGraph imports with optional import handling
 try:
-    from langgraph.graph import CompiledStateGraph
     from langgraph.graph import StateGraph
-    from langgraph.graph.state import StateDefinition
     from langgraph.pregel import Pregel
     from langgraph.types import Command
 
     LANGGRAPH_AVAILABLE = True
-except ImportError:
+except ImportError as e:
     # Create mock classes when langgraph is not available
     StateGraph = type("StateGraph", (), {})
-    CompiledStateGraph = type("CompiledStateGraph", (), {})
     Pregel = type("Pregel", (), {})
     Command = type("Command", (), {})
-    StateDefinition = type("StateDefinition", (), {})
     LANGGRAPH_AVAILABLE = False
+    E = e
 
 try:
     from langgraph.func import task
@@ -61,7 +59,6 @@ class LangGraphInstrument(core_instruments.Instrument):
 
         CLASSES = (
             lambda: {
-                CompiledStateGraph,
                 Pregel,
                 StateGraph,
             }
@@ -73,12 +70,6 @@ class LangGraphInstrument(core_instruments.Instrument):
         # Instrument only methods with these names and of these classes.
         METHODS: List[InstrumentedMethod] = (
             [
-                InstrumentedMethod("invoke", CompiledStateGraph),
-                InstrumentedMethod("ainvoke", CompiledStateGraph),
-                InstrumentedMethod("stream", CompiledStateGraph),
-                InstrumentedMethod("astream", CompiledStateGraph),
-                InstrumentedMethod("stream_mode", CompiledStateGraph),
-                InstrumentedMethod("astream_mode", CompiledStateGraph),
                 InstrumentedMethod("invoke", Pregel),
                 InstrumentedMethod("ainvoke", Pregel),
                 InstrumentedMethod("stream", Pregel),
@@ -257,7 +248,7 @@ class TruGraph(TruChain):
             and [AppDefinition][trulens.core.schema.app.AppDefinition].
     """
 
-    app: Union[CompiledStateGraph, Pregel, StateGraph]
+    app: Union[Pregel, StateGraph]
     """The langgraph app to be instrumented."""
 
     root_callable: ClassVar[Optional[pyschema_utils.FunctionOrMethod]] = Field(
@@ -267,14 +258,14 @@ class TruGraph(TruChain):
 
     def __init__(
         self,
-        app: Union[CompiledStateGraph, Pregel, StateGraph],
+        app: Union[Pregel, StateGraph],
         main_method: Optional[Callable] = None,
         **kwargs: Dict[str, Any],
     ):
         if not LANGGRAPH_AVAILABLE:
             raise ImportError(
-                "LangGraph is not installed. Please install it with 'pip install langgraph' "
-                "to use TruGraph."
+                f"LangGraph is not installed. Please install it with 'pip install langgraph' "
+                f"to use TruGraph. Error: {E}"
             )
 
         # For LangGraph apps, we need to check if it's a compiled graph
