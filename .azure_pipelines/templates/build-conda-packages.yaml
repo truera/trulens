@@ -13,6 +13,7 @@ jobs:
       rm -rf ./src/core/trulens/data/snowflake_stage_zips
     displayName: Clean up existing build artifacts
   - bash: |
+      conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
       conda install conda-build --yes
     displayName: Install conda-build
   - bash: |
