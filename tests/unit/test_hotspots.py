@@ -3,13 +3,14 @@ from unittest import TestCase
 
 import numpy as np
 import pandas as pd
+from pandas import read_csv
 import pytest
-from trulens.hotspots import hotspots
 from trulens.hotspots.hotspots import FeatureStats
 from trulens.hotspots.hotspots import HotspotsConfig
 from trulens.hotspots.hotspots import TokenFeature
 from trulens.hotspots.hotspots import delta
 from trulens.hotspots.hotspots import get_feature_stat
+from trulens.hotspots.hotspots import hotspots
 from trulens.hotspots.hotspots import opportunity
 from trulens.hotspots.hotspots import utest_z
 
@@ -47,11 +48,6 @@ class TestHotspots(TestCase):
     @pytest.mark.optional
     def test_simple(self) -> None:
         """Run the simple tests."""
-
-        from pandas import read_csv
-        from trulens.hotspots import HotspotsConfig
-        from trulens.hotspots import hotspots
-
         df = read_csv("tests/files/sample.csv.gz")
 
         config = HotspotsConfig(score_column="score")
@@ -206,7 +202,7 @@ class TestHotspots(TestCase):
         empty_df = self._create_test_dataframe([], [])
         modified_df, avg_score, features = hotspots(config, empty_df)
         self.assertEqual(len(modified_df), 0)
-        self.assertTrue(pd.isna(avg_score) or avg_score == 0.0)
+        self.assertTrue(pd.isna(avg_score))
         self.assertEqual(len(features), 0)
 
     @pytest.mark.optional
