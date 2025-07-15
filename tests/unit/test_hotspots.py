@@ -4,9 +4,9 @@ from unittest import TestCase
 import numpy as np
 import pandas as pd
 import pytest
-from trulens.hotspots import HotspotsConfig
 from trulens.hotspots import hotspots
 from trulens.hotspots.hotspots import FeatureStats
+from trulens.hotspots.hotspots import HotspotsConfig
 from trulens.hotspots.hotspots import TokenFeature
 from trulens.hotspots.hotspots import delta
 from trulens.hotspots.hotspots import get_feature_stat
