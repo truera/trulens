@@ -5,14 +5,14 @@ import numpy as np
 import pandas as pd
 from pandas import read_csv
 import pytest
-from trulens.hotspots.hotspots import FeatureStats
-from trulens.hotspots.hotspots import HotspotsConfig
-from trulens.hotspots.hotspots import TokenFeature
-from trulens.hotspots.hotspots import delta
-from trulens.hotspots.hotspots import get_feature_stat
-from trulens.hotspots.hotspots import hotspots
-from trulens.hotspots.hotspots import opportunity
-from trulens.hotspots.hotspots import utest_z
+from trulens.hotspots import FeatureStats
+from trulens.hotspots import HotspotsConfig
+from trulens.hotspots import TokenFeature
+from trulens.hotspots import delta
+from trulens.hotspots import get_feature_stat
+from trulens.hotspots import hotspots
+from trulens.hotspots import opportunity
+from trulens.hotspots import utest_z
 
 
 def clean_up_feature(feat: str) -> str:
