@@ -187,9 +187,9 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         try:
             from trulens.apps.langgraph.tru_graph import LANGGRAPH_AVAILABLE
 
-            assert LANGGRAPH_AVAILABLE, (
-                "LangGraph should be available in test environment"
-            )
+            assert (
+                LANGGRAPH_AVAILABLE
+            ), "LangGraph should be available in test environment"
         except ImportError:
             # This is expected if LangGraph is not installed
             pass

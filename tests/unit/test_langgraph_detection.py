@@ -39,9 +39,9 @@ class TestLangGraphDetection:
         graph = workflow.compile()
 
         # Test the module-based detection
-        assert graph.__module__.startswith("langgraph"), (
-            f"Expected module to start with 'langgraph', got {graph.__module__}"
-        )
+        assert graph.__module__.startswith(
+            "langgraph"
+        ), f"Expected module to start with 'langgraph', got {graph.__module__}"
 
     def test_langgraph_detection_by_type(self):
         """Test that LangGraph apps are detected by type checking."""
@@ -87,9 +87,9 @@ class TestLangGraphDetection:
         session = TruSession()
         tru_app = session.App(graph, app_name="DetectionTest")
 
-        assert isinstance(tru_app, TruGraph), (
-            f"Expected TruGraph, got {type(tru_app)}"
-        )
+        assert isinstance(
+            tru_app, TruGraph
+        ), f"Expected TruGraph, got {type(tru_app)}"
 
         assert tru_app.app_name == "DetectionTest"
 
@@ -163,12 +163,12 @@ class TestLangGraphDetection:
         graph = workflow.compile()
 
         # Test attribute-based detection
-        assert hasattr(graph, "graph"), (
-            "Compiled graph should have 'graph' attribute"
-        )
-        assert hasattr(graph, "invoke"), (
-            "Compiled graph should have 'invoke' method"
-        )
+        assert hasattr(
+            graph, "graph"
+        ), "Compiled graph should have 'graph' attribute"
+        assert hasattr(
+            graph, "invoke"
+        ), "Compiled graph should have 'invoke' method"
 
     def test_detection_with_different_graph_types(self):
         """Test detection with different LangGraph types."""
