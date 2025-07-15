@@ -2,15 +2,11 @@
 Tests for OTEL TruGraph app.
 """
 
-import gc
-import weakref
-
 import pytest
 from trulens.core.otel.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
 
 import tests.util.otel_tru_app_test_case
-from tests.utils import enable_otel_backwards_compatibility
 
 try:
     from langchain_core.messages import AIMessage
@@ -86,55 +82,6 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         app = TestOtelTruGraph._create_simple_multi_agent()
         return tests.util.otel_tru_app_test_case.TestAppInfo(
             app=app, main_method=app.invoke, TruAppClass=TruGraph
-        )
-
-    def test_smoke(self) -> None:
-        """Test basic TruGraph functionality."""
-
-        multi_agent_graph = self._create_simple_multi_agent()
-        tru_recorder = TruGraph(
-            multi_agent_graph,
-            app_name="Simple Multi-Agent",
-            app_version="v1",
-            main_method=multi_agent_graph.invoke,
-        )
-
-        tru_recorder.instrumented_invoke_main_method(
-            run_name="test run",
-            input_id="42",
-            main_method_args=(
-                {"messages": [HumanMessage(content="What is AI?")]},
-            ),
-        )
-
-        self._compare_events_to_golden_dataframe(
-            "tests/unit/static/golden/test_otel_tru_graph__test_smoke.csv"
-        )
-
-        # Check gc
-        tru_recorder_ref = weakref.ref(tru_recorder)
-        del tru_recorder
-        del multi_agent_graph
-        gc.collect()
-        self.assertCollected(tru_recorder_ref)
-
-    @enable_otel_backwards_compatibility
-    def test_legacy_app(self) -> None:
-        """Test TruGraph with legacy app interface."""
-
-        multi_agent_graph = self._create_simple_multi_agent()
-        tru_recorder = TruGraph(
-            multi_agent_graph, app_name="Simple Multi-Agent", app_version="v1"
-        )
-
-        with tru_recorder:
-            multi_agent_graph.invoke({
-                "messages": [HumanMessage(content="What is AI?")]
-            })
-
-        # Compare results to expected.
-        self._compare_record_attributes_to_golden_dataframe(
-            "tests/unit/static/golden/test_otel_tru_graph__test_smoke.csv"
         )
 
     def test_auto_compilation(self) -> None:

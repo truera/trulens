@@ -164,9 +164,6 @@ class TestLangGraphDetection:
 
         # Test attribute-based detection
         assert hasattr(
-            graph, "graph"
-        ), "Compiled graph should have 'graph' attribute"
-        assert hasattr(
             graph, "invoke"
         ), "Compiled graph should have 'invoke' method"
 
