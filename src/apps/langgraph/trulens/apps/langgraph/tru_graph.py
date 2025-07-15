@@ -288,34 +288,55 @@ class TruGraph(TruChain):
             kwargs["main_method"] = main_method
         kwargs["root_class"] = pyschema_utils.Class.of_object(app)
 
-        # Create combined instrumentation for both LangChain and LangGraph
-        from trulens.apps.langchain.tru_chain import LangChainInstrument
+        # Check if OTel tracing is enabled
+        from trulens.core.otel.utils import is_otel_tracing_enabled
 
-        class CombinedInstrument(core_instruments.Instrument):
-            def __init__(self, *args, **kwargs):
-                # Initialize with both LangChain and LangGraph settings
-                langchain_default = LangChainInstrument.Default
-                langgraph_default = LangGraphInstrument.Default
+        if is_otel_tracing_enabled():
+            # In OTel mode, set main_method for automatic instrumentation
+            # The main method for LangGraph apps is typically 'invoke' or 'run'
+            if main_method is None:
+                if hasattr(app, "invoke"):
+                    main_method = app.invoke
+                elif hasattr(app, "run"):
+                    main_method = app.run
+                else:
+                    raise ValueError(
+                        "LangGraph app must have 'invoke' or 'run' method for OTel tracing. "
+                        "Alternatively, specify main_method explicitly."
+                    )
 
-                combined_modules = langchain_default.MODULES.union(
-                    langgraph_default.MODULES
-                )
-                combined_classes = langchain_default.CLASSES().union(
-                    langgraph_default.CLASSES()
-                )
-                combined_methods = (
-                    langchain_default.METHODS + langgraph_default.METHODS
-                )
+            kwargs["main_method"] = main_method
+            # Skip traditional instrumentation in OTel mode
+        else:
+            # Traditional instrumentation mode
+            # Create combined instrumentation for both LangChain and LangGraph
+            from trulens.apps.langchain.tru_chain import LangChainInstrument
 
-                super().__init__(
-                    include_modules=combined_modules,
-                    include_classes=combined_classes,
-                    include_methods=combined_methods,
-                    *args,
-                    **kwargs,
-                )
+            class CombinedInstrument(core_instruments.Instrument):
+                def __init__(self, *args, **kwargs):
+                    # Initialize with both LangChain and LangGraph settings
+                    langchain_default = LangChainInstrument.Default
+                    langgraph_default = LangGraphInstrument.Default
 
-        kwargs["instrument"] = CombinedInstrument(app=self)
+                    combined_modules = langchain_default.MODULES.union(
+                        langgraph_default.MODULES
+                    )
+                    combined_classes = langchain_default.CLASSES().union(
+                        langgraph_default.CLASSES()
+                    )
+                    combined_methods = (
+                        langchain_default.METHODS + langgraph_default.METHODS
+                    )
+
+                    super().__init__(
+                        include_modules=combined_modules,
+                        include_classes=combined_classes,
+                        include_methods=combined_methods,
+                        *args,
+                        **kwargs,
+                    )
+
+            kwargs["instrument"] = CombinedInstrument(app=self)
 
         # Call TruChain's parent (core_app.App) __init__ directly to avoid TruChain's specific initialization
         core_app.App.__init__(self, **kwargs)

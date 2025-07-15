@@ -9,6 +9,7 @@ TruLens integration for LangGraph applications. This package provides comprehens
 - **Multi-Agent Evaluation**: Comprehensive evaluation capabilities for complex workflows
 - **Automatic @task Instrumentation**: Automatically detects and instruments functions decorated with `@task`
 - **Smart Attribute Extraction**: Intelligently extracts information from function arguments
+- **OpenTelemetry Compatibility**: Full support for both traditional TruLens instrumentation and OTel tracing mode
 
 ## Installation
 
@@ -62,6 +63,34 @@ def my_agent_function(state, config):
 3. **No Code Changes Required**: Works with existing `@task` decorated functions
 
 This approach follows TruLens conventions and is more robust than scanning `sys.modules`.
+
+## OpenTelemetry (OTel) Compatibility
+
+TruGraph supports both traditional TruLens instrumentation and OpenTelemetry tracing mode for interoperability with existing telemetry stacks:
+
+### Traditional Mode (Default)
+Uses TruLens native instrumentation with combined LangChain and LangGraph method tracking.
+
+### OTel Mode
+Enable OpenTelemetry tracing by setting the environment variable:
+
+```python
+import os
+os.environ["TRULENS_OTEL_TRACING"] = "1"
+
+# TruGraph will automatically:
+# - Detect the main method (invoke or run)
+# - Use OTel-compatible instrumentation
+# - Disable traditional instrumentation system
+from trulens.core.session import TruSession
+session = TruSession()
+tru_app = session.App(graph, app_name="MyOTelApp")
+```
+
+In OTel mode, TruGraph seamlessly integrates with OpenTelemetry spans, enabling:
+- Language-agnostic tracing
+- Distributed system observability
+- Interoperability with existing telemetry infrastructure
 
 ## Usage
 
