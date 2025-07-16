@@ -261,7 +261,7 @@ If we consider a RAG, context filter guardrails can be used to evaluate the *con
 
         filtered_retriever = WithFeedbackFilterDocuments.of_retriever(
             retriever=retriever,
-            feedback=feedback
+            feedback=feedback,
             threshold=0.5
         )
 
