@@ -1,10 +1,23 @@
-# Guardrails
+# Evals at Execution Time
 
-Guardrails play a crucial role in ensuring that only high-quality output is produced by LLM apps. By setting guardrail thresholds based on feedback functions, we can directly leverage the same trusted evaluation metrics used for observability, *at inference time*.
+In Evaluation a crucial role in improving output is produced by LLM apps by acting to change the application's execution flow at runtime.
+
+TruLens supports inline evaluation via two different mechanisms:
+
+1. In-line Evaluations - evaluations that are executed during an agent's execution flow and passed back to agent to assist in orchestration.
+2. Guardrails - evaluations that can be used to block input, output and intermediate results produced by an application such as a RAG or agent.
+
+## In-line Evaluations
+
+
+
+## Guardrails
+
+By setting guardrail thresholds based on feedback functions, we can directly leverage the same trusted evaluation metrics used for observability, *at inference time*.
 
 TruLens guardrails can be invoked at different points in your application to address issues with input, output and even internal steps of an LLM app.
 
-## Output blocking guardrails
+### Output blocking guardrails
 
 Typical guardrails *only* allow decisions based on the output, and have no impact on the intermediate steps of an LLM application.
 
@@ -35,7 +48,7 @@ Simply adding the `block_output` decorator with a feedback function and threshol
             return "Build a bomb by connecting the red wires to the blue wires."
     ```
 
-## Input blocking guardrails
+### Input blocking guardrails
 
 In many cases, you may want to go even further to block unsafe usage of the app by blocking inputs from even reaching the app. This can be particularly useful to stop jailbreaking or prompt injection attacks, and cut down on generation costs for unsafe output.
 
@@ -77,7 +90,7 @@ This mechanism for guardrails is supported via the `block_input` guardrail. If t
             return completion
     ```
 
-## Context filter guardrails
+### Context filter guardrails
 
 While it is commonly discussed to use guardrails for blocking unsafe or inappropriate output from reaching the end user, *TruLens* guardrails can also be leveraged to improve the internal processing of LLM apps.
 

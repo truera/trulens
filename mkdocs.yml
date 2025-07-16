@@ -262,8 +262,8 @@ nav:
             - Running on existing data: component_guides/evaluation/running_feedback_functions/existing_data.md
         - Generating Test Cases:
             - component_guides/evaluation/generate_test_cases.md
-    - 🛡️ Guardrails:
-        - component_guides/guardrails/index.md
+    - 🛡️ Execution Time Evaluations:
+        - component_guides/execution_time_evals/index.md
     - Other:
       - Moving from TruLens Eval: component_guides/other/trulens_eval_migration.md
       - Uninstalling TruLens: component_guides/other/uninstalling.md
