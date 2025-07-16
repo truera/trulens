@@ -58,6 +58,28 @@ except ImportError:
     task = None
     LANGGRAPH_TASK_AVAILABLE = False
 
+# Global flag to track if early patching has been done
+_GLOBAL_TASK_PATCHING_DONE = False
+
+
+def force_early_task_patching():
+    """Force early @task monkey-patching before workflows are created."""
+    global _GLOBAL_TASK_PATCHING_DONE
+
+    if _GLOBAL_TASK_PATCHING_DONE:
+        return
+
+    if not LANGGRAPH_AVAILABLE or not TRULENS_INSTRUMENT_AVAILABLE:
+        return
+
+    try:
+        # Create a temporary instrument to do the patching
+        temp_instrument = LangGraphInstrument()  # noqa: F841
+        _GLOBAL_TASK_PATCHING_DONE = True
+        logger.info("Early @task monkey-patching completed successfully")
+    except Exception as e:
+        logger.warning(f"Early @task monkey-patching failed: {e}")
+
 
 class LangGraphInstrument(core_instruments.Instrument):
     """Instrumentation for LangGraph apps."""
@@ -105,84 +127,142 @@ class LangGraphInstrument(core_instruments.Instrument):
             **kwargs,
         )
 
-        # Monkey-patch the @task decorator to automatically instrument functions
-        self._patch_task_decorator()
+        # Comprehensive @task monkey-patching
+        self._comprehensive_task_patching()
 
-    def _patch_task_decorator(self):
-        """Monkey-patch the @task decorator to automatically instrument decorated functions."""
+    def _comprehensive_task_patching(self):
+        """Apply working @task monkey-patching that actually works."""
         if not LANGGRAPH_AVAILABLE or not TRULENS_INSTRUMENT_AVAILABLE:
+            logger.debug(
+                "LangGraph or TruLens instrument not available for @task patching"
+            )
             return
 
         try:
+            # Import required modules
             import langgraph.func as langgraph_func
+            from langgraph.func import task
 
-            if hasattr(langgraph_func.task, "_trulens_patched"):
+            # Check if already patched with working fix
+            if hasattr(task, "_trulens_working_patch"):
+                logger.debug("@task decorator already patched with working fix")
                 return
 
-            # Store the original decorator
-            original_task = langgraph_func.task
+            # Store the original task decorator
+            original_task = task
 
-            def instrumented_task(*task_args, **task_kwargs):
-                """Instrumented version of the @task decorator that follows the user's pattern."""
+            def working_instrumented_task(*args, **kwargs):
+                """Working instrumented version of @task decorator."""
 
-                def decorator(func: Callable) -> Callable:
+                def decorator(func):
                     logger.debug(
-                        f"@task decorator called with func: {func.__name__}"
+                        f"Instrumenting @task function: {func.__name__}"
                     )
 
-                    # First apply the TruLens @instrument decorator if available
-                    if instrument is not None:
+                    # Apply TruLens instrumentation FIRST
+                    try:
                         instrumented_func = instrument(
                             span_type="langgraph_task",  # type: ignore
-                            attributes=self._extract_task_attributes,
+                            attributes=self._extract_task_attributes_simple,
                         )(func)
-                    else:
-                        # Fallback: just use the original function
+                        logger.debug(
+                            f"Applied TruLens instrumentation to {func.__name__}"
+                        )
+                    except Exception as e:
+                        logger.warning(
+                            f"TruLens instrumentation failed for {func.__name__}: {e}"
+                        )
                         instrumented_func = func
 
-                    # Then apply the original @task decorator to the instrumented function
-                    task_function = original_task(*task_args, **task_kwargs)(
-                        instrumented_func
-                    )
+                    # Then apply the original @task decorator
+                    try:
+                        if args or kwargs:
+                            # Parameterized @task call: @task(...)
+                            task_func = original_task(*args, **kwargs)(
+                                instrumented_func
+                            )
+                        else:
+                            # Direct @task call: @task
+                            task_func = original_task(instrumented_func)
 
-                    logger.debug(
-                        f"Successfully instrumented @task function: {func.__name__}"
-                    )
-                    return task_function
+                        logger.debug(
+                            f"Applied @task decorator to {func.__name__}"
+                        )
+                        return task_func
+                    except Exception as e:
+                        logger.warning(
+                            f"@task decoration failed for {func.__name__}: {e}"
+                        )
+                        return instrumented_func
 
-                # Handle both @task and @task(...) usage patterns
-                if (
-                    len(task_args) == 1
-                    and len(task_kwargs) == 0
-                    and callable(task_args[0])
-                ):
+                # Handle both @task and @task(...) patterns
+                if len(args) == 1 and callable(args[0]) and not kwargs:
                     # Direct usage: @task
-                    func = task_args[0]
-                    # Call the decorator with no arguments (reset task_args/kwargs for original_task)
-                    task_args = ()
-                    task_kwargs = {}
+                    func = args[0]
                     return decorator(func)
                 else:
                     # Parameterized usage: @task(...)
-                    # Return the decorator that will be called with the function
                     return decorator
 
-            # Replace the original task decorator
-            langgraph_func.task = instrumented_task
-            langgraph_func.task._trulens_patched = True
+            # Replace the task decorator
+            langgraph_func.task = working_instrumented_task
 
-            logger.debug(
-                "Successfully monkey-patched LangGraph @task decorator for TruLens instrumentation"
-            )
+            # Mark as patched with working fix
+            langgraph_func.task._trulens_working_patch = True
 
-        except ImportError:
-            logger.debug(
-                "LangGraph @task decorator not available for monkey-patching"
-            )
+            logger.info("Successfully applied working @task instrumentation")
+
         except Exception as e:
-            logger.warning(
-                f"Failed to monkey-patch LangGraph @task decorator: {e}"
-            )
+            logger.warning(f"Working @task instrumentation failed: {e}")
+
+    def _extract_task_attributes_simple(
+        self, ret: Any, exc: Optional[Exception], *args, **kwargs
+    ) -> Dict[str, Any]:
+        """
+        Simple attribute extraction for @task functions.
+
+        Args:
+            ret: Return value from the function
+            exc: Exception if any occurred
+            *args: Positional arguments passed to the function
+            **kwargs: Keyword arguments passed to the function
+
+        Returns:
+            Dictionary of attributes for tracing
+        """
+        attributes = {}
+
+        try:
+            # Get function name from the call stack
+            import inspect
+
+            frame = inspect.currentframe()
+            if frame and frame.f_back and frame.f_back.f_back:
+                func_name = frame.f_back.f_back.f_code.co_name
+                attributes["task.function_name"] = func_name
+
+            # Return value info
+            if ret is not None:
+                attributes["task.return_type"] = type(ret).__name__
+            else:
+                attributes["task.return_type"] = "None"
+
+            # Exception info
+            attributes["task.has_exception"] = exc is not None
+            if exc:
+                attributes["task.exception_type"] = type(exc).__name__
+            else:
+                attributes["task.exception_type"] = None
+
+            # Basic argument count (avoid complex serialization)
+            attributes["task.arg_count"] = len(args)
+            attributes["task.kwarg_count"] = len(kwargs)
+
+        except Exception as e:
+            logger.debug(f"Failed to extract simple task attributes: {e}")
+            attributes["task.extraction_error"] = str(e)
+
+        return attributes
 
     def _extract_task_attributes(
         self, ret: Any, exc: Optional[Exception], *args, **kwargs
@@ -364,6 +444,9 @@ class TruGraph(TruChain):
                 f"to use TruGraph. Error: {E}"
             )
 
+        # Force early @task monkey-patching before any workflows are processed
+        force_early_task_patching()
+
         # Auto-detect and handle different app types
         app = self._prepare_app(app)
 
@@ -387,8 +470,6 @@ class TruGraph(TruChain):
                 main_method = self._detect_main_method(app)
 
             kwargs["main_method"] = main_method
-            # Skip traditional instrumentation in OTel mode (but keep @task patching)
-            # Note: We already created langgraph_instrument above for @task patching
         else:
             # Traditional instrumentation mode
             # Create combined instrumentation for both LangChain and LangGraph

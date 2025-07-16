@@ -579,6 +579,23 @@ class Run(BaseModel):
                         input_id = obj_id_of_obj(row[input_col])
                         main_method_args.append(row[input_col])
 
+                # Extract additional method arguments from dataset_spec
+                # Skip fields that are already handled or are special metadata fields
+                special_fields = {
+                    "input_id",
+                    "input",
+                    "record_root.input",
+                    "ground_truth_output",
+                    "record_root.ground_truth_output",
+                }
+
+                for spec_key, column_name in dataset_spec.items():
+                    if spec_key not in special_fields and column_name in row:
+                        if spec_key == "input" and input_col is not None:
+                            # Already added this as the first argument
+                            continue
+                        main_method_args.append(row[column_name])
+
                 ground_truth_output = row.get(
                     dataset_spec.get("ground_truth_output")
                     or dataset_spec.get("record_root.ground_truth_output")
