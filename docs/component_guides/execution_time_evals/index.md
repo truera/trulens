@@ -61,7 +61,7 @@ Consider a `LangGraph` agent with the following instrumented research node.
         )
     ```
 
-In this example, we can define a feedback function that accepts the `research_node`'s instrumented span attributes: `QUERY_TEXT` and `RETRIEVED_CONTEXT`.
+In this example, we can define a feedback function that accepts the `research_node`'s instrumented span attributes: `QUERY_TEXT` and `RETRIEVED_CONTEXTS`.
 
 !!! example
 
