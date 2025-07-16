@@ -10,7 +10,6 @@ from typing import (
     Dict,
     List,
     Optional,
-    Union,
 )
 
 from pydantic import Field
@@ -371,6 +370,14 @@ class TruGraph(TruChain):
     log, and evaluate their behavior while inheriting all LangChain instrumentation
     capabilities.
 
+    **Flexible App Support**:
+
+    `TruGraph` can wrap different types of objects:
+
+    1. **Direct LangGraph objects**: `Pregel` (compiled graphs) or `StateGraph` (uncompiled)
+    2. **Custom classes**: Any class that uses LangGraph workflows internally
+    3. **Complex agents**: Multi-step applications with multiple LangGraph invocations
+
     Example: "Creating a LangGraph multi-agent application"
 
         Consider an example LangGraph multi-agent application:
@@ -395,6 +402,26 @@ class TruGraph(TruChain):
         graph = workflow.compile()
         ```
 
+    Example: "Custom class with multiple LangGraph workflows"
+
+        ```python
+        class ComplexAgent:
+            def __init__(self):
+                self.planner = StateGraph(...).compile()
+                self.executor = StateGraph(...).compile()
+                self.critic = StateGraph(...).compile()
+
+            def run(self, query):
+                plan = self.planner.invoke({"input": query})
+                execution = self.executor.invoke({"plan": plan})
+                critique = self.critic.invoke({"execution": execution})
+                return self.synthesize_results(plan, execution, critique)
+
+        # Both of these work:
+        tru_graph = TruGraph(graph)  # Direct LangGraph
+        tru_agent = TruGraph(ComplexAgent())  # Custom class
+        ```
+
     The application can be wrapped in a `TruGraph` recorder to provide logging
     and evaluation upon the application's use.
 
@@ -417,14 +444,17 @@ class TruGraph(TruChain):
         ```
 
     Args:
-        app: A LangGraph application (compiled StateGraph).
+        app: A LangGraph application. Can be:
+            - `Pregel`: A compiled LangGraph
+            - `StateGraph`: An uncompiled LangGraph (will be auto-compiled)
+            - Custom class: Any object that uses LangGraph workflows internally
 
         **kwargs: Additional arguments to pass to [App][trulens.core.app.App]
             and [AppDefinition][trulens.core.schema.app.AppDefinition].
     """
 
-    app: Union[Pregel, StateGraph]
-    """The langgraph app to be instrumented."""
+    app: Any
+    """The application to be instrumented. Can be LangGraph objects or custom classes."""
 
     root_callable: ClassVar[Optional[pyschema_utils.FunctionOrMethod]] = Field(
         None
@@ -433,7 +463,7 @@ class TruGraph(TruChain):
 
     def __init__(
         self,
-        app: Union[Pregel, StateGraph],
+        app: Any,  # Changed from Union[Pregel, StateGraph] to Any
         main_method: Optional[Callable] = None,
         **kwargs: Dict[str, Any],
     ):
@@ -443,14 +473,8 @@ class TruGraph(TruChain):
                 f"to use TruGraph. Error: {E}"
             )
 
-        # For LangGraph apps, we need to check if it's a compiled graph
-        # compile if it's a StateGraph
-        if isinstance(app, StateGraph):
-            logger.warning(
-                "Received uncompiled StateGraph. Compiling it for instrumentation. "
-                "For better control, consider compiling the graph yourself before wrapping with TruGraph."
-            )
-            app = app.compile()
+        # Auto-detect and handle different app types
+        app = self._prepare_app(app)
 
         kwargs["app"] = app
 
@@ -468,17 +492,8 @@ class TruGraph(TruChain):
 
         if is_otel_tracing_enabled():
             # In OTel mode, set main_method for automatic instrumentation
-            # The main method for LangGraph apps is typically 'invoke' or 'run'
             if main_method is None:
-                if hasattr(app, "invoke"):
-                    main_method = app.invoke
-                elif hasattr(app, "run"):
-                    main_method = app.run
-                else:
-                    raise ValueError(
-                        "LangGraph app must have 'invoke' or 'run' method for OTel tracing. "
-                        "Alternatively, specify main_method explicitly."
-                    )
+                main_method = self._detect_main_method(app)
 
             kwargs["main_method"] = main_method
             # Skip traditional instrumentation in OTel mode (but keep @task patching)
@@ -516,6 +531,107 @@ class TruGraph(TruChain):
 
         # Call TruChain's parent (core_app.App) __init__ directly to avoid TruChain's specific initialization
         core_app.App.__init__(self, **kwargs)
+
+    def _prepare_app(self, app: Any) -> Any:
+        """
+        Prepare the app for instrumentation by handling different input types.
+
+        Args:
+            app: The input application
+
+        Returns:
+            The prepared application ready for instrumentation
+        """
+        # Handle direct LangGraph objects
+        if isinstance(app, StateGraph):
+            logger.warning(
+                "Received uncompiled StateGraph. Compiling it for instrumentation. "
+                "For better control, consider compiling the graph yourself before wrapping with TruGraph."
+            )
+            return app.compile()
+
+        if isinstance(app, Pregel):
+            return app
+
+        # Handle custom classes - detect if they contain LangGraph components
+        langgraph_components = self._detect_langgraph_components(app)
+        if langgraph_components:
+            logger.info(
+                f"Detected {len(langgraph_components)} LangGraph component(s) in custom class {type(app).__name__}: "
+                f"{[f'{name}: {type(comp).__name__}' for name, comp in langgraph_components]}"
+            )
+
+        # Return the app as-is for custom classes
+        return app
+
+    def _detect_langgraph_components(self, app: Any) -> List[tuple]:
+        """
+        Detect LangGraph components within a custom class.
+
+        Args:
+            app: The application object to inspect
+
+        Returns:
+            List of (attribute_name, component) tuples for found LangGraph components
+        """
+        components = []
+
+        if not hasattr(app, "__dict__"):
+            return components
+
+        for attr_name in dir(app):
+            if attr_name.startswith("_"):
+                continue
+
+            try:
+                attr_value = getattr(app, attr_name)
+                if isinstance(attr_value, (Pregel, StateGraph)):
+                    components.append((attr_name, attr_value))
+            except Exception:
+                # Skip attributes that can't be accessed
+                continue
+
+        return components
+
+    def _detect_main_method(self, app: Any) -> Optional[Callable]:
+        """
+        Detect the main method to instrument for the given app.
+
+        Args:
+            app: The application object
+
+        Returns:
+            The main method to instrument, or None if not found
+        """
+        # For direct LangGraph objects
+        if isinstance(app, Pregel):
+            if hasattr(app, "invoke"):
+                return app.invoke
+            elif hasattr(app, "run"):
+                return app.run
+
+        # For custom classes, look for common method names
+        method_candidates = ["run", "invoke", "execute", "call", "__call__"]
+
+        for method_name in method_candidates:
+            if hasattr(app, method_name):
+                method = getattr(app, method_name)
+                if callable(method):
+                    logger.info(f"Auto-detected main method: {method_name}")
+                    return method
+
+        # If no common methods found, raise an error with helpful message
+        available_methods = [
+            name
+            for name in dir(app)
+            if not name.startswith("_") and callable(getattr(app, name, None))
+        ]
+
+        raise ValueError(
+            f"Could not auto-detect main method for {type(app).__name__}. "
+            f"Available methods: {available_methods}. "
+            f"Please specify main_method explicitly: TruGraph(app, main_method=app.your_method)"
+        )
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
