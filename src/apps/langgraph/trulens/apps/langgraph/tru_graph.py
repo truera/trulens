@@ -1,6 +1,5 @@
 """LangGraph app instrumentation."""
 
-import functools
 from inspect import BoundArguments
 from inspect import Signature
 import logging
@@ -19,6 +18,7 @@ from trulens.apps.langchain.tru_chain import TruChain
 from trulens.core import app as core_app
 from trulens.core import instruments as core_instruments
 from trulens.core.instruments import InstrumentedMethod
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.session import TruSession
 from trulens.core.utils import pyschema as pyschema_utils
 
@@ -116,67 +116,237 @@ class LangGraphInstrument(core_instruments.Instrument):
                 """Instrumented version of the @task decorator."""
 
                 def decorator(func: Callable) -> Callable:
-                    task_decorated_func = original_task(
-                        *task_args, **task_kwargs
-                    )(func)
+                    logger.debug(
+                        f"@task decorator called with func: {func} (type: {type(func)})"
+                    )
 
-                    try:
-                        from trulens.core.otel.instrument import instrument
+                    # First apply the original @task decorator to get a TaskFunction
+                    task_function = original_task(*task_args, **task_kwargs)(
+                        func
+                    )
+                    logger.debug(
+                        f"Original @task returned: {type(task_function)}, has .func: {hasattr(task_function, 'func')}"
+                    )
 
-                        # Create a wrapper that extracts attributes using our heuristics
-                        @functools.wraps(func)
-                        def trulens_wrapper(*args, **kwargs):
-                            ret = None
-                            exc = None
-
-                            try:
-                                ret = task_decorated_func(*args, **kwargs)
-                                return ret
-                            except Exception as e:
-                                exc = e
-                                raise
-                            finally:
-                                # Extract attributes using our heuristics
-                                try:
-                                    if exc is not None:
-                                        attributes = _extract_task_attributes(
-                                            func, ret, exc, *args, **kwargs
-                                        )
-                                    else:
-                                        attributes = _extract_task_attributes(
-                                            func,
-                                            ret,
-                                            Exception("No exception"),
-                                            *args,
-                                            **kwargs,
-                                        )
-
-                                    logger.debug(
-                                        f"Extracted @task attributes for {func.__name__}: {list(attributes.keys())}"
-                                    )
-                                except Exception as attr_exc:
-                                    logger.debug(
-                                        f"Failed to extract @task attributes for {func.__name__}: {attr_exc}"
-                                    )
-
-                        # Apply the instrument decorator to get full TruLens tracing
-                        instrumented_func = instrument(
-                            span_type=f"TASK_{func.__name__.upper()}"
-                        )(trulens_wrapper)
-
+                    if is_otel_tracing_enabled():
                         logger.debug(
-                            f"Successfully instrumented @task function: {func.__name__}"
+                            "OTel tracing is enabled, attempting instrumentation..."
                         )
-                        return instrumented_func
+                        try:
+                            from trulens.core.otel.instrument import instrument
 
-                    except ImportError:
+                            # Ensure we have a valid function
+                            if not callable(func):
+                                logger.warning(
+                                    f"Expected callable but got {type(func)}: {func}"
+                                )
+                                return task_function
+
+                            # Get function name safely
+                            func_name = getattr(func, "__name__", str(func))
+                            if not isinstance(func_name, str):
+                                func_name = str(func_name)
+                            logger.debug(f"Function name: {func_name}")
+
+                            # Check if we got a TaskFunction with .func attribute
+                            if hasattr(task_function, "func") and callable(
+                                task_function.func
+                            ):
+                                logger.debug(
+                                    "TaskFunction has .func attribute, instrumenting..."
+                                )
+                                # Instrument the underlying function inside TaskFunction
+                                original_func = task_function.func
+                                logger.debug(
+                                    f"Original func type: {type(original_func)}"
+                                )
+
+                                # Create attributes callable that extracts task information
+                                def task_attributes(ret, exc, *args, **kwargs):
+                                    """Extract attributes from @task function calls."""
+                                    attributes = {}
+                                    try:
+                                        # Extract function name and basic info
+                                        attributes["task.function_name"] = (
+                                            func_name
+                                        )
+                                        attributes["task.module"] = getattr(
+                                            func, "__module__", "unknown"
+                                        )
+
+                                        # Try to extract meaningful arguments (avoiding LLM objects)
+                                        import inspect
+
+                                        try:
+                                            sig = inspect.signature(
+                                                original_func
+                                            )
+                                            bound_args = sig.bind_partial(
+                                                *args, **kwargs
+                                            )
+
+                                            for (
+                                                name,
+                                                value,
+                                            ) in bound_args.arguments.items():
+                                                # Skip self and common non-serializable objects
+                                                if name in ["self", "_self"]:
+                                                    continue
+
+                                                # Try to extract basic info, avoid complex objects
+                                                try:
+                                                    if isinstance(
+                                                        value,
+                                                        (
+                                                            str,
+                                                            int,
+                                                            float,
+                                                            bool,
+                                                            type(None),
+                                                        ),
+                                                    ):
+                                                        attributes[
+                                                            f"task.args.{name}"
+                                                        ] = str(value)
+                                                    elif isinstance(
+                                                        value, dict
+                                                    ):
+                                                        attributes[
+                                                            f"task.args.{name}"
+                                                        ] = str(value)[
+                                                            :500
+                                                        ]  # Truncate long values
+                                                    elif (
+                                                        hasattr(
+                                                            value, "__dict__"
+                                                        )
+                                                        and len(str(value))
+                                                        < 1000
+                                                    ):
+                                                        attributes[
+                                                            f"task.args.{name}"
+                                                        ] = str(value)[:500]
+                                                    else:
+                                                        attributes[
+                                                            f"task.args.{name}"
+                                                        ] = f"<{type(value).__name__}>"
+                                                except Exception:
+                                                    attributes[
+                                                        f"task.args.{name}"
+                                                    ] = f"<{type(value).__name__}>"
+                                        except Exception as sig_exc:
+                                            logger.debug(
+                                                f"Failed to extract signature for {func_name}: {sig_exc}"
+                                            )
+
+                                        # Add return value info
+                                        if ret is not None:
+                                            try:
+                                                if isinstance(
+                                                    ret, (str, int, float, bool)
+                                                ):
+                                                    attributes[
+                                                        "task.return"
+                                                    ] = str(ret)
+                                                else:
+                                                    attributes[
+                                                        "task.return"
+                                                    ] = f"<{type(ret).__name__}>"
+                                            except Exception:
+                                                attributes["task.return"] = (
+                                                    f"<{type(ret).__name__}>"
+                                                )
+
+                                        # Add exception info if present
+                                        if exc and str(exc) != "No exception":
+                                            attributes["task.exception"] = str(
+                                                exc
+                                            )
+                                            attributes[
+                                                "task.exception_type"
+                                            ] = type(exc).__name__
+
+                                    except Exception as attr_exc:
+                                        logger.debug(
+                                            f"Failed to extract @task attributes: {attr_exc}"
+                                        )
+                                        attributes[
+                                            "task.attribute_extraction_error"
+                                        ] = str(attr_exc)
+
+                                    return attributes
+
+                                # Apply the instrument decorator to the underlying function
+                                span_type = f"TASK_{func_name.upper()}"
+                                logger.debug(
+                                    f"Applying instrument with span_type: {span_type}"
+                                )
+                                instrumented_func = instrument(
+                                    span_type=span_type,
+                                    attributes=task_attributes,
+                                )(original_func)
+                                logger.debug(
+                                    f"Instrumented func type: {type(instrumented_func)}"
+                                )
+
+                                # Replace the TaskFunction's .func with the instrumented version
+                                # This preserves the TaskFunction object while instrumenting its execution
+                                task_function.func = instrumented_func
+                                logger.debug(
+                                    "Replaced task_function.func with instrumented version"
+                                )
+
+                                logger.debug(
+                                    f"Successfully instrumented @task function: {func_name}"
+                                )
+
+                            else:
+                                logger.warning(
+                                    f"TaskFunction object doesn't have .func attribute or it's not callable: {type(task_function)}"
+                                )
+
+                        except ImportError:
+                            logger.debug(
+                                f"TruLens OTel instrumentation not available for @task function {getattr(func, '__name__', str(func))}"
+                            )
+                        except Exception as e:
+                            func_name_safe = getattr(
+                                func, "__name__", str(func)
+                            )
+                            logger.exception(
+                                f"Failed to instrument @task function {func_name_safe}: {e}"
+                            )
+                    else:
+                        # Traditional TruLens mode - just log that we found a @task function
+                        func_name_safe = getattr(func, "__name__", str(func))
                         logger.debug(
-                            f"TruLens instrumentation not available for @task function {func.__name__}"
+                            f"Found @task function {func_name_safe} (traditional TruLens mode)"
                         )
-                        return task_decorated_func
 
-                return decorator
+                    # Always return the TaskFunction object (instrumented or not)
+                    logger.debug(
+                        f"Returning task_function: {type(task_function)}"
+                    )
+                    return task_function
 
+                # Handle both @task and @task(...) usage patterns
+                if (
+                    len(task_args) == 1
+                    and len(task_kwargs) == 0
+                    and callable(task_args[0])
+                ):
+                    # Direct usage: @task
+                    func = task_args[0]
+                    # Call the decorator with no arguments (reset task_args/kwargs for original_task)
+                    task_args = ()
+                    task_kwargs = {}
+                    return decorator(func)
+                else:
+                    # Parameterized usage: @task(...)
+                    # Return the decorator that will be called with the function
+                    return decorator
+
+            # Replace the original task decorator
             langgraph_func.task = instrumented_task
             langgraph_func.task._trulens_patched = True
 
@@ -293,8 +463,8 @@ class TruGraph(TruChain):
             kwargs["main_method"] = main_method
         kwargs["root_class"] = pyschema_utils.Class.of_object(app)
 
-        # Check if OTel tracing is enabled
-        from trulens.core.otel.utils import is_otel_tracing_enabled
+        # Always ensure @task monkey-patching happens, regardless of instrumentation mode
+        langgraph_instrument = LangGraphInstrument(app=self)  # noqa: F841
 
         if is_otel_tracing_enabled():
             # In OTel mode, set main_method for automatic instrumentation
@@ -311,7 +481,8 @@ class TruGraph(TruChain):
                     )
 
             kwargs["main_method"] = main_method
-            # Skip traditional instrumentation in OTel mode
+            # Skip traditional instrumentation in OTel mode (but keep @task patching)
+            # Note: We already created langgraph_instrument above for @task patching
         else:
             # Traditional instrumentation mode
             # Create combined instrumentation for both LangChain and LangGraph
@@ -475,130 +646,6 @@ class TruGraph(TruChain):
             return result
         else:
             return str(result)
-
-
-# Helper function to extract attributes from @task functions
-def _extract_task_attributes(
-    func: Callable,
-    ret: Any,
-    exc: Exception,
-    ignore_args: Optional[set] = None,
-    extract_fields: Optional[Dict[str, str]] = None,
-    *args,
-    **kwargs,
-) -> Dict[str, Any]:
-    """
-    Extract attributes from @task function calls using intelligent heuristics.
-
-    This function automatically extracts relevant information from function arguments,
-    handling special cases for LLM models, Pydantic models, dataclasses, etc.
-    """
-    import dataclasses
-    import inspect
-    import json
-
-    if ignore_args is None:
-        ignore_args = set()
-    if extract_fields is None:
-        extract_fields = {}
-
-    try:
-        from langchain_core.language_models.chat_models import BaseChatModel
-    except ImportError:
-        BaseChatModel = type("BaseChatModel", (), {})
-
-    try:
-        from pydantic import BaseModel
-    except ImportError:
-        BaseModel = type("BaseModel", (), {})  # noqa: F841
-
-    attributes = {}
-
-    try:
-        # Get the BASE_SCOPE for attributes. TODO: should we allow users to override this?
-        try:
-            from trulens.otel.semconv.trace import BASE_SCOPE
-        except ImportError:
-            BASE_SCOPE = "trulens.task"
-
-        sig = inspect.signature(func)
-
-        # Merge args and kwargs to avoid duplicates
-        all_kwargs = {}
-        bound_args = sig.bind_partial(*args)
-        all_kwargs.update(bound_args.arguments)
-        all_kwargs.update(kwargs)
-        bound = sig.bind(**all_kwargs)
-        bound.apply_defaults()
-
-        for name, value in bound.arguments.items():
-            if name in ignore_args:
-                continue
-
-            # Skip LLM-related objects as they're not serializable
-            try:
-                if isinstance(value, BaseChatModel):
-                    continue
-            except (TypeError, NameError):
-                # Handle case where types are mock objects
-                pass
-
-            # Extract only a specific field if specified
-            if name in extract_fields:
-                attr_path = extract_fields[name]
-                for attr in attr_path.split("."):
-                    value = getattr(value, attr, None)
-                val = json.dumps(value, default=str, indent=2)
-            else:
-                # Handle different data types intelligently
-                if dataclasses.is_dataclass(value):
-                    val = json.dumps(
-                        dataclasses.asdict(value), default=str, indent=2
-                    )
-                elif hasattr(value, "model_dump") or hasattr(value, "dict"):
-                    # Handle Pydantic models (both v1 and v2)
-                    try:
-                        model_data = (
-                            value.model_dump()
-                            if hasattr(value, "model_dump")
-                            else value.dict()
-                        )
-                        val = json.dumps(model_data, default=str, indent=2)
-                    except (TypeError, AttributeError):
-                        val = json.dumps(value, default=str, indent=2)
-                else:
-                    val = json.dumps(value, default=str, indent=2)
-
-            attributes[f"{BASE_SCOPE}.{name}"] = val
-
-        # Add return value information
-        if dataclasses.is_dataclass(ret):
-            ret_val = dataclasses.asdict(ret)
-        elif hasattr(ret, "model_dump") or hasattr(ret, "dict"):
-            # Handle Pydantic models (both v1 and v2)
-            try:
-                ret_val = (
-                    ret.model_dump()
-                    if hasattr(ret, "model_dump")
-                    else ret.dict()
-                )
-            except (TypeError, AttributeError):
-                ret_val = ret
-        else:
-            ret_val = ret
-
-        attributes[f"{BASE_SCOPE}.return"] = json.dumps(
-            ret_val, default=str, indent=2
-        )
-
-        attributes[f"{BASE_SCOPE}.exception"] = str(exc) if exc else ""
-
-    except Exception as e:
-        logger.exception(
-            f"Exception occurred during TruLens @task instrumentation: {e}"
-        )
-
-    return attributes
 
 
 TruGraph.model_rebuild()
