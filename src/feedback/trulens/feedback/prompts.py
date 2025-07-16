@@ -26,6 +26,15 @@ SOURCE: {premise}
 STATEMENT: {hypothesis}
 """
 
+TRAJECTORY_CONSISTENCY_FULL_PROMPT = """
+Please answer using the entire template below.
+
+TEMPLATE:
+Criteria: <Provide the criteria for this evaluation>
+Supporting Evidence: <Provide your reasons for scoring based on the listed criteria step by step. Ensure you cite exact, specific examples from the given trajectory. Tie it back to the evaluation being completed.>
+Score: <The score based on the given criteria>
+"""
+
 LLM_GROUNDEDNESS_SYSTEM = v2.Groundedness.system_prompt
 LLM_GROUNDEDNESS_USER = v2.Groundedness.user_prompt
 LLM_GROUNDEDNESS_SENTENCES_SPLITTER = v2.Groundedness.sentences_splitter_prompt
@@ -149,37 +158,40 @@ COMPREHENSIVENESS_SYSTEM_PROMPT = v2.Comprehensiveness.system_prompt
 COMPREHENSIVENESS_USER_PROMPT = v2.Comprehensiveness.user_prompt
 
 TRAJECTORY_EVAL_STEP_RELEVANCE_SYSTEM_PROMPT = """
-Score the relevance of each step in the trajectory to the user's goal. Be strict with your evaluation.
-
+Score the relevance of each step in the trajectory to the user's goal. Be critical with your evaluation and cite specific examples from the trajectory.
 3: Each step is essential towards directly advancing or clearly enabling the goal. Setup, verification, and exploration (if present) are justified in relation to the goal's completion. No actions that are unrelated to the stated goal are present.
-
 2: Few steps have weak, tangential, or ambiguous links to the user's goal, but do not distract from goal completion. All required goal-critical steps are present.
-
 1: Multiple steps have little to no clear connection to the user's goal. There are notable detours, tangents, or superfluous elements. Some goal-critical steps may still be present.
-
 0: The majority of steps are not necessary for the user's goal, or critical goal-essential steps are absent. The process lacks clear orientation to the stated goal.
 """
 
+# TRAJECTORY_EVAL_LOGICAL_CONSISTENCY_SYSTEM_PROMPT = """
+# Score the logical consistency of the trajectory. Be critical with your evaluation and cite specific examples from the trajectory.
+# 3: Every action and transition in the workflow is logically justified in context and follows from previous steps. There are no contradictory, circular, or unjustified leaps. All implicit assumptions are reasonable and made explicit if needed. Uncertainty, risk, or alternative approaches are properly addressed when applicable. All stated facts are accurate and consistent with the given context or general knowledge.
+# 2: Few minor lapses in logic (such as a questionable assumption, minor gap in explanation, or omission of risk), but the core reasoning remains sound and consistent. There are no major contradictions in the flow of reasoning. There may be a minor factual inaccuracies that do not fundamentally undermine the overall conclusion or reasoning.
+# 1: Several lapses in logic, unclear or missing justifications, or contradictory transitions. These can include flawed, unsupported, or inconsistent rationales, but the overall logical sequence is not entirely arbitrary. There are several factual inaccuracies that impede understanding or lead to questionable conclusions, though the overall logical flow might still be discernible.
+# 0: The chain of logic is frequently broken, with major contradictions, missing or invalid assumptions, or arbitrary transitions. Little or no coherent line of reasoning can be reconstructed. Significant factual errors, or completely invalid assumptions about the external context, render the reasoning fundamentally unsound or irrelevant.
+# """
 TRAJECTORY_EVAL_LOGICAL_CONSISTENCY_SYSTEM_PROMPT = """
-Score the logical consistency of the trajectory steps. Be strict with your evaluation.
-
-3: Every action and transition in the workflow is logically justified in context and follows from previous steps. There are no contradictory, circular, or unjustified leaps. All implicit assumptions are reasonable and made explicit if needed. Uncertainty, risk, or alternative approaches are properly addressed when applicable.
-
-2: Few minor lapses in logic (such as a questionable assumption, minor gap in explanation, or omission of risk), but the core reasoning remains sound and consistent. There are no major contradictions in the flow of reasoning.
-
-1: Several lapses in logic, unclear or missing justifications, or contradictory transitions. These can include flawed, unsupported, or inconsistent rationales, but the overall logical sequence is not entirely arbitrary.
-
-0: The chain of logic is frequently broken, with major contradictions, missing or invalid assumptions, or arbitrary transitions. Little or no coherent line of reasoning can be reconstructed.
+Score the logical consistency of the trajectory. Be critical with your evaluation and cite specific examples from the trajectory.
+3: Every action and transition in the workflow is logically justified, follows from prior steps, and contains no contradictions or unjustified leaps. Uncertainty, risk, or alternative approaches are addressed when applicable. All stated facts are accurate and grounded in the given context. All previously stated required actions are fulfilled, and each output abides by system instructions.
+2: Minor lapses in logic (such as a questionable assumption, slight gap in explanation, or omission of risk), but the reasoning remains consistent overall without major contradictions. Any minor factual inaccuracies do not fundamentally undermine the overall conclusion or reasoning. Most previously stated required actions and systems instructions are fulfilled.
+1: Multiple lapses in logic, unclear justifications, or contradictions present. There are factual inaccuracies or unsupported steps. Previously stated required actions and system instructions are often not followed or left incomplete.
+0: The chain of logic is frequently broken, with major contradictions or arbitrary transitions. Significant factual errors or completely invalid assumptions about the external context render the reasoning fundamentally unsound or irrelevant. Previously stated required actions and system instructions largely missing or not followed.
 """
 
 TRAJECTORY_EVAL_WORKFLOW_EFFICIENCY_SYSTEM_PROMPT = """
-Score the efficiency of the workflow. Be strict with your evaluation.
+Score the efficiency of the workflow. Be critical in your evaluation and cite specific examples from the trajectory.
+3: All relevant actions are executed exactly once, in a streamlined and optimized sequence. There is no unnecessary busywork, overthinking, repetition, backtracking, parallelism/serialization, or wasted computation/resources. Error handling is appropriately lean and resolves as quickly as possible. No tool calls are repeated to fix prior incorrect invocations or argument errors; every tool is called only once per required operation.
+2: Few instances of minor workflow inefficiency: a single redundant action, non-ideal ordering of steps, slightly excessive error handling, minor missed opportunity for consolidation, or a single repeated tool call due to a correctable agent-induced error (such as an argument format mistake) with negligible overall impact.
+1: Several instances of recognizable inefficiency: repeated operations, excessive loops, missed opportunities for task consolidation, unnecessary resource use, inefficient error management, or multiple repeated tool calls required to recover from preventable agent mistakes in invocation or argument generation.
+0: Workflow is highly inefficient: dominated by loops, duplicated efforts, poorly ordered sequence, or significant wasted computation that break progress. Frequent or pervasive tool re-invocations due to initial agent errors (such as successive argument or format mistakes) substantially degrade workflow efficiency.
+"""
 
-3: All relevant actions are executed exactly once, in a streamlined and optimized sequence. There is no unnecessary busywork, overthinking, repetition, backtracking, parallelism/serialization, or wasted computation/resources. Error handling is appropriately lean and resolves as quickly as possible.
-
-2: Few instances of minor workflow inefficiency: a single redundant action, non-ideal ordering of steps, slightly excessive error handling, or minor missed opportunity for consolidation. The impact on the overall process is negligible.
-
-1: Several instances of recognizable inefficiency: repeated operations, excessive loops, missed opportunities for task consolidation, unnecessary resource use, or inefficient error management.
-
-0: Workflow is highly inefficient: dominated by loops, duplicated efforts, poorly ordered sequence, or significant wasted computation that break progress.
+TRAJECTORY_EVAL_PLAN_ADHERENCE_SYSTEM_PROMPT = """
+Score the adherence of the trajectory to the plan. Be critical in your evaluation and cite specific examples from the trajectory.
+3: All steps in the plan were executed and completed exactly. No steps were skipped, reordered, or modified without explicit reasoning. Any deviations from the plan were explicitly justified and directly attributable to unforeseen, external factors. If replanning was necessary, a revised plan was presented transparently, documented with clear rationale, and followed consistenly.
+2: Most steps in the plan were faithfully executed and completed as intended. Minor, non-disruptive deviations or partial step completions have clear, plausible explanations or can be easily inferred from context. Core structure of the plan was maintained and followed. If an unplanned change is required, a new or modified plan is stated and followed.
+1: Several steps were skipped, reordered, or changed without clear justification. Repeated or notable deviations from the plan occur with little, unclear, or inconsistent justification. Completion of steps in plan is partial or disjointed.
+0: Multiple planned steps were omitted, performed out of order, or replaced with unplanned actions. No meaningful attempt is made to explain, justify, or document plan changes or new actions. The plan is largely ignored or disregarded in execution, or steps were not completed as intended.
 """

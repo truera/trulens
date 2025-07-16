@@ -2305,9 +2305,9 @@ class LLMProvider(core_provider.Provider):
         )
 
         if isinstance(trace, Trace):
-            user_prompt = f"""Please score the execution trace. Execution Trace: {trace.events.to_json()}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
+            user_prompt = f"""Please score the execution trace. Execution Trace: {trace.events.to_json()}.\n\n{feedback_prompts.TRAJECTORY_CONSISTENCY_FULL_PROMPT}"""
         elif isinstance(trace, str):
-            user_prompt = f"""Please score the execution trace. Execution Trace: {trace}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
+            user_prompt = f"""Please score the execution trace. Execution Trace: {trace}.\n\n{feedback_prompts.TRAJECTORY_CONSISTENCY_FULL_PROMPT}"""
         else:
             raise ValueError("Invalid trace type")
 
@@ -2353,6 +2353,57 @@ class LLMProvider(core_provider.Provider):
         """
         system_prompt = (
             feedback_prompts.TRAJECTORY_EVAL_WORKFLOW_EFFICIENCY_SYSTEM_PROMPT
+        )
+
+        if isinstance(trace, Trace):
+            user_prompt = f"""Please score the execution trace. Execution Trace: {trace.events.to_json()}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
+        elif isinstance(trace, str):
+            user_prompt = f"""Please score the execution trace. Execution Trace: {trace}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
+        else:
+            raise ValueError("Invalid trace type")
+
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
+
+    def trajectory_plan_adherence_with_cot_reasons(
+        self,
+        trace: Union[Trace, str],
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+    ) -> Tuple[float, Dict]:
+        """
+        Evaluate the quality of an agentic execution trace using a rubric focused on adherence of agentic workflow to its plan.
+
+        Example:
+            ```python
+            from trulens.core import Feedback
+            from trulens.providers.openai import OpenAI
+
+            provider = OpenAI()
+
+            f_workflow_efficiency = (
+                Feedback(provider.trajectory_plan_adherence_with_cot_reasons)
+                .on({
+                    "trace": Selector(trace_level=True),
+                })
+            ```
+
+        Args:
+            trace (Trace): The execution trace to evaluate (e.g., as a JSON string or formatted log).
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+        Returns:
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (little adherence to the plan) and 1.0 (high adherence to the plan) and a dictionary containing the reasons for the evaluation.
+        """
+        system_prompt = (
+            feedback_prompts.TRAJECTORY_EVAL_PLAN_ADHERENCE_SYSTEM_PROMPT
         )
 
         if isinstance(trace, Trace):
