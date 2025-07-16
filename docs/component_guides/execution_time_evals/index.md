@@ -137,7 +137,7 @@ After the feedback function is executed, evaluation results will be added to the
 
     In `LangGraph`, the evaluations are formatted as `AnyMessage` objects and appended to the `messages` key in `MessageState`.
 
-By adding the evaluation results to the agent's state, the agent can then use evaluation results to guide execution steps. For example, by informing the agent that an intial retrieval step lacks context relevance, the agent may choose to perform additional research before moving on to generate a final answer.
+By adding the evaluation results to the agent's state, the agent can then use evaluation results to guide execution steps. For example, by informing the agent that an initial retrieval step lacks context relevance, the agent may choose to perform additional research before moving on to generate a final answer.
 
 ## Guardrails
 
