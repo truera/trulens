@@ -507,9 +507,9 @@ class TruGraph(TruChain):
                 return app.run
 
         # For custom classes, look for common method names
-        method_candidates = ["run", "invoke", "execute", "call", "__call__"]
+        common_methods = ["run", "invoke", "execute", "call", "__call__"]
 
-        for method_name in method_candidates:
+        for method_name in common_methods:
             if hasattr(app, method_name):
                 method = getattr(app, method_name)
                 if callable(method):
@@ -525,8 +525,10 @@ class TruGraph(TruChain):
 
         raise ValueError(
             f"Could not auto-detect main method for {type(app).__name__}. "
+            f"Auto-detection only works for common method names: {', '.join(['run', 'invoke', 'execute', 'call', '__call__'])}. "
             f"Available methods: {available_methods}. "
-            f"Please specify main_method explicitly: TruGraph(app, main_method=app.your_method)"
+            f"For complex applications, please specify main_method explicitly: "
+            f"TruGraph(app, main_method=app.your_main_method)"
         )
 
     def main_input(

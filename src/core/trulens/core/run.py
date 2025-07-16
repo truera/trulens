@@ -108,11 +108,11 @@ def validate_dataset_spec(
         normalized_key = key.lower()
 
         # Ensure that the key is one of the valid reserved fields or its subscripted form
-        if not any(
-            normalized_key.startswith(reserved_field)
-            for reserved_field in DATASET_RESERVED_FIELDS
-        ):
-            raise ValueError(f"Invalid field '{key}' found in dataset_spec.")
+        # if not any(
+        #     normalized_key.startswith(reserved_field)
+        #     for reserved_field in DATASET_RESERVED_FIELDS
+        # ):
+        #     raise ValueError(f"Invalid field '{key}' found in dataset_spec.")
 
         # Add the normalized field to the dictionary
         normalized_spec[normalized_key] = value
