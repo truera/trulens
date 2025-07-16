@@ -228,7 +228,7 @@ If we consider a RAG, context filter guardrails can be used to evaluate the *con
 
 ![Context Filtering with Guardrails](guardrail_context_filtering.png)
 
-## Using context filters
+### Using context filters
 
 `TruLens` context filter guardrails are easy to add to your app built with custom Python, *LangChain*, or *LlamaIndex*.
 
