@@ -10,9 +10,6 @@ import threading
 from threading import Thread
 from typing import Optional
 
-from trulens.connectors.snowflake.dao.sql_utils import (
-    clean_up_snowflake_identifier,
-)
 from trulens.core import session as core_session
 from trulens.core.database.connector.base import DBConnector
 from trulens.core.utils import imports as import_utils
@@ -139,6 +136,10 @@ def run_dashboard(
         _is_snowflake_connector(session.connector)
         and not session.connector.password_known
     ):
+        from trulens.connectors.snowflake.dao.sql_utils import (
+            clean_up_snowflake_identifier,
+        )
+
         connector = session.connector
         snowpark_session = connector.snowpark_session
         args_to_add = [
