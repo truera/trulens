@@ -748,6 +748,4 @@ def _show_no_records_error(
             icon="🔄",
         )
     else:
-        st.error(
-            f"No records found for app `{app_name}`. Found {otel_count} in OTEL format and {non_otel_count} in non-OTEL format."
-        )
+        st.error(f"No records found for app `{app_name}`.")
