@@ -109,6 +109,16 @@ def get_session() -> core_session.TruSession:
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--database-url", default=None)
+    parser.add_argument("--snowflake-account", default=None)
+    parser.add_argument("--snowflake-user", default=None)
+    parser.add_argument("--snowflake-role", default=None)
+    parser.add_argument("--snowflake-database", default=None)
+    parser.add_argument("--snowflake-schema", default=None)
+    parser.add_argument("--snowflake-warehouse", default=None)
+    parser.add_argument("--snowflake-authenticator", default=None)
+    parser.add_argument(
+        "--snowflake-use-account-event-table", action="store_true"
+    )
     parser.add_argument("--sis-compatibility", action="store_true")
     parser.add_argument(
         "--database-prefix", default=core_db.DEFAULT_DATABASE_PREFIX
@@ -129,9 +139,31 @@ def get_session() -> core_session.TruSession:
         # so we have to do a hard exit.
         sys.exit(e.code)
 
-    session = core_session.TruSession(
-        database_url=args.database_url, database_prefix=args.database_prefix
-    )
+    if args.database_url:
+        session = core_session.TruSession(
+            database_url=args.database_url, database_prefix=args.database_prefix
+        )
+    elif args.snowflake_account:
+        from snowflake.snowpark import Session
+        from trulens.connectors.snowflake import SnowflakeConnector
+
+        connection_params = {
+            "account": args.snowflake_account,
+            "user": args.snowflake_user,
+            "role": args.snowflake_role,
+            "database": args.snowflake_database,
+            "schema": args.snowflake_schema,
+            "warehouse": args.snowflake_warehouse,
+            "authenticator": args.snowflake_authenticator,
+        }
+        use_account_event_table = bool(args.snowflake_use_account_event_table)
+        snowpark_session = Session.builder.configs(connection_params).create()
+        session = core_session.TruSession(
+            connector=SnowflakeConnector(
+                snowpark_session=snowpark_session,
+                use_account_event_table=use_account_event_table,
+            )
+        )
 
     if args.sis_compatibility:
         session.experimental_enable_feature(
@@ -716,4 +748,6 @@ def _show_no_records_error(
             icon="🔄",
         )
     else:
-        st.error(f"No records found for app `{app_name}`.")
+        st.error(
+            f"No records found for app `{app_name}`. Found {otel_count} in OTEL format and {non_otel_count} in non-OTEL format."
+        )
