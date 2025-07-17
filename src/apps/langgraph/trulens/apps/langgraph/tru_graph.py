@@ -28,7 +28,6 @@ logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 E = None
-# LangGraph imports with optional import handling
 try:
     from langgraph.graph import StateGraph
     from langgraph.pregel import Pregel
@@ -36,8 +35,7 @@ try:
 
     LANGGRAPH_AVAILABLE = True
 except ImportError as e:
-    # Create mock classes when langgraph is not available
-    # Use type() to avoid type checking issues with generics
+
     def _mock_compile(self):
         raise ImportError("LangGraph is not available")
 
@@ -47,7 +45,6 @@ except ImportError as e:
     LANGGRAPH_AVAILABLE = False
     E = e
 
-# Import LangGraph func module components
 try:
     from langgraph.func import TaskFunction
     from langgraph.func import entrypoint
@@ -55,55 +52,47 @@ try:
 
     LANGGRAPH_FUNC_AVAILABLE = True
 
-    # Apply wrapt wrapping immediately at import time to ensure we catch all decorator usage
     try:
         import os
 
         import wrapt
 
         def _task_wrapper(wrapped, instance, args, kwargs):
-            """
-            Wrapper for langgraph.func.task that applies TruLens instrumentation first,
-            then applies the original @task decorator.
-            """
-            # Check if OTEL tracing is enabled
+            """Wrapper for langgraph.func.task that applies TruLens instrumentation."""
             otel_enabled = os.environ.get("TRULENS_OTEL_TRACING", "0") == "1"
 
+            logger.debug(f"Task wrapper called, OTEL enabled: {otel_enabled}")
+
             if not otel_enabled:
-                # No instrumentation, just call original
+                logger.debug("OTEL not enabled, skipping instrumentation")
                 return wrapped(*args, **kwargs)
 
             try:
                 from trulens.core.otel.instrument import instrument
 
-                # Create custom attributes function similar to user's _default_attributes
                 def task_attributes(
                     ret, exception, *inner_args, **inner_kwargs
                 ):
+                    logger.debug(
+                        f"Task attributes function called with args: {len(inner_args)}, kwargs: {len(inner_kwargs)}"
+                    )
                     attributes = {}
                     try:
                         import inspect
                         import json
 
-                        # Get the actual task function from the first call
                         task_func = inner_args[0] if inner_args else None
                         if not task_func or not callable(task_func):
                             return attributes
 
-                        # For the actual task function call, extract arguments
-                        if (
-                            len(inner_args) > 1
-                        ):  # This is the actual function call
+                        if len(inner_args) > 1:
                             sig = inspect.signature(task_func)
-                            # Skip first arg (self/context) and bind the rest
                             bound_args = sig.bind_partial(
                                 *inner_args[1:], **inner_kwargs
                             ).arguments
                             all_kwargs = {**inner_kwargs, **bound_args}
 
-                            # Extract and serialize function arguments
                             for name, value in all_kwargs.items():
-                                # Skip certain types that aren't serializable
                                 if hasattr(value, "__module__") and (
                                     "llm" in str(type(value)).lower()
                                     or "pool" in str(type(value)).lower()
@@ -111,11 +100,9 @@ try:
                                     continue
 
                                 try:
-                                    # Handle different value types
                                     if hasattr(value, "__dict__") and hasattr(
                                         value, "__dataclass_fields__"
                                     ):
-                                        # Dataclass
                                         import dataclasses
 
                                         val = json.dumps(
@@ -124,7 +111,6 @@ try:
                                             indent=2,
                                         )
                                     elif hasattr(value, "model_dump"):
-                                        # Pydantic v2
                                         val = json.dumps(
                                             value.model_dump(),
                                             default=str,
@@ -133,12 +119,10 @@ try:
                                     elif hasattr(value, "dict") and callable(
                                         getattr(value, "dict")
                                     ):
-                                        # Pydantic v1
                                         val = json.dumps(
                                             value.dict(), default=str, indent=2
                                         )
                                     else:
-                                        # Regular serialization
                                         val = json.dumps(
                                             value, default=str, indent=2
                                         )
@@ -147,12 +131,10 @@ try:
                                         f"trulens.langgraph_task.input_state.{name}"
                                     ] = val
                                 except Exception:
-                                    # Fallback to string representation
                                     attributes[
                                         f"trulens.langgraph_task.input_state.{name}"
                                     ] = str(value)
 
-                            # Handle return value
                             if ret is not None and not exception:
                                 try:
                                     if hasattr(ret, "__dict__") and hasattr(
@@ -179,7 +161,6 @@ try:
                                         "trulens.langgraph_task.output_state"
                                     ] = str(ret)
 
-                            # Handle exceptions
                             if exception:
                                 attributes["trulens.langgraph_task.error"] = (
                                     str(exception)
@@ -193,13 +174,11 @@ try:
                     return attributes
 
                 if args and callable(args[0]):
-                    # @task used without parameters: @task
                     func = args[0]
-                    logger.debug(
+                    logger.info(
                         f"Auto-instrumenting @task function: {func.__name__}"
                     )
 
-                    # Apply instrumentation first, then original @task
                     instrumented_func = instrument(
                         span_type=SpanAttributes.SpanType.LANGGRAPH_TASK,
                         attributes=task_attributes,
@@ -207,15 +186,13 @@ try:
 
                     return wrapped(instrumented_func, **kwargs)
                 else:
-                    # @task used with parameters: @task(...)
                     original_decorator = wrapped(*args, **kwargs)
 
                     def new_decorator(func):
-                        logger.debug(
+                        logger.info(
                             f"Auto-instrumenting @task function: {func.__name__}"
                         )
 
-                        # Apply instrumentation first, then original decorator
                         instrumented_func = instrument(
                             span_type=SpanAttributes.SpanType.LANGGRAPH_TASK,
                             attributes=task_attributes,
@@ -227,39 +204,27 @@ try:
 
             except Exception as e:
                 logger.warning(f"Error in task wrapper: {e}")
-                # Fallback to original behavior
                 return wrapped(*args, **kwargs)
 
         def _entrypoint_wrapper(wrapped, instance, args, kwargs):
-            """
-            Wrapper for langgraph.func.entrypoint that applies TruLens instrumentation.
-            """
-            # Check if OTEL tracing is enabled
+            """Wrapper for langgraph.func.entrypoint that applies TruLens instrumentation."""
             otel_enabled = os.environ.get("TRULENS_OTEL_TRACING", "0") == "1"
 
             if not otel_enabled:
-                # No instrumentation, just call original
                 return wrapped(*args, **kwargs)
 
             try:
                 from trulens.core.otel.instrument import instrument
 
-                # Get the original entrypoint instance
                 original_result = wrapped(*args, **kwargs)
 
-                # If this creates an entrypoint instance, instrument its __call__ method
-                if (
-                    hasattr(original_result, "__call__")
-                    and not hasattr(
-                        original_result,
-                        "_trulens_instrumented",  # Check on the object, not the method
-                    )
+                if hasattr(original_result, "__call__") and not hasattr(
+                    original_result, "_trulens_instrumented"
                 ):
                     logger.debug(
                         f"Auto-instrumenting @entrypoint: {original_result}"
                     )
 
-                    # Apply instrumentation to the __call__ method
                     instrumented_call = instrument(
                         span_type=SpanAttributes.SpanType.LANGGRAPH_ENTRYPOINT,
                         attributes=lambda ret, exception, *args, **kwargs: {
@@ -275,26 +240,21 @@ try:
                         },
                     )(original_result.__call__)
 
-                    # Replace the __call__ method with instrumented version
                     original_result.__call__ = instrumented_call
-                    original_result._trulens_instrumented = (
-                        True  # Set on the object, not the method
-                    )
+                    original_result._trulens_instrumented = True
 
                 return original_result
 
             except Exception as e:
                 logger.warning(f"Error in entrypoint wrapper: {e}")
-                # Fallback to original behavior
                 return wrapped(*args, **kwargs)
 
-        # Apply wrapt wrapping at module level immediately
         wrapt.wrap_function_wrapper("langgraph.func", "task", _task_wrapper)
         wrapt.wrap_function_wrapper(
             "langgraph.func", "entrypoint", _entrypoint_wrapper
         )
 
-        logger.debug(
+        logger.info(
             "Applied wrapt wrappers to @task and @entrypoint at import time"
         )
 
@@ -318,11 +278,9 @@ def _langgraph_graph_span() -> Dict[str, Any]:
     def _attributes(ret, exception, *args, **kwargs) -> Dict[str, Any]:
         attributes = {}
 
-        # Try to extract graph input state
-        if args and len(args) > 1:  # args[0] is self, args[1] might be input
+        if args and len(args) > 1:
             input_data = args[1]
             if isinstance(input_data, dict):
-                # Serialize the input state for tracing
                 attributes[SpanAttributes.LANGGRAPH_GRAPH.INPUT_STATE] = str(
                     input_data
                 )
@@ -331,17 +289,14 @@ def _langgraph_graph_span() -> Dict[str, Any]:
                     input_data
                 )
 
-        # Handle keyword arguments for input
         for k, v in kwargs.items():
             if k in ["input", "state", "data"]:
                 attributes[SpanAttributes.LANGGRAPH_GRAPH.INPUT_STATE] = str(v)
                 break
 
-        # Extract output state
         if ret is not None and not exception:
             attributes[SpanAttributes.LANGGRAPH_GRAPH.OUTPUT_STATE] = str(ret)
 
-        # Handle errors
         if exception:
             attributes[SpanAttributes.LANGGRAPH_GRAPH.ERROR] = str(exception)
 
@@ -359,24 +314,20 @@ def _langgraph_task_span() -> Dict[str, Any]:
     def _attributes(ret, exception, *args, **kwargs) -> Dict[str, Any]:
         attributes = {}
 
-        # Try to extract task input state
-        if args and len(args) > 1:  # args[0] is usually self or context
+        if args and len(args) > 1:
             input_data = args[1] if len(args) > 1 else args[0]
             attributes[SpanAttributes.LANGGRAPH_TASK.INPUT_STATE] = str(
                 input_data
             )
 
-        # Handle keyword arguments for input
         for k, v in kwargs.items():
             if k in ["state", "data", "context"]:
                 attributes[SpanAttributes.LANGGRAPH_TASK.INPUT_STATE] = str(v)
                 break
 
-        # Extract output state
         if ret is not None and not exception:
             attributes[SpanAttributes.LANGGRAPH_TASK.OUTPUT_STATE] = str(ret)
 
-        # Handle errors
         if exception:
             attributes[SpanAttributes.LANGGRAPH_TASK.ERROR] = str(exception)
 
@@ -394,14 +345,12 @@ def _langgraph_entrypoint_span() -> Dict[str, Any]:
     def _attributes(ret, exception, *args, **kwargs) -> Dict[str, Any]:
         attributes = {}
 
-        # Try to extract entrypoint input data
         if args and len(args) > 1:
             input_data = args[1]
             attributes[SpanAttributes.LANGGRAPH_ENTRYPOINT.INPUT_DATA] = str(
                 input_data
             )
 
-        # Handle keyword arguments for input
         for k, v in kwargs.items():
             if k in ["input", "data", "query"]:
                 attributes[SpanAttributes.LANGGRAPH_ENTRYPOINT.INPUT_DATA] = (
@@ -409,13 +358,11 @@ def _langgraph_entrypoint_span() -> Dict[str, Any]:
                 )
                 break
 
-        # Extract output data
         if ret is not None and not exception:
             attributes[SpanAttributes.LANGGRAPH_ENTRYPOINT.OUTPUT_DATA] = str(
                 ret
             )
 
-        # Handle errors
         if exception:
             attributes[SpanAttributes.LANGGRAPH_ENTRYPOINT.ERROR] = str(
                 exception
@@ -457,10 +404,8 @@ class LangGraphInstrument(core_instruments.Instrument):
 
         METHODS: List[InstrumentedMethod] = []
 
-        # Build methods list conditionally
         if LANGGRAPH_AVAILABLE:
             METHODS.extend([
-                # Core LangGraph methods
                 InstrumentedMethod(
                     "invoke",
                     Pregel,
@@ -493,11 +438,6 @@ class LangGraphInstrument(core_instruments.Instrument):
                 ),
             ])
 
-        if LANGGRAPH_FUNC_AVAILABLE:
-            # Note: TaskFunction and entrypoint methods are now handled via wrapt
-            # module-level function wrapping in _instrument_task_functions_globally() method
-            pass
-
     def __init__(self, *args, **kwargs):
         super().__init__(
             include_modules=LangGraphInstrument.Default.MODULES,
@@ -506,8 +446,6 @@ class LangGraphInstrument(core_instruments.Instrument):
             *args,
             **kwargs,
         )
-
-        # Note: Task and entrypoint instrumentation now happens at import time via wrapt
 
 
 class TruGraph(TruChain):
@@ -636,13 +574,10 @@ class TruGraph(TruChain):
                 f"to use TruGraph. Error: {E}"
             )
 
-        # Auto-detect and handle different app types
         app = self._prepare_app(app)
 
-        # TruGraph specific:
         kwargs["app"] = app
 
-        # Extract connector if provided for TruSession creation
         connector = kwargs.get("connector")
         if connector is not None:
             TruSession(connector=connector)
@@ -652,13 +587,10 @@ class TruGraph(TruChain):
         if main_method is not None:
             kwargs["main_method"] = main_method
         kwargs["root_class"] = pyschema_utils.Class.of_object(app)
-
-        # Create combined instrumentation for both LangChain and LangGraph
         from trulens.apps.langchain.tru_chain import LangChainInstrument
 
         class CombinedInstrument(core_instruments.Instrument):
             def __init__(self, *args, **kwargs):
-                # Initialize with both LangChain and LangGraph settings
                 langchain_default = LangChainInstrument.Default
                 langgraph_default = LangGraphInstrument.Default
 
@@ -682,7 +614,6 @@ class TruGraph(TruChain):
 
         kwargs["instrument"] = CombinedInstrument(app=self)
 
-        # Call TruChain's parent (core_app.App) __init__ directly to avoid TruChain's specific initialization
         core_app.App.__init__(self, **kwargs)
 
     def _prepare_app(self, app: Any) -> Any:
@@ -695,7 +626,6 @@ class TruGraph(TruChain):
         Returns:
             The prepared application ready for instrumentation
         """
-        # Handle direct LangGraph objects
         if isinstance(app, StateGraph):
             logger.warning(
                 "Received uncompiled StateGraph. Compiling it for instrumentation. "
@@ -706,7 +636,6 @@ class TruGraph(TruChain):
         if isinstance(app, Pregel):
             return app
 
-        # Handle custom classes - simple detection for logging
         langgraph_components = self._detect_langgraph_components(app)
         if langgraph_components:
             logger.info(
@@ -714,7 +643,6 @@ class TruGraph(TruChain):
                 f"{[f'{name}: {type(comp).__name__}' for name, comp in langgraph_components]}"
             )
 
-        # Return the app as-is for custom classes
         return app
 
     def _detect_langgraph_components(self, app: Any) -> List[Tuple[str, Any]]:
@@ -735,7 +663,6 @@ class TruGraph(TruChain):
         if not hasattr(app, "__dict__"):
             return components
 
-        # Simple approach: only check direct attributes
         for attr_name in dir(app):
             if attr_name.startswith("_"):
                 continue
@@ -746,7 +673,6 @@ class TruGraph(TruChain):
                     components.append((attr_name, attr_value))
                     logger.debug(f"Found LangGraph component: {attr_name}")
             except Exception:
-                # Skip attributes that can't be accessed
                 continue
 
         return components
@@ -759,14 +685,9 @@ class TruGraph(TruChain):
         signature `sig` if it is to be called with the given bindings
         `bindings`.
         """
-        # For LangGraph, the main input is typically the initial state
-        # which can be a dict with "messages" key or direct input
         if "input" in bindings.arguments:
             temp = bindings.arguments["input"]
             if isinstance(temp, dict):
-                # For LangGraph, common patterns are:
-                # {"messages": [HumanMessage(content="...")]}
-                # or {"query": "..."}
                 if "messages" in temp:
                     messages = temp["messages"]
                     if isinstance(messages, list) and len(messages) > 0:
@@ -783,7 +704,6 @@ class TruGraph(TruChain):
                 elif "query" in temp:
                     return temp["query"]
                 else:
-                    # Try to get any string-like value from the input dict
                     for _, value in temp.items():
                         if isinstance(value, str):
                             return value
@@ -793,7 +713,6 @@ class TruGraph(TruChain):
             else:
                 return str(temp)
 
-        # Fall back to TruChain's main_input method
         return super().main_input(func, sig, bindings)
 
     def main_output(
@@ -804,8 +723,6 @@ class TruGraph(TruChain):
         signature `sig` after it is called with the given `bindings` and has
         returned `ret`.
         """
-        # For LangGraph, the output is typically the final state
-        # which can be a dict with "messages" key
         if isinstance(ret, dict):
             if "messages" in ret:
                 messages = ret["messages"]
@@ -821,10 +738,8 @@ class TruGraph(TruChain):
                     else:
                         return str(last_message)
                 else:
-                    # messages is not a list or is empty
                     return str(ret)
             else:
-                # Try to get any string-like value from the output dict
                 for _, value in ret.items():
                     if isinstance(value, str):
                         return value
@@ -832,16 +747,11 @@ class TruGraph(TruChain):
         elif isinstance(ret, str):
             return ret
         else:
-            # Fall back to TruChain's main_output method
             return super().main_output(func, sig, bindings, ret)
 
     def main_call(self, human: str):
-        """
-        A single text to a single text invocation of this app.
-        """
-        # Most LangGraph apps expect a dict with "messages" key
+        """A single text to a single text invocation of this app."""
         try:
-            # Try the common LangGraph pattern first
             result = self.app.invoke({"messages": [("user", human)]})
             return self._extract_output_from_result(result)
         except Exception:
@@ -852,9 +762,7 @@ class TruGraph(TruChain):
                 return super().main_call(human)
 
     async def main_acall(self, human: str):
-        """
-        A single text to a single text async invocation of this app.
-        """
+        """A single text to a single text async invocation of this app."""
         try:
             result = await self.app.ainvoke({"messages": [("user", human)]})
             return self._extract_output_from_result(result)
@@ -866,9 +774,7 @@ class TruGraph(TruChain):
                 return await super().main_acall(human)
 
     def _extract_output_from_result(self, result: Any) -> str:
-        """
-        Helper method to extract string output from LangGraph result.
-        """
+        """Helper method to extract string output from LangGraph result."""
         if isinstance(result, dict) and "messages" in result:
             messages = result["messages"]
             if isinstance(messages, list) and len(messages) > 0:
@@ -880,12 +786,28 @@ class TruGraph(TruChain):
                 else:
                     return str(last_message)
             else:
-                # messages is not a list or is empty
                 return str(result)
         elif isinstance(result, str):
             return result
         else:
             return str(result)
+
+    def debug_instrumentation(self) -> Dict[str, Any]:
+        """Debug method to check instrumentation status."""
+        import os
+
+        debug_info = {
+            "otel_enabled": os.environ.get("TRULENS_OTEL_TRACING", "0") == "1",
+            "environment_variable": os.environ.get(
+                "TRULENS_OTEL_TRACING", "not_set"
+            ),
+            "langgraph_available": LANGGRAPH_AVAILABLE,
+            "langgraph_func_available": LANGGRAPH_FUNC_AVAILABLE,
+            "detected_components": self._detect_langgraph_components(self.app),
+        }
+
+        logger.info(f"Instrumentation debug info: {debug_info}")
+        return debug_info
 
 
 TruGraph.model_rebuild()
