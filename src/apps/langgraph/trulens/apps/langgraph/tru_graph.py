@@ -21,6 +21,7 @@ from trulens.core import instruments as core_instruments
 from trulens.core.instruments import InstrumentedMethod
 from trulens.core.session import TruSession
 from trulens.core.utils import pyschema as pyschema_utils
+from trulens.core.utils import serial as serial_utils
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
@@ -574,6 +575,8 @@ class TruGraph(TruChain):
                 f"to use TruGraph. Error: {E}"
             )
 
+        # Only do minimal preparation to avoid interfering with existing instrumentation
+        original_app = app
         app = self._prepare_app(app)
 
         kwargs["app"] = app
@@ -614,7 +617,14 @@ class TruGraph(TruChain):
 
         kwargs["instrument"] = CombinedInstrument(app=self)
 
+        # Store original app for debugging
+        self._original_app = original_app
+
         core_app.App.__init__(self, **kwargs)
+
+        # After initialization, help the instrumentation system find nested Pregel objects
+        # This does NOT interfere with @task/@entrypoint instrumentation
+        self._instrument_nested_pregel_objects()
 
     def _prepare_app(self, app: Any) -> Any:
         """
@@ -636,6 +646,8 @@ class TruGraph(TruChain):
         if isinstance(app, Pregel):
             return app
 
+        # For custom classes, only detect components for logging/debugging
+        # Do NOT modify the app to avoid interfering with existing @task/@entrypoint instrumentation
         langgraph_components = self._detect_langgraph_components(app)
         if langgraph_components:
             logger.info(
@@ -649,8 +661,8 @@ class TruGraph(TruChain):
         """
         Simple detection of LangGraph components in custom classes.
 
-        This is primarily for logging/visibility. The main instrumentation
-        works regardless of what this detects.
+        This method looks for basic LangGraph components for logging/debugging purposes.
+        It does NOT interfere with existing @task/@entrypoint instrumentation.
 
         Args:
             app: The application object to inspect
@@ -663,19 +675,109 @@ class TruGraph(TruChain):
         if not hasattr(app, "__dict__"):
             return components
 
+        # Only check for basic LangGraph objects - Pregel and StateGraph
+        # @task and @entrypoint instrumentation is handled separately via wrapt
         for attr_name in dir(app):
             if attr_name.startswith("_"):
                 continue
 
             try:
                 attr_value = getattr(app, attr_name)
-                if isinstance(attr_value, (Pregel, StateGraph, TaskFunction)):
+                if isinstance(attr_value, (Pregel, StateGraph)):
                     components.append((attr_name, attr_value))
-                    logger.debug(f"Found LangGraph component: {attr_name}")
+                    logger.debug(
+                        f"Found LangGraph component: {attr_name} ({type(attr_value).__name__})"
+                    )
             except Exception:
                 continue
 
         return components
+
+    def _instrument_nested_pregel_objects(self) -> None:
+        """
+        Help the instrumentation system find and instrument nested Pregel objects.
+
+        This method specifically targets Pregel objects (compiled LangGraph workflows)
+        that might be nested within custom classes. It does NOT interfere with
+        @task/@entrypoint instrumentation which is handled separately via wrapt.
+        """
+        if not hasattr(self, "instrument") or not hasattr(
+            self.instrument, "instrument_object"
+        ):
+            logger.debug(
+                "No instrument object available for nested Pregel instrumentation"
+            )
+            return
+
+        # Look for nested Pregel objects in the app
+        nested_pregels = self._find_nested_pregel_objects(self.app)
+
+        for path_parts, pregel_obj in nested_pregels:
+            try:
+                # Create a lens path for this Pregel object
+                lens = serial_utils.Lens()
+                for part in path_parts:
+                    lens = lens[part]
+
+                logger.debug(
+                    f"Instrumenting nested Pregel at path: {'.'.join(path_parts)}"
+                )
+                self.instrument.instrument_object(pregel_obj, lens)  # type: ignore
+
+            except Exception as e:
+                logger.warning(
+                    f"Failed to instrument nested Pregel at {'.'.join(path_parts)}: {e}"
+                )
+
+    def _find_nested_pregel_objects(
+        self, obj: Any, path: Optional[List[str]] = None
+    ) -> List[Tuple[List[str], Any]]:
+        """
+        Recursively find Pregel objects nested within the given object.
+
+        Args:
+            obj: Object to search within
+            path: Current path to this object
+
+        Returns:
+            List of (path_parts, pregel_object) tuples
+        """
+        if path is None:
+            path = []
+
+        pregels = []
+
+        # If this object itself is a Pregel, add it (but skip if it's the root app)
+        if (
+            isinstance(obj, Pregel) and path
+        ):  # path check ensures we skip root app
+            pregels.append((path, obj))
+            return pregels  # Don't recurse into Pregel objects
+
+        # Look for Pregel objects in attributes
+        if hasattr(obj, "__dict__"):
+            for attr_name in dir(obj):
+                if attr_name.startswith("_"):
+                    continue
+
+                try:
+                    attr_value = getattr(obj, attr_name)
+
+                    if isinstance(attr_value, Pregel):
+                        pregels.append((path + [attr_name], attr_value))
+                    elif hasattr(attr_value, "__dict__") and not callable(
+                        attr_value
+                    ):
+                        # Recursively search one level deep
+                        nested_pregels = self._find_nested_pregel_objects(
+                            attr_value, path + [attr_name]
+                        )
+                        pregels.extend(nested_pregels)
+
+                except Exception:
+                    continue
+
+        return pregels
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
