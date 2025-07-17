@@ -29,7 +29,7 @@ class OtelTestCase(TruTestCase):
     @classmethod
     def tearDownClass(cls) -> None:
         instrument.disable_all_instrumentation()
-        del os.environ["TRULENS_OTEL_TRACING"]
+        os.environ["TRULENS_OTEL_TRACING"] = "0"
         return super().tearDownClass()
 
     def setUp(self) -> None:
