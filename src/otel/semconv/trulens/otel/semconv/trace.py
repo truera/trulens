@@ -91,6 +91,15 @@ class SpanAttributes:
         GENERATION = "generation"
         """A generation call to an LLM."""
 
+        LANGGRAPH_TASK = "langgraph_task"
+        """A LangGraph task function execution."""
+
+        LANGGRAPH_ENTRYPOINT = "langgraph_entrypoint"
+        """A LangGraph entrypoint function execution."""
+
+        LANGGRAPH_GRAPH = "langgraph_graph"
+        """A LangGraph graph execution."""
+
     class UNKNOWN:
         """Attributes relevant for spans that could not be categorized otherwise."""
 
@@ -264,3 +273,57 @@ class SpanAttributes:
 
     class GENERATION:
         base = BASE_SCOPE + ".generation"
+
+    class LANGGRAPH_TASK:
+        """A LangGraph task function execution."""
+
+        base = BASE_SCOPE + ".langgraph_task"
+
+        TASK_NAME = base + ".task_name"
+        """Name of the task function."""
+
+        INPUT_STATE = base + ".input_state"
+        """Input state to the task."""
+
+        OUTPUT_STATE = base + ".output_state"
+        """Output state from the task."""
+
+        ERROR = base + ".error"
+        """Error raised during task execution."""
+
+    class LANGGRAPH_ENTRYPOINT:
+        """A LangGraph entrypoint function execution."""
+
+        base = BASE_SCOPE + ".langgraph_entrypoint"
+
+        ENTRYPOINT_NAME = base + ".entrypoint_name"
+        """Name of the entrypoint function."""
+
+        INPUT_DATA = base + ".input_data"
+        """Input data to the entrypoint."""
+
+        OUTPUT_DATA = base + ".output_data"
+        """Output data from the entrypoint."""
+
+        ERROR = base + ".error"
+        """Error raised during entrypoint execution."""
+
+    class LANGGRAPH_GRAPH:
+        """A LangGraph graph execution."""
+
+        base = BASE_SCOPE + ".langgraph_graph"
+
+        GRAPH_NAME = base + ".graph_name"
+        """Name of the graph."""
+
+        INPUT_STATE = base + ".input_state"
+        """Input state to the graph."""
+
+        OUTPUT_STATE = base + ".output_state"
+        """Output state from the graph."""
+
+        NODES_EXECUTED = base + ".nodes_executed"
+        """List of nodes executed in the graph."""
+
+        ERROR = base + ".error"
+        """Error raised during graph execution."""

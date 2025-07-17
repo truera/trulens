@@ -3,6 +3,7 @@
 from inspect import BoundArguments
 from inspect import Signature
 import logging
+from pprint import PrettyPrinter
 from typing import (
     Any,
     Callable,
@@ -18,11 +19,13 @@ from trulens.apps.langchain.tru_chain import TruChain
 from trulens.core import app as core_app
 from trulens.core import instruments as core_instruments
 from trulens.core.instruments import InstrumentedMethod
-from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.session import TruSession
 from trulens.core.utils import pyschema as pyschema_utils
+from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
+
+pp = PrettyPrinter()
 
 E = None
 # LangGraph imports with optional import handling
@@ -40,75 +43,133 @@ except ImportError as e:
     LANGGRAPH_AVAILABLE = False
     E = e
 
-try:
-    from langgraph.func import task
-
-    LANGGRAPH_TASK_AVAILABLE = True
-except ImportError:
-    task = None
-    LANGGRAPH_TASK_AVAILABLE = False
-
-# Import TaskFunction for detection
+# Import LangGraph func module components
 try:
     from langgraph.func import TaskFunction
+    from langgraph.func import task
 
-    TASK_FUNCTION_AVAILABLE = True
+    LANGGRAPH_FUNC_AVAILABLE = True
 except ImportError:
-    TaskFunction = None
-    TASK_FUNCTION_AVAILABLE = False
+    task = None
+    TaskFunction = type("TaskFunction", (), {})
+    LANGGRAPH_FUNC_AVAILABLE = False
 
 
-def _detect_task_methods(app_instance: Any) -> List[Tuple[str, Any, Callable]]:
-    """
-    Detect @task decorated methods on an app instance.
+def _langgraph_graph_span() -> Dict[str, Any]:
+    """Create span configuration for LangGraph graph operations."""
 
-    Args:
-        app_instance: The application instance to inspect
+    def _attributes(ret, exception, *args, **kwargs) -> Dict[str, Any]:
+        attributes = {}
 
-    Returns:
-        List of tuples (method_name, task_function_instance, original_function)
-    """
-    task_methods = []
+        # Try to extract graph input state
+        if args and len(args) > 1:  # args[0] is self, args[1] might be input
+            input_data = args[1]
+            if isinstance(input_data, dict):
+                # Serialize the input state for tracing
+                attributes[SpanAttributes.LANGGRAPH_GRAPH.INPUT_STATE] = str(
+                    input_data
+                )
+            else:
+                attributes[SpanAttributes.LANGGRAPH_GRAPH.INPUT_STATE] = str(
+                    input_data
+                )
 
-    if app_instance is None:
-        return task_methods
+        # Handle keyword arguments for input
+        for k, v in kwargs.items():
+            if k in ["input", "state", "data"]:
+                attributes[SpanAttributes.LANGGRAPH_GRAPH.INPUT_STATE] = str(v)
+                break
 
-    logger.debug(f"Scanning {type(app_instance).__name__} for @task methods...")
+        # Extract output state
+        if ret is not None and not exception:
+            attributes[SpanAttributes.LANGGRAPH_GRAPH.OUTPUT_STATE] = str(ret)
 
-    # Scan all attributes of the instance
-    for attr_name in dir(app_instance):
-        if attr_name.startswith("_"):
-            continue
+        # Handle errors
+        if exception:
+            attributes[SpanAttributes.LANGGRAPH_GRAPH.ERROR] = str(exception)
 
-        try:
-            attr_value = getattr(app_instance, attr_name)
+        return attributes
 
-            # Check if it's a TaskFunction (from @task decorator)
-            if (
-                TASK_FUNCTION_AVAILABLE
-                and TaskFunction is not None
-                and isinstance(attr_value, TaskFunction)
-            ):
-                task_methods.append((attr_name, attr_value, attr_value.func))
-                logger.info(f"Found @task method: {attr_name}")
-            # Fallback: check by class name for compatibility
-            elif (
-                hasattr(attr_value, "__class__")
-                and attr_value.__class__.__name__ == "TaskFunction"
-            ):
-                original_func = getattr(attr_value, "func", None)
-                if original_func:
-                    task_methods.append((attr_name, attr_value, original_func))
-                    logger.info(f"Found @task method (fallback): {attr_name}")
+    return {
+        "span_type": SpanAttributes.SpanType.LANGGRAPH_GRAPH,
+        "attributes": _attributes,
+    }
 
-        except Exception as e:
-            logger.debug(f"Error inspecting attribute {attr_name}: {e}")
-            continue
 
-    logger.info(
-        f"Detected {len(task_methods)} @task methods on {type(app_instance).__name__}"
-    )
-    return task_methods
+def _langgraph_task_span() -> Dict[str, Any]:
+    """Create span configuration for LangGraph task operations."""
+
+    def _attributes(ret, exception, *args, **kwargs) -> Dict[str, Any]:
+        attributes = {}
+
+        # Try to extract task input state
+        if args and len(args) > 1:  # args[0] is usually self or context
+            input_data = args[1] if len(args) > 1 else args[0]
+            attributes[SpanAttributes.LANGGRAPH_TASK.INPUT_STATE] = str(
+                input_data
+            )
+
+        # Handle keyword arguments for input
+        for k, v in kwargs.items():
+            if k in ["state", "data", "context"]:
+                attributes[SpanAttributes.LANGGRAPH_TASK.INPUT_STATE] = str(v)
+                break
+
+        # Extract output state
+        if ret is not None and not exception:
+            attributes[SpanAttributes.LANGGRAPH_TASK.OUTPUT_STATE] = str(ret)
+
+        # Handle errors
+        if exception:
+            attributes[SpanAttributes.LANGGRAPH_TASK.ERROR] = str(exception)
+
+        return attributes
+
+    return {
+        "span_type": SpanAttributes.SpanType.LANGGRAPH_TASK,
+        "attributes": _attributes,
+    }
+
+
+def _langgraph_entrypoint_span() -> Dict[str, Any]:
+    """Create span configuration for LangGraph entrypoint operations."""
+
+    def _attributes(ret, exception, *args, **kwargs) -> Dict[str, Any]:
+        attributes = {}
+
+        # Try to extract entrypoint input data
+        if args and len(args) > 1:
+            input_data = args[1]
+            attributes[SpanAttributes.LANGGRAPH_ENTRYPOINT.INPUT_DATA] = str(
+                input_data
+            )
+
+        # Handle keyword arguments for input
+        for k, v in kwargs.items():
+            if k in ["input", "data", "query"]:
+                attributes[SpanAttributes.LANGGRAPH_ENTRYPOINT.INPUT_DATA] = (
+                    str(v)
+                )
+                break
+
+        # Extract output data
+        if ret is not None and not exception:
+            attributes[SpanAttributes.LANGGRAPH_ENTRYPOINT.OUTPUT_DATA] = str(
+                ret
+            )
+
+        # Handle errors
+        if exception:
+            attributes[SpanAttributes.LANGGRAPH_ENTRYPOINT.ERROR] = str(
+                exception
+            )
+
+        return attributes
+
+    return {
+        "span_type": SpanAttributes.SpanType.LANGGRAPH_ENTRYPOINT,
+        "attributes": _attributes,
+    }
 
 
 class LangGraphInstrument(core_instruments.Instrument):
@@ -118,76 +179,87 @@ class LangGraphInstrument(core_instruments.Instrument):
         """Instrumentation specification for LangGraph apps."""
 
         MODULES = {"langgraph"}
-        """Filter for module name prefix for modules to be instrumented."""
+        """Modules by prefix to instrument."""
 
         CLASSES = (
             lambda: {
                 Pregel,
                 StateGraph,
+                TaskFunction,
             }
             if LANGGRAPH_AVAILABLE
             else set()
         )
-        """Filter for classes to be instrumented."""
+        """Classes to instrument."""
 
-        # Instrument only methods with these names and of these classes.
-        METHODS: List[InstrumentedMethod] = (
-            [
-                InstrumentedMethod("invoke", Pregel),
-                InstrumentedMethod("ainvoke", Pregel),
-                InstrumentedMethod("stream", Pregel),
-                InstrumentedMethod("astream", Pregel),
-                InstrumentedMethod("stream_mode", Pregel),
-                InstrumentedMethod("astream_mode", Pregel),
-            ]
-            if LANGGRAPH_AVAILABLE
-            else []
-        )
-        """Methods to be instrumented.
+        METHODS: List[InstrumentedMethod] = []
 
-        Key is method name and value is filter for objects that need those
-        methods instrumented"""
+        # Build methods list conditionally
+        if LANGGRAPH_AVAILABLE:
+            METHODS.extend([
+                # Core LangGraph methods
+                InstrumentedMethod(
+                    "invoke",
+                    Pregel,
+                    **_langgraph_graph_span(),
+                ),
+                InstrumentedMethod(
+                    "ainvoke",
+                    Pregel,
+                    **_langgraph_graph_span(),
+                ),
+                InstrumentedMethod(
+                    "stream",
+                    Pregel,
+                    **_langgraph_graph_span(),
+                ),
+                InstrumentedMethod(
+                    "astream",
+                    Pregel,
+                    **_langgraph_graph_span(),
+                ),
+                InstrumentedMethod(
+                    "stream_mode",
+                    Pregel,
+                    **_langgraph_graph_span(),
+                ),
+                InstrumentedMethod(
+                    "astream_mode",
+                    Pregel,
+                    **_langgraph_graph_span(),
+                ),
+            ])
+
+        if LANGGRAPH_FUNC_AVAILABLE:
+            METHODS.extend([
+                # Task function methods
+                InstrumentedMethod(
+                    "__call__",
+                    TaskFunction,
+                    **_langgraph_task_span(),
+                ),
+                InstrumentedMethod(
+                    "invoke",
+                    TaskFunction,
+                    **_langgraph_task_span(),
+                ),
+                InstrumentedMethod(
+                    "result",
+                    TaskFunction,
+                    **_langgraph_task_span(),
+                ),
+            ])
+
+        # Note: entrypoint is a decorator, not a class to instrument directly
+        # Entrypoint functions will be instrumented through their underlying Pregel instances
+
+        """Methods to instrument."""
 
     def __init__(self, *args, **kwargs):
-        # Get the app instance from kwargs to detect @task methods
-        app_instance = kwargs.get("app")
-        if hasattr(app_instance, "app"):
-            # If it's a TruGraph instance, get the underlying app
-            actual_app = getattr(app_instance, "app")
-        else:
-            actual_app = app_instance
-
-        # Start with default methods
-        methods_to_instrument = list(LangGraphInstrument.Default.METHODS)
-        classes_to_instrument = LangGraphInstrument.Default.CLASSES()
-
-        # Detect and add @task methods for instrumentation
-        if actual_app is not None:
-            task_methods = _detect_task_methods(actual_app)
-
-            if task_methods:
-                logger.info(
-                    f"Adding {len(task_methods)} @task methods to instrumentation"
-                )
-
-                # Add the app's class to classes to instrument
-                app_class = type(actual_app)
-                classes_to_instrument.add(app_class)
-
-                # Add each @task method to the instrumentation list
-                for method_name, method_obj, original_func in task_methods:
-                    instrumented_method = InstrumentedMethod(
-                        method_name, app_class
-                    )
-                    methods_to_instrument.append(instrumented_method)
-                    logger.info(
-                        f"Added @task method to instrumentation: {method_name}"
-                    )
-
         super().__init__(
             include_modules=LangGraphInstrument.Default.MODULES,
-            include_classes=classes_to_instrument,
-            include_methods=methods_to_instrument,
+            include_classes=LangGraphInstrument.Default.CLASSES(),
+            include_methods=LangGraphInstrument.Default.METHODS,
             *args,
             **kwargs,
         )
@@ -200,33 +272,12 @@ class TruGraph(TruChain):
     log, and evaluate their behavior while inheriting all LangChain instrumentation
     capabilities.
 
-    **Automatic @task Function Tracing**:
+    **Automatic LangGraph Function Tracing**:
 
-    TruGraph automatically instruments all LangGraph `@task` decorated functions
-    by detecting existing TaskFunction instances on the app object. No code changes
-    are required - simply use standard LangGraph patterns:
-
-    ```python
-    from langgraph.func import task, entrypoint
-
-    @task
-    def my_task_function(state):
-        # Your task logic here - automatically instrumented
-        return updated_state
-
-    @entrypoint()
-    def my_workflow(input_state):
-        result = my_task_function(input_state).result()
-        return result
-    ```
-
-    **Flexible App Support**:
-
-    `TruGraph` can wrap different types of objects:
-
-    1. **Direct LangGraph objects**: `Pregel` (compiled graphs) or `StateGraph` (uncompiled)
-    2. **Custom classes**: Any class that uses LangGraph workflows internally
-    3. **Complex agents**: Multi-step applications with multiple LangGraph invocations
+    TruGraph automatically instruments LangGraph components including:
+    - `Pregel` (compiled graphs) and `StateGraph` (uncompiled graphs)
+    - `@task` decorated functions from `langgraph.func`
+    - `@entrypoint` decorated functions from `langgraph.func`
 
     Example: "Creating a LangGraph multi-agent application"
 
@@ -250,6 +301,22 @@ class TruGraph(TruChain):
         workflow.set_entry_point("researcher")
 
         graph = workflow.compile()
+        ```
+
+    Example: "Using @task and @entrypoint decorators"
+
+        ```python
+        from langgraph.func import task, entrypoint
+
+        @task
+        def my_task_function(state):
+            # Your task logic here - automatically instrumented
+            return updated_state
+
+        @entrypoint()
+        def my_workflow(input_state):
+            result = my_task_function(input_state).result()
+            return result
         ```
 
     Example: "Custom class with multiple LangGraph workflows"
@@ -306,14 +373,13 @@ class TruGraph(TruChain):
     app: Any
     """The application to be instrumented. Can be LangGraph objects or custom classes."""
 
-    root_callable: ClassVar[Optional[pyschema_utils.FunctionOrMethod]] = Field(
-        None
-    )
+    # TODEP
+    root_callable: ClassVar[pyschema_utils.FunctionOrMethod] = Field(None)
     """The root callable of the wrapped app."""
 
     def __init__(
         self,
-        app: Any,  # Changed from Union[Pregel, StateGraph] to Any
+        app: Any,
         main_method: Optional[Callable] = None,
         **kwargs: Dict[str, Any],
     ):
@@ -326,10 +392,13 @@ class TruGraph(TruChain):
         # Auto-detect and handle different app types
         app = self._prepare_app(app)
 
+        # TruGraph specific:
         kwargs["app"] = app
 
-        if "connector" in kwargs:
-            TruSession(connector=kwargs["connector"])
+        # Extract connector if provided for TruSession creation
+        connector = kwargs.get("connector")
+        if connector is not None:
+            TruSession(connector=connector)
         else:
             TruSession()
 
@@ -337,45 +406,34 @@ class TruGraph(TruChain):
             kwargs["main_method"] = main_method
         kwargs["root_class"] = pyschema_utils.Class.of_object(app)
 
-        # Create LangGraph instrumentation
-        langgraph_instrument = LangGraphInstrument(app=self)  # noqa: F841
+        # Create combined instrumentation for both LangChain and LangGraph
+        from trulens.apps.langchain.tru_chain import LangChainInstrument
 
-        if is_otel_tracing_enabled():
-            # In OTel mode, set main_method for automatic instrumentation
-            if main_method is None:
-                main_method = self._detect_main_method(app)
+        class CombinedInstrument(core_instruments.Instrument):
+            def __init__(self, *args, **kwargs):
+                # Initialize with both LangChain and LangGraph settings
+                langchain_default = LangChainInstrument.Default
+                langgraph_default = LangGraphInstrument.Default
 
-            kwargs["main_method"] = main_method
-        else:
-            # Traditional instrumentation mode
-            # Create combined instrumentation for both LangChain and LangGraph
-            from trulens.apps.langchain.tru_chain import LangChainInstrument
+                combined_modules = langchain_default.MODULES.union(
+                    langgraph_default.MODULES
+                )
+                combined_classes = langchain_default.CLASSES().union(
+                    langgraph_default.CLASSES()
+                )
+                combined_methods = (
+                    langchain_default.METHODS + langgraph_default.METHODS
+                )
 
-            class CombinedInstrument(core_instruments.Instrument):
-                def __init__(self, *args, **kwargs):
-                    # Initialize with both LangChain and LangGraph settings
-                    langchain_default = LangChainInstrument.Default
-                    langgraph_default = LangGraphInstrument.Default
+                super().__init__(
+                    include_modules=combined_modules,
+                    include_classes=combined_classes,
+                    include_methods=combined_methods,
+                    *args,
+                    **kwargs,
+                )
 
-                    combined_modules = langchain_default.MODULES.union(
-                        langgraph_default.MODULES
-                    )
-                    combined_classes = langchain_default.CLASSES().union(
-                        langgraph_default.CLASSES()
-                    )
-                    combined_methods = (
-                        langchain_default.METHODS + langgraph_default.METHODS
-                    )
-
-                    super().__init__(
-                        include_modules=combined_modules,
-                        include_classes=combined_classes,
-                        include_methods=combined_methods,
-                        *args,
-                        **kwargs,
-                    )
-
-            kwargs["instrument"] = CombinedInstrument(app=self)
+        kwargs["instrument"] = CombinedInstrument(app=self)
 
         # Call TruChain's parent (core_app.App) __init__ directly to avoid TruChain's specific initialization
         core_app.App.__init__(self, **kwargs)
@@ -412,7 +470,7 @@ class TruGraph(TruChain):
         # Return the app as-is for custom classes
         return app
 
-    def _detect_langgraph_components(self, app: Any) -> List[tuple]:
+    def _detect_langgraph_components(self, app: Any) -> List[Tuple[str, Any]]:
         """
         Simple detection of LangGraph components in custom classes.
 
@@ -437,7 +495,7 @@ class TruGraph(TruChain):
 
             try:
                 attr_value = getattr(app, attr_name)
-                if isinstance(attr_value, (Pregel, StateGraph)):
+                if isinstance(attr_value, (Pregel, StateGraph, TaskFunction)):
                     components.append((attr_name, attr_value))
                     logger.debug(f"Found LangGraph component: {attr_name}")
             except Exception:
@@ -445,48 +503,6 @@ class TruGraph(TruChain):
                 continue
 
         return components
-
-    def _detect_main_method(self, app: Any) -> Optional[Callable]:
-        """
-        Detect the main method to instrument for the given app.
-
-        Args:
-            app: The application object
-
-        Returns:
-            The main method to instrument, or None if not found
-        """
-        # For direct LangGraph objects
-        if isinstance(app, Pregel):
-            if hasattr(app, "invoke"):
-                return app.invoke
-            elif hasattr(app, "run"):
-                return app.run
-
-        # For custom classes, look for common method names
-        common_methods = ["run", "invoke", "execute", "call", "__call__"]
-
-        for method_name in common_methods:
-            if hasattr(app, method_name):
-                method = getattr(app, method_name)
-                if callable(method):
-                    logger.info(f"Auto-detected main method: {method_name}")
-                    return method
-
-        # If no common methods found, raise an error with helpful message
-        available_methods = [
-            name
-            for name in dir(app)
-            if not name.startswith("_") and callable(getattr(app, name, None))
-        ]
-
-        raise ValueError(
-            f"Could not auto-detect main method for {type(app).__name__}. "
-            f"Auto-detection only works for common method names: {', '.join(['run', 'invoke', 'execute', 'call', '__call__'])}. "
-            f"Available methods: {available_methods}. "
-            f"For complex applications, please specify main_method explicitly: "
-            f"TruGraph(app, main_method=app.your_main_method)"
-        )
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
@@ -557,6 +573,9 @@ class TruGraph(TruChain):
                         return last_message[1]  # (role, content) tuple
                     else:
                         return str(last_message)
+                else:
+                    # messages is not a list or is empty
+                    return str(ret)
             else:
                 # Try to get any string-like value from the output dict
                 for _, value in ret.items():
@@ -613,6 +632,9 @@ class TruGraph(TruChain):
                     return last_message[1]  # (role, content) tuple
                 else:
                     return str(last_message)
+            else:
+                # messages is not a list or is empty
+                return str(result)
         elif isinstance(result, str):
             return result
         else:
@@ -620,5 +642,3 @@ class TruGraph(TruChain):
 
 
 TruGraph.model_rebuild()
-
-# Note: @task instrumentation is applied through detection when TruGraph is instantiated
