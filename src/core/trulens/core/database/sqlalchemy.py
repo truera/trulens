@@ -983,7 +983,13 @@ class SQLAlchemyDB(core_db.DB):
             app_id_expr = self._json_extract_otel(
                 "resource_attributes", ResourceAttributes.APP_ID
             )
-            conditions.append(app_id_expr.in_(app_ids))
+            conditions.append(
+                sa.or_(
+                    app_id_expr.in_(app_ids),
+                    app_id_expr.is_(None),
+                    app_id_expr == "",
+                )
+            )
 
         # Apply all conditions
         stmt = stmt.where(sa.and_(*conditions))
@@ -1082,6 +1088,10 @@ class SQLAlchemyDB(core_db.DB):
                         app_name, app_version
                     ),
                 )
+                if app_ids and app_id not in app_ids:
+                    # TODO(otel): This may screw up the pagination and can be
+                    #             slow!
+                    continue
 
                 if record_id not in record_events:
                     record_events[record_id] = {
