@@ -139,11 +139,7 @@ def get_session() -> core_session.TruSession:
         # so we have to do a hard exit.
         sys.exit(e.code)
 
-    if args.database_url:
-        session = core_session.TruSession(
-            database_url=args.database_url, database_prefix=args.database_prefix
-        )
-    elif args.snowflake_account:
+    if args.snowflake_account:
         from snowflake.snowpark import Session
         from trulens.connectors.snowflake import SnowflakeConnector
 
@@ -164,6 +160,10 @@ def get_session() -> core_session.TruSession:
                 use_account_event_table=use_account_event_table,
             ),
             database_prefix=args.database_prefix,
+        )
+    else:
+        session = core_session.TruSession(
+            database_url=args.database_url, database_prefix=args.database_prefix
         )
 
     if args.sis_compatibility:

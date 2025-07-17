@@ -155,7 +155,7 @@ def run_dashboard(
                 args += [arg, clean_up_snowflake_identifier(val)]
         args += ["--snowflake-authenticator", "externalbrowser"]
         if connector.use_account_event_table:
-            args_to_add.append("--snowflake-use-account-event-table")
+            args.append("--snowflake-use-account-event-table")
     else:
         args += [
             "--database-url",
