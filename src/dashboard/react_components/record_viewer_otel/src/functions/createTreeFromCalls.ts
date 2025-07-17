@@ -9,11 +9,6 @@ export const createTreeFromCalls = (spans: Span[]) => {
   }
 
   const nodes = spans
-    .filter(
-      (span) =>
-        span.record_attributes[SpanAttributes.SPAN_TYPE] !== SpanType.EVAL &&
-        span.record_attributes[SpanAttributes.SPAN_TYPE] !== SpanType.EVAL_ROOT
-    )
     .map((span) => {
       return new StackTreeNode({
         name: span.record.name,
