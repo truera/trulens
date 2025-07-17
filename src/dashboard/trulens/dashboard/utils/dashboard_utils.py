@@ -162,7 +162,8 @@ def get_session() -> core_session.TruSession:
             connector=SnowflakeConnector(
                 snowpark_session=snowpark_session,
                 use_account_event_table=use_account_event_table,
-            )
+            ),
+            database_prefix=args.database_prefix,
         )
 
     if args.sis_compatibility:
