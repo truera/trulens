@@ -1,6 +1,6 @@
 # Runtime Evaluation
 
-In Evaluation a crucial role in improving output is produced by LLM apps by acting to change the application's execution flow at runtime.
+Evaluations play a crucial role in improving LLM app outputs by altering execution flow at runtime.
 
 TruLens supports runtime evaluation via two different mechanisms:
 
