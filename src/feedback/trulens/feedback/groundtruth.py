@@ -807,7 +807,7 @@ class GroundTruthAggregator(
         """
         if isinstance(scores[0], List):
             scores = [score for score, _ in scores]
-        tau, _p_value = stats.kendalltau(scores, self.true_labels).correlation
+        tau = stats.kendalltau(scores, self.true_labels).statistic
         # The two-sided p-value for a hypothesis test whose null hypothesis is an absence of association, tau = 0.
         # TODO: p_value is unused here
         return tau
@@ -1020,9 +1020,16 @@ class GroundTruthAggregator(
         Returns:
             float: Brier score
         """
+        # Brier score is mathematically undefined for empty inputs (division by zero).
+        # Return np.nan to accurately represent this undefined state rather than 0.0
+        # which would falsely suggest "perfect calibration" with no predictions.
+        if not scores:
+            return np.nan
+
         if isinstance(scores[0], List):
             scores = [score for score, _ in scores]
         assert len(scores) == len(self.true_labels)
+
         brier_score = 0
 
         for score, truth in zip(scores, self.true_labels):

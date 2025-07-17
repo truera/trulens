@@ -981,6 +981,8 @@ class COTExplained(Feedback):
             def extract_cot_explanation_of_response(
                 self, response: str, normalize: int = 3
             ) -> Union[float, Tuple[float, Dict[str, str]]]:
+                assert normalize > 0, "Normalize must be greater than 0."
+
                 if "Supporting Evidence" in response:
                     score = 0
                     for line in response.split("\n"):
