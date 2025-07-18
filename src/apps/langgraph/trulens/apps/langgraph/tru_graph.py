@@ -8,7 +8,6 @@ from typing import (
     Any,
     Callable,
     ClassVar,
-    Dict,
     List,
     Optional,
     Tuple,
@@ -53,328 +52,313 @@ try:
 
     LANGGRAPH_FUNC_AVAILABLE = True
 
-    try:
+    # Apply class-level instrumentation for TaskFunction when langgraph.func is available
+    # This ensures TaskFunction.__call__ is instrumented regardless of where TaskFunction
+    # instances end up in the object hierarchy (e.g., embedded in Pregel workflows)
+    def _setup_task_function_instrumentation():
+        """Set up class-level instrumentation for TaskFunction.__call__"""
         import os
 
-        import wrapt
+        # Only instrument if OTEL tracing is enabled
+        otel_enabled = os.environ.get("TRULENS_OTEL_TRACING", "0") == "1"
+        if not otel_enabled:
+            logger.debug(
+                "OTEL not enabled, skipping TaskFunction class-level instrumentation"
+            )
+            return
 
-        def _task_wrapper(wrapped, instance, args, kwargs):
-            """Wrapper for langgraph.func.task that applies TruLens instrumentation."""
-            otel_enabled = os.environ.get("TRULENS_OTEL_TRACING", "0") == "1"
+        try:
+            from trulens.core.otel.instrument import instrument_method
 
-            logger.debug(f"Task wrapper called, OTEL enabled: {otel_enabled}")
+            # Check if TaskFunction.__call__ is already instrumented
+            if hasattr(TaskFunction.__call__, "__trulens_instrument_wrapper__"):
+                logger.debug("TaskFunction.__call__ already instrumented")
+                return
 
-            if not otel_enabled:
-                logger.debug("OTEL not enabled, skipping instrumentation")
-                return wrapped(*args, **kwargs)
+            logger.info(
+                "Applying class-level instrumentation to TaskFunction.__call__"
+            )
 
-            try:
-                from trulens.core.otel.instrument import instrument
+            # Create attributes function for TaskFunction calls
+            def task_function_attributes(ret, exception, *args, **kwargs):
+                attributes = {}
 
-                def task_attributes(
-                    ret, exception, *inner_args, **inner_kwargs
-                ):
-                    logger.debug(
-                        f"Task attributes function called with args: {len(inner_args)}, kwargs: {len(inner_kwargs)}"
-                    )
-                    attributes = {}
+                # For TaskFunction.__call__, the first argument is self (TaskFunction instance)
+                if args and len(args) > 0:
+                    task_function_instance = args[0]
+                    task_args = args[1:] if len(args) > 1 else ()
+                    task_kwargs = kwargs
+
+                    # Get the original function name
+                    if hasattr(task_function_instance, "func") and hasattr(
+                        task_function_instance.func, "__name__"
+                    ):
+                        attributes[SpanAttributes.LANGGRAPH_TASK.TASK_NAME] = (
+                            task_function_instance.func.__name__
+                        )
+
+                    # Serialize the task input arguments
                     try:
                         import inspect
                         import json
 
-                        task_func = inner_args[0] if inner_args else None
-                        if not task_func or not callable(task_func):
-                            return attributes
-
-                        if len(inner_args) > 1:
-                            sig = inspect.signature(task_func)
-                            bound_args = sig.bind_partial(
-                                *inner_args[1:], **inner_kwargs
-                            ).arguments
-                            all_kwargs = {**inner_kwargs, **bound_args}
-
-                            for name, value in all_kwargs.items():
-                                if hasattr(value, "__module__") and (
-                                    "llm" in str(type(value)).lower()
-                                    or "pool" in str(type(value)).lower()
-                                ):
-                                    continue
-
-                                try:
-                                    if hasattr(value, "__dict__") and hasattr(
-                                        value, "__dataclass_fields__"
-                                    ):
-                                        import dataclasses
-
-                                        val = json.dumps(
-                                            dataclasses.asdict(value),
-                                            default=str,
-                                            indent=2,
-                                        )
-                                    elif hasattr(value, "model_dump"):
-                                        val = json.dumps(
-                                            value.model_dump(),
-                                            default=str,
-                                            indent=2,
-                                        )
-                                    elif hasattr(value, "dict") and callable(
-                                        getattr(value, "dict")
-                                    ):
-                                        val = json.dumps(
-                                            value.dict(), default=str, indent=2
-                                        )
-                                    else:
-                                        val = json.dumps(
-                                            value, default=str, indent=2
-                                        )
-
-                                    attributes[
-                                        f"trulens.langgraph_task.input_state.{name}"
-                                    ] = val
-                                except Exception:
-                                    attributes[
-                                        f"trulens.langgraph_task.input_state.{name}"
-                                    ] = str(value)
-
-                            if ret is not None and not exception:
-                                try:
-                                    if hasattr(ret, "__dict__") and hasattr(
-                                        ret, "__dataclass_fields__"
-                                    ):
-                                        import dataclasses
-
-                                        ret_val = dataclasses.asdict(ret)
-                                    elif hasattr(ret, "model_dump"):
-                                        ret_val = ret.model_dump()
-                                    elif hasattr(ret, "dict") and callable(
-                                        getattr(ret, "dict")
-                                    ):
-                                        ret_val = ret.dict()
-                                    else:
-                                        ret_val = ret
-                                    attributes[
-                                        "trulens.langgraph_task.output_state"
-                                    ] = json.dumps(
-                                        ret_val, default=str, indent=2
-                                    )
-                                except Exception:
-                                    attributes[
-                                        "trulens.langgraph_task.output_state"
-                                    ] = str(ret)
-
-                            if exception:
-                                attributes["trulens.langgraph_task.error"] = (
-                                    str(exception)
+                        if hasattr(task_function_instance, "func"):
+                            # Try to bind arguments, but be robust about mismatches
+                            try:
+                                sig = inspect.signature(
+                                    task_function_instance.func
                                 )
+                                # Be more careful about binding - only bind positional args that fit
+                                # and exclude kwargs that don't match the signature
+
+                                # Filter kwargs to only include those that match the signature
+                                sig_params = list(sig.parameters.keys())
+                                filtered_kwargs = {
+                                    k: v
+                                    for k, v in task_kwargs.items()
+                                    if k in sig_params
+                                }
+
+                                # Try to bind with available arguments
+                                if task_args or filtered_kwargs:
+                                    bound_args = sig.bind_partial(
+                                        *task_args, **filtered_kwargs
+                                    )
+                                    bound_args.apply_defaults()
+
+                                    # Collect all arguments into a single JSON structure
+                                    input_args = {}
+                                    for (
+                                        name,
+                                        value,
+                                    ) in bound_args.arguments.items():
+                                        # Skip complex objects like models/pools
+                                        if hasattr(value, "__module__") and (
+                                            "llm" in str(type(value)).lower()
+                                            or "pool"
+                                            in str(type(value)).lower()
+                                        ):
+                                            continue
+
+                                        try:
+                                            if hasattr(
+                                                value, "__dict__"
+                                            ) and hasattr(
+                                                value, "__dataclass_fields__"
+                                            ):
+                                                import dataclasses
+
+                                                input_args[name] = (
+                                                    dataclasses.asdict(value)
+                                                )
+                                            elif hasattr(value, "model_dump"):
+                                                input_args[name] = (
+                                                    value.model_dump()
+                                                )
+                                            elif hasattr(
+                                                value, "dict"
+                                            ) and callable(
+                                                getattr(value, "dict")
+                                            ):
+                                                input_args[name] = value.dict()
+                                            else:
+                                                input_args[name] = value
+                                        except Exception:
+                                            input_args[name] = str(value)
+
+                                    # Store as single JSON structure using proper SpanAttributes
+                                    attributes[
+                                        SpanAttributes.LANGGRAPH_TASK.INPUT_STATE
+                                    ] = json.dumps(
+                                        input_args, default=str, indent=2
+                                    )
+                                else:
+                                    # No arguments to bind
+                                    attributes[
+                                        SpanAttributes.LANGGRAPH_TASK.INPUT_STATE
+                                    ] = "{}"
+
+                            except Exception as bind_error:
+                                # If binding fails, fall back to simple argument logging
+                                logger.debug(
+                                    f"Argument binding failed: {bind_error}, using fallback"
+                                )
+
+                                # Collect arguments as simple structure
+                                fallback_args = {}
+                                for i, arg in enumerate(task_args):
+                                    try:
+                                        fallback_args[f"arg_{i}"] = arg
+                                    except Exception:
+                                        fallback_args[f"arg_{i}"] = str(arg)
+
+                                for name, value in task_kwargs.items():
+                                    try:
+                                        fallback_args[name] = value
+                                    except Exception:
+                                        fallback_args[name] = str(value)
+
+                                attributes[
+                                    SpanAttributes.LANGGRAPH_TASK.INPUT_STATE
+                                ] = json.dumps(
+                                    fallback_args, default=str, indent=2
+                                )
+                        else:
+                            # Fallback: just stringify the arguments
+                            attributes[
+                                SpanAttributes.LANGGRAPH_TASK.INPUT_STATE
+                            ] = json.dumps(
+                                {"args": task_args, "kwargs": task_kwargs},
+                                default=str,
+                                indent=2,
+                            )
 
                     except Exception as e:
                         logger.warning(
-                            f"Error in task attributes extraction: {e}"
+                            f"Error processing task input arguments: {e}"
                         )
+                        # Even more basic fallback
+                        attributes[
+                            SpanAttributes.LANGGRAPH_TASK.INPUT_STATE
+                        ] = f"Error processing args: {str(e)}"
 
-                    return attributes
+                # Handle return value (Future object for now)
+                if ret is not None and not exception:
+                    try:
+                        # For now, capture the Future object info
+                        # TODO: In future, we might want to capture the actual result when Future completes
+                        attributes[
+                            SpanAttributes.LANGGRAPH_TASK.OUTPUT_STATE
+                        ] = str(ret)
+                    except Exception:
+                        attributes[
+                            SpanAttributes.LANGGRAPH_TASK.OUTPUT_STATE
+                        ] = str(ret)
 
-                if args and callable(args[0]):
-                    func = args[0]
-                    logger.info(
-                        f"Auto-instrumenting @task function: {func.__name__}"
+                if exception:
+                    attributes[SpanAttributes.LANGGRAPH_TASK.ERROR] = str(
+                        exception
                     )
 
-                    instrumented_func = instrument(
-                        span_type=SpanAttributes.SpanType.LANGGRAPH_TASK,
-                        attributes=task_attributes,
-                    )(func)
+                return attributes
 
-                    return wrapped(instrumented_func, **kwargs)
-                else:
-                    original_decorator = wrapped(*args, **kwargs)
+            # Apply the instrumentation at class level
+            instrument_method(
+                cls=TaskFunction,
+                method_name="__call__",
+                span_type=SpanAttributes.SpanType.LANGGRAPH_TASK,
+                attributes=task_function_attributes,
+            )
 
-                    def new_decorator(func):
-                        logger.info(
-                            f"Auto-instrumenting @task function: {func.__name__}"
-                        )
+            logger.info(
+                "Successfully applied class-level instrumentation to TaskFunction.__call__"
+            )
 
-                        instrumented_func = instrument(
-                            span_type=SpanAttributes.SpanType.LANGGRAPH_TASK,
-                            attributes=task_attributes,
-                        )(func)
+        except Exception as e:
+            logger.warning(
+                f"Failed to apply class-level TaskFunction instrumentation: {e}"
+            )
 
-                        return original_decorator(instrumented_func)
+    # Apply the instrumentation when this module is imported
+    _setup_task_function_instrumentation()
 
-                    return new_decorator
+    def _setup_pregel_instrumentation():
+        """Set up class-level instrumentation for Pregel methods"""
+        import os
 
-            except Exception as e:
-                logger.warning(f"Error in task wrapper: {e}")
-                return wrapped(*args, **kwargs)
+        # Only instrument if OTEL tracing is enabled
+        otel_enabled = os.environ.get("TRULENS_OTEL_TRACING", "0") == "1"
+        if not otel_enabled:
+            logger.debug(
+                "OTEL not enabled, skipping Pregel class-level instrumentation"
+            )
+            return
 
-        def _entrypoint_wrapper(wrapped, instance, args, kwargs):
-            """Wrapper for langgraph.func.entrypoint that applies TruLens instrumentation."""
-            otel_enabled = os.environ.get("TRULENS_OTEL_TRACING", "0") == "1"
+        try:
+            from trulens.core.otel.instrument import instrument_method
 
-            if not otel_enabled:
-                return wrapped(*args, **kwargs)
+            # Check if Pregel methods are already instrumented
+            if hasattr(Pregel, "invoke") and hasattr(
+                getattr(Pregel, "invoke"), "__trulens_instrument_wrapper__"
+            ):
+                logger.debug("Pregel methods already instrumented")
+                return
 
-            try:
-                from trulens.core.otel.instrument import instrument
+            logger.info(
+                "Applying class-level instrumentation to Pregel methods"
+            )
 
-                original_result = wrapped(*args, **kwargs)
+            # Create attributes function for Pregel methods
+            def pregel_attributes(ret, exception, *args, **kwargs):
+                attributes = {}
 
-                if hasattr(original_result, "__call__") and not hasattr(
-                    original_result, "_trulens_instrumented"
-                ):
-                    logger.debug(
-                        f"Auto-instrumenting @entrypoint: {original_result}"
+                if args and len(args) > 1:
+                    input_data = args[1]
+                    if isinstance(input_data, dict):
+                        attributes[
+                            SpanAttributes.LANGGRAPH_GRAPH.INPUT_STATE
+                        ] = str(input_data)
+                    else:
+                        attributes[
+                            SpanAttributes.LANGGRAPH_GRAPH.INPUT_STATE
+                        ] = str(input_data)
+
+                for k, v in kwargs.items():
+                    if k in ["input", "state", "data"]:
+                        attributes[
+                            SpanAttributes.LANGGRAPH_GRAPH.INPUT_STATE
+                        ] = str(v)
+                        break
+
+                if ret is not None and not exception:
+                    attributes[SpanAttributes.LANGGRAPH_GRAPH.OUTPUT_STATE] = (
+                        str(ret)
                     )
 
-                    instrumented_call = instrument(
-                        span_type=SpanAttributes.SpanType.LANGGRAPH_ENTRYPOINT,
-                        attributes=lambda ret, exception, *args, **kwargs: {
-                            "trulens.langgraph_entrypoint.input_data": str(
-                                args[1] if len(args) > 1 else ""
-                            ),
-                            "trulens.langgraph_entrypoint.output_data": str(ret)
-                            if ret is not None and not exception
-                            else "",
-                            "trulens.langgraph_entrypoint.error": str(exception)
-                            if exception
-                            else "",
-                        },
-                    )(original_result.__call__)
+                if exception:
+                    attributes[SpanAttributes.LANGGRAPH_GRAPH.ERROR] = str(
+                        exception
+                    )
 
-                    original_result.__call__ = instrumented_call
-                    original_result._trulens_instrumented = True
+                return attributes
 
-                return original_result
+            # Apply instrumentation to all Pregel methods
+            pregel_methods = [
+                "invoke",
+                "ainvoke",
+                "stream",
+                "astream",
+                "stream_mode",
+                "astream_mode",
+            ]
+            for method_name in pregel_methods:
+                instrument_method(
+                    cls=Pregel,
+                    method_name=method_name,
+                    span_type=SpanAttributes.SpanType.LANGGRAPH_GRAPH,
+                    attributes=pregel_attributes,
+                )
+                logger.debug(
+                    f"Applied class-level instrumentation to Pregel.{method_name}"
+                )
 
-            except Exception as e:
-                logger.warning(f"Error in entrypoint wrapper: {e}")
-                return wrapped(*args, **kwargs)
+            logger.info(
+                "Successfully applied class-level instrumentation to Pregel methods"
+            )
 
-        wrapt.wrap_function_wrapper("langgraph.func", "task", _task_wrapper)
-        wrapt.wrap_function_wrapper(
-            "langgraph.func", "entrypoint", _entrypoint_wrapper
-        )
+        except Exception as e:
+            logger.warning(
+                f"Failed to apply class-level Pregel instrumentation: {e}"
+            )
 
-        logger.info(
-            "Applied wrapt wrappers to @task and @entrypoint at import time"
-        )
-
-    except ImportError:
-        logger.warning(
-            "wrapt not available, cannot wrap @task and @entrypoint decorators"
-        )
-    except Exception as e:
-        logger.warning(f"Error applying wrapt wrappers at import time: {e}")
+    # Apply Pregel instrumentation when this module is imported
+    _setup_pregel_instrumentation()
 
 except ImportError:
     task = None
     TaskFunction = type("TaskFunction", (), {})
     entrypoint = type("entrypoint", (), {})
     LANGGRAPH_FUNC_AVAILABLE = False
-
-
-def _langgraph_graph_span() -> Dict[str, Any]:
-    """Create span configuration for LangGraph graph operations."""
-
-    def _attributes(ret, exception, *args, **kwargs) -> Dict[str, Any]:
-        attributes = {}
-
-        if args and len(args) > 1:
-            input_data = args[1]
-            if isinstance(input_data, dict):
-                attributes[SpanAttributes.LANGGRAPH_GRAPH.INPUT_STATE] = str(
-                    input_data
-                )
-            else:
-                attributes[SpanAttributes.LANGGRAPH_GRAPH.INPUT_STATE] = str(
-                    input_data
-                )
-
-        for k, v in kwargs.items():
-            if k in ["input", "state", "data"]:
-                attributes[SpanAttributes.LANGGRAPH_GRAPH.INPUT_STATE] = str(v)
-                break
-
-        if ret is not None and not exception:
-            attributes[SpanAttributes.LANGGRAPH_GRAPH.OUTPUT_STATE] = str(ret)
-
-        if exception:
-            attributes[SpanAttributes.LANGGRAPH_GRAPH.ERROR] = str(exception)
-
-        return attributes
-
-    return {
-        "span_type": SpanAttributes.SpanType.LANGGRAPH_GRAPH,
-        "attributes": _attributes,
-    }
-
-
-def _langgraph_task_span() -> Dict[str, Any]:
-    """Create span configuration for LangGraph task operations."""
-
-    def _attributes(ret, exception, *args, **kwargs) -> Dict[str, Any]:
-        attributes = {}
-
-        if args and len(args) > 1:
-            input_data = args[1] if len(args) > 1 else args[0]
-            attributes[SpanAttributes.LANGGRAPH_TASK.INPUT_STATE] = str(
-                input_data
-            )
-
-        for k, v in kwargs.items():
-            if k in ["state", "data", "context"]:
-                attributes[SpanAttributes.LANGGRAPH_TASK.INPUT_STATE] = str(v)
-                break
-
-        if ret is not None and not exception:
-            attributes[SpanAttributes.LANGGRAPH_TASK.OUTPUT_STATE] = str(ret)
-
-        if exception:
-            attributes[SpanAttributes.LANGGRAPH_TASK.ERROR] = str(exception)
-
-        return attributes
-
-    return {
-        "span_type": SpanAttributes.SpanType.LANGGRAPH_TASK,
-        "attributes": _attributes,
-    }
-
-
-def _langgraph_entrypoint_span() -> Dict[str, Any]:
-    """Create span configuration for LangGraph entrypoint operations."""
-
-    def _attributes(ret, exception, *args, **kwargs) -> Dict[str, Any]:
-        attributes = {}
-
-        if args and len(args) > 1:
-            input_data = args[1]
-            attributes[SpanAttributes.LANGGRAPH_ENTRYPOINT.INPUT_DATA] = str(
-                input_data
-            )
-
-        for k, v in kwargs.items():
-            if k in ["input", "data", "query"]:
-                attributes[SpanAttributes.LANGGRAPH_ENTRYPOINT.INPUT_DATA] = (
-                    str(v)
-                )
-                break
-
-        if ret is not None and not exception:
-            attributes[SpanAttributes.LANGGRAPH_ENTRYPOINT.OUTPUT_DATA] = str(
-                ret
-            )
-
-        if exception:
-            attributes[SpanAttributes.LANGGRAPH_ENTRYPOINT.ERROR] = str(
-                exception
-            )
-
-        return attributes
-
-    return {
-        "span_type": SpanAttributes.SpanType.LANGGRAPH_ENTRYPOINT,
-        "attributes": _attributes,
-    }
 
 
 class LangGraphInstrument(core_instruments.Instrument):
@@ -390,8 +374,8 @@ class LangGraphInstrument(core_instruments.Instrument):
             lambda: {
                 Pregel,
                 StateGraph,
-                TaskFunction,
-                entrypoint,
+                # Note: TaskFunction is instrumented at class-level during import,
+                # @entrypoint returns Pregel objects which are already instrumented
             }
             if LANGGRAPH_AVAILABLE and LANGGRAPH_FUNC_AVAILABLE
             else {
@@ -405,39 +389,9 @@ class LangGraphInstrument(core_instruments.Instrument):
 
         METHODS: List[InstrumentedMethod] = []
 
-        if LANGGRAPH_AVAILABLE:
-            METHODS.extend([
-                InstrumentedMethod(
-                    "invoke",
-                    Pregel,
-                    **_langgraph_graph_span(),
-                ),
-                InstrumentedMethod(
-                    "ainvoke",
-                    Pregel,
-                    **_langgraph_graph_span(),
-                ),
-                InstrumentedMethod(
-                    "stream",
-                    Pregel,
-                    **_langgraph_graph_span(),
-                ),
-                InstrumentedMethod(
-                    "astream",
-                    Pregel,
-                    **_langgraph_graph_span(),
-                ),
-                InstrumentedMethod(
-                    "stream_mode",
-                    Pregel,
-                    **_langgraph_graph_span(),
-                ),
-                InstrumentedMethod(
-                    "astream_mode",
-                    Pregel,
-                    **_langgraph_graph_span(),
-                ),
-            ])
+        # Note: Both TaskFunction and Pregel methods are instrumented at class-level
+        # during import via _setup_task_function_instrumentation() and
+        # _setup_pregel_instrumentation(), not through instance-based instrumentation
 
     def __init__(self, *args, **kwargs):
         super().__init__(
@@ -459,9 +413,19 @@ class TruGraph(TruChain):
     **Automatic LangGraph Function Tracing**:
 
     TruGraph automatically instruments LangGraph components including:
-    - `Pregel` (compiled graphs) and `StateGraph` (uncompiled graphs)
-    - `@task` decorated functions from `langgraph.func`
-    - `@entrypoint` decorated functions from `langgraph.func`
+    - `Pregel` methods (invoke, ainvoke, stream, etc.) - instrumented at class-level during import
+    - `TaskFunction.__call__` method - instrumented at class-level during import
+    - `StateGraph` objects (uncompiled graphs) for logging/debugging purposes
+
+    **Class-Level Instrumentation**: Both `@task` functions (TaskFunction) and
+    `Pregel` graph methods are instrumented at the class level when TruGraph is imported.
+    This ensures all function calls are captured regardless of where the instances
+    are embedded in the object hierarchy (e.g., inside custom classes).
+
+    **Benefits of Class-Level Approach**:
+    - **Guaranteed Coverage**: All TaskFunction and Pregel method calls are captured
+    - **No Import Timing Issues**: Works regardless of when objects are created
+    - **Consistent Span Types**: Properly sets "langgraph_task" and "langgraph_graph" span types
 
     Example: "Creating a LangGraph multi-agent application"
 
@@ -645,8 +609,7 @@ class TruGraph(TruChain):
         if isinstance(app, Pregel):
             return app
 
-        # For custom classes, only detect components for logging/debugging
-        # Do NOT modify the app to avoid interfering with existing @task/@entrypoint instrumentation
+        # For custom classes, detect components for logging/debugging
         langgraph_components = self._detect_langgraph_components(app)
         if langgraph_components:
             logger.info(
@@ -661,7 +624,8 @@ class TruGraph(TruChain):
         Simple detection of LangGraph components in custom classes.
 
         This method looks for basic LangGraph components for logging/debugging purposes.
-        It does NOT interfere with existing @task/@entrypoint instrumentation.
+        Note: TaskFunction instances are instrumented at class-level during import
+        and don't need to be detected here.
 
         Args:
             app: The application object to inspect
@@ -674,8 +638,8 @@ class TruGraph(TruChain):
         if not hasattr(app, "__dict__"):
             return components
 
-        # Only check for basic LangGraph objects - Pregel and StateGraph
-        # @task and @entrypoint instrumentation is handled separately via wrapt
+        # Check for basic LangGraph objects - Pregel and StateGraph
+        # TaskFunction is instrumented at class-level and doesn't need detection
         for attr_name in dir(app):
             if attr_name.startswith("_"):
                 continue
@@ -703,9 +667,6 @@ class TruGraph(TruChain):
         1. You have custom classes with nested Pregel workflows
         2. You want those nested workflows to be instrumented
         3. The automatic instrumentation didn't catch them
-
-        Note: This does NOT interfere with @task/@entrypoint instrumentation
-        which is handled separately via wrapt decorators.
 
         Example:
             ```python
@@ -948,23 +909,6 @@ class TruGraph(TruChain):
             return result
         else:
             return str(result)
-
-    def debug_instrumentation(self) -> Dict[str, Any]:
-        """Debug method to check instrumentation status."""
-        import os
-
-        debug_info = {
-            "otel_enabled": os.environ.get("TRULENS_OTEL_TRACING", "0") == "1",
-            "environment_variable": os.environ.get(
-                "TRULENS_OTEL_TRACING", "not_set"
-            ),
-            "langgraph_available": LANGGRAPH_AVAILABLE,
-            "langgraph_func_available": LANGGRAPH_FUNC_AVAILABLE,
-            "detected_components": self._detect_langgraph_components(self.app),
-        }
-
-        logger.info(f"Instrumentation debug info: {debug_info}")
-        return debug_info
 
 
 TruGraph.model_rebuild()
