@@ -3,6 +3,7 @@
 from inspect import BoundArguments
 from inspect import Signature
 import logging
+import os
 from pprint import PrettyPrinter
 from typing import (
     Any,
@@ -56,7 +57,6 @@ try:
     # instances end up in the object hierarchy (e.g., embedded in Pregel workflows)
     def _setup_task_function_instrumentation():
         """Set up class-level instrumentation for TaskFunction.__call__"""
-        import os
 
         # Only instrument if OTEL tracing is enabled
         otel_enabled = os.environ.get("TRULENS_OTEL_TRACING", "0") == "1"
@@ -131,14 +131,6 @@ try:
                                         name,
                                         value,
                                     ) in bound_args.arguments.items():
-                                        # Skip complex objects like models/pools
-                                        if hasattr(value, "__module__") and (
-                                            "llm" in str(type(value)).lower()
-                                            or "pool"
-                                            in str(type(value)).lower()
-                                        ):
-                                            continue
-
                                         try:
                                             if hasattr(
                                                 value, "__dict__"
@@ -263,7 +255,6 @@ try:
 
     def _setup_pregel_instrumentation():
         """Set up class-level instrumentation for Pregel methods"""
-        import os
 
         # Only instrument if OTEL tracing is enabled
         otel_enabled = os.environ.get("TRULENS_OTEL_TRACING", "0") == "1"
