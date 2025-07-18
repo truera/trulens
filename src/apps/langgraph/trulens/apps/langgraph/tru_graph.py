@@ -622,9 +622,8 @@ class TruGraph(TruChain):
 
         core_app.App.__init__(self, **kwargs)
 
-        # After initialization, help the instrumentation system find nested Pregel objects
-        # This does NOT interfere with @task/@entrypoint instrumentation
-        self._instrument_nested_pregel_objects()
+        # Note: Nested Pregel instrumentation is now done lazily to avoid hanging during init
+        # Call instrument_nested_pregel_objects() manually if needed for nested workflows
 
     def _prepare_app(self, app: Any) -> Any:
         """
@@ -693,13 +692,33 @@ class TruGraph(TruChain):
 
         return components
 
-    def _instrument_nested_pregel_objects(self) -> None:
+    def instrument_nested_pregel_objects(self) -> None:
         """
-        Help the instrumentation system find and instrument nested Pregel objects.
+        Manually instrument nested Pregel objects found in the app.
 
-        This method specifically targets Pregel objects (compiled LangGraph workflows)
-        that might be nested within custom classes. It does NOT interfere with
-        @task/@entrypoint instrumentation which is handled separately via wrapt.
+        This method helps the instrumentation system find and instrument nested Pregel objects
+        (compiled LangGraph workflows) that might be nested within custom classes.
+
+        This is OPTIONAL and only needed if:
+        1. You have custom classes with nested Pregel workflows
+        2. You want those nested workflows to be instrumented
+        3. The automatic instrumentation didn't catch them
+
+        Note: This does NOT interfere with @task/@entrypoint instrumentation
+        which is handled separately via wrapt decorators.
+
+        Example:
+            ```python
+            class MyAgent:
+                def __init__(self):
+                    self.workflow = some_pregel_workflow
+
+            agent = MyAgent()
+            tru_graph = TruGraph(agent, main_method=agent.run)
+
+            # Optionally instrument nested workflows
+            tru_graph.instrument_nested_pregel_objects()
+            ```
         """
         if not hasattr(self, "instrument") or not hasattr(
             self.instrument, "instrument_object"
@@ -711,6 +730,14 @@ class TruGraph(TruChain):
 
         # Look for nested Pregel objects in the app
         nested_pregels = self._find_nested_pregel_objects(self.app)
+
+        if not nested_pregels:
+            logger.debug("No nested Pregel objects found")
+            return
+
+        logger.info(
+            f"Found {len(nested_pregels)} nested Pregel objects to instrument"
+        )
 
         for path_parts, pregel_obj in nested_pregels:
             try:
@@ -730,7 +757,7 @@ class TruGraph(TruChain):
                 )
 
     def _find_nested_pregel_objects(
-        self, obj: Any, path: Optional[List[str]] = None
+        self, obj: Any, path: Optional[List[str]] = None, max_depth: int = 8
     ) -> List[Tuple[List[str], Any]]:
         """
         Recursively find Pregel objects nested within the given object.
@@ -738,12 +765,17 @@ class TruGraph(TruChain):
         Args:
             obj: Object to search within
             path: Current path to this object
+            max_depth: Maximum recursion depth to prevent hanging
 
         Returns:
             List of (path_parts, pregel_object) tuples
         """
         if path is None:
             path = []
+
+        # Prevent excessive recursion that could cause hanging
+        if len(path) >= max_depth:
+            return []
 
         pregels = []
 
@@ -754,28 +786,51 @@ class TruGraph(TruChain):
             pregels.append((path, obj))
             return pregels  # Don't recurse into Pregel objects
 
-        # Look for Pregel objects in attributes
-        if hasattr(obj, "__dict__"):
-            for attr_name in dir(obj):
-                if attr_name.startswith("_"):
+        # Only traverse objects that are safe to traverse
+        if not hasattr(obj, "__dict__"):
+            return pregels
+
+        # Be more selective about which attributes to check
+        try:
+            # Use __dict__ directly instead of dir() to avoid triggering properties
+            obj_dict = getattr(obj, "__dict__", {})
+            if not isinstance(obj_dict, dict):
+                return pregels
+
+            for attr_name, attr_value in obj_dict.items():
+                # Skip private attributes and known problematic ones
+                if attr_name.startswith("_") or attr_name in (
+                    "session",
+                    "connector",
+                    "instrument",
+                    "logger",
+                ):
                     continue
 
                 try:
-                    attr_value = getattr(obj, attr_name)
-
                     if isinstance(attr_value, Pregel):
                         pregels.append((path + [attr_name], attr_value))
-                    elif hasattr(attr_value, "__dict__") and not callable(
-                        attr_value
+                    elif (
+                        hasattr(attr_value, "__dict__")
+                        and not callable(attr_value)
+                        and not isinstance(
+                            attr_value,
+                            (str, int, float, bool, list, dict, tuple),
+                        )
                     ):
-                        # Recursively search one level deep
+                        # Only recurse into custom objects, avoid built-in types
                         nested_pregels = self._find_nested_pregel_objects(
-                            attr_value, path + [attr_name]
+                            attr_value, path + [attr_name], max_depth
                         )
                         pregels.extend(nested_pregels)
 
                 except Exception:
+                    # Silently skip any problematic attributes
                     continue
+
+        except Exception:
+            # If we can't safely traverse this object, skip it
+            pass
 
         return pregels
 
