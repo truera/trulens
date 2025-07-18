@@ -3,8 +3,6 @@
 from inspect import BoundArguments
 from inspect import Signature
 import logging
-import os
-from pprint import PrettyPrinter
 from typing import (
     Any,
     Callable,
@@ -19,38 +17,21 @@ from trulens.apps.langchain.tru_chain import TruChain
 from trulens.core import app as core_app
 from trulens.core import instruments as core_instruments
 from trulens.core.instruments import InstrumentedMethod
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.session import TruSession
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
-pp = PrettyPrinter()
-
-E = None
-try:
-    from langgraph.graph import StateGraph
-    from langgraph.pregel import Pregel
-    from langgraph.types import Command
-
-    LANGGRAPH_AVAILABLE = True
-except ImportError as e:
-
-    def _mock_compile(self):
-        raise ImportError("LangGraph is not available")
-
-    StateGraph = type("StateGraph", (), {"compile": _mock_compile})
-    Pregel = type("Pregel", (), {})
-    Command = type("Command", (), {})
-    LANGGRAPH_AVAILABLE = False
-    E = e
 
 try:
     from langgraph.func import TaskFunction
     from langgraph.func import entrypoint
     from langgraph.func import task
-
-    LANGGRAPH_FUNC_AVAILABLE = True
+    from langgraph.graph import StateGraph
+    from langgraph.pregel import Pregel
+    from langgraph.types import Command
 
     # Apply class-level instrumentation for TaskFunction when langgraph.func is available
     # This ensures TaskFunction.__call__ is instrumented regardless of where TaskFunction
@@ -59,8 +40,7 @@ try:
         """Set up class-level instrumentation for TaskFunction.__call__"""
 
         # Only instrument if OTEL tracing is enabled
-        otel_enabled = os.environ.get("TRULENS_OTEL_TRACING", "0") == "1"
-        if not otel_enabled:
+        if not is_otel_tracing_enabled():
             logger.debug(
                 "OTEL not enabled, skipping TaskFunction class-level instrumentation"
             )
@@ -257,8 +237,7 @@ try:
         """Set up class-level instrumentation for Pregel methods"""
 
         # Only instrument if OTEL tracing is enabled
-        otel_enabled = os.environ.get("TRULENS_OTEL_TRACING", "0") == "1"
-        if not otel_enabled:
+        if not is_otel_tracing_enabled():
             logger.debug(
                 "OTEL not enabled, skipping Pregel class-level instrumentation"
             )
@@ -344,11 +323,21 @@ try:
     # Apply Pregel instrumentation when this module is imported
     _setup_pregel_instrumentation()
 
-except ImportError:
+    LANGGRAPH_AVAILABLE = True
+except ImportError as e:
+
+    def _mock_compile(self):
+        raise ImportError("LangGraph is not available")
+
+    StateGraph = type("StateGraph", (), {"compile": _mock_compile})
+    Pregel = type("Pregel", (), {})
+    Command = type("Command", (), {})
     task = None
     TaskFunction = type("TaskFunction", (), {})
     entrypoint = type("entrypoint", (), {})
-    LANGGRAPH_FUNC_AVAILABLE = False
+    LANGGRAPH_AVAILABLE = False
+
+    logger.warning(f"LangGraph is not available: {e}")
 
 
 class LangGraphInstrument(core_instruments.Instrument):
@@ -364,13 +353,9 @@ class LangGraphInstrument(core_instruments.Instrument):
             lambda: {
                 Pregel,
                 StateGraph,
+                Command,
                 # Note: TaskFunction is instrumented at class-level during import,
                 # @entrypoint returns Pregel objects which are already instrumented
-            }
-            if LANGGRAPH_AVAILABLE and LANGGRAPH_FUNC_AVAILABLE
-            else {
-                Pregel,
-                StateGraph,
             }
             if LANGGRAPH_AVAILABLE
             else set()
@@ -448,7 +433,7 @@ class TruGraph(TruChain):
 
         @task
         def my_task_function(state):
-            # Your task logic here - automatically instrumented
+            ...
             return updated_state
 
         @entrypoint()
@@ -523,12 +508,6 @@ class TruGraph(TruChain):
         main_method: Optional[Callable] = None,
         **kwargs: Any,
     ):
-        if not LANGGRAPH_AVAILABLE:
-            raise ImportError(
-                f"LangGraph is not installed. Please install it with 'pip install langgraph' "
-                f"to use TruGraph. Error: {E}"
-            )
-
         # Only do minimal preparation to avoid interfering with existing instrumentation
         original_app = app
         app = self._prepare_app(app)
