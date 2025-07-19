@@ -322,6 +322,17 @@ class TruSession(
                 *args, app=app, connector=self.connector, **kwargs
             )
 
+        elif app.__module__.startswith("langgraph"):
+            with import_utils.OptionalImports(
+                messages=optional_utils.REQUIREMENT_APPS_LANGGRAPH
+            ):
+                from trulens.apps.langgraph import tru_graph
+
+            print(f"{text_utils.UNICODE_SQUID} Instrumenting LangGraph app.")
+            return tru_graph.TruGraph(
+                *args, app=app, connector=self.connector, **kwargs
+            )
+
         elif app.__module__.startswith("llamaindex"):
             with import_utils.OptionalImports(
                 messages=optional_utils.REQUIREMENT_APPS_LLAMA

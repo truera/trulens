@@ -1129,6 +1129,13 @@ class Instrument:
                     print("\tinstrumenting", method_name)
                     original_fun = getattr(base, method_name)
 
+                    # Skip non-callable attributes (strings, properties, etc.)
+                    if not callable(original_fun):
+                        print(
+                            f"\t\tskipping non-callable attribute {method_name}: {type(original_fun)}"
+                        )
+                        continue
+
                     # If an instrument class uses a decorator to wrap one of
                     # their methods, the wrapper will capture an un-instrumented
                     # version of the inner method which we may fail to
@@ -1229,6 +1236,9 @@ class Instrument:
 
                 elif isinstance(v, Dict):
                     for k2, sv in v.items():
+                        # Skip keys that aren't valid for Lens (like TypedDict metaclasses)
+                        if not isinstance(k2, (str, int)):
+                            continue
                         subquery = query[k][k2]
                         if self.to_instrument_class(type(sv)):
                             self.instrument_object(

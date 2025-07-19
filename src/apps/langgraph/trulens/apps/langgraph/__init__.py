@@ -1,17 +1,6 @@
-"""
-!!! note "Additional Dependency Required"
+"""TruLens LangGraph instrumentation."""
 
-    To use this module, you must have the `trulens-apps-langgraph` package installed.
+from trulens.apps.langgraph.tru_graph import LangGraphInstrument
+from trulens.apps.langgraph.tru_graph import TruGraph
 
-    ```bash
-    pip install trulens-apps-langgraph
-    ```
-"""
-
-from importlib.metadata import version
-
-from trulens.core.utils import imports as import_utils
-
-__version__ = version(
-    import_utils.safe_importlib_package_name(__package__ or __name__)
-)
+__all__ = ["TruGraph", "LangGraphInstrument"]

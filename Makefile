@@ -50,9 +50,11 @@ env-tests-optional: env env-tests
 	poetry run pip install \
 		chromadb \
 	 	faiss-cpu \
+		langchain-core \
 		langchain-openai \
 		llama-index-embeddings-huggingface \
 		llama-index-embeddings-openai \
+		langgraph \
 		unstructured
 
 
@@ -263,8 +265,8 @@ install-wheels:
 ## Step: Clean repo:
 clean:
 	git clean --dry-run -fxd
-	@read -p "Do you wish to remove these files? (y/N)" -n 1 -r
-	echo
+	@read -p "Do you wish to remove these files? (y/N)" -n 1 -r; \
+	echo; \
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
 		git clean -fxd; \
 	else \
