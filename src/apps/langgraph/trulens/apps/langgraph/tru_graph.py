@@ -9,7 +9,6 @@ from typing import (
     ClassVar,
     List,
     Optional,
-    Tuple,
 )
 
 from pydantic import Field
@@ -20,6 +19,7 @@ from trulens.core.instruments import InstrumentedMethod
 from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.session import TruSession
 from trulens.core.utils import pyschema as pyschema_utils
+from trulens.otel.semconv.constants import TRULENS_INSTRUMENT_WRAPPER_FLAG
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
@@ -39,7 +39,6 @@ try:
     def _setup_task_function_instrumentation():
         """Set up class-level instrumentation for TaskFunction.__call__"""
 
-        # Only instrument if OTEL tracing is enabled
         if not is_otel_tracing_enabled():
             logger.debug(
                 "OTEL not enabled, skipping TaskFunction class-level instrumentation"
@@ -50,7 +49,7 @@ try:
             from trulens.core.otel.instrument import instrument_method
 
             # Check if TaskFunction.__call__ is already instrumented
-            if hasattr(TaskFunction.__call__, "__trulens_instrument_wrapper__"):
+            if hasattr(TaskFunction.__call__, TRULENS_INSTRUMENT_WRAPPER_FLAG):
                 logger.debug("TaskFunction.__call__ already instrumented")
                 return
 
@@ -236,7 +235,6 @@ try:
     def _setup_pregel_instrumentation():
         """Set up class-level instrumentation for Pregel methods"""
 
-        # Only instrument if OTEL tracing is enabled
         if not is_otel_tracing_enabled():
             logger.debug(
                 "OTEL not enabled, skipping Pregel class-level instrumentation"
@@ -248,7 +246,7 @@ try:
 
             # Check if Pregel methods are already instrumented
             if hasattr(Pregel, "invoke") and hasattr(
-                getattr(Pregel, "invoke"), "__trulens_instrument_wrapper__"
+                getattr(Pregel, "invoke"), TRULENS_INSTRUMENT_WRAPPER_FLAG
             ):
                 logger.debug("Pregel methods already instrumented")
                 return
@@ -578,52 +576,7 @@ class TruGraph(TruChain):
         if isinstance(app, Pregel):
             return app
 
-        # For custom classes, detect components for logging/debugging
-        langgraph_components = self._detect_langgraph_components(app)
-        if langgraph_components:
-            logger.info(
-                f"Detected {len(langgraph_components)} LangGraph component(s) in custom class {type(app).__name__}: "
-                f"{[f'{name}: {type(comp).__name__}' for name, comp in langgraph_components]}"
-            )
-
         return app
-
-    def _detect_langgraph_components(self, app: Any) -> List[Tuple[str, Any]]:
-        """
-        Simple detection of LangGraph components in custom classes.
-
-        This method looks for basic LangGraph components for logging/debugging purposes.
-        Note: TaskFunction instances are instrumented at class-level during import
-        and don't need to be detected here.
-
-        Args:
-            app: The application object to inspect
-
-        Returns:
-            List of (attribute_name, component) tuples for found LangGraph components
-        """
-        components = []
-
-        if not hasattr(app, "__dict__"):
-            return components
-
-        # Check for basic LangGraph objects - Pregel and StateGraph
-        # TaskFunction is instrumented at class-level and doesn't need detection
-        for attr_name in dir(app):
-            if attr_name.startswith("_"):
-                continue
-
-            try:
-                attr_value = getattr(app, attr_name)
-                if isinstance(attr_value, (Pregel, StateGraph)):
-                    components.append((attr_name, attr_value))
-                    logger.debug(
-                        f"Found LangGraph component: {attr_name} ({type(attr_value).__name__})"
-                    )
-            except Exception:
-                continue
-
-        return components
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
