@@ -29,6 +29,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.9,!=3.9.7"
 trulens-core = { version = "^1.0.0" }
+trulens-apps-langgraph = { version = "^1.0.0" }
 ipywidgets = ">=7.1.2"
 jupyter = "^1"
 pandas = ">=1.0.0"
@@ -48,3 +49,4 @@ full = [
 
 [tool.poetry.group.dev.dependencies]
 trulens-core = { path = "../core" }
+trulens-apps-langgraph = { path = "../apps/langgraph" }
