@@ -52,9 +52,9 @@ env-tests-optional: env env-tests
 	 	faiss-cpu \
 		langchain-core \
 		langchain-openai \
+		langgraph \
 		llama-index-embeddings-huggingface \
 		llama-index-embeddings-openai \
-		langgraph \
 		unstructured
 
 

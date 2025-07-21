@@ -7,32 +7,24 @@ import time
 import uuid
 import weakref
 
+from langchain_core.messages import AIMessage
+from langchain_core.messages import HumanMessage
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.func import entrypoint
+from langgraph.func import task
+from langgraph.graph import END
+from langgraph.graph import MessagesState
+from langgraph.graph import StateGraph
 import pytest
+from trulens.apps.langgraph import TruGraph
 from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
 from trulens.otel.semconv.trace import SpanAttributes
 
 import tests.util.otel_tru_app_test_case
 
-try:
-    from langchain_core.messages import AIMessage
-    from langchain_core.messages import HumanMessage
-    from langgraph.checkpoint.memory import MemorySaver
-    from langgraph.func import entrypoint
-    from langgraph.func import task
-    from langgraph.graph import END
-    from langgraph.graph import MessagesState
-    from langgraph.graph import StateGraph
-    from trulens.apps.langgraph import TruGraph
-
-    LANGGRAPH_AVAILABLE = True
-except Exception as e:
-    print(f"LangGraph imports failed: {e}")
-    LANGGRAPH_AVAILABLE = False
-
 
 @pytest.mark.optional
-@pytest.mark.skipif(not LANGGRAPH_AVAILABLE, reason="LangGraph not available")
 class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
     @staticmethod
     def _create_simple_multi_agent():
@@ -172,12 +164,9 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
             main_method_args=("artificial intelligence",),
         )
 
-        # with tru_recorder:
-        #     result = essay_writer.run("artificial intelligence")
-
-        assert "essay" in result
-        assert "is_approved" in result
-        assert "artificial intelligence" in result["essay"]
+        self.assertIn("essay", result)
+        self.assertIn("is_approved", result)
+        self.assertIn("artificial intelligence", result["essay"])
 
         self._compare_events_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_graph_test_function_api_smoke.csv"
@@ -196,9 +185,7 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
 
         graph = workflow.compile()
 
-        assert graph.__module__.startswith(
-            "langgraph"
-        ), f"Expected module to start with 'langgraph', got {graph.__module__}"
+        self.assertIn("langgraph", graph.__module__)
 
     def test_session_auto_detection(self):
         """Test that TruSession automatically detects and creates TruGraph."""
@@ -225,17 +212,15 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         session = TruSession()
         tru_app = session.App(graph, app_name="DetectionTest")
 
-        assert isinstance(
-            tru_app, TruGraph
-        ), f"Expected TruGraph, got {type(tru_app)}"
-        assert tru_app.app_name == "DetectionTest"
+        self.assertIsInstance(tru_app, TruGraph)
+        self.assertEqual(tru_app.app_name, "DetectionTest")
 
         result = tru_app.app.invoke({
             "messages": [HumanMessage(content="Hello")]
         })
-        assert "messages" in result
-        assert len(result["messages"]) > 0
-        assert "Echo: Hello" in result["messages"][-1].content
+        self.assertIn("messages", result)
+        self.assertGreater(len(result["messages"]), 0)
+        self.assertIn("Echo: Hello", result["messages"][-1].content)
 
     def test_manual_trugraph_creation(self):
         """Test manual TruGraph creation as fallback."""
@@ -252,15 +237,15 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
 
         tru_app = TruGraph(app=graph, app_name="ManualTest", app_version="1.0")
 
-        assert isinstance(tru_app, TruGraph)
-        assert tru_app.app_name == "ManualTest"
-        assert tru_app.app_version == "1.0"
+        self.assertIsInstance(tru_app, TruGraph)
+        self.assertEqual(tru_app.app_name, "ManualTest")
+        self.assertEqual(tru_app.app_version, "1.0")
 
         result = tru_app.app.invoke({
             "messages": [HumanMessage(content="Test")]
         })
-        assert "messages" in result
-        assert "Manual creation works" in result["messages"][-1].content
+        self.assertIn("messages", result)
+        self.assertIn("Manual creation works", result["messages"][-1].content)
 
     def test_input_output_handling(self) -> None:
         """Test TruGraph input/output handling for different formats."""
@@ -274,14 +259,14 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         result1 = tru_recorder.app.invoke({
             "messages": [HumanMessage(content="Test 1")]
         })
-        assert "messages" in result1
+        self.assertIn("messages", result1)
 
         result2 = tru_recorder.app.invoke({"messages": [("user", "Test 2")]})
-        assert "messages" in result2
+        self.assertIn("messages", result2)
 
         result3 = tru_recorder.main_call("Test 3")
-        assert isinstance(result3, str)
-        assert "Test 3" in result3
+        self.assertIsInstance(result3, str)
+        self.assertIn("Test 3", result3)
 
     def test_custom_class_support(self) -> None:
         """Test TruGraph support for custom classes with LangGraph workflows."""
@@ -309,19 +294,6 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         )
 
         result = tru_recorder.app.run({"messages": [("user", "Test input")]})
-        assert isinstance(result, dict), f"Expected dict, got {type(result)}"
-        assert "messages" in result, f"Expected 'messages' in {result}"
-        assert (
-            "Custom class response" in result["messages"][-1].content
-        ), f"Expected 'Custom class response' in {result['messages'][-1].content}"
-
-    def test_error_handling(self) -> None:
-        """Test error handling when LangGraph is not available."""
-        try:
-            from trulens.apps.langgraph.tru_graph import LANGGRAPH_AVAILABLE
-
-            assert (
-                LANGGRAPH_AVAILABLE
-            ), "LangGraph should be available in test environment"
-        except ImportError:
-            pass
+        self.assertIsInstance(result, dict)
+        self.assertIn("messages", result)
+        self.assertIn("Custom class response", result["messages"][-1].content)
