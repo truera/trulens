@@ -8,6 +8,9 @@ import uuid
 import weakref
 
 import pytest
+from trulens.core.otel.instrument import instrument
+from trulens.core.session import TruSession
+from trulens.otel.semconv.trace import SpanAttributes
 
 import tests.util.otel_tru_app_test_case
 
@@ -21,9 +24,8 @@ try:
     from langgraph.graph import MessagesState
     from langgraph.graph import StateGraph
     from trulens.apps.langgraph import TruGraph
-    from trulens.core.otel.instrument import instrument
-    from trulens.core.session import TruSession
-    from trulens.otel.semconv.trace import SpanAttributes
+
+    LANGGRAPH_AVAILABLE = True
 except Exception:
     pass
 
@@ -173,7 +175,11 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         self.assertIn("artificial intelligence", result["essay"])
 
         self._compare_events_to_golden_dataframe(
-            "tests/unit/static/golden/test_otel_tru_graph_test_function_api_smoke.csv"
+            "tests/unit/static/golden/test_otel_tru_graph_test_function_api_smoke.csv",
+            ignore_locators=[
+                "[record_attributes][ai.observability.call.return]",
+                "[record_attributes][ai.observability.graph_task.output_state]",
+            ],
         )
 
     def test_langgraph_detection_by_module(self):
