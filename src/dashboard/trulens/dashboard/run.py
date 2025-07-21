@@ -136,6 +136,11 @@ def run_dashboard(
         _is_snowflake_connector(session.connector)
         and not session.connector.password_known
     ):
+        # If we don't know the password, this is problematic because we run the
+        # dashboard in a separate process so we won't be able to recreate the
+        # snowpark session in the child process. Thus, in this case we default
+        # to using external browser authentication.
+        # TODO: support other passwordless token authentication such as PAT.
         from trulens.connectors.snowflake.dao.sql_utils import (
             clean_up_snowflake_identifier,
         )
