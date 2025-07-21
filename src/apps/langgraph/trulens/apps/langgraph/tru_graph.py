@@ -105,7 +105,7 @@ class TruGraph(TruChain):
     **Benefits of Class-Level Approach**:
     - **Guaranteed Coverage**: All TaskFunction and Pregel method calls are captured
     - **No Import Timing Issues**: Works regardless of when objects are created
-    - **Consistent Span Types**: Properly sets "graph_node" and "graph_task" span types
+    - **Consistent Span Types**: Properly sets "langgraph_task" and "langgraph_node" span types
 
     Example: "Creating a LangGraph multi-agent application"
 
@@ -245,7 +245,7 @@ class TruGraph(TruChain):
                     if hasattr(task_function_instance, "func") and hasattr(
                         task_function_instance.func, "__name__"
                     ):
-                        attributes[SpanAttributes.GRAPH_TASK.TASK_NAME] = (
+                        attributes[SpanAttributes.LANGGRAPH_TASK.TASK_NAME] = (
                             task_function_instance.func.__name__
                         )
 
@@ -310,13 +310,13 @@ class TruGraph(TruChain):
                                             input_args[name] = str(value)
 
                                     attributes[
-                                        SpanAttributes.GRAPH_TASK.INPUT_STATE
+                                        SpanAttributes.LANGGRAPH_TASK.INPUT_STATE
                                     ] = json.dumps(
                                         input_args, default=str, indent=2
                                     )
                                 else:
                                     attributes[
-                                        SpanAttributes.GRAPH_TASK.INPUT_STATE
+                                        SpanAttributes.LANGGRAPH_TASK.INPUT_STATE
                                     ] = "{}"
 
                             except Exception as bind_error:
@@ -339,13 +339,13 @@ class TruGraph(TruChain):
                                         fallback_args[name] = str(value)
 
                                 attributes[
-                                    SpanAttributes.GRAPH_TASK.INPUT_STATE
+                                    SpanAttributes.LANGGRAPH_TASK.INPUT_STATE
                                 ] = json.dumps(
                                     fallback_args, default=str, indent=2
                                 )
                         else:
                             attributes[
-                                SpanAttributes.GRAPH_TASK.INPUT_STATE
+                                SpanAttributes.LANGGRAPH_TASK.INPUT_STATE
                             ] = json.dumps(
                                 {"args": task_args, "kwargs": task_kwargs},
                                 default=str,
@@ -356,25 +356,27 @@ class TruGraph(TruChain):
                         logger.warning(
                             f"Error processing task input arguments: {e}"
                         )
-                        attributes[SpanAttributes.GRAPH_TASK.INPUT_STATE] = (
-                            f"Error processing args: {str(e)}"
-                        )
+                        attributes[
+                            SpanAttributes.LANGGRAPH_TASK.INPUT_STATE
+                        ] = f"Error processing args: {str(e)}"
 
                 # Handle return value (Future object for now)
                 if ret is not None and not exception:
                     try:
                         # For now, capture the Future object info
                         # TODO: In future, we might want to capture the actual result when task Future completes
-                        attributes[SpanAttributes.GRAPH_TASK.OUTPUT_STATE] = (
-                            str(ret)
-                        )
+                        attributes[
+                            SpanAttributes.LANGGRAPH_TASK.OUTPUT_STATE
+                        ] = str(ret)
                     except Exception:
-                        attributes[SpanAttributes.GRAPH_TASK.OUTPUT_STATE] = (
-                            str(ret)
-                        )
+                        attributes[
+                            SpanAttributes.LANGGRAPH_TASK.OUTPUT_STATE
+                        ] = str(ret)
 
                 if exception:
-                    attributes[SpanAttributes.GRAPH_TASK.ERROR] = str(exception)
+                    attributes[SpanAttributes.LANGGRAPH_TASK.ERROR] = str(
+                        exception
+                    )
 
                 return attributes
 
@@ -382,7 +384,7 @@ class TruGraph(TruChain):
             instrument_method(
                 cls=TaskFunction,
                 method_name="__call__",
-                span_type=SpanAttributes.SpanType.GRAPH_TASK,
+                span_type=SpanAttributes.SpanType.LANGGRAPH_TASK,
                 attributes=task_function_attributes,
             )
 
@@ -425,28 +427,30 @@ class TruGraph(TruChain):
                 if args and len(args) > 1:
                     input_data = args[1]
                     if isinstance(input_data, dict):
-                        attributes[SpanAttributes.GRAPH_NODE.INPUT_STATE] = str(
-                            input_data
-                        )
+                        attributes[
+                            SpanAttributes.LANGGRAPH_NODE.INPUT_STATE
+                        ] = str(input_data)
                     else:
-                        attributes[SpanAttributes.GRAPH_NODE.INPUT_STATE] = str(
-                            input_data
-                        )
+                        attributes[
+                            SpanAttributes.LANGGRAPH_NODE.INPUT_STATE
+                        ] = str(input_data)
 
                 for k, v in kwargs.items():
                     if k in ["input", "state", "data"]:
-                        attributes[SpanAttributes.GRAPH_NODE.INPUT_STATE] = str(
-                            v
-                        )
+                        attributes[
+                            SpanAttributes.LANGGRAPH_NODE.INPUT_STATE
+                        ] = str(v)
                         break
 
                 if ret is not None and not exception:
-                    attributes[SpanAttributes.GRAPH_NODE.OUTPUT_STATE] = str(
-                        ret
+                    attributes[SpanAttributes.LANGGRAPH_NODE.OUTPUT_STATE] = (
+                        str(ret)
                     )
 
                 if exception:
-                    attributes[SpanAttributes.GRAPH_NODE.ERROR] = str(exception)
+                    attributes[SpanAttributes.LANGGRAPH_NODE.ERROR] = str(
+                        exception
+                    )
 
                 return attributes
 
@@ -463,7 +467,7 @@ class TruGraph(TruChain):
                 instrument_method(
                     cls=Pregel,
                     method_name=method_name,
-                    span_type=SpanAttributes.SpanType.GRAPH_NODE,
+                    span_type=SpanAttributes.SpanType.LANGGRAPH_NODE,
                     attributes=pregel_attributes,
                 )
                 logger.debug(

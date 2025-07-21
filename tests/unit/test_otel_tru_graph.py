@@ -3,24 +3,27 @@ Tests for OTEL TruGraph app.
 """
 
 import gc
+import time
+import uuid
 import weakref
 
 import pytest
-from trulens.core.session import TruSession
 
 import tests.util.otel_tru_app_test_case
 
 try:
     from langchain_core.messages import AIMessage
     from langchain_core.messages import HumanMessage
+    from langgraph.checkpoint.memory import MemorySaver
     from langgraph.func import entrypoint
     from langgraph.func import task
     from langgraph.graph import END
     from langgraph.graph import MessagesState
     from langgraph.graph import StateGraph
     from trulens.apps.langgraph import TruGraph
-
-    LANGGRAPH_AVAILABLE = True
+    from trulens.core.otel.instrument import instrument
+    from trulens.core.session import TruSession
+    from trulens.otel.semconv.trace import SpanAttributes
 except Exception:
     pass
 
@@ -29,11 +32,22 @@ except Exception:
 class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
     @staticmethod
     def _create_simple_multi_agent():
-        """Helper function to create a simple multi-agent graph."""
+        """Helper function to create a simple multi-agent LangGraph."""
 
-        def research(state):
-            query = state["messages"][-1].content if state["messages"] else None
-            if query:
+        @instrument(
+            attributes=lambda ret, exception, *args, **kwargs: {
+                f"{SpanAttributes.UNKNOWN.base}.agent_type": "research_agent"
+            }
+        )
+        def research_agent(state):
+            messages = state.get("messages", [])
+            if messages:
+                last_message = messages[-1]
+                if hasattr(last_message, "content"):
+                    query = last_message.content
+                else:
+                    query = str(last_message)
+
                 response = f"Research findings for: {query}"
                 return {
                     "messages": [
@@ -42,11 +56,20 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
                 }
             return {"messages": [AIMessage(content="No query provided")]}
 
-        def write_article(state):
-            research_content = (
-                state["messages"][-1].content if state["messages"] else None
-            )
-            if research_content:
+        @instrument(
+            attributes=lambda ret, exception, *args, **kwargs: {
+                f"{SpanAttributes.UNKNOWN.base}.agent_type": "writer_agent"
+            }
+        )
+        def writer_agent(state):
+            messages = state.get("messages", [])
+            if messages:
+                last_message = messages[-1]
+                if hasattr(last_message, "content"):
+                    research_content = last_message.content
+                else:
+                    research_content = str(last_message)
+
                 response = f"Article based on: {research_content}"
                 return {
                     "messages": [
@@ -56,13 +79,11 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
             return {"messages": [AIMessage(content="No research provided")]}
 
         workflow = StateGraph(MessagesState)
-
-        workflow.add_node("research", research)
-        workflow.add_node("write", write_article)
-
-        workflow.set_entry_point("research")
-        workflow.add_edge("research", "write")
-        workflow.add_edge("write", END)
+        workflow.add_node("researcher", research_agent)
+        workflow.add_node("writer", writer_agent)
+        workflow.add_edge("researcher", "writer")
+        workflow.add_edge("writer", END)
+        workflow.set_entry_point("researcher")
 
         return workflow.compile()
 
@@ -70,22 +91,39 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
     def _create_functional_api_graph_app():
         """Helper function to create a LangGraph app using Function API."""
 
-        @task(name="research")
-        def research(topic: str) -> str:
-            return f"Research findings for: {topic}"
+        @task
+        def write_essay(topic: str) -> str:
+            time.sleep(0.1)  # Simulate work
+            return f"An essay about {topic}"
 
-        @task(name="write_essay")
-        def write_essay(research_findings: str) -> dict:
-            essay = f"Essay based on: {research_findings}"
-            return {"essay": essay, "is_approved": True}
-
-        @entrypoint(name="workflow")
+        @entrypoint(checkpointer=MemorySaver())
         def workflow(topic: str) -> dict:
-            findings = research(topic)
-            result = write_essay(findings)
-            return result
+            essay = write_essay(topic).result()
 
-        return workflow
+            return {
+                "essay": essay,
+                "is_approved": True,
+            }
+
+        class EssayWriter:
+            def __init__(self):
+                self.workflow = workflow
+
+            def run(self, topic: str) -> dict:
+                thread_id = str(uuid.uuid4())
+                config = {"configurable": {"thread_id": thread_id}}
+                return self.workflow.invoke(topic, config)
+
+        return EssayWriter()
+
+    @staticmethod
+    def _create_test_app_info() -> (
+        tests.util.otel_tru_app_test_case.TestAppInfo
+    ):
+        app = TestOtelTruGraph._create_simple_multi_agent()
+        return tests.util.otel_tru_app_test_case.TestAppInfo(
+            app=app, main_method=app.invoke, TruAppClass=TruGraph
+        )
 
     def test_smoke(self) -> None:
         multi_agent_graph = self._create_simple_multi_agent()
@@ -107,6 +145,12 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         self._compare_events_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_graph_test_smoke.csv"
         )
+
+        tru_recorder_ref = weakref.ref(tru_recorder)
+        del tru_recorder
+        del multi_agent_graph
+        gc.collect()
+        self.assertCollected(tru_recorder_ref)
 
     def test_task_instrumentation(self) -> None:
         essay_writer = self._create_functional_api_graph_app()
@@ -133,16 +177,43 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         )
 
     def test_langgraph_detection_by_module(self):
-        """Test that LangGraph is detected by module name."""
-        graph = self._create_simple_multi_agent()
+        """Test that LangGraph apps are detected by module name."""
+
+        def simple_agent(state):
+            return {"messages": [AIMessage(content="Hello from agent")]}
+
+        workflow = StateGraph(MessagesState)
+        workflow.add_node("agent", simple_agent)
+        workflow.add_edge("agent", END)
+        workflow.set_entry_point("agent")
+
+        graph = workflow.compile()
 
         self.assertIn("langgraph", graph.__module__)
 
     def test_session_auto_detection(self):
-        """Test that TruGraph is automatically detected and created."""
-        session = TruSession()
-        graph = self._create_simple_multi_agent()
+        """Test that TruSession automatically detects and creates TruGraph."""
 
+        def echo_agent(state):
+            messages = state.get("messages", [])
+            if messages:
+                last_message = messages[-1]
+                content = (
+                    last_message.content
+                    if hasattr(last_message, "content")
+                    else str(last_message)
+                )
+                return {"messages": [AIMessage(content=f"Echo: {content}")]}
+            return {"messages": [AIMessage(content="Echo: No message")]}
+
+        workflow = StateGraph(MessagesState)
+        workflow.add_node("echo", echo_agent)
+        workflow.add_edge("echo", END)
+        workflow.set_entry_point("echo")
+
+        graph = workflow.compile()
+
+        session = TruSession()
         tru_app = session.App(graph, app_name="DetectionTest")
 
         self.assertIsInstance(tru_app, TruGraph)
@@ -156,8 +227,17 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         self.assertIn("Echo: Hello", result["messages"][-1].content)
 
     def test_manual_trugraph_creation(self):
-        """Test manual creation of TruGraph."""
-        graph = self._create_simple_multi_agent()
+        """Test manual TruGraph creation as fallback."""
+
+        def simple_agent(state):
+            return {"messages": [AIMessage(content="Manual creation works")]}
+
+        workflow = StateGraph(MessagesState)
+        workflow.add_node("agent", simple_agent)
+        workflow.add_edge("agent", END)
+        workflow.set_entry_point("agent")
+
+        graph = workflow.compile()
 
         tru_app = TruGraph(app=graph, app_name="ManualTest", app_version="1.0")
 
@@ -172,11 +252,12 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         self.assertIn("Manual creation works", result["messages"][-1].content)
 
     def test_input_output_handling(self) -> None:
-        """Test handling of different input/output formats."""
+        """Test TruGraph input/output handling for different formats."""
+        multi_agent_graph = self._create_simple_multi_agent()
         tru_recorder = TruGraph(
-            app=self._create_simple_multi_agent(),
-            app_name="IOTest",
-            app_version="1.0",
+            multi_agent_graph,
+            app_name="IO Test",
+            app_version="v1",
         )
 
         result1 = tru_recorder.app.invoke({
@@ -192,55 +273,31 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         self.assertIn("Test 3", result3)
 
     def test_custom_class_support(self) -> None:
-        """Test support for custom classes."""
+        """Test TruGraph support for custom classes with LangGraph workflows."""
 
-        class CustomGraph:
+        def simple_agent(state):
+            return {"messages": [AIMessage(content="Custom class response")]}
+
+        workflow = StateGraph(MessagesState)
+        workflow.add_node("agent", simple_agent)
+        workflow.add_edge("agent", END)
+        workflow.set_entry_point("agent")
+
+        class CustomAgent:
+            def __init__(self):
+                self.workflow = workflow.compile()
+
             def run(self, input_data):
-                return {
-                    "messages": [AIMessage(content="Custom class response")]
-                }
+                return self.workflow.invoke(input_data)
 
+        custom_agent = CustomAgent()
         tru_recorder = TruGraph(
-            app=CustomGraph(),
-            app_name="CustomTest",
-            app_version="1.0",
+            custom_agent,
+            app_name="Custom Agent",
+            app_version="v1",
         )
 
         result = tru_recorder.app.run({"messages": [("user", "Test input")]})
         self.assertIsInstance(result, dict)
         self.assertIn("messages", result)
         self.assertIn("Custom class response", result["messages"][-1].content)
-
-    def test_with_existing_tru_session(self):
-        """Test using TruGraph with an existing TruSession."""
-        session = TruSession()
-        graph = self._create_simple_multi_agent()
-
-        tru_recorder = TruGraph(
-            app=graph,
-            app_name="SessionTest",
-            app_version="1.0",
-            tru_session=session,
-        )
-
-        tru_recorder_ref = weakref.ref(tru_recorder)
-        del tru_recorder
-        gc.collect()
-
-        self.assertCollected(tru_recorder_ref)
-
-    def test_with_new_tru_session(self):
-        """Test using TruGraph with a new TruSession."""
-        graph = self._create_simple_multi_agent()
-
-        tru_recorder = TruGraph(
-            app=graph,
-            app_name="NewSessionTest",
-            app_version="1.0",
-        )
-
-        tru_recorder_ref = weakref.ref(tru_recorder)
-        del tru_recorder
-        gc.collect()
-
-        self.assertCollected(tru_recorder_ref)
