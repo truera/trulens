@@ -86,7 +86,6 @@ class OtelTestCase(TruTestCase):
         if ignore_locators is None:
             ignore_locators = []
         ignore_locators += ["[resource_attributes][telemetry.sdk.version]"]
-
         compare_dfs_accounting_for_ids_and_timestamps(
             self,
             expected,
