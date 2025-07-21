@@ -28,6 +28,7 @@ requirements:
   run:
     - python >=3.9,<3.13
     - trulens-core >=1.0.0,<2.0.0
+    - trulens-apps-langgraph >=1.0.0
     - ipywidgets >=7.1.2
     - jupyter >=1.0.0,<2.0.0
     - pandas >=1.0.0
