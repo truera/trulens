@@ -54,7 +54,7 @@ def my_agent_function(state, config):
 
 ### How it works:
 
-1. **Decorator Monkey-Patching**: TruGraph patches the `@task` decorator at import time
+1. **Decorator Monkey-Patching**: TruGraph instruments the `@task` decorator on the class level.
 2. **Intelligent Attribute Extraction**: Automatically extracts information from function arguments:
    - Handles `BaseChatModel` and `BaseModel` objects
    - Extracts data from dataclasses and Pydantic models
@@ -95,15 +95,3 @@ In OTel mode, TruGraph seamlessly integrates with OpenTelemetry spans, enabling:
 ## Usage
 
 See the [TruLens documentation](https://trulens.org/getting_started/) for complete usage instructions.
-
-
-
-# Dev notes
-
-1. import timing struggle -> remove wrapt in trugraph and instead using class-level instrumentation.
- order of importing trugraph was once very tricky to get right (i.e. wrap before task decoration) -> no longer need to worry about this after switching to class-level instrumentation
-2. instance level instrumentation somehow misses the span type -> switching everything to class-level instrumentation works
-
-3. library level auto instrumentation not there yet for PuPr experience w/ run, as it requires an tru app
-
-4. sem conv -> is it too premature or limiting to add langgraph specific sem conv?
