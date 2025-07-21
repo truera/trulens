@@ -1,5 +1,6 @@
 """Tests for GroundTruthAgreement class."""
 
+from functools import wraps
 from unittest import TestCase
 from unittest.mock import Mock
 from unittest.mock import patch
@@ -9,6 +10,56 @@ import pandas as pd
 import pytest
 from trulens.feedback.dummy.provider import DummyProvider
 from trulens.feedback.groundtruth import GroundTruthAgreement
+
+
+def requires_optional_dependency(*modules):
+    """Decorator to skip tests that require optional dependencies.
+
+    This decorator checks if the specified modules can be imported and skips
+    the test if any of them are not available. This is useful for handling
+    optional dependencies like bert-score and evaluate.
+
+    Args:
+        *modules: Variable number of module names to check for imports.
+                 For packages with hyphens (like 'bert-score'), use the
+                 hyphenated name and it will be handled automatically.
+
+    Usage:
+        @requires_optional_dependency("bert_score")
+        def test_bert_functionality():
+            # Test will be skipped if bert-score package not available
+            pass
+
+        @requires_optional_dependency("evaluate")
+        def test_evaluate_functionality():
+            # Test will be skipped if evaluate package not available
+            pass
+
+        @requires_optional_dependency("bert_score", "evaluate")
+        def test_multiple_dependencies():
+            # Test will be skipped if either dependency not available
+            pass
+    """
+
+    def decorator(test_func):
+        @wraps(test_func)
+        def wrapper(*args, **kwargs):
+            for module in modules:
+                try:
+                    # Handle packages that use hyphens in their names
+                    module_to_import = (
+                        module.replace("_", "-")
+                        if module == "bert_score"
+                        else module
+                    )
+                    __import__(module_to_import)
+                except ImportError:
+                    pytest.skip(f"{module} not available")
+            return test_func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 class TestGroundTruthAgreement(TestCase):
@@ -175,6 +226,7 @@ class TestGroundTruthAgreement(TestCase):
         self.assertTrue(np.isnan(result))
 
     @pytest.mark.optional
+    @requires_optional_dependency("bert_score")
     def test_public_api_ground_truth_lookup_via_callable(self):
         """Test ground truth lookup via public API with callable ground truth."""
 
@@ -183,25 +235,20 @@ class TestGroundTruthAgreement(TestCase):
 
         callable_agreement = self._create_agreement(mock_func)
 
-        try:
-            with patch("trulens.feedback.groundtruth.BERTScorer") as mock_bert:
-                mock_scorer = Mock()
-                mock_score_tensor = Mock()
-                mock_score_tensor.item.return_value = 0.85
-                mock_scorer.score.return_value = (mock_score_tensor,)
-                mock_bert.return_value = mock_scorer
+        with patch("trulens.feedback.groundtruth.BERTScorer") as mock_bert:
+            mock_scorer = Mock()
+            mock_score_tensor = Mock()
+            mock_score_tensor.item.return_value = 0.85
+            mock_scorer.score.return_value = (mock_score_tensor,)
+            mock_bert.return_value = mock_scorer
 
-                result = callable_agreement.bert_score("What is 2+2?", "Four")
-                score, metadata = result
-                self.assertEqual(score, 0.85)
-                self.assertEqual(metadata["ground_truth_response"], "4")
+            result = callable_agreement.bert_score("What is 2+2?", "Four")
+            score, metadata = result
+            self.assertEqual(score, 0.85)
+            self.assertEqual(metadata["ground_truth_response"], "4")
 
-                result = callable_agreement.bert_score(
-                    "Unknown query", "response"
-                )
-                self.assertTrue(np.isnan(result))
-        except ModuleNotFoundError:
-            self.skipTest("bert-score not available")
+            result = callable_agreement.bert_score("Unknown query", "response")
+            self.assertTrue(np.isnan(result))
 
     @pytest.mark.optional
     def test_public_api_score_lookup_via_absolute_error(self):
@@ -297,85 +344,69 @@ class TestGroundTruthAgreement(TestCase):
         self.assertTrue(np.isnan(error))
 
     @pytest.mark.optional
+    @requires_optional_dependency("bert_score")
     def test_bert_score_found_response(self):
         """Test bert_score when ground truth response is found."""
-        try:
-            with patch("trulens.feedback.groundtruth.BERTScorer") as mock_bert:
-                mock_scorer = Mock()
-                mock_score_tensor = Mock()
-                mock_score_tensor.item.return_value = 0.85
-                mock_scorer.score.return_value = (mock_score_tensor,)
-                mock_bert.return_value = mock_scorer
+        with patch("trulens.feedback.groundtruth.BERTScorer") as mock_bert:
+            mock_scorer = Mock()
+            mock_score_tensor = Mock()
+            mock_score_tensor.item.return_value = 0.85
+            mock_scorer.score.return_value = (mock_score_tensor,)
+            mock_bert.return_value = mock_scorer
 
-                result = self.agreement.bert_score("What is 2+2?", "Four")
-                score, metadata = result
-                self.assertEqual(score, 0.85)
-                self.assertEqual(metadata["ground_truth_response"], "4")
-        except ModuleNotFoundError:
-            self.skipTest("bert-score not available")
+            result = self.agreement.bert_score("What is 2+2?", "Four")
+            score, metadata = result
+            self.assertEqual(score, 0.85)
+            self.assertEqual(metadata["ground_truth_response"], "4")
 
     @pytest.mark.optional
+    @requires_optional_dependency("bert_score")
     def test_bert_score_no_response_found(self):
         """Test bert_score when no ground truth response is found."""
-        try:
-            result = self.agreement.bert_score("Unknown query", "Some response")
-            self.assertTrue(np.isnan(result))
-        except ModuleNotFoundError:
-            self.skipTest("bert-score not available")
+        result = self.agreement.bert_score("Unknown query", "Some response")
+        self.assertTrue(np.isnan(result))
 
     @pytest.mark.optional
+    @requires_optional_dependency("evaluate")
     def test_bleu_score_found_response(self):
         """Test bleu score when ground truth response is found."""
-        try:
-            with patch(
-                "trulens.feedback.groundtruth.evaluate"
-            ) as mock_evaluate:
-                mock_bleu = Mock()
-                mock_bleu.compute.return_value = {"bleu": 0.75}
-                mock_evaluate.load.return_value = mock_bleu
+        with patch("trulens.feedback.groundtruth.evaluate") as mock_evaluate:
+            mock_bleu = Mock()
+            mock_bleu.compute.return_value = {"bleu": 0.75}
+            mock_evaluate.load.return_value = mock_bleu
 
-                result = self.agreement.bleu("What is 2+2?", "Four")
-                score, metadata = result
-                self.assertEqual(score, 0.75)
-                self.assertEqual(metadata["ground_truth_response"], "4")
-        except ModuleNotFoundError:
-            self.skipTest("evaluate not available")
+            result = self.agreement.bleu("What is 2+2?", "Four")
+            score, metadata = result
+            self.assertEqual(score, 0.75)
+            self.assertEqual(metadata["ground_truth_response"], "4")
 
     @pytest.mark.optional
+    @requires_optional_dependency("evaluate")
     def test_bleu_score_no_response_found(self):
         """Test bleu score when no ground truth response is found."""
-        try:
-            result = self.agreement.bleu("Unknown query", "Some response")
-            self.assertTrue(np.isnan(result))
-        except ModuleNotFoundError:
-            self.skipTest("evaluate not available")
+        result = self.agreement.bleu("Unknown query", "Some response")
+        self.assertTrue(np.isnan(result))
 
     @pytest.mark.optional
+    @requires_optional_dependency("evaluate")
     def test_rouge_score_found_response(self):
         """Test rouge score when ground truth response is found."""
-        try:
-            with patch(
-                "trulens.feedback.groundtruth.evaluate"
-            ) as mock_evaluate:
-                mock_rouge = Mock()
-                mock_rouge.compute.return_value = {"rouge1": 0.65}
-                mock_evaluate.load.return_value = mock_rouge
+        with patch("trulens.feedback.groundtruth.evaluate") as mock_evaluate:
+            mock_rouge = Mock()
+            mock_rouge.compute.return_value = {"rouge1": 0.65}
+            mock_evaluate.load.return_value = mock_rouge
 
-                result = self.agreement.rouge("What is 2+2?", "Four")
-                score, metadata = result
-                self.assertEqual(score, 0.65)
-                self.assertEqual(metadata["ground_truth_response"], "4")
-        except ModuleNotFoundError:
-            self.skipTest("evaluate not available")
+            result = self.agreement.rouge("What is 2+2?", "Four")
+            score, metadata = result
+            self.assertEqual(score, 0.65)
+            self.assertEqual(metadata["ground_truth_response"], "4")
 
     @pytest.mark.optional
+    @requires_optional_dependency("evaluate")
     def test_rouge_score_no_response_found(self):
         """Test rouge score when no ground truth response is found."""
-        try:
-            result = self.agreement.rouge("Unknown query", "Some response")
-            self.assertTrue(np.isnan(result))
-        except ModuleNotFoundError:
-            self.skipTest("evaluate not available")
+        result = self.agreement.rouge("Unknown query", "Some response")
+        self.assertTrue(np.isnan(result))
 
     def _test_ir_metric(
         self, metric_func, query, chunks, expected_result, **kwargs
