@@ -42,6 +42,7 @@ requirements:
     - tqdm >=4.2.0
     - openai >=1.0.0
     - httpx >=0.27
+    - smmap >=3.0.1,<5.0.0
 
 test:
   imports:
