@@ -319,88 +319,110 @@ class TestGroundTruthAgreement(TestCase):
     @pytest.mark.optional
     def test_bert_score_found_response(self):
         """Test bert_score when ground truth response is found."""
-        with patch("trulens.feedback.groundtruth.BERTScorer") as mock_bert:
-            mock_scorer = Mock()
-            mock_score_tensor = Mock()
-            mock_score_tensor.item.return_value = 0.85
-            mock_scorer.score.return_value = (mock_score_tensor,)
-            mock_bert.return_value = mock_scorer
+        try:
+            with patch("trulens.feedback.groundtruth.BERTScorer") as mock_bert:
+                mock_scorer = Mock()
+                mock_score_tensor = Mock()
+                mock_score_tensor.item.return_value = 0.85
+                mock_scorer.score.return_value = (mock_score_tensor,)
+                mock_bert.return_value = mock_scorer
 
-            self._test_optional_metric(
-                self.agreement.bert_score,
-                "What is 2+2?",
-                "Four",
-                expected_result=(0.85, {"ground_truth_response": "4"}),
-                skip_msg="bert-score not available",
-            )
+                self._test_optional_metric(
+                    self.agreement.bert_score,
+                    "What is 2+2?",
+                    "Four",
+                    expected_result=(0.85, {"ground_truth_response": "4"}),
+                    skip_msg="bert-score not available",
+                )
+        except ModuleNotFoundError:
+            self.skipTest("bert-score not available")
 
     @pytest.mark.optional
     def test_bert_score_no_response_found(self):
         """Test bert_score when no ground truth response is found."""
-        result = self._test_optional_metric(
-            self.agreement.bert_score,
-            "Unknown query",
-            "Some response",
-            skip_msg="bert-score not available",
-        )
-        if result is not None:
-            self.assertTrue(np.isnan(result))
+        try:
+            result = self._test_optional_metric(
+                self.agreement.bert_score,
+                "Unknown query",
+                "Some response",
+                skip_msg="bert-score not available",
+            )
+            if result is not None:
+                self.assertTrue(np.isnan(result))
+        except ModuleNotFoundError:
+            self.skipTest("bert-score not available")
 
     @pytest.mark.optional
     def test_bleu_score_found_response(self):
         """Test bleu score when ground truth response is found."""
-        with patch("trulens.feedback.groundtruth.evaluate") as mock_evaluate:
-            mock_bleu = Mock()
-            mock_bleu.compute.return_value = {"bleu": 0.75}
-            mock_evaluate.load.return_value = mock_bleu
+        try:
+            with patch(
+                "trulens.feedback.groundtruth.evaluate"
+            ) as mock_evaluate:
+                mock_bleu = Mock()
+                mock_bleu.compute.return_value = {"bleu": 0.75}
+                mock_evaluate.load.return_value = mock_bleu
 
-            self._test_optional_metric(
-                self.agreement.bleu,
-                "What is 2+2?",
-                "Four",
-                expected_result=(0.75, {"ground_truth_response": "4"}),
-                skip_msg="evaluate not available",
-            )
+                self._test_optional_metric(
+                    self.agreement.bleu,
+                    "What is 2+2?",
+                    "Four",
+                    expected_result=(0.75, {"ground_truth_response": "4"}),
+                    skip_msg="evaluate not available",
+                )
+        except ModuleNotFoundError:
+            self.skipTest("evaluate not available")
 
     @pytest.mark.optional
     def test_bleu_score_no_response_found(self):
         """Test bleu score when no ground truth response is found."""
-        result = self._test_optional_metric(
-            self.agreement.bleu,
-            "Unknown query",
-            "Some response",
-            skip_msg="evaluate not available",
-        )
-        if result is not None:
-            self.assertTrue(np.isnan(result))
+        try:
+            result = self._test_optional_metric(
+                self.agreement.bleu,
+                "Unknown query",
+                "Some response",
+                skip_msg="evaluate not available",
+            )
+            if result is not None:
+                self.assertTrue(np.isnan(result))
+        except ModuleNotFoundError:
+            self.skipTest("evaluate not available")
 
     @pytest.mark.optional
     def test_rouge_score_found_response(self):
         """Test rouge score when ground truth response is found."""
-        with patch("trulens.feedback.groundtruth.evaluate") as mock_evaluate:
-            mock_rouge = Mock()
-            mock_rouge.compute.return_value = {"rouge1": 0.65}
-            mock_evaluate.load.return_value = mock_rouge
+        try:
+            with patch(
+                "trulens.feedback.groundtruth.evaluate"
+            ) as mock_evaluate:
+                mock_rouge = Mock()
+                mock_rouge.compute.return_value = {"rouge1": 0.65}
+                mock_evaluate.load.return_value = mock_rouge
 
-            self._test_optional_metric(
-                self.agreement.rouge,
-                "What is 2+2?",
-                "Four",
-                expected_result=(0.65, {"ground_truth_response": "4"}),
-                skip_msg="evaluate not available",
-            )
+                self._test_optional_metric(
+                    self.agreement.rouge,
+                    "What is 2+2?",
+                    "Four",
+                    expected_result=(0.65, {"ground_truth_response": "4"}),
+                    skip_msg="evaluate not available",
+                )
+        except ModuleNotFoundError:
+            self.skipTest("evaluate not available")
 
     @pytest.mark.optional
     def test_rouge_score_no_response_found(self):
         """Test rouge score when no ground truth response is found."""
-        result = self._test_optional_metric(
-            self.agreement.rouge,
-            "Unknown query",
-            "Some response",
-            skip_msg="evaluate not available",
-        )
-        if result is not None:
-            self.assertTrue(np.isnan(result))
+        try:
+            result = self._test_optional_metric(
+                self.agreement.rouge,
+                "Unknown query",
+                "Some response",
+                skip_msg="evaluate not available",
+            )
+            if result is not None:
+                self.assertTrue(np.isnan(result))
+        except ModuleNotFoundError:
+            self.skipTest("evaluate not available")
 
     def _test_ir_metric(
         self, metric_func, query, chunks, expected_result, **kwargs
