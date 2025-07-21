@@ -22,32 +22,12 @@ from trulens.core.utils import pyschema as pyschema_utils
 from trulens.otel.semconv.constants import TRULENS_INSTRUMENT_WRAPPER_FLAG
 from trulens.otel.semconv.trace import SpanAttributes
 
+from langgraph.func import TaskFunction
+from langgraph.graph import StateGraph
+from langgraph.pregel import Pregel
+from langgraph.types import Command
+
 logger = logging.getLogger(__name__)
-
-
-try:
-    from langgraph.func import TaskFunction
-    from langgraph.func import entrypoint
-    from langgraph.func import task
-    from langgraph.graph import StateGraph
-    from langgraph.pregel import Pregel
-    from langgraph.types import Command
-
-    LANGGRAPH_AVAILABLE = True
-except ImportError as e:
-
-    def _mock_compile(self):
-        raise ImportError("LangGraph is not available")
-
-    StateGraph = type("StateGraph", (), {"compile": _mock_compile})
-    Pregel = type("Pregel", (), {})
-    Command = type("Command", (), {})
-    task = None
-    TaskFunction = type("TaskFunction", (), {})
-    entrypoint = type("entrypoint", (), {})
-    LANGGRAPH_AVAILABLE = False
-
-    logger.warning(f"LangGraph is not available: {e}")
 
 
 class LangGraphInstrument(core_instruments.Instrument):
@@ -59,16 +39,12 @@ class LangGraphInstrument(core_instruments.Instrument):
         MODULES = {"langgraph"}
         """Modules by prefix to instrument."""
 
-        CLASSES = (
-            lambda: {
-                Pregel,
-                StateGraph,
-                Command,
-                # Note: TaskFunction is instrumented at class-level during initialization
-            }
-            if LANGGRAPH_AVAILABLE
-            else set()
-        )
+        CLASSES = lambda: {
+            Pregel,
+            StateGraph,
+            Command,
+            # Note: TaskFunction is instrumented at class-level during initialization
+        }
         """Classes to instrument."""
 
         METHODS: List[InstrumentedMethod] = []
@@ -482,7 +458,7 @@ class TruGraph(TruChain):
     @classmethod
     def _ensure_instrumentation(cls):
         """Ensure one-time initialization of instrumentation."""
-        if not cls._is_instrumented and LANGGRAPH_AVAILABLE:
+        if not cls._is_instrumented:
             cls._setup_task_function_instrumentation()
             cls._setup_pregel_instrumentation()
             cls._is_instrumented = True
