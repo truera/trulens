@@ -1089,8 +1089,19 @@ class SQLAlchemyDB(core_db.DB):
                     ),
                 )
                 if app_ids and app_id not in app_ids:
-                    # TODO(otel): This may screw up the pagination and can be
-                    #             slow!
+                    # TODO(otel):
+                    # This may screw up the pagination and can be slow due to it
+                    # looking at possibly a lot more events if there are many
+                    # that don't have app ids.
+                    # In the future we should either:
+                    # 1. Remove app ids if we're going to assume they're some
+                    #    complex function of app_name and app_version that's
+                    #    hard to replicate for non-TruLens users that want to
+                    #    still use our evaluation/feedback stuff.
+                    # 2. Have the app ids be from some source of truth like the
+                    #    app table but this doesn't work as easily for the
+                    #    Snowflake side.
+                    logger.info(f"Computed {app_id} not in {app_ids}!")
                     continue
 
                 if record_id not in record_events:
