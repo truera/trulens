@@ -53,7 +53,11 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
                     query = str(last_message)
 
                 response = f"Research findings for: {query}"
-                return {"messages": [AIMessage(content=response)]}
+                return {
+                    "messages": [
+                        AIMessage(content=response, id=2),
+                    ]
+                }
             return {"messages": [AIMessage(content="No query provided")]}
 
         @instrument(
@@ -71,7 +75,11 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
                     research_content = str(last_message)
 
                 response = f"Article based on: {research_content}"
-                return {"messages": [AIMessage(content=response)]}
+                return {
+                    "messages": [
+                        AIMessage(content=response, id="3"),
+                    ]
+                }
             return {"messages": [AIMessage(content="No research provided")]}
 
         workflow = StateGraph(MessagesState)
@@ -84,7 +92,7 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         return workflow.compile()
 
     @staticmethod
-    def _create_function_api_app():
+    def _create_functional_api_graph_app():
         """Helper function to create a LangGraph app using Function API."""
 
         @task
@@ -134,7 +142,7 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
             run_name="test run",
             input_id="42",
             main_method_args=(
-                {"messages": [HumanMessage(content="What is AI?")]},
+                {"messages": [HumanMessage(content="What is AI?", id="1")]},
             ),
         )
 
@@ -148,24 +156,28 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         gc.collect()
         self.assertCollected(tru_recorder_ref)
 
-    def test_function_api_smoke(self) -> None:
-        essay_writer = self._create_function_api_app()
-        session = TruSession()
+    def test_task_instrumentation(self) -> None:
+        essay_writer = self._create_functional_api_graph_app()
 
         tru_recorder = TruGraph(
             essay_writer,
+            main_method=essay_writer.run,
             app_name="Essay Writer",
             app_version="v1",
         )
 
-        with tru_recorder:
-            result = essay_writer.run("artificial intelligence")
+        result = tru_recorder.instrumented_invoke_main_method(
+            run_name="test run",
+            input_id="42",
+            main_method_args=("artificial intelligence",),
+        )
+
+        # with tru_recorder:
+        #     result = essay_writer.run("artificial intelligence")
 
         assert "essay" in result
         assert "is_approved" in result
         assert "artificial intelligence" in result["essay"]
-
-        session.force_flush()
 
         self._compare_events_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_graph_test_function_api_smoke.csv"
