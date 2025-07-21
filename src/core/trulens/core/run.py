@@ -106,14 +106,6 @@ def validate_dataset_spec(
 
     for key, value in dataset_spec.items():
         normalized_key = key.lower()
-
-        # Ensure that the key is one of the valid reserved fields or its subscripted form
-        # if not any(
-        #     normalized_key.startswith(reserved_field)
-        #     for reserved_field in DATASET_RESERVED_FIELDS
-        # ):
-        #     raise ValueError(f"Invalid field '{key}' found in dataset_spec.")
-
         # Add the normalized field to the dictionary
         normalized_spec[normalized_key] = value
 
@@ -591,9 +583,6 @@ class Run(BaseModel):
 
                 for spec_key, column_name in dataset_spec.items():
                     if spec_key not in special_fields and column_name in row:
-                        if spec_key == "input" and input_col is not None:
-                            # Already added this as the first argument
-                            continue
                         main_method_args.append(row[column_name])
 
                 ground_truth_output = row.get(
