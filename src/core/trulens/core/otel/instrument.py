@@ -47,6 +47,7 @@ from trulens.otel.semconv.constants import TRULENS_INSTRUMENT_WRAPPER_FLAG
 from trulens.otel.semconv.constants import (
     TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
 )
+from trulens.otel.semconv.constants import TRULENS_SPAN_END_CALLBACKS
 from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 import wrapt
@@ -154,7 +155,7 @@ def _set_span_attributes(
         set_user_defined_attributes(span, attributes=resolved_attributes)
 
 
-def _set_span_attributes_and_handle_exceptions(
+def _finalize_span(
     span: Span,
     span_type: SpanAttributes.SpanType,
     func_name: str,
@@ -166,6 +167,7 @@ def _set_span_attributes_and_handle_exceptions(
     kwargs: Dict[str, Any],
     ret: Any,
     only_set_user_defined_attributes: bool = False,
+    span_end_callbacks: List[Callable[[Span], None]] = [],
 ):
     attributes_exception: Optional[Exception] = None
     try:
@@ -185,6 +187,8 @@ def _set_span_attributes_and_handle_exceptions(
     except Exception as e:
         logger.error(f"Error setting attributes: {e}")
         attributes_exception = e
+    for span_end_callback in span_end_callbacks:
+        span_end_callback(span)
     # Raise any exceptions that occurred.
     exception = func_exception or attributes_exception
     if exception:
@@ -251,6 +255,7 @@ class instrument:
             return ret
 
         def convert_to_generator(func, instance, args, kwargs):
+            span_end_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
             with create_function_call_context_manager(
                 self.create_new_span, func_name
             ) as span:
@@ -275,7 +280,7 @@ class instrument:
                     # None as a return value.
                     func_exception = e
                 finally:
-                    _set_span_attributes_and_handle_exceptions(
+                    _finalize_span(
                         span,
                         self.span_type,
                         func_name,
@@ -287,6 +292,7 @@ class instrument:
                         kwargs,
                         ret,
                         self.only_set_user_defined_attributes,
+                        span_end_callbacks,
                     )
                     return ret
 
@@ -294,6 +300,7 @@ class instrument:
         async def async_wrapper(func, instance, args, kwargs):
             if not self.enabled or get_baggage("__trulens_recording__") is None:
                 return await func(*args, **kwargs)
+            span_end_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
             with create_function_call_context_manager(
                 self.create_new_span, func_name
             ) as span:
@@ -308,7 +315,7 @@ class instrument:
                     # None as a return value.
                     func_exception = e
                 # Set span attributes.
-                _set_span_attributes_and_handle_exceptions(
+                _finalize_span(
                     span,
                     self.span_type,
                     func_name,
@@ -320,6 +327,7 @@ class instrument:
                     kwargs,
                     ret,
                     self.only_set_user_defined_attributes,
+                    span_end_callbacks,
                 )
             return ret
 
@@ -329,6 +337,7 @@ class instrument:
                 async for curr in func(*args, **kwargs):
                     yield curr
                 return
+            span_end_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
             with create_function_call_context_manager(
                 self.create_new_span, func_name
             ) as span:
@@ -347,7 +356,7 @@ class instrument:
                     # None as a return value.
                     func_exception = e
                 finally:
-                    _set_span_attributes_and_handle_exceptions(
+                    _finalize_span(
                         span,
                         self.span_type,
                         func_name,
@@ -359,6 +368,7 @@ class instrument:
                         kwargs,
                         ret,
                         self.only_set_user_defined_attributes,
+                        span_end_callbacks,
                     )
 
         # Check if already wrapped if not allowing multiple wrappers.
