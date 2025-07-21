@@ -630,27 +630,29 @@ class TruGraph(TruChain):
 
     def main_call(self, human: str):
         """A single text to a single text invocation of this app."""
-        try:
-            result = self.app.invoke({"messages": [("user", human)]})
-            return self._extract_output_from_result(result)
-        except Exception:
+        if isinstance(self.app, Pregel):
             try:
-                result = self.app.invoke(human)
+                result = self.app.invoke({"messages": [("user", human)]})
                 return self._extract_output_from_result(result)
-            except Exception:
-                return super().main_call(human)
+            except Exception as e:
+                raise Exception(f"Error invoking Langgraph workflow: {str(e)}")
+        else:
+            raise Exception(
+                f"App must be an instance of Pregel, got {type(self.app)}"
+            )
 
     async def main_acall(self, human: str):
         """A single text to a single text async invocation of this app."""
-        try:
-            result = await self.app.ainvoke({"messages": [("user", human)]})
-            return self._extract_output_from_result(result)
-        except Exception:
+        if isinstance(self.app, Pregel):
             try:
-                result = await self.app.ainvoke(human)
+                result = await self.app.ainvoke({"messages": [("user", human)]})
                 return self._extract_output_from_result(result)
-            except Exception:
-                return await super().main_acall(human)
+            except Exception as e:
+                raise Exception(f"Error invoking Langgraph workflow: {str(e)}")
+        else:
+            raise Exception(
+                f"App must be an instance of Pregel, got {type(self.app)}"
+            )
 
     def _extract_output_from_result(self, result: Any) -> str:
         """Helper method to extract string output from LangGraph result."""
