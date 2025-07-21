@@ -91,11 +91,11 @@ class SpanAttributes:
         GENERATION = "generation"
         """A generation call to an LLM."""
 
-        LANGGRAPH_TASK = "langgraph_task"
-        """A LangGraph task function execution."""
+        GRAPH_TASK = "graph_task"
+        """A graph task function execution."""
 
-        LANGGRAPH_NODE = "langgraph_node"
-        """A LangGraph node execution."""
+        GRAPH_NODE = "graph_node"
+        """A graph node execution."""
 
     class UNKNOWN:
         """Attributes relevant for spans that could not be categorized otherwise."""
@@ -271,10 +271,10 @@ class SpanAttributes:
     class GENERATION:
         base = BASE_SCOPE + ".generation"
 
-    class LANGGRAPH_TASK:
-        """A LangGraph task function execution."""
+    class GRAPH_TASK:
+        """A graph task function execution."""
 
-        base = BASE_SCOPE + ".langgraph_task"
+        base = BASE_SCOPE + ".graph_task"
 
         TASK_NAME = base + ".task_name"
         """Name of the task function."""
@@ -288,10 +288,10 @@ class SpanAttributes:
         ERROR = base + ".error"
         """Error raised during task execution."""
 
-    class LANGGRAPH_NODE:
-        """A LangGraph node execution."""
+    class GRAPH_NODE:
+        """A graph node execution."""
 
-        base = BASE_SCOPE + ".langgraph_node"
+        base = BASE_SCOPE + ".graph_node"
 
         NODE_NAME = base + ".node_name"
         """Name of the node."""
