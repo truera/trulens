@@ -296,26 +296,6 @@ class TestGroundTruthAgreement(TestCase):
         error, _ = result
         self.assertTrue(np.isnan(error))
 
-    def _test_optional_metric(
-        self,
-        metric_func,
-        *args,
-        expected_result=None,
-        skip_msg="dependency not available",
-    ):
-        """Helper for testing optional dependency metrics."""
-        try:
-            result = metric_func(*args)
-            if expected_result is not None:
-                if isinstance(expected_result, tuple):
-                    self.assertIsInstance(result, tuple)
-                    self.assertEqual(len(result), len(expected_result))
-                else:
-                    self.assertEqual(result, expected_result)
-            return result
-        except ModuleNotFoundError:
-            self.skipTest(skip_msg)
-
     @pytest.mark.optional
     def test_bert_score_found_response(self):
         """Test bert_score when ground truth response is found."""
@@ -327,13 +307,10 @@ class TestGroundTruthAgreement(TestCase):
                 mock_scorer.score.return_value = (mock_score_tensor,)
                 mock_bert.return_value = mock_scorer
 
-                self._test_optional_metric(
-                    self.agreement.bert_score,
-                    "What is 2+2?",
-                    "Four",
-                    expected_result=(0.85, {"ground_truth_response": "4"}),
-                    skip_msg="bert-score not available",
-                )
+                result = self.agreement.bert_score("What is 2+2?", "Four")
+                score, metadata = result
+                self.assertEqual(score, 0.85)
+                self.assertEqual(metadata["ground_truth_response"], "4")
         except ModuleNotFoundError:
             self.skipTest("bert-score not available")
 
@@ -341,14 +318,8 @@ class TestGroundTruthAgreement(TestCase):
     def test_bert_score_no_response_found(self):
         """Test bert_score when no ground truth response is found."""
         try:
-            result = self._test_optional_metric(
-                self.agreement.bert_score,
-                "Unknown query",
-                "Some response",
-                skip_msg="bert-score not available",
-            )
-            if result is not None:
-                self.assertTrue(np.isnan(result))
+            result = self.agreement.bert_score("Unknown query", "Some response")
+            self.assertTrue(np.isnan(result))
         except ModuleNotFoundError:
             self.skipTest("bert-score not available")
 
@@ -363,13 +334,10 @@ class TestGroundTruthAgreement(TestCase):
                 mock_bleu.compute.return_value = {"bleu": 0.75}
                 mock_evaluate.load.return_value = mock_bleu
 
-                self._test_optional_metric(
-                    self.agreement.bleu,
-                    "What is 2+2?",
-                    "Four",
-                    expected_result=(0.75, {"ground_truth_response": "4"}),
-                    skip_msg="evaluate not available",
-                )
+                result = self.agreement.bleu("What is 2+2?", "Four")
+                score, metadata = result
+                self.assertEqual(score, 0.75)
+                self.assertEqual(metadata["ground_truth_response"], "4")
         except ModuleNotFoundError:
             self.skipTest("evaluate not available")
 
@@ -377,14 +345,8 @@ class TestGroundTruthAgreement(TestCase):
     def test_bleu_score_no_response_found(self):
         """Test bleu score when no ground truth response is found."""
         try:
-            result = self._test_optional_metric(
-                self.agreement.bleu,
-                "Unknown query",
-                "Some response",
-                skip_msg="evaluate not available",
-            )
-            if result is not None:
-                self.assertTrue(np.isnan(result))
+            result = self.agreement.bleu("Unknown query", "Some response")
+            self.assertTrue(np.isnan(result))
         except ModuleNotFoundError:
             self.skipTest("evaluate not available")
 
@@ -399,13 +361,10 @@ class TestGroundTruthAgreement(TestCase):
                 mock_rouge.compute.return_value = {"rouge1": 0.65}
                 mock_evaluate.load.return_value = mock_rouge
 
-                self._test_optional_metric(
-                    self.agreement.rouge,
-                    "What is 2+2?",
-                    "Four",
-                    expected_result=(0.65, {"ground_truth_response": "4"}),
-                    skip_msg="evaluate not available",
-                )
+                result = self.agreement.rouge("What is 2+2?", "Four")
+                score, metadata = result
+                self.assertEqual(score, 0.65)
+                self.assertEqual(metadata["ground_truth_response"], "4")
         except ModuleNotFoundError:
             self.skipTest("evaluate not available")
 
@@ -413,14 +372,8 @@ class TestGroundTruthAgreement(TestCase):
     def test_rouge_score_no_response_found(self):
         """Test rouge score when no ground truth response is found."""
         try:
-            result = self._test_optional_metric(
-                self.agreement.rouge,
-                "Unknown query",
-                "Some response",
-                skip_msg="evaluate not available",
-            )
-            if result is not None:
-                self.assertTrue(np.isnan(result))
+            result = self.agreement.rouge("Unknown query", "Some response")
+            self.assertTrue(np.isnan(result))
         except ModuleNotFoundError:
             self.skipTest("evaluate not available")
 
