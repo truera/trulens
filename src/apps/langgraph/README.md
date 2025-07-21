@@ -46,7 +46,7 @@ TruGraph automatically instruments functions decorated with LangGraph's `@task` 
 ```python
 from langgraph.func import task
 
-@task  # Automatically instrumented by TruGraph when TruGraph is imported
+@task  # Automatically instrumented by TruGraph when TruGraph is created
 def my_agent_function(state, config):
     # Your agent logic here
     return updated_state
