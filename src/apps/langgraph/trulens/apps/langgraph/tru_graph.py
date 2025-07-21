@@ -33,9 +33,6 @@ try:
     from langgraph.pregel import Pregel
     from langgraph.types import Command
 
-    # Apply class-level instrumentation for TaskFunction when langgraph.func is available
-    # This ensures TaskFunction.__call__ is instrumented regardless of where TaskFunction
-    # instances end up in the object hierarchy (e.g., embedded in Pregel workflows)
     def _setup_task_function_instrumentation():
         """Set up class-level instrumentation for TaskFunction.__call__"""
 
@@ -67,7 +64,6 @@ try:
                     task_args = args[1:] if len(args) > 1 else ()
                     task_kwargs = kwargs
 
-                    # Get the original function name
                     if hasattr(task_function_instance, "func") and hasattr(
                         task_function_instance.func, "__name__"
                     ):
@@ -81,7 +77,6 @@ try:
                         import json
 
                         if hasattr(task_function_instance, "func"):
-                            # Try to bind arguments, but be robust about mismatches
                             try:
                                 sig = inspect.signature(
                                     task_function_instance.func
@@ -136,20 +131,17 @@ try:
                                         except Exception:
                                             input_args[name] = str(value)
 
-                                    # Store as single JSON structure using proper SpanAttributes
                                     attributes[
                                         SpanAttributes.LANGGRAPH_TASK.INPUT_STATE
                                     ] = json.dumps(
                                         input_args, default=str, indent=2
                                     )
                                 else:
-                                    # No arguments to bind
                                     attributes[
                                         SpanAttributes.LANGGRAPH_TASK.INPUT_STATE
                                     ] = "{}"
 
                             except Exception as bind_error:
-                                # If binding fails, fall back to simple argument logging
                                 logger.debug(
                                     f"Argument binding failed: {bind_error}, using fallback"
                                 )
@@ -174,7 +166,6 @@ try:
                                     fallback_args, default=str, indent=2
                                 )
                         else:
-                            # Fallback: just stringify the arguments
                             attributes[
                                 SpanAttributes.LANGGRAPH_TASK.INPUT_STATE
                             ] = json.dumps(
@@ -187,7 +178,6 @@ try:
                         logger.warning(
                             f"Error processing task input arguments: {e}"
                         )
-                        # Even more basic fallback
                         attributes[
                             SpanAttributes.LANGGRAPH_TASK.INPUT_STATE
                         ] = f"Error processing args: {str(e)}"
@@ -196,7 +186,7 @@ try:
                 if ret is not None and not exception:
                     try:
                         # For now, capture the Future object info
-                        # TODO: In future, we might want to capture the actual result when Future completes
+                        # TODO: In future, we might want to capture the actual result when task Future completes
                         attributes[
                             SpanAttributes.LANGGRAPH_TASK.OUTPUT_STATE
                         ] = str(ret)
@@ -244,7 +234,6 @@ try:
         try:
             from trulens.core.otel.instrument import instrument_method
 
-            # Check if Pregel methods are already instrumented
             if hasattr(Pregel, "invoke") and hasattr(
                 getattr(Pregel, "invoke"), TRULENS_INSTRUMENT_WRAPPER_FLAG
             ):
@@ -361,10 +350,6 @@ class LangGraphInstrument(core_instruments.Instrument):
         """Classes to instrument."""
 
         METHODS: List[InstrumentedMethod] = []
-
-        # Note: Both TaskFunction and Pregel methods are instrumented at class-level
-        # during import via _setup_task_function_instrumentation() and
-        # _setup_pregel_instrumentation(), not through instance-based instrumentation
 
     def __init__(self, *args, **kwargs):
         super().__init__(
@@ -507,7 +492,6 @@ class TruGraph(TruChain):
         **kwargs: Any,
     ):
         # Only do minimal preparation to avoid interfering with existing instrumentation
-        original_app = app
         app = self._prepare_app(app)
 
         kwargs["app"] = app
@@ -548,13 +532,7 @@ class TruGraph(TruChain):
 
         kwargs["instrument"] = CombinedInstrument(app=self)
 
-        # Store original app for debugging
-        self._original_app = original_app
-
         core_app.App.__init__(self, **kwargs)
-
-        # Note: Nested Pregel instrumentation is now done lazily to avoid hanging during init
-        # Call instrument_nested_pregel_objects() manually if needed for nested workflows
 
     def _prepare_app(self, app: Any) -> Any:
         """
