@@ -94,9 +94,6 @@ class SpanAttributes:
         LANGGRAPH_TASK = "langgraph_task"
         """A LangGraph task function execution."""
 
-        LANGGRAPH_ENTRYPOINT = "langgraph_entrypoint"
-        """A LangGraph entrypoint function execution."""
-
         LANGGRAPH_NODE = "langgraph_node"
         """A LangGraph node execution."""
 
@@ -290,23 +287,6 @@ class SpanAttributes:
 
         ERROR = base + ".error"
         """Error raised during task execution."""
-
-    class LANGGRAPH_ENTRYPOINT:
-        """A LangGraph entrypoint function execution."""
-
-        base = BASE_SCOPE + ".langgraph_entrypoint"
-
-        ENTRYPOINT_NAME = base + ".entrypoint_name"
-        """Name of the entrypoint function."""
-
-        INPUT_DATA = base + ".input_data"
-        """Input data to the entrypoint."""
-
-        OUTPUT_DATA = base + ".output_data"
-        """Output data from the entrypoint."""
-
-        ERROR = base + ".error"
-        """Error raised during entrypoint execution."""
 
     class LANGGRAPH_NODE:
         """A LangGraph node execution."""
