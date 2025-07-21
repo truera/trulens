@@ -97,8 +97,8 @@ class SpanAttributes:
         LANGGRAPH_ENTRYPOINT = "langgraph_entrypoint"
         """A LangGraph entrypoint function execution."""
 
-        LANGGRAPH_GRAPH = "langgraph_graph"
-        """A LangGraph graph execution."""
+        LANGGRAPH_NODE = "langgraph_node"
+        """A LangGraph node execution."""
 
     class UNKNOWN:
         """Attributes relevant for spans that could not be categorized otherwise."""
@@ -308,13 +308,13 @@ class SpanAttributes:
         ERROR = base + ".error"
         """Error raised during entrypoint execution."""
 
-    class LANGGRAPH_GRAPH:
-        """A LangGraph graph execution."""
+    class LANGGRAPH_NODE:
+        """A LangGraph node execution."""
 
-        base = BASE_SCOPE + ".langgraph_graph"
+        base = BASE_SCOPE + ".langgraph_node"
 
-        GRAPH_NAME = base + ".graph_name"
-        """Name of the graph."""
+        NODE_NAME = base + ".node_name"
+        """Name of the node."""
 
         INPUT_STATE = base + ".input_state"
         """Input state to the graph."""

@@ -252,27 +252,27 @@ try:
                     input_data = args[1]
                     if isinstance(input_data, dict):
                         attributes[
-                            SpanAttributes.LANGGRAPH_GRAPH.INPUT_STATE
+                            SpanAttributes.LANGGRAPH_NODE.INPUT_STATE
                         ] = str(input_data)
                     else:
                         attributes[
-                            SpanAttributes.LANGGRAPH_GRAPH.INPUT_STATE
+                            SpanAttributes.LANGGRAPH_NODE.INPUT_STATE
                         ] = str(input_data)
 
                 for k, v in kwargs.items():
                     if k in ["input", "state", "data"]:
                         attributes[
-                            SpanAttributes.LANGGRAPH_GRAPH.INPUT_STATE
+                            SpanAttributes.LANGGRAPH_NODE.INPUT_STATE
                         ] = str(v)
                         break
 
                 if ret is not None and not exception:
-                    attributes[SpanAttributes.LANGGRAPH_GRAPH.OUTPUT_STATE] = (
+                    attributes[SpanAttributes.LANGGRAPH_NODE.OUTPUT_STATE] = (
                         str(ret)
                     )
 
                 if exception:
-                    attributes[SpanAttributes.LANGGRAPH_GRAPH.ERROR] = str(
+                    attributes[SpanAttributes.LANGGRAPH_NODE.ERROR] = str(
                         exception
                     )
 
@@ -291,7 +291,7 @@ try:
                 instrument_method(
                     cls=Pregel,
                     method_name=method_name,
-                    span_type=SpanAttributes.SpanType.LANGGRAPH_GRAPH,
+                    span_type=SpanAttributes.SpanType.LANGGRAPH_NODE,
                     attributes=pregel_attributes,
                 )
                 logger.debug(
@@ -383,7 +383,7 @@ class TruGraph(TruChain):
     **Benefits of Class-Level Approach**:
     - **Guaranteed Coverage**: All TaskFunction and Pregel method calls are captured
     - **No Import Timing Issues**: Works regardless of when objects are created
-    - **Consistent Span Types**: Properly sets "langgraph_task" and "langgraph_graph" span types
+    - **Consistent Span Types**: Properly sets "langgraph_task" and "langgraph_node" span types
 
     Example: "Creating a LangGraph multi-agent application"
 
