@@ -7,21 +7,25 @@ import time
 import uuid
 import weakref
 
-from langchain_core.messages import AIMessage
-from langchain_core.messages import HumanMessage
-from langgraph.checkpoint.memory import MemorySaver
-from langgraph.func import entrypoint
-from langgraph.func import task
-from langgraph.graph import END
-from langgraph.graph import MessagesState
-from langgraph.graph import StateGraph
 import pytest
-from trulens.apps.langgraph import TruGraph
-from trulens.core.otel.instrument import instrument
-from trulens.core.session import TruSession
-from trulens.otel.semconv.trace import SpanAttributes
 
 import tests.util.otel_tru_app_test_case
+
+try:
+    from langchain_core.messages import AIMessage
+    from langchain_core.messages import HumanMessage
+    from langgraph.checkpoint.memory import MemorySaver
+    from langgraph.func import entrypoint
+    from langgraph.func import task
+    from langgraph.graph import END
+    from langgraph.graph import MessagesState
+    from langgraph.graph import StateGraph
+    from trulens.apps.langgraph import TruGraph
+    from trulens.core.otel.instrument import instrument
+    from trulens.core.session import TruSession
+    from trulens.otel.semconv.trace import SpanAttributes
+except Exception:
+    pass
 
 
 @pytest.mark.optional

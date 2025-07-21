@@ -33,7 +33,185 @@ try:
     from langgraph.pregel import Pregel
     from langgraph.types import Command
 
-    def _setup_task_function_instrumentation():
+    LANGGRAPH_AVAILABLE = True
+except ImportError as e:
+
+    def _mock_compile(self):
+        raise ImportError("LangGraph is not available")
+
+    StateGraph = type("StateGraph", (), {"compile": _mock_compile})
+    Pregel = type("Pregel", (), {})
+    Command = type("Command", (), {})
+    task = None
+    TaskFunction = type("TaskFunction", (), {})
+    entrypoint = type("entrypoint", (), {})
+    LANGGRAPH_AVAILABLE = False
+
+    logger.warning(f"LangGraph is not available: {e}")
+
+
+class LangGraphInstrument(core_instruments.Instrument):
+    """Instrumentation for LangGraph apps."""
+
+    class Default:
+        """Instrumentation specification for LangGraph apps."""
+
+        MODULES = {"langgraph"}
+        """Modules by prefix to instrument."""
+
+        CLASSES = (
+            lambda: {
+                Pregel,
+                StateGraph,
+                Command,
+                # Note: TaskFunction is instrumented at class-level during initialization
+            }
+            if LANGGRAPH_AVAILABLE
+            else set()
+        )
+        """Classes to instrument."""
+
+        METHODS: List[InstrumentedMethod] = []
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            include_modules=LangGraphInstrument.Default.MODULES,
+            include_classes=LangGraphInstrument.Default.CLASSES(),
+            include_methods=LangGraphInstrument.Default.METHODS,
+            *args,
+            **kwargs,
+        )
+
+
+class TruGraph(TruChain):
+    """Recorder for _LangGraph_ applications.
+
+    This recorder is designed for LangGraph apps, providing a way to instrument,
+    log, and evaluate their behavior while inheriting all LangChain instrumentation
+    capabilities.
+
+    **Automatic LangGraph Function Tracing**:
+
+    TruGraph automatically instruments LangGraph components including:
+    - `Pregel` methods (invoke, ainvoke, stream, etc.) - instrumented at class-level during import
+    - `TaskFunction.__call__` method - instrumented at class-level during import
+    - `StateGraph` objects (uncompiled graphs) for logging/debugging purposes
+
+    **Class-Level Instrumentation**: Both `@task` functions (TaskFunction) and
+    `Pregel` graph methods are instrumented at the class level when TruGraph is imported.
+    This ensures all function calls are captured regardless of where the instances
+    are embedded in the object hierarchy (e.g., inside custom classes).
+
+    **Benefits of Class-Level Approach**:
+    - **Guaranteed Coverage**: All TaskFunction and Pregel method calls are captured
+    - **No Import Timing Issues**: Works regardless of when objects are created
+    - **Consistent Span Types**: Properly sets "langgraph_task" and "langgraph_node" span types
+
+    Example: "Creating a LangGraph multi-agent application"
+
+        Consider an example LangGraph multi-agent application:
+
+        ```python
+        from langgraph.graph import StateGraph, MessagesState
+        from langgraph.prebuilt import create_react_agent
+        from langchain_openai import ChatOpenAI
+        from langchain_community.tools.tavily_search import TavilySearchResults
+
+        # Create agents
+        llm = ChatOpenAI(model="gpt-4")
+        search_tool = TavilySearchResults()
+        research_agent = create_react_agent(llm, [search_tool])
+
+        # Build graph
+        workflow = StateGraph(MessagesState)
+        workflow.add_node("researcher", research_agent)
+        workflow.add_edge("researcher", END)
+        workflow.set_entry_point("researcher")
+
+        graph = workflow.compile()
+        ```
+
+    Example: "Using @task and @entrypoint decorators"
+
+        ```python
+        from langgraph.func import task, entrypoint
+
+        @task
+        def my_task_function(state):
+            ...
+            return updated_state
+
+        @entrypoint()
+        def my_workflow(input_state):
+            result = my_task_function(input_state).result()
+            return result
+        ```
+
+    Example: "Custom class with multiple LangGraph workflows"
+
+        ```python
+        class ComplexAgent:
+            def __init__(self):
+                self.planner = StateGraph(...).compile()
+                self.executor = StateGraph(...).compile()
+                self.critic = StateGraph(...).compile()
+
+            def run(self, query):
+                plan = self.planner.invoke({"input": query})
+                execution = self.executor.invoke({"plan": plan})
+                critique = self.critic.invoke({"execution": execution})
+                return self.synthesize_results(plan, execution, critique)
+
+        # Both of these work:
+        tru_graph = TruGraph(graph)  # Direct LangGraph
+        tru_agent = TruGraph(ComplexAgent())  # Custom class
+        ```
+
+    The application can be wrapped in a `TruGraph` recorder to provide logging
+    and evaluation upon the application's use.
+
+    Example: "Using the `TruGraph` recorder"
+
+        ```python
+        from trulens.apps.langgraph import TruGraph
+
+        # Wrap application
+        tru_recorder = TruGraph(
+            graph,
+            app_name="MultiAgentApp",
+            app_version="v1",
+            feedbacks=[f_context_relevance]
+        )
+
+        # Record application runs
+        with tru_recorder as recording:
+            result = graph.invoke({"messages": [("user", "What is the weather?")]})
+        ```
+
+    Args:
+        app: A LangGraph application. Can be:
+            - `Pregel`: A compiled LangGraph
+            - `StateGraph`: An uncompiled LangGraph (will be auto-compiled)
+            - Custom class: Any object that uses LangGraph workflows internally
+
+        **kwargs: Additional arguments to pass to [App][trulens.core.app.App]
+            and [AppDefinition][trulens.core.schema.app.AppDefinition].
+    """
+
+    # Class-level flag to track instrumentation status
+    _is_instrumented: ClassVar[bool] = False
+
+    app: Any
+    """The application to be instrumented. Can be LangGraph objects or custom classes."""
+
+    # Fix the root_callable field to have the correct default
+    root_callable: ClassVar[Optional[pyschema_utils.FunctionOrMethod]] = Field(
+        default=None
+    )
+    """The root callable of the wrapped app."""
+
+    @classmethod
+    def _setup_task_function_instrumentation(cls):
         """Set up class-level instrumentation for TaskFunction.__call__"""
 
         if not is_otel_tracing_enabled():
@@ -219,10 +397,8 @@ try:
                 f"Failed to apply class-level TaskFunction instrumentation: {e}"
             )
 
-    # Apply the instrumentation when this module is imported
-    _setup_task_function_instrumentation()
-
-    def _setup_pregel_instrumentation():
+    @classmethod
+    def _setup_pregel_instrumentation(cls):
         """Set up class-level instrumentation for Pregel methods"""
 
         if not is_otel_tracing_enabled():
@@ -307,183 +483,13 @@ try:
                 f"Failed to apply class-level Pregel instrumentation: {e}"
             )
 
-    # Apply Pregel instrumentation when this module is imported
-    _setup_pregel_instrumentation()
-
-    LANGGRAPH_AVAILABLE = True
-except ImportError as e:
-
-    def _mock_compile(self):
-        raise ImportError("LangGraph is not available")
-
-    StateGraph = type("StateGraph", (), {"compile": _mock_compile})
-    Pregel = type("Pregel", (), {})
-    Command = type("Command", (), {})
-    task = None
-    TaskFunction = type("TaskFunction", (), {})
-    entrypoint = type("entrypoint", (), {})
-    LANGGRAPH_AVAILABLE = False
-
-    logger.warning(f"LangGraph is not available: {e}")
-
-
-class LangGraphInstrument(core_instruments.Instrument):
-    """Instrumentation for LangGraph apps."""
-
-    class Default:
-        """Instrumentation specification for LangGraph apps."""
-
-        MODULES = {"langgraph"}
-        """Modules by prefix to instrument."""
-
-        CLASSES = (
-            lambda: {
-                Pregel,
-                StateGraph,
-                Command,
-                # Note: TaskFunction is instrumented at class-level during import,
-                # @entrypoint returns Pregel objects which are already instrumented
-            }
-            if LANGGRAPH_AVAILABLE
-            else set()
-        )
-        """Classes to instrument."""
-
-        METHODS: List[InstrumentedMethod] = []
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(
-            include_modules=LangGraphInstrument.Default.MODULES,
-            include_classes=LangGraphInstrument.Default.CLASSES(),
-            include_methods=LangGraphInstrument.Default.METHODS,
-            *args,
-            **kwargs,
-        )
-
-
-class TruGraph(TruChain):
-    """Recorder for _LangGraph_ applications.
-
-    This recorder is designed for LangGraph apps, providing a way to instrument,
-    log, and evaluate their behavior while inheriting all LangChain instrumentation
-    capabilities.
-
-    **Automatic LangGraph Function Tracing**:
-
-    TruGraph automatically instruments LangGraph components including:
-    - `Pregel` methods (invoke, ainvoke, stream, etc.) - instrumented at class-level during import
-    - `TaskFunction.__call__` method - instrumented at class-level during import
-    - `StateGraph` objects (uncompiled graphs) for logging/debugging purposes
-
-    **Class-Level Instrumentation**: Both `@task` functions (TaskFunction) and
-    `Pregel` graph methods are instrumented at the class level when TruGraph is imported.
-    This ensures all function calls are captured regardless of where the instances
-    are embedded in the object hierarchy (e.g., inside custom classes).
-
-    **Benefits of Class-Level Approach**:
-    - **Guaranteed Coverage**: All TaskFunction and Pregel method calls are captured
-    - **No Import Timing Issues**: Works regardless of when objects are created
-    - **Consistent Span Types**: Properly sets "langgraph_task" and "langgraph_node" span types
-
-    Example: "Creating a LangGraph multi-agent application"
-
-        Consider an example LangGraph multi-agent application:
-
-        ```python
-        from langgraph.graph import StateGraph, MessagesState
-        from langgraph.prebuilt import create_react_agent
-        from langchain_openai import ChatOpenAI
-        from langchain_community.tools.tavily_search import TavilySearchResults
-
-        # Create agents
-        llm = ChatOpenAI(model="gpt-4")
-        search_tool = TavilySearchResults()
-        research_agent = create_react_agent(llm, [search_tool])
-
-        # Build graph
-        workflow = StateGraph(MessagesState)
-        workflow.add_node("researcher", research_agent)
-        workflow.add_edge("researcher", END)
-        workflow.set_entry_point("researcher")
-
-        graph = workflow.compile()
-        ```
-
-    Example: "Using @task and @entrypoint decorators"
-
-        ```python
-        from langgraph.func import task, entrypoint
-
-        @task
-        def my_task_function(state):
-            ...
-            return updated_state
-
-        @entrypoint()
-        def my_workflow(input_state):
-            result = my_task_function(input_state).result()
-            return result
-        ```
-
-    Example: "Custom class with multiple LangGraph workflows"
-
-        ```python
-        class ComplexAgent:
-            def __init__(self):
-                self.planner = StateGraph(...).compile()
-                self.executor = StateGraph(...).compile()
-                self.critic = StateGraph(...).compile()
-
-            def run(self, query):
-                plan = self.planner.invoke({"input": query})
-                execution = self.executor.invoke({"plan": plan})
-                critique = self.critic.invoke({"execution": execution})
-                return self.synthesize_results(plan, execution, critique)
-
-        # Both of these work:
-        tru_graph = TruGraph(graph)  # Direct LangGraph
-        tru_agent = TruGraph(ComplexAgent())  # Custom class
-        ```
-
-    The application can be wrapped in a `TruGraph` recorder to provide logging
-    and evaluation upon the application's use.
-
-    Example: "Using the `TruGraph` recorder"
-
-        ```python
-        from trulens.apps.langgraph import TruGraph
-
-        # Wrap application
-        tru_recorder = TruGraph(
-            graph,
-            app_name="MultiAgentApp",
-            app_version="v1",
-            feedbacks=[f_context_relevance]
-        )
-
-        # Record application runs
-        with tru_recorder as recording:
-            result = graph.invoke({"messages": [("user", "What is the weather?")]})
-        ```
-
-    Args:
-        app: A LangGraph application. Can be:
-            - `Pregel`: A compiled LangGraph
-            - `StateGraph`: An uncompiled LangGraph (will be auto-compiled)
-            - Custom class: Any object that uses LangGraph workflows internally
-
-        **kwargs: Additional arguments to pass to [App][trulens.core.app.App]
-            and [AppDefinition][trulens.core.schema.app.AppDefinition].
-    """
-
-    app: Any
-    """The application to be instrumented. Can be LangGraph objects or custom classes."""
-
-    # Fix the root_callable field to have the correct default
-    root_callable: ClassVar[Optional[pyschema_utils.FunctionOrMethod]] = Field(
-        default=None
-    )
-    """The root callable of the wrapped app."""
+    @classmethod
+    def _ensure_instrumentation(cls):
+        """Ensure one-time initialization of instrumentation."""
+        if not cls._is_instrumented and LANGGRAPH_AVAILABLE:
+            cls._setup_task_function_instrumentation()
+            cls._setup_pregel_instrumentation()
+            cls._is_instrumented = True
 
     def __init__(
         self,
@@ -491,6 +497,9 @@ class TruGraph(TruChain):
         main_method: Optional[Callable] = None,
         **kwargs: Any,
     ):
+        # Ensure instrumentation is set up before initializing
+        self._ensure_instrumentation()
+
         # Only do minimal preparation to avoid interfering with existing instrumentation
         app = self._prepare_app(app)
 
