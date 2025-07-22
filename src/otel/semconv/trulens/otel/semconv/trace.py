@@ -91,6 +91,12 @@ class SpanAttributes:
         GENERATION = "generation"
         """A generation call to an LLM."""
 
+        GRAPH_TASK = "graph_task"
+        """A graph task function execution."""
+
+        GRAPH_NODE = "graph_node"
+        """A graph node execution."""
+
     class UNKNOWN:
         """Attributes relevant for spans that could not be categorized otherwise."""
 
@@ -264,3 +270,40 @@ class SpanAttributes:
 
     class GENERATION:
         base = BASE_SCOPE + ".generation"
+
+    class GRAPH_TASK:
+        """A graph task function execution."""
+
+        base = BASE_SCOPE + ".graph_task"
+
+        TASK_NAME = base + ".task_name"
+        """Name of the task function."""
+
+        INPUT_STATE = base + ".input_state"
+        """Input state to the task."""
+
+        OUTPUT_STATE = base + ".output_state"
+        """Output state from the task."""
+
+        ERROR = base + ".error"
+        """Error raised during task execution."""
+
+    class GRAPH_NODE:
+        """A graph node execution."""
+
+        base = BASE_SCOPE + ".graph_node"
+
+        NODE_NAME = base + ".node_name"
+        """Name of the node."""
+
+        INPUT_STATE = base + ".input_state"
+        """Input state to the graph."""
+
+        OUTPUT_STATE = base + ".output_state"
+        """Output state from the graph."""
+
+        NODES_EXECUTED = base + ".nodes_executed"
+        """List of nodes executed in the graph."""
+
+        ERROR = base + ".error"
+        """Error raised during graph execution."""
