@@ -2,7 +2,6 @@ from concurrent.futures import as_completed
 import logging
 import re
 from typing import ClassVar, Dict, List, Optional, Sequence, Tuple, Type, Union
-from trulens.core.feedback.selector import Trace
 import warnings
 
 import nltk
@@ -194,7 +193,7 @@ class LLMProvider(core_provider.Provider):
             lines = response.split("\n")
             for i, line in enumerate(lines):
                 if (
-                    "Score" in line
+                    "Score:" in line
                 ):  # TODO: find a more robust way to generate and extract score
                     # If the next line exists and appears to be a numeric score, use it.
                     if (
@@ -204,6 +203,7 @@ class LLMProvider(core_provider.Provider):
                         score_line = lines[i + 1]
                     else:
                         score_line = line
+                        print(score_line)
                     score = feedback_generated.re_configured_rating(
                         score_line,
                         min_score_val=min_score_val,
@@ -2309,7 +2309,7 @@ class LLMProvider(core_provider.Provider):
         criteria: Optional[str] = None,
         examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
-        max_score_val: int = 2,
+        max_score_val: int = 3,
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
@@ -2385,7 +2385,7 @@ class LLMProvider(core_provider.Provider):
         criteria: Optional[str] = None,
         examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
-        max_score_val: int = 2,
+        max_score_val: int = 3,
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
@@ -2461,7 +2461,7 @@ class LLMProvider(core_provider.Provider):
         criteria: Optional[str] = None,
         examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
-        max_score_val: int = 2,
+        max_score_val: int = 3,
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
@@ -2534,38 +2534,53 @@ class LLMProvider(core_provider.Provider):
 
     def trajectory_plan_adherence_with_cot_reasons(
         self,
+        # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
         trace: Union[Trace, str],
+        criteria: Optional[str] = None,
+        examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
-        Evaluate the quality of an agentic execution trace using a rubric focused on adherence of agentic workflow to its plan.
+                Evaluate the quality of an agentic execution trace using a rubric focused on adherence to a plan.
 
-        Example:
-            ```python
-            from trulens.core import Feedback
-            from trulens.providers.openai import OpenAI
+                Example:
+                    ```python
+                    from trulens.core import Feedback
+                    from trulens.providers.openai import OpenAI
 
-            provider = OpenAI()
+                    provider = OpenAI()
 
-            f_workflow_efficiency = (
-                Feedback(provider.trajectory_plan_adherence_with_cot_reasons)
-                .on({
-                    "trace": Selector(trace_level=True),
-                })
-            ```
+                    f_plan_adherence = (
+                        Feedback(provider.trajectory_plan_adherence_with_cot_reasons)
+                        .on({
+                            "trace": Selector(trace_level=True),
+                        })
+                    ```
 
         Args:
-            trace (Trace): The execution trace to evaluate (e.g., as a JSON string or formatted log).
+            trace (Union[Trace, str]): The execution trace to evaluate (e.g., as a JSON string or formatted log).
+            criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
+            examples (Optional[List[Tuple[Dict[str, str], int]]): Optional few-shot examples for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
         Returns:
-            Tuple[float, Dict]: A tuple containing a value between 0.0 (little adherence to the plan) and 1.0 (high adherence to the plan) and a dictionary containing the reasons for the evaluation.
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (trajectory did not follow plan) and 1.0 (workflow followed plan exactly) and a dictionary containing the reasons for the evaluation.
         """
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
         system_prompt = (
-            feedback_prompts.TRAJECTORY_EVAL_PLAN_ADHERENCE_SYSTEM_PROMPT
+            feedback_v2.TrajectoryPlanAdherence.generate_system_prompt(
+                min_score=min_score_val,
+                max_score=max_score_val,
+                criteria=criteria,
+                output_space=output_space,
+                examples=examples,
+            )
         )
 
         if isinstance(trace, Trace):
@@ -2577,14 +2592,12 @@ class LLMProvider(core_provider.Provider):
                 f"Invalid trace type: {type(trace)}. Must be a Trace or a string."
             )
 
-        user_prompt = (
-            feedback_v2.TrajectoryWorkflowEfficiency.user_prompt.format(
-                trajectory=trajectory
-            )
+        user_prompt = feedback_v2.TrajectoryPlanAdherence.user_prompt.format(
+            trajectory=trajectory
         )
 
         user_prompt = user_prompt.replace(
-            "WORKFLOW EFFICIENCY SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
+            "PLAN ADHERENCE SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
         )
 
         return self.generate_score_and_reasons(
@@ -2595,48 +2608,73 @@ class LLMProvider(core_provider.Provider):
             temperature=temperature,
         )
 
-    def trajectory_plan_adherence_with_cot_reasons(
+    def trajectory_plan_quality_with_cot_reasons(
         self,
+        # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
         trace: Union[Trace, str],
+        criteria: Optional[str] = None,
+        examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
-        Evaluate the quality of an agentic execution trace using a rubric focused on adherence of agentic workflow to its plan.
+                Evaluate the quality of an agentic system's plan.
 
-        Example:
-            ```python
-            from trulens.core import Feedback
-            from trulens.providers.openai import OpenAI
+                Example:
+                    ```python
+                    from trulens.core import Feedback
+                    from trulens.providers.openai import OpenAI
 
-            provider = OpenAI()
+                    provider = OpenAI()
 
-            f_workflow_efficiency = (
-                Feedback(provider.trajectory_plan_adherence_with_cot_reasons)
-                .on({
-                    "trace": Selector(trace_level=True),
-                })
-            ```
+                    f_plan_adherence = (
+                        Feedback(provider.trajectory_plan_quality_with_cot_reasons)
+                        .on({
+                            "trace": Selector(trace_level=True),
+                        })
+                    ```
 
         Args:
-            trace (Trace): The execution trace to evaluate (e.g., as a JSON string or formatted log).
+            trace (Union[Trace, str]): The execution trace to evaluate (e.g., as a JSON string or formatted log).
+            criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
+            examples (Optional[List[Tuple[Dict[str, str], int]]): Optional few-shot examples for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
         Returns:
-            Tuple[float, Dict]: A tuple containing a value between 0.0 (little adherence to the plan) and 1.0 (high adherence to the plan) and a dictionary containing the reasons for the evaluation.
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (poor plan quality) and 1.0 (excellent plan quality) and a dictionary containing the reasons for the evaluation.
         """
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
         system_prompt = (
-            feedback_prompts.TRAJECTORY_EVAL_PLAN_ADHERENCE_SYSTEM_PROMPT
+            feedback_v2.TrajectoryPlanQuality.generate_system_prompt(
+                min_score=min_score_val,
+                max_score=max_score_val,
+                criteria=criteria,
+                output_space=output_space,
+                examples=examples,
+            )
         )
 
         if isinstance(trace, Trace):
-            user_prompt = f"""Please score the execution trace. Execution Trace: {trace.events.to_json()}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
+            trajectory = trace.events.to_json()
         elif isinstance(trace, str):
-            user_prompt = f"""Please score the execution trace. Execution Trace: {trace}.\n\n{feedback_prompts.COT_REASONS_TEMPLATE}"""
+            trajectory = trace
         else:
-            raise ValueError("Invalid trace type")
+            raise ValueError(
+                f"Invalid trace type: {type(trace)}. Must be a Trace or a string."
+            )
+
+        user_prompt = feedback_v2.TrajectoryPlanQuality.user_prompt.format(
+            trajectory=trajectory
+        )
+
+        user_prompt = user_prompt.replace(
+            "PLAN QUALITY SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
+        )
 
         return self.generate_score_and_reasons(
             system_prompt=system_prompt,
