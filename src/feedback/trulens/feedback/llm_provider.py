@@ -203,7 +203,6 @@ class LLMProvider(core_provider.Provider):
                         score_line = lines[i + 1]
                     else:
                         score_line = line
-                        print(score_line)
                     score = feedback_generated.re_configured_rating(
                         score_line,
                         min_score_val=min_score_val,
