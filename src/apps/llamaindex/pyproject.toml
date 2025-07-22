@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-apps-llamaindex"
-version = "1.5.2"
+version = "2.1.0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -28,8 +28,8 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9"
-trulens-core = { version = "^1.0.0" }
-trulens-apps-langchain = { version = "^1.0.0" }
+trulens-core = { version = "^2.0.0" }
+trulens-apps-langchain = { version = "^2.0.0" }
 pydantic = "^2.4.2"
 llama-index = ">=0.11"
 tiktoken = [
