@@ -229,6 +229,9 @@ class SpanAttributes:
         NUM_COMPLETION_TOKENS = base + ".num_completion_tokens"
         """Number of completion tokens generated."""
 
+        NUM_REASONING_TOKENS = base + ".num_reasoning_tokens"
+        """Number of reasoning tokens generated (for reasoning models)."""
+
     class CALL:
         """Instrumented method call attributes."""
 

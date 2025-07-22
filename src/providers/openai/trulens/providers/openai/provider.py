@@ -73,10 +73,26 @@ class OpenAI(llm_provider.LLMProvider):
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
+    def _is_reasoning_model(self) -> bool:
+        """Check if the current model is a reasoning model (o1, o3, o4 series).
+
+        Returns:
+            bool: True if the model is a reasoning model, False otherwise.
+        """
+        reasoning_model_prefixes = ["o1", "o3", "o4"]
+        return any(
+            self.model_engine.startswith(prefix)
+            for prefix in reasoning_model_prefixes
+        )
+
     def _structured_output_supported(self) -> bool:
         """Whether the provider supports structured output. This is analogous to model support for OpenAI's Responses API.
         For more details: https://platform.openai.com/docs/guides/structured-outputs?api-mode=responses#structured-outputs-vs-json-mode
         """
+        # Reasoning models have limited structured output support
+        if self._is_reasoning_model():
+            return False
+
         if (
             # gpt-3.5, gpt-3.5-turbo do not support structured output
             self.model_engine.startswith("gpt-3.5")
@@ -99,13 +115,11 @@ class OpenAI(llm_provider.LLMProvider):
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
         response_format: Optional[Type[pydantic.BaseModel]] = None,
+        reasoning_effort: Optional[str] = None,
         **kwargs,
     ) -> Optional[Union[str, pydantic.BaseModel]]:
         if "model" not in kwargs:
             kwargs["model"] = self.model_engine
-
-        if "temperature" not in kwargs:
-            kwargs["temperature"] = 0.0
 
         if messages is not None:
             input_messages = messages
@@ -113,6 +127,38 @@ class OpenAI(llm_provider.LLMProvider):
             input_messages = [{"role": "system", "content": prompt}]
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
+
+        # Handle reasoning models
+        if self._is_reasoning_model():
+            # Reasoning models don't support temperature parameter
+            if "temperature" in kwargs:
+                logger.warning(
+                    f"Temperature parameter is not supported for reasoning model {self.model_engine}. "
+                    "Removing temperature parameter."
+                )
+                del kwargs["temperature"]
+
+            # Add reasoning_effort parameter if provided
+            if reasoning_effort is not None:
+                if reasoning_effort not in ["low", "medium", "high"]:
+                    logger.warning(
+                        f"Invalid reasoning_effort '{reasoning_effort}'. Must be 'low', 'medium', or 'high'. Using default."
+                    )
+                else:
+                    # For reasoning models, use the reasoning_effort parameter directly
+                    kwargs["reasoning_effort"] = reasoning_effort
+
+            # Reasoning models don't support structured output in the same way
+            if response_format is not None:
+                logger.warning(
+                    f"Structured output not fully supported for reasoning model {self.model_engine}. "
+                    "Falling back to text output."
+                )
+                response_format = None
+        else:
+            # Set default temperature for non-reasoning models
+            if "temperature" not in kwargs:
+                kwargs["temperature"] = 0.0
 
         if response_format is not None and self._structured_output_supported():
             response = self.endpoint.client.responses.parse(
