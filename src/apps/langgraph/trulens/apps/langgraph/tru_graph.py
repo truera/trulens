@@ -235,8 +235,6 @@ class TruGraph(TruChain):
                                 sig = inspect.signature(
                                     task_function_instance.func
                                 )
-                                # Be more careful about binding - only bind positional args that fit
-                                # and exclude kwargs that don't match the signature
 
                                 # Filter kwargs to only include those that match the signature
                                 sig_params = list(sig.parameters.keys())
@@ -246,11 +244,20 @@ class TruGraph(TruChain):
                                     if k in sig_params
                                 }
 
-                                # Try to bind with available arguments
-                                if task_args or filtered_kwargs:
-                                    bound_args = sig.bind_partial(
-                                        *task_args, **filtered_kwargs
-                                    )
+                                args_as_kwargs = {}
+                                for i, arg in enumerate(task_args):
+                                    if i < len(sig_params):
+                                        args_as_kwargs[sig_params[i]] = arg
+
+                                # Merge positional args (as kwargs) with existing kwargs
+                                all_kwargs = {
+                                    **args_as_kwargs,
+                                    **filtered_kwargs,
+                                }
+
+                                # Try to bind with all arguments as kwargs
+                                if all_kwargs:
+                                    bound_args = sig.bind_partial(**all_kwargs)
                                     bound_args.apply_defaults()
 
                                     # Collect all arguments into a single JSON structure
