@@ -2629,7 +2629,7 @@ class LLMProvider(core_provider.Provider):
 
             provider = OpenAI()
 
-            f_plan_adherence = (
+            f_plan_quality = (
                 Feedback(provider.trajectory_plan_quality_with_cot_reasons)
                 .on({
                     "trace": Selector(trace_level=True),
