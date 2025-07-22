@@ -26,15 +26,6 @@ SOURCE: {premise}
 STATEMENT: {hypothesis}
 """
 
-TRAJECTORY_CONSISTENCY_FULL_PROMPT = """
-Please answer using the entire template below.
-
-TEMPLATE:
-Criteria: <Provide the criteria for this evaluation>
-Supporting Evidence: <Provide your reasons for scoring based on the listed criteria step by step. Ensure you cite exact, specific examples from the given trajectory. Tie it back to the evaluation being completed.>
-Score: <The score based on the given criteria>
-"""
-
 LLM_GROUNDEDNESS_SYSTEM = v2.Groundedness.system_prompt
 LLM_GROUNDEDNESS_USER = v2.Groundedness.user_prompt
 LLM_GROUNDEDNESS_SENTENCES_SPLITTER = v2.Groundedness.sentences_splitter_prompt
