@@ -168,3 +168,11 @@ TRAJECTORY_EVAL_LOGICAL_CONSISTENCY_SYSTEM_PROMPT = (
 TRAJECTORY_EVAL_WORKFLOW_EFFICIENCY_SYSTEM_PROMPT = (
     v2.TrajectoryWorkflowEfficiency.system_prompt
 )
+
+TRAJECTORY_EVAL_PLAN_ADHERENCE_SYSTEM_PROMPT = (
+    v2.TrajectoryPlanAdherence.system_prompt
+)
+
+TRAJECTORY_EVAL_PLAN_QUALITY_SYSTEM_PROMPT = (
+    v2.TrajectoryPlanQuality.system_prompt
+)
