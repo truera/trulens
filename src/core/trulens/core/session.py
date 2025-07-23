@@ -45,11 +45,14 @@ from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
 from trulens.core.utils import threading as threading_utils
 from trulens.experimental.otel_tracing import _feature as otel_tracing_feature
+from trulens.otel.semconv.trace import ResourceAttributes
+from trulens.otel.semconv.trace import SpanAttributes
 
 if TYPE_CHECKING:
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import SpanExporter
     from trulens.core import app as base_app
+    from trulens.core.otel.recording import Record
 
 tqdm = None
 with import_utils.OptionalImports(messages=optional_utils.REQUIREMENT_TQDM):
@@ -1238,6 +1241,66 @@ class TruSession(
             sleep(poll_interval)
         raise RuntimeError(
             f"Could not find all record IDs: {record_ids} in database!"
+        )
+
+    def add_feedback_result(
+        self,
+        record: Record,
+        feedback_name: str,
+        feedback_result: Union[float, int],
+        higher_is_better: bool,
+    ) -> None:
+        """
+        Add a feedback result for a given record using OTEL tracing.
+
+                This method creates an OTEL span to record the feedback result for a
+        specific record. It extracts necessary information from the record
+        (app info, run_name, input_id) and uses
+        OtelFeedbackComputationRecordingContext to create the appropriate
+        tracing context.
+
+        Args:
+            record: The Record object to add feedback for. Must be a
+                trulens.core.otel.recording.Record instance.
+            feedback_name: The name of the feedback function.
+            feedback_result: The feedback score/result (float or int).
+            higher_is_better: Whether higher values are better.
+
+        Raises:
+            RuntimeError: If OTEL tracing is not enabled.
+            ValueError: If required information cannot be extracted from the record.
+        """
+        if not is_otel_tracing_enabled():
+            raise RuntimeError(
+                "add_feedback_result is only supported when OTEL tracing is enabled!"
+            )
+
+        from trulens.feedback.computer import _call_feedback_function
+
+        # Get necessary information from the record root.
+        record_root_event = record._get_record_root_event()
+        resource_attributes = record_root_event["resource_attributes"]
+        record_attributes = record_root_event["record_attributes"]
+        app_name = resource_attributes.get(ResourceAttributes.APP_NAME)
+        app_version = resource_attributes.get(ResourceAttributes.APP_VERSION)
+        app_id = resource_attributes.get(ResourceAttributes.APP_ID)
+        run_name = record_attributes.get(SpanAttributes.RUN_NAME)
+        input_id = record_attributes.get(SpanAttributes.INPUT_ID)
+
+        # Create feedback computation recording context
+        feedback_result = _call_feedback_function(
+            feedback_name,
+            lambda: feedback_result,
+            higher_is_better,
+            None,
+            {},
+            app_name,
+            app_version,
+            app_id,
+            run_name,
+            input_id,
+            record.record_id,
+            None,
         )
 
 
