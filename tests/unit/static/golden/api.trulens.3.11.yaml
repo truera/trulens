@@ -2478,6 +2478,8 @@ trulens.feedback.llm_provider.LLMProvider:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -2548,6 +2550,8 @@ trulens.feedback.prompts:
     STEREOTYPES_USER_PROMPT: builtins.str
     SYSTEM_FIND_SUPPORTING: builtins.str
     TRAJECTORY_EVAL_LOGICAL_CONSISTENCY_SYSTEM_PROMPT: builtins.str
+    TRAJECTORY_EVAL_PLAN_ADHERENCE_SYSTEM_PROMPT: builtins.str
+    TRAJECTORY_EVAL_PLAN_QUALITY_SYSTEM_PROMPT: builtins.str
     TRAJECTORY_EVAL_STEP_RELEVANCE_SYSTEM_PROMPT: builtins.str
     TRAJECTORY_EVAL_WORKFLOW_EFFICIENCY_SYSTEM_PROMPT: builtins.str
     USER_FIND_SUPPORTING: builtins.str
@@ -2615,6 +2619,8 @@ trulens.feedback.v2.feedback:
     Syntax: pydantic._internal._model_construction.ModelMetaclass
     Toxicity: pydantic._internal._model_construction.ModelMetaclass
     TrajectoryLogicalConsistency: pydantic._internal._model_construction.ModelMetaclass
+    TrajectoryPlanAdherence: pydantic._internal._model_construction.ModelMetaclass
+    TrajectoryPlanQuality: pydantic._internal._model_construction.ModelMetaclass
     TrajectoryStepRelevance: pydantic._internal._model_construction.ModelMetaclass
     TrajectoryWorkflowEfficiency: pydantic._internal._model_construction.ModelMetaclass
     Trivial: pydantic._internal._model_construction.ModelMetaclass
@@ -3103,6 +3109,36 @@ trulens.feedback.v2.feedback.Toxicity:
   attributes:
     languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
 trulens.feedback.v2.feedback.TrajectoryLogicalConsistency:
+  __bases__:
+  - trulens.feedback.v2.feedback.Semantics
+  - trulens.feedback.v2.feedback.WithPrompt
+  - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+    output_space: builtins.str
+    output_space_prompt: builtins.str
+    system_prompt: builtins.str
+    system_prompt_template: builtins.str
+    user_prompt: builtins.str
+trulens.feedback.v2.feedback.TrajectoryPlanAdherence:
+  __bases__:
+  - trulens.feedback.v2.feedback.Semantics
+  - trulens.feedback.v2.feedback.WithPrompt
+  - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+    output_space: builtins.str
+    output_space_prompt: builtins.str
+    system_prompt: builtins.str
+    system_prompt_template: builtins.str
+    user_prompt: builtins.str
+trulens.feedback.v2.feedback.TrajectoryPlanQuality:
   __bases__:
   - trulens.feedback.v2.feedback.Semantics
   - trulens.feedback.v2.feedback.WithPrompt
