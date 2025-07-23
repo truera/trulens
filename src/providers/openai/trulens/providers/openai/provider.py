@@ -142,7 +142,7 @@ class OpenAI(llm_provider.LLMProvider):
             if reasoning_effort is not None:
                 if reasoning_effort not in ["low", "medium", "high"]:
                     logger.warning(
-                        f"Invalid reasoning_effort '{reasoning_effort}'. Must be 'low', 'medium', or 'high'. Using default."
+                        f"Invalid reasoning_effort '{reasoning_effort}'. Must be 'low', 'medium', or 'high'. Using 'medium' as default."
                     )
                 else:
                     # For reasoning models, use the reasoning_effort parameter directly
