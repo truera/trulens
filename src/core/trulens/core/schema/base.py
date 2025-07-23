@@ -88,6 +88,13 @@ class Cost(serial_utils.SerialModel, pydantic.BaseModel):
     To increment by the number of tokens in the completion of a completion request.
     """
 
+    n_reasoning_tokens: int = 0
+    """Number of reasoning tokens generated.
+
+    To increment by the number of reasoning tokens used by reasoning models like o1, o3, o4.
+    These are typically included in the completion token count for billing purposes.
+    """
+
     n_cortex_guardrails_tokens: int = 0
     """Number of guardrails tokens generated. This is only available for
     requests instrumented by the Cortex endpoint."""
