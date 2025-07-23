@@ -57,6 +57,16 @@ class LLMProvider(core_provider.Provider):
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
+    def _is_reasoning_model(self) -> bool:
+        """Check if the current model is a reasoning model.
+
+        This method should be overridden by provider-specific implementations.
+
+        Returns:
+            bool: False by default. Subclasses should override for reasoning model detection.
+        """
+        return False
+
     # @abstractmethod
     def _create_chat_completion(
         self,
@@ -111,11 +121,28 @@ class LLMProvider(core_provider.Provider):
         if user_prompt is not None:
             llm_messages.append({"role": "user", "content": user_prompt})
 
+        # For reasoning models, fall back to text output since structured output may not be supported
+        response_format = (
+            None
+            if self._is_reasoning_model()
+            else feedback_output_schemas.BaseFeedbackResponse
+        )
+
+        # Add reasoning effort for reasoning models and handle temperature
+        extra_kwargs = {}
+        if self._is_reasoning_model():
+            extra_kwargs["reasoning_effort"] = (
+                "medium"  # Default reasoning effort
+            )
+            # Don't pass temperature to reasoning models as they don't support it
+        else:
+            extra_kwargs["temperature"] = temperature
+
         response = self.endpoint.run_in_pace(
             func=self._create_chat_completion,
             messages=llm_messages,
-            temperature=temperature,
-            response_format=feedback_output_schemas.BaseFeedbackResponse,
+            response_format=response_format,
+            **extra_kwargs,
         )
 
         if isinstance(response, feedback_output_schemas.BaseFeedbackResponse):
@@ -163,11 +190,29 @@ class LLMProvider(core_provider.Provider):
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
             llm_messages.append({"role": "user", "content": user_prompt})
+
+        # For reasoning models, fall back to text output since structured output may not be supported
+        response_format = (
+            None
+            if self._is_reasoning_model()
+            else feedback_output_schemas.ChainOfThoughtResponse
+        )
+
+        # Add reasoning effort for reasoning models and handle temperature
+        extra_kwargs = {}
+        if self._is_reasoning_model():
+            extra_kwargs["reasoning_effort"] = (
+                "medium"  # Default reasoning effort
+            )
+            # Don't pass temperature to reasoning models as they don't support it
+        else:
+            extra_kwargs["temperature"] = temperature
+
         response = self.endpoint.run_in_pace(
             func=self._create_chat_completion,
             messages=llm_messages,
-            temperature=temperature,
-            response_format=feedback_output_schemas.ChainOfThoughtResponse,
+            response_format=response_format,
+            **extra_kwargs,
         )
 
         criteria_field = "Criteria"

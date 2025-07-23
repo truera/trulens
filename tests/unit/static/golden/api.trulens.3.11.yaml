@@ -963,6 +963,7 @@ trulens.core.schema.base.Cost:
     n_embedding_requests: builtins.int
     n_embeddings: builtins.int
     n_prompt_tokens: builtins.int
+    n_reasoning_tokens: builtins.int
     n_requests: builtins.int
     n_stream_chunks: builtins.int
     n_successful_requests: builtins.int
