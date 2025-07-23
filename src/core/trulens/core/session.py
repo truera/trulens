@@ -1251,24 +1251,13 @@ class TruSession(
         higher_is_better: bool,
     ) -> None:
         """
-        Add a feedback result for a given record using OTEL tracing.
-
-                This method creates an OTEL span to record the feedback result for a
-        specific record. It extracts necessary information from the record
-        (app info, run_name, input_id) and uses
-        OtelFeedbackComputationRecordingContext to create the appropriate
-        tracing context.
+        Add a feedback result for a given record.
 
         Args:
-            record: The Record object to add feedback for. Must be a
-                trulens.core.otel.recording.Record instance.
+            record: The Record object to add feedback for.
             feedback_name: The name of the feedback function.
             feedback_result: The feedback score/result (float or int).
             higher_is_better: Whether higher values are better.
-
-        Raises:
-            RuntimeError: If OTEL tracing is not enabled.
-            ValueError: If required information cannot be extracted from the record.
         """
         if not is_otel_tracing_enabled():
             raise RuntimeError(
