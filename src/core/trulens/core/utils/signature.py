@@ -1,11 +1,13 @@
 """Utilities related to guessing inputs and outputs of functions."""
 
+import dataclasses
 from inspect import BoundArguments
 from inspect import Signature
 import logging
 from typing import Any, Callable, Dict, Sequence
 
 import pydantic
+
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 
@@ -58,6 +60,26 @@ def _extract_content(value, content_keys=["content"]):
             # as main input/output.
             return str(e)
 
+    elif dataclasses.is_dataclass(value) and not isinstance(value, type):
+        # Handle dataclass instances (not dataclass classes) by converting them to dictionaries
+        try:
+            value_dict = dataclasses.asdict(value)
+            # Check for content keys in the dataclass fields
+            for key in content_keys:
+                content = value_dict.get(key)
+                if content is not None:
+                    return content
+
+            # If no specific content key found, recursively extract content from the dictionary
+            return {
+                k: _extract_content(v) if isinstance(v, (dict, list)) else v
+                for k, v in value_dict.items()
+            }
+        except Exception as e:
+            logger.warning("Failed to extract content from dataclass: %s", e)
+            # Fall back to string representation
+            return str(value)
+
     elif isinstance(value, dict):
         # Check for 'content' key in the dictionary
         for key in content_keys:
@@ -106,19 +128,99 @@ def main_input(func: Callable, sig: Signature, bindings: BoundArguments) -> str:
     # If there is only one string arg, it is a pretty good guess that it is
     # the main input.
 
+    # Try to find the most meaningful argument by examining each one
+    for arg in all_args:
+        if arg is None:  # Skip None arguments
+            continue
+
+        # Try to extract content from this argument
+        extracted = _extract_content(arg, content_keys=["content", "input"])
+
+        # If we got a JSON base type, use it
+        if isinstance(extracted, serial_utils.JSON_BASES):
+            return str(extracted)
+
+        # If we got a dictionary, try to extract meaningful content
+        if isinstance(extracted, Dict):
+            # Try to find the most meaningful string value in the dictionary
+            for key in ["content", "input", "query", "text", "message", "name"]:
+                if key in extracted and isinstance(extracted[key], str):
+                    return extracted[key]
+
+            # If no specific key found, try to find any string value
+            for value in extracted.values():
+                if isinstance(value, str) and value.strip():
+                    return value
+
+            # If no string values found, convert entire dict to JSON string
+            try:
+                import json
+
+                return json.dumps(extracted, indent=2)
+            except Exception:
+                return str(extracted)
+
     # if have only containers of length 1, find the innermost non-container
     focus = all_args
 
-    while not isinstance(focus, serial_utils.JSON_BASES) and len(focus) == 1:
+    while (
+        not isinstance(focus, serial_utils.JSON_BASES)
+        and isinstance(focus, Sequence)
+        and len(focus) == 1
+    ):
         focus = focus[0]
         focus = _extract_content(focus, content_keys=["content", "input"])
 
-        if not isinstance(focus, Sequence):
-            logger.warning("Focus %s is not a sequence.", focus)
+        # After extracting content, check if we got a useful result
+        if isinstance(focus, serial_utils.JSON_BASES):
+            return str(focus)
+
+        # If we got a dictionary, try to extract meaningful content immediately
+        if isinstance(focus, Dict):
+            # Try to find the most meaningful string value in the dictionary
+            for key in ["content", "input", "query", "text", "message", "name"]:
+                if key in focus and isinstance(focus[key], str):
+                    return focus[key]
+
+            # If no specific key found, try to find any string value
+            for value in focus.values():
+                if isinstance(value, str) and value.strip():
+                    return value
+
+            # If no string values found, convert entire dict to JSON string
+            try:
+                import json
+
+                return json.dumps(focus, indent=2)
+            except Exception:
+                return str(focus)
+
+        if not isinstance(focus, (Sequence, Dict)):
+            logger.warning("Focus %s is not a sequence or dict.", focus)
             break
 
     if isinstance(focus, serial_utils.JSON_BASES):
         return str(focus)
+
+    # If we have a dictionary, try to extract meaningful content
+    if isinstance(focus, Dict):
+        # Try to find the most meaningful string value in the dictionary
+        for key in ["content", "input", "query", "text", "message", "name"]:
+            if key in focus and isinstance(focus[key], str):
+                return focus[key]
+
+        # If no specific key found, try to find any string value
+        for value in focus.values():
+            if isinstance(value, str) and value.strip():
+                return value
+
+        # If no string values found, convert entire dict to JSON string
+        try:
+            import json
+
+            return json.dumps(focus, indent=2)
+        except Exception:
+            return str(focus)
 
     # Otherwise we are not sure.
     logger.warning(
@@ -130,16 +232,40 @@ def main_input(func: Callable, sig: Signature, bindings: BoundArguments) -> str:
     # After warning, just take the first item in each container until a
     # non-container is reached.
     focus = all_args
-    while not isinstance(focus, serial_utils.JSON_BASES) and len(focus) >= 1:
+    while (
+        not isinstance(focus, serial_utils.JSON_BASES)
+        and isinstance(focus, Sequence)
+        and len(focus) >= 1
+    ):
         focus = focus[0]
         focus = _extract_content(focus)
 
-        if not isinstance(focus, Sequence):
-            logger.warning("Focus %s is not a sequence.", focus)
+        if not isinstance(focus, (Sequence, Dict)):
+            logger.warning("Focus %s is not a sequence or dict.", focus)
             break
 
     if isinstance(focus, serial_utils.JSON_BASES):
         return str(focus)
+
+    # If we have a dictionary, try to extract meaningful content
+    if isinstance(focus, Dict):
+        # Try to find the most meaningful string value in the dictionary
+        for key in ["content", "input", "query", "text", "message", "name"]:
+            if key in focus and isinstance(focus[key], str):
+                return focus[key]
+
+        # If no specific key found, try to find any string value
+        for value in focus.values():
+            if isinstance(value, str) and value.strip():
+                return value
+
+        # If no string values found, convert entire dict to JSON string
+        try:
+            import json
+
+            return json.dumps(focus, indent=2)
+        except Exception:
+            return str(focus)
 
     logger.warning(
         "Could not determine main input/output of %s.", str(all_args)
