@@ -125,8 +125,25 @@ def main_input(func: Callable, sig: Signature, bindings: BoundArguments) -> str:
         v for k, v in bindings.arguments.items() if k not in ["self", "_self"]
     )  # llama_index is using "_self" in some places
 
-    # If there is only one string arg, it is a pretty good guess that it is
-    # the main input.
+    # Helper function to extract meaningful string from a dictionary
+    def _extract_from_dict(d):
+        # Try to find the most meaningful string value in the dictionary
+        for key in ["content", "input", "query", "text", "message", "name"]:
+            if key in d and isinstance(d[key], str):
+                return d[key]
+
+        # If no specific key found, try to find any string value
+        for value in d.values():
+            if isinstance(value, str) and value.strip():
+                return value
+
+        # If no string values found, convert entire dict to JSON string
+        try:
+            import json
+
+            return json.dumps(d, indent=2)
+        except Exception:
+            return str(d)
 
     # Try to find the most meaningful argument by examining each one
     for arg in all_args:
@@ -142,27 +159,10 @@ def main_input(func: Callable, sig: Signature, bindings: BoundArguments) -> str:
 
         # If we got a dictionary, try to extract meaningful content
         if isinstance(extracted, Dict):
-            # Try to find the most meaningful string value in the dictionary
-            for key in ["content", "input", "query", "text", "message", "name"]:
-                if key in extracted and isinstance(extracted[key], str):
-                    return extracted[key]
+            return _extract_from_dict(extracted)
 
-            # If no specific key found, try to find any string value
-            for value in extracted.values():
-                if isinstance(value, str) and value.strip():
-                    return value
-
-            # If no string values found, convert entire dict to JSON string
-            try:
-                import json
-
-                return json.dumps(extracted, indent=2)
-            except Exception:
-                return str(extracted)
-
-    # if have only containers of length 1, find the innermost non-container
+    # Fallback: if have only containers of length 1, find the innermost non-container
     focus = all_args
-
     while (
         not isinstance(focus, serial_utils.JSON_BASES)
         and isinstance(focus, Sequence)
@@ -171,56 +171,19 @@ def main_input(func: Callable, sig: Signature, bindings: BoundArguments) -> str:
         focus = focus[0]
         focus = _extract_content(focus, content_keys=["content", "input"])
 
-        # After extracting content, check if we got a useful result
         if isinstance(focus, serial_utils.JSON_BASES):
             return str(focus)
-
-        # If we got a dictionary, try to extract meaningful content immediately
         if isinstance(focus, Dict):
-            # Try to find the most meaningful string value in the dictionary
-            for key in ["content", "input", "query", "text", "message", "name"]:
-                if key in focus and isinstance(focus[key], str):
-                    return focus[key]
-
-            # If no specific key found, try to find any string value
-            for value in focus.values():
-                if isinstance(value, str) and value.strip():
-                    return value
-
-            # If no string values found, convert entire dict to JSON string
-            try:
-                import json
-
-                return json.dumps(focus, indent=2)
-            except Exception:
-                return str(focus)
-
+            return _extract_from_dict(focus)
         if not isinstance(focus, (Sequence, Dict)):
             logger.warning("Focus %s is not a sequence or dict.", focus)
             break
 
+    # Final checks
     if isinstance(focus, serial_utils.JSON_BASES):
         return str(focus)
-
-    # If we have a dictionary, try to extract meaningful content
     if isinstance(focus, Dict):
-        # Try to find the most meaningful string value in the dictionary
-        for key in ["content", "input", "query", "text", "message", "name"]:
-            if key in focus and isinstance(focus[key], str):
-                return focus[key]
-
-        # If no specific key found, try to find any string value
-        for value in focus.values():
-            if isinstance(value, str) and value.strip():
-                return value
-
-        # If no string values found, convert entire dict to JSON string
-        try:
-            import json
-
-            return json.dumps(focus, indent=2)
-        except Exception:
-            return str(focus)
+        return _extract_from_dict(focus)
 
     # Otherwise we are not sure.
     logger.warning(
