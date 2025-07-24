@@ -178,7 +178,6 @@ def main_input(func: Callable, sig: Signature, bindings: BoundArguments) -> str:
             logger.warning("Focus %s is not a sequence or dict.", focus)
             break
 
-    # Final checks
     if isinstance(focus, serial_utils.JSON_BASES):
         return str(focus)
     if isinstance(focus, Dict):
