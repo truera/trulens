@@ -12,11 +12,6 @@ from typing import (
 )
 
 from pydantic import Field
-
-from langgraph.func import TaskFunction
-from langgraph.graph import StateGraph
-from langgraph.pregel import Pregel
-from langgraph.types import Command
 from trulens.apps.langchain.tru_chain import TruChain
 from trulens.core import app as core_app
 from trulens.core import instruments as core_instruments
@@ -26,6 +21,11 @@ from trulens.core.session import TruSession
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.otel.semconv.constants import TRULENS_INSTRUMENT_WRAPPER_FLAG
 from trulens.otel.semconv.trace import SpanAttributes
+
+from langgraph.func import TaskFunction
+from langgraph.graph import StateGraph
+from langgraph.pregel import Pregel
+from langgraph.types import Command
 
 logger = logging.getLogger(__name__)
 
