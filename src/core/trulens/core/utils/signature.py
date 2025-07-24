@@ -61,7 +61,6 @@ def _extract_content(value, content_keys=["content"]):
             return str(e)
 
     elif dataclasses.is_dataclass(value) and not isinstance(value, type):
-        # Handle dataclass instances (not dataclass classes) by converting them to dictionaries
         try:
             value_dict = dataclasses.asdict(value)
             # Check for content keys in the dataclass fields
