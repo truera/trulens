@@ -1,6 +1,6 @@
 {% set name = "trulens-apps-langgraph" %}
 {% set pyname = name.replace('-', '.') %}
-{% set version = "1.5.2" %}
+{% set version = "2.1.0" %}
 
 package:
   name: {{ name|lower }}
@@ -11,7 +11,7 @@ source:
   # path: .
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-apps-langgraph/#files
-  sha256: 00db8abcfa07fcba4c86e1720a1b115edb9732058c7bb994f54513bd95cfbd9d
+  sha256: fcf4d13e7d3cc9ce2d91e6435dd29f21a1d9a4bbe9666dd62cba717fba32bfb4
 
 build:
   noarch: python
@@ -25,8 +25,8 @@ requirements:
     - pip
   run:
     - python >=3.9,<3.13
-    - trulens-core >=1.0.0,<2.0.0
-    - langgraph >=0.5.2
+    - trulens-core >=1.0.0,<3.0.0
+    - trulens-apps-langchain >=1.0.0
     - pydantic >=2.4.2
 
 test:
@@ -46,5 +46,4 @@ about:
 
 extra:
   recipe-maintainers:
-    - sfc-gh-srudenko
-    - sfc-gh-chu
+    - sfc-gh-dhuang

@@ -57,6 +57,16 @@ class LLMProvider(core_provider.Provider):
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
+    def _is_reasoning_model(self) -> bool:
+        """Check if the current model is a reasoning model.
+
+        This method should be overridden by provider-specific implementations.
+
+        Returns:
+            bool: False by default. Subclasses should override for reasoning model detection.
+        """
+        return False
+
     # @abstractmethod
     def _create_chat_completion(
         self,
@@ -111,11 +121,28 @@ class LLMProvider(core_provider.Provider):
         if user_prompt is not None:
             llm_messages.append({"role": "user", "content": user_prompt})
 
+        # For reasoning models, fall back to text output since structured output may not be supported
+        response_format = (
+            None
+            if self._is_reasoning_model()
+            else feedback_output_schemas.BaseFeedbackResponse
+        )
+
+        # Add reasoning effort for reasoning models and handle temperature
+        extra_kwargs = {}
+        if self._is_reasoning_model():
+            extra_kwargs["reasoning_effort"] = (
+                "medium"  # Default reasoning effort
+            )
+            # Don't pass temperature to reasoning models as they don't support it
+        else:
+            extra_kwargs["temperature"] = temperature
+
         response = self.endpoint.run_in_pace(
             func=self._create_chat_completion,
             messages=llm_messages,
-            temperature=temperature,
-            response_format=feedback_output_schemas.BaseFeedbackResponse,
+            response_format=response_format,
+            **extra_kwargs,
         )
 
         if isinstance(response, feedback_output_schemas.BaseFeedbackResponse):
@@ -163,11 +190,29 @@ class LLMProvider(core_provider.Provider):
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
             llm_messages.append({"role": "user", "content": user_prompt})
+
+        # For reasoning models, fall back to text output since structured output may not be supported
+        response_format = (
+            None
+            if self._is_reasoning_model()
+            else feedback_output_schemas.ChainOfThoughtResponse
+        )
+
+        # Add reasoning effort for reasoning models and handle temperature
+        extra_kwargs = {}
+        if self._is_reasoning_model():
+            extra_kwargs["reasoning_effort"] = (
+                "medium"  # Default reasoning effort
+            )
+            # Don't pass temperature to reasoning models as they don't support it
+        else:
+            extra_kwargs["temperature"] = temperature
+
         response = self.endpoint.run_in_pace(
             func=self._create_chat_completion,
             messages=llm_messages,
-            temperature=temperature,
-            response_format=feedback_output_schemas.ChainOfThoughtResponse,
+            response_format=response_format,
+            **extra_kwargs,
         )
 
         criteria_field = "Criteria"
@@ -193,7 +238,7 @@ class LLMProvider(core_provider.Provider):
             lines = response.split("\n")
             for i, line in enumerate(lines):
                 if (
-                    "Score" in line
+                    "Score:" in line
                 ):  # TODO: find a more robust way to generate and extract score
                     # If the next line exists and appears to be a numeric score, use it.
                     if (
@@ -2523,6 +2568,158 @@ class LLMProvider(core_provider.Provider):
 
         user_prompt = user_prompt.replace(
             "WORKFLOW EFFICIENCY SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
+        )
+
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
+
+    def trajectory_plan_adherence_with_cot_reasons(
+        self,
+        # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
+        trace: Union[Trace, str],
+        criteria: Optional[str] = None,
+        examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+    ) -> Tuple[float, Dict]:
+        """
+        Evaluate the quality of an agentic execution trace using a rubric focused on adherence to a plan.
+
+        Example:
+            ```python
+            from trulens.core import Feedback
+            from trulens.providers.openai import OpenAI
+
+            provider = OpenAI()
+
+            f_plan_adherence = (
+                Feedback(provider.trajectory_plan_adherence_with_cot_reasons)
+                .on({
+                    "trace": Selector(trace_level=True),
+                })
+            ```
+
+        Args:
+            trace (Union[Trace, str]): The execution trace to evaluate (e.g., as a JSON string or formatted log).
+            criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
+            examples (Optional[List[Tuple[Dict[str, str], int]]): Optional few-shot examples for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+        Returns:
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (trajectory did not follow plan) and 1.0 (workflow followed plan exactly) and a dictionary containing the reasons for the evaluation.
+        """
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        system_prompt = (
+            feedback_v2.TrajectoryPlanAdherence.generate_system_prompt(
+                min_score=min_score_val,
+                max_score=max_score_val,
+                criteria=criteria,
+                output_space=output_space,
+                examples=examples,
+            )
+        )
+
+        if isinstance(trace, Trace):
+            trajectory = trace.events.to_json()
+        elif isinstance(trace, str):
+            trajectory = trace
+        else:
+            raise ValueError(
+                f"Invalid trace type: {type(trace)}. Must be a Trace or a string."
+            )
+
+        user_prompt = feedback_v2.TrajectoryPlanAdherence.user_prompt.format(
+            trajectory=trajectory
+        )
+
+        user_prompt = user_prompt.replace(
+            "PLAN ADHERENCE SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
+        )
+
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
+
+    def trajectory_plan_quality_with_cot_reasons(
+        self,
+        # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
+        trace: Union[Trace, str],
+        criteria: Optional[str] = None,
+        examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+    ) -> Tuple[float, Dict]:
+        """
+        Evaluate the quality of an agentic system's plan.
+
+        Example:
+            ```python
+            from trulens.core import Feedback
+            from trulens.providers.openai import OpenAI
+
+            provider = OpenAI()
+
+            f_plan_quality = (
+                Feedback(provider.trajectory_plan_quality_with_cot_reasons)
+                .on({
+                    "trace": Selector(trace_level=True),
+                })
+            ```
+
+        Args:
+            trace (Union[Trace, str]): The execution trace to evaluate (e.g., as a JSON string or formatted log).
+            criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
+            examples (Optional[List[Tuple[Dict[str, str], int]]): Optional few-shot examples for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+        Returns:
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (poor plan quality) and 1.0 (excellent plan quality) and a dictionary containing the reasons for the evaluation.
+        """
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        system_prompt = (
+            feedback_v2.TrajectoryPlanQuality.generate_system_prompt(
+                min_score=min_score_val,
+                max_score=max_score_val,
+                criteria=criteria,
+                output_space=output_space,
+                examples=examples,
+            )
+        )
+
+        if isinstance(trace, Trace):
+            trajectory = trace.events.to_json()
+        elif isinstance(trace, str):
+            trajectory = trace
+        else:
+            raise ValueError(
+                f"Invalid trace type: {type(trace)}. Must be a Trace or a string."
+            )
+
+        user_prompt = feedback_v2.TrajectoryPlanQuality.user_prompt.format(
+            trajectory=trajectory
+        )
+
+        user_prompt = user_prompt.replace(
+            "PLAN QUALITY SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
         )
 
         return self.generate_score_and_reasons(
