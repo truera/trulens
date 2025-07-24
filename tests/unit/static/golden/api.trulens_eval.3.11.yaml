@@ -121,6 +121,8 @@ trulens_eval.AzureOpenAI:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -206,6 +208,8 @@ trulens_eval.Bedrock:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -294,6 +298,8 @@ trulens_eval.Cortex:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -573,6 +579,8 @@ trulens_eval.Langchain:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -665,6 +673,8 @@ trulens_eval.LiteLLM:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -758,6 +768,8 @@ trulens_eval.OpenAI:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -2398,6 +2410,8 @@ trulens_eval.feedback.AzureOpenAI:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -2483,6 +2497,8 @@ trulens_eval.feedback.Bedrock:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -2571,6 +2587,8 @@ trulens_eval.feedback.Cortex:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -2941,6 +2959,8 @@ trulens_eval.feedback.Langchain:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -3026,6 +3046,8 @@ trulens_eval.feedback.LiteLLM:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -3119,6 +3141,8 @@ trulens_eval.feedback.OpenAI:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -3489,6 +3513,8 @@ trulens_eval.feedback.provider.AzureOpenAI:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -3574,6 +3600,8 @@ trulens_eval.feedback.provider.Bedrock:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -3662,6 +3690,8 @@ trulens_eval.feedback.provider.Cortex:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -3845,6 +3875,8 @@ trulens_eval.feedback.provider.Langchain:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -3930,6 +3962,8 @@ trulens_eval.feedback.provider.LiteLLM:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -4023,6 +4057,8 @@ trulens_eval.feedback.provider.OpenAI:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -4156,6 +4192,8 @@ trulens_eval.feedback.provider.base.LLMProvider:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -4290,6 +4328,8 @@ trulens_eval.feedback.provider.bedrock.Bedrock:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -4384,6 +4424,8 @@ trulens_eval.feedback.provider.cortex.Cortex:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -6242,6 +6284,8 @@ trulens_eval.feedback.provider.langchain.Langchain:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -6333,6 +6377,8 @@ trulens_eval.feedback.provider.litellm.LiteLLM:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -6434,6 +6480,8 @@ trulens_eval.feedback.provider.openai.AzureOpenAI:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -6527,6 +6575,8 @@ trulens_eval.feedback.provider.openai.OpenAI:
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
     trajectory_logical_consistency_with_cot_reasons: builtins.function
+    trajectory_plan_adherence_with_cot_reasons: builtins.function
+    trajectory_plan_quality_with_cot_reasons: builtins.function
     trajectory_step_relevance_with_cot_reasons: builtins.function
     trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
