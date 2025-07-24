@@ -7,7 +7,6 @@ import logging
 from typing import Any, Callable, Dict, Sequence
 
 import pydantic
-
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 
