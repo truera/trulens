@@ -556,7 +556,7 @@ def _remove_already_computed_feedbacks(
     if not events.empty and "record_attributes" in events.columns:
         attributes = events["record_attributes"]
     else:
-        _logger.warning("Events is empty, returning flattened inputs.")
+        _logger.debug("Events is empty, returning flattened inputs.")
         return flattened_inputs
     eval_root_attributes = attributes[
         attributes.apply(
