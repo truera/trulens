@@ -145,8 +145,6 @@ def expand_groundedness_df(df: pd.DataFrame) -> pd.DataFrame:
                 columns={
                     "criteria": "Statement",
                     "supporting_evidence": "Supporting Evidence from Source",
-                    "supportingevidence": "Supporting Evidence from Source",
-                    "supportingEvidence": "Supporting Evidence from Source",
                 },
                 inplace=True,
             )
