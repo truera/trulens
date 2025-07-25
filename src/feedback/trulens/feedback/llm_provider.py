@@ -1,6 +1,7 @@
 from concurrent.futures import as_completed
 import json
 import logging
+import re
 from typing import ClassVar, Dict, List, Optional, Sequence, Tuple, Type, Union
 import warnings
 
@@ -2077,6 +2078,11 @@ class LLMProvider(core_provider.Provider):
                 temperature=temperature,
             ).split("\n")
 
+        # Remove simple numeric list markers such as "1." or "2)"
+        hypotheses = [
+            h for h in hypotheses if not re.match(r"^\s*\d+[\.)]?\s*$", h)
+        ]
+
         if filter_trivial_statements:
             hypotheses = self._remove_trivial_statements(hypotheses)
 
@@ -2239,6 +2245,11 @@ class LLMProvider(core_provider.Provider):
                 messages=llm_messages,
                 temperature=temperature,
             ).split("\n")
+
+        # Remove numeric list markers
+        hypotheses = [
+            h for h in hypotheses if not re.match(r"^\s*\d+[\.)]?\s*$", h)
+        ]
 
         groundedness_scores = {}
         reasons_list = []
