@@ -1,6 +1,6 @@
 from concurrent.futures import as_completed
+import json
 import logging
-import re
 from typing import ClassVar, Dict, List, Optional, Sequence, Tuple, Type, Union
 import warnings
 
@@ -144,6 +144,43 @@ class LLMProvider(core_provider.Provider):
             response_format=response_format,
             **extra_kwargs,
         )
+
+        # --------------------------------------------------------------
+        # Attempt to parse structured JSON responses directly.
+        # --------------------------------------------------------------
+        try:
+            parsed_json = json.loads(response)
+        except Exception:
+            parsed_json = None
+
+        if isinstance(parsed_json, dict) and "score" in parsed_json:
+            try:
+                raw_score = float(parsed_json["score"])
+                normalized_score = (raw_score - min_score_val) / (
+                    max_score_val - min_score_val
+                )
+            except (TypeError, ValueError):
+                normalized_score = -1.0
+
+            return normalized_score, {"reason": parsed_json}
+
+        if isinstance(parsed_json, list):
+            # If a list is returned, average the scores where possible.
+            scores = []
+            for item in parsed_json:
+                if isinstance(item, dict) and "score" in item:
+                    try:
+                        scores.append(float(item["score"]))
+                    except (TypeError, ValueError):
+                        pass
+            if scores:
+                avg_raw = sum(scores) / len(scores)
+                normalized_score = (avg_raw - min_score_val) / (
+                    max_score_val - min_score_val
+                )
+            else:
+                normalized_score = -1.0
+            return normalized_score, {"reason": parsed_json}
 
         if isinstance(response, feedback_output_schemas.BaseFeedbackResponse):
             score = response.score
@@ -2009,7 +2046,7 @@ class LLMProvider(core_provider.Provider):
         assert self.endpoint is not None, "Endpoint is not set."
 
         groundedness_scores = {}
-        reasons_str = ""
+        reasons_list = []
 
         use_sent_tokenize = (
             groundedness_configs.use_sent_tokenize
@@ -2070,27 +2107,13 @@ class LLMProvider(core_provider.Provider):
                 temperature=temperature,
             )
 
-            score_pattern = re.compile(r"Score:\s*([0-9.]+)")
-            match = score_pattern.search(reason.get("reason", ""))
-            normalized_reason = None
-            if match:
-                original_reason_score = float(match.group(1))
-                normalized_reason_score = (
-                    original_reason_score - min_score_val
-                ) / (max_score_val - min_score_val)
-
-                # Ensure the formatting matches exactly
-                original_string = f"Score: {int(original_reason_score)}"
-                replacement_string = f"Score: {normalized_reason_score}"
-                normalized_reason = reason.copy()
-                normalized_reason["reason"] = normalized_reason[
-                    "reason"
-                ].replace(original_string, replacement_string)
-
-            if normalized_reason is not None:
-                return index, score, normalized_reason
-            else:
-                return index, score, reason
+            # Build structured reason dict to ensure criteria, evidence, and score present
+            structured = {
+                "criteria": hypothesis,
+                "supporting_evidence": reason.get("reason", ""),
+                "score": score,
+            }
+            return index, score, structured
 
         results = []
 
@@ -2107,19 +2130,14 @@ class LLMProvider(core_provider.Provider):
 
         for i, score, reason in results:
             groundedness_scores[f"statement_{i}"] = score
-            reason_str = (
-                reason["reason"]
-                if reason is not None and "reason" in reason
-                else "reason not generated"
-            )
-            reasons_str += f"STATEMENT {i}:\n{reason_str}\n"
+            reasons_list.append(reason)
 
         # Calculate the average groundedness score from the scores dictionary
         average_groundedness_score = float(
             np.mean(list(groundedness_scores.values()))
         )
 
-        return average_groundedness_score, {"reasons": reasons_str}
+        return average_groundedness_score, {"reasons": reasons_list}
 
     @deprecation_utils.method_renamed("relevance")
     def qs_relevance(self, *args, **kwargs):
@@ -2223,7 +2241,7 @@ class LLMProvider(core_provider.Provider):
             ).split("\n")
 
         groundedness_scores = {}
-        reasons_str = ""
+        reasons_list = []
 
         def evaluate_abstention(statement):
             user_prompt = feedback_prompts.LLM_ABSTENTION_USER.format(
@@ -2294,27 +2312,13 @@ class LLMProvider(core_provider.Provider):
                     temperature=temperature,
                 )
 
-                score_pattern = re.compile(r"Score:\s*([0-9.]+)")
-                match = score_pattern.search(reason.get("reason", ""))
-                normalized_reason = None
-                if match:
-                    original_reason_score = float(match.group(1))
-                    normalized_reason_score = (
-                        original_reason_score - min_score_val
-                    ) / (max_score_val - min_score_val)
-
-                    # Ensure the formatting matches exactly
-                    original_string = f"Score: {int(original_reason_score)}"
-                    replacement_string = f"Score: {normalized_reason_score}"
-                    normalized_reason = reason.copy()
-                    normalized_reason["reason"] = normalized_reason[
-                        "reason"
-                    ].replace(original_string, replacement_string)
-
-                if normalized_reason is not None:
-                    return index, score, normalized_reason
-                else:
-                    return index, score, reason
+                # Build structured reason dict to ensure criteria, evidence, and score present
+                structured = {
+                    "criteria": hypothesis,
+                    "supporting_evidence": reason.get("reason", ""),
+                    "score": score,
+                }
+                return index, score, structured
 
         results = []
 
@@ -2331,19 +2335,14 @@ class LLMProvider(core_provider.Provider):
 
         for i, score, reason in results:
             groundedness_scores[f"statement_{i}"] = score
-            reason_str = (
-                reason["reason"]
-                if "reason" in reason
-                else "reason not generated"
-            )
-            reasons_str += f"STATEMENT {i}:\n{reason_str}\n"
+            reasons_list.append(reason)
 
         # Calculate the average groundedness score from the scores dictionary
         average_groundedness_score = float(
             np.mean(list(groundedness_scores.values()))
         )
 
-        return average_groundedness_score, {"reasons": reasons_str}
+        return average_groundedness_score, {"reasons": reasons_list}
 
     # NOTE: Add user goal to the step relevance feedback (either extract manually from trace, or prompt LLM judge to extract and synthesize)
     def trajectory_step_relevance_with_cot_reasons(

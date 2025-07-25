@@ -30,6 +30,11 @@ def df_cell_highlight(
     """
     if "distance" in feedback_name:
         return [f"background-color: {CATEGORY.UNKNOWN.color}"] * n_cells
+
+    # Handle None scores
+    if score is None:
+        return [f"background-color: {CATEGORY.UNKNOWN.color}"] * n_cells
+
     cat = CATEGORY.of_score(
         score,
         higher_is_better=feedback_directions.get(
@@ -172,11 +177,14 @@ def display_feedback_call(
     if "groundedness" in feedback_name.lower():
         try:
             df = expand_groundedness_df(df)
-        except ValueError:
+        except (ValueError, AttributeError, TypeError) as e:
             st.error(
-                "Error expanding groundedness DataFrame. "
-                "Please ensure the DataFrame is in the correct format."
+                f"Error expanding groundedness DataFrame: {str(e)}. "
+                "This might be due to missing or None values in the feedback data. "
+                "Please check that your groundedness feedback selector is properly configured."
             )
+            # Return early to avoid further errors
+            return
 
     if df.empty:
         st.warning("No feedback details found.")
