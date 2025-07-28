@@ -1,4 +1,5 @@
 from concurrent.futures import as_completed
+import json
 import logging
 import re
 from typing import ClassVar, Dict, List, Optional, Sequence, Tuple, Type, Union
@@ -57,6 +58,16 @@ class LLMProvider(core_provider.Provider):
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
+    def _is_reasoning_model(self) -> bool:
+        """Check if the current model is a reasoning model.
+
+        This method should be overridden by provider-specific implementations.
+
+        Returns:
+            bool: False by default. Subclasses should override for reasoning model detection.
+        """
+        return False
+
     # @abstractmethod
     def _create_chat_completion(
         self,
@@ -111,12 +122,66 @@ class LLMProvider(core_provider.Provider):
         if user_prompt is not None:
             llm_messages.append({"role": "user", "content": user_prompt})
 
+        # For reasoning models, fall back to text output since structured output may not be supported
+        response_format = (
+            None
+            if self._is_reasoning_model()
+            else feedback_output_schemas.BaseFeedbackResponse
+        )
+
+        # Add reasoning effort for reasoning models and handle temperature
+        extra_kwargs = {}
+        if self._is_reasoning_model():
+            extra_kwargs["reasoning_effort"] = (
+                "medium"  # Default reasoning effort
+            )
+            # Don't pass temperature to reasoning models as they don't support it
+        else:
+            extra_kwargs["temperature"] = temperature
+
         response = self.endpoint.run_in_pace(
             func=self._create_chat_completion,
             messages=llm_messages,
-            temperature=temperature,
-            response_format=feedback_output_schemas.BaseFeedbackResponse,
+            response_format=response_format,
+            **extra_kwargs,
         )
+
+        # --------------------------------------------------------------
+        # Attempt to parse structured JSON responses directly.
+        # --------------------------------------------------------------
+        try:
+            parsed_json = json.loads(response)
+        except Exception:
+            parsed_json = None
+
+        if isinstance(parsed_json, dict) and "score" in parsed_json:
+            try:
+                raw_score = float(parsed_json["score"])
+                normalized_score = (raw_score - min_score_val) / (
+                    max_score_val - min_score_val
+                )
+            except (TypeError, ValueError):
+                normalized_score = -1.0
+
+            return normalized_score, {"reason": parsed_json}
+
+        if isinstance(parsed_json, list):
+            # If a list is returned, average the scores where possible.
+            scores = []
+            for item in parsed_json:
+                if isinstance(item, dict) and "score" in item:
+                    try:
+                        scores.append(float(item["score"]))
+                    except (TypeError, ValueError):
+                        pass
+            if scores:
+                avg_raw = sum(scores) / len(scores)
+                normalized_score = (avg_raw - min_score_val) / (
+                    max_score_val - min_score_val
+                )
+            else:
+                normalized_score = -1.0
+            return normalized_score, {"reason": parsed_json}
 
         if isinstance(response, feedback_output_schemas.BaseFeedbackResponse):
             score = response.score
@@ -163,11 +228,29 @@ class LLMProvider(core_provider.Provider):
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
             llm_messages.append({"role": "user", "content": user_prompt})
+
+        # For reasoning models, fall back to text output since structured output may not be supported
+        response_format = (
+            None
+            if self._is_reasoning_model()
+            else feedback_output_schemas.ChainOfThoughtResponse
+        )
+
+        # Add reasoning effort for reasoning models and handle temperature
+        extra_kwargs = {}
+        if self._is_reasoning_model():
+            extra_kwargs["reasoning_effort"] = (
+                "medium"  # Default reasoning effort
+            )
+            # Don't pass temperature to reasoning models as they don't support it
+        else:
+            extra_kwargs["temperature"] = temperature
+
         response = self.endpoint.run_in_pace(
             func=self._create_chat_completion,
             messages=llm_messages,
-            temperature=temperature,
-            response_format=feedback_output_schemas.ChainOfThoughtResponse,
+            response_format=response_format,
+            **extra_kwargs,
         )
 
         criteria_field = "Criteria"
@@ -193,7 +276,7 @@ class LLMProvider(core_provider.Provider):
             lines = response.split("\n")
             for i, line in enumerate(lines):
                 if (
-                    "Score" in line
+                    "Score:" in line
                 ):  # TODO: find a more robust way to generate and extract score
                     # If the next line exists and appears to be a numeric score, use it.
                     if (
@@ -1964,7 +2047,7 @@ class LLMProvider(core_provider.Provider):
         assert self.endpoint is not None, "Endpoint is not set."
 
         groundedness_scores = {}
-        reasons_str = ""
+        reasons_list = []
 
         use_sent_tokenize = (
             groundedness_configs.use_sent_tokenize
@@ -1994,6 +2077,11 @@ class LLMProvider(core_provider.Provider):
                 messages=llm_messages,
                 temperature=temperature,
             ).split("\n")
+
+        # Remove simple numeric list markers such as "1." or "2)"
+        hypotheses = [
+            h for h in hypotheses if not re.match(r"^\s*\d+[\.)]?\s*$", h)
+        ]
 
         if filter_trivial_statements:
             hypotheses = self._remove_trivial_statements(hypotheses)
@@ -2025,27 +2113,13 @@ class LLMProvider(core_provider.Provider):
                 temperature=temperature,
             )
 
-            score_pattern = re.compile(r"Score:\s*([0-9.]+)")
-            match = score_pattern.search(reason.get("reason", ""))
-            normalized_reason = None
-            if match:
-                original_reason_score = float(match.group(1))
-                normalized_reason_score = (
-                    original_reason_score - min_score_val
-                ) / (max_score_val - min_score_val)
-
-                # Ensure the formatting matches exactly
-                original_string = f"Score: {int(original_reason_score)}"
-                replacement_string = f"Score: {normalized_reason_score}"
-                normalized_reason = reason.copy()
-                normalized_reason["reason"] = normalized_reason[
-                    "reason"
-                ].replace(original_string, replacement_string)
-
-            if normalized_reason is not None:
-                return index, score, normalized_reason
-            else:
-                return index, score, reason
+            # Build structured reason dict to ensure criteria, evidence, and score present
+            structured = {
+                "criteria": hypothesis,
+                "supporting_evidence": reason.get("reason", ""),
+                "score": score,
+            }
+            return index, score, structured
 
         results = []
 
@@ -2062,19 +2136,14 @@ class LLMProvider(core_provider.Provider):
 
         for i, score, reason in results:
             groundedness_scores[f"statement_{i}"] = score
-            reason_str = (
-                reason["reason"]
-                if reason is not None and "reason" in reason
-                else "reason not generated"
-            )
-            reasons_str += f"STATEMENT {i}:\n{reason_str}\n"
+            reasons_list.append(reason)
 
         # Calculate the average groundedness score from the scores dictionary
         average_groundedness_score = float(
             np.mean(list(groundedness_scores.values()))
         )
 
-        return average_groundedness_score, {"reasons": reasons_str}
+        return average_groundedness_score, {"reasons": reasons_list}
 
     @deprecation_utils.method_renamed("relevance")
     def qs_relevance(self, *args, **kwargs):
@@ -2177,8 +2246,13 @@ class LLMProvider(core_provider.Provider):
                 temperature=temperature,
             ).split("\n")
 
+        # Remove numeric list markers
+        hypotheses = [
+            h for h in hypotheses if not re.match(r"^\s*\d+[\.)]?\s*$", h)
+        ]
+
         groundedness_scores = {}
-        reasons_str = ""
+        reasons_list = []
 
         def evaluate_abstention(statement):
             user_prompt = feedback_prompts.LLM_ABSTENTION_USER.format(
@@ -2249,27 +2323,13 @@ class LLMProvider(core_provider.Provider):
                     temperature=temperature,
                 )
 
-                score_pattern = re.compile(r"Score:\s*([0-9.]+)")
-                match = score_pattern.search(reason.get("reason", ""))
-                normalized_reason = None
-                if match:
-                    original_reason_score = float(match.group(1))
-                    normalized_reason_score = (
-                        original_reason_score - min_score_val
-                    ) / (max_score_val - min_score_val)
-
-                    # Ensure the formatting matches exactly
-                    original_string = f"Score: {int(original_reason_score)}"
-                    replacement_string = f"Score: {normalized_reason_score}"
-                    normalized_reason = reason.copy()
-                    normalized_reason["reason"] = normalized_reason[
-                        "reason"
-                    ].replace(original_string, replacement_string)
-
-                if normalized_reason is not None:
-                    return index, score, normalized_reason
-                else:
-                    return index, score, reason
+                # Build structured reason dict to ensure criteria, evidence, and score present
+                structured = {
+                    "criteria": hypothesis,
+                    "supporting_evidence": reason.get("reason", ""),
+                    "score": score,
+                }
+                return index, score, structured
 
         results = []
 
@@ -2286,19 +2346,14 @@ class LLMProvider(core_provider.Provider):
 
         for i, score, reason in results:
             groundedness_scores[f"statement_{i}"] = score
-            reason_str = (
-                reason["reason"]
-                if "reason" in reason
-                else "reason not generated"
-            )
-            reasons_str += f"STATEMENT {i}:\n{reason_str}\n"
+            reasons_list.append(reason)
 
         # Calculate the average groundedness score from the scores dictionary
         average_groundedness_score = float(
             np.mean(list(groundedness_scores.values()))
         )
 
-        return average_groundedness_score, {"reasons": reasons_str}
+        return average_groundedness_score, {"reasons": reasons_list}
 
     # NOTE: Add user goal to the step relevance feedback (either extract manually from trace, or prompt LLM judge to extract and synthesize)
     def trajectory_step_relevance_with_cot_reasons(
@@ -2523,6 +2578,158 @@ class LLMProvider(core_provider.Provider):
 
         user_prompt = user_prompt.replace(
             "WORKFLOW EFFICIENCY SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
+        )
+
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
+
+    def trajectory_plan_adherence_with_cot_reasons(
+        self,
+        # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
+        trace: Union[Trace, str],
+        criteria: Optional[str] = None,
+        examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+    ) -> Tuple[float, Dict]:
+        """
+        Evaluate the quality of an agentic execution trace using a rubric focused on adherence to a plan.
+
+        Example:
+            ```python
+            from trulens.core import Feedback
+            from trulens.providers.openai import OpenAI
+
+            provider = OpenAI()
+
+            f_plan_adherence = (
+                Feedback(provider.trajectory_plan_adherence_with_cot_reasons)
+                .on({
+                    "trace": Selector(trace_level=True),
+                })
+            ```
+
+        Args:
+            trace (Union[Trace, str]): The execution trace to evaluate (e.g., as a JSON string or formatted log).
+            criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
+            examples (Optional[List[Tuple[Dict[str, str], int]]): Optional few-shot examples for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+        Returns:
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (trajectory did not follow plan) and 1.0 (workflow followed plan exactly) and a dictionary containing the reasons for the evaluation.
+        """
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        system_prompt = (
+            feedback_v2.TrajectoryPlanAdherence.generate_system_prompt(
+                min_score=min_score_val,
+                max_score=max_score_val,
+                criteria=criteria,
+                output_space=output_space,
+                examples=examples,
+            )
+        )
+
+        if isinstance(trace, Trace):
+            trajectory = trace.events.to_json()
+        elif isinstance(trace, str):
+            trajectory = trace
+        else:
+            raise ValueError(
+                f"Invalid trace type: {type(trace)}. Must be a Trace or a string."
+            )
+
+        user_prompt = feedback_v2.TrajectoryPlanAdherence.user_prompt.format(
+            trajectory=trajectory
+        )
+
+        user_prompt = user_prompt.replace(
+            "PLAN ADHERENCE SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
+        )
+
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
+
+    def trajectory_plan_quality_with_cot_reasons(
+        self,
+        # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
+        trace: Union[Trace, str],
+        criteria: Optional[str] = None,
+        examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+    ) -> Tuple[float, Dict]:
+        """
+        Evaluate the quality of an agentic system's plan.
+
+        Example:
+            ```python
+            from trulens.core import Feedback
+            from trulens.providers.openai import OpenAI
+
+            provider = OpenAI()
+
+            f_plan_quality = (
+                Feedback(provider.trajectory_plan_quality_with_cot_reasons)
+                .on({
+                    "trace": Selector(trace_level=True),
+                })
+            ```
+
+        Args:
+            trace (Union[Trace, str]): The execution trace to evaluate (e.g., as a JSON string or formatted log).
+            criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
+            examples (Optional[List[Tuple[Dict[str, str], int]]): Optional few-shot examples for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+        Returns:
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (poor plan quality) and 1.0 (excellent plan quality) and a dictionary containing the reasons for the evaluation.
+        """
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        system_prompt = (
+            feedback_v2.TrajectoryPlanQuality.generate_system_prompt(
+                min_score=min_score_val,
+                max_score=max_score_val,
+                criteria=criteria,
+                output_space=output_space,
+                examples=examples,
+            )
+        )
+
+        if isinstance(trace, Trace):
+            trajectory = trace.events.to_json()
+        elif isinstance(trace, str):
+            trajectory = trace
+        else:
+            raise ValueError(
+                f"Invalid trace type: {type(trace)}. Must be a Trace or a string."
+            )
+
+        user_prompt = feedback_v2.TrajectoryPlanQuality.user_prompt.format(
+            trajectory=trajectory
+        )
+
+        user_prompt = user_prompt.replace(
+            "PLAN QUALITY SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
         )
 
         return self.generate_score_and_reasons(

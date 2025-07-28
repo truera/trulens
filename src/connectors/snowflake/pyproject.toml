@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-connectors-snowflake"
-version = "1.5.2"
+version = "2.1.1"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -34,7 +34,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9,<3.13"
-trulens-core = { version = "^1.0.0" }
+trulens-core = { version = "^2.0.0" }
 snowflake-snowpark-python = { version = "^1.18" }
 snowflake-sqlalchemy = { version = "^1.6" }
 
