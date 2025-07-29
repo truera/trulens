@@ -50,6 +50,7 @@ requirements:
     - tqdm >=4.2.0
     - openai >=1.0.0
     - httpx >=0.27
+    - trulens-feedback >=2.0.0
 
 test:
   imports:
