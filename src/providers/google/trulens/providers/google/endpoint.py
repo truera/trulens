@@ -70,7 +70,7 @@ class GoogleGenAICallback(core_endpoint.EndpointCallback):
     ]
 
     def handle_generation(self, response: Any):
-        """Get the usage information from GoogeAI LLM function response's usage_metadata field."""
+        """Get the usage information from GoogleGenAI LLM function response's usage_metadata field."""
         response_dict = response
         if isinstance(response, GenerateContentResponse):
             response_dict = response.to_json_dict()
