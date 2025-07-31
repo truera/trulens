@@ -4,7 +4,7 @@ TruLens is a framework designed to help you instrument and evaluate LLM applicat
 
 !!! note
 
-    To turn on OpenTelemetry tracing, set the environment variable `TRULENS_OTEL_TRACING` to "1".
+    OpenTelemetry tracing is enabled by default. To disable it, set the environment variable `TRULENS_OTEL_TRACING` to "0" or "false".
 
 This instrumentation capability allows you to track the entire execution flow of your app, including inputs, outputs, internal operations, and performance metrics.
 
