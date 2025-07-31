@@ -109,6 +109,9 @@ class LiteLLM(llm_provider.LLMProvider):
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
 
+        if response_format is not None:
+            completion_args["response_format"] = response_format
+
         if "/" in self.model_engine:
             # if we have model provider and model name, verify params
             _model_provider, _model_name = self.model_engine.split("/", 1)
