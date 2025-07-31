@@ -56,7 +56,12 @@ legacy = (
 
 if not legacy:
     from llama_index.core.base.base_query_engine import BaseQueryEngine
-    from llama_index.core.base.base_query_engine import QueryEngineComponent
+
+    try:
+        from llama_index.core.base.base_query_engine import QueryEngineComponent
+    except ImportError:
+        # QueryEngineComponent might not exist in some versions
+        QueryEngineComponent = EmptyType
     from llama_index.core.base.embeddings.base import BaseEmbedding
     from llama_index.core.base.llms.base import BaseLLM
     from llama_index.core.base.llms.types import LLMMetadata
