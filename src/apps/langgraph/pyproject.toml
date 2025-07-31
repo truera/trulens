@@ -28,6 +28,9 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9"
+opentelemetry-api = ">=1.23.0"
+opentelemetry-sdk = ">=1.23.0"
+opentelemetry-proto = ">=1.23.0"
 trulens-core = { version = "^2.0.0" }
 trulens-apps-langchain = { version = "^2.0.0" }
 langgraph = ">=0.3.18"
