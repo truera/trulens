@@ -46,6 +46,12 @@ with import_utils.OptionalImports(
 ):
     from trulens.providers.huggingface.endpoint import HuggingfaceEndpoint
 
+with import_utils.OptionalImports(
+    messages=optional_utils.REQUIREMENT_PROVIDER_GOOGLE
+):
+    from trulens.providers.google.endpoint import GoogleGenAIEndpoint
+
+
 __all__ = [
     "Endpoint",
     "DummyEndpoint",
@@ -56,6 +62,7 @@ __all__ = [
     "OpenAIClient",
     "LangchainEndpoint",
     "CortexEndpoint",
+    "GoogleGenAIEndpoint",
 ]
 
 # Replace all classes we expose to ones which issue a deprecation warning upon
