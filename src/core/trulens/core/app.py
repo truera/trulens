@@ -1914,7 +1914,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 app_name=self.app_name,
                 app_version=self.app_version,
                 run_name=run_name,
-                input_id=None,
+                input_id="",
             )
         raise NotImplementedError(
             "This feature is not yet implemented for non-OTEL TruLens!"
@@ -1930,7 +1930,47 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 tru_app=self,
                 app_name=self.app_name,
                 app_version=self.app_version,
-                run_name=None,
+                run_name="",
+                input_id=input_id,
+            )
+        raise NotImplementedError(
+            "This feature is not yet implemented for non-OTEL TruLens!"
+        )
+
+    def context(self, run_name: str = "", input_id: str = ""):
+        """Create a context manager with the specified run_name and/or input_id.
+
+        This provides a flexible way to specify context parameters when using
+        the app as a context manager.
+
+        Args:
+            run_name: Name of the run (optional, defaults to empty string)
+            input_id: ID of the input (optional, defaults to empty string)
+
+        Returns:
+            A context manager for recording app execution
+
+        Example:
+            ```python
+            # Specify run name only
+            with tru_app.context(run_name="my_run"):
+                result = app.respond("query")
+
+            # Specify both run name and input ID
+            with tru_app.context(run_name="my_run", input_id="input_123"):
+                result = app.respond("query")
+            ```
+        """
+        if self.session.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
+        ):
+            from trulens.core.otel.instrument import OtelRecordingContext
+
+            return OtelRecordingContext(
+                tru_app=self,
+                app_name=self.app_name,
+                app_version=self.app_version,
+                run_name=run_name,
                 input_id=input_id,
             )
         raise NotImplementedError(
