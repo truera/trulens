@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from abc import ABCMeta
 from abc import abstractmethod
+from contextlib import contextmanager
 import contextvars
 import datetime
 import inspect
@@ -19,6 +20,7 @@ from typing import (
     Dict,
     Hashable,
     Iterable,
+    Iterator,
     List,
     Optional,
     Sequence,
@@ -326,6 +328,26 @@ def _can_import(to_import: str) -> bool:
         return True
     except ImportError:
         return False
+
+
+class LiveRunContext:
+    """Helper class to track state during a live run."""
+
+    def __init__(self, tru_app: "App", run: "Run"):
+        self.tru_app = tru_app
+        self.run = run
+        self.input_count = 0
+
+    def count_input(self) -> None:
+        """Increment the input record count."""
+        self.input_count += 1
+
+    @contextmanager
+    def input(self, input_id: str) -> Iterator[None]:
+        """Context manager for processing a single input with automatic counting."""
+        with self.tru_app.input(input_id):
+            yield
+        self.count_input()
 
 
 class App(
@@ -1937,45 +1959,190 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             "This feature is not yet implemented for non-OTEL TruLens!"
         )
 
-    def context(self, run_name: str = "", input_id: str = ""):
-        """Create a context manager with the specified run_name and/or input_id.
-
-        This provides a flexible way to specify context parameters when using
-        the app as a context manager.
+    @contextmanager
+    def live_run(
+        self,
+        dataset_name: str,
+        run_name: Optional[str] = None,
+        description: Optional[str] = None,
+        label: Optional[str] = None,
+    ) -> Iterator[LiveRunContext]:
+        """
+        Context manager for live tracing runs with automatic setup and teardown.
 
         Args:
-            run_name: Name of the run (optional, defaults to empty string)
-            input_id: ID of the input (optional, defaults to empty string)
-
-        Returns:
-            A context manager for recording app execution
+            dataset_name: Name of the dataset being processed
+            run_name: Optional run name (auto-generated if not provided)
+            description: Optional description for the run
+            label: Optional label for the run
 
         Example:
             ```python
-            # Specify run name only
-            with tru_app.context(run_name="my_run"):
-                result = app.respond("query")
+            # Option 1: Manual counting
+            with tru_app.live_run(
+                dataset_name="customer_queries",
+                dataset_spec={"RECORD_ROOT.INPUT": "query"}
+            ) as live_run:
+                for input_entry in test_data_entries:
+                    test_app.query(input_entry["query"])
+                    live_run.count_input()
 
-            # Specify both run name and input ID
-            with tru_app.context(run_name="my_run", input_id="input_123"):
-                result = app.respond("query")
+            # Option 2: Automatic counting with input context
+            with tru_app.live_run(
+                dataset_name="customer_queries",
+                dataset_spec={"RECORD_ROOT.INPUT": "query"}
+            ) as live_run:
+                for input_entry in test_data_entries:
+                    with live_run.input(input_entry["id"]):
+                        test_app.query(input_entry["query"])
             ```
         """
-        if self.session.experimental_feature(
-            core_experimental.Feature.OTEL_TRACING
-        ):
-            from trulens.core.otel.instrument import OtelRecordingContext
-
-            return OtelRecordingContext(
-                tru_app=self,
-                app_name=self.app_name,
-                app_version=self.app_version,
-                run_name=run_name,
-                input_id=input_id,
+        # set up run configuration for live tracing
+        if run_name is None:
+            run_name = (
+                f"live_tracing_run_{datetime.datetime.now().strftime('%H%M%S')}"
             )
-        raise NotImplementedError(
-            "This feature is not yet implemented for non-OTEL TruLens!"
+
+        run_config = RunConfig(
+            run_name=run_name,
+            dataset_name=dataset_name,
+            source_type="DATAFRAME",
+            dataset_spec={},
+            description=description,
+            label=label,
         )
+
+        run: Run = self.add_run(run_config=run_config)
+
+        # Create context object to track state
+        live_run_context = LiveRunContext(self, run)
+
+        try:
+            with self.run(run_name=run.run_name):
+                yield live_run_context
+        finally:
+            # After logic: Cleanup
+            self.session.force_flush()
+            run.run_dao.start_ingestion_query(
+                object_name=run.object_name,
+                object_type=run.object_type,
+                object_version=run.object_version,
+                run_name=run.run_name,
+                input_records_count=live_run_context.input_count,
+            )
+
+    def live_tracing_with_run(
+        self,
+        dataset_name: str,
+        run_name: Optional[str] = None,
+        description: Optional[str] = None,
+        label: Optional[str] = None,
+        input_count: Optional[int] = None,
+        inject_context: bool = False,
+    ):
+        """
+        Decorator for live tracing runs with automatic setup and teardown.
+
+        Args:
+            dataset_name: Name of the dataset being processed
+            run_name: Optional run name (auto-generated if not provided)
+            description: Optional description for the run
+            label: Optional label for the run
+            input_count: Pre-known input count (if None, expects function to return count)
+            inject_context: If True, injects LiveRunContext as first argument to function
+
+        Example:
+            ```python
+            # Option 1: Return input count from function
+            @tru_app.live_tracing_with_run(dataset_name="customer_queries")
+            def run_queries():
+                for input_entry in test_data_entries:
+                    test_app.query(input_entry["query"])
+                return len(test_data_entries)  # Return count
+
+            # Option 2: Pre-specify input count
+            @tru_app.live_tracing_with_run(
+                dataset_name="customer_queries",
+                input_count=len(test_data_entries)
+            )
+            def run_queries():
+                for input_entry in test_data_entries:
+                    test_app.query(input_entry["query"])
+
+            # Option 3: Use injected context for manual counting
+            @tru_app.live_tracing_with_run(
+                dataset_name="customer_queries",
+                inject_context=True
+            )
+            def run_queries(live_run_context):
+                for input_entry in test_data_entries:
+                    live_run_context.count_input()
+                    test_app.query(input_entry["query"])
+            ```
+        """
+
+        def decorator(func):
+            def wrapper(*args, **kwargs):
+                # Set up run configuration for live tracing
+                actual_run_name = run_name
+                if actual_run_name is None:
+                    actual_run_name = f"live_tracing_run_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
+
+                run_config = RunConfig(
+                    run_name=actual_run_name,
+                    dataset_name=dataset_name,
+                    source_type="DATAFRAME",
+                    dataset_spec={},
+                    description=description,
+                    label=label,
+                )
+
+                run: Run = self.add_run(run_config=run_config)
+                live_run_context = LiveRunContext(self, run)
+
+                try:
+                    with self.run(run_name=run.run_name):
+                        if inject_context:
+                            # Inject context as first argument
+                            result = func(live_run_context, *args, **kwargs)
+                        else:
+                            result = func(*args, **kwargs)
+
+                        # Determine final input count
+                        final_input_count = input_count
+                        if final_input_count is None:
+                            if inject_context:
+                                # Use the context's tracked count
+                                final_input_count = live_run_context.input_count
+                            elif isinstance(result, int):
+                                # Function returned the count
+                                final_input_count = result
+                            else:
+                                # Default to 0 if no count specified
+                                final_input_count = 0
+                                logger.warning(
+                                    f"No input count specified for live run '{actual_run_name}'. "
+                                    "Consider returning count from function, using inject_context=True, "
+                                    "or specifying input_count parameter."
+                                )
+
+                        live_run_context.input_count = final_input_count
+                        return result
+
+                finally:
+                    # After logic: Cleanup
+                    self.session.force_flush()
+                    run.run_dao.start_ingestion_query(
+                        object_name=run.object_name,
+                        object_type=run.object_type,
+                        object_version=run.object_version,
+                        run_name=run.run_name,
+                        input_records_count=live_run_context.input_count,
+                    )
+
+            return wrapper
+
+        return decorator
 
     def instrumented_invoke_main_method(
         self,
