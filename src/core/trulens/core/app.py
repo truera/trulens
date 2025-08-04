@@ -2157,7 +2157,7 @@ def trace_with_run(
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            # Auto-detect input count from first argument if it's a sequence
+            # Auto-detect input count from first argument if it's a sequence (note: may not work for single-pass iterators like generators)
             detected_count = input_count
             if detected_count is None and args:
                 first_arg = args[0]
