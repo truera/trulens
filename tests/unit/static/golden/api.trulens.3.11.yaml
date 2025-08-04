@@ -93,6 +93,7 @@ trulens.core.app:
     Tool: trulens.core.app.ComponentViewMeta
     TrulensComponent: trulens.core.app.ComponentViewMeta
     instrumented_component_views: builtins.function
+    trace_with_run: builtins.staticmethod
 trulens.core.app.Agent:
   __bases__:
   - trulens.core.app.ComponentView
@@ -165,7 +166,6 @@ trulens.core.app.App:
     start_evaluator: builtins.function
     stop_evaluator: builtins.function
     tags: builtins.str
-    trace_with_run: builtins.function
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     wait_for_feedback_results: builtins.function

@@ -1031,7 +1031,6 @@ trulens_eval.TruApp:
     start_evaluator: builtins.function
     stop_evaluator: builtins.function
     tags: builtins.str
-    trace_with_run: builtins.function
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -1149,7 +1148,6 @@ trulens_eval.TruBasicApp:
     start_evaluator: builtins.function
     stop_evaluator: builtins.function
     tags: builtins.str
-    trace_with_run: builtins.function
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -1268,7 +1266,6 @@ trulens_eval.TruChain:
     start_evaluator: builtins.function
     stop_evaluator: builtins.function
     tags: builtins.str
-    trace_with_run: builtins.function
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -1386,7 +1383,6 @@ trulens_eval.TruCustomApp:
     start_evaluator: builtins.function
     stop_evaluator: builtins.function
     tags: builtins.str
-    trace_with_run: builtins.function
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -1504,7 +1500,6 @@ trulens_eval.TruLlama:
     start_evaluator: builtins.function
     stop_evaluator: builtins.function
     tags: builtins.str
-    trace_with_run: builtins.function
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -1621,7 +1616,6 @@ trulens_eval.TruRails:
     start_evaluator: builtins.function
     stop_evaluator: builtins.function
     tags: builtins.str
-    trace_with_run: builtins.function
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -1740,7 +1734,6 @@ trulens_eval.TruVirtual:
     start_evaluator: builtins.function
     stop_evaluator: builtins.function
     tags: builtins.str
-    trace_with_run: builtins.function
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -1889,7 +1882,6 @@ trulens_eval.app.App:
     start_evaluator: builtins.function
     stop_evaluator: builtins.function
     tags: builtins.str
-    trace_with_run: builtins.function
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -7479,7 +7471,6 @@ trulens_eval.tru_basic_app.TruBasicApp:
     start_evaluator: builtins.function
     stop_evaluator: builtins.function
     tags: builtins.str
-    trace_with_run: builtins.function
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -7642,7 +7633,6 @@ trulens_eval.tru_chain.TruChain:
     start_evaluator: builtins.function
     stop_evaluator: builtins.function
     tags: builtins.str
-    trace_with_run: builtins.function
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -7768,7 +7758,6 @@ trulens_eval.tru_custom_app.TruCustomApp:
     start_evaluator: builtins.function
     stop_evaluator: builtins.function
     tags: builtins.str
-    trace_with_run: builtins.function
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -7917,7 +7906,6 @@ trulens_eval.tru_llama.TruLlama:
     start_evaluator: builtins.function
     stop_evaluator: builtins.function
     tags: builtins.str
-    trace_with_run: builtins.function
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -8100,7 +8088,6 @@ trulens_eval.tru_rails.TruRails:
     start_evaluator: builtins.function
     stop_evaluator: builtins.function
     tags: builtins.str
-    trace_with_run: builtins.function
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -8227,7 +8214,6 @@ trulens_eval.tru_virtual.TruVirtual:
     start_evaluator: builtins.function
     stop_evaluator: builtins.function
     tags: builtins.str
-    trace_with_run: builtins.function
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
