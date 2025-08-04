@@ -2041,7 +2041,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         Decorator for live tracing with a run with automatic setup and teardown.
 
         Args:
-            run_name: Mandatory run name that uniquely identified the run
+            run_name: Mandatory run name that uniquely identifies the run
             description: Optional description for the run
             label: Optional label for the run
             input_count: Optional input count (auto-detected from first argument if not provided)
