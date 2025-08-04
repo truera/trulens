@@ -2173,7 +2173,7 @@ def trace_with_run(
             # Set up run configuration for live tracing
             run_config = RunConfig(
                 run_name=run_name,
-                dataset_name=f"live_tracing_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                dataset_name=f"live_tracing_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f')}",
                 source_type="DATAFRAME",
                 dataset_spec={},
                 description=description,
