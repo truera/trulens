@@ -6,6 +6,7 @@ from abc import abstractmethod
 from contextlib import contextmanager
 import contextvars
 import datetime
+import functools
 import inspect
 from inspect import BoundArguments
 from inspect import Signature
@@ -2062,6 +2063,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         """
 
         def decorator(func):
+            @functools.wraps(func)
             def wrapper(*args, **kwargs):
                 # Auto-detect input count from first argument if it's a sequence
                 detected_count = input_count
