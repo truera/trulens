@@ -1962,8 +1962,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
     @contextmanager
     def live_run(
         self,
-        dataset_name: str,
-        run_name: Optional[str] = None,
+        run_name: str,
+        dataset_name: Optional[str] = None,
         description: Optional[str] = None,
         label: Optional[str] = None,
     ) -> Iterator[LiveRunContext]:
@@ -1971,8 +1971,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         Context manager for live tracing runs with automatic setup and teardown.
 
         Args:
-            dataset_name: Name of the dataset being processed
-            run_name: Optional run name (auto-generated if not provided)
+            run_name: Name of the run (unique identifier)
+            dataset_name: Name of the dataset being processed (auto-generated if not provided)
             description: Optional description for the run
             label: Optional label for the run
 
@@ -1980,7 +1980,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             ```python
             # Option 1: Manual counting
             with tru_app.live_run(
-                dataset_name="customer_queries",
+                run_name="customer_queries_run_1",
                 dataset_spec={"RECORD_ROOT.INPUT": "query"}
             ) as live_run:
                 for input_entry in test_data_entries:
@@ -1989,7 +1989,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
             # Option 2: Automatic counting with input context
             with tru_app.live_run(
-                dataset_name="customer_queries",
+                run_name="customer_queries_run_1",
                 dataset_spec={"RECORD_ROOT.INPUT": "query"}
             ) as live_run:
                 for input_entry in test_data_entries:
@@ -1998,8 +1998,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             ```
         """
         # set up run configuration for live tracing
-        if run_name is None:
-            run_name = (
+        if dataset_name is None:
+            dataset_name = (
                 f"live_tracing_run_{datetime.datetime.now().strftime('%H%M%S')}"
             )
 
@@ -2031,66 +2031,58 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 input_records_count=live_run_context.input_count,
             )
 
-    def live_tracing_with_run(
+    def trace_with_run(
         self,
-        dataset_name: str,
-        run_name: Optional[str] = None,
+        run_name: str,
         description: Optional[str] = None,
         label: Optional[str] = None,
         input_count: Optional[int] = None,
-        inject_context: bool = False,
     ):
         """
-        Decorator for live tracing runs with automatic setup and teardown.
+        Decorator for live tracing with a run with automatic setup and teardown.
 
         Args:
-            dataset_name: Name of the dataset being processed
-            run_name: Optional run name (auto-generated if not provided)
+            run_name: Mandatory run name that uniquely identified the run
             description: Optional description for the run
             label: Optional label for the run
-            input_count: Pre-known input count (if None, expects function to return count)
-            inject_context: If True, injects LiveRunContext as first argument to function
+            input_count: Optional input count (auto-detected from first argument if not provided)
 
         Example:
             ```python
-            # Option 1: Return input count from function
-            @tru_app.live_tracing_with_run(dataset_name="customer_queries")
-            def run_queries():
-                for input_entry in test_data_entries:
-                    test_app.query(input_entry["query"])
-                return len(test_data_entries)  # Return count
-
-            # Option 2: Pre-specify input count
-            @tru_app.live_tracing_with_run(
-                dataset_name="customer_queries",
-                input_count=len(test_data_entries)
-            )
-            def run_queries():
-                for input_entry in test_data_entries:
+            @tru_app.trace_with_run(run_name="customer_queries_run_1")
+            def run_queries(test_data):
+                for input_entry in test_data:
                     test_app.query(input_entry["query"])
 
-            # Option 3: Use injected context for manual counting
-            @tru_app.live_tracing_with_run(
-                dataset_name="customer_queries",
-                inject_context=True
-            )
-            def run_queries(live_run_context):
-                for input_entry in test_data_entries:
-                    live_run_context.count_input()
-                    test_app.query(input_entry["query"])
+            run_queries(test_data_entries)  # Auto-detects len(test_data_entries)
+
+            # Or specify manually if auto-detection doesn't work
+            @tru_app.trace_with_run(run_name="custom_run", input_count=50)
+            def run_custom():
+                # Custom logic that processes 50 inputs
+                pass
             ```
         """
 
         def decorator(func):
             def wrapper(*args, **kwargs):
-                # Set up run configuration for live tracing
-                actual_run_name = run_name
-                if actual_run_name is None:
-                    actual_run_name = f"live_tracing_run_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                # Auto-detect input count from first argument if it's a sequence
+                detected_count = input_count
+                if detected_count is None and args:
+                    first_arg = args[0]
+                    if hasattr(first_arg, "__len__") and not isinstance(
+                        first_arg, str
+                    ):
+                        detected_count = len(first_arg)
+                    else:
+                        detected_count = 1  # Default to 1 if can't detect
+                elif detected_count is None:
+                    detected_count = 1  # Default to 1 if no args
 
+                # Set up run configuration for live tracing
                 run_config = RunConfig(
-                    run_name=actual_run_name,
-                    dataset_name=dataset_name,
+                    run_name=run_name,
+                    dataset_name=f"live_tracing_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}",
                     source_type="DATAFRAME",
                     dataset_spec={},
                     description=description,
@@ -2098,35 +2090,11 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 )
 
                 run: Run = self.add_run(run_config=run_config)
-                live_run_context = LiveRunContext(self, run)
 
                 try:
-                    with self.run(run_name=run.run_name):
-                        if inject_context:
-                            # Inject context as first argument
-                            result = func(live_run_context, *args, **kwargs)
-                        else:
-                            result = func(*args, **kwargs)
-
-                        # Determine final input count
-                        final_input_count = input_count
-                        if final_input_count is None:
-                            if inject_context:
-                                # Use the context's tracked count
-                                final_input_count = live_run_context.input_count
-                            elif isinstance(result, int):
-                                # Function returned the count
-                                final_input_count = result
-                            else:
-                                # Default to 0 if no count specified
-                                final_input_count = 0
-                                logger.warning(
-                                    f"No input count specified for live run '{actual_run_name}'. "
-                                    "Consider returning count from function, using inject_context=True, "
-                                    "or specifying input_count parameter."
-                                )
-
-                        live_run_context.input_count = final_input_count
+                    with self.run(run_name=run_name):
+                        # Call the original function without any modifications
+                        result = func(*args, **kwargs)
                         return result
 
                 finally:
@@ -2137,7 +2105,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                         object_type=run.object_type,
                         object_version=run.object_version,
                         run_name=run.run_name,
-                        input_records_count=live_run_context.input_count,
+                        input_records_count=detected_count,
                     )
 
             return wrapper
