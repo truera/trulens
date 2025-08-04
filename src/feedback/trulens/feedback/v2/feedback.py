@@ -1124,7 +1124,7 @@ class TrajectoryStepRelevance(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     """
 
     system_prompt_template: ClassVar[str] = cleandoc(
-        """You are a TRAJECTORY STEP RELEVANCE evaluator: first, identify the user's goal and then evaluate how relevant each step in the trajectory is to that goal.
+        """You are a meticulous and analytical TRAJECTORY STEP RELEVANCE evaluator: first, identify the user's goal and then evaluate how relevant each step in the trajectory is to that goal.
         Respond only as a number from {output_space_prompt}.
 
         Evaluation criteria:
@@ -1167,21 +1167,22 @@ class TrajectoryLogicalConsistency(
     criteria_template: ClassVar[str] = """
     Score the logical consistency of the trajectory steps.
 
-    {max_score}: Every action, claim, and transition in the workflow is explicitly justified using information available in the prior context. Each statement is directly supported by and traceable to previous data, instructions, or content—no part of the response is fabricated or inferred from unstated assumptions. If an error from an earlier step is identified and corrected, the error is explicitly acknowledged before the correction is made, maintaining logical transparency. All previously assigned tasks and every internal system instruction are completed and followed, with clear evidence provided from earlier context at each step. The reasoning remains coherent and free of contradictions or logical leaps.
+    {max_score}: Every action, claim, and transition in the workflow is explicitly justified using information available in the prior context. Each statement is directly supported by and traceable to previous data, instructions, or content—no part of the response is fabricated or inferred from unstated assumptions. If an error from an earlier step is identified and corrected, the error is explicitly acknowledged before the correction is made, maintaining logical transparency. Each internal system instruction is completed and followed. The reasoning remains coherent and free of contradictions or logical leaps.
 
-    Middle scores: There are occasional lapses in logic, minor unsupported assertions, or isolated explanatory gaps. Errors may be corrected, but corrections are occasionally introduced without clear acknowledgement of prior mistakes, creating minor inconsistencies or reducing transparency. Some statements may not be fully traceable to prior context, or some assumptions are made without explicit support from available evidence. Factual consistency may suffer from minor errors or embellishments, but the overall reasoning and most assigned tasks and instructions remain intact.
+    Middle scores: There are occasional lapses in logic, minor unsupported assertions, or isolated explanatory gaps. Errors may be corrected, but corrections are occasionally introduced without clear acknowledgement of prior mistakes, creating minor inconsistencies or reducing transparency. Some statements may not be fully traceable to prior context, or some assumptions are made without explicit support from available evidence. Factual consistency may suffer from minor errors or embellishments, but the overall reasoning remains intact. Most previously assigned tasks and instructions remain intact.
 
     {min_score}: There is frequent or severe breakdown in the logical flow; many statements are either unsupported by, or cannot be grounded in, the prior context. Corrections for earlier errors are often made without any explicit acknowledgement, resulting in contradictions or confusing transitions. Key actions or facts are invented, fabricated, or otherwise not observable in the given information. Major contradictions, invalid assumptions, or arbitrary transitions undermine the overall reasoning and conclusion. Most previously assigned tasks are not fulfilled, and internal system instructions are largely disregarded.
     """
 
     system_prompt_template: ClassVar[str] = cleandoc(
-        """You are a TRAJECTORY LOGICAL CONSISTENCY evaluator: provide a score for the logical consistency of trajectory steps.
+        """You are a meticulous and analytical TRAJECTORY LOGICAL CONSISTENCY evaluator: provide a score for the logical consistency of trajectory steps.
+        This multi-turn conversation involves multiple agents. Track each agent's system instructions and conversation history, ensuring all subsequent outputs from that agent adhere to its established guidelines and prior dialogue, even when agents speak interchangeably.
         Respond only as a number from {output_space_prompt}.
 
         Evaluation criteria:
         {criteria}
 
-        Be critical in your evaluation and focus on identifying any contradictions, gaps in reasoning, or unrealistic statements. For each of the tool calls and results, pay special attention to whether the logic of generated SQL code fully captures the intent of the associated query. Cite specific examples from the trajectory, and flag any implicit assumptions.
+        Be critical in your evaluation. For each step in the trajectory with an issue (eg. contradictions, unsupported statements, or previous instructions not followed), identify that step and explain the problem specifically. Flag any implicit assumptions.
 
         Never elaborate.
         """
@@ -1218,21 +1219,21 @@ class TrajectoryWorkflowEfficiency(
     criteria_template: ClassVar[str] = """
     Score the efficiency of the workflow.
 
-    {max_score}: All relevant actions are executed exactly once, in a streamlined and optimized sequence. There is no unnecessary busywork, overthinking, repetition, backtracking, or wasted computation/resources. Error handling is appropriately lean and resolves as quickly as possible. Any verification steps are necessary and not redundant. Verification steps are only present when there is a demonstrable risk or uncertainty, unresolved dependency, or explicit requirement in the prior context.
+    {max_score}: All relevant actions are executed exactly once, in a streamlined and optimized sequence. There is no unnecessary busywork, repetition, backtracking, or wasted computation/resources. Each step genuinely contributes to progressing towards the goal without extraneous operations. Error handling is appropriately lean and resolves quickly, without requiring multiple attempts due to easily correctable input errors (e.g., incorrect tool arguments). Verification steps provide unique feedback, serve as sanity checks, or uses a demonstrably different approach from the initial approach to ensure correctness, without duplicating prior effort.
 
-    Middle scores: Some instances of workflow inefficiency such as redundant actions or verification steps, non-ideal ordering of steps, excessive error handling, missed opportunities for consolidation, or unnecessary resource use. The inefficiencies may have noticeable but not devastating impact on the overall process.
+    Middle scores: Some instances of workflow inefficiency such as redundant actions, non-ideal ordering of steps that cause rework, excessive error handling, missed opportunities for consolidation, or unnecessary resource use. There might be occasional minor input errors or misconfigurations that lead to a slightly increased number of attempts but are eventually corrected without major disruption. The inefficiencies may have noticeable but not devastating impact on the overall process. There might be minor detours or operations that are not strictly necessary but don't derail the progress.
 
-    {min_score}: Workflow is highly inefficient: dominated by loops, duplicated efforts, poorly ordered sequence, or significant wasted computation that break progress. Multiple repeated tool calls required to recover from preventable mistakes in invocation or argument generation. Verification steps are superfluous and highly unnecessary.
+    {min_score}: Workflow is highly inefficient: dominated by loops, duplicated efforts, poorly ordered sequence, or significant wasted computation that break progress. Multiple repeated tool calls required to recover from preventable mistakes in invocation or argument generation. Verification steps are highly redundant and do not provide any value. The workflow's operational flow is severely hampered by unnecessary or counterproductive actions.
     """
 
     system_prompt_template: ClassVar[str] = cleandoc(
-        """You are a TRAJECTORY WORKFLOW EFFICIENCY evaluator: provide a score for how efficiently the workflow executes its steps.
+        """You are a TRAJECTORY WORKFLOW EFFICIENCY evaluator: provide a score for how efficiently the workflow executes its steps. Your assessment should strictly focus on the operational fluidity, resource utilization, and avoidance of redundant or wasteful actions within the workflow itself, irrespective of whether the plan was ultimately successful or fully adhered to.
         Respond only as a number from {output_space_prompt}.
 
         Evaluation criteria:
         {criteria}
 
-        Be critical in your evaluation and focus on identifying redundancies, inefficiencies, and missed optimization opportunities. Cite specific examples from the trajectory.
+        Evaluation steps to give feedback on key steps in the trajectory are allowed. Otherwise, be critical in your evaluation. For each step in the trajectory with an issue (e.g., redundancies, unnecessary retries, inefficient sequencing, missed optimization opportunities, or preventable errors), identify that step and explain the problem specifically.
 
         Never elaborate.
         """
@@ -1275,7 +1276,7 @@ class TrajectoryPlanAdherence(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     """
 
     system_prompt_template: ClassVar[str] = cleandoc(
-        """You are a TRAJECTORY PLAN ADHERENCE evaluator: first, identify the exact plan and then evaluate how closely the trajectory follows the plan.
+        """You are a TRAJECTORY PLAN ADHERENCE evaluator: first, identify the plan and any subsequent replans. Then, evaluate how closely the trajectory follows the plan or replans.
         Respond only as a number from {output_space_prompt}.
 
         Evaluation criteria:
@@ -1316,7 +1317,7 @@ class TrajectoryPlanQuality(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     criteria_template: ClassVar[str] = """
     Score the quality of the plan.
 
-    {max_score}: The plan is well-structured, optimal, and directly addresses the user's query. Every step is justified, necessary, and includes sufficient detail to ensure feasibility and efficiency. If replanning occurs, the revised plan and rationale are provided with precise references to observed gaps or triggers in prior results or context.
+    {max_score}: The plan is well-structured, optimal, and directly addresses the user's query by breaking it down into clear, actionable, and logical steps. Every step is justified, necessary, and includes sufficient detail to ensure feasibility and efficiency without being overly verbose. If replanning occurs, the revised plan and rationale are provided with precise references to observed gaps or triggers in prior results or context.
 
     Middle scores: The plan generally addresses the query and appears feasible. Minor issues may be present: some steps lack explicit justification, a few steps may be unnecessary or unclear, or non-critical actions may be missing. The step order or rationale might be partially implied rather than fully articulated. If replanning occurs, it is mentioned but may lack thorough explanation or explicit ties to prior context.
 
@@ -1324,13 +1325,13 @@ class TrajectoryPlanQuality(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     """
 
     system_prompt_template: ClassVar[str] = cleandoc(
-        """You are a TRAJECTORY PLAN QUALITY evaluator: you are given the entire trajectory and the plan. First, you must identify the system's overall plan (independent of the trajectory) and then evaluate how well the plan addresses the user's query.
+        """You are a TRAJECTORY PLAN QUALITY evaluator: you are given the entire trajectory which contains the plan. First, you must identify the system's overall plan (independent of the trajectory) as well as any subsequent replans. **Your evaluation MUST solely focus on the intrinsic quality of the plan (and replans), without any consideration for how it was executed or the results of the execution.** Evaluate how well the plan addresses the user's query.
         Respond only as a number from {output_space_prompt}.
 
         Evaluation criteria:
         {criteria}
 
-        Ensure that you identify the system's plan and not the entire trajectory. Be critical in your evaluation and focus on identifying any steps in the plan that are not necessary, unclear, or unsupported. Cite specific examples from the plan.
+        Ensure that you identify the system's plan and not the executed trajectory. Be critical in your evaluation and focus on identifying any steps in the plan that are not necessary, unclear, or unsupported. Cite specific examples from the plan.
 
         Never elaborate.
         """
