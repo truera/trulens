@@ -2029,88 +2029,6 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 input_records_count=live_run_context.input_count,
             )
 
-    def trace_with_run(
-        self,
-        run_name: str,
-        description: Optional[str] = None,
-        label: Optional[str] = None,
-        input_count: Optional[int] = None,
-    ):
-        """
-        Decorator for live tracing with a run with automatic setup and teardown.
-
-        Args:
-            run_name: Mandatory run name that uniquely identifies the run
-            description: Optional description for the run
-            label: Optional label for the run
-            input_count: Optional input count (auto-detected from first argument if not provided)
-
-        Example:
-            ```python
-            @tru_app.trace_with_run(run_name="customer_queries_run_1")
-            def run_queries(test_data):
-                for input_entry in test_data:
-                    test_app.query(input_entry["query"])
-
-            run_queries(test_data_entries)  # Auto-detects len(test_data_entries)
-
-            # Or specify manually if auto-detection doesn't work
-            @tru_app.trace_with_run(run_name="custom_run", input_count=50)
-            def run_custom():
-                # Custom logic that processes 50 inputs
-                pass
-            ```
-        """
-
-        def decorator(func):
-            @functools.wraps(func)
-            def wrapper(*args, **kwargs):
-                # Auto-detect input count from first argument if it's a sequence
-                detected_count = input_count
-                if detected_count is None and args:
-                    first_arg = args[0]
-                    if hasattr(first_arg, "__len__") and not isinstance(
-                        first_arg, str
-                    ):
-                        detected_count = len(first_arg)
-                    else:
-                        detected_count = 1  # Default to 1 if can't detect
-                elif detected_count is None:
-                    detected_count = 1  # Default to 1 if no args
-
-                # Set up run configuration for live tracing
-                run_config = RunConfig(
-                    run_name=run_name,
-                    dataset_name=f"live_tracing_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}",
-                    source_type="DATAFRAME",
-                    dataset_spec={},
-                    description=description,
-                    label=label,
-                )
-
-                run: Run = self.add_run(run_config=run_config)
-
-                try:
-                    with self.run(run_name=run_name):
-                        # Call the original function without any modifications
-                        result = func(*args, **kwargs)
-                        return result
-
-                finally:
-                    # After logic: Cleanup
-                    self.session.force_flush()
-                    run.run_dao.start_ingestion_query(
-                        object_name=run.object_name,
-                        object_type=run.object_type,
-                        object_version=run.object_version,
-                        run_name=run.run_name,
-                        input_records_count=detected_count,
-                    )
-
-            return wrapper
-
-        return decorator
-
     def instrumented_invoke_main_method(
         self,
         run_name: str,
@@ -2199,6 +2117,90 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         """Stop the evaluator for the app."""
         if hasattr(self, "_evaluator") and self._evaluator is not None:
             self._evaluator.stop_evaluator()
+
+
+@staticmethod
+def trace_with_run(
+    app: "App",
+    run_name: str,
+    description: Optional[str] = None,
+    label: Optional[str] = None,
+    input_count: Optional[int] = None,
+):
+    """
+    Decorator for live tracing with a run with automatic setup and teardown.
+
+    Args:
+        app: The TruLens App instance to use for tracing
+        run_name: Mandatory run name that uniquely identifies the run
+        description: Optional description for the run
+        label: Optional label for the run
+        input_count: Optional input count (auto-detected from first argument if not provided)
+
+    Example:
+        ```python
+        @trace_with_run(app=tru_app, run_name="customer_queries_run_1")
+        def run_queries(test_data):
+            for input_entry in test_data:
+                test_app.query(input_entry["query"])
+
+        run_queries(test_data_entries)  # Auto-detects len(test_data_entries)
+
+        # Or specify manually if auto-detection doesn't work
+        @trace_with_run(app=tru_app, run_name="custom_run", input_count=50)
+        def run_custom():
+            # Custom logic that processes 50 inputs
+            pass
+        ```
+    """
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            # Auto-detect input count from first argument if it's a sequence
+            detected_count = input_count
+            if detected_count is None and args:
+                first_arg = args[0]
+                if hasattr(first_arg, "__len__") and not isinstance(
+                    first_arg, str
+                ):
+                    detected_count = len(first_arg)
+                else:
+                    detected_count = 1  # Default to 1 if can't detect
+            elif detected_count is None:
+                detected_count = 1  # Default to 1 if no args
+
+            # Set up run configuration for live tracing
+            run_config = RunConfig(
+                run_name=run_name,
+                dataset_name=f"live_tracing_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                source_type="DATAFRAME",
+                dataset_spec={},
+                description=description,
+                label=label,
+            )
+
+            run: Run = app.add_run(run_config=run_config)
+
+            try:
+                with app.run(run_name=run_name):
+                    # Call the original function without any modifications
+                    result = func(*args, **kwargs)
+                    return result
+            finally:
+                # After logic: Cleanup
+                app.session.force_flush()
+                run.run_dao.start_ingestion_query(
+                    object_name=run.object_name,
+                    object_type=run.object_type,
+                    object_version=run.object_version,
+                    run_name=run.run_name,
+                    input_records_count=detected_count,
+                )
+
+        return wrapper
+
+    return decorator
 
 
 # NOTE: Cannot App.model_rebuild here due to circular imports involving mod_session.TruSession
