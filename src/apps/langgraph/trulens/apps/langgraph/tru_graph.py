@@ -11,6 +11,7 @@ from typing import (
     Optional,
 )
 
+from opentelemetry.trace import get_current_span
 from pydantic import Field
 from trulens.apps.langchain.tru_chain import TruChain
 from trulens.core import app as core_app
@@ -221,9 +222,22 @@ class TruGraph(TruChain):
                     if hasattr(task_function_instance, "func") and hasattr(
                         task_function_instance.func, "__name__"
                     ):
+                        task_name = task_function_instance.func.__name__
                         attributes[SpanAttributes.GRAPH_TASK.TASK_NAME] = (
-                            task_function_instance.func.__name__
+                            task_name
                         )
+
+                        # Update the span name to the task name
+                        try:
+                            current_span = get_current_span()
+                            if current_span and hasattr(
+                                current_span, "update_name"
+                            ):
+                                current_span.update_name(task_name)
+                        except Exception as e:
+                            logger.debug(
+                                f"Failed to update span name to {task_name}: {e}"
+                            )
 
                     # Serialize the task input arguments
                     try:

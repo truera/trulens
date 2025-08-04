@@ -1,6 +1,6 @@
 {% set name = "trulens-core" %}
 {% set pyname = name.replace('-', '.') %}
-{% set version = "2.1.0" %}
+{% set version = "2.1.2" %}
 
 package:
   name: {{ name|lower }}
@@ -12,7 +12,7 @@ source:
   {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-core/#files
-  sha256: f5648fe880867df35be62d5682d07dc95519ffed63219de651070f1f26d4378f
+  sha256: 40083fbeac03ab0c6f86c53dd04f10eadec38d992441d59961f3c9c36bc5429d
   {% endif %}
 
 build:
@@ -50,6 +50,7 @@ requirements:
     - tqdm >=4.2.0
     - openai >=1.0.0
     - httpx >=0.27
+    - trulens-feedback >=2.0.0
 
 test:
   imports:

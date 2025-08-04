@@ -381,11 +381,13 @@ class Groundedness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
         Statement: {hypothesis}
 
-        Please meticulously answer with the template below for ALL statement sentences:
+        For EACH sentence in STATEMENTS output one block EXACTLY in the following template *and nothing else*:
 
         Criteria: <Statement>
         Supporting Evidence: <Identify and describe the location in the source where the information matches the statement. Provide a detailed, human-readable summary indicating the path or key details. if nothing matches, say NOTHING FOUND. For the case where the statement is an abstention, say ABSTENTION>
-        Score: <Output a number based on the scoring output space / range>
+        Score: <Only the numeric score inside of the specified scoring range>
+
+        Return the blocks one after another with a single blank line between blocks. Do NOT output any text before the first block or after the last block. Do NOT include explanations outside the template.
         """
     )
 

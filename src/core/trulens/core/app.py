@@ -63,7 +63,6 @@ from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import signature as signature_utils
 from trulens.core.utils import threading as threading_utils
-from trulens.feedback.computer import compute_feedback_by_span_group
 from trulens.otel.semconv.constants import (
     TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG,
 )
@@ -1991,12 +1990,22 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             raise ValueError(
                 "This method is only supported for OTEL Tracing. Please enable OTEL tracing in the environment!"
             )
+
+        try:
+            from trulens.feedback.computer import compute_feedback_by_span_group
+        except ImportError:
+            logger.error(
+                "trulens.feedback package is not installed. Please install it to use feedback computation functionality."
+            )
+            raise
+
         if events is None:
             # Get all events associated with this app name and version.
             # TODO(otel): Should probably handle the case where there are a lot of events with pagination.
             events = self.connector.get_events(
                 app_name=self.app_name, app_version=self.app_version
             )
+
         for feedback in self.feedbacks:
             compute_feedback_by_span_group(
                 events,
