@@ -2121,8 +2121,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
 @staticmethod
 def trace_with_run(
-    app: "App",
-    run_name: str,
+    app: Optional["App"],
+    run_name: Optional[str] = None,
     description: Optional[str] = None,
     label: Optional[str] = None,
     input_count: Optional[int] = None,
@@ -2131,8 +2131,8 @@ def trace_with_run(
     Decorator for live tracing with a run with automatic setup and teardown.
 
     Args:
-        app: The TruLens App instance to use for tracing
-        run_name: Mandatory run name that uniquely identifies the run
+        app: The TruLens App instance to use for tracing. If None, no tracing is performed.
+        run_name: Run name that uniquely identifies the run. Required when app is not None.
         description: Optional description for the run
         label: Optional label for the run
         input_count: Optional input count (auto-detected from first argument if not provided)
@@ -2143,18 +2143,18 @@ def trace_with_run(
         def run_queries(test_data):
             for input_entry in test_data:
                 test_app.query(input_entry["query"])
-
-        run_queries(test_data_entries)  # Auto-detects len(test_data_entries)
-
-        # Or specify manually if auto-detection doesn't work
-        @trace_with_run(app=tru_app, run_name="custom_run", input_count=50)
-        def run_custom():
-            # Custom logic that processes 50 inputs
-            pass
         ```
     """
 
     def decorator(func):
+        # If app is None, just return the original function without any wrapping
+        if app is None:
+            return func
+
+        # If app is provided but run_name is None, raise an error
+        if run_name is None:
+            raise ValueError("run_name is required when app is not None")
+
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             # Auto-detect input count from first argument if it's a sequence
