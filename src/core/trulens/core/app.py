@@ -2014,14 +2014,13 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
         run: Run = self.add_run(run_config=run_config)
 
-        # Create context object to track state
         live_run_context = LiveRunContext(self, run)
 
         try:
             with self.run(run_name=run.run_name):
                 yield live_run_context
         finally:
-            # After logic: Cleanup
+            # kick off the task orchestration with start_ingestion_query
             self.session.force_flush()
             run.run_dao.start_ingestion_query(
                 object_name=run.object_name,
