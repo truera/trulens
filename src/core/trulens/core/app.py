@@ -1980,8 +1980,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             ```python
             # Option 1: Manual counting
             with tru_app.live_run(
-                run_name="customer_queries_run_1",
-                dataset_spec={"RECORD_ROOT.INPUT": "query"}
+                run_name="customer_queries_run_1"
             ) as live_run:
                 for input_entry in test_data_entries:
                     test_app.query(input_entry["query"])
@@ -1989,8 +1988,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
             # Option 2: Automatic counting with input context
             with tru_app.live_run(
-                run_name="customer_queries_run_1",
-                dataset_spec={"RECORD_ROOT.INPUT": "query"}
+                run_name="customer_queries_run_1"
             ) as live_run:
                 for input_entry in test_data_entries:
                     with live_run.input(input_entry["id"]):
@@ -2006,7 +2004,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         run_config = RunConfig(
             run_name=run_name,
             dataset_name=dataset_name,
-            source_type="DATAFRAME",
+            source_type="LIVE_TRACING",
             dataset_spec={},
             description=description,
             label=label,
