@@ -23,6 +23,12 @@ from trulens.core.utils import pyschema as pyschema_utils
 from trulens.otel.semconv.constants import TRULENS_INSTRUMENT_WRAPPER_FLAG
 from trulens.otel.semconv.trace import SpanAttributes
 
+from langgraph.graph import StateGraph
+from langgraph.pregel import Pregel
+from langgraph.types import Command
+
+logger = logging.getLogger(__name__)
+
 # Handle backward compatibility for TaskFunction rename
 try:
     from langgraph.func import TaskFunction
@@ -30,13 +36,8 @@ except ImportError:
     try:
         from langgraph.func import _TaskFunction as TaskFunction
     except ImportError:
+        logger.warning("TaskFunction not found, skipping instrumentation")
         TaskFunction = None
-
-from langgraph.graph import StateGraph
-from langgraph.pregel import Pregel
-from langgraph.types import Command
-
-logger = logging.getLogger(__name__)
 
 
 class LangGraphInstrument(core_instruments.Instrument):
