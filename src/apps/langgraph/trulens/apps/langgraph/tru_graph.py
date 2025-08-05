@@ -214,7 +214,7 @@ class TruGraph(TruChain):
         try:
             from trulens.core.otel.instrument import instrument_method
 
-            # Check if TaskFunction/__call__ is already instrumented
+            # Check if TaskFunction.__call__ is already instrumented
             if hasattr(TaskFunction.__call__, TRULENS_INSTRUMENT_WRAPPER_FLAG):
                 logger.debug(
                     "TaskFunction/_TaskFunction.__call__ already instrumented"
@@ -229,7 +229,7 @@ class TruGraph(TruChain):
             def task_function_attributes(ret, exception, *args, **kwargs):
                 attributes = {}
 
-                # For TaskFunction/__call__, the first argument is self (TaskFunction/_TaskFunction instance)
+                # For TaskFunction.__call__, the first argument is self (TaskFunction/_TaskFunction instance)
                 if args and len(args) > 0:
                     task_function_instance = args[0]
                     task_args = args[1:] if len(args) > 1 else ()
