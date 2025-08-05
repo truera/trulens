@@ -2015,11 +2015,16 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
         live_run_context = LiveRunContext(self, run)
 
+        logger.debug(f"Starting live run with run_name: {run.run_name}")
+
         try:
             with self.run(run_name=run.run_name):
                 yield live_run_context
         finally:
-            # kick off the task orchestration with start_ingestion_query
+            logger.debug(
+                f"Finishing live run with run_name: {run.run_name} for {live_run_context.input_count} input records"
+            )
+
             self.session.force_flush()
             run.run_dao.start_ingestion_query(
                 object_name=run.object_name,
@@ -2157,7 +2162,7 @@ def trace_with_run(
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            # Auto-detect input count from first argument if it's a sequence (note: may not work for single-pass iterators like generators)
+            # Auto-detect input count from first argument if it's a sequence
             detected_count = input_count
             if detected_count is None and args:
                 first_arg = args[0]
@@ -2188,7 +2193,10 @@ def trace_with_run(
                     result = func(*args, **kwargs)
                     return result
             finally:
-                # After logic: Cleanup
+                logger.debug(
+                    f"Finishing live run with run_name: {run.run_name} for {detected_count} input records"
+                )
+
                 app.session.force_flush()
                 run.run_dao.start_ingestion_query(
                     object_name=run.object_name,
