@@ -33,7 +33,7 @@ opentelemetry-sdk = ">=1.23.0"
 opentelemetry-proto = ">=1.23.0"
 trulens-core = { version = "^2.0.0" }
 trulens-apps-langchain = { version = "^2.0.0" }
-langgraph = ">=0.3.18,<0.6.0"
+langgraph = ">=0.4.4"
 pydantic = "^2.4.2"
 
 [tool.poetry.group.dev.dependencies]
