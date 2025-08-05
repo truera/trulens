@@ -12532,14 +12532,14 @@ capabilities.</p>
 <p><strong>Automatic LangGraph Function Tracing</strong>:</p>
 <p>TruGraph automatically instruments LangGraph components including:
 - <code>Pregel</code> methods (invoke, ainvoke, stream, etc.) - instrumented at class-level during import
-- <code>TaskFunction.__call__</code> method - instrumented at class-level during import
+- <code>TaskFunction.__call__</code> method (or <code>_TaskFunction.__call__</code> in newer versions) - instrumented at class-level during import
 - <code>StateGraph</code> objects (uncompiled graphs) for logging/debugging purposes</p>
-<p><strong>Class-Level Instrumentation</strong>: Both <code>@task</code> functions (TaskFunction) and
+<p><strong>Class-Level Instrumentation</strong>: Both <code>@task</code> functions (TaskFunction/_TaskFunction) and
 <code>Pregel</code> graph methods are instrumented at the class level when TruGraph is imported.
 This ensures all function calls are captured regardless of where the instances
 are embedded in the object hierarchy (e.g., inside custom classes).</p>
 <p><strong>Benefits of Class-Level Approach</strong>:
-- <strong>Guaranteed Coverage</strong>: All TaskFunction and Pregel method calls are captured
+- <strong>Guaranteed Coverage</strong>: All TaskFunction/_TaskFunction and Pregel method calls are captured
 - <strong>No Import Timing Issues</strong>: Works regardless of when objects are created
 - <strong>Consistent Span Types</strong>: Properly sets "graph_node" and "graph_task" span types</p>
 <p>Example: "Creating a LangGraph multi-agent application"</p>
