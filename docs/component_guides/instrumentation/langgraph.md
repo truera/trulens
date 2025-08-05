@@ -10,7 +10,7 @@ TruGraph offers:
 * Multi-agent evaluation capabilities
 * Automatic @task instrumentation with intelligent attribute extraction
 
-## Instrumenting LangChain apps
+## Instrumenting LangGraph apps
 
 To demonstrate usage, we'll create a basic multi-agent workflow with a researcher and a writer.
 
