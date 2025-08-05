@@ -9,4 +9,4 @@ from trulens.core.utils import deprecation as deprecation_utils
 
 deprecation_utils.packages_dep_warn()
 
-from trulens.providers.google.provider import GoogleGenAI
+from trulens.providers.google.provider import Google

@@ -41,7 +41,7 @@ def _get_env_api_key() -> Optional[str]:
     return env_google_api_key or env_gemini_api_key or None
 
 
-class GoogleGenAICostComputer:
+class GoogleCostComputer:
     @staticmethod
     def handle_response(response: Any) -> Dict[str, Any]:
         usage = response.usage_metadata
@@ -60,7 +60,7 @@ class GoogleGenAICostComputer:
         }
 
 
-class GoogleGenAICallback(core_endpoint.EndpointCallback):
+class GoogleCallback(core_endpoint.EndpointCallback):
     _FIELDS_MAP: ClassVar[List[Tuple[str, str]]] = [
         ("cost", "total_cost"),
         ("n_tokens", "total_tokens"),
@@ -94,7 +94,7 @@ class GoogleGenAICallback(core_endpoint.EndpointCallback):
         # TODO: missing code for cost calculation
 
 
-class GoogleGenAIEndpoint(core_endpoint.Endpoint):
+class GoogleEndpoint(core_endpoint.Endpoint):
     client: Optional["Client"] = None
     vertexai: Optional[bool] = None
     api_key: Optional[str] = None
@@ -127,7 +127,7 @@ class GoogleGenAIEndpoint(core_endpoint.Endpoint):
                 )
 
         kwargs_for_super = {
-            # These are the fields declared in GoogleGenAIEndpoint
+            # These are the fields declared in GoogleEndpoint
             "client": actual_client_instance,
             "vertexai": vertexai,
             "api_key": api_key,
@@ -136,7 +136,7 @@ class GoogleGenAIEndpoint(core_endpoint.Endpoint):
             "location": location,
             # This is a kwarg your Endpoint base class expects,
             # and it's also set for the parent.
-            "callback_class": GoogleGenAICallback,
+            "callback_class": GoogleCallback,
             **kwargs,  # Pass through any other arbitrary kwargs
         }
 

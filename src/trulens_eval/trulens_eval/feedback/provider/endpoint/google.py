@@ -9,5 +9,5 @@ from trulens.core.utils import deprecation as deprecation_utils
 
 deprecation_utils.packages_dep_warn()
 
-from trulens.providers.google.endpoint import GoogleGenAICallback
-from trulens.providers.google.endpoint import GoogleGenAIEndpoint
+from trulens.providers.google.endpoint import GoogleCallback
+from trulens.providers.google.endpoint import GoogleEndpoint

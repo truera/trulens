@@ -33,7 +33,7 @@ with import_utils.OptionalImports(
 with import_utils.OptionalImports(
     messages=optional_utils.REQUIREMENT_PROVIDER_GOOGLE
 ):
-    from trulens.providers.google.provider import GoogleGenAI
+    from trulens.providers.google.provider import Google
 
 with import_utils.OptionalImports(
     messages=optional_utils.REQUIREMENT_PROVIDER_CORTEX
@@ -61,7 +61,7 @@ __all__ = [
     "Bedrock",
     "Langchain",
     "Cortex",
-    "GoogleGenAI",
+    "Google",
 ]
 
 # Replace all classes we expose to ones which issue a deprecation warning upon

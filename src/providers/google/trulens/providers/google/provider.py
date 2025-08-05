@@ -12,8 +12,8 @@ from google.genai.types import GenerateContentConfig
 logger = logging.getLogger(__name__)
 
 
-class GoogleGenAI(llm_provider.LLMProvider):
-    """GoogleGenAI provides access to Google's generative models via the Gemini Developer API
+class Google(llm_provider.LLMProvider):
+    """Google provides access to Google's generative models via the Gemini Developer API
     or Vertex AI, depending on the configuration.
 
     For more details, see the official Gemini documentation.
@@ -23,44 +23,45 @@ class GoogleGenAI(llm_provider.LLMProvider):
     === "Connecting with a Gemini Developer API client"
         ```python
         from google import genai
-        from trulens.providers.google import GoogleGenAI
+        from trulens.providers.google import Google
 
         google_client = genai.Client(api_key="GOOGLE_API_KEY")
-        provider = GoogleGenAI(client=google_client)
+        provider = Google(client=google_client)
         ```
 
     === "Connecting with a Vertex AI client"
         ```python
         from google import genai
-        from trulens.providers.google import GoogleGenAI
+        from trulens.providers.google import Google
 
         PROJECT_ID = "your_project_id"
         LOCATION = "us-central1"
 
         vertex_client = genai.Client(vertexai=True, project=PROJECT_ID, location=LOCATION)
-        provider = GoogleGenAI(client=vertex_client)
+        provider = Google(client=vertex_client)
         ```
 
     === "Using only an API key (Gemini Developer API)"
         ```python
-        from trulens.providers.google import GoogleGenAI
+        from trulens.providers.google import Google
 
-        provider = GoogleGenAI(api_key="GOOGLE_API_KEY")
+        provider = Google(api_key="GOOGLE_API_KEY")
         ```
 
     === "Using Vertex AI configuration directly"
         ```python
-        from trulens.providers.google import GoogleGenAI
+        from trulens.providers.google import Google
 
         PROJECT_ID = "your_project_id"
         LOCATION = "us-central1"
 
-        provider = GoogleGenAI(vertexai=True, project=PROJECT_ID, location=LOCATION)
+        provider = Google(vertexai=True, project=PROJECT_ID, location=LOCATION)
         ```
 
     Args:
         model_engine: Model engine to use. Defaults to `"gemini-2.5-flash"`.
-        api_key: API key for authenticating with the Gemini Developer API.
+        api_key: API key for authenticating with the Gemini Developer API. If not provided,
+        the key will be read from the environment variable `GOOGLE_API_KEY` or `GEMINI_API_KEY`, if available.
         vertexai: Whether to use Vertex AI endpoints. Set to `True` to use Vertex AI instead of the Gemini Developer API. Defaults to `False`.
         credentials: Credentials to authenticate with Vertex AI. If not provided, default application credentials are used.
         project: Google Cloud project ID used for billing and quota when using Vertex AI. Can be set via environment variables.
@@ -88,7 +89,7 @@ class GoogleGenAI(llm_provider.LLMProvider):
         self_kwargs.update(**kwargs)
         self_kwargs["model_engine"] = model_engine
 
-        endpoint = google_endpoint.GoogleGenAIEndpoint(
+        endpoint = google_endpoint.GoogleEndpoint(
             client=client,
             vertexai=vertexai,
             api_key=api_key,

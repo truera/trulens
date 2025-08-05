@@ -57,7 +57,7 @@ with import_utils.OptionalImports(
 with import_utils.OptionalImports(
     messages=eval_optional_utils.REQUIREMENT_PROVIDER_GOOGLE
 ):
-    from trulens.providers.google.provider import GoogleGenAI
+    from trulens.providers.google.provider import Google
 
 
 with import_utils.OptionalImports(
@@ -111,7 +111,7 @@ __all__ = [
     "Cortex",
     # misc utility
     "TP",
-    "GoogleGenAI",
+    "Google",
 ]
 
 # Replace all classes we expose to ones which issue a deprecation warning upon

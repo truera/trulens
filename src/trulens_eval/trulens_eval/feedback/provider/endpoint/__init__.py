@@ -49,7 +49,7 @@ with import_utils.OptionalImports(
 with import_utils.OptionalImports(
     messages=optional_utils.REQUIREMENT_PROVIDER_GOOGLE
 ):
-    from trulens.providers.google.endpoint import GoogleGenAIEndpoint
+    from trulens.providers.google.endpoint import GoogleEndpoint
 
 
 __all__ = [
@@ -62,7 +62,7 @@ __all__ = [
     "OpenAIClient",
     "LangchainEndpoint",
     "CortexEndpoint",
-    "GoogleGenAIEndpoint",
+    "GoogleEndpoint",
 ]
 
 # Replace all classes we expose to ones which issue a deprecation warning upon

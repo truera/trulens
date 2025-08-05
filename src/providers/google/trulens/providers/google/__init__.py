@@ -13,10 +13,10 @@
 from importlib.metadata import version
 
 from trulens.core.utils import imports as import_utils
-from trulens.providers.google.provider import GoogleGenAI
+from trulens.providers.google.provider import Google
 
 __version__ = version(
     import_utils.safe_importlib_package_name(__package__ or __name__)
 )
 
-__all__ = ["GoogleGenAI"]
+__all__ = ["Google"]
