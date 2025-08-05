@@ -147,7 +147,7 @@ The lambda function dynamically processes both the function's return value and i
 
 ## Instrumenting Common App Frameworks
 
-In cases where you are leveraging frameworks like `Langchain` or `LlamaIndex`, TruLens instruments the framework for you. To take advantage of this instrumentation, you can simply use `TruChain` ([Read more](langchain.md))for `Langchain` apps or `TruLlama` ([Read more](llama_index.md))for `LlamaIndex` apps to wrap your application.
+In cases where you are leveraging frameworks like `Langchain`, `LangGraph` and `LlamaIndex`, TruLens instruments the framework for you. To take advantage of this instrumentation, you can simply use `TruChain` ([Read more](langchain.md)) for `Langchain`, `TruGraph` for `LangGraph`, or `TruLlama` ([Read more](llama_index.md)) for `LlamaIndex` to wrap your application.
 
 !!! example
 
@@ -169,6 +169,20 @@ In cases where you are leveraging frameworks like `Langchain` or `LlamaIndex`, T
             app_name="ChatApplication",
             app_version="Base"
         )
+        ```
+
+    === "_LangGraph_"
+
+        ```python
+        from trulens.apps.langgraph import TruGraph
+
+        graph = graph_builder.compile()
+
+        tru_recorder = TruGraph(
+            graph,
+            app_name="LangGraph Agent",
+            app_version="Base"
+            )
         ```
 
     === "_LlamaIndex_"
