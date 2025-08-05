@@ -347,8 +347,12 @@ class LiveRunContext:
     def input(self, input_id: str) -> Iterator[None]:
         """Context manager for processing a single input with automatic counting."""
         with self.tru_app.input(input_id):
-            yield
-        self.count_input()
+            try:
+                yield
+                self.count_input()
+            except Exception as e:
+                logger.error(f"Error in input context manager: {e}")
+                raise e
 
 
 class App(
