@@ -351,8 +351,8 @@ class LiveRunContext:
                 yield
                 self.count_input()
             except Exception as e:
-                logger.error(f"Error in input context manager: {e}")
-                raise e
+                logger.exception(f"Error in input context manager: {e}")
+                raise
 
 
 class App(
