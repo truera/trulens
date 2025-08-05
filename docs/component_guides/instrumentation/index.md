@@ -40,11 +40,26 @@ To capture the values from the function signature as specific span attributes, y
 
 Adding custom attributes in this way does not capture any additional information, however it can allow you to capture these span attributes in a way that is semantically meaningful to your application, or to adhere to existing standards.
 
-## Instrumenting with TruLens semantic conventions
+!!! example
 
-`instrument()` also allows you to annotate methods with TruLens semantic conventions that add meaning to the instrumented attributes. You can read more about the TruLens [semantic conventions](https://www.trulens.org/otel/semantic_conventions/) which lay out how to emit spans.
+    ```python
+        @instrument(
+        attributes={
+            "custom_attr__query": "query",
+            "custom_attr__results": "return",
+        }
+    )
+    def retrieve_contexts_with_function_signature_attributes(
+        self, query: str
+    ) -> List[str]:
+        return ["context 3", "context 4"]
+    ```
 
-In the example below, you can see how we use TruLens semantic conventions to instrument the span types `RETRIEVAL`, `GENERATION` and `RECORD_ROOT`.
+## Instrumenting custom attributes with _TruLens_ semantic conventions
+
+`instrument()` also allows you to annotate methods with _TruLens_ semantic conventions that add meaning to the instrumented attributes. You can read more about the _TruLens_ [semantic conventions](https://www.trulens.org/otel/semantic_conventions/) which lay out how to emit spans.
+
+In the example below, you can see how we use _TruLens_ semantic conventions to instrument the span types `RETRIEVAL`, `GENERATION` and `RECORD_ROOT`.
 
 In the `retrieve` method, we also associate the `query` argument with the span attribute `RETRIEVAL.QUERY_TEXT`, and the method's `return` with `RETRIEVAL.RETRIEVED_CONTEXT`. We follow a similar process for the `query` method.
 
@@ -91,8 +106,7 @@ In addition to using the `attributes` arg to pass in a dictionary of span attrib
 
 ## Manipulating custom attributes
 
-In some cases, you may want to manipulate information from the function signature before instrumenting. For example, if the retrieved context is
-buried inside of nested dict.
+In some cases, you may want to manipulate information from the function signature before instrumenting. For example, if the retrieved context is buried inside of nested dict.
 
 The `@instrument` decorator provides powerful flexibility through lambda functions in the `attributes` parameter. Instead of simple static mappings, you can use lambda functions to dynamically compute custom attributes based on the function's execution context.
 
