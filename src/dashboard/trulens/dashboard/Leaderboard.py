@@ -1,4 +1,5 @@
 import math
+import os
 import re
 from typing import Any, Dict, List, Optional, Sequence
 
@@ -437,9 +438,18 @@ def _render_grid_tab(
     grid_key: Optional[str] = None,
 ):
     container = st.container()
-    c1, c2, c3, c4, c5, c6 = st_columns(
-        [1, 1, 1, 1, 1, 1], vertical_alignment="center", container=container
-    )
+    # Show stability tab if environment variable is set
+    show_stability = os.getenv("TRULENS_STABILITY_TAB") in ["1", "true"]
+    if show_stability:
+        c1, c2, c3, c4, c5, c6, c7 = st_columns(
+            [1, 1, 1, 1, 1, 1, 1],
+            vertical_alignment="center",
+            container=container,
+        )
+    else:
+        c1, c2, c3, c4, c5, c6 = st_columns(
+            [1, 1, 1, 1, 1, 1], vertical_alignment="center", container=container
+        )
 
     _metadata_options = [
         col
@@ -560,6 +570,19 @@ def _render_grid_tab(
             selected_app_ids
         )
         st.switch_page("pages/Compare.py")
+
+    # Stability Analysis (only show if environment variable is set)
+    if show_stability:
+        if c7.button(
+            "Stability Analysis",
+            disabled=selected_rows.empty,
+            use_container_width=True,
+            key=f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.stability_button",
+        ):
+            st.session_state[
+                f"{dashboard_constants.STABILITY_PAGE_NAME}.app_ids"
+            ] = selected_app_ids
+            st.switch_page("pages/Stability.py")
 
     # Add Metadata Col
     if c5.button(
