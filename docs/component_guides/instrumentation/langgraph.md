@@ -1,4 +1,4 @@
-# 🦜️🔗 _LangGraph_ Integration
+# 🦜️ _LangGraph_ Integration
 
 TruLens provides TruGraph, a deep integration with _LangGraph_ that allows you to
 inspect and evaluate the internals of your _LangGraph_-built applications.
