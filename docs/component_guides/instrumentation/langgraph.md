@@ -114,6 +114,8 @@ In the example below, `my_agent_function` is automatically instrumented. No manu
         return updated_state
     ```
 
+### Instrumentation of custom classes
+
 Beyond instrumenting explicit _LangGraph_ classes, `TruGraph` can also be used to instrument custom classes leveraging the `@task` decorator. Consider a more complete example using same researcher/writer multi-agent system we built before.
 
 In this example, the `write_essay` method is automatically instrumented by `TruGraph`.
