@@ -11,6 +11,7 @@ from typing import (
     Optional,
 )
 
+from opentelemetry.trace import get_current_span
 from pydantic import Field
 from trulens.apps.langchain.tru_chain import TruChain
 from trulens.core import app as core_app
@@ -22,12 +23,21 @@ from trulens.core.utils import pyschema as pyschema_utils
 from trulens.otel.semconv.constants import TRULENS_INSTRUMENT_WRAPPER_FLAG
 from trulens.otel.semconv.trace import SpanAttributes
 
-from langgraph.func import TaskFunction
 from langgraph.graph import StateGraph
 from langgraph.pregel import Pregel
 from langgraph.types import Command
 
 logger = logging.getLogger(__name__)
+
+# Handle backward compatibility for TaskFunction rename
+try:
+    from langgraph.func import TaskFunction
+except ImportError:
+    try:
+        from langgraph.func import _TaskFunction as TaskFunction
+    except ImportError:
+        logger.warning("TaskFunction not found, skipping instrumentation")
+        TaskFunction = None
 
 
 class LangGraphInstrument(core_instruments.Instrument):
@@ -43,7 +53,7 @@ class LangGraphInstrument(core_instruments.Instrument):
             Pregel,
             StateGraph,
             Command,
-            # Note: TaskFunction is instrumented at class-level during initialization
+            # Note: TaskFunction (or _TaskFunction) is instrumented at class-level during initialization
         }
         """Classes to instrument."""
 
@@ -70,16 +80,16 @@ class TruGraph(TruChain):
 
     TruGraph automatically instruments LangGraph components including:
     - `Pregel` methods (invoke, ainvoke, stream, etc.) - instrumented at class-level during import
-    - `TaskFunction.__call__` method - instrumented at class-level during import
+    - `TaskFunction.__call__` method (or `_TaskFunction.__call__` in newer versions) - instrumented at class-level during import
     - `StateGraph` objects (uncompiled graphs) for logging/debugging purposes
 
-    **Class-Level Instrumentation**: Both `@task` functions (TaskFunction) and
+    **Class-Level Instrumentation**: Both `@task` functions (TaskFunction/_TaskFunction) and
     `Pregel` graph methods are instrumented at the class level when TruGraph is imported.
     This ensures all function calls are captured regardless of where the instances
     are embedded in the object hierarchy (e.g., inside custom classes).
 
     **Benefits of Class-Level Approach**:
-    - **Guaranteed Coverage**: All TaskFunction and Pregel method calls are captured
+    - **Guaranteed Coverage**: All TaskFunction/_TaskFunction and Pregel method calls are captured
     - **No Import Timing Issues**: Works regardless of when objects are created
     - **Consistent Span Types**: Properly sets "graph_node" and "graph_task" span types
 
@@ -188,11 +198,17 @@ class TruGraph(TruChain):
 
     @classmethod
     def _setup_task_function_instrumentation(cls):
-        """Set up class-level instrumentation for TaskFunction.__call__"""
+        """Set up class-level instrumentation for TaskFunction/__call__ (or _TaskFunction.__call__)"""
+
+        if TaskFunction is None:
+            logger.debug(
+                "TaskFunction/_TaskFunction not available, skipping instrumentation"
+            )
+            return
 
         if not is_otel_tracing_enabled():
             logger.debug(
-                "OTEL not enabled, skipping TaskFunction class-level instrumentation"
+                "OTEL not enabled, skipping TaskFunction/_TaskFunction class-level instrumentation"
             )
             return
 
@@ -201,18 +217,20 @@ class TruGraph(TruChain):
 
             # Check if TaskFunction.__call__ is already instrumented
             if hasattr(TaskFunction.__call__, TRULENS_INSTRUMENT_WRAPPER_FLAG):
-                logger.debug("TaskFunction.__call__ already instrumented")
+                logger.debug(
+                    "TaskFunction/_TaskFunction.__call__ already instrumented"
+                )
                 return
 
             logger.info(
-                "Applying class-level instrumentation to TaskFunction.__call__"
+                f"Applying class-level instrumentation to {TaskFunction.__name__}.__call__"
             )
 
             # Create attributes function for TaskFunction calls
             def task_function_attributes(ret, exception, *args, **kwargs):
                 attributes = {}
 
-                # For TaskFunction.__call__, the first argument is self (TaskFunction instance)
+                # For TaskFunction.__call__, the first argument is self (TaskFunction/_TaskFunction instance)
                 if args and len(args) > 0:
                     task_function_instance = args[0]
                     task_args = args[1:] if len(args) > 1 else ()
@@ -221,9 +239,22 @@ class TruGraph(TruChain):
                     if hasattr(task_function_instance, "func") and hasattr(
                         task_function_instance.func, "__name__"
                     ):
+                        task_name = task_function_instance.func.__name__
                         attributes[SpanAttributes.GRAPH_TASK.TASK_NAME] = (
-                            task_function_instance.func.__name__
+                            task_name
                         )
+
+                        # Update the span name to the task name
+                        try:
+                            current_span = get_current_span()
+                            if current_span and hasattr(
+                                current_span, "update_name"
+                            ):
+                                current_span.update_name(task_name)
+                        except Exception as e:
+                            logger.debug(
+                                f"Failed to update span name to {task_name}: {e}"
+                            )
 
                     # Serialize the task input arguments
                     try:
@@ -370,12 +401,12 @@ class TruGraph(TruChain):
             )
 
             logger.info(
-                "Successfully applied class-level instrumentation to TaskFunction.__call__"
+                f"Successfully applied class-level instrumentation to {TaskFunction.__name__}.__call__"
             )
 
         except Exception as e:
             logger.warning(
-                f"Failed to apply class-level TaskFunction instrumentation: {e}"
+                f"Failed to apply class-level TaskFunction/_TaskFunction instrumentation: {e}"
             )
 
     @classmethod

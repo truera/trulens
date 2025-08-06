@@ -89,6 +89,7 @@ snowflake-sqlalchemy >= 1.6.0
 # Optional trulens packages
 trulens-apps-llamaindex >= 1.0.0
 trulens-apps-langchain >= 1.0.0
+trulens-apps-langgraph >= 1.0.0
 trulens-apps-nemo >= 1.0.0
 trulens-connectors-snowflake >= 1.0.0
 trulens-providers-bedrock >= 1.0.0
