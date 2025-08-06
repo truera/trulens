@@ -6,7 +6,6 @@ from trulens.core.utils import imports as import_utils
 from trulens.dashboard.Leaderboard import leaderboard_main
 from trulens.dashboard.pages.Compare import compare_main
 from trulens.dashboard.pages.Records import records_main
-from trulens.dashboard.pages.Stability import stability_main
 
 with import_utils.OptionalImports(
     messages=import_utils.format_import_errors(
@@ -28,7 +27,6 @@ DASHBOARD_PAGES = {
     "leaderboard": leaderboard_main,
     "records": records_main,
     "compare": compare_main,
-    "stability": stability_main,
 }
 
 

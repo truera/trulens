@@ -3,7 +3,6 @@ from typing import List, Optional
 
 import pandas as pd
 import streamlit as st
-from trulens.dashboard.constants import STABILITY_PAGE_NAME as page_name
 from trulens.dashboard.utils.dashboard_utils import get_records_and_feedback
 from trulens.dashboard.utils.dashboard_utils import (
     read_query_params_into_session_state,
@@ -12,25 +11,27 @@ from trulens.dashboard.utils.dashboard_utils import render_app_version_filters
 from trulens.dashboard.utils.dashboard_utils import render_sidebar
 from trulens.dashboard.utils.dashboard_utils import set_page_config
 
+PAGE_NAME = "Stability"
+
 
 def init_page_state():
-    if st.session_state.get(f"{page_name}.initialized", False):
+    if st.session_state.get(f"{PAGE_NAME}.initialized", False):
         return
 
     read_query_params_into_session_state(
-        page_name=page_name,
+        page_name=PAGE_NAME,
         transforms={
             "app_ids": lambda x: x.split(","),
         },
     )
 
     app_ids: Optional[List[str]] = st.session_state.get(
-        f"{page_name}.app_ids", None
+        f"{PAGE_NAME}.app_ids", None
     )
     if app_ids and not st.query_params.get("app_ids", None):
         st.query_params["app_ids"] = ",".join(app_ids)
 
-    st.session_state[f"{page_name}.initialized"] = True
+    st.session_state[f"{PAGE_NAME}.initialized"] = True
 
 
 def _get_stability_data(app_ids: List[str]) -> pd.DataFrame:
@@ -95,7 +96,7 @@ def _get_stability_data(app_ids: List[str]) -> pd.DataFrame:
 
 def render_stability(app_name: str):
     """Render the stability analysis page."""
-    st.title(page_name)
+    st.title(PAGE_NAME)
     st.markdown(f"Showing stability analysis for app `{app_name}`")
     st.markdown(
         "This page shows the stability of different inputs by grouping "
@@ -140,7 +141,7 @@ def stability_main():
         )
         return
 
-    set_page_config(page_title=page_name)
+    set_page_config(page_title=PAGE_NAME)
     init_page_state()
     app_name = render_sidebar()
     if app_name:
