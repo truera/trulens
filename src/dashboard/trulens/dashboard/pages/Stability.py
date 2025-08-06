@@ -38,14 +38,24 @@ def _get_stability_data(app_ids: List[str]) -> pd.DataFrame:
 
     records_df, feedback_col_names = get_records_and_feedback(app_ids=app_ids)
 
-    if "QA_ACCURACY" not in feedback_col_names:
+    columns = ["app_version", "input_id", "input"]
+    all_stability_base_metric_columns_to_max_score = {
+        "QA_ACCURACY": 1,
+        "INSIGHT_ACCURACY": 2,
+    }
+    stability_base_metric_columns = []
+    for col in all_stability_base_metric_columns_to_max_score:
+        if col in feedback_col_names:
+            stability_base_metric_columns.append(col)
+            columns.append(col)
+    if not stability_base_metric_columns:
         st.warning(
-            "QA_ACCURACY feedback function not found. "
-            "Please ensure you have QA_ACCURACY feedback defined."
+            "No stability base metric found. Please ensure you have QA_ACCURACY"
+            " or INSIGHT_ACCURACY feedback defined."
         )
         return pd.DataFrame()
 
-    ret = records_df[["app_version", "input_id", "input", "QA_ACCURACY"]]
+    ret = records_df[columns]
 
     def unique_input(series):
         if series.nunique() > 1:
@@ -56,17 +66,30 @@ def _get_stability_data(app_ids: List[str]) -> pd.DataFrame:
 
     ret = (
         ret.groupby(["app_version", "input_id"])
-        .agg(Input=("input", unique_input), QA_ACCURACY=("QA_ACCURACY", list))
+        .agg(
+            input=("input", unique_input),
+            total_records=("input_id", len),
+            **{col: (col, list) for col in stability_base_metric_columns},
+        )
         .reset_index()
     )
+    for col in stability_base_metric_columns:
+        ret[f"{col} Stability"] = ret[col].apply(
+            lambda x: 1
+            if len(x) > 0
+            and x.count(all_stability_base_metric_columns_to_max_score[col])
+            == len(x)
+            else 0
+        )
     ret.rename(
-        columns={"app_version": "App Version", "input_id": "Input ID"},
+        columns={
+            "input": "Input",
+            "total_records": "Total Records",
+            "app_version": "App Version",
+            "input_id": "Input ID",
+        },
         inplace=True,
     )
-    ret["Stability"] = ret["QA_ACCURACY"].apply(
-        lambda x: x.count(1) / len(x) if len(x) > 0 else 0
-    )
-    ret["Total Records"] = ret["QA_ACCURACY"].apply(len)
     return ret
 
 
