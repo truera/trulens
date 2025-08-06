@@ -13,6 +13,7 @@ class ObjectType(str, Enum):
 class SourceType(str, Enum):
     TABLE = "TABLE"
     DATAFRAME = "DATAFRAME"
+    LIVE_TRACING = "LIVE_TRACING"
 
     @classmethod
     def is_valid_source_type(cls, key) -> bool:

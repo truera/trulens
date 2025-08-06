@@ -237,6 +237,7 @@ nav:
         - component_guides/instrumentation/index.md
         # Titles set inside notebooks and will be overridden if provided here.
         - component_guides/instrumentation/langchain.md
+        - component_guides/instrumentation/langgraph.md
         - component_guides/instrumentation/llama_index.md
     - Logging:
         - component_guides/logging/where_to_log/index.md
