@@ -969,6 +969,7 @@ trulens_eval.TruApp:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -1085,6 +1086,7 @@ trulens_eval.TruBasicApp:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -1202,6 +1204,7 @@ trulens_eval.TruChain:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -1318,6 +1321,7 @@ trulens_eval.TruCustomApp:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -1433,6 +1437,7 @@ trulens_eval.TruLlama:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -1549,6 +1554,7 @@ trulens_eval.TruRails:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -1666,6 +1672,7 @@ trulens_eval.TruVirtual:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -1814,6 +1821,7 @@ trulens_eval.app.App:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -7401,6 +7409,7 @@ trulens_eval.tru_basic_app.TruBasicApp:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -7562,6 +7571,7 @@ trulens_eval.tru_chain.TruChain:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -7686,6 +7696,7 @@ trulens_eval.tru_custom_app.TruCustomApp:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -7832,6 +7843,7 @@ trulens_eval.tru_llama.TruLlama:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -8014,6 +8026,7 @@ trulens_eval.tru_rails.TruRails:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -8139,6 +8152,7 @@ trulens_eval.tru_virtual.TruVirtual:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
