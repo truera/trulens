@@ -2356,7 +2356,7 @@ class LLMProvider(core_provider.Provider):
         return average_groundedness_score, {"reasons": reasons_list}
 
     # NOTE: Add user goal to the step relevance feedback (either extract manually from trace, or prompt LLM judge to extract and synthesize)
-    def trajectory_step_relevance_with_cot_reasons(
+    def step_relevance_with_cot_reasons(
         self,
         # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
         trace: Union[Trace, str],
@@ -2367,7 +2367,7 @@ class LLMProvider(core_provider.Provider):
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
-        Evaluate the quality of an agentic execution trace using a rubric focused on step relevance and progress toward the user goal.
+        Evaluate the quality of an agentic trajectory using a rubric focused on step relevance and progress toward the user goal.
 
         Example:
             ```python
@@ -2377,14 +2377,14 @@ class LLMProvider(core_provider.Provider):
             provider = OpenAI()
 
             f_step_relevance = (
-                Feedback(provider.trajectory_step_relevance_with_cot_reasons)
+                Feedback(provider.step_relevance_with_cot_reasons)
                 .on({
                     "trace": Selector(trace_level=True),
                 })
             ```
 
         Args:
-            trace (Union[Trace, str]): The execution trace to evaluate (e.g., as a JSON string or formatted log).
+            trace (Union[Trace, str]): The trajecotry to evaluate (e.g., as a JSON string or formatted log).
             criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
             examples (Optional[List[Tuple[Dict[str, str], int]]]): Optional few-shot examples for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
@@ -2397,14 +2397,12 @@ class LLMProvider(core_provider.Provider):
             min_score_val, max_score_val
         )
 
-        system_prompt = (
-            feedback_v2.TrajectoryStepRelevance.generate_system_prompt(
-                min_score=min_score_val,
-                max_score=max_score_val,
-                criteria=criteria,
-                output_space=output_space,
-                examples=examples,
-            )
+        system_prompt = feedback_v2.StepRelevance.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            output_space=output_space,
+            examples=examples,
         )
 
         if isinstance(trace, Trace):
@@ -2416,7 +2414,7 @@ class LLMProvider(core_provider.Provider):
                 f"Invalid trace type: {type(trace)}. Must be a Trace or a string."
             )
 
-        user_prompt = feedback_v2.TrajectoryStepRelevance.user_prompt.format(
+        user_prompt = feedback_v2.StepRelevance.user_prompt.format(
             trajectory=trajectory,
         )
 
@@ -2432,7 +2430,7 @@ class LLMProvider(core_provider.Provider):
             temperature=temperature,
         )
 
-    def trajectory_logical_consistency_with_cot_reasons(
+    def logical_consistency_with_cot_reasons(
         self,
         # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
         trace: Union[Trace, str],
@@ -2443,7 +2441,7 @@ class LLMProvider(core_provider.Provider):
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
-        Evaluate the quality of an agentic execution trace using a rubric focused on logical consistency and reasoning toward the user goal.
+        Evaluate the quality of an agentic trajectory using a rubric focused on logical consistency and reasoning.
 
         Example:
             ```python
@@ -2453,14 +2451,14 @@ class LLMProvider(core_provider.Provider):
             provider = OpenAI()
 
             f_logical_consistency = (
-                Feedback(provider.trajectory_logical_consistency_with_cot_reasons)
+                Feedback(provider.logical_consistency_with_cot_reasons)
                 .on({
                     "trace": Selector(trace_level=True),
                 })
             ```
 
         Args:
-            trace (Union[Trace, str]): The execution trace to evaluate (e.g., as a JSON string or formatted log).
+            trace (Union[Trace, str]): The trajectory to evaluate (e.g., as a JSON string or formatted log).
             criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
             examples (Optional[List[Tuple[Dict[str, str], int]]]): Optional few-shot examples for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
@@ -2473,14 +2471,12 @@ class LLMProvider(core_provider.Provider):
             min_score_val, max_score_val
         )
 
-        system_prompt = (
-            feedback_v2.TrajectoryLogicalConsistency.generate_system_prompt(
-                min_score=min_score_val,
-                max_score=max_score_val,
-                criteria=criteria,
-                output_space=output_space,
-                examples=examples,
-            )
+        system_prompt = feedback_v2.LogicalConsistency.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            output_space=output_space,
+            examples=examples,
         )
 
         if isinstance(trace, Trace):
@@ -2492,10 +2488,8 @@ class LLMProvider(core_provider.Provider):
                 f"Invalid trace type: {type(trace)}. Must be a Trace or a string."
             )
 
-        user_prompt = (
-            feedback_v2.TrajectoryLogicalConsistency.user_prompt.format(
-                trajectory=trajectory
-            )
+        user_prompt = feedback_v2.LogicalConsistency.user_prompt.format(
+            trajectory=trajectory
         )
 
         user_prompt = user_prompt.replace(
@@ -2510,7 +2504,7 @@ class LLMProvider(core_provider.Provider):
             temperature=temperature,
         )
 
-    def trajectory_workflow_efficiency_with_cot_reasons(
+    def execution_efficiency_with_cot_reasons(
         self,
         # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
         trace: Union[Trace, str],
@@ -2521,7 +2515,7 @@ class LLMProvider(core_provider.Provider):
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
-        Evaluate the quality of an agentic execution trace using a rubric focused on workflow efficiency toward the user goal.
+        Evaluate the quality of an agentic trajectory using a rubric focused on execution efficiency.
 
         Example:
             ```python
@@ -2531,14 +2525,14 @@ class LLMProvider(core_provider.Provider):
             provider = OpenAI()
 
             f_workflow_efficiency = (
-                Feedback(provider.trajectory_workflow_efficiency_with_cot_reasons)
+                Feedback(provider.execution_efficiency_with_cot_reasons)
                 .on({
                     "trace": Selector(trace_level=True),
                 })
             ```
 
         Args:
-            trace (Union[Trace, str]): The execution trace to evaluate (e.g., as a JSON string or formatted log).
+            trace (Union[Trace, str]): The trajectory to evaluate (e.g., as a JSON string or formatted log).
             criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
             examples (Optional[List[Tuple[Dict[str, str], int]]): Optional few-shot examples for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
@@ -2551,14 +2545,12 @@ class LLMProvider(core_provider.Provider):
             min_score_val, max_score_val
         )
 
-        system_prompt = (
-            feedback_v2.TrajectoryWorkflowEfficiency.generate_system_prompt(
-                min_score=min_score_val,
-                max_score=max_score_val,
-                criteria=criteria,
-                output_space=output_space,
-                examples=examples,
-            )
+        system_prompt = feedback_v2.ExecutionEfficiency.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            output_space=output_space,
+            examples=examples,
         )
 
         if isinstance(trace, Trace):
@@ -2570,14 +2562,12 @@ class LLMProvider(core_provider.Provider):
                 f"Invalid trace type: {type(trace)}. Must be a Trace or a string."
             )
 
-        user_prompt = (
-            feedback_v2.TrajectoryWorkflowEfficiency.user_prompt.format(
-                trajectory=trajectory
-            )
+        user_prompt = feedback_v2.ExecutionEfficiency.user_prompt.format(
+            trajectory=trajectory
         )
 
         user_prompt = user_prompt.replace(
-            "WORKFLOW EFFICIENCY SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
+            "EXECUTION EFFICIENCY SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
         )
 
         return self.generate_score_and_reasons(
@@ -2588,7 +2578,7 @@ class LLMProvider(core_provider.Provider):
             temperature=temperature,
         )
 
-    def trajectory_plan_adherence_with_cot_reasons(
+    def plan_adherence_with_cot_reasons(
         self,
         # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
         trace: Union[Trace, str],
@@ -2599,7 +2589,7 @@ class LLMProvider(core_provider.Provider):
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
-        Evaluate the quality of an agentic execution trace using a rubric focused on adherence to a plan.
+        Evaluate the quality of an agentic trajectory using a rubric focused on execution adherence to the plan.
 
         Example:
             ```python
@@ -2609,34 +2599,32 @@ class LLMProvider(core_provider.Provider):
             provider = OpenAI()
 
             f_plan_adherence = (
-                Feedback(provider.trajectory_plan_adherence_with_cot_reasons)
+                Feedback(provider.plan_adherence_with_cot_reasons)
                 .on({
                     "trace": Selector(trace_level=True),
                 })
             ```
 
         Args:
-            trace (Union[Trace, str]): The execution trace to evaluate (e.g., as a JSON string or formatted log).
+            trace (Union[Trace, str]): The trajectory to evaluate (e.g., as a JSON string or formatted log).
             criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
             examples (Optional[List[Tuple[Dict[str, str], int]]): Optional few-shot examples for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
         Returns:
-            Tuple[float, Dict]: A tuple containing a value between 0.0 (trajectory did not follow plan) and 1.0 (workflow followed plan exactly) and a dictionary containing the reasons for the evaluation.
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (execution did not follow plan) and 1.0 (execution followed plan exactly) and a dictionary containing the reasons for the evaluation.
         """
         output_space = self._determine_output_space(
             min_score_val, max_score_val
         )
 
-        system_prompt = (
-            feedback_v2.TrajectoryPlanAdherence.generate_system_prompt(
-                min_score=min_score_val,
-                max_score=max_score_val,
-                criteria=criteria,
-                output_space=output_space,
-                examples=examples,
-            )
+        system_prompt = feedback_v2.PlanAdherence.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            output_space=output_space,
+            examples=examples,
         )
 
         if isinstance(trace, Trace):
@@ -2648,7 +2636,7 @@ class LLMProvider(core_provider.Provider):
                 f"Invalid trace type: {type(trace)}. Must be a Trace or a string."
             )
 
-        user_prompt = feedback_v2.TrajectoryPlanAdherence.user_prompt.format(
+        user_prompt = feedback_v2.PlanAdherence.user_prompt.format(
             trajectory=trajectory
         )
 
@@ -2664,7 +2652,7 @@ class LLMProvider(core_provider.Provider):
             temperature=temperature,
         )
 
-    def trajectory_plan_quality_with_cot_reasons(
+    def plan_quality_with_cot_reasons(
         self,
         # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
         trace: Union[Trace, str],
@@ -2685,7 +2673,7 @@ class LLMProvider(core_provider.Provider):
             provider = OpenAI()
 
             f_plan_quality = (
-                Feedback(provider.trajectory_plan_quality_with_cot_reasons)
+                Feedback(provider.plan_quality_with_cot_reasons)
                 .on({
                     "trace": Selector(trace_level=True),
                 })
@@ -2705,14 +2693,12 @@ class LLMProvider(core_provider.Provider):
             min_score_val, max_score_val
         )
 
-        system_prompt = (
-            feedback_v2.TrajectoryPlanQuality.generate_system_prompt(
-                min_score=min_score_val,
-                max_score=max_score_val,
-                criteria=criteria,
-                output_space=output_space,
-                examples=examples,
-            )
+        system_prompt = feedback_v2.PlanQuality.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            output_space=output_space,
+            examples=examples,
         )
 
         if isinstance(trace, Trace):
@@ -2724,7 +2710,7 @@ class LLMProvider(core_provider.Provider):
                 f"Invalid trace type: {type(trace)}. Must be a Trace or a string."
             )
 
-        user_prompt = feedback_v2.TrajectoryPlanQuality.user_prompt.format(
+        user_prompt = feedback_v2.PlanQuality.user_prompt.format(
             trajectory=trajectory
         )
 
