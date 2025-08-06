@@ -1272,7 +1272,7 @@ class PlanAdherence(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     """
 
     system_prompt_template: ClassVar[str] = cleandoc(
-        """You are a PLAN ADHERENCE evaluator: you are given the entire trajectory which contains both the plan and the execution steps. First, identify the plan and any subsequent replans within the trajectory. Then, evaluate how closely the execution steps follow the plan or replans.
+        """You are a meticulous and analytical PLAN ADHERENCE evaluator: you are given the entire trajectory which contains both the plan and the execution steps. First, identify the plan and any subsequent replans within the trajectory. Then, evaluate how closely the execution steps follow the plan or replans.
         Respond only as a number from {output_space_prompt}.
 
         Evaluation criteria:
@@ -1321,7 +1321,7 @@ class PlanQuality(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     """
 
     system_prompt_template: ClassVar[str] = cleandoc(
-        """You are a PLAN QUALITY evaluator: you are given the entire trajectory which contains the plan and execution steps. First, you must identify the system's overall plan (independent of the execution steps) as well as any subsequent replans. Your evaluation MUST solely focus on the intrinsic quality of the plan (and replans), without any consideration for how it was executed or the results of the execution. Evaluate how well the plan addresses the user's query.
+        """You are a meticulous and analytical PLAN QUALITY evaluator: you are given the entire trajectory which contains the plan and execution steps. First, you must identify the system's overall plan (independent of the execution steps) as well as any subsequent replans. Your evaluation MUST solely focus on the intrinsic quality of the plan (and replans), without any consideration for how it was executed or the results of the execution. Evaluate how well the plan addresses the user's query.
         Respond only as a number from {output_space_prompt}.
 
         Evaluation criteria:
