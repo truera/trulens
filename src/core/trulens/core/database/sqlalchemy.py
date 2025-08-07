@@ -983,7 +983,13 @@ class SQLAlchemyDB(core_db.DB):
             app_id_expr = self._json_extract_otel(
                 "resource_attributes", ResourceAttributes.APP_ID
             )
-            conditions.append(app_id_expr.in_(app_ids))
+            conditions.append(
+                sa.or_(
+                    app_id_expr.in_(app_ids),
+                    app_id_expr.is_(None),
+                    app_id_expr == "",
+                )
+            )
 
         # Apply all conditions
         stmt = stmt.where(sa.and_(*conditions))
@@ -1082,6 +1088,21 @@ class SQLAlchemyDB(core_db.DB):
                         app_name, app_version
                     ),
                 )
+                if app_ids and app_id not in app_ids:
+                    # TODO(otel):
+                    # This may screw up the pagination and can be slow due to it
+                    # looking at possibly a lot more events if there are many
+                    # that don't have app ids.
+                    # In the future we should either:
+                    # 1. Remove app ids if we're going to assume they're some
+                    #    complex function of app_name and app_version that's
+                    #    hard to replicate for non-TruLens users that want to
+                    #    still use our evaluation/feedback stuff.
+                    # 2. Have the app ids be from some source of truth like the
+                    #    app table but this doesn't work as easily for the
+                    #    Snowflake side.
+                    logger.info(f"Computed {app_id} not in {app_ids}!")
+                    continue
 
                 if record_id not in record_events:
                     record_events[record_id] = {
@@ -1683,9 +1704,7 @@ class SQLAlchemyDB(core_db.DB):
                 )
                 where_clauses.append(record_id_expr.in_(record_ids))
             if start_time is not None:
-                where_clauses.append(
-                    self.orm.Event.start_timestamp >= start_time
-                )
+                where_clauses.append(self.orm.Event.timestamp >= start_time)
 
             if len(where_clauses) == 0:
                 q = sa.select(self.orm.Event)

@@ -126,22 +126,49 @@ def run_dashboard(
     if address is not None:
         args.append(f"--server.address={address}")
 
+    args += [
+        leaderboard_path,
+        "--",
+        "--database-prefix",
+        session.connector.db.table_prefix,
+    ]
     if (
         _is_snowflake_connector(session.connector)
         and not session.connector.password_known
     ):
-        raise ValueError(
-            "SnowflakeConnector was made via an established Snowpark session which did not pass through authentication details to the SnowflakeConnector. To fix, supply password argument during SnowflakeConnector construction."
+        # If we don't know the password, this is problematic because we run the
+        # dashboard in a separate process so we won't be able to recreate the
+        # snowpark session in the child process. Thus, in this case we default
+        # to using external browser authentication.
+        # TODO: support other passwordless token authentication such as PAT.
+        from trulens.connectors.snowflake.dao.sql_utils import (
+            clean_up_snowflake_identifier,
         )
 
-    args += [
-        leaderboard_path,
-        "--",
-        "--database-url",
-        session.connector.db.engine.url.render_as_string(hide_password=False),
-        "--database-prefix",
-        session.connector.db.table_prefix,
-    ]
+        connector = session.connector
+        snowpark_session = connector.snowpark_session
+        args_to_add = [
+            ("--snowflake-account", snowpark_session.get_current_account()),
+            ("--snowflake-user", snowpark_session.get_current_user()),
+            ("--snowflake-role", snowpark_session.get_current_role()),
+            ("--snowflake-database", snowpark_session.get_current_database()),
+            ("--snowflake-schema", snowpark_session.get_current_schema()),
+            ("--snowflake-warehouse", snowpark_session.get_current_warehouse()),
+            ("--snowflake-host", snowpark_session.connection.host),
+        ]
+        for arg, val in args_to_add:
+            if val:
+                args += [arg, clean_up_snowflake_identifier(val)]
+        args += ["--snowflake-authenticator", "externalbrowser"]
+        if connector.use_account_event_table:
+            args.append("--snowflake-use-account-event-table")
+    else:
+        args += [
+            "--database-url",
+            session.connector.db.engine.url.render_as_string(
+                hide_password=False
+            ),
+        ]
     if sis_compatibility_mode:
         args += ["--sis-compatibility"]
 

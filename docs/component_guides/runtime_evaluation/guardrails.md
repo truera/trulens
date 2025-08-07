@@ -1,8 +1,10 @@
 # Guardrails
 
-Guardrails play a crucial role in ensuring that only high-quality output is produced by LLM apps. By setting guardrail thresholds based on feedback functions, we can directly leverage the same trusted evaluation metrics used for observability, *at inference time*.
+The second avenue for using evaluations to improve application output at execution time is via *guardrails*.
 
-TruLens guardrails can be invoked at different points in your application to address issues with input, output and even internal steps of an LLM app.
+By setting guardrail thresholds based on feedback functions, we can directly leverage the same trusted evaluation metrics used for off-line observability, *at inference time*.
+
+`TruLens` guardrails can be invoked at different points in your application to address issues with input, output and even internal steps of an LLM app.
 
 ## Output blocking guardrails
 
@@ -79,7 +81,7 @@ This mechanism for guardrails is supported via the `block_input` guardrail. If t
 
 ## Context filter guardrails
 
-While it is commonly discussed to use guardrails for blocking unsafe or inappropriate output from reaching the end user, *TruLens* guardrails can also be leveraged to improve the internal processing of LLM apps.
+While it is commonly discussed to use guardrails for blocking unsafe or inappropriate output from reaching the end user, `TruLens` guardrails can also be leveraged to improve the internal processing of LLM apps.
 
 If we consider a RAG, context filter guardrails can be used to evaluate the *context relevance* of each context chunk, and only pass relevant chunks to the LLM for generation. Doing so reduces the chance of hallucination and reduces token usage.
 
@@ -87,7 +89,7 @@ If we consider a RAG, context filter guardrails can be used to evaluate the *con
 
 ## Using context filters
 
-*TruLens* context filter guardrails are easy to add to your app built with custom Python, *LangChain*, or *LlamaIndex*.
+`TruLens` context filter guardrails are easy to add to your app built with custom Python, *LangChain*, or *LlamaIndex*.
 
 !!! example "Using context filter guardrails"
 
@@ -118,7 +120,7 @@ If we consider a RAG, context filter guardrails can be used to evaluate the *con
 
         filtered_retriever = WithFeedbackFilterDocuments.of_retriever(
             retriever=retriever,
-            feedback=feedback
+            feedback=feedback,
             threshold=0.5
         )
 
@@ -147,4 +149,4 @@ If we consider a RAG, context filter guardrails can be used to evaluate the *con
 
     A feedback function used as a guardrail must only return a float score, and cannot also return reasons.
 
-TruLens has native Python and framework-specific tooling for implementing guardrails. Read more about the available guardrails in [native Python][trulens.core.guardrails.base], [LangChain][trulens.apps.langchain.guardrails] and [LlamaIndex][trulens.apps.llamaindex.guardrails].
+`TruLens` has native Python and framework-specific tooling for implementing guardrails. Read more about the available guardrails in [native Python][trulens.core.guardrails.base], [LangChain][trulens.apps.langchain.guardrails] and [LlamaIndex][trulens.apps.llamaindex.guardrails].

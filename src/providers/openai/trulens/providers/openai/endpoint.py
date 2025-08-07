@@ -113,6 +113,7 @@ class OpenAICostComputer:
             SpanAttributes.COST.NUM_TOKENS: callback.cost.n_tokens,
             SpanAttributes.COST.NUM_PROMPT_TOKENS: callback.cost.n_prompt_tokens,
             SpanAttributes.COST.NUM_COMPLETION_TOKENS: callback.cost.n_completion_tokens,
+            SpanAttributes.COST.NUM_REASONING_TOKENS: callback.cost.n_reasoning_tokens,
         }
         if model_name:
             ret[SpanAttributes.COST.MODEL] = model_name
@@ -450,6 +451,16 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
                 usage = None
 
             if isinstance(response, ChatCompletion):
+                # Extract reasoning tokens if available (for reasoning models)
+                reasoning_tokens = 0
+                if usage and isinstance(usage, dict):
+                    # Look for reasoning tokens in completion_tokens_details
+                    output_details = usage.get("completion_tokens_details", {})
+                    if isinstance(output_details, dict):
+                        reasoning_tokens = output_details.get(
+                            "reasoning_tokens", 0
+                        )
+
                 # See how to construct in langchain.llms.openai.OpenAIChat._generate
                 llm_res = LLMResult(
                     generations=[[]],
@@ -458,6 +469,9 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
                 )
                 for callback in callbacks:
                     callback.handle_generation(response=llm_res)
+                    # Track reasoning tokens separately
+                    if reasoning_tokens > 0:
+                        callback.cost.n_reasoning_tokens += reasoning_tokens
             elif isinstance(response, CreateEmbeddingResponse):
                 for callback in callbacks:
                     callback.handle_embedding(response=response)
