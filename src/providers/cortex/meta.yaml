@@ -1,6 +1,6 @@
 {% set name = "trulens-providers-cortex" %}
 {% set pyname = name.replace('-', '.') %}
-{% set version = "2.1.2" %}
+{% set version = "2.1.4" %}
 
 package:
   name: {{ name|lower }}
@@ -12,7 +12,7 @@ source:
   {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-providers-cortex/#files
-  sha256: 7dd1e6f4f8c1c9bd4abb2fe8bead220bca633e7ff73d62b8aa10b082fc9dfc6a
+  sha256: 224408ae22976d06515c292e292e80acbb147697fc0594e99da110da92b922b8
   {% endif %}
 
 build:
