@@ -4,7 +4,7 @@ trulens:
   lows: {}
 trulens.benchmark:
   __class__: builtins.module
-  __version__: 1.5.2
+  __version__: 2.1.2
   highs: {}
   lows:
     __version__: builtins.str
@@ -60,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 1.5.2
+  __version__: 2.1.2
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -83,6 +83,7 @@ trulens.core.app:
     ComponentViewMeta: builtins.type
     CustomComponent: trulens.core.app.ComponentViewMeta
     LLM: trulens.core.app.ComponentViewMeta
+    LiveRunContext: builtins.type
     Memory: trulens.core.app.ComponentViewMeta
     Other: trulens.core.app.ComponentViewMeta
     Prompt: trulens.core.app.ComponentViewMeta
@@ -92,6 +93,7 @@ trulens.core.app:
     Tool: trulens.core.app.ComponentViewMeta
     TrulensComponent: trulens.core.app.ComponentViewMeta
     instrumented_component_views: builtins.function
+    trace_with_run: builtins.staticmethod
 trulens.core.app.Agent:
   __bases__:
   - trulens.core.app.ComponentView
@@ -134,6 +136,7 @@ trulens.core.app.App:
     instrumented_invoke_main_method: builtins.function
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     list_runs: builtins.function
+    live_run: builtins.function
     main_acall: builtins.function
     main_call: builtins.function
     main_input: builtins.function
@@ -197,6 +200,13 @@ trulens.core.app.LLM:
   __class__: trulens.core.app.ComponentViewMeta
   attributes:
     model_name: builtins.property
+trulens.core.app.LiveRunContext:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    count_input: builtins.function
+    input: builtins.function
 trulens.core.app.Memory:
   __bases__:
   - trulens.core.app.ComponentView
@@ -1911,7 +1921,7 @@ trulens.core.utils.trulens.Other:
   attributes: {}
 trulens.dashboard:
   __class__: builtins.module
-  __version__: 1.5.2
+  __version__: 2.1.2
   highs:
     run_dashboard: builtins.function
     run_dashboard_sis: builtins.function
@@ -2222,7 +2232,7 @@ trulens.dashboard.ux.styles.ResultCategoryType:
     value: enum.property
 trulens.feedback:
   __class__: builtins.module
-  __version__: 1.5.2
+  __version__: 2.1.2
   highs:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
@@ -3217,7 +3227,7 @@ trulens.feedback.v2.provider.base.Provider:
     tru_class_info: trulens.core.utils.pyschema.Class
 trulens.hotspots:
   __class__: builtins.module
-  __version__: 1.5.2
+  __version__: 2.1.2
   highs:
     HotspotsConfig: builtins.type
     get_skipped_columns: builtins.function
