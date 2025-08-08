@@ -25,9 +25,6 @@ def create_navigation() -> Dict[str, Callable]:
         "Compare": render_app_comparison,
         "Records": render_records,
     }
-    # Load built-in plugins (like Stability) - import triggers auto-registration
-    from trulens.dashboard import plugins  # noqa: F401
-
     # Add custom pages.
     custom_pages = get_registered_pages()
     pages.update(custom_pages)

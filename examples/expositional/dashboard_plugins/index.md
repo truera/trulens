@@ -167,25 +167,6 @@ if os.getenv("TRULENS_DEBUG") == "1":
     register_page("Debug", render_debug_tab)
 ```
 
-## Built-in Example: Stability Tab
-
-The Stability tab is now implemented as a plugin and serves as a real-world example. You can find it at:
-`src/dashboard/trulens/dashboard/plugins/stability.py`
-
-It shows how to:
-- Access TruLens data
-- Implement conditional registration (environment variable)
-- Handle complex data analysis
-- Provide user feedback and error handling
-
-## Template and Examples
-
-### Template File
-See `src/dashboard/trulens/dashboard/plugins/example_custom_tab.py.template` for a comprehensive template.
-
-### Working Example
-See `examples/custom_tab_example.py` for a complete working example you can test immediately.
-
 ## Advanced Features
 
 ### Using Decorators

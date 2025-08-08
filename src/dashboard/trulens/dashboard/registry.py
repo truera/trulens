@@ -29,19 +29,6 @@ def get_registered_pages() -> Dict[str, Callable]:
 
 
 def load_custom_pages() -> None:
-    """Load custom pages from various sources."""
-    _load_plugins_directory()
-    _load_from_cwd()
-
-
-def _load_plugins_directory() -> None:
-    """Load plugins from the built-in plugins directory."""
-    plugins_dir = Path(__file__).parent / "plugins"
-    if plugins_dir.exists():
-        _load_from_directory(plugins_dir)
-
-
-def _load_from_cwd() -> None:
     """
     Load custom pages from trulens_pages directory in current working directory.
     """
