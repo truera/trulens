@@ -229,18 +229,6 @@ def render_robust_tab(app_name: str):
 - Ensure function accepts `app_name` parameter
 - Test the function independently first
 
-## Migration from Old System
-
-If you previously had custom tabs in the source code:
-
-1. **Extract your custom code** into separate Python files
-2. **Add the registration call** using `register_page()`
-3. **Place files** in `trulens_pages/` directory
-4. **Remove custom code** from source files
-5. **Restart the dashboard**
-
-The new system is backward compatible - existing tabs will continue to work while you migrate to the new system.
-
 ## Best Practices
 
 1. **Use descriptive tab names** that clearly indicate the tab's purpose
