@@ -1,0 +1,72 @@
+"""
+Example custom tab for TruLens Dashboard.
+
+This is a template file showing how to create custom tabs for the TruLens
+dashboard. To use this:
+
+1. Copy this file and rename it (remove the .template extension)
+2. Modify the render function to show your custom content
+3. Change the tab name in the register_page call
+4. Place the file in one of these locations:
+   - src/dashboard/trulens/dashboard/plugins/ (built-in plugins)
+   - ./trulens_pages/ (in your current working directory)
+
+The tab will automatically appear in the dashboard when you restart it.
+"""
+
+import streamlit as st
+from trulens.dashboard.registry import register_page
+
+
+def render_my_custom_tab(app_name: str):
+    """Render your custom tab content.
+
+    Args:
+        app_name: The currently selected app name from the sidebar.
+                  Can be None if no app is selected.
+    """
+    st.title("My Custom Tab")
+
+    if app_name:
+        st.write(f"Currently viewing data for app: **{app_name}**")
+
+        # Add your custom analysis here
+        st.subheader("Custom Analysis")
+        st.write("This is where you can add your custom dashboard content.")
+
+        # Example: Show some metrics
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Custom Metric 1", "42", "2%")
+        with col2:
+            st.metric("Custom Metric 2", "123", "-5%")
+        with col3:
+            st.metric("Custom Metric 3", "789", "12%")
+
+        # Example: Show a chart
+        st.subheader("Custom Chart")
+        import pandas as pd
+        import numpy as np
+
+        # Generate sample data
+        data = pd.DataFrame({
+            'x': range(10),
+            'y': np.random.randn(10).cumsum()
+        })
+        st.line_chart(data.set_index('x'))
+
+        # Example: Add custom controls
+        st.subheader("Custom Controls")
+        option = st.selectbox(
+            "Choose an option:",
+            ["Option 1", "Option 2", "Option 3"]
+        )
+        st.write(f"You selected: {option}")
+
+    else:
+        st.info("Please select an app from the sidebar to view custom analysis.")
+
+
+# Register the custom tab with the dashboard
+# The first parameter is the tab name that will appear in the UI
+register_page("My Custom Tab", render_my_custom_tab)
