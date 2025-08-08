@@ -10,7 +10,7 @@ import sys
 import tempfile
 import threading
 from threading import Thread
-from typing import Optional
+from typing import Optional, Tuple
 
 from trulens.core import session as core_session
 from trulens.core.database.connector.base import DBConnector
@@ -32,32 +32,35 @@ def find_unused_port() -> int:
         return s.getsockname()[1]
 
 
-def _create_temp_dashboard_dir() -> Path:
+def _create_dashboard_dir() -> Tuple[Path, bool]:
     """Create a temporary directory with dashboard files and custom pages.
 
     Returns:
-        Path to the temporary directory containing all dashboard files.
+        Tuple of:
+            1. Path to the directory containing all dashboard files.
+            2. Whether the directory is temporary.
     """
-    temp_dir = Path(tempfile.mkdtemp(prefix="trulens_dashboard_"))
-    # Copy Leaderboard.py.
+    # Check if we don't need to create a temporary directory.
     leaderboard_path = import_utils.static_resource(
         "dashboard", "Leaderboard.py"
     )
+    custom_pages_dir = os.environ.get("TRULENS_UI_CUSTOM_PAGES")
+    if not custom_pages_dir:
+        return os.path.parent(leaderboard_path), False
+    # Create a temporary directory and copy everything into it.
+    temp_dir = Path(tempfile.mkdtemp(prefix="trulens_dashboard_"))
     shutil.copy2(leaderboard_path, temp_dir / "Leaderboard.py")
-    # Create pages directory and copy all .py files from it.
     temp_pages_dir = temp_dir / "pages"
     temp_pages_dir.mkdir()
     dashboard_pages_dir = import_utils.static_resource("dashboard", "pages")
     for py_file in dashboard_pages_dir.glob("*.py"):
         shutil.copy2(py_file, temp_pages_dir / py_file.name)
     # Copy custom pages from TRULENS_UI_CUSTOM_PAGES environment variable.
-    custom_pages_dir = os.environ.get("TRULENS_UI_CUSTOM_PAGES")
-    if custom_pages_dir:
-        custom_pages_path = Path(custom_pages_dir)
-        if custom_pages_path.exists() and custom_pages_path.is_dir():
-            for py_file in custom_pages_path.glob("*.py"):
-                shutil.copy2(py_file, temp_dir / "pages" / py_file.name)
-    return temp_dir
+    custom_pages_path = Path(custom_pages_dir)
+    if custom_pages_path.exists() and custom_pages_path.is_dir():
+        for py_file in custom_pages_path.glob("*.py"):
+            shutil.copy2(py_file, temp_dir / "pages" / py_file.name)
+    return temp_dir, True
 
 
 def _is_snowflake_connector(connector: DBConnector):
@@ -112,10 +115,9 @@ def run_dashboard(
 
     print("Starting dashboard ...")
 
-    # Create temporary directory with dashboard files
-    # TODO(this_pr): Maybe not make this temp.
-    temp_dashboard_dir = _create_temp_dashboard_dir()
-    leaderboard_path = temp_dashboard_dir / "Leaderboard.py"
+    # Create directory with dashboard files.
+    dashboard_dir, is_temp_dashboard_dir = _create_dashboard_dir()
+    leaderboard_path = dashboard_dir / "Leaderboard.py"
 
     if session._dashboard_proc is not None:
         print("Dashboard already running at path:", session._dashboard_urls)
@@ -206,7 +208,7 @@ def run_dashboard(
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
-        cwd=str(temp_dashboard_dir),
+        cwd=str(dashboard_dir),
         **env_opts,
     )
 
@@ -292,7 +294,8 @@ def run_dashboard(
 
         # Process has ended, clean up temporary directory (only once)
         try:
-            shutil.rmtree(session._dashboard_temp_dir)
+            if is_temp_dashboard_dir:
+                shutil.rmtree(dashboard_dir)
         except Exception as e:
             print(f"Warning: Failed to clean up temporary directory: {e}")
 
@@ -318,7 +321,6 @@ def run_dashboard(
     session._dashboard_listener_stderr.start()
 
     session._dashboard_proc = proc
-    session._dashboard_temp_dir = temp_dashboard_dir
 
     wait_period = DASHBOARD_START_TIMEOUT
     if IN_COLAB:
@@ -330,7 +332,8 @@ def run_dashboard(
         session._dashboard_proc = None
         # Clean up temporary directory on failure
         try:
-            shutil.rmtree(temp_dashboard_dir)
+            if is_temp_dashboard_dir:
+                shutil.rmtree(dashboard_dir)
         except Exception as e:
             print(f"Warning: Failed to clean up temporary directory: {e}")
         raise RuntimeError(
