@@ -46,7 +46,7 @@ def _create_dashboard_dir() -> Tuple[Path, bool]:
     )
     custom_pages_dir = os.environ.get("TRULENS_UI_CUSTOM_PAGES")
     if not custom_pages_dir:
-        return os.path.parent(leaderboard_path), False
+        return leaderboard_path.parent, False
     # Create a temporary directory and copy everything into it.
     temp_dir = Path(tempfile.mkdtemp(prefix="trulens_dashboard_"))
     shutil.copy2(leaderboard_path, temp_dir / "Leaderboard.py")
