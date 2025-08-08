@@ -3,9 +3,11 @@ from __future__ import annotations
 from multiprocessing import Process
 import os
 from pathlib import Path
+import shutil
 import socket
 import subprocess
 import sys
+import tempfile
 import threading
 from threading import Thread
 from typing import Optional
@@ -28,6 +30,34 @@ def find_unused_port() -> int:
         s.bind(("", 0))
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         return s.getsockname()[1]
+
+
+def _create_temp_dashboard_dir() -> Path:
+    """Create a temporary directory with dashboard files and custom pages.
+
+    Returns:
+        Path to the temporary directory containing all dashboard files.
+    """
+    temp_dir = Path(tempfile.mkdtemp(prefix="trulens_dashboard_"))
+    # Copy Leaderboard.py.
+    leaderboard_path = import_utils.static_resource(
+        "dashboard", "Leaderboard.py"
+    )
+    shutil.copy2(leaderboard_path, temp_dir / "Leaderboard.py")
+    # Create pages directory and copy all .py files from it.
+    temp_pages_dir = temp_dir / "pages"
+    temp_pages_dir.mkdir()
+    dashboard_pages_dir = import_utils.static_resource("dashboard", "pages")
+    for py_file in dashboard_pages_dir.glob("*.py"):
+        shutil.copy2(py_file, temp_pages_dir / py_file.name)
+    # Copy custom pages from TRULENS_UI_CUSTOM_PAGES environment variable.
+    custom_pages_dir = os.environ.get("TRULENS_UI_CUSTOM_PAGES")
+    if custom_pages_dir:
+        custom_pages_path = Path(custom_pages_dir)
+        if custom_pages_path.exists() and custom_pages_path.is_dir():
+            for py_file in custom_pages_path.glob("*.py"):
+                shutil.copy2(py_file, temp_dir / "pages" / py_file.name)
+    return temp_dir
 
 
 def _is_snowflake_connector(connector: DBConnector):
@@ -82,10 +112,10 @@ def run_dashboard(
 
     print("Starting dashboard ...")
 
-    # run leaderboard with subprocess
-    leaderboard_path = import_utils.static_resource(
-        "dashboard", "Leaderboard.py"
-    )
+    # Create temporary directory with dashboard files
+    # TODO(this_pr): Maybe not make this temp.
+    temp_dashboard_dir = _create_temp_dashboard_dir()
+    leaderboard_path = temp_dashboard_dir / "Leaderboard.py"
 
     if session._dashboard_proc is not None:
         print("Dashboard already running at path:", session._dashboard_urls)
@@ -127,7 +157,7 @@ def run_dashboard(
         args.append(f"--server.address={address}")
 
     args += [
-        leaderboard_path,
+        str(leaderboard_path),
         "--",
         "--database-prefix",
         session.connector.db.table_prefix,
@@ -176,6 +206,7 @@ def run_dashboard(
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
+        cwd=str(temp_dashboard_dir),
         **env_opts,
     )
 
@@ -258,6 +289,13 @@ def run_dashboard(
                     out.append_stdout(line)
                 else:
                     print(line)
+
+        # Process has ended, clean up temporary directory (only once)
+        try:
+            shutil.rmtree(session._dashboard_temp_dir)
+        except Exception as e:
+            print(f"Warning: Failed to clean up temporary directory: {e}")
+
         if out is not None:
             out.append_stdout("Dashboard closed.")
         else:
@@ -280,6 +318,7 @@ def run_dashboard(
     session._dashboard_listener_stderr.start()
 
     session._dashboard_proc = proc
+    session._dashboard_temp_dir = temp_dashboard_dir
 
     wait_period = DASHBOARD_START_TIMEOUT
     if IN_COLAB:
@@ -289,6 +328,11 @@ def run_dashboard(
     # This might not work on windows.
     if not started.wait(timeout=wait_period):
         session._dashboard_proc = None
+        # Clean up temporary directory on failure
+        try:
+            shutil.rmtree(temp_dashboard_dir)
+        except Exception as e:
+            print(f"Warning: Failed to clean up temporary directory: {e}")
         raise RuntimeError(
             "Dashboard failed to start in time. "
             "Please inspect dashboard logs for additional information."

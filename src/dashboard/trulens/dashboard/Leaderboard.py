@@ -857,20 +857,13 @@ def render_leaderboard(app_name: str):
 
 
 def leaderboard_main():
-    # Try to use the new navigation system if available
-    try:
-        from trulens.dashboard.navigation import render_navigation
-
-        render_navigation()
-    except ImportError:
-        # Fall back to the original leaderboard-only view
-        dashboard_utils.set_page_config(
-            page_title=dashboard_constants.LEADERBOARD_PAGE_NAME
-        )
-        init_page_state()
-        app_name = dashboard_utils.render_sidebar()
-        if app_name:
-            render_leaderboard(app_name)
+    dashboard_utils.set_page_config(
+        page_title=dashboard_constants.LEADERBOARD_PAGE_NAME
+    )
+    init_page_state()
+    app_name = dashboard_utils.render_sidebar()
+    if app_name:
+        render_leaderboard(app_name)
 
 
 if __name__ == "__main__":
