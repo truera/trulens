@@ -1107,65 +1107,17 @@ class Comprehensiveness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     )
 
 
-class StepRelevance(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
-    """
-    Evaluates the relevance of each step in the agentic system's trajectory to the user's goal.
-    """
-
-    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
-    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
-    criteria_template: ClassVar[str] = """
-    Score the relevance of each step in the trajectory to the user's goal.
-    {max_score}: Each step is essential towards directly advancing or clearly enabling the goal. Setup, verification, and exploration (if present) are justified in relation to the goal's completion. No actions that are unrelated to the stated goal are present.
-
-    Middle scores: Some steps have weak, tangential, or ambiguous links to the user's goal, but may not significantly distract from goal completion. Most goal-critical steps are present, though there may be some detours or less relevant actions mixed in.
-
-    {min_score}: The majority of steps are not necessary for the user's goal, or critical goal-essential steps are absent. The process lacks clear orientation to the stated goal.
-    """
-
-    system_prompt_template: ClassVar[str] = cleandoc(
-        """You are a meticulous and analytical STEP RELEVANCE evaluator: first, identify the user's goal and then evaluate how relevant each step in the trajectory is to that goal.
-        Respond only as a number from {output_space_prompt}.
-
-        Evaluation criteria:
-        {criteria}
-
-        Be critical in your evaluation and focus on identifying any steps that are not directly contributing to the goal. Cite specific examples from the trajectory.
-
-        Never elaborate.
-        """
-    )
-
-    user_prompt: ClassVar[str] = cleandoc(
-        """TRAJECTORY STEPS: {trajectory}
-
-        STEP RELEVANCE SCORE:
-        """
-    )
-
-    criteria: ClassVar[str] = criteria_template.format(
-        min_score=OutputSpace.LIKERT_0_3.value[0],
-        max_score=OutputSpace.LIKERT_0_3.value[1],
-    )
-
-    system_prompt: ClassVar[str] = cleandoc(
-        system_prompt_template.format(
-            output_space_prompt=output_space_prompt, criteria=criteria
-        )
-    )
-
-
 class LogicalConsistency(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     """
-    Evaluates the logical consistency of the agentic system's trajectory.
+    Evaluates the logical consistency of the agentic system's plan and execution.
     """
 
     output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
     output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
     criteria_template: ClassVar[str] = """
-    Score the logical consistency of the trajectory steps.
+    Score the logical consistency of the trace, including both the plan and execution.
 
-    {max_score}: Every action, claim, and transition in the trajectory is explicitly justified using information available in the prior context. Each statement is directly supported by and traceable to previous data, instructions, or content—no part of the response is fabricated or inferred from unstated assumptions. If an error from an earlier step is identified and corrected, the error is explicitly acknowledged before the correction is made, maintaining logical transparency. Each system instruction is followed. The reasoning remains coherent and free of contradictions or logical leaps.
+    {max_score}: Every action, claim, and transition in the trace is explicitly justified using information available in the prior context. Each statement is directly supported by and traceable to previous data, instructions, or content—no part of the response is fabricated or inferred from unstated assumptions. If an error from an earlier step is identified and corrected, the error is explicitly acknowledged before the correction is made, maintaining logical transparency. Each system instruction is followed. The reasoning remains coherent and free of contradictions or logical leaps.
 
     Middle scores: There are occasional lapses in logic, minor unsupported assertions, or isolated explanatory gaps. Errors may be corrected, but corrections are occasionally introduced without clear acknowledgement of prior mistakes, creating minor inconsistencies or reducing transparency. Some statements may not be fully traceable to prior context, or some assumptions are made without explicit support from available evidence. Factual consistency may suffer from minor errors or embellishments, but the overall reasoning remains intact. Most previously assigned tasks and instructions remain intact.
 
@@ -1173,21 +1125,21 @@ class LogicalConsistency(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     """
 
     system_prompt_template: ClassVar[str] = cleandoc(
-        """You are a meticulous and analytical LOGICAL CONSISTENCY evaluator: provide a score for the logical consistency of an agentic system's trajectory.
-        This multi-turn conversation involves multiple agents. Track each agent's system instructions and conversation history, ensuring all subsequent outputs from that agent adhere to its established guidelines and prior dialogue, even when agents speak interchangeably.
+        """You are a meticulous and analytical LOGICAL CONSISTENCY evaluator: provide a score for the logical consistency given an agentic system's trace.
+        This multi-turn conversation may involve multiple agents. Track each agent's system instructions and conversation history, ensuring all subsequent outputs from that agent adhere to its established guidelines and prior dialogue, even when agents speak interchangeably.
         Respond only as a number from {output_space_prompt}.
 
         Evaluation criteria:
         {criteria}
 
-        Be critical in your evaluation. For each step in the trajectory with an issue (eg. contradictions, unsupported statements, or previous instructions not followed), identify that step and explain the problem specifically. Flag any implicit assumptions.
+        Be critical in your evaluation. For each step in the trace with an issue (eg. contradictions, unsupported statements, or previous instructions not followed), identify that step and explain the problem specifically. Flag any implicit assumptions.
 
         Never elaborate.
         """
     )
 
     user_prompt: ClassVar[str] = cleandoc(
-        """TRAJECTORY: {trajectory}
+        """TRACE: {trace}
 
         LOGICAL CONSISTENCY SCORE:
         """
@@ -1207,15 +1159,15 @@ class LogicalConsistency(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
 class ExecutionEfficiency(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     """
-    Evaluates the efficiency of the agentic system's execution steps.
+    Evaluates the efficiency of the agentic system's execution.
     """
 
     output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
     output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
     criteria_template: ClassVar[str] = """
-    Score the efficiency of the execution steps.
+    Score the efficiency of the execution.
 
-    {max_score}: All relevant actions are executed exactly once, in a streamlined and optimized sequence. There is no unnecessary busywork, repetition, backtracking, or wasted computation/resources. Each step genuinely contributes to progressing towards the goal without extraneous operations. Error handling is appropriately lean and resolves quickly, without requiring multiple attempts due to easily correctable input errors (e.g., incorrect tool arguments). Verification steps provide unique feedback, serve as sanity checks, or uses a demonstrably different approach from the initial approach to ensure correctness, without duplicating prior effort.
+    {max_score}: All relevant actions are executed exactly once, in a streamlined and optimized sequence. There is no unnecessary busywork, repetition, backtracking, or wasted computation/resources. Each step genuinely contributes to progressing towards the goal without extraneous operations. Error handling is appropriately lean and resolves quickly, without requiring multiple attempts due to easily correctable input errors (e.g., incorrect tool arguments). Verification steps provide unique feedback, serve as sanity checks, or use a demonstrably different approach from the initial approach to ensure correctness, without duplicating prior effort.
 
     Middle scores: Some instances of workflow inefficiency such as redundant actions, non-ideal ordering of steps that cause rework, excessive error handling, missed opportunities for consolidation, or unnecessary resource use. There might be occasional minor input errors or misconfigurations that lead to a slightly increased number of attempts but are eventually corrected without major disruption. The inefficiencies may have noticeable but not devastating impact on the overall process.
 
@@ -1236,7 +1188,7 @@ class ExecutionEfficiency(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     )
 
     user_prompt: ClassVar[str] = cleandoc(
-        """TRAJECTORY (INCLUDING EXECUTION STEPS): {trajectory}
+        """TRACE (INCLUDING EXECUTION): {trace}
 
         EXECUTION EFFICIENCY SCORE:
         """
@@ -1256,7 +1208,7 @@ class ExecutionEfficiency(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
 class PlanAdherence(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     """
-    Evaluates the adherence of the agentic system's execution steps to the agentic system's plan.
+    Evaluates the adherence of the agentic system's execution to the agentic system's plan.
     """
 
     output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
@@ -1272,7 +1224,7 @@ class PlanAdherence(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     """
 
     system_prompt_template: ClassVar[str] = cleandoc(
-        """You are a meticulous and analytical PLAN ADHERENCE evaluator: you are given the entire trajectory which contains both the plan and the execution steps. First, identify the plan and any subsequent replans within the trajectory. Then, evaluate how closely the execution steps follow the plan or replans.
+        """You are a meticulous and analytical PLAN ADHERENCE evaluator: you are given the entire trace which contains both the plan and the execution. First, identify the plan and any subsequent replans within the trace. Then, evaluate how closely the execution follows the plan or replans.
         Respond only as a number from {output_space_prompt}.
 
         Evaluation criteria:
@@ -1285,7 +1237,7 @@ class PlanAdherence(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     )
 
     user_prompt: ClassVar[str] = cleandoc(
-        """TRAJECTORY (INCLUDING PLAN): {trajectory}
+        """TRACE (INCLUDING PLAN): {trace}
 
         PLAN ADHERENCE SCORE:
         """
@@ -1321,20 +1273,20 @@ class PlanQuality(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     """
 
     system_prompt_template: ClassVar[str] = cleandoc(
-        """You are a meticulous and analytical PLAN QUALITY evaluator: you are given the entire trajectory which contains the plan and execution steps. First, you must identify the system's overall plan (independent of the execution steps) as well as any subsequent replans. Your evaluation MUST solely focus on the intrinsic quality of the plan (and replans), without any consideration for how it was executed or the results of the execution. Evaluate how well the plan addresses the user's query.
+        """You are a meticulous and analytical PLAN QUALITY evaluator: you are given the entire trace which contains the plan and execution. First, you must identify the system's overall plan (independent of the execution steps) as well as any subsequent replans. Your evaluation MUST solely focus on the intrinsic quality of the plan (and replans), without any consideration for how it was executed or the results of the execution. Evaluate how well the plan addresses the user's query.
         Respond only as a number from {output_space_prompt}.
 
         Evaluation criteria:
         {criteria}
 
-        Ensure that you identify the system's plan and NOT the execution steps within the trajectory. Be critical in your evaluation. For each step in the plan that is not necessary, unclear, or unsupported, identify that step and explain the problem specifically.
+        Ensure that you identify the system's plan and NOT the execution steps within the trace. Be critical in your evaluation. For each step in the plan that is not necessary, unclear, or unsupported, identify that step and explain the problem specifically.
 
         Never elaborate.
         """
     )
 
     user_prompt: ClassVar[str] = cleandoc(
-        """TRAJECTORY (INCLUDING PLAN): {trajectory}
+        """TRACE (INCLUDING PLAN): {trace}
 
         PLAN QUALITY SCORE:
         """

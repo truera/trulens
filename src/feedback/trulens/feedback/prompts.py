@@ -160,8 +160,6 @@ COMPREHENSIVENESS_SYSTEM_PROMPT = v2.Comprehensiveness.system_prompt
 
 COMPREHENSIVENESS_USER_PROMPT = v2.Comprehensiveness.user_prompt
 
-STEP_RELEVANCE_SYSTEM_PROMPT = v2.StepRelevance.system_prompt
-
 LOGICAL_CONSISTENCY_SYSTEM_PROMPT = v2.LogicalConsistency.system_prompt
 
 EXECUTION_EFFICIENCY_SYSTEM_PROMPT = v2.ExecutionEfficiency.system_prompt

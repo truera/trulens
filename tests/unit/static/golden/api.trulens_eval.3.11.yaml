@@ -121,7 +121,6 @@ trulens_eval.AzureOpenAI:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    step_relevance_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -208,7 +207,6 @@ trulens_eval.Bedrock:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    step_relevance_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -298,7 +296,6 @@ trulens_eval.Cortex:
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
     snowpark_session: snowflake.snowpark.session.Session
-    step_relevance_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -579,7 +576,6 @@ trulens_eval.Langchain:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    step_relevance_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -673,7 +669,6 @@ trulens_eval.LiteLLM:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    step_relevance_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -768,7 +763,6 @@ trulens_eval.OpenAI:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    step_relevance_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -2410,7 +2404,6 @@ trulens_eval.feedback.AzureOpenAI:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    step_relevance_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -2497,7 +2490,6 @@ trulens_eval.feedback.Bedrock:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    step_relevance_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -2587,7 +2579,6 @@ trulens_eval.feedback.Cortex:
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
     snowpark_session: snowflake.snowpark.session.Session
-    step_relevance_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -2959,7 +2950,6 @@ trulens_eval.feedback.Langchain:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    step_relevance_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -3046,7 +3036,6 @@ trulens_eval.feedback.LiteLLM:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    step_relevance_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -3141,7 +3130,6 @@ trulens_eval.feedback.OpenAI:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    step_relevance_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -3513,7 +3501,6 @@ trulens_eval.feedback.provider.AzureOpenAI:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    step_relevance_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -3600,7 +3587,6 @@ trulens_eval.feedback.provider.Bedrock:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    step_relevance_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -3690,7 +3676,6 @@ trulens_eval.feedback.provider.Cortex:
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
     snowpark_session: snowflake.snowpark.session.Session
-    step_relevance_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -3875,7 +3860,6 @@ trulens_eval.feedback.provider.Langchain:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    step_relevance_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -3962,7 +3946,6 @@ trulens_eval.feedback.provider.LiteLLM:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    step_relevance_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -4057,7 +4040,6 @@ trulens_eval.feedback.provider.OpenAI:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    step_relevance_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -4192,7 +4174,6 @@ trulens_eval.feedback.provider.base.LLMProvider:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    step_relevance_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -4328,7 +4309,6 @@ trulens_eval.feedback.provider.bedrock.Bedrock:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    step_relevance_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -4424,7 +4404,6 @@ trulens_eval.feedback.provider.cortex.Cortex:
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
     snowpark_session: snowflake.snowpark.session.Session
-    step_relevance_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -6284,7 +6263,6 @@ trulens_eval.feedback.provider.langchain.Langchain:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    step_relevance_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -6377,7 +6355,6 @@ trulens_eval.feedback.provider.litellm.LiteLLM:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    step_relevance_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -6480,7 +6457,6 @@ trulens_eval.feedback.provider.openai.AzureOpenAI:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    step_relevance_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -6575,7 +6551,6 @@ trulens_eval.feedback.provider.openai.OpenAI:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    step_relevance_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
