@@ -55,6 +55,12 @@ with import_utils.OptionalImports(
     from trulens.providers.huggingface.provider import HuggingfaceLocal
 
 with import_utils.OptionalImports(
+    messages=eval_optional_utils.REQUIREMENT_PROVIDER_GOOGLE
+):
+    from trulens.providers.google.provider import Google
+
+
+with import_utils.OptionalImports(
     messages=eval_optional_utils.REQUIREMENT_PROVIDER_LANGCHAIN
 ):
     from trulens.providers.langchain.provider import Langchain
@@ -105,6 +111,7 @@ __all__ = [
     "Cortex",
     # misc utility
     "TP",
+    "Google",
 ]
 
 # Replace all classes we expose to ones which issue a deprecation warning upon
