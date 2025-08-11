@@ -72,16 +72,12 @@ class TestOtelInlineEvaluations(OtelTestCase):
             and m.content.startswith("[Inline Evaluation Guidance]")
         ]
         assert len(guidance_msgs) == 1
-        assert "higher is better" in guidance_msgs[0].content
-
-        result_msgs = [
-            m
-            for m in result["messages"]
-            if isinstance(getattr(m, "content", None), str)
-            and m.content.startswith("[Inline Evaluation Result]")
-        ]
-        assert len(result_msgs) == 1
-        assert "0.42" in result_msgs[0].content
+        g = guidance_msgs[0].content
+        assert "Heads-up: an inline evaluation" in g
+        assert "Feedback: simple_feedback" in g
+        assert "(higher is better)" in g
+        assert "[Inline Evaluation Result]" in g
+        assert "0.42" in g
 
         return self._get_events()
 
@@ -150,9 +146,11 @@ class TestOtelInlineEvaluations(OtelTestCase):
             and m.content.startswith("[Inline Evaluation Guidance]")
         ]
         assert len(guidance_msgs) == 1
-        assert "lower is better" in guidance_msgs[0].content
+        g = guidance_msgs[0].content
+        assert "(lower is better)" in g
+        assert "[Inline Evaluation Result]" in g
 
-    def test_guidance_added_only_once_across_multiple_nodes(self) -> None:
+    def test_guidance_added_per_inline_eval_across_multiple_nodes(self) -> None:
         # Feedback function
         def simple_feedback(text: str) -> float:
             return 0.5
@@ -200,4 +198,6 @@ class TestOtelInlineEvaluations(OtelTestCase):
             if isinstance(getattr(m, "content", None), str)
             and m.content.startswith("[Inline Evaluation Guidance]")
         ]
-        assert len(guidance_msgs) == 1
+        assert len(guidance_msgs) == 2
+        for m in guidance_msgs:
+            assert "[Inline Evaluation Result]" in m.content
