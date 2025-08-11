@@ -93,6 +93,35 @@ def _clean_text_value(value: Any) -> Any:
     return text
 
 
+def _escape_currency_dollars(text: str) -> str:
+    """Escape $ so Markdown doesn't interpret it as LaTeX math.
+
+    If we render with st.markdown, unescaped $ can trigger math in some themes.
+    """
+    if isinstance(text, str):
+        return text.replace("$", r"\$")
+    return text
+
+
+def _escape_problematic_markdown(text: str) -> str:
+    """Escape characters that can rewrite plain text when rendered as Markdown.
+
+    - Escape dollar signs to avoid accidental math rendering
+    - Escape underscores only when they are between word characters (e.g.,
+      followed_by -> followed\_by). This preserves legitimate Markdown
+      italics/bold like _text_ or __text__ which are typically surrounded by
+      spaces or punctuation.
+    """
+    if not isinstance(text, str):
+        return text
+    escaped = text.replace("$", r"\$")
+    # Escape underscores between alphanumerics
+    import re as _re
+
+    escaped = _re.sub(r"(?<=\w)_(?=\w)", r"\\_", escaped)
+    return escaped
+
+
 def _render_record_metrics(
     records_df: pd.DataFrame, selected_row: pd.Series
 ) -> None:
@@ -166,14 +195,18 @@ def _render_trace(
     with input_col.expander("Record Input"):
         input_value = selected_row["input"]
         if isinstance(input_value, str):
-            st.markdown(input_value, unsafe_allow_html=True)
+            text = _clean_text_value(input_value)
+            text = _escape_problematic_markdown(text)
+            st.markdown(text, unsafe_allow_html=False)
         else:
             st_code(selected_row["input"], wrap_lines=True)
 
     with output_col.expander("Record Output"):
         output_value = selected_row["output"]
         if isinstance(output_value, str):
-            st.markdown(output_value, unsafe_allow_html=True)
+            text = _clean_text_value(output_value)
+            text = _escape_problematic_markdown(text)
+            st.markdown(text, unsafe_allow_html=False)
         else:
             st_code(json.dumps(output_value, indent=2), wrap_lines=True)
 
