@@ -80,7 +80,45 @@ class inline_evaluation:
 
                 # Add feedback result to state messages
                 state = self._get_state_arg(func, instance, args, kwargs)
-                state["messages"].append(SystemMessage(str(feedback_result)))
+                messages = state.get("messages", [])
+
+                # Add a one-time guidance message to help the agent interpret evaluation outputs
+                guidance_marker = "[Inline Evaluation Guidance]"
+                has_guidance = any(
+                    isinstance(m, SystemMessage)
+                    and isinstance(getattr(m, "content", None), str)
+                    and getattr(m, "content").startswith(guidance_marker)
+                    for m in messages
+                )
+
+                if not has_guidance:
+                    score_direction_text = (
+                        "higher is better"
+                        if self._feedback.higher_is_better
+                        else "lower is better"
+                    )
+                    guidance_text = (
+                        f"{guidance_marker}\n"
+                        "Evaluation messages summarize observations about the last step. "
+                        f"They often include a short explanation and may include a score (0–1; {score_direction_text}).\n\n"
+                        "How to use them:\n"
+                        "- Treat the explanation as the primary signal; scores are only rough indicators.\n"
+                        "- Use the score and explanation to choose the next action.\n"
+                        "- If the explanation points to critical gaps for the current objective, adjust the plan or request the missing information.\n"
+                        "- If gaps are minor or non‑blocking, continue.\n"
+                        "- Avoid redundant verification unless the explanation indicates real risk or uncertainty.\n"
+                        "- Keep retries bounded; if similar feedback recurs, consider a different approach or narrow the scope.\n"
+                        "- If the feedback concerns information scheduled for a later step, you can proceed without replanning."
+                    )
+                    messages.append(SystemMessage(guidance_text))
+
+                # Append the evaluation result as a labeled system message
+                messages.append(
+                    SystemMessage(
+                        "[Inline Evaluation Result]\n" + str(feedback_result)
+                    )
+                )
+                state["messages"] = messages
 
             kwargs_copy = kwargs.copy()
             span_callbacks = kwargs_copy.pop(TRULENS_SPAN_END_CALLBACKS, [])
