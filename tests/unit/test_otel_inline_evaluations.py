@@ -23,11 +23,11 @@ except Exception:
 @pytest.mark.optional
 class TestOtelInlineEvaluations(OtelTestCase):
     def _create_and_invoke_simple_app(self, emit_spans: bool) -> pd.DataFrame:
-        # Create feedback function.
+        # Create feedback function (higher is better by default).
         def simple_feedback(text: str) -> float:
             if text == "Kojikun":
                 return 0.42
-            return 0
+            return 0.0
 
         feedback_func = Feedback(simple_feedback).on({
             "text": Selector(span_attribute="test_output")
@@ -58,12 +58,30 @@ class TestOtelInlineEvaluations(OtelTestCase):
             result = graph.invoke(initial_state)
         TruSession().force_flush()
 
-        # Ensure that when calling the app, the state is updated with the
-        # feedback result.
-        self.assertListEqual(
-            ["Nolan", "Sachiboy", "0.42"],
-            [curr.content for curr in result["messages"]],
-        )
+        # Validate messages contain original content, guidance, and labeled result.
+        def content_of(msg):
+            return msg if isinstance(msg, str) else getattr(msg, "content", msg)
+
+        assert content_of(result["messages"][0]) == "Nolan"
+        assert content_of(result["messages"][1]) == "Sachiboy"
+
+        guidance_msgs = [
+            m
+            for m in result["messages"]
+            if isinstance(getattr(m, "content", None), str)
+            and m.content.startswith("[Inline Evaluation Guidance]")
+        ]
+        assert len(guidance_msgs) == 1
+        assert "higher is better" in guidance_msgs[0].content
+
+        result_msgs = [
+            m
+            for m in result["messages"]
+            if isinstance(getattr(m, "content", None), str)
+            and m.content.startswith("[Inline Evaluation Result]")
+        ]
+        assert len(result_msgs) == 1
+        assert "0.42" in result_msgs[0].content
 
         return self._get_events()
 
@@ -94,3 +112,92 @@ class TestOtelInlineEvaluations(OtelTestCase):
             0.42,
             events.iloc[1]["record_attributes"][SpanAttributes.EVAL_ROOT.SCORE],
         )
+
+    def test_guidance_direction_respects_higher_is_better_flag(self) -> None:
+        # lower-is-better feedback
+        def simple_feedback(text: str) -> float:
+            return 0.25
+
+        feedback_func = Feedback(simple_feedback, higher_is_better=False).on({
+            "text": Selector(span_attribute="test_output")
+        })
+
+        @inline_evaluation(feedback_func, emit_spans=False)
+        @instrument(
+            attributes=lambda ret, exception, *args, **kwargs: {
+                "test_output": "anything"
+            }
+        )
+        def simple_node(state: MessagesState) -> MessagesState:
+            state["messages"].append(AIMessage("msg"))
+            return state
+
+        workflow = StateGraph(MessagesState)
+        workflow.add_node("simple_node", simple_node)
+        workflow.add_edge(START, "simple_node")
+        workflow.add_edge("simple_node", END)
+        graph = workflow.compile()
+
+        tru_app = TruApp(graph, app_name="test_app", app_version="v1")
+        initial_state = MessagesState(messages=["start"])
+        with tru_app:
+            result = graph.invoke(initial_state)
+
+        guidance_msgs = [
+            m
+            for m in result["messages"]
+            if isinstance(getattr(m, "content", None), str)
+            and m.content.startswith("[Inline Evaluation Guidance]")
+        ]
+        assert len(guidance_msgs) == 1
+        assert "lower is better" in guidance_msgs[0].content
+
+    def test_guidance_added_only_once_across_multiple_nodes(self) -> None:
+        # Feedback function
+        def simple_feedback(text: str) -> float:
+            return 0.5
+
+        feedback_func = Feedback(simple_feedback).on({
+            "text": Selector(span_attribute="test_output")
+        })
+
+        @inline_evaluation(feedback_func, emit_spans=False)
+        @instrument(
+            attributes=lambda ret, exception, *args, **kwargs: {
+                "test_output": "a"
+            }
+        )
+        def node_a(state: MessagesState) -> MessagesState:
+            state["messages"].append(AIMessage("A"))
+            return state
+
+        @inline_evaluation(feedback_func, emit_spans=False)
+        @instrument(
+            attributes=lambda ret, exception, *args, **kwargs: {
+                "test_output": "b"
+            }
+        )
+        def node_b(state: MessagesState) -> MessagesState:
+            state["messages"].append(AIMessage("B"))
+            return state
+
+        workflow = StateGraph(MessagesState)
+        workflow.add_node("node_a", node_a)
+        workflow.add_node("node_b", node_b)
+        workflow.add_edge(START, "node_a")
+        workflow.add_edge("node_a", "node_b")
+        workflow.add_edge("node_b", END)
+        graph = workflow.compile()
+
+        tru_app = TruApp(graph, app_name="test_app", app_version="v1")
+        initial_state = MessagesState(messages=["start"])
+        with tru_app:
+            result = graph.invoke(initial_state)
+
+        guidance_msgs = [
+            m
+            for m in result["messages"]
+            if isinstance(getattr(m, "content", None), str)
+            and m.content.startswith("[Inline Evaluation Guidance]")
+        ]
+        assert len(guidance_msgs) == 1
