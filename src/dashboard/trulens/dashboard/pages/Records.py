@@ -359,7 +359,7 @@ def _build_grid_options(
             "overflow": "hidden",
             "text-overflow": "ellipsis",
         },
-        width=150,
+        width=300,
         minWidth=300,
         maxWidth=300,
         resizable=False,
