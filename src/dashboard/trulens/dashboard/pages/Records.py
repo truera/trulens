@@ -1,4 +1,6 @@
-from typing import Dict, List, Optional, Sequence
+import codecs
+import json
+from typing import Any, Dict, List, Optional, Sequence
 
 import pandas as pd
 import streamlit as st
@@ -57,6 +59,38 @@ def _format_cost(cost: float, currency: str) -> str:
         return f"${cost:.2f}"
     else:
         return f"{cost:.3g} {currency}"
+
+
+def _clean_text_value(value: Any) -> Any:
+    """Fix common text encoding issues and decode escaped sequences.
+
+    - Fix UTF-8 displayed as Windows-1252/latin-1 (e.g., â -> ’)
+    - Decode backslash-escaped unicode sequences when present
+    - Leave non-strings unchanged
+    """
+    if not isinstance(value, str):
+        return value
+
+    text = value
+
+    # Attempt to fix mojibake: bytes intended as UTF-8 shown as latin-1
+    # Trigger only if typical mojibake markers present
+    if any(mark in text for mark in ("â€", "Ã", "Â")):
+        try:
+            text = text.encode("latin-1", errors="ignore").decode(
+                "utf-8", errors="ignore"
+            )
+        except Exception:
+            pass
+
+    # Decode literal escape sequences like \u2019 -> ’ if present
+    if "\\u" in text or "\\x" in text:
+        try:
+            text = codecs.decode(text.encode("utf-8"), "unicode_escape")
+        except Exception:
+            pass
+
+    return text
 
 
 def _render_record_metrics(
@@ -130,10 +164,18 @@ def _render_trace(
 
     input_col, output_col = st_columns(2)
     with input_col.expander("Record Input"):
-        st_code(selected_row["input"], wrap_lines=True)
+        input_value = selected_row["input"]
+        if isinstance(input_value, str):
+            st.markdown(input_value, unsafe_allow_html=True)
+        else:
+            st_code(selected_row["input"], wrap_lines=True)
 
     with output_col.expander("Record Output"):
-        st_code(selected_row["output"], wrap_lines=True)
+        output_value = selected_row["output"]
+        if isinstance(output_value, str):
+            st.markdown(output_value, unsafe_allow_html=True)
+        else:
+            st_code(json.dumps(output_value, indent=2), wrap_lines=True)
 
     _render_record_metrics(records_df, selected_row)
 
@@ -186,12 +228,10 @@ def _preprocess_df(
     if HIDE_RECORD_COL_NAME in records_df.columns:
         records_df = records_df[~records_df[HIDE_RECORD_COL_NAME]]
     records_df = records_df.sort_values(by="ts", ascending=False)
-    records_df["input"] = (
-        records_df["input"].str.encode("utf-8").str.decode("unicode-escape")
-    )
-    records_df["output"] = (
-        records_df["output"].str.encode("utf-8").str.decode("unicode-escape")
-    )
+    if "input" in records_df.columns:
+        records_df["input"] = records_df["input"].apply(_clean_text_value)
+    if "output" in records_df.columns:
+        records_df["output"] = records_df["output"].apply(_clean_text_value)
 
     # Reorder App columns to the front. Used for aggrid display
     records_df.insert(0, "app_id", records_df.pop("app_id"))
