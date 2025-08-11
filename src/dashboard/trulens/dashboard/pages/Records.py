@@ -221,6 +221,7 @@ def _build_grid_options(
     from st_aggrid.grid_options_builder import GridOptionsBuilder
 
     gb = GridOptionsBuilder.from_dataframe(df, headerHeight=50)
+    gb.configure_default_column(resizable=True, flex=0, suppressSizeToFit=True)
 
     gb.configure_column(
         "app_version",
@@ -270,6 +271,10 @@ def _build_grid_options(
             "text-overflow": "ellipsis",
         },
         width=150,
+        minWidth=300,
+        maxWidth=300,
+        resizable=False,
+        suppressSizeToFit=True,
         tooltipField="input",
         filter="agMultiColumnFilter",
     )
@@ -282,6 +287,10 @@ def _build_grid_options(
             "text-overflow": "ellipsis",
         },
         width=150,
+        minWidth=300,
+        maxWidth=300,
+        resizable=False,
+        suppressSizeToFit=True,
         tooltipField="output",
         filter="agMultiColumnFilter",
     )
@@ -437,6 +446,8 @@ def _render_grid(
                 update_on=["selectionChanged"],
                 custom_css={**aggrid_css, **radio_button_css},
                 columns_auto_size_mode=ColumnsAutoSizeMode.NO_AUTOSIZE,
+                fit_columns_on_grid_load=False,
+                reload_data=True,
                 data_return_mode=DataReturnMode.FILTERED,
                 allow_unsafe_jscode=True,
             )
