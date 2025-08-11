@@ -264,15 +264,25 @@ def _build_grid_options(
     gb.configure_column(
         "input",
         header_name="Record Input",
-        wrapText=True,
-        autoHeight=True,
+        cellStyle={
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
+        },
+        width=150,
+        tooltipField="input",
         filter="agMultiColumnFilter",
     )
     gb.configure_column(
         "output",
         header_name="Record Output",
-        wrapText=True,
-        autoHeight=True,
+        cellStyle={
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
+        },
+        width=150,
+        tooltipField="output",
         filter="agMultiColumnFilter",
     )
 
@@ -392,6 +402,7 @@ def _build_grid_options(
     gb.configure_grid_options(
         rowHeight=40,
         suppressContextMenu=True,
+        suppressSizeToFit=True,
     )
     gb.configure_selection(
         selection_mode="single",
@@ -425,7 +436,7 @@ def _render_grid(
                 ),
                 update_on=["selectionChanged"],
                 custom_css={**aggrid_css, **radio_button_css},
-                columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS,
+                columns_auto_size_mode=ColumnsAutoSizeMode.NO_AUTOSIZE,
                 data_return_mode=DataReturnMode.FILTERED,
                 allow_unsafe_jscode=True,
             )
