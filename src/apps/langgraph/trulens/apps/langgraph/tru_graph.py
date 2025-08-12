@@ -1,5 +1,8 @@
 """LangGraph app instrumentation."""
 
+import dataclasses
+from functools import wraps
+import inspect
 from inspect import BoundArguments
 from inspect import Signature
 import json
@@ -18,6 +21,13 @@ from trulens.apps.langchain.tru_chain import TruChain
 from trulens.core import app as core_app
 from trulens.core import instruments as core_instruments
 from trulens.core.instruments import InstrumentedMethod
+from trulens.core.otel.function_call_context_manager import (
+    create_function_call_context_manager,
+)
+from trulens.core.otel.instrument import instrument_function
+from trulens.core.otel.instrument import instrument_method
+from trulens.core.otel.instrument import set_general_span_attributes
+from trulens.core.otel.instrument import set_user_defined_attributes
 from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.session import TruSession
 from trulens.core.utils import pyschema as pyschema_utils
@@ -214,8 +224,6 @@ class TruGraph(TruChain):
             return
 
         try:
-            from trulens.core.otel.instrument import instrument_method
-
             # Check if TaskFunction.__call__ is already instrumented
             if hasattr(TaskFunction.__call__, TRULENS_INSTRUMENT_WRAPPER_FLAG):
                 logger.debug(
@@ -259,8 +267,6 @@ class TruGraph(TruChain):
 
                     # Serialize the task input arguments
                     try:
-                        import inspect
-
                         if hasattr(task_function_instance, "func"):
                             try:
                                 sig = inspect.signature(
@@ -303,8 +309,6 @@ class TruGraph(TruChain):
                                             ) and hasattr(
                                                 value, "__dataclass_fields__"
                                             ):
-                                                import dataclasses
-
                                                 input_args[name] = (
                                                     dataclasses.asdict(value)
                                                 )
@@ -420,8 +424,6 @@ class TruGraph(TruChain):
             return
 
         try:
-            from trulens.core.otel.instrument import instrument_method
-
             # Try to instrument internal LangGraph execution methods
             # These are the methods that actually call individual node functions
 
@@ -439,7 +441,6 @@ class TruGraph(TruChain):
             ]
 
             # Try to find and instrument any of these methods on Pregel
-            instrumented_count = 0
             for method_name in internal_methods:
                 if hasattr(Pregel, method_name):
                     try:
@@ -547,7 +548,6 @@ class TruGraph(TruChain):
                                 method_name
                             ),
                         )
-                        instrumented_count += 1
                         logger.debug(
                             f"Instrumented internal method: Pregel.{method_name}"
                         )
@@ -556,15 +556,6 @@ class TruGraph(TruChain):
                         logger.debug(
                             f"Failed to instrument Pregel.{method_name}: {e}"
                         )
-
-            if instrumented_count > 0:
-                logger.info(
-                    f"Successfully instrumented {instrumented_count} internal node execution methods"
-                )
-            else:
-                logger.debug(
-                    "No internal node execution methods found to instrument"
-                )
 
         except Exception as e:
             logger.warning(
@@ -576,15 +567,6 @@ class TruGraph(TruChain):
         """Wrap a LangGraph stream generator to capture individual node updates as spans"""
 
         try:
-            from trulens.core.otel.function_call_context_manager import (
-                create_function_call_context_manager,
-            )
-            from trulens.experimental.otel_tracing.core.span import (
-                set_general_span_attributes,
-            )
-            from trulens.experimental.otel_tracing.core.span import (
-                set_user_defined_attributes,
-            )
 
             def instrumented_generator():
                 for chunk in original_generator:
@@ -596,7 +578,7 @@ class TruGraph(TruChain):
 
                             try:
                                 with create_function_call_context_manager(
-                                    create_new_span=True, func_name=span_name
+                                    create_new_span=True, span_name=span_name
                                 ) as span:
                                     # Set general span attributes
                                     set_general_span_attributes(
@@ -629,23 +611,15 @@ class TruGraph(TruChain):
                                         else:
                                             attributes[
                                                 SpanAttributes.GRAPH_NODE.OUTPUT_STATE
-                                            ] = (
-                                                str(node_data)[:200] + "..."
-                                                if len(str(node_data)) > 200
-                                                else str(node_data)
-                                            )
+                                            ] = str(node_data)
                                     else:
                                         attributes[
                                             SpanAttributes.GRAPH_NODE.OUTPUT_STATE
-                                        ] = (
-                                            str(node_data)[:200] + "..."
-                                            if len(str(node_data)) > 200
-                                            else str(node_data)
-                                        )
+                                        ] = str(node_data)
 
                                     # Set the user-defined attributes
                                     set_user_defined_attributes(
-                                        span, attributes
+                                        span, attributes=attributes
                                     )
 
                             except Exception as e:
@@ -709,173 +683,6 @@ class TruGraph(TruChain):
             )
 
     @classmethod
-    def _instrument_invoke_method_for_node_detection(cls):
-        """Instrument invoke methods to detect and create spans for individual node executions"""
-
-        try:
-            # This is a post-processing approach: analyze the invoke result to infer node executions
-
-            def create_node_detection_wrapper(original_method, method_name):
-                def wrapped_invoke(self, *args, **kwargs):
-                    # Debug: Log that wrapper is being called
-                    logger.debug(
-                        f"Node detection wrapper called for {method_name}"
-                    )
-
-                    # Call the original method
-                    result = original_method(self, *args, **kwargs)
-
-                    # Post-process the result to create individual node spans
-                    try:
-                        cls._create_individual_node_spans_within_invoke(
-                            result, args, kwargs
-                        )
-                        logger.debug("Node span creation completed")
-                    except Exception as e:
-                        logger.exception(
-                            f"Failed to create node spans from result: {e}"
-                        )
-
-                    return result
-
-                # Mark as instrumented to avoid double wrapping
-                setattr(wrapped_invoke, TRULENS_INSTRUMENT_WRAPPER_FLAG, True)
-                return wrapped_invoke
-
-            # Only instrument invoke methods, not streaming (those use the stream wrapper)
-            invoke_methods = ["invoke", "ainvoke"]
-
-            for method_name in invoke_methods:
-                if hasattr(Pregel, method_name):
-                    original_method = getattr(Pregel, method_name)
-
-                    if not hasattr(
-                        original_method, TRULENS_INSTRUMENT_WRAPPER_FLAG
-                    ):
-                        # Only wrap if not already wrapped by our streaming instrumentation
-                        wrapped_method = create_node_detection_wrapper(
-                            original_method, method_name
-                        )
-                        setattr(Pregel, method_name, wrapped_method)
-                        logger.debug(
-                            f"Added node detection wrapper to Pregel.{method_name}"
-                        )
-
-        except Exception as e:
-            logger.warning(
-                f"Failed to instrument invoke methods for node detection: {e}"
-            )
-
-    @classmethod
-    def _create_individual_node_spans_within_invoke(cls, result, args, kwargs):
-        """Create individual node spans based on analysis of the invoke result"""
-
-        try:
-            from opentelemetry.trace import get_current_span
-
-            # We're already inside a TruLens span context, so we can create child spans
-            current_span = get_current_span()
-            if current_span is None:
-                logger.debug("No current span, skipping node span creation")
-                return
-
-            if not isinstance(result, dict):
-                logger.debug(
-                    f"Result is not dict (type: {type(result)}), skipping"
-                )
-                return
-
-            logger.debug(f"Result is dict with keys: {list(result.keys())}")
-
-            # Create individual child spans for each detected node
-            # This creates the structure the user wants: individual spans per node
-
-            potential_nodes = []
-
-            # Look for keys that might represent node outputs
-            # Based on the LangGraph example: topic is input, joke/improved_joke/final_joke are node outputs
-            for key, value in result.items():
-                if key not in [
-                    "topic",  # Input parameter
-                    "input",
-                    "state",
-                    "messages",
-                ]:  # Skip common input/state keys
-                    # This key likely represents a node output (joke, improved_joke, final_joke)
-                    potential_nodes.append({
-                        "name": key,
-                        "content": str(value),
-                        "type": "node_output",
-                    })
-
-            # Create individual child spans for each detected node
-            if potential_nodes:
-                logger.info(
-                    f"🎯 Creating {len(potential_nodes)} individual node spans: {[n['name'] for n in potential_nodes]}"
-                )
-
-                # Import what we need for span creation
-                from trulens.core.otel.function_call_context_manager import (
-                    create_function_call_context_manager,
-                )
-                from trulens.experimental.otel_tracing.core.span import (
-                    set_general_span_attributes,
-                )
-                from trulens.experimental.otel_tracing.core.span import (
-                    set_user_defined_attributes,
-                )
-
-                # Create a child span for each detected node
-                for node_info in potential_nodes:
-                    try:
-                        # Use the actual node name as the span name (what user wants)
-                        span_name = node_info[
-                            "name"
-                        ]  # e.g., "generate_joke", "improve_joke"
-
-                        logger.info(f"Creating span for node: {span_name}")
-
-                        with create_function_call_context_manager(
-                            create_new_span=True, func_name=span_name
-                        ) as span:
-                            # Set general span attributes
-                            set_general_span_attributes(
-                                span, SpanAttributes.SpanType.GRAPH_NODE
-                            )
-                            # Build attributes for this specific node
-                            attributes = {
-                                SpanAttributes.GRAPH_NODE.NODE_NAME: span_name,
-                                SpanAttributes.GRAPH_NODE.OUTPUT_STATE: node_info[
-                                    "content"
-                                ],
-                                SpanAttributes.GRAPH_NODE.LATEST_MESSAGE: node_info[
-                                    "content"
-                                ],
-                                "detection_method": node_info["type"],
-                            }
-
-                            # Set the user-defined attributes
-                            set_user_defined_attributes(span, attributes)
-
-                            logger.info(
-                                f"✅ Created span for node: {span_name}"
-                            )
-
-                    except Exception as e:
-                        logger.error(
-                            f"❌ Failed to create span for node {node_info['name']}: {e}"
-                        )
-
-                logger.info(
-                    f"✅ Created {len(potential_nodes)} individual node spans"
-                )
-            else:
-                logger.info("❌ No potential nodes detected in result")
-
-        except Exception as e:
-            logger.debug(f"Failed to create node spans from result: {e}")
-
-    @classmethod
     def _setup_pregel_instrumentation(cls):
         """Set up class-level instrumentation for Pregel methods"""
 
@@ -884,10 +691,6 @@ class TruGraph(TruChain):
             return
 
         try:
-            import json
-
-            from trulens.core.otel.instrument import instrument_method
-
             if hasattr(Pregel, "invoke") and hasattr(
                 getattr(Pregel, "invoke"), TRULENS_INSTRUMENT_WRAPPER_FLAG
             ):
@@ -906,8 +709,6 @@ class TruGraph(TruChain):
                 attributes = {}
 
                 # Extract method name to understand what we're instrumenting
-                import inspect
-
                 frame = inspect.currentframe()
                 method_name = None
                 try:
@@ -963,16 +764,6 @@ class TruGraph(TruChain):
 
                                         # CREATE INDIVIDUAL SPAN RIGHT HERE!
                                         try:
-                                            from trulens.core.otel.function_call_context_manager import (
-                                                create_function_call_context_manager,
-                                            )
-                                            from trulens.experimental.otel_tracing.core.span import (
-                                                set_general_span_attributes,
-                                            )
-                                            from trulens.experimental.otel_tracing.core.span import (
-                                                set_user_defined_attributes,
-                                            )
-
                                             with create_function_call_context_manager(
                                                 create_new_span=True,
                                                 span_name=node_name,
@@ -1212,42 +1003,6 @@ class TruGraph(TruChain):
                 if exception:
                     attributes[SpanAttributes.GRAPH_NODE.ERROR] = str(exception)
 
-                # For invoke methods, also create individual node spans
-                if ret is not None and not exception:
-                    logger.error(
-                        f"🔍 Method name: '{method_name}', checking for node detection"
-                    )
-
-                # Always try to create node spans for any successful method call (regardless of method name)
-                logger.error(
-                    f"🔍 Checking conditions: ret={ret is not None}, exception={exception is not None}, dict={isinstance(ret, dict) if ret else False}, len={len(ret) if isinstance(ret, dict) else 0}"
-                )
-
-                if (
-                    ret is not None
-                    and not exception
-                    and isinstance(ret, dict)
-                    and len(ret) > 1
-                ):
-                    logger.error(
-                        "🎯 ALL CONDITIONS MET - Calling individual span creation!"
-                    )
-                    try:
-                        logger.error(
-                            f"🔍 About to call node detection for invoke with return type: {type(ret)}"
-                        )
-                        cls._create_individual_node_spans_within_invoke(
-                            ret, args, kwargs
-                        )
-                        logger.error("🔍 Node detection call completed")
-                    except Exception as e:
-                        logger.error(
-                            f"❌ Failed to create individual node spans: {e}"
-                        )
-                        import traceback
-
-                        logger.error(f"❌ Traceback: {traceback.format_exc()}")
-
                 return attributes
 
             # Apply instrumentation to different method groups
@@ -1326,9 +1081,6 @@ class TruGraph(TruChain):
             return node_func
 
         try:
-            from functools import wraps
-
-            from trulens.core.otel.instrument import instrument_function
 
             def node_attributes(ret, exception, *args, **kwargs):
                 attributes = {
