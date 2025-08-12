@@ -23,6 +23,7 @@ from trulens.core.instruments import InstrumentedMethod
 from trulens.core.otel.function_call_context_manager import (
     create_function_call_context_manager,
 )
+from trulens.core.otel.instrument import instrument
 from trulens.core.otel.instrument import instrument_method
 from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.session import TruSession
@@ -481,7 +482,8 @@ class TruGraph(TruChain):
         for consistency across the codebase.
         """
         attributes = {
-            SpanAttributes.GRAPH_NODE.NODE_NAME: node_name,
+            # SpanAttributes.GRAPH_NODE.NODE_NAME: node_name,
+            SpanAttributes.GRAPH_NODE.NODE_NAME: "check in create_node_update_attributes",
         }
 
         if isinstance(node_data, dict):
@@ -503,7 +505,8 @@ class TruGraph(TruChain):
                     # Each chunk typically contains node updates
                     if isinstance(chunk, dict):
                         for node_name, node_data in chunk.items():
-                            span_name = f"graph_node.{node_name}"
+                            # span_name = f"graph_node.{node_name}"
+                            span_name = "check in wrap_stream_generator"
 
                             try:
                                 with create_function_call_context_manager(
@@ -580,6 +583,150 @@ class TruGraph(TruChain):
             )
 
     @classmethod
+    def _setup_runnable_callable_instrumentation(cls):
+        """Set up instrumentation for RunnableCallable objects (individual node functions)"""
+
+        try:
+            from langgraph.utils.runnable import RunnableCallable
+        except ImportError:
+            logger.warning(
+                "RunnableCallable not available, skipping node instrumentation"
+            )
+            return
+
+        if not is_otel_tracing_enabled():
+            logger.debug(
+                "OTEL not enabled, skipping RunnableCallable instrumentation"
+            )
+            return
+
+        try:
+            if hasattr(RunnableCallable, "invoke") and hasattr(
+                getattr(RunnableCallable, "invoke"),
+                TRULENS_INSTRUMENT_WRAPPER_FLAG,
+            ):
+                logger.debug("RunnableCallable methods already instrumented")
+                return
+
+            logger.info(
+                "Applying class-level instrumentation to RunnableCallable methods"
+            )
+
+            def runnable_callable_attributes(ret, exception, *args, **kwargs):
+                """Extract attributes for RunnableCallable (node function) execution"""
+                attributes = {}
+
+                # Get the function reference to extract the actual function name
+                # args[0] should be the 'self' parameter (RunnableCallable instance)
+                node_name = "unknown_node"
+                if args and hasattr(args[0], "func"):
+                    func = args[0].func
+                    if hasattr(func, "__name__"):
+                        node_name = func.__name__
+                        attributes[SpanAttributes.GRAPH_NODE.NODE_NAME] = (
+                            node_name
+                        )
+                    else:
+                        attributes[SpanAttributes.GRAPH_NODE.NODE_NAME] = str(
+                            func
+                        )
+                else:
+                    attributes[SpanAttributes.GRAPH_NODE.NODE_NAME] = node_name
+
+                # Update the span name to the actual node function name
+                try:
+                    current_span = get_current_span()
+                    if current_span and hasattr(current_span, "update_name"):
+                        current_span.update_name(node_name)
+                except Exception as e:
+                    logger.debug(
+                        f"Failed to update span name to {node_name}: {e}"
+                    )
+
+                # Capture input state (args[1] should be the state parameter)
+                if len(args) > 1:
+                    input_data = args[1]
+                    try:
+                        if isinstance(input_data, dict):
+                            input_attrs = cls._build_state_attributes(
+                                input_data, is_input=True
+                            )
+                            attributes.update(input_attrs)
+                        else:
+                            attributes[
+                                SpanAttributes.GRAPH_NODE.INPUT_STATE
+                            ] = str(input_data)
+                    except Exception as e:
+                        attributes[SpanAttributes.GRAPH_NODE.INPUT_STATE] = (
+                            f"Error serializing input: {str(e)}"
+                        )
+
+                # Capture output state
+                if ret is not None and not exception:
+                    try:
+                        if isinstance(ret, dict):
+                            output_attrs = cls._build_state_attributes(
+                                ret, is_input=False
+                            )
+                            attributes.update(output_attrs)
+                        else:
+                            attributes[
+                                SpanAttributes.GRAPH_NODE.OUTPUT_STATE
+                            ] = str(ret)
+                    except Exception as e:
+                        attributes[SpanAttributes.GRAPH_NODE.OUTPUT_STATE] = (
+                            f"Error serializing output: {str(e)}"
+                        )
+
+                if exception:
+                    attributes[SpanAttributes.GRAPH_NODE.ERROR] = str(exception)
+
+                return attributes
+
+            # Apply custom instrumentation to RunnableCallable methods with filtering
+            for method_name in ["invoke", "ainvoke"]:
+                cls._instrument_runnable_callable_method(
+                    RunnableCallable, method_name, runnable_callable_attributes
+                )
+                logger.debug(
+                    f"Applied class-level instrumentation to RunnableCallable.{method_name}"
+                )
+
+        except Exception as e:
+            logger.warning(f"Failed to instrument RunnableCallable: {e}")
+
+    @classmethod
+    def _instrument_runnable_callable_method(
+        cls, target_class, method_name, attributes_func
+    ):
+        """Apply instrumentation to RunnableCallable method with filtering for internal nodes"""
+        import wrapt
+
+        original_method = getattr(target_class, method_name)
+
+        @wrapt.decorator
+        def filtered_wrapper(wrapped, instance, args, kwargs):
+            # Check if this is an internal LangGraph node before creating any span
+            if hasattr(instance, "func") and hasattr(instance.func, "__name__"):
+                func_name = instance.func.__name__
+                # Skip instrumentation for internal LangGraph nodes
+                if func_name.startswith("_") and func_name in [
+                    "_write",
+                    "_route",
+                    "_control_branch",
+                ]:
+                    return wrapped(*args, **kwargs)
+
+            # For user-defined nodes, apply full instrumentation
+            instrumented_method = instrument(
+                span_type=SpanAttributes.SpanType.GRAPH_NODE,
+                attributes=attributes_func,
+            )(wrapped)
+            return instrumented_method(*args, **kwargs)
+
+        setattr(target_class, method_name, filtered_wrapper(original_method))
+
+    @classmethod
     def _setup_pregel_instrumentation(cls):
         """Set up class-level instrumentation for Pregel methods"""
 
@@ -600,6 +747,9 @@ class TruGraph(TruChain):
                 "Applying class-level instrumentation to Pregel methods"
             )
 
+            # Set up RunnableCallable instrumentation for individual nodes
+            cls._setup_runnable_callable_instrumentation()
+
             # Create enhanced attributes function for Pregel methods
             def pregel_attributes(ret, exception, *args, **kwargs):
                 attributes = {}
@@ -612,65 +762,6 @@ class TruGraph(TruChain):
                         method_name = frame.f_back.f_code.co_name
                 finally:
                     del frame
-
-                if ret is not None and not exception:
-                    # Check if we can extract execution information from the result
-                    if isinstance(ret, dict):
-                        result_keys = list(ret.keys())
-
-                        node_names = []
-                        for key in result_keys:
-                            node_names.append(key)
-
-                        if node_names:
-                            attributes[
-                                SpanAttributes.GRAPH_NODE.NODES_EXECUTED
-                            ] = json.dumps(node_names)
-                            attributes["execution_summary"] = (
-                                f"Executed nodes: {', '.join(node_names)}"
-                            )
-
-                            # Add individual node details as attributes (simpler approach)
-                            for i, node_name in enumerate(node_names):
-                                attributes[f"detected_node_{i}_name"] = (
-                                    node_name
-                                )
-                                if node_name in ret:
-                                    node_output = str(ret[node_name])
-                                    if len(node_output) > 200:
-                                        node_output = node_output[:200] + "..."
-                                    attributes[f"detected_node_{i}_output"] = (
-                                        node_output
-                                    )
-                                    attributes[f"detected_node_{i}_type"] = (
-                                        "step_result"
-                                    )
-
-                                    try:
-                                        with create_function_call_context_manager(
-                                            create_new_span=True,
-                                            span_name=node_name,
-                                        ) as span:
-                                            set_general_span_attributes(
-                                                span,
-                                                SpanAttributes.SpanType.GRAPH_NODE,
-                                            )
-
-                                            node_attributes = {
-                                                SpanAttributes.GRAPH_NODE.NODE_NAME: node_name,
-                                                SpanAttributes.GRAPH_NODE.OUTPUT_STATE: node_output,
-                                                SpanAttributes.GRAPH_NODE.LATEST_MESSAGE: node_output,
-                                            }
-
-                                            set_user_defined_attributes(
-                                                span,
-                                                attributes=node_attributes,
-                                            )
-
-                                    except Exception as span_e:
-                                        logger.exception(
-                                            f"Failed to create span for {node_name}: {span_e}"
-                                        )
 
                 # Capture input state
                 if args and len(args) > 1:
@@ -733,6 +824,7 @@ class TruGraph(TruChain):
                         attributes[SpanAttributes.GRAPH_NODE.OUTPUT_STATE] = (
                             f"Error serializing output: {str(e)}"
                         )
+
                 span_name_for_pregel = "graph"  # we intentionally rename "Pregel.invoke" to "graph" to be more user-friendly
                 try:
                     current_span = get_current_span()
