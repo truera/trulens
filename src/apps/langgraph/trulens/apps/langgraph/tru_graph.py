@@ -2,6 +2,7 @@
 
 from inspect import BoundArguments
 from inspect import Signature
+import json
 import logging
 from typing import (
     Any,
@@ -259,7 +260,6 @@ class TruGraph(TruChain):
                     # Serialize the task input arguments
                     try:
                         import inspect
-                        import json
 
                         if hasattr(task_function_instance, "func"):
                             try:
@@ -410,16 +410,482 @@ class TruGraph(TruChain):
             )
 
     @classmethod
-    def _setup_pregel_instrumentation(cls):
-        """Set up class-level instrumentation for Pregel methods"""
+    def _setup_internal_node_instrumentation(cls):
+        """Set up instrumentation for internal LangGraph node execution"""
 
         if not is_otel_tracing_enabled():
             logger.debug(
-                "OTEL not enabled, skipping Pregel class-level instrumentation"
+                "OTEL not enabled, skipping internal node instrumentation"
             )
             return
 
         try:
+            from trulens.core.otel.instrument import instrument_method
+
+            # Try to instrument internal LangGraph execution methods
+            # These are the methods that actually call individual node functions
+
+            # Look for common internal execution patterns in LangGraph
+            internal_methods = [
+                # Common patterns from LangGraph internals that handle node execution
+                "_execute_node",
+                "_invoke_node",
+                "_run_node",
+                "_call_node",
+                "invoke_node",
+                "run_node",
+                "_execute_step",
+                "_invoke_step",
+            ]
+
+            # Try to find and instrument any of these methods on Pregel
+            instrumented_count = 0
+            for method_name in internal_methods:
+                if hasattr(Pregel, method_name):
+                    try:
+
+                        def create_node_execution_attributes(method_name):
+                            def node_execution_attributes(
+                                ret, exception, *args, **kwargs
+                            ):
+                                attributes = {}
+
+                                # Try to extract node name from arguments
+                                # LangGraph internal methods often pass node name as first or second arg
+                                node_name = "unknown_node"
+                                if args:
+                                    # Check if first arg looks like a node name (string)
+                                    if len(args) > 0 and isinstance(
+                                        args[0], str
+                                    ):
+                                        node_name = args[0]
+                                    elif len(args) > 1 and isinstance(
+                                        args[1], str
+                                    ):
+                                        node_name = args[1]
+                                    # Also check for node name in common parameter positions
+                                    for i, arg in enumerate(
+                                        args[:3]
+                                    ):  # Check first 3 args
+                                        if (
+                                            isinstance(arg, str)
+                                            and len(arg) < 50
+                                        ):  # Reasonable node name length
+                                            # Check if it looks like a node name (no spaces, reasonable length)
+                                            if " " not in arg and len(arg) > 0:
+                                                node_name = arg
+                                                break
+
+                                attributes[
+                                    SpanAttributes.GRAPH_NODE.NODE_NAME
+                                ] = node_name
+
+                                # Try to capture state from arguments
+                                if args:
+                                    for i, arg in enumerate(args):
+                                        if (
+                                            isinstance(arg, dict)
+                                            and "messages" in arg
+                                        ):
+                                            messages = arg["messages"]
+                                            if messages and hasattr(
+                                                messages[-1], "content"
+                                            ):
+                                                latest_content = messages[
+                                                    -1
+                                                ].content
+                                                attributes[
+                                                    SpanAttributes.GRAPH_NODE.INPUT_STATE
+                                                ] = latest_content
+                                                attributes[
+                                                    SpanAttributes.GRAPH_NODE.LATEST_MESSAGE
+                                                ] = latest_content
+                                                break
+
+                                # Capture output
+                                if ret is not None and not exception:
+                                    if (
+                                        isinstance(ret, dict)
+                                        and "messages" in ret
+                                    ):
+                                        messages = ret["messages"]
+                                        if messages and hasattr(
+                                            messages[-1], "content"
+                                        ):
+                                            latest_content = messages[
+                                                -1
+                                            ].content
+                                            attributes[
+                                                SpanAttributes.GRAPH_NODE.OUTPUT_STATE
+                                            ] = latest_content
+                                            attributes[
+                                                SpanAttributes.GRAPH_NODE.LATEST_MESSAGE
+                                            ] = latest_content
+                                    else:
+                                        attributes[
+                                            SpanAttributes.GRAPH_NODE.OUTPUT_STATE
+                                        ] = (
+                                            str(ret)[:200] + "..."
+                                            if len(str(ret)) > 200
+                                            else str(ret)
+                                        )
+
+                                if exception:
+                                    attributes[
+                                        SpanAttributes.GRAPH_NODE.ERROR
+                                    ] = str(exception)
+
+                                return attributes
+
+                            return node_execution_attributes
+
+                        instrument_method(
+                            cls=Pregel,
+                            method_name=method_name,
+                            span_type=SpanAttributes.SpanType.GRAPH_NODE,
+                            attributes=create_node_execution_attributes(
+                                method_name
+                            ),
+                        )
+                        instrumented_count += 1
+                        logger.debug(
+                            f"Instrumented internal method: Pregel.{method_name}"
+                        )
+
+                    except Exception as e:
+                        logger.debug(
+                            f"Failed to instrument Pregel.{method_name}: {e}"
+                        )
+
+            if instrumented_count > 0:
+                logger.info(
+                    f"Successfully instrumented {instrumented_count} internal node execution methods"
+                )
+            else:
+                logger.debug(
+                    "No internal node execution methods found to instrument"
+                )
+
+        except Exception as e:
+            logger.warning(
+                f"Failed to set up internal node instrumentation: {e}"
+            )
+
+    @classmethod
+    def _wrap_stream_generator(cls, original_generator):
+        """Wrap a LangGraph stream generator to capture individual node updates as spans"""
+
+        try:
+            from trulens.core.otel.function_call_context_manager import (
+                create_function_call_context_manager,
+            )
+            from trulens.experimental.otel_tracing.core.span import (
+                set_general_span_attributes,
+            )
+            from trulens.experimental.otel_tracing.core.span import (
+                set_user_defined_attributes,
+            )
+
+            def instrumented_generator():
+                for chunk in original_generator:
+                    # Each chunk typically contains node updates
+                    if isinstance(chunk, dict):
+                        for node_name, node_data in chunk.items():
+                            # Create a span for each node update using the proper TruLens approach
+                            span_name = f"graph_node.{node_name}"
+
+                            try:
+                                with create_function_call_context_manager(
+                                    create_new_span=True, func_name=span_name
+                                ) as span:
+                                    # Set general span attributes
+                                    set_general_span_attributes(
+                                        span, SpanAttributes.SpanType.GRAPH_NODE
+                                    )
+
+                                    # Build attributes dict
+                                    attributes = {
+                                        SpanAttributes.GRAPH_NODE.NODE_NAME: node_name,
+                                    }
+
+                                    # Capture the latest message
+                                    if (
+                                        isinstance(node_data, dict)
+                                        and "messages" in node_data
+                                    ):
+                                        messages = node_data["messages"]
+                                        if messages and hasattr(
+                                            messages[-1], "content"
+                                        ):
+                                            latest_content = messages[
+                                                -1
+                                            ].content
+                                            attributes[
+                                                SpanAttributes.GRAPH_NODE.OUTPUT_STATE
+                                            ] = latest_content
+                                            attributes[
+                                                SpanAttributes.GRAPH_NODE.LATEST_MESSAGE
+                                            ] = latest_content
+                                        else:
+                                            attributes[
+                                                SpanAttributes.GRAPH_NODE.OUTPUT_STATE
+                                            ] = (
+                                                str(node_data)[:200] + "..."
+                                                if len(str(node_data)) > 200
+                                                else str(node_data)
+                                            )
+                                    else:
+                                        attributes[
+                                            SpanAttributes.GRAPH_NODE.OUTPUT_STATE
+                                        ] = (
+                                            str(node_data)[:200] + "..."
+                                            if len(str(node_data)) > 200
+                                            else str(node_data)
+                                        )
+
+                                    # Set the user-defined attributes
+                                    set_user_defined_attributes(
+                                        span, attributes
+                                    )
+
+                            except Exception as e:
+                                logger.debug(
+                                    f"Failed to create span for node {node_name}: {e}"
+                                )
+
+                    # Yield the original chunk unchanged
+                    yield chunk
+
+            return instrumented_generator()
+
+        except Exception as e:
+            logger.warning(f"Failed to wrap stream generator: {e}")
+            return original_generator
+
+    @classmethod
+    def _instrument_streaming_method(cls, method_name):
+        """Instrument a specific streaming method to capture node-by-node updates"""
+
+        try:
+            if not hasattr(Pregel, method_name):
+                logger.debug(f"Method {method_name} not found on Pregel")
+                return
+
+            original_method = getattr(Pregel, method_name)
+
+            if hasattr(original_method, TRULENS_INSTRUMENT_WRAPPER_FLAG):
+                logger.debug(f"Method {method_name} already instrumented")
+                return
+
+            def create_instrumented_streaming_method(
+                original_method, method_name
+            ):
+                def instrumented_method(self, *args, **kwargs):
+                    # Call the original method to get the generator
+                    original_generator = original_method(self, *args, **kwargs)
+
+                    # Wrap the generator to capture individual node updates
+                    return cls._wrap_stream_generator(original_generator)
+
+                # Mark as instrumented
+                setattr(
+                    instrumented_method, TRULENS_INSTRUMENT_WRAPPER_FLAG, True
+                )
+                return instrumented_method
+
+            # Replace the method with our instrumented version
+            instrumented_method = create_instrumented_streaming_method(
+                original_method, method_name
+            )
+            setattr(Pregel, method_name, instrumented_method)
+
+            logger.debug(
+                f"Successfully instrumented streaming method: {method_name}"
+            )
+
+        except Exception as e:
+            logger.warning(
+                f"Failed to instrument streaming method {method_name}: {e}"
+            )
+
+    @classmethod
+    def _instrument_invoke_method_for_node_detection(cls):
+        """Instrument invoke methods to detect and create spans for individual node executions"""
+
+        try:
+            # This is a post-processing approach: analyze the invoke result to infer node executions
+
+            def create_node_detection_wrapper(original_method, method_name):
+                def wrapped_invoke(self, *args, **kwargs):
+                    # Debug: Log that wrapper is being called
+                    logger.debug(
+                        f"Node detection wrapper called for {method_name}"
+                    )
+
+                    # Call the original method
+                    result = original_method(self, *args, **kwargs)
+
+                    # Post-process the result to create individual node spans
+                    try:
+                        cls._create_individual_node_spans_within_invoke(
+                            result, args, kwargs
+                        )
+                        logger.debug("Node span creation completed")
+                    except Exception as e:
+                        logger.exception(
+                            f"Failed to create node spans from result: {e}"
+                        )
+
+                    return result
+
+                # Mark as instrumented to avoid double wrapping
+                setattr(wrapped_invoke, TRULENS_INSTRUMENT_WRAPPER_FLAG, True)
+                return wrapped_invoke
+
+            # Only instrument invoke methods, not streaming (those use the stream wrapper)
+            invoke_methods = ["invoke", "ainvoke"]
+
+            for method_name in invoke_methods:
+                if hasattr(Pregel, method_name):
+                    original_method = getattr(Pregel, method_name)
+
+                    if not hasattr(
+                        original_method, TRULENS_INSTRUMENT_WRAPPER_FLAG
+                    ):
+                        # Only wrap if not already wrapped by our streaming instrumentation
+                        wrapped_method = create_node_detection_wrapper(
+                            original_method, method_name
+                        )
+                        setattr(Pregel, method_name, wrapped_method)
+                        logger.debug(
+                            f"Added node detection wrapper to Pregel.{method_name}"
+                        )
+
+        except Exception as e:
+            logger.warning(
+                f"Failed to instrument invoke methods for node detection: {e}"
+            )
+
+    @classmethod
+    def _create_individual_node_spans_within_invoke(cls, result, args, kwargs):
+        """Create individual node spans based on analysis of the invoke result"""
+
+        try:
+            from opentelemetry.trace import get_current_span
+
+            # We're already inside a TruLens span context, so we can create child spans
+            current_span = get_current_span()
+            if current_span is None:
+                logger.debug("No current span, skipping node span creation")
+                return
+
+            if not isinstance(result, dict):
+                logger.debug(
+                    f"Result is not dict (type: {type(result)}), skipping"
+                )
+                return
+
+            logger.debug(f"Result is dict with keys: {list(result.keys())}")
+
+            # Create individual child spans for each detected node
+            # This creates the structure the user wants: individual spans per node
+
+            potential_nodes = []
+
+            # Look for keys that might represent node outputs
+            # Based on the LangGraph example: topic is input, joke/improved_joke/final_joke are node outputs
+            for key, value in result.items():
+                if key not in [
+                    "topic",  # Input parameter
+                    "input",
+                    "state",
+                    "messages",
+                ]:  # Skip common input/state keys
+                    # This key likely represents a node output (joke, improved_joke, final_joke)
+                    potential_nodes.append({
+                        "name": key,
+                        "content": str(value),
+                        "type": "node_output",
+                    })
+
+            # Create individual child spans for each detected node
+            if potential_nodes:
+                logger.info(
+                    f"🎯 Creating {len(potential_nodes)} individual node spans: {[n['name'] for n in potential_nodes]}"
+                )
+
+                # Import what we need for span creation
+                from trulens.core.otel.function_call_context_manager import (
+                    create_function_call_context_manager,
+                )
+                from trulens.experimental.otel_tracing.core.span import (
+                    set_general_span_attributes,
+                )
+                from trulens.experimental.otel_tracing.core.span import (
+                    set_user_defined_attributes,
+                )
+
+                # Create a child span for each detected node
+                for node_info in potential_nodes:
+                    try:
+                        # Use the actual node name as the span name (what user wants)
+                        span_name = node_info[
+                            "name"
+                        ]  # e.g., "generate_joke", "improve_joke"
+
+                        logger.info(f"Creating span for node: {span_name}")
+
+                        with create_function_call_context_manager(
+                            create_new_span=True, func_name=span_name
+                        ) as span:
+                            # Set general span attributes
+                            set_general_span_attributes(
+                                span, SpanAttributes.SpanType.GRAPH_NODE
+                            )
+                            # Build attributes for this specific node
+                            attributes = {
+                                SpanAttributes.GRAPH_NODE.NODE_NAME: span_name,
+                                SpanAttributes.GRAPH_NODE.OUTPUT_STATE: node_info[
+                                    "content"
+                                ],
+                                SpanAttributes.GRAPH_NODE.LATEST_MESSAGE: node_info[
+                                    "content"
+                                ],
+                                "detection_method": node_info["type"],
+                            }
+
+                            # Set the user-defined attributes
+                            set_user_defined_attributes(span, attributes)
+
+                            logger.info(
+                                f"✅ Created span for node: {span_name}"
+                            )
+
+                    except Exception as e:
+                        logger.error(
+                            f"❌ Failed to create span for node {node_info['name']}: {e}"
+                        )
+
+                logger.info(
+                    f"✅ Created {len(potential_nodes)} individual node spans"
+                )
+            else:
+                logger.info("❌ No potential nodes detected in result")
+
+        except Exception as e:
+            logger.debug(f"Failed to create node spans from result: {e}")
+
+    @classmethod
+    def _setup_pregel_instrumentation(cls):
+        """Set up class-level instrumentation for Pregel methods"""
+
+        if not is_otel_tracing_enabled():
+            logger.error("OTEL not enabled, skipping Pregel instrumentation")
+            return
+
+        try:
+            import json
+
             from trulens.core.otel.instrument import instrument_method
 
             if hasattr(Pregel, "invoke") and hasattr(
@@ -432,48 +898,370 @@ class TruGraph(TruChain):
                 "Applying class-level instrumentation to Pregel methods"
             )
 
-            # Create attributes function for Pregel methods
+            # First, instrument internal node execution methods
+            cls._setup_internal_node_instrumentation()
+
+            # Create enhanced attributes function for Pregel methods
             def pregel_attributes(ret, exception, *args, **kwargs):
                 attributes = {}
 
-                if args and len(args) > 1:
-                    input_data = args[1]
-                    if isinstance(input_data, dict):
-                        attributes[SpanAttributes.GRAPH_NODE.INPUT_STATE] = str(
-                            input_data
-                        )
-                    else:
-                        attributes[SpanAttributes.GRAPH_NODE.INPUT_STATE] = str(
-                            input_data
-                        )
+                # Extract method name to understand what we're instrumenting
+                import inspect
 
-                for k, v in kwargs.items():
-                    if k in ["input", "state", "data"]:
-                        attributes[SpanAttributes.GRAPH_NODE.INPUT_STATE] = str(
-                            v
-                        )
-                        break
+                frame = inspect.currentframe()
+                method_name = None
+                try:
+                    if frame and frame.f_back and frame.f_back.f_code:
+                        method_name = frame.f_back.f_code.co_name
+                finally:
+                    del frame
 
                 if ret is not None and not exception:
-                    attributes[SpanAttributes.GRAPH_NODE.OUTPUT_STATE] = str(
-                        ret
-                    )
+                    # Check if we can extract execution information from the result
+                    if isinstance(ret, dict):
+                        # Look for patterns that indicate multiple node executions
+                        # This is a heuristic approach to detect sequential node processing
+
+                        # Check if this looks like a multi-step result
+                        result_keys = list(ret.keys())
+
+                        if len(result_keys) > 1:
+                            # Multiple keys might indicate multiple node outputs
+                            node_names = []
+                            for key in result_keys:
+                                if key not in [
+                                    "topic",  # Input parameter
+                                    "messages",  # State data
+                                ]:  # Skip common input/state keys
+                                    node_names.append(key)
+
+                            if node_names:
+                                attributes[
+                                    SpanAttributes.GRAPH_NODE.NODES_EXECUTED
+                                ] = json.dumps(node_names)
+                                attributes["execution_summary"] = (
+                                    f"Executed nodes: {', '.join(node_names)}"
+                                )
+
+                                # Add individual node details as attributes (simpler approach)
+                                for i, node_name in enumerate(node_names):
+                                    attributes[f"detected_node_{i}_name"] = (
+                                        node_name
+                                    )
+                                    if node_name in ret:
+                                        node_output = str(ret[node_name])
+                                        if len(node_output) > 200:
+                                            node_output = (
+                                                node_output[:200] + "..."
+                                            )
+                                        attributes[
+                                            f"detected_node_{i}_output"
+                                        ] = node_output
+                                        attributes[
+                                            f"detected_node_{i}_type"
+                                        ] = "step_result"
+
+                                        # CREATE INDIVIDUAL SPAN RIGHT HERE!
+                                        try:
+                                            from trulens.core.otel.function_call_context_manager import (
+                                                create_function_call_context_manager,
+                                            )
+                                            from trulens.experimental.otel_tracing.core.span import (
+                                                set_general_span_attributes,
+                                            )
+                                            from trulens.experimental.otel_tracing.core.span import (
+                                                set_user_defined_attributes,
+                                            )
+
+                                            with create_function_call_context_manager(
+                                                create_new_span=True,
+                                                span_name=node_name,
+                                            ) as span:
+                                                # Set general span attributes
+                                                set_general_span_attributes(
+                                                    span,
+                                                    SpanAttributes.SpanType.GRAPH_NODE,
+                                                )
+
+                                                # Build attributes for this specific node
+                                                node_attributes = {
+                                                    SpanAttributes.GRAPH_NODE.NODE_NAME: node_name,
+                                                    SpanAttributes.GRAPH_NODE.OUTPUT_STATE: node_output,
+                                                    SpanAttributes.GRAPH_NODE.LATEST_MESSAGE: node_output,
+                                                }
+
+                                                # Set the user-defined attributes
+                                                set_user_defined_attributes(
+                                                    span,
+                                                    attributes=node_attributes,
+                                                )
+
+                                        except Exception as span_e:
+                                            logger.exception(
+                                                f"Failed to create span for {node_name}: {span_e}"
+                                            )
+
+                # Capture input state
+                if args and len(args) > 1:
+                    input_data = args[1]
+                    try:
+                        if isinstance(input_data, dict):
+                            # Extract latest message for better readability
+                            if "messages" in input_data and isinstance(
+                                input_data["messages"], list
+                            ):
+                                messages = input_data["messages"]
+                                if messages:
+                                    latest_message = messages[-1]
+                                    if hasattr(latest_message, "content"):
+                                        attributes[
+                                            SpanAttributes.GRAPH_NODE.INPUT_STATE
+                                        ] = latest_message.content
+                                    else:
+                                        attributes[
+                                            SpanAttributes.GRAPH_NODE.INPUT_STATE
+                                        ] = str(latest_message)
+                                else:
+                                    attributes[
+                                        SpanAttributes.GRAPH_NODE.INPUT_STATE
+                                    ] = "Empty messages"
+                            else:
+                                # For non-message states, serialize first level only
+                                simplified_input = {}
+                                for k, v in input_data.items():
+                                    if isinstance(v, (str, int, float, bool)):
+                                        simplified_input[k] = v
+                                    elif isinstance(v, list) and len(v) <= 3:
+                                        simplified_input[k] = v
+                                    else:
+                                        simplified_input[k] = (
+                                            f"<{type(v).__name__}: {len(v) if hasattr(v, '__len__') else 'unknown'}>"
+                                        )
+                                attributes[
+                                    SpanAttributes.GRAPH_NODE.INPUT_STATE
+                                ] = json.dumps(
+                                    simplified_input, default=str, indent=2
+                                )
+                        else:
+                            attributes[
+                                SpanAttributes.GRAPH_NODE.INPUT_STATE
+                            ] = str(input_data)
+                    except Exception as e:
+                        attributes[SpanAttributes.GRAPH_NODE.INPUT_STATE] = (
+                            f"Error serializing input: {str(e)}"
+                        )
+
+                # Handle kwargs
+                for k, v in kwargs.items():
+                    if k in ["input", "state", "data"]:
+                        try:
+                            if isinstance(v, dict) and "messages" in v:
+                                messages = v["messages"]
+                                if messages and hasattr(
+                                    messages[-1], "content"
+                                ):
+                                    attributes[
+                                        SpanAttributes.GRAPH_NODE.INPUT_STATE
+                                    ] = messages[-1].content
+                                else:
+                                    attributes[
+                                        SpanAttributes.GRAPH_NODE.INPUT_STATE
+                                    ] = str(v)
+                            else:
+                                attributes[
+                                    SpanAttributes.GRAPH_NODE.INPUT_STATE
+                                ] = str(v)
+                        except Exception:
+                            attributes[
+                                SpanAttributes.GRAPH_NODE.INPUT_STATE
+                            ] = str(v)
+                        break
+
+                # Capture output state
+                if ret is not None and not exception:
+                    try:
+                        # For streaming methods, we'll get generators - capture that info
+                        if method_name in [
+                            "stream",
+                            "astream",
+                            "stream_mode",
+                            "astream_mode",
+                        ]:
+                            attributes[
+                                SpanAttributes.GRAPH_NODE.OUTPUT_STATE
+                            ] = f"<Generator: {type(ret).__name__}>"
+                        elif isinstance(ret, dict):
+                            # Extract latest message for better readability
+                            if "messages" in ret and isinstance(
+                                ret["messages"], list
+                            ):
+                                messages = ret["messages"]
+                                if messages:
+                                    latest_message = messages[-1]
+                                    if hasattr(latest_message, "content"):
+                                        attributes[
+                                            SpanAttributes.GRAPH_NODE.OUTPUT_STATE
+                                        ] = latest_message.content
+                                        attributes[
+                                            SpanAttributes.GRAPH_NODE.LATEST_MESSAGE
+                                        ] = latest_message.content
+                                    else:
+                                        attributes[
+                                            SpanAttributes.GRAPH_NODE.OUTPUT_STATE
+                                        ] = str(latest_message)
+                                        attributes[
+                                            SpanAttributes.GRAPH_NODE.LATEST_MESSAGE
+                                        ] = str(latest_message)
+                                else:
+                                    attributes[
+                                        SpanAttributes.GRAPH_NODE.OUTPUT_STATE
+                                    ] = "Empty messages"
+                            else:
+                                # For non-message states, serialize first level only
+                                simplified_output = {}
+                                for k, v in ret.items():
+                                    if isinstance(v, (str, int, float, bool)):
+                                        simplified_output[k] = v
+                                    elif isinstance(v, list) and len(v) <= 3:
+                                        simplified_output[k] = v
+                                    else:
+                                        simplified_output[k] = (
+                                            f"<{type(v).__name__}: {len(v) if hasattr(v, '__len__') else 'unknown'}>"
+                                        )
+                                attributes[
+                                    SpanAttributes.GRAPH_NODE.OUTPUT_STATE
+                                ] = json.dumps(
+                                    simplified_output, default=str, indent=2
+                                )
+                        else:
+                            attributes[
+                                SpanAttributes.GRAPH_NODE.OUTPUT_STATE
+                            ] = str(ret)
+                    except Exception as e:
+                        attributes[SpanAttributes.GRAPH_NODE.OUTPUT_STATE] = (
+                            f"Error serializing output: {str(e)}"
+                        )
 
                 if exception:
                     attributes[SpanAttributes.GRAPH_NODE.ERROR] = str(exception)
 
                 return attributes
 
-            # Apply instrumentation to all Pregel methods
-            pregel_methods = [
-                "invoke",
-                "ainvoke",
+            # Create specialized attributes function for streaming methods
+            def streaming_pregel_attributes(ret, exception, *args, **kwargs):
+                attributes = {}
+
+                # For streaming methods, we capture the generator info and wrap it
+                if ret is not None and not exception:
+                    attributes[SpanAttributes.GRAPH_NODE.OUTPUT_STATE] = (
+                        f"<Stream Generator: {type(ret).__name__}>"
+                    )
+
+                    # Wrap the generator to capture individual node updates as separate spans
+                    if hasattr(ret, "__iter__"):
+                        attributes["stream_info"] = (
+                            "Streaming generator wrapped - individual node updates will be captured as spans"
+                        )
+
+                        # Note: We can't modify ret here, so we'll instrument differently
+
+                # Capture input like normal methods
+                if args and len(args) > 1:
+                    input_data = args[1]
+                    try:
+                        if isinstance(input_data, dict):
+                            if "messages" in input_data and isinstance(
+                                input_data["messages"], list
+                            ):
+                                messages = input_data["messages"]
+                                if messages:
+                                    latest_message = messages[-1]
+                                    if hasattr(latest_message, "content"):
+                                        attributes[
+                                            SpanAttributes.GRAPH_NODE.INPUT_STATE
+                                        ] = latest_message.content
+                                    else:
+                                        attributes[
+                                            SpanAttributes.GRAPH_NODE.INPUT_STATE
+                                        ] = str(latest_message)
+                            else:
+                                simplified_input = {}
+                                for k, v in input_data.items():
+                                    if isinstance(v, (str, int, float, bool)):
+                                        simplified_input[k] = v
+                                    elif isinstance(v, list) and len(v) <= 3:
+                                        simplified_input[k] = v
+                                    else:
+                                        simplified_input[k] = (
+                                            f"<{type(v).__name__}: {len(v) if hasattr(v, '__len__') else 'unknown'}>"
+                                        )
+                                attributes[
+                                    SpanAttributes.GRAPH_NODE.INPUT_STATE
+                                ] = json.dumps(
+                                    simplified_input, default=str, indent=2
+                                )
+                        else:
+                            attributes[
+                                SpanAttributes.GRAPH_NODE.INPUT_STATE
+                            ] = str(input_data)
+                    except Exception as e:
+                        attributes[SpanAttributes.GRAPH_NODE.INPUT_STATE] = (
+                            f"Error serializing input: {str(e)}"
+                        )
+
+                if exception:
+                    attributes[SpanAttributes.GRAPH_NODE.ERROR] = str(exception)
+
+                # For invoke methods, also create individual node spans
+                if ret is not None and not exception:
+                    logger.error(
+                        f"🔍 Method name: '{method_name}', checking for node detection"
+                    )
+
+                # Always try to create node spans for any successful method call (regardless of method name)
+                logger.error(
+                    f"🔍 Checking conditions: ret={ret is not None}, exception={exception is not None}, dict={isinstance(ret, dict) if ret else False}, len={len(ret) if isinstance(ret, dict) else 0}"
+                )
+
+                if (
+                    ret is not None
+                    and not exception
+                    and isinstance(ret, dict)
+                    and len(ret) > 1
+                ):
+                    logger.error(
+                        "🎯 ALL CONDITIONS MET - Calling individual span creation!"
+                    )
+                    try:
+                        logger.error(
+                            f"🔍 About to call node detection for invoke with return type: {type(ret)}"
+                        )
+                        cls._create_individual_node_spans_within_invoke(
+                            ret, args, kwargs
+                        )
+                        logger.error("🔍 Node detection call completed")
+                    except Exception as e:
+                        logger.error(
+                            f"❌ Failed to create individual node spans: {e}"
+                        )
+                        import traceback
+
+                        logger.error(f"❌ Traceback: {traceback.format_exc()}")
+
+                return attributes
+
+            # Apply instrumentation to different method groups
+            sync_methods = ["invoke"]
+            async_methods = ["ainvoke"]
+            streaming_methods = [
                 "stream",
                 "astream",
                 "stream_mode",
                 "astream_mode",
             ]
-            for method_name in pregel_methods:
+
+            # Regular methods use standard attributes
+            for method_name in sync_methods + async_methods:
                 instrument_method(
                     cls=Pregel,
                     method_name=method_name,
@@ -484,7 +1272,15 @@ class TruGraph(TruChain):
                     f"Applied class-level instrumentation to Pregel.{method_name}"
                 )
 
-            logger.info(
+            # Streaming methods use specialized wrapper approach
+            for method_name in streaming_methods:
+                cls._instrument_streaming_method(method_name)
+                logger.debug(
+                    f"Applied streaming instrumentation to Pregel.{method_name}"
+                )
+
+            # Node detection will be handled by the enhanced pregel_attributes function
+            logger.debug(
                 "Successfully applied class-level instrumentation to Pregel methods"
             )
 
@@ -494,12 +1290,215 @@ class TruGraph(TruChain):
             )
 
     @classmethod
+    def _setup_node_function_instrumentation(cls):
+        """Set up instrumentation for individual node functions to capture node names"""
+
+        if not is_otel_tracing_enabled():
+            logger.debug(
+                "OTEL not enabled, skipping node function instrumentation"
+            )
+            return
+
+        try:
+            # We'll add a helper method to instrument individual node functions
+            # This will be used when we process the graph structure
+            logger.debug("Node function instrumentation setup complete")
+
+        except Exception as e:
+            logger.warning(
+                f"Failed to apply node function instrumentation: {e}"
+            )
+
+    @staticmethod
+    def instrument_node_function(
+        node_func: Callable, node_name: str
+    ) -> Callable:
+        """Instrument a single node function to add node name tracking.
+
+        Args:
+            node_func: The node function to instrument
+            node_name: The name of the node
+
+        Returns:
+            The instrumented function
+        """
+        if not is_otel_tracing_enabled():
+            return node_func
+
+        try:
+            from functools import wraps
+
+            from trulens.core.otel.instrument import instrument_function
+
+            def node_attributes(ret, exception, *args, **kwargs):
+                attributes = {
+                    SpanAttributes.GRAPH_NODE.NODE_NAME: node_name,
+                }
+
+                # Capture input state from arguments
+                if args:
+                    state_arg = args[0] if args else {}
+                    try:
+                        if isinstance(state_arg, dict):
+                            # Extract latest message for better readability
+                            if "messages" in state_arg and isinstance(
+                                state_arg["messages"], list
+                            ):
+                                messages = state_arg["messages"]
+                                if messages:
+                                    latest_message = messages[-1]
+                                    if hasattr(latest_message, "content"):
+                                        message_content = latest_message.content
+                                        attributes[
+                                            SpanAttributes.GRAPH_NODE.INPUT_STATE
+                                        ] = message_content
+                                        attributes[
+                                            SpanAttributes.GRAPH_NODE.LATEST_MESSAGE
+                                        ] = message_content
+                                    else:
+                                        message_str = str(latest_message)
+                                        attributes[
+                                            SpanAttributes.GRAPH_NODE.INPUT_STATE
+                                        ] = message_str
+                                        attributes[
+                                            SpanAttributes.GRAPH_NODE.LATEST_MESSAGE
+                                        ] = message_str
+                                else:
+                                    attributes[
+                                        SpanAttributes.GRAPH_NODE.INPUT_STATE
+                                    ] = "Empty messages"
+                                    attributes[
+                                        SpanAttributes.GRAPH_NODE.LATEST_MESSAGE
+                                    ] = "Empty messages"
+                            else:
+                                # For non-message states, serialize first level only
+                                simplified_input = {}
+                                for k, v in state_arg.items():
+                                    if isinstance(v, (str, int, float, bool)):
+                                        simplified_input[k] = v
+                                    elif isinstance(v, list) and len(v) <= 3:
+                                        simplified_input[k] = v
+                                    else:
+                                        simplified_input[k] = (
+                                            f"<{type(v).__name__}: {len(v) if hasattr(v, '__len__') else 'unknown'}>"
+                                        )
+                                attributes[
+                                    SpanAttributes.GRAPH_NODE.INPUT_STATE
+                                ] = json.dumps(
+                                    simplified_input, default=str, indent=2
+                                )
+                        else:
+                            attributes[
+                                SpanAttributes.GRAPH_NODE.INPUT_STATE
+                            ] = str(state_arg)
+                    except Exception as e:
+                        attributes[SpanAttributes.GRAPH_NODE.INPUT_STATE] = (
+                            f"Error serializing input: {str(e)}"
+                        )
+
+                # Capture output state
+                if ret is not None and not exception:
+                    try:
+                        if isinstance(ret, dict):
+                            # Extract latest message for better readability
+                            if "messages" in ret and isinstance(
+                                ret["messages"], list
+                            ):
+                                messages = ret["messages"]
+                                if messages:
+                                    latest_message = messages[-1]
+                                    if hasattr(latest_message, "content"):
+                                        message_content = latest_message.content
+                                        attributes[
+                                            SpanAttributes.GRAPH_NODE.OUTPUT_STATE
+                                        ] = message_content
+                                        attributes[
+                                            SpanAttributes.GRAPH_NODE.LATEST_MESSAGE
+                                        ] = message_content
+                                    else:
+                                        message_str = str(latest_message)
+                                        attributes[
+                                            SpanAttributes.GRAPH_NODE.OUTPUT_STATE
+                                        ] = message_str
+                                        attributes[
+                                            SpanAttributes.GRAPH_NODE.LATEST_MESSAGE
+                                        ] = message_str
+                                else:
+                                    attributes[
+                                        SpanAttributes.GRAPH_NODE.OUTPUT_STATE
+                                    ] = "Empty messages"
+                            else:
+                                # For non-message states, serialize first level only
+                                simplified_output = {}
+                                for k, v in ret.items():
+                                    if isinstance(v, (str, int, float, bool)):
+                                        simplified_output[k] = v
+                                    elif isinstance(v, list) and len(v) <= 3:
+                                        simplified_output[k] = v
+                                    else:
+                                        simplified_output[k] = (
+                                            f"<{type(v).__name__}: {len(v) if hasattr(v, '__len__') else 'unknown'}>"
+                                        )
+                                attributes[
+                                    SpanAttributes.GRAPH_NODE.OUTPUT_STATE
+                                ] = json.dumps(
+                                    simplified_output, default=str, indent=2
+                                )
+                        else:
+                            attributes[
+                                SpanAttributes.GRAPH_NODE.OUTPUT_STATE
+                            ] = str(ret)
+                    except Exception as e:
+                        attributes[SpanAttributes.GRAPH_NODE.OUTPUT_STATE] = (
+                            f"Error serializing output: {str(e)}"
+                        )
+
+                if exception:
+                    attributes[SpanAttributes.GRAPH_NODE.ERROR] = str(exception)
+
+                return attributes
+
+            @wraps(node_func)
+            def instrumented_node_func(*args, **kwargs):
+                # Set span name to the node name
+                from opentelemetry.trace import get_current_span
+
+                try:
+                    current_span = get_current_span()
+                    if current_span and hasattr(current_span, "update_name"):
+                        current_span.update_name(node_name)
+                except Exception as e:
+                    logger.debug(
+                        f"Failed to update span name to {node_name}: {e}"
+                    )
+
+                # Call the original function
+                return node_func(*args, **kwargs)
+
+            # Apply instrumentation
+            return instrument_function(
+                func=instrumented_node_func,
+                span_type=SpanAttributes.SpanType.GRAPH_NODE,
+                attributes=node_attributes,
+                span_name=node_name,
+            )
+
+        except Exception as e:
+            logger.warning(
+                f"Failed to instrument node function {node_name}: {e}"
+            )
+            return node_func
+
+    @classmethod
     def _ensure_instrumentation(cls):
         """Ensure one-time initialization of instrumentation."""
         if not cls._is_instrumented:
             cls._setup_task_function_instrumentation()
             cls._setup_pregel_instrumentation()
+            cls._setup_node_function_instrumentation()
             cls._is_instrumented = True
+        else:
+            logger.debug("Instrumentation already set up")
 
     def __init__(
         self,
@@ -568,12 +1567,112 @@ class TruGraph(TruChain):
                 "Received uncompiled StateGraph. Compiling it for instrumentation. "
                 "For better control, consider compiling the graph yourself before wrapping with TruGraph."
             )
-            return app.compile()  # type: ignore
+            compiled_app = app.compile()
+            self._instrument_graph_nodes(compiled_app)
+            return compiled_app  # type: ignore
 
         if isinstance(app, Pregel):
+            self._instrument_graph_nodes(app)
             return app
 
         return app
+
+    def _instrument_graph_nodes(self, compiled_graph: Any) -> None:
+        """
+        Instrument individual node functions in a compiled graph for better node name tracking.
+
+        Args:
+            compiled_graph: A compiled LangGraph (Pregel instance)
+        """
+        if not is_otel_tracing_enabled():
+            return
+
+        try:
+            instrumented_nodes = 0
+
+            # Method 1: Try to access and instrument the direct nodes dictionary
+            if hasattr(compiled_graph, "nodes") and isinstance(
+                compiled_graph.nodes, dict
+            ):
+                for node_name, node_obj in compiled_graph.nodes.items():
+                    # Handle different node types
+                    if hasattr(node_obj, "func") and callable(node_obj.func):
+                        # Node with a function attribute
+                        original_func = node_obj.func
+                        instrumented_func = self.instrument_node_function(
+                            original_func, node_name
+                        )
+                        node_obj.func = instrumented_func
+                        logger.debug(
+                            f"Instrumented node function via .func: {node_name}"
+                        )
+                        instrumented_nodes += 1
+                    elif callable(node_obj):
+                        # Node is directly a callable
+                        instrumented_func = self.instrument_node_function(
+                            node_obj, node_name
+                        )
+                        compiled_graph.nodes[node_name] = instrumented_func
+                        logger.debug(f"Instrumented callable node: {node_name}")
+                        instrumented_nodes += 1
+
+            # Method 2: Try alternative node access patterns
+            # Look for other possible node storage patterns in LangGraph
+            alternative_node_attrs = ["_nodes", "graph", "_graph", "spec"]
+            for attr_name in alternative_node_attrs:
+                if hasattr(compiled_graph, attr_name):
+                    attr_obj = getattr(compiled_graph, attr_name)
+                    if hasattr(attr_obj, "nodes") and isinstance(
+                        attr_obj.nodes, dict
+                    ):
+                        for node_name, node_obj in attr_obj.nodes.items():
+                            if callable(node_obj):
+                                instrumented_func = (
+                                    self.instrument_node_function(
+                                        node_obj, node_name
+                                    )
+                                )
+                                attr_obj.nodes[node_name] = instrumented_func
+                                logger.debug(
+                                    f"Instrumented node via {attr_name}: {node_name}"
+                                )
+                                instrumented_nodes += 1
+
+            # Method 3: Try to access step definitions which might contain the actual node functions
+            if hasattr(compiled_graph, "step") and hasattr(
+                compiled_graph.step, "__self__"
+            ):
+                step_obj = compiled_graph.step.__self__
+                if hasattr(step_obj, "nodes") and isinstance(
+                    step_obj.nodes, dict
+                ):
+                    for node_name, node_obj in step_obj.nodes.items():
+                        if callable(node_obj):
+                            instrumented_func = self.instrument_node_function(
+                                node_obj, node_name
+                            )
+                            step_obj.nodes[node_name] = instrumented_func
+                            logger.debug(
+                                f"Instrumented node via step: {node_name}"
+                            )
+                            instrumented_nodes += 1
+
+            if instrumented_nodes > 0:
+                logger.info(
+                    f"Successfully instrumented {instrumented_nodes} node functions"
+                )
+            else:
+                logger.debug(
+                    "Could not find node functions to instrument in compiled graph"
+                )
+                # Log the structure for debugging
+                logger.debug(f"Compiled graph type: {type(compiled_graph)}")
+                logger.debug(
+                    f"Compiled graph attributes: {[attr for attr in dir(compiled_graph) if not attr.startswith('_')]}"
+                )
+
+        except Exception as e:
+            logger.warning(f"Failed to instrument graph nodes: {e}")
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
