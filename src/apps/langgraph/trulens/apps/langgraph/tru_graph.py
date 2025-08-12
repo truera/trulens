@@ -472,6 +472,27 @@ class TruGraph(TruChain):
             )
 
     @classmethod
+    def _create_node_update_attributes(
+        cls, node_name: str, node_data: Any
+    ) -> dict:
+        """Create attributes for individual node updates in streaming scenarios.
+
+        This follows the same pattern as task_function_attributes and pregel_attributes
+        for consistency across the codebase.
+        """
+        attributes = {
+            SpanAttributes.GRAPH_NODE.NODE_NAME: node_name,
+        }
+
+        if isinstance(node_data, dict):
+            state_attrs = cls._build_state_attributes(node_data, is_input=False)
+            attributes.update(state_attrs)
+        else:
+            attributes[SpanAttributes.GRAPH_NODE.OUTPUT_STATE] = str(node_data)
+
+        return attributes
+
+    @classmethod
     def _wrap_stream_generator(cls, original_generator):
         """Wrap a LangGraph stream generator to capture individual node updates as spans"""
 
@@ -482,37 +503,22 @@ class TruGraph(TruChain):
                     # Each chunk typically contains node updates
                     if isinstance(chunk, dict):
                         for node_name, node_data in chunk.items():
-                            # Create a span for each node update using the proper TruLens approach
                             span_name = f"graph_node.{node_name}"
 
                             try:
                                 with create_function_call_context_manager(
                                     create_new_span=True, span_name=span_name
                                 ) as span:
-                                    # Set general span attributes
                                     set_general_span_attributes(
                                         span, SpanAttributes.SpanType.GRAPH_NODE
                                     )
 
-                                    # Build attributes dict
-                                    attributes = {
-                                        SpanAttributes.GRAPH_NODE.NODE_NAME: node_name,
-                                    }
-
-                                    # Capture output state using helper method
-                                    if isinstance(node_data, dict):
-                                        state_attrs = (
-                                            cls._build_state_attributes(
-                                                node_data, is_input=False
-                                            )
+                                    attributes = (
+                                        cls._create_node_update_attributes(
+                                            node_name, node_data
                                         )
-                                        attributes.update(state_attrs)
-                                    else:
-                                        attributes[
-                                            SpanAttributes.GRAPH_NODE.OUTPUT_STATE
-                                        ] = str(node_data)
+                                    )
 
-                                    # Set the user-defined attributes
                                     set_user_defined_attributes(
                                         span, attributes=attributes
                                     )
