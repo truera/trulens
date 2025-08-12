@@ -482,8 +482,7 @@ class TruGraph(TruChain):
         for consistency across the codebase.
         """
         attributes = {
-            # SpanAttributes.GRAPH_NODE.NODE_NAME: node_name,
-            SpanAttributes.GRAPH_NODE.NODE_NAME: "check in create_node_update_attributes",
+            SpanAttributes.GRAPH_NODE.NODE_NAME: node_name,
         }
 
         if isinstance(node_data, dict):
@@ -505,8 +504,7 @@ class TruGraph(TruChain):
                     # Each chunk typically contains node updates
                     if isinstance(chunk, dict):
                         for node_name, node_data in chunk.items():
-                            # span_name = f"graph_node.{node_name}"
-                            span_name = "check in wrap_stream_generator"
+                            span_name = f"graph_node.{node_name}"
 
                             try:
                                 with create_function_call_context_manager(
