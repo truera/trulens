@@ -299,9 +299,6 @@ class SpanAttributes:
         NODE_NAME = base + ".node_name"
         """Name of the node."""
 
-        NODE_TYPE = base + ".node_type"
-        """Type of the node (START, END, regular, conditional)."""
-
         INPUT_STATE = base + ".input_state"
         """Input state to the graph."""
 
