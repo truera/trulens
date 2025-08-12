@@ -727,6 +727,15 @@ class TruGraph(TruChain):
                         attributes[SpanAttributes.GRAPH_NODE.OUTPUT_STATE] = (
                             f"Error serializing output: {str(e)}"
                         )
+                span_name_for_pregel = "graph"  # we intentionally rename Pregel to "graph" to be more user-friendly
+                try:
+                    current_span = get_current_span()
+                    if current_span and hasattr(current_span, "update_name"):
+                        current_span.update_name(span_name_for_pregel)
+                except Exception as e:
+                    logger.debug(
+                        f"Failed to update span name to {span_name_for_pregel}: {e}"
+                    )
 
                 if exception:
                     attributes[SpanAttributes.GRAPH_NODE.ERROR] = str(exception)
