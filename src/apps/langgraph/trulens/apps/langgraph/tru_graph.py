@@ -795,26 +795,6 @@ class TruGraph(TruChain):
                 f"Failed to apply class-level Pregel instrumentation: {e}"
             )
 
-    @classmethod
-    def _setup_node_function_instrumentation(cls):
-        """Set up instrumentation for individual node functions to capture node names"""
-
-        if not is_otel_tracing_enabled():
-            logger.debug(
-                "OTEL not enabled, skipping node function instrumentation"
-            )
-            return
-
-        try:
-            # We'll add a helper method to instrument individual node functions
-            # This will be used when we process the graph structure
-            logger.debug("Node function instrumentation setup complete")
-
-        except Exception as e:
-            logger.warning(
-                f"Failed to apply node function instrumentation: {e}"
-            )
-
     @staticmethod
     def instrument_node_function(
         node_func: Callable, node_name: str
@@ -909,7 +889,6 @@ class TruGraph(TruChain):
         if not cls._is_instrumented:
             cls._setup_task_function_instrumentation()
             cls._setup_pregel_instrumentation()
-            cls._setup_node_function_instrumentation()
             cls._is_instrumented = True
         else:
             logger.debug("Instrumentation already set up")
