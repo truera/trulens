@@ -24,13 +24,16 @@ from trulens.core.instruments import InstrumentedMethod
 from trulens.core.otel.function_call_context_manager import (
     create_function_call_context_manager,
 )
-from trulens.core.otel.instrument import instrument_function
 from trulens.core.otel.instrument import instrument_method
-from trulens.core.otel.instrument import set_general_span_attributes
-from trulens.core.otel.instrument import set_user_defined_attributes
 from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.session import TruSession
 from trulens.core.utils import pyschema as pyschema_utils
+from trulens.experimental.otel_tracing.core.span import (
+    set_general_span_attributes,
+)
+from trulens.experimental.otel_tracing.core.span import (
+    set_user_defined_attributes,
+)
 from trulens.otel.semconv.constants import TRULENS_INSTRUMENT_WRAPPER_FLAG
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -197,6 +200,62 @@ class TruGraph(TruChain):
 
     # Class-level flag to track instrumentation status
     _is_instrumented: ClassVar[bool] = False
+
+    @staticmethod
+    def _extract_latest_message_content(data: dict) -> Optional[str]:
+        """Extract latest message content from state dict."""
+        if "messages" in data and isinstance(data["messages"], list):
+            messages = data["messages"]
+            if messages:
+                latest_message = messages[-1]
+                if hasattr(latest_message, "content"):
+                    return latest_message.content
+                else:
+                    return str(latest_message)
+        return None
+
+    @staticmethod
+    def _serialize_state_for_attributes(data: dict, max_items: int = 3) -> str:
+        """Serialize state dictionary for span attributes."""
+        simplified = {}
+        for k, v in data.items():
+            if isinstance(v, (str, int, float, bool)):
+                simplified[k] = v
+            elif isinstance(v, list) and len(v) <= max_items:
+                simplified[k] = v
+            else:
+                simplified[k] = (
+                    f"<{type(v).__name__}: {len(v) if hasattr(v, '__len__') else 'unknown'}>"
+                )
+        return json.dumps(simplified, default=str, indent=2)
+
+    @classmethod
+    def _build_state_attributes(cls, data: dict, is_input: bool = True) -> dict:
+        """Build standard state attributes for spans."""
+        attributes = {}
+
+        # Try to extract latest message
+        latest_content = cls._extract_latest_message_content(data)
+        if latest_content:
+            state_key = (
+                SpanAttributes.GRAPH_NODE.INPUT_STATE
+                if is_input
+                else SpanAttributes.GRAPH_NODE.OUTPUT_STATE
+            )
+            attributes[state_key] = latest_content
+            attributes[SpanAttributes.GRAPH_NODE.LATEST_MESSAGE] = (
+                latest_content
+            )
+        else:
+            # Fallback to serialized state
+            state_key = (
+                SpanAttributes.GRAPH_NODE.INPUT_STATE
+                if is_input
+                else SpanAttributes.GRAPH_NODE.OUTPUT_STATE
+            )
+            attributes[state_key] = cls._serialize_state_for_attributes(data)
+
+        return attributes
 
     app: Any
     """The application to be instrumented. Can be LangGraph objects or custom classes."""
@@ -590,28 +649,14 @@ class TruGraph(TruChain):
                                         SpanAttributes.GRAPH_NODE.NODE_NAME: node_name,
                                     }
 
-                                    # Capture the latest message
-                                    if (
-                                        isinstance(node_data, dict)
-                                        and "messages" in node_data
-                                    ):
-                                        messages = node_data["messages"]
-                                        if messages and hasattr(
-                                            messages[-1], "content"
-                                        ):
-                                            latest_content = messages[
-                                                -1
-                                            ].content
-                                            attributes[
-                                                SpanAttributes.GRAPH_NODE.OUTPUT_STATE
-                                            ] = latest_content
-                                            attributes[
-                                                SpanAttributes.GRAPH_NODE.LATEST_MESSAGE
-                                            ] = latest_content
-                                        else:
-                                            attributes[
-                                                SpanAttributes.GRAPH_NODE.OUTPUT_STATE
-                                            ] = str(node_data)
+                                    # Capture output state using helper method
+                                    if isinstance(node_data, dict):
+                                        state_attrs = (
+                                            cls._build_state_attributes(
+                                                node_data, is_input=False
+                                            )
+                                        )
+                                        attributes.update(state_attrs)
                                     else:
                                         attributes[
                                             SpanAttributes.GRAPH_NODE.OUTPUT_STATE
@@ -797,42 +842,10 @@ class TruGraph(TruChain):
                     input_data = args[1]
                     try:
                         if isinstance(input_data, dict):
-                            # Extract latest message for better readability
-                            if "messages" in input_data and isinstance(
-                                input_data["messages"], list
-                            ):
-                                messages = input_data["messages"]
-                                if messages:
-                                    latest_message = messages[-1]
-                                    if hasattr(latest_message, "content"):
-                                        attributes[
-                                            SpanAttributes.GRAPH_NODE.INPUT_STATE
-                                        ] = latest_message.content
-                                    else:
-                                        attributes[
-                                            SpanAttributes.GRAPH_NODE.INPUT_STATE
-                                        ] = str(latest_message)
-                                else:
-                                    attributes[
-                                        SpanAttributes.GRAPH_NODE.INPUT_STATE
-                                    ] = "Empty messages"
-                            else:
-                                # For non-message states, serialize first level only
-                                simplified_input = {}
-                                for k, v in input_data.items():
-                                    if isinstance(v, (str, int, float, bool)):
-                                        simplified_input[k] = v
-                                    elif isinstance(v, list) and len(v) <= 3:
-                                        simplified_input[k] = v
-                                    else:
-                                        simplified_input[k] = (
-                                            f"<{type(v).__name__}: {len(v) if hasattr(v, '__len__') else 'unknown'}>"
-                                        )
-                                attributes[
-                                    SpanAttributes.GRAPH_NODE.INPUT_STATE
-                                ] = json.dumps(
-                                    simplified_input, default=str, indent=2
-                                )
+                            input_attrs = cls._build_state_attributes(
+                                input_data, is_input=True
+                            )
+                            attributes.update(input_attrs)
                         else:
                             attributes[
                                 SpanAttributes.GRAPH_NODE.INPUT_STATE
@@ -846,18 +859,11 @@ class TruGraph(TruChain):
                 for k, v in kwargs.items():
                     if k in ["input", "state", "data"]:
                         try:
-                            if isinstance(v, dict) and "messages" in v:
-                                messages = v["messages"]
-                                if messages and hasattr(
-                                    messages[-1], "content"
-                                ):
-                                    attributes[
-                                        SpanAttributes.GRAPH_NODE.INPUT_STATE
-                                    ] = messages[-1].content
-                                else:
-                                    attributes[
-                                        SpanAttributes.GRAPH_NODE.INPUT_STATE
-                                    ] = str(v)
+                            if isinstance(v, dict):
+                                kwargs_attrs = cls._build_state_attributes(
+                                    v, is_input=True
+                                )
+                                attributes.update(kwargs_attrs)
                             else:
                                 attributes[
                                     SpanAttributes.GRAPH_NODE.INPUT_STATE
@@ -882,48 +888,10 @@ class TruGraph(TruChain):
                                 SpanAttributes.GRAPH_NODE.OUTPUT_STATE
                             ] = f"<Generator: {type(ret).__name__}>"
                         elif isinstance(ret, dict):
-                            # Extract latest message for better readability
-                            if "messages" in ret and isinstance(
-                                ret["messages"], list
-                            ):
-                                messages = ret["messages"]
-                                if messages:
-                                    latest_message = messages[-1]
-                                    if hasattr(latest_message, "content"):
-                                        attributes[
-                                            SpanAttributes.GRAPH_NODE.OUTPUT_STATE
-                                        ] = latest_message.content
-                                        attributes[
-                                            SpanAttributes.GRAPH_NODE.LATEST_MESSAGE
-                                        ] = latest_message.content
-                                    else:
-                                        attributes[
-                                            SpanAttributes.GRAPH_NODE.OUTPUT_STATE
-                                        ] = str(latest_message)
-                                        attributes[
-                                            SpanAttributes.GRAPH_NODE.LATEST_MESSAGE
-                                        ] = str(latest_message)
-                                else:
-                                    attributes[
-                                        SpanAttributes.GRAPH_NODE.OUTPUT_STATE
-                                    ] = "Empty messages"
-                            else:
-                                # For non-message states, serialize first level only
-                                simplified_output = {}
-                                for k, v in ret.items():
-                                    if isinstance(v, (str, int, float, bool)):
-                                        simplified_output[k] = v
-                                    elif isinstance(v, list) and len(v) <= 3:
-                                        simplified_output[k] = v
-                                    else:
-                                        simplified_output[k] = (
-                                            f"<{type(v).__name__}: {len(v) if hasattr(v, '__len__') else 'unknown'}>"
-                                        )
-                                attributes[
-                                    SpanAttributes.GRAPH_NODE.OUTPUT_STATE
-                                ] = json.dumps(
-                                    simplified_output, default=str, indent=2
-                                )
+                            output_attrs = cls._build_state_attributes(
+                                ret, is_input=False
+                            )
+                            attributes.update(output_attrs)
                         else:
                             attributes[
                                 SpanAttributes.GRAPH_NODE.OUTPUT_STATE
@@ -1092,53 +1060,10 @@ class TruGraph(TruChain):
                     state_arg = args[0] if args else {}
                     try:
                         if isinstance(state_arg, dict):
-                            # Extract latest message for better readability
-                            if "messages" in state_arg and isinstance(
-                                state_arg["messages"], list
-                            ):
-                                messages = state_arg["messages"]
-                                if messages:
-                                    latest_message = messages[-1]
-                                    if hasattr(latest_message, "content"):
-                                        message_content = latest_message.content
-                                        attributes[
-                                            SpanAttributes.GRAPH_NODE.INPUT_STATE
-                                        ] = message_content
-                                        attributes[
-                                            SpanAttributes.GRAPH_NODE.LATEST_MESSAGE
-                                        ] = message_content
-                                    else:
-                                        message_str = str(latest_message)
-                                        attributes[
-                                            SpanAttributes.GRAPH_NODE.INPUT_STATE
-                                        ] = message_str
-                                        attributes[
-                                            SpanAttributes.GRAPH_NODE.LATEST_MESSAGE
-                                        ] = message_str
-                                else:
-                                    attributes[
-                                        SpanAttributes.GRAPH_NODE.INPUT_STATE
-                                    ] = "Empty messages"
-                                    attributes[
-                                        SpanAttributes.GRAPH_NODE.LATEST_MESSAGE
-                                    ] = "Empty messages"
-                            else:
-                                # For non-message states, serialize first level only
-                                simplified_input = {}
-                                for k, v in state_arg.items():
-                                    if isinstance(v, (str, int, float, bool)):
-                                        simplified_input[k] = v
-                                    elif isinstance(v, list) and len(v) <= 3:
-                                        simplified_input[k] = v
-                                    else:
-                                        simplified_input[k] = (
-                                            f"<{type(v).__name__}: {len(v) if hasattr(v, '__len__') else 'unknown'}>"
-                                        )
-                                attributes[
-                                    SpanAttributes.GRAPH_NODE.INPUT_STATE
-                                ] = json.dumps(
-                                    simplified_input, default=str, indent=2
-                                )
+                            input_attrs = TruGraph._build_state_attributes(
+                                state_arg, is_input=True
+                            )
+                            attributes.update(input_attrs)
                         else:
                             attributes[
                                 SpanAttributes.GRAPH_NODE.INPUT_STATE
@@ -1152,50 +1077,10 @@ class TruGraph(TruChain):
                 if ret is not None and not exception:
                     try:
                         if isinstance(ret, dict):
-                            # Extract latest message for better readability
-                            if "messages" in ret and isinstance(
-                                ret["messages"], list
-                            ):
-                                messages = ret["messages"]
-                                if messages:
-                                    latest_message = messages[-1]
-                                    if hasattr(latest_message, "content"):
-                                        message_content = latest_message.content
-                                        attributes[
-                                            SpanAttributes.GRAPH_NODE.OUTPUT_STATE
-                                        ] = message_content
-                                        attributes[
-                                            SpanAttributes.GRAPH_NODE.LATEST_MESSAGE
-                                        ] = message_content
-                                    else:
-                                        message_str = str(latest_message)
-                                        attributes[
-                                            SpanAttributes.GRAPH_NODE.OUTPUT_STATE
-                                        ] = message_str
-                                        attributes[
-                                            SpanAttributes.GRAPH_NODE.LATEST_MESSAGE
-                                        ] = message_str
-                                else:
-                                    attributes[
-                                        SpanAttributes.GRAPH_NODE.OUTPUT_STATE
-                                    ] = "Empty messages"
-                            else:
-                                # For non-message states, serialize first level only
-                                simplified_output = {}
-                                for k, v in ret.items():
-                                    if isinstance(v, (str, int, float, bool)):
-                                        simplified_output[k] = v
-                                    elif isinstance(v, list) and len(v) <= 3:
-                                        simplified_output[k] = v
-                                    else:
-                                        simplified_output[k] = (
-                                            f"<{type(v).__name__}: {len(v) if hasattr(v, '__len__') else 'unknown'}>"
-                                        )
-                                attributes[
-                                    SpanAttributes.GRAPH_NODE.OUTPUT_STATE
-                                ] = json.dumps(
-                                    simplified_output, default=str, indent=2
-                                )
+                            output_attrs = TruGraph._build_state_attributes(
+                                ret, is_input=False
+                            )
+                            attributes.update(output_attrs)
                         else:
                             attributes[
                                 SpanAttributes.GRAPH_NODE.OUTPUT_STATE
@@ -1227,13 +1112,7 @@ class TruGraph(TruChain):
                 # Call the original function
                 return node_func(*args, **kwargs)
 
-            # Apply instrumentation
-            return instrument_function(
-                func=instrumented_node_func,
-                span_type=SpanAttributes.SpanType.GRAPH_NODE,
-                attributes=node_attributes,
-                span_name=node_name,
-            )
+            return instrumented_node_func
 
         except Exception as e:
             logger.warning(
