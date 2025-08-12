@@ -257,6 +257,59 @@ class TruGraph(TruChain):
 
         return attributes
 
+    @classmethod
+    def _update_span_name(cls, span_name: str) -> None:
+        """Update current span name if possible."""
+        try:
+            current_span = get_current_span()
+            if current_span and hasattr(current_span, "update_name"):
+                current_span.update_name(span_name)
+        except Exception as e:
+            logger.debug(f"Failed to update span name to {span_name}: {e}")
+
+    @classmethod
+    def _handle_input_output_state(
+        cls, input_data: Any, ret: Any, exception: Exception, attributes: dict
+    ) -> None:
+        """Handle input and output state processing for spans."""
+        # Capture input state
+        if input_data is not None:
+            try:
+                if isinstance(input_data, dict):
+                    input_attrs = cls._build_state_attributes(
+                        input_data, is_input=True
+                    )
+                    attributes.update(input_attrs)
+                else:
+                    attributes[SpanAttributes.GRAPH_NODE.INPUT_STATE] = str(
+                        input_data
+                    )
+            except Exception as e:
+                attributes[SpanAttributes.GRAPH_NODE.INPUT_STATE] = (
+                    f"Error serializing input: {str(e)}"
+                )
+
+        # Capture output state
+        if ret is not None and not exception:
+            try:
+                if isinstance(ret, dict):
+                    output_attrs = cls._build_state_attributes(
+                        ret, is_input=False
+                    )
+                    attributes.update(output_attrs)
+                else:
+                    attributes[SpanAttributes.GRAPH_NODE.OUTPUT_STATE] = str(
+                        ret
+                    )
+            except Exception as e:
+                attributes[SpanAttributes.GRAPH_NODE.OUTPUT_STATE] = (
+                    f"Error serializing output: {str(e)}"
+                )
+
+        # Handle exceptions
+        if exception:
+            attributes[SpanAttributes.GRAPH_NODE.ERROR] = str(exception)
+
     app: Any
     """The application to be instrumented. Can be LangGraph objects or custom classes."""
 
@@ -313,16 +366,7 @@ class TruGraph(TruChain):
                         )
 
                         # Update the span name to the task name
-                        try:
-                            current_span = get_current_span()
-                            if current_span and hasattr(
-                                current_span, "update_name"
-                            ):
-                                current_span.update_name(task_name)
-                        except Exception as e:
-                            logger.debug(
-                                f"Failed to update span name to {task_name}: {e}"
-                            )
+                        cls._update_span_name(task_name)
 
                     # Serialize the task input arguments
                     try:
@@ -615,69 +659,24 @@ class TruGraph(TruChain):
                 attributes = {}
 
                 # Get the function reference to extract the actual function name
-                # args[0] should be the 'self' parameter (RunnableCallable instance)
                 node_name = "unknown_node"
                 if args and hasattr(args[0], "func"):
                     func = args[0].func
                     if hasattr(func, "__name__"):
                         node_name = func.__name__
-                        attributes[SpanAttributes.GRAPH_NODE.NODE_NAME] = (
-                            node_name
-                        )
                     else:
-                        attributes[SpanAttributes.GRAPH_NODE.NODE_NAME] = str(
-                            func
-                        )
-                else:
-                    attributes[SpanAttributes.GRAPH_NODE.NODE_NAME] = node_name
+                        node_name = str(func)
+
+                attributes[SpanAttributes.GRAPH_NODE.NODE_NAME] = node_name
 
                 # Update the span name to the actual node function name
-                try:
-                    current_span = get_current_span()
-                    if current_span and hasattr(current_span, "update_name"):
-                        current_span.update_name(node_name)
-                except Exception as e:
-                    logger.debug(
-                        f"Failed to update span name to {node_name}: {e}"
-                    )
+                cls._update_span_name(node_name)
 
-                # Capture input state (args[1] should be the state parameter)
-                if len(args) > 1:
-                    input_data = args[1]
-                    try:
-                        if isinstance(input_data, dict):
-                            input_attrs = cls._build_state_attributes(
-                                input_data, is_input=True
-                            )
-                            attributes.update(input_attrs)
-                        else:
-                            attributes[
-                                SpanAttributes.GRAPH_NODE.INPUT_STATE
-                            ] = str(input_data)
-                    except Exception as e:
-                        attributes[SpanAttributes.GRAPH_NODE.INPUT_STATE] = (
-                            f"Error serializing input: {str(e)}"
-                        )
-
-                # Capture output state
-                if ret is not None and not exception:
-                    try:
-                        if isinstance(ret, dict):
-                            output_attrs = cls._build_state_attributes(
-                                ret, is_input=False
-                            )
-                            attributes.update(output_attrs)
-                        else:
-                            attributes[
-                                SpanAttributes.GRAPH_NODE.OUTPUT_STATE
-                            ] = str(ret)
-                    except Exception as e:
-                        attributes[SpanAttributes.GRAPH_NODE.OUTPUT_STATE] = (
-                            f"Error serializing output: {str(e)}"
-                        )
-
-                if exception:
-                    attributes[SpanAttributes.GRAPH_NODE.ERROR] = str(exception)
+                # Handle input/output state and exceptions
+                input_data = args[1] if len(args) > 1 else None
+                cls._handle_input_output_state(
+                    input_data, ret, exception, attributes
+                )
 
                 return attributes
 
@@ -702,7 +701,6 @@ class TruGraph(TruChain):
 
         original_method = getattr(target_class, method_name)
 
-        @wrapt.decorator
         def filtered_wrapper(wrapped, instance, args, kwargs):
             # Check if this is an internal LangGraph node before creating any span
             if hasattr(instance, "func") and hasattr(instance.func, "__name__"):
@@ -722,7 +720,12 @@ class TruGraph(TruChain):
             )(wrapped)
             return instrumented_method(*args, **kwargs)
 
-        setattr(target_class, method_name, filtered_wrapper(original_method))
+        # Apply the wrapper using wrapt
+        setattr(
+            target_class,
+            method_name,
+            wrapt.decorator(filtered_wrapper)(original_method),
+        )
 
     @classmethod
     def _setup_pregel_instrumentation(cls):
@@ -761,80 +764,38 @@ class TruGraph(TruChain):
                 finally:
                     del frame
 
-                # Capture input state
-                if args and len(args) > 1:
-                    input_data = args[1]
-                    try:
-                        if isinstance(input_data, dict):
-                            input_attrs = cls._build_state_attributes(
-                                input_data, is_input=True
-                            )
-                            attributes.update(input_attrs)
-                        else:
-                            attributes[
-                                SpanAttributes.GRAPH_NODE.INPUT_STATE
-                            ] = str(input_data)
-                    except Exception as e:
-                        attributes[SpanAttributes.GRAPH_NODE.INPUT_STATE] = (
-                            f"Error serializing input: {str(e)}"
-                        )
+                # Handle input from args and kwargs
+                input_data = args[1] if args and len(args) > 1 else None
 
-                # Handle kwargs
-                for _, v in kwargs.items():
-                    try:
+                # Also handle kwargs as potential input
+                if kwargs:
+                    for _, v in kwargs.items():
                         if isinstance(v, dict):
-                            kwargs_attrs = cls._build_state_attributes(
-                                v, is_input=True
-                            )
-                            attributes.update(kwargs_attrs)
-                        else:
-                            attributes[
-                                SpanAttributes.GRAPH_NODE.INPUT_STATE
-                            ] = str(v)
-                    except Exception:
-                        attributes[SpanAttributes.GRAPH_NODE.INPUT_STATE] = str(
-                            v
-                        )
+                            # If we haven't found input_data yet, use this dict
+                            if input_data is None:
+                                input_data = v
+                            break
 
-                # Capture output state
-                if ret is not None and not exception:
-                    try:
-                        # For streaming methods, we'll get generators - capture that info
-                        if method_name in [
-                            "stream",
-                            "astream",
-                            "stream_mode",
-                            "astream_mode",
-                        ]:
-                            attributes[
-                                SpanAttributes.GRAPH_NODE.OUTPUT_STATE
-                            ] = f"<Generator: {type(ret).__name__}>"
-                        elif isinstance(ret, dict):
-                            output_attrs = cls._build_state_attributes(
-                                ret, is_input=False
-                            )
-                            attributes.update(output_attrs)
-                        else:
-                            attributes[
-                                SpanAttributes.GRAPH_NODE.OUTPUT_STATE
-                            ] = str(ret)
-                    except Exception as e:
-                        attributes[SpanAttributes.GRAPH_NODE.OUTPUT_STATE] = (
-                            f"Error serializing output: {str(e)}"
-                        )
+                # Handle streaming method output specially
+                output_data = ret
+                if method_name in [
+                    "stream",
+                    "astream",
+                    "stream_mode",
+                    "astream_mode",
+                ]:
+                    output_data = f"<Generator: {type(ret).__name__}>"
 
-                span_name_for_pregel = "graph"  # we intentionally rename "Pregel.invoke" to "graph" to be more user-friendly
-                try:
-                    current_span = get_current_span()
-                    if current_span and hasattr(current_span, "update_name"):
-                        current_span.update_name(span_name_for_pregel)
-                except Exception as e:
-                    logger.debug(
-                        f"Failed to update span name to {span_name_for_pregel}: {e}"
-                    )
+                # Use the consolidated helper
+                cls._handle_input_output_state(
+                    input_data, output_data, exception, attributes
+                )
 
-                if exception:
-                    attributes[SpanAttributes.GRAPH_NODE.ERROR] = str(exception)
+                # Update span name for Pregel methods
+                span_name_for_pregel = (
+                    "graph"  # user-friendly name instead of "Pregel.invoke"
+                )
+                cls._update_span_name(span_name_for_pregel)
 
                 return attributes
 
@@ -1005,31 +966,30 @@ class TruGraph(TruChain):
         else:
             return super().main_output(func, sig, bindings, ret)
 
-    def main_call(self, human: str):
-        """A single text to a single text invocation of this app."""
-        if isinstance(self.app, Pregel):
-            try:
-                result = self.app.invoke({"messages": [("user", human)]})
-                return self._extract_output_from_result(result)
-            except Exception as e:
-                raise Exception(f"Error invoking Langgraph workflow: {str(e)}")
-        else:
+    def _validate_pregel_app(self):
+        """Validate that the app is a Pregel instance."""
+        if not isinstance(self.app, Pregel):
             raise Exception(
                 f"App must be an instance of Pregel, got {type(self.app)}"
             )
 
+    def main_call(self, human: str):
+        """A single text to a single text invocation of this app."""
+        self._validate_pregel_app()
+        try:
+            result = self.app.invoke({"messages": [("user", human)]})
+            return self._extract_output_from_result(result)
+        except Exception as e:
+            raise Exception(f"Error invoking Langgraph workflow: {str(e)}")
+
     async def main_acall(self, human: str):
         """A single text to a single text async invocation of this app."""
-        if isinstance(self.app, Pregel):
-            try:
-                result = await self.app.ainvoke({"messages": [("user", human)]})
-                return self._extract_output_from_result(result)
-            except Exception as e:
-                raise Exception(f"Error invoking Langgraph workflow: {str(e)}")
-        else:
-            raise Exception(
-                f"App must be an instance of Pregel, got {type(self.app)}"
-            )
+        self._validate_pregel_app()
+        try:
+            result = await self.app.ainvoke({"messages": [("user", human)]})
+            return self._extract_output_from_result(result)
+        except Exception as e:
+            raise Exception(f"Error invoking Langgraph workflow: {str(e)}")
 
     def _extract_output_from_result(self, result: Any) -> str:
         """Helper method to extract string output from LangGraph result."""
