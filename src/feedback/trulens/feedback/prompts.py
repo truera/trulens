@@ -160,22 +160,10 @@ COMPREHENSIVENESS_SYSTEM_PROMPT = v2.Comprehensiveness.system_prompt
 
 COMPREHENSIVENESS_USER_PROMPT = v2.Comprehensiveness.user_prompt
 
-TRAJECTORY_EVAL_STEP_RELEVANCE_SYSTEM_PROMPT = (
-    v2.TrajectoryStepRelevance.system_prompt
-)
+LOGICAL_CONSISTENCY_SYSTEM_PROMPT = v2.LogicalConsistency.system_prompt
 
-TRAJECTORY_EVAL_LOGICAL_CONSISTENCY_SYSTEM_PROMPT = (
-    v2.TrajectoryLogicalConsistency.system_prompt
-)
+EXECUTION_EFFICIENCY_SYSTEM_PROMPT = v2.ExecutionEfficiency.system_prompt
 
-TRAJECTORY_EVAL_WORKFLOW_EFFICIENCY_SYSTEM_PROMPT = (
-    v2.TrajectoryWorkflowEfficiency.system_prompt
-)
+PLAN_ADHERENCE_SYSTEM_PROMPT = v2.PlanAdherence.system_prompt
 
-TRAJECTORY_EVAL_PLAN_ADHERENCE_SYSTEM_PROMPT = (
-    v2.TrajectoryPlanAdherence.system_prompt
-)
-
-TRAJECTORY_EVAL_PLAN_QUALITY_SYSTEM_PROMPT = (
-    v2.TrajectoryPlanQuality.system_prompt
-)
+PLAN_QUALITY_SYSTEM_PROMPT = v2.PlanQuality.system_prompt
