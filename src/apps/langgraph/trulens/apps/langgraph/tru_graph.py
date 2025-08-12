@@ -727,7 +727,7 @@ class TruGraph(TruChain):
                         attributes[SpanAttributes.GRAPH_NODE.OUTPUT_STATE] = (
                             f"Error serializing output: {str(e)}"
                         )
-                span_name_for_pregel = "graph"  # we intentionally rename Pregel to "graph" to be more user-friendly
+                span_name_for_pregel = "graph"  # we intentionally rename "Pregel.invoke" to "graph" to be more user-friendly
                 try:
                     current_span = get_current_span()
                     if current_span and hasattr(current_span, "update_name"):
