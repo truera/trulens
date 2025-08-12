@@ -1,7 +1,6 @@
 """LangGraph app instrumentation."""
 
 import dataclasses
-from functools import wraps
 import inspect
 from inspect import BoundArguments
 from inspect import Signature
@@ -795,93 +794,93 @@ class TruGraph(TruChain):
                 f"Failed to apply class-level Pregel instrumentation: {e}"
             )
 
-    @staticmethod
-    def instrument_node_function(
-        node_func: Callable, node_name: str
-    ) -> Callable:
-        """Instrument a single node function to add node name tracking.
+    # @staticmethod
+    # def instrument_node_function(
+    #     node_func: Callable, node_name: str
+    # ) -> Callable:
+    #     """Instrument a single node function to add node name tracking.
 
-        Args:
-            node_func: The node function to instrument
-            node_name: The name of the node
+    #     Args:
+    #         node_func: The node function to instrument
+    #         node_name: The name of the node
 
-        Returns:
-            The instrumented function
-        """
-        if not is_otel_tracing_enabled():
-            return node_func
+    #     Returns:
+    #         The instrumented function
+    #     """
+    #     if not is_otel_tracing_enabled():
+    #         return node_func
 
-        try:
+    #     try:
 
-            def node_attributes(ret, exception, *args, **kwargs):
-                attributes = {
-                    SpanAttributes.GRAPH_NODE.NODE_NAME: node_name,
-                }
+    #         def node_attributes(ret, exception, *args, **kwargs):
+    #             attributes = {
+    #                 SpanAttributes.GRAPH_NODE.NODE_NAME: node_name,
+    #             }
 
-                # Capture input state from arguments
-                if args:
-                    state_arg = args[0] if args else {}
-                    try:
-                        if isinstance(state_arg, dict):
-                            input_attrs = TruGraph._build_state_attributes(
-                                state_arg, is_input=True
-                            )
-                            attributes.update(input_attrs)
-                        else:
-                            attributes[
-                                SpanAttributes.GRAPH_NODE.INPUT_STATE
-                            ] = str(state_arg)
-                    except Exception as e:
-                        attributes[SpanAttributes.GRAPH_NODE.INPUT_STATE] = (
-                            f"Error serializing input: {str(e)}"
-                        )
+    #             # Capture input state from arguments
+    #             if args:
+    #                 state_arg = args[0] if args else {}
+    #                 try:
+    #                     if isinstance(state_arg, dict):
+    #                         input_attrs = TruGraph._build_state_attributes(
+    #                             state_arg, is_input=True
+    #                         )
+    #                         attributes.update(input_attrs)
+    #                     else:
+    #                         attributes[
+    #                             SpanAttributes.GRAPH_NODE.INPUT_STATE
+    #                         ] = str(state_arg)
+    #                 except Exception as e:
+    #                     attributes[SpanAttributes.GRAPH_NODE.INPUT_STATE] = (
+    #                         f"Error serializing input: {str(e)}"
+    #                     )
 
-                # Capture output state
-                if ret is not None and not exception:
-                    try:
-                        if isinstance(ret, dict):
-                            output_attrs = TruGraph._build_state_attributes(
-                                ret, is_input=False
-                            )
-                            attributes.update(output_attrs)
-                        else:
-                            attributes[
-                                SpanAttributes.GRAPH_NODE.OUTPUT_STATE
-                            ] = str(ret)
-                    except Exception as e:
-                        attributes[SpanAttributes.GRAPH_NODE.OUTPUT_STATE] = (
-                            f"Error serializing output: {str(e)}"
-                        )
+    #             # Capture output state
+    #             if ret is not None and not exception:
+    #                 try:
+    #                     if isinstance(ret, dict):
+    #                         output_attrs = TruGraph._build_state_attributes(
+    #                             ret, is_input=False
+    #                         )
+    #                         attributes.update(output_attrs)
+    #                     else:
+    #                         attributes[
+    #                             SpanAttributes.GRAPH_NODE.OUTPUT_STATE
+    #                         ] = str(ret)
+    #                 except Exception as e:
+    #                     attributes[SpanAttributes.GRAPH_NODE.OUTPUT_STATE] = (
+    #                         f"Error serializing output: {str(e)}"
+    #                     )
 
-                if exception:
-                    attributes[SpanAttributes.GRAPH_NODE.ERROR] = str(exception)
+    #             if exception:
+    #                 attributes[SpanAttributes.GRAPH_NODE.ERROR] = str(exception)
 
-                return attributes
+    #             return attributes
 
-            @wraps(node_func)
-            def instrumented_node_func(*args, **kwargs):
-                # Set span name to the node name
-                from opentelemetry.trace import get_current_span
+    #         @wraps(node_func)
+    #         def instrumented_node_func(*args, **kwargs):
+    #             # Set span name to the node name
+    #             from opentelemetry.trace import get_current_span
 
-                try:
-                    current_span = get_current_span()
-                    if current_span and hasattr(current_span, "update_name"):
-                        current_span.update_name(node_name)
-                except Exception as e:
-                    logger.debug(
-                        f"Failed to update span name to {node_name}: {e}"
-                    )
+    #             try:
+    #                 current_span = get_current_span()
+    #                 if current_span and hasattr(current_span, "update_name"):
+    #                     current_span.update_name(node_name)
+    #             except Exception as e:
+    #                 logger.debug(
+    #                     f"Failed to update span name to {node_name}: {e}"
+    #                 )
 
-                # Call the original function
-                return node_func(*args, **kwargs)
+    #             # Call the original function
+    #             return node_func(*args, **kwargs)
 
-            return instrumented_node_func
+    #         return instrumented_node_func
 
-        except Exception as e:
-            logger.warning(
-                f"Failed to instrument node function {node_name}: {e}"
-            )
-            return node_func
+    #     except Exception as e:
+    #         logger.warning(
+    #             f"Failed to instrument node function {node_name}: {e}"
+    #         )
+    #         return node_func
 
     @classmethod
     def _ensure_instrumentation(cls):
@@ -901,9 +900,6 @@ class TruGraph(TruChain):
     ):
         # Ensure instrumentation is set up before initializing
         self._ensure_instrumentation()
-
-        # Only do minimal preparation to avoid interfering with existing instrumentation
-        app = self._prepare_app(app)
 
         kwargs["app"] = app
 
@@ -944,128 +940,6 @@ class TruGraph(TruChain):
         kwargs["instrument"] = CombinedInstrument(app=self)
 
         core_app.App.__init__(self, **kwargs)
-
-    def _prepare_app(self, app: Any) -> Any:
-        """
-        Prepare the app for instrumentation by handling different input types.
-
-        Args:
-            app: The input application
-
-        Returns:
-            The prepared application ready for instrumentation
-        """
-        if isinstance(app, StateGraph):
-            logger.warning(
-                "Received uncompiled StateGraph. Compiling it for instrumentation. "
-                "For better control, consider compiling the graph yourself before wrapping with TruGraph."
-            )
-            compiled_app = app.compile()
-            self._instrument_graph_nodes(compiled_app)
-            return compiled_app  # type: ignore
-
-        if isinstance(app, Pregel):
-            self._instrument_graph_nodes(app)
-            return app
-
-        return app
-
-    def _instrument_graph_nodes(self, compiled_graph: Any) -> None:
-        """
-        Instrument individual node functions in a compiled graph for better node name tracking.
-
-        Args:
-            compiled_graph: A compiled LangGraph (Pregel instance)
-        """
-        if not is_otel_tracing_enabled():
-            return
-
-        try:
-            instrumented_nodes = 0
-
-            # Method 1: Try to access and instrument the direct nodes dictionary
-            if hasattr(compiled_graph, "nodes") and isinstance(
-                compiled_graph.nodes, dict
-            ):
-                for node_name, node_obj in compiled_graph.nodes.items():
-                    # Handle different node types
-                    if hasattr(node_obj, "func") and callable(node_obj.func):
-                        # Node with a function attribute
-                        original_func = node_obj.func
-                        instrumented_func = self.instrument_node_function(
-                            original_func, node_name
-                        )
-                        node_obj.func = instrumented_func
-                        logger.debug(
-                            f"Instrumented node function via .func: {node_name}"
-                        )
-                        instrumented_nodes += 1
-                    elif callable(node_obj):
-                        # Node is directly a callable
-                        instrumented_func = self.instrument_node_function(
-                            node_obj, node_name
-                        )
-                        compiled_graph.nodes[node_name] = instrumented_func
-                        logger.debug(f"Instrumented callable node: {node_name}")
-                        instrumented_nodes += 1
-
-            # Method 2: Try alternative node access patterns
-            # Look for other possible node storage patterns in LangGraph
-            alternative_node_attrs = ["_nodes", "graph", "_graph", "spec"]
-            for attr_name in alternative_node_attrs:
-                if hasattr(compiled_graph, attr_name):
-                    attr_obj = getattr(compiled_graph, attr_name)
-                    if hasattr(attr_obj, "nodes") and isinstance(
-                        attr_obj.nodes, dict
-                    ):
-                        for node_name, node_obj in attr_obj.nodes.items():
-                            if callable(node_obj):
-                                instrumented_func = (
-                                    self.instrument_node_function(
-                                        node_obj, node_name
-                                    )
-                                )
-                                attr_obj.nodes[node_name] = instrumented_func
-                                logger.debug(
-                                    f"Instrumented node via {attr_name}: {node_name}"
-                                )
-                                instrumented_nodes += 1
-
-            # Method 3: Try to access step definitions which might contain the actual node functions
-            if hasattr(compiled_graph, "step") and hasattr(
-                compiled_graph.step, "__self__"
-            ):
-                step_obj = compiled_graph.step.__self__
-                if hasattr(step_obj, "nodes") and isinstance(
-                    step_obj.nodes, dict
-                ):
-                    for node_name, node_obj in step_obj.nodes.items():
-                        if callable(node_obj):
-                            instrumented_func = self.instrument_node_function(
-                                node_obj, node_name
-                            )
-                            step_obj.nodes[node_name] = instrumented_func
-                            logger.debug(
-                                f"Instrumented node via step: {node_name}"
-                            )
-                            instrumented_nodes += 1
-
-            if instrumented_nodes > 0:
-                logger.info(
-                    f"Successfully instrumented {instrumented_nodes} node functions"
-                )
-            else:
-                logger.debug(
-                    "Could not find node functions to instrument in compiled graph"
-                )
-                # Log the structure for debugging
-                logger.debug(f"Compiled graph type: {type(compiled_graph)}")
-                logger.debug(
-                    f"Compiled graph attributes: {[attr for attr in dir(compiled_graph) if not attr.startswith('_')]}"
-                )
-
-        except Exception as e:
-            logger.warning(f"Failed to instrument graph nodes: {e}")
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
