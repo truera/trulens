@@ -755,14 +755,12 @@ class TruGraph(TruChain):
                     f"Applied class-level instrumentation to Pregel.{method_name}"
                 )
 
-            # Streaming methods use specialized wrapper approach
             for method_name in streaming_methods:
                 cls._instrument_streaming_method(method_name)
                 logger.debug(
                     f"Applied streaming instrumentation to Pregel.{method_name}"
                 )
 
-            # Node detection will be handled by the enhanced pregel_attributes function
             logger.debug(
                 "Successfully applied class-level instrumentation to Pregel methods"
             )
