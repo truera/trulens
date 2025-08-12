@@ -1,4 +1,6 @@
-from typing import Dict, List, Optional, Sequence
+import codecs
+import json
+from typing import Any, Dict, List, Optional, Sequence
 
 import pandas as pd
 import streamlit as st
@@ -57,6 +59,67 @@ def _format_cost(cost: float, currency: str) -> str:
         return f"${cost:.2f}"
     else:
         return f"{cost:.3g} {currency}"
+
+
+def _clean_text_value(value: Any) -> Any:
+    """Fix common text encoding issues and decode escaped sequences.
+
+    - Fix UTF-8 displayed as Windows-1252/latin-1 (e.g., â -> ’)
+    - Decode backslash-escaped unicode sequences when present
+    - Leave non-strings unchanged
+    """
+    if not isinstance(value, str):
+        return value
+
+    text = value
+
+    # Attempt to fix mojibake: bytes intended as UTF-8 shown as latin-1
+    # Trigger only if typical mojibake markers present
+    if any(mark in text for mark in ("â€", "Ã", "Â")):
+        try:
+            text = text.encode("latin-1", errors="ignore").decode(
+                "utf-8", errors="ignore"
+            )
+        except Exception:
+            pass
+
+    # Decode literal escape sequences like \u2019 -> ’ if present
+    if "\\u" in text or "\\x" in text:
+        try:
+            text = codecs.decode(text.encode("utf-8"), "unicode_escape")
+        except Exception:
+            pass
+
+    return text
+
+
+def _escape_currency_dollars(text: str) -> str:
+    """Escape $ so Markdown doesn't interpret it as LaTeX math.
+
+    If we render with st.markdown, unescaped $ can trigger math in some themes.
+    """
+    if isinstance(text, str):
+        return text.replace("$", r"\$")
+    return text
+
+
+def _escape_problematic_markdown(text: str) -> str:
+    """Escape characters that can rewrite plain text when rendered as Markdown.
+
+    - Escape dollar signs to avoid accidental math rendering
+    - Escape underscores only when they are between word characters (e.g.,
+      followed_by -> followed\_by). This preserves legitimate Markdown
+      italics/bold like _text_ or __text__ which are typically surrounded by
+      spaces or punctuation.
+    """
+    if not isinstance(text, str):
+        return text
+    escaped = text.replace("$", r"\$")
+    # Escape underscores between alphanumerics
+    import re as _re
+
+    escaped = _re.sub(r"(?<=\w)_(?=\w)", r"\\_", escaped)
+    return escaped
 
 
 def _render_record_metrics(
@@ -130,10 +193,22 @@ def _render_trace(
 
     input_col, output_col = st_columns(2)
     with input_col.expander("Record Input"):
-        st_code(selected_row["input"], wrap_lines=True)
+        input_value = selected_row["input"]
+        if isinstance(input_value, str):
+            text = _clean_text_value(input_value)
+            text = _escape_problematic_markdown(text)
+            st.markdown(text, unsafe_allow_html=False)
+        else:
+            st_code(selected_row["input"], wrap_lines=True)
 
     with output_col.expander("Record Output"):
-        st_code(selected_row["output"], wrap_lines=True)
+        output_value = selected_row["output"]
+        if isinstance(output_value, str):
+            text = _clean_text_value(output_value)
+            text = _escape_problematic_markdown(text)
+            st.markdown(text, unsafe_allow_html=False)
+        else:
+            st_code(json.dumps(output_value, indent=2), wrap_lines=True)
 
     _render_record_metrics(records_df, selected_row)
 
@@ -186,12 +261,10 @@ def _preprocess_df(
     if HIDE_RECORD_COL_NAME in records_df.columns:
         records_df = records_df[~records_df[HIDE_RECORD_COL_NAME]]
     records_df = records_df.sort_values(by="ts", ascending=False)
-    records_df["input"] = (
-        records_df["input"].str.encode("utf-8").str.decode("unicode-escape")
-    )
-    records_df["output"] = (
-        records_df["output"].str.encode("utf-8").str.decode("unicode-escape")
-    )
+    if "input" in records_df.columns:
+        records_df["input"] = records_df["input"].apply(_clean_text_value)
+    if "output" in records_df.columns:
+        records_df["output"] = records_df["output"].apply(_clean_text_value)
 
     # Reorder App columns to the front. Used for aggrid display
     records_df.insert(0, "app_id", records_df.pop("app_id"))
@@ -221,6 +294,7 @@ def _build_grid_options(
     from st_aggrid.grid_options_builder import GridOptionsBuilder
 
     gb = GridOptionsBuilder.from_dataframe(df, headerHeight=50)
+    gb.configure_default_column(resizable=True, flex=0, suppressSizeToFit=True)
 
     gb.configure_column(
         "app_version",
@@ -264,15 +338,33 @@ def _build_grid_options(
     gb.configure_column(
         "input",
         header_name="Record Input",
-        wrapText=True,
-        autoHeight=True,
+        cellStyle={
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
+        },
+        width=300,
+        minWidth=300,
+        maxWidth=300,
+        resizable=False,
+        suppressSizeToFit=True,
+        tooltipField="input",
         filter="agMultiColumnFilter",
     )
     gb.configure_column(
         "output",
         header_name="Record Output",
-        wrapText=True,
-        autoHeight=True,
+        cellStyle={
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
+        },
+        width=300,
+        minWidth=300,
+        maxWidth=300,
+        resizable=False,
+        suppressSizeToFit=True,
+        tooltipField="output",
         filter="agMultiColumnFilter",
     )
 
@@ -392,6 +484,7 @@ def _build_grid_options(
     gb.configure_grid_options(
         rowHeight=40,
         suppressContextMenu=True,
+        suppressSizeToFit=True,
     )
     gb.configure_selection(
         selection_mode="single",
@@ -425,7 +518,9 @@ def _render_grid(
                 ),
                 update_on=["selectionChanged"],
                 custom_css={**aggrid_css, **radio_button_css},
-                columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS,
+                columns_auto_size_mode=ColumnsAutoSizeMode.NO_AUTOSIZE,
+                fit_columns_on_grid_load=False,
+                reload_data=True,
                 data_return_mode=DataReturnMode.FILTERED,
                 allow_unsafe_jscode=True,
             )
