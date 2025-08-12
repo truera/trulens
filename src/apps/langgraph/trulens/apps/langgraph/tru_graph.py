@@ -758,7 +758,6 @@ class TruGraph(TruChain):
                 "astream_mode",
             ]
 
-            # Regular methods use standard attributes
             for method_name in sync_methods + async_methods:
                 instrument_method(
                     cls=Pregel,
