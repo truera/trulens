@@ -583,7 +583,9 @@ class TruGraph(TruChain):
         """Set up class-level instrumentation for Pregel methods"""
 
         if not is_otel_tracing_enabled():
-            logger.error("OTEL not enabled, skipping Pregel instrumentation")
+            logger.debug(
+                "OTEL not enabled, skipping Pregel class-level instrumentation"
+            )
             return
 
         try:
@@ -747,73 +749,6 @@ class TruGraph(TruChain):
                     except Exception as e:
                         attributes[SpanAttributes.GRAPH_NODE.OUTPUT_STATE] = (
                             f"Error serializing output: {str(e)}"
-                        )
-
-                if exception:
-                    attributes[SpanAttributes.GRAPH_NODE.ERROR] = str(exception)
-
-                return attributes
-
-            # Create specialized attributes function for streaming methods
-            def streaming_pregel_attributes(ret, exception, *args, **kwargs):
-                attributes = {}
-
-                # For streaming methods, we capture the generator info and wrap it
-                if ret is not None and not exception:
-                    attributes[SpanAttributes.GRAPH_NODE.OUTPUT_STATE] = (
-                        f"<Stream Generator: {type(ret).__name__}>"
-                    )
-
-                    # Wrap the generator to capture individual node updates as separate spans
-                    if hasattr(ret, "__iter__"):
-                        attributes["stream_info"] = (
-                            "Streaming generator wrapped - individual node updates will be captured as spans"
-                        )
-
-                        # Note: We can't modify ret here, so we'll instrument differently
-
-                # Capture input like normal methods
-                if args and len(args) > 1:
-                    input_data = args[1]
-                    try:
-                        if isinstance(input_data, dict):
-                            if "messages" in input_data and isinstance(
-                                input_data["messages"], list
-                            ):
-                                messages = input_data["messages"]
-                                if messages:
-                                    latest_message = messages[-1]
-                                    if hasattr(latest_message, "content"):
-                                        attributes[
-                                            SpanAttributes.GRAPH_NODE.INPUT_STATE
-                                        ] = latest_message.content
-                                    else:
-                                        attributes[
-                                            SpanAttributes.GRAPH_NODE.INPUT_STATE
-                                        ] = str(latest_message)
-                            else:
-                                simplified_input = {}
-                                for k, v in input_data.items():
-                                    if isinstance(v, (str, int, float, bool)):
-                                        simplified_input[k] = v
-                                    elif isinstance(v, list) and len(v) <= 3:
-                                        simplified_input[k] = v
-                                    else:
-                                        simplified_input[k] = (
-                                            f"<{type(v).__name__}: {len(v) if hasattr(v, '__len__') else 'unknown'}>"
-                                        )
-                                attributes[
-                                    SpanAttributes.GRAPH_NODE.INPUT_STATE
-                                ] = json.dumps(
-                                    simplified_input, default=str, indent=2
-                                )
-                        else:
-                            attributes[
-                                SpanAttributes.GRAPH_NODE.INPUT_STATE
-                            ] = str(input_data)
-                    except Exception as e:
-                        attributes[SpanAttributes.GRAPH_NODE.INPUT_STATE] = (
-                            f"Error serializing input: {str(e)}"
                         )
 
                 if exception:
