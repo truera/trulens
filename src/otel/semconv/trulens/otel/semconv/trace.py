@@ -311,8 +311,5 @@ class SpanAttributes:
         NODES_EXECUTED = base + ".nodes_executed"
         """List of nodes executed in the graph."""
 
-        EXECUTION_ORDER = base + ".execution_order"
-        """Order in which this node was executed in the graph."""
-
         ERROR = base + ".error"
         """Error raised during graph execution."""
