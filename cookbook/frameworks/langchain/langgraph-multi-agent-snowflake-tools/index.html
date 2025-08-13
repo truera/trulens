@@ -1042,6 +1042,8 @@
       
         
       
+        
+      
     
     
     
@@ -1100,6 +1102,29 @@
   
   <span class="md-ellipsis">
     🦜️🔗 LangChain Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../component_guides/instrumentation/langgraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    🦜️ LangGraph Integration
     
   </span>
   
@@ -8703,6 +8728,8 @@
       
         
       
+        
+      
     
     
     
@@ -8821,6 +8848,29 @@
   
   <span class="md-ellipsis">
     Ollama Quickstart
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../models/local_and_OSS_models/openai-gpt-oss/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OpenAI OSS Models as Judge with TruLens
     
   </span>
   
@@ -12573,25 +12623,6 @@ def planner_node(state: State) \
 <span class="s2">Write a clear, standalone instruction for the chosen agent. If the chosen agent </span>
 <span class="s2">is `web_researcher` or `cortex_researcher`, the query should be a standalone search query.</span>
 
-<span class="s2">### How to use evaluation scores</span>
-<span class="s2">After each research step, an evaluation message may appear in the history.</span>
-<span class="s2">These messages include:</span>
-<span class="s2">- `relevance` (0–1)</span>
-<span class="s2">- `coherence` (0–1)</span>
-<span class="s2">- A short **explanation** describing why the score was assigned (e.g., what’s missing, what’s strong).</span>
-
-<span class="s2">**Interpretation rules (score + explanation):**</span>
-<span class="s2">1. If the score is ≥ 0.7 **and** the explanation states the data is sufficient/complete for this step’s pre_conditions, treat those conditions as **satisfied**.</span>
-<span class="s2">2. If the score is ≥ 0.7 **but** the explanation flags missing fields, ambiguity, or low confidence in critical parts, treat the condition as **not fully satisfied**; you may retry the same step once before considering a replan.</span>
-<span class="s2">3. If the score is between 0.5 and 0.7, read the explanation:</span>
-<span class="s2">   - If it says gaps are minor or non‑blocking, proceed without replanning.</span>
-<span class="s2">   - If it highlights important omissions, retry or replan (whichever requires fewer changes).</span>
-<span class="s2">4. If the score is &lt; 0.5 **or** the explanation clearly indicates missing/irrelevant data, you may set `"replan": true`—unless the missing info is already scheduled to be produced by later steps.</span>
-<span class="s2">5. Do **not** replan solely to add redundant verification.</span>
-<span class="s2">6. If this step has been replanned </span><span class="si">{</span><span class="n">attempts</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">max_replans</span><span class="si">}</span><span class="s2"> times already, avoid another replan unless the explanation shows a critical blocker that cannot be bypassed.</span>
-<span class="s2">7. In case of conflict, **trust the explanation over the numeric score** (e.g., a high score with a negative explanation means the condition is not satisfied).</span>
-
-
 <span class="s2">Context you can rely on</span>
 <span class="s2">- User query ..............: </span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"user_query"</span><span class="p">)</span><span class="si">}</span>
 <span class="s2">- Current step index ......: </span><span class="si">{</span><span class="n">step</span><span class="si">}</span>
@@ -12786,25 +12817,6 @@ Respond **only** with valid JSON (no additional text):
 ### Build `"query"`
 Write a clear, standalone instruction for the chosen agent. If the chosen agent 
 is `web_researcher` or `cortex_researcher`, the query should be a standalone search query.
-
-### How to use evaluation scores
-After each research step, an evaluation message may appear in the history.
-These messages include:
-- `relevance` (0–1)
-- `coherence` (0–1)
-- A short **explanation** describing why the score was assigned (e.g., what’s missing, what’s strong).
-
-**Interpretation rules (score + explanation):**
-1. If the score is ≥ 0.7 **and** the explanation states the data is sufficient/complete for this step’s pre_conditions, treat those conditions as **satisfied**.
-2. If the score is ≥ 0.7 **but** the explanation flags missing fields, ambiguity, or low confidence in critical parts, treat the condition as **not fully satisfied**; you may retry the same step once before considering a replan.
-3. If the score is between 0.5 and 0.7, read the explanation:
-   - If it says gaps are minor or non‑blocking, proceed without replanning.
-   - If it highlights important omissions, retry or replan (whichever requires fewer changes).
-4. If the score is &lt; 0.5 **or** the explanation clearly indicates missing/irrelevant data, you may set `"replan": true`—unless the missing info is already scheduled to be produced by later steps.
-5. Do **not** replan solely to add redundant verification.
-6. If this step has been replanned {attempts}/{max_replans} times already, avoid another replan unless the explanation shows a critical blocker that cannot be bypassed.
-7. In case of conflict, **trust the explanation over the numeric score** (e.g., a high score with a negative explanation means the condition is not satisfied).
-
 
 Context you can rely on
 - User query ..............: {state.get("user_query")}
@@ -13873,7 +13885,7 @@ graph = workflow.compile()</div>
 <span class="kn">from</span><span class="w"> </span><span class="nn">trulens.providers.openai</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAI</span>
 
 <span class="n">provider</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">model_engine</span><span class="o">=</span><span class="s2">"gpt-4o"</span><span class="p">)</span>
-<span class="n">traj_eval_provider</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">model_engine</span><span class="o">=</span><span class="s2">"gpt-4.1"</span><span class="p">)</span>
+<span class="n">gpa_eval_provider</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">model_engine</span><span class="o">=</span><span class="s2">"gpt-4.1"</span><span class="p">)</span>
 
 <span class="c1"># Define a groundedness feedback function</span>
 <span class="n">f_groundedness</span> <span class="o">=</span> <span class="p">(</span>
@@ -13919,40 +13931,33 @@ graph = workflow.compile()</div>
     <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
 <span class="p">)</span>
 
-<span class="c1"># Trajectory evaluations: step relevance of trace given user query</span>
-<span class="n">f_step_relevance</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span>
-    <span class="n">traj_eval_provider</span><span class="o">.</span><span class="n">trajectory_step_relevance_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"Step Relevance"</span>
-<span class="p">)</span><span class="o">.</span><span class="n">on</span><span class="p">({</span>
-    <span class="s2">"trace"</span><span class="p">:</span> <span class="n">Selector</span><span class="p">(</span><span class="n">trace_level</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
-<span class="p">})</span>
-
-<span class="c1"># Trajectory evaluations: logical consistency of trace</span>
+<span class="c1"># Goal-Plan-Act: Logical consistency of trace</span>
 <span class="n">f_logical_consistency</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span>
-    <span class="n">traj_eval_provider</span><span class="o">.</span><span class="n">trajectory_logical_consistency_with_cot_reasons</span><span class="p">,</span>
+    <span class="n">gpa_eval_provider</span><span class="o">.</span><span class="n">logical_consistency_with_cot_reasons</span><span class="p">,</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">"Logical Consistency"</span><span class="p">,</span>
 <span class="p">)</span><span class="o">.</span><span class="n">on</span><span class="p">({</span>
     <span class="s2">"trace"</span><span class="p">:</span> <span class="n">Selector</span><span class="p">(</span><span class="n">trace_level</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
 <span class="p">})</span>
 
-<span class="c1"># Trajectory evaluations: workflow efficiency of trace</span>
-<span class="n">f_workflow_efficiency</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span>
-    <span class="n">traj_eval_provider</span><span class="o">.</span><span class="n">trajectory_workflow_efficiency_with_cot_reasons</span><span class="p">,</span>
-    <span class="n">name</span><span class="o">=</span><span class="s2">"Workflow Efficiency"</span><span class="p">,</span>
+<span class="c1"># Goal-Plan-Act: Execution efficiency of trace</span>
+<span class="n">f_execution</span> <span class="n">_efficiency</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span>
+    <span class="n">gpa_eval_provider</span><span class="o">.</span><span class="n">execution_efficiency_with_cot_reasons</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"Execution Efficiency"</span><span class="p">,</span>
 <span class="p">)</span><span class="o">.</span><span class="n">on</span><span class="p">({</span>
     <span class="s2">"trace"</span><span class="p">:</span> <span class="n">Selector</span><span class="p">(</span><span class="n">trace_level</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
 <span class="p">})</span>
 
-<span class="c1"># Trajectory evaluations: plan adherence</span>
+<span class="c1"># Goal-Plan-Act: Plan adherence</span>
 <span class="n">f_plan_adherence</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span>
-    <span class="n">traj_eval_provider</span><span class="o">.</span><span class="n">trajectory_plan_adherence_with_cot_reasons</span><span class="p">,</span>
+    <span class="n">gpa_eval_provider</span><span class="o">.</span><span class="n">plan_adherence_with_cot_reasons</span><span class="p">,</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">"Plan Adherence"</span><span class="p">,</span>
 <span class="p">)</span><span class="o">.</span><span class="n">on</span><span class="p">({</span>
     <span class="s2">"trace"</span><span class="p">:</span> <span class="n">Selector</span><span class="p">(</span><span class="n">trace_level</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
 <span class="p">})</span>
 
-<span class="c1"># Truajectory evaluations: plan quality</span>
+<span class="c1"># Goal-Plan-Act: Plan quality</span>
 <span class="n">f_plan_quality</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span>
-    <span class="n">traj_eval_provider</span><span class="o">.</span><span class="n">trajectory_plan_quality_with_cot_reasons</span><span class="p">,</span>
+    <span class="n">gpa_eval_provider</span><span class="o">.</span><span class="n">plan_quality_with_cot_reasons</span><span class="p">,</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">"Plan Quality"</span><span class="p">,</span>
 <span class="p">)</span><span class="o">.</span><span class="n">on</span><span class="p">({</span>
     <span class="s2">"trace"</span><span class="p">:</span> <span class="n">Selector</span><span class="p">(</span><span class="n">trace_level</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
@@ -13964,7 +13969,7 @@ from trulens.core.feedback.selector import Selector
 from trulens.providers.openai import OpenAI
 
 provider = OpenAI(model_engine="gpt-4o")
-traj_eval_provider = OpenAI(model_engine="gpt-4.1")
+gpa_eval_provider = OpenAI(model_engine="gpt-4.1")
 
 # Define a groundedness feedback function
 f_groundedness = (
@@ -14010,40 +14015,33 @@ f_context_relevance = (
     .aggregate(np.mean)
 )
 
-# Trajectory evaluations: step relevance of trace given user query
-f_step_relevance = Feedback(
-    traj_eval_provider.trajectory_step_relevance_with_cot_reasons, name="Step Relevance"
-).on({
-    "trace": Selector(trace_level=True),
-})
-
-# Trajectory evaluations: logical consistency of trace
+# Goal-Plan-Act: Logical consistency of trace
 f_logical_consistency = Feedback(
-    traj_eval_provider.trajectory_logical_consistency_with_cot_reasons,
+    gpa_eval_provider.logical_consistency_with_cot_reasons,
     name="Logical Consistency",
 ).on({
     "trace": Selector(trace_level=True),
 })
 
-# Trajectory evaluations: workflow efficiency of trace
-f_workflow_efficiency = Feedback(
-    traj_eval_provider.trajectory_workflow_efficiency_with_cot_reasons,
-    name="Workflow Efficiency",
+# Goal-Plan-Act: Execution efficiency of trace
+f_execution _efficiency = Feedback(
+    gpa_eval_provider.execution_efficiency_with_cot_reasons,
+    name="Execution Efficiency",
 ).on({
     "trace": Selector(trace_level=True),
 })
 
-# Trajectory evaluations: plan adherence
+# Goal-Plan-Act: Plan adherence
 f_plan_adherence = Feedback(
-    traj_eval_provider.trajectory_plan_adherence_with_cot_reasons,
+    gpa_eval_provider.plan_adherence_with_cot_reasons,
     name="Plan Adherence",
 ).on({
     "trace": Selector(trace_level=True),
 })
 
-# Truajectory evaluations: plan quality
+# Goal-Plan-Act: Plan quality
 f_plan_quality = Feedback(
-    traj_eval_provider.trajectory_plan_quality_with_cot_reasons,
+    gpa_eval_provider.plan_quality_with_cot_reasons,
     name="Plan Quality",
 ).on({
     "trace": Selector(trace_level=True),
@@ -14128,9 +14126,8 @@ session.reset_database()</div>
         <span class="n">f_answer_relevance</span><span class="p">,</span>
         <span class="n">f_context_relevance</span><span class="p">,</span>
         <span class="n">f_groundedness</span><span class="p">,</span>
-        <span class="n">f_step_relevance</span><span class="p">,</span>
         <span class="n">f_logical_consistency</span><span class="p">,</span>
-        <span class="n">f_workflow_efficiency</span><span class="p">,</span>
+        <span class="n">f_execution_efficiency</span><span class="p">,</span>
         <span class="n">f_plan_adherence</span><span class="p">,</span>
         <span class="n">f_plan_quality</span><span class="p">,</span>
     <span class="p">],</span>
@@ -14146,9 +14143,8 @@ tru_recorder = TruGraph(
         f_answer_relevance,
         f_context_relevance,
         f_groundedness,
-        f_step_relevance,
         f_logical_consistency,
-        f_workflow_efficiency,
+        f_execution_efficiency,
         f_plan_adherence,
         f_plan_quality,
     ],
@@ -14658,9 +14654,10 @@ graph_v2 = workflow.compile()</div>
         <span class="n">f_answer_relevance</span><span class="p">,</span>
         <span class="n">f_context_relevance</span><span class="p">,</span>
         <span class="n">f_groundedness</span><span class="p">,</span>
-        <span class="n">f_step_relevance</span><span class="p">,</span>
         <span class="n">f_logical_consistency</span><span class="p">,</span>
-        <span class="n">f_workflow_efficiency</span><span class="p">,</span>
+        <span class="n">f_execution_efficiency</span><span class="p">,</span>
+        <span class="n">f_plan_adherence</span><span class="p">,</span>
+        <span class="n">f_plan_quality</span><span class="p">,</span>
     <span class="p">],</span>
 <span class="p">)</span>
 </pre></div>
@@ -14672,9 +14669,10 @@ graph_v2 = workflow.compile()</div>
         f_answer_relevance,
         f_context_relevance,
         f_groundedness,
-        f_step_relevance,
         f_logical_consistency,
-        f_workflow_efficiency,
+        f_execution_efficiency,
+        f_plan_adherence,
+        f_plan_quality,
     ],
 )</div>
 </div>

@@ -1042,6 +1042,8 @@
       
         
       
+        
+      
     
     
     
@@ -1100,6 +1102,29 @@
   
   <span class="md-ellipsis">
     🦜️🔗 LangChain Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../component_guides/instrumentation/langgraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    🦜️ LangGraph Integration
     
   </span>
   
@@ -4060,6 +4085,15 @@
   <a href="#trulens.apps.virtual.TruVirtual.delete_version" class="md-nav__link">
     <span class="md-ellipsis">
       <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;delete_version
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens.apps.virtual.TruVirtual.live_run" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;live_run
     </span>
   </a>
   
@@ -9475,6 +9509,8 @@
       
         
       
+        
+      
     
     
     
@@ -9593,6 +9629,29 @@
   
   <span class="md-ellipsis">
     Ollama Quickstart
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../cookbook/models/local_and_OSS_models/openai-gpt-oss/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OpenAI OSS Models as Judge with TruLens
     
   </span>
   
@@ -12333,6 +12392,15 @@
   <a href="#trulens.apps.virtual.TruVirtual.delete_version" class="md-nav__link">
     <span class="md-ellipsis">
       <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;delete_version
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens.apps.virtual.TruVirtual.live_run" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;live_run
     </span>
   </a>
   
@@ -15925,6 +15993,139 @@ be missing information that can only be determined after a call is made.</p>
         <p>Delete the current version of the snowflake App (external agent) in snowflake.
 Only the non-default version can be deleted.</p>
 
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="trulens.apps.virtual.TruVirtual.live_run" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">live_run</span>
+
+
+<a href="#trulens.apps.virtual.TruVirtual.live_run" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">live_run</span><span class="p">(</span>
+    <span class="n">run_name</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span>
+    <span class="n">dataset_name</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">description</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">label</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Iterator" href="https://docs.python.org/3/library/typing.html#typing.Iterator">Iterator</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            LiveRunContext (trulens.core.app.LiveRunContext)" href="../../core/app/#trulens.core.app.LiveRunContext">LiveRunContext</a></span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Context manager for live tracing runs with automatic setup and teardown.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>run_name</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Name of the run (unique identifier)</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>dataset_name</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Name of the dataset being processed (auto-generated if not provided)</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>]</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>None</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>description</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Optional description for the run</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>]</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>None</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>label</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Optional label for the run</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>]</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>None</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="c1"># Option 1: Manual counting</span>
+<span class="k">with</span> <span class="n">tru_app</span><span class="o">.</span><span class="n">live_run</span><span class="p">(</span>
+    <span class="n">run_name</span><span class="o">=</span><span class="s2">&quot;customer_queries_run_1&quot;</span>
+<span class="p">)</span> <span class="k">as</span> <span class="n">live_run</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">input_entry</span> <span class="ow">in</span> <span class="n">test_data_entries</span><span class="p">:</span>
+        <span class="n">test_app</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">input_entry</span><span class="p">[</span><span class="s2">&quot;query&quot;</span><span class="p">])</span>
+        <span class="n">live_run</span><span class="o">.</span><span class="n">count_input</span><span class="p">()</span>
+
+<span class="c1"># Option 2: Automatic counting with input context</span>
+<span class="k">with</span> <span class="n">tru_app</span><span class="o">.</span><span class="n">live_run</span><span class="p">(</span>
+    <span class="n">run_name</span><span class="o">=</span><span class="s2">&quot;customer_queries_run_1&quot;</span>
+<span class="p">)</span> <span class="k">as</span> <span class="n">live_run</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">input_entry</span> <span class="ow">in</span> <span class="n">test_data_entries</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">live_run</span><span class="o">.</span><span class="n">input</span><span class="p">(</span><span class="n">input_entry</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]):</span>
+            <span class="n">test_app</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">input_entry</span><span class="p">[</span><span class="s2">&quot;query&quot;</span><span class="p">])</span>
+</code></pre></div>
+</details>
 
     </div>
 

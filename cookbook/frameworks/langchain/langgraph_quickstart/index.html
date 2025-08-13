@@ -1042,6 +1042,8 @@
       
         
       
+        
+      
     
     
     
@@ -1100,6 +1102,29 @@
   
   <span class="md-ellipsis">
     🦜️🔗 LangChain Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../component_guides/instrumentation/langgraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    🦜️ LangGraph Integration
     
   </span>
   
@@ -8562,6 +8587,8 @@
       
         
       
+        
+      
     
     
     
@@ -8680,6 +8707,29 @@
   
   <span class="md-ellipsis">
     Ollama Quickstart
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../models/local_and_OSS_models/openai-gpt-oss/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OpenAI OSS Models as Judge with TruLens
     
   </span>
   
@@ -11739,36 +11789,18 @@ except Exception:
     <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>  <span class="c1"># choose a different aggregation method if you wish</span>
 <span class="p">)</span>
 
-<span class="c1"># NOTE: you can now add few-shot examples to the trajectory feedback functions</span>
-<span class="c1"># the format is a list of tuples, each tuple is as follows ({"trajectory": "&lt;REPLACE_WITH_YOUR_TRAJECTORY&gt;"}, score)</span>
-<span class="n">step_relevance_examples</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="p">({</span><span class="s2">"trajectory"</span><span class="p">:</span> <span class="s2">"very strong trajectory steps"</span><span class="p">},</span> <span class="mf">3.0</span><span class="p">),</span>
-    <span class="p">({</span><span class="s2">"trajectory"</span><span class="p">:</span> <span class="s2">"some good, some off-track trajectory steps"</span><span class="p">},</span> <span class="mf">1.0</span><span class="p">),</span>
-    <span class="p">({</span><span class="s2">"trajectory"</span><span class="p">:</span> <span class="s2">"very irrelevant trajectory steps"</span><span class="p">},</span> <span class="mf">0.0</span><span class="p">),</span>
-    <span class="c1"># ... more examples</span>
-<span class="p">]</span>
-
-<span class="c1"># Trajectory evaluations: step relevance of trace given user query</span>
-<span class="n">f_step_relevance</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span>
-    <span class="n">provider</span><span class="o">.</span><span class="n">trajectory_step_relevance_with_cot_reasons</span><span class="p">,</span> 
-    <span class="n">name</span><span class="o">=</span><span class="s2">"Step Relevance"</span><span class="p">,</span>
-    <span class="n">examples</span><span class="o">=</span><span class="n">step_relevance_examples</span><span class="p">,</span>
-<span class="p">)</span><span class="o">.</span><span class="n">on</span><span class="p">({</span>
-    <span class="s2">"trace"</span><span class="p">:</span> <span class="n">Selector</span><span class="p">(</span><span class="n">trace_level</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
-<span class="p">})</span>
-
-<span class="c1"># Trajectory evaluations: logical consistency of trace</span>
+<span class="c1"># Goal-Plan-Act: Logical consistency of trace</span>
 <span class="n">f_logical_consistency</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span>
-    <span class="n">provider</span><span class="o">.</span><span class="n">trajectory_logical_consistency_with_cot_reasons</span><span class="p">,</span>
+    <span class="n">gpa_eval_provider</span><span class="o">.</span><span class="n">logical_consistency_with_cot_reasons</span><span class="p">,</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">"Logical Consistency"</span><span class="p">,</span>
 <span class="p">)</span><span class="o">.</span><span class="n">on</span><span class="p">({</span>
     <span class="s2">"trace"</span><span class="p">:</span> <span class="n">Selector</span><span class="p">(</span><span class="n">trace_level</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
 <span class="p">})</span>
 
-<span class="c1"># Trajectory evaluations: workflow efficiency of trace</span>
-<span class="n">f_workflow_efficiency</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span>
-    <span class="n">provider</span><span class="o">.</span><span class="n">trajectory_workflow_efficiency_with_cot_reasons</span><span class="p">,</span>
-    <span class="n">name</span><span class="o">=</span><span class="s2">"Workflow Efficiency"</span><span class="p">,</span>
+<span class="c1"># Goal-Plan-Act: Execution efficiency of trace</span>
+<span class="n">f_execution</span> <span class="n">_efficiency</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span>
+    <span class="n">gpa_eval_provider</span><span class="o">.</span><span class="n">execution_efficiency_with_cot_reasons</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"Execution Efficiency"</span><span class="p">,</span>
 <span class="p">)</span><span class="o">.</span><span class="n">on</span><span class="p">({</span>
     <span class="s2">"trace"</span><span class="p">:</span> <span class="n">Selector</span><span class="p">(</span><span class="n">trace_level</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
 <span class="p">})</span>
@@ -11806,39 +11838,21 @@ f_context_relevance = (
     .aggregate(np.mean)  # choose a different aggregation method if you wish
 )
 
-# NOTE: you can now add few-shot examples to the trajectory feedback functions
-# the format is a list of tuples, each tuple is as follows ({"trajectory": "<replace_with_your_trajectory>"}, score)
-step_relevance_examples = [
-    ({"trajectory": "very strong trajectory steps"}, 3.0),
-    ({"trajectory": "some good, some off-track trajectory steps"}, 1.0),
-    ({"trajectory": "very irrelevant trajectory steps"}, 0.0),
-    # ... more examples
-]
-
-# Trajectory evaluations: step relevance of trace given user query
-f_step_relevance = Feedback(
-    provider.trajectory_step_relevance_with_cot_reasons, 
-    name="Step Relevance",
-    examples=step_relevance_examples,
-).on({
-    "trace": Selector(trace_level=True),
-})
-
-# Trajectory evaluations: logical consistency of trace
+# Goal-Plan-Act: Logical consistency of trace
 f_logical_consistency = Feedback(
-    provider.trajectory_logical_consistency_with_cot_reasons,
+    gpa_eval_provider.logical_consistency_with_cot_reasons,
     name="Logical Consistency",
 ).on({
     "trace": Selector(trace_level=True),
 })
 
-# Trajectory evaluations: workflow efficiency of trace
-f_workflow_efficiency = Feedback(
-    provider.trajectory_workflow_efficiency_with_cot_reasons,
-    name="Workflow Efficiency",
+# Goal-Plan-Act: Execution efficiency of trace
+f_execution _efficiency = Feedback(
+    gpa_eval_provider.execution_efficiency_with_cot_reasons,
+    name="Execution Efficiency",
 ).on({
     "trace": Selector(trace_level=True),
-})</replace_with_your_trajectory></div>
+})</div>
 </div>
 </div>
 </div>
@@ -11884,9 +11898,8 @@ f_workflow_efficiency = Feedback(
         <span class="n">f_answer_relevance</span><span class="p">,</span>
         <span class="n">f_context_relevance</span><span class="p">,</span>
         <span class="n">f_groundedness</span><span class="p">,</span>
-        <span class="n">f_step_relevance</span><span class="p">,</span>
         <span class="n">f_logical_consistency</span><span class="p">,</span>
-        <span class="n">f_workflow_efficiency</span><span class="p">,</span>
+        <span class="n">f_exececution_efficiency</span><span class="p">,</span>
     <span class="p">],</span>
 <span class="p">)</span>
 </pre></div>
@@ -11900,9 +11913,8 @@ tru_recorder = TruGraph(
         f_answer_relevance,
         f_context_relevance,
         f_groundedness,
-        f_step_relevance,
         f_logical_consistency,
-        f_workflow_efficiency,
+        f_exececution_efficiency,
     ],
 )</div>
 </div>

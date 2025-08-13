@@ -1042,6 +1042,8 @@
       
         
       
+        
+      
     
     
     
@@ -1100,6 +1102,29 @@
   
   <span class="md-ellipsis">
     🦜️🔗 LangChain Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../component_guides/instrumentation/langgraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    🦜️ LangGraph Integration
     
   </span>
   
@@ -7668,6 +7693,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Example 1: Simple Multi-Agent Workflow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#view-the-traces-in-streamlit-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      View the traces in streamlit dashboard
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -8547,6 +8587,8 @@
       
         
       
+        
+      
     
     
     
@@ -8665,6 +8707,29 @@
   
   <span class="md-ellipsis">
     Ollama Quickstart
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../models/local_and_OSS_models/openai-gpt-oss/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OpenAI OSS Models as Judge with TruLens
     
   </span>
   
@@ -10486,6 +10551,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Example 1: Simple Multi-Agent Workflow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#view-the-traces-in-streamlit-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      View the traces in streamlit dashboard
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -11051,6 +11131,17 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </div>
 </div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="example-1-simple-multi-agent-workflow">Example 1: Simple Multi-Agent Workflow<a class="anchor-link" href="#example-1-simple-multi-agent-workflow">¶</a></h2><p>Let's create a basic multi-agent workflow to generate topics and jokes.</p>
+</div>
+</div>
+</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
 <div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
 <div class="jp-Cell-inputWrapper" tabindex="0">
@@ -11070,10 +11161,13 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-
-
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">operator</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langgraph.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">StateGraph</span><span class="p">,</span> <span class="n">START</span><span class="p">,</span> <span class="n">END</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langgraph.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Send</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span><span class="p">,</span> <span class="n">Annotated</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">trulens.core.session</span><span class="w"> </span><span class="kn">import</span> <span class="n">TruSession</span>
+
 
 <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"TRULENS_OTEL_TRACING"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"1"</span>
 
@@ -11081,18 +11175,60 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <span class="n">session</span><span class="o">.</span><span class="n">reset_database</span><span class="p">()</span>
 <span class="c1"># Check if LangGraph is available</span>
 <span class="k">try</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">langgraph.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">StateGraph</span><span class="p">,</span> <span class="n">MessagesState</span><span class="p">,</span> <span class="n">END</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">langgraph.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">StateGraph</span><span class="p">,</span> <span class="n">MessagesState</span><span class="p">,</span> <span class="n">END</span><span class="p">,</span> <span class="n">START</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.messages</span><span class="w"> </span><span class="kn">import</span> <span class="n">HumanMessage</span><span class="p">,</span> <span class="n">AIMessage</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">trulens.apps.langgraph</span><span class="w"> </span><span class="kn">import</span> <span class="n">TruGraph</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">"✅ LangGraph and TruGraph are available!"</span><span class="p">)</span>
     <span class="n">LANGGRAPH_AVAILABLE</span> <span class="o">=</span> <span class="kc">True</span>
 <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
     <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"❌ LangGraph not available: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">OverallState</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
+    <span class="n">topic</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">subjects</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">jokes</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">]</span>
+    <span class="n">best_selected_joke</span><span class="p">:</span> <span class="nb">str</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_topics</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">OverallState</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"subjects"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"lions"</span><span class="p">,</span> <span class="s2">"elephants"</span><span class="p">,</span> <span class="s2">"penguins"</span><span class="p">]}</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_joke</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">OverallState</span><span class="p">):</span>
+    <span class="n">joke_map</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"lions"</span><span class="p">:</span> <span class="s2">"Why don't lions like fast food? Because they can't catch it!"</span><span class="p">,</span>
+        <span class="s2">"elephants"</span><span class="p">:</span> <span class="s2">"Why don't elephants use computers? They're afraid of the mouse!"</span><span class="p">,</span>
+        <span class="s2">"penguins"</span><span class="p">:</span> <span class="s2">"Why don't penguins like talking to strangers at parties? Because they find it hard to break the ice."</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"jokes"</span><span class="p">:</span> <span class="p">[</span><span class="n">joke_map</span><span class="p">[</span><span class="n">state</span><span class="p">[</span><span class="s2">"subject"</span><span class="p">]]]}</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">continue_to_jokes</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">OverallState</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">Send</span><span class="p">(</span><span class="s2">"generate_joke"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"subject"</span><span class="p">:</span> <span class="n">s</span><span class="p">})</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">state</span><span class="p">[</span><span class="s2">"subjects"</span><span class="p">]]</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">best_joke</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">OverallState</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"best_selected_joke"</span><span class="p">:</span> <span class="s2">"penguins"</span><span class="p">}</span>
+
+<span class="n">builder</span> <span class="o">=</span> <span class="n">StateGraph</span><span class="p">(</span><span class="n">OverallState</span><span class="p">)</span>
+<span class="n">builder</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"generate_topics"</span><span class="p">,</span> <span class="n">generate_topics</span><span class="p">)</span>
+<span class="n">builder</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"generate_joke"</span><span class="p">,</span> <span class="n">generate_joke</span><span class="p">)</span>
+<span class="n">builder</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"best_joke"</span><span class="p">,</span> <span class="n">best_joke</span><span class="p">)</span>
+<span class="n">builder</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">START</span><span class="p">,</span> <span class="s2">"generate_topics"</span><span class="p">)</span>
+<span class="n">builder</span><span class="o">.</span><span class="n">add_conditional_edges</span><span class="p">(</span><span class="s2">"generate_topics"</span><span class="p">,</span> <span class="n">continue_to_jokes</span><span class="p">,</span> <span class="p">[</span><span class="s2">"generate_joke"</span><span class="p">])</span>
+<span class="n">builder</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"generate_joke"</span><span class="p">,</span> <span class="s2">"best_joke"</span><span class="p">)</span>
+<span class="n">builder</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"best_joke"</span><span class="p">,</span> <span class="n">END</span><span class="p">)</span>
+<span class="n">builder</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"generate_topics"</span><span class="p">,</span> <span class="n">END</span><span class="p">)</span>
+<span class="n">graph</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>
+
+
+<span class="n">tru_simple_graph</span> <span class="o">=</span> <span class="n">TruGraph</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">app_name</span><span class="o">=</span><span class="s2">"tru_simple_graph"</span><span class="p">,</span> <span class="n">app_version</span><span class="o">=</span><span class="s2">"v1.0"</span><span class="p">,</span> <span class="n">run_name</span><span class="o">=</span><span class="s2">"run_1"</span><span class="p">)</span>
+<span class="k">with</span> <span class="n">tru_simple_graph</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
+    <span class="n">graph</span><span class="o">.</span><span class="n">invoke</span><span class="p">({</span><span class="s2">"topic"</span><span class="p">:</span> <span class="s2">"animals"</span><span class="p">})</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-2">import os
-
-
+<div class="clipboard-copy-txt" id="cell-2">import operator
+import os
+from langgraph.graph import StateGraph, START, END
+from langgraph.types import Send
+from typing_extensions import TypedDict, Annotated
 from trulens.core.session import TruSession
+
 
 os.environ["TRULENS_OTEL_TRACING"] = "1"
 
@@ -11100,7 +11236,7 @@ session = TruSession()
 session.reset_database()
 # Check if LangGraph is available
 try:
-    from langgraph.graph import StateGraph, MessagesState, END
+    from langgraph.graph import StateGraph, MessagesState, END, START
     from langchain_core.messages import HumanMessage, AIMessage
     from trulens.apps.langgraph import TruGraph
     print("✅ LangGraph and TruGraph are available!")
@@ -11108,7 +11244,44 @@ try:
 except ImportError as e:
     raise ImportError(f"❌ LangGraph not available: {e}")
 
-</div>
+class OverallState(TypedDict):
+    topic: str
+    subjects: list[str]
+    jokes: Annotated[list[str], operator.add]
+    best_selected_joke: str
+
+def generate_topics(state: OverallState):
+    return {"subjects": ["lions", "elephants", "penguins"]}
+
+def generate_joke(state: OverallState):
+    joke_map = {
+        "lions": "Why don't lions like fast food? Because they can't catch it!",
+        "elephants": "Why don't elephants use computers? They're afraid of the mouse!",
+        "penguins": "Why don't penguins like talking to strangers at parties? Because they find it hard to break the ice."
+    }
+    return {"jokes": [joke_map[state["subject"]]]}
+
+def continue_to_jokes(state: OverallState):
+    return [Send("generate_joke", {"subject": s}) for s in state["subjects"]]
+
+def best_joke(state: OverallState):
+    return {"best_selected_joke": "penguins"}
+
+builder = StateGraph(OverallState)
+builder.add_node("generate_topics", generate_topics)
+builder.add_node("generate_joke", generate_joke)
+builder.add_node("best_joke", best_joke)
+builder.add_edge(START, "generate_topics")
+builder.add_conditional_edges("generate_topics", continue_to_jokes, ["generate_joke"])
+builder.add_edge("generate_joke", "best_joke")
+builder.add_edge("best_joke", END)
+builder.add_edge("generate_topics", END)
+graph = builder.compile()
+
+
+tru_simple_graph = TruGraph(graph, app_name="tru_simple_graph", app_version="v1.0", run_name="run_1")
+with tru_simple_graph as recording:
+    graph.invoke({"topic": "animals"})</div>
 </div>
 </div>
 </div>
@@ -11121,7 +11294,7 @@ except ImportError as e:
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="example-1-simple-multi-agent-workflow">Example 1: Simple Multi-Agent Workflow<a class="anchor-link" href="#example-1-simple-multi-agent-workflow">¶</a></h2><p>Let's create a basic multi-agent workflow with a researcher and writer:</p>
+<h3 id="view-the-traces-in-streamlit-dashboard">View the traces in streamlit dashboard<a class="anchor-link" href="#view-the-traces-in-streamlit-dashboard">¶</a></h3>
 </div>
 </div>
 </div>
@@ -11144,121 +11317,13 @@ except ImportError as e:
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">research_agent</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Agent that performs research on a topic."""</span>
-    <span class="n">messages</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"messages"</span><span class="p">,</span> <span class="p">[])</span>
-    <span class="k">if</span> <span class="n">messages</span><span class="p">:</span>
-        <span class="n">last_message</span> <span class="o">=</span> <span class="n">messages</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">last_message</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">):</span>
-            <span class="n">query</span> <span class="o">=</span> <span class="n">last_message</span><span class="o">.</span><span class="n">content</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">query</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">last_message</span><span class="p">)</span>
-        
-        <span class="c1"># Simulate research (in a real app, this would call external APIs)</span>
-        <span class="n">research_results</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Research findings for '</span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="s2">': This is a comprehensive analysis of the topic."</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s2">"messages"</span><span class="p">:</span> <span class="p">[</span><span class="n">AIMessage</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="n">research_results</span><span class="p">)]}</span>
-    
-    <span class="k">return</span> <span class="p">{</span><span class="s2">"messages"</span><span class="p">:</span> <span class="p">[</span><span class="n">AIMessage</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="s2">"No research query provided"</span><span class="p">)]}</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">trulens.dashboard</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_dashboard</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">writer_agent</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Agent that writes articles based on research."""</span>
-    <span class="n">messages</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"messages"</span><span class="p">,</span> <span class="p">[])</span>
-    <span class="k">if</span> <span class="n">messages</span><span class="p">:</span>
-        <span class="n">last_message</span> <span class="o">=</span> <span class="n">messages</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">last_message</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">):</span>
-            <span class="n">research_content</span> <span class="o">=</span> <span class="n">last_message</span><span class="o">.</span><span class="n">content</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">research_content</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">last_message</span><span class="p">)</span>
-        
-        <span class="c1"># Simulate article writing</span>
-        <span class="n">article</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Article: Based on the research - </span><span class="si">{</span><span class="n">research_content</span><span class="p">[:</span><span class="mi">100</span><span class="p">]</span><span class="si">}</span><span class="s2">..."</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s2">"messages"</span><span class="p">:</span> <span class="p">[</span><span class="n">AIMessage</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="n">article</span><span class="p">)]}</span>
-    
-    <span class="k">return</span> <span class="p">{</span><span class="s2">"messages"</span><span class="p">:</span> <span class="p">[</span><span class="n">AIMessage</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="s2">"No research content provided"</span><span class="p">)]}</span>
-
-<span class="c1"># Create the workflow</span>
-<span class="n">workflow</span> <span class="o">=</span> <span class="n">StateGraph</span><span class="p">(</span><span class="n">MessagesState</span><span class="p">)</span>
-<span class="n">workflow</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"researcher"</span><span class="p">,</span> <span class="n">research_agent</span><span class="p">)</span>
-<span class="n">workflow</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">"writer"</span><span class="p">,</span> <span class="n">writer_agent</span><span class="p">)</span>
-<span class="n">workflow</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"researcher"</span><span class="p">,</span> <span class="s2">"writer"</span><span class="p">)</span>
-<span class="n">workflow</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="s2">"writer"</span><span class="p">,</span> <span class="n">END</span><span class="p">)</span>
-<span class="n">workflow</span><span class="o">.</span><span class="n">set_entry_point</span><span class="p">(</span><span class="s2">"researcher"</span><span class="p">)</span>
-
-<span class="c1"># Compile the graph</span>
-<span class="n">graph</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s2">"✅ Multi-agent workflow created successfully!"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Graph type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">graph</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Graph module: </span><span class="si">{</span><span class="n">graph</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-<span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">"configurable"</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">"thread_id"</span><span class="p">:</span> <span class="s2">"1"</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-
-
-<span class="n">tru_simple_graph</span> <span class="o">=</span> <span class="n">TruGraph</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">app_name</span><span class="o">=</span><span class="s2">"tru_simple_graph"</span><span class="p">,</span> <span class="n">app_version</span><span class="o">=</span><span class="s2">"v1.0"</span><span class="p">,</span> <span class="n">run_name</span><span class="o">=</span><span class="s2">"run_1"</span><span class="p">)</span>
-<span class="k">with</span> <span class="n">tru_simple_graph</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
-    <span class="n">graph</span><span class="o">.</span><span class="n">invoke</span><span class="p">({</span><span class="s2">"topic"</span><span class="p">:</span> <span class="s2">"cat"</span><span class="p">},</span> <span class="n">config</span><span class="p">)</span>
+<span class="n">run_dashboard</span><span class="p">(</span><span class="n">session</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-3">def research_agent(state):
-    """Agent that performs research on a topic."""
-    messages = state.get("messages", [])
-    if messages:
-        last_message = messages[-1]
-        if hasattr(last_message, "content"):
-            query = last_message.content
-        else:
-            query = str(last_message)
-        
-        # Simulate research (in a real app, this would call external APIs)
-        research_results = f"Research findings for '{query}': This is a comprehensive analysis of the topic."
-        return {"messages": [AIMessage(content=research_results)]}
-    
-    return {"messages": [AIMessage(content="No research query provided")]}
+<div class="clipboard-copy-txt" id="cell-3">from trulens.dashboard import run_dashboard
 
-def writer_agent(state):
-    """Agent that writes articles based on research."""
-    messages = state.get("messages", [])
-    if messages:
-        last_message = messages[-1]
-        if hasattr(last_message, "content"):
-            research_content = last_message.content
-        else:
-            research_content = str(last_message)
-        
-        # Simulate article writing
-        article = f"Article: Based on the research - {research_content[:100]}..."
-        return {"messages": [AIMessage(content=article)]}
-    
-    return {"messages": [AIMessage(content="No research content provided")]}
-
-# Create the workflow
-workflow = StateGraph(MessagesState)
-workflow.add_node("researcher", research_agent)
-workflow.add_node("writer", writer_agent)
-workflow.add_edge("researcher", "writer")
-workflow.add_edge("writer", END)
-workflow.set_entry_point("researcher")
-
-# Compile the graph
-graph = workflow.compile()
-
-print("✅ Multi-agent workflow created successfully!")
-print(f"Graph type: {type(graph)}")
-print(f"Graph module: {graph.__module__}")
-
-config = {
-    "configurable": {
-        "thread_id": "1"
-    }
-}
-
-
-tru_simple_graph = TruGraph(graph, app_name="tru_simple_graph", app_version="v1.0", run_name="run_1")
-with tru_simple_graph as recording:
-    graph.invoke({"topic": "cat"}, config)</div>
+run_dashboard(session)</div>
 </div>
 </div>
 </div>

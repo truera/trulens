@@ -1051,6 +1051,8 @@
       
         
       
+        
+      
     
     
     
@@ -1112,6 +1114,29 @@
   
   <span class="md-ellipsis">
     🦜️🔗 LangChain Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="langgraph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    🦜️ LangGraph Integration
     
   </span>
   
@@ -8427,6 +8452,8 @@
       
         
       
+        
+      
     
     
     
@@ -8545,6 +8572,29 @@
   
   <span class="md-ellipsis">
     Ollama Quickstart
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cookbook/models/local_and_OSS_models/openai-gpt-oss/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OpenAI OSS Models as Judge with TruLens
     
   </span>
   
@@ -10345,6 +10395,33 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#instrumenting-custom-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Instrumenting custom attributes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#instrumenting-custom-attributes-with-trulens-semantic-conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Instrumenting custom attributes with TruLens semantic conventions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#manipulating-custom-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Manipulating custom attributes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#instrumenting-common-app-frameworks" class="md-nav__link">
     <span class="md-ellipsis">
       Instrumenting Common App Frameworks
@@ -10428,9 +10505,48 @@
 </div>
 <p>This instrumentation capability allows you to track the entire execution flow of your app, including inputs, outputs, internal operations, and performance metrics.</p>
 <h2 id="instrumenting-applications-with-instrument">Instrumenting Applications with <code>@instrument</code><a class="headerlink" href="#instrumenting-applications-with-instrument" title="Permanent link">&para;</a></h2>
-<p>For applications that you can edit the source code, TruLens provides a framework-agnostic <code>instrument</code> decorator to annotate methods with their span type and attributes. TruLens <a href="https://www.trulens.org/otel/semantic_conventions/">semantic conventions</a> lay out how to emit spans.</p>
-<p>In the example below, you can see how we use TruLens semantic conventions to instrument the span types <code>RETRIEVAL</code>, <code>GENERATION</code> and <code>RECORD_ROOT</code>.</p>
+<p>For applications that you can edit the source code, TruLens provides a framework-agnostic <code>instrument</code> decorator to capture the information from decorated functions. More specifically, adding the <code>instrument()</code> decorator will allow TruLens to log the function signature as span attributes.</p>
+<p>Consider the following instrumented class method, <code>retrieve_contexts</code>:</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">opentelemetry</span><span class="w"> </span><span class="kn">import</span> <span class="n">trace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">trulens.core.otel.instrument</span><span class="w"> </span><span class="kn">import</span> <span class="n">instrument</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyRAG</span><span class="p">:</span>
+    <span class="nd">@instrument</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_contexts</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;This function has no custom attributes.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;context 1&quot;</span><span class="p">,</span> <span class="s2">&quot;context 2&quot;</span><span class="p">]</span>
+</code></pre></div>
+</div>
+<p>In the example above, the <code>query</code> argument is logged as <code>ai.observability.call.kwargs.query</code> and the function return value is logged as <code>ai.observability.call.return</code>.</p>
+<h2 id="instrumenting-custom-attributes">Instrumenting custom attributes<a class="headerlink" href="#instrumenting-custom-attributes" title="Permanent link">&para;</a></h2>
+<p>To capture the values from the function signature as specific span attributes, you can pass in a dictionary to the <code>attributes</code> parameter of the <code>@instrument</code> decorator where the keys are function arguments or <code>return</code> for the return value.</p>
+<p>Adding custom attributes in this way does not capture any additional information, however it can allow you to capture these span attributes in a way that is semantically meaningful to your application, or to adhere to existing standards.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code>    <span class="nd">@instrument</span><span class="p">(</span>
+    <span class="n">attributes</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;custom_attr__query&quot;</span><span class="p">:</span> <span class="s2">&quot;query&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;custom_attr__results&quot;</span><span class="p">:</span> <span class="s2">&quot;return&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">retrieve_contexts_with_function_signature_attributes</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;context 3&quot;</span><span class="p">,</span> <span class="s2">&quot;context 4&quot;</span><span class="p">]</span>
+</code></pre></div>
+</div>
+<h2 id="instrumenting-custom-attributes-with-trulens-semantic-conventions">Instrumenting custom attributes with <em>TruLens</em> semantic conventions<a class="headerlink" href="#instrumenting-custom-attributes-with-trulens-semantic-conventions" title="Permanent link">&para;</a></h2>
+<p><code>instrument()</code> also allows you to annotate methods with <em>TruLens</em> semantic conventions that add meaning to the instrumented attributes. You can read more about the <em>TruLens</em> <a href="https://www.trulens.org/otel/semantic_conventions/">semantic conventions</a> which lay out how to emit spans.</p>
+<p>In the example below, you can see how we use <em>TruLens</em> semantic conventions to instrument the span types <code>RETRIEVAL</code>, <code>GENERATION</code> and <code>RECORD_ROOT</code>.</p>
 <p>In the <code>retrieve</code> method, we also associate the <code>query</code> argument with the span attribute <code>RETRIEVAL.QUERY_TEXT</code>, and the method's <code>return</code> with <code>RETRIEVAL.RETRIEVED_CONTEXT</code>. We follow a similar process for the <code>query</code> method.</p>
+<p>In addition to using the <code>attributes</code> arg to pass in a dictionary of span attributes, we the example below also shows how to set the <code>span_type</code> of instrumented methods.</p>
 <div class="admonition example">
 <p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">trulens.core.otel.instrument</span><span class="w"> </span><span class="kn">import</span> <span class="n">instrument</span>
@@ -10468,11 +10584,47 @@
 <span class="sd">        &quot;&quot;&quot;</span>
 </code></pre></div>
 </div>
-<h2 id="instrumenting-common-app-frameworks">Instrumenting Common App Frameworks<a class="headerlink" href="#instrumenting-common-app-frameworks" title="Permanent link">&para;</a></h2>
-<p>In cases where you are leveraging frameworks like <code>Langchain</code> or <code>LlamaIndex</code>, TruLens instruments the framework for you. To take advantage of this instrumentation, you can simply use <code>TruChain</code> (<a href="langchain/">Read more</a>)for <code>Langchain</code> apps or <code>TruLlama</code> (<a href="llama_index/">Read more</a>)for <code>LlamaIndex</code> apps to wrap your application.</p>
+<h2 id="manipulating-custom-attributes">Manipulating custom attributes<a class="headerlink" href="#manipulating-custom-attributes" title="Permanent link">&para;</a></h2>
+<p>In some cases, you may want to manipulate information from the function signature before instrumenting. For example, if the retrieved context is buried inside of nested dict.</p>
+<p>The <code>@instrument</code> decorator provides powerful flexibility through lambda functions in the <code>attributes</code> parameter. Instead of simple static mappings, you can use lambda functions to dynamically compute custom attributes based on the function's execution context.</p>
+<p>When you provide a lambda function to the <code>attributes</code> parameter, you gain access to:</p>
+<ol>
+<li><code>ret</code> - The function's return value (useful for extracting data from complex responses)</li>
+<li><code>exception</code> - Any exception that was thrown during execution (None if successful)</li>
+<li><code>*args</code> - All positional arguments passed to the function</li>
+<li><code>**kwargs</code> - All keyword arguments (positional args are also included here by name)</li>
+</ol>
+<p>The example below demonstrates advanced attribute manipulation:</p>
+<ul>
+<li><code>custom_attr__retrieved_texts</code>: Uses the <code>ret</code> parameter to extract the "text" values from each dictionary in the returned list, creating a clean list of just the text content for instrumentation.</li>
+<li><code>custom_attr__uppercased_query</code>: Uses the <code>kwargs</code> parameter to access the input query and transform it (uppercase) before storing as an attribute.</li>
+</ul>
+<p>The lambda function dynamically processes both the function's return value and input parameters to create meaningful instrumentation data.</p>
 <div class="admonition example">
 <p class="admonition-title">Example</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1"><em>LangChain</em></label><label for="__tabbed_1_2"><em>LlamaIndex</em></label></div>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">trulens.core.otel.instrument</span><span class="w"> </span><span class="kn">import</span> <span class="n">instrument</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">trulens.otel.semconv.trace</span><span class="w"> </span><span class="kn">import</span> <span class="n">SpanAttributes</span>
+
+    <span class="nd">@instrument</span><span class="p">(</span>
+        <span class="n">attributes</span><span class="o">=</span><span class="k">lambda</span> <span class="n">ret</span><span class="p">,</span> <span class="n">exception</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="p">{</span>
+            <span class="n">SpanAttributes</span><span class="o">.</span><span class="n">RETRIEVAL</span><span class="o">.</span><span class="n">RETRIEVED_CONTEXTS</span><span class="p">:</span> <span class="p">[</span><span class="n">doc</span><span class="p">[</span><span class="s2">&quot;text&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">ret</span><span class="p">],</span>
+            <span class="n">SpanAttributes</span><span class="o">.</span><span class="n">RETRIEVAL</span><span class="o">.</span><span class="n">QUERY_TEXT</span><span class="p">:</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;query&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_contexts</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="p">{</span><span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="s2">&quot;context 5&quot;</span><span class="p">,</span> <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="s2">&quot;doc1.pdf&quot;</span><span class="p">},</span>
+            <span class="p">{</span><span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="s2">&quot;context 6&quot;</span><span class="p">,</span> <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="s2">&quot;doc2.pdf&quot;</span><span class="p">}</span>
+        <span class="p">]</span>
+</code></pre></div>
+</div>
+<h2 id="instrumenting-common-app-frameworks">Instrumenting Common App Frameworks<a class="headerlink" href="#instrumenting-common-app-frameworks" title="Permanent link">&para;</a></h2>
+<p>In cases where you are leveraging frameworks like <code>LangChain</code>, <code>LangGraph</code> and <code>LlamaIndex</code>, TruLens instruments the framework for you. To take advantage of this instrumentation, you can simply use <code>TruChain</code> (<a href="langchain/">Read more</a>) for <code>LangChain</code>, <code>TruGraph</code> (<a href="langgraph/">Read more</a>) for <code>LangGraph</code>, or <code>TruLlama</code> (<a href="llama_index/">Read more</a>) for <code>LlamaIndex</code> to wrap your application.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1"><em>LangChain</em></label><label for="__tabbed_1_2"><em>LangGraph</em></label><label for="__tabbed_1_3"><em>LlamaIndex</em></label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">trulens.apps.langchain</span><span class="w"> </span><span class="kn">import</span> <span class="n">TruChain</span>
@@ -10490,6 +10642,18 @@
     <span class="n">app_name</span><span class="o">=</span><span class="s2">&quot;ChatApplication&quot;</span><span class="p">,</span>
     <span class="n">app_version</span><span class="o">=</span><span class="s2">&quot;Base&quot;</span>
 <span class="p">)</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">trulens.apps.langgraph</span><span class="w"> </span><span class="kn">import</span> <span class="n">TruGraph</span>
+
+<span class="n">graph</span> <span class="o">=</span> <span class="n">graph_builder</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>
+
+<span class="n">tru_recorder</span> <span class="o">=</span> <span class="n">TruGraph</span><span class="p">(</span>
+    <span class="n">graph</span><span class="p">,</span>
+    <span class="n">app_name</span><span class="o">=</span><span class="s2">&quot;LangGraph Agent&quot;</span><span class="p">,</span>
+    <span class="n">app_version</span><span class="o">=</span><span class="s2">&quot;Base&quot;</span>
+    <span class="p">)</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
