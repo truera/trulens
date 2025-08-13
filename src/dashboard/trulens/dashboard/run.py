@@ -186,6 +186,7 @@ def run_dashboard(
             ("--snowflake-database", snowpark_session.get_current_database()),
             ("--snowflake-schema", snowpark_session.get_current_schema()),
             ("--snowflake-warehouse", snowpark_session.get_current_warehouse()),
+            ("--snowflake-host", snowpark_session.connection.host),
         ]
         for arg, val in args_to_add:
             if val:
