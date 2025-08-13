@@ -274,14 +274,6 @@ export TRULENS_UI_CUSTOM_PAGES="/absolute/path/to/custom_tabs"
 ENV TRULENS_UI_CUSTOM_PAGES="/app/custom_tabs"
 ```
 
-### Multiple Directories
-
-You can specify multiple directories by separating them with colons (Unix) or semicolons (Windows):
-
-```bash
-export TRULENS_UI_CUSTOM_PAGES="/path/to/tabs1:/path/to/tabs2"
-```
-
 ## Troubleshooting
 
 **Tab doesn't appear:**
