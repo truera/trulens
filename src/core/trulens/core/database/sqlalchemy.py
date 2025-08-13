@@ -1317,7 +1317,7 @@ class SQLAlchemyDB(core_db.DB):
                     # TODO(nit): consider using a constant here
                     "type": "SPAN",  # Default type as per orm.py
                     "record_id": record_id,
-                    "input_id": record_data["input_id"],
+                    "input_id": record_data.get("input_id"),
                     "input": record_data["input"],
                     "output": record_data["output"],
                     "tags": record_data["tags"],
