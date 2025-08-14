@@ -57,6 +57,7 @@ trulens_eval.AzureOpenAI:
     deployment_name: builtins.str
     dict: builtins.function
     endpoint: trulens.providers.openai.endpoint.OpenAIEndpoint
+    execution_efficiency_with_cot_reasons: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -72,6 +73,7 @@ trulens_eval.AzureOpenAI:
     insensitivity_with_cot_reasons: builtins.function
     json: builtins.function
     load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
@@ -108,6 +110,8 @@ trulens_eval.AzureOpenAI:
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -120,11 +124,6 @@ trulens_eval.AzureOpenAI:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
-    trajectory_logical_consistency_with_cot_reasons: builtins.function
-    trajectory_plan_adherence_with_cot_reasons: builtins.function
-    trajectory_plan_quality_with_cot_reasons: builtins.function
-    trajectory_step_relevance_with_cot_reasons: builtins.function
-    trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -152,6 +151,7 @@ trulens_eval.Bedrock:
     criminality_with_cot_reasons: builtins.function
     dict: builtins.function
     endpoint: trulens.providers.bedrock.endpoint.BedrockEndpoint
+    execution_efficiency_with_cot_reasons: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -167,6 +167,7 @@ trulens_eval.Bedrock:
     insensitivity_with_cot_reasons: builtins.function
     json: builtins.function
     load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
@@ -195,6 +196,8 @@ trulens_eval.Bedrock:
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -207,11 +210,6 @@ trulens_eval.Bedrock:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
-    trajectory_logical_consistency_with_cot_reasons: builtins.function
-    trajectory_plan_adherence_with_cot_reasons: builtins.function
-    trajectory_plan_quality_with_cot_reasons: builtins.function
-    trajectory_step_relevance_with_cot_reasons: builtins.function
-    trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -241,6 +239,7 @@ trulens_eval.Cortex:
     criminality_with_cot_reasons: builtins.function
     dict: builtins.function
     endpoint: trulens.providers.cortex.endpoint.CortexEndpoint
+    execution_efficiency_with_cot_reasons: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -256,6 +255,7 @@ trulens_eval.Cortex:
     insensitivity_with_cot_reasons: builtins.function
     json: builtins.function
     load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
@@ -283,6 +283,8 @@ trulens_eval.Cortex:
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -297,11 +299,6 @@ trulens_eval.Cortex:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
-    trajectory_logical_consistency_with_cot_reasons: builtins.function
-    trajectory_plan_adherence_with_cot_reasons: builtins.function
-    trajectory_plan_quality_with_cot_reasons: builtins.function
-    trajectory_step_relevance_with_cot_reasons: builtins.function
-    trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -524,6 +521,7 @@ trulens_eval.Langchain:
     criminality_with_cot_reasons: builtins.function
     dict: builtins.function
     endpoint: trulens.providers.langchain.endpoint.LangchainEndpoint
+    execution_efficiency_with_cot_reasons: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -539,6 +537,7 @@ trulens_eval.Langchain:
     insensitivity_with_cot_reasons: builtins.function
     json: builtins.function
     load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
@@ -566,6 +565,8 @@ trulens_eval.Langchain:
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -578,11 +579,6 @@ trulens_eval.Langchain:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
-    trajectory_logical_consistency_with_cot_reasons: builtins.function
-    trajectory_plan_adherence_with_cot_reasons: builtins.function
-    trajectory_plan_quality_with_cot_reasons: builtins.function
-    trajectory_step_relevance_with_cot_reasons: builtins.function
-    trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -618,6 +614,7 @@ trulens_eval.LiteLLM:
     criminality_with_cot_reasons: builtins.function
     dict: builtins.function
     endpoint: trulens.core.feedback.endpoint.Endpoint
+    execution_efficiency_with_cot_reasons: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -633,6 +630,7 @@ trulens_eval.LiteLLM:
     insensitivity_with_cot_reasons: builtins.function
     json: builtins.function
     load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
@@ -660,6 +658,8 @@ trulens_eval.LiteLLM:
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -672,11 +672,6 @@ trulens_eval.LiteLLM:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
-    trajectory_logical_consistency_with_cot_reasons: builtins.function
-    trajectory_plan_adherence_with_cot_reasons: builtins.function
-    trajectory_plan_quality_with_cot_reasons: builtins.function
-    trajectory_step_relevance_with_cot_reasons: builtins.function
-    trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -704,6 +699,7 @@ trulens_eval.OpenAI:
     criminality_with_cot_reasons: builtins.function
     dict: builtins.function
     endpoint: trulens.providers.openai.endpoint.OpenAIEndpoint
+    execution_efficiency_with_cot_reasons: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -719,6 +715,7 @@ trulens_eval.OpenAI:
     insensitivity_with_cot_reasons: builtins.function
     json: builtins.function
     load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
@@ -755,6 +752,8 @@ trulens_eval.OpenAI:
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -767,11 +766,6 @@ trulens_eval.OpenAI:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
-    trajectory_logical_consistency_with_cot_reasons: builtins.function
-    trajectory_plan_adherence_with_cot_reasons: builtins.function
-    trajectory_plan_quality_with_cot_reasons: builtins.function
-    trajectory_step_relevance_with_cot_reasons: builtins.function
-    trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -969,6 +963,7 @@ trulens_eval.TruApp:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -1085,6 +1080,7 @@ trulens_eval.TruBasicApp:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -1202,6 +1198,7 @@ trulens_eval.TruChain:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -1318,6 +1315,7 @@ trulens_eval.TruCustomApp:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -1433,6 +1431,7 @@ trulens_eval.TruLlama:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -1549,6 +1548,7 @@ trulens_eval.TruRails:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -1666,6 +1666,7 @@ trulens_eval.TruVirtual:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -1814,6 +1815,7 @@ trulens_eval.app.App:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -2346,6 +2348,7 @@ trulens_eval.feedback.AzureOpenAI:
     deployment_name: builtins.str
     dict: builtins.function
     endpoint: trulens.providers.openai.endpoint.OpenAIEndpoint
+    execution_efficiency_with_cot_reasons: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -2361,6 +2364,7 @@ trulens_eval.feedback.AzureOpenAI:
     insensitivity_with_cot_reasons: builtins.function
     json: builtins.function
     load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
@@ -2397,6 +2401,8 @@ trulens_eval.feedback.AzureOpenAI:
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -2409,11 +2415,6 @@ trulens_eval.feedback.AzureOpenAI:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
-    trajectory_logical_consistency_with_cot_reasons: builtins.function
-    trajectory_plan_adherence_with_cot_reasons: builtins.function
-    trajectory_plan_quality_with_cot_reasons: builtins.function
-    trajectory_step_relevance_with_cot_reasons: builtins.function
-    trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -2441,6 +2442,7 @@ trulens_eval.feedback.Bedrock:
     criminality_with_cot_reasons: builtins.function
     dict: builtins.function
     endpoint: trulens.providers.bedrock.endpoint.BedrockEndpoint
+    execution_efficiency_with_cot_reasons: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -2456,6 +2458,7 @@ trulens_eval.feedback.Bedrock:
     insensitivity_with_cot_reasons: builtins.function
     json: builtins.function
     load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
@@ -2484,6 +2487,8 @@ trulens_eval.feedback.Bedrock:
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -2496,11 +2501,6 @@ trulens_eval.feedback.Bedrock:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
-    trajectory_logical_consistency_with_cot_reasons: builtins.function
-    trajectory_plan_adherence_with_cot_reasons: builtins.function
-    trajectory_plan_quality_with_cot_reasons: builtins.function
-    trajectory_step_relevance_with_cot_reasons: builtins.function
-    trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -2530,6 +2530,7 @@ trulens_eval.feedback.Cortex:
     criminality_with_cot_reasons: builtins.function
     dict: builtins.function
     endpoint: trulens.providers.cortex.endpoint.CortexEndpoint
+    execution_efficiency_with_cot_reasons: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -2545,6 +2546,7 @@ trulens_eval.feedback.Cortex:
     insensitivity_with_cot_reasons: builtins.function
     json: builtins.function
     load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
@@ -2572,6 +2574,8 @@ trulens_eval.feedback.Cortex:
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -2586,11 +2590,6 @@ trulens_eval.feedback.Cortex:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
-    trajectory_logical_consistency_with_cot_reasons: builtins.function
-    trajectory_plan_adherence_with_cot_reasons: builtins.function
-    trajectory_plan_quality_with_cot_reasons: builtins.function
-    trajectory_step_relevance_with_cot_reasons: builtins.function
-    trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -2904,6 +2903,7 @@ trulens_eval.feedback.Langchain:
     criminality_with_cot_reasons: builtins.function
     dict: builtins.function
     endpoint: trulens.providers.langchain.endpoint.LangchainEndpoint
+    execution_efficiency_with_cot_reasons: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -2919,6 +2919,7 @@ trulens_eval.feedback.Langchain:
     insensitivity_with_cot_reasons: builtins.function
     json: builtins.function
     load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
@@ -2946,6 +2947,8 @@ trulens_eval.feedback.Langchain:
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -2958,11 +2961,6 @@ trulens_eval.feedback.Langchain:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
-    trajectory_logical_consistency_with_cot_reasons: builtins.function
-    trajectory_plan_adherence_with_cot_reasons: builtins.function
-    trajectory_plan_quality_with_cot_reasons: builtins.function
-    trajectory_step_relevance_with_cot_reasons: builtins.function
-    trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -2991,6 +2989,7 @@ trulens_eval.feedback.LiteLLM:
     criminality_with_cot_reasons: builtins.function
     dict: builtins.function
     endpoint: trulens.core.feedback.endpoint.Endpoint
+    execution_efficiency_with_cot_reasons: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -3006,6 +3005,7 @@ trulens_eval.feedback.LiteLLM:
     insensitivity_with_cot_reasons: builtins.function
     json: builtins.function
     load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
@@ -3033,6 +3033,8 @@ trulens_eval.feedback.LiteLLM:
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -3045,11 +3047,6 @@ trulens_eval.feedback.LiteLLM:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
-    trajectory_logical_consistency_with_cot_reasons: builtins.function
-    trajectory_plan_adherence_with_cot_reasons: builtins.function
-    trajectory_plan_quality_with_cot_reasons: builtins.function
-    trajectory_step_relevance_with_cot_reasons: builtins.function
-    trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -3077,6 +3074,7 @@ trulens_eval.feedback.OpenAI:
     criminality_with_cot_reasons: builtins.function
     dict: builtins.function
     endpoint: trulens.providers.openai.endpoint.OpenAIEndpoint
+    execution_efficiency_with_cot_reasons: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -3092,6 +3090,7 @@ trulens_eval.feedback.OpenAI:
     insensitivity_with_cot_reasons: builtins.function
     json: builtins.function
     load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
@@ -3128,6 +3127,8 @@ trulens_eval.feedback.OpenAI:
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -3140,11 +3141,6 @@ trulens_eval.feedback.OpenAI:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
-    trajectory_logical_consistency_with_cot_reasons: builtins.function
-    trajectory_plan_adherence_with_cot_reasons: builtins.function
-    trajectory_plan_quality_with_cot_reasons: builtins.function
-    trajectory_step_relevance_with_cot_reasons: builtins.function
-    trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -3449,6 +3445,7 @@ trulens_eval.feedback.provider.AzureOpenAI:
     deployment_name: builtins.str
     dict: builtins.function
     endpoint: trulens.providers.openai.endpoint.OpenAIEndpoint
+    execution_efficiency_with_cot_reasons: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -3464,6 +3461,7 @@ trulens_eval.feedback.provider.AzureOpenAI:
     insensitivity_with_cot_reasons: builtins.function
     json: builtins.function
     load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
@@ -3500,6 +3498,8 @@ trulens_eval.feedback.provider.AzureOpenAI:
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -3512,11 +3512,6 @@ trulens_eval.feedback.provider.AzureOpenAI:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
-    trajectory_logical_consistency_with_cot_reasons: builtins.function
-    trajectory_plan_adherence_with_cot_reasons: builtins.function
-    trajectory_plan_quality_with_cot_reasons: builtins.function
-    trajectory_step_relevance_with_cot_reasons: builtins.function
-    trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -3544,6 +3539,7 @@ trulens_eval.feedback.provider.Bedrock:
     criminality_with_cot_reasons: builtins.function
     dict: builtins.function
     endpoint: trulens.providers.bedrock.endpoint.BedrockEndpoint
+    execution_efficiency_with_cot_reasons: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -3559,6 +3555,7 @@ trulens_eval.feedback.provider.Bedrock:
     insensitivity_with_cot_reasons: builtins.function
     json: builtins.function
     load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
@@ -3587,6 +3584,8 @@ trulens_eval.feedback.provider.Bedrock:
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -3599,11 +3598,6 @@ trulens_eval.feedback.provider.Bedrock:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
-    trajectory_logical_consistency_with_cot_reasons: builtins.function
-    trajectory_plan_adherence_with_cot_reasons: builtins.function
-    trajectory_plan_quality_with_cot_reasons: builtins.function
-    trajectory_step_relevance_with_cot_reasons: builtins.function
-    trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -3633,6 +3627,7 @@ trulens_eval.feedback.provider.Cortex:
     criminality_with_cot_reasons: builtins.function
     dict: builtins.function
     endpoint: trulens.providers.cortex.endpoint.CortexEndpoint
+    execution_efficiency_with_cot_reasons: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -3648,6 +3643,7 @@ trulens_eval.feedback.provider.Cortex:
     insensitivity_with_cot_reasons: builtins.function
     json: builtins.function
     load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
@@ -3675,6 +3671,8 @@ trulens_eval.feedback.provider.Cortex:
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -3689,11 +3687,6 @@ trulens_eval.feedback.provider.Cortex:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
-    trajectory_logical_consistency_with_cot_reasons: builtins.function
-    trajectory_plan_adherence_with_cot_reasons: builtins.function
-    trajectory_plan_quality_with_cot_reasons: builtins.function
-    trajectory_step_relevance_with_cot_reasons: builtins.function
-    trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -3820,6 +3813,7 @@ trulens_eval.feedback.provider.Langchain:
     criminality_with_cot_reasons: builtins.function
     dict: builtins.function
     endpoint: trulens.providers.langchain.endpoint.LangchainEndpoint
+    execution_efficiency_with_cot_reasons: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -3835,6 +3829,7 @@ trulens_eval.feedback.provider.Langchain:
     insensitivity_with_cot_reasons: builtins.function
     json: builtins.function
     load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
@@ -3862,6 +3857,8 @@ trulens_eval.feedback.provider.Langchain:
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -3874,11 +3871,6 @@ trulens_eval.feedback.provider.Langchain:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
-    trajectory_logical_consistency_with_cot_reasons: builtins.function
-    trajectory_plan_adherence_with_cot_reasons: builtins.function
-    trajectory_plan_quality_with_cot_reasons: builtins.function
-    trajectory_step_relevance_with_cot_reasons: builtins.function
-    trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -3907,6 +3899,7 @@ trulens_eval.feedback.provider.LiteLLM:
     criminality_with_cot_reasons: builtins.function
     dict: builtins.function
     endpoint: trulens.core.feedback.endpoint.Endpoint
+    execution_efficiency_with_cot_reasons: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -3922,6 +3915,7 @@ trulens_eval.feedback.provider.LiteLLM:
     insensitivity_with_cot_reasons: builtins.function
     json: builtins.function
     load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
@@ -3949,6 +3943,8 @@ trulens_eval.feedback.provider.LiteLLM:
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -3961,11 +3957,6 @@ trulens_eval.feedback.provider.LiteLLM:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
-    trajectory_logical_consistency_with_cot_reasons: builtins.function
-    trajectory_plan_adherence_with_cot_reasons: builtins.function
-    trajectory_plan_quality_with_cot_reasons: builtins.function
-    trajectory_step_relevance_with_cot_reasons: builtins.function
-    trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -3993,6 +3984,7 @@ trulens_eval.feedback.provider.OpenAI:
     criminality_with_cot_reasons: builtins.function
     dict: builtins.function
     endpoint: trulens.providers.openai.endpoint.OpenAIEndpoint
+    execution_efficiency_with_cot_reasons: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -4008,6 +4000,7 @@ trulens_eval.feedback.provider.OpenAI:
     insensitivity_with_cot_reasons: builtins.function
     json: builtins.function
     load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
@@ -4044,6 +4037,8 @@ trulens_eval.feedback.provider.OpenAI:
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -4056,11 +4051,6 @@ trulens_eval.feedback.provider.OpenAI:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
-    trajectory_logical_consistency_with_cot_reasons: builtins.function
-    trajectory_plan_adherence_with_cot_reasons: builtins.function
-    trajectory_plan_quality_with_cot_reasons: builtins.function
-    trajectory_step_relevance_with_cot_reasons: builtins.function
-    trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -4137,6 +4127,7 @@ trulens_eval.feedback.provider.base.LLMProvider:
     criminality_with_cot_reasons: builtins.function
     dict: builtins.function
     endpoint: typing.Optional[trulens.core.feedback.endpoint.Endpoint, builtins.NoneType]
+    execution_efficiency_with_cot_reasons: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -4152,6 +4143,7 @@ trulens_eval.feedback.provider.base.LLMProvider:
     insensitivity_with_cot_reasons: builtins.function
     json: builtins.function
     load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
@@ -4179,6 +4171,8 @@ trulens_eval.feedback.provider.base.LLMProvider:
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -4191,11 +4185,6 @@ trulens_eval.feedback.provider.base.LLMProvider:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
-    trajectory_logical_consistency_with_cot_reasons: builtins.function
-    trajectory_plan_adherence_with_cot_reasons: builtins.function
-    trajectory_plan_quality_with_cot_reasons: builtins.function
-    trajectory_step_relevance_with_cot_reasons: builtins.function
-    trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -4272,6 +4261,7 @@ trulens_eval.feedback.provider.bedrock.Bedrock:
     criminality_with_cot_reasons: builtins.function
     dict: builtins.function
     endpoint: trulens.providers.bedrock.endpoint.BedrockEndpoint
+    execution_efficiency_with_cot_reasons: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -4287,6 +4277,7 @@ trulens_eval.feedback.provider.bedrock.Bedrock:
     insensitivity_with_cot_reasons: builtins.function
     json: builtins.function
     load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
@@ -4315,6 +4306,8 @@ trulens_eval.feedback.provider.bedrock.Bedrock:
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -4327,11 +4320,6 @@ trulens_eval.feedback.provider.bedrock.Bedrock:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
-    trajectory_logical_consistency_with_cot_reasons: builtins.function
-    trajectory_plan_adherence_with_cot_reasons: builtins.function
-    trajectory_plan_quality_with_cot_reasons: builtins.function
-    trajectory_step_relevance_with_cot_reasons: builtins.function
-    trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -4367,6 +4355,7 @@ trulens_eval.feedback.provider.cortex.Cortex:
     criminality_with_cot_reasons: builtins.function
     dict: builtins.function
     endpoint: trulens.providers.cortex.endpoint.CortexEndpoint
+    execution_efficiency_with_cot_reasons: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -4382,6 +4371,7 @@ trulens_eval.feedback.provider.cortex.Cortex:
     insensitivity_with_cot_reasons: builtins.function
     json: builtins.function
     load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
@@ -4409,6 +4399,8 @@ trulens_eval.feedback.provider.cortex.Cortex:
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -4423,11 +4415,6 @@ trulens_eval.feedback.provider.cortex.Cortex:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
-    trajectory_logical_consistency_with_cot_reasons: builtins.function
-    trajectory_plan_adherence_with_cot_reasons: builtins.function
-    trajectory_plan_quality_with_cot_reasons: builtins.function
-    trajectory_step_relevance_with_cot_reasons: builtins.function
-    trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -6229,6 +6216,7 @@ trulens_eval.feedback.provider.langchain.Langchain:
     criminality_with_cot_reasons: builtins.function
     dict: builtins.function
     endpoint: trulens.providers.langchain.endpoint.LangchainEndpoint
+    execution_efficiency_with_cot_reasons: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -6244,6 +6232,7 @@ trulens_eval.feedback.provider.langchain.Langchain:
     insensitivity_with_cot_reasons: builtins.function
     json: builtins.function
     load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
@@ -6271,6 +6260,8 @@ trulens_eval.feedback.provider.langchain.Langchain:
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -6283,11 +6274,6 @@ trulens_eval.feedback.provider.langchain.Langchain:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
-    trajectory_logical_consistency_with_cot_reasons: builtins.function
-    trajectory_plan_adherence_with_cot_reasons: builtins.function
-    trajectory_plan_quality_with_cot_reasons: builtins.function
-    trajectory_step_relevance_with_cot_reasons: builtins.function
-    trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -6322,6 +6308,7 @@ trulens_eval.feedback.provider.litellm.LiteLLM:
     criminality_with_cot_reasons: builtins.function
     dict: builtins.function
     endpoint: trulens.core.feedback.endpoint.Endpoint
+    execution_efficiency_with_cot_reasons: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -6337,6 +6324,7 @@ trulens_eval.feedback.provider.litellm.LiteLLM:
     insensitivity_with_cot_reasons: builtins.function
     json: builtins.function
     load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
@@ -6364,6 +6352,8 @@ trulens_eval.feedback.provider.litellm.LiteLLM:
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -6376,11 +6366,6 @@ trulens_eval.feedback.provider.litellm.LiteLLM:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
-    trajectory_logical_consistency_with_cot_reasons: builtins.function
-    trajectory_plan_adherence_with_cot_reasons: builtins.function
-    trajectory_plan_quality_with_cot_reasons: builtins.function
-    trajectory_step_relevance_with_cot_reasons: builtins.function
-    trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -6416,6 +6401,7 @@ trulens_eval.feedback.provider.openai.AzureOpenAI:
     deployment_name: builtins.str
     dict: builtins.function
     endpoint: trulens.providers.openai.endpoint.OpenAIEndpoint
+    execution_efficiency_with_cot_reasons: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -6431,6 +6417,7 @@ trulens_eval.feedback.provider.openai.AzureOpenAI:
     insensitivity_with_cot_reasons: builtins.function
     json: builtins.function
     load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
@@ -6467,6 +6454,8 @@ trulens_eval.feedback.provider.openai.AzureOpenAI:
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -6479,11 +6468,6 @@ trulens_eval.feedback.provider.openai.AzureOpenAI:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
-    trajectory_logical_consistency_with_cot_reasons: builtins.function
-    trajectory_plan_adherence_with_cot_reasons: builtins.function
-    trajectory_plan_quality_with_cot_reasons: builtins.function
-    trajectory_step_relevance_with_cot_reasons: builtins.function
-    trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -6511,6 +6495,7 @@ trulens_eval.feedback.provider.openai.OpenAI:
     criminality_with_cot_reasons: builtins.function
     dict: builtins.function
     endpoint: trulens.providers.openai.endpoint.OpenAIEndpoint
+    execution_efficiency_with_cot_reasons: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     generate_score: builtins.function
@@ -6526,6 +6511,7 @@ trulens_eval.feedback.provider.openai.OpenAI:
     insensitivity_with_cot_reasons: builtins.function
     json: builtins.function
     load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
@@ -6562,6 +6548,8 @@ trulens_eval.feedback.provider.openai.OpenAI:
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -6574,11 +6562,6 @@ trulens_eval.feedback.provider.openai.OpenAI:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
-    trajectory_logical_consistency_with_cot_reasons: builtins.function
-    trajectory_plan_adherence_with_cot_reasons: builtins.function
-    trajectory_plan_quality_with_cot_reasons: builtins.function
-    trajectory_step_relevance_with_cot_reasons: builtins.function
-    trajectory_workflow_efficiency_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -6834,6 +6817,7 @@ trulens_eval.schema.base.Cost:
     n_embedding_requests: builtins.int
     n_embeddings: builtins.int
     n_prompt_tokens: builtins.int
+    n_reasoning_tokens: builtins.int
     n_requests: builtins.int
     n_stream_chunks: builtins.int
     n_successful_requests: builtins.int
@@ -7400,6 +7384,7 @@ trulens_eval.tru_basic_app.TruBasicApp:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -7561,6 +7546,7 @@ trulens_eval.tru_chain.TruChain:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -7685,6 +7671,7 @@ trulens_eval.tru_custom_app.TruCustomApp:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -7831,6 +7818,7 @@ trulens_eval.tru_llama.TruLlama:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -8013,6 +8001,7 @@ trulens_eval.tru_rails.TruRails:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -8138,6 +8127,7 @@ trulens_eval.tru_virtual.TruVirtual:
     json: builtins.function
     jsonify_extra: builtins.function
     list_runs: builtins.function
+    live_run: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function

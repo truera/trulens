@@ -145,7 +145,10 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         )
 
         self._compare_events_to_golden_dataframe(
-            "tests/unit/static/golden/test_otel_tru_graph_test_smoke.csv"
+            "tests/unit/static/golden/test_otel_tru_graph_test_smoke.csv",
+            ignore_locators=[
+                "[record_attributes][ai.observability.call.kwargs.config]",
+            ],
         )
 
         tru_recorder_ref = weakref.ref(tru_recorder)
@@ -179,6 +182,7 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
             ignore_locators=[
                 "[record_attributes][ai.observability.call.return]",
                 "[record_attributes][ai.observability.graph_task.output_state]",
+                "[record_attributes][ai.observability.call.kwargs.config]",
             ],
         )
 

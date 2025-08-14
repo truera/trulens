@@ -10,11 +10,60 @@ This instrumentation capability allows you to track the entire execution flow of
 
 ## Instrumenting Applications with `@instrument`
 
-For applications that you can edit the source code, TruLens provides a framework-agnostic `instrument` decorator to annotate methods with their span type and attributes. TruLens [semantic conventions](https://www.trulens.org/otel/semantic_conventions/) lay out how to emit spans.
+For applications that you can edit the source code, TruLens provides a framework-agnostic `instrument` decorator to capture the information from decorated functions. More specifically, adding the `instrument()` decorator will allow TruLens to log the function signature as span attributes.
 
-In the example below, you can see how we use TruLens semantic conventions to instrument the span types `RETRIEVAL`, `GENERATION` and `RECORD_ROOT`.
+Consider the following instrumented class method, `retrieve_contexts`:
+
+!!! example
+
+    ```python
+    from typing import List
+
+    from opentelemetry import trace
+    from trulens.core.otel.instrument import instrument
+
+
+    class MyRAG:
+        @instrument()
+        def retrieve_contexts(
+            self, query: str
+        ) -> List[str]:
+            """This function has no custom attributes."""
+            return ["context 1", "context 2"]
+    ```
+
+In the example above, the `query` argument is logged as `ai.observability.call.kwargs.query` and the function return value is logged as `ai.observability.call.return`.
+
+## Instrumenting custom attributes
+
+To capture the values from the function signature as specific span attributes, you can pass in a dictionary to the `attributes` parameter of the `@instrument` decorator where the keys are function arguments or `return` for the return value.
+
+Adding custom attributes in this way does not capture any additional information, however it can allow you to capture these span attributes in a way that is semantically meaningful to your application, or to adhere to existing standards.
+
+!!! example
+
+    ```python
+        @instrument(
+        attributes={
+            "custom_attr__query": "query",
+            "custom_attr__results": "return",
+        }
+    )
+    def retrieve_contexts_with_function_signature_attributes(
+        self, query: str
+    ) -> List[str]:
+        return ["context 3", "context 4"]
+    ```
+
+## Instrumenting custom attributes with _TruLens_ semantic conventions
+
+`instrument()` also allows you to annotate methods with _TruLens_ semantic conventions that add meaning to the instrumented attributes. You can read more about the _TruLens_ [semantic conventions](https://www.trulens.org/otel/semantic_conventions/) which lay out how to emit spans.
+
+In the example below, you can see how we use _TruLens_ semantic conventions to instrument the span types `RETRIEVAL`, `GENERATION` and `RECORD_ROOT`.
 
 In the `retrieve` method, we also associate the `query` argument with the span attribute `RETRIEVAL.QUERY_TEXT`, and the method's `return` with `RETRIEVAL.RETRIEVED_CONTEXT`. We follow a similar process for the `query` method.
+
+In addition to using the `attributes` arg to pass in a dictionary of span attributes, we the example below also shows how to set the `span_type` of instrumented methods.
 
 !!! example
 
@@ -55,9 +104,50 @@ In the `retrieve` method, we also associate the `query` argument with the span a
 
     ```
 
+## Manipulating custom attributes
+
+In some cases, you may want to manipulate information from the function signature before instrumenting. For example, if the retrieved context is buried inside of nested dict.
+
+The `@instrument` decorator provides powerful flexibility through lambda functions in the `attributes` parameter. Instead of simple static mappings, you can use lambda functions to dynamically compute custom attributes based on the function's execution context.
+
+When you provide a lambda function to the `attributes` parameter, you gain access to:
+
+1. `ret` - The function's return value (useful for extracting data from complex responses)
+2. `exception` - Any exception that was thrown during execution (None if successful)
+3. `*args` - All positional arguments passed to the function
+4. `**kwargs` - All keyword arguments (positional args are also included here by name)
+
+The example below demonstrates advanced attribute manipulation:
+
+* `custom_attr__retrieved_texts`: Uses the `ret` parameter to extract the "text" values from each dictionary in the returned list, creating a clean list of just the text content for instrumentation.
+* `custom_attr__uppercased_query`: Uses the `kwargs` parameter to access the input query and transform it (uppercase) before storing as an attribute.
+
+The lambda function dynamically processes both the function's return value and input parameters to create meaningful instrumentation data.
+
+!!! example
+
+    ```python
+    from trulens.core.otel.instrument import instrument
+    from trulens.otel.semconv.trace import SpanAttributes
+
+        @instrument(
+            attributes=lambda ret, exception, *args, **kwargs: {
+                SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: [doc["text"] for doc in ret],
+                SpanAttributes.RETRIEVAL.QUERY_TEXT: kwargs["query"].upper()
+            }
+        )
+        def retrieve_contexts(
+            self, query: str
+        ) -> List[Dict[str, str]]:
+            return [
+                {"text": "context 5", "source": "doc1.pdf"},
+                {"text": "context 6", "source": "doc2.pdf"}
+            ]
+    ```
+
 ## Instrumenting Common App Frameworks
 
-In cases where you are leveraging frameworks like `Langchain` or `LlamaIndex`, TruLens instruments the framework for you. To take advantage of this instrumentation, you can simply use `TruChain` ([Read more](langchain.md))for `Langchain` apps or `TruLlama` ([Read more](llama_index.md))for `LlamaIndex` apps to wrap your application.
+In cases where you are leveraging frameworks like `LangChain`, `LangGraph` and `LlamaIndex`, TruLens instruments the framework for you. To take advantage of this instrumentation, you can simply use `TruChain` ([Read more](langchain.md)) for `LangChain`, `TruGraph` ([Read more](langgraph.md)) for `LangGraph`, or `TruLlama` ([Read more](llama_index.md)) for `LlamaIndex` to wrap your application.
 
 !!! example
 
@@ -79,6 +169,20 @@ In cases where you are leveraging frameworks like `Langchain` or `LlamaIndex`, T
             app_name="ChatApplication",
             app_version="Base"
         )
+        ```
+
+    === "_LangGraph_"
+
+        ```python
+        from trulens.apps.langgraph import TruGraph
+
+        graph = graph_builder.compile()
+
+        tru_recorder = TruGraph(
+            graph,
+            app_name="LangGraph Agent",
+            app_version="Base"
+            )
         ```
 
     === "_LlamaIndex_"

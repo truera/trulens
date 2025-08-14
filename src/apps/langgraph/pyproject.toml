@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-apps-langgraph"
-version = "2.1.1"
+version = "2.2.0"
 description = "Library to systematically track and evaluate LangGraph based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -28,9 +28,12 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9"
+opentelemetry-api = ">=1.23.0"
+opentelemetry-sdk = ">=1.23.0"
+opentelemetry-proto = ">=1.23.0"
 trulens-core = { version = "^2.0.0" }
 trulens-apps-langchain = { version = "^2.0.0" }
-langgraph = ">=0.5.2"
+langgraph = ">=0.4.4"
 pydantic = "^2.4.2"
 
 [tool.poetry.group.dev.dependencies]
