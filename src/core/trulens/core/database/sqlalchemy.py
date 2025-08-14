@@ -1128,6 +1128,9 @@ class SQLAlchemyDB(core_db.DB):
                     record_attributes.get(SpanAttributes.SPAN_TYPE)
                     == SpanAttributes.SpanType.RECORD_ROOT.value
                 ):
+                    record_events[record_id]["input_id"] = (
+                        record_attributes.get(SpanAttributes.INPUT_ID, "")
+                    )
                     record_events[record_id]["input"] = record_attributes.get(
                         SpanAttributes.RECORD_ROOT.INPUT, ""
                     )
@@ -1314,6 +1317,7 @@ class SQLAlchemyDB(core_db.DB):
                     # TODO(nit): consider using a constant here
                     "type": "SPAN",  # Default type as per orm.py
                     "record_id": record_id,
+                    "input_id": record_data.get("input_id"),
                     "input": record_data["input"],
                     "output": record_data["output"],
                     "tags": record_data["tags"],
