@@ -3,9 +3,12 @@
 from trulens.core import TruSession
 from trulens.core.experimental import Feature
 from trulens.core.utils import imports as import_utils
-from trulens.dashboard.Leaderboard import leaderboard_main
-from trulens.dashboard.pages.Compare import compare_main
-from trulens.dashboard.pages.Records import records_main
+from trulens.dashboard.tabs.Compare import compare_main
+from trulens.dashboard.tabs.Compare import compare_page
+from trulens.dashboard.tabs.Leaderboard import leaderboard_main
+from trulens.dashboard.tabs.Leaderboard import leaderboard_page
+from trulens.dashboard.tabs.Records import records_main
+from trulens.dashboard.tabs.Records import records_page
 
 with import_utils.OptionalImports(
     messages=import_utils.format_import_errors(
@@ -27,6 +30,14 @@ DASHBOARD_PAGES = {
     "leaderboard": leaderboard_main,
     "records": records_main,
     "compare": compare_main,
+}
+
+# New st.Page compatible functions
+# TODO(this_pr): what's this for?
+DASHBOARD_PAGE_FUNCTIONS = {
+    "leaderboard": leaderboard_page,
+    "records": records_page,
+    "compare": compare_page,
 }
 
 

@@ -11,7 +11,7 @@ from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.utils import text as text_utils
 from trulens.dashboard import constants as dashboard_constants
-from trulens.dashboard.pages import Compare as Compare_page
+from trulens.dashboard.tabs import Compare as Compare_page
 from trulens.dashboard.utils import dashboard_utils
 from trulens.dashboard.utils import metadata_utils
 from trulens.dashboard.utils import streamlit_compat
@@ -535,7 +535,8 @@ def _render_grid_tab(
         st.session_state[f"{dashboard_constants.RECORDS_PAGE_NAME}.app_ids"] = (
             selected_app_ids
         )
-        st.switch_page("pages/Records.py")
+        # TODO(this_pr): does this still work?
+        st.switch_page("tabs/Records.py")
     # Compare App Versions
     if len(selected_app_ids) < Compare_page.MIN_COMPARATORS:
         _compare_button_disabled = True
@@ -559,7 +560,8 @@ def _render_grid_tab(
         st.session_state[f"{dashboard_constants.COMPARE_PAGE_NAME}.app_ids"] = (
             selected_app_ids
         )
-        st.switch_page("pages/Compare.py")
+        # TODO(this_pr): does this still work?
+        st.switch_page("tabs/Compare.py")
 
     # Add Metadata Col
     if c5.button(
@@ -706,7 +708,8 @@ def _render_list_tab(
                 st.session_state[
                     f"{dashboard_constants.RECORDS_PAGE_NAME}.app_ids"
                 ] = [app_id]
-                st.switch_page("pages/Records.py")
+                # TODO(this_pr): does this still work?
+                st.switch_page("tabs/Records.py")
 
         st.markdown("""---""")
 
@@ -860,6 +863,15 @@ def leaderboard_main():
     dashboard_utils.set_page_config(
         page_title=dashboard_constants.LEADERBOARD_PAGE_NAME
     )
+    init_page_state()
+    app_name = dashboard_utils.render_sidebar()
+    if app_name:
+        render_leaderboard(app_name)
+
+
+def leaderboard_page():
+    """Leaderboard page function for st.Page - no page config needed."""
+    # TODO(this_pr): can't we just use the main?
     init_page_state()
     app_name = dashboard_utils.render_sidebar()
     if app_name:

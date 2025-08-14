@@ -859,5 +859,14 @@ def compare_main():
         render_app_comparison(app_name)
 
 
+def compare_page():
+    """Compare page function for st.Page - no page config needed."""
+    # TODO(this_pr): can't we just use the main?
+    init_page_state()
+    app_name = render_sidebar()
+    if app_name:
+        render_app_comparison(app_name)
+
+
 if __name__ == "__main__":
     compare_main()
