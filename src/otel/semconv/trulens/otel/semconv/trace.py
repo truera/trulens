@@ -229,6 +229,9 @@ class SpanAttributes:
         NUM_COMPLETION_TOKENS = base + ".num_completion_tokens"
         """Number of completion tokens generated."""
 
+        NUM_REASONING_TOKENS = base + ".num_reasoning_tokens"
+        """Number of reasoning tokens generated (for reasoning models)."""
+
     class CALL:
         """Instrumented method call attributes."""
 
@@ -301,6 +304,9 @@ class SpanAttributes:
 
         OUTPUT_STATE = base + ".output_state"
         """Output state from the graph."""
+
+        LATEST_MESSAGE = base + ".latest_message"
+        """Latest message flowing between nodes."""
 
         NODES_EXECUTED = base + ".nodes_executed"
         """List of nodes executed in the graph."""

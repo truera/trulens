@@ -100,6 +100,8 @@ export const createSpanTreeFromNodes = (nodes: StackTreeNode[]) => {
  */
 const buildTreeRecursive = (node: StackTreeNode, childrenMap: Map<string, StackTreeNode[]>): void => {
   const children = childrenMap.get(node.id) || [];
+  // Sort children by their start timestamp to show siblings in chronological order
+  children.sort((a, b) => a.startTime - b.startTime);
   node.children = children;
 
   children.forEach((child) => {

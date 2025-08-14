@@ -116,6 +116,7 @@ def get_session() -> core_session.TruSession:
     parser.add_argument("--snowflake-schema", default=None)
     parser.add_argument("--snowflake-warehouse", default=None)
     parser.add_argument("--snowflake-authenticator", default=None)
+    parser.add_argument("--snowflake-host", default=None)
     parser.add_argument(
         "--snowflake-use-account-event-table", action="store_true"
     )
@@ -151,6 +152,7 @@ def get_session() -> core_session.TruSession:
             "schema": args.snowflake_schema,
             "warehouse": args.snowflake_warehouse,
             "authenticator": args.snowflake_authenticator,
+            "host": args.snowflake_host,
         }
         use_account_event_table = bool(args.snowflake_use_account_event_table)
         snowpark_session = Session.builder.configs(connection_params).create()

@@ -27,7 +27,19 @@ STATEMENT: {hypothesis}
 """
 
 LLM_GROUNDEDNESS_SYSTEM = v2.Groundedness.system_prompt
-LLM_GROUNDEDNESS_USER = v2.Groundedness.user_prompt
+LLM_GROUNDEDNESS_USER = """SOURCE: {premise}
+
+STATEMENT: {hypothesis}
+
+Respond ONLY with a single-line JSON object having exactly these keys:
+  "criteria"             – copy of the STATEMENT verbatim
+  "supporting_evidence"  – sentence(s) from SOURCE that support the STATEMENT, or the string NOTHING FOUND or ABSTENTION
+  "score"                – an integer 0, 1, 2, or 3
+
+Example (format only – you must replace the values):
+{{"criteria": "...", "supporting_evidence": "...", "score": 2}}
+
+Return the JSON and nothing else (no markdown, no additional text)."""
 LLM_GROUNDEDNESS_SENTENCES_SPLITTER = v2.Groundedness.sentences_splitter_prompt
 
 LLM_ANSWERABILITY_SYSTEM = v2.Answerability.system_prompt
@@ -148,14 +160,10 @@ COMPREHENSIVENESS_SYSTEM_PROMPT = v2.Comprehensiveness.system_prompt
 
 COMPREHENSIVENESS_USER_PROMPT = v2.Comprehensiveness.user_prompt
 
-TRAJECTORY_EVAL_STEP_RELEVANCE_SYSTEM_PROMPT = (
-    v2.TrajectoryStepRelevance.system_prompt
-)
+LOGICAL_CONSISTENCY_SYSTEM_PROMPT = v2.LogicalConsistency.system_prompt
 
-TRAJECTORY_EVAL_LOGICAL_CONSISTENCY_SYSTEM_PROMPT = (
-    v2.TrajectoryLogicalConsistency.system_prompt
-)
+EXECUTION_EFFICIENCY_SYSTEM_PROMPT = v2.ExecutionEfficiency.system_prompt
 
-TRAJECTORY_EVAL_WORKFLOW_EFFICIENCY_SYSTEM_PROMPT = (
-    v2.TrajectoryWorkflowEfficiency.system_prompt
-)
+PLAN_ADHERENCE_SYSTEM_PROMPT = v2.PlanAdherence.system_prompt
+
+PLAN_QUALITY_SYSTEM_PROMPT = v2.PlanQuality.system_prompt

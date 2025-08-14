@@ -3,8 +3,10 @@ from __future__ import annotations
 from abc import ABC
 from abc import ABCMeta
 from abc import abstractmethod
+from contextlib import contextmanager
 import contextvars
 import datetime
+import functools
 import inspect
 from inspect import BoundArguments
 from inspect import Signature
@@ -19,6 +21,7 @@ from typing import (
     Dict,
     Hashable,
     Iterable,
+    Iterator,
     List,
     Optional,
     Sequence,
@@ -63,7 +66,6 @@ from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import signature as signature_utils
 from trulens.core.utils import threading as threading_utils
-from trulens.feedback.computer import compute_feedback_by_span_group
 from trulens.otel.semconv.constants import (
     TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG,
 )
@@ -327,6 +329,30 @@ def _can_import(to_import: str) -> bool:
         return True
     except ImportError:
         return False
+
+
+class LiveRunContext:
+    """Helper class to track state during a live run."""
+
+    def __init__(self, tru_app: "App", run: "Run"):
+        self.tru_app = tru_app
+        self.run = run
+        self.input_count = 0
+
+    def count_input(self) -> None:
+        """Increment the input record count."""
+        self.input_count += 1
+
+    @contextmanager
+    def input(self, input_id: str) -> Iterator[None]:
+        """Context manager for processing a single input with automatic counting."""
+        with self.tru_app.input(input_id):
+            try:
+                yield
+                self.count_input()
+            except Exception as e:
+                logger.exception(f"Error in input context manager: {e}")
+                raise
 
 
 class App(
@@ -1915,7 +1941,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 app_name=self.app_name,
                 app_version=self.app_version,
                 run_name=run_name,
-                input_id=None,
+                input_id="",
             )
         raise NotImplementedError(
             "This feature is not yet implemented for non-OTEL TruLens!"
@@ -1931,12 +1957,86 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 tru_app=self,
                 app_name=self.app_name,
                 app_version=self.app_version,
-                run_name=None,
+                run_name="",
                 input_id=input_id,
             )
         raise NotImplementedError(
             "This feature is not yet implemented for non-OTEL TruLens!"
         )
+
+    @contextmanager
+    def live_run(
+        self,
+        run_name: str,
+        dataset_name: Optional[str] = None,
+        description: Optional[str] = None,
+        label: Optional[str] = None,
+    ) -> Iterator[LiveRunContext]:
+        """
+        Context manager for live tracing runs with automatic setup and teardown.
+
+        Args:
+            run_name: Name of the run (unique identifier)
+            dataset_name: Name of the dataset being processed (auto-generated if not provided)
+            description: Optional description for the run
+            label: Optional label for the run
+
+        Example:
+            ```python
+            # Option 1: Manual counting
+            with tru_app.live_run(
+                run_name="customer_queries_run_1"
+            ) as live_run:
+                for input_entry in test_data_entries:
+                    test_app.query(input_entry["query"])
+                    live_run.count_input()
+
+            # Option 2: Automatic counting with input context
+            with tru_app.live_run(
+                run_name="customer_queries_run_1"
+            ) as live_run:
+                for input_entry in test_data_entries:
+                    with live_run.input(input_entry["id"]):
+                        test_app.query(input_entry["query"])
+            ```
+        """
+        # set up run configuration for live tracing
+        if dataset_name is None:
+            dataset_name = (
+                f"live_tracing_run_{datetime.datetime.now().strftime('%H%M%S')}"
+            )
+
+        run_config = RunConfig(
+            run_name=run_name,
+            dataset_name=dataset_name,
+            source_type="LIVE_TRACING",
+            dataset_spec={},
+            description=description,
+            label=label,
+        )
+
+        run: Run = self.add_run(run_config=run_config)
+
+        live_run_context = LiveRunContext(self, run)
+
+        logger.debug(f"Starting live run with run_name: {run.run_name}")
+
+        try:
+            with self.run(run_name=run.run_name):
+                yield live_run_context
+        finally:
+            logger.debug(
+                f"Finishing live run with run_name: {run.run_name} for {live_run_context.input_count} input records"
+            )
+
+            self.session.force_flush()
+            run.run_dao.start_ingestion_query(
+                object_name=run.object_name,
+                object_type=run.object_type,
+                object_version=run.object_version,
+                run_name=run.run_name,
+                input_records_count=live_run_context.input_count,
+            )
 
     def instrumented_invoke_main_method(
         self,
@@ -1991,12 +2091,22 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             raise ValueError(
                 "This method is only supported for OTEL Tracing. Please enable OTEL tracing in the environment!"
             )
+
+        try:
+            from trulens.feedback.computer import compute_feedback_by_span_group
+        except ImportError:
+            logger.error(
+                "trulens.feedback package is not installed. Please install it to use feedback computation functionality."
+            )
+            raise
+
         if events is None:
             # Get all events associated with this app name and version.
             # TODO(otel): Should probably handle the case where there are a lot of events with pagination.
             events = self.connector.get_events(
                 app_name=self.app_name, app_version=self.app_version
             )
+
         for feedback in self.feedbacks:
             compute_feedback_by_span_group(
                 events,
@@ -2016,6 +2126,93 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         """Stop the evaluator for the app."""
         if hasattr(self, "_evaluator") and self._evaluator is not None:
             self._evaluator.stop_evaluator()
+
+
+@staticmethod
+def trace_with_run(
+    app: Optional["App"],
+    run_name: Optional[str] = None,
+    description: Optional[str] = None,
+    label: Optional[str] = None,
+    input_count: Optional[int] = None,
+):
+    """
+    Decorator for live tracing with a run with automatic setup and teardown.
+
+    Args:
+        app: The TruLens App instance to use for tracing. If None, no tracing is performed.
+        run_name: Run name that uniquely identifies the run. Required when app is not None.
+        description: Optional description for the run
+        label: Optional label for the run
+        input_count: Optional input count (auto-detected from first argument if not provided)
+
+    Example:
+        ```python
+        @trace_with_run(app=tru_app, run_name="customer_queries_run_1")
+        def run_queries(test_data):
+            for input_entry in test_data:
+                test_app.query(input_entry["query"])
+        ```
+    """
+
+    def decorator(func):
+        # If app is None, just return the original function without any wrapping
+        if app is None:
+            return func
+
+        # If app is provided but run_name is None, raise an error
+        if run_name is None:
+            raise ValueError("run_name is required when app is not None")
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            # Auto-detect input count from first argument if it's a sequence
+            detected_count = input_count
+            if detected_count is None and args:
+                first_arg = args[0]
+                if hasattr(first_arg, "__len__") and not isinstance(
+                    first_arg, str
+                ):
+                    detected_count = len(first_arg)
+                else:
+                    detected_count = 1  # Default to 1 if can't detect
+            elif detected_count is None:
+                detected_count = 1  # Default to 1 if no args
+
+            # Set up run configuration for live tracing
+            run_config = RunConfig(
+                run_name=run_name,
+                dataset_name=f"live_tracing_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f')}",
+                source_type="DATAFRAME",
+                dataset_spec={},
+                description=description,
+                label=label,
+            )
+
+            run: Run = app.add_run(run_config=run_config)
+
+            try:
+                with app.run(run_name=run_name):
+                    # Call the original function without any modifications
+                    result = func(*args, **kwargs)
+                    return result
+            finally:
+                logger.debug(
+                    f"Finishing live run with run_name: {run.run_name} for {detected_count} input records"
+                )
+
+                app.session.force_flush()
+                run.run_dao.start_ingestion_query(
+                    object_name=run.object_name,
+                    object_type=run.object_type,
+                    object_version=run.object_version,
+                    run_name=run.run_name,
+                    input_records_count=detected_count,
+                )
+
+        return wrapper
+
+    return decorator
 
 
 # NOTE: Cannot App.model_rebuild here due to circular imports involving mod_session.TruSession
