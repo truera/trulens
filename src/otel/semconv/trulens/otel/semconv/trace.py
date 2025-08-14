@@ -305,6 +305,9 @@ class SpanAttributes:
         OUTPUT_STATE = base + ".output_state"
         """Output state from the graph."""
 
+        LATEST_MESSAGE = base + ".latest_message"
+        """Latest message flowing between nodes."""
+
         NODES_EXECUTED = base + ".nodes_executed"
         """List of nodes executed in the graph."""
 
