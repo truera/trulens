@@ -2028,6 +2028,11 @@ trulens.dashboard.display:
     get_feedback_result: builtins.function
     get_icon: builtins.function
     highlight: builtins.function
+trulens.dashboard.main:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    main: builtins.function
 trulens.dashboard.run:
   __class__: builtins.module
   highs: {}
