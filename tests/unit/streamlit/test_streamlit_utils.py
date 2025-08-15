@@ -356,7 +356,7 @@ class MockManager:
     def mock_leaderboard_components():
         """Context manager for mocking leaderboard rendering components."""
         with patch.multiple(
-            "trulens.dashboard.Leaderboard",
+            "trulens.dashboard.tabs.Leaderboard",
             _render_plot_tab=Mock(return_value=None),
             _render_list_tab=Mock(return_value=None),
             _render_grid=Mock(return_value=pd.DataFrame()),
