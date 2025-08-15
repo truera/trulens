@@ -729,14 +729,5 @@ def records_main():
         render_records(app_name)
 
 
-def records_page():
-    """Records page function for st.Page - no page config needed."""
-    # TODO(this_pr): can't we just use the main?
-    init_page_state()
-    app_name = render_sidebar()
-    if app_name:
-        render_records(app_name)
-
-
 if __name__ == "__main__":
     records_main()

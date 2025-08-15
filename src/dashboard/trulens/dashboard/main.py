@@ -2,34 +2,11 @@
 Main entry point for the TruLens dashboard using st.navigation and st.Page.
 """
 
+import os
+
 import streamlit as st
-from trulens.dashboard.tabs.Compare import compare_page as _compare_page
-from trulens.dashboard.tabs.Leaderboard import (
-    leaderboard_page as _leaderboard_page,
-)
-from trulens.dashboard.tabs.Records import records_page as _records_page
 from trulens.dashboard.utils.dashboard_utils import get_session
 from trulens.dashboard.utils.dashboard_utils import set_page_config
-
-
-def leaderboard_page():
-    """Leaderboard page function for st.Page."""
-    _leaderboard_page()
-
-
-def records_page():
-    """Records page function for st.Page."""
-    _records_page()
-
-
-def compare_page():
-    """Compare page function for st.Page."""
-    _compare_page()
-
-
-def stability_page():
-    """Stability page function for st.Page."""
-    st.info("🚧 Stability page - placeholder for now")
 
 
 def main():
@@ -37,10 +14,19 @@ def main():
     get_session()
     set_page_config(page_title="Dashboard")
     pages = [
-        st.Page(leaderboard_page, title="Leaderboard", icon="🏆", default=True),
-        st.Page(records_page, title="Records", icon="📝"),
-        st.Page(compare_page, title="Compare", icon="⚖️"),
+        st.Page("./tabs/Leaderboard.py", default=True),
+        st.Page("./tabs/Records.py"),
+        st.Page("./tabs/Compare.py"),
     ]
+    if custom_pages_dir := os.environ.get("TRULENS_UI_CUSTOM_PAGES"):
+        if os.path.isdir(custom_pages_dir):
+            for file in os.listdir(custom_pages_dir):
+                if file.endswith(".py"):
+                    pages.append(st.Page(os.path.join(custom_pages_dir, file)))
+        else:
+            st.error(
+                f"TRULENS_UI_CUSTOM_PAGES is set to {custom_pages_dir} but it is not a directory!"
+            )
     pg = st.navigation(pages)
     pg.run()
 

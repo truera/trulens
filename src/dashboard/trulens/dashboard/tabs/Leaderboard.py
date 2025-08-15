@@ -869,14 +869,5 @@ def leaderboard_main():
         render_leaderboard(app_name)
 
 
-def leaderboard_page():
-    """Leaderboard page function for st.Page - no page config needed."""
-    # TODO(this_pr): can't we just use the main?
-    init_page_state()
-    app_name = dashboard_utils.render_sidebar()
-    if app_name:
-        render_leaderboard(app_name)
-
-
 if __name__ == "__main__":
     leaderboard_main()
