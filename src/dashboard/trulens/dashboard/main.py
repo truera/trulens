@@ -3,6 +3,7 @@ Main entry point for the TruLens dashboard using st.navigation and st.Page.
 """
 
 import os
+from pathlib import Path
 
 import streamlit as st
 from trulens.dashboard.utils.dashboard_utils import get_session
@@ -13,9 +14,6 @@ def main():
     """Main dashboard function using st.navigation and st.Page."""
     get_session()
     set_page_config(page_title="Dashboard")
-    pages = [
-        st.Page("./tabs/Leaderboard.py", default=True),
-        st.Page("./tabs/Records.py"),
     tabs_dir = Path(__file__).parent / "tabs"
     pages = [
         st.Page(str(tabs_dir / "Leaderboard.py"), default=True),
