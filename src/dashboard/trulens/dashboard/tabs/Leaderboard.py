@@ -535,7 +535,6 @@ def _render_grid_tab(
         st.session_state[f"{dashboard_constants.RECORDS_PAGE_NAME}.app_ids"] = (
             selected_app_ids
         )
-        # TODO(this_pr): does this still work?
         st.switch_page("tabs/Records.py")
     # Compare App Versions
     if len(selected_app_ids) < Compare_page.MIN_COMPARATORS:
@@ -560,7 +559,6 @@ def _render_grid_tab(
         st.session_state[f"{dashboard_constants.COMPARE_PAGE_NAME}.app_ids"] = (
             selected_app_ids
         )
-        # TODO(this_pr): does this still work?
         st.switch_page("tabs/Compare.py")
 
     # Add Metadata Col
@@ -708,7 +706,6 @@ def _render_list_tab(
                 st.session_state[
                     f"{dashboard_constants.RECORDS_PAGE_NAME}.app_ids"
                 ] = [app_id]
-                # TODO(this_pr): does this still work?
                 st.switch_page("tabs/Records.py")
 
         st.markdown("""---""")
