@@ -16,7 +16,11 @@ def main():
     pages = [
         st.Page("./tabs/Leaderboard.py", default=True),
         st.Page("./tabs/Records.py"),
-        st.Page("./tabs/Compare.py"),
+    tabs_dir = Path(__file__).parent / "tabs"
+    pages = [
+        st.Page(str(tabs_dir / "Leaderboard.py"), default=True),
+        st.Page(str(tabs_dir / "Records.py")),
+        st.Page(str(tabs_dir / "Compare.py")),
     ]
     if custom_pages_dir := os.environ.get("TRULENS_UI_CUSTOM_PAGES"):
         if os.path.isdir(custom_pages_dir):
