@@ -79,6 +79,7 @@ trulens-providers-cortex = { path = "src/providers/cortex", develop = true, pyth
 trulens-providers-huggingface = { path = "src/providers/huggingface", develop = true }
 trulens-providers-openai = { path = "src/providers/openai", develop = true }
 trulens-providers-litellm = { path = "src/providers/litellm", develop = true }
+trulens-providers-google = { path = "src/providers/google", develop = true }
 
 [tool.poetry.group.connectors.dependencies]
 trulens-connectors-snowflake = { path = "src/connectors/snowflake", develop = true, python = "<3.13" }
