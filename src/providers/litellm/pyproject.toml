@@ -30,7 +30,7 @@ classifiers = [
 python = "^3.9"
 trulens-core = { version = "^2.0.0" }
 trulens-feedback = { version = "^2.0.0" }
-litellm = "^1.25"
+litellm = "~1.75.8"
 
 [tool.poetry.group.dev.dependencies]
 trulens-core = { path = "../../core" }
