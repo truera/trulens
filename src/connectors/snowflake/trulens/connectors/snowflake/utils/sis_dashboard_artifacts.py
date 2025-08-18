@@ -12,7 +12,7 @@ from snowflake.connector.errors import ProgrammingError
 from snowflake.snowpark import Session
 
 _STAGE_NAME = "TRULENS_DASHBOARD_STAGE"
-_STREAMLIT_ENTRYPOINT = "Leaderboard.py"
+_STREAMLIT_ENTRYPOINT = "main.py"
 
 _TRULENS_DEPENDENCIES = [
     "trulens-core",

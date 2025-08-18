@@ -1929,20 +1929,6 @@ trulens.dashboard:
   lows:
     __all__: builtins.list
     __version__: builtins.str
-trulens.dashboard.Leaderboard:
-  __class__: builtins.module
-  highs: {}
-  lows:
-    APP_AGG_COLS: builtins.list
-    APP_COLS: builtins.list
-    handle_add_metadata: builtins.function
-    handle_add_virtual_app: builtins.function
-    handle_pin_toggle: builtins.function
-    handle_table_edit: builtins.function
-    init_page_state: builtins.function
-    leaderboard_main: builtins.function
-    order_columns: builtins.function
-    render_leaderboard: builtins.function
 trulens.dashboard.appui:
   __class__: builtins.module
   highs: {}
@@ -2042,6 +2028,11 @@ trulens.dashboard.display:
     get_feedback_result: builtins.function
     get_icon: builtins.function
     highlight: builtins.function
+trulens.dashboard.main:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    main: builtins.function
 trulens.dashboard.run:
   __class__: builtins.module
   highs: {}
