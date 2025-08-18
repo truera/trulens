@@ -10330,7 +10330,7 @@ develop = true
 
 [package.dependencies]
 langchain-community = ">=0.0.20"
-openai = ">=1.52.1,!=1.100.0"
+openai = ">=1.52.1,!=1.100.0,!=100.1"
 trulens-core = "^2.0.0"
 trulens-feedback = "^2.0.0"
 
