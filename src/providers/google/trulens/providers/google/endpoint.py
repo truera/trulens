@@ -147,7 +147,7 @@ class GoogleEndpoint(core_endpoint.Endpoint):
         func: Callable[..., Any],
         bindings: inspect.BoundArguments,
         response: Any,
-        callback: core_endpoint.EndpointCallback | None,
+        callback: Optional[core_endpoint.EndpointCallback],
     ) -> Any:
         try:
             if isinstance(response, GenerateContentResponse):
