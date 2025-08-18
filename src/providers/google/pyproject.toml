@@ -27,7 +27,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.10"
 trulens-core = { version = "^2.0.0" }
 trulens-feedback = { version = "^2.0.0" }
 google-genai = ">=1.27.0"
