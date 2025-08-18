@@ -2,7 +2,7 @@
 """
 !!! warning
     This module is deprecated and will be removed. Use
-    `trulens.providers.openai.provider` instead.
+    `trulens.providers.google.provider` instead.
 """
 
 from trulens.core.utils import deprecation as deprecation_utils

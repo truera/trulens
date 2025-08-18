@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-providers-google"
-version = "2.1.1"
+version = "2.2.2"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -31,6 +31,7 @@ python = "^3.9"
 trulens-core = { version = "^2.0.0" }
 trulens-feedback = { version = "^2.0.0" }
 google-genai = ">=1.27.0"
+google-auth = ">=2.20.0"
 
 [tool.poetry.group.dev.dependencies]
 trulens-core = { path = "../../core" }
