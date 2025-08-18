@@ -30,7 +30,7 @@ classifiers = [
 python = "^3.9"
 trulens-core = { version = "^2.0.0" }
 trulens-feedback = { version = "^2.0.0" }
-openai = "^1.100.0"
+openai = "^1.97.2"
 langchain-community = ">=0.0.20"
 
 [tool.poetry.group.dev.dependencies]
