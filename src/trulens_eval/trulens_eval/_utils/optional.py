@@ -54,3 +54,6 @@ REQUIREMENT_PROVIDER_LITELLM = format_import_errors(
 REQUIREMENT_PROVIDER_OPENAI = format_import_errors(
     "trulens-providers-openai", purpose="evaluating feedback using OpenAI"
 )
+REQUIREMENT_PROVIDER_GOOGLE = format_import_errors(
+    "trulens-providers-google", purpose="evaluating feedback using Google"
+)
