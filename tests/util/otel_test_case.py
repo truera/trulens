@@ -35,6 +35,7 @@ class OtelTestCase(TruTestCase):
     def setUp(self) -> None:
         super().setUp()
         tru_session = TruSession()
+        tru_session.force_flush()
         tru_session.reset_database()
         self.clear_TruSession_singleton()
 
