@@ -5,9 +5,9 @@ requires = [
 ]
 
 [tool.poetry]
-name = "trulens-hotspots"
+name = "trulens-providers-google"
 version = "2.2.3"
-description = "Library and command-line tool to list features lowering your evaluation score."
+description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
 ]
@@ -29,9 +29,10 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.9"
 trulens-core = { version = "^2.0.0" }
-pandas = ">=1.0.0"
-regex = ">2021.8.28"
-scipy = "^1.11.1"
+trulens-feedback = { version = "^2.0.0" }
+google-genai = ">=1.27.0"
+google-auth = ">=2.20.0"
 
 [tool.poetry.group.dev.dependencies]
-trulens-core = { path = "../core" }
+trulens-core = { path = "../../core" }
+trulens-feedback = { path = "../../feedback" }

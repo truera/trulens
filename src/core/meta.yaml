@@ -1,6 +1,6 @@
 {% set name = "trulens-core" %}
 {% set pyname = name.replace('-', '.') %}
-{% set version = "2.2.0" %}
+{% set version = "2.2.3" %}
 
 package:
   name: {{ name|lower }}
@@ -12,7 +12,7 @@ source:
   {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-core/#files
-  sha256: 166b9606e9803eb2140b759218eb335127a175708cfb9e38d6949de4ac81134c
+  sha256: efdfa467a09f869a4ed0b4e456530c26ff5fda0c63a885d5b6e0132b4993825f
   {% endif %}
 
 build:
