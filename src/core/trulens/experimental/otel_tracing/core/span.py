@@ -26,7 +26,7 @@ from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 if TYPE_CHECKING:
-    pass
+    from trulens.core.app import App
 
 logger = logging.getLogger(__name__)
 
@@ -228,10 +228,7 @@ def set_record_root_span_attributes(
     ret: Any,
     exception: Optional[Exception],
 ) -> None:
-    tru_app = get_baggage("__trulens_app__")
-    if tru_app is None:
-        logger.error("No TruLens app found in context")
-        return
+    tru_app: App = get_baggage("__trulens_app__")
     sig = signature(func)
     input_selector = get_baggage("__trulens_input_selector__")
 
@@ -240,7 +237,6 @@ def set_record_root_span_attributes(
         try:
             main_input_value = input_selector(args, kwargs)
         except Exception as e:
-            # If custom selector fails, fall back to default behavior
             logger.warning(
                 f"Custom input selector failed: {e}. Falling back to default."
             )
