@@ -794,6 +794,7 @@ class TruSession(
         app_ids: Optional[List[types_schema.AppID]] = None,
         app_name: Optional[types_schema.AppName] = None,
         app_version: Optional[types_schema.AppVersion] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
@@ -810,6 +811,9 @@ class TruSession(
             app_version: A version of the app to filter records by. If given, only records for
                 this app version will be returned.
 
+            app_versions: A list of app versions to filter records by. If given, only records for
+                these app versions will be returned.
+
             record_ids: An optional list of record ids to filter records by.
 
             offset: Record row offset.
@@ -825,6 +829,7 @@ class TruSession(
             app_ids=app_ids,
             app_name=app_name,
             app_version=app_version,
+            app_versions=app_versions,
             record_ids=record_ids,
             offset=offset,
             limit=limit,

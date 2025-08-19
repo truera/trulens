@@ -923,6 +923,7 @@ class SQLAlchemyDB(core_db.DB):
         app_ids: Optional[List[str]] = None,
         app_name: Optional[types_schema.AppName] = None,
         app_version: Optional[types_schema.AppVersion] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> sa.Select:
@@ -932,6 +933,7 @@ class SQLAlchemyDB(core_db.DB):
             app_ids: List of app IDs to filter by. Defaults to None.
             app_name: App name to filter by. Defaults to None.
             app_version: App version to filter by. Defaults to None.
+            app_versions: List of app versions to filter by. Defaults to None.
             offset: Offset for pagination. Defaults to None.
             limit: Limit for pagination. Defaults to None.
 
@@ -979,6 +981,12 @@ class SQLAlchemyDB(core_db.DB):
             )
             conditions.append(app_version_expr == app_version)
 
+        if app_versions:
+            app_version_expr = self._json_extract_otel(
+                "resource_attributes", ResourceAttributes.APP_VERSION
+            )
+            conditions.append(app_version_expr.in_(app_versions))
+
         if app_ids:
             app_id_expr = self._json_extract_otel(
                 "resource_attributes", ResourceAttributes.APP_ID
@@ -1013,6 +1021,7 @@ class SQLAlchemyDB(core_db.DB):
         app_ids: Optional[List[str]] = None,
         app_name: Optional[types_schema.AppName] = None,
         app_version: Optional[types_schema.AppVersion] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
@@ -1026,6 +1035,7 @@ class SQLAlchemyDB(core_db.DB):
             app_ids: List of app IDs to filter by. Defaults to None.
             app_name: App name to filter by. Defaults to None.
             app_version: App version to filter by. Defaults to None.
+            app_versions: List of app versions to filter by. Defaults to None.
             record_ids: List of record IDs to filter by. Defaults to None.
             offset: Offset for pagination. Defaults to None.
             limit: Limit for pagination. Defaults to None.
@@ -1040,6 +1050,7 @@ class SQLAlchemyDB(core_db.DB):
                     app_ids=app_ids,
                     app_name=app_name,
                     app_version=app_version,
+                    app_versions=app_versions,
                     offset=offset,
                     limit=limit,
                 )
@@ -1370,6 +1381,7 @@ class SQLAlchemyDB(core_db.DB):
         app_ids: Optional[List[types_schema.AppID]] = None,
         app_name: Optional[types_schema.AppName] = None,
         app_version: Optional[types_schema.AppVersion] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
@@ -1380,16 +1392,25 @@ class SQLAlchemyDB(core_db.DB):
             app_ids: Optional list of app IDs to filter by. Defaults to None.
             app_name: Optional app name to filter by. Defaults to None.
             app_version: Optional app version to filter by. Defaults to None.
+            app_versions: Optional list of app versions to filter by. Defaults to None.
             record_ids: Optional list of record IDs to filter by. Defaults to None.
             offset: Optional offset for pagination. Defaults to None.
             limit: Optional limit for pagination. Defaults to None.
         """
-
+        if app_ids:
+            logger.warning(
+                "`app_ids` is deprecated. Please use `app_name`, and `app_versions` instead."
+            )
+        if app_version:
+            logger.warning(
+                "`app_version` is deprecated. Please use `app_versions` instead."
+            )
         if is_otel_tracing_enabled():
             return self._get_records_and_feedback_otel(
                 app_ids=app_ids,
                 app_name=app_name,
                 app_version=app_version,
+                app_versions=app_versions,
                 record_ids=record_ids,
                 offset=offset,
                 limit=limit,
@@ -1425,6 +1446,11 @@ class SQLAlchemyDB(core_db.DB):
                 # stmt = stmt.options(joinedload(self.orm.Record.app))
                 stmt = stmt.join(self.orm.Record.app).filter(
                     self.orm.AppDefinition.app_version == app_version
+                )
+
+            if app_versions:
+                stmt = stmt.join(self.orm.Record.app).filter(
+                    self.orm.AppDefinition.app_version.in_(app_versions)
                 )
 
             stmt = stmt.options(joinedload(self.orm.Record.feedback_results))
