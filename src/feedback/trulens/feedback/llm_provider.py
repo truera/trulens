@@ -2360,6 +2360,7 @@ class LLMProvider(core_provider.Provider):
         # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
         trace: Union[Trace, str],
         criteria: Optional[str] = None,
+        custom_instructions: Optional[str] = None,
         examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -2400,6 +2401,7 @@ class LLMProvider(core_provider.Provider):
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
+            custom_instructions=custom_instructions,
             output_space=output_space,
             examples=examples,
         )
@@ -2434,6 +2436,7 @@ class LLMProvider(core_provider.Provider):
         # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
         trace: Union[Trace, str],
         criteria: Optional[str] = None,
+        custom_instructions: Optional[str] = None,
         examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -2474,6 +2477,7 @@ class LLMProvider(core_provider.Provider):
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
+            custom_instructions=custom_instructions,
             output_space=output_space,
             examples=examples,
         )
@@ -2508,6 +2512,7 @@ class LLMProvider(core_provider.Provider):
         # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
         trace: Union[Trace, str],
         criteria: Optional[str] = None,
+        custom_instructions: Optional[str] = None,
         examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -2548,6 +2553,7 @@ class LLMProvider(core_provider.Provider):
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
+            custom_instructions=custom_instructions,
             output_space=output_space,
             examples=examples,
         )
@@ -2580,6 +2586,7 @@ class LLMProvider(core_provider.Provider):
         # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
         trace: Union[Trace, str],
         criteria: Optional[str] = None,
+        custom_instructions: Optional[str] = None,
         examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -2620,6 +2627,7 @@ class LLMProvider(core_provider.Provider):
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
+            custom_instructions=custom_instructions,
             output_space=output_space,
             examples=examples,
         )
