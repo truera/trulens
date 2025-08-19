@@ -29,6 +29,7 @@ Providers which use large language models for feedback evaluation:
 
 - [OpenAI provider][trulens.providers.openai.OpenAI] or
   [AzureOpenAI provider][trulens.providers.openai.AzureOpenAI]
+- [Google provider][trulens.providers.google.Google]
 - [Bedrock provider][trulens.providers.bedrock.Bedrock]
 - [LiteLLM provider][trulens.providers.litellm.LiteLLM]
 - [_LangChain_ provider][trulens.providers.langchain.Langchain]
