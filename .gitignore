@@ -83,3 +83,6 @@ src/**/poetry.lock
 
 # backup files
 *~
+
+# cursor files
+**/.cursor

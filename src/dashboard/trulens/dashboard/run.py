@@ -82,10 +82,8 @@ def run_dashboard(
 
     print("Starting dashboard ...")
 
-    # run leaderboard with subprocess
-    leaderboard_path = import_utils.static_resource(
-        "dashboard", "Leaderboard.py"
-    )
+    # run main dashboard with subprocess
+    main_path = import_utils.static_resource("dashboard", "main.py")
 
     if session._dashboard_proc is not None:
         print("Dashboard already running at path:", session._dashboard_urls)
@@ -127,7 +125,7 @@ def run_dashboard(
         args.append(f"--server.address={address}")
 
     args += [
-        leaderboard_path,
+        main_path,
         "--",
         "--database-prefix",
         session.connector.db.table_prefix,
@@ -339,7 +337,7 @@ def stop_dashboard(
                     cmd = " ".join(p.cmdline())
                     if (
                         "streamlit" in cmd
-                        and "Leaderboard.py" in cmd
+                        and "main.py" in cmd
                         and p.username() == username
                     ):
                         print(f"killing {p}")

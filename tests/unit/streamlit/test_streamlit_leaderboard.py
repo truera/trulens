@@ -25,7 +25,7 @@ class TestLeaderboardUI:
         ):
 
             def test_app():
-                from trulens.dashboard.Leaderboard import init_page_state
+                from trulens.dashboard.tabs.Leaderboard import init_page_state
 
                 init_page_state()
 
@@ -37,7 +37,9 @@ class TestLeaderboardUI:
         with MockManager.mock_dashboard_utils(empty_versions=True):
 
             def test_app():
-                from trulens.dashboard.Leaderboard import render_leaderboard
+                from trulens.dashboard.tabs.Leaderboard import (
+                    render_leaderboard,
+                )
 
                 render_leaderboard("Test App")
 
@@ -51,7 +53,9 @@ class TestLeaderboardUI:
         with MockManager.mock_dashboard_utils(empty_records=True):
 
             def test_app():
-                from trulens.dashboard.Leaderboard import render_leaderboard
+                from trulens.dashboard.tabs.Leaderboard import (
+                    render_leaderboard,
+                )
 
                 render_leaderboard("Test App")
 
@@ -63,7 +67,9 @@ class TestLeaderboardUI:
         with MockManager.mock_all_common_dependencies(mock_data):
 
             def test_app():
-                from trulens.dashboard.Leaderboard import render_leaderboard
+                from trulens.dashboard.tabs.Leaderboard import (
+                    render_leaderboard,
+                )
 
                 render_leaderboard("Test App")
 
@@ -79,7 +85,7 @@ class TestLeaderboardUI:
 
         def test_app():
             import pandas as pd
-            from trulens.dashboard.Leaderboard import _render_plot_tab
+            from trulens.dashboard.tabs.Leaderboard import _render_plot_tab
 
             df = pd.DataFrame({"app_id": ["app_1"], "app_version": ["v1.0"]})
             feedback_col_names = []
@@ -94,7 +100,7 @@ class TestLeaderboardUI:
         """Test plot tab rendering with feedback data."""
 
         def test_app():
-            from trulens.dashboard.Leaderboard import _render_plot_tab
+            from trulens.dashboard.tabs.Leaderboard import _render_plot_tab
 
             from tests.unit.streamlit.test_streamlit_utils import (
                 TestDataFactory,
@@ -111,7 +117,7 @@ class TestLeaderboardUI:
         """Test list tab rendering with app data."""
 
         def test_app():
-            from trulens.dashboard.Leaderboard import _render_list_tab
+            from trulens.dashboard.tabs.Leaderboard import _render_list_tab
 
             from tests.unit.streamlit.test_streamlit_utils import (
                 TestDataFactory,
@@ -141,7 +147,9 @@ class TestLeaderboardUI:
                 mock_sidebar.return_value = None
 
                 def test_app():
-                    from trulens.dashboard.Leaderboard import leaderboard_main
+                    from trulens.dashboard.tabs.Leaderboard import (
+                        leaderboard_main,
+                    )
 
                     leaderboard_main()
 
@@ -153,7 +161,7 @@ class TestLeaderboardUI:
         with MockManager.mock_all_common_dependencies(mock_data):
 
             def test_app():
-                from trulens.dashboard.Leaderboard import leaderboard_main
+                from trulens.dashboard.tabs.Leaderboard import leaderboard_main
 
                 leaderboard_main()
 
@@ -165,7 +173,9 @@ class TestLeaderboardUI:
         with MockManager.mock_all_common_dependencies(mock_data):
 
             def test_app():
-                from trulens.dashboard.Leaderboard import render_leaderboard
+                from trulens.dashboard.tabs.Leaderboard import (
+                    render_leaderboard,
+                )
 
                 render_leaderboard("Test App")
 
@@ -182,7 +192,7 @@ class TestLeaderboardUIErrorHandling:
 
         def test_app():
             import streamlit as st
-            from trulens.dashboard.Leaderboard import render_leaderboard
+            from trulens.dashboard.tabs.Leaderboard import render_leaderboard
 
             try:
                 with patch(
@@ -202,7 +212,7 @@ class TestLeaderboardUIErrorHandling:
 
         def test_app():
             import streamlit as st
-            from trulens.dashboard.Leaderboard import render_leaderboard
+            from trulens.dashboard.tabs.Leaderboard import render_leaderboard
 
             try:
                 with MockManager.mock_dashboard_utils():
