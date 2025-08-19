@@ -44,10 +44,13 @@ class TestOtelMultiThreaded(OtelTestCase):
         custom_app = TruApp(test_app, main_method=test_app.respond_to_query)
         with custom_app.run("test run"):
             input_recorder = custom_app.input("456")
-            with input_recorder:
+            with input_recorder as recording:
                 input_recorder.attach_to_context("best_baby", "Kojikun")
                 test_app.respond_to_query("test")
         TruSession().force_flush()
+        TruSession().wait_for_records([
+            curr.record_id for curr in recording.records
+        ])
         actual = self._get_events()
         seen_span_ids = set()
         for _, row in actual.iterrows():
