@@ -679,9 +679,7 @@ def _get_event_otel_spans(record_id: str) -> List[OtelSpan]:
 
 
 def _check_cross_format_records(
-    app_name: Optional[str] = None,
-    app_ids: Optional[List[str]] = None,
-    app_versions: Optional[List[str]] = None,
+    app_name: Optional[str] = None, app_versions: Optional[List[str]] = None
 ) -> tuple[int, int]:
     """Check record counts in both OTEL and non-OTEL formats.
 
@@ -705,12 +703,6 @@ def _check_cross_format_records(
                     "resource_attributes", ResourceAttributes.APP_NAME
                 )
                 query = query.where(app_name_expr == app_name)
-            if app_ids:
-                # For OTEL events, app_id is in resource_attributes JSON
-                app_id_expr = db._json_extract_otel(
-                    "resource_attributes", ResourceAttributes.APP_ID
-                )
-                query = query.where(app_id_expr.in_(app_ids))
             if app_versions:
                 app_version_expr = db._json_extract_otel(
                     "resource_attributes", ResourceAttributes.APP_VERSION
@@ -728,8 +720,6 @@ def _check_cross_format_records(
                 query = query.join(db.orm.Record.app).where(  # type: ignore
                     db.orm.AppDefinition.app_name == app_name  # type: ignore
                 )
-            if app_ids:
-                query = query.where(db.orm.Record.app_id.in_(app_ids))  # type: ignore
             if app_versions:
                 query = query.where(db.orm.Record.app_version.in_(app_versions))  # type: ignore
 
@@ -740,14 +730,12 @@ def _check_cross_format_records(
 
 
 def _show_no_records_error(
-    app_name: Optional[str] = None,
-    app_ids: Optional[List[str]] = None,  # TODO(this_pr): do we need this?
-    app_versions: Optional[List[str]] = None,
+    app_name: Optional[str] = None, app_versions: Optional[List[str]] = None
 ) -> None:
     """Show helpful error message when no records found, with cross-format record counts."""
     is_otel_mode = is_otel_tracing_enabled()
     otel_count, non_otel_count = _check_cross_format_records(
-        app_name, app_ids, app_versions
+        app_name=app_name, app_versions=app_versions
     )
 
     if is_otel_mode and otel_count == 0 and non_otel_count > 0:

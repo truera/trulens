@@ -687,7 +687,7 @@ def _render_version_selectors(
             records, feedback_cols = get_records_and_feedback(
                 app_name=app_name,
                 app_ids=current_app_ids,
-                # TODO(this_pr): Probably should make this use app versions.
+                # TODO: Probably should make this use app versions.
             )
             records = _preprocess_df(records)
             col_data = {
