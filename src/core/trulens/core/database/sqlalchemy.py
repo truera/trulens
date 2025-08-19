@@ -1699,14 +1699,20 @@ class SQLAlchemyDB(core_db.DB):
 
     def insert_event(self, event: Event) -> types_schema.EventID:
         """See [DB.insert_event][trulens.core.database.base.DB.insert_event]."""
+        return self.insert_events([event])[0]
 
+    def insert_events(self, events: List[Event]) -> List[types_schema.EventID]:
+        """See [DB.insert_events][trulens.core.database.base.DB.insert_events]."""
         with self.session.begin() as session:
-            _event = self.orm.Event.parse(event, redact_keys=self.redact_keys)
-            session.add(_event)
-            logger.info(
-                f"{text_utils.UNICODE_CHECK} added event {_event.event_id}"
-            )
-            return _event.event_id
+            events_to_insert = [
+                self.orm.Event.parse(event, redact_keys=self.redact_keys)
+                for event in events
+            ]
+            session.add_all(events_to_insert)
+            ret = [event.event_id for event in events_to_insert]
+            for curr in ret:
+                logger.info(f"{text_utils.UNICODE_CHECK} added event {curr}")
+            return ret
 
     def get_events(
         self,
