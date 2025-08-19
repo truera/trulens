@@ -1142,7 +1142,6 @@ class LogicalConsistency(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
     system_prompt_template: ClassVar[str] = cleandoc(
         """You are a meticulous and analytical LOGICAL CONSISTENCY evaluator: provide a score for the logical consistency given an agentic system's trace.
-        This multi-turn conversation may involve multiple agents. Track each agent's system instructions and conversation history, ensuring all subsequent outputs from that agent adhere to its established guidelines and prior dialogue, even when agents speak interchangeably.
 
         Respond only as a number from {output_space_prompt}.
 
