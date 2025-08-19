@@ -1930,7 +1930,13 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         self._check_snowflake_dao()
         self.snowflake_app_dao.drop_current_version(self.snowflake_object_name)
 
-    def run(self, run_name: str):
+    def run(
+        self,
+        run_name: str,
+        input_selector: Optional[
+            Callable[[Tuple[Any, ...], Dict[str, Any]], Any]
+        ] = None,
+    ):
         if self.session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING
         ):
@@ -1942,6 +1948,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 app_version=self.app_version,
                 run_name=run_name,
                 input_id="",
+                input_selector=input_selector,
             )
         raise NotImplementedError(
             "This feature is not yet implemented for non-OTEL TruLens!"
@@ -2135,6 +2142,9 @@ def trace_with_run(
     description: Optional[str] = None,
     label: Optional[str] = None,
     input_count: Optional[int] = None,
+    input_selector: Optional[
+        Callable[[Tuple[Any, ...], Dict[str, Any]], Any]
+    ] = None,
 ):
     """
     Decorator for live tracing with a run with automatic setup and teardown.
@@ -2145,11 +2155,28 @@ def trace_with_run(
         description: Optional description for the run
         label: Optional label for the run
         input_count: Optional input count (auto-detected from first argument if not provided)
+        input_selector: Optional function to extract input from function arguments.
+            Signature: (args: Tuple[Any, ...], kwargs: Dict[str, Any]) -> Any
+            If not provided, uses the default main_input logic.
 
     Example:
         ```python
         @trace_with_run(app=tru_app, run_name="customer_queries_run_1")
         def run_queries(test_data):
+            for input_entry in test_data:
+                test_app.query(input_entry["query"])
+
+        # Custom input selector for complex objects
+        def extract_query_text(args, kwargs):
+            test_data = args[0]  # First argument
+            return [item["query"] for item in test_data]
+
+        @trace_with_run(
+            app=tru_app,
+            run_name="custom_queries_run_1",
+            input_selector=extract_query_text
+        )
+        def run_queries_with_custom_input(test_data):
             for input_entry in test_data:
                 test_app.query(input_entry["query"])
         ```
@@ -2192,7 +2219,7 @@ def trace_with_run(
             run: Run = app.add_run(run_config=run_config)
 
             try:
-                with app.run(run_name=run_name):
+                with app.run(run_name=run_name, input_selector=input_selector):
                     # Call the original function without any modifications
                     result = func(*args, **kwargs)
                     return result
