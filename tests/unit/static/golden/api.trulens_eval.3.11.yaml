@@ -39,6 +39,8 @@ trulens_eval.AzureOpenAI:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     DEFAULT_MODEL_ENGINE: builtins.str
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -682,6 +684,8 @@ trulens_eval.OpenAI:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     DEFAULT_MODEL_ENGINE: builtins.str
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -2330,6 +2334,8 @@ trulens_eval.feedback.AzureOpenAI:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     DEFAULT_MODEL_ENGINE: builtins.str
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -3057,6 +3063,8 @@ trulens_eval.feedback.OpenAI:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     DEFAULT_MODEL_ENGINE: builtins.str
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -3427,6 +3435,8 @@ trulens_eval.feedback.provider.AzureOpenAI:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     DEFAULT_MODEL_ENGINE: builtins.str
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -3967,6 +3977,8 @@ trulens_eval.feedback.provider.OpenAI:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     DEFAULT_MODEL_ENGINE: builtins.str
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -6383,6 +6395,8 @@ trulens_eval.feedback.provider.openai.AzureOpenAI:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     DEFAULT_MODEL_ENGINE: builtins.str
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -6478,6 +6492,8 @@ trulens_eval.feedback.provider.openai.OpenAI:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     DEFAULT_MODEL_ENGINE: builtins.str
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
