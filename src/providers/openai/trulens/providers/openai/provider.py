@@ -1,5 +1,15 @@
 import logging
-from typing import ClassVar, Dict, Optional, Sequence, Type, Union
+import threading
+from typing import (
+    Any,
+    ClassVar,
+    Dict,
+    Optional,
+    Sequence,
+    Type,
+    TypedDict,
+    Union,
+)
 
 import pydantic
 from trulens.core.utils import constants as constant_utils
@@ -10,6 +20,19 @@ from trulens.providers.openai import endpoint as openai_endpoint
 import openai as oai
 
 logger = logging.getLogger(__name__)
+
+
+# Global, process-local capability cache keyed by model engine.
+_capabilities_lock = threading.Lock()
+
+
+class ModelCapabilities(TypedDict, total=False):
+    structured_outputs: bool
+    temperature: bool
+    reasoning_effort: bool
+
+
+_model_capabilities_cache: Dict[str, ModelCapabilities] = {}
 
 
 class OpenAI(llm_provider.LLMProvider):
@@ -74,12 +97,12 @@ class OpenAI(llm_provider.LLMProvider):
         )  # need to include pydantic.BaseModel.__init__
 
     def _is_reasoning_model(self) -> bool:
-        """Check if the current model is a reasoning model (o1, o3, o4 series).
+        """Check if the current model is a reasoning model (o1, o3, o4, gpt-5 series).
 
         Returns:
             bool: True if the model is a reasoning model, False otherwise.
         """
-        reasoning_model_prefixes = ["o1", "o3", "o4"]
+        reasoning_model_prefixes = ["o1", "o3", "o4", "gpt-5"]
         return any(
             self.model_engine.startswith(prefix)
             for prefix in reasoning_model_prefixes
@@ -108,6 +131,151 @@ class OpenAI(llm_provider.LLMProvider):
         ):
             return False
         return True
+
+    # --- Capability probing and caching helpers ---
+    def _capabilities_key(self) -> str:
+        return self.model_engine
+
+    def _get_capabilities(self) -> ModelCapabilities:
+        with _capabilities_lock:
+            return _model_capabilities_cache.get(self._capabilities_key(), {})
+
+    def _set_capabilities(self, updates: ModelCapabilities) -> None:
+        with _capabilities_lock:
+            current = _model_capabilities_cache.get(
+                self._capabilities_key(), {}
+            )
+            current.update(updates)
+            _model_capabilities_cache[self._capabilities_key()] = current
+
+    def _is_unsupported_parameter_error(
+        self, exc: Exception, parameter: str
+    ) -> bool:
+        message = str(getattr(exc, "message", "")) or str(exc)
+        lowered = message.lower()
+        return (
+            ("unsupported" in lowered)
+            or ("unknown" in lowered)
+            or ("does not support" in lowered)
+            or ("is not allowed" in lowered)
+        ) and (parameter in lowered)
+
+    @classmethod
+    def clear_model_capabilities_cache(
+        cls, model_engine: Optional[str] = None
+    ) -> None:
+        """Clear the in-memory model capabilities cache.
+
+        Args:
+            model_engine: When provided, only clears cached capabilities for
+                that specific model. When None, clears the entire cache.
+        """
+        with _capabilities_lock:
+            if model_engine is None:
+                _model_capabilities_cache.clear()
+            else:
+                _model_capabilities_cache.pop(model_engine, None)
+
+    def clear_capabilities_cache(self) -> None:
+        """Clear cached capabilities for this provider's current model."""
+        self.clear_model_capabilities_cache(self.model_engine)
+
+    def _call_with_capability_fallbacks(
+        self,
+        *,
+        input_messages: Sequence[Dict[str, Any]],
+        response_format: Optional[Type[pydantic.BaseModel]],
+        kwargs: Dict[str, Any],
+    ) -> Optional[Union[str, pydantic.BaseModel]]:
+        capabilities = self._get_capabilities()
+
+        # 1) Try structured outputs via Responses API if requested/unknown
+        wants_structured_outputs = response_format is not None
+        structured_outputs = (
+            capabilities.get("structured_outputs")
+            if "structured_outputs" in capabilities
+            else None
+        )
+        if wants_structured_outputs and (
+            structured_outputs is None or structured_outputs is True
+        ):
+            try:
+                response = self.endpoint.client.responses.parse(
+                    input=input_messages, text_format=response_format, **kwargs
+                )
+                self._set_capabilities({"structured_outputs": True})
+                return response.output_parsed
+            except Exception as exc:
+                # If this looks like a capability issue, record and fall back; otherwise re-raise
+                if (
+                    self._is_unsupported_parameter_error(exc, "response_format")
+                    or "structured" in str(exc).lower()
+                    or "responses.parse" in str(exc).lower()
+                ):
+                    self._set_capabilities({"structured_outputs": False})
+                else:
+                    raise
+
+        # 2) Fall back to Chat Completions with parameter probes
+        # Probe temperature support
+        if "temperature" in kwargs:
+            temperature = capabilities.get("temperature")
+            if temperature is False:
+                kwargs.pop("temperature", None)
+            elif temperature is None:
+                try:
+                    completion = self.endpoint.client.chat.completions.create(
+                        messages=input_messages, **kwargs
+                    )
+                    self._set_capabilities({"temperature": True})
+                    return completion.choices[0].message.content
+                except Exception as exc:
+                    if self._is_unsupported_parameter_error(exc, "temperature"):
+                        kwargs.pop("temperature", None)
+                        self._set_capabilities({"temperature": False})
+                        # Immediate retry without temperature
+                        completion = (
+                            self.endpoint.client.chat.completions.create(
+                                messages=input_messages, **kwargs
+                            )
+                        )
+                        return completion.choices[0].message.content
+                    else:
+                        raise
+
+        # Probe reasoning_effort support
+        if "reasoning_effort" in kwargs:
+            reasoning_effort = capabilities.get("reasoning_effort")
+            if reasoning_effort is False:
+                kwargs.pop("reasoning_effort", None)
+            elif reasoning_effort is None:
+                try:
+                    completion = self.endpoint.client.chat.completions.create(
+                        messages=input_messages, **kwargs
+                    )
+                    self._set_capabilities({"reasoning_effort": True})
+                    return completion.choices[0].message.content
+                except Exception as exc:
+                    if self._is_unsupported_parameter_error(
+                        exc, "reasoning_effort"
+                    ):
+                        kwargs.pop("reasoning_effort", None)
+                        self._set_capabilities({"reasoning_effort": False})
+                        # Immediate retry without reasoning_effort
+                        completion = (
+                            self.endpoint.client.chat.completions.create(
+                                messages=input_messages, **kwargs
+                            )
+                        )
+                        return completion.choices[0].message.content
+                    else:
+                        raise
+
+        # Final attempt with whatever parameters remain
+        completion = self.endpoint.client.chat.completions.create(
+            messages=input_messages, **kwargs
+        )
+        return completion.choices[0].message.content
 
     # LLMProvider requirement
     def _create_chat_completion(
@@ -160,19 +328,15 @@ class OpenAI(llm_provider.LLMProvider):
             if "temperature" not in kwargs:
                 kwargs["temperature"] = 0.0
 
-        if response_format is not None and self._structured_output_supported():
-            response = self.endpoint.client.responses.parse(
-                input=input_messages, text_format=response_format, **kwargs
-            )
-            return response.output_parsed
-        else:
-            if "seed" not in kwargs:
-                kwargs["seed"] = 123
+        # Route through capability probing + caching for robust behavior
+        if "seed" not in kwargs:
+            kwargs["seed"] = 123
 
-            completion = self.endpoint.client.chat.completions.create(
-                messages=input_messages, **kwargs
-            )
-            return completion.choices[0].message.content
+        return self._call_with_capability_fallbacks(
+            input_messages=input_messages,
+            response_format=response_format,
+            kwargs=kwargs,
+        )
 
     def _moderation(self, text: str):
         # See https://platform.openai.com/docs/guides/moderation/overview .
