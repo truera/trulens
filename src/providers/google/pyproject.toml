@@ -5,7 +5,7 @@ requires = [
 ]
 
 [tool.poetry]
-name = "trulens-providers-huggingface"
+name = "trulens-providers-google"
 version = "2.2.4"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
@@ -30,12 +30,8 @@ classifiers = [
 python = "^3.9"
 trulens-core = { version = "^2.0.0" }
 trulens-feedback = { version = "^2.0.0" }
-requests = "^2.31"
-numpy = ">=1.23.0"
-nltk = "^3.9.1"
-# HuggingfaceLocal dependencies
-torch = "^2.1.2"
-transformers = "^4.38.1"
+google-genai = ">=1.27.0"
+google-auth = ">=2.20.0"
 
 [tool.poetry.group.dev.dependencies]
 trulens-core = { path = "../../core" }

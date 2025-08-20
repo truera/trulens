@@ -344,6 +344,7 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
         app_ids: Optional[List[types_schema.AppID]] = None,
         app_name: Optional[types_schema.AppName] = None,
         app_version: Optional[types_schema.AppVersion] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
@@ -355,6 +356,7 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                 Otherwise all apps are retrieved.
             app_name: If given, retrieve only the records for the given app name.
             app_version: If given, retrieve only the records for the given app version.
+            app_versions: If given, retrieve only the records for the given app versions.
             record_ids: Optional list of record IDs to filter by. Defaults to None.
             offset: Database row offset.
             limit: Limit on rows (records) returned.
