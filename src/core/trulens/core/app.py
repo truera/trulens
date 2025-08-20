@@ -2016,7 +2016,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         run_config = RunConfig(
             run_name=run_name,
             dataset_name=dataset_name,
-            source_type="LIVE_TRACING",
+            source_type="DATAFRAME",  # TODO: can only be LIVE_TRACING once run DPO side is updated
             dataset_spec={},
             description=description,
             label=label,
@@ -2210,7 +2210,7 @@ def trace_with_run(
             run_config = RunConfig(
                 run_name=run_name,
                 dataset_name=f"live_tracing_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f')}",
-                source_type="LIVE_TRACING",
+                source_type="DATAFRAME",  # TODO: can only be LIVE_TRACING once run DPO side is updated
                 dataset_spec={},
                 description=description,
                 label=label,
