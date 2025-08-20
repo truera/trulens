@@ -547,7 +547,7 @@ class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
 
         Output only a single-line JSON object with exactly these keys:
           "criteria"             – one concise sentence that states your rationale with reference to the rubric
-          "supporting_evidence"  – An explanation of why you scored the way you did using exact
+          "supporting_evidence"  – An explanation of why you scored the way you did using exact words or evidence from the response
           "score"                – {output_space_prompt}
         """
     )
