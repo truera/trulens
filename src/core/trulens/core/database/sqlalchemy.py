@@ -5,6 +5,7 @@ from datetime import datetime
 import json
 import logging
 from sqlite3 import OperationalError
+import threading
 from typing import (
     Any,
     ClassVar,
@@ -137,6 +138,7 @@ class SQLAlchemyDB(core_db.DB):
                     "See https://www.sqlite.org/threadsafe.html"
                 )
             )
+        self._insert_events_lock = threading.Lock()
 
     def _reload_engine(self):
         if self.engine is None:
@@ -1703,16 +1705,19 @@ class SQLAlchemyDB(core_db.DB):
 
     def insert_events(self, events: List[Event]) -> List[types_schema.EventID]:
         """See [DB.insert_events][trulens.core.database.base.DB.insert_events]."""
-        with self.session.begin() as session:
-            events_to_insert = [
-                self.orm.Event.parse(event, redact_keys=self.redact_keys)
-                for event in events
-            ]
-            session.add_all(events_to_insert)
-            ret = [event.event_id for event in events_to_insert]
-            for curr in ret:
-                logger.info(f"{text_utils.UNICODE_CHECK} added event {curr}")
-            return ret
+        with self._insert_events_lock:
+            with self.session.begin() as session:
+                events_to_insert = [
+                    self.orm.Event.parse(event, redact_keys=self.redact_keys)
+                    for event in events
+                ]
+                session.add_all(events_to_insert)
+                ret = [event.event_id for event in events_to_insert]
+                for curr in ret:
+                    logger.info(
+                        f"{text_utils.UNICODE_CHECK} added event {curr}"
+                    )
+                return ret
 
     def get_events(
         self,
