@@ -258,9 +258,6 @@ class OpenAI(llm_provider.LLMProvider):
                     parallel_tool_calls=False,
                     **_responses_kwargs,
                 )
-                print(
-                    f"[TruLens] CFG grammar used via Responses.create for model '{self.model_engine}' (syntax={grammar_syntax})."
-                )
 
                 if hasattr(response, "output"):
                     out_items = getattr(response, "output")
@@ -284,7 +281,7 @@ class OpenAI(llm_provider.LLMProvider):
                 except Exception:
                     return str(response)
             except Exception as exc:
-                print(
+                logger.debug(
                     f"[TruLens] CFG grammar invocation failed for model '{self.model_engine}': {exc}. Falling back."
                 )
 
@@ -303,9 +300,6 @@ class OpenAI(llm_provider.LLMProvider):
                     input=input_messages, text_format=response_format, **kwargs
                 )
                 self._set_capabilities({"structured_outputs": True})
-                print(
-                    f"[TruLens] Structured outputs used via Responses.parse for model '{self.model_engine}'."
-                )
                 return response.output_parsed
             except Exception as exc:
                 # Targeted retry: remove only offending params and retry once
@@ -323,9 +317,6 @@ class OpenAI(llm_provider.LLMProvider):
                 if offending_params:
                     for p in offending_params:
                         kwargs.pop(p, None)
-                        print(
-                            f"[TruLens] Removed unsupported '{p}' for Responses.parse on model '{self.model_engine}'. Retrying."
-                        )
                     try:
                         response = self.endpoint.client.responses.parse(
                             input=input_messages,
@@ -333,9 +324,6 @@ class OpenAI(llm_provider.LLMProvider):
                             **kwargs,
                         )
                         self._set_capabilities({"structured_outputs": True})
-                        print(
-                            f"[TruLens] Structured outputs used via Responses.parse after param fix for model '{self.model_engine}'."
-                        )
                         return response.output_parsed
                     except Exception as exc2:
                         if (
@@ -348,7 +336,7 @@ class OpenAI(llm_provider.LLMProvider):
                             self._set_capabilities({
                                 "structured_outputs": False
                             })
-                            print(
+                            logger.debug(
                                 f"[TruLens] Structured outputs unsupported for model '{self.model_engine}'. Falling back to text outputs."
                             )
                         else:
@@ -362,7 +350,7 @@ class OpenAI(llm_provider.LLMProvider):
                         or "responses.parse" in str(exc).lower()
                     ):
                         self._set_capabilities({"structured_outputs": False})
-                        print(
+                        logger.debug(
                             f"[TruLens] Structured outputs unsupported for model '{self.model_engine}'. Falling back to text outputs."
                         )
                     else:
@@ -385,9 +373,6 @@ class OpenAI(llm_provider.LLMProvider):
                     if self._is_unsupported_parameter_error(exc, "temperature"):
                         kwargs.pop("temperature", None)
                         self._set_capabilities({"temperature": False})
-                        print(
-                            f"[TruLens] Removed unsupported 'temperature' for model '{self.model_engine}'. Retrying without it."
-                        )
                         # Immediate retry without temperature
                         completion = (
                             self.endpoint.client.chat.completions.create(
@@ -416,9 +401,6 @@ class OpenAI(llm_provider.LLMProvider):
                     ):
                         kwargs.pop("reasoning_effort", None)
                         self._set_capabilities({"reasoning_effort": False})
-                        print(
-                            f"[TruLens] Removed unsupported 'reasoning_effort' for model '{self.model_engine}'. Retrying without it."
-                        )
                         # Immediate retry without reasoning_effort
                         completion = (
                             self.endpoint.client.chat.completions.create(
@@ -430,9 +412,6 @@ class OpenAI(llm_provider.LLMProvider):
                         raise
 
         # Final attempt with whatever parameters remain
-        print(
-            f"[TruLens] Using text outputs via Chat Completions for model '{self.model_engine}' (structured outputs not used)."
-        )
         completion = self.endpoint.client.chat.completions.create(
             messages=input_messages, **kwargs
         )
@@ -500,9 +479,6 @@ class OpenAI(llm_provider.LLMProvider):
                     kwargs["grammar_description"] = (
                         "Strict JSON for BaseFeedbackResponse"
                     )
-                    print(
-                        f"[TruLens] Auto-CFG enabled for BaseFeedbackResponse on model '{self.model_engine}'."
-                    )
                 elif (
                     response_format
                     is feedback_output_schemas.ChainOfThoughtResponse
@@ -514,9 +490,6 @@ class OpenAI(llm_provider.LLMProvider):
                     kwargs["grammar_name"] = "cot_feedback_json"
                     kwargs["grammar_description"] = (
                         "Strict JSON for ChainOfThoughtResponse"
-                    )
-                    print(
-                        f"[TruLens] Auto-CFG enabled for ChainOfThoughtResponse on model '{self.model_engine}'."
                     )
         except Exception:
             # Non-fatal: fall through to normal flow
