@@ -15,11 +15,36 @@ import pydantic
 from trulens.core.utils import constants as constant_utils
 from trulens.core.utils import pace as pace_utils
 from trulens.feedback import llm_provider
+from trulens.feedback import output_schemas as feedback_output_schemas
 from trulens.providers.openai import endpoint as openai_endpoint
 
 import openai as oai
 
 logger = logging.getLogger(__name__)
+
+
+# --- Optional CFG grammars matching feedback output schemas ---
+# Fixed-field-order JSON grammars for robust constrained generation.
+
+# BaseFeedbackResponse JSON: {"score": <int>}
+BASE_FEEDBACK_RESPONSE_LARK_GRAMMAR: str = r"""
+%import common.INT
+%import common.WS
+%ignore WS
+
+start: "{" "\"score\"" ":" INT "}"
+"""
+
+# ChainOfThoughtResponse JSON:
+# {"criteria":"...","supporting_evidence":"...","score":<int>}
+CHAIN_OF_THOUGHT_RESPONSE_LARK_GRAMMAR: str = r"""
+%import common.ESCAPED_STRING
+%import common.INT
+%import common.WS
+%ignore WS
+
+start: "{" "\"criteria\"" ":" ESCAPED_STRING "," "\"supporting_evidence\"" ":" ESCAPED_STRING "," "\"score\"" ":" INT "}"
+"""
 
 
 # Global, process-local capability cache keyed by model engine.
@@ -160,6 +185,13 @@ class OpenAI(llm_provider.LLMProvider):
             or ("is not allowed" in lowered)
         ) and (parameter in lowered)
 
+    def _is_cfg_available(self) -> bool:
+        """Return True if model supports CFG path by default heuristics.
+
+        Currently enables CFG only for gpt-5* model families.
+        """
+        return self.model_engine.startswith("gpt-5")
+
     @classmethod
     def clear_model_capabilities_cache(
         cls, model_engine: Optional[str] = None
@@ -189,6 +221,73 @@ class OpenAI(llm_provider.LLMProvider):
     ) -> Optional[Union[str, pydantic.BaseModel]]:
         capabilities = self._get_capabilities()
 
+        # 0) Grammar-constrained generation (CFG) via Responses.create if provided
+        grammar_syntax: Optional[str] = kwargs.pop("grammar_syntax", None)
+        grammar_definition: Optional[str] = kwargs.pop(
+            "grammar_definition", None
+        )
+        grammar_name: str = kwargs.pop("grammar_name", "custom_grammar")
+        grammar_description: str = kwargs.pop(
+            "grammar_description", "Custom grammar-constrained generation."
+        )
+
+        if grammar_syntax and grammar_definition:
+            try:
+                # Filter params not supported by responses.create (e.g., reasoning_effort)
+                _responses_kwargs = {
+                    k: v
+                    for k, v in kwargs.items()
+                    if k not in ("model", "reasoning_effort", "seed")
+                }
+                response = self.endpoint.client.responses.create(
+                    model=kwargs.get("model", self.model_engine),
+                    input=input_messages,
+                    text={"format": {"type": "text"}},
+                    tools=[
+                        {
+                            "type": "custom",
+                            "name": grammar_name,
+                            "description": grammar_description,
+                            "format": {
+                                "type": "grammar",
+                                "syntax": grammar_syntax,
+                                "definition": grammar_definition,
+                            },
+                        }
+                    ],
+                    parallel_tool_calls=False,
+                    **_responses_kwargs,
+                )
+                print(
+                    f"[TruLens] CFG grammar used via Responses.create for model '{self.model_engine}' (syntax={grammar_syntax})."
+                )
+
+                if hasattr(response, "output"):
+                    out_items = getattr(response, "output")
+                    for item in out_items:
+                        if getattr(item, "type", None) == "tool" and hasattr(
+                            item, "input"
+                        ):
+                            return getattr(item, "input")
+                    texts: list[str] = []
+                    for item in out_items:
+                        for part in getattr(item, "content", []) or []:
+                            if getattr(
+                                part, "type", None
+                            ) == "output_text" and hasattr(part, "text"):
+                                texts.append(part.text)
+                    if texts:
+                        return "".join(texts)
+
+                try:
+                    return response.model_dump_json()
+                except Exception:
+                    return str(response)
+            except Exception as exc:
+                print(
+                    f"[TruLens] CFG grammar invocation failed for model '{self.model_engine}': {exc}. Falling back."
+                )
+
         # 1) Try structured outputs via Responses API if requested/unknown
         wants_structured_outputs = response_format is not None
         structured_outputs = (
@@ -204,17 +303,70 @@ class OpenAI(llm_provider.LLMProvider):
                     input=input_messages, text_format=response_format, **kwargs
                 )
                 self._set_capabilities({"structured_outputs": True})
+                print(
+                    f"[TruLens] Structured outputs used via Responses.parse for model '{self.model_engine}'."
+                )
                 return response.output_parsed
             except Exception as exc:
-                # If this looks like a capability issue, record and fall back; otherwise re-raise
-                if (
-                    self._is_unsupported_parameter_error(exc, "response_format")
-                    or "structured" in str(exc).lower()
-                    or "responses.parse" in str(exc).lower()
-                ):
-                    self._set_capabilities({"structured_outputs": False})
+                # Targeted retry: remove only offending params and retry once
+                offending_params = []
+                for p in ("seed", "temperature", "reasoning_effort"):
+                    try:
+                        if (
+                            self._is_unsupported_parameter_error(exc, p)
+                            and p in kwargs
+                        ):
+                            offending_params.append(p)
+                    except Exception:
+                        pass
+
+                if offending_params:
+                    for p in offending_params:
+                        kwargs.pop(p, None)
+                        print(
+                            f"[TruLens] Removed unsupported '{p}' for Responses.parse on model '{self.model_engine}'. Retrying."
+                        )
+                    try:
+                        response = self.endpoint.client.responses.parse(
+                            input=input_messages,
+                            text_format=response_format,
+                            **kwargs,
+                        )
+                        self._set_capabilities({"structured_outputs": True})
+                        print(
+                            f"[TruLens] Structured outputs used via Responses.parse after param fix for model '{self.model_engine}'."
+                        )
+                        return response.output_parsed
+                    except Exception as exc2:
+                        if (
+                            self._is_unsupported_parameter_error(
+                                exc2, "response_format"
+                            )
+                            or "structured" in str(exc2).lower()
+                            or "responses.parse" in str(exc2).lower()
+                        ):
+                            self._set_capabilities({
+                                "structured_outputs": False
+                            })
+                            print(
+                                f"[TruLens] Structured outputs unsupported for model '{self.model_engine}'. Falling back to text outputs."
+                            )
+                        else:
+                            raise
                 else:
-                    raise
+                    if (
+                        self._is_unsupported_parameter_error(
+                            exc, "response_format"
+                        )
+                        or "structured" in str(exc).lower()
+                        or "responses.parse" in str(exc).lower()
+                    ):
+                        self._set_capabilities({"structured_outputs": False})
+                        print(
+                            f"[TruLens] Structured outputs unsupported for model '{self.model_engine}'. Falling back to text outputs."
+                        )
+                    else:
+                        raise
 
         # 2) Fall back to Chat Completions with parameter probes
         # Probe temperature support
@@ -233,6 +385,9 @@ class OpenAI(llm_provider.LLMProvider):
                     if self._is_unsupported_parameter_error(exc, "temperature"):
                         kwargs.pop("temperature", None)
                         self._set_capabilities({"temperature": False})
+                        print(
+                            f"[TruLens] Removed unsupported 'temperature' for model '{self.model_engine}'. Retrying without it."
+                        )
                         # Immediate retry without temperature
                         completion = (
                             self.endpoint.client.chat.completions.create(
@@ -261,6 +416,9 @@ class OpenAI(llm_provider.LLMProvider):
                     ):
                         kwargs.pop("reasoning_effort", None)
                         self._set_capabilities({"reasoning_effort": False})
+                        print(
+                            f"[TruLens] Removed unsupported 'reasoning_effort' for model '{self.model_engine}'. Retrying without it."
+                        )
                         # Immediate retry without reasoning_effort
                         completion = (
                             self.endpoint.client.chat.completions.create(
@@ -272,6 +430,9 @@ class OpenAI(llm_provider.LLMProvider):
                         raise
 
         # Final attempt with whatever parameters remain
+        print(
+            f"[TruLens] Using text outputs via Chat Completions for model '{self.model_engine}' (structured outputs not used)."
+        )
         completion = self.endpoint.client.chat.completions.create(
             messages=input_messages, **kwargs
         )
@@ -315,14 +476,6 @@ class OpenAI(llm_provider.LLMProvider):
                 else:
                     # For reasoning models, use the reasoning_effort parameter directly
                     kwargs["reasoning_effort"] = reasoning_effort
-
-            # Reasoning models don't support structured output in the same way
-            if response_format is not None:
-                logger.warning(
-                    f"Structured output not fully supported for reasoning model {self.model_engine}. "
-                    "Falling back to text output."
-                )
-                response_format = None
         else:
             # Set default temperature for non-reasoning models
             if "temperature" not in kwargs:
@@ -331,6 +484,43 @@ class OpenAI(llm_provider.LLMProvider):
         # Route through capability probing + caching for robust behavior
         if "seed" not in kwargs:
             kwargs["seed"] = 123
+
+        # Auto‑enable CFG for feedback schemas when available (gpt-5*)
+        try:
+            if self._is_cfg_available() and isinstance(response_format, type):
+                if (
+                    response_format
+                    is feedback_output_schemas.BaseFeedbackResponse
+                ):
+                    kwargs["grammar_syntax"] = "lark"
+                    kwargs["grammar_definition"] = (
+                        BASE_FEEDBACK_RESPONSE_LARK_GRAMMAR
+                    )
+                    kwargs["grammar_name"] = "base_feedback_json"
+                    kwargs["grammar_description"] = (
+                        "Strict JSON for BaseFeedbackResponse"
+                    )
+                    print(
+                        f"[TruLens] Auto-CFG enabled for BaseFeedbackResponse on model '{self.model_engine}'."
+                    )
+                elif (
+                    response_format
+                    is feedback_output_schemas.ChainOfThoughtResponse
+                ):
+                    kwargs["grammar_syntax"] = "lark"
+                    kwargs["grammar_definition"] = (
+                        CHAIN_OF_THOUGHT_RESPONSE_LARK_GRAMMAR
+                    )
+                    kwargs["grammar_name"] = "cot_feedback_json"
+                    kwargs["grammar_description"] = (
+                        "Strict JSON for ChainOfThoughtResponse"
+                    )
+                    print(
+                        f"[TruLens] Auto-CFG enabled for ChainOfThoughtResponse on model '{self.model_engine}'."
+                    )
+        except Exception:
+            # Non-fatal: fall through to normal flow
+            pass
 
         return self._call_with_capability_fallbacks(
             input_messages=input_messages,
