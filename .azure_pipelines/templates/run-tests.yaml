@@ -32,4 +32,8 @@ steps:
       SNOWFLAKE_DATABASE: $(SNOWFLAKE_DATABASE)
       SNOWFLAKE_ROLE: $(SNOWFLAKE_ROLE)
       SNOWFLAKE_WAREHOUSE: $(SNOWFLAKE_WAREHOUSE)
+
+      # OTel configs.
+      OTEL_BSP_MAX_EXPORT_BATCH_SIZE: "1024"
+      OTEL_BSP_MAX_QUEUE_SIZE: "8192"
     displayName: Run ${{ parameters.pytestMarker }} ${{ parameters.testSuite }} Test Suite
