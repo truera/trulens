@@ -122,12 +122,8 @@ class LLMProvider(core_provider.Provider):
         if user_prompt is not None:
             llm_messages.append({"role": "user", "content": user_prompt})
 
-        # For reasoning models, fall back to text output since structured output may not be supported
-        response_format = (
-            None
-            if self._is_reasoning_model()
-            else feedback_output_schemas.BaseFeedbackResponse
-        )
+        # Try structured outputs first; provider will probe and fall back if unsupported
+        response_format = feedback_output_schemas.BaseFeedbackResponse
 
         # Add reasoning effort for reasoning models and handle temperature
         extra_kwargs = {}
@@ -229,12 +225,8 @@ class LLMProvider(core_provider.Provider):
         if user_prompt is not None:
             llm_messages.append({"role": "user", "content": user_prompt})
 
-        # For reasoning models, fall back to text output since structured output may not be supported
-        response_format = (
-            None
-            if self._is_reasoning_model()
-            else feedback_output_schemas.ChainOfThoughtResponse
-        )
+        # Try structured outputs first; provider will probe and fall back if unsupported
+        response_format = feedback_output_schemas.ChainOfThoughtResponse
 
         # Add reasoning effort for reasoning models and handle temperature
         extra_kwargs = {}
@@ -255,6 +247,38 @@ class LLMProvider(core_provider.Provider):
 
         criteria_field = "Criteria"
         supporting_evidence_field = "Supporting Evidence"
+
+        # Attempt to parse JSON (e.g., from CFG or structured outputs returned as text)
+        parsed_json = None
+        if isinstance(response, str):
+            try:
+                parsed_json = json.loads(response)
+            except Exception:
+                parsed_json = None
+
+        # If JSON matches ChainOfThoughtResponse shape, use it directly
+        if isinstance(parsed_json, dict):
+            json_score = parsed_json.get("score")
+            json_criteria = parsed_json.get("criteria")
+            json_evidence = parsed_json.get("supporting_evidence")
+            if json_score is not None and (
+                json_criteria is not None and json_evidence is not None
+            ):
+                try:
+                    score_val = float(json_score)
+                except (TypeError, ValueError):
+                    score_val = -1.0
+                reasons = {
+                    "reason": (
+                        f"{criteria_field}: {json_criteria}\n"
+                        f"{supporting_evidence_field}: {json_evidence}"
+                    )
+                }
+                score_val = (score_val - min_score_val) / (
+                    max_score_val - min_score_val
+                )
+                return score_val, reasons
+
         if isinstance(response, feedback_output_schemas.ChainOfThoughtResponse):
             score = response.score
             if score is None:
@@ -268,6 +292,76 @@ class LLMProvider(core_provider.Provider):
                     f"{supporting_evidence_field}: {supporting_evidence}"
                 )
             }
+
+        # Last-chance structured reformat: if we still don't have reasons, try a quick
+        # coercion call that forces the ChainOfThoughtResponse schema.
+        elif isinstance(response, str):
+            try:
+                reformat_messages = [
+                    {
+                        "role": "system",
+                        "content": (
+                            "Convert the following text into a strict JSON object with keys "
+                            '"criteria", "supporting_evidence", and "score" (integer). '
+                            "Use concise but non-empty values for criteria and supporting_evidence. "
+                            "Output ONLY the JSON, no extra text."
+                        ),
+                    },
+                    {"role": "user", "content": response},
+                ]
+                logger.debug(
+                    "Reformatting LLM output text to JSON with an LLM: %s",
+                    reformat_messages,
+                )
+
+                ref = self.endpoint.run_in_pace(
+                    func=self._create_chat_completion,
+                    messages=reformat_messages,
+                    response_format=feedback_output_schemas.ChainOfThoughtResponse,
+                    **extra_kwargs,
+                )
+
+                if isinstance(
+                    ref, feedback_output_schemas.ChainOfThoughtResponse
+                ):
+                    score = ref.score
+                    criteria = ref.criteria
+                    supporting_evidence = ref.supporting_evidence
+                    reasons = {
+                        "reason": (
+                            f"{criteria_field}: {criteria}\n"
+                            f"{supporting_evidence_field}: {supporting_evidence}"
+                        )
+                    }
+                    score = (score - min_score_val) / (
+                        max_score_val - min_score_val
+                    )
+                    return score, reasons
+                elif isinstance(ref, str):
+                    try:
+                        ref_json = json.loads(ref)
+                        if (
+                            isinstance(ref_json, dict)
+                            and "criteria" in ref_json
+                            and "supporting_evidence" in ref_json
+                            and "score" in ref_json
+                        ):
+                            score_val = float(ref_json["score"])
+                            reasons = {
+                                "reason": (
+                                    f"{criteria_field}: {ref_json['criteria']}\n"
+                                    f"{supporting_evidence_field}: {ref_json['supporting_evidence']}"
+                                )
+                            }
+                            score_val = (score_val - min_score_val) / (
+                                max_score_val - min_score_val
+                            )
+                            return score_val, reasons
+                    except Exception:
+                        pass
+            except Exception:
+                # Ignore reformat failures and fall through to existing parsing
+                pass
 
         elif "Supporting Evidence" in response:
             score = -1
@@ -623,6 +717,8 @@ class LLMProvider(core_provider.Provider):
         user_prompt = user_prompt.replace(
             "RELEVANCE:", feedback_prompts.COT_REASONS_TEMPLATE
         )
+        logger.debug(system_prompt)
+        logger.debug(user_prompt)
         return self.generate_score_and_reasons(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
