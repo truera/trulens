@@ -491,9 +491,11 @@ class OpenAI(llm_provider.LLMProvider):
                     kwargs["grammar_description"] = (
                         "Strict JSON for ChainOfThoughtResponse"
                     )
-        except Exception:
-            # Non-fatal: fall through to normal flow
-            pass
+        except Exception as exc:
+            logger.debug(
+                f"[TruLens] Auto-enable CFG grammar setup failed for model '{self.model_engine}' and response_format '{type(response_format).__name__}': {exc}",
+                exc_info=True,
+            )
 
         return self._call_with_capability_fallbacks(
             input_messages=input_messages,
