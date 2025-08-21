@@ -1,5 +1,6 @@
 import logging
-from typing import Dict, Optional, Sequence, Type, Union
+import threading
+from typing import Dict, Optional, Sequence, Type, TypedDict, Union
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.language_models.llms import BaseLLM
@@ -11,10 +12,21 @@ from trulens.feedback import llm_provider
 from trulens.providers.langchain import endpoint as langchain_endpoint
 
 logger = logging.getLogger(__name__)
+_capabilities_lock = threading.Lock()
 
 
-def _convert_message(message: Dict) -> BaseMessage:
+class ModelCapabilities(TypedDict, total=False):
+    temperature: bool
+    reasoning_effort: bool
+
+
+_model_capabilities_cache: Dict[str, ModelCapabilities] = {}
+
+
+def _convert_message(message: Union[Dict, BaseMessage]) -> BaseMessage:
     """Convert a message to a LangChain BaseMessage."""
+    if isinstance(message, BaseMessage):
+        return message
     if "role" not in message or message["role"] == "user":
         return HumanMessage(content=message["content"])
     return AIMessage(content=message["content"])
@@ -55,19 +67,171 @@ class Langchain(llm_provider.LLMProvider):
 
         super().__init__(**self_kwargs)
 
+    # --- Capability probing and caching helpers ---
+    def _capabilities_key(self) -> str:
+        # Prefer explicit model_engine; fallback to LC class name
+        return self.model_engine or type(self.endpoint.chain).__name__
+
+    def _get_capabilities(self) -> ModelCapabilities:
+        with _capabilities_lock:
+            return _model_capabilities_cache.get(self._capabilities_key(), {})
+
+    def _set_capabilities(self, updates: ModelCapabilities) -> None:
+        with _capabilities_lock:
+            current = _model_capabilities_cache.get(
+                self._capabilities_key(), {}
+            )
+            current.update(updates)
+            _model_capabilities_cache[self._capabilities_key()] = current
+
+    @classmethod
+    def clear_model_capabilities_cache(
+        cls, model_engine: Optional[str] = None
+    ) -> None:
+        with _capabilities_lock:
+            if model_engine is None:
+                _model_capabilities_cache.clear()
+            else:
+                _model_capabilities_cache.pop(model_engine, None)
+
+    def clear_capabilities_cache(self) -> None:
+        self.clear_model_capabilities_cache(self._capabilities_key())
+
+    def _is_reasoning_model(self) -> bool:
+        """Heuristic check for common reasoning model names.
+
+        Covers OpenAI o* families and other common vendors exposing reasoning
+        variants (e.g., DeepSeek R1, models with "reasoning"/"thinking").
+        """
+        name = (self.model_engine or "").lower()
+        prefixes = ("o1", "o3", "o4", "gpt-5", "deepseek-r1")
+        if any(name.startswith(p) for p in prefixes):
+            return True
+        return ("reasoning" in name) or ("thinking" in name)
+
+    def _is_unsupported_parameter_error(
+        self, exc: Exception, parameter: str
+    ) -> bool:
+        message = str(getattr(exc, "message", "")) or str(exc)
+        lowered = message.lower()
+        return (
+            ("unexpected keyword" in lowered)
+            or ("got an unexpected" in lowered)
+            or ("does not support" in lowered)
+            or ("is not allowed" in lowered)
+            or ("unknown" in lowered)
+        ) and (parameter in lowered)
+
     def _create_chat_completion(
         self,
         prompt: Optional[str] = None,
-        messages: Optional[Sequence[Dict]] = None,
+        messages: Optional[Sequence[Union[Dict, BaseMessage]]] = None,
         response_format: Optional[Type[BaseModel]] = None,
+        reasoning_effort: Optional[str] = None,
         **kwargs,
     ) -> str:
-        if prompt is not None:
-            predict = self.endpoint.chain.invoke(prompt, **kwargs)
+        # LangChain generally does not support structured outputs via response_format.
+        # Ignore if provided to avoid unexpected keyword errors downstream.
+        if response_format is not None:
+            logger.debug(
+                "Ignoring response_format in LangChain provider; not supported via chain.invoke."
+            )
 
+        call_kwargs = dict(kwargs)
+
+        # Reasoning model handling mirrors OpenAI provider behavior.
+        if self._is_reasoning_model():
+            if "temperature" in call_kwargs:
+                logger.warning(
+                    "Temperature parameter is not supported for reasoning models in LangChain calls. Removing."
+                )
+                call_kwargs.pop("temperature", None)
+            if reasoning_effort is not None:
+                if reasoning_effort not in ("low", "medium", "high"):
+                    logger.warning(
+                        f"Invalid reasoning_effort '{reasoning_effort}'. Must be 'low', 'medium', or 'high'."
+                    )
+                else:
+                    call_kwargs["reasoning_effort"] = reasoning_effort
+        else:
+            # Default to deterministic behavior for non-reasoning models
+            call_kwargs.setdefault("temperature", 0.0)
+
+        def _invoke_with_messages(_msgs_or_prompt):
+            capabilities = self._get_capabilities()
+
+            # Probe temperature support
+            if "temperature" in call_kwargs:
+                temperature_supported = capabilities.get("temperature")
+                if temperature_supported is False:
+                    call_kwargs.pop("temperature", None)
+                elif temperature_supported is None:
+                    try:
+                        result = self.endpoint.chain.invoke(
+                            _msgs_or_prompt, **call_kwargs
+                        )
+                        self._set_capabilities({"temperature": True})
+                        return result
+                    except TypeError as exc:
+                        if self._is_unsupported_parameter_error(
+                            exc, "temperature"
+                        ):
+                            call_kwargs.pop("temperature", None)
+                            self._set_capabilities({"temperature": False})
+                        else:
+                            raise
+
+            # Probe reasoning_effort support
+            if "reasoning_effort" in call_kwargs:
+                re_supported = capabilities.get("reasoning_effort")
+                if re_supported is False:
+                    call_kwargs.pop("reasoning_effort", None)
+                elif re_supported is None:
+                    try:
+                        result = self.endpoint.chain.invoke(
+                            _msgs_or_prompt, **call_kwargs
+                        )
+                        self._set_capabilities({"reasoning_effort": True})
+                        return result
+                    except TypeError as exc:
+                        if self._is_unsupported_parameter_error(
+                            exc, "reasoning_effort"
+                        ):
+                            call_kwargs.pop("reasoning_effort", None)
+                            self._set_capabilities({"reasoning_effort": False})
+                        else:
+                            raise
+
+            # Final attempt with whatever parameters remain
+            try:
+                return self.endpoint.chain.invoke(
+                    _msgs_or_prompt, **call_kwargs
+                )
+            except Exception as exc:
+                # Last-resort targeted retry if unsupported parameter still slipped through
+                removed_any = False
+                for param in ("temperature", "reasoning_effort"):
+                    if (
+                        param in call_kwargs
+                        and self._is_unsupported_parameter_error(exc, param)
+                    ):
+                        call_kwargs.pop(param, None)
+                        removed_any = True
+                        # Cache negative support
+                        self._set_capabilities({param: False})
+                if removed_any:
+                    return self.endpoint.chain.invoke(
+                        _msgs_or_prompt, **call_kwargs
+                    )
+                raise
+
+        if prompt is not None:
+            predict = _invoke_with_messages(prompt)
         elif messages is not None:
-            messages = [_convert_message(message) for message in messages]
-            predict = self.endpoint.chain.invoke(messages, **kwargs)
+            lc_messages: list[BaseMessage] = [
+                _convert_message(message) for message in messages
+            ]
+            predict = _invoke_with_messages(lc_messages)
             if isinstance(self.endpoint.chain, BaseChatModel):
                 if not isinstance(predict, BaseMessage):
                     raise ValueError(
@@ -81,7 +245,6 @@ class Langchain(llm_provider.LLMProvider):
                     )
             else:
                 raise ValueError("Unexpected `chain` type!")
-
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
 
