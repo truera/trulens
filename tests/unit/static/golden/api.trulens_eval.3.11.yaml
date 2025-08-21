@@ -137,6 +137,8 @@ trulens_eval.Bedrock:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     DEFAULT_MODEL_ID: builtins.str
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -225,6 +227,8 @@ trulens_eval.Cortex:
     DEFAULT_MODEL_ENGINE: builtins.str
     DEFAULT_SNOWPARK_SESSION: typing.Optional[snowflake.snowpark.session.Session,
       builtins.NoneType]
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -408,6 +412,8 @@ trulens_eval.Google:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     DEFAULT_MODEL_ENGINE: builtins.str
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -592,6 +598,8 @@ trulens_eval.Langchain:
   - trulens.feedback.llm_provider.LLMProvider
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -684,6 +692,8 @@ trulens_eval.LiteLLM:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     DEFAULT_MODEL_ENGINE: builtins.str
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     completion_args: typing.Dict[builtins.str, builtins.str]
@@ -2518,6 +2528,8 @@ trulens_eval.feedback.Bedrock:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     DEFAULT_MODEL_ID: builtins.str
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -2606,6 +2618,8 @@ trulens_eval.feedback.Cortex:
     DEFAULT_MODEL_ENGINE: builtins.str
     DEFAULT_SNOWPARK_SESSION: typing.Optional[snowflake.snowpark.session.Session,
       builtins.NoneType]
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -2979,6 +2993,8 @@ trulens_eval.feedback.Langchain:
   - trulens.feedback.llm_provider.LLMProvider
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -3064,6 +3080,8 @@ trulens_eval.feedback.LiteLLM:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     DEFAULT_MODEL_ENGINE: builtins.str
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     completion_args: typing.Dict[builtins.str, builtins.str]
@@ -3620,6 +3638,8 @@ trulens_eval.feedback.provider.Bedrock:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     DEFAULT_MODEL_ID: builtins.str
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -3708,6 +3728,8 @@ trulens_eval.feedback.provider.Cortex:
     DEFAULT_MODEL_ENGINE: builtins.str
     DEFAULT_SNOWPARK_SESSION: typing.Optional[snowflake.snowpark.session.Session,
       builtins.NoneType]
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -3795,6 +3817,8 @@ trulens_eval.feedback.provider.Google:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     DEFAULT_MODEL_ENGINE: builtins.str
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -3979,6 +4003,8 @@ trulens_eval.feedback.provider.Langchain:
   - trulens.feedback.llm_provider.LLMProvider
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -4064,6 +4090,8 @@ trulens_eval.feedback.provider.LiteLLM:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     DEFAULT_MODEL_ENGINE: builtins.str
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     completion_args: typing.Dict[builtins.str, builtins.str]
@@ -4295,6 +4323,8 @@ trulens_eval.feedback.provider.base.LLMProvider:
   - trulens.core.feedback.provider.Provider
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -4429,6 +4459,8 @@ trulens_eval.feedback.provider.bedrock.Bedrock:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     DEFAULT_MODEL_ID: builtins.str
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -4523,6 +4555,8 @@ trulens_eval.feedback.provider.cortex.Cortex:
     DEFAULT_MODEL_ENGINE: builtins.str
     DEFAULT_SNOWPARK_SESSION: typing.Optional[snowflake.snowpark.session.Session,
       builtins.NoneType]
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -6361,6 +6395,8 @@ trulens_eval.feedback.provider.google.Google:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     DEFAULT_MODEL_ENGINE: builtins.str
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -6669,6 +6705,8 @@ trulens_eval.feedback.provider.langchain.Langchain:
   - trulens.feedback.llm_provider.LLMProvider
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -6760,6 +6798,8 @@ trulens_eval.feedback.provider.litellm.LiteLLM:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     DEFAULT_MODEL_ENGINE: builtins.str
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     completion_args: typing.Dict[builtins.str, builtins.str]
