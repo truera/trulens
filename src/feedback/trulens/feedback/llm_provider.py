@@ -711,7 +711,7 @@ class LLMProvider(core_provider.Provider):
             "RELEVANCE:", feedback_prompts.COT_REASONS_TEMPLATE
         )
         logger.debug(system_prompt)
-        print(user_prompt)
+        logger.debug(user_prompt)
         return self.generate_score_and_reasons(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
