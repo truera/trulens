@@ -309,7 +309,7 @@ class LLMProvider(core_provider.Provider):
                     },
                     {"role": "user", "content": response},
                 ]
-                print("[DEBUG] reformatting LLM output text to JSON with an LLM", reformat_messages)
+                logger.debug("Reformatting LLM output text to JSON with an LLM: %s", reformat_messages)
 
                 ref = self.endpoint.run_in_pace(
                     func=self._create_chat_completion,
