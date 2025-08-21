@@ -7,6 +7,7 @@ trulens_eval:
     Cortex: pydantic._internal._model_construction.ModelMetaclass
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
+    Google: pydantic._internal._model_construction.ModelMetaclass
     Huggingface: pydantic._internal._model_construction.ModelMetaclass
     HuggingfaceLocal: pydantic._internal._model_construction.ModelMetaclass
     Langchain: pydantic._internal._model_construction.ModelMetaclass
@@ -399,6 +400,91 @@ trulens_eval.FeedbackMode:
     WITH_APP_THREAD: trulens.core.schema.feedback.FeedbackMode
     name: enum.property
     value: enum.property
+trulens_eval.Google:
+  __bases__:
+  - trulens.feedback.llm_provider.LLMProvider
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    DEFAULT_MODEL_ENGINE: builtins.str
+    coherence: builtins.function
+    coherence_with_cot_reasons: builtins.function
+    comprehensiveness_with_cot_reasons: builtins.function
+    conciseness: builtins.function
+    conciseness_with_cot_reasons: builtins.function
+    construct: builtins.classmethod
+    context_relevance: builtins.function
+    context_relevance_with_cot_reasons: builtins.function
+    controversiality: builtins.function
+    controversiality_with_cot_reasons: builtins.function
+    copy: builtins.function
+    correctness: builtins.function
+    correctness_with_cot_reasons: builtins.function
+    criminality: builtins.function
+    criminality_with_cot_reasons: builtins.function
+    dict: builtins.function
+    endpoint: typing.Optional[trulens.core.feedback.endpoint.Endpoint, builtins.NoneType]
+    execution_efficiency_with_cot_reasons: builtins.function
+    formatted_objects: _contextvars.ContextVar
+    from_orm: builtins.classmethod
+    generate_score: builtins.function
+    generate_score_and_reasons: builtins.function
+    get_class: builtins.staticmethod
+    groundedness_measure_with_cot_reasons: builtins.function
+    groundedness_measure_with_cot_reasons_consider_answerability: builtins.function
+    harmfulness: builtins.function
+    harmfulness_with_cot_reasons: builtins.function
+    helpfulness: builtins.function
+    helpfulness_with_cot_reasons: builtins.function
+    insensitivity: builtins.function
+    insensitivity_with_cot_reasons: builtins.function
+    json: builtins.function
+    load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
+    maliciousness: builtins.function
+    maliciousness_with_cot_reasons: builtins.function
+    misogyny: builtins.function
+    misogyny_with_cot_reasons: builtins.function
+    model_agreement: builtins.function
+    model_computed_fields: pydantic._internal._utils.deprecated_instance_property
+    model_config: builtins.dict
+    model_construct: builtins.classmethod
+    model_copy: builtins.function
+    model_dump: builtins.function
+    model_dump_json: builtins.function
+    model_engine: builtins.str
+    model_extra: builtins.property
+    model_fields: pydantic._internal._utils.deprecated_instance_property
+    model_fields_set: builtins.property
+    model_json_schema: builtins.classmethod
+    model_parametrized_name: builtins.classmethod
+    model_post_init: builtins.function
+    model_rebuild: builtins.classmethod
+    model_validate: builtins.classmethod
+    model_validate_json: builtins.classmethod
+    model_validate_strings: builtins.classmethod
+    of_class: builtins.staticmethod
+    of_object: builtins.staticmethod
+    parse_file: builtins.classmethod
+    parse_obj: builtins.classmethod
+    parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
+    qs_relevance: builtins.function
+    qs_relevance_with_cot_reasons: builtins.function
+    relevance: builtins.function
+    relevance_with_cot_reasons: builtins.function
+    replace: builtins.function
+    schema: builtins.classmethod
+    schema_json: builtins.classmethod
+    sentiment: builtins.function
+    sentiment_with_cot_reasons: builtins.function
+    stereotypes: builtins.function
+    stereotypes_with_cot_reasons: builtins.function
+    summarization_with_cot_reasons: builtins.function
+    tru_class_info: trulens.core.utils.pyschema.Class
+    update: builtins.function
+    update_forward_refs: builtins.classmethod
+    validate: builtins.classmethod
 trulens_eval.Huggingface:
   __bases__:
   - trulens.providers.huggingface.provider.HuggingfaceBase
@@ -2252,6 +2338,7 @@ trulens_eval.database.sqlalchemy.SQLAlchemyDB:
     insert_app: builtins.function
     insert_dataset: builtins.function
     insert_event: builtins.function
+    insert_events: builtins.function
     insert_feedback: builtins.function
     insert_feedback_definition: builtins.function
     insert_ground_truth: builtins.function
@@ -3410,6 +3497,7 @@ trulens_eval.feedback.provider:
     AzureOpenAI: pydantic._internal._model_construction.ModelMetaclass
     Bedrock: pydantic._internal._model_construction.ModelMetaclass
     Cortex: pydantic._internal._model_construction.ModelMetaclass
+    Google: pydantic._internal._model_construction.ModelMetaclass
     Huggingface: pydantic._internal._model_construction.ModelMetaclass
     HuggingfaceLocal: pydantic._internal._model_construction.ModelMetaclass
     Langchain: pydantic._internal._model_construction.ModelMetaclass
@@ -3684,6 +3772,91 @@ trulens_eval.feedback.provider.Cortex:
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
     snowpark_session: snowflake.snowpark.session.Session
+    stereotypes: builtins.function
+    stereotypes_with_cot_reasons: builtins.function
+    summarization_with_cot_reasons: builtins.function
+    tru_class_info: trulens.core.utils.pyschema.Class
+    update: builtins.function
+    update_forward_refs: builtins.classmethod
+    validate: builtins.classmethod
+trulens_eval.feedback.provider.Google:
+  __bases__:
+  - trulens.feedback.llm_provider.LLMProvider
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    DEFAULT_MODEL_ENGINE: builtins.str
+    coherence: builtins.function
+    coherence_with_cot_reasons: builtins.function
+    comprehensiveness_with_cot_reasons: builtins.function
+    conciseness: builtins.function
+    conciseness_with_cot_reasons: builtins.function
+    construct: builtins.classmethod
+    context_relevance: builtins.function
+    context_relevance_with_cot_reasons: builtins.function
+    controversiality: builtins.function
+    controversiality_with_cot_reasons: builtins.function
+    copy: builtins.function
+    correctness: builtins.function
+    correctness_with_cot_reasons: builtins.function
+    criminality: builtins.function
+    criminality_with_cot_reasons: builtins.function
+    dict: builtins.function
+    endpoint: typing.Optional[trulens.core.feedback.endpoint.Endpoint, builtins.NoneType]
+    execution_efficiency_with_cot_reasons: builtins.function
+    formatted_objects: _contextvars.ContextVar
+    from_orm: builtins.classmethod
+    generate_score: builtins.function
+    generate_score_and_reasons: builtins.function
+    get_class: builtins.staticmethod
+    groundedness_measure_with_cot_reasons: builtins.function
+    groundedness_measure_with_cot_reasons_consider_answerability: builtins.function
+    harmfulness: builtins.function
+    harmfulness_with_cot_reasons: builtins.function
+    helpfulness: builtins.function
+    helpfulness_with_cot_reasons: builtins.function
+    insensitivity: builtins.function
+    insensitivity_with_cot_reasons: builtins.function
+    json: builtins.function
+    load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
+    maliciousness: builtins.function
+    maliciousness_with_cot_reasons: builtins.function
+    misogyny: builtins.function
+    misogyny_with_cot_reasons: builtins.function
+    model_agreement: builtins.function
+    model_computed_fields: pydantic._internal._utils.deprecated_instance_property
+    model_config: builtins.dict
+    model_construct: builtins.classmethod
+    model_copy: builtins.function
+    model_dump: builtins.function
+    model_dump_json: builtins.function
+    model_engine: builtins.str
+    model_extra: builtins.property
+    model_fields: pydantic._internal._utils.deprecated_instance_property
+    model_fields_set: builtins.property
+    model_json_schema: builtins.classmethod
+    model_parametrized_name: builtins.classmethod
+    model_post_init: builtins.function
+    model_rebuild: builtins.classmethod
+    model_validate: builtins.classmethod
+    model_validate_json: builtins.classmethod
+    model_validate_strings: builtins.classmethod
+    of_class: builtins.staticmethod
+    of_object: builtins.staticmethod
+    parse_file: builtins.classmethod
+    parse_obj: builtins.classmethod
+    parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
+    qs_relevance: builtins.function
+    qs_relevance_with_cot_reasons: builtins.function
+    relevance: builtins.function
+    relevance_with_cot_reasons: builtins.function
+    replace: builtins.function
+    schema: builtins.classmethod
+    schema_json: builtins.classmethod
+    sentiment: builtins.function
+    sentiment_with_cot_reasons: builtins.function
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -4426,6 +4599,7 @@ trulens_eval.feedback.provider.endpoint:
     CortexEndpoint: pydantic._internal._model_construction.ModelMetaclass
     DummyEndpoint: pydantic._internal._model_construction.ModelMetaclass
     Endpoint: pydantic._internal._model_construction.ModelMetaclass
+    GoogleEndpoint: pydantic._internal._model_construction.ModelMetaclass
     HuggingfaceEndpoint: pydantic._internal._model_construction.ModelMetaclass
     LangchainEndpoint: pydantic._internal._model_construction.ModelMetaclass
     LiteLLMEndpoint: pydantic._internal._model_construction.ModelMetaclass
@@ -4712,6 +4886,77 @@ trulens_eval.feedback.provider.endpoint.Endpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
+    wrap_function: builtins.function
+trulens_eval.feedback.provider.endpoint.GoogleEndpoint:
+  __bases__:
+  - trulens.core.feedback.endpoint.Endpoint
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    BASE_ENDPOINTS: builtins.dict
+    ENDPOINT_SETUPS: builtins.list
+    EndpointSetup: builtins.type
+    apace_me: builtins.function
+    api_key: typing.Optional[builtins.str, builtins.NoneType]
+    callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
+    callback_name: builtins.str
+    client: typing.Optional[google.genai.client.Client, builtins.NoneType]
+    construct: builtins.classmethod
+    copy: builtins.function
+    credentials: typing.Optional[google.auth.credentials.Credentials, builtins.NoneType]
+    delete_instances: builtins.classmethod
+    dict: builtins.function
+    formatted_objects: _contextvars.ContextVar
+    from_orm: builtins.classmethod
+    get_class: builtins.staticmethod
+    get_instances: builtins.classmethod
+    global_callback: trulens.core.feedback.endpoint.EndpointCallback
+    handle_wrapped_call: builtins.function
+    instrumented_methods: collections.defaultdict
+    json: builtins.function
+    load: builtins.staticmethod
+    location: typing.Optional[builtins.str, builtins.NoneType]
+    model_computed_fields: pydantic._internal._utils.deprecated_instance_property
+    model_config: builtins.dict
+    model_construct: builtins.classmethod
+    model_copy: builtins.function
+    model_dump: builtins.function
+    model_dump_json: builtins.function
+    model_extra: builtins.property
+    model_fields: pydantic._internal._utils.deprecated_instance_property
+    model_fields_set: builtins.property
+    model_json_schema: builtins.classmethod
+    model_parametrized_name: builtins.classmethod
+    model_post_init: builtins.function
+    model_rebuild: builtins.classmethod
+    model_validate: builtins.classmethod
+    model_validate_json: builtins.classmethod
+    model_validate_strings: builtins.classmethod
+    name: builtins.str
+    of_class: builtins.staticmethod
+    of_object: builtins.staticmethod
+    pace: trulens.core.utils.pace.Pace
+    pace_me: builtins.function
+    parse_file: builtins.classmethod
+    parse_obj: builtins.classmethod
+    parse_raw: builtins.classmethod
+    post_headers: typing.Dict[builtins.str, builtins.str]
+    print_instrumented: builtins.classmethod
+    project: typing.Optional[builtins.str, builtins.NoneType]
+    replace: builtins.function
+    retries: builtins.int
+    rpm: builtins.float
+    run_in_pace: builtins.function
+    run_me: builtins.function
+    schema: builtins.classmethod
+    schema_json: builtins.classmethod
+    track_all_costs: builtins.staticmethod
+    track_all_costs_tally: builtins.staticmethod
+    track_cost: builtins.function
+    tru_class_info: trulens.core.utils.pyschema.Class
+    update: builtins.function
+    update_forward_refs: builtins.classmethod
+    validate: builtins.classmethod
+    vertexai: typing.Optional[builtins.bool, builtins.NoneType]
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.HuggingfaceEndpoint:
   __bases__:
@@ -5455,6 +5700,128 @@ trulens_eval.feedback.provider.endpoint.cortex.CortexEndpoint:
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
     wrap_function: builtins.function
+trulens_eval.feedback.provider.endpoint.google:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    GoogleCallback: pydantic._internal._model_construction.ModelMetaclass
+    GoogleEndpoint: pydantic._internal._model_construction.ModelMetaclass
+    deprecation_utils: builtins.module
+trulens_eval.feedback.provider.endpoint.google.GoogleCallback:
+  __bases__:
+  - trulens.core.feedback.endpoint.EndpointCallback
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    construct: builtins.classmethod
+    copy: builtins.function
+    cost: trulens.core.schema.base.Cost
+    dict: builtins.function
+    endpoint: trulens.core.feedback.endpoint.Endpoint
+    formatted_objects: _contextvars.ContextVar
+    from_orm: builtins.classmethod
+    handle: builtins.function
+    handle_chunk: builtins.function
+    handle_classification: builtins.function
+    handle_embedding: builtins.function
+    handle_generation: builtins.function
+    handle_generation_chunk: builtins.function
+    json: builtins.function
+    model_computed_fields: pydantic._internal._utils.deprecated_instance_property
+    model_config: builtins.dict
+    model_construct: builtins.classmethod
+    model_copy: builtins.function
+    model_dump: builtins.function
+    model_dump_json: builtins.function
+    model_extra: builtins.property
+    model_fields: pydantic._internal._utils.deprecated_instance_property
+    model_fields_set: builtins.property
+    model_json_schema: builtins.classmethod
+    model_parametrized_name: builtins.classmethod
+    model_post_init: builtins.function
+    model_rebuild: builtins.classmethod
+    model_validate: builtins.classmethod
+    model_validate_json: builtins.classmethod
+    model_validate_strings: builtins.classmethod
+    parse_file: builtins.classmethod
+    parse_obj: builtins.classmethod
+    parse_raw: builtins.classmethod
+    replace: builtins.function
+    schema: builtins.classmethod
+    schema_json: builtins.classmethod
+    update: builtins.function
+    update_forward_refs: builtins.classmethod
+    validate: builtins.classmethod
+trulens_eval.feedback.provider.endpoint.google.GoogleEndpoint:
+  __bases__:
+  - trulens.core.feedback.endpoint.Endpoint
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    BASE_ENDPOINTS: builtins.dict
+    ENDPOINT_SETUPS: builtins.list
+    EndpointSetup: builtins.type
+    apace_me: builtins.function
+    api_key: typing.Optional[builtins.str, builtins.NoneType]
+    callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
+    callback_name: builtins.str
+    client: typing.Optional[google.genai.client.Client, builtins.NoneType]
+    construct: builtins.classmethod
+    copy: builtins.function
+    credentials: typing.Optional[google.auth.credentials.Credentials, builtins.NoneType]
+    delete_instances: builtins.classmethod
+    dict: builtins.function
+    formatted_objects: _contextvars.ContextVar
+    from_orm: builtins.classmethod
+    get_class: builtins.staticmethod
+    get_instances: builtins.classmethod
+    global_callback: trulens.core.feedback.endpoint.EndpointCallback
+    handle_wrapped_call: builtins.function
+    instrumented_methods: collections.defaultdict
+    json: builtins.function
+    load: builtins.staticmethod
+    location: typing.Optional[builtins.str, builtins.NoneType]
+    model_computed_fields: pydantic._internal._utils.deprecated_instance_property
+    model_config: builtins.dict
+    model_construct: builtins.classmethod
+    model_copy: builtins.function
+    model_dump: builtins.function
+    model_dump_json: builtins.function
+    model_extra: builtins.property
+    model_fields: pydantic._internal._utils.deprecated_instance_property
+    model_fields_set: builtins.property
+    model_json_schema: builtins.classmethod
+    model_parametrized_name: builtins.classmethod
+    model_post_init: builtins.function
+    model_rebuild: builtins.classmethod
+    model_validate: builtins.classmethod
+    model_validate_json: builtins.classmethod
+    model_validate_strings: builtins.classmethod
+    name: builtins.str
+    of_class: builtins.staticmethod
+    of_object: builtins.staticmethod
+    pace: trulens.core.utils.pace.Pace
+    pace_me: builtins.function
+    parse_file: builtins.classmethod
+    parse_obj: builtins.classmethod
+    parse_raw: builtins.classmethod
+    post_headers: typing.Dict[builtins.str, builtins.str]
+    print_instrumented: builtins.classmethod
+    project: typing.Optional[builtins.str, builtins.NoneType]
+    replace: builtins.function
+    retries: builtins.int
+    rpm: builtins.float
+    run_in_pace: builtins.function
+    run_me: builtins.function
+    schema: builtins.classmethod
+    schema_json: builtins.classmethod
+    track_all_costs: builtins.staticmethod
+    track_all_costs_tally: builtins.staticmethod
+    track_cost: builtins.function
+    tru_class_info: trulens.core.utils.pyschema.Class
+    update: builtins.function
+    update_forward_refs: builtins.classmethod
+    validate: builtins.classmethod
+    vertexai: typing.Optional[builtins.bool, builtins.NoneType]
+    wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.hugs:
   __class__: builtins.module
   highs: {}
@@ -5970,6 +6337,97 @@ trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint:
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
     wrap_function: builtins.function
+trulens_eval.feedback.provider.google:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    Google: pydantic._internal._model_construction.ModelMetaclass
+    deprecation_utils: builtins.module
+trulens_eval.feedback.provider.google.Google:
+  __bases__:
+  - trulens.feedback.llm_provider.LLMProvider
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    DEFAULT_MODEL_ENGINE: builtins.str
+    coherence: builtins.function
+    coherence_with_cot_reasons: builtins.function
+    comprehensiveness_with_cot_reasons: builtins.function
+    conciseness: builtins.function
+    conciseness_with_cot_reasons: builtins.function
+    construct: builtins.classmethod
+    context_relevance: builtins.function
+    context_relevance_with_cot_reasons: builtins.function
+    controversiality: builtins.function
+    controversiality_with_cot_reasons: builtins.function
+    copy: builtins.function
+    correctness: builtins.function
+    correctness_with_cot_reasons: builtins.function
+    criminality: builtins.function
+    criminality_with_cot_reasons: builtins.function
+    dict: builtins.function
+    endpoint: typing.Optional[trulens.core.feedback.endpoint.Endpoint, builtins.NoneType]
+    execution_efficiency_with_cot_reasons: builtins.function
+    formatted_objects: _contextvars.ContextVar
+    from_orm: builtins.classmethod
+    generate_score: builtins.function
+    generate_score_and_reasons: builtins.function
+    get_class: builtins.staticmethod
+    groundedness_measure_with_cot_reasons: builtins.function
+    groundedness_measure_with_cot_reasons_consider_answerability: builtins.function
+    harmfulness: builtins.function
+    harmfulness_with_cot_reasons: builtins.function
+    helpfulness: builtins.function
+    helpfulness_with_cot_reasons: builtins.function
+    insensitivity: builtins.function
+    insensitivity_with_cot_reasons: builtins.function
+    json: builtins.function
+    load: builtins.staticmethod
+    logical_consistency_with_cot_reasons: builtins.function
+    maliciousness: builtins.function
+    maliciousness_with_cot_reasons: builtins.function
+    misogyny: builtins.function
+    misogyny_with_cot_reasons: builtins.function
+    model_agreement: builtins.function
+    model_computed_fields: pydantic._internal._utils.deprecated_instance_property
+    model_config: builtins.dict
+    model_construct: builtins.classmethod
+    model_copy: builtins.function
+    model_dump: builtins.function
+    model_dump_json: builtins.function
+    model_engine: builtins.str
+    model_extra: builtins.property
+    model_fields: pydantic._internal._utils.deprecated_instance_property
+    model_fields_set: builtins.property
+    model_json_schema: builtins.classmethod
+    model_parametrized_name: builtins.classmethod
+    model_post_init: builtins.function
+    model_rebuild: builtins.classmethod
+    model_validate: builtins.classmethod
+    model_validate_json: builtins.classmethod
+    model_validate_strings: builtins.classmethod
+    of_class: builtins.staticmethod
+    of_object: builtins.staticmethod
+    parse_file: builtins.classmethod
+    parse_obj: builtins.classmethod
+    parse_raw: builtins.classmethod
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
+    qs_relevance: builtins.function
+    qs_relevance_with_cot_reasons: builtins.function
+    relevance: builtins.function
+    relevance_with_cot_reasons: builtins.function
+    replace: builtins.function
+    schema: builtins.classmethod
+    schema_json: builtins.classmethod
+    sentiment: builtins.function
+    sentiment_with_cot_reasons: builtins.function
+    stereotypes: builtins.function
+    stereotypes_with_cot_reasons: builtins.function
+    summarization_with_cot_reasons: builtins.function
+    tru_class_info: trulens.core.utils.pyschema.Class
+    update: builtins.function
+    update_forward_refs: builtins.classmethod
+    validate: builtins.classmethod
 trulens_eval.feedback.provider.hugs:
   __class__: builtins.module
   highs: {}
