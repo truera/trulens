@@ -22,6 +22,8 @@ import openai as oai
 
 logger = logging.getLogger(__name__)
 
+SEED: int = 123
+
 
 # --- Optional CFG grammars matching feedback output schemas ---
 # Fixed-field-order JSON grammars for robust constrained generation.
@@ -462,7 +464,7 @@ class OpenAI(llm_provider.LLMProvider):
 
         # Route through capability probing + caching for robust behavior
         if "seed" not in kwargs:
-            kwargs["seed"] = 123
+            kwargs["seed"] = SEED
 
         # Auto‑enable CFG for feedback schemas when available (gpt-5*)
         try:
