@@ -1,6 +1,5 @@
 import logging
-import threading
-from typing import Dict, Optional, Sequence, Type, TypedDict, Union
+from typing import Dict, Optional, Sequence, Type, Union
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.language_models.llms import BaseLLM
@@ -12,15 +11,6 @@ from trulens.feedback import llm_provider
 from trulens.providers.langchain import endpoint as langchain_endpoint
 
 logger = logging.getLogger(__name__)
-_capabilities_lock = threading.Lock()
-
-
-class ModelCapabilities(TypedDict, total=False):
-    temperature: bool
-    reasoning_effort: bool
-
-
-_model_capabilities_cache: Dict[str, ModelCapabilities] = {}
 
 
 def _convert_message(message: Union[Dict, BaseMessage]) -> BaseMessage:
@@ -67,35 +57,10 @@ class Langchain(llm_provider.LLMProvider):
 
         super().__init__(**self_kwargs)
 
-    # --- Capability probing and caching helpers ---
-    def _capabilities_key(self) -> str:
+    # Capability probing and caching helpers come from LLMProvider
+    def _capabilities_key(self) -> str:  # type: ignore[override]
         # Prefer explicit model_engine; fallback to LC class name
         return self.model_engine or type(self.endpoint.chain).__name__
-
-    def _get_capabilities(self) -> ModelCapabilities:
-        with _capabilities_lock:
-            return _model_capabilities_cache.get(self._capabilities_key(), {})
-
-    def _set_capabilities(self, updates: ModelCapabilities) -> None:
-        with _capabilities_lock:
-            current = _model_capabilities_cache.get(
-                self._capabilities_key(), {}
-            )
-            current.update(updates)
-            _model_capabilities_cache[self._capabilities_key()] = current
-
-    @classmethod
-    def clear_model_capabilities_cache(
-        cls, model_engine: Optional[str] = None
-    ) -> None:
-        with _capabilities_lock:
-            if model_engine is None:
-                _model_capabilities_cache.clear()
-            else:
-                _model_capabilities_cache.pop(model_engine, None)
-
-    def clear_capabilities_cache(self) -> None:
-        self.clear_model_capabilities_cache(self._capabilities_key())
 
     def _is_reasoning_model(self) -> bool:
         """Heuristic check for common reasoning model names.
