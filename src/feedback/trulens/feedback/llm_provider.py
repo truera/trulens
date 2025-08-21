@@ -309,7 +309,10 @@ class LLMProvider(core_provider.Provider):
                     },
                     {"role": "user", "content": response},
                 ]
-                logger.debug("Reformatting LLM output text to JSON with an LLM: %s", reformat_messages)
+                logger.debug(
+                    "Reformatting LLM output text to JSON with an LLM: %s",
+                    reformat_messages,
+                )
 
                 ref = self.endpoint.run_in_pace(
                     func=self._create_chat_completion,
@@ -318,7 +321,9 @@ class LLMProvider(core_provider.Provider):
                     **extra_kwargs,
                 )
 
-                if isinstance(ref, feedback_output_schemas.ChainOfThoughtResponse):
+                if isinstance(
+                    ref, feedback_output_schemas.ChainOfThoughtResponse
+                ):
                     score = ref.score
                     criteria = ref.criteria
                     supporting_evidence = ref.supporting_evidence
@@ -328,7 +333,9 @@ class LLMProvider(core_provider.Provider):
                             f"{supporting_evidence_field}: {supporting_evidence}"
                         )
                     }
-                    score = (score - min_score_val) / (max_score_val - min_score_val)
+                    score = (score - min_score_val) / (
+                        max_score_val - min_score_val
+                    )
                     return score, reasons
                 elif isinstance(ref, str):
                     try:
