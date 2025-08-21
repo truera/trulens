@@ -76,11 +76,12 @@ class LiteLLM(llm_provider.LLMProvider):
                 """
             )
 
-        self_kwargs = dict()
+        self_kwargs: Dict[str, object] = {}
         self_kwargs.update(**kwargs)
         self_kwargs["model_engine"] = model_engine
         self_kwargs["litellm_provider"] = litellm_provider
-        self_kwargs["completion_args"] = completion_kwargs
+        # store completion kwargs dict on the provider
+        self_kwargs["completion_args"] = dict(completion_kwargs)
         self_kwargs["endpoint"] = litellm_endpoint.LiteLLMEndpoint(
             litellm_provider=litellm_provider, **kwargs
         )
@@ -89,14 +90,29 @@ class LiteLLM(llm_provider.LLMProvider):
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
+    # Prefer caching keyed by provider+model to avoid cross-provider collisions
+    def _capabilities_key(self) -> str:  # type: ignore[override]
+        provider = getattr(self, "litellm_provider", "") or "unknown"
+        return f"{provider}:{self.model_engine}"
+
+    def _is_reasoning_model(self) -> bool:
+        raw = (self.model_engine or "").lower()
+        # Consider provider-prefixed ids like "snowflake/o3-mini" or "anthropic/claude-...-thinking"
+        name = raw.split("/", 1)[1] if "/" in raw else raw
+        prefixes = ("o1", "o3", "o4", "gpt-5", "deepseek-r1")
+        if any(name.startswith(p) for p in prefixes):
+            return True
+        return ("reasoning" in name) or ("thinking" in name)
+
     def _create_chat_completion(
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
         response_format: Optional[Type[BaseModel]] = None,
+        reasoning_effort: Optional[str] = None,
         **kwargs,
     ) -> str:
-        completion_args = kwargs
+        completion_args = dict(kwargs)
         completion_args["model"] = self.model_engine
         completion_args.update(self.completion_args)
 
@@ -121,5 +137,78 @@ class LiteLLM(llm_provider.LLMProvider):
                 k: v for k, v in completion_args.items() if k in params
             }
 
-        comp = completion(**completion_args)
-        return comp.choices[0].message.content
+        # Handle reasoning models vs non-reasoning defaults
+        if self._is_reasoning_model():
+            if "temperature" in completion_args:
+                logger.warning(
+                    "Temperature parameter is not supported for reasoning models. Removing."
+                )
+                completion_args.pop("temperature", None)
+            if reasoning_effort is not None:
+                if reasoning_effort in ("low", "medium", "high"):
+                    completion_args["reasoning_effort"] = reasoning_effort
+                else:
+                    logger.warning(
+                        f"Invalid reasoning_effort '{reasoning_effort}'. Must be 'low', 'medium', or 'high'."
+                    )
+        else:
+            completion_args.setdefault("temperature", 0.0)
+
+        # Probe and cache support for temperature and reasoning_effort
+        capabilities = self._get_capabilities()
+
+        # Temperature
+        if "temperature" in completion_args:
+            temp_supported = capabilities.get("temperature")
+            if temp_supported is False:
+                completion_args.pop("temperature", None)
+            elif temp_supported is None:
+                try:
+                    comp = completion(**completion_args)
+                    self._set_capabilities({"temperature": True})
+                    return comp.choices[0].message.content
+                except Exception as exc:
+                    if self._is_unsupported_parameter_error(exc, "temperature"):
+                        completion_args.pop("temperature", None)
+                        self._set_capabilities({"temperature": False})
+                    else:
+                        raise
+
+        # Reasoning effort
+        if "reasoning_effort" in completion_args:
+            re_supported = capabilities.get("reasoning_effort")
+            if re_supported is False:
+                completion_args.pop("reasoning_effort", None)
+            elif re_supported is None:
+                try:
+                    comp = completion(**completion_args)
+                    self._set_capabilities({"reasoning_effort": True})
+                    return comp.choices[0].message.content
+                except Exception as exc:
+                    if self._is_unsupported_parameter_error(
+                        exc, "reasoning_effort"
+                    ):
+                        completion_args.pop("reasoning_effort", None)
+                        self._set_capabilities({"reasoning_effort": False})
+                    else:
+                        raise
+
+        # Final attempt with whatever parameters remain
+        try:
+            comp = completion(**completion_args)
+            return comp.choices[0].message.content
+        except Exception as exc:
+            # Last-resort targeted retry if unsupported parameter still slipped through
+            removed_any = False
+            for param in ("temperature", "reasoning_effort"):
+                if (
+                    param in completion_args
+                    and self._is_unsupported_parameter_error(exc, param)
+                ):
+                    completion_args.pop(param, None)
+                    removed_any = True
+                    self._set_capabilities({param: False})
+            if removed_any:
+                comp = completion(**completion_args)
+                return comp.choices[0].message.content
+            raise
