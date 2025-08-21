@@ -4,12 +4,15 @@ from typing import Any, Dict, Optional
 
 import pydantic
 import pytest
-from trulens.providers.openai import OpenAI
 
 
 @pytest.fixture(autouse=True)
 def _reset_model_capabilities_cache():
     # Ensure each test starts with a clean capability cache
+    from trulens.providers.openai import (
+        OpenAI,  # type: ignore[import-not-found]
+    )
+
     OpenAI.clear_model_capabilities_cache()
     yield
     # And leave no residue for other modules
@@ -77,7 +80,9 @@ class _DummyClient:
 
 def _make_provider(monkeypatch, model_engine: str = "gpt-4o-mini"):
     # Import here to avoid heavy imports at module import time
-    from trulens.providers.openai import OpenAI
+    from trulens.providers.openai import (
+        OpenAI,  # type: ignore[import-not-found]
+    )
 
     provider = OpenAI(model_engine=model_engine)
 
@@ -88,6 +93,7 @@ def _make_provider(monkeypatch, model_engine: str = "gpt-4o-mini"):
     return provider
 
 
+@pytest.mark.optional
 def test_structured_outputs_success_then_cached(monkeypatch):
     provider = _make_provider(monkeypatch)
 
@@ -112,6 +118,7 @@ def test_structured_outputs_success_then_cached(monkeypatch):
     assert provider.endpoint.client.responses.parse_calls == 2
 
 
+@pytest.mark.optional
 def test_structured_outputs_fallback_and_cached(monkeypatch):
     provider = _make_provider(monkeypatch)
 
@@ -140,6 +147,7 @@ def test_structured_outputs_fallback_and_cached(monkeypatch):
     assert len(provider.endpoint.client.chat.completions.create_calls) == 1
 
 
+@pytest.mark.optional
 def test_temperature_fallback_and_cached(monkeypatch):
     provider = _make_provider(monkeypatch)
 
@@ -173,6 +181,7 @@ def test_temperature_fallback_and_cached(monkeypatch):
     assert "temperature" not in calls2[0]
 
 
+@pytest.mark.optional
 def test_temperature_success_and_cached(monkeypatch):
     provider = _make_provider(monkeypatch)
 
@@ -201,6 +210,7 @@ def test_temperature_success_and_cached(monkeypatch):
     assert calls2[0]["temperature"] == 0.9
 
 
+@pytest.mark.optional
 def test_reasoning_effort_fallback_and_cached(monkeypatch):
     # Use a reasoning model id so upstream logic keeps reasoning_effort
     provider = _make_provider(monkeypatch, model_engine="o1-mini")
@@ -227,6 +237,7 @@ def test_reasoning_effort_fallback_and_cached(monkeypatch):
     assert "reasoning_effort" not in calls[0]
 
 
+@pytest.mark.optional
 def test_reasoning_effort_success_and_cached(monkeypatch):
     # Use a reasoning model so provider sets/keeps reasoning_effort
     provider = _make_provider(monkeypatch, model_engine="o1-mini")
@@ -255,6 +266,7 @@ def test_reasoning_effort_success_and_cached(monkeypatch):
     assert calls2[0].get("reasoning_effort") == "low"
 
 
+@pytest.mark.optional
 def test_is_reasoning_model_gpt5():
     from trulens.providers.openai import OpenAI
 
@@ -292,6 +304,7 @@ class _DummyResponsesWithCreate:
         return _Response([_Item(self.tool_input)])
 
 
+@pytest.mark.optional
 def test_cfg_success_then_cached(monkeypatch):
     # Use a gpt-5 model so CFG auto-enable is considered
     provider = _make_provider(monkeypatch, model_engine="gpt-5-mini")
@@ -321,6 +334,7 @@ def test_cfg_success_then_cached(monkeypatch):
     assert provider.endpoint.client.responses.create_calls == 2
 
 
+@pytest.mark.optional
 def test_cfg_failure_then_cached_skip(monkeypatch):
     # Use a gpt-5 model so CFG auto-enable is considered
     provider = _make_provider(monkeypatch, model_engine="gpt-5-mini")
