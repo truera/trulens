@@ -529,6 +529,7 @@ class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
         - RESPONSE that is RELEVANT and answers the entire PROMPT completely should get a score of {max_score}.
         - RESPONSE that confidently FALSE should get a score of {min_score}.
         - RESPONSE that is only seemingly RELEVANT should get a score of {min_score}.
+        - Long RESPONSES should score equally well as short RESPONSES.
         - Answers that intentionally do not answer the question, such as 'I don't know' and model refusals, should also be counted as the least RELEVANT and get a score of {min_score}.
     """
 
@@ -538,17 +539,16 @@ class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
     )
 
     system_prompt_template: ClassVar[str] = cleandoc(
-        """You are a RELEVANCE grader; providing the relevance of the given RESPONSE to the given PROMPT.
-        Respond only as a number from {output_space_prompt}.
+        """
+        You are a RELEVANCE grader; evaluate how relevant the RESPONSE is to the PROMPT.
 
         Criteria for evaluating relevance:
         {criteria}
 
-        A few additional scoring guidelines:
-
-        - Long RESPONSES should score equally well as short RESPONSES.
-
-        - Never elaborate.
+        Output only a single-line JSON object with exactly these keys:
+          "criteria"             – one concise sentence that states your rationale with reference to the rubric
+          "supporting_evidence"  – An explanation of why you scored the way you did using exact words or evidence from the response
+          "score"                – {output_space_prompt}
         """
     )
 
@@ -559,11 +559,12 @@ class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
     )
 
     user_prompt: ClassVar[str] = cleandoc(
-        """PROMPT: {prompt}
+        """
+        PROMPT: {prompt}
 
         RESPONSE: {response}
 
-        RELEVANCE:
+        Produce the JSON object now.
         """
     )
 
