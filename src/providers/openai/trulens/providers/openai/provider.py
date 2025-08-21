@@ -57,6 +57,7 @@ class ModelCapabilities(TypedDict, total=False):
     structured_outputs: bool
     temperature: bool
     reasoning_effort: bool
+    cfg: bool
 
 
 _model_capabilities_cache: Dict[str, ModelCapabilities] = {}
@@ -111,7 +112,7 @@ class OpenAI(llm_provider.LLMProvider):
 
         # Separate set of args for our attributes because only a subset go into
         # endpoint below.
-        self_kwargs = dict()
+        self_kwargs: Dict[str, Any] = dict()
         self_kwargs.update(**kwargs)
         self_kwargs["model_engine"] = model_engine
 
@@ -233,7 +234,12 @@ class OpenAI(llm_provider.LLMProvider):
             "grammar_description", "Custom grammar-constrained generation."
         )
 
-        if grammar_syntax and grammar_definition:
+        cfg_capability = capabilities.get("cfg")
+        if (
+            grammar_syntax
+            and grammar_definition
+            and (cfg_capability is None or cfg_capability is True)
+        ):
             try:
                 # Filter params not supported by responses.create (e.g., reasoning_effort)
                 _responses_kwargs = {
@@ -261,6 +267,9 @@ class OpenAI(llm_provider.LLMProvider):
                     **_responses_kwargs,
                 )
 
+                # Mark CFG as supported for this model
+                self._set_capabilities({"cfg": True})
+
                 if hasattr(response, "output"):
                     out_items = getattr(response, "output")
                     for item in out_items:
@@ -283,6 +292,8 @@ class OpenAI(llm_provider.LLMProvider):
                 except Exception:
                     return str(response)
             except Exception as exc:
+                # Mark CFG as unsupported to avoid re-trying on subsequent calls
+                self._set_capabilities({"cfg": False})
                 logger.debug(
                     f"[TruLens] CFG grammar invocation failed for model '{self.model_engine}': {exc}. Falling back."
                 )

@@ -261,3 +261,97 @@ def test_is_reasoning_model_gpt5():
     assert OpenAI(model_engine="gpt-5-mini")._is_reasoning_model() is True
     assert OpenAI(model_engine="gpt-5")._is_reasoning_model() is True
     assert OpenAI(model_engine="gpt-4o-mini")._is_reasoning_model() is False
+
+
+class _DummyResponsesWithCreate:
+    def __init__(self, *, should_succeed: bool, tool_input: str = "ok_cfg"):
+        self.should_succeed = should_succeed
+        self.tool_input = tool_input
+        self.create_calls = 0
+        self.parse_calls = 0
+
+    # Structured outputs path should be bypassed or set unsupported
+    def parse(self, *args, **kwargs):  # noqa: ANN001
+        self.parse_calls += 1
+        raise Exception("structured outputs unsupported")
+
+    def create(self, *args, **kwargs):  # noqa: ANN001
+        self.create_calls += 1
+        if not self.should_succeed:
+            raise Exception("cfg unsupported")
+
+        class _Item:
+            def __init__(self, text: str):
+                self.type = "tool"
+                self.input = text
+
+        class _Response:
+            def __init__(self, items):
+                self.output = items
+
+        return _Response([_Item(self.tool_input)])
+
+
+def test_cfg_success_then_cached(monkeypatch):
+    # Use a gpt-5 model so CFG auto-enable is considered
+    provider = _make_provider(monkeypatch, model_engine="gpt-5-mini")
+
+    # Swap in a responses client that supports create() with grammar tool
+    provider.endpoint.client.responses = _DummyResponsesWithCreate(
+        should_succeed=True, tool_input="ok_cfg"
+    )
+
+    from trulens.feedback import (
+        output_schemas as feedback_output_schemas,  # type: ignore[import-not-found]
+    )
+
+    out = provider._create_chat_completion(
+        messages=[{"role": "user", "content": "hi"}],
+        response_format=feedback_output_schemas.BaseFeedbackResponse,
+    )
+    assert out == "ok_cfg"
+    assert provider.endpoint.client.responses.create_calls == 1
+
+    # Second call should use cached cfg=True and attempt create again
+    out2 = provider._create_chat_completion(
+        messages=[{"role": "user", "content": "hi2"}],
+        response_format=feedback_output_schemas.BaseFeedbackResponse,
+    )
+    assert out2 == "ok_cfg"
+    assert provider.endpoint.client.responses.create_calls == 2
+
+
+def test_cfg_failure_then_cached_skip(monkeypatch):
+    # Use a gpt-5 model so CFG auto-enable is considered
+    provider = _make_provider(monkeypatch, model_engine="gpt-5-mini")
+
+    # responses.create will fail; responses.parse also fails -> fallback to chat.completions
+    provider.endpoint.client.responses = _DummyResponsesWithCreate(
+        should_succeed=False
+    )
+
+    from trulens.feedback import (
+        output_schemas as feedback_output_schemas,  # type: ignore[import-not-found]
+    )
+
+    out = provider._create_chat_completion(
+        messages=[{"role": "user", "content": "hi"}],
+        response_format=feedback_output_schemas.BaseFeedbackResponse,
+    )
+    # Should have fallen back to chat completions' "ok"
+    assert out == "ok"
+    assert provider.endpoint.client.responses.create_calls == 1
+    # Structured outputs was attempted and failed once, then chat was used
+    assert len(provider.endpoint.client.chat.completions.create_calls) >= 1
+
+    # Clear chat call log and call again; cfg should be cached False and skip create
+    provider.endpoint.client.chat.completions.create_calls.clear()
+    out2 = provider._create_chat_completion(
+        messages=[{"role": "user", "content": "hi2"}],
+        response_format=feedback_output_schemas.BaseFeedbackResponse,
+    )
+    assert out2 == "ok"
+    # Still only 1 attempt to create (from first call)
+    assert provider.endpoint.client.responses.create_calls == 1
+    # And chat.completions used again
+    assert len(provider.endpoint.client.chat.completions.create_calls) == 1
