@@ -1,5 +1,4 @@
 import logging
-import threading
 from typing import (
     Any,
     ClassVar,
@@ -7,7 +6,6 @@ from typing import (
     Optional,
     Sequence,
     Type,
-    TypedDict,
     Union,
 )
 
@@ -47,20 +45,6 @@ CHAIN_OF_THOUGHT_RESPONSE_LARK_GRAMMAR: str = r"""
 
 start: "{" "\"criteria\"" ":" ESCAPED_STRING "," "\"supporting_evidence\"" ":" ESCAPED_STRING "," "\"score\"" ":" INT "}"
 """
-
-
-# Global, process-local capability cache keyed by model engine.
-_capabilities_lock = threading.Lock()
-
-
-class ModelCapabilities(TypedDict, total=False):
-    structured_outputs: bool
-    temperature: bool
-    reasoning_effort: bool
-    cfg: bool
-
-
-_model_capabilities_cache: Dict[str, ModelCapabilities] = {}
 
 
 class OpenAI(llm_provider.LLMProvider):
@@ -124,18 +108,6 @@ class OpenAI(llm_provider.LLMProvider):
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
-    def _is_reasoning_model(self) -> bool:
-        """Check if the current model is a reasoning model (o1, o3, o4, gpt-5 series).
-
-        Returns:
-            bool: True if the model is a reasoning model, False otherwise.
-        """
-        reasoning_model_prefixes = ["o1", "o3", "o4", "gpt-5"]
-        return any(
-            self.model_engine.startswith(prefix)
-            for prefix in reasoning_model_prefixes
-        )
-
     def _structured_output_supported(self) -> bool:
         """Whether the provider supports structured output. This is analogous to model support for OpenAI's Responses API.
         For more details: https://platform.openai.com/docs/guides/structured-outputs?api-mode=responses#structured-outputs-vs-json-mode
@@ -164,56 +136,12 @@ class OpenAI(llm_provider.LLMProvider):
     def _capabilities_key(self) -> str:
         return self.model_engine
 
-    def _get_capabilities(self) -> ModelCapabilities:
-        with _capabilities_lock:
-            return _model_capabilities_cache.get(self._capabilities_key(), {})
-
-    def _set_capabilities(self, updates: ModelCapabilities) -> None:
-        with _capabilities_lock:
-            current = _model_capabilities_cache.get(
-                self._capabilities_key(), {}
-            )
-            current.update(updates)
-            _model_capabilities_cache[self._capabilities_key()] = current
-
-    def _is_unsupported_parameter_error(
-        self, exc: Exception, parameter: str
-    ) -> bool:
-        message = str(getattr(exc, "message", "")) or str(exc)
-        lowered = message.lower()
-        return (
-            ("unsupported" in lowered)
-            or ("unknown" in lowered)
-            or ("does not support" in lowered)
-            or ("is not allowed" in lowered)
-        ) and (parameter in lowered)
-
     def _is_cfg_available(self) -> bool:
         """Return True if model supports CFG path by default heuristics.
 
         Currently enables CFG only for gpt-5* model families.
         """
         return self.model_engine.startswith("gpt-5")
-
-    @classmethod
-    def clear_model_capabilities_cache(
-        cls, model_engine: Optional[str] = None
-    ) -> None:
-        """Clear the in-memory model capabilities cache.
-
-        Args:
-            model_engine: When provided, only clears cached capabilities for
-                that specific model. When None, clears the entire cache.
-        """
-        with _capabilities_lock:
-            if model_engine is None:
-                _model_capabilities_cache.clear()
-            else:
-                _model_capabilities_cache.pop(model_engine, None)
-
-    def clear_capabilities_cache(self) -> None:
-        """Clear cached capabilities for this provider's current model."""
-        self.clear_model_capabilities_cache(self.model_engine)
 
     def _call_with_capability_fallbacks(
         self,
