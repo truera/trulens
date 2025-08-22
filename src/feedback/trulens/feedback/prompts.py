@@ -6,12 +6,13 @@
 from trulens.feedback.v2 import feedback as v2
 
 COT_REASONS_TEMPLATE = """
-Please answer using the entire template below.
+Please evaluate using the following template:
 
-TEMPLATE:
-Criteria: <Provide the criteria for this evaluation>
+Criteria: <Provide the criteria for this evaluation, restating the criteria you are using to evaluate>
 Supporting Evidence: <Provide your reasons for scoring based on the listed criteria step by step. Tie it back to the evaluation being completed.>
 Score: <The score based on the given criteria>
+
+Please respond using the entire template above.
 """
 
 # Keep this in line with the LLM output template as above

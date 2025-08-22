@@ -129,9 +129,12 @@ class Evaluator:
         self,
         record_ids: Optional[List[str]] = None,
         in_evaluator_thread: bool = True,
+        lock: Optional[threading.Lock] = None,
     ) -> None:
         new_processed_time = datetime.datetime.now()
-        with self._compute_feedbacks_lock:
+        if lock is None:
+            lock = self._compute_feedbacks_lock
+        with lock:
             if self._processed_time is None:
                 logger.info("Processing all events.")
             else:
@@ -217,15 +220,24 @@ class Evaluator:
         self._thread = None
         self._stop_event.clear()
 
-    def compute_now(self, record_ids: Optional[List[str]]) -> None:
+    def compute_now(
+        self,
+        record_ids: Optional[List[str]],
+        lock: Optional[threading.Lock] = None,
+    ) -> None:
         """Trigger immediate computation.
 
         Args:
             record_ids:
                 Optional list of record ids to compute feedbacks for. If None,
                 computes feedbacks for all unprocessed records.
+            lock:
+                Optional lock to use for the computation. If None, will use the
+                default lock.
         """
-        self._compute_feedbacks(record_ids, in_evaluator_thread=False)
+        self._compute_feedbacks(
+            record_ids, in_evaluator_thread=False, lock=lock
+        )
 
     def __del__(self):
         try:
