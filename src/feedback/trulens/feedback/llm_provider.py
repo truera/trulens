@@ -33,6 +33,8 @@ from trulens.feedback.v2 import feedback as feedback_v2
 
 logger = logging.getLogger(__name__)
 
+REASONING_MODEL_PREFIXES = ("o1", "o3", "o4", "gpt-5", "deepseek-r1")
+
 # --- Shared capability cache for LLM providers ---
 _capabilities_lock = threading.Lock()
 
@@ -126,14 +128,15 @@ class LLMProvider(core_provider.Provider):
         ) and (parameter in lowered)
 
     def _is_reasoning_model(self) -> bool:
-        """Check if the current model is a reasoning model.
-
-        This method should be overridden by provider-specific implementations.
+        """Check if the current model is a reasoning model based on known naming conventions.
 
         Returns:
-            bool: False by default. Subclasses should override for reasoning model detection.
+            bool: True if the model is a reasoning model, False otherwise.
         """
-        return False
+        return any(
+            self.model_engine.startswith(prefix)
+            for prefix in REASONING_MODEL_PREFIXES
+        )
 
     # @abstractmethod
     def _create_chat_completion(

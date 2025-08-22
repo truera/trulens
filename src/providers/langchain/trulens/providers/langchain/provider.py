@@ -62,18 +62,6 @@ class Langchain(llm_provider.LLMProvider):
         # Prefer explicit model_engine; fallback to LC class name
         return self.model_engine or type(self.endpoint.chain).__name__
 
-    def _is_reasoning_model(self) -> bool:
-        """Heuristic check for common reasoning model names.
-
-        Covers OpenAI o* families and other common vendors exposing reasoning
-        variants (e.g., DeepSeek R1, models with "reasoning"/"thinking").
-        """
-        name = (self.model_engine or "").lower()
-        prefixes = ("o1", "o3", "o4", "gpt-5", "deepseek-r1")
-        if any(name.startswith(p) for p in prefixes):
-            return True
-        return ("reasoning" in name) or ("thinking" in name)
-
     def _is_unsupported_parameter_error(
         self, exc: Exception, parameter: str
     ) -> bool:

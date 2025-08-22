@@ -108,18 +108,6 @@ class OpenAI(llm_provider.LLMProvider):
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
-    def _is_reasoning_model(self) -> bool:
-        """Check if the current model is a reasoning model (o1, o3, o4, gpt-5 series).
-
-        Returns:
-            bool: True if the model is a reasoning model, False otherwise.
-        """
-        reasoning_model_prefixes = ["o1", "o3", "o4", "gpt-5"]
-        return any(
-            self.model_engine.startswith(prefix)
-            for prefix in reasoning_model_prefixes
-        )
-
     def _structured_output_supported(self) -> bool:
         """Whether the provider supports structured output. This is analogous to model support for OpenAI's Responses API.
         For more details: https://platform.openai.com/docs/guides/structured-outputs?api-mode=responses#structured-outputs-vs-json-mode

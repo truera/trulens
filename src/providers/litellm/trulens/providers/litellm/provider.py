@@ -99,8 +99,9 @@ class LiteLLM(llm_provider.LLMProvider):
         raw = (self.model_engine or "").lower()
         # Consider provider-prefixed ids like "snowflake/o3-mini" or "anthropic/claude-...-thinking"
         name = raw.split("/", 1)[1] if "/" in raw else raw
-        prefixes = ("o1", "o3", "o4", "gpt-5", "deepseek-r1")
-        if any(name.startswith(p) for p in prefixes):
+        if any(
+            name.startswith(p) for p in llm_provider.REASONING_MODEL_PREFIXES
+        ):
             return True
         return ("reasoning" in name) or ("thinking" in name)
 
