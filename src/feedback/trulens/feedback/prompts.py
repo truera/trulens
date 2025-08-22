@@ -22,11 +22,6 @@ Supporting Evidence: {supporting_evidence}
 Score: {score}
 """
 
-LLM_GROUNDEDNESS_FULL_PROMPT = """Give me the INFORMATION OVERLAP of this SOURCE and STATEMENT.
-SOURCE: {premise}
-STATEMENT: {hypothesis}
-"""
-
 LLM_GROUNDEDNESS_SYSTEM = v2.Groundedness.system_prompt
 LLM_GROUNDEDNESS_USER = """SOURCE: {premise}
 
