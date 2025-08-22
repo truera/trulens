@@ -1,5 +1,3 @@
-from functools import partial
-import json
 import pprint as pp
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
@@ -7,7 +5,6 @@ import pandas as pd
 import streamlit as st
 from trulens.core.database.base import MULTI_CALL_NAME_DELIMITER
 from trulens.dashboard.display import expand_groundedness_df
-from trulens.dashboard.display import highlight
 from trulens.dashboard.ux.styles import CATEGORY
 from trulens.dashboard.ux.styles import default_direction
 
@@ -191,54 +188,12 @@ def display_feedback_call(
         st.warning("No feedback details found.")
         return
 
-    df = _convert_dicts_to_str(df.copy())
-
-    # Style and display the DataFrame
-    style_highlight_fn = partial(
-        highlight,
-        selected_feedback=feedback_name,
-        feedback_directions=feedback_directions,
-        default_direction=default_direction,
-    )
-    styled_df = df.style.apply(
-        style_highlight_fn,
-        axis=1,
-    )
-
     # Format only numeric columns
+    styled_df = df.style
     for col in df.select_dtypes(include=["number"]).columns:
         styled_df = styled_df.format({col: "{:.2f}"})
 
     st.dataframe(styled_df, hide_index=True)
-
-
-def _convert_dicts_to_str(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Convert dicts to strings in a DataFrame. This is necessary for Streamlit
-    when the rows are colored with some transparency/alpha as Streamlit can't
-    handle the linear combination of colors correctly as it can be
-    non-integral.
-    NB: Not only do we convert dicts, but also strings that are valid JSON. This
-    is because Streamlit seems to convert such strings to dicts.
-
-
-    Args:
-        df: DataFrame possibly containing dicts.
-
-    Returns:
-        DataFrame with dicts converted to strings.
-    """
-    for i in range(df.shape[0]):
-        for j in range(df.shape[1]):
-            curr = df.iloc[i, j]
-            if isinstance(curr, dict):
-                df.iloc[i, j] = pp.pformat(json.dumps(curr))
-            elif isinstance(curr, str):
-                try:
-                    json.loads(curr)
-                    df.iloc[i, j] = pp.pformat(curr)
-                except json.JSONDecodeError:
-                    pass
 
 
 def _filter_duplicate_span_calls(df: pd.DataFrame) -> pd.DataFrame:
