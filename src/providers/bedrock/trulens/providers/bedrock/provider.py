@@ -3,7 +3,6 @@ import logging
 from typing import ClassVar, Dict, Optional, Sequence, Tuple, Type, Union
 
 from pydantic import BaseModel
-from trulens.feedback import generated as feedback_generated
 from trulens.feedback import llm_provider
 from trulens.providers.bedrock import endpoint as bedrock_endpoint
 
@@ -182,7 +181,6 @@ class Bedrock(llm_provider.LLMProvider):
 
         return response_body
 
-    # overwrite base to use prompt instead of messages
     def generate_score(
         self,
         system_prompt: str,
@@ -204,25 +202,18 @@ class Bedrock(llm_provider.LLMProvider):
         Returns:
             The score on a 0-1 scale.
         """
-
         if temperature != 0.0:
             logger.warning(
                 "The `temperature` argument is ignored for Bedrock provider."
             )
-
-        llm_messages = [{"role": "system", "content": system_prompt}]
-        if user_prompt is not None:
-            llm_messages.append({"role": "user", "content": user_prompt})
-
-        response = self.endpoint.run_in_pace(
-            func=self._create_chat_completion, messages=llm_messages
+        return super().generate_score(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
         )
 
-        return (
-            feedback_generated.re_configured_rating(response) - min_score_val
-        ) / (max_score_val - min_score_val)
-
-    # overwrite base to use prompt instead of messages
     def generate_score_and_reasons(
         self,
         system_prompt: str,
