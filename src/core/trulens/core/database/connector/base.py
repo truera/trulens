@@ -453,12 +453,11 @@ class DBConnector(ABC, text_utils.WithIdentString):
     def add_events(self, events: List[event_schema.Event]):
         """
         Add multiple events to the database.
-        # TODO: This is slow and should be batched or otherwise optimized in the future.
 
         Args:
             events: A list of events to add to the database.
         """
-        return [self.add_event(event=event) for event in events]
+        return self.db.insert_events(events=events)
 
     def get_events(
         self,

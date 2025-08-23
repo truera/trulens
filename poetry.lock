@@ -3482,20 +3482,20 @@ reference = "pypi-public"
 
 [[package]]
 name = "langgraph"
-version = "0.6.5"
+version = "0.6.6"
 description = "Building stateful, multi-actor applications with LLMs"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "langgraph-0.6.5-py3-none-any.whl", hash = "sha256:042b2ee7af6f308659520eea5ba6def50f2d109475691666045850d0661b1082"},
-    {file = "langgraph-0.6.5.tar.gz", hash = "sha256:59639927997457fe04f802b39f0e7179cedf8db1cf85f33db764de02ae23c2f0"},
+    {file = "langgraph-0.6.6-py3-none-any.whl", hash = "sha256:a2283a5236abba6c8307c1a485c04e8a0f0ffa2be770878782a7bf2deb8d7954"},
+    {file = "langgraph-0.6.6.tar.gz", hash = "sha256:e7d3cefacf356f8c01721b166b67b3bf581659d5361a3530f59ecd9b8448eca7"},
 ]
 
 [package.dependencies]
 langchain-core = ">=0.1"
 langgraph-checkpoint = ">=2.1.0,<3.0.0"
 langgraph-prebuilt = ">=0.6.0,<0.7.0"
-langgraph-sdk = ">=0.2.0,<0.3.0"
+langgraph-sdk = ">=0.2.2,<0.3.0"
 pydantic = ">=2.7.4"
 xxhash = ">=3.5.0"
 
@@ -8901,37 +8901,37 @@ reference = "pypi-public"
 
 [[package]]
 name = "snowflake-connector-python"
-version = "3.17.1"
+version = "3.17.2"
 description = "Snowflake Connector for Python"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "snowflake_connector_python-3.17.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:2bf8a5f9884dc5e0d1722d485e638186010bc5393e627c592f472d9b4126e18e"},
-    {file = "snowflake_connector_python-3.17.1-cp310-cp310-macosx_11_0_x86_64.whl", hash = "sha256:781996e233b4b7d0183cd9bf6660aca5ed8ed828c36592de67fcbefd24fed3c1"},
-    {file = "snowflake_connector_python-3.17.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:96d3db5db2ee6ff5a4800b98d8ea430f0d5602114ef6e3c573c7185a8f117995"},
-    {file = "snowflake_connector_python-3.17.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:38a3e3a6bd744cd9948a3aad3f8444d354433377fff052be259df489681cb714"},
-    {file = "snowflake_connector_python-3.17.1-cp310-cp310-win_amd64.whl", hash = "sha256:52faf845643daa34dc82a6666a9bee09780474296118ffe68307ff7d8e082ee0"},
-    {file = "snowflake_connector_python-3.17.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:43c011e5166ba6e926b0337eb272c103f1c09372ba14ce996ebfe0af3f05d614"},
-    {file = "snowflake_connector_python-3.17.1-cp311-cp311-macosx_11_0_x86_64.whl", hash = "sha256:769ed390c2bf37748f3b0b701e2c3b4e0d07df04a9637065dda2146662dedcb0"},
-    {file = "snowflake_connector_python-3.17.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ff76aee784b6567cb3eec7bd1285e91a2fffe0961f4650dfe78341af92368574"},
-    {file = "snowflake_connector_python-3.17.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:500283544c6a7816ef72ddddac40613829d1fdf5eb94b41794faa4ba067c38b2"},
-    {file = "snowflake_connector_python-3.17.1-cp311-cp311-win_amd64.whl", hash = "sha256:c90a8eb8f89e2de2e499cc69caa1ff997a45304617b20ee11e4ba2ec5a3a3869"},
-    {file = "snowflake_connector_python-3.17.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:b04b887d17ea5d165ac73ae6eb2e509a68e1ebe4a7b0147843f939b06eb42118"},
-    {file = "snowflake_connector_python-3.17.1-cp312-cp312-macosx_11_0_x86_64.whl", hash = "sha256:ca6707cb4defc7951d805ca761648661f27831063457e3f679a6bfff00ca8248"},
-    {file = "snowflake_connector_python-3.17.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:23152cfd59ab7d24e1c13f7fa4be850991357e158f3f05fdcb2b7e1c2b5c79e0"},
-    {file = "snowflake_connector_python-3.17.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f3e1d62ec883c07e85a039d9e0407f29ab66bd35fb88cce78701ac1754a130ed"},
-    {file = "snowflake_connector_python-3.17.1-cp312-cp312-win_amd64.whl", hash = "sha256:b89aefe195b333ce18cf09e690550aaf398bae68a9ee6ebf8d265f4af25c3188"},
-    {file = "snowflake_connector_python-3.17.1-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:7d314d57efc3777f295b06c95599b551424eb15af4fc1444ba2da1a3c4ea740a"},
-    {file = "snowflake_connector_python-3.17.1-cp313-cp313-macosx_11_0_x86_64.whl", hash = "sha256:4a3dfe18d780328601a474b5506fc31a3c02b4ecc7659d2d0b4fe4c7e07ad446"},
-    {file = "snowflake_connector_python-3.17.1-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:55047fe9b92d7608fa06a0fc08b6275a259b2ee28b7510b71a01de15fce28bb5"},
-    {file = "snowflake_connector_python-3.17.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:397e35f8b397a28e781dfebe6894bb9086208b970f9de443ceef755184bc8199"},
-    {file = "snowflake_connector_python-3.17.1-cp313-cp313-win_amd64.whl", hash = "sha256:49ced0eb72c34e5ff00ed394d62bdc038315b928539d60169612c6b80bbd7c8d"},
-    {file = "snowflake_connector_python-3.17.1-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:c30782bcec6c8708cd7e891342552dc887d6d96bde8f09fd04585e9380c5d993"},
-    {file = "snowflake_connector_python-3.17.1-cp39-cp39-macosx_11_0_x86_64.whl", hash = "sha256:d701b9f6d8557f58881f4c87dc1b362a0acb0d04562278fd7cb4703eb9aa783f"},
-    {file = "snowflake_connector_python-3.17.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4c499073e5af6cef8cddbf6a76e0b7486cc5341061c42d69b8136355eeb9b1ff"},
-    {file = "snowflake_connector_python-3.17.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:756595252759c8539ebfee025dde348da5faebb2f1ef79cb571a5e945388fa7d"},
-    {file = "snowflake_connector_python-3.17.1-cp39-cp39-win_amd64.whl", hash = "sha256:324013afe67acfd5b65736fe798ce3d5a83d44d5e0fe3ac115a832ce9256cb29"},
-    {file = "snowflake_connector_python-3.17.1.tar.gz", hash = "sha256:1881025adea6dd732fe02065df8693a45b446a8db8e0e0ed7d728a7f09734076"},
+    {file = "snowflake_connector_python-3.17.2-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:58c273b610ba25d6386134238c27290ea9ed468443da4061d80050288dc7b01d"},
+    {file = "snowflake_connector_python-3.17.2-cp310-cp310-macosx_11_0_x86_64.whl", hash = "sha256:ed2c183058245a63125ac1ebb20062e41c0cc5b0ab6cde5df1250e1c332d3da1"},
+    {file = "snowflake_connector_python-3.17.2-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:89d5001de2b708ba3941cf1a2a33e391ba3c11b4f5176bf89ee0c76590eb0900"},
+    {file = "snowflake_connector_python-3.17.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fc3d216fa04f3f9126207d71aa150f219367fc44759caabec4d2d96687242135"},
+    {file = "snowflake_connector_python-3.17.2-cp310-cp310-win_amd64.whl", hash = "sha256:b6b5956b59f3c379c72a008a9d413e878188979c003e2aced0e1eebf27ca4cc0"},
+    {file = "snowflake_connector_python-3.17.2-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:d8a97d7dc4abf194ca540564f75b4b4a79004a553767001e1d70fae49bb7bf4f"},
+    {file = "snowflake_connector_python-3.17.2-cp311-cp311-macosx_11_0_x86_64.whl", hash = "sha256:d06d9c4ade7fb8f9d1e237cab9c5d38408785d3d2ddfe94001bbef9bb076203f"},
+    {file = "snowflake_connector_python-3.17.2-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:c6e737d8b66f0bdbb698f8e1a394f191eadcd16b9145abc08fdf8959a77d6a70"},
+    {file = "snowflake_connector_python-3.17.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:53ad13df88b2dd568e8f9c2944386c8446482152141dff83f27e680ceffa1b10"},
+    {file = "snowflake_connector_python-3.17.2-cp311-cp311-win_amd64.whl", hash = "sha256:a601dfe86ab4b7900b68fa1cfadcc674b23f6f6b4a1c57c3202e57761de6b183"},
+    {file = "snowflake_connector_python-3.17.2-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:63a57cb67d14c7da6b91b8db0db3a92dfa5cf5082c388006d2f9f480c2df0234"},
+    {file = "snowflake_connector_python-3.17.2-cp312-cp312-macosx_11_0_x86_64.whl", hash = "sha256:c6f59c47e43bf889fd5a2ead8ffeacd447cd792d711f010c91b23b4804c67f6b"},
+    {file = "snowflake_connector_python-3.17.2-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4934a4f552876592696ab8def7e2d33163f99bb059bac4b90b5cfce165aa6499"},
+    {file = "snowflake_connector_python-3.17.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:70f7cf3dcfcceea99d4b9d4fb8ef67788790832cbeceb222fbdf5595da52103b"},
+    {file = "snowflake_connector_python-3.17.2-cp312-cp312-win_amd64.whl", hash = "sha256:9e05c9d55b234c8a903d96397b9eb4accbddf7d2fcfac2e27239f0f49d16f475"},
+    {file = "snowflake_connector_python-3.17.2-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:e21a68c5fb04a16f48fd5146ab7a72d17b2d3d09c9b537f64fffa99316abd670"},
+    {file = "snowflake_connector_python-3.17.2-cp313-cp313-macosx_11_0_x86_64.whl", hash = "sha256:1691f5f7ff508b1fefc491f0fb85524165681bb29242f508731515057a1b4f9d"},
+    {file = "snowflake_connector_python-3.17.2-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1a668e5e9ae04ec0ab0f7cdd450ef3757283f37856655ae7e971ee645a25b4b3"},
+    {file = "snowflake_connector_python-3.17.2-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ed6a05c55238d076ad186e27889a72fe888f02e9c8c341127f828439cbf1e42f"},
+    {file = "snowflake_connector_python-3.17.2-cp313-cp313-win_amd64.whl", hash = "sha256:360f21c576847636c3560a2607c5388f9e57e607a3558f5f5a188a71c82108e1"},
+    {file = "snowflake_connector_python-3.17.2-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:c526f18487fc1e7d4f6b294198079cceefa47a77084c9d2a87a2e617fceb999d"},
+    {file = "snowflake_connector_python-3.17.2-cp39-cp39-macosx_11_0_x86_64.whl", hash = "sha256:54dfeba63d8ccef4182951ab2dc605cc7cb2a811e68e98f1146281f4721e3af0"},
+    {file = "snowflake_connector_python-3.17.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f3620f33f6a453775fb527d32308ffdf167cc426a81fc1dfdadd4cd657dc6ac9"},
+    {file = "snowflake_connector_python-3.17.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:07195dcde0a8265bc26f404e124ff514b47c16964e1a84625ab53d3ea52359db"},
+    {file = "snowflake_connector_python-3.17.2-cp39-cp39-win_amd64.whl", hash = "sha256:3be73a65f5fdb8f074eef129c7828134aac9b429afab18f142ecc0f7260668b8"},
+    {file = "snowflake_connector_python-3.17.2.tar.gz", hash = "sha256:0708de0f64e3c6789fdf0d75f22c55eb0215b60b125a5d7d18e48a1d5b2e7def"},
 ]
 
 [package.dependencies]
@@ -9944,7 +9944,7 @@ reference = "pypi-public"
 
 [[package]]
 name = "trulens-apps-langchain"
-version = "2.2.3"
+version = "2.2.4"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -9963,7 +9963,7 @@ url = "src/apps/langchain"
 
 [[package]]
 name = "trulens-apps-langgraph"
-version = "2.2.3"
+version = "2.2.4"
 description = "Library to systematically track and evaluate LangGraph based applications."
 optional = false
 python-versions = "^3.9"
@@ -9985,7 +9985,7 @@ url = "src/apps/langgraph"
 
 [[package]]
 name = "trulens-apps-llamaindex"
-version = "2.2.3"
+version = "2.2.4"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10008,7 +10008,7 @@ url = "src/apps/llamaindex"
 
 [[package]]
 name = "trulens-apps-nemo"
-version = "2.2.3"
+version = "2.2.4"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9,<3.13"
@@ -10031,7 +10031,7 @@ url = "src/apps/nemo"
 
 [[package]]
 name = "trulens-benchmark"
-version = "2.2.3"
+version = "2.2.4"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10048,7 +10048,7 @@ url = "src/benchmark"
 
 [[package]]
 name = "trulens-connectors-snowflake"
-version = "2.2.3"
+version = "2.2.4"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9,<3.13"
@@ -10066,7 +10066,7 @@ url = "src/connectors/snowflake"
 
 [[package]]
 name = "trulens-core"
-version = "2.2.3"
+version = "2.2.4"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10100,7 +10100,7 @@ url = "src/core"
 
 [[package]]
 name = "trulens-dashboard"
-version = "2.2.3"
+version = "2.2.4"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9,!=3.9.7"
@@ -10129,7 +10129,7 @@ url = "src/dashboard"
 
 [[package]]
 name = "trulens-eval"
-version = "2.2.3"
+version = "2.2.4"
 description = "Backwards-compatibility package for API of trulens_eval<1.0.0 using API of trulens-*>=1.0.0."
 optional = false
 python-versions = "^3.9,!=3.9.7"
@@ -10147,7 +10147,7 @@ url = "src/trulens_eval"
 
 [[package]]
 name = "trulens-feedback"
-version = "2.2.3"
+version = "2.2.4"
 description = "A TruLens extension package implementing feedback functions for LLM App evaluation."
 optional = false
 python-versions = "^3.9"
@@ -10169,7 +10169,7 @@ url = "src/feedback"
 
 [[package]]
 name = "trulens-hotspots"
-version = "2.2.3"
+version = "2.2.4"
 description = "Library and command-line tool to list features lowering your evaluation score."
 optional = false
 python-versions = "^3.9"
@@ -10188,7 +10188,7 @@ url = "src/hotspots"
 
 [[package]]
 name = "trulens-otel-semconv"
-version = "2.2.3"
+version = "2.2.4"
 description = "Semantic conventions for spans produced by TruLens."
 optional = false
 python-versions = "^3.9"
@@ -10204,7 +10204,7 @@ url = "src/otel/semconv"
 
 [[package]]
 name = "trulens-providers-bedrock"
-version = "2.2.3"
+version = "2.2.4"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10223,7 +10223,7 @@ url = "src/providers/bedrock"
 
 [[package]]
 name = "trulens-providers-cortex"
-version = "2.2.3"
+version = "2.2.4"
 description = "A TruLens extension package adding Snowflake Cortex support for LLM App evaluation."
 optional = false
 python-versions = "^3.9,<3.13"
@@ -10244,7 +10244,7 @@ url = "src/providers/cortex"
 
 [[package]]
 name = "trulens-providers-google"
-version = "2.2.3"
+version = "2.2.4"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10263,7 +10263,7 @@ url = "src/providers/google"
 
 [[package]]
 name = "trulens-providers-huggingface"
-version = "2.2.3"
+version = "2.2.4"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10285,7 +10285,7 @@ url = "src/providers/huggingface"
 
 [[package]]
 name = "trulens-providers-langchain"
-version = "2.2.3"
+version = "2.2.4"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10303,7 +10303,7 @@ url = "src/providers/langchain"
 
 [[package]]
 name = "trulens-providers-litellm"
-version = "2.2.3"
+version = "2.2.4"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10321,7 +10321,7 @@ url = "src/providers/litellm"
 
 [[package]]
 name = "trulens-providers-openai"
-version = "2.2.3"
+version = "2.2.4"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
