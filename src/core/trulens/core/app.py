@@ -2204,6 +2204,7 @@ def trace_with_run(
             )
 
             run: Run = app.add_run(run_config=run_config)
+            detected_count = None
 
             try:
                 with app.run(
@@ -2220,7 +2221,7 @@ def trace_with_run(
                         detected_count = len(recording.records)
 
                         # Fallback: try to detect from first argument if no records were created
-                        if detected_count == 0 and args:
+                        if detected_count is None and args:
                             first_arg = args[0]
                             if hasattr(first_arg, "__len__") and not isinstance(
                                 first_arg, str
@@ -2230,7 +2231,7 @@ def trace_with_run(
                                 detected_count = (
                                     1  # Default to 1 if can't detect
                                 )
-                        elif detected_count == 0:
+                        elif detected_count is None:
                             detected_count = (
                                 1  # Default to 1 if no args and no records
                             )
