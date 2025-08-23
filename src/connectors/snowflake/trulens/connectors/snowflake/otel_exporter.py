@@ -194,7 +194,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
             ],
         )
         if not dry_run:
-            sql_cmd.collect_nowait()
+            sql_cmd.collect()
 
     def _export_to_snowflake_stage_for_app_and_run(
         self,
