@@ -742,14 +742,14 @@ def _show_no_records_error(
         st.error(
             f"No records found for app `{app_name}` in OTEL mode. "
             f"However, {non_otel_count} records exist in non-OTEL format. "
-            f"Restart without `TRULENS_OTEL_TRACING` to access them.",
+            f"Set `TRULENS_OTEL_TRACING=0` to disable OTEL mode and access them.",
             icon="🔄",
         )
     elif not is_otel_mode and non_otel_count == 0 and otel_count > 0:
         st.error(
             f"No records found for app `{app_name}` in non-OTEL mode. "
             f"However, {otel_count} records exist in OTEL format. "
-            f"Set `TRULENS_OTEL_TRACING=1` to access them.",
+            f"Remove `TRULENS_OTEL_TRACING=0` to enable OTEL mode and access them.",
             icon="🔄",
         )
     else:
