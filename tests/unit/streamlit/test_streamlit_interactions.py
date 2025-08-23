@@ -20,7 +20,7 @@ class TestStreamlitInteractions:
         with MockManager.mock_dashboard_utils():
 
             def test_app():
-                from trulens.dashboard.Leaderboard import handle_pin_toggle
+                from trulens.dashboard.tabs.Leaderboard import handle_pin_toggle
 
                 selected_app_ids = ["app_1", "app_2"]
                 on_leaderboard = False
@@ -35,7 +35,9 @@ class TestStreamlitInteractions:
 
             def test_app():
                 import pandas as pd
-                from trulens.dashboard.Leaderboard import handle_add_metadata
+                from trulens.dashboard.tabs.Leaderboard import (
+                    handle_add_metadata,
+                )
 
                 selected_rows = pd.DataFrame({
                     "app_id": ["app_1", "app_2"],
@@ -54,7 +56,7 @@ class TestStreamlitInteractions:
             def test_app():
                 from unittest.mock import patch
 
-                from trulens.dashboard.Leaderboard import _render_grid_tab
+                from trulens.dashboard.tabs.Leaderboard import _render_grid_tab
 
                 from tests.unit.streamlit.test_streamlit_utils import (
                     create_mock_data_dict,
@@ -178,7 +180,9 @@ class TestStreamlitFormInteractions:
         with MockManager.mock_all_common_dependencies():
 
             def test_app():
-                from trulens.dashboard.Leaderboard import handle_add_virtual_app
+                from trulens.dashboard.tabs.Leaderboard import (
+                    handle_add_virtual_app,
+                )
 
                 from tests.unit.streamlit.test_streamlit_utils import (
                     TestDataFactory,
@@ -205,7 +209,9 @@ class TestStreamlitFormInteractions:
 
             def test_app():
                 import pandas as pd
-                from trulens.dashboard.Leaderboard import handle_add_metadata
+                from trulens.dashboard.tabs.Leaderboard import (
+                    handle_add_metadata,
+                )
 
                 selected_rows = pd.DataFrame({
                     "app_id": ["app_1"],
@@ -230,7 +236,7 @@ class TestStreamlitStateManagement:
         """Test that page state persists across interactions."""
 
         def test_app():
-            from trulens.dashboard.Leaderboard import init_page_state
+            from trulens.dashboard.tabs.Leaderboard import init_page_state
 
             init_page_state()
             init_page_state()  # Should not reinitialize
@@ -243,7 +249,7 @@ class TestStreamlitStateManagement:
         with MockManager.mock_all_common_dependencies(mock_data):
 
             def test_app():
-                from trulens.dashboard.Leaderboard import _render_grid_tab
+                from trulens.dashboard.tabs.Leaderboard import _render_grid_tab
 
                 from tests.unit.streamlit.test_streamlit_utils import (
                     create_mock_data_dict,

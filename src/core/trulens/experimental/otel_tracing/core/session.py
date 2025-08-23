@@ -90,23 +90,52 @@ class _TruSession(core_session.TruSession):
         exporter: Optional[otel_export_sdk.SpanExporter],
     ):
         logger.info(
-            f"{text_utils.UNICODE_CHECK} OpenTelemetry exporter set: {python_utils.class_name(exporter.__class__)}"
+            f"{text_utils.UNICODE_CHECK} OpenTelemetry exporter set: "
+            f"{python_utils.class_name(exporter.__class__)}"
         )
 
         tracer_provider = _set_up_tracer_provider()
-        # Setting it here for easy access without having to assert the type every time
+        # Setting it here for easy access without having to assert the type
+        # every time
         self._experimental_tracer_provider = tracer_provider
 
         exporter = _TruSession._validate_otel_exporter(
             self, exporter, connector
         )
 
-        self._experimental_otel_span_processor = TrulensOtelSpanProcessor(
-            exporter
+        # Check if we already have a TrulensOtelSpanProcessor to avoid
+        # duplicates. This prevents accumulation of span processors when
+        # multiple TruSessions are created across tests, which caused
+        # intermittent test failures
+        existing_processors = getattr(
+            tracer_provider._active_span_processor, "_span_processors", []
         )
-        tracer_provider.add_span_processor(
-            self._experimental_otel_span_processor
+        has_trulens_processor = any(
+            isinstance(proc, TrulensOtelSpanProcessor)
+            for proc in existing_processors
         )
+
+        if not has_trulens_processor:
+            self._experimental_otel_span_processor = TrulensOtelSpanProcessor(
+                exporter
+            )
+            tracer_provider.add_span_processor(
+                self._experimental_otel_span_processor
+            )
+            logger.info(
+                f"{text_utils.UNICODE_CHECK} Added new TrulensOtelSpanProcessor"
+            )
+        else:
+            # Reuse existing processor to avoid duplicates
+            self._experimental_otel_span_processor = next(
+                proc
+                for proc in existing_processors
+                if isinstance(proc, TrulensOtelSpanProcessor)
+            )
+            logger.info(
+                f"{text_utils.UNICODE_CHECK} Reusing existing "
+                f"TrulensOtelSpanProcessor"
+            )
 
     @staticmethod
     def _track_costs_for_module_member(

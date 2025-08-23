@@ -3,9 +3,9 @@
 from trulens.core import TruSession
 from trulens.core.experimental import Feature
 from trulens.core.utils import imports as import_utils
-from trulens.dashboard.Leaderboard import leaderboard_main
-from trulens.dashboard.pages.Compare import compare_main
-from trulens.dashboard.pages.Records import records_main
+from trulens.dashboard.tabs.Compare import compare_main
+from trulens.dashboard.tabs.Leaderboard import leaderboard_main
+from trulens.dashboard.tabs.Records import records_main
 
 with import_utils.OptionalImports(
     messages=import_utils.format_import_errors(

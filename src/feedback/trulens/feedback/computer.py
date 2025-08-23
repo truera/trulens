@@ -574,7 +574,9 @@ def _remove_already_computed_feedbacks(
         curr_eval_root_attributes = []
         if record_id in record_id_to_eval_root_attributes.groups:
             curr_eval_root_attributes = (
-                record_id_to_eval_root_attributes.get_group(record_id)
+                record_id_to_eval_root_attributes.get_group((record_id,))
+                # DEV NOTE: In pandas 2.1.0: `get_group` deprecated grouping on
+                # non-tuple keys.
             )
         if not _feedback_already_computed(
             span_group, inputs, feedback_name, curr_eval_root_attributes
