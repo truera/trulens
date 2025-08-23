@@ -194,7 +194,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
             ],
         )
         if not dry_run:
-            sql_cmd.collect()
+            sql_cmd.collect()  # Blocking call: ensures spans are ingested before process exit; may delay if ingestion hangs and force_flush is called
 
     def _export_to_snowflake_stage_for_app_and_run(
         self,
