@@ -2239,11 +2239,7 @@ def trace_with_run(
                 logger.debug(
                     f"Finishing live run with run_name: {run.run_name} for {detected_count} input records"
                 )
-                logger.error(
-                    "daniel debugging in trulens: detected_count is {}".format(
-                        detected_count
-                    )
-                )
+
                 app.session.force_flush()
                 run.run_dao.start_ingestion_query(
                     object_name=run.object_name,
