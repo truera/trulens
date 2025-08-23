@@ -2016,7 +2016,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         run_config = RunConfig(
             run_name=run_name,
             dataset_name=dataset_name,
-            source_type="DATAFRAME",  # TODO: can only be LIVE_TRACING once run DPO side is updated
+            source_type="DATAFRAME",  # TODO: use LIVE_TRACING once run DPO side is updated
             dataset_spec={},
             description=description,
             label=label,
@@ -2154,7 +2154,7 @@ def trace_with_run(
         run_name: Run name that uniquely identifies the run. Required when app is not None.
         description: Optional description for the run
         label: Optional label for the run
-        input_count: Optional input count (auto-detected from first argument if not provided)
+        input_count: Optional input count (auto-detected from main method calls if not provided)
         input_selector: Optional function to extract input from function arguments.
             Signature: (args: Tuple[Any, ...], kwargs: Dict[str, Any]) -> Any
             If not provided, uses the default main_input logic.
@@ -2193,24 +2193,11 @@ def trace_with_run(
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            # Auto-detect input count from first argument if it's a sequence
-            detected_count = input_count
-            if detected_count is None and args:
-                first_arg = args[0]
-                if hasattr(first_arg, "__len__") and not isinstance(
-                    first_arg, str
-                ):
-                    detected_count = len(first_arg)
-                else:
-                    detected_count = 1  # Default to 1 if can't detect
-            elif detected_count is None:
-                detected_count = 1  # Default to 1 if no args
-
             # Set up run configuration for live tracing
             run_config = RunConfig(
                 run_name=run_name,
                 dataset_name=f"live_tracing_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f')}",
-                source_type="DATAFRAME",  # TODO: can only be LIVE_TRACING once run DPO side is updated
+                source_type="DATAFRAME",  # TODO: use LIVE_TRACING once run DPO side is updated
                 dataset_spec={},
                 description=description,
                 label=label,
@@ -2219,15 +2206,44 @@ def trace_with_run(
             run: Run = app.add_run(run_config=run_config)
 
             try:
-                with app.run(run_name=run_name, input_selector=input_selector):
+                with app.run(
+                    run_name=run_name, input_selector=input_selector
+                ) as recording:
                     # Call the original function without any modifications
                     result = func(*args, **kwargs)
+
+                    # Determine the actual input count based on method calls or user input
+                    if input_count is not None:
+                        detected_count = input_count
+                    else:
+                        # Count the actual number of records created (main method calls)
+                        detected_count = len(recording.records)
+
+                        # Fallback: try to detect from first argument if no records were created
+                        if detected_count == 0 and args:
+                            first_arg = args[0]
+                            if hasattr(first_arg, "__len__") and not isinstance(
+                                first_arg, str
+                            ):
+                                detected_count = len(first_arg)
+                            else:
+                                detected_count = (
+                                    1  # Default to 1 if can't detect
+                                )
+                        elif detected_count == 0:
+                            detected_count = (
+                                1  # Default to 1 if no args and no records
+                            )
                     return result
             finally:
                 logger.debug(
                     f"Finishing live run with run_name: {run.run_name} for {detected_count} input records"
                 )
-
+                logger.error(
+                    "daniel debugging in trulens: detected_count is {}".format(
+                        detected_count
+                    )
+                )
                 app.session.force_flush()
                 run.run_dao.start_ingestion_query(
                     object_name=run.object_name,
