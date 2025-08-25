@@ -24,7 +24,7 @@ class TestTruApp(TruTestCase):
         return dummy_app, recorder
 
     def setUp(self):
-        """Disable OTEL for legacy with_record tests."""
+        """Disable OTEL for legacy app tests."""
         self.original_otel_setting = os.environ.get("TRULENS_OTEL_TRACING")
         os.environ["TRULENS_OTEL_TRACING"] = "0"
 
