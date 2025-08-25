@@ -2158,7 +2158,7 @@ def trace_with_run(
         input_selector: Optional function to extract input from function arguments.
             Signature: (args: Tuple[Any, ...], kwargs: Dict[str, Any]) -> Any
             If not provided, uses the default main_input logic.
-            User is responsible for validating or enforcing the logic to ensure that the returned value is compatible with currently supported types of OTEL attribute values, ie. (str, int, float, bool, dict, and sequence of these types).
+            User is responsible for validating or enforcing the logic to ensure that the returned value is compatible with currently supported types of OTEL attribute values, i.e. (str, int, float, bool, dict, and sequence of these types).
 
     Example:
         ```python
