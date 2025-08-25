@@ -1,5 +1,6 @@
 """Tests for Feedback class."""
 
+import os
 import time
 from unittest import TestCase
 
@@ -26,6 +27,18 @@ except ImportError:
 
 class TestFeedbackEval(TestCase):
     """Tests for feedback function evaluation."""
+
+    def setUp(self) -> None:
+        """Disable OTEL for legacy feedback tests."""
+        self.original_otel_setting = os.environ.get("TRULENS_OTEL_TRACING")
+        os.environ["TRULENS_OTEL_TRACING"] = "0"
+
+    def tearDown(self) -> None:
+        """Restore original OTEL setting."""
+        if self.original_otel_setting is None:
+            os.environ.pop("TRULENS_OTEL_TRACING", None)
+        else:
+            os.environ["TRULENS_OTEL_TRACING"] = self.original_otel_setting
 
     def test_skipeval(self) -> None:
         """Test the SkipEval capability."""
@@ -82,48 +95,68 @@ class TestFeedbackEval(TestCase):
 
     @pytest.mark.optional
     def test_same_provider_for_app_and_feedback(self) -> None:
-        tru_session = TruSession()
-        tru_session.reset_database()
-        rag_chain = (
-            tests.unit.test_otel_tru_chain.TestOtelTruChain._create_simple_rag()
-        )
-        llm = rag_chain.middle[
-            1
-        ]  # Bit of a hack, but this is the LLM for the chain.
-        provider = Langchain(chain=llm)
-        context = TruChain.select_context(rag_chain)
-        f_answer_relevance = Feedback(
-            provider.relevance_with_cot_reasons, name="Answer Relevance"
-        ).on_input_output()
-        f_groundedness = (
-            Feedback(
-                provider.groundedness_measure_with_cot_reasons,
-                name="Groundedness",
+        # Temporarily disable OTEL for this test since it uses legacy selectors
+        original_otel_setting = os.environ.get("TRULENS_OTEL_TRACING")
+        os.environ["TRULENS_OTEL_TRACING"] = "0"
+
+        try:
+            tru_session = TruSession()
+            tru_session.reset_database()
+            rag_chain = tests.unit.test_otel_tru_chain.TestOtelTruChain._create_simple_rag()
+            llm = rag_chain.middle[
+                1
+            ]  # Bit of a hack, but this is the LLM for the chain.
+            provider = Langchain(chain=llm)
+            context = TruChain.select_context(rag_chain)
+            f_answer_relevance = Feedback(
+                provider.relevance_with_cot_reasons, name="Answer Relevance"
+            ).on_input_output()
+            f_groundedness = (
+                Feedback(
+                    provider.groundedness_measure_with_cot_reasons,
+                    name="Groundedness",
+                )
+                .on(context.collect())
+                .on_output()
             )
-            .on(context.collect())
-            .on_output()
-        )
-        tru_recorder = TruChain(
-            rag_chain,
-            app_name="ChatApplication",
-            app_version="Chain1",
-            feedbacks=[f_answer_relevance, f_groundedness],
-        )
-        with tru_recorder:
-            rag_chain.invoke("What is Task Decomposition?")
-            time.sleep(1)
-        res = tru_session.get_records_and_feedback()[0]
-        self.assertEqual(len(res), 1)
+            tru_recorder = TruChain(
+                rag_chain,
+                app_name="ChatApplication",
+                app_version="Chain1",
+                feedbacks=[f_answer_relevance, f_groundedness],
+            )
+            with tru_recorder:
+                rag_chain.invoke("What is Task Decomposition?")
+                time.sleep(1)
+            res = tru_session.get_records_and_feedback()[0]
+            self.assertEqual(len(res), 1)
+        finally:
+            # Restore original OTEL setting
+            if original_otel_setting is None:
+                os.environ.pop("TRULENS_OTEL_TRACING", None)
+            else:
+                os.environ["TRULENS_OTEL_TRACING"] = original_otel_setting
 
 
 class TestFeedbackConstructors(TestCase):
     """Test for feedback function serialization/deserialization."""
 
     def setUp(self) -> None:
+        """Disable OTEL for legacy feedback tests."""
+        self.original_otel_setting = os.environ.get("TRULENS_OTEL_TRACING")
+        os.environ["TRULENS_OTEL_TRACING"] = "0"
+
         self.app = basic_app.TruBasicApp(
             text_to_text=lambda t: f"returning {t}"
         )
         _, self.record = self.app.with_record(self.app.app, t="hello")
+
+    def tearDown(self) -> None:
+        """Restore original OTEL setting."""
+        if self.original_otel_setting is None:
+            os.environ.pop("TRULENS_OTEL_TRACING", None)
+        else:
+            os.environ["TRULENS_OTEL_TRACING"] = self.original_otel_setting
 
     def test_global_feedback_functions(self) -> None:
         # NOTE: currently static methods and class methods are not supported
