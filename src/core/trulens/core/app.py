@@ -1930,7 +1930,13 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         self._check_snowflake_dao()
         self.snowflake_app_dao.drop_current_version(self.snowflake_object_name)
 
-    def run(self, run_name: str):
+    def run(
+        self,
+        run_name: str,
+        input_selector: Optional[
+            Callable[[Tuple[Any, ...], Dict[str, Any]], Any]
+        ] = None,
+    ):
         if self.session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING
         ):
@@ -1942,6 +1948,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 app_version=self.app_version,
                 run_name=run_name,
                 input_id="",
+                input_selector=input_selector,
             )
         raise NotImplementedError(
             "This feature is not yet implemented for non-OTEL TruLens!"
@@ -2009,7 +2016,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         run_config = RunConfig(
             run_name=run_name,
             dataset_name=dataset_name,
-            source_type="LIVE_TRACING",
+            source_type="DATAFRAME",  # TODO: use LIVE_TRACING once run DPO side is updated
             dataset_spec={},
             description=description,
             label=label,
@@ -2135,6 +2142,9 @@ def trace_with_run(
     description: Optional[str] = None,
     label: Optional[str] = None,
     input_count: Optional[int] = None,
+    input_selector: Optional[
+        Callable[[Tuple[Any, ...], Dict[str, Any]], Any]
+    ] = None,
 ):
     """
     Decorator for live tracing with a run with automatic setup and teardown.
@@ -2144,12 +2154,30 @@ def trace_with_run(
         run_name: Run name that uniquely identifies the run. Required when app is not None.
         description: Optional description for the run
         label: Optional label for the run
-        input_count: Optional input count (auto-detected from first argument if not provided)
+        input_count: Optional input count (auto-detected from main method calls if not provided)
+        input_selector: Optional function to extract input from function arguments.
+            Signature: (args: Tuple[Any, ...], kwargs: Dict[str, Any]) -> Any
+            If not provided, uses the default main_input logic.
+            User is responsible for validating or enforcing the logic to ensure that the returned value is compatible with currently supported types of OTEL attribute values, i.e. (str, int, float, bool, dict, and sequence of these types).
 
     Example:
         ```python
         @trace_with_run(app=tru_app, run_name="customer_queries_run_1")
         def run_queries(test_data):
+            for input_entry in test_data:
+                test_app.query(input_entry["query"])
+
+        # Custom input selector for complex objects
+        def extract_query_text(args, kwargs):
+            test_data = args[0]  # First argument
+            return [item["query"] for item in test_data]
+
+        @trace_with_run(
+            app=tru_app,
+            run_name="custom_queries_run_1",
+            input_selector=extract_query_text
+        )
+        def run_queries_with_custom_input(test_data):
             for input_entry in test_data:
                 test_app.query(input_entry["query"])
         ```
@@ -2166,35 +2194,48 @@ def trace_with_run(
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            # Auto-detect input count from first argument if it's a sequence
-            detected_count = input_count
-            if detected_count is None and args:
-                first_arg = args[0]
-                if hasattr(first_arg, "__len__") and not isinstance(
-                    first_arg, str
-                ):
-                    detected_count = len(first_arg)
-                else:
-                    detected_count = 1  # Default to 1 if can't detect
-            elif detected_count is None:
-                detected_count = 1  # Default to 1 if no args
-
             # Set up run configuration for live tracing
             run_config = RunConfig(
                 run_name=run_name,
                 dataset_name=f"live_tracing_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f')}",
-                source_type="DATAFRAME",
+                source_type="DATAFRAME",  # TODO: use LIVE_TRACING once run DPO side is updated
                 dataset_spec={},
                 description=description,
                 label=label,
             )
 
             run: Run = app.add_run(run_config=run_config)
+            detected_count = None
 
             try:
-                with app.run(run_name=run_name):
+                with app.run(
+                    run_name=run_name, input_selector=input_selector
+                ) as recording:
                     # Call the original function without any modifications
                     result = func(*args, **kwargs)
+
+                    # Determine the actual input count based on method calls or user input
+                    if input_count is not None:
+                        detected_count = input_count
+                    else:
+                        # Count the actual number of records created (main method calls)
+                        detected_count = len(recording.records)
+
+                        # Fallback: try to detect from first argument if no records were created
+                        if detected_count is None and args:
+                            first_arg = args[0]
+                            if hasattr(first_arg, "__len__") and not isinstance(
+                                first_arg, str
+                            ):
+                                detected_count = len(first_arg)
+                            else:
+                                detected_count = (
+                                    1  # Default to 1 if can't detect
+                                )
+                        elif detected_count is None:
+                            detected_count = (
+                                1  # Default to 1 if no args and no records
+                            )
                     return result
             finally:
                 logger.debug(
