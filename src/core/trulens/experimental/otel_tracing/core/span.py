@@ -230,10 +230,28 @@ def set_record_root_span_attributes(
 ) -> None:
     tru_app: App = get_baggage("__trulens_app__")
     sig = signature(func)
+    input_selector = get_baggage("__trulens_input_selector__")
+
+    # Use custom input selector if provided, otherwise fall back to default
+    if input_selector is not None and callable(input_selector):
+        try:
+            main_input_value = input_selector(args, kwargs)
+        except Exception as e:
+            logger.warning(
+                f"Custom input selector failed: {e}. Falling back to default."
+            )
+            main_input_value = tru_app.main_input(
+                func, sig, sig.bind_partial(*args, **kwargs)
+            )
+    else:
+        main_input_value = tru_app.main_input(
+            func, sig, sig.bind_partial(*args, **kwargs)
+        )
+
     set_span_attribute_safely(
         span,
         SpanAttributes.RECORD_ROOT.INPUT,
-        tru_app.main_input(func, sig, sig.bind_partial(*args, **kwargs)),
+        main_input_value,
     )
     ground_truth_output = get_baggage(
         SpanAttributes.RECORD_ROOT.GROUND_TRUTH_OUTPUT
