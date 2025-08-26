@@ -670,6 +670,7 @@ def _run_feedback_on_inputs(
             _logger.warning(
                 f"feedback_name={feedback_name}, record={record_id}, span_group={span_group} had an error during computation:\n{str(e)}"
             )
+            raise e
     return ret
 
 
