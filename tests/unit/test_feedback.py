@@ -1,5 +1,11 @@
 """Tests for Feedback class."""
 
+import os
+
+# CRITICAL: Set OTEL environment variable BEFORE any TruLens imports
+# This must be done before any TruSession is created to avoid freezing the experimental flag
+os.environ["TRULENS_OTEL_TRACING"] = "0"
+
 import time
 from unittest import TestCase
 
