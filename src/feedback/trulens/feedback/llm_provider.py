@@ -2502,7 +2502,6 @@ class LLMProvider(core_provider.Provider):
 
         if isinstance(trace, Trace):
             trace = trace.events.to_json(default_handler=str)
-            print(trace)
         elif isinstance(trace, str):
             trace = trace
         else:
@@ -2577,7 +2576,6 @@ class LLMProvider(core_provider.Provider):
 
         if isinstance(trace, Trace):
             trace = trace.events.to_json(default_handler=str)
-            print(trace)
         elif isinstance(trace, str):
             trace = trace
         else:
@@ -2652,7 +2650,6 @@ class LLMProvider(core_provider.Provider):
 
         if isinstance(trace, Trace):
             trace = trace.events.to_json(default_handler=str)
-            print(trace)
         elif isinstance(trace, str):
             trace = trace
         else:
@@ -2725,7 +2722,6 @@ class LLMProvider(core_provider.Provider):
 
         if isinstance(trace, Trace):
             trace = trace.events.to_json(default_handler=str)
-            print(trace)
         elif isinstance(trace, str):
             trace = trace
         else:
