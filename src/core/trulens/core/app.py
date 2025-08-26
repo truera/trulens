@@ -2036,14 +2036,19 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 f"Finishing live run with run_name: {run.run_name} for {live_run_context.input_count} input records"
             )
 
-            self.session.force_flush()
-            run.run_dao.start_ingestion_query(
-                object_name=run.object_name,
-                object_type=run.object_type,
-                object_version=run.object_version,
-                run_name=run.run_name,
-                input_records_count=live_run_context.input_count,
-            )
+            try:
+                self.session.force_flush()
+                run.run_dao.start_ingestion_query(
+                    object_name=run.object_name,
+                    object_type=run.object_type,
+                    object_version=run.object_version,
+                    run_name=run.run_name,
+                    input_records_count=live_run_context.input_count,
+                )
+            except Exception as e:
+                logger.exception(
+                    f"Failed to flush remaining OTEL spans and/or start Snowflake query to wait for ingested batches: {e}"
+                )
 
     def instrumented_invoke_main_method(
         self,
@@ -2242,14 +2247,19 @@ def trace_with_run(
                     f"Finishing live run with run_name: {run.run_name} for {detected_count} input records"
                 )
 
-                app.session.force_flush()
-                run.run_dao.start_ingestion_query(
-                    object_name=run.object_name,
-                    object_type=run.object_type,
-                    object_version=run.object_version,
-                    run_name=run.run_name,
-                    input_records_count=detected_count,
-                )
+                try:
+                    app.session.force_flush()
+                    run.run_dao.start_ingestion_query(
+                        object_name=run.object_name,
+                        object_type=run.object_type,
+                        object_version=run.object_version,
+                        run_name=run.run_name,
+                        input_records_count=detected_count,
+                    )
+                except Exception as e:
+                    logger.exception(
+                        f"Failed to flush remaining OTEL spans and/or start Snowflake query to wait for ingested batches: {e}"
+                    )
 
         return wrapper
 
