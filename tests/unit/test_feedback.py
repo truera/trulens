@@ -1,6 +1,11 @@
 """Tests for Feedback class."""
 
 import os
+
+# CRITICAL: Set OTEL environment variable BEFORE any TruLens imports
+# This must be done before any TruSession is created to avoid freezing the experimental flag
+os.environ["TRULENS_OTEL_TRACING"] = "0"
+
 import time
 from unittest import TestCase
 
@@ -27,18 +32,6 @@ except ImportError:
 
 class TestFeedbackEval(TestCase):
     """Tests for feedback function evaluation."""
-
-    def setUp(self) -> None:
-        """Disable OTEL for legacy feedback tests."""
-        self.original_otel_setting = os.environ.get("TRULENS_OTEL_TRACING")
-        os.environ["TRULENS_OTEL_TRACING"] = "0"
-
-    def tearDown(self) -> None:
-        """Restore original OTEL setting."""
-        if self.original_otel_setting is None:
-            os.environ.pop("TRULENS_OTEL_TRACING", None)
-        else:
-            os.environ["TRULENS_OTEL_TRACING"] = self.original_otel_setting
 
     def test_skipeval(self) -> None:
         """Test the SkipEval capability."""
@@ -142,21 +135,10 @@ class TestFeedbackConstructors(TestCase):
     """Test for feedback function serialization/deserialization."""
 
     def setUp(self) -> None:
-        """Disable OTEL for legacy feedback tests."""
-        self.original_otel_setting = os.environ.get("TRULENS_OTEL_TRACING")
-        os.environ["TRULENS_OTEL_TRACING"] = "0"
-
         self.app = basic_app.TruBasicApp(
             text_to_text=lambda t: f"returning {t}"
         )
         _, self.record = self.app.with_record(self.app.app, t="hello")
-
-    def tearDown(self) -> None:
-        """Restore original OTEL setting."""
-        if self.original_otel_setting is None:
-            os.environ.pop("TRULENS_OTEL_TRACING", None)
-        else:
-            os.environ["TRULENS_OTEL_TRACING"] = self.original_otel_setting
 
     def test_global_feedback_functions(self) -> None:
         # NOTE: currently static methods and class methods are not supported

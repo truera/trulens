@@ -3,6 +3,11 @@ Tests for TruCustomApp.
 """
 
 import os
+
+# CRITICAL: Set OTEL environment variable BEFORE any TruLens imports
+# This must be done before any TruSession is created to avoid freezing the experimental flag
+os.environ["TRULENS_OTEL_TRACING"] = "0"
+
 import weakref
 
 from trulens.apps import custom as custom_app
@@ -26,19 +31,9 @@ class TestTruCustomApp(TruTestCase):
         return app, recorder
 
     def setUp(self):
-        """Disable OTEL for legacy custom app tests."""
-        self.original_otel_setting = os.environ.get("TRULENS_OTEL_TRACING")
-        os.environ["TRULENS_OTEL_TRACING"] = "0"
-
         self.session = core_session.TruSession()
 
     def tearDown(self):
-        """Restore original OTEL setting."""
-        if self.original_otel_setting is None:
-            os.environ.pop("TRULENS_OTEL_TRACING", None)
-        else:
-            os.environ["TRULENS_OTEL_TRACING"] = self.original_otel_setting
-
         super().tearDown()
 
     def test_with_record(self):
