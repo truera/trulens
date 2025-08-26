@@ -88,47 +88,38 @@ class TestFeedbackEval(TestCase):
 
     @pytest.mark.optional
     def test_same_provider_for_app_and_feedback(self) -> None:
-        # Temporarily disable OTEL for this test since it uses legacy selectors
-        original_otel_setting = os.environ.get("TRULENS_OTEL_TRACING")
-        os.environ["TRULENS_OTEL_TRACING"] = "0"
-
-        try:
-            tru_session = TruSession()
-            tru_session.reset_database()
-            rag_chain = tests.unit.test_otel_tru_chain.TestOtelTruChain._create_simple_rag()
-            llm = rag_chain.middle[
-                1
-            ]  # Bit of a hack, but this is the LLM for the chain.
-            provider = Langchain(chain=llm)
-            context = TruChain.select_context(rag_chain)
-            f_answer_relevance = Feedback(
-                provider.relevance_with_cot_reasons, name="Answer Relevance"
-            ).on_input_output()
-            f_groundedness = (
-                Feedback(
-                    provider.groundedness_measure_with_cot_reasons,
-                    name="Groundedness",
-                )
-                .on(context.collect())
-                .on_output()
+        tru_session = TruSession()
+        tru_session.reset_database()
+        rag_chain = (
+            tests.unit.test_otel_tru_chain.TestOtelTruChain._create_simple_rag()
+        )
+        llm = rag_chain.middle[
+            1
+        ]  # Bit of a hack, but this is the LLM for the chain.
+        provider = Langchain(chain=llm)
+        context = TruChain.select_context(rag_chain)
+        f_answer_relevance = Feedback(
+            provider.relevance_with_cot_reasons, name="Answer Relevance"
+        ).on_input_output()
+        f_groundedness = (
+            Feedback(
+                provider.groundedness_measure_with_cot_reasons,
+                name="Groundedness",
             )
-            tru_recorder = TruChain(
-                rag_chain,
-                app_name="ChatApplication",
-                app_version="Chain1",
-                feedbacks=[f_answer_relevance, f_groundedness],
-            )
-            with tru_recorder:
-                rag_chain.invoke("What is Task Decomposition?")
-                time.sleep(1)
-            res = tru_session.get_records_and_feedback()[0]
-            self.assertEqual(len(res), 1)
-        finally:
-            # Restore original OTEL setting
-            if original_otel_setting is None:
-                os.environ.pop("TRULENS_OTEL_TRACING", None)
-            else:
-                os.environ["TRULENS_OTEL_TRACING"] = original_otel_setting
+            .on(context.collect())
+            .on_output()
+        )
+        tru_recorder = TruChain(
+            rag_chain,
+            app_name="ChatApplication",
+            app_version="Chain1",
+            feedbacks=[f_answer_relevance, f_groundedness],
+        )
+        with tru_recorder:
+            rag_chain.invoke("What is Task Decomposition?")
+            time.sleep(1)
+        res = tru_session.get_records_and_feedback()[0]
+        self.assertEqual(len(res), 1)
 
 
 class TestFeedbackConstructors(TestCase):
