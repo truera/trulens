@@ -2502,6 +2502,7 @@ class LLMProvider(core_provider.Provider):
 
         if isinstance(trace, Trace):
             trace = trace.events["record_attributes"].to_string()
+            print(trace)
         elif isinstance(trace, str):
             trace = trace
         else:
@@ -2576,6 +2577,7 @@ class LLMProvider(core_provider.Provider):
 
         if isinstance(trace, Trace):
             trace = trace.events["record_attributes"].to_string()
+            print(trace)
         elif isinstance(trace, str):
             trace = trace
         else:
@@ -2650,6 +2652,7 @@ class LLMProvider(core_provider.Provider):
 
         if isinstance(trace, Trace):
             trace = trace.events["record_attributes"].to_string()
+            print(trace)
         elif isinstance(trace, str):
             trace = trace
         else:
@@ -2722,6 +2725,7 @@ class LLMProvider(core_provider.Provider):
 
         if isinstance(trace, Trace):
             trace = trace.events["record_attributes"].to_string()
+            print(trace)
         elif isinstance(trace, str):
             trace = trace
         else:
