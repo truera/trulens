@@ -3,7 +3,7 @@ Information nuggets were introduced long ago as part of an early [TREC Track](ht
 
 In the 2024 and beyond RAG tracks, nuggets became the default way of understanding response qualities of RAG systems as it could verify the presence of indivisible facts or statements and verify the presence. 
 
-## Nuggitization Process. (Original)
+## Nuggetization Process. (Original)
 As shown in [The Great Nugget Recall](https://arxiv.org/pdf/2504.15068) the nuggitization process is a simple multi step process which goes as follows:
 1. First, Given a piece of context and a user query or intent, extract the relevant nuggets. This runs interatively until no new nuggets are created or a max threshold is met (30 in TREC RAG)
 2. Given this set of nuggets they are scored for importance relative to query needs. The labels are either vital or ok. Ok is related but not needed while vital is, as implied, vital to the query. 
