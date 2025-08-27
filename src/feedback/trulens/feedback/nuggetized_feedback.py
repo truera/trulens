@@ -34,7 +34,7 @@ class NuggetizerProvider:
         
         Args:
             context_text: context text to extract nuggets from
-            query_text: a piece of query text to condition nugget extration on. 
+            query_text: a piece of query text to condition nugget extraction on. 
             max_nuggets: Maximum number of nuggets to extract
             
         Returns:
