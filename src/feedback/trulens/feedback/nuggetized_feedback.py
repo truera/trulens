@@ -108,7 +108,7 @@ class NuggetizerProvider:
             
                 
         except Exception as e:
-            logger.error(f"Error extracting nuggets: {e}")
+            logger.error(f"Error classifying nuggets: {e}")
             return []
     
 
