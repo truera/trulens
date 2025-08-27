@@ -72,7 +72,7 @@ class NuggetizerProvider:
             return []
     
 
-    def classify_nuggests(self, nuggets: List[str], query_text: str,) -> List[str]:
+    def classify_nuggets(self, nuggets: List[str], query_text: str,) -> List[str]:
         """
         Classify the importance of nuggets from text using LLM.
         
