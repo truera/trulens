@@ -21,4 +21,4 @@ To make nuggets fit within the RAG triad we treat the process of nuggetization a
 
 This process is demonstrated by running the script below. Be sure to set up your OPEN_AI_API_KEY before proceeding. 
 
-
+[nuggetized_feedback.py](../../../src/feedback/trulens/feedback/nuggetized_feedback.py)
