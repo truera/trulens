@@ -1,7 +1,7 @@
 # Nuggetized Feedback
 Information nuggets were introduced long ago as part of an early [TREC Track](https://trec.nist.gov/pubs/trec12/papers/QA.OVERVIEW.pdf) focused on question answering. This track defined the category as: "An information nugget was defined as a fact for which the assessor could make a binary decision as to whether a response contained the nugget. At the end of this step, the assessor decided which nuggets were vital—nuggets that must appear in a definition for that definition to be good". In other words, an information nugget is a fact or statement which when presented with an answer, it is immediately visible if this "nugget" is present.
 
-In the 2024 and beyond RAG tracks nuggets became the default way of understanding response qualities of RAG systems as it could verify the presence of undivisible facts or statements and verify the presense. 
+In the 2024 and beyond RAG tracks, nuggets became the default way of understanding response qualities of RAG systems as it could verify the presence of indivisible facts or statements and verify the presence. 
 
 ## Nuggitization Process. (Original)
 As shown in [The Great Nugget Recall](https://arxiv.org/pdf/2504.15068) the nuggitization process is a simple multi step process which goes as follows:
