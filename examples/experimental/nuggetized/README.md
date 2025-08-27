@@ -16,7 +16,7 @@ To make nuggets fit within the RAG triad we treat the process of nuggetization a
 
 1. First, Given a piece of context and a user query or intent, extract the relevant nuggets. This runs interatively until no new nuggets are created or a max threshold is met (30 in TREC RAG). This is done based on the full generated answer. 
 2. Given this set of nuggets they are scored for importance relative to query needs. The labels are either vital or ok. Ok is related but not needed while vital is, as implied, vital to the query. 
-3. Nuggets are passed to the existing rag triad and evaluated independently. 
+3. Nuggets are passed to the existing RAG triad and evaluated independently. 
 4. RAG triad results are combined and weighted based on nugget importance. 
 
 This process is demonstrated by running the script below. Be sure to set up your OPEN_AI_API_KEY before proceeding. 
