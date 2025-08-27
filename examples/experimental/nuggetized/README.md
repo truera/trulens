@@ -15,7 +15,7 @@ True Lens is build around the notion of RAG triad which decomposes RAG answer qu
 To make nuggets fit within the RAG triad we treat the process of nuggetization as a wrapper to the existing feedback process. Context relevance is unchanged so existing passages are evaluated on relevance with direct comparing the context passage with the query. Groundness and answer relevance are changed as they the existing RAG triad gets nuggetized information. This all means that Nuggetized RAG triad behaves as follows
 
 1. First, given a piece of context and a user query or intent, extract the relevant nuggets. This runs iteratively until no new nuggets are created or a max threshold is met (30 in TREC RAG). This is done based on the full generated answer. 
-2. Given this set of nuggets they are scored for importance relative to query needs. The labels are either vital or ok. Ok is related but not needed while vital is, as implied, vital to the query. 
+2. Given this set of nuggets, they are then scored for importance relative to query needs. The labels are either "vital" or "ok". "ok" is related but not needed while "vital" is, as implied, vital to the query. 
 3. Nuggets are passed to the existing RAG triad and evaluated independently. 
 4. RAG triad results are combined and weighted based on nugget importance. 
 
