@@ -6,7 +6,7 @@ In the 2024 and beyond RAG tracks, nuggets became the default way of understandi
 ## Nuggetization Process. (Original)
 As shown in [The Great Nugget Recall](https://arxiv.org/pdf/2504.15068) the nuggetization process is a simple multi step process which goes as follows:
 1. First, given a piece of context and a user query or intent, extract the relevant nuggets. This runs iteratively until no new nuggets are created or a max threshold is met (30 in TREC RAG)
-2. Given this set of nuggets they are scored for importance relative to query needs. The labels are either vital or ok. Ok is related but not needed while vital is, as implied, vital to the query. 
+2. Given this set of nuggets, they are then scored for importance relative to query needs. The labels are either "vital" or "ok". "ok" is related but not needed while "vital" is, as implied, vital to the query. 
 3. Once there are importance scores, the final step is to measure if nuggets are supported by the passage which they come from. Nuggets/context relationship can be "support" implying the nugget is fully supported by the passage, "not_support", and "partial_support", which imply what their names indicate.
 
 ## Nuggets in True Lens
