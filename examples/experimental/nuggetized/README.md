@@ -19,6 +19,6 @@ To make nuggets fit within the RAG triad we treat the process of nuggetization a
 3. Nuggets are passed to the existing rag triad and evaluated independently. 
 4. RAG triad results are combined and weighted based on nugget importance. 
 
-This process is demonstrated by running the script below. Be sure to set up your OPEN_AI_API_KEY before proceding. 
+This process is demonstrated by running the script below. Be sure to set up your OPEN_AI_API_KEY before proceeding. 
 
 
