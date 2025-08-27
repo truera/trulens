@@ -64,7 +64,7 @@ class NuggetizerProvider:
             )
             
             content = response.choices[0].message.content.strip()
-            return list(content)
+            return json.loads(content)
             
                 
         except Exception as e:
