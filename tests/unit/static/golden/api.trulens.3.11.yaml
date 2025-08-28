@@ -4,7 +4,7 @@ trulens:
   lows: {}
 trulens.benchmark:
   __class__: builtins.module
-  __version__: 2.1.2
+  __version__: 2.2.4
   highs: {}
   lows:
     __version__: builtins.str
@@ -60,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 2.1.2
+  __version__: 2.2.4
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -456,6 +456,7 @@ trulens.core.database.sqlalchemy.SQLAlchemyDB:
     from_db_url: builtins.classmethod
     from_tru_args: builtins.classmethod
     get_events_by_record_id: builtins.function
+    insert_events: builtins.function
     orm: typing.Type[trulens.core.database.orm.ORM]
     redact_keys: builtins.bool
     session: typing.Optional[sqlalchemy.orm.session.sessionmaker, builtins.NoneType]
@@ -1922,7 +1923,7 @@ trulens.core.utils.trulens.Other:
   attributes: {}
 trulens.dashboard:
   __class__: builtins.module
-  __version__: 2.1.2
+  __version__: 2.2.4
   highs:
     run_dashboard: builtins.function
     run_dashboard_sis: builtins.function
@@ -1930,20 +1931,6 @@ trulens.dashboard:
   lows:
     __all__: builtins.list
     __version__: builtins.str
-trulens.dashboard.Leaderboard:
-  __class__: builtins.module
-  highs: {}
-  lows:
-    APP_AGG_COLS: builtins.list
-    APP_COLS: builtins.list
-    handle_add_metadata: builtins.function
-    handle_add_virtual_app: builtins.function
-    handle_pin_toggle: builtins.function
-    handle_table_edit: builtins.function
-    init_page_state: builtins.function
-    leaderboard_main: builtins.function
-    order_columns: builtins.function
-    render_leaderboard: builtins.function
 trulens.dashboard.appui:
   __class__: builtins.module
   highs: {}
@@ -2043,6 +2030,11 @@ trulens.dashboard.display:
     get_feedback_result: builtins.function
     get_icon: builtins.function
     highlight: builtins.function
+trulens.dashboard.main:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    main: builtins.function
 trulens.dashboard.run:
   __class__: builtins.module
   highs: {}
@@ -2233,7 +2225,7 @@ trulens.dashboard.ux.styles.ResultCategoryType:
     value: enum.property
 trulens.feedback:
   __class__: builtins.module
-  __version__: 2.1.2
+  __version__: 2.2.4
   highs:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
@@ -2549,7 +2541,6 @@ trulens.feedback.prompts:
     LLM_ABSTENTION_USER: builtins.str
     LLM_ANSWERABILITY_SYSTEM: builtins.str
     LLM_ANSWERABILITY_USER: builtins.str
-    LLM_GROUNDEDNESS_FULL_PROMPT: builtins.str
     LLM_GROUNDEDNESS_SENTENCES_SPLITTER: builtins.str
     LLM_GROUNDEDNESS_SYSTEM: builtins.str
     LLM_GROUNDEDNESS_USER: builtins.str
@@ -3228,7 +3219,7 @@ trulens.feedback.v2.provider.base.Provider:
     tru_class_info: trulens.core.utils.pyschema.Class
 trulens.hotspots:
   __class__: builtins.module
-  __version__: 2.1.2
+  __version__: 2.2.4
   highs:
     HotspotsConfig: builtins.type
     get_skipped_columns: builtins.function

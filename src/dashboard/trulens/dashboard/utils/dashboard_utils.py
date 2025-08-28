@@ -186,6 +186,7 @@ def get_session() -> core_session.TruSession:
 def get_records_and_feedback(
     app_ids: Optional[List[str]] = None,
     app_name: Optional[str] = None,
+    app_versions: Optional[List[str]] = None,
     offset: Optional[int] = None,
     limit: Optional[int] = None,
 ):
@@ -196,6 +197,7 @@ def get_records_and_feedback(
     records_df, feedback_col_names = lms.get_records_and_feedback(
         app_ids=app_ids,
         app_name=app_name,
+        app_versions=app_versions,
         offset=offset,
         limit=limit,
     )
@@ -677,8 +679,7 @@ def _get_event_otel_spans(record_id: str) -> List[OtelSpan]:
 
 
 def _check_cross_format_records(
-    app_name: Optional[str] = None,
-    app_ids: Optional[List[str]] = None,
+    app_name: Optional[str] = None, app_versions: Optional[List[str]] = None
 ) -> tuple[int, int]:
     """Check record counts in both OTEL and non-OTEL formats.
 
@@ -702,12 +703,11 @@ def _check_cross_format_records(
                     "resource_attributes", ResourceAttributes.APP_NAME
                 )
                 query = query.where(app_name_expr == app_name)
-            elif app_ids:
-                # For OTEL events, app_id is in resource_attributes JSON
-                app_id_expr = db._json_extract_otel(
-                    "resource_attributes", ResourceAttributes.APP_ID
+            if app_versions:
+                app_version_expr = db._json_extract_otel(
+                    "resource_attributes", ResourceAttributes.APP_VERSION
                 )
-                query = query.where(app_id_expr.in_(app_ids))
+                query = query.where(app_version_expr.in_(app_versions))
 
             result = session_ctx.execute(query).scalar()
             otel_count = result or 0
@@ -720,8 +720,8 @@ def _check_cross_format_records(
                 query = query.join(db.orm.Record.app).where(  # type: ignore
                     db.orm.AppDefinition.app_name == app_name  # type: ignore
                 )
-            elif app_ids:
-                query = query.where(db.orm.Record.app_id.in_(app_ids))  # type: ignore
+            if app_versions:
+                query = query.where(db.orm.Record.app_version.in_(app_versions))  # type: ignore
 
             result = session_ctx.execute(query).scalar()
             non_otel_count = result or 0
@@ -730,24 +730,26 @@ def _check_cross_format_records(
 
 
 def _show_no_records_error(
-    app_name: Optional[str] = None, app_ids: Optional[List[str]] = None
+    app_name: Optional[str] = None, app_versions: Optional[List[str]] = None
 ) -> None:
     """Show helpful error message when no records found, with cross-format record counts."""
     is_otel_mode = is_otel_tracing_enabled()
-    otel_count, non_otel_count = _check_cross_format_records(app_name, app_ids)
+    otel_count, non_otel_count = _check_cross_format_records(
+        app_name=app_name, app_versions=app_versions
+    )
 
     if is_otel_mode and otel_count == 0 and non_otel_count > 0:
         st.error(
             f"No records found for app `{app_name}` in OTEL mode. "
             f"However, {non_otel_count} records exist in non-OTEL format. "
-            f"Restart without `TRULENS_OTEL_TRACING` to access them.",
+            f"Set `TRULENS_OTEL_TRACING=0` to disable OTEL mode and access them.",
             icon="🔄",
         )
     elif not is_otel_mode and non_otel_count == 0 and otel_count > 0:
         st.error(
             f"No records found for app `{app_name}` in non-OTEL mode. "
             f"However, {otel_count} records exist in OTEL format. "
-            f"Set `TRULENS_OTEL_TRACING=1` to access them.",
+            f"Remove `TRULENS_OTEL_TRACING=0` to enable OTEL mode and access them.",
             icon="🔄",
         )
     else:

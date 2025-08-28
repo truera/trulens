@@ -1,4 +1,3 @@
-from functools import partial
 import pprint as pp
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
@@ -6,7 +5,6 @@ import pandas as pd
 import streamlit as st
 from trulens.core.database.base import MULTI_CALL_NAME_DELIMITER
 from trulens.dashboard.display import expand_groundedness_df
-from trulens.dashboard.display import highlight
 from trulens.dashboard.ux.styles import CATEGORY
 from trulens.dashboard.ux.styles import default_direction
 
@@ -190,19 +188,8 @@ def display_feedback_call(
         st.warning("No feedback details found.")
         return
 
-    # Style and display the DataFrame
-    style_highlight_fn = partial(
-        highlight,
-        selected_feedback=feedback_name,
-        feedback_directions=feedback_directions,
-        default_direction=default_direction,
-    )
-    styled_df = df.style.apply(
-        style_highlight_fn,
-        axis=1,
-    )
-
     # Format only numeric columns
+    styled_df = df.style
     for col in df.select_dtypes(include=["number"]).columns:
         styled_df = styled_df.format({col: "{:.2f}"})
 

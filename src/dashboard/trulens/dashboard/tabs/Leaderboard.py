@@ -11,7 +11,7 @@ from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.utils import text as text_utils
 from trulens.dashboard import constants as dashboard_constants
-from trulens.dashboard.pages import Compare as Compare_page
+from trulens.dashboard.tabs import Compare as Compare_page
 from trulens.dashboard.utils import dashboard_utils
 from trulens.dashboard.utils import metadata_utils
 from trulens.dashboard.utils import streamlit_compat
@@ -535,7 +535,7 @@ def _render_grid_tab(
         st.session_state[f"{dashboard_constants.RECORDS_PAGE_NAME}.app_ids"] = (
             selected_app_ids
         )
-        st.switch_page("pages/Records.py")
+        st.switch_page("tabs/Records.py")
     # Compare App Versions
     if len(selected_app_ids) < Compare_page.MIN_COMPARATORS:
         _compare_button_disabled = True
@@ -559,7 +559,7 @@ def _render_grid_tab(
         st.session_state[f"{dashboard_constants.COMPARE_PAGE_NAME}.app_ids"] = (
             selected_app_ids
         )
-        st.switch_page("pages/Compare.py")
+        st.switch_page("tabs/Compare.py")
 
     # Add Metadata Col
     if c5.button(
@@ -706,7 +706,7 @@ def _render_list_tab(
                 st.session_state[
                     f"{dashboard_constants.RECORDS_PAGE_NAME}.app_ids"
                 ] = [app_id]
-                st.switch_page("pages/Records.py")
+                st.switch_page("tabs/Records.py")
 
         st.markdown("""---""")
 
@@ -786,16 +786,18 @@ def render_leaderboard(app_name: str):
     if versions_df.empty:
         st.error(f"No app versions found for app `{app_name}`.")
         return
-    app_ids = versions_df["app_id"].tolist()
+    app_versions = versions_df["app_version"].tolist()
 
     # Get records and feedback data
     records_limit = st.session_state.get(dashboard_utils.ST_RECORDS_LIMIT, None)
     records_df, feedback_col_names = dashboard_utils.get_records_and_feedback(
-        app_name=app_name, app_ids=app_ids, limit=records_limit
+        app_name=app_name,
+        app_versions=app_versions,
+        limit=records_limit,
     )
     if records_df.empty:
         # Check for cross-format records before showing generic error
-        _show_no_records_error(app_name=app_name, app_ids=app_ids)
+        _show_no_records_error(app_name=app_name, app_versions=app_versions)
         return
     elif records_limit is not None and len(records_df) >= records_limit:
         cols = st_columns([0.9, 0.1], vertical_alignment="center")
