@@ -2216,57 +2216,11 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
         self._custom_metrics.append(custom_metric_info)
 
-        # Register with Snowflake if using Snowflake connector
-        if hasattr(self, "connector") and self.connector is not None:
-            try:
-                self._register_custom_metric_with_snowflake(custom_metric_info)
-            except Exception as e:
-                logger.warning(
-                    f"Failed to register custom metric with Snowflake: {e}"
-                )
-
-    def _register_custom_metric_with_snowflake(
-        self, metric_info: Dict[str, Any]
-    ) -> None:
+    def _register_custom_metric_with_snowflake(self) -> None:
         """Register custom metric definition with Snowflake."""
-        try:
-            from trulens.connectors.snowflake import SnowflakeConnector
-            from trulens.connectors.snowflake.custom_metrics import (
-                CustomMetricsManager,
-            )
-
-            if isinstance(self.connector, SnowflakeConnector):
-                metrics_manager = CustomMetricsManager(
-                    self.connector.snowpark_session
-                )
-
-                metrics_manager.register_custom_metric(
-                    metric_name=metric_info["metric"].name,
-                    metric_type=metric_info["metric_type"],
-                    computation_type=metric_info["computation_type"],
-                    object_name=self.snowflake_object_name,
-                    object_type=self.snowflake_object_type,
-                    object_version=self.snowflake_object_version,
-                    selectors=metric_info["selectors"],
-                    description=metric_info["metric"].description,
-                )
-                logger.info(
-                    f"Registered custom metric '{metric_info['metric'].name}' with Snowflake"
-                )
-            else:
-                logger.debug(
-                    f"Connector is not SnowflakeConnector, skipping Snowflake registration for metric '{metric_info['metric'].name}'"
-                )
-
-        except ImportError:
-            logger.debug(
-                "Snowflake connector not available, skipping custom metric registration"
-            )
-        except Exception as e:
-            logger.warning(
-                f"Failed to register custom metric with Snowflake: {e}"
-            )
-            raise
+        raise NotImplementedError(
+            "Registering client-side custom metrics to Snowflake are not yet supported."
+        )
 
     def get_custom_metrics(self) -> List[Dict[str, Any]]:
         """Get all registered custom metrics."""
