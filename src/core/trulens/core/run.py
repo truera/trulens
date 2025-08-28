@@ -706,18 +706,20 @@ class Run(BaseModel):
         return True
 
     def compute_metrics(self, metrics: List[str]) -> str:
+        """Enhanced compute_metrics to handle client-side custom metrics."""
         if not metrics:
             raise ValueError(
                 "No metrics provided. Please provide at least one metric to compute."
             )
 
         run_status = self.get_status()
-
         logger.info(f"Current run status: {run_status}")
+
         if not self._can_start_new_metric_computation(run_status):
             return f"""Cannot start a new metric computation when in run status: {run_status}. Valid statuses are: {RunStatus.INVOCATION_COMPLETED}, {RunStatus.INVOCATION_PARTIALLY_COMPLETED},
         {RunStatus.COMPUTATION_IN_PROGRESS}, {RunStatus.COMPLETED}, {RunStatus.PARTIALLY_COMPLETED}, {RunStatus.FAILED}."""
 
+        # Check for already computed metrics
         computed_metrics = []
         for metric in metrics:
             if self._should_skip_computation(metric, self):
@@ -729,18 +731,113 @@ class Run(BaseModel):
                 f"{', '.join(computed_metrics)}. If you want to recompute, please cancel the run and start a new one."
             )
 
-        logger.info(f"Metrics to compute: {metrics}.")
+        # Separate client-side and server-side metrics
+        client_metrics = []
+        server_metrics = []
 
-        self.run_dao.call_compute_metrics_query(
-            metrics=metrics,
-            object_name=self.object_name,
-            object_type=self.object_type,
-            object_version=self.object_version,
-            run_name=self.run_name,
-        )
+        app_custom_metrics = self.app.get_custom_metrics()
+        custom_metric_names = {
+            m["metric"].name
+            for m in app_custom_metrics
+            if m["computation_type"] == "client"
+        }
+
+        for metric in metrics:
+            if metric in custom_metric_names:
+                client_metrics.append(metric)
+            else:
+                server_metrics.append(metric)
+
+        logger.info(f"Client-side metrics to compute: {client_metrics}")
+        logger.info(f"Server-side metrics to compute: {server_metrics}")
+
+        # Handle client-side metrics
+        if client_metrics:
+            try:
+                self._compute_client_side_metrics(client_metrics)
+                logger.info(
+                    f"Successfully computed {len(client_metrics)} client-side metrics"
+                )
+            except Exception as e:
+                logger.error(f"Error computing client-side metrics: {e}")
+                raise
+
+        # Handle server-side metrics (existing logic)
+        if server_metrics:
+            self.run_dao.call_compute_metrics_query(
+                metrics=server_metrics,
+                object_name=self.object_name,
+                object_type=self.object_type,
+                object_version=self.object_version,
+                run_name=self.run_name,
+            )
+            logger.info(
+                f"Started server-side computation for {len(server_metrics)} metrics"
+            )
 
         logger.info("Metrics computation job started")
         return "Metrics computation in progress."
+
+    def _compute_client_side_metrics(self, metrics: List[str]) -> None:
+        """Compute client-side custom metrics."""
+        try:
+            from trulens.feedback.computer import compute_feedback_by_span_group
+        except ImportError:
+            logger.error(
+                "trulens.feedback package is not installed. Please install it to use feedback computation functionality."
+            )
+            raise
+
+        # Get events for this run
+        events = self.tru_session.connector.get_events(
+            app_name=self.app.app_name,
+            app_version=self.app.app_version,
+            run_name=self.run_name,
+        )
+
+        if events.empty:
+            logger.warning(
+                f"No events found for app {self.app.app_name} version {self.app.app_version} run {self.run_name}"
+            )
+            return
+
+        # Get custom metric definitions
+        app_custom_metrics = self.app.get_custom_metrics()
+        metric_map = {m["metric"].name: m for m in app_custom_metrics}
+
+        # Compute each client-side metric
+        for metric_name in metrics:
+            if metric_name in metric_map:
+                metric_info = metric_map[metric_name]
+                feedback = metric_info["feedback"]
+
+                try:
+                    logger.info(f"Computing client-side metric: {metric_name}")
+                    compute_feedback_by_span_group(
+                        events=events,
+                        feedback_name=feedback.name,
+                        feedback_function=feedback.imp,
+                        higher_is_better=feedback.higher_is_better,
+                        kwarg_to_selector=feedback.selectors,
+                        feedback_aggregator=feedback.aggregator,
+                        raise_error_on_no_feedbacks_computed=False,
+                    )
+                    logger.info(
+                        f"Successfully computed client-side metric: {metric_name}"
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"Error computing client-side metric {metric_name}: {e}"
+                    )
+                    raise
+            else:
+                logger.warning(
+                    f"Client-side metric {metric_name} not found in app custom metrics"
+                )
+
+        # Force flush to ensure spans are uploaded
+        self.tru_session.force_flush()
+        logger.info("Flushed OTEL spans for client-side metrics")
 
     def _is_cancelled(self) -> bool:
         return self.get_status() == RunStatus.CANCELLED

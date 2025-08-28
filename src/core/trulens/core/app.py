@@ -44,6 +44,8 @@ from trulens.core.database import base as core_db
 from trulens.core.database import connector as core_connector
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback import feedback as core_feedback
+from trulens.core.feedback.custom_metric import CustomMetric
+from trulens.core.feedback.selector import Selector
 from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.run import Run
 from trulens.core.run import RunConfig
@@ -389,6 +391,11 @@ class App(
         exclude=True, default_factory=list
     )
     """Feedback functions to evaluate on each record."""
+
+    _custom_metrics: List[Dict[str, Any]] = pydantic.Field(
+        exclude=True, default_factory=list
+    )
+    """Custom metrics registered with this app."""
 
     session: core_session.TruSession = pydantic.Field(
         default_factory=core_session.TruSession, exclude=True
@@ -2138,6 +2145,173 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         """Stop the evaluator for the app."""
         if hasattr(self, "_evaluator") and self._evaluator is not None:
             self._evaluator.stop_evaluator()
+
+    def add_metric(
+        self,
+        metric: Union[CustomMetric, Callable],
+        selectors: Dict[str, Selector],
+        metric_type: str = "custom",
+        metric_computation: str = "client",
+        name: Optional[str] = None,
+        higher_is_better: bool = True,
+    ) -> None:
+        """
+        Add a custom metric to the app.
+
+        Args:
+            metric: CustomMetric instance or callable function
+            selectors: Dictionary mapping parameter names to Selectors
+            metric_type: Type identifier for the metric (e.g., "text2SQL", "accuracy")
+            metric_computation: "client" or "server" (default: "client")
+            name: Optional name override
+            higher_is_better: Whether higher scores are better
+
+        Example:
+            ```python
+            app.add_metric(
+                metric=text_to_sql_scores,
+                selectors={
+                    "query": Selector(
+                        function_attribute="question",
+                        function_name="App.generate_SQL"
+                    ),
+                    "sql": Selector(
+                        function_attribute="return",
+                        function_name="App.generate_SQL"
+                    )
+                },
+                metric_type="text2SQL",
+                metric_computation="client"
+            )
+            ```
+        """
+        if isinstance(metric, CustomMetric):
+            custom_metric = metric
+        else:
+            # Convert callable to CustomMetric
+            metric_name = name or getattr(metric, "__name__", "custom_metric")
+            custom_metric = CustomMetric(
+                function=metric,
+                name=metric_name,
+                higher_is_better=higher_is_better,
+                metric_type=metric_type,
+            )
+
+        # Create feedback definition
+        try:
+            feedback_def = custom_metric.create_feedback_definition(selectors)
+        except ValueError as e:
+            raise ValueError(
+                f"Error creating feedback definition for metric '{custom_metric.name}': {e}"
+            )
+
+        # Store custom metric info
+        custom_metric_info = {
+            "metric": custom_metric,
+            "feedback": feedback_def,
+            "selectors": selectors,
+            "metric_type": metric_type,
+            "computation_type": metric_computation,
+        }
+
+        self._custom_metrics.append(custom_metric_info)
+
+        # Register with Snowflake if using Snowflake connector
+        if hasattr(self, "connector") and self.connector is not None:
+            try:
+                self._register_custom_metric_with_snowflake(custom_metric_info)
+            except Exception as e:
+                logger.warning(
+                    f"Failed to register custom metric with Snowflake: {e}"
+                )
+
+    def _register_custom_metric_with_snowflake(
+        self, metric_info: Dict[str, Any]
+    ) -> None:
+        """Register custom metric definition with Snowflake."""
+        try:
+            from trulens.connectors.snowflake import SnowflakeConnector
+            from trulens.connectors.snowflake.custom_metrics import (
+                CustomMetricsManager,
+            )
+
+            if isinstance(self.connector, SnowflakeConnector):
+                metrics_manager = CustomMetricsManager(
+                    self.connector.snowpark_session
+                )
+
+                metrics_manager.register_custom_metric(
+                    metric_name=metric_info["metric"].name,
+                    metric_type=metric_info["metric_type"],
+                    computation_type=metric_info["computation_type"],
+                    object_name=self.snowflake_object_name,
+                    object_type=self.snowflake_object_type,
+                    object_version=self.snowflake_object_version,
+                    selectors=metric_info["selectors"],
+                    description=metric_info["metric"].description,
+                )
+                logger.info(
+                    f"Registered custom metric '{metric_info['metric'].name}' with Snowflake"
+                )
+            else:
+                logger.debug(
+                    f"Connector is not SnowflakeConnector, skipping Snowflake registration for metric '{metric_info['metric'].name}'"
+                )
+
+        except ImportError:
+            logger.debug(
+                "Snowflake connector not available, skipping custom metric registration"
+            )
+        except Exception as e:
+            logger.warning(
+                f"Failed to register custom metric with Snowflake: {e}"
+            )
+            raise
+
+    def get_custom_metrics(self) -> List[Dict[str, Any]]:
+        """Get all registered custom metrics."""
+        return self._custom_metrics
+
+    def add_metric_from_config(
+        self,
+        config: Dict[str, Any],
+        metric_function: Callable,
+    ) -> None:
+        """
+        Add a custom metric from a configuration dictionary.
+
+        Args:
+            config: Configuration dictionary with metric details
+            metric_function: The metric function to use
+
+        Example:
+            ```python
+            config = {
+                "name": "my_metric_1",
+                "type": "text2SQL",
+                "computation": "client",
+                "selectors": {
+                    "query": Selector(
+                        function_attribute="question",
+                        function_name="App.generate_SQL"
+                    ),
+                    "SQL": Selector(
+                        function_attribute="return",
+                        function_name="App.generate_SQL"
+                    )
+                }
+            }
+            app.add_metric_from_config(config, text_to_sql_scores)
+            ```
+        """
+        self.add_metric(
+            metric=metric_function,
+            selectors=config.get("selectors", {}),
+            metric_type=config.get("type", "custom"),
+            metric_computation=config.get("computation", "client"),
+            name=config.get("name"),
+            higher_is_better=config.get("higher_is_better", True),
+        )
 
 
 @staticmethod
