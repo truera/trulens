@@ -392,7 +392,7 @@ class App(
     )
     """Feedback functions to evaluate on each record."""
 
-    _custom_metrics: List[Dict[str, Any]] = pydantic.Field(
+    custom_metrics: List[Dict[str, Any]] = pydantic.Field(
         exclude=True, default_factory=list
     )
     """Custom metrics registered with this app."""
@@ -2214,7 +2214,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             "computation_type": metric_computation,
         }
 
-        self._custom_metrics.append(custom_metric_info)
+        self.custom_metrics.append(custom_metric_info)
 
     def _register_custom_metric_with_snowflake(self) -> None:
         """Register custom metric definition with Snowflake."""
@@ -2224,7 +2224,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
     def get_custom_metrics(self) -> List[Dict[str, Any]]:
         """Get all registered custom metrics."""
-        return self._custom_metrics
+        return self.custom_metrics
 
     def add_metric_from_config(
         self,
