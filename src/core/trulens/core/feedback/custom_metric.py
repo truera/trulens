@@ -262,8 +262,9 @@ class CustomMetric:
                 error_msg += f"\nExtra selectors: {extra}"
             raise ValueError(error_msg)
 
+        # Use the same pattern as in the tests: pass function as first positional argument
         return Feedback(
-            imp=self.function,
+            self.function,
             name=self.metric_type,
             higher_is_better=self.higher_is_better,
         ).on(selectors)
@@ -284,9 +285,10 @@ class CustomMetric:
         # Validate the config against this function
         config.validate_for_function(self.function)
 
+        # Use the same pattern as in the tests: pass function as first positional argument
         return Feedback(
-            imp=self.function,
-            name=config.name,
+            self.function,
+            name=self.metric_type,  # Use the metric's name, not the config name
             higher_is_better=config.higher_is_better,
         ).on(config.selectors)
 

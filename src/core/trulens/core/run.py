@@ -787,11 +787,8 @@ class Run(BaseModel):
             )
             raise
 
-        # Get events for this run
-        events = self.tru_session.connector.get_events(
-            app_name=self.app.app_name,
-            app_version=self.app.app_version,
-        )
+        # Get events using the proper method based on connector type
+        events = self._get_events_for_client_metrics()
 
         if events.empty:
             logger.warning(
@@ -801,7 +798,7 @@ class Run(BaseModel):
 
         # Get custom metric definitions
         app_custom_metrics = self.app.get_custom_metrics()
-        metric_map = {m["metric"].name: m for m in app_custom_metrics}
+        metric_map = {m["metric"].metric_type: m for m in app_custom_metrics}
 
         # Compute each client-side metric
         for metric_name in metrics:
@@ -836,6 +833,112 @@ class Run(BaseModel):
         # Force flush to ensure spans are uploaded
         self.tru_session.force_flush()
         logger.info("Flushed OTEL spans for client-side metrics")
+
+    def _get_events_for_client_metrics(self) -> pd.DataFrame:
+        """Get events for client-side metric computation using the appropriate method."""
+        try:
+            # Check if we're using Snowflake connector with account event table
+            from trulens.connectors.snowflake import SnowflakeConnector
+
+            if (
+                isinstance(self.tru_session.connector, SnowflakeConnector)
+                and self.tru_session.connector.use_account_event_table
+            ):
+                # Use Snowflake event table query (following _wait_for_events pattern)
+                return self._get_events_from_snowflake_event_table()
+            else:
+                # Use standard connector get_events method
+                return self.tru_session.connector.get_events(
+                    app_name=self.app.app_name,
+                    app_version=self.app.app_version,
+                    run_name=self.run_name,
+                )
+        except ImportError:
+            # Fallback to standard method if Snowflake connector not available
+            return self.tru_session.connector.get_events(
+                app_name=self.app.app_name,
+                app_version=self.app.app_version,
+                run_name=self.run_name,
+            )
+
+    def _get_events_from_snowflake_event_table(self) -> pd.DataFrame:
+        """Get events from Snowflake event table using direct SQL query."""
+        try:
+            import json
+
+            # Use the same pattern as _wait_for_events in tests/load/test_snowflake.py
+            query = """
+                SELECT *
+                FROM TABLE(SNOWFLAKE.LOCAL.GET_AI_OBSERVABILITY_EVENTS(
+                    ?, ?, ?, 'EXTERNAL AGENT'
+                ))
+                WHERE RECORD_ATTRIBUTES[?] = ?
+            """
+
+            params = [
+                self.run_dao.session.get_current_database()[
+                    1:-1
+                ],  # Remove quotes
+                self.run_dao.session.get_current_schema()[
+                    1:-1
+                ],  # Remove quotes
+                self.app.app_name.upper(),
+                SpanAttributes.RUN_NAME,
+                self.run_name,
+            ]
+
+            logger.debug(
+                f"Querying Snowflake event table with params: {params}"
+            )
+            events_df = self.run_dao.session.sql(
+                query, params=params
+            ).to_pandas()
+
+            if events_df.empty:
+                logger.debug("No events found in Snowflake event table")
+                return pd.DataFrame()
+
+            # Parse JSON columns (following the pattern from _wait_for_events)
+            for json_col in [
+                "TRACE",
+                "RESOURCE_ATTRIBUTES",
+                "RECORD",
+                "RECORD_ATTRIBUTES",
+            ]:
+                if json_col in events_df.columns:
+                    events_df[json_col] = events_df[json_col].apply(json.loads)
+
+            # Rename columns to match expected format (lowercase)
+            column_mapping = {
+                "TRACE": "trace",
+                "RESOURCE_ATTRIBUTES": "resource_attributes",
+                "RECORD": "record",
+                "RECORD_ATTRIBUTES": "record_attributes",
+            }
+
+            events_df = events_df.rename(columns=column_mapping)
+
+            # Fix the trace structure to match what feedback computation expects
+            # The Snowflake event table stores parent_span_id in RECORD, but
+            # compute_feedback_by_span_group expects it in trace["parent_id"]
+            for idx, row in events_df.iterrows():
+                if "parent_span_id" in row["record"]:
+                    events_df.at[idx, "trace"]["parent_id"] = row["record"][
+                        "parent_span_id"
+                    ]
+                else:
+                    events_df.at[idx, "trace"]["parent_id"] = None
+
+            logger.info(
+                f"Retrieved {len(events_df)} events from Snowflake event table"
+            )
+            return events_df
+
+        except Exception as e:
+            logger.error(
+                f"Error getting events from Snowflake event table: {e}"
+            )
+            return pd.DataFrame()
 
     def _is_cancelled(self) -> bool:
         return self.get_status() == RunStatus.CANCELLED
