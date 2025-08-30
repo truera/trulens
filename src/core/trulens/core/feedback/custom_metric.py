@@ -3,10 +3,107 @@
 from __future__ import annotations
 
 import inspect
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+import threading
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from trulens.core.feedback.feedback import Feedback
 from trulens.core.feedback.selector import Selector
+
+# Global registry for automatic metric registration
+_metric_registry_lock = threading.Lock()
+_pending_metrics: List[Tuple[CustomMetric, Optional[EvaluationConfig]]] = []
+
+
+def register_pending_metrics_with_app(tru_app) -> int:
+    """Register all pending metrics with the given TruApp."""
+    global _pending_metrics
+
+    registered_count = 0
+    with _metric_registry_lock:
+        # Process all pending metrics
+        for metric, eval_config in _pending_metrics[:]:
+            try:
+                if eval_config:
+                    # Use the direct method to avoid circular imports
+                    _register_metric_directly(tru_app, metric, eval_config)
+                else:
+                    # Need to create a default evaluation config
+                    default_config = EvaluationConfig(
+                        metric_type=metric.metric_type,
+                        computation_type="client",
+                    )
+                    # Add default selectors for single-parameter functions
+                    sig = inspect.signature(metric.function)
+                    if len(sig.parameters) == 1:
+                        param_name = list(sig.parameters.keys())[0]
+                        # Import SpanAttributes here to avoid circular imports
+                        try:
+                            from trulens.otel.semconv.trace import (
+                                SpanAttributes,
+                            )
+
+                            default_config.add_selector(
+                                param_name,
+                                Selector(
+                                    span_type=SpanAttributes.SpanType.RECORD_ROOT,
+                                    span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
+                                ),
+                            )
+                            _register_metric_directly(
+                                tru_app, metric, default_config
+                            )
+                        except ImportError:
+                            # Skip if can't import SpanAttributes
+                            continue
+                    else:
+                        # For multi-parameter functions, user must provide explicit config
+                        continue
+
+                registered_count += 1
+                _pending_metrics.remove((metric, eval_config))
+
+            except Exception as e:
+                # Log error but continue with other metrics
+                import logging
+
+                logger = logging.getLogger(__name__)
+                logger.warning(
+                    f"Failed to auto-register metric {metric.metric_type}: {e}"
+                )
+
+    return registered_count
+
+
+def _register_metric_directly(
+    tru_app, metric: CustomMetric, eval_config: EvaluationConfig
+):
+    """Register a metric directly with TruApp to avoid circular imports."""
+    # Create feedback definition
+    feedback_def = metric.create_feedback_from_config(eval_config)
+
+    # Store custom metric info
+    custom_metric_info = {
+        "metric": metric,
+        "feedback": feedback_def,
+        "evaluation_config": eval_config,
+        "selectors": eval_config.selectors,
+        "metric_type": eval_config.metric_type,
+        "computation_type": eval_config.computation_type,
+    }
+
+    tru_app.custom_metrics.append(custom_metric_info)
+
+
+def _auto_register_metric(
+    metric: CustomMetric, eval_config: Optional[EvaluationConfig] = None
+):
+    """Add metric to pending registry for later registration with TruApp."""
+    global _pending_metrics
+
+    with _metric_registry_lock:
+        # Simply add to pending metrics - will be registered when TruApp is created
+        _pending_metrics.append((metric, eval_config))
+        return True
 
 
 class EvaluationConfig:
@@ -126,38 +223,55 @@ def custom_metric(
     metric_type: Optional[str] = None,
     higher_is_better: bool = True,
     description: Optional[str] = None,
+    evaluation_config: Optional[EvaluationConfig] = None,
+    auto_register: bool = True,
 ) -> Callable:
     """
     Decorator to convert a function into a client-side custom metric.
 
     This decorator transforms a regular function into a CustomMetric instance
-    that can be registered with TruApp for client-side evaluation.
+    that can be automatically registered with TruApp for client-side evaluation.
 
     Args:
         metric_type: identifier for the metric. equivalent to metric name (e.g., "text2SQL", "accuracy")
         higher_is_better: Whether higher scores are better for this metric
         description: Optional description of what the metric measures
+        evaluation_config: Optional EvaluationConfig for explicit span-to-argument mapping
+        auto_register: Whether to automatically register with TruApp when available
 
     Returns:
         A decorator function that wraps the target function as a CustomMetric
 
     Example:
         ```python
-        @custom_metric(name="text2sql_accuracy", higher_is_better=True)
+        # Basic usage - automatically registers with current TruApp context
+        @custom_metric(metric_type="text2sql_accuracy", higher_is_better=True)
         def text_to_sql_scores(query: str, sql: str) -> float:
             if "SELECT" in sql.upper() and "movies" in query.lower():
                 return 0.9
             return 0.1
+
+        # With explicit evaluation config
+        eval_config = EvaluationConfig(metric_type="custom_accuracy").add_selector(...)
+        @custom_metric(evaluation_config=eval_config)
+        def custom_accuracy(query: str) -> float:
+            return len(query) / 100.0
         ```
     """
 
     def decorator(func: Callable) -> CustomMetric:
-        return CustomMetric(
+        custom_metric_instance = CustomMetric(
             function=func,
             metric_type=metric_type or func.__name__,
             higher_is_better=higher_is_better,
             description=description,
         )
+
+        # Automatically register with current TruApp context if enabled
+        if auto_register:
+            _auto_register_metric(custom_metric_instance, evaluation_config)
+
+        return custom_metric_instance
 
     return decorator
 
