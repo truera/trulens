@@ -5,6 +5,7 @@ from __future__ import annotations
 import inspect
 import threading
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+import weakref
 
 from trulens.core.feedback.feedback import Feedback
 from trulens.core.feedback.selector import Selector
@@ -12,6 +13,24 @@ from trulens.core.feedback.selector import Selector
 # Global registry for automatic metric registration
 _metric_registry_lock = threading.Lock()
 _pending_metrics: List[Tuple[CustomMetric, Optional[EvaluationConfig]]] = []
+_registered_apps: List[
+    weakref.ReferenceType
+] = []  # Track all TruApps for bidirectional registration
+
+
+def register_app_for_auto_metrics(tru_app) -> None:
+    """Register a TruApp for automatic metric registration."""
+    global _registered_apps
+
+    with _metric_registry_lock:
+        # Clean up dead references
+        _registered_apps[:] = [
+            ref for ref in _registered_apps if ref() is not None
+        ]
+
+        # Add this app
+        app_ref = weakref.ref(tru_app)
+        _registered_apps.append(app_ref)
 
 
 def register_pending_metrics_with_app(tru_app) -> int:
@@ -23,42 +42,7 @@ def register_pending_metrics_with_app(tru_app) -> int:
         # Process all pending metrics
         for metric, eval_config in _pending_metrics[:]:
             try:
-                if eval_config:
-                    # Use the direct method to avoid circular imports
-                    _register_metric_directly(tru_app, metric, eval_config)
-                else:
-                    # Need to create a default evaluation config
-                    default_config = EvaluationConfig(
-                        metric_type=metric.metric_type,
-                        computation_type="client",
-                    )
-                    # Add default selectors for single-parameter functions
-                    sig = inspect.signature(metric.function)
-                    if len(sig.parameters) == 1:
-                        param_name = list(sig.parameters.keys())[0]
-                        # Import SpanAttributes here to avoid circular imports
-                        try:
-                            from trulens.otel.semconv.trace import (
-                                SpanAttributes,
-                            )
-
-                            default_config.add_selector(
-                                param_name,
-                                Selector(
-                                    span_type=SpanAttributes.SpanType.RECORD_ROOT,
-                                    span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
-                                ),
-                            )
-                            _register_metric_directly(
-                                tru_app, metric, default_config
-                            )
-                        except ImportError:
-                            # Skip if can't import SpanAttributes
-                            continue
-                    else:
-                        # For multi-parameter functions, user must provide explicit config
-                        continue
-
+                _register_single_metric_with_app(tru_app, metric, eval_config)
                 registered_count += 1
                 _pending_metrics.remove((metric, eval_config))
 
@@ -97,13 +81,82 @@ def _register_metric_directly(
 def _auto_register_metric(
     metric: CustomMetric, eval_config: Optional[EvaluationConfig] = None
 ):
-    """Add metric to pending registry for later registration with TruApp."""
-    global _pending_metrics
+    """Automatically register metric with existing TruApps and add to pending for future apps."""
+    global _pending_metrics, _registered_apps
 
     with _metric_registry_lock:
-        # Simply add to pending metrics - will be registered when TruApp is created
+        # First, try to register with all existing TruApps
+        registered_with_existing = 0
+        for app_ref in _registered_apps[
+            :
+        ]:  # Copy list to avoid modification during iteration
+            tru_app = app_ref()
+            if tru_app is not None:
+                try:
+                    _register_single_metric_with_app(
+                        tru_app, metric, eval_config
+                    )
+                    registered_with_existing += 1
+                except Exception as e:
+                    import logging
+
+                    logger = logging.getLogger(__name__)
+                    logger.debug(
+                        f"Failed to auto-register metric {metric.metric_type} with existing app: {e}"
+                    )
+            else:
+                # Remove dead reference
+                _registered_apps.remove(app_ref)
+
+        # Add to pending metrics for future TruApps
         _pending_metrics.append((metric, eval_config))
-        return True
+
+        if registered_with_existing > 0:
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.info(
+                f"Auto-registered metric {metric.metric_type} with {registered_with_existing} existing TruApp(s)"
+            )
+
+        return registered_with_existing > 0
+
+
+def _register_single_metric_with_app(
+    tru_app, metric: CustomMetric, eval_config: Optional[EvaluationConfig]
+):
+    """Register a single metric with a TruApp, creating default config if needed."""
+    if eval_config:
+        _register_metric_directly(tru_app, metric, eval_config)
+    else:
+        # Create default config for single-parameter functions
+        sig = inspect.signature(metric.function)
+        if len(sig.parameters) == 1:
+            param_name = list(sig.parameters.keys())[0]
+            try:
+                from trulens.otel.semconv.trace import SpanAttributes
+
+                default_config = EvaluationConfig(
+                    metric_type=metric.metric_type,
+                    computation_type="client",
+                ).add_selector(
+                    param_name,
+                    Selector(
+                        span_type=SpanAttributes.SpanType.RECORD_ROOT,
+                        span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
+                    ),
+                )
+                _register_metric_directly(tru_app, metric, default_config)
+            except ImportError:
+                # Skip if can't import SpanAttributes
+                raise ValueError(
+                    "Cannot create default config: SpanAttributes not available"
+                )
+        else:
+            # For multi-parameter functions, user must provide explicit config
+            raise ValueError(
+                f"Multi-parameter function {metric.metric_type} requires explicit EvaluationConfig"
+            )
 
 
 class EvaluationConfig:

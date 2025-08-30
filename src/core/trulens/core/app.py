@@ -616,8 +616,8 @@ class App(
 
         self._tru_post_init()
 
-        # Auto-register any pending metrics
-        self._register_pending_metrics()
+        # Register this app for automatic metric registration and process pending metrics
+        self._setup_auto_metric_registration()
 
     def __del__(self):
         """Shut down anything associated with this app that might persist otherwise."""
@@ -2158,6 +2158,24 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
     def get_custom_metrics(self) -> List[Dict[str, Any]]:
         """Get all registered custom metrics."""
         return self.custom_metrics
+
+    def _setup_auto_metric_registration(self) -> int:
+        """Set up bidirectional automatic metric registration."""
+        try:
+            from trulens.core.feedback.custom_metric import (
+                register_app_for_auto_metrics,
+            )
+            from trulens.core.feedback.custom_metric import (
+                register_pending_metrics_with_app,
+            )
+
+            # Register this app to receive future metrics
+            register_app_for_auto_metrics(self)
+
+            # Register any existing pending metrics with this app
+            return register_pending_metrics_with_app(self)
+        except ImportError:
+            return 0
 
     def _register_pending_metrics(self) -> int:
         """Register any pending metrics that were defined with @custom_metric decorator."""
