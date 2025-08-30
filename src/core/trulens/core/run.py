@@ -844,21 +844,18 @@ class Run(BaseModel):
                 isinstance(self.tru_session.connector, SnowflakeConnector)
                 and self.tru_session.connector.use_account_event_table
             ):
-                # Use Snowflake event table query (following _wait_for_events pattern)
+                # snowflake event table
                 return self._get_events_from_snowflake_event_table()
             else:
-                # Use standard connector get_events method
+                # sqlalchemy connector
                 return self.tru_session.connector.get_events(
                     app_name=self.app.app_name,
                     app_version=self.app.app_version,
                     run_name=self.run_name,
                 )
         except ImportError:
-            # Fallback to standard method if Snowflake connector not available
-            return self.tru_session.connector.get_events(
-                app_name=self.app.app_name,
-                app_version=self.app.app_version,
-                run_name=self.run_name,
+            raise ValueError(
+                "Snowflake connector is not installed. Please install it to use feedback computation functionality."
             )
 
     def _get_events_from_snowflake_event_table(self) -> pd.DataFrame:
@@ -866,7 +863,6 @@ class Run(BaseModel):
         try:
             import json
 
-            # Use the same pattern as _wait_for_events in tests/load/test_snowflake.py
             query = """
                 SELECT *
                 FROM TABLE(SNOWFLAKE.LOCAL.GET_AI_OBSERVABILITY_EVENTS(
@@ -898,7 +894,6 @@ class Run(BaseModel):
                 logger.debug("No events found in Snowflake event table")
                 return pd.DataFrame()
 
-            # Parse JSON columns (following the pattern from _wait_for_events)
             for json_col in [
                 "TRACE",
                 "RESOURCE_ATTRIBUTES",
@@ -918,9 +913,6 @@ class Run(BaseModel):
 
             events_df = events_df.rename(columns=column_mapping)
 
-            # Fix the trace structure to match what feedback computation expects
-            # The Snowflake event table stores parent_span_id in RECORD, but
-            # compute_feedback_by_span_group expects it in trace["parent_id"]
             for idx, row in events_df.iterrows():
                 if "parent_span_id" in row["record"]:
                     events_df.at[idx, "trace"]["parent_id"] = row["record"][

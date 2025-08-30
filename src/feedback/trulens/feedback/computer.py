@@ -877,7 +877,6 @@ def _call_feedback_function_under_eval_span(
                         "Feedback functions must be of type `Callable[Any, Union[float, Tuple[float, Dict[str, Any]]]]`!"
                     )
                 res, metadata = res[0], res[1]
-
             res = float(res)
             eval_span.set_attribute(SpanAttributes.EVAL.SCORE, res)
             _set_metadata_attributes(eval_span, metadata)
