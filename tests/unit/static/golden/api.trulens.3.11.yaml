@@ -4,7 +4,7 @@ trulens:
   lows: {}
 trulens.benchmark:
   __class__: builtins.module
-  __version__: 2.2.4
+  __version__: 2.3.0
   highs: {}
   lows:
     __version__: builtins.str
@@ -32,7 +32,7 @@ trulens.benchmark.benchmark_frameworks.tru_benchmark_experiment.TruBenchmarkExpe
   - builtins.object
   __class__: builtins.type
   attributes:
-    run_score_generation_on_single_row: builtins.function
+    run_score_generation_on_single_row: builtins.FunctionWrapper
 trulens.benchmark.generate:
   __class__: builtins.module
   highs: {}
@@ -60,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 2.2.4
+  __version__: 2.3.0
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -108,6 +108,8 @@ trulens.core.app.App:
   - typing.Generic
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_metric_with_evaluation_config: builtins.function
+    add_metrics_with_evaluation_configs: builtins.function
     add_run: builtins.function
     app: typing.Any
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -119,6 +121,7 @@ trulens.core.app.App:
     awith_record: builtins.function
     compute_feedbacks: builtins.function
     connector: builtins.property
+    custom_metrics: typing.List[typing.Dict[builtins.str, typing.Any]]
     db: builtins.property
     delete: builtins.function
     delete_version: builtins.function
@@ -127,6 +130,7 @@ trulens.core.app.App:
     feedback_mode: trulens.core.schema.feedback.FeedbackMode
     feedbacks: typing.List[trulens.core.feedback.feedback.Feedback]
     format_instrumented_methods: builtins.function
+    get_custom_metrics: builtins.function
     get_run: builtins.function
     initial_app_loader_dump: typing.Optional[trulens.core.utils.serial.SerialBytes,
       builtins.NoneType]
@@ -502,6 +506,31 @@ trulens.core.feedback:
     SnowflakeFeedback: pydantic._internal._model_construction.ModelMetaclass
   lows:
     __all__: builtins.list
+trulens.core.feedback.custom_metric:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    CustomMetric: builtins.type
+    EvaluationConfig: builtins.type
+    custom_metric: builtins.function
+    register_app_for_auto_metrics: builtins.function
+    register_pending_metrics_with_app: builtins.function
+trulens.core.feedback.custom_metric.CustomMetric:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    create_feedback_definition: builtins.function
+    create_feedback_from_config: builtins.function
+trulens.core.feedback.custom_metric.EvaluationConfig:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    add_selector: builtins.function
+    from_dict: builtins.classmethod
+    to_dict: builtins.function
+    validate_for_function: builtins.function
 trulens.core.feedback.endpoint:
   __class__: builtins.module
   highs: {}
@@ -1922,7 +1951,7 @@ trulens.core.utils.trulens.Other:
   attributes: {}
 trulens.dashboard:
   __class__: builtins.module
-  __version__: 2.2.4
+  __version__: 2.3.0
   highs:
     run_dashboard: builtins.function
     run_dashboard_sis: builtins.function
@@ -2224,7 +2253,7 @@ trulens.dashboard.ux.styles.ResultCategoryType:
     value: enum.property
 trulens.feedback:
   __class__: builtins.module
-  __version__: 2.2.4
+  __version__: 2.3.0
   highs:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
@@ -3218,7 +3247,7 @@ trulens.feedback.v2.provider.base.Provider:
     tru_class_info: trulens.core.utils.pyschema.Class
 trulens.hotspots:
   __class__: builtins.module
-  __version__: 2.2.4
+  __version__: 2.3.0
   highs:
     HotspotsConfig: builtins.type
     get_skipped_columns: builtins.function
