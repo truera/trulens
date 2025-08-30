@@ -706,20 +706,20 @@ class Run(BaseModel):
         return True
 
     def compute_metrics(self, metrics: List[str]) -> str:
-        """Enhanced compute_metrics to handle client-side custom metrics."""
+        """Compute metrics for the run, where client-side metrics are computed using the app's feedback computation and server-side metrics are computed on Snowflake."""
         if not metrics:
             raise ValueError(
                 "No metrics provided. Please provide at least one metric to compute."
             )
 
         run_status = self.get_status()
+
         logger.info(f"Current run status: {run_status}")
 
         if not self._can_start_new_metric_computation(run_status):
             return f"""Cannot start a new metric computation when in run status: {run_status}. Valid statuses are: {RunStatus.INVOCATION_COMPLETED}, {RunStatus.INVOCATION_PARTIALLY_COMPLETED},
         {RunStatus.COMPUTATION_IN_PROGRESS}, {RunStatus.COMPLETED}, {RunStatus.PARTIALLY_COMPLETED}, {RunStatus.FAILED}."""
 
-        # Check for already computed metrics
         computed_metrics = []
         for metric in metrics:
             if self._should_skip_computation(metric, self):
