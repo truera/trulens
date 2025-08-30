@@ -1312,6 +1312,7 @@ trulens.core.session.TruSession:
     Virtual: builtins.function
     add_app: builtins.function
     add_feedback: builtins.function
+    add_feedback_result: builtins.function
     add_feedbacks: builtins.function
     add_ground_truth_to_dataset: builtins.function
     add_record: builtins.function
