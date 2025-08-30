@@ -737,7 +737,7 @@ class Run(BaseModel):
 
         app_custom_metrics = self.app.get_custom_metrics()
         custom_metric_names = {
-            m["metric"].name
+            m["metric"].metric_type
             for m in app_custom_metrics
             if m["computation_type"] == "client"
         }
@@ -762,7 +762,6 @@ class Run(BaseModel):
                 logger.error(f"Error computing client-side metrics: {e}")
                 raise
 
-        # Handle server-side metrics (existing logic)
         if server_metrics:
             self.run_dao.call_compute_metrics_query(
                 metrics=server_metrics,
@@ -792,7 +791,6 @@ class Run(BaseModel):
         events = self.tru_session.connector.get_events(
             app_name=self.app.app_name,
             app_version=self.app.app_version,
-            run_name=self.run_name,
         )
 
         if events.empty:

@@ -45,6 +45,7 @@ from trulens.core.database import connector as core_connector
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback import feedback as core_feedback
 from trulens.core.feedback.custom_metric import CustomMetric
+from trulens.core.feedback.custom_metric import EvaluationConfig
 from trulens.core.feedback.selector import Selector
 from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.run import Run
@@ -2150,9 +2151,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         self,
         metric: Union[CustomMetric, Callable],
         selectors: Dict[str, Selector],
-        metric_type: str = "custom",
+        metric_type: str,
         metric_computation: str = "client",
-        name: Optional[str] = None,
         higher_is_better: bool = True,
     ) -> None:
         """
@@ -2161,9 +2161,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         Args:
             metric: CustomMetric instance or callable function
             selectors: Dictionary mapping parameter names to Selectors
-            metric_type: Type identifier for the metric (e.g., "text2SQL", "accuracy")
+            metric_type: Unique identifier for the metric (e.g., "text2SQL", "accuracy"). equivalent to metric name
             metric_computation: "client" or "server" (default: "client")
-            name: Optional name override
             higher_is_better: Whether higher scores are better
 
         Example:
@@ -2189,12 +2188,11 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             custom_metric = metric
         else:
             # Convert callable to CustomMetric
-            metric_name = name or getattr(metric, "__name__", "custom_metric")
+            metric_name = getattr(metric, "__name__", "custom_metric")
             custom_metric = CustomMetric(
                 function=metric,
-                name=metric_name,
+                metric_type=metric_name,
                 higher_is_better=higher_is_better,
-                metric_type=metric_type,
             )
 
         # Create feedback definition
@@ -2261,11 +2259,103 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         self.add_metric(
             metric=metric_function,
             selectors=config.get("selectors", {}),
-            metric_type=config.get("type", "custom"),
+            metric_type=config.get("name", config.get("type", "custom")),
             metric_computation=config.get("computation", "client"),
-            name=config.get("name"),
             higher_is_better=config.get("higher_is_better", True),
         )
+
+    def add_metric_with_evaluation_config(
+        self,
+        metric: Union[CustomMetric, Callable],
+        evaluation_config: EvaluationConfig,
+    ) -> None:
+        """
+        Add a custom metric using an EvaluationConfig for explicit span-to-argument mapping.
+
+        Args:
+            metric: CustomMetric instance or callable function
+            evaluation_config: EvaluationConfig defining how to extract arguments from spans
+
+        Example:
+            ```python
+            # Create evaluation config
+            eval_config = EvaluationConfig(
+                name="text2sql_accuracy_v1",
+                metric_type="text2SQL",
+                computation_type="client"
+            ).add_selector(
+                "query",
+                Selector(function_attribute="question", function_name="App.generate_SQL")
+            ).add_selector(
+                "sql",
+                Selector(function_attribute="return", function_name="App.generate_SQL")
+            )
+
+            # Add metric with config
+            app.add_metric_with_evaluation_config(text_to_sql_scores, eval_config)
+            ```
+        """
+        if isinstance(metric, CustomMetric):
+            custom_metric = metric
+        else:
+            # Convert callable to CustomMetric
+            custom_metric = CustomMetric(
+                function=metric,
+                metric_type=evaluation_config.name,
+                higher_is_better=evaluation_config.higher_is_better,
+                description=evaluation_config.description,
+            )
+
+        # Create feedback definition using the evaluation config
+        try:
+            feedback_def = custom_metric.create_feedback_from_config(
+                evaluation_config
+            )
+        except ValueError as e:
+            raise ValueError(f"Error creating feedback definition: {e}")
+
+        # Store custom metric info with evaluation config
+        custom_metric_info = {
+            "metric": custom_metric,
+            "feedback": feedback_def,
+            "evaluation_config": evaluation_config,
+            "selectors": evaluation_config.selectors,
+            "metric_type": evaluation_config.metric_type,
+            "computation_type": evaluation_config.computation_type,
+        }
+
+        self.custom_metrics.append(custom_metric_info)
+
+    def add_metrics_from_evaluation_configs(
+        self,
+        metric_function: Callable,
+        evaluation_configs: List[EvaluationConfig],
+    ) -> None:
+        """
+        Add multiple metric configurations for the same function.
+
+        This allows you to use the same metric function with different
+        evaluation configs (e.g., different selectors or names).
+
+        Args:
+            metric_function: The metric function to use for all configs
+            evaluation_configs: List of EvaluationConfig objects
+
+        Example:
+            ```python
+            configs = [
+                EvaluationConfig(name="sql_accuracy_v1", metric_type="text2SQL")
+                    .add_selector("query", Selector(...))
+                    .add_selector("sql", Selector(...)),
+                EvaluationConfig(name="sql_accuracy_v2", metric_type="text2SQL")
+                    .add_selector("query", Selector(...))
+                    .add_selector("sql", Selector(...))
+            ]
+            app.add_metrics_from_evaluation_configs(text_to_sql_scores, configs)
+            ```
+        """
+        for config in evaluation_configs:
+            self.add_metric_with_evaluation_config(metric_function, config)
 
 
 @staticmethod
