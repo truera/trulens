@@ -19,7 +19,6 @@ class EvaluationConfig:
 
     def __init__(
         self,
-        name: str,
         metric_type: str = "custom",
         computation_type: str = "client",
         selectors: Optional[Dict[str, Selector]] = None,
@@ -30,14 +29,12 @@ class EvaluationConfig:
         Initialize an evaluation configuration.
 
         Args:
-            name: Name of the metric configuration
             metric_type: Unique identifier for the metric (e.g., "text2SQL", "accuracy"). equivalent to metric name
             computation_type: Where to compute ("client" or "server")
             selectors: Dictionary mapping parameter names to Selectors
             higher_is_better: Whether higher scores are better
             description: Optional description of the configuration
         """
-        self.name = name
         self.metric_type = metric_type
         self.computation_type = computation_type
         self.selectors = selectors or {}
@@ -77,7 +74,7 @@ class EvaluationConfig:
         if func_params != selector_params:
             missing = func_params - selector_params
             extra = selector_params - func_params
-            error_msg = f"Evaluation config '{self.name}' doesn't match function parameters"
+            error_msg = f"Evaluation config for metric '{self.metric_type}' doesn't match function parameters"
             if missing:
                 error_msg += f"\nMissing selectors: {missing}"
             if extra:
@@ -96,7 +93,6 @@ class EvaluationConfig:
             EvaluationConfig instance
         """
         return cls(
-            name=config_dict["name"],
             metric_type=config_dict.get("metric_type", "custom"),
             computation_type=config_dict.get("computation_type", "client"),
             selectors=config_dict.get("selectors", {}),
@@ -112,7 +108,6 @@ class EvaluationConfig:
             Dictionary representation of the config
         """
         return {
-            "name": self.name,
             "metric_type": self.metric_type,
             "computation_type": self.computation_type,
             "selectors": self.selectors,
@@ -122,15 +117,14 @@ class EvaluationConfig:
 
     def __repr__(self) -> str:
         return (
-            f"EvaluationConfig(name='{self.name}', type='{self.metric_type}', "
+            f"EvaluationConfig(metric_type='{self.metric_type}', "
             f"computation='{self.computation_type}', selectors={len(self.selectors)})"
         )
 
 
 def custom_metric(
-    name: Optional[str] = None,
+    metric_type: Optional[str] = None,
     higher_is_better: bool = True,
-    metric_type: str = "custom",
     description: Optional[str] = None,
 ) -> Callable:
     """
@@ -140,9 +134,8 @@ def custom_metric(
     that can be registered with TruApp for client-side evaluation.
 
     Args:
-        name: Name of the metric (defaults to function name)
+        metric_type: identifier for the metric. equivalent to metric name (e.g., "text2SQL", "accuracy")
         higher_is_better: Whether higher scores are better for this metric
-        metric_type: Type identifier for the metric (e.g., "text2SQL", "accuracy")
         description: Optional description of what the metric measures
 
     Returns:
@@ -159,10 +152,9 @@ def custom_metric(
     """
 
     def decorator(func: Callable) -> CustomMetric:
-        metric_name = name or func.__name__
         return CustomMetric(
             function=func,
-            metric_type=metric_name,
+            metric_type=metric_type or func.__name__,
             higher_is_better=higher_is_better,
             description=description,
         )

@@ -2224,46 +2224,6 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         """Get all registered custom metrics."""
         return self.custom_metrics
 
-    def add_metric_from_config(
-        self,
-        config: Dict[str, Any],
-        metric_function: Callable,
-    ) -> None:
-        """
-        Add a custom metric from a configuration dictionary.
-
-        Args:
-            config: Configuration dictionary with metric details
-            metric_function: The metric function to use
-
-        Example:
-            ```python
-            config = {
-                "name": "my_metric_1",
-                "type": "text2SQL",
-                "computation": "client",
-                "selectors": {
-                    "query": Selector(
-                        function_attribute="question",
-                        function_name="App.generate_SQL"
-                    ),
-                    "SQL": Selector(
-                        function_attribute="return",
-                        function_name="App.generate_SQL"
-                    )
-                }
-            }
-            app.add_metric_from_config(config, text_to_sql_scores)
-            ```
-        """
-        self.add_metric(
-            metric=metric_function,
-            selectors=config.get("selectors", {}),
-            metric_type=config.get("name", config.get("type", "custom")),
-            metric_computation=config.get("computation", "client"),
-            higher_is_better=config.get("higher_is_better", True),
-        )
-
     def add_metric_with_evaluation_config(
         self,
         metric: Union[CustomMetric, Callable],
@@ -2326,7 +2286,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
         self.custom_metrics.append(custom_metric_info)
 
-    def add_metrics_from_evaluation_configs(
+    def add_metrics_with_evaluation_configs(
         self,
         metric_function: Callable,
         evaluation_configs: List[EvaluationConfig],
@@ -2351,7 +2311,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                     .add_selector("query", Selector(...))
                     .add_selector("sql", Selector(...))
             ]
-            app.add_metrics_from_evaluation_configs(text_to_sql_scores, configs)
+            app.add_metrics_with_evaluation_configs(text_to_sql_scores, configs)
             ```
         """
         for config in evaluation_configs:
