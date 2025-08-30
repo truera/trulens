@@ -46,7 +46,6 @@ from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback import feedback as core_feedback
 from trulens.core.feedback.custom_metric import CustomMetric
 from trulens.core.feedback.custom_metric import EvaluationConfig
-from trulens.core.feedback.selector import Selector
 from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.run import Run
 from trulens.core.run import RunConfig
@@ -2147,73 +2146,6 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         if hasattr(self, "_evaluator") and self._evaluator is not None:
             self._evaluator.stop_evaluator()
 
-    def add_metric(
-        self,
-        metric: Union[CustomMetric, Callable],
-        selectors: Dict[str, Selector],
-        metric_type: str,
-        metric_computation: str = "client",
-        higher_is_better: bool = True,
-    ) -> None:
-        """
-        Add a custom metric to the app.
-
-        Args:
-            metric: CustomMetric instance or callable function
-            selectors: Dictionary mapping parameter names to Selectors
-            metric_type: Unique identifier for the metric (e.g., "text2SQL", "accuracy"). equivalent to metric name
-            metric_computation: "client" or "server" (default: "client")
-            higher_is_better: Whether higher scores are better
-
-        Example:
-            ```python
-            app.add_metric(
-                metric=text_to_sql_scores,
-                selectors={
-                    "query": Selector(
-                        function_attribute="question",
-                        function_name="App.generate_SQL"
-                    ),
-                    "sql": Selector(
-                        function_attribute="return",
-                        function_name="App.generate_SQL"
-                    )
-                },
-                metric_type="text2SQL",
-                metric_computation="client"
-            )
-            ```
-        """
-        if isinstance(metric, CustomMetric):
-            custom_metric = metric
-        else:
-            # Convert callable to CustomMetric
-            metric_name = getattr(metric, "__name__", "custom_metric")
-            custom_metric = CustomMetric(
-                function=metric,
-                metric_type=metric_name,
-                higher_is_better=higher_is_better,
-            )
-
-        # Create feedback definition
-        try:
-            feedback_def = custom_metric.create_feedback_definition(selectors)
-        except ValueError as e:
-            raise ValueError(
-                f"Error creating feedback definition for metric '{custom_metric.name}': {e}"
-            )
-
-        # Store custom metric info
-        custom_metric_info = {
-            "metric": custom_metric,
-            "feedback": feedback_def,
-            "selectors": selectors,
-            "metric_type": metric_type,
-            "computation_type": metric_computation,
-        }
-
-        self.custom_metrics.append(custom_metric_info)
-
     def _register_custom_metric_with_snowflake(self) -> None:
         """Register custom metric definition with Snowflake."""
         raise NotImplementedError(
@@ -2261,7 +2193,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             # Convert callable to CustomMetric
             custom_metric = CustomMetric(
                 function=metric,
-                metric_type=evaluation_config.name,
+                metric_type=evaluation_config.metric_type,
                 higher_is_better=evaluation_config.higher_is_better,
                 description=evaluation_config.description,
             )
