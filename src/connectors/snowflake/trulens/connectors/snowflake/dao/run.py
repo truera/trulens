@@ -545,6 +545,9 @@ class RunDao:
         run_name: str,
         input_records_count: int,
     ) -> None:
+        """
+        The sproc query starts the Snowflake orchestration task to wait for ingested batches to arrive at the event table, and update the run metadata of the run DPO.
+        """
         database = clean_up_snowflake_identifier(
             self.session.get_current_database()
         )

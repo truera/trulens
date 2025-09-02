@@ -34,7 +34,7 @@ class NuggetizerProvider:
         
         Args:
             context_text: context text to extract nuggets from
-            query_text: a piece of query text to condition nugget extration on. 
+            query_text: a piece of query text to condition nugget extraction on. 
             max_nuggets: Maximum number of nuggets to extract
             
         Returns:
@@ -64,7 +64,7 @@ class NuggetizerProvider:
             )
             
             content = response.choices[0].message.content.strip()
-            return list(content)
+            return json.loads(content)
             
                 
         except Exception as e:
@@ -72,7 +72,7 @@ class NuggetizerProvider:
             return []
     
 
-    def classify_nuggests(self, nuggets: List[str], query_text: str,) -> List[str]:
+    def classify_nuggets(self, nuggets: List[str], query_text: str,) -> List[str]:
         """
         Classify the importance of nuggets from text using LLM.
         
@@ -104,11 +104,11 @@ class NuggetizerProvider:
             )
             
             content = response.choices[0].message.content.strip()
-            return list(content)
+            return json.loads(content)
             
                 
         except Exception as e:
-            logger.error(f"Error extracting nuggets: {e}")
+            logger.error(f"Error classifying nuggets: {e}")
             return []
     
 
