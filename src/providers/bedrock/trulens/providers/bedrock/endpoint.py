@@ -1,10 +1,11 @@
 import inspect
+import json
 import logging
 import pprint
 from typing import Any, Callable, Iterable, Optional
 
 import boto3
-from botocore.client import ClientCreator
+from botocore import client as botocore_client
 import pydantic
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.utils import python as python_utils
@@ -44,8 +45,6 @@ class BedrockCallback(core_endpoint.EndpointCallback):
         data = chunk.get("bytes")
         if data is None:
             return
-
-        import json
 
         data = json.loads(data.decode())
 
@@ -165,10 +164,11 @@ class BedrockEndpoint(core_endpoint.Endpoint):
         # Note here was are instrumenting a method that outputs a function which
         # we also want to instrument:
         if not python_utils.safe_hasattr(
-            ClientCreator._create_api_method, core_endpoint.INSTRUMENT
+            botocore_client.ClientCreator._create_api_method,
+            core_endpoint.INSTRUMENT,
         ):
             self._instrument_class_wrapper(
-                ClientCreator,
+                botocore_client.ClientCreator,
                 wrapper_method_name="_create_api_method",
                 wrapped_method_filter=lambda f: f.__name__
                 in ["invoke_model", "invoke_model_with_response_stream"],

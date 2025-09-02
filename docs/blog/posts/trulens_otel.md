@@ -166,10 +166,11 @@ Today, we are launching a pre-release of TruLens on Otel. Below is a minimal wal
 pip install trulens-core==1.5.0
 ```
 
-2. **Enable OpenTelemetry**:
+2. **OpenTelemetry is enabled by default**:
 
 ```python
-os.environ["TRULENS_OTEL_TRACING"] = "1"
+# OpenTelemetry is now enabled by default
+# To disable it, set: os.environ["TRULENS_OTEL_TRACING"] = "0"
 ```
 
 3. **Instrument Methods**:

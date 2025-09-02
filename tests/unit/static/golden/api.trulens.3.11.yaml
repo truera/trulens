@@ -2548,7 +2548,6 @@ trulens.feedback.prompts:
     LLM_ABSTENTION_USER: builtins.str
     LLM_ANSWERABILITY_SYSTEM: builtins.str
     LLM_ANSWERABILITY_USER: builtins.str
-    LLM_GROUNDEDNESS_FULL_PROMPT: builtins.str
     LLM_GROUNDEDNESS_SENTENCES_SPLITTER: builtins.str
     LLM_GROUNDEDNESS_SYSTEM: builtins.str
     LLM_GROUNDEDNESS_USER: builtins.str

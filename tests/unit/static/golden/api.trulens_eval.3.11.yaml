@@ -3505,7 +3505,6 @@ trulens_eval.feedback.prompts:
     LANGCHAIN_PROMPT_TEMPLATE_SYSTEM: builtins.str
     LANGCHAIN_PROMPT_TEMPLATE_USER: builtins.str
     LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS_SYSTEM: builtins.str
-    LLM_GROUNDEDNESS_FULL_PROMPT: builtins.str
     LLM_GROUNDEDNESS_SYSTEM: builtins.str
     LLM_GROUNDEDNESS_USER: builtins.str
     QS_RELEVANCE_VERB_2S_TOP1: trulens.core.utils.imports.Dummy
