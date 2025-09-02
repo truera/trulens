@@ -2,7 +2,18 @@ from concurrent.futures import as_completed
 import json
 import logging
 import re
-from typing import ClassVar, Dict, List, Optional, Sequence, Tuple, Type, Union
+import threading
+from typing import (
+    ClassVar,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    TypedDict,
+    Union,
+)
 import warnings
 
 import nltk
@@ -21,6 +32,21 @@ from trulens.feedback import prompts as feedback_prompts
 from trulens.feedback.v2 import feedback as feedback_v2
 
 logger = logging.getLogger(__name__)
+
+REASONING_MODEL_PREFIXES = ("o1", "o3", "o4", "gpt-5", "deepseek-r1")
+
+# --- Shared capability cache for LLM providers ---
+_capabilities_lock = threading.Lock()
+
+
+class CapabilityCacheEntry(TypedDict, total=False):
+    structured_outputs: bool
+    temperature: bool
+    reasoning_effort: bool
+    cfg: bool
+
+
+_model_capabilities_cache: Dict[str, CapabilityCacheEntry] = {}
 
 
 class LLMProvider(core_provider.Provider):
@@ -58,15 +84,61 @@ class LLMProvider(core_provider.Provider):
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
+    # --- Shared capability cache helpers ---
+    def _capabilities_key(self) -> str:
+        return getattr(self, "model_engine", "") or self.__class__.__name__
+
+    def _get_capabilities(self) -> CapabilityCacheEntry:
+        with _capabilities_lock:
+            return _model_capabilities_cache.get(self._capabilities_key(), {})
+
+    def _set_capabilities(self, updates: CapabilityCacheEntry) -> None:
+        with _capabilities_lock:
+            current = _model_capabilities_cache.get(
+                self._capabilities_key(), {}
+            )
+            current.update(updates)
+            _model_capabilities_cache[self._capabilities_key()] = current
+
+    @classmethod
+    def clear_model_capabilities_cache(
+        cls, model_engine: Optional[str] = None
+    ) -> None:
+        with _capabilities_lock:
+            if model_engine is None:
+                _model_capabilities_cache.clear()
+            else:
+                _model_capabilities_cache.pop(model_engine, None)
+
+    def clear_capabilities_cache(self) -> None:
+        self.clear_model_capabilities_cache(self._capabilities_key())
+
+    def _is_unsupported_parameter_error(
+        self, exc: Exception, parameter: str
+    ) -> bool:
+        message = str(getattr(exc, "message", "")) or str(exc)
+        lowered = message.lower()
+        return (
+            ("unsupported" in lowered)
+            or ("unexpected keyword" in lowered)
+            or ("got an unexpected" in lowered)
+            or ("does not support" in lowered)
+            or ("is not allowed" in lowered)
+            or ("unknown" in lowered)
+        ) and (parameter in lowered)
+
     def _is_reasoning_model(self) -> bool:
-        """Check if the current model is a reasoning model.
+        """Detect reasoning models robustly across providers.
 
-        This method should be overridden by provider-specific implementations.
-
-        Returns:
-            bool: False by default. Subclasses should override for reasoning model detection.
+        - Handles provider-prefixed ids like "snowflake/o3-mini".
+        - Matches known prefixes in REASONING_MODEL_PREFIXES.
+        - Also matches generic substrings like "reasoning" or "thinking".
         """
-        return False
+        raw = (self.model_engine or "").lower()
+        name = raw.split("/", 1)[1] if "/" in raw else raw
+        if any(name.startswith(p) for p in REASONING_MODEL_PREFIXES):
+            return True
+        return ("reasoning" in name) or ("thinking" in name)
 
     # @abstractmethod
     def _create_chat_completion(
