@@ -8137,7 +8137,7 @@ trulens_eval.tru_custom_app:
     PLACEHOLDER: builtins.str
     TruCustomApp: pydantic._internal._model_construction.ModelMetaclass
     deprecation_utils: builtins.module
-    instrument: builtins.type
+    instrument: trulens.core.otel.instrument.instrument
 trulens_eval.tru_custom_app.TruCustomApp:
   __bases__:
   - trulens.apps.app.TruApp
@@ -8255,13 +8255,6 @@ trulens_eval.tru_custom_app.TruCustomApp:
     with_: builtins.function
     with_record: builtins.function
     wrap_lazy_values: builtins.function
-trulens_eval.tru_custom_app.instrument:
-  __bases__:
-  - trulens.core.instruments.instrument
-  __class__: builtins.type
-  attributes:
-    method: builtins.classmethod
-    methods: builtins.classmethod
 trulens_eval.tru_llama:
   __class__: builtins.module
   highs: {}
