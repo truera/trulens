@@ -1,5 +1,7 @@
+import json
 import logging
 import os
+import re
 from typing import ClassVar, Dict, Optional, Sequence, Type
 
 import pydantic
@@ -113,6 +115,13 @@ class LiteLLM(llm_provider.LLMProvider):
         reasoning_effort: Optional[str] = None,
         **kwargs,
     ) -> str:
+        def _postprocess_content(text: str) -> str:
+            if not isinstance(text, str):
+                return text
+            if self._is_reasoning_model():
+                return self._sanitize_reasoning_output(text)
+            return text
+
         completion_args = dict(kwargs)
         completion_args["model"] = self.model_engine
         completion_args.update(self.completion_args)
@@ -167,7 +176,7 @@ class LiteLLM(llm_provider.LLMProvider):
                 try:
                     comp = completion(**completion_args)
                     self._set_capabilities({"temperature": True})
-                    return comp.choices[0].message.content
+                    return _postprocess_content(comp.choices[0].message.content)
                 except Exception as exc:
                     if self._is_unsupported_parameter_error(exc, "temperature"):
                         completion_args.pop("temperature", None)
@@ -184,7 +193,7 @@ class LiteLLM(llm_provider.LLMProvider):
                 try:
                     comp = completion(**completion_args)
                     self._set_capabilities({"reasoning_effort": True})
-                    return comp.choices[0].message.content
+                    return _postprocess_content(comp.choices[0].message.content)
                 except Exception as exc:
                     if self._is_unsupported_parameter_error(
                         exc, "reasoning_effort"
@@ -197,7 +206,7 @@ class LiteLLM(llm_provider.LLMProvider):
         # Final attempt with whatever parameters remain
         try:
             comp = completion(**completion_args)
-            return comp.choices[0].message.content
+            return _postprocess_content(comp.choices[0].message.content)
         except Exception as exc:
             # Last-resort targeted retry if unsupported parameter still slipped through
             removed_any = False
@@ -211,5 +220,53 @@ class LiteLLM(llm_provider.LLMProvider):
                     self._set_capabilities({param: False})
             if removed_any:
                 comp = completion(**completion_args)
-                return comp.choices[0].message.content
+                return _postprocess_content(comp.choices[0].message.content)
             raise
+
+    def _sanitize_reasoning_output(self, text: str) -> str:
+        """
+        Sanitize outputs from reasoning models (e.g., deepseek-r1) that prepend
+        visible thinking traces like <think>...</think>. Also tries to
+        extract JSON from code fences or trailing objects if present.
+        """
+        try:
+            content = text if isinstance(text, str) else str(text)
+            # Remove DeepSeek-style thinking blocks
+            content = re.sub(
+                r"<think>[\s\S]*?</think>\s*", "", content, flags=re.IGNORECASE
+            )
+
+            trimmed = content.strip()
+
+            # If content contains fenced blocks, prefer the last non-empty block
+            fences = re.findall(
+                r"```(?:json|python)?\s*([\s\S]*?)```",
+                trimmed,
+                flags=re.IGNORECASE,
+            )
+            for block in reversed(fences or []):
+                candidate = block.strip()
+                if candidate:
+                    # If it parses as JSON, return the JSON block
+                    try:
+                        json.loads(candidate)
+                        return candidate
+                    except Exception:
+                        # Not strict JSON; still may be the intended payload
+                        return candidate
+
+            # Try to return a valid trailing JSON object or array if present
+            for open_c, close_c in (("{", "}"), ("[", "]")):
+                start = trimmed.rfind(open_c)
+                end = trimmed.rfind(close_c)
+                if start != -1 and end != -1 and end > start:
+                    candidate2 = trimmed[start : end + 1].strip()
+                    try:
+                        json.loads(candidate2)
+                        return candidate2
+                    except Exception:
+                        pass
+
+            return trimmed
+        except Exception:
+            return text
