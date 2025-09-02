@@ -97,16 +97,6 @@ class LiteLLM(llm_provider.LLMProvider):
         provider = getattr(self, "litellm_provider", "") or "unknown"
         return f"{provider}:{self.model_engine}"
 
-    def _is_reasoning_model(self) -> bool:
-        raw = (self.model_engine or "").lower()
-        # Consider provider-prefixed ids like "snowflake/o3-mini" or "anthropic/claude-...-thinking"
-        name = raw.split("/", 1)[1] if "/" in raw else raw
-        if any(
-            name.startswith(p) for p in llm_provider.REASONING_MODEL_PREFIXES
-        ):
-            return True
-        return ("reasoning" in name) or ("thinking" in name)
-
     def _create_chat_completion(
         self,
         prompt: Optional[str] = None,

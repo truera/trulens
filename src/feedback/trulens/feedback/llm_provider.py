@@ -128,15 +128,17 @@ class LLMProvider(core_provider.Provider):
         ) and (parameter in lowered)
 
     def _is_reasoning_model(self) -> bool:
-        """Check if the current model is a reasoning model based on known naming conventions.
+        """Detect reasoning models robustly across providers.
 
-        Returns:
-            bool: True if the model is a reasoning model, False otherwise.
+        - Handles provider-prefixed ids like "snowflake/o3-mini".
+        - Matches known prefixes in REASONING_MODEL_PREFIXES.
+        - Also matches generic substrings like "reasoning" or "thinking".
         """
-        return any(
-            self.model_engine.startswith(prefix)
-            for prefix in REASONING_MODEL_PREFIXES
-        )
+        raw = (self.model_engine or "").lower()
+        name = raw.split("/", 1)[1] if "/" in raw else raw
+        if any(name.startswith(p) for p in REASONING_MODEL_PREFIXES):
+            return True
+        return ("reasoning" in name) or ("thinking" in name)
 
     # @abstractmethod
     def _create_chat_completion(
