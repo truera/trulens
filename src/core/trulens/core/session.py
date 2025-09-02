@@ -52,6 +52,7 @@ if TYPE_CHECKING:
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import SpanExporter
     from trulens.core import app as base_app
+    from trulens.core.feedback import Feedback
     from trulens.core.otel.recording import Record
 
 tqdm = None
@@ -1296,6 +1297,36 @@ class TruSession(
             record.record_id,
             None,
         )
+
+    def compute_feedbacks_on_events(
+        self,
+        events: pandas.DataFrame,
+        feedbacks: List[Feedback],
+        raise_error_on_no_feedbacks_computed: bool = False,
+    ) -> None:
+        if not is_otel_tracing_enabled():
+            raise ValueError(
+                "This method is only supported for OTEL Tracing. Please enable OTEL tracing in the environment!"
+            )
+
+        try:
+            from trulens.feedback.computer import compute_feedback_by_span_group
+        except ImportError:
+            logger.error(
+                "trulens.feedback package is not installed. Please install it to use feedback computation functionality."
+            )
+            raise
+
+        for feedback in feedbacks:
+            compute_feedback_by_span_group(
+                events,
+                feedback.name,
+                feedback.imp,
+                feedback.higher_is_better,
+                feedback.selectors,
+                feedback.aggregator,
+                raise_error_on_no_feedbacks_computed,
+            )
 
 
 def Tru(*args, **kwargs) -> TruSession:
