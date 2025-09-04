@@ -119,7 +119,7 @@ def _compute_feedback(
     )
     for curr in feedback_inputs:
         curr = {k: FeedbackFunctionInput(value=v) for k, v in curr.items()}
-        _call_feedback_function(
+        _call_feedback_function_with_record_root_info(
             feedback_name,
             feedback_function,
             higher_is_better,
@@ -553,7 +553,11 @@ def _remove_already_computed_feedbacks(
     Returns:
         List of inputs that have not already been computed.
     """
-    attributes = events["record_attributes"]
+    if not events.empty and "record_attributes" in events.columns:
+        attributes = events["record_attributes"]
+    else:
+        _logger.debug("Events is empty, returning flattened inputs.")
+        return flattened_inputs
     eval_root_attributes = attributes[
         attributes.apply(
             lambda curr: curr.get(SpanAttributes.SPAN_TYPE)
@@ -571,6 +575,8 @@ def _remove_already_computed_feedbacks(
         if record_id in record_id_to_eval_root_attributes.groups:
             curr_eval_root_attributes = (
                 record_id_to_eval_root_attributes.get_group(record_id)
+                # DEV NOTE: In pandas 2.1.0: `get_group` deprecated grouping on
+                # non-tuple keys.
             )
         if not _feedback_already_computed(
             span_group, inputs, feedback_name, curr_eval_root_attributes
@@ -649,7 +655,7 @@ def _run_feedback_on_inputs(
     ret = 0
     for record_id, span_group, inputs in flattened_inputs:
         try:
-            _call_feedback_function(
+            _call_feedback_function_with_record_root_info(
                 feedback_name,
                 feedback_function,
                 higher_is_better,
@@ -667,7 +673,7 @@ def _run_feedback_on_inputs(
     return ret
 
 
-def _call_feedback_function(
+def _call_feedback_function_with_record_root_info(
     feedback_name: str,
     feedback_function: Callable[
         [Any], Union[float, Tuple[float, Dict[str, Any]]]
@@ -703,6 +709,57 @@ def _call_feedback_function(
     # ]
     input_id = record_root_attributes[SpanAttributes.INPUT_ID]
     target_record_id = record_root_attributes[SpanAttributes.RECORD_ID]
+    _call_feedback_function(
+        feedback_name,
+        feedback_function,
+        higher_is_better,
+        feedback_aggregator,
+        kwarg_inputs,
+        app_name,
+        app_version,
+        app_id,
+        run_name,
+        input_id,
+        target_record_id,
+        span_group,
+    )
+
+
+def _call_feedback_function(
+    feedback_name: str,
+    feedback_function: Callable[
+        [Any], Union[float, Tuple[float, Dict[str, Any]]]
+    ],
+    higher_is_better: bool,
+    feedback_aggregator: Optional[Callable[[List[float]], float]],
+    kwarg_inputs: Dict[str, FeedbackFunctionInput],
+    app_name: str,
+    app_version: str,
+    app_id: str,
+    run_name: str,
+    input_id: str,
+    target_record_id: str,
+    span_group: Optional[str] = None,
+) -> float:
+    """Call feedback function.
+
+    Args:
+        feedback_name: Name of the feedback function.
+        feedback_function: Function to compute feedback.
+        higher_is_better: Whether higher values are better.
+        feedback_aggregator: Aggregator function to combine feedback scores.
+        kwarg_inputs: kwarg inputs to feedback function.
+        app_name: Name of the app.
+        app_version: Version of the app.
+        app_id: ID of the app.
+        run_name: Name of the run.
+        input_id: ID of the input.
+        target_record_id: ID of the target record.
+        span_group: Span group of the invocation.
+
+    Returns:
+        The score returned by the feedback function.
+    """
     context_manager = OtelFeedbackComputationRecordingContext(
         app_name=app_name,
         app_version=app_version,
@@ -765,6 +822,7 @@ def _call_feedback_function(
             else:
                 res = res[0]
             eval_root_span.set_attribute(SpanAttributes.EVAL_ROOT.SCORE, res)
+            return res
         except Exception as e:
             eval_root_span.set_attribute(SpanAttributes.EVAL_ROOT.ERROR, str(e))
             raise e

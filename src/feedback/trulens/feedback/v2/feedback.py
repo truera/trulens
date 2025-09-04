@@ -1,3 +1,8 @@
+"""
+PROVIDER IMPLEMENTATION TEMPLATES: Class-based feedback definitions with prompts and criteria.
+Used by feedback providers to generate system/user prompts for LLM evaluation calls.
+"""
+
 from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
@@ -376,11 +381,13 @@ class Groundedness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
         Statement: {hypothesis}
 
-        Please meticulously answer with the template below for ALL statement sentences:
+        For EACH sentence in STATEMENTS output one block EXACTLY in the following template *and nothing else*:
 
         Criteria: <Statement>
         Supporting Evidence: <Identify and describe the location in the source where the information matches the statement. Provide a detailed, human-readable summary indicating the path or key details. if nothing matches, say NOTHING FOUND. For the case where the statement is an abstention, say ABSTENTION>
-        Score: <Output a number based on the scoring output space / range>
+        Score: <Only the numeric score inside of the specified scoring range>
+
+        Return the blocks one after another with a single blank line between blocks. Do NOT output any text before the first block or after the last block. Do NOT include explanations outside the template.
         """
     )
 
@@ -522,6 +529,7 @@ class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
         - RESPONSE that is RELEVANT and answers the entire PROMPT completely should get a score of {max_score}.
         - RESPONSE that confidently FALSE should get a score of {min_score}.
         - RESPONSE that is only seemingly RELEVANT should get a score of {min_score}.
+        - Long RESPONSES should score equally well as short RESPONSES.
         - Answers that intentionally do not answer the question, such as 'I don't know' and model refusals, should also be counted as the least RELEVANT and get a score of {min_score}.
     """
 
@@ -531,17 +539,16 @@ class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
     )
 
     system_prompt_template: ClassVar[str] = cleandoc(
-        """You are a RELEVANCE grader; providing the relevance of the given RESPONSE to the given PROMPT.
-        Respond only as a number from {output_space_prompt}.
+        """
+        You are a RELEVANCE grader; evaluate how relevant the RESPONSE is to the PROMPT.
 
         Criteria for evaluating relevance:
         {criteria}
 
-        A few additional scoring guidelines:
-
-        - Long RESPONSES should score equally well as short RESPONSES.
-
-        - Never elaborate.
+        Output only a single-line JSON object with exactly these keys:
+          "criteria"             – one concise sentence that states your rationale with reference to the rubric
+          "supporting_evidence"  – An explanation of why you scored the way you did using exact words or evidence from the response
+          "score"                – {output_space_prompt}
         """
     )
 
@@ -552,11 +559,12 @@ class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
     )
 
     user_prompt: ClassVar[str] = cleandoc(
-        """PROMPT: {prompt}
+        """
+        PROMPT: {prompt}
 
         RESPONSE: {response}
 
-        RELEVANCE:
+        Produce the JSON object now.
         """
     )
 
@@ -976,6 +984,8 @@ class COTExplained(Feedback):
             def extract_cot_explanation_of_response(
                 self, response: str, normalize: int = 3
             ) -> Union[float, Tuple[float, Dict[str, str]]]:
+                assert normalize > 0, "Normalize must be greater than 0."
+
                 if "Supporting Evidence" in response:
                     score = 0
                     for line in response.split("\n"):
@@ -1095,4 +1105,201 @@ class Comprehensiveness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         {summary}
         /END OF SUMMARY/
         """
+    )
+
+
+class LogicalConsistency(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
+    """
+    Evaluates the logical consistency of the agentic system's plan and execution.
+    """
+
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+    criteria_template: ClassVar[str] = """
+    Score the logical consistency of the trace, including both the plan and execution.
+
+    {max_score}: Every action, claim, and transition in the trace is explicitly justified using information available in the prior context. Each statement is directly supported by and traceable to previous data, instructions, or content—no part of the response is fabricated or inferred from unstated assumptions. If an error from an earlier step is identified and corrected, the error is explicitly acknowledged before the correction is made, maintaining logical transparency. Each system instruction is followed. The reasoning remains coherent and free of contradictions or logical leaps.
+
+    Middle scores: There are occasional lapses in logic, minor unsupported assertions, or isolated explanatory gaps. Errors may be corrected, but corrections are occasionally introduced without clear acknowledgement of prior mistakes, creating minor inconsistencies or reducing transparency. Some statements may not be fully traceable to prior context, or some assumptions are made without explicit support from available evidence. Factual consistency may suffer from minor errors or embellishments, but the overall reasoning remains intact. Most previously assigned tasks and instructions remain intact.
+
+    {min_score}: There is frequent or severe breakdown in the logical flow; many statements are either unsupported by, or cannot be grounded in, the prior context. Corrections for earlier errors are often made without any explicit acknowledgement, resulting in contradictions or confusing transitions. Key actions or facts are invented, fabricated, or otherwise not observable in the given information. Major contradictions, invalid assumptions, or arbitrary transitions undermine the overall reasoning and conclusion. Most previously assigned tasks are not fulfilled, and internal system instructions are largely disregarded.
+    """
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """You are a meticulous and analytical LOGICAL CONSISTENCY evaluator: provide a score for the logical consistency given an agentic system's trace.
+        This multi-turn conversation may involve multiple agents. Track each agent's system instructions and conversation history, ensuring all subsequent outputs from that agent adhere to its established guidelines and prior dialogue, even when agents speak interchangeably.
+        Respond only as a number from {output_space_prompt}.
+
+        Evaluation criteria:
+        {criteria}
+
+        Be critical in your evaluation. For each step in the trace with an issue (eg. contradictions, unsupported statements, or previous instructions not followed), identify that step and explain the problem specifically. Flag any implicit assumptions.
+
+        Never elaborate.
+        """
+    )
+
+    user_prompt: ClassVar[str] = cleandoc(
+        """TRACE: {trace}
+
+        LOGICAL CONSISTENCY SCORE:
+        """
+    )
+
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
+    )
+
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt, criteria=criteria
+        )
+    )
+
+
+class ExecutionEfficiency(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
+    """
+    Evaluates the efficiency of the agentic system's execution.
+    """
+
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+    criteria_template: ClassVar[str] = """
+    Score the efficiency of the execution.
+
+    {max_score}: All relevant actions are executed exactly once, in a streamlined and optimized sequence. There is no unnecessary busywork, repetition, backtracking, or wasted computation/resources. Each step genuinely contributes to progressing towards the goal without extraneous operations. Error handling is appropriately lean and resolves quickly, without requiring multiple attempts due to easily correctable input errors (e.g., incorrect tool arguments). Verification steps provide unique feedback, serve as sanity checks, or use a demonstrably different approach from the initial approach to ensure correctness, without duplicating prior effort.
+
+    Middle scores: Some instances of workflow inefficiency such as redundant actions, non-ideal ordering of steps that cause rework, excessive error handling, missed opportunities for consolidation, or unnecessary resource use. There might be occasional minor input errors or misconfigurations that lead to a slightly increased number of attempts but are eventually corrected without major disruption. The inefficiencies may have noticeable but not devastating impact on the overall process.
+
+    {min_score}: Workflow is highly inefficient: dominated by loops, duplicated efforts, poorly ordered sequence, or significant wasted computation that break progress. Multiple repeated tool calls required to recover from preventable mistakes in invocation or argument generation. Verification steps are highly redundant and do not provide any value. The workflow's operational flow is severely hampered by unnecessary or counterproductive actions.
+    """
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """You are a meticulous and analytical EXECUTION EFFICIENCY evaluator: provide a score for how efficiently the agent executes its steps. Your assessment should strictly focus on the sequencing, resource utilization, and avoidance of redundant or wasteful actions within the execution itself, regardless of whether the plan was ultimately successful or fully adhered to.
+        Respond only as a number from {output_space_prompt}.
+
+        Evaluation criteria:
+        {criteria}
+
+        Evaluation steps to give feedback on key steps in the execution are allowed. Otherwise, be critical in your evaluation. For each step in the execution with an issue (e.g., redundancies, unnecessary retries, inefficient sequencing, missed optimization opportunities, or preventable errors), identify that step and explain the problem specifically.
+
+        Never elaborate.
+        """
+    )
+
+    user_prompt: ClassVar[str] = cleandoc(
+        """TRACE (INCLUDING EXECUTION): {trace}
+
+        EXECUTION EFFICIENCY SCORE:
+        """
+    )
+
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
+    )
+
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt, criteria=criteria
+        )
+    )
+
+
+class PlanAdherence(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
+    """
+    Evaluates the adherence of the agentic system's execution to the agentic system's plan.
+    """
+
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+    criteria_template: ClassVar[str] = """
+    Score the adherence of the execution to the plan.
+
+    {max_score}: Each step in the plan was executed and completed correctly and in entirety. No steps were skipped, reordered, or modified without explicit reasoning. Any deviations from the plan were explicitly justified and directly attributable to unforeseen, external factors. If replanning was necessary, the revised plan was followed exactly.
+
+    Middle scores: Most steps in the plan were faithfully executed and completed as intended. Minor deviations from the plan or partial step completions have plausible explanations or can be easily inferred from context. If replanning was necessary, the revised plan was generally followed.
+
+    {min_score}: Multiple planned steps were omitted, performed out of order, or replaced with unplanned actions. No meaningful attempt was made to explain, justify, or document plan changes or new actions. The plan was largely ignored or disregarded in execution, or steps were not completed as intended. If replanning was necessary, the revised plan was not followed.
+    """
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """You are a meticulous and analytical PLAN ADHERENCE evaluator: you are given the entire trace which contains both the plan and the execution. First, identify the plan and any subsequent replans within the trace. Then, evaluate how closely the execution follows the plan or replans.
+        Respond only as a number from {output_space_prompt}.
+
+        Evaluation criteria:
+        {criteria}
+
+        Adherence is judged step-by-step; if a plan mandates tool usage or sub-tasks, their omission or incomplete execution always counts as a failure of adherence, regardless of the effect on final output completeness or quality. Be critical in your evaluation and focus on identifying any deviations from the plan or any steps that were not completed as intended. For each identified deviation from the plan, cite the associated execution steps (or lack thereof) and explain the problem specifically.
+
+        Never elaborate.
+        """
+    )
+
+    user_prompt: ClassVar[str] = cleandoc(
+        """TRACE (INCLUDING PLAN): {trace}
+
+        PLAN ADHERENCE SCORE:
+        """
+    )
+
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
+    )
+
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt, criteria=criteria
+        )
+    )
+
+
+class PlanQuality(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
+    """
+    Evaluates the quality of the agentic system's plan to address the user's query.
+    """
+
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+    criteria_template: ClassVar[str] = """
+    Score the quality of the plan.
+
+    {max_score}: The plan is well-structured, optimal, and directly addresses the user's query by breaking it down into clear, actionable, and logical steps. Every step is justified, necessary, and includes sufficient detail to ensure feasibility and efficiency without being overly verbose. If replanning occurs, the revised plan and rationale are provided with precise references to observed gaps or triggers in prior results or context.
+
+    Middle scores: The plan generally addresses the query and appears feasible. Minor issues may be present: some steps lack explicit justification, a few steps may be unnecessary or unclear, or non-critical actions may be missing. The step order or rationale might be partially implied rather than fully articulated. If replanning occurs, it is mentioned but may lack thorough explanation or explicit ties to prior context.
+
+    {min_score}: The plan fails to directly address the user's query or cannot feasibly accomplish the goal. Critical steps are missing, irrelevant, unsupported, or based on fabricated reasoning. Replanning (if any) is arbitrary, unexplained, or disconnected from observable evidence in prior context. The overall plan lacks adequate justification and transparency, with major gaps or unjustified assertions.
+    """
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """You are a meticulous and analytical PLAN QUALITY evaluator: you are given the entire trace which contains the plan and execution. First, you must identify the system's overall plan (independent of the execution steps) as well as any subsequent replans. Your evaluation MUST solely focus on the intrinsic quality of the plan (and replans), without any consideration for how it was executed or the results of the execution. Evaluate how well the plan addresses the user's query.
+        Respond only as a number from {output_space_prompt}.
+
+        Evaluation criteria:
+        {criteria}
+
+        Ensure that you identify the system's plan and NOT the execution steps within the trace. Be critical in your evaluation. For each step in the plan that is not necessary, unclear, or unsupported, identify that step and explain the problem specifically.
+
+        Never elaborate.
+        """
+    )
+
+    user_prompt: ClassVar[str] = cleandoc(
+        """TRACE (INCLUDING PLAN): {trace}
+
+        PLAN QUALITY SCORE:
+        """
+    )
+
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
+    )
+
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt, criteria=criteria
+        )
     )

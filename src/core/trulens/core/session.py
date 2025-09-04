@@ -45,11 +45,14 @@ from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
 from trulens.core.utils import threading as threading_utils
 from trulens.experimental.otel_tracing import _feature as otel_tracing_feature
+from trulens.otel.semconv.trace import ResourceAttributes
+from trulens.otel.semconv.trace import SpanAttributes
 
 if TYPE_CHECKING:
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import SpanExporter
     from trulens.core import app as base_app
+    from trulens.core.otel.recording import Record
 
 tqdm = None
 with import_utils.OptionalImports(messages=optional_utils.REQUIREMENT_TQDM):
@@ -319,6 +322,17 @@ class TruSession(
 
             print(f"{text_utils.UNICODE_SQUID} Instrumenting LangChain app.")
             return tru_chain.TruChain(
+                *args, app=app, connector=self.connector, **kwargs
+            )
+
+        elif app.__module__.startswith("langgraph"):
+            with import_utils.OptionalImports(
+                messages=optional_utils.REQUIREMENT_APPS_LANGGRAPH
+            ):
+                from trulens.apps.langgraph import tru_graph
+
+            print(f"{text_utils.UNICODE_SQUID} Instrumenting LangGraph app.")
+            return tru_graph.TruGraph(
                 *args, app=app, connector=self.connector, **kwargs
             )
 
@@ -783,6 +797,7 @@ class TruSession(
         app_ids: Optional[List[types_schema.AppID]] = None,
         app_name: Optional[types_schema.AppName] = None,
         app_version: Optional[types_schema.AppVersion] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
@@ -799,6 +814,9 @@ class TruSession(
             app_version: A version of the app to filter records by. If given, only records for
                 this app version will be returned.
 
+            app_versions: A list of app versions to filter records by. If given, only records for
+                these app versions will be returned.
+
             record_ids: An optional list of record ids to filter records by.
 
             offset: Record row offset.
@@ -814,6 +832,7 @@ class TruSession(
             app_ids=app_ids,
             app_name=app_name,
             app_version=app_version,
+            app_versions=app_versions,
             record_ids=record_ids,
             offset=offset,
             limit=limit,
@@ -1227,6 +1246,55 @@ class TruSession(
             sleep(poll_interval)
         raise RuntimeError(
             f"Could not find all record IDs: {record_ids} in database!"
+        )
+
+    def add_feedback_result(
+        self,
+        record: Record,
+        feedback_name: str,
+        feedback_result: Union[float, int],
+        higher_is_better: bool,
+    ) -> None:
+        """
+        Add a feedback result for a given record.
+
+        Args:
+            record: The Record object to add feedback for.
+            feedback_name: The name of the feedback function.
+            feedback_result: The feedback score/result (float or int).
+            higher_is_better: Whether higher values are better.
+        """
+        if not is_otel_tracing_enabled():
+            raise RuntimeError(
+                "add_feedback_result is only supported when OTEL tracing is enabled!"
+            )
+
+        from trulens.feedback.computer import _call_feedback_function
+
+        # Get necessary information from the record root.
+        record_root_event = record._get_record_root_event()
+        resource_attributes = record_root_event["resource_attributes"]
+        record_attributes = record_root_event["record_attributes"]
+        app_name = resource_attributes.get(ResourceAttributes.APP_NAME)
+        app_version = resource_attributes.get(ResourceAttributes.APP_VERSION)
+        app_id = resource_attributes.get(ResourceAttributes.APP_ID)
+        run_name = record_attributes.get(SpanAttributes.RUN_NAME)
+        input_id = record_attributes.get(SpanAttributes.INPUT_ID)
+
+        # Create feedback computation recording context
+        feedback_result = _call_feedback_function(
+            feedback_name,
+            lambda: feedback_result,
+            higher_is_better,
+            None,
+            {},
+            app_name,
+            app_version,
+            app_id,
+            run_name,
+            input_id,
+            record.record_id,
+            None,
         )
 
 

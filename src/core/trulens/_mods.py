@@ -61,16 +61,14 @@ from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
 from trulens.core.utils import threading as threading_utils
 from trulens.core.utils import trulens as trulens_utils
-from trulens.dashboard import (
-    Leaderboard as Leaderboard_page,  # not a good location
-)
 from trulens.dashboard import appui as dashboard_appui
 from trulens.dashboard import constants as dashboard_constants
 from trulens.dashboard import display as dashboard_display
 from trulens.dashboard import run as dashboard_run
 from trulens.dashboard import streamlit as dashboard_streamlit
-from trulens.dashboard.pages import Compare as Compare_page
-from trulens.dashboard.pages import Records as Records_page
+from trulens.dashboard.tabs import Compare as Compare_page
+from trulens.dashboard.tabs import Leaderboard as Leaderboard_page
+from trulens.dashboard.tabs import Records as Records_page
 from trulens.dashboard.utils import dashboard_utils
 from trulens.dashboard.utils import metadata_utils
 from trulens.dashboard.utils import notebook_utils

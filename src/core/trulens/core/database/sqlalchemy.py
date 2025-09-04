@@ -923,6 +923,7 @@ class SQLAlchemyDB(core_db.DB):
         app_ids: Optional[List[str]] = None,
         app_name: Optional[types_schema.AppName] = None,
         app_version: Optional[types_schema.AppVersion] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> sa.Select:
@@ -932,6 +933,7 @@ class SQLAlchemyDB(core_db.DB):
             app_ids: List of app IDs to filter by. Defaults to None.
             app_name: App name to filter by. Defaults to None.
             app_version: App version to filter by. Defaults to None.
+            app_versions: List of app versions to filter by. Defaults to None.
             offset: Offset for pagination. Defaults to None.
             limit: Limit for pagination. Defaults to None.
 
@@ -979,11 +981,23 @@ class SQLAlchemyDB(core_db.DB):
             )
             conditions.append(app_version_expr == app_version)
 
+        if app_versions:
+            app_version_expr = self._json_extract_otel(
+                "resource_attributes", ResourceAttributes.APP_VERSION
+            )
+            conditions.append(app_version_expr.in_(app_versions))
+
         if app_ids:
             app_id_expr = self._json_extract_otel(
                 "resource_attributes", ResourceAttributes.APP_ID
             )
-            conditions.append(app_id_expr.in_(app_ids))
+            conditions.append(
+                sa.or_(
+                    app_id_expr.in_(app_ids),
+                    app_id_expr.is_(None),
+                    app_id_expr == "",
+                )
+            )
 
         # Apply all conditions
         stmt = stmt.where(sa.and_(*conditions))
@@ -1007,6 +1021,7 @@ class SQLAlchemyDB(core_db.DB):
         app_ids: Optional[List[str]] = None,
         app_name: Optional[types_schema.AppName] = None,
         app_version: Optional[types_schema.AppVersion] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
@@ -1020,6 +1035,7 @@ class SQLAlchemyDB(core_db.DB):
             app_ids: List of app IDs to filter by. Defaults to None.
             app_name: App name to filter by. Defaults to None.
             app_version: App version to filter by. Defaults to None.
+            app_versions: List of app versions to filter by. Defaults to None.
             record_ids: List of record IDs to filter by. Defaults to None.
             offset: Offset for pagination. Defaults to None.
             limit: Limit for pagination. Defaults to None.
@@ -1034,6 +1050,7 @@ class SQLAlchemyDB(core_db.DB):
                     app_ids=app_ids,
                     app_name=app_name,
                     app_version=app_version,
+                    app_versions=app_versions,
                     offset=offset,
                     limit=limit,
                 )
@@ -1082,6 +1099,21 @@ class SQLAlchemyDB(core_db.DB):
                         app_name, app_version
                     ),
                 )
+                if app_ids and app_id not in app_ids:
+                    # TODO(otel):
+                    # This may screw up the pagination and can be slow due to it
+                    # looking at possibly a lot more events if there are many
+                    # that don't have app ids.
+                    # In the future we should either:
+                    # 1. Remove app ids if we're going to assume they're some
+                    #    complex function of app_name and app_version that's
+                    #    hard to replicate for non-TruLens users that want to
+                    #    still use our evaluation/feedback stuff.
+                    # 2. Have the app ids be from some source of truth like the
+                    #    app table but this doesn't work as easily for the
+                    #    Snowflake side.
+                    logger.info(f"Computed {app_id} not in {app_ids}!")
+                    continue
 
                 if record_id not in record_events:
                     record_events[record_id] = {
@@ -1107,6 +1139,9 @@ class SQLAlchemyDB(core_db.DB):
                     record_attributes.get(SpanAttributes.SPAN_TYPE)
                     == SpanAttributes.SpanType.RECORD_ROOT.value
                 ):
+                    record_events[record_id]["input_id"] = (
+                        record_attributes.get(SpanAttributes.INPUT_ID, "")
+                    )
                     record_events[record_id]["input"] = record_attributes.get(
                         SpanAttributes.RECORD_ROOT.INPUT, ""
                     )
@@ -1293,6 +1328,7 @@ class SQLAlchemyDB(core_db.DB):
                     # TODO(nit): consider using a constant here
                     "type": "SPAN",  # Default type as per orm.py
                     "record_id": record_id,
+                    "input_id": record_data.get("input_id"),
                     "input": record_data["input"],
                     "output": record_data["output"],
                     "tags": record_data["tags"],
@@ -1345,6 +1381,7 @@ class SQLAlchemyDB(core_db.DB):
         app_ids: Optional[List[types_schema.AppID]] = None,
         app_name: Optional[types_schema.AppName] = None,
         app_version: Optional[types_schema.AppVersion] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
@@ -1355,16 +1392,25 @@ class SQLAlchemyDB(core_db.DB):
             app_ids: Optional list of app IDs to filter by. Defaults to None.
             app_name: Optional app name to filter by. Defaults to None.
             app_version: Optional app version to filter by. Defaults to None.
+            app_versions: Optional list of app versions to filter by. Defaults to None.
             record_ids: Optional list of record IDs to filter by. Defaults to None.
             offset: Optional offset for pagination. Defaults to None.
             limit: Optional limit for pagination. Defaults to None.
         """
-
+        if app_ids:
+            logger.warning(
+                "`app_ids` is deprecated. Please use `app_name`, and `app_versions` instead."
+            )
+        if app_version:
+            logger.warning(
+                "`app_version` is deprecated. Please use `app_versions` instead."
+            )
         if is_otel_tracing_enabled():
             return self._get_records_and_feedback_otel(
                 app_ids=app_ids,
                 app_name=app_name,
                 app_version=app_version,
+                app_versions=app_versions,
                 record_ids=record_ids,
                 offset=offset,
                 limit=limit,
@@ -1400,6 +1446,11 @@ class SQLAlchemyDB(core_db.DB):
                 # stmt = stmt.options(joinedload(self.orm.Record.app))
                 stmt = stmt.join(self.orm.Record.app).filter(
                     self.orm.AppDefinition.app_version == app_version
+                )
+
+            if app_versions:
+                stmt = stmt.join(self.orm.Record.app).filter(
+                    self.orm.AppDefinition.app_version.in_(app_versions)
                 )
 
             stmt = stmt.options(joinedload(self.orm.Record.feedback_results))
@@ -1648,14 +1699,20 @@ class SQLAlchemyDB(core_db.DB):
 
     def insert_event(self, event: Event) -> types_schema.EventID:
         """See [DB.insert_event][trulens.core.database.base.DB.insert_event]."""
+        return self.insert_events([event])[0]
 
+    def insert_events(self, events: List[Event]) -> List[types_schema.EventID]:
+        """See [DB.insert_events][trulens.core.database.base.DB.insert_events]."""
         with self.session.begin() as session:
-            _event = self.orm.Event.parse(event, redact_keys=self.redact_keys)
-            session.add(_event)
-            logger.info(
-                f"{text_utils.UNICODE_CHECK} added event {_event.event_id}"
-            )
-            return _event.event_id
+            events_to_insert = [
+                self.orm.Event.parse(event, redact_keys=self.redact_keys)
+                for event in events
+            ]
+            session.add_all(events_to_insert)
+            ret = [event.event_id for event in events_to_insert]
+            for curr in ret:
+                logger.info(f"{text_utils.UNICODE_CHECK} added event {curr}")
+            return ret
 
     def get_events(
         self,
@@ -1683,9 +1740,7 @@ class SQLAlchemyDB(core_db.DB):
                 )
                 where_clauses.append(record_id_expr.in_(record_ids))
             if start_time is not None:
-                where_clauses.append(
-                    self.orm.Event.start_timestamp >= start_time
-                )
+                where_clauses.append(self.orm.Event.timestamp >= start_time)
 
             if len(where_clauses) == 0:
                 q = sa.select(self.orm.Event)

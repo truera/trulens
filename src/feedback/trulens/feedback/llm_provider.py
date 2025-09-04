@@ -1,7 +1,19 @@
 from concurrent.futures import as_completed
+import json
 import logging
 import re
-from typing import ClassVar, Dict, List, Optional, Sequence, Tuple, Type
+import threading
+from typing import (
+    ClassVar,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    TypedDict,
+    Union,
+)
 import warnings
 
 import nltk
@@ -11,6 +23,7 @@ import pydantic
 from pydantic import BaseModel
 from trulens.core.feedback import feedback as core_feedback
 from trulens.core.feedback import provider as core_provider
+from trulens.core.feedback.selector import Trace
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils.threading import ThreadPoolExecutor
 from trulens.feedback import generated as feedback_generated
@@ -19,6 +32,21 @@ from trulens.feedback import prompts as feedback_prompts
 from trulens.feedback.v2 import feedback as feedback_v2
 
 logger = logging.getLogger(__name__)
+
+REASONING_MODEL_PREFIXES = ("o1", "o3", "o4", "gpt-5", "deepseek-r1")
+
+# --- Shared capability cache for LLM providers ---
+_capabilities_lock = threading.Lock()
+
+
+class CapabilityCacheEntry(TypedDict, total=False):
+    structured_outputs: bool
+    temperature: bool
+    reasoning_effort: bool
+    cfg: bool
+
+
+_model_capabilities_cache: Dict[str, CapabilityCacheEntry] = {}
 
 
 class LLMProvider(core_provider.Provider):
@@ -35,7 +63,7 @@ class LLMProvider(core_provider.Provider):
     interface to a [wide range of
     models](https://docs.litellm.ai/docs/providers).
 
-    * [Langchain][trulens.providers.langchain.Langchain].
+    * [LangChain][trulens.providers.langchain.Langchain].
 
     """
 
@@ -56,6 +84,62 @@ class LLMProvider(core_provider.Provider):
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
+    # --- Shared capability cache helpers ---
+    def _capabilities_key(self) -> str:
+        return getattr(self, "model_engine", "") or self.__class__.__name__
+
+    def _get_capabilities(self) -> CapabilityCacheEntry:
+        with _capabilities_lock:
+            return _model_capabilities_cache.get(self._capabilities_key(), {})
+
+    def _set_capabilities(self, updates: CapabilityCacheEntry) -> None:
+        with _capabilities_lock:
+            current = _model_capabilities_cache.get(
+                self._capabilities_key(), {}
+            )
+            current.update(updates)
+            _model_capabilities_cache[self._capabilities_key()] = current
+
+    @classmethod
+    def clear_model_capabilities_cache(
+        cls, model_engine: Optional[str] = None
+    ) -> None:
+        with _capabilities_lock:
+            if model_engine is None:
+                _model_capabilities_cache.clear()
+            else:
+                _model_capabilities_cache.pop(model_engine, None)
+
+    def clear_capabilities_cache(self) -> None:
+        self.clear_model_capabilities_cache(self._capabilities_key())
+
+    def _is_unsupported_parameter_error(
+        self, exc: Exception, parameter: str
+    ) -> bool:
+        message = str(getattr(exc, "message", "")) or str(exc)
+        lowered = message.lower()
+        return (
+            ("unsupported" in lowered)
+            or ("unexpected keyword" in lowered)
+            or ("got an unexpected" in lowered)
+            or ("does not support" in lowered)
+            or ("is not allowed" in lowered)
+            or ("unknown" in lowered)
+        ) and (parameter in lowered)
+
+    def _is_reasoning_model(self) -> bool:
+        """Detect reasoning models robustly across providers.
+
+        - Handles provider-prefixed ids like "snowflake/o3-mini".
+        - Matches known prefixes in REASONING_MODEL_PREFIXES.
+        - Also matches generic substrings like "reasoning" or "thinking".
+        """
+        raw = (self.model_engine or "").lower()
+        name = raw.split("/", 1)[1] if "/" in raw else raw
+        if any(name.startswith(p) for p in REASONING_MODEL_PREFIXES):
+            return True
+        return ("reasoning" in name) or ("thinking" in name)
+
     # @abstractmethod
     def _create_chat_completion(
         self,
@@ -65,10 +149,16 @@ class LLMProvider(core_provider.Provider):
         **kwargs,
     ) -> str:
         """
-        Chat Completion Model
+        Create a chat completion using the LLM provider.
+
+        Args:
+            prompt: Optional text prompt.
+            messages: Optional sequence of message dictionaries.
+            response_format: Optional response format schema.
+            **kwargs: Additional keyword arguments.
 
         Returns:
-            str: Completion model response.
+            str: The completion model response.
         """
         # text
         raise NotImplementedError()
@@ -85,18 +175,14 @@ class LLMProvider(core_provider.Provider):
         Base method to generate a score normalized to 0 to 1, used for evaluation.
 
         Args:
-            system_prompt: A pre-formatted system prompt.
-
-            user_prompt: An optional user prompt.
-
-            min_score_val: The minimum score value.
-
-            max_score_val: The maximum score value.
-
-            temperature: The temperature for the LLM response.
+            system_prompt (str): A pre-formatted system prompt.
+            user_prompt (Optional[str]): An optional user prompt.
+            min_score_val (int): The minimum score value.
+            max_score_val (int): The maximum score value.
+            temperature (float): The temperature for the LLM response.
 
         Returns:
-            The score on a 0-1 scale.
+            The normalized score on a 0-1 scale.
         """
 
         assert self.endpoint is not None, "Endpoint is not set."
@@ -108,12 +194,62 @@ class LLMProvider(core_provider.Provider):
         if user_prompt is not None:
             llm_messages.append({"role": "user", "content": user_prompt})
 
+        # Try structured outputs first; provider will probe and fall back if unsupported
+        response_format = feedback_output_schemas.BaseFeedbackResponse
+
+        # Add reasoning effort for reasoning models and handle temperature
+        extra_kwargs = {}
+        if self._is_reasoning_model():
+            extra_kwargs["reasoning_effort"] = (
+                "medium"  # Default reasoning effort
+            )
+            # Don't pass temperature to reasoning models as they don't support it
+        else:
+            extra_kwargs["temperature"] = temperature
+
         response = self.endpoint.run_in_pace(
             func=self._create_chat_completion,
             messages=llm_messages,
-            temperature=temperature,
-            response_format=feedback_output_schemas.BaseFeedbackResponse,
+            response_format=response_format,
+            **extra_kwargs,
         )
+
+        # --------------------------------------------------------------
+        # Attempt to parse structured JSON responses directly.
+        # --------------------------------------------------------------
+        try:
+            parsed_json = json.loads(response)
+        except Exception:
+            parsed_json = None
+
+        if isinstance(parsed_json, dict) and "score" in parsed_json:
+            try:
+                raw_score = float(parsed_json["score"])
+                normalized_score = (raw_score - min_score_val) / (
+                    max_score_val - min_score_val
+                )
+            except (TypeError, ValueError):
+                normalized_score = -1.0
+
+            return normalized_score, {"reason": parsed_json}
+
+        if isinstance(parsed_json, list):
+            # If a list is returned, average the scores where possible.
+            scores = []
+            for item in parsed_json:
+                if isinstance(item, dict) and "score" in item:
+                    try:
+                        scores.append(float(item["score"]))
+                    except (TypeError, ValueError):
+                        pass
+            if scores:
+                avg_raw = sum(scores) / len(scores)
+                normalized_score = (avg_raw - min_score_val) / (
+                    max_score_val - min_score_val
+                )
+            else:
+                normalized_score = -1.0
+            return normalized_score, {"reason": parsed_json}
 
         if isinstance(response, feedback_output_schemas.BaseFeedbackResponse):
             score = response.score
@@ -142,20 +278,15 @@ class LLMProvider(core_provider.Provider):
         Base method to generate a score and reason, used for evaluation.
 
         Args:
-            system_prompt: A pre-formatted system prompt.
-
-            user_prompt: An optional user prompt. Defaults to None.
-
-            min_score_val: The minimum score value.
-
-            max_score_val: The maximum score value.
-
-            temperature: The temperature for the LLM response.
+            system_prompt (str): A pre-formatted system prompt.
+            user_prompt (Optional[str]): An optional user prompt. Defaults to None.
+            min_score_val (int): The minimum score value.
+            max_score_val (int): The maximum score value.
+            temperature (float): The temperature for the LLM response.
 
         Returns:
-            The score on a 0-1 scale.
-
-            Reason metadata if returned by the LLM.
+            Tuple[float, Dict]: A tuple containing the normalized score on a 0-1 scale and
+                reason metadata dictionary.
         """
         assert self.endpoint is not None, "Endpoint is not set."
         assert (
@@ -165,15 +296,61 @@ class LLMProvider(core_provider.Provider):
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
             llm_messages.append({"role": "user", "content": user_prompt})
+
+        # Try structured outputs first; provider will probe and fall back if unsupported
+        response_format = feedback_output_schemas.ChainOfThoughtResponse
+
+        # Add reasoning effort for reasoning models and handle temperature
+        extra_kwargs = {}
+        if self._is_reasoning_model():
+            extra_kwargs["reasoning_effort"] = (
+                "medium"  # Default reasoning effort
+            )
+            # Don't pass temperature to reasoning models as they don't support it
+        else:
+            extra_kwargs["temperature"] = temperature
+
         response = self.endpoint.run_in_pace(
             func=self._create_chat_completion,
             messages=llm_messages,
-            temperature=temperature,
-            response_format=feedback_output_schemas.ChainOfThoughtResponse,
+            response_format=response_format,
+            **extra_kwargs,
         )
 
         criteria_field = "Criteria"
         supporting_evidence_field = "Supporting Evidence"
+
+        # Attempt to parse JSON (e.g., from CFG or structured outputs returned as text)
+        parsed_json = None
+        if isinstance(response, str):
+            try:
+                parsed_json = json.loads(response)
+            except Exception:
+                parsed_json = None
+
+        # If JSON matches ChainOfThoughtResponse shape, use it directly
+        if isinstance(parsed_json, dict):
+            json_score = parsed_json.get("score")
+            json_criteria = parsed_json.get("criteria")
+            json_evidence = parsed_json.get("supporting_evidence")
+            if json_score is not None and (
+                json_criteria is not None and json_evidence is not None
+            ):
+                try:
+                    score_val = float(json_score)
+                except (TypeError, ValueError):
+                    score_val = -1.0
+                reasons = {
+                    "reason": (
+                        f"{criteria_field}: {json_criteria}\n"
+                        f"{supporting_evidence_field}: {json_evidence}"
+                    )
+                }
+                score_val = (score_val - min_score_val) / (
+                    max_score_val - min_score_val
+                )
+                return score_val, reasons
+
         if isinstance(response, feedback_output_schemas.ChainOfThoughtResponse):
             score = response.score
             if score is None:
@@ -188,6 +365,76 @@ class LLMProvider(core_provider.Provider):
                 )
             }
 
+        # Last-chance structured reformat: if we still don't have reasons, try a quick
+        # coercion call that forces the ChainOfThoughtResponse schema.
+        elif isinstance(response, str):
+            try:
+                reformat_messages = [
+                    {
+                        "role": "system",
+                        "content": (
+                            "Convert the following text into a strict JSON object with keys "
+                            '"criteria", "supporting_evidence", and "score" (integer). '
+                            "Use concise but non-empty values for criteria and supporting_evidence. "
+                            "Output ONLY the JSON, no extra text."
+                        ),
+                    },
+                    {"role": "user", "content": response},
+                ]
+                logger.debug(
+                    "Reformatting LLM output text to JSON with an LLM: %s",
+                    reformat_messages,
+                )
+
+                ref = self.endpoint.run_in_pace(
+                    func=self._create_chat_completion,
+                    messages=reformat_messages,
+                    response_format=feedback_output_schemas.ChainOfThoughtResponse,
+                    **extra_kwargs,
+                )
+
+                if isinstance(
+                    ref, feedback_output_schemas.ChainOfThoughtResponse
+                ):
+                    score = ref.score
+                    criteria = ref.criteria
+                    supporting_evidence = ref.supporting_evidence
+                    reasons = {
+                        "reason": (
+                            f"{criteria_field}: {criteria}\n"
+                            f"{supporting_evidence_field}: {supporting_evidence}"
+                        )
+                    }
+                    score = (score - min_score_val) / (
+                        max_score_val - min_score_val
+                    )
+                    return score, reasons
+                elif isinstance(ref, str):
+                    try:
+                        ref_json = json.loads(ref)
+                        if (
+                            isinstance(ref_json, dict)
+                            and "criteria" in ref_json
+                            and "supporting_evidence" in ref_json
+                            and "score" in ref_json
+                        ):
+                            score_val = float(ref_json["score"])
+                            reasons = {
+                                "reason": (
+                                    f"{criteria_field}: {ref_json['criteria']}\n"
+                                    f"{supporting_evidence_field}: {ref_json['supporting_evidence']}"
+                                )
+                            }
+                            score_val = (score_val - min_score_val) / (
+                                max_score_val - min_score_val
+                            )
+                            return score_val, reasons
+                    except Exception:
+                        pass
+            except Exception:
+                # Ignore reformat failures and fall through to existing parsing
+                pass
+
         elif "Supporting Evidence" in response:
             score = -1
             supporting_evidence = None
@@ -195,7 +442,7 @@ class LLMProvider(core_provider.Provider):
             lines = response.split("\n")
             for i, line in enumerate(lines):
                 if (
-                    "Score" in line
+                    "Score:" in line
                 ):  # TODO: find a more robust way to generate and extract score
                     # If the next line exists and appears to be a numeric score, use it.
                     if (
@@ -318,7 +565,7 @@ class LLMProvider(core_provider.Provider):
         Args:
             question (str): A question being asked.
             context (str): Context related to the question.
-            criteria (Optional[str]): If provided, overrides the evaluation criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             min_score_val (int): The minimum score value. Defaults to 0.
             max_score_val (int): The maximum score value. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
@@ -380,7 +627,7 @@ class LLMProvider(core_provider.Provider):
         Args:
             question (str): A question being asked.
             context (str): Context related to the question.
-            criteria (Optional[str]): If provided, overrides the evaluation criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             min_score_val (int): The minimum score value. Defaults to 0.
             max_score_val (int): The maximum score value. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
@@ -449,7 +696,7 @@ class LLMProvider(core_provider.Provider):
         Args:
             prompt (str): A text prompt to an agent.
             response (str): The agent's response to the prompt.
-            criteria (Optional[str]): If provided, overrides the evaluation criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
@@ -510,7 +757,7 @@ class LLMProvider(core_provider.Provider):
         Args:
             prompt (str): A text prompt to an agent.
             response (str): The agent's response to the prompt.
-            criteria (Optional[str]): If provided, overrides the evaluation criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
@@ -542,6 +789,8 @@ class LLMProvider(core_provider.Provider):
         user_prompt = user_prompt.replace(
             "RELEVANCE:", feedback_prompts.COT_REASONS_TEMPLATE
         )
+        logger.debug(system_prompt)
+        logger.debug(user_prompt)
         return self.generate_score_and_reasons(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
@@ -574,7 +823,7 @@ class LLMProvider(core_provider.Provider):
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
 
         Returns:
-            A value between 0 and 1. 0 being "negative sentiment" and 1
+            float: A value between 0 and 1. 0 being "negative sentiment" and 1
                 being "positive sentiment".
         """
 
@@ -766,7 +1015,7 @@ class LLMProvider(core_provider.Provider):
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
-            Tuple[float, str]: A tuple containing a value between 0.0 and 1.0, representing the specified evaluation, and a string containing the reasons for the evaluation.
+            Tuple[float, Dict]: A tuple containing a value between 0.0 and 1.0, representing the specified evaluation, and a dictionary containing the reasons for the evaluation.
         """
 
         output_space = self._determine_output_space(
@@ -821,10 +1070,14 @@ class LLMProvider(core_provider.Provider):
             ```
 
         Args:
-            text: The text to evaluate the conciseness of.
+            text (str): The text to evaluate the conciseness of.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
-            A value between 0.0 (not concise) and 1.0 (concise).
+            float: A value between 0.0 (not concise) and 1.0 (concise).
 
         """
         if criteria is None:
@@ -851,13 +1104,17 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = Feedback(provider.conciseness).on_output()
+            feedback = Feedback(provider.conciseness_with_cot_reasons).on_output()
             ```
         Args:
-            text: The text to evaluate the conciseness of.
+            text (str): The text to evaluate the conciseness of.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
-            Tuple[float, str]: A tuple containing a value between 0.0 (not concise) and 1.0 (concise) and a string containing the reasons for the evaluation.
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (not concise) and 1.0 (concise) and a dictionary containing the reasons for the evaluation.
         """
         if criteria is None:
             criteria = feedback_prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT
@@ -887,10 +1144,14 @@ class LLMProvider(core_provider.Provider):
             ```
 
         Args:
-            text: A prompt to an agent.
+            text (str): A prompt to an agent.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
-            A value between 0.0 (not correct) and 1.0 (correct).
+            float: A value between 0.0 (not correct) and 1.0 (correct).
         """
         if criteria is None:
             criteria = feedback_prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT
@@ -922,9 +1183,13 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): Text to evaluate.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
-            Tuple[float, str]: A tuple containing a value between 0 (not correct) and 1.0 (correct) and a string containing the reasons for the evaluation.
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (not correct) and 1.0 (correct) and a dictionary containing the reasons for the evaluation.
         """
         if criteria is None:
             criteria = feedback_prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT
@@ -955,6 +1220,10 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
             float: A value between 0.0 (not coherent) and 1.0 (coherent).
@@ -989,9 +1258,13 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
-            Tuple[float, str]: A tuple containing a value between 0 (not coherent) and 1.0 (coherent) and a string containing the reasons for the evaluation.
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (not coherent) and 1.0 (coherent) and a dictionary containing the reasons for the evaluation.
         """
         if criteria is None:
             criteria = feedback_prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT
@@ -1056,9 +1329,13 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
-            Tuple[float, str]: A tuple containing a value between 0 (not harmful) and 1.0 (harmful) and a string containing the reasons for the evaluation.
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (not harmful) and 1.0 (harmful) and a dictionary containing the reasons for the evaluation.
         """
 
         if criteria is None:
@@ -1125,9 +1402,13 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
-            Tuple[float, str]: A tuple containing a value between 0 (not malicious) and 1.0 (malicious) and a string containing the reasons for the evaluation.
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (not malicious) and 1.0 (malicious) and a dictionary containing the reasons for the evaluation.
         """
         if criteria is None:
             criteria = feedback_prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT
@@ -1158,6 +1439,10 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
             float: A value between 0.0 (not helpful) and 1.0 (helpful).
@@ -1192,9 +1477,13 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
-            Tuple[float, str]: A tuple containing a value between 0 (not helpful) and 1.0 (helpful) and a string containing the reasons for the evaluation.
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (not helpful) and 1.0 (helpful) and a dictionary containing the reasons for the evaluation.
         """
         if criteria is None:
             criteria = feedback_prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT
@@ -1226,6 +1515,10 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
             float: A value between 0.0 (not controversial) and 1.0
@@ -1262,9 +1555,13 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
-            Tuple[float, str]: A tuple containing a value between 0 (not controversial) and 1.0 (controversial) and a string containing the reasons for the evaluation.
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (not controversial) and 1.0 (controversial) and a dictionary containing the reasons for the evaluation.
         """
         if criteria is None:
             criteria = feedback_prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT
@@ -1295,6 +1592,10 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
             float: A value between 0.0 (not misogynistic) and 1.0 (misogynistic).
@@ -1329,9 +1630,13 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
-            Tuple[float, str]: A tuple containing a value between 0.0 (not misogynistic) and 1.0 (misogynistic) and a string containing the reasons for the evaluation.
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (not misogynistic) and 1.0 (misogynistic) and a dictionary containing the reasons for the evaluation.
         """
         if criteria is None:
             criteria = feedback_prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT
@@ -1362,6 +1667,10 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
             float: A value between 0.0 (not criminal) and 1.0 (criminal).
@@ -1397,9 +1706,13 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
-            Tuple[float, str]: A tuple containing a value between 0.0 (not criminal) and 1.0 (criminal) and a string containing the reasons for the evaluation.
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (not criminal) and 1.0 (criminal) and a dictionary containing the reasons for the evaluation.
         """
         if criteria is None:
             criteria = feedback_prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT
@@ -1430,6 +1743,10 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
             float: A value between 0.0 (not insensitive) and 1.0 (insensitive).
@@ -1464,9 +1781,13 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
-            Tuple[float, str]: A tuple containing a value between 0.0 (not insensitive) and 1.0 (insensitive) and a string containing the reasons for the evaluation.
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (not insensitive) and 1.0 (insensitive) and a dictionary containing the reasons for the evaluation.
         """
         if criteria is None:
             criteria = feedback_prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT
@@ -1486,12 +1807,12 @@ class LLMProvider(core_provider.Provider):
         check if two answers agree.
 
         Args:
-            text (str): A prompt to an agent.
+            prompt (str): A text prompt to an agent.
             response (str): The agent's response to the prompt.
-            check_response(str): The response to check against.
+            check_response (str): The response to check against.
 
         Returns:
-            str
+            str: The agreement assessment result.
         """
 
         assert self.endpoint is not None, "Endpoint is not set."
@@ -1511,11 +1832,12 @@ class LLMProvider(core_provider.Provider):
         Uses chat completion model. A function that tries to distill main points
         to be used by the comprehensiveness feedback function.
 
-         Args:
+        Args:
             source (str): Text corresponding to source material.
+            temperature (float): The temperature for the LLM response. Defaults to 0.0.
 
         Returns:
-            (str) key points of the source text.
+            str: Key points of the source text.
         """
         assert self.endpoint is not None, "Endpoint is not set."
         llm_messages = [
@@ -1553,6 +1875,10 @@ class LLMProvider(core_provider.Provider):
         Args:
             key_points (str): Key points separated by newlines.
             summary (str): The summary text to check for inclusion of key points.
+            min_score_val (int): The minimum score value. Defaults to 0.
+            max_score_val (int): The maximum score value. Defaults to 3.
+            criteria (Optional[str]): If provided, overrides the default criteria for assessment. Defaults to None.
+            temperature (float): The temperature for the LLM response. Defaults to 0.0.
 
         Returns:
             List[str]: A list of strings indicating whether each key point is included in the summary.
@@ -1618,9 +1944,13 @@ class LLMProvider(core_provider.Provider):
         Args:
             source (str): Text corresponding to source material.
             summary (str): Text corresponding to a summary.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
-            Tuple[float, str]: A tuple containing a value between 0.0 (not comprehensive) and 1.0 (comprehensive) and a string containing the reasons for the evaluation.
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (not comprehensive) and 1.0 (comprehensive) and a dictionary containing the reasons for the evaluation.
         """
 
         key_points = self._generate_key_points(source)
@@ -1681,11 +2011,13 @@ class LLMProvider(core_provider.Provider):
         Args:
             prompt (str): A text prompt to an agent.
             response (str): The agent's response to the prompt.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
-            A value between 0.0 (no stereotypes assumed) and 1.0 (stereotypes assumed).
+            float: A value between 0.0 (no stereotypes assumed) and 1.0 (stereotypes assumed).
         """
 
         output_space = self._determine_output_space(
@@ -1723,7 +2055,7 @@ class LLMProvider(core_provider.Provider):
         """
         Uses chat completion model. A function that completes a template to
         check adding assumed stereotypes in the response when not present in the
-        prompt.
+        prompt. Also uses chain of thought methodology and emits the reasons.
 
         Example:
             ```python
@@ -1733,12 +2065,13 @@ class LLMProvider(core_provider.Provider):
         Args:
             prompt (str): A text prompt to an agent.
             response (str): The agent's response to the prompt.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
-            Tuple[float, str]: A tuple containing a value between 0.0 (no stereotypes assumed) and 1.0 (stereotypes assumed) and a string containing the reasons for the evaluation.
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (no stereotypes assumed) and 1.0 (stereotypes assumed) and a dictionary containing the reasons for the evaluation.
         """
         output_space = self._determine_output_space(
             min_score_val, max_score_val
@@ -1838,7 +2171,7 @@ class LLMProvider(core_provider.Provider):
 
             f_groundedness = (
                 Feedback(provider.groundedness_measure_with_cot_reasons)
-                .on(context.collect()
+                .on(context.collect())
                 .on_output()
                 )
             ```
@@ -1868,8 +2201,9 @@ class LLMProvider(core_provider.Provider):
         Args:
             source (str): The source that should support the statement.
             statement (str): The statement to check groundedness.
-            criteria (str): The specific criteria for evaluation. Defaults to None.
-            use_sent_tokenize (bool): Whether to split the statement into sentences using punkt sentence tokenizer. If `False`, use an LLM to split the statement. Defaults to False. Note this might incur additional costs and reach context window limits in some cases.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            examples (Optional[str]): Optional examples to guide the evaluation. Defaults to None.
+            groundedness_configs (Optional[core_feedback.GroundednessConfigs]): Configuration for groundedness evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
@@ -1881,7 +2215,7 @@ class LLMProvider(core_provider.Provider):
         assert self.endpoint is not None, "Endpoint is not set."
 
         groundedness_scores = {}
-        reasons_str = ""
+        reasons_list = []
 
         use_sent_tokenize = (
             groundedness_configs.use_sent_tokenize
@@ -1911,6 +2245,11 @@ class LLMProvider(core_provider.Provider):
                 messages=llm_messages,
                 temperature=temperature,
             ).split("\n")
+
+        # Remove simple numeric list markers such as "1." or "2)"
+        hypotheses = [
+            h for h in hypotheses if not re.match(r"^\s*\d+[\.)]?\s*$", h)
+        ]
 
         if filter_trivial_statements:
             hypotheses = self._remove_trivial_statements(hypotheses)
@@ -1942,27 +2281,13 @@ class LLMProvider(core_provider.Provider):
                 temperature=temperature,
             )
 
-            score_pattern = re.compile(r"Score:\s*([0-9.]+)")
-            match = score_pattern.search(reason.get("reason", ""))
-            normalized_reason = None
-            if match:
-                original_reason_score = float(match.group(1))
-                normalized_reason_score = (
-                    original_reason_score - min_score_val
-                ) / (max_score_val - min_score_val)
-
-                # Ensure the formatting matches exactly
-                original_string = f"Score: {int(original_reason_score)}"
-                replacement_string = f"Score: {normalized_reason_score}"
-                normalized_reason = reason.copy()
-                normalized_reason["reason"] = normalized_reason[
-                    "reason"
-                ].replace(original_string, replacement_string)
-
-            if normalized_reason is not None:
-                return index, score, normalized_reason
-            else:
-                return index, score, reason
+            # Build structured reason dict to ensure criteria, evidence, and score present
+            structured = {
+                "criteria": hypothesis,
+                "supporting_evidence": reason.get("reason", ""),
+                "score": score,
+            }
+            return index, score, structured
 
         results = []
 
@@ -1979,19 +2304,14 @@ class LLMProvider(core_provider.Provider):
 
         for i, score, reason in results:
             groundedness_scores[f"statement_{i}"] = score
-            reason_str = (
-                reason["reason"]
-                if reason is not None and "reason" in reason
-                else "reason not generated"
-            )
-            reasons_str += f"STATEMENT {i}:\n{reason_str}\n"
+            reasons_list.append(reason)
 
         # Calculate the average groundedness score from the scores dictionary
         average_groundedness_score = float(
             np.mean(list(groundedness_scores.values()))
         )
 
-        return average_groundedness_score, {"reasons": reasons_str}
+        return average_groundedness_score, {"reasons": reasons_list}
 
     @deprecation_utils.method_renamed("relevance")
     def qs_relevance(self, *args, **kwargs):
@@ -2042,8 +2362,8 @@ class LLMProvider(core_provider.Provider):
             provider = OpenAI()
 
             f_groundedness = (
-                Feedback(provider.groundedness_measure_with_cot_reasons)
-                .on(context.collect()
+                Feedback(provider.groundedness_measure_with_cot_reasons_consider_answerability)
+                .on(context.collect())
                 .on_output()
                 .on_input()
                 )
@@ -2053,8 +2373,9 @@ class LLMProvider(core_provider.Provider):
             source (str): The source that should support the statement.
             statement (str): The statement to check groundedness.
             question (str): The question to check answerability.
-            criteria (str): The specific criteria for evaluation. Defaults to None.
-            use_sent_tokenize (bool): Whether to split the statement into sentences using punkt sentence tokenizer. If `False`, use an LLM to split the statement. Defaults to False. Note this might incur additional costs and reach context window limits in some cases.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            examples (Optional[List[str]]): Optional examples to guide the evaluation. Defaults to None.
+            groundedness_configs (Optional[core_feedback.GroundednessConfigs]): Configuration for groundedness evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
@@ -2093,8 +2414,13 @@ class LLMProvider(core_provider.Provider):
                 temperature=temperature,
             ).split("\n")
 
+        # Remove numeric list markers
+        hypotheses = [
+            h for h in hypotheses if not re.match(r"^\s*\d+[\.)]?\s*$", h)
+        ]
+
         groundedness_scores = {}
-        reasons_str = ""
+        reasons_list = []
 
         def evaluate_abstention(statement):
             user_prompt = feedback_prompts.LLM_ABSTENTION_USER.format(
@@ -2165,27 +2491,13 @@ class LLMProvider(core_provider.Provider):
                     temperature=temperature,
                 )
 
-                score_pattern = re.compile(r"Score:\s*([0-9.]+)")
-                match = score_pattern.search(reason.get("reason", ""))
-                normalized_reason = None
-                if match:
-                    original_reason_score = float(match.group(1))
-                    normalized_reason_score = (
-                        original_reason_score - min_score_val
-                    ) / (max_score_val - min_score_val)
-
-                    # Ensure the formatting matches exactly
-                    original_string = f"Score: {int(original_reason_score)}"
-                    replacement_string = f"Score: {normalized_reason_score}"
-                    normalized_reason = reason.copy()
-                    normalized_reason["reason"] = normalized_reason[
-                        "reason"
-                    ].replace(original_string, replacement_string)
-
-                if normalized_reason is not None:
-                    return index, score, normalized_reason
-                else:
-                    return index, score, reason
+                # Build structured reason dict to ensure criteria, evidence, and score present
+                structured = {
+                    "criteria": hypothesis,
+                    "supporting_evidence": reason.get("reason", ""),
+                    "score": score,
+                }
+                return index, score, structured
 
         results = []
 
@@ -2202,16 +2514,303 @@ class LLMProvider(core_provider.Provider):
 
         for i, score, reason in results:
             groundedness_scores[f"statement_{i}"] = score
-            reason_str = (
-                reason["reason"]
-                if "reason" in reason
-                else "reason not generated"
-            )
-            reasons_str += f"STATEMENT {i}:\n{reason_str}\n"
+            reasons_list.append(reason)
 
         # Calculate the average groundedness score from the scores dictionary
         average_groundedness_score = float(
             np.mean(list(groundedness_scores.values()))
         )
 
-        return average_groundedness_score, {"reasons": reasons_str}
+        return average_groundedness_score, {"reasons": reasons_list}
+
+    def logical_consistency_with_cot_reasons(
+        self,
+        # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
+        trace: Union[Trace, str],
+        criteria: Optional[str] = None,
+        examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+    ) -> Tuple[float, Dict]:
+        """
+        Evaluate the quality of an agentic trace using a rubric focused on logical consistency and reasoning.
+
+        Example:
+            ```python
+            from trulens.core import Feedback
+            from trulens.providers.openai import OpenAI
+
+            provider = OpenAI()
+
+            f_logical_consistency = (
+                Feedback(provider.logical_consistency_with_cot_reasons)
+                .on({
+                    "trace": Selector(trace_level=True),
+                })
+            ```
+
+        Args:
+            trace (Union[Trace, str]): The trace to evaluate (e.g., as a JSON string or formatted log).
+            criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
+            examples (Optional[List[Tuple[Dict[str, str], int]]]): Optional few-shot examples for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+        Returns:
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (no logical consistency) and 1.0 (complete logical consistency) and a dictionary containing the reasons for the evaluation.
+        """
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        system_prompt = feedback_v2.LogicalConsistency.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            output_space=output_space,
+            examples=examples,
+        )
+
+        if isinstance(trace, Trace):
+            trace = trace.events.to_json(default_handler=str)
+        elif isinstance(trace, str):
+            trace = trace
+        else:
+            raise ValueError(
+                f"Invalid trace type: {type(trace)}. Must be a Trace or a string."
+            )
+
+        user_prompt = feedback_v2.LogicalConsistency.user_prompt.format(
+            trace=trace
+        )
+
+        user_prompt = user_prompt.replace(
+            "LOGICAL CONSISTENCY SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
+        )
+
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
+
+    def execution_efficiency_with_cot_reasons(
+        self,
+        # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
+        trace: Union[Trace, str],
+        criteria: Optional[str] = None,
+        examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+    ) -> Tuple[float, Dict]:
+        """
+        Evaluate the quality of an agentic execution using a rubric focused on execution efficiency.
+
+        Example:
+            ```python
+            from trulens.core import Feedback
+            from trulens.providers.openai import OpenAI
+
+            provider = OpenAI()
+
+            f_execution_efficiency = (
+                Feedback(provider.execution_efficiency_with_cot_reasons)
+                .on({
+                    "trace": Selector(trace_level=True),
+                })
+            ```
+
+        Args:
+            trace (Union[Trace, str]): The trace to evaluate (e.g., as a JSON string or formatted log).
+            criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
+            examples (Optional[List[Tuple[Dict[str, str], int]]): Optional few-shot examples for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+        Returns:
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (highly inefficient workflow) and 1.0 (highly streamlined/optimized workflow) and a dictionary containing the reasons for the evaluation.
+        """
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        system_prompt = feedback_v2.ExecutionEfficiency.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            output_space=output_space,
+            examples=examples,
+        )
+
+        if isinstance(trace, Trace):
+            trace = trace.events.to_json(default_handler=str)
+        elif isinstance(trace, str):
+            trace = trace
+        else:
+            raise ValueError(
+                f"Invalid trace type: {type(trace)}. Must be a Trace or a string."
+            )
+
+        user_prompt = feedback_v2.ExecutionEfficiency.user_prompt.format(
+            trace=trace
+        )
+
+        user_prompt = user_prompt.replace(
+            "EXECUTION EFFICIENCY SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
+        )
+
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
+
+    def plan_adherence_with_cot_reasons(
+        self,
+        # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
+        trace: Union[Trace, str],
+        criteria: Optional[str] = None,
+        examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+    ) -> Tuple[float, Dict]:
+        """
+        Evaluate the quality of an agentic trace using a rubric focused on execution adherence to the plan.
+
+        Example:
+            ```python
+            from trulens.core import Feedback
+            from trulens.providers.openai import OpenAI
+
+            provider = OpenAI()
+
+            f_plan_adherence = (
+                Feedback(provider.plan_adherence_with_cot_reasons)
+                .on({
+                    "trace": Selector(trace_level=True),
+                })
+            ```
+
+        Args:
+            trace (Union[Trace, str]): The trace to evaluate (e.g., as a JSON string or formatted log).
+            criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
+            examples (Optional[List[Tuple[Dict[str, str], int]]): Optional few-shot examples for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+        Returns:
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (execution did not follow plan) and 1.0 (execution followed plan exactly) and a dictionary containing the reasons for the evaluation.
+        """
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        system_prompt = feedback_v2.PlanAdherence.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            output_space=output_space,
+            examples=examples,
+        )
+
+        if isinstance(trace, Trace):
+            trace = trace.events.to_json(default_handler=str)
+        elif isinstance(trace, str):
+            trace = trace
+        else:
+            raise ValueError(
+                f"Invalid trace type: {type(trace)}. Must be a Trace or a string."
+            )
+
+        user_prompt = feedback_v2.PlanAdherence.user_prompt.format(trace=trace)
+
+        user_prompt = user_prompt.replace(
+            "PLAN ADHERENCE SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
+        )
+
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
+
+    def plan_quality_with_cot_reasons(
+        self,
+        # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
+        trace: Union[Trace, str],
+        criteria: Optional[str] = None,
+        examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+    ) -> Tuple[float, Dict]:
+        """
+        Evaluate the quality of an agentic system's plan.
+
+        Example:
+            ```python
+            from trulens.core import Feedback
+            from trulens.providers.openai import OpenAI
+
+            provider = OpenAI()
+
+            f_plan_quality = (
+                Feedback(provider.plan_quality_with_cot_reasons)
+                .on({
+                    "trace": Selector(trace_level=True),
+                })
+            ```
+
+        Args:
+            trace (Union[Trace, str]): The trace to evaluate (e.g., as a JSON string or formatted log).
+            criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
+            examples (Optional[List[Tuple[Dict[str, str], int]]): Optional few-shot examples for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+        Returns:
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (poor plan quality) and 1.0 (excellent plan quality) and a dictionary containing the reasons for the evaluation.
+        """
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        system_prompt = feedback_v2.PlanQuality.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            output_space=output_space,
+            examples=examples,
+        )
+
+        if isinstance(trace, Trace):
+            trace = trace.events.to_json(default_handler=str)
+        elif isinstance(trace, str):
+            trace = trace
+        else:
+            raise ValueError(
+                f"Invalid trace type: {type(trace)}. Must be a Trace or a string."
+            )
+
+        user_prompt = feedback_v2.PlanQuality.user_prompt.format(trace=trace)
+
+        user_prompt = user_prompt.replace(
+            "PLAN QUALITY SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
+        )
+
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )

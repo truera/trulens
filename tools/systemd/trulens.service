@@ -21,7 +21,7 @@ Description=trulens Leaderboard
 Type=simple
 User=ubuntu
 WorkingDirectory=/home/ubuntu/trulens
-ExecStart=/usr/bin/bash -lc "source /home/ubuntu/trulens/tools/systemd/init_conda.sh; source $(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate py311_trulens; PYTHONPATH=. streamlit run src/dashboard/trulens/dashboard/Leaderboard.py"
+ExecStart=/usr/bin/bash -lc "source /home/ubuntu/trulens/tools/systemd/init_conda.sh; source $(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate py311_trulens; PYTHONPATH=. streamlit run src/dashboard/trulens/dashboard/main.py"
 # Restart=always
 
 [Install]

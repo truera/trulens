@@ -1,0 +1,49 @@
+{% set name = "trulens-apps-langgraph" %}
+{% set pyname = name.replace('-', '.') %}
+{% set version = "2.3.0" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  # Replace url and sha256 with below line to test build locally with `conda build . -c https://conda.anaconda.org/sfe1ed40/``
+  # path: .
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
+  # Get SHA256 from https://pypi.org/project/trulens-apps-langgraph/#files
+  sha256: 19fcfaac99f7d7275811576311456c207e0090bdee555dbed1e25b1d67f8a960
+
+build:
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  number: 0
+
+requirements:
+  host:
+    - python >=3.9
+    - poetry-core <2.0.0
+    - pip
+  run:
+    - python >=3.9,<3.13
+    - trulens-core >=1.0.0,<3.0.0
+    - trulens-apps-langchain >=1.0.0
+    - pydantic >=2.4.2
+
+test:
+  imports:
+    - {{ pyname }}
+  commands:
+    - pip check
+    - python -c 'import {{ pyname }}; assert {{ pyname }}.__version__ == "{{ version }}", "Installed version does not match expected version"'
+  requires:
+    - python >=3.9,<3.13
+    - pip
+
+about:
+  home: https://trulens.org/
+  summary: Library to systematically track and evaluate LLM based applications.
+  license: MIT
+
+extra:
+  recipe-maintainers:
+    - sfc-gh-dhuang

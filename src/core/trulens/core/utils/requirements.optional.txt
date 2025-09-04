@@ -31,6 +31,9 @@ httpx  >= 0.23.3  # for openai client serialization
 boto3    >= 1.33.6
 botocore >= 1.33.6
 
+# Models: Google
+genai >= 1.28.0
+
 # Models API
 litellm     >= 1.25.2
 
@@ -86,6 +89,7 @@ snowflake-sqlalchemy >= 1.6.0
 # Optional trulens packages
 trulens-apps-llamaindex >= 1.0.0
 trulens-apps-langchain >= 1.0.0
+trulens-apps-langgraph >= 1.0.0
 trulens-apps-nemo >= 1.0.0
 trulens-connectors-snowflake >= 1.0.0
 trulens-providers-bedrock >= 1.0.0

@@ -9,11 +9,6 @@ export const createTreeFromCalls = (spans: Span[]) => {
   }
 
   const nodes = spans
-    .filter(
-      (span) =>
-        span.record_attributes[SpanAttributes.SPAN_TYPE] !== SpanType.EVAL &&
-        span.record_attributes[SpanAttributes.SPAN_TYPE] !== SpanType.EVAL_ROOT
-    )
     .map((span) => {
       return new StackTreeNode({
         name: span.record.name,
@@ -105,6 +100,8 @@ export const createSpanTreeFromNodes = (nodes: StackTreeNode[]) => {
  */
 const buildTreeRecursive = (node: StackTreeNode, childrenMap: Map<string, StackTreeNode[]>): void => {
   const children = childrenMap.get(node.id) || [];
+  // Sort children by their start timestamp to show siblings in chronological order
+  children.sort((a, b) => a.startTime - b.startTime);
   node.children = children;
 
   children.forEach((child) => {

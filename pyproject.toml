@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens"
-version = "1.5.2"
+version = "2.3.0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -28,14 +28,14 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9,!=3.9.7"
-trulens-core = { version = "^1.0.0" }
-trulens-feedback = { version = "^1.0.0" }
-trulens-dashboard = { version = "^1.0.0", extras = [
+trulens-core = { version = "^2.0.0" }
+trulens-feedback = { version = "^2.0.0" }
+trulens-dashboard = { version = "^2.0.0", extras = [
   "full",
 ] }
-trulens-otel-semconv = { version = "^1.0.0" }
+trulens-otel-semconv = { version = "^2.0.0" }
 # Remove after deprecation period:
-trulens_eval = { version = "^1.0.0" }
+trulens_eval = { version = "^2.0.0" }
 
 [tool.poetry.group.benchmark.dependencies]
 trulens-benchmark = { path = "src/benchmark", develop = true }
@@ -68,6 +68,7 @@ mkdocs-section-index = ">=0.3"
 
 [tool.poetry.group.apps.dependencies]
 trulens-apps-langchain = { path = "src/apps/langchain", develop = true }
+trulens-apps-langgraph = { path = "src/apps/langgraph", develop = true }
 trulens-apps-llamaindex = { path = "src/apps/llamaindex", develop = true }
 trulens-apps-nemo = { path = "src/apps/nemo", develop = true, python = "<3.13" }
 
@@ -78,6 +79,7 @@ trulens-providers-cortex = { path = "src/providers/cortex", develop = true, pyth
 trulens-providers-huggingface = { path = "src/providers/huggingface", develop = true }
 trulens-providers-openai = { path = "src/providers/openai", develop = true }
 trulens-providers-litellm = { path = "src/providers/litellm", develop = true }
+trulens-providers-google = { path = "src/providers/google", develop = true, python = ">3.9" }
 
 [tool.poetry.group.connectors.dependencies]
 trulens-connectors-snowflake = { path = "src/connectors/snowflake", develop = true, python = "<3.13" }

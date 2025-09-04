@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-benchmark"
-version = "1.5.2"
+version = "2.3.0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -29,7 +29,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.9"
 poetry = "<2.0.0"
-trulens-core = { version = "^1.0.0" }
+trulens-core = { version = "^2.0.0" }
 
 [tool.poetry.group.dev.dependencies]
 trulens-core = { path = "../core", develop = true }
