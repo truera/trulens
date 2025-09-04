@@ -761,7 +761,7 @@ class TestOtelFeedbackComputation(OtelTestCase):
             )
         })
         # Compute feedbacks on events.
-        events = self._get_events()
+        events = TruSession().get_events(app_name=None, app_version=None)
         self.assertEqual(2, len(events))
         TruSession().compute_feedbacks_on_events(events, [f_best_baby_checker])
         TruSession().force_flush()
