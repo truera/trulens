@@ -1324,6 +1324,7 @@ trulens.core.session.TruSession:
     force_flush: builtins.function
     get_app: builtins.function
     get_apps: builtins.function
+    get_events: builtins.function
     get_ground_truth: builtins.function
     get_leaderboard: builtins.function
     get_records_and_feedback: builtins.function
