@@ -1326,7 +1326,7 @@ class PlanQuality(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         Evaluating the Initial Plan:
         1. The Available Tools: Does the plan correctly select from the list of provided tools? Does it ignore a more appropriate or efficient tool that was available? Does it try to use a tool that doesn't exist?
         2. Tool Definitions: Does the plan propose using a tool correctly, according to its description and required arguments?
-        3. Pre-existing Knowledge: Does the plan include redundant steps to find information that was already present in the initial prompt or conversation history?
+        3. Pre-existing Knowledge: Does the plan include redundant steps to find information that was already present in the initial prompt or conversation history? Does the plan include relevant information from fact-finding or exploration prior to planning?
         4. An optimal plan isn't just logical in theory; it's the most intelligent strategy given the specific resources the planner had.
         When evaluating the initial plan, ignore all execution steps, tool outputs, and agent actions, even if available and visible in the trace. Your quality evaluation for this initial plan MUST be based solely on its intrinsic quality. You are judging the strategy, not the outcome. Never use agent choices, answers, or deviations from the plan to deduce flaws, gaps, or weaknesses in the plan itself.
 
