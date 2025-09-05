@@ -2751,6 +2751,58 @@ class LLMProvider(core_provider.Provider):
             temperature=temperature,
         )
 
+    def tool_usage_with_cot_reasons(
+        self,
+        trace: Union[Trace, str],
+        criteria: Optional[str] = None,
+        custom_instructions: Optional[str] = None,
+        examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+    ) -> Tuple[float, Dict]:
+        """
+        Evaluate the quality of an agent's tool usage.
+        """
+
+        """
+        Evaluate the quality of an agent's tool usage.
+        """
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        system_prompt = feedback_v2.ToolUsage.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            custom_instructions=custom_instructions,
+            output_space=output_space,
+            examples=examples,
+        )
+        if isinstance(trace, Trace):
+            trace = trace.events.to_json(default_handler=str)
+        elif isinstance(trace, str):
+            trace = trace
+        else:
+            raise ValueError(
+                f"Invalid trace type: {type(trace)}. Must be a Trace or a string."
+            )
+
+        user_prompt = feedback_v2.ToolUsage.user_prompt.format(trace=trace)
+
+        user_prompt = user_prompt.replace(
+            "TOOL USAGE SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
+        )
+
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
+
     def trail_with_cot_reasons(
         self,
         # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.

@@ -1382,6 +1382,83 @@ class PlanQuality(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     )
 
 
+class ToolUsage(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
+    """
+    Evaluates the quality of an agent's reasoning *around tool usage* in a ground-truth-free setting.
+    Focuses on: selection, input quality, output integration, context handling, error robustness, and transparency.
+    Explicitly does NOT double-count efficiency (covered by ExecutionEfficiency) or plan deviations (covered by PlanAdherence).
+    """
+
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+
+    criteria_template: ClassVar[str] = """
+    Score the quality of tool usage reasoning in the execution trace. Do not assess factual correctness of results.
+
+    {max_score}: Tool usage is expert and disciplined across all dimensions.
+      - Selection: Chosen tools are appropriate, necessary, and clearly the best available option for each subtask. No misuse or irrelevant calls.
+      - Input Quality: Queries/arguments are precise, complete, and well-scoped; ineffective inputs are promptly and thoughtfully reformulated.
+      - Output Integration: Tool outputs are interpreted faithfully and incorporated correctly; no fabrications or ignoring of results.
+      - Context Handling: Instructions, prior tool outputs, and tool specifications are used consistently; prior mistakes are not repeated.
+      - Error Robustness: Failures (empty/irrelevant results, API/service errors) are explicitly recognized and handled with adaptive strategies.
+      - Transparency: The agent briefly justifies why a tool is used and how its output influences subsequent reasoning.
+
+    Middle scores: Tool usage is functional but shows notable flaws.
+      - Some questionable tool choices or unnecessary calls.
+      - Inputs are somewhat vague/under-specified or reformulation is weak.
+      - Outputs used shallowly or with minor misinterpretations/omissions.
+      - Context sometimes ignored, leading to repeated or preventable mistakes.
+      - Error handling is inconsistent; failures occasionally glossed over.
+      - Justifications for tool use are minimal or unclear.
+
+    {min_score}: Tool usage is incompetent, misleading, or opaque.
+      - Tools are misused or repeatedly invoked irrelevantly.
+      - Inputs are incoherent/irrelevant and not effectively reformulated.
+      - Outputs are ignored, misread, or replaced with hallucinations.
+      - Context mishandled; same mistakes recur without learning.
+      - Failures unacknowledged and derail the process.
+      - No explanation for tool choices or their role in reasoning.
+    """
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """You are a meticulous and analytical TOOL USAGE evaluator: provide a score for how competently the agent used tools within the execution trace.
+        You must assign a single numerical score from {output_space_prompt}.
+
+        Evaluation criteria:
+        {criteria}
+        {custom_instructions}
+
+        Important scope boundaries:
+        - Do NOT penalize workflow inefficiency (covered by ExecutionEfficiency).
+        - Do NOT penalize deviations from the written plan (covered by PlanAdherence).
+        - Focus strictly on the reasoning quality around tool calls (selection, inputs, interpretation, context handling, error robustness, transparency).
+
+        Be critical in your evaluation. For each problematic step (e.g., wrong tool, poor query, misread output, ignored context, unhandled failure), identify that step and explain the issue specifically.
+        Never elaborate beyond what is requested.
+        """
+    )
+
+    user_prompt: ClassVar[str] = cleandoc(
+        """{trace}
+
+        TOOL USAGE SCORE:
+        """
+    )
+
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
+    )
+
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            custom_instructions="",
+        )
+    )
+
+
 class TRAIL(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     """
     Evaluates the quality of the agentic system's plan to address the user's query.
