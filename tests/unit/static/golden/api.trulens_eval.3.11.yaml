@@ -1022,6 +1022,8 @@ trulens_eval.TruApp:
   - trulens.core.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_metric_with_evaluation_config: builtins.function
+    add_metrics_with_evaluation_configs: builtins.function
     add_run: builtins.function
     app: typing.Any
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -1036,6 +1038,7 @@ trulens_eval.TruApp:
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
+    custom_metrics: typing.List[typing.Dict[builtins.str, typing.Any]]
     db: builtins.property
     delete: builtins.function
     delete_version: builtins.function
@@ -1049,6 +1052,7 @@ trulens_eval.TruApp:
     from_orm: builtins.classmethod
     functions_to_instrument: builtins.set
     get_class: builtins.staticmethod
+    get_custom_metrics: builtins.function
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
@@ -1139,6 +1143,8 @@ trulens_eval.TruBasicApp:
   - trulens.core.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_metric_with_evaluation_config: builtins.function
+    add_metrics_with_evaluation_configs: builtins.function
     add_run: builtins.function
     app: trulens.apps.basic.TruWrapperApp
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -1154,6 +1160,7 @@ trulens_eval.TruBasicApp:
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
+    custom_metrics: typing.List[typing.Dict[builtins.str, typing.Any]]
     db: builtins.property
     delete: builtins.function
     delete_version: builtins.function
@@ -1166,6 +1173,7 @@ trulens_eval.TruBasicApp:
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_custom_metrics: builtins.function
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
@@ -1257,6 +1265,8 @@ trulens_eval.TruChain:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     acall_with_record: builtins.function
+    add_metric_with_evaluation_config: builtins.function
+    add_metrics_with_evaluation_configs: builtins.function
     add_run: builtins.function
     app: langchain_core.runnables.base.Runnable
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -1272,6 +1282,7 @@ trulens_eval.TruChain:
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
+    custom_metrics: typing.List[typing.Dict[builtins.str, typing.Any]]
     db: builtins.property
     delete: builtins.function
     delete_version: builtins.function
@@ -1284,6 +1295,7 @@ trulens_eval.TruChain:
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_custom_metrics: builtins.function
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
@@ -1374,6 +1386,8 @@ trulens_eval.TruCustomApp:
   - trulens.apps.app.TruApp
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_metric_with_evaluation_config: builtins.function
+    add_metrics_with_evaluation_configs: builtins.function
     add_run: builtins.function
     app: typing.Any
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -1388,6 +1402,7 @@ trulens_eval.TruCustomApp:
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
+    custom_metrics: typing.List[typing.Dict[builtins.str, typing.Any]]
     db: builtins.property
     delete: builtins.function
     delete_version: builtins.function
@@ -1401,6 +1416,7 @@ trulens_eval.TruCustomApp:
     from_orm: builtins.classmethod
     functions_to_instrument: builtins.set
     get_class: builtins.staticmethod
+    get_custom_metrics: builtins.function
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
@@ -1491,6 +1507,8 @@ trulens_eval.TruLlama:
   - trulens.core.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_metric_with_evaluation_config: builtins.function
+    add_metrics_with_evaluation_configs: builtins.function
     add_run: builtins.function
     app: typing.Union[llama_index.core.base.base_query_engine.BaseQueryEngine, llama_index.core.chat_engine.types.BaseChatEngine]
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -1505,6 +1523,7 @@ trulens_eval.TruLlama:
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
+    custom_metrics: typing.List[typing.Dict[builtins.str, typing.Any]]
     db: builtins.property
     delete: builtins.function
     delete_version: builtins.function
@@ -1517,6 +1536,7 @@ trulens_eval.TruLlama:
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_custom_metrics: builtins.function
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
@@ -1608,6 +1628,8 @@ trulens_eval.TruRails:
   - trulens.core.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_metric_with_evaluation_config: builtins.function
+    add_metrics_with_evaluation_configs: builtins.function
     add_run: builtins.function
     app: nemoguardrails.rails.llm.llmrails.LLMRails
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -1622,6 +1644,7 @@ trulens_eval.TruRails:
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
+    custom_metrics: typing.List[typing.Dict[builtins.str, typing.Any]]
     db: builtins.property
     delete: builtins.function
     delete_version: builtins.function
@@ -1634,6 +1657,7 @@ trulens_eval.TruRails:
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_custom_metrics: builtins.function
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
@@ -1725,6 +1749,8 @@ trulens_eval.TruVirtual:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     add_dataframe: builtins.function
+    add_metric_with_evaluation_config: builtins.function
+    add_metrics_with_evaluation_configs: builtins.function
     add_record: builtins.function
     add_run: builtins.function
     app: trulens.apps.virtual.VirtualApp
@@ -1740,6 +1766,7 @@ trulens_eval.TruVirtual:
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
+    custom_metrics: typing.List[typing.Dict[builtins.str, typing.Any]]
     db: builtins.property
     delete: builtins.function
     delete_version: builtins.function
@@ -1752,6 +1779,7 @@ trulens_eval.TruVirtual:
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_custom_metrics: builtins.function
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
@@ -1875,6 +1903,8 @@ trulens_eval.app.App:
   - typing.Generic
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_metric_with_evaluation_config: builtins.function
+    add_metrics_with_evaluation_configs: builtins.function
     add_run: builtins.function
     app: typing.Any
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -1889,6 +1919,7 @@ trulens_eval.app.App:
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
+    custom_metrics: typing.List[typing.Dict[builtins.str, typing.Any]]
     db: builtins.property
     delete: builtins.function
     delete_version: builtins.function
@@ -1901,6 +1932,7 @@ trulens_eval.app.App:
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_custom_metrics: builtins.function
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
@@ -7856,6 +7888,8 @@ trulens_eval.tru_basic_app.TruBasicApp:
   - trulens.core.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_metric_with_evaluation_config: builtins.function
+    add_metrics_with_evaluation_configs: builtins.function
     add_run: builtins.function
     app: trulens.apps.basic.TruWrapperApp
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -7871,6 +7905,7 @@ trulens_eval.tru_basic_app.TruBasicApp:
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
+    custom_metrics: typing.List[typing.Dict[builtins.str, typing.Any]]
     db: builtins.property
     delete: builtins.function
     delete_version: builtins.function
@@ -7883,6 +7918,7 @@ trulens_eval.tru_basic_app.TruBasicApp:
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_custom_metrics: builtins.function
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
@@ -8018,6 +8054,8 @@ trulens_eval.tru_chain.TruChain:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     acall_with_record: builtins.function
+    add_metric_with_evaluation_config: builtins.function
+    add_metrics_with_evaluation_configs: builtins.function
     add_run: builtins.function
     app: langchain_core.runnables.base.Runnable
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -8033,6 +8071,7 @@ trulens_eval.tru_chain.TruChain:
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
+    custom_metrics: typing.List[typing.Dict[builtins.str, typing.Any]]
     db: builtins.property
     delete: builtins.function
     delete_version: builtins.function
@@ -8045,6 +8084,7 @@ trulens_eval.tru_chain.TruChain:
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_custom_metrics: builtins.function
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
@@ -8143,6 +8183,8 @@ trulens_eval.tru_custom_app.TruCustomApp:
   - trulens.apps.app.TruApp
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_metric_with_evaluation_config: builtins.function
+    add_metrics_with_evaluation_configs: builtins.function
     add_run: builtins.function
     app: typing.Any
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -8157,6 +8199,7 @@ trulens_eval.tru_custom_app.TruCustomApp:
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
+    custom_metrics: typing.List[typing.Dict[builtins.str, typing.Any]]
     db: builtins.property
     delete: builtins.function
     delete_version: builtins.function
@@ -8170,6 +8213,7 @@ trulens_eval.tru_custom_app.TruCustomApp:
     from_orm: builtins.classmethod
     functions_to_instrument: builtins.set
     get_class: builtins.staticmethod
+    get_custom_metrics: builtins.function
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
@@ -8284,6 +8328,8 @@ trulens_eval.tru_llama.TruLlama:
   - trulens.core.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_metric_with_evaluation_config: builtins.function
+    add_metrics_with_evaluation_configs: builtins.function
     add_run: builtins.function
     app: typing.Union[llama_index.core.base.base_query_engine.BaseQueryEngine, llama_index.core.chat_engine.types.BaseChatEngine]
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -8298,6 +8344,7 @@ trulens_eval.tru_llama.TruLlama:
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
+    custom_metrics: typing.List[typing.Dict[builtins.str, typing.Any]]
     db: builtins.property
     delete: builtins.function
     delete_version: builtins.function
@@ -8310,6 +8357,7 @@ trulens_eval.tru_llama.TruLlama:
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_custom_metrics: builtins.function
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
@@ -8467,6 +8515,8 @@ trulens_eval.tru_rails.TruRails:
   - trulens.core.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_metric_with_evaluation_config: builtins.function
+    add_metrics_with_evaluation_configs: builtins.function
     add_run: builtins.function
     app: nemoguardrails.rails.llm.llmrails.LLMRails
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -8481,6 +8531,7 @@ trulens_eval.tru_rails.TruRails:
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
+    custom_metrics: typing.List[typing.Dict[builtins.str, typing.Any]]
     db: builtins.property
     delete: builtins.function
     delete_version: builtins.function
@@ -8493,6 +8544,7 @@ trulens_eval.tru_rails.TruRails:
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_custom_metrics: builtins.function
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
@@ -8592,6 +8644,8 @@ trulens_eval.tru_virtual.TruVirtual:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     add_dataframe: builtins.function
+    add_metric_with_evaluation_config: builtins.function
+    add_metrics_with_evaluation_configs: builtins.function
     add_record: builtins.function
     add_run: builtins.function
     app: trulens.apps.virtual.VirtualApp
@@ -8607,6 +8661,7 @@ trulens_eval.tru_virtual.TruVirtual:
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
+    custom_metrics: typing.List[typing.Dict[builtins.str, typing.Any]]
     db: builtins.property
     delete: builtins.function
     delete_version: builtins.function
@@ -8619,6 +8674,7 @@ trulens_eval.tru_virtual.TruVirtual:
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_custom_metrics: builtins.function
     get_loadable_apps: builtins.staticmethod
     get_method_path: builtins.function
     get_methods_for_func: builtins.function
