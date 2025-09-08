@@ -2,6 +2,7 @@
 Tests for a Snowflake connection.
 """
 
+import os
 import uuid
 
 import pytest
@@ -14,6 +15,20 @@ from tests.util.snowflake_test_case import SnowflakeTestCase
 
 @pytest.mark.snowflake
 class TestSnowflakeConnection(SnowflakeTestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls._orig_TRULENS_OTEL_TRACING = os.environ.get("TRULENS_OTEL_TRACING")
+        os.environ["TRULENS_OTEL_TRACING"] = "0"
+        return super().setUpClass()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        if cls._orig_TRULENS_OTEL_TRACING is not None:
+            os.environ["TRULENS_OTEL_TRACING"] = cls._orig_TRULENS_OTEL_TRACING
+        else:
+            del os.environ["TRULENS_OTEL_TRACING"]
+        return super().tearDownClass()
+
     def test_snowflake_connection_via_snowpark_session(self):
         """
         Check that we can connect to a Snowflake backend and have created the
