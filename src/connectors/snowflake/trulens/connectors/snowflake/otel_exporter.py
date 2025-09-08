@@ -33,6 +33,11 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
     Implementation of `SpanExporter` that flushes the spans in the TruLens session to a Snowflake Stage.
     """
 
+    enabled: bool
+    """
+    Whether the exporter is enabled.
+    """
+
     connector: SnowflakeConnector
     """
     The database connector used to export the spans.
@@ -43,6 +48,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         connector: core_connector.DBConnector,
         verify_via_dry_run: bool = True,
     ):
+        self.enabled = True
         if not isinstance(connector, SnowflakeConnector):
             raise ValueError("Provided connector is not a SnowflakeConnector")
         self.connector = connector  # type: ignore
@@ -62,6 +68,9 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                 raise ValueError(
                     "OTEL Exporter failed dry run during initialization!"
                 )
+
+    def disable(self) -> None:
+        self.enabled = False
 
     def _export_to_snowflake(
         self, spans: Sequence[ReadableSpan], dry_run: bool
@@ -255,6 +264,8 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
     def export(
         self, spans: Sequence[ReadableSpan], dry_run: bool = False
     ) -> SpanExportResult:
+        if not self.enabled:
+            return SpanExportResult.SUCCESS
         if dry_run:
             trulens_spans = spans
         else:
