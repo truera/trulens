@@ -18,6 +18,7 @@ from trulens.core import app as core_app
 from trulens.core.otel.instrument import instrument_method
 from trulens.core.session import TruSession
 from trulens.core.utils import pyschema as pyschema_utils
+from trulens.otel.semconv.trace import SpanAttributes  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -215,21 +216,21 @@ class TruLlamaWorkflow(core_app.App):
                 exception_str = _safe_str(exception)
 
                 attrs = {
-                    "workflow.step.input": ev_ser,
-                    "workflow.step.output": out_ser,
-                    "workflow.step.exception": exception_str,
-                    "workflow.step.error": exception_str,
+                    SpanAttributes.WORKFLOW.INPUT_EVENT: ev_ser,
+                    SpanAttributes.WORKFLOW.OUTPUT_EVENT: out_ser,
+                    SpanAttributes.WORKFLOW.ERROR: exception_str,
+                    # Also set generic call attributes so UI input/output panels are populated
+                    f"{SpanAttributes.CALL.KWARGS}.ev": ev_ser,
+                    SpanAttributes.CALL.RETURN: out_ser,
                 }
-                print("attrs:", attrs)
 
                 return attrs
 
-            print("[TruLlamaWorkflow] instrumenting step:", name)
             try:
                 instrument_method(
                     cls=cls,
                     method_name=name,
-                    span_type="FUNCTION_CALL",
+                    span_type=SpanAttributes.SpanType.WORKFLOW_STEP,
                     attributes=step_function_attributes,
                 )
             except Exception as e:
