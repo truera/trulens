@@ -29,6 +29,52 @@ def _safe_str(obj: Any) -> Optional[str]:
         return None
 
 
+def _to_json_safe(val: Any) -> Any:
+    if isinstance(val, (str, int, float, bool)) or val is None:
+        return val
+    if isinstance(val, (list, tuple)):
+        return [_to_json_safe(v) for v in val]
+    if isinstance(val, dict):
+        return {str(k): _to_json_safe(v) for k, v in val.items()}
+    return _safe_str(val)
+
+
+def _serialize_event(ev: Any) -> Any:
+    """Best-effort structured serialization of LlamaIndex Event objects."""
+    if ev is None:
+        return None
+    # If StopEvent-like, prefer its result if accessible without calling.
+    res = _extract_stop_result(ev)
+    if res is not None:
+        return _to_json_safe(res)
+    # dataclass
+    try:
+        if dataclasses.is_dataclass(ev):
+            return _to_json_safe(dataclasses.asdict(ev))
+    except Exception:
+        pass
+    # pydantic
+    for meth in ("model_dump", "dict"):
+        try:
+            if hasattr(ev, meth) and callable(getattr(ev, meth)):
+                d = getattr(ev, meth)()
+                if isinstance(d, dict):
+                    return _to_json_safe(d)
+        except Exception:
+            pass
+    # plain object: filter public attrs
+    try:
+        d = getattr(ev, "__dict__", None)
+        if isinstance(d, dict):
+            pub = {k: v for k, v in d.items() if not str(k).startswith("_")}
+            if pub:
+                return _to_json_safe(pub)
+    except Exception:
+        pass
+    # fallback string
+    return _safe_str(ev)
+
+
 def _extract_stop_result(obj: Any) -> Optional[Any]:
     """Extract StopEvent.result safely without invoking callables.
 
@@ -126,42 +172,68 @@ class TruLlamaWorkflow(core_app.App):
         else:
             TruSession()
 
-        # Auto-instrument only step-decorated class methods (equivalent to manual instrument_method).
-        try:
-            # Discover Step classes.
-            step_classes = []
-            for mod_path in (
-                "workflows.decorators",
-                "workflows.step",
-                "workflows",
-            ):
-                try:
-                    mod = __import__(mod_path, fromlist=["*"])  # type: ignore
-                    for name in ("Step", "_Step"):
-                        if hasattr(mod, name):
-                            step_classes.append(getattr(mod, name))
-                except Exception:
-                    continue
             # Instrument only attributes that are instances of Step classes.
-            cls = type(app)
-            for name, val in cls.__dict__.items():
-                print("name", name, "val", val)
-                if inspect.isfunction(val):
-                    print("instrumenting: ", name)
-                    try:
-                        instrument_method(
-                            cls=cls,
-                            method_name=name,
-                            span_type="FUNCTION_CALL",
-                        )
-                    except Exception as e:
-                        logger.debug(
-                            "Could not instrument step method %s: %s", name, e
-                        )
-        except Exception as e:
-            logger.debug("Step auto-instrumentation skipped: %s", e)
+        cls = type(app)
+        for name, val in cls.__dict__.items():
+            print("[TruLlamaWorkflow] class member:", name, "=>", val)
+            # Only instrument coroutine step methods: async def with 'ev' parameter
+            if not inspect.isfunction(val) or not inspect.iscoroutinefunction(
+                val
+            ):
+                continue
+            try:
+                params = list(
+                    (inspect.signature(val).parameters or {}).values()
+                )
+                if len(params) < 2 or params[1].name != "ev":
+                    continue
+            except Exception:
+                continue
 
-        # Pass main_method through so App can wrap it in OTEL mode.
+            def step_function_attributes(ret, exception, *args, **kwargs):  # noqa: ANN001
+                print("\n[TruLlamaWorkflow][attrs] STEP:", name)
+                # Try to locate `ev`
+                ev = None
+                try:
+                    if isinstance(kwargs, dict) and "ev" in kwargs:
+                        ev = kwargs.get("ev")
+                    elif len(args) > 1:
+                        ev = args[1]
+                except Exception:
+                    pass
+
+                # Shallow serialize ev
+                ev_ser = _serialize_event(ev)
+
+                out_val = _extract_stop_result(ret)
+                out_ser = (
+                    _to_json_safe(out_val)
+                    if out_val is not None
+                    else _serialize_event(ret)
+                )
+
+                exception_str = _safe_str(exception)
+
+                attrs = {
+                    "workflow.step.input": ev_ser,
+                    "workflow.step.output": out_ser,
+                    "workflow.step.exception": exception_str,
+                    "workflow.step.error": exception_str,
+                }
+                print("attrs:", attrs)
+
+                return attrs
+
+            print("[TruLlamaWorkflow] instrumenting step:", name)
+            try:
+                instrument_method(
+                    cls=cls,
+                    method_name=name,
+                    span_type="FUNCTION_CALL",
+                    attributes=step_function_attributes,
+                )
+            except Exception as e:
+                logger.debug("Could not instrument step method %s: %s", name, e)
         if main_method is not None:
             kwargs["main_method"] = main_method
         kwargs["root_class"] = pyschema_utils.Class.of_object(app)

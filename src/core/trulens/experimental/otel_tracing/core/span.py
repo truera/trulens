@@ -22,8 +22,8 @@ from opentelemetry.baggage import get_baggage
 from opentelemetry.context import Context
 from opentelemetry.trace.span import Span
 from opentelemetry.util.types import AttributeValue
-from trulens.otel.semconv.trace import ResourceAttributes
-from trulens.otel.semconv.trace import SpanAttributes
+from trulens.otel.semconv.trace import ResourceAttributes  # type: ignore
+from trulens.otel.semconv.trace import SpanAttributes  # type: ignore
 
 if TYPE_CHECKING:
     from trulens.core.app import App
@@ -69,7 +69,12 @@ def _stringify_span_attribute(o: Any) -> Tuple[bool, str]:
         return True, json.dumps(o)
     except Exception:
         pass
-    return False, str(o)
+    # Avoid calling __str__ on unknown objects as it may trigger side effects
+    # (e.g., awaiting results), causing runtime errors. Use type name instead.
+    try:
+        return False, f"<{type(o).__name__}>"
+    except Exception:
+        return False, "<unstringifiable>"
 
 
 def _convert_to_valid_span_attribute_type(val: Any) -> AttributeValue:
@@ -185,7 +190,7 @@ def set_user_defined_attributes(
         if key.startswith(f"{SpanAttributes.COST.base}."):
             cost_attributes[key] = value
         else:
-            span.set_attribute(key, value)
+            set_span_attribute_safely(span, key, value)
     if cost_attributes:
         attributes_so_far = dict(getattr(span, "attributes", {}))
         if attributes_so_far:
@@ -211,7 +216,7 @@ def set_user_defined_attributes(
             ]:
                 cost_attributes[SpanAttributes.COST.MODEL] = "mixed"
             for k, v in cost_attributes.items():
-                span.set_attribute(k, v)
+                set_span_attribute_safely(span, k, v)
 
 
 """
