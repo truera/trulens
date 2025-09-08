@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import ClassVar, Dict, Optional, Sequence, Type, Union
 
 from packaging.version import Version
@@ -13,6 +14,8 @@ from trulens.core.utils import pyschema as pyschema_utils
 from trulens.feedback import llm_provider
 from trulens.feedback import prompts as feedback_prompts
 from trulens.providers.cortex import endpoint as cortex_endpoint
+
+logger = logging.getLogger(__name__)
 
 
 class Cortex(

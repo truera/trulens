@@ -86,3 +86,6 @@ src/**/poetry.lock
 
 # cursor files
 **/.cursor
+
+
+**/GAIA
