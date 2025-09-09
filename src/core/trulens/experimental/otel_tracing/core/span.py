@@ -22,8 +22,8 @@ from opentelemetry.baggage import get_baggage
 from opentelemetry.context import Context
 from opentelemetry.trace.span import Span
 from opentelemetry.util.types import AttributeValue
-from trulens.otel.semconv.trace import ResourceAttributes  # type: ignore
-from trulens.otel.semconv.trace import SpanAttributes  # type: ignore
+from trulens.otel.semconv.trace import ResourceAttributes
+from trulens.otel.semconv.trace import SpanAttributes
 
 if TYPE_CHECKING:
     from trulens.core.app import App
