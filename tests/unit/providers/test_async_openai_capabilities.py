@@ -232,9 +232,6 @@ class TestAsyncOpenAIInstrumentation:
 
     def test_async_openai_with_streaming(self):
         """Test handling of streaming responses."""
-        if not OPENAI_AVAILABLE:
-            pytest.skip("OpenAI not available")
-
         from openai import AsyncStream
         from openai.types.chat import ChatCompletionChunk
 
