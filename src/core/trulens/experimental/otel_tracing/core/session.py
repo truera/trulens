@@ -214,22 +214,176 @@ class _TruSession(core_session.TruSession):
                 )
 
                 def async_post_cost_attributes(ret, exception, *args, **kwargs):
-                    """Extract costs from AsyncOpenAI post responses."""
+                    """Extract costs and capture input/output from AsyncOpenAI post responses."""
                     print(f"[COST] AsyncOpenAI.post returned type: {type(ret)}")
 
-                    # Check if this is a chat completion response
+                    attrs = {}
+
+                    # Capture the input (path and request body)
+                    if args and len(args) > 0:
+                        # First arg is usually the path
+                        path = str(args[0]) if args[0] else "unknown"
+                        attrs["openai.api.path"] = path
+
+                    # Capture request body if present
+                    if "body" in kwargs:
+                        import json
+
+                        try:
+                            # Serialize the request body
+                            if hasattr(kwargs["body"], "__dict__"):
+                                body_dict = kwargs["body"].__dict__
+                            else:
+                                body_dict = kwargs["body"]
+
+                            # Map request to standard attributes
+                            if isinstance(body_dict, dict):
+                                # Store messages - use custom attributes for LLM-specific fields
+                                if "messages" in body_dict:
+                                    attrs["llm.prompts"] = json.dumps(
+                                        body_dict["messages"]
+                                    )
+                                    # Extract just the user message for a simpler view
+                                    for msg in body_dict["messages"]:
+                                        if (
+                                            isinstance(msg, dict)
+                                            and msg.get("role") == "user"
+                                        ):
+                                            attrs["llm.input_text"] = msg.get(
+                                                "content", ""
+                                            )
+                                            break
+
+                                # Store model if specified in request
+                                if "model" in body_dict:
+                                    attrs[SpanAttributes.COST.MODEL] = (
+                                        body_dict["model"]
+                                    )
+
+                                # Store temperature and other parameters
+                                if "temperature" in body_dict:
+                                    attrs["llm.temperature"] = body_dict[
+                                        "temperature"
+                                    ]
+                                if "max_tokens" in body_dict:
+                                    attrs["llm.max_tokens"] = body_dict[
+                                        "max_tokens"
+                                    ]
+
+                                # Store full request for debugging
+                                attrs["openai.api.request"] = json.dumps(
+                                    body_dict
+                                )[:2000]  # Limit size
+                        except Exception as e:
+                            print(f"[COST] Could not serialize request: {e}")
+
+                    # Capture the output
+                    if ret:
+                        try:
+                            # Try to serialize the response
+                            if hasattr(ret, "model_dump"):
+                                # Pydantic model
+                                output = ret.model_dump()
+                            elif hasattr(ret, "__dict__"):
+                                output = {
+                                    k: v
+                                    for k, v in ret.__dict__.items()
+                                    if not k.startswith("_")
+                                }
+                            else:
+                                output = str(ret)
+
+                            import json
+
+                            if isinstance(output, dict):
+                                # Map to standard TruLens span attributes
+
+                                # Model information
+                                if output.get("model"):
+                                    attrs[SpanAttributes.COST.MODEL] = output[
+                                        "model"
+                                    ]
+
+                                # Token usage - these match the COST attributes
+                                usage = output.get("usage", {})
+                                if usage:
+                                    attrs[
+                                        SpanAttributes.COST.NUM_PROMPT_TOKENS
+                                    ] = usage.get("prompt_tokens", 0)
+                                    attrs[
+                                        SpanAttributes.COST.NUM_COMPLETION_TOKENS
+                                    ] = usage.get("completion_tokens", 0)
+                                    attrs[SpanAttributes.COST.NUM_TOKENS] = (
+                                        usage.get("total_tokens", 0)
+                                    )
+
+                                    # Also check for reasoning tokens (for o1 models)
+                                    if "completion_tokens_details" in usage:
+                                        details = usage[
+                                            "completion_tokens_details"
+                                        ]
+                                        if "reasoning_tokens" in details:
+                                            attrs[
+                                                SpanAttributes.COST.NUM_REASONING_TOKENS
+                                            ] = details["reasoning_tokens"]
+
+                                # Response content
+                                if output.get("choices"):
+                                    first_choice = output["choices"][0]
+                                    if isinstance(first_choice, dict):
+                                        message = first_choice.get(
+                                            "message", {}
+                                        )
+                                        if isinstance(message, dict):
+                                            content = message.get("content", "")
+                                            attrs[
+                                                SpanAttributes.CALL.RETURN
+                                            ] = content
+                                            # Also store as LLM completion with custom attribute
+                                            attrs["llm.completions"] = (
+                                                json.dumps([
+                                                    {
+                                                        "role": message.get(
+                                                            "role", "assistant"
+                                                        ),
+                                                        "content": content,
+                                                    }
+                                                ])
+                                            )
+                                            attrs["llm.output_text"] = content
+
+                                # Store full response for debugging
+                                summary = {
+                                    "model": output.get("model", "unknown"),
+                                    "usage": usage,
+                                    "choices": len(output.get("choices", [])),
+                                }
+                                attrs["openai.api.response"] = json.dumps(
+                                    summary
+                                )
+                            else:
+                                attrs[SpanAttributes.CALL.RETURN] = str(output)[
+                                    :1000
+                                ]
+                        except Exception as e:
+                            print(f"[COST] Could not serialize output: {e}")
+                            attrs[SpanAttributes.CALL.RETURN] = (
+                                f"<{type(ret).__name__}>"
+                            )
+
+                    # Check if this is a chat completion response for cost tracking
                     if hasattr(ret, "model") and hasattr(ret, "usage"):
                         print(
                             f"[COST] Found chat completion response with model: {ret.model}"
                         )
                         try:
-                            result = OpenAICostComputer.handle_response(ret)
-                            print(f"[COST] Computed costs: {result}")
-                            return result
+                            cost_attrs = OpenAICostComputer.handle_response(ret)
+                            print(f"[COST] Computed costs: {cost_attrs}")
+                            attrs.update(cost_attrs)
                         except Exception as e:
                             print(f"[COST ERROR] Failed to compute costs: {e}")
 
-                    return {}
+                    return attrs
 
                 # Instrument the post method which is async and returns the actual response
                 instrument_method(
