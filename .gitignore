@@ -89,3 +89,4 @@ src/**/poetry.lock
 
 
 **/GAIA
+**/experimental/*.csv
