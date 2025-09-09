@@ -67,6 +67,7 @@ Using `on_context` allows to access the retrieved text for evaluation via the so
 You can find the full quickstart available here: [LlamaIndex Quickstart](../../getting_started/quickstarts/llama_index_quickstart.ipynb)
 
 ## Async Support
+
 TruLlama also provides async support for LlamaIndex through the `aquery`,
 `achat`, and `astream_chat` methods. This allows you to track and evaluate async
 applications.
@@ -134,6 +135,113 @@ You can also print the response tokens as they are generated using the `response
     ```
 
 For examples of using `TruLlama`, check out the [_TruLens_ Cookbook](../../cookbook/index.md)
+
+## LlamaIndex Workflows Support
+
+TruLens provides comprehensive support for LlamaIndex Workflows through `TruLlamaWorkflow`. This allows you to track, evaluate, and monitor complex multi-step workflows built with LlamaIndex's event-driven architecture.
+
+### What are LlamaIndex Workflows?
+
+LlamaIndex Workflows provide an event-driven, declarative way to build complex agentic applications. They allow you to define steps that process events and emit new events, creating sophisticated data processing pipelines.
+
+### Basic Workflow Instrumentation
+
+To instrument a LlamaIndex workflow, wrap it with `TruLlamaWorkflow`:
+
+!!! example "Create and instrument a basic workflow"
+
+    ```python
+    from llama_index.core.workflow import Workflow, StartEvent, StopEvent, step
+    from llama_index.llms.openai import OpenAI
+    from trulens.apps.llamaindex import TruLlamaWorkflow
+
+    class SimpleWorkflow(Workflow):
+        """A simple workflow that generates a response."""
+
+        @step
+        async def generate_response(self, ev: StartEvent) -> StopEvent:
+            query = ev.get("query")
+            llm = OpenAI(model="gpt-3.5-turbo")
+            response = await llm.acomplete(query)
+            return StopEvent(result=str(response))
+
+    # Create and instrument the workflow
+    workflow = SimpleWorkflow()
+    tru_workflow = TruLlamaWorkflow(
+        workflow,
+        app_name="simple_workflow",
+        app_version="1.0"
+    )
+
+    # Run the workflow with tracking
+    with tru_workflow as recording:
+        result = await workflow.run(query="What is the capital of France?")
+        print(result)
+    ```
+
+### Multi-Step Workflows
+
+TruLlamaWorkflow automatically tracks all steps in your workflow, maintaining proper associations between them:
+
+!!! example "Track a multi-step workflow"
+
+    ```python
+    from dataclasses import dataclass
+    from llama_index.core.workflow import Event, Workflow, StartEvent, StopEvent, step
+    from llama_index.llms.openai import OpenAI
+    from trulens.apps.llamaindex import TruLlamaWorkflow
+
+    @dataclass
+    class TopicEvent(Event):
+        """Event containing a topic."""
+        topic: str
+
+    @dataclass
+    class JokeEvent(Event):
+        """Event containing a generated joke."""
+        joke: str
+
+    class JokeWorkflow(Workflow):
+        """A workflow that generates and critiques jokes."""
+
+        @step
+        async def generate_joke(self, ev: StartEvent) -> JokeEvent:
+            topic = ev.get("topic", "general")
+            llm = OpenAI(model="gpt-3.5-turbo")
+
+            prompt = f"Write a funny joke about {topic}"
+            response = await llm.acomplete(prompt)
+
+            return JokeEvent(joke=str(response))
+
+        @step
+        async def critique_joke(self, ev: JokeEvent) -> StopEvent:
+            llm = OpenAI(model="gpt-3.5-turbo")
+
+            prompt = f"Critique this joke: {ev.joke}"
+            response = await llm.acomplete(prompt)
+
+            return StopEvent(result={
+                "joke": ev.joke,
+                "critique": str(response)
+            })
+
+    # Create and instrument the workflow
+    workflow = JokeWorkflow()
+    tru_workflow = TruLlamaWorkflow(
+        workflow,
+        app_name="joke_workflow",
+        metadata={"category": "humor"}
+    )
+
+    # Run with tracking - all steps are automatically tracked
+    with tru_workflow as recording:
+        result = await workflow.run(topic="programming")
+        print(f"Joke: {result['joke']}")
+        print(f"Critique: {result['critique']}")
+    ```
+
+For more examples of using `TruLlamaWorkflow`, check out the [_TruLens_ Cookbook](../../cookbook/index.md)
 
 ## Appendix: LlamaIndex Instrumented Classes and Methods
 
