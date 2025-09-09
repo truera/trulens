@@ -166,6 +166,26 @@ class TruLlamaWorkflow(core_app.App):
         # Ensure class-level instrumentation for workflow steps.
         self._ensure_workflows_instrumentation()
 
+        # Store the original workflow
+        self._original_workflow = app
+
+        # Wrap the workflow's run method to await completion
+        original_run = app.run
+
+        async def wrapped_run(**run_kwargs):
+            """Wrapped run that awaits the workflow handler to get the actual result."""
+            # Call the original run (which is sync and returns a handler)
+            handler = original_run(**run_kwargs)
+            # The handler is a WorkflowHandler which is awaitable
+            # Await it to get the actual result and ensure all steps complete
+            if hasattr(handler, "__await__"):
+                result = await handler
+                return result
+            return handler
+
+        # Replace the run method with our wrapped version
+        app.run = wrapped_run
+
         kwargs["app"] = app
         # Create or adopt session.
         if "connector" in kwargs:

@@ -152,13 +152,27 @@ class _TruSession(core_session.TruSession):
                 and isinstance(obj, type)
                 and hasattr(obj, method)
             ):
+                logger.info(
+                    f"Instrumenting {obj.__name__}.{method} for cost tracking"
+                )
+
+                # Create an async-aware cost computer wrapper
+                def cost_attributes(ret, exception, *args, **kwargs):
+                    """Compute costs, handling both sync and async responses."""
+                    logger.info(
+                        f"Cost computer called with return type: {type(ret)}"
+                    )
+                    try:
+                        # The handle_response method now handles async responses internally
+                        return cost_computer(ret)
+                    except Exception as e:
+                        logging.warning(f"Failed to compute costs: {e}")
+                        return {}
+
                 instrument_cost_computer(
                     obj,
                     method,
-                    attributes=lambda ret,
-                    exception,
-                    *args,
-                    **kwargs: cost_computer(ret),
+                    attributes=cost_attributes,
                 )
 
     @staticmethod
@@ -182,12 +196,52 @@ class _TruSession(core_session.TruSession):
             from openai.resources import chat
             from trulens.providers.openai.endpoint import OpenAICostComputer
 
+            # The existing instrumentation handles sync calls
             for module in [openai, resources, chat]:
                 _TruSession._track_costs_for_module_member(
                     module,
                     "create",
                     OpenAICostComputer.handle_response,
                 )
+
+            # Also need to explicitly instrument AsyncCompletions for async calls
+            # because _track_costs_for_module_member might miss it
+            try:
+                from openai.resources.chat import completions
+                from trulens.core.otel.instrument import (
+                    instrument_cost_computer,
+                )
+
+                if hasattr(completions, "AsyncCompletions"):
+                    logger.info(
+                        "Instrumenting AsyncCompletions.create for cost tracking"
+                    )
+
+                    def async_cost_attributes(ret, exception, *args, **kwargs):
+                        """Compute costs for async OpenAI responses."""
+                        logger.info(
+                            f"AsyncCompletions cost computer called with return type: {type(ret)}"
+                        )
+                        try:
+                            # At this point, ret should be the actual ChatCompletion object,
+                            # not a coroutine, because the async_wrapper has already awaited it
+                            result = OpenAICostComputer.handle_response(ret)
+                            logger.info(f"Cost computation result: {result}")
+                            return result
+                        except Exception as e:
+                            logger.warning(
+                                f"Failed to compute async costs: {e}"
+                            )
+                            return {}
+
+                    instrument_cost_computer(
+                        completions.AsyncCompletions,
+                        "create",
+                        attributes=async_cost_attributes,
+                    )
+            except ImportError as e:
+                logger.debug(f"Could not import AsyncCompletions: {e}")
+
         if _can_import("trulens.providers.litellm.endpoint"):
             import litellm
             from trulens.core.otel.instrument import instrument_method

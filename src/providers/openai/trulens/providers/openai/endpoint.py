@@ -77,6 +77,31 @@ T = TypeVar("T")  # TODO bound
 class OpenAICostComputer:
     @staticmethod
     def handle_response(response: Any) -> Dict[str, Any]:
+        import asyncio
+        import inspect
+
+        # Debug logging to see what we're getting
+        logger.info(
+            f"OpenAICostComputer.handle_response received type: {type(response)}, value sample: {str(response)[:200] if response else 'None'}"
+        )
+
+        # Check if response is a coroutine/awaitable
+        if inspect.iscoroutine(response) or asyncio.isfuture(response):
+            logger.warning(
+                f"Received coroutine/future in cost handler: {type(response)}"
+            )
+            # The response shouldn't be a coroutine at this point - it should have been awaited
+            # by the async wrapper in the instrumentation. If we're getting a coroutine here,
+            # something is wrong with the instrumentation flow.
+            return {
+                SpanAttributes.COST.COST: 0.0,
+                SpanAttributes.COST.CURRENCY: "USD",
+                SpanAttributes.COST.NUM_TOKENS: 0,
+                SpanAttributes.COST.NUM_PROMPT_TOKENS: 0,
+                SpanAttributes.COST.NUM_COMPLETION_TOKENS: 0,
+                SpanAttributes.COST.NUM_REASONING_TOKENS: 0,
+            }
+
         # Handle legacy response if needed
         if isinstance(response, openai._legacy_response.LegacyAPIResponse):
             if response.http_response.status_code != 200:
@@ -118,6 +143,38 @@ class OpenAICostComputer:
         if model_name:
             ret[SpanAttributes.COST.MODEL] = model_name
         return ret
+
+    @staticmethod
+    async def ahandle_response(response: Any) -> Dict[str, Any]:
+        """
+        Async version of handle_response that can properly await coroutines.
+
+        Args:
+            response: The response object from OpenAI (can be a coroutine).
+
+        Returns:
+            A dictionary with cost information.
+        """
+        import asyncio
+        import inspect
+
+        # If response is a coroutine, await it
+        if inspect.iscoroutine(response) or asyncio.isfuture(response):
+            try:
+                response = await response
+            except Exception as e:
+                logger.warning(f"Failed to await async response: {e}")
+                return {
+                    SpanAttributes.COST.COST: 0.0,
+                    SpanAttributes.COST.CURRENCY: "USD",
+                    SpanAttributes.COST.NUM_TOKENS: 0,
+                    SpanAttributes.COST.NUM_PROMPT_TOKENS: 0,
+                    SpanAttributes.COST.NUM_COMPLETION_TOKENS: 0,
+                    SpanAttributes.COST.NUM_REASONING_TOKENS: 0,
+                }
+
+        # Now we have the actual response, use the sync handler
+        return OpenAICostComputer.handle_response(response)
 
 
 class OpenAIClient(serial_utils.SerialModel):
