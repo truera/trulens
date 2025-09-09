@@ -170,8 +170,11 @@ class TruLlamaWorkflow(core_app.App):
         self._original_workflow = app
 
         # Wrap the workflow's run method to await completion
+        import functools
+
         original_run = app.run
 
+        @functools.wraps(original_run)
         async def wrapped_run(**run_kwargs):
             """Wrapped run that awaits the workflow handler to get the actual result."""
             # Call the original run (which is sync and returns a handler)
