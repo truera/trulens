@@ -2,6 +2,7 @@
 
 import asyncio
 from dataclasses import dataclass
+import importlib.util
 import json
 import os
 import sys
@@ -400,14 +401,10 @@ except ImportError:
 
     Context = Mock
 
-# Try to import TruLlamaWorkflow
-try:
-    from trulens.apps.llamaindex import TruLlamaWorkflow
-
-    TRULENS_LLAMAINDEX_AVAILABLE = True
-except ImportError:
-    TRULENS_LLAMAINDEX_AVAILABLE = False
-    TruLlamaWorkflow = None
+# Check if TruLlamaWorkflow can be imported (for skipif decorator)
+TRULENS_LLAMAINDEX_AVAILABLE = (
+    importlib.util.find_spec("trulens.apps.llamaindex") is not None
+)
 
 try:
     from trulens.core.session import TruSession
@@ -464,6 +461,8 @@ def mock_session():
 class TestTruLlamaWorkflowIntegration:
     """Integration tests for TruLlamaWorkflow."""
 
+    from trulens.apps.llamaindex import TruLlamaWorkflow
+
     def test_workflow_initialization(self, mock_session):
         """Test that TruLlamaWorkflow properly initializes a workflow."""
         workflow = SimpleTestWorkflow() if LLAMAINDEX_AVAILABLE else Mock()
@@ -472,7 +471,7 @@ class TestTruLlamaWorkflowIntegration:
             "trulens.apps.llamaindex.tru_llama_workflow.TruSession",
             return_value=mock_session,
         ):
-            tru_workflow = TruLlamaWorkflow(
+            tru_workflow = self.TruLlamaWorkflow(
                 workflow, app_name="test_workflow", app_version="1.0.0"
             )
 
@@ -493,7 +492,7 @@ class TestTruLlamaWorkflowIntegration:
             "trulens.apps.llamaindex.tru_llama_workflow.TruSession",
             return_value=mock_session,
         ):
-            tru_workflow = TruLlamaWorkflow(
+            tru_workflow = self.TruLlamaWorkflow(
                 workflow,
                 app_name="test_workflow",
                 metadata={"test_key": "test_value"},
