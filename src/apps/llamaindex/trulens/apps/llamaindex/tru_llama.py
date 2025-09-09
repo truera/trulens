@@ -226,88 +226,87 @@ class LlamaInstrument(core_instruments.Instrument):
         }.union(mod_tru_chain.LangChainInstrument.Default.CLASSES())
         """Classes to instrument."""
 
-        METHODS: List[InstrumentedMethod] = (
+        METHODS: List[InstrumentedMethod] = list(
             mod_tru_chain.LangChainInstrument.Default.METHODS
-            + [
-                InstrumentedMethod("chat", BaseLLM),
-                InstrumentedMethod("complete", BaseLLM),
-                InstrumentedMethod("stream_chat", BaseLLM),
-                InstrumentedMethod("stream_complete", BaseLLM),
-                InstrumentedMethod("achat", BaseLLM),
-                InstrumentedMethod("acomplete", BaseLLM),
-                InstrumentedMethod("astream_chat", BaseLLM),
-                InstrumentedMethod("astream_complete", BaseLLM),
-                InstrumentedMethod("__call__", BaseTool),
-                InstrumentedMethod("call", BaseTool),
-                InstrumentedMethod("acall", AsyncBaseTool),
-                InstrumentedMethod("put", BaseMemory),
-                InstrumentedMethod("get_response", Refine),
-                InstrumentedMethod("predict", BaseLLMPredictor),
-                InstrumentedMethod("apredict", BaseLLMPredictor),
-                InstrumentedMethod("stream", BaseLLMPredictor),
-                InstrumentedMethod("astream", BaseLLMPredictor),
-                InstrumentedMethod("query", BaseQueryEngine),
-                InstrumentedMethod("aquery", BaseQueryEngine),
-                InstrumentedMethod("synthesize", BaseQueryEngine),
-                InstrumentedMethod("asynthesize", BaseQueryEngine),
-                InstrumentedMethod("chat", BaseChatEngine),
-                InstrumentedMethod("achat", BaseChatEngine),
-                InstrumentedMethod("stream_chat", BaseChatEngine),
-                InstrumentedMethod("astream_chat", BaseChatEngine),
-                InstrumentedMethod("complete", BaseChatEngine),
-                InstrumentedMethod("acomplete", BaseChatEngine),
-                InstrumentedMethod("stream_complete", BaseChatEngine),
-                InstrumentedMethod("astream_complete", BaseChatEngine),
-                InstrumentedMethod(
-                    "retrieve",
-                    BaseQueryEngine,
-                    **_retrieval_span(),
-                ),
-                InstrumentedMethod(
-                    "_retrieve",
-                    BaseQueryEngine,
-                    **_retrieval_span(),
-                ),
-                InstrumentedMethod(
-                    "_aretrieve",
-                    BaseQueryEngine,
-                    **_retrieval_span(),
-                ),
-                InstrumentedMethod(
-                    "retrieve",
-                    BaseRetriever,
-                    **_retrieval_span(),
-                ),
-                InstrumentedMethod(
-                    "_retrieve",
-                    BaseRetriever,
-                    **_retrieval_span(),
-                ),
-                InstrumentedMethod(
-                    "_aretrieve",
-                    BaseRetriever,
-                    **_retrieval_span(),
-                ),
-                InstrumentedMethod(
-                    "retrieve",
-                    WithFeedbackFilterNodes,
-                    **_retrieval_span(),
-                ),
-                InstrumentedMethod(
-                    "_retrieve",
-                    WithFeedbackFilterNodes,
-                    **_retrieval_span(),
-                ),
-                InstrumentedMethod(
-                    "_aretrieve",
-                    WithFeedbackFilterNodes,
-                    **_retrieval_span(),
-                ),
-                InstrumentedMethod("_postprocess_nodes", BaseNodePostprocessor),
-                InstrumentedMethod("_run_component", QueryEngineComponent),
-                InstrumentedMethod("_run_component", RetrieverComponent),
-            ]
-        )
+        ) + [
+            InstrumentedMethod("chat", BaseLLM),
+            InstrumentedMethod("complete", BaseLLM),
+            InstrumentedMethod("stream_chat", BaseLLM),
+            InstrumentedMethod("stream_complete", BaseLLM),
+            InstrumentedMethod("achat", BaseLLM),
+            InstrumentedMethod("acomplete", BaseLLM),
+            InstrumentedMethod("astream_chat", BaseLLM),
+            InstrumentedMethod("astream_complete", BaseLLM),
+            InstrumentedMethod("__call__", BaseTool),
+            InstrumentedMethod("call", BaseTool),
+            InstrumentedMethod("acall", AsyncBaseTool),
+            InstrumentedMethod("put", BaseMemory),
+            InstrumentedMethod("get_response", Refine),
+            InstrumentedMethod("predict", BaseLLMPredictor),
+            InstrumentedMethod("apredict", BaseLLMPredictor),
+            InstrumentedMethod("stream", BaseLLMPredictor),
+            InstrumentedMethod("astream", BaseLLMPredictor),
+            InstrumentedMethod("query", BaseQueryEngine),
+            InstrumentedMethod("aquery", BaseQueryEngine),
+            InstrumentedMethod("synthesize", BaseQueryEngine),
+            InstrumentedMethod("asynthesize", BaseQueryEngine),
+            InstrumentedMethod("chat", BaseChatEngine),
+            InstrumentedMethod("achat", BaseChatEngine),
+            InstrumentedMethod("stream_chat", BaseChatEngine),
+            InstrumentedMethod("astream_chat", BaseChatEngine),
+            InstrumentedMethod("complete", BaseChatEngine),
+            InstrumentedMethod("acomplete", BaseChatEngine),
+            InstrumentedMethod("stream_complete", BaseChatEngine),
+            InstrumentedMethod("astream_complete", BaseChatEngine),
+            InstrumentedMethod(
+                "retrieve",
+                BaseQueryEngine,
+                **_retrieval_span(),
+            ),
+            InstrumentedMethod(
+                "_retrieve",
+                BaseQueryEngine,
+                **_retrieval_span(),
+            ),
+            InstrumentedMethod(
+                "_aretrieve",
+                BaseQueryEngine,
+                **_retrieval_span(),
+            ),
+            InstrumentedMethod(
+                "retrieve",
+                BaseRetriever,
+                **_retrieval_span(),
+            ),
+            InstrumentedMethod(
+                "_retrieve",
+                BaseRetriever,
+                **_retrieval_span(),
+            ),
+            InstrumentedMethod(
+                "_aretrieve",
+                BaseRetriever,
+                **_retrieval_span(),
+            ),
+            InstrumentedMethod(
+                "retrieve",
+                WithFeedbackFilterNodes,
+                **_retrieval_span(),
+            ),
+            InstrumentedMethod(
+                "_retrieve",
+                WithFeedbackFilterNodes,
+                **_retrieval_span(),
+            ),
+            InstrumentedMethod(
+                "_aretrieve",
+                WithFeedbackFilterNodes,
+                **_retrieval_span(),
+            ),
+            InstrumentedMethod("_postprocess_nodes", BaseNodePostprocessor),
+            InstrumentedMethod("_run_component", QueryEngineComponent),
+            InstrumentedMethod("_run_component", RetrieverComponent),
+        ]
         """Methods to instrument."""
 
     def __init__(self, *args, **kwargs):
