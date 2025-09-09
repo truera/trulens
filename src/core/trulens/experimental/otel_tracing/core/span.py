@@ -69,6 +69,12 @@ def _stringify_span_attribute(o: Any) -> Tuple[bool, str]:
         return True, json.dumps(o)
     except Exception:
         pass
+    # Special handling for exceptions to preserve their message
+    if isinstance(o, Exception):
+        try:
+            return False, str(o)
+        except Exception:
+            return False, f"<{type(o).__name__}>"
     # Avoid calling __str__ on unknown objects as it may trigger side effects
     # (e.g., awaiting results), causing runtime errors. Use type name instead.
     try:
