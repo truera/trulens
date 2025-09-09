@@ -461,7 +461,12 @@ def mock_session():
 class TestTruLlamaWorkflowIntegration:
     """Integration tests for TruLlamaWorkflow."""
 
-    from trulens.apps.llamaindex import TruLlamaWorkflow
+    @property
+    def TruLlamaWorkflow(self):
+        """Lazy import of TruLlamaWorkflow."""
+        from trulens.apps.llamaindex import TruLlamaWorkflow
+
+        return TruLlamaWorkflow
 
     def test_workflow_initialization(self, mock_session):
         """Test that TruLlamaWorkflow properly initializes a workflow."""
