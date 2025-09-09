@@ -7,18 +7,39 @@ from unittest.mock import Mock
 from unittest.mock import patch
 
 import pytest
-from trulens.otel.semconv.trace import SpanAttributes
 
-
-@pytest.mark.optional
-class TestAsyncOpenAIInstrumentation:
-    """Test suite for async OpenAI instrumentation."""
-
+# Check if OpenAI is available
+try:
     from openai import AsyncOpenAI
     from openai.types.chat import ChatCompletion
     from openai.types.chat import ChatCompletionMessage
     from openai.types.chat.chat_completion import Choice
     from openai.types.chat.chat_completion import CompletionUsage
+
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
+    # Create dummy classes to avoid NameError
+    AsyncOpenAI = None
+    ChatCompletion = None
+    ChatCompletionMessage = None
+    Choice = None
+    CompletionUsage = None
+
+from trulens.otel.semconv.trace import SpanAttributes
+
+
+@pytest.mark.optional
+@pytest.mark.skipif(not OPENAI_AVAILABLE, reason="OpenAI not available")
+class TestAsyncOpenAIInstrumentation:
+    """Test suite for async OpenAI instrumentation."""
+
+    # Store the imported classes as class attributes
+    AsyncOpenAI = AsyncOpenAI
+    ChatCompletion = ChatCompletion
+    ChatCompletionMessage = ChatCompletionMessage
+    Choice = Choice
+    CompletionUsage = CompletionUsage
 
     @pytest.fixture
     def mock_chat_completion(self):
@@ -211,6 +232,9 @@ class TestAsyncOpenAIInstrumentation:
 
     def test_async_openai_with_streaming(self):
         """Test handling of streaming responses."""
+        if not OPENAI_AVAILABLE:
+            pytest.skip("OpenAI not available")
+
         from openai import AsyncStream
         from openai.types.chat import ChatCompletionChunk
 
