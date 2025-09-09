@@ -6,11 +6,6 @@ from unittest.mock import AsyncMock
 from unittest.mock import Mock
 from unittest.mock import patch
 
-from openai import AsyncOpenAI
-from openai.types.chat import ChatCompletion
-from openai.types.chat import ChatCompletionMessage
-from openai.types.chat.chat_completion import Choice
-from openai.types.chat.chat_completion import CompletionUsage
 import pytest
 from trulens.otel.semconv.trace import SpanAttributes
 from trulens.providers.openai.endpoint import OpenAICostComputer
@@ -20,23 +15,29 @@ from trulens.providers.openai.endpoint import OpenAICostComputer
 class TestAsyncOpenAIInstrumentation:
     """Test suite for async OpenAI instrumentation."""
 
+    from openai import AsyncOpenAI
+    from openai.types.chat import ChatCompletion
+    from openai.types.chat import ChatCompletionMessage
+    from openai.types.chat.chat_completion import Choice
+    from openai.types.chat.chat_completion import CompletionUsage
+
     @pytest.fixture
     def mock_chat_completion(self):
         """Create a mock ChatCompletion response."""
         # Create a mock that looks like a real ChatCompletion
-        mock_response = Mock(spec=ChatCompletion)
+        mock_response = Mock(spec=self.ChatCompletion)
         mock_response.model = "gpt-3.5-turbo"
-        mock_response.usage = Mock(spec=CompletionUsage)
+        mock_response.usage = Mock(spec=self.CompletionUsage)
         mock_response.usage.prompt_tokens = 50
         mock_response.usage.completion_tokens = 100
         mock_response.usage.total_tokens = 150
         mock_response.usage.completion_tokens_details = Mock(reasoning_tokens=0)
 
-        mock_message = Mock(spec=ChatCompletionMessage)
+        mock_message = Mock(spec=self.ChatCompletionMessage)
         mock_message.role = "assistant"
         mock_message.content = "This is a test response"
 
-        mock_choice = Mock(spec=Choice)
+        mock_choice = Mock(spec=self.Choice)
         mock_choice.message = mock_message
         mock_choice.index = 0
         mock_choice.finish_reason = "stop"
@@ -75,7 +76,7 @@ class TestAsyncOpenAIInstrumentation:
 
     def test_async_openai_post_method(self, mock_chat_completion):
         """Test that AsyncOpenAI.post method returns correct response."""
-        mock_client = Mock(spec=AsyncOpenAI)
+        mock_client = Mock(spec=self.AsyncOpenAI)
         mock_client.post = AsyncMock(return_value=mock_chat_completion)
 
         # Run the async test in a sync context
@@ -228,7 +229,7 @@ class TestAsyncOpenAIInstrumentation:
 
         # Run the async test in a sync context
         async def run_test():
-            mock_client = Mock(spec=AsyncOpenAI)
+            mock_client = Mock(spec=self.AsyncOpenAI)
             mock_stream_response = AsyncStream(
                 cast_to=ChatCompletionChunk, client=mock_client, response=Mock()
             )
