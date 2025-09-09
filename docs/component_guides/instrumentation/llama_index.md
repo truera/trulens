@@ -142,7 +142,7 @@ TruLens provides comprehensive support for LlamaIndex Workflows through `TruLlam
 
 ### What are LlamaIndex Workflows?
 
-LlamaIndex Workflows provide an event-driven, declarative way to build complex agentic applications. They allow you to define steps that process events and emit new events, creating sophisticated data processing pipelines.
+[LlamaIndex Workflows](https://docs.llamaindex.ai/en/stable/module_guides/workflow/) provide an event-driven, declarative way to build complex agentic applications. They allow you to define steps that process events and emit new events, creating sophisticated data processing pipelines.
 
 ### Basic Workflow Instrumentation
 
