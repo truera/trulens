@@ -159,14 +159,15 @@ class _TruSession(core_session.TruSession):
                 # Create an async-aware cost computer wrapper
                 def cost_attributes(ret, exception, *args, **kwargs):
                     """Compute costs, handling both sync and async responses."""
-                    logger.info(
+                    logger.debug(
                         f"Cost computer called with return type: {type(ret)}"
                     )
                     try:
                         # The handle_response method now handles async responses internally
                         return cost_computer(ret)
                     except Exception as e:
-                        logging.warning(f"Failed to compute costs: {e}")
+                        # Only log as debug since costs might be computed elsewhere
+                        logger.debug(f"Cost computation skipped: {e}")
                         return {}
 
                 instrument_cost_computer(
@@ -209,13 +210,8 @@ class _TruSession(core_session.TruSession):
                 from openai import AsyncOpenAI
                 from trulens.core.otel.instrument import instrument_method
 
-                print(
-                    "[COST SETUP] Instrumenting AsyncOpenAI.post for cost tracking"
-                )
-
                 def async_post_cost_attributes(ret, exception, *args, **kwargs):
                     """Extract costs and capture input/output from AsyncOpenAI post responses."""
-                    print(f"[COST] AsyncOpenAI.post returned type: {type(ret)}")
 
                     attrs = {}
 
@@ -274,8 +270,8 @@ class _TruSession(core_session.TruSession):
                                 attrs["openai.api.request"] = json.dumps(
                                     body_dict
                                 )[:2000]  # Limit size
-                        except Exception as e:
-                            print(f"[COST] Could not serialize request: {e}")
+                        except Exception:
+                            pass  # Silently skip serialization errors
 
                     # Capture the output
                     if ret:
@@ -365,23 +361,28 @@ class _TruSession(core_session.TruSession):
                                 attrs[SpanAttributes.CALL.RETURN] = str(output)[
                                     :1000
                                 ]
-                        except Exception as e:
-                            print(f"[COST] Could not serialize output: {e}")
+                        except Exception:
+                            pass  # Silently skip serialization errors
                             attrs[SpanAttributes.CALL.RETURN] = (
                                 f"<{type(ret).__name__}>"
                             )
 
                     # Check if this is a chat completion response for cost tracking
-                    if hasattr(ret, "model") and hasattr(ret, "usage"):
-                        print(
-                            f"[COST] Found chat completion response with model: {ret.model}"
-                        )
+                    # Only compute costs for actual ChatCompletion objects
+                    if (
+                        hasattr(ret, "model")
+                        and hasattr(ret, "usage")
+                        and ret.__class__.__name__
+                        in ["ChatCompletion", "ParsedChatCompletion"]
+                    ):
                         try:
                             cost_attrs = OpenAICostComputer.handle_response(ret)
-                            print(f"[COST] Computed costs: {cost_attrs}")
                             attrs.update(cost_attrs)
                         except Exception as e:
-                            print(f"[COST ERROR] Failed to compute costs: {e}")
+                            # This should rarely happen now that we filter by type
+                            logger.debug(
+                                f"Unexpected cost computation error: {e}"
+                            )
 
                     return attrs
 

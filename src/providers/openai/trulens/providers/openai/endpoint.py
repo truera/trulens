@@ -77,41 +77,6 @@ T = TypeVar("T")  # TODO bound
 class OpenAICostComputer:
     @staticmethod
     def handle_response(response: Any) -> Dict[str, Any]:
-        import asyncio
-        import inspect
-
-        # Debug logging to see what we're getting
-        print(
-            f"[COST] OpenAICostComputer.handle_response received type: {type(response)}"
-        )
-
-        # Check what attributes the response has
-        if hasattr(response, "__dict__"):
-            print(
-                f"[COST] Response attributes: {list(response.__dict__.keys())}"
-            )
-        if hasattr(response, "model"):
-            print(f"[COST] Response model: {response.model}")
-        if hasattr(response, "usage"):
-            print(f"[COST] Response usage: {response.usage}")
-
-        # Check if response is a coroutine/awaitable
-        if inspect.iscoroutine(response) or asyncio.isfuture(response):
-            logger.warning(
-                f"Received coroutine/future in cost handler: {type(response)}"
-            )
-            # The response shouldn't be a coroutine at this point - it should have been awaited
-            # by the async wrapper in the instrumentation. If we're getting a coroutine here,
-            # something is wrong with the instrumentation flow.
-            return {
-                SpanAttributes.COST.COST: 0.0,
-                SpanAttributes.COST.CURRENCY: "USD",
-                SpanAttributes.COST.NUM_TOKENS: 0,
-                SpanAttributes.COST.NUM_PROMPT_TOKENS: 0,
-                SpanAttributes.COST.NUM_COMPLETION_TOKENS: 0,
-                SpanAttributes.COST.NUM_REASONING_TOKENS: 0,
-            }
-
         # Handle legacy response if needed
         if isinstance(response, openai._legacy_response.LegacyAPIResponse):
             if response.http_response.status_code != 200:
@@ -121,8 +86,6 @@ class OpenAICostComputer:
         endpoint = OpenAIEndpoint()
         callback = OpenAICallback(endpoint=endpoint)
         model_name = ""
-
-        print("[COST] Processing response for cost calculation...")
 
         if hasattr(response, "__iter__") and not hasattr(response, "model"):
             try:
@@ -155,7 +118,6 @@ class OpenAICostComputer:
         if model_name:
             ret[SpanAttributes.COST.MODEL] = model_name
 
-        print(f"[COST] Cost computation result: {ret}")
         return ret
 
     @staticmethod

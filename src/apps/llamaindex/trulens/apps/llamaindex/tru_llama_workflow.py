@@ -199,7 +199,6 @@ class TruLlamaWorkflow(core_app.App):
             # Instrument only attributes that are instances of Step classes.
         cls = type(app)
         for name, val in cls.__dict__.items():
-            print("[TruLlamaWorkflow] class member:", name, "=>", val)
             # Only instrument coroutine step methods: async def with 'ev' parameter
             if not inspect.isfunction(val) or not inspect.iscoroutinefunction(
                 val
@@ -215,7 +214,6 @@ class TruLlamaWorkflow(core_app.App):
                 continue
 
             def step_function_attributes(ret, exception, *args, **kwargs):  # noqa: ANN001
-                print("\n[TruLlamaWorkflow][attrs] STEP:", name)
                 # Try to locate `ev`
                 ev = None
                 try:
