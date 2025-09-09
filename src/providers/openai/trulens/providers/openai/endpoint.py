@@ -81,9 +81,19 @@ class OpenAICostComputer:
         import inspect
 
         # Debug logging to see what we're getting
-        logger.info(
-            f"OpenAICostComputer.handle_response received type: {type(response)}, value sample: {str(response)[:200] if response else 'None'}"
+        print(
+            f"[COST] OpenAICostComputer.handle_response received type: {type(response)}"
         )
+
+        # Check what attributes the response has
+        if hasattr(response, "__dict__"):
+            print(
+                f"[COST] Response attributes: {list(response.__dict__.keys())}"
+            )
+        if hasattr(response, "model"):
+            print(f"[COST] Response model: {response.model}")
+        if hasattr(response, "usage"):
+            print(f"[COST] Response usage: {response.usage}")
 
         # Check if response is a coroutine/awaitable
         if inspect.iscoroutine(response) or asyncio.isfuture(response):
@@ -111,6 +121,8 @@ class OpenAICostComputer:
         endpoint = OpenAIEndpoint()
         callback = OpenAICallback(endpoint=endpoint)
         model_name = ""
+
+        print("[COST] Processing response for cost calculation...")
 
         if hasattr(response, "__iter__") and not hasattr(response, "model"):
             try:
@@ -142,6 +154,8 @@ class OpenAICostComputer:
         }
         if model_name:
             ret[SpanAttributes.COST.MODEL] = model_name
+
+        print(f"[COST] Cost computation result: {ret}")
         return ret
 
     @staticmethod
