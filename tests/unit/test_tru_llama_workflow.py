@@ -215,7 +215,8 @@ class TestAsyncOpenAICostTracking:
         assert attrs["llm.max_tokens"] == 100
         assert "Hello" in attrs["llm.prompts"]
 
-    def test_async_post_method(self):
+    @pytest.mark.asyncio
+    async def test_async_post_method(self):
         """Test async post method handling."""
         mock_response = Mock()
         mock_response.model = "gpt-3.5-turbo"
@@ -228,21 +229,13 @@ class TestAsyncOpenAICostTracking:
         assert hasattr(mock_client, "post")
         assert asyncio.iscoroutinefunction(mock_client.post)
 
-        # Run the async method in a sync context
-        async def run_test():
-            result = await mock_client.post(
-                "/chat/completions", body={"model": "gpt-3.5-turbo"}
-            )
-            return result
+        # Run the async method directly
+        result = await mock_client.post(
+            "/chat/completions", body={"model": "gpt-3.5-turbo"}
+        )
 
-        # Execute the async function
-        loop = asyncio.new_event_loop()
-        try:
-            result = loop.run_until_complete(run_test())
-            assert result.model == "gpt-3.5-turbo"
-            assert result.usage.total_tokens == 50
-        finally:
-            loop.close()
+        assert result.model == "gpt-3.5-turbo"
+        assert result.usage.total_tokens == 50
 
     def test_cost_filtering_by_type(self):
         """Test that cost computation is filtered by response type."""
