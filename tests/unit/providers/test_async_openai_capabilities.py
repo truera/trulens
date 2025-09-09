@@ -2,9 +2,20 @@
 
 import asyncio
 import json
+import os
+import sys
 from unittest.mock import AsyncMock
 from unittest.mock import Mock
 from unittest.mock import patch
+
+# Add source paths to PYTHONPATH for testing
+sys.path.insert(
+    0, os.path.join(os.path.dirname(__file__), "../../../src/otel/semconv")
+)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src/core"))
+sys.path.insert(
+    0, os.path.join(os.path.dirname(__file__), "../../../src/providers/openai")
+)
 
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletion
@@ -16,6 +27,7 @@ from trulens.otel.semconv.trace import SpanAttributes
 from trulens.providers.openai.endpoint import OpenAICostComputer
 
 
+@pytest.mark.optional
 class TestAsyncOpenAIInstrumentation:
     """Test suite for async OpenAI instrumentation."""
 
@@ -371,6 +383,7 @@ class TestAsyncOpenAIInstrumentation:
             assert call_args[1] == "post"
 
 
+@pytest.mark.optional
 class TestRequestResponseSerialization:
     """Test serialization of request and response data."""
 

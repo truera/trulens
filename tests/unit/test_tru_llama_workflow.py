@@ -28,6 +28,7 @@ from trulens.otel.semconv.trace import SpanAttributes
 # =============================================================================
 
 
+@pytest.mark.optional
 class TestWorkflowOutputCapture:
     """Test workflow output capture functionality."""
 
@@ -99,6 +100,7 @@ class TestWorkflowOutputCapture:
         assert "test" in attrs[SpanAttributes.WORKFLOW.OUTPUT_EVENT]
 
 
+@pytest.mark.optional
 class TestAsyncOpenAICostTracking:
     """Test async OpenAI cost tracking."""
 
@@ -268,6 +270,7 @@ class TestAsyncOpenAICostTracking:
         assert should_compute is False
 
 
+@pytest.mark.optional
 class TestSpanAttributeMapping:
     """Test proper mapping of span attributes."""
 
@@ -454,6 +457,7 @@ def mock_session():
     return session
 
 
+@pytest.mark.optional
 @pytest.mark.skipif(
     not TRULENS_LLAMAINDEX_AVAILABLE, reason="TruLlamaWorkflow not available"
 )
@@ -502,6 +506,7 @@ class TestTruLlamaWorkflowIntegration:
             assert tru_workflow.tags == ["test_tag"]
 
 
+@pytest.mark.optional
 class TestWorkflowRecordAssociation:
     """Test suite for workflow record ID association."""
 
