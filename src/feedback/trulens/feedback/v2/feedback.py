@@ -1382,46 +1382,31 @@ class PlanQuality(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     )
 
 
-class ToolUsage(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
+# --- CLASS DEFINITIONS -------------------------------------------------------
+
+
+class ToolSelection(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     """
-    Evaluates the quality of an agent's reasoning *around tool usage* in a ground-truth-free setting.
-    Focuses on: selection, input quality, output integration, context handling, error robustness, and transparency.
-    Explicitly does NOT double-count efficiency (covered by ExecutionEfficiency) or plan deviations (covered by PlanAdherence).
+    Evaluates the agent's *choice of tools* for its tasks/subtasks given tool descriptions.
+    Mapped to PLAN (lower-level complement to Plan Quality).
+    Excludes execution efficiency and adherence; focuses on suitability of selection.
     """
 
     output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
     output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
 
     criteria_template: ClassVar[str] = """
-    Score the quality of tool usage reasoning in the execution trace. Do not assess factual correctness of results.
+    Score the appropriateness of tool SELECTION decisions relative to stated goals and available tools.
 
-    {max_score}: Tool usage is expert and disciplined across all dimensions.
-      - Selection: Chosen tools are appropriate, necessary, and clearly the best available option for each subtask. No misuse or irrelevant calls.
-      - Input Quality: Queries/arguments are precise, complete, and well-scoped; ineffective inputs are promptly and thoughtfully reformulated.
-      - Output Integration: Tool outputs are interpreted faithfully and incorporated correctly; no fabrications or ignoring of results.
-      - Context Handling: Instructions, prior tool outputs, and tool specifications are used consistently; prior mistakes are not repeated.
-      - Error Robustness: Failures (empty/irrelevant results, API/service errors) are explicitly recognized and handled with adaptive strategies.
-      - Transparency: The agent briefly justifies why a tool is used and how its output influences subsequent reasoning.
+    {max_score}: Consistently selects the most suitable tools for each subtask, honors mandated tools, avoids tools when internal reasoning suffices, and reflects awareness of tool capabilities/limits.
+    Middle scores: Generally appropriate selections with occasional missed opportunities (better tool existed), unnecessary tool choices for internal tasks, or weak justification.
+    {min_score}: Frequently selects ill-suited/irrelevant tools, ignores mandated tools, or bypasses obviously superior tools; relies on non-tools where a tool is necessary.
 
-    Middle scores: Tool usage is functional but shows notable flaws.
-      - Some questionable tool choices or unnecessary calls.
-      - Inputs are somewhat vague/under-specified or reformulation is weak.
-      - Outputs used shallowly or with minor misinterpretations/omissions.
-      - Context sometimes ignored, leading to repeated or preventable mistakes.
-      - Error handling is inconsistent; failures occasionally glossed over.
-      - Justifications for tool use are minimal or unclear.
-
-    {min_score}: Tool usage is incompetent, misleading, or opaque.
-      - Tools are misused or repeatedly invoked irrelevantly.
-      - Inputs are incoherent/irrelevant and not effectively reformulated.
-      - Outputs are ignored, misread, or replaced with hallucinations.
-      - Context mishandled; same mistakes recur without learning.
-      - Failures unacknowledged and derail the process.
-      - No explanation for tool choices or their role in reasoning.
+    Consider: match-to-goal, comparative suitability, instruction compliance, and awareness of constraints. Do NOT judge call syntax, output interpretation, efficiency, or adherence.
     """
 
     system_prompt_template: ClassVar[str] = cleandoc(
-        """You are a meticulous and analytical TOOL USAGE evaluator: provide a score for how competently the agent used tools within the execution trace.
+        """You are a meticulous TOOL SELECTION evaluator. Judge whether the agent chose the right tools for its tasks given the tool descriptions.
         You must assign a single numerical score from {output_space_prompt}.
 
         Evaluation criteria:
@@ -1429,19 +1414,79 @@ class ToolUsage(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         {custom_instructions}
 
         Important scope boundaries:
-        - Do NOT penalize workflow inefficiency (covered by ExecutionEfficiency).
-        - Do NOT penalize deviations from the written plan (covered by PlanAdherence).
-        - Focus strictly on the reasoning quality around tool calls (selection, inputs, interpretation, context handling, error robustness, transparency).
+        - Do NOT penalize call syntax/semantics or output interpretation (Tool Calling).
+        - Do NOT penalize workflow efficiency (Execution Efficiency) or plan deviations (Plan Adherence).
+        - Focus strictly on selection quality per subtask.
 
-        Be critical in your evaluation. For each problematic step (e.g., wrong tool, poor query, misread output, ignored context, unhandled failure), identify that step and explain the issue specifically.
-        Never elaborate beyond what is requested.
+        Be critical. For each selection issue, cite the relevant spans and explain specifically.
+        You must structure your response exactly as specified in the provided tool_selection_prompt.
         """
     )
 
     user_prompt: ClassVar[str] = cleandoc(
         """{trace}
 
-        TOOL USAGE SCORE:
+        TOOL SELECTION SCORE:
+        """
+    )
+
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
+    )
+
+    # Use the long form prompt when generating; here we set a compact system prompt that references it.
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            custom_instructions="",
+        )
+    )
+
+
+class ToolCalling(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
+    """
+    Evaluates the agent's *tool invocation quality* that is within the agent's control:
+    argument validity/completeness, semantic appropriateness, preconditions/postconditions, and output interpretation.
+    Mapped to ACT (specialized complement to Plan Adherence).
+    Excludes selection and efficiency.
+    """
+
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+
+    criteria_template: ClassVar[str] = """
+    Score the quality of TOOL CALLS within the agent’s control.
+
+    {max_score}: Inputs are syntactically valid and semantically appropriate; required params and preconditions are satisfied; outputs are interpreted faithfully and integrated correctly; tool-returned errors are acknowledged and handled reasonably.
+    Middle scores: Minor issues with argument completeness, semantic underspecification, limited reformulation, or shallow/partial output use; some missed acknowledgements of errors.
+    {min_score}: Invalid/missing arguments, repeated schema violations, semantically off-target queries without correction; outputs ignored/misread/fabricated; tool errors unacknowledged.
+
+    Consider only what is under the agent's control. Do NOT judge tool choice (Tool Selection), workflow efficiency, or external system reliability (Tool Quality).
+    """
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """You are a meticulous TOOL CALLING evaluator. Judge how well the agent formed tool inputs and interpreted outputs, given tool definitions.
+        You must assign a single numerical score from {output_space_prompt}.
+
+        Evaluation criteria:
+        {criteria}
+        {custom_instructions}
+
+        Important scope boundaries:
+        - In-scope: argument/schema correctness, semantic fit of query, preconditions/postconditions, grounded interpretation of outputs, explicit handling of tool-returned errors.
+        - Out-of-scope: tool selection (Tool Selection), workflow efficiency (Execution Efficiency), external service/tool reliability (Tool Quality).
+
+        Be critical. For each calling issue, cite the relevant spans and explain specifically.
+        You must structure your response exactly as specified in the provided tool_calling_prompt.
+        """
+    )
+
+    user_prompt: ClassVar[str] = cleandoc(
+        """{trace}
+
+        TOOL CALLING SCORE:
         """
     )
 
@@ -1457,6 +1502,140 @@ class ToolUsage(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
             custom_instructions="",
         )
     )
+
+
+class ToolQuality(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
+    """
+    Evaluates the *tool/system side* quality and reliability observed in the trace (external errors, availability, stability, domain-specific output quality like search relevance).
+    Independent of agent behavior; complements GPA by isolating tool-side failures.
+    """
+
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+
+    criteria_template: ClassVar[str] = """
+    Score the QUALITY/RELIABILITY of tools as observed, independent of agent choices.
+
+    {max_score}: Tools respond reliably with relevant/complete outputs; no or rare external errors (5xx/4xx/429), no unexplained timeouts; domain quality (e.g., search relevance) is consistently strong.
+    Middle scores: Occasional external errors or weak outputs; intermittent relevance/latency issues; overall usable but flaky.
+    {min_score}: Frequent external errors, timeouts, rate limits, auth failures, or persistently poor domain output quality.
+
+    Consider only external/tool-side quality given the inputs. If inputs are clearly invalid, note it but do not penalize Tool Quality (penalize under Tool Calling).
+    """
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """You are a meticulous TOOL QUALITY evaluator. Judge external/tool-side reliability and output quality observed in the trace.
+        You must assign a single numerical score from {output_space_prompt}.
+
+        Evaluation criteria:
+        {criteria}
+        {custom_instructions}
+
+        Important scope boundaries:
+        - In-scope: service errors (5xx), rate limiting (429), auth (401/403), resource not found (404), timeouts, flakiness, determinism, and domain-specific output quality (e.g., search relevance).
+        - Out-of-scope: agent’s selection, argument formation, or workflow efficiency.
+
+        Be critical. For each tool quality issue, cite the relevant spans and explain specifically.
+        You must structure your response exactly as specified in the provided tool_quality_prompt.
+        """
+    )
+
+    user_prompt: ClassVar[str] = cleandoc(
+        """{trace}
+
+        TOOL QUALITY SCORE:
+        """
+    )
+
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
+    )
+
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            custom_instructions="",
+        )
+    )
+
+
+# class ToolUsage(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
+#     """
+#     Evaluates the quality of an agent's reasoning *around tool usage* in a ground-truth-free setting.
+#     Focuses on: selection, input quality, output integration, context handling, error robustness, and transparency.
+#     Explicitly does NOT double-count efficiency (covered by ExecutionEfficiency) or plan deviations (covered by PlanAdherence).
+#     """
+
+#     output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+#     output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+
+#     criteria_template: ClassVar[str] = """
+#     Score the quality of tool usage reasoning in the execution trace. Do not assess factual correctness of results.
+
+#     {max_score}: Tool usage is expert and disciplined across all dimensions.
+#       - Selection: Chosen tools are appropriate, necessary, and clearly the best available option for each subtask. No misuse or irrelevant calls.
+#       - Input Quality: Queries/arguments are precise, complete, and well-scoped; ineffective inputs are promptly and thoughtfully reformulated.
+#       - Output Integration: Tool outputs are interpreted faithfully and incorporated correctly; no fabrications or ignoring of results.
+#       - Context Handling: Instructions, prior tool outputs, and tool specifications are used consistently; prior mistakes are not repeated.
+#       - Error Robustness: Failures (empty/irrelevant results, API/service errors) are explicitly recognized and handled with adaptive strategies.
+#       - Transparency: The agent briefly justifies why a tool is used and how its output influences subsequent reasoning.
+
+#     Middle scores: Tool usage is functional but shows notable flaws.
+#       - Some questionable tool choices or unnecessary calls.
+#       - Inputs are somewhat vague/under-specified or reformulation is weak.
+#       - Outputs used shallowly or with minor misinterpretations/omissions.
+#       - Context sometimes ignored, leading to repeated or preventable mistakes.
+#       - Error handling is inconsistent; failures occasionally glossed over.
+#       - Justifications for tool use are minimal or unclear.
+
+#     {min_score}: Tool usage is incompetent, misleading, or opaque.
+#       - Tools are misused or repeatedly invoked irrelevantly.
+#       - Inputs are incoherent/irrelevant and not effectively reformulated.
+#       - Outputs are ignored, misread, or replaced with hallucinations.
+#       - Context mishandled; same mistakes recur without learning.
+#       - Failures unacknowledged and derail the process.
+#       - No explanation for tool choices or their role in reasoning.
+#     """
+
+#     system_prompt_template: ClassVar[str] = cleandoc(
+#         """You are a meticulous and analytical TOOL USAGE evaluator: provide a score for how competently the agent used tools within the execution trace.
+#         You must assign a single numerical score from {output_space_prompt}.
+
+#         Evaluation criteria:
+#         {criteria}
+#         {custom_instructions}
+
+#         Important scope boundaries:
+#         - Do NOT penalize workflow inefficiency (covered by ExecutionEfficiency).
+#         - Do NOT penalize deviations from the written plan (covered by PlanAdherence).
+#         - Focus strictly on the reasoning quality around tool calls (selection, inputs, interpretation, context handling, error robustness, transparency).
+
+#         Be critical in your evaluation. For each problematic step (e.g., wrong tool, poor query, misread output, ignored context, unhandled failure), identify that step and explain the issue specifically.
+#         Never elaborate beyond what is requested.
+#         """
+#     )
+
+#     user_prompt: ClassVar[str] = cleandoc(
+#         """{trace}
+
+#         TOOL USAGE SCORE:
+#         """
+#     )
+
+#     criteria: ClassVar[str] = criteria_template.format(
+#         min_score=OutputSpace.LIKERT_0_3.value[0],
+#         max_score=OutputSpace.LIKERT_0_3.value[1],
+#     )
+
+#     system_prompt: ClassVar[str] = cleandoc(
+#         system_prompt_template.format(
+#             output_space_prompt=output_space_prompt,
+#             criteria=criteria,
+#             custom_instructions="",
+#         )
+#     )
 
 
 class TRAIL(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
