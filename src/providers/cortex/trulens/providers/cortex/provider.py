@@ -1,5 +1,4 @@
 import json
-import logging
 from typing import ClassVar, Dict, Optional, Sequence, Type, Union
 
 from packaging.version import Version
@@ -14,8 +13,6 @@ from trulens.core.utils import pyschema as pyschema_utils
 from trulens.feedback import llm_provider
 from trulens.feedback import prompts as feedback_prompts
 from trulens.providers.cortex import endpoint as cortex_endpoint
-
-logger = logging.getLogger(__name__)
 
 
 class Cortex(
@@ -174,15 +171,7 @@ class Cortex(
         if response_format is not None:
             # If response_format is provided, we expect the response to be a JSON string
             # that can be parsed into the specified response_format.
-            try:
-                completion_obj = response_format.model_validate_json(
-                    completion_res
-                )
-            except Exception as e:
-                logger.debug(
-                    f"Parsing response_format {response_format} failed due to {e}, returning raw response.",
-                )
-                completion_obj = completion_res
+            completion_obj = response_format.model_validate_json(completion_res)
         else:
             completion_obj = completion_res
 
