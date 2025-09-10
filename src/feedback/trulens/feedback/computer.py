@@ -151,8 +151,7 @@ def compute_feedback_by_span_group(
         raise_error_on_no_feedbacks_computed:
             Raise an error if no feedbacks were computed. Default is True.
     """
-    # Always use the Feedback object directly
-    actual_feedback_function = feedback_function
+
     kwarg_groups = _group_kwargs_by_selectors(kwarg_to_selector)
     unflattened_inputs = _collect_inputs_from_events(
         events, kwarg_groups, kwarg_to_selector
@@ -171,7 +170,7 @@ def compute_feedback_by_span_group(
     num_feedbacks_computed = _run_feedback_on_inputs(
         flattened_inputs,
         feedback_name,
-        actual_feedback_function,  # Pass the Feedback object or raw callable
+        feedback_function,
         higher_is_better,
         feedback_aggregator,
         record_id_to_record_root,
