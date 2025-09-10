@@ -205,17 +205,23 @@ class Evaluator:
             return
         # Signal the thread to stop.
         self._stop_event.set()
-        # Give the thread a reasonable time to exit gracefully.
-        self._thread.join(timeout=300)
-        # If thread is still alive after timeout, log a warning.
-        if self._thread.is_alive():
-            logger.warning(
-                f"Evaluator thread (app_name={self._app_name}, app_version={self._app_version}) did not terminate gracefully within timeout."
+        # If called from within the evaluator thread, skip join to avoid deadlock.
+        if threading.current_thread() is self._thread:
+            logger.info(
+                f"Stop requested from evaluator thread itself; skipping join for (app_name={self._app_name}, app_version={self._app_version})."
             )
         else:
-            logger.info(
-                f"Stopped evaluator thread (app_name={self._app_name}, app_version={self._app_version})."
-            )
+            # Give the thread a reasonable time to exit gracefully.
+            self._thread.join(timeout=300)
+            # If thread is still alive after timeout, log a warning.
+            if self._thread.is_alive():
+                logger.warning(
+                    f"Evaluator thread (app_name={self._app_name}, app_version={self._app_version}) did not terminate gracefully within timeout."
+                )
+            else:
+                logger.info(
+                    f"Stopped evaluator thread (app_name={self._app_name}, app_version={self._app_version})."
+                )
         # Reset for potential future restart.
         self._thread = None
         self._stop_event.clear()
