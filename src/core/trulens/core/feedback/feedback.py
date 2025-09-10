@@ -168,10 +168,10 @@ class Feedback(feedback_schema.FeedbackDefinition):
     examples: Optional[List[Tuple]] = pydantic.Field(None, exclude=True)
     """Examples to use when evaluating the feedback function."""
 
-    criteria: Optional[str] = pydantic.Field(None)
+    criteria: Optional[str] = pydantic.Field(None, exclude=True)
     """Criteria for the feedback function."""
 
-    custom_instructions: Optional[str] = pydantic.Field(None)
+    custom_instructions: Optional[str] = pydantic.Field(None, exclude=True)
     """Custom instructions for the feedback function."""
 
     min_score_val: Optional[int] = pydantic.Field(None, exclude=True)
