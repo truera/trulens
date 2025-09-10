@@ -330,6 +330,8 @@ class CriteriaOutputSpaceMixin:
 
         if custom_instructions is None:
             custom_instructions = ""
+        else:
+            custom_instructions = "Custom instructions: " + custom_instructions
 
         if output_space is None:
             output_space_prompt = cls.output_space_prompt
