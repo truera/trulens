@@ -20,7 +20,6 @@ from opentelemetry.trace import INVALID_SPAN_ID
 from opentelemetry.trace.span import Span
 import pandas as pd
 
-# Import Feedback for runtime isinstance checks
 from trulens.core.feedback.feedback import Feedback
 from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
 from trulens.core.feedback.selector import ProcessedContentNode
