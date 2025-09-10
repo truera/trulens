@@ -20,6 +20,9 @@ from opentelemetry import trace
 from opentelemetry.trace import INVALID_SPAN_ID
 from opentelemetry.trace.span import Span
 import pandas as pd
+
+# Import Feedback for runtime isinstance checks
+from trulens.core.feedback.feedback import Feedback
 from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
 from trulens.core.feedback.selector import ProcessedContentNode
 from trulens.core.feedback.selector import Selector
@@ -133,8 +136,9 @@ def _compute_feedback(
 def compute_feedback_by_span_group(
     events: pd.DataFrame,
     feedback_name: str,
-    feedback_function: Callable[
-        [Any], Union[float, Tuple[float, Dict[str, Any]]]
+    feedback_function: Union[
+        Callable[[Any], Union[float, Tuple[float, Dict[str, Any]]]],
+        Feedback,  # Can now accept Feedback objects
     ],
     higher_is_better: bool,
     kwarg_to_selector: Dict[str, Selector],
@@ -147,13 +151,21 @@ def compute_feedback_by_span_group(
     Args:
         events: DataFrame containing trace events.
         feedback_name: Name of the feedback function.
-        feedback_function: Function to compute feedback.
+        feedback_function: Function to compute feedback or Feedback object.
         higher_is_better: Whether higher values are better.
         kwarg_to_selector: Mapping from function kwargs to span selectors
         feedback_aggregator: Aggregator function to combine feedback scores.
         raise_error_on_no_feedbacks_computed:
             Raise an error if no feedbacks were computed. Default is True.
     """
+    # If we received a Feedback object, extract the implementation but keep the object for later use
+    actual_feedback_function = feedback_function
+    if isinstance(feedback_function, Feedback):
+        # We'll pass the Feedback object through the call chain
+        actual_feedback_function = feedback_function
+    else:
+        # For backward compatibility with raw callables
+        actual_feedback_function = feedback_function
     kwarg_groups = _group_kwargs_by_selectors(kwarg_to_selector)
     unflattened_inputs = _collect_inputs_from_events(
         events, kwarg_groups, kwarg_to_selector
@@ -172,7 +184,7 @@ def compute_feedback_by_span_group(
     num_feedbacks_computed = _run_feedback_on_inputs(
         flattened_inputs,
         feedback_name,
-        feedback_function,
+        actual_feedback_function,  # Pass the Feedback object or raw callable
         higher_is_better,
         feedback_aggregator,
         record_id_to_record_root,
@@ -632,8 +644,9 @@ def _run_feedback_on_inputs(
         Tuple[str, Optional[str], Dict[str, FeedbackFunctionInput]]
     ],
     feedback_name: str,
-    feedback_function: Callable[
-        [Any], Union[float, Tuple[float, Dict[str, Any]]]
+    feedback_function: Union[
+        Callable[[Any], Union[float, Tuple[float, Dict[str, Any]]]],
+        Feedback,  # Can now accept Feedback objects
     ],
     higher_is_better: bool,
     feedback_aggregator: Optional[Callable[[List[float]], float]],
@@ -675,8 +688,9 @@ def _run_feedback_on_inputs(
 
 def _call_feedback_function_with_record_root_info(
     feedback_name: str,
-    feedback_function: Callable[
-        [Any], Union[float, Tuple[float, Dict[str, Any]]]
+    feedback_function: Union[
+        Callable[[Any], Union[float, Tuple[float, Dict[str, Any]]]],
+        Feedback,  # Can now accept Feedback objects
     ],
     higher_is_better: bool,
     feedback_aggregator: Optional[Callable[[List[float]], float]],
@@ -727,8 +741,9 @@ def _call_feedback_function_with_record_root_info(
 
 def _call_feedback_function(
     feedback_name: str,
-    feedback_function: Callable[
-        [Any], Union[float, Tuple[float, Dict[str, Any]]]
+    feedback_function: Union[
+        Callable[[Any], Union[float, Tuple[float, Dict[str, Any]]]],
+        Feedback,  # Can now accept Feedback objects
     ],
     higher_is_better: bool,
     feedback_aggregator: Optional[Callable[[List[float]], float]],
@@ -829,8 +844,9 @@ def _call_feedback_function(
 
 
 def _call_feedback_function_under_eval_span(
-    feedback_function: Callable[
-        [Any], Union[float, Tuple[float, Dict[str, Any]]]
+    feedback_function: Union[
+        Callable[[Any], Union[float, Tuple[float, Dict[str, Any]]]],
+        Feedback,  # Can now accept Feedback objects
     ],
     kwargs: Dict[str, Any],
     eval_root_span: Span,
@@ -860,7 +876,12 @@ def _call_feedback_function_under_eval_span(
         res = None
         exc = None
         try:
-            res = feedback_function(**kwargs)
+            # Check if feedback_function is a Feedback object and use its __call__ method
+            # to ensure custom parameters like criteria and custom_instructions are used
+            if isinstance(feedback_function, Feedback):
+                res = feedback_function(**kwargs)
+            else:
+                res = feedback_function(**kwargs)
             metadata = {}
             if isinstance(res, tuple):
                 # If the result is a tuple, it must be (score, metadata) where
@@ -888,9 +909,13 @@ def _call_feedback_function_under_eval_span(
             eval_span.set_attribute(SpanAttributes.EVAL.ERROR, str(e))
             raise e
         finally:
-            set_function_call_attributes(
-                eval_span, res, get_func_name(feedback_function), exc, kwargs
-            )
+            # Handle both Feedback objects and raw functions for get_func_name
+            if isinstance(feedback_function, Feedback):
+                func_name = feedback_function.name
+            else:
+                func_name = get_func_name(feedback_function)
+
+            set_function_call_attributes(eval_span, res, func_name, exc, kwargs)
 
 
 def _set_metadata_attributes(span: Span, metadata: Dict[str, Any]) -> None:
