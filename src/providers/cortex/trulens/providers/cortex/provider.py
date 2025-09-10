@@ -174,16 +174,15 @@ class Cortex(
         if response_format is not None:
             # If response_format is provided, we expect the response to be a JSON string
             # that can be parsed into the specified response_format.
-            completion_obj = response_format.model_validate_json(completion_res)
-            # try:
-            #     completion_obj = response_format.model_validate_json(
-            #         completion_res
-            #     )
-            # except Exception as e:
-            #     logger.debug(
-            #         f"Parsing response_format {response_format} failed due to {e}, returning raw response.",
-            #     )
-            #     completion_obj = completion_res
+            try:
+                completion_obj = response_format.model_validate_json(
+                    completion_res
+                )
+            except Exception as e:
+                logger.debug(
+                    f"Parsing response_format {response_format} failed due to {e}, returning raw response.",
+                )
+                completion_obj = completion_res
         else:
             completion_obj = completion_res
 
