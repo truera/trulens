@@ -64,7 +64,7 @@ Using `on_context` allows to access the retrieved text for evaluation via the so
     )
     ```
 
-You can find the full quickstart available here: [LlamaIndex Quickstart](../../getting_started/quickstarts/llama_index_quickstart.ipynb)
+You can find the full quickstart available here: [LlamaIndex Quickstart](../../cookbook/frameworks/llamaindex/llama_index_quickstart.ipynb)
 
 ## Async Support
 
