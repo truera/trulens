@@ -2123,7 +2123,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             compute_feedback_by_span_group(
                 events,
                 feedback.name,
-                feedback,  # Pass the entire Feedback object instead of just feedback.imp
+                feedback,
                 feedback.higher_is_better,
                 feedback.selectors,
                 feedback.aggregator,
