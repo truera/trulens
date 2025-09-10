@@ -435,81 +435,88 @@ class LLMProvider(core_provider.Provider):
                 # Ignore reformat failures and fall through to existing parsing
                 pass
 
-        if "Supporting Evidence" in response:
-            score = -1
-            supporting_evidence = None
-            criteria = None
-            lines = response.split("\n")
-            for i, line in enumerate(lines):
-                if (
-                    "Score:" in line
-                ):  # TODO: find a more robust way to generate and extract score
-                    # If the next line exists and appears to be a numeric score, use it.
+            if "Supporting Evidence" in response:
+                score = -1
+                supporting_evidence = None
+                criteria = None
+                lines = response.split("\n")
+                for i, line in enumerate(lines):
                     if (
-                        i + 1 < len(lines)
-                        and lines[i + 1].strip().replace(".", "", 1).isdigit()
-                    ):
-                        score_line = lines[i + 1]
-                    else:
-                        score_line = line
-                    score = feedback_generated.re_configured_rating(
-                        score_line,
-                        min_score_val=min_score_val,
-                        max_score_val=max_score_val,
-                    )
-
-                criteria_lines = []
-                supporting_evidence_lines = []
-                collecting_criteria = False
-                collecting_evidence = False
-
-                for line in response.split("\n"):
-                    if f"{criteria_field}:" in line:
-                        criteria_lines.append(
-                            line.split(f"{criteria_field}:", 1)[1].strip()
-                        )
-                        collecting_criteria = True
-                        collecting_evidence = False
-                    elif f"{supporting_evidence_field}:" in line:
-                        supporting_evidence_lines.append(
-                            line.split(f"{supporting_evidence_field}:", 1)[
-                                1
-                            ].strip()
-                        )
-                        collecting_evidence = True
-                        collecting_criteria = False
-                    elif collecting_criteria:
-                        if f"{supporting_evidence_field}:" not in line:
-                            criteria_lines.append(line.strip())
+                        "Score:" in line
+                    ):  # TODO: find a more robust way to generate and extract score
+                        # If the next line exists and appears to be a numeric score, use it.
+                        if (
+                            i + 1 < len(lines)
+                            and lines[i + 1]
+                            .strip()
+                            .replace(".", "", 1)
+                            .isdigit()
+                        ):
+                            score_line = lines[i + 1]
                         else:
-                            collecting_criteria = False
-                    elif collecting_evidence:
-                        if f"{criteria_field}:" not in line:
-                            supporting_evidence_lines.append(line.strip())
-                        else:
+                            score_line = line
+                        score = feedback_generated.re_configured_rating(
+                            score_line,
+                            min_score_val=min_score_val,
+                            max_score_val=max_score_val,
+                        )
+
+                    criteria_lines = []
+                    supporting_evidence_lines = []
+                    collecting_criteria = False
+                    collecting_evidence = False
+
+                    for line in response.split("\n"):
+                        if f"{criteria_field}:" in line:
+                            criteria_lines.append(
+                                line.split(f"{criteria_field}:", 1)[1].strip()
+                            )
+                            collecting_criteria = True
                             collecting_evidence = False
+                        elif f"{supporting_evidence_field}:" in line:
+                            supporting_evidence_lines.append(
+                                line.split(f"{supporting_evidence_field}:", 1)[
+                                    1
+                                ].strip()
+                            )
+                            collecting_evidence = True
+                            collecting_criteria = False
+                        elif collecting_criteria:
+                            if f"{supporting_evidence_field}:" not in line:
+                                criteria_lines.append(line.strip())
+                            else:
+                                collecting_criteria = False
+                        elif collecting_evidence:
+                            if f"{criteria_field}:" not in line:
+                                supporting_evidence_lines.append(line.strip())
+                            else:
+                                collecting_evidence = False
 
-                criteria = "\n".join(criteria_lines).strip()
-                supporting_evidence = "\n".join(
-                    supporting_evidence_lines
-                ).strip()
-            reasons = {
-                "reason": (
-                    f"{criteria_field}: {criteria}\n"
-                    f"{supporting_evidence_field}: {supporting_evidence}"
+                    criteria = "\n".join(criteria_lines).strip()
+                    supporting_evidence = "\n".join(
+                        supporting_evidence_lines
+                    ).strip()
+                reasons = {
+                    "reason": (
+                        f"{criteria_field}: {criteria}\n"
+                        f"{supporting_evidence_field}: {supporting_evidence}"
+                    )
+                }
+
+            else:
+                score = feedback_generated.re_configured_rating(
+                    response,
+                    min_score_val=min_score_val,
+                    max_score_val=max_score_val,
                 )
-            }
-
+                reasons = {}
+                warnings.warn(
+                    "No supporting evidence provided. Returning score only.",
+                    UserWarning,
+                )
         else:
-            score = feedback_generated.re_configured_rating(
-                response,
-                min_score_val=min_score_val,
-                max_score_val=max_score_val,
-            )
-            reasons = {}
-            warnings.warn(
-                "No supporting evidence provided. Returning score only.",
-                UserWarning,
+            raise ValueError(
+                f"Expected string or structured response but got:\n{response}"
             )
 
         # Normalize score to [0, 1] range
