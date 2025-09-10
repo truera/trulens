@@ -2581,7 +2581,6 @@ class LLMProvider(core_provider.Provider):
             output_space=output_space,
             examples=examples,
         )
-
         if isinstance(trace, Trace):
             trace = trace.events.to_json(default_handler=str)
         elif isinstance(trace, str):
