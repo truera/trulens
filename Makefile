@@ -17,6 +17,8 @@ CONDA_BUILD_DIRS := $(shell find . \
 	-name "*meta.yaml" \
 	-exec dirname {} \;)
 LAST_TRULENS_EVAL_COMMIT := 4cadb05 # commit that includes the last pre-namespace trulens_eval package
+TOKEN ?= $(shell echo $$TOKEN)
+
 
 # Global setting: execute all commands of a target in a single shell session.
 # Note for MAC OS, the default make is too old to support this. "brew install

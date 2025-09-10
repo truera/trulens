@@ -4,7 +4,7 @@ trulens:
   lows: {}
 trulens.benchmark:
   __class__: builtins.module
-  __version__: 2.2.0
+  __version__: 2.3.0
   highs: {}
   lows:
     __version__: builtins.str
@@ -32,7 +32,7 @@ trulens.benchmark.benchmark_frameworks.tru_benchmark_experiment.TruBenchmarkExpe
   - builtins.object
   __class__: builtins.type
   attributes:
-    run_score_generation_on_single_row: builtins.function
+    run_score_generation_on_single_row: builtins.FunctionWrapper
 trulens.benchmark.generate:
   __class__: builtins.module
   highs: {}
@@ -60,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 2.2.0
+  __version__: 2.3.0
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -1315,6 +1315,7 @@ trulens.core.session.TruSession:
     Virtual: builtins.function
     add_app: builtins.function
     add_feedback: builtins.function
+    add_feedback_result: builtins.function
     add_feedbacks: builtins.function
     add_ground_truth_to_dataset: builtins.function
     add_record: builtins.function
@@ -1925,7 +1926,7 @@ trulens.core.utils.trulens.Other:
   attributes: {}
 trulens.dashboard:
   __class__: builtins.module
-  __version__: 2.2.0
+  __version__: 2.3.0
   highs:
     run_dashboard: builtins.function
     run_dashboard_sis: builtins.function
@@ -2227,7 +2228,7 @@ trulens.dashboard.ux.styles.ResultCategoryType:
     value: enum.property
 trulens.feedback:
   __class__: builtins.module
-  __version__: 2.2.0
+  __version__: 2.3.0
   highs:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
@@ -2438,12 +2439,21 @@ trulens.feedback.llm_provider:
   __class__: builtins.module
   highs: {}
   lows:
+    CapabilityCacheEntry: typing._TypedDictMeta
     LLMProvider: pydantic._internal._model_construction.ModelMetaclass
+    REASONING_MODEL_PREFIXES: builtins.tuple
+trulens.feedback.llm_provider.CapabilityCacheEntry:
+  __bases__:
+  - builtins.dict
+  __class__: typing._TypedDictMeta
+  attributes: {}
 trulens.feedback.llm_provider.LLMProvider:
   __bases__:
   - trulens.core.feedback.provider.Provider
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -2543,7 +2553,6 @@ trulens.feedback.prompts:
     LLM_ABSTENTION_USER: builtins.str
     LLM_ANSWERABILITY_SYSTEM: builtins.str
     LLM_ANSWERABILITY_USER: builtins.str
-    LLM_GROUNDEDNESS_FULL_PROMPT: builtins.str
     LLM_GROUNDEDNESS_SENTENCES_SPLITTER: builtins.str
     LLM_GROUNDEDNESS_SYSTEM: builtins.str
     LLM_GROUNDEDNESS_USER: builtins.str
@@ -3223,7 +3232,7 @@ trulens.feedback.v2.provider.base.Provider:
     tru_class_info: trulens.core.utils.pyschema.Class
 trulens.hotspots:
   __class__: builtins.module
-  __version__: 2.2.0
+  __version__: 2.3.0
   highs:
     HotspotsConfig: builtins.type
     get_skipped_columns: builtins.function

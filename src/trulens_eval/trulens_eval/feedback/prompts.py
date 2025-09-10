@@ -36,7 +36,6 @@ from trulens.feedback.prompts import LANGCHAIN_PROMPT_TEMPLATE_USER
 from trulens.feedback.prompts import (
     LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS_SYSTEM,
 )
-from trulens.feedback.prompts import LLM_GROUNDEDNESS_FULL_PROMPT
 from trulens.feedback.prompts import LLM_GROUNDEDNESS_SYSTEM
 from trulens.feedback.prompts import LLM_GROUNDEDNESS_USER
 from trulens.feedback.prompts import REMOVE_Y_N

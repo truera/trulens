@@ -523,6 +523,9 @@ class OtelRecordingContext(OtelBaseRecordingContext):
         input_id: str,
         input_records_count: Optional[int] = None,
         ground_truth_output: Optional[str] = None,
+        input_selector: Optional[
+            Callable[[Tuple[Any, ...], Dict[str, Any]], Any]
+        ] = None,
     ) -> None:
         app_id = AppDefinition._compute_app_id(app_name, app_version)
         super().__init__(
@@ -535,6 +538,7 @@ class OtelRecordingContext(OtelBaseRecordingContext):
         self.tru_app = tru_app
         self.input_records_count = input_records_count
         self.ground_truth_output = ground_truth_output
+        self.input_selector = input_selector
 
     # For use as a context manager.
     def __enter__(self) -> Recording:
@@ -553,6 +557,10 @@ class OtelRecordingContext(OtelBaseRecordingContext):
             SpanAttributes.RECORD_ROOT.GROUND_TRUTH_OUTPUT,
             self.ground_truth_output,
         )
+        self.attach_to_context(
+            "__trulens_input_selector__", self.input_selector
+        )
+
         ret = Recording(self.tru_app)
         self.attach_to_context("__trulens_recording__", ret)
         return ret
