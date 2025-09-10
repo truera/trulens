@@ -435,7 +435,7 @@ class LLMProvider(core_provider.Provider):
                 # Ignore reformat failures and fall through to existing parsing
                 pass
 
-        elif "Supporting Evidence" in response:
+        if "Supporting Evidence" in response:
             score = -1
             supporting_evidence = None
             criteria = None
