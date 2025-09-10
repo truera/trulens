@@ -277,6 +277,14 @@ class Feedback(feedback_schema.FeedbackDefinition):
                 # loaded `agg` were specified.
                 agg = np.mean
 
+        # Pass custom parameters to parent class for serialization
+        if criteria is not None:
+            kwargs["criteria"] = criteria
+        if custom_instructions is not None:
+            kwargs["custom_instructions"] = custom_instructions
+        if examples is not None:
+            kwargs["examples"] = examples
+
         super().__init__(**kwargs)
 
         self.imp = imp

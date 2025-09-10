@@ -13,19 +13,19 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
-    Union,
 )
 
 from opentelemetry import trace
 from opentelemetry.trace import INVALID_SPAN_ID
 from opentelemetry.trace.span import Span
 import pandas as pd
+
+from trulens.core.feedback.feedback import Feedback
 from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
 from trulens.core.feedback.selector import ProcessedContentNode
 from trulens.core.feedback.selector import Selector
 from trulens.core.feedback.selector import Trace
 from trulens.core.otel.instrument import OtelFeedbackComputationRecordingContext
-from trulens.core.otel.instrument import get_func_name
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
 from trulens.experimental.otel_tracing.core.span import (
     set_function_call_attributes,
@@ -91,9 +91,7 @@ class RecordGraphNode:
 def _compute_feedback(
     record_root: RecordGraphNode,
     feedback_name: str,
-    feedback_function: Callable[
-        [Any], Union[float, Tuple[float, Dict[str, Any]]]
-    ],
+    feedback_function: Feedback,
     higher_is_better: bool,
     selector_function: Callable[[RecordGraphNode], List[Dict[str, Any]]],
 ) -> None:
@@ -104,7 +102,7 @@ def _compute_feedback(
     Args:
         record_root: Record root of record to compute feedback for.
         feedback_name: Name of feedback.
-        feedback_function: Function to compute feedback.
+        feedback_function: Feedback object to compute feedback.
         higher_is_better: Whether higher values are better.
         selector_function:
             Function to select inputs for feedback computation. Given a record
@@ -133,9 +131,7 @@ def _compute_feedback(
 def compute_feedback_by_span_group(
     events: pd.DataFrame,
     feedback_name: str,
-    feedback_function: Callable[
-        [Any], Union[float, Tuple[float, Dict[str, Any]]]
-    ],
+    feedback_function: Feedback,
     higher_is_better: bool,
     kwarg_to_selector: Dict[str, Selector],
     feedback_aggregator: Optional[Callable[[List[float]], float]] = None,
@@ -147,13 +143,14 @@ def compute_feedback_by_span_group(
     Args:
         events: DataFrame containing trace events.
         feedback_name: Name of the feedback function.
-        feedback_function: Function to compute feedback.
+        feedback_function: Feedback object to compute feedback.
         higher_is_better: Whether higher values are better.
         kwarg_to_selector: Mapping from function kwargs to span selectors
         feedback_aggregator: Aggregator function to combine feedback scores.
         raise_error_on_no_feedbacks_computed:
             Raise an error if no feedbacks were computed. Default is True.
     """
+
     kwarg_groups = _group_kwargs_by_selectors(kwarg_to_selector)
     unflattened_inputs = _collect_inputs_from_events(
         events, kwarg_groups, kwarg_to_selector
@@ -632,9 +629,7 @@ def _run_feedback_on_inputs(
         Tuple[str, Optional[str], Dict[str, FeedbackFunctionInput]]
     ],
     feedback_name: str,
-    feedback_function: Callable[
-        [Any], Union[float, Tuple[float, Dict[str, Any]]]
-    ],
+    feedback_function: Feedback,
     higher_is_better: bool,
     feedback_aggregator: Optional[Callable[[List[float]], float]],
     record_id_to_record_root: Dict[str, pd.Series],
@@ -644,7 +639,7 @@ def _run_feedback_on_inputs(
     Args:
         flattened_inputs: Flattened inputs. Each entry is a tuple of (record_id, span_group, inputs).
         feedback_name: Name of the feedback function.
-        feedback_function: Function to compute feedback.
+        feedback_function: Feedback object to compute feedback.
         higher_is_better: Whether higher values are better.
         feedback_aggregator: Aggregator function to combine feedback scores.
         record_id_to_record_root: Mapping from record_id to record root.
@@ -675,9 +670,7 @@ def _run_feedback_on_inputs(
 
 def _call_feedback_function_with_record_root_info(
     feedback_name: str,
-    feedback_function: Callable[
-        [Any], Union[float, Tuple[float, Dict[str, Any]]]
-    ],
+    feedback_function: Feedback,
     higher_is_better: bool,
     feedback_aggregator: Optional[Callable[[List[float]], float]],
     kwarg_inputs: Dict[str, FeedbackFunctionInput],
@@ -689,7 +682,7 @@ def _call_feedback_function_with_record_root_info(
 
     Args:
         feedback_name: Name of the feedback function.
-        feedback_function: Function to compute feedback.
+        feedback_function: Feedback object to compute feedback.
         higher_is_better: Whether higher values are better.
         feedback_aggregator: Aggregator function to combine feedback scores.
         kwarg_inputs: kwarg inputs to feedback function.
@@ -727,9 +720,7 @@ def _call_feedback_function_with_record_root_info(
 
 def _call_feedback_function(
     feedback_name: str,
-    feedback_function: Callable[
-        [Any], Union[float, Tuple[float, Dict[str, Any]]]
-    ],
+    feedback_function: Feedback,
     higher_is_better: bool,
     feedback_aggregator: Optional[Callable[[List[float]], float]],
     kwarg_inputs: Dict[str, FeedbackFunctionInput],
@@ -745,7 +736,7 @@ def _call_feedback_function(
 
     Args:
         feedback_name: Name of the feedback function.
-        feedback_function: Function to compute feedback.
+        feedback_function: Feedback object to compute feedback.
         higher_is_better: Whether higher values are better.
         feedback_aggregator: Aggregator function to combine feedback scores.
         kwarg_inputs: kwarg inputs to feedback function.
@@ -829,9 +820,7 @@ def _call_feedback_function(
 
 
 def _call_feedback_function_under_eval_span(
-    feedback_function: Callable[
-        [Any], Union[float, Tuple[float, Dict[str, Any]]]
-    ],
+    feedback_function: Feedback,
     kwargs: Dict[str, Any],
     eval_root_span: Span,
     is_only_child: bool,
@@ -860,6 +849,7 @@ def _call_feedback_function_under_eval_span(
         res = None
         exc = None
         try:
+            # Directly call the Feedback object to ensure custom parameters are used
             res = feedback_function(**kwargs)
             metadata = {}
             if isinstance(res, tuple):
@@ -874,7 +864,7 @@ def _call_feedback_function_under_eval_span(
                     ])
                 ):
                     raise ValueError(
-                        "Feedback functions must be of type `Callable[Any, Union[float, Tuple[float, Dict[str, Any]]]]`!"
+                        "Feedback functions must return either a float score or a (score, metadata) tuple."
                     )
                 res, metadata = res[0], res[1]
             res = float(res)
@@ -888,9 +878,10 @@ def _call_feedback_function_under_eval_span(
             eval_span.set_attribute(SpanAttributes.EVAL.ERROR, str(e))
             raise e
         finally:
-            set_function_call_attributes(
-                eval_span, res, get_func_name(feedback_function), exc, kwargs
-            )
+            # Use Feedback.name for function call attributes
+            func_name = feedback_function.name
+
+            set_function_call_attributes(eval_span, res, func_name, exc, kwargs)
 
 
 def _set_metadata_attributes(span: Span, metadata: Dict[str, Any]) -> None:
