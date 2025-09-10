@@ -209,7 +209,7 @@ class WithJSONTestCase(TestCase):
         elif ".yaml" in golden_path.suffixes or ".yml" in golden_path.suffixes:
             loader = functools.partial(yaml.load, Loader=yaml.FullLoader)
         elif ".csv" in golden_path.suffixes:
-            loader = functools.partial(pd.read_csv, index_col=0)
+            loader = functools.partial(pd.read_csv)
         else:
             raise ValueError(f"Unknown file extension {golden_path}.")
 
