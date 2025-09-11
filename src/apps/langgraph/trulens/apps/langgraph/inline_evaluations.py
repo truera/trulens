@@ -62,7 +62,7 @@ class inline_evaluation:
                     )
                     feedback_result = _call_feedback_function(
                         self._feedback.name,
-                        self._feedback.imp,
+                        self._feedback,
                         self._feedback.higher_is_better,
                         self._feedback.aggregator,
                         feedback_function_inputs,
@@ -76,7 +76,7 @@ class inline_evaluation:
                     )
                 else:
                     # Call the feedback function without creating spans
-                    feedback_result = self._feedback.imp(**feedback_args)
+                    feedback_result = self._feedback(**feedback_args)
 
                 # Add feedback result to state messages
                 state = self._get_state_arg(func, instance, args, kwargs)
