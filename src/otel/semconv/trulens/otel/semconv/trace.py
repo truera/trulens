@@ -97,6 +97,9 @@ class SpanAttributes:
         GRAPH_NODE = "graph_node"
         """A graph node execution."""
 
+        WORKFLOW_STEP = "workflow_step"
+        """A workflow step execution."""
+
     class UNKNOWN:
         """Attributes relevant for spans that could not be categorized otherwise."""
 
@@ -313,3 +316,17 @@ class SpanAttributes:
 
         ERROR = base + ".error"
         """Error raised during graph execution."""
+
+    class WORKFLOW:
+        """A workflow execution."""
+
+        base = BASE_SCOPE + ".workflow"
+
+        INPUT_EVENT = base + ".input_event"
+        """Input event to the workflow."""
+
+        OUTPUT_EVENT = base + ".output_event"
+        """Output event from the workflow."""
+
+        ERROR = base + ".error"
+        """Error raised during workflow execution."""
