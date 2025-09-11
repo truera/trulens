@@ -1270,6 +1270,7 @@ class TruSession(
                 "add_feedback_result is only supported when OTEL tracing is enabled!"
             )
 
+        from trulens.core.feedback.feedback import Feedback
         from trulens.feedback.computer import _call_feedback_function
 
         # Get necessary information from the record root.
@@ -1282,10 +1283,17 @@ class TruSession(
         run_name = record_attributes.get(SpanAttributes.RUN_NAME)
         input_id = record_attributes.get(SpanAttributes.INPUT_ID)
 
+        # Wrap constant result in a Feedback object to align with new API
+        const_feedback = Feedback(
+            lambda: feedback_result,
+            name=feedback_name,
+            higher_is_better=higher_is_better,
+        )
+
         # Create feedback computation recording context
         feedback_result = _call_feedback_function(
             feedback_name,
-            lambda: feedback_result,
+            const_feedback,
             higher_is_better,
             None,
             {},

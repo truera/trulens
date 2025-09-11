@@ -170,7 +170,6 @@ class Feedback(feedback_schema.FeedbackDefinition):
 
     criteria: Optional[str] = pydantic.Field(None, exclude=True)
     """Criteria for the feedback function."""
-
     min_score_val: Optional[int] = pydantic.Field(None, exclude=True)
     """Minimum score value for the feedback function."""
 
@@ -272,6 +271,12 @@ class Feedback(feedback_schema.FeedbackDefinition):
                 # Default aggregator if neither serialized `aggregator` or
                 # loaded `agg` were specified.
                 agg = np.mean
+
+        # Pass custom parameters to parent class for serialization
+        if criteria is not None:
+            kwargs["criteria"] = criteria
+        if examples is not None:
+            kwargs["examples"] = examples
 
         super().__init__(**kwargs)
 
