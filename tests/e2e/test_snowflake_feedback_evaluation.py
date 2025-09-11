@@ -25,19 +25,17 @@ def silly_feedback_function(q: str) -> float:
 class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.orig_trulens_otel_tracing_val = os.getenv("TRULENS_OTEL_TRACING")
+        cls._orig_TRULENS_OTEL_TRACING = os.getenv("TRULENS_OTEL_TRACING")
         os.environ["TRULENS_OTEL_TRACING"] = "0"
-        super().setUpClass()
+        return super().setUpClass()
 
     @classmethod
     def tearDownClass(cls) -> None:
-        super().tearDownClass()
-        if cls.orig_trulens_otel_tracing_val is not None:
-            os.environ["TRULENS_OTEL_TRACING"] = (
-                cls.orig_trulens_otel_tracing_val
-            )
+        if cls._orig_TRULENS_OTEL_TRACING is not None:
+            os.environ["TRULENS_OTEL_TRACING"] = cls._orig_TRULENS_OTEL_TRACING
         else:
             del os.environ["TRULENS_OTEL_TRACING"]
+        return super().tearDownClass()
 
     def _suspend_task(self) -> None:
         self._snowpark_session.sql(

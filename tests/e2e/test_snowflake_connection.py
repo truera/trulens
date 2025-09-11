@@ -17,7 +17,7 @@ from tests.util.snowflake_test_case import SnowflakeTestCase
 class TestSnowflakeConnection(SnowflakeTestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls._orig_TRULENS_OTEL_TRACING = os.environ.get("TRULENS_OTEL_TRACING")
+        cls._orig_TRULENS_OTEL_TRACING = os.getenv("TRULENS_OTEL_TRACING")
         os.environ["TRULENS_OTEL_TRACING"] = "0"
         return super().setUpClass()
 
