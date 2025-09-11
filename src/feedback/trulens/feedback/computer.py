@@ -131,6 +131,7 @@ def compute_feedback_by_span_group(
     events: pd.DataFrame,
     feedback: Feedback,
     raise_error_on_no_feedbacks_computed: bool = True,
+    selectors: Optional[Dict[str, Selector]] = None,
 ) -> None:
     """
     Compute feedback based on span groups in events.
@@ -138,14 +139,18 @@ def compute_feedback_by_span_group(
     Args:
         events: DataFrame containing trace events.
         feedback: Feedback object to compute feedback. Its `name`,
-            `selectors`, `higher_is_better`, and `aggregator` will be used.
+            `higher_is_better`, and `aggregator` will be used.
         raise_error_on_no_feedbacks_computed:
             Raise an error if no feedbacks were computed. Default is True.
+        selectors: Optional dict of selectors for OTEL mode. If not provided,
+            will use feedback.selectors.
     """
     feedback_name = feedback.name
     feedback_function = feedback
     higher_is_better = feedback.higher_is_better
-    kwarg_to_selector = feedback.selectors
+    kwarg_to_selector = (
+        selectors if selectors is not None else feedback.selectors
+    )
     feedback_aggregator = feedback.aggregator
 
     kwarg_groups = _group_kwargs_by_selectors(kwarg_to_selector)
