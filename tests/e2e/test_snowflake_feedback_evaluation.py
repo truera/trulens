@@ -36,6 +36,8 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             os.environ["TRULENS_OTEL_TRACING"] = (
                 cls.orig_trulens_otel_tracing_val
             )
+        else:
+            del os.environ["TRULENS_OTEL_TRACING"]
 
     def _suspend_task(self) -> None:
         self._snowpark_session.sql(
