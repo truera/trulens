@@ -19,7 +19,6 @@ from opentelemetry import trace
 from opentelemetry.trace import INVALID_SPAN_ID
 from opentelemetry.trace.span import Span
 import pandas as pd
-
 from trulens.core.feedback.feedback import Feedback
 from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
 from trulens.core.feedback.selector import ProcessedContentNode
@@ -130,26 +129,29 @@ def _compute_feedback(
 
 def compute_feedback_by_span_group(
     events: pd.DataFrame,
-    feedback_name: str,
-    feedback_function: Feedback,
-    higher_is_better: bool,
-    kwarg_to_selector: Dict[str, Selector],
-    feedback_aggregator: Optional[Callable[[List[float]], float]] = None,
+    feedback: Feedback,
     raise_error_on_no_feedbacks_computed: bool = True,
+    selectors: Optional[Dict[str, Selector]] = None,
 ) -> None:
     """
     Compute feedback based on span groups in events.
 
     Args:
         events: DataFrame containing trace events.
-        feedback_name: Name of the feedback function.
-        feedback_function: Feedback object to compute feedback.
-        higher_is_better: Whether higher values are better.
-        kwarg_to_selector: Mapping from function kwargs to span selectors
-        feedback_aggregator: Aggregator function to combine feedback scores.
+        feedback: Feedback object to compute feedback. Its `name`,
+            `higher_is_better`, and `aggregator` will be used.
         raise_error_on_no_feedbacks_computed:
             Raise an error if no feedbacks were computed. Default is True.
+        selectors: Optional dict of selectors for OTEL mode. If not provided,
+            will use feedback.selectors.
     """
+    feedback_name = feedback.name
+    feedback_function = feedback
+    higher_is_better = feedback.higher_is_better
+    kwarg_to_selector = (
+        selectors if selectors is not None else feedback.selectors
+    )
+    feedback_aggregator = feedback.aggregator
 
     kwarg_groups = _group_kwargs_by_selectors(kwarg_to_selector)
     unflattened_inputs = _collect_inputs_from_events(
