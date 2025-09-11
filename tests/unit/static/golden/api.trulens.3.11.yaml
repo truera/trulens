@@ -1341,16 +1341,19 @@ trulens.core.session.TruSession:
     Virtual: builtins.function
     add_app: builtins.function
     add_feedback: builtins.function
+    add_feedback_result: builtins.function
     add_feedbacks: builtins.function
     add_ground_truth_to_dataset: builtins.function
     add_record: builtins.function
     add_record_nowait: builtins.function
+    compute_feedbacks_on_events: builtins.function
     connector: typing.Optional[trulens.core.database.connector.base.DBConnector, builtins.NoneType]
     delete_app: builtins.function
     find_unused_port: builtins.function
     force_flush: builtins.function
     get_app: builtins.function
     get_apps: builtins.function
+    get_events: builtins.function
     get_ground_truth: builtins.function
     get_leaderboard: builtins.function
     get_records_and_feedback: builtins.function
@@ -2464,12 +2467,21 @@ trulens.feedback.llm_provider:
   __class__: builtins.module
   highs: {}
   lows:
+    CapabilityCacheEntry: typing._TypedDictMeta
     LLMProvider: pydantic._internal._model_construction.ModelMetaclass
+    REASONING_MODEL_PREFIXES: builtins.tuple
+trulens.feedback.llm_provider.CapabilityCacheEntry:
+  __bases__:
+  - builtins.dict
+  __class__: typing._TypedDictMeta
+  attributes: {}
 trulens.feedback.llm_provider.LLMProvider:
   __bases__:
   - trulens.core.feedback.provider.Provider
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function

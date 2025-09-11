@@ -2,7 +2,18 @@ from concurrent.futures import as_completed
 import json
 import logging
 import re
-from typing import ClassVar, Dict, List, Optional, Sequence, Tuple, Type, Union
+import threading
+from typing import (
+    ClassVar,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    TypedDict,
+    Union,
+)
 import warnings
 
 import nltk
@@ -21,6 +32,21 @@ from trulens.feedback import prompts as feedback_prompts
 from trulens.feedback.v2 import feedback as feedback_v2
 
 logger = logging.getLogger(__name__)
+
+REASONING_MODEL_PREFIXES = ("o1", "o3", "o4", "gpt-5", "deepseek-r1")
+
+# --- Shared capability cache for LLM providers ---
+_capabilities_lock = threading.Lock()
+
+
+class CapabilityCacheEntry(TypedDict, total=False):
+    structured_outputs: bool
+    temperature: bool
+    reasoning_effort: bool
+    cfg: bool
+
+
+_model_capabilities_cache: Dict[str, CapabilityCacheEntry] = {}
 
 
 class LLMProvider(core_provider.Provider):
@@ -58,15 +84,61 @@ class LLMProvider(core_provider.Provider):
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
+    # --- Shared capability cache helpers ---
+    def _capabilities_key(self) -> str:
+        return getattr(self, "model_engine", "") or self.__class__.__name__
+
+    def _get_capabilities(self) -> CapabilityCacheEntry:
+        with _capabilities_lock:
+            return _model_capabilities_cache.get(self._capabilities_key(), {})
+
+    def _set_capabilities(self, updates: CapabilityCacheEntry) -> None:
+        with _capabilities_lock:
+            current = _model_capabilities_cache.get(
+                self._capabilities_key(), {}
+            )
+            current.update(updates)
+            _model_capabilities_cache[self._capabilities_key()] = current
+
+    @classmethod
+    def clear_model_capabilities_cache(
+        cls, model_engine: Optional[str] = None
+    ) -> None:
+        with _capabilities_lock:
+            if model_engine is None:
+                _model_capabilities_cache.clear()
+            else:
+                _model_capabilities_cache.pop(model_engine, None)
+
+    def clear_capabilities_cache(self) -> None:
+        self.clear_model_capabilities_cache(self._capabilities_key())
+
+    def _is_unsupported_parameter_error(
+        self, exc: Exception, parameter: str
+    ) -> bool:
+        message = str(getattr(exc, "message", "")) or str(exc)
+        lowered = message.lower()
+        return (
+            ("unsupported" in lowered)
+            or ("unexpected keyword" in lowered)
+            or ("got an unexpected" in lowered)
+            or ("does not support" in lowered)
+            or ("is not allowed" in lowered)
+            or ("unknown" in lowered)
+        ) and (parameter in lowered)
+
     def _is_reasoning_model(self) -> bool:
-        """Check if the current model is a reasoning model.
+        """Detect reasoning models robustly across providers.
 
-        This method should be overridden by provider-specific implementations.
-
-        Returns:
-            bool: False by default. Subclasses should override for reasoning model detection.
+        - Handles provider-prefixed ids like "snowflake/o3-mini".
+        - Matches known prefixes in REASONING_MODEL_PREFIXES.
+        - Also matches generic substrings like "reasoning" or "thinking".
         """
-        return False
+        raw = (self.model_engine or "").lower()
+        name = raw.split("/", 1)[1] if "/" in raw else raw
+        if any(name.startswith(p) for p in REASONING_MODEL_PREFIXES):
+            return True
+        return ("reasoning" in name) or ("thinking" in name)
 
     # @abstractmethod
     def _create_chat_completion(
@@ -363,81 +435,88 @@ class LLMProvider(core_provider.Provider):
                 # Ignore reformat failures and fall through to existing parsing
                 pass
 
-        elif "Supporting Evidence" in response:
-            score = -1
-            supporting_evidence = None
-            criteria = None
-            lines = response.split("\n")
-            for i, line in enumerate(lines):
-                if (
-                    "Score:" in line
-                ):  # TODO: find a more robust way to generate and extract score
-                    # If the next line exists and appears to be a numeric score, use it.
+            if "Supporting Evidence" in response:
+                score = -1
+                supporting_evidence = None
+                criteria = None
+                lines = response.split("\n")
+                for i, line in enumerate(lines):
                     if (
-                        i + 1 < len(lines)
-                        and lines[i + 1].strip().replace(".", "", 1).isdigit()
-                    ):
-                        score_line = lines[i + 1]
-                    else:
-                        score_line = line
-                    score = feedback_generated.re_configured_rating(
-                        score_line,
-                        min_score_val=min_score_val,
-                        max_score_val=max_score_val,
-                    )
-
-                criteria_lines = []
-                supporting_evidence_lines = []
-                collecting_criteria = False
-                collecting_evidence = False
-
-                for line in response.split("\n"):
-                    if f"{criteria_field}:" in line:
-                        criteria_lines.append(
-                            line.split(f"{criteria_field}:", 1)[1].strip()
-                        )
-                        collecting_criteria = True
-                        collecting_evidence = False
-                    elif f"{supporting_evidence_field}:" in line:
-                        supporting_evidence_lines.append(
-                            line.split(f"{supporting_evidence_field}:", 1)[
-                                1
-                            ].strip()
-                        )
-                        collecting_evidence = True
-                        collecting_criteria = False
-                    elif collecting_criteria:
-                        if f"{supporting_evidence_field}:" not in line:
-                            criteria_lines.append(line.strip())
+                        "Score:" in line
+                    ):  # TODO: find a more robust way to generate and extract score
+                        # If the next line exists and appears to be a numeric score, use it.
+                        if (
+                            i + 1 < len(lines)
+                            and lines[i + 1]
+                            .strip()
+                            .replace(".", "", 1)
+                            .isdigit()
+                        ):
+                            score_line = lines[i + 1]
                         else:
-                            collecting_criteria = False
-                    elif collecting_evidence:
-                        if f"{criteria_field}:" not in line:
-                            supporting_evidence_lines.append(line.strip())
-                        else:
+                            score_line = line
+                        score = feedback_generated.re_configured_rating(
+                            score_line,
+                            min_score_val=min_score_val,
+                            max_score_val=max_score_val,
+                        )
+
+                    criteria_lines = []
+                    supporting_evidence_lines = []
+                    collecting_criteria = False
+                    collecting_evidence = False
+
+                    for line in response.split("\n"):
+                        if f"{criteria_field}:" in line:
+                            criteria_lines.append(
+                                line.split(f"{criteria_field}:", 1)[1].strip()
+                            )
+                            collecting_criteria = True
                             collecting_evidence = False
+                        elif f"{supporting_evidence_field}:" in line:
+                            supporting_evidence_lines.append(
+                                line.split(f"{supporting_evidence_field}:", 1)[
+                                    1
+                                ].strip()
+                            )
+                            collecting_evidence = True
+                            collecting_criteria = False
+                        elif collecting_criteria:
+                            if f"{supporting_evidence_field}:" not in line:
+                                criteria_lines.append(line.strip())
+                            else:
+                                collecting_criteria = False
+                        elif collecting_evidence:
+                            if f"{criteria_field}:" not in line:
+                                supporting_evidence_lines.append(line.strip())
+                            else:
+                                collecting_evidence = False
 
-                criteria = "\n".join(criteria_lines).strip()
-                supporting_evidence = "\n".join(
-                    supporting_evidence_lines
-                ).strip()
-            reasons = {
-                "reason": (
-                    f"{criteria_field}: {criteria}\n"
-                    f"{supporting_evidence_field}: {supporting_evidence}"
+                    criteria = "\n".join(criteria_lines).strip()
+                    supporting_evidence = "\n".join(
+                        supporting_evidence_lines
+                    ).strip()
+                reasons = {
+                    "reason": (
+                        f"{criteria_field}: {criteria}\n"
+                        f"{supporting_evidence_field}: {supporting_evidence}"
+                    )
+                }
+
+            else:
+                score = feedback_generated.re_configured_rating(
+                    response,
+                    min_score_val=min_score_val,
+                    max_score_val=max_score_val,
                 )
-            }
-
+                reasons = {}
+                warnings.warn(
+                    "No supporting evidence provided. Returning score only.",
+                    UserWarning,
+                )
         else:
-            score = feedback_generated.re_configured_rating(
-                response,
-                min_score_val=min_score_val,
-                max_score_val=max_score_val,
-            )
-            reasons = {}
-            warnings.warn(
-                "No supporting evidence provided. Returning score only.",
-                UserWarning,
+            raise ValueError(
+                f"Expected string or structured response but got:\n{response}"
             )
 
         # Normalize score to [0, 1] range

@@ -45,11 +45,15 @@ from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
 from trulens.core.utils import threading as threading_utils
 from trulens.experimental.otel_tracing import _feature as otel_tracing_feature
+from trulens.otel.semconv.trace import ResourceAttributes
+from trulens.otel.semconv.trace import SpanAttributes
 
 if TYPE_CHECKING:
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import SpanExporter
     from trulens.core import app as base_app
+    from trulens.core.feedback import Feedback
+    from trulens.core.otel.recording import Record
 
 tqdm = None
 with import_utils.OptionalImports(messages=optional_utils.REQUIREMENT_TQDM):
@@ -1243,6 +1247,125 @@ class TruSession(
             sleep(poll_interval)
         raise RuntimeError(
             f"Could not find all record IDs: {record_ids} in database!"
+        )
+
+    def add_feedback_result(
+        self,
+        record: Record,
+        feedback_name: str,
+        feedback_result: Union[float, int],
+        higher_is_better: bool,
+    ) -> None:
+        """
+        Add a feedback result for a given record.
+
+        Args:
+            record: The Record object to add feedback for.
+            feedback_name: The name of the feedback function.
+            feedback_result: The feedback score/result (float or int).
+            higher_is_better: Whether higher values are better.
+        """
+        if not is_otel_tracing_enabled():
+            raise RuntimeError(
+                "add_feedback_result is only supported when OTEL tracing is enabled!"
+            )
+
+        from trulens.core.feedback.feedback import Feedback
+        from trulens.feedback.computer import _call_feedback_function
+
+        # Get necessary information from the record root.
+        record_root_event = record._get_record_root_event()
+        resource_attributes = record_root_event["resource_attributes"]
+        record_attributes = record_root_event["record_attributes"]
+        app_name = resource_attributes.get(ResourceAttributes.APP_NAME)
+        app_version = resource_attributes.get(ResourceAttributes.APP_VERSION)
+        app_id = resource_attributes.get(ResourceAttributes.APP_ID)
+        run_name = record_attributes.get(SpanAttributes.RUN_NAME)
+        input_id = record_attributes.get(SpanAttributes.INPUT_ID)
+
+        # Wrap constant result in a Feedback object to align with new API
+        const_feedback = Feedback(
+            lambda: feedback_result,
+            name=feedback_name,
+            higher_is_better=higher_is_better,
+        )
+
+        # Create feedback computation recording context
+        feedback_result = _call_feedback_function(
+            feedback_name,
+            const_feedback,
+            higher_is_better,
+            None,
+            {},
+            app_name,
+            app_version,
+            app_id,
+            run_name,
+            input_id,
+            record.record_id,
+            None,
+        )
+
+    def compute_feedbacks_on_events(
+        self,
+        events: pandas.DataFrame,
+        feedbacks: List[Feedback],
+        raise_error_on_no_feedbacks_computed: bool = False,
+    ) -> None:
+        """Compute feedbacks/metrics on events.
+
+        Args:
+            events:
+                Events to compute feedbacks on. This can be from multiple
+                records.
+            feedbacks: Feedback functions to compute.
+            raise_error_on_no_feedbacks_computed:
+                Raise an error if no feedbacks were computed. Default is False.
+        """
+        if not is_otel_tracing_enabled():
+            raise ValueError(
+                "This method is only supported for OTEL Tracing. Please enable OTEL tracing in the environment!"
+            )
+
+        try:
+            from trulens.feedback.computer import compute_feedback_by_span_group
+        except ImportError:
+            logger.error(
+                "trulens.feedback package is not installed. Please install it to use feedback computation functionality."
+            )
+            raise
+
+        for feedback in feedbacks:
+            compute_feedback_by_span_group(
+                events,
+                feedback,
+                raise_error_on_no_feedbacks_computed,
+            )
+
+    def get_events(
+        self,
+        app_name: Optional[str],
+        app_version: Optional[str],
+        record_ids: Optional[List[str]] = None,
+        start_time: Optional[datetime] = None,
+    ) -> pandas.DataFrame:
+        """
+        Get events/spans from the database in OTel mode.
+
+        Args:
+            app_name: The app name to filter events by.
+            app_version: The app version to filter events by.
+            record_ids: The record ids to filter events by.
+            start_time: The minimum time to consider events from.
+
+        Returns:
+            A pandas DataFrame of all relevant events/spans.
+        """
+        return self.connector.get_events(
+            app_name=app_name,
+            app_version=app_version,
+            record_ids=record_ids,
+            start_time=start_time,
         )
 
 

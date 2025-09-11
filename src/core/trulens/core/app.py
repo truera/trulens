@@ -2132,11 +2132,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         for feedback in self.feedbacks:
             compute_feedback_by_span_group(
                 events,
-                feedback.name,
-                feedback.imp,
-                feedback.higher_is_better,
-                feedback.selectors,
-                feedback.aggregator,
+                feedback,
                 raise_error_on_no_feedbacks_computed,
             )
 
