@@ -245,7 +245,7 @@ class WithJSONTestCase(TestCase):
         elif golden_path.suffix == ".yaml":
             writer = functools.partial(yaml.dump, sort_keys=True)
         elif golden_path.suffix == ".csv":
-            writer = lambda data, f: data.to_csv(f)
+            writer = lambda data, f: data.to_csv(f, index=False)
         elif golden_path.suffix == ".parquet":
             writer = lambda data, f: data.to_parquet(f)
         else:
