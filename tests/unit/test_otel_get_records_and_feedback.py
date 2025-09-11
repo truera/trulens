@@ -10,7 +10,6 @@ from typing import List
 import pandas as pd
 from trulens.apps.app import TruApp
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
-from trulens.core.feedback import Feedback
 from trulens.core.otel.instrument import instrument
 from trulens.core.schema.app import AppDefinition
 from trulens.core.schema.event import Event
@@ -545,15 +544,10 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             events
         )
         record_root = RecordGraphNode.build_graph(spans)
-        f_gen = Feedback(
-            feedback_function,
-            name=self.GEN_FEEDBACK_NAME,
-            higher_is_better=True,
-        )
         _compute_feedback(
             record_root,
             self.GEN_FEEDBACK_NAME,
-            f_gen,
+            feedback_function,
             True,
             all_retrieval_span_attributes,
         )

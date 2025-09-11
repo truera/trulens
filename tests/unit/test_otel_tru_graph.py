@@ -284,8 +284,6 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
 
     def test_custom_class_support(self) -> None:
         """Test TruGraph support for custom classes with LangGraph workflows."""
-        if not LANGGRAPH_AVAILABLE:
-            self.skipTest("LangGraph not available")
 
         def simple_agent(state):
             return {"messages": [AIMessage(content="Custom class response")]}

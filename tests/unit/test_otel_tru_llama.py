@@ -107,5 +107,5 @@ class TestOtelTruLlama(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
             rag.query("What is multi-headed attention?")
         # Compare results to expected.
         self._compare_record_attributes_to_golden_dataframe(
-            "tests/unit/static/golden/test_otel_tru_llama__test_legacy_app.csv"
+            "tests/unit/static/golden/test_otel_tru_llama__test_smoke.csv"
         )

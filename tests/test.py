@@ -209,7 +209,7 @@ class WithJSONTestCase(TestCase):
         elif ".yaml" in golden_path.suffixes or ".yml" in golden_path.suffixes:
             loader = functools.partial(yaml.load, Loader=yaml.FullLoader)
         elif ".csv" in golden_path.suffixes:
-            loader = functools.partial(pd.read_csv)
+            loader = functools.partial(pd.read_csv, index_col=0)
         else:
             raise ValueError(f"Unknown file extension {golden_path}.")
 
@@ -245,7 +245,7 @@ class WithJSONTestCase(TestCase):
         elif golden_path.suffix == ".yaml":
             writer = functools.partial(yaml.dump, sort_keys=True)
         elif golden_path.suffix == ".csv":
-            writer = lambda data, f: data.to_csv(f, index=False)
+            writer = lambda data, f: data.to_csv(f)
         elif golden_path.suffix == ".parquet":
             writer = lambda data, f: data.to_parquet(f)
         else:

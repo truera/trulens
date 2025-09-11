@@ -101,10 +101,9 @@ class OtelTestCase(TruTestCase):
         keys_to_check: List[str] = [SpanAttributes.SPAN_TYPE],
     ) -> None:
         TruSession().force_flush()
-        actual = self._get_events()
-        self.write_golden(golden_filename, actual)
         expected = self.load_golden(golden_filename)
         self._convert_column_types(expected)
+        actual = self._get_events()
         self.assertEqual(expected.shape, actual.shape)
         for i in range(len(actual)):
             self.assertEqual(
