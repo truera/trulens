@@ -8,10 +8,11 @@ from trulens.core.feedback.selector import Trace
 from trulens.otel.semconv.trace import SpanAttributes
 
 import tests.unit.test_otel_tru_custom
-from tests.util.otel_snowflake_test_case import OtelSnowflakeTestCase
+from tests.util.otel_test_case import OtelTestCase
+from tests.util.snowflake_test_case import SnowflakeTestCase
 
 
-class TestOtelSnowflakeRegularTables(OtelSnowflakeTestCase):
+class TestOtelSnowflakeRegularTables(OtelTestCase, SnowflakeTestCase):
     def test_smoke(self):
         # Create simple feedback.
         def simple(trace: Trace) -> float:
