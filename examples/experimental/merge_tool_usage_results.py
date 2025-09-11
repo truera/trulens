@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-Script to merge Tool Usage judge results with existing benchmark data.
+Script to merge Tool Judge results with existing benchmark data.
 
-This script reads the existing benchmark CSV and the new tool usage results CSV,
-then creates a new merged CSV file with Tool Usage_score and Tool Usage_reasons
+This script reads the existing benchmark CSV and the new tool judge results CSV,
+then creates a new merged CSV file with Tool Selection_score and Tool Selection_reasons
+and Tool Calling_score and Tool Calling_reasons
 columns appended to the existing data.
 """
 
@@ -14,8 +15,8 @@ import pandas as pd
 
 def main():
     # File paths
-    existing_file = "EXISTING_TRAIN_TRAIL_BENCHMARK.csv"
-    tool_usage_file = "tool_usage_0907_train.csv"
+    existing_file = "~/Downloads/NEW_all_eval_trail_benchmark - NEW_train_eval_trail_benchmark.csv"
+    tool_judge_file = "tool_judges_0910_train.csv"
     output_file = "MERGED_TRAIN_TRAIL_BENCHMARK.csv"
 
     try:
@@ -25,62 +26,67 @@ def main():
         existing_df = pd.read_csv(existing_file, quotechar='"', escapechar=None)
         print(f"Loaded {len(existing_df)} rows from existing benchmark")
 
-        print(f"Reading tool usage results from {tool_usage_file}...")
-        # Read the tool usage results
-        tool_usage_df = pd.read_csv(
-            tool_usage_file, quotechar='"', escapechar=None
+        print(f"Reading tool judge results from {tool_judge_file}...")
+
+        tool_judge_df = pd.read_csv(
+            tool_judge_file, quotechar='"', escapechar=None
         )
-        print(f"Loaded {len(tool_usage_df)} rows from tool usage results")
+
+        tool_judge_df = tool_judge_df.assign(
+            filename=tool_judge_df["filename"].str.replace(
+                "/Users/dhuang/Documents/", ""
+            )
+        )
+
+        print(f"Loaded {len(tool_judge_df)} rows from tool judge results")
 
         # Check if filename columns exist
         if "filename" not in existing_df.columns:
             raise ValueError(
                 "'filename' column not found in existing benchmark data"
             )
-        if "filename" not in tool_usage_df.columns:
+        if "filename" not in tool_judge_df.columns:
             raise ValueError(
-                "'filename' column not found in tool usage results"
+                "'filename' column not found in tool judge results"
             )
 
-        # Check if tool usage columns exist
-        required_cols = ["Tool Usage_score", "Tool Usage_reasons"]
+        # Check if tool judge columns exist
+        required_cols = [
+            "Tool Selection_score",
+            "Tool Selection_reasons",
+            "Tool Calling_score",
+            "Tool Calling_reasons",
+        ]
         for col in required_cols:
-            if col not in tool_usage_df.columns:
+            if col not in tool_judge_df.columns:
                 raise ValueError(
-                    f"'{col}' column not found in tool usage results"
+                    f"'{col}' column not found in tool judge results"
                 )
 
         print("Merging data...")
         # Merge the dataframes on filename
         merged_df = existing_df.merge(
-            tool_usage_df[["filename"] + required_cols],
+            tool_judge_df[["filename"] + required_cols],
             on="filename",
             how="left",
         )
 
         print(f"Merged dataset contains {len(merged_df)} rows")
 
-        # Check for any missing matches
-        missing_tool_usage = merged_df["Tool Usage_score"].isna().sum()
-        if missing_tool_usage > 0:
-            print(
-                f"Warning: {missing_tool_usage} rows from existing data have no matching tool usage results"
-            )
-
-        # Check for any tool usage results that didn't match existing data
+        # Check for any tool judge results that didn't match existing data
         existing_filenames = set(existing_df["filename"])
-        tool_usage_filenames = set(tool_usage_df["filename"])
-        unmatched_tool_usage = tool_usage_filenames - existing_filenames
-        if unmatched_tool_usage:
+        tool_judge_filenames = set(tool_judge_df["filename"])
+        unmatched_tool_judge = tool_judge_filenames - existing_filenames
+        if unmatched_tool_judge:
             print(
-                f"Warning: {len(unmatched_tool_usage)} tool usage results have no matching existing data:"
+                f"Warning: {len(unmatched_tool_judge)} tool judge results have no matching existing data:"
             )
             for filename in sorted(
-                list(unmatched_tool_usage)[:5]
+                list(unmatched_tool_judge)[:5]
             ):  # Show first 5
                 print(f"  - {filename}")
-            if len(unmatched_tool_usage) > 5:
-                print(f"  ... and {len(unmatched_tool_usage) - 5} more")
+            if len(unmatched_tool_judge) > 5:
+                print(f"  ... and {len(unmatched_tool_judge) - 5} more")
 
         print(f"Saving merged results to {output_file}...")
         # Save the merged data
@@ -90,7 +96,7 @@ def main():
 
         print(f"✅ Successfully created {output_file}")
         print(f"   - Original data: {len(existing_df)} rows")
-        print(f"   - Tool usage data: {len(tool_usage_df)} rows")
+        print(f"   - Tool judge data: {len(tool_judge_df)} rows")
         print(f"   - Merged data: {len(merged_df)} rows")
         print(f"   - Columns in merged file: {len(merged_df.columns)}")
 
