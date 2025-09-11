@@ -1354,7 +1354,7 @@ class TruSession(
         start_time: Optional[datetime] = None,
     ) -> pandas.DataFrame:
         """
-        Get events from the database.
+        Get events/spans from the database in OTel mode.
 
         Args:
             app_name: The app name to filter events by.
@@ -1363,7 +1363,7 @@ class TruSession(
             start_time: The minimum time to consider events from.
 
         Returns:
-            A pandas DataFrame of all relevant events.
+            A pandas DataFrame of all relevant events/spans.
         """
         return self.connector.get_events(
             app_name=app_name,
