@@ -127,31 +127,73 @@ def _compute_feedback(
         )
 
 
-def compute_feedback_by_span_group(
-    events: pd.DataFrame,
-    feedback: Feedback,
-    raise_error_on_no_feedbacks_computed: bool = True,
-    selectors: Optional[Dict[str, Selector]] = None,
-) -> None:
+def compute_feedback_by_span_group(*args, **kwargs) -> None:
     """
     Compute feedback based on span groups in events.
 
     Args:
         events: DataFrame containing trace events.
-        feedback: Feedback object to compute feedback. Its `name`,
-            `higher_is_better`, and `aggregator` will be used.
+        feedback: Feedback object to compute feedback OR feedback name (for legacy compatibility).
         raise_error_on_no_feedbacks_computed:
             Raise an error if no feedbacks were computed. Default is True.
         selectors: Optional dict of selectors for OTEL mode. If not provided,
             will use feedback.selectors.
     """
-    feedback_name = feedback.name
-    feedback_function = feedback
-    higher_is_better = feedback.higher_is_better
+
+    # Handle both new signature (4 args) and legacy signature (7 args)
+    if len(args) == 7:
+        # Legacy signature from installed version:
+        # (events, feedback_name, feedback_imp, higher_is_better, selectors, aggregator, raise_error)
+        events = args[0]
+        feedback_name = args[1]  # str
+        feedback_imp = args[2]  # function/method
+        higher_is_better = args[3]  # bool
+        selectors = args[4]  # dict
+        feedback_aggregator = args[5]  # function/None
+        raise_error_on_no_feedbacks_computed = args[6]  # bool
+
+        # Create a minimal feedback-like object
+        class LegacyFeedback:
+            def __init__(
+                self, name, imp, higher_is_better, selectors, aggregator
+            ):
+                self.name = name
+                self.imp = imp
+                self.higher_is_better = higher_is_better
+                self.selectors = selectors
+                self.aggregator = aggregator
+
+        feedback_function = LegacyFeedback(
+            feedback_name,
+            feedback_imp,
+            higher_is_better,
+            selectors,
+            feedback_aggregator,
+        )
+
+    elif len(args) >= 2:
+        # New signature: (events, feedback, raise_error=True, selectors=None)
+        events = args[0]
+        feedback_function = args[1]  # Should be Feedback object
+        raise_error_on_no_feedbacks_computed = (
+            args[2]
+            if len(args) > 2
+            else kwargs.get("raise_error_on_no_feedbacks_computed", True)
+        )
+        selectors = args[3] if len(args) > 3 else kwargs.get("selectors", None)
+        feedback_aggregator = getattr(feedback_function, "aggregator", None)
+
+    else:
+        raise ValueError(
+            f"Invalid number of arguments: {len(args)}. Expected 2-4 or 7 arguments."
+        )
+
+    # Extract common variables
+    feedback_name = feedback_function.name
+    higher_is_better = feedback_function.higher_is_better
     kwarg_to_selector = (
-        selectors if selectors is not None else feedback.selectors
+        selectors if selectors is not None else feedback_function.selectors
     )
-    feedback_aggregator = feedback.aggregator
 
     kwarg_groups = _group_kwargs_by_selectors(kwarg_to_selector)
     unflattened_inputs = _collect_inputs_from_events(

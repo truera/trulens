@@ -2675,13 +2675,22 @@ class LLMProvider(core_provider.Provider):
             "EXECUTION EFFICIENCY SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
         )
 
-        return self.generate_score_and_reasons(
+        score, reasons = self.generate_score_and_reasons(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             min_score_val=min_score_val,
             max_score_val=max_score_val,
             temperature=temperature,
         )
+
+        # Add custom instructions to the output if provided
+        if custom_instructions is not None:
+            current_reason = reasons.get("reason", "")
+            reasons["reason"] = (
+                f"Custom Instructions: {custom_instructions}\n{current_reason}"
+            )
+
+        return score, reasons
 
     def plan_adherence_with_cot_reasons(
         self,
