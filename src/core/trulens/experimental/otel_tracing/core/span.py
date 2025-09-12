@@ -218,7 +218,7 @@ def set_user_defined_attributes(
             model = attributes_so_far.get(SpanAttributes.COST.MODEL, None)
             if currency not in [
                 None,
-                cost_attributes[SpanAttributes.COST.CURRENCY],
+                cost_attributes.get(SpanAttributes.COST.CURRENCY),
             ]:
                 cost_attributes[SpanAttributes.COST.CURRENCY] = "mixed"
             if model not in [
