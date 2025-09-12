@@ -4,7 +4,7 @@ trulens:
   lows: {}
 trulens.benchmark:
   __class__: builtins.module
-  __version__: 2.3.0
+  __version__: 1.3.5
   highs: {}
   lows:
     __version__: builtins.str
@@ -32,7 +32,7 @@ trulens.benchmark.benchmark_frameworks.tru_benchmark_experiment.TruBenchmarkExpe
   - builtins.object
   __class__: builtins.type
   attributes:
-    run_score_generation_on_single_row: builtins.FunctionWrapper
+    run_score_generation_on_single_row: builtins.function
 trulens.benchmark.generate:
   __class__: builtins.module
   highs: {}
@@ -60,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 2.3.0
+  __version__: 2.1.2
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -108,8 +108,6 @@ trulens.core.app.App:
   - typing.Generic
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
-    add_metric_with_evaluation_config: builtins.function
-    add_metrics_with_evaluation_configs: builtins.function
     add_run: builtins.function
     app: typing.Any
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -121,7 +119,6 @@ trulens.core.app.App:
     awith_record: builtins.function
     compute_feedbacks: builtins.function
     connector: builtins.property
-    custom_metrics: typing.List[typing.Dict[builtins.str, typing.Any]]
     db: builtins.property
     delete: builtins.function
     delete_version: builtins.function
@@ -130,7 +127,6 @@ trulens.core.app.App:
     feedback_mode: trulens.core.schema.feedback.FeedbackMode
     feedbacks: typing.List[trulens.core.feedback.feedback.Feedback]
     format_instrumented_methods: builtins.function
-    get_custom_metrics: builtins.function
     get_run: builtins.function
     initial_app_loader_dump: typing.Optional[trulens.core.utils.serial.SerialBytes,
       builtins.NoneType]
@@ -506,31 +502,6 @@ trulens.core.feedback:
     SnowflakeFeedback: pydantic._internal._model_construction.ModelMetaclass
   lows:
     __all__: builtins.list
-trulens.core.feedback.custom_metric:
-  __class__: builtins.module
-  highs: {}
-  lows:
-    CustomMetric: builtins.type
-    EvaluationConfig: builtins.type
-    custom_metric: builtins.function
-    register_app_for_auto_metrics: builtins.function
-    register_pending_metrics_with_app: builtins.function
-trulens.core.feedback.custom_metric.CustomMetric:
-  __bases__:
-  - builtins.object
-  __class__: builtins.type
-  attributes:
-    create_feedback_definition: builtins.function
-    create_feedback_from_config: builtins.function
-trulens.core.feedback.custom_metric.EvaluationConfig:
-  __bases__:
-  - builtins.object
-  __class__: builtins.type
-  attributes:
-    add_selector: builtins.function
-    from_dict: builtins.classmethod
-    to_dict: builtins.function
-    validate_for_function: builtins.function
 trulens.core.feedback.endpoint:
   __class__: builtins.module
   highs: {}
@@ -606,6 +577,7 @@ trulens.core.feedback.feedback.Feedback:
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
     criteria: typing.Optional[builtins.str, builtins.NoneType]
+    custom_instructions: typing.Optional[builtins.str, builtins.NoneType]
     evaluate_deferred: builtins.staticmethod
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     extract_selection: builtins.function
@@ -668,6 +640,7 @@ trulens.core.feedback.feedback.SnowflakeFeedback:
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
     criteria: typing.Optional[builtins.str, builtins.NoneType]
+    custom_instructions: typing.Optional[builtins.str, builtins.NoneType]
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     feedback_definition_id: builtins.str
     groundedness_configs: typing.Optional[trulens.core.feedback.feedback.GroundednessConfigs,
@@ -1115,6 +1088,7 @@ trulens.core.schema.feedback.FeedbackDefinition:
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
     criteria: typing.Optional[builtins.str, builtins.NoneType]
+    custom_instructions: typing.Optional[builtins.str, builtins.NoneType]
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     feedback_definition_id: builtins.str
     higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
@@ -1341,19 +1315,16 @@ trulens.core.session.TruSession:
     Virtual: builtins.function
     add_app: builtins.function
     add_feedback: builtins.function
-    add_feedback_result: builtins.function
     add_feedbacks: builtins.function
     add_ground_truth_to_dataset: builtins.function
     add_record: builtins.function
     add_record_nowait: builtins.function
-    compute_feedbacks_on_events: builtins.function
     connector: typing.Optional[trulens.core.database.connector.base.DBConnector, builtins.NoneType]
     delete_app: builtins.function
     find_unused_port: builtins.function
     force_flush: builtins.function
     get_app: builtins.function
     get_apps: builtins.function
-    get_events: builtins.function
     get_ground_truth: builtins.function
     get_leaderboard: builtins.function
     get_records_and_feedback: builtins.function
@@ -1954,7 +1925,7 @@ trulens.core.utils.trulens.Other:
   attributes: {}
 trulens.dashboard:
   __class__: builtins.module
-  __version__: 2.3.0
+  __version__: 1.3.5
   highs:
     run_dashboard: builtins.function
     run_dashboard_sis: builtins.function
@@ -2256,7 +2227,7 @@ trulens.dashboard.ux.styles.ResultCategoryType:
     value: enum.property
 trulens.feedback:
   __class__: builtins.module
-  __version__: 2.3.0
+  __version__: 1.3.5
   highs:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
@@ -2525,6 +2496,8 @@ trulens.feedback.llm_provider.LLMProvider:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
 trulens.feedback.output_schemas:
   __class__: builtins.module
@@ -2581,6 +2554,7 @@ trulens.feedback.prompts:
     LLM_ABSTENTION_USER: builtins.str
     LLM_ANSWERABILITY_SYSTEM: builtins.str
     LLM_ANSWERABILITY_USER: builtins.str
+    LLM_GROUNDEDNESS_FULL_PROMPT: builtins.str
     LLM_GROUNDEDNESS_SENTENCES_SPLITTER: builtins.str
     LLM_GROUNDEDNESS_SYSTEM: builtins.str
     LLM_GROUNDEDNESS_USER: builtins.str
@@ -2662,6 +2636,10 @@ trulens.feedback.v2.feedback:
     SexualMinors: pydantic._internal._model_construction.ModelMetaclass
     Stereotypes: pydantic._internal._model_construction.ModelMetaclass
     Syntax: pydantic._internal._model_construction.ModelMetaclass
+    TRAIL: pydantic._internal._model_construction.ModelMetaclass
+    ToolCalling: pydantic._internal._model_construction.ModelMetaclass
+    ToolQuality: pydantic._internal._model_construction.ModelMetaclass
+    ToolSelection: pydantic._internal._model_construction.ModelMetaclass
     Toxicity: pydantic._internal._model_construction.ModelMetaclass
     Trivial: pydantic._internal._model_construction.ModelMetaclass
     Violence: pydantic._internal._model_construction.ModelMetaclass
@@ -2854,6 +2832,7 @@ trulens.feedback.v2.feedback.EvalSchema:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     criteria: builtins.str
+    custom_instructions: builtins.str
     get_output_scale_prompt: builtins.function
     output_space: builtins.str
     validate_output_space: builtins.classmethod
@@ -3202,6 +3181,66 @@ trulens.feedback.v2.feedback.Syntax:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+trulens.feedback.v2.feedback.TRAIL:
+  __bases__:
+  - trulens.feedback.v2.feedback.Semantics
+  - trulens.feedback.v2.feedback.WithPrompt
+  - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+    output_space: builtins.str
+    output_space_prompt: builtins.str
+    system_prompt: builtins.str
+    system_prompt_template: builtins.str
+    user_prompt: builtins.str
+trulens.feedback.v2.feedback.ToolCalling:
+  __bases__:
+  - trulens.feedback.v2.feedback.Semantics
+  - trulens.feedback.v2.feedback.WithPrompt
+  - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+    output_space: builtins.str
+    output_space_prompt: builtins.str
+    system_prompt: builtins.str
+    system_prompt_template: builtins.str
+    user_prompt: builtins.str
+trulens.feedback.v2.feedback.ToolQuality:
+  __bases__:
+  - trulens.feedback.v2.feedback.Semantics
+  - trulens.feedback.v2.feedback.WithPrompt
+  - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+    output_space: builtins.str
+    output_space_prompt: builtins.str
+    system_prompt: builtins.str
+    system_prompt_template: builtins.str
+    user_prompt: builtins.str
+trulens.feedback.v2.feedback.ToolSelection:
+  __bases__:
+  - trulens.feedback.v2.feedback.Semantics
+  - trulens.feedback.v2.feedback.WithPrompt
+  - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+    output_space: builtins.str
+    output_space_prompt: builtins.str
+    system_prompt: builtins.str
+    system_prompt_template: builtins.str
+    user_prompt: builtins.str
 trulens.feedback.v2.feedback.Toxicity:
   __bases__:
   - trulens.feedback.v2.feedback.Semantics
@@ -3257,126 +3296,3 @@ trulens.feedback.v2.provider.base.Provider:
     endpoint: typing.Optional[trulens.core.feedback.endpoint.Endpoint, builtins.NoneType]
     supported_models: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
-trulens.hotspots:
-  __class__: builtins.module
-  __version__: 2.3.0
-  highs:
-    HotspotsConfig: builtins.type
-    get_skipped_columns: builtins.function
-    hotspots: builtins.function
-    hotspots_as_df: builtins.function
-    hotspots_dict_to_df: builtins.function
-    main: builtins.function
-  lows:
-    __all__: builtins.list
-    __version__: builtins.str
-trulens.hotspots.__main__:
-  __class__: builtins.module
-  highs: {}
-  lows: {}
-trulens.hotspots.hotspots:
-  __class__: builtins.module
-  highs: {}
-  lows:
-    AUTOSKIP_COLUMNS_REGEX: _regex.Pattern
-    EqualsFeature: abc.ABCMeta
-    Feature: abc.ABCMeta
-    FeatureStats: builtins.type
-    HotspotsConfig: builtins.type
-    LengthFeature: abc.ABCMeta
-    NO_NEED_TO_BE_QUOTED_REGEX: _regex.Pattern
-    NumericalFeature: abc.ABCMeta
-    NumericalFeatureBase: abc.ABCMeta
-    QUOTE_CHARACTER: builtins.str
-    TokenFeature: abc.ABCMeta
-    delta: builtins.function
-    do_round: builtins.function
-    format_feature_with_stat: builtins.function
-    get_autoskipped_columns: builtins.function
-    get_feature_stat: builtins.function
-    get_features_for_sample: builtins.function
-    get_features_for_value: builtins.function
-    get_features_with_stats: builtins.function
-    get_inverted_index_for_features: builtins.function
-    get_skipped_columns: builtins.function
-    hotspots: builtins.function
-    hotspots_as_df: builtins.function
-    hotspots_dict_to_df: builtins.function
-    initial_round: builtins.function
-    is_feature_unwanted: builtins.function
-    is_number: builtins.function
-    main: builtins.function
-    opportunity: builtins.function
-    parse_args: builtins.function
-    prepare_inverted_index: builtins.function
-    prune_inverted_index: builtins.function
-    quote_if_needed: builtins.function
-    shorter_string_preference: builtins.function
-    should_be_autoskipped: builtins.function
-    to_dict_for_df: builtins.function
-    utest_z: builtins.function
-    z_to_p_value: builtins.function
-trulens.hotspots.hotspots.EqualsFeature:
-  __bases__:
-  - trulens.hotspots.hotspots.Feature
-  __class__: abc.ABCMeta
-  attributes: {}
-trulens.hotspots.hotspots.Feature:
-  __bases__:
-  - abc.ABC
-  __class__: abc.ABCMeta
-  attributes:
-    description: builtins.function
-    priority: builtins.function
-trulens.hotspots.hotspots.FeatureStats:
-  __bases__:
-  - builtins.object
-  __class__: builtins.type
-  attributes: {}
-trulens.hotspots.hotspots.HotspotsConfig:
-  __bases__:
-  - builtins.object
-  __class__: builtins.type
-  attributes:
-    higher_is_better: builtins.bool
-    max_features: builtins.int
-    min_occurrences: builtins.int
-    num_rounds: builtins.int
-trulens.hotspots.hotspots.LengthFeature:
-  __bases__:
-  - trulens.hotspots.hotspots.NumericalFeatureBase
-  __class__: abc.ABCMeta
-  attributes:
-    is_applicable: builtins.classmethod
-trulens.hotspots.hotspots.NumericalFeature:
-  __bases__:
-  - trulens.hotspots.hotspots.NumericalFeatureBase
-  __class__: abc.ABCMeta
-  attributes:
-    is_applicable: builtins.classmethod
-trulens.hotspots.hotspots.NumericalFeatureBase:
-  __bases__:
-  - trulens.hotspots.hotspots.Feature
-  - abc.ABC
-  __class__: abc.ABCMeta
-  attributes:
-    generate_feature: builtins.classmethod
-    generate_features: builtins.classmethod
-    get_thresholds: builtins.classmethod
-trulens.hotspots.hotspots.TokenFeature:
-  __bases__:
-  - trulens.hotspots.hotspots.Feature
-  __class__: abc.ABCMeta
-  attributes: {}
-trulens.hotspots.hotspots_streamlit:
-  __class__: builtins.module
-  highs: {}
-  lows:
-    hotspots_in_streamlit: builtins.function
-    hotspots_in_streamlit_with_config: builtins.function
-    sample_main: builtins.function
-trulens.hotspots.tru_hotspots:
-  __class__: builtins.module
-  highs: {}
-  lows:
-    get_hotspots: builtins.function
