@@ -60,6 +60,7 @@ class SnowflakeTestCase(TruTestCase):
             raise ValueError(error_msg)
         # Close session.
         self._snowpark_session.close()
+        super().tearDown()
 
     def list_schemas(self):
         res = self.run_query(

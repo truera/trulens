@@ -52,6 +52,7 @@ if TYPE_CHECKING:
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import SpanExporter
     from trulens.core import app as base_app
+    from trulens.core.feedback import Feedback
     from trulens.core.otel.recording import Record
 
 tqdm = None
@@ -1303,6 +1304,68 @@ class TruSession(
             input_id,
             record.record_id,
             None,
+        )
+
+    def compute_feedbacks_on_events(
+        self,
+        events: pandas.DataFrame,
+        feedbacks: List[Feedback],
+        raise_error_on_no_feedbacks_computed: bool = False,
+    ) -> None:
+        """Compute feedbacks/metrics on events.
+
+        Args:
+            events:
+                Events to compute feedbacks on. This can be from multiple
+                records.
+            feedbacks: Feedback functions to compute.
+            raise_error_on_no_feedbacks_computed:
+                Raise an error if no feedbacks were computed. Default is False.
+        """
+        if not is_otel_tracing_enabled():
+            raise ValueError(
+                "This method is only supported for OTEL Tracing. Please enable OTEL tracing in the environment!"
+            )
+
+        try:
+            from trulens.feedback.computer import compute_feedback_by_span_group
+        except ImportError:
+            logger.error(
+                "trulens.feedback package is not installed. Please install it to use feedback computation functionality."
+            )
+            raise
+
+        for feedback in feedbacks:
+            compute_feedback_by_span_group(
+                events,
+                feedback,
+                raise_error_on_no_feedbacks_computed,
+            )
+
+    def get_events(
+        self,
+        app_name: Optional[str],
+        app_version: Optional[str],
+        record_ids: Optional[List[str]] = None,
+        start_time: Optional[datetime] = None,
+    ) -> pandas.DataFrame:
+        """
+        Get events/spans from the database in OTel mode.
+
+        Args:
+            app_name: The app name to filter events by.
+            app_version: The app version to filter events by.
+            record_ids: The record ids to filter events by.
+            start_time: The minimum time to consider events from.
+
+        Returns:
+            A pandas DataFrame of all relevant events/spans.
+        """
+        return self.connector.get_events(
+            app_name=app_name,
+            app_version=app_version,
+            record_ids=record_ids,
+            start_time=start_time,
         )
 
 
