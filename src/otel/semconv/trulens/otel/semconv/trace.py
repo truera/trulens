@@ -100,6 +100,9 @@ class SpanAttributes:
         WORKFLOW_STEP = "workflow_step"
         """A workflow step execution."""
 
+        RERANKER = "reranking"
+        """A reranking operation."""
+
     class UNKNOWN:
         """Attributes relevant for spans that could not be categorized otherwise."""
 
@@ -330,3 +333,32 @@ class SpanAttributes:
 
         ERROR = base + ".error"
         """Error raised during workflow execution."""
+
+    class RERANKER:
+        """A reranking operation."""
+
+        base = BASE_SCOPE + ".reranking"
+
+        QUERY_TEXT = base + ".query_text"
+        """Query text used for reranking."""
+
+        MODEL_NAME = base + ".model_name"
+        """Name of the reranking model."""
+
+        TOP_N = base + ".top_n"
+        """Number of top results to return after reranking."""
+
+        INPUT_CONTEXT_TEXTS = base + ".input_context_texts"
+        """Input contexts before reranking."""
+
+        INPUT_CONTEXT_SCORES = base + ".input_context_scores"
+        """Input scores before reranking."""
+
+        OUTPUT_RANKS = base + ".output_ranks"
+        """Output ranking order after reranking."""
+
+        OUTPUT_CONTEXT_TEXTS = base + ".output_context_texts"
+        """Output contexts after reranking."""
+
+        OUTPUT_CONTEXT_SCORES = base + ".output_context_scores"
+        """Output scores after reranking."""
