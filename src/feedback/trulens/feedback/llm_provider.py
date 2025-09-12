@@ -2836,7 +2836,7 @@ class LLMProvider(core_provider.Provider):
             min_score_val, max_score_val
         )
 
-        system_prompt = feedback_v2.PlanQuality.generate_system_prompt(
+        system_prompt = feedback_v2.ToolSelection.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
@@ -2893,6 +2893,8 @@ class LLMProvider(core_provider.Provider):
             output_space=output_space,
             examples=examples,
         )
+
+        print(system_prompt)
 
         if isinstance(trace, Trace):
             trace = trace.events.to_json(default_handler=str)
