@@ -3,197 +3,85 @@
 from __future__ import annotations
 
 import inspect
-import threading
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
-import weakref
+from typing import Any, Callable, Dict, Optional
 
 from trulens.core.feedback.feedback import Feedback
 from trulens.core.feedback.selector import Selector
 
-# Global registry for automatic metric registration
-_metric_registry_lock = threading.Lock()
-_pending_metrics: List[Tuple[CustomMetric, Optional[EvaluationConfig]]] = []
-_registered_apps: List[
-    weakref.ReferenceType
-] = []  # Track all TruApps for bidirectional registration
 
-
-def register_app_for_auto_metrics(tru_app) -> None:
-    """Register a TruApp for automatic metric registration."""
-    global _registered_apps
-
-    with _metric_registry_lock:
-        # Clean up dead references
-        _registered_apps[:] = [
-            ref for ref in _registered_apps if ref() is not None
-        ]
-
-        # Add this app
-        app_ref = weakref.ref(tru_app)
-        _registered_apps.append(app_ref)
-
-
-def register_pending_metrics_with_app(tru_app) -> int:
-    """Register all pending metrics with the given TruApp."""
-    global _pending_metrics
-
-    registered_count = 0
-    with _metric_registry_lock:
-        # Process all pending metrics
-        for metric, eval_config in _pending_metrics[:]:
-            try:
-                _register_single_metric_with_app(tru_app, metric, eval_config)
-                registered_count += 1
-                _pending_metrics.remove((metric, eval_config))
-
-            except Exception as e:
-                # Log error but continue with other metrics
-                import logging
-
-                logger = logging.getLogger(__name__)
-                logger.warning(
-                    f"Failed to auto-register metric {metric.metric_type}: {e}"
-                )
-
-    return registered_count
-
-
-def _register_metric_directly(
-    tru_app, metric: CustomMetric, eval_config: EvaluationConfig
-):
-    """Register a metric directly with TruApp to avoid circular imports."""
-    # Create feedback definition
-    feedback_def = metric.create_feedback_from_config(eval_config)
-
-    # Store custom metric info
-    custom_metric_info = {
-        "metric": metric,
-        "feedback": feedback_def,
-        "evaluation_config": eval_config,
-        "selectors": eval_config.selectors,
-        "metric_type": eval_config.metric_type,
-        "computation_type": eval_config.computation_type,
-    }
-
-    tru_app.custom_metrics.append(custom_metric_info)
-
-
-def _auto_register_metric(
-    metric: CustomMetric, eval_config: Optional[EvaluationConfig] = None
-):
-    """Automatically register metric with existing TruApps and add to pending for future apps."""
-    global _pending_metrics, _registered_apps
-
-    with _metric_registry_lock:
-        # First, try to register with all existing TruApps
-        registered_with_existing = 0
-        for app_ref in _registered_apps[
-            :
-        ]:  # Copy list to avoid modification during iteration
-            tru_app = app_ref()
-            if tru_app is not None:
-                try:
-                    _register_single_metric_with_app(
-                        tru_app, metric, eval_config
-                    )
-                    registered_with_existing += 1
-                except Exception as e:
-                    import logging
-
-                    logger = logging.getLogger(__name__)
-                    logger.debug(
-                        f"Failed to auto-register metric {metric.metric_type} with existing app: {e}"
-                    )
-            else:
-                # Remove dead reference
-                _registered_apps.remove(app_ref)
-
-        # Add to pending metrics for future TruApps
-        _pending_metrics.append((metric, eval_config))
-
-        if registered_with_existing > 0:
-            import logging
-
-            logger = logging.getLogger(__name__)
-            logger.info(
-                f"Auto-registered metric {metric.metric_type} with {registered_with_existing} existing TruApp(s)"
-            )
-
-        return registered_with_existing > 0
-
-
-def _register_single_metric_with_app(
-    tru_app, metric: CustomMetric, eval_config: Optional[EvaluationConfig]
-):
-    """Register a single metric with a TruApp, creating default config if needed."""
-    if eval_config:
-        _register_metric_directly(tru_app, metric, eval_config)
-    else:
-        # Create default config for single-parameter functions
-        sig = inspect.signature(metric.function)
-        if len(sig.parameters) == 1:
-            param_name = list(sig.parameters.keys())[0]
-            try:
-                from trulens.otel.semconv.trace import SpanAttributes
-
-                default_config = EvaluationConfig(
-                    metric_type=metric.metric_type,
-                    computation_type="client",
-                ).add_selector(
-                    param_name,
-                    Selector(
-                        span_type=SpanAttributes.SpanType.RECORD_ROOT,
-                        span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
-                    ),
-                )
-                _register_metric_directly(tru_app, metric, default_config)
-            except ImportError:
-                # Skip if can't import SpanAttributes
-                raise ValueError(
-                    "Cannot create default config: SpanAttributes not available"
-                )
-        else:
-            # For multi-parameter functions, user must provide explicit config
-            raise ValueError(
-                f"Multi-parameter function {metric.metric_type} requires explicit EvaluationConfig"
-            )
-
-
-class EvaluationConfig:
+class MetricConfig:
     """
-    Configuration for mapping metric function parameters to OTEL span attributes.
+    Configuration for a custom metric including implementation and span mapping.
 
-    This class provides a structured way to define how metric function arguments
-    should be extracted from OTEL spans during evaluation.
+    This class defines a complete metric configuration that includes the metric
+    function implementation and how its arguments should be extracted from OTEL spans.
+
+    Key Concepts:
+    - metric_name: Unique semantic identifier for this specific usage of the metric
+                   (e.g., "text2sql_accuracy_v1", "relevance_for_qa_task")
+    - metric_type: Implementation identifier of the underlying metric function
+                   (e.g., "text2sql", "accuracy", "relevance")
+
+    This distinction allows the same metric implementation to be used multiple times
+    with different configurations and names within the same application.
     """
 
     def __init__(
         self,
-        metric_type: str = "custom",
-        computation_type: str = "client",
+        metric_name: str,
+        metric_implementation: Callable,
+        metric_type: Optional[str] = None,
         selectors: Optional[Dict[str, Selector]] = None,
+        computation_type: str = "client",
         higher_is_better: bool = True,
         description: Optional[str] = None,
     ):
         """
-        Initialize an evaluation configuration.
+        Initialize a metric configuration.
 
         Args:
-            metric_type: Unique identifier for the metric (e.g., "text2SQL", "accuracy"). equivalent to metric name
-            computation_type: Where to compute ("client" or "server")
+            metric_name: Unique semantic identifier for this specific metric usage
+                        (e.g., "text2sql_accuracy_v1", "custom_relevance_for_qa")
+            metric_implementation: The metric function to execute
+            metric_type: Implementation identifier of the custom metric
+                        (e.g., "text2sql", "accuracy", "relevance").
+                        If not provided, defaults to the function name.
             selectors: Dictionary mapping parameter names to Selectors
+            computation_type: Where to compute ("client" or "server")
             higher_is_better: Whether higher scores are better
-            description: Optional description of the configuration
+            description: Optional description of the metric
         """
-        self.metric_type = metric_type
+        self.metric_name = metric_name
+        self.metric_implementation = metric_implementation
+        self.metric_type = metric_type or (
+            metric_implementation.__name__
+            if hasattr(metric_implementation, "__name__")
+            else "custom_metric"
+        )
         self.computation_type = computation_type
         self.selectors = selectors or {}
         self.higher_is_better = higher_is_better
         self.description = description
 
+        # Validate function signature
+        self._validate_function()
+
+    def _validate_function(self) -> None:
+        """Validate that the function has a proper signature for a metric."""
+        if not callable(self.metric_implementation):
+            raise ValueError("metric_implementation must be callable")
+
+        sig = inspect.signature(self.metric_implementation)
+
+        # Check that function has at least one parameter
+        if len(sig.parameters) == 0:
+            raise ValueError(
+                f"Metric function '{self.metric_name}' must have at least one parameter"
+            )
+
     def add_selector(
         self, parameter_name: str, selector: Selector
-    ) -> "EvaluationConfig":
+    ) -> "MetricConfig":
         """
         Add a selector for a specific parameter.
 
@@ -207,57 +95,55 @@ class EvaluationConfig:
         self.selectors[parameter_name] = selector
         return self
 
-    def validate_for_function(self, func: Callable) -> None:
+    def validate_selectors(self) -> None:
         """
-        Validate that this configuration matches the given function signature.
-
-        Args:
-            func: The metric function to validate against
+        Validate that selectors match the function signature.
 
         Raises:
             ValueError: If selectors don't match function parameters
         """
-        sig = inspect.signature(func)
+        sig = inspect.signature(self.metric_implementation)
         func_params = set(sig.parameters.keys())
         selector_params = set(self.selectors.keys())
 
         if func_params != selector_params:
             missing = func_params - selector_params
             extra = selector_params - func_params
-            error_msg = f"Evaluation config for metric '{self.metric_type}' doesn't match function parameters"
+            error_msg = f"Selectors for metric '{self.metric_name}' don't match function parameters"
             if missing:
                 error_msg += f"\nMissing selectors: {missing}"
             if extra:
                 error_msg += f"\nExtra selectors: {extra}"
             raise ValueError(error_msg)
 
-    @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> "EvaluationConfig":
+    def create_feedback_definition(self) -> Feedback:
         """
-        Create an EvaluationConfig from a dictionary.
-
-        Args:
-            config_dict: Dictionary containing configuration data
+        Create a Feedback instance from this metric configuration.
 
         Returns:
-            EvaluationConfig instance
+            A Feedback instance configured for this metric
+
+        Raises:
+            ValueError: If selectors don't match function parameters
         """
-        return cls(
-            metric_type=config_dict.get("metric_type", "custom"),
-            computation_type=config_dict.get("computation_type", "client"),
-            selectors=config_dict.get("selectors", {}),
-            higher_is_better=config_dict.get("higher_is_better", True),
-            description=config_dict.get("description"),
-        )
+        # Validate selectors first
+        self.validate_selectors()
+
+        return Feedback(
+            self.metric_implementation,
+            name=self.metric_name,
+            higher_is_better=self.higher_is_better,
+        ).on(self.selectors)
 
     def to_dict(self) -> Dict[str, Any]:
         """
-        Convert the evaluation config to a dictionary.
+        Convert the metric config to a dictionary.
 
         Returns:
             Dictionary representation of the config
         """
         return {
+            "metric_name": self.metric_name,
             "metric_type": self.metric_type,
             "computation_type": self.computation_type,
             "selectors": self.selectors,
@@ -267,190 +153,35 @@ class EvaluationConfig:
 
     def __repr__(self) -> str:
         return (
-            f"EvaluationConfig(metric_type='{self.metric_type}', "
+            f"MetricConfig(metric_name='{self.metric_name}', "
+            f"metric_type='{self.metric_type}', "
             f"computation='{self.computation_type}', selectors={len(self.selectors)})"
         )
 
 
-def custom_metric(
-    metric_type: Optional[str] = None,
-    higher_is_better: bool = True,
-    description: Optional[str] = None,
-    evaluation_config: Optional[EvaluationConfig] = None,
-    auto_register: bool = True,
-) -> Callable:
+# For backwards compatibility, keep EvaluationConfig as an alias to MetricConfig
+# This allows existing code to continue working
+EvaluationConfig = MetricConfig
+
+
+# Backwards compatibility function - deprecated
+def custom_metric(*args, **kwargs):
     """
-    Decorator to convert a function into a client-side custom metric.
+    DEPRECATED: Use MetricConfig directly instead of this decorator.
 
-    This decorator transforms a regular function into a CustomMetric instance
-    that can be automatically registered with TruApp for client-side evaluation.
-
-    Args:
-        metric_type: identifier for the metric. equivalent to metric name (e.g., "text2SQL", "accuracy")
-        higher_is_better: Whether higher scores are better for this metric
-        description: Optional description of what the metric measures
-        evaluation_config: Optional EvaluationConfig for explicit span-to-argument mapping
-        auto_register: Whether to automatically register with TruApp when available
-
-    Returns:
-        A decorator function that wraps the target function as a CustomMetric
-
-    Example:
-        ```python
-        # Basic usage - automatically registers with current TruApp context
-        @custom_metric(metric_type="text2sql_accuracy", higher_is_better=True)
-        def text_to_sql_scores(query: str, sql: str) -> float:
-            if "SELECT" in sql.upper() and "movies" in query.lower():
-                return 0.9
-            return 0.1
-
-        # With explicit evaluation config
-        eval_config = EvaluationConfig(metric_type="custom_accuracy").add_selector(...)
-        @custom_metric(evaluation_config=eval_config)
-        def custom_accuracy(query: str) -> float:
-            return len(query) / 100.0
-        ```
+    This function is kept for backwards compatibility but will be removed
+    in a future version. Please use MetricConfig directly.
     """
+    import warnings
 
-    def decorator(func: Callable) -> CustomMetric:
-        custom_metric_instance = CustomMetric(
-            function=func,
-            metric_type=metric_type or func.__name__,
-            higher_is_better=higher_is_better,
-            description=description,
-        )
+    warnings.warn(
+        "custom_metric decorator is deprecated. Use MetricConfig directly instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
-        # Automatically register with current TruApp context if enabled
-        if auto_register:
-            _auto_register_metric(custom_metric_instance, evaluation_config)
-
-        return custom_metric_instance
+    # Return a no-op decorator for now
+    def decorator(func):
+        return func
 
     return decorator
-
-
-class CustomMetric:
-    """
-    Wrapper class for custom metric functions.
-
-    This class encapsulates a user-defined metric function along with its
-    metadata and provides methods to integrate with the TruLens feedback system.
-    """
-
-    def __init__(
-        self,
-        function: Callable,
-        metric_type: str,
-        higher_is_better: bool = True,
-        description: Optional[str] = None,
-    ):
-        """
-        Initialize a CustomMetric.
-
-        Args:
-            function: The metric function to wrap
-            metric_type: identifier for the metric. equivalent to metric name
-            higher_is_better: Whether higher scores are better
-            description: Optional description
-        """
-        self.function = function
-        self.higher_is_better = higher_is_better
-        self.metric_type = metric_type
-        self.description = description or f"Custom metric: {metric_type}"
-
-        # Validate function signature
-        self._validate_function()
-
-    def _validate_function(self) -> None:
-        """Validate that the function has a proper signature for a metric."""
-        sig = inspect.signature(self.function)
-
-        # Check that function has at least one parameter
-        if len(sig.parameters) == 0:
-            raise ValueError(
-                f"Metric function '{self.metric_type}' must have at least one parameter"
-            )
-
-        # Check return annotation if present
-        if sig.return_annotation != inspect.Signature.empty:
-            expected_types = (float, int, tuple)
-            if not any(
-                sig.return_annotation == t
-                or (
-                    hasattr(sig.return_annotation, "__origin__")
-                    and sig.return_annotation.__origin__ in (tuple, Union)
-                )
-                for t in expected_types
-            ):
-                # This is just a warning, not an error
-                pass
-
-    def __call__(
-        self, *args, **kwargs
-    ) -> Union[float, Tuple[float, Dict[str, Any]]]:
-        """Call the underlying metric function."""
-        return self.function(*args, **kwargs)
-
-    def create_feedback_definition(
-        self, selectors: Dict[str, Selector]
-    ) -> Feedback:
-        """
-        Create a Feedback instance from this custom metric.
-
-        Args:
-            selectors: Dictionary mapping parameter names to Selectors
-
-        Returns:
-            A Feedback instance configured for this custom metric
-
-        Raises:
-            ValueError: If selectors don't match function parameters
-        """
-        # Validate that selectors match function parameters
-        sig = inspect.signature(self.function)
-        func_params = set(sig.parameters.keys())
-        selector_params = set(selectors.keys())
-
-        if func_params != selector_params:
-            missing = func_params - selector_params
-            extra = selector_params - func_params
-            error_msg = f"Selector parameters don't match function parameters for '{self.metric_type}'"
-            if missing:
-                error_msg += f"\nMissing selectors: {missing}"
-            if extra:
-                error_msg += f"\nExtra selectors: {extra}"
-            raise ValueError(error_msg)
-
-        return Feedback(
-            self.function,
-            name=self.metric_type,
-            higher_is_better=self.higher_is_better,
-        ).on(selectors)
-
-    def create_feedback_from_config(self, config: EvaluationConfig) -> Feedback:
-        """
-        Create a Feedback instance from an EvaluationConfig.
-
-        Args:
-            config: EvaluationConfig containing selectors and metadata
-
-        Returns:
-            A Feedback instance configured for this custom metric
-
-        Raises:
-            ValueError: If config doesn't match function parameters
-        """
-        # Validate the config against this function
-        config.validate_for_function(self.function)
-
-        return Feedback(
-            self.function,
-            name=self.metric_type,  # Use the metric's name, not the eval config name
-            higher_is_better=config.higher_is_better,
-        ).on(config.selectors)
-
-    def __repr__(self) -> str:
-        return (
-            f"CustomMetric(name='{self.metric_type}', "
-            f"higher_is_better={self.higher_is_better})"
-        )

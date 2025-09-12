@@ -44,8 +44,6 @@ from trulens.core.database import base as core_db
 from trulens.core.database import connector as core_connector
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback import feedback as core_feedback
-from trulens.core.feedback.custom_metric import CustomMetric
-from trulens.core.feedback.custom_metric import EvaluationConfig
 from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.run import Run
 from trulens.core.run import RunConfig
@@ -392,11 +390,6 @@ class App(
     )
     """Feedback functions to evaluate on each record."""
 
-    custom_metrics: List[Dict[str, Any]] = pydantic.Field(
-        exclude=True, default_factory=list
-    )
-    """Custom metrics registered with this app."""
-
     session: core_session.TruSession = pydantic.Field(
         default_factory=core_session.TruSession, exclude=True
     )
@@ -615,9 +608,6 @@ class App(
             self._wrap_main_function(app, main_method.__name__)
 
         self._tru_post_init()
-
-        # Register this app for automatic metric registration and process pending metrics
-        self._setup_auto_metric_registration()
 
     def __del__(self):
         """Shut down anything associated with this app that might persist otherwise."""
@@ -2144,138 +2134,6 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         """Stop the evaluator for the app."""
         if hasattr(self, "_evaluator") and self._evaluator is not None:
             self._evaluator.stop_evaluator()
-
-    def _register_custom_metric_with_snowflake(self) -> None:
-        """Register custom metric definition with Snowflake."""
-        raise NotImplementedError(
-            "Registering client-side custom metrics to Snowflake are not yet supported."
-        )
-
-    def get_custom_metrics(self) -> List[Dict[str, Any]]:
-        """Get all registered custom metrics."""
-        return self.custom_metrics
-
-    def _setup_auto_metric_registration(self) -> int:
-        """Set up bidirectional automatic metric registration."""
-        try:
-            from trulens.core.feedback.custom_metric import (
-                register_app_for_auto_metrics,
-            )
-            from trulens.core.feedback.custom_metric import (
-                register_pending_metrics_with_app,
-            )
-
-            # Register this app to receive future metrics
-            register_app_for_auto_metrics(self)
-
-            # Register any existing pending metrics with this app
-            return register_pending_metrics_with_app(self)
-        except ImportError:
-            return 0
-
-    def _register_pending_metrics(self) -> int:
-        """Register any pending metrics that were defined with @custom_metric decorator."""
-        try:
-            from trulens.core.feedback.custom_metric import (
-                register_pending_metrics_with_app,
-            )
-
-            return register_pending_metrics_with_app(self)
-        except ImportError:
-            return 0
-
-    def add_metric_with_evaluation_config(
-        self,
-        metric: Union[CustomMetric, Callable],
-        evaluation_config: EvaluationConfig,
-    ) -> None:
-        """
-        Add a custom metric using an EvaluationConfig for explicit span-to-argument mapping.
-
-        Args:
-            metric: CustomMetric instance or callable function
-            evaluation_config: EvaluationConfig defining how to extract arguments from spans
-
-        Example:
-            ```python
-            # Create evaluation config
-            eval_config = EvaluationConfig(
-                name="text2sql_accuracy_v1",
-                metric_type="text2SQL",
-                computation_type="client"
-            ).add_selector(
-                "query",
-                Selector(function_attribute="question", function_name="App.generate_SQL")
-            ).add_selector(
-                "sql",
-                Selector(function_attribute="return", function_name="App.generate_SQL")
-            )
-
-            # Add metric with config
-            app.add_metric_with_evaluation_config(text_to_sql_scores, eval_config)
-            ```
-        """
-        if isinstance(metric, CustomMetric):
-            custom_metric = metric
-        else:
-            # Convert callable to CustomMetric
-            custom_metric = CustomMetric(
-                function=metric,
-                metric_type=evaluation_config.metric_type,
-                higher_is_better=evaluation_config.higher_is_better,
-                description=evaluation_config.description,
-            )
-
-        # Create feedback definition using the evaluation config
-        try:
-            feedback_def = custom_metric.create_feedback_from_config(
-                evaluation_config
-            )
-        except ValueError as e:
-            raise ValueError(f"Error creating feedback definition: {e}")
-
-        # Store custom metric info with evaluation config
-        custom_metric_info = {
-            "metric": custom_metric,
-            "feedback": feedback_def,
-            "evaluation_config": evaluation_config,
-            "selectors": evaluation_config.selectors,
-            "metric_type": evaluation_config.metric_type,
-            "computation_type": evaluation_config.computation_type,
-        }
-
-        self.custom_metrics.append(custom_metric_info)
-
-    def add_metrics_with_evaluation_configs(
-        self,
-        metric_function: Callable,
-        evaluation_configs: List[EvaluationConfig],
-    ) -> None:
-        """
-        Add multiple metric configurations for the same function.
-
-        This allows you to use the same metric function with different
-        evaluation configs (e.g., different selectors or names).
-
-        Args:
-            metric_function: The metric function to use for all configs
-            evaluation_configs: List of EvaluationConfig objects
-
-        Example:
-            ```python
-            configs = [
-                EvaluationConfig(name="sql_accuracy_v1", metric_type="text2SQL")
-                    .add_selector("query", Selector(...))
-                    .add_selector("sql", Selector(...)),
-                EvaluationConfig(name="sql_accuracy_v2", metric_type="text2SQL")
-                    .add_selector("query", Selector(...))
-                    .add_selector("sql", Selector(...))
-            ]
-            app.add_metrics_with_evaluation_configs(text_to_sql_scores, configs)
-            ```
-        """
-        for config in evaluation_configs:
-            self.add_metric_with_evaluation_config(metric_function, config)
 
 
 @staticmethod

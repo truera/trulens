@@ -5,13 +5,14 @@ import inspect
 import json
 import logging
 import time
-from typing import Any, ClassVar, Dict, List, Optional, Set, Type
+from typing import Any, ClassVar, Dict, List, Optional, Set, Type, Union
 
 import pandas as pd
 import pydantic
 from pydantic import BaseModel
 from pydantic import Field
 from pydantic import field_serializer
+from trulens.core.feedback.custom_metric import MetricConfig
 from trulens.core.utils.json import obj_id_of_obj
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -705,8 +706,17 @@ class Run(BaseModel):
         )
         return True
 
-    def compute_metrics(self, metrics: List[str]) -> str:
-        """Compute metrics for the run, where client-side metrics are computed using the app's feedback computation and server-side metrics are computed on Snowflake."""
+    def compute_metrics(self, metrics: List[Union[str, "MetricConfig"]]) -> str:
+        """
+        Compute metrics for the run.
+
+        Args:
+            metrics: List of metric identifiers (strings) for server-side metrics,
+                    or MetricConfig objects for client-side metrics
+
+        Returns:
+            Status message indicating computation progress
+        """
         if not metrics:
             raise ValueError(
                 "No metrics provided. Please provide at least one metric to compute."
@@ -732,50 +742,109 @@ class Run(BaseModel):
             )
 
         # Separate client-side and server-side metrics
-        client_metrics = []
-        server_metrics = []
-
-        app_custom_metrics = self.app.get_custom_metrics()
-        custom_metric_names = {
-            m["metric"].metric_type
-            for m in app_custom_metrics
-            if m["computation_type"] == "client"
-        }
+        client_metric_configs = []
+        server_metric_names = []
 
         for metric in metrics:
-            if metric in custom_metric_names:
-                client_metrics.append(metric)
+            if isinstance(metric, str):
+                # String metrics are server-side
+                server_metric_names.append(metric)
             else:
-                server_metrics.append(metric)
+                # MetricConfig objects are client-side
+                if (
+                    hasattr(metric, "computation_type")
+                    and metric.computation_type == "client"
+                ):
+                    client_metric_configs.append(metric)
+                else:
+                    # Default to client-side for MetricConfig objects
+                    client_metric_configs.append(metric)
 
-        logger.info(f"Client-side metrics to compute: {client_metrics}")
-        logger.info(f"Server-side metrics to compute: {server_metrics}")
+        logger.info(
+            f"Client-side metrics to compute: {[m.metric_name for m in client_metric_configs]}"
+        )
+        logger.info(f"Server-side metrics to compute: {server_metric_names}")
 
         # Handle client-side metrics
-        if client_metrics:
+        if client_metric_configs:
             try:
-                self._compute_client_side_metrics(client_metrics)
+                self._compute_client_side_metrics_from_configs(
+                    client_metric_configs
+                )
                 logger.info(
-                    f"Successfully computed {len(client_metrics)} client-side metrics"
+                    f"Successfully computed {len(client_metric_configs)} client-side metrics"
                 )
             except Exception as e:
                 logger.error(f"Error computing client-side metrics: {e}")
                 raise
 
-        if server_metrics:
+        if server_metric_names:
             self.run_dao.call_compute_metrics_query(
-                metrics=server_metrics,
+                metrics=server_metric_names,
                 object_name=self.object_name,
                 object_type=self.object_type,
                 object_version=self.object_version,
                 run_name=self.run_name,
             )
             logger.info(
-                f"Started server-side computation for {len(server_metrics)} metrics"
+                f"Started server-side computation for {len(server_metric_names)} metrics"
             )
 
         logger.info("Metrics computation job started")
         return "Metrics computation in progress."
+
+    def _compute_client_side_metrics_from_configs(
+        self, metric_configs: List["MetricConfig"]
+    ) -> None:
+        """Compute client-side custom metrics from MetricConfig objects."""
+        try:
+            from trulens.feedback.computer import compute_feedback_by_span_group
+        except ImportError:
+            logger.error(
+                "trulens.feedback package is not installed. Please install it to use feedback computation functionality."
+            )
+            raise
+
+        # Get events using the proper method based on connector type
+        events = self._get_events_for_client_metrics()
+
+        if events.empty:
+            logger.warning(
+                f"No events found for app {self.app.app_name} version {self.app.app_version} run {self.run_name}"
+            )
+            return
+
+        # Compute each client-side metric
+        for metric_config in metric_configs:
+            try:
+                logger.info(
+                    f"Computing client-side metric: {metric_config.metric_name}"
+                )
+
+                # Create feedback definition from the metric config
+                feedback = metric_config.create_feedback_definition()
+
+                compute_feedback_by_span_group(
+                    events=events,
+                    feedback_name=feedback.name,
+                    feedback_function=feedback.imp,
+                    higher_is_better=feedback.higher_is_better,
+                    kwarg_to_selector=feedback.selectors,
+                    feedback_aggregator=feedback.aggregator,
+                    raise_error_on_no_feedbacks_computed=False,
+                )
+                logger.info(
+                    f"Successfully computed client-side metric: {metric_config.metric_name}"
+                )
+            except Exception as e:
+                logger.error(
+                    f"Error computing client-side metric {metric_config.metric_name}: {e}"
+                )
+                raise
+
+        # Force flush to ensure spans are uploaded
+        self.tru_session.force_flush()
+        logger.info("Flushed OTEL spans for client-side metrics")
 
     def _compute_client_side_metrics(self, metrics: List[str]) -> None:
         """Compute client-side custom metrics."""
