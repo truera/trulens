@@ -112,6 +112,8 @@ export const SpanAttributes = {
   RERANKING_INPUT_CONTEXT_TEXTS: `${BASE_SCOPE}.${SpanType.RERANKING}.input_context_texts`,
   RERANKING_INPUT_CONTEXT_SCORES: `${BASE_SCOPE}.${SpanType.RERANKING}.input_context_scores`,
   RERANKING_OUTPUT_RANKS: `${BASE_SCOPE}.${SpanType.RERANKING}.output_ranks`,
+  RERANKING_OUTPUT_CONTEXT_TEXTS: `${BASE_SCOPE}.${SpanType.RERANKING}.output_context_texts`,
+  RERANKING_OUTPUT_CONTEXT_SCORES: `${BASE_SCOPE}.${SpanType.RERANKING}.output_context_scores`,
 
   // Attributes for GENERATION span type
   GENERATION_MODEL_NAME: `${BASE_SCOPE}.${SpanType.GENERATION}.model_name`,
