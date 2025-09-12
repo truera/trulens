@@ -189,12 +189,6 @@ class SnowflakeTestCase(TruTestCase):
     ) -> List[Row]:
         for _ in range(num_retries):
             results = self.run_query(q, params)
-
-            new_results = []  # TODO(this_pr): remove this
-            for curr in results:
-                if curr[1] not in [new_curr[1] for new_curr in new_results]:
-                    new_results.append(curr)
-            results = new_results
             if len(results) == expected_num_results:
                 return results
             self.logger.info(
