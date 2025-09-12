@@ -115,6 +115,7 @@ def get_session() -> core_session.TruSession:
     parser.add_argument("--snowflake-database", default=None)
     parser.add_argument("--snowflake-schema", default=None)
     parser.add_argument("--snowflake-warehouse", default=None)
+    parser.add_argument("--snowflake-password", default=None)
     parser.add_argument("--snowflake-authenticator", default=None)
     parser.add_argument("--snowflake-host", default=None)
     parser.add_argument(
@@ -151,9 +152,12 @@ def get_session() -> core_session.TruSession:
             "database": args.snowflake_database,
             "schema": args.snowflake_schema,
             "warehouse": args.snowflake_warehouse,
-            "authenticator": args.snowflake_authenticator,
             "host": args.snowflake_host,
         }
+        if args.snowflake_password:
+            connection_params["password"] = args.snowflake_password
+        if args.snowflake_authenticator:
+            connection_params["authenticator"] = args.snowflake_authenticator
         use_account_event_table = bool(args.snowflake_use_account_event_table)
         snowpark_session = Session.builder.configs(connection_params).create()
         session = core_session.TruSession(

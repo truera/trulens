@@ -15,6 +15,9 @@ from typing import (
 from trulens.connectors.snowflake.dao.enums import ObjectType
 from trulens.connectors.snowflake.dao.external_agent import ExternalAgentDao
 from trulens.connectors.snowflake.dao.run import RunDao
+from trulens.connectors.snowflake.snowflake_event_table_db import (
+    SnowflakeEventTableDB,
+)
 from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import (
     ServerSideEvaluationArtifacts,
 )
@@ -116,6 +119,13 @@ class SnowflakeConnector(DBConnector):
                 database_check_revision,
                 connection_parameters,
             )
+        else:
+            self.password_known = False
+            self._password = None
+            if password is not None:
+                self.password_known = True
+                self._password = password
+            self._db = SnowflakeEventTableDB(self.snowpark_session)
 
     def _create_snowpark_session(
         self, connection_parameters: Dict[str, Optional[str]]
