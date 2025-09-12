@@ -20,25 +20,33 @@ class TruLensOtelSpanExporter(SpanExporter):
     Implementation of `SpanExporter` that flushes the spans in the TruLens session to the connector.
     """
 
+    enabled: bool
+    """
+    Whether the exporter is enabled.
+    """
+
     connector: core_connector.DBConnector
     """
     The database connector used to export the spans.
     """
 
     def __init__(self, connector: core_connector.DBConnector):
+        self.enabled = True
         self.connector = connector
 
-    def export(self, spans: Sequence[ReadableSpan]) -> SpanExportResult:
-        trulens_spans = list(filter(check_if_trulens_span, spans))
+    def disable(self) -> None:
+        self.enabled = False
 
+    def export(self, spans: Sequence[ReadableSpan]) -> SpanExportResult:
+        if not self.enabled:
+            return SpanExportResult.SUCCESS
+        trulens_spans = list(filter(check_if_trulens_span, spans))
         try:
             events = list(map(construct_event, trulens_spans))
             self.connector.add_events(events)
-
         except Exception as e:
             logger.error(
                 f"Error exporting spans to the database: {e}",
             )
             return SpanExportResult.FAILURE
-
         return SpanExportResult.SUCCESS

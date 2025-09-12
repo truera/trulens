@@ -20,8 +20,11 @@ from tests.util.df_comparison import (
 
 
 class OtelTestCase(TruTestCase):
+    _orig_TRULENS_OTEL_TRACING: Optional[str] = None
+
     @classmethod
     def setUpClass(cls) -> None:
+        cls._orig_TRULENS_OTEL_TRACING = os.environ.get("TRULENS_OTEL_TRACING")
         os.environ["TRULENS_OTEL_TRACING"] = "1"
         instrument.enable_all_instrumentation()
         return super().setUpClass()
@@ -29,7 +32,10 @@ class OtelTestCase(TruTestCase):
     @classmethod
     def tearDownClass(cls) -> None:
         instrument.disable_all_instrumentation()
-        os.environ["TRULENS_OTEL_TRACING"] = "0"
+        if cls._orig_TRULENS_OTEL_TRACING is not None:
+            os.environ["TRULENS_OTEL_TRACING"] = cls._orig_TRULENS_OTEL_TRACING
+        else:
+            del os.environ["TRULENS_OTEL_TRACING"]
         return super().tearDownClass()
 
     def setUp(self) -> None:

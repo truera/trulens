@@ -188,6 +188,10 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         app = (
             tests.unit.test_otel_tru_chain.TestOtelTruChain._create_simple_rag()
         )
+        input_df = pd.DataFrame({
+            "custom_input": ["What is multi-headed attention?"],
+            "expected_response": ["Like attention but with more heads."],
+        })
         app_name, run = self._test_tru_app(
             app,
             app.invoke,
@@ -196,20 +200,31 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
                 "input": "custom_input",
                 "ground_truth_output": "expected_response",
             },
-            pd.DataFrame({
-                "custom_input": ["What is multi-headed attention?"],
-                "expected_response": ["Like attention but with more heads."],
-            }),
+            input_df,
             pd.read_csv(
                 "tests/unit/static/golden/test_otel_tru_chain__test_smoke.csv",
                 index_col=0,
             ).shape[0],
         )
-        run.compute_metrics([
+        feedbacks_to_compute = [
             "context_relevance",
             "groundedness",
             "answer_relevance",
             "coherence",
             "correctness",
-        ])
+        ]
+        run.compute_metrics(feedbacks_to_compute)
         self._validate_results(app_name, 23)
+        records, feedbacks = self._tru_session.get_records_and_feedback(
+            app_name=app_name, app_version="v1"
+        )
+        self.assertEqual(sorted(feedbacks_to_compute), sorted(feedbacks))
+        self.assertEqual(input_df.shape[0], records.shape[0])
+        self.assertEqual(
+            feedbacks_to_compute,
+            [
+                curr
+                for curr in records.columns.tolist()
+                if curr in feedbacks_to_compute
+            ],
+        )
