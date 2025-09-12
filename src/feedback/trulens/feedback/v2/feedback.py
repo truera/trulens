@@ -231,6 +231,7 @@ class FewShotExamples(pydantic.BaseModel):
 
 class EvalSchema(pydantic.BaseModel):
     criteria: str
+    custom_instructions: str
     output_space: str
 
     @pydantic.field_validator("output_space")
@@ -295,8 +296,14 @@ class CriteriaOutputSpaceMixin:
     examples: ClassVar[Optional[str]] = None
 
     @staticmethod
-    def validate_criteria_and_output_space(criteria: str, output_space: str):
-        validated = EvalSchema(criteria=criteria, output_space=output_space)
+    def validate_criteria_and_output_space(
+        criteria: str, custom_instructions: str, output_space: str
+    ):
+        validated = EvalSchema(
+            criteria=criteria,
+            custom_instructions=custom_instructions,
+            output_space=output_space,
+        )
         return validated
 
     @classmethod
@@ -305,29 +312,38 @@ class CriteriaOutputSpaceMixin:
         min_score: int,
         max_score: int,
         criteria: Optional[str] = None,
+        custom_instructions: Optional[str] = None,
         output_space: Optional[str] = None,
         examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
     ) -> str:
-        if criteria is None and output_space is None:
+        if (
+            criteria is None
+            and custom_instructions is None
+            and output_space is None
+        ):
             return cls.system_prompt
 
         if criteria is None:
             criteria = cls.criteria_template.format(
                 min_score=min_score, max_score=max_score
             )
+
+        if custom_instructions is None:
+            custom_instructions = ""
+
         if output_space is None:
             output_space_prompt = cls.output_space_prompt
         else:
             validated = cls.validate_criteria_and_output_space(
-                criteria, output_space
+                criteria, custom_instructions, output_space
             )
-            criteria = validated.criteria
             output_space_prompt = validated.get_output_scale_prompt()
 
         prompt = cleandoc(
             cls.system_prompt_template.format(
                 output_space_prompt=output_space_prompt,
                 criteria=criteria,
+                custom_instructions=custom_instructions,
             )
         )
 
@@ -1127,20 +1143,19 @@ class LogicalConsistency(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
     system_prompt_template: ClassVar[str] = cleandoc(
         """You are a meticulous and analytical LOGICAL CONSISTENCY evaluator: provide a score for the logical consistency given an agentic system's trace.
-        This multi-turn conversation may involve multiple agents. Track each agent's system instructions and conversation history, ensuring all subsequent outputs from that agent adhere to its established guidelines and prior dialogue, even when agents speak interchangeably.
+
         Respond only as a number from {output_space_prompt}.
 
         Evaluation criteria:
         {criteria}
+        {custom_instructions}
 
         Be critical in your evaluation. For each step in the trace with an issue (eg. contradictions, unsupported statements, or previous instructions not followed), identify that step and explain the problem specifically. Flag any implicit assumptions.
-
-        Never elaborate.
         """
     )
 
     user_prompt: ClassVar[str] = cleandoc(
-        """TRACE: {trace}
+        """{trace}
 
         LOGICAL CONSISTENCY SCORE:
         """
@@ -1153,7 +1168,9 @@ class LogicalConsistency(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
     system_prompt: ClassVar[str] = cleandoc(
         system_prompt_template.format(
-            output_space_prompt=output_space_prompt, criteria=criteria
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            custom_instructions="",
         )
     )
 
@@ -1181,15 +1198,14 @@ class ExecutionEfficiency(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
         Evaluation criteria:
         {criteria}
+        {custom_instructions}
 
-        Evaluation steps to give feedback on key steps in the execution are allowed. Otherwise, be critical in your evaluation. For each step in the execution with an issue (e.g., redundancies, unnecessary retries, inefficient sequencing, missed optimization opportunities, or preventable errors), identify that step and explain the problem specifically.
-
-        Never elaborate.
+        Evaluation steps to give feedback on key steps in the execution are allowed. Otherwise, be critical in your evaluation. For each step in the execution trace with an issue (e.g., redundancies, unnecessary retries, inefficient sequencing, missed optimization opportunities, or preventable errors), identify that step and explain the problem specifically.
         """
     )
 
     user_prompt: ClassVar[str] = cleandoc(
-        """TRACE (INCLUDING EXECUTION): {trace}
+        """{trace}
 
         EXECUTION EFFICIENCY SCORE:
         """
@@ -1202,7 +1218,9 @@ class ExecutionEfficiency(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
     system_prompt: ClassVar[str] = cleandoc(
         system_prompt_template.format(
-            output_space_prompt=output_space_prompt, criteria=criteria
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            custom_instructions="",
         )
     )
 
@@ -1230,15 +1248,14 @@ class PlanAdherence(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
         Evaluation criteria:
         {criteria}
+        {custom_instructions}
 
         Adherence is judged step-by-step; if a plan mandates tool usage or sub-tasks, their omission or incomplete execution always counts as a failure of adherence, regardless of the effect on final output completeness or quality. Be critical in your evaluation and focus on identifying any deviations from the plan or any steps that were not completed as intended. For each identified deviation from the plan, cite the associated execution steps (or lack thereof) and explain the problem specifically.
-
-        Never elaborate.
         """
     )
 
     user_prompt: ClassVar[str] = cleandoc(
-        """TRACE (INCLUDING PLAN): {trace}
+        """{trace}
 
         PLAN ADHERENCE SCORE:
         """
@@ -1251,7 +1268,9 @@ class PlanAdherence(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
     system_prompt: ClassVar[str] = cleandoc(
         system_prompt_template.format(
-            output_space_prompt=output_space_prompt, criteria=criteria
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            custom_instructions="",
         )
     )
 
@@ -1270,7 +1289,7 @@ class PlanQuality(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
     Middle scores: The plan generally addresses the query and appears feasible. Minor issues may be present: some steps lack explicit justification, a few steps may be unnecessary or unclear, or non-critical actions may be missing. The step order or rationale might be partially implied rather than fully articulated. If replanning occurs, it is mentioned but may lack thorough explanation or explicit ties to prior context.
 
-    {min_score}: The plan fails to directly address the user's query or cannot feasibly accomplish the goal. Critical steps are missing, irrelevant, unsupported, or based on fabricated reasoning. Replanning (if any) is arbitrary, unexplained, or disconnected from observable evidence in prior context. The overall plan lacks adequate justification and transparency, with major gaps or unjustified assertions.
+    {min_score}: The plan fails to directly address the user's query or cannot feasibly accomplish the goal. Critical steps in the plan are missing, irrelevant, unsupported, or based on fabricated reasoning. Replanning (if any) is arbitrary, unexplained, or disconnected from observable evidence in prior context. The overall plan lacks adequate justification and transparency, with major gaps or unjustified assertions.
     """
 
     system_prompt_template: ClassVar[str] = cleandoc(
@@ -1279,15 +1298,14 @@ class PlanQuality(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
         Evaluation criteria:
         {criteria}
+        {custom_instructions}
 
         Ensure that you identify the system's plan and NOT the execution steps within the trace. Be critical in your evaluation. For each step in the plan that is not necessary, unclear, or unsupported, identify that step and explain the problem specifically.
-
-        Never elaborate.
         """
     )
 
     user_prompt: ClassVar[str] = cleandoc(
-        """TRACE (INCLUDING PLAN): {trace}
+        """{trace}
 
         PLAN QUALITY SCORE:
         """
@@ -1300,6 +1318,8 @@ class PlanQuality(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
     system_prompt: ClassVar[str] = cleandoc(
         system_prompt_template.format(
-            output_space_prompt=output_space_prompt, criteria=criteria
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            custom_instructions="",
         )
     )
