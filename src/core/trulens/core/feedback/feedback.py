@@ -171,6 +171,9 @@ class Feedback(feedback_schema.FeedbackDefinition):
     criteria: Optional[str] = pydantic.Field(None, exclude=True)
     """Criteria for the feedback function."""
 
+    custom_instructions: Optional[str] = pydantic.Field(None, exclude=True)
+    """Custom instructions for the feedback function."""
+
     min_score_val: Optional[int] = pydantic.Field(None, exclude=True)
     """Minimum score value for the feedback function."""
 
@@ -191,6 +194,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
         agg: Optional[Callable] = None,
         examples: Optional[List[Tuple]] = None,
         criteria: Optional[str] = None,
+        custom_instructions: Optional[str] = None,
         min_score_val: Optional[int] = 0,
         max_score_val: Optional[int] = 3,
         temperature: Optional[float] = 0.0,
@@ -273,12 +277,21 @@ class Feedback(feedback_schema.FeedbackDefinition):
                 # loaded `agg` were specified.
                 agg = np.mean
 
+        # Pass custom parameters to parent class for serialization
+        if criteria is not None:
+            kwargs["criteria"] = criteria
+        if custom_instructions is not None:
+            kwargs["custom_instructions"] = custom_instructions
+        if examples is not None:
+            kwargs["examples"] = examples
+
         super().__init__(**kwargs)
 
         self.imp = imp
         self.agg = agg
         self.examples = examples
         self.criteria = criteria
+        self.custom_instructions = custom_instructions
         self.min_score_val = min_score_val
         self.max_score_val = max_score_val
         self.temperature = temperature
@@ -472,6 +485,8 @@ class Feedback(feedback_schema.FeedbackDefinition):
             kwargs["examples"] = self.examples
         if self.criteria is not None:
             kwargs["criteria"] = self.criteria
+        if self.custom_instructions is not None:
+            kwargs["custom_instructions"] = self.custom_instructions
         if self.min_score_val is not None:
             kwargs["min_score_val"] = self.min_score_val
         if self.max_score_val is not None:

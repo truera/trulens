@@ -330,6 +330,8 @@ class CriteriaOutputSpaceMixin:
 
         if custom_instructions is None:
             custom_instructions = ""
+        else:
+            custom_instructions = "Custom instructions: " + custom_instructions
 
         if output_space is None:
             output_space_prompt = cls.output_space_prompt
@@ -1144,7 +1146,7 @@ class LogicalConsistency(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     system_prompt_template: ClassVar[str] = cleandoc(
         """You are a meticulous and analytical LOGICAL CONSISTENCY evaluator: provide a score for the logical consistency given an agentic system's trace.
 
-        Respond only as a number from {output_space_prompt}.
+        You must assign a single numerical score from {output_space_prompt}.
 
         Evaluation criteria:
         {criteria}
@@ -1194,7 +1196,7 @@ class ExecutionEfficiency(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
     system_prompt_template: ClassVar[str] = cleandoc(
         """You are a meticulous and analytical EXECUTION EFFICIENCY evaluator: provide a score for how efficiently the agent executes its steps. Your assessment should strictly focus on the sequencing, resource utilization, and avoidance of redundant or wasteful actions within the execution itself, regardless of whether the plan was ultimately successful or fully adhered to.
-        Respond only as a number from {output_space_prompt}.
+        You must assign a single numerical score from {output_space_prompt}.
 
         Evaluation criteria:
         {criteria}
@@ -1244,7 +1246,29 @@ class PlanAdherence(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
     system_prompt_template: ClassVar[str] = cleandoc(
         """You are a meticulous and analytical PLAN ADHERENCE evaluator: you are given the entire trace which contains both the plan and the execution. First, identify the plan and any subsequent replans within the trace. Then, evaluate how closely the execution follows the plan or replans.
-        Respond only as a number from {output_space_prompt}.
+        You must assign a single numerical score from {output_space_prompt}.
+
+        Plan Extraction Procedure:
+        1. Scan for the sections labeled with a PLAN keyword. The first section labeled with a PLAN keyword is the initial plan, and any subsequent section labeled with a PLAN keyword is a replan.
+        2. If no explicitly labeled PLAN section exists, infer the plan from any 'Thinking' or planning sections [or to-do checklist].
+        3. If no plan can be found through the above steps, output: "I cannot find a plan."
+        Do NOT infer or fill gaps using execution steps.
+
+        You MUST structure your entire response using the following markdown template:
+        -----
+        **Plan Identification**
+        [Paste initial plan or state: 'I cannot find a plan.']
+
+        **Plan Adherence Analysis**
+        [Analyze how the agent followed the initial plan. Note each deviation leading up to the first replan (if any).]
+
+        For each replan (if exists):
+        **Replan Identification:**
+        [Paste the replan.]
+
+        **Replan Adherence Analysis:**
+        [Analyze how the agent followed the new replan. Note each deviation leading up to the next replan (if any).]
+        -----
 
         Evaluation criteria:
         {criteria}
@@ -1285,22 +1309,57 @@ class PlanQuality(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     criteria_template: ClassVar[str] = """
     Score the quality of the plan.
 
-    {max_score}: The plan is well-structured, optimal, and directly addresses the user's query by breaking it down into clear, actionable, and logical steps. Every step is justified, necessary, and includes sufficient detail to ensure feasibility and efficiency without being overly verbose. If replanning occurs, the revised plan and rationale are provided with precise references to observed gaps or triggers in prior results or context.
+    {max_score}: The plan is well-structured, optimal, and directly addresses the user's query by breaking it down into clear, actionable, and logical steps. Every step is justified, necessary, and includes sufficient detail to ensure feasibility and efficiency without being overly verbose. Each step in the plan could be feasibly executed by the tools provided. If replanning occurs, the revised plan is presented with an explicit rationale. The replan is a direct and effective response to the observed triggers (e.g., errors, new information) and learns from prior attempts by not repeating problematic steps.
 
-    Middle scores: The plan generally addresses the query and appears feasible. Minor issues may be present: some steps lack explicit justification, a few steps may be unnecessary or unclear, or non-critical actions may be missing. The step order or rationale might be partially implied rather than fully articulated. If replanning occurs, it is mentioned but may lack thorough explanation or explicit ties to prior context.
+    Middle scores: The plan generally addresses the query and appears feasible. Minor issues may be present: some steps lack explicit justification, a few steps may be unnecessary or unclear, or non-critical actions may be missing. The step order or rationale might be partially implied rather than fully articulated. Most steps in the plan could be feasibly executed by the tools provided. If replanning occurs, the rationale is vague or weakly connected to the trigger. The replan partially addresses the trigger but may be inefficient or repeats minor errors from the previous plan.
 
-    {min_score}: The plan fails to directly address the user's query or cannot feasibly accomplish the goal. Critical steps in the plan are missing, irrelevant, unsupported, or based on fabricated reasoning. Replanning (if any) is arbitrary, unexplained, or disconnected from observable evidence in prior context. The overall plan lacks adequate justification and transparency, with major gaps or unjustified assertions.
+    {min_score}: The plan fails to directly address the user's query or cannot feasibly accomplish the goal. Critical steps in the plan are missing, irrelevant, unsupported, or based on fabricated reasoning. Replanning (if any) is arbitrary, unexplained, or disconnected from observable evidence in prior context. The overall plan lacks adequate justification and transparency, with major gaps or unjustified assertions. Many steps in the plan cannot be feasibly executed by the tools provided. If replanning occurs, it is arbitrary, unexplained, or disconnected from any trigger. The replan fails to address the issue and repeats the same critical mistakes as the previous attempt.
     """
 
     system_prompt_template: ClassVar[str] = cleandoc(
-        """You are a meticulous and analytical PLAN QUALITY evaluator: you are given the entire trace which contains the plan and execution. First, you must identify the system's overall plan (independent of the execution steps) as well as any subsequent replans. Your evaluation MUST solely focus on the intrinsic quality of the plan (and replans), without any consideration for how it was executed or the results of the execution. Evaluate how well the plan addresses the user's query.
-        Respond only as a number from {output_space_prompt}.
+        """You are a meticulous and analytical PLAN QUALITY evaluator. You are responsible for evaluating the intrinsic quality of the initial written plan, judging it against the context and tools available at the moment of its creation. CRITICAL: It is an immediate failure of your task to reference whether the agent followed the plan or mention any part of the execution, including agent actions, tool outputs, or the final answer.
+
+        Plan Extraction Procedure:
+        1. Scan for the sections labeled with a PLAN keyword. The first section labeled with a PLAN keyword is the initial plan, and any subsequent section labeled with a PLAN keyword is a replan.
+        2. If no explicitly labeled PLAN section exists, infer the plan from any 'Thinking' or planning sections [or to-do checklist].
+        3. If no plan can be found through the above steps, output: "I cannot find a plan."
+        Do NOT infer or fill gaps using execution steps.
+
+        Evaluating the Initial Plan:
+        1. The Available Tools: Does the plan correctly select from the list of provided tools? Does it ignore a more appropriate or efficient tool that was available? Does it try to use a tool that doesn't exist?
+        2. Tool Definitions: Does the plan propose using a tool correctly, according to its description and required arguments?
+        3. Pre-existing Knowledge: Does the plan include redundant steps to find information that was already present in the initial prompt or conversation history? Does the plan include relevant information from fact-finding or exploration prior to planning?
+        4. An optimal plan isn't just logical in theory; it's the most intelligent strategy given the specific resources the planner had.
+        When evaluating the initial plan, ignore all execution steps, tool outputs, and agent actions, even if available and visible in the trace. Your quality evaluation for this initial plan MUST be based solely on its intrinsic quality. You are judging the strategy, not the outcome. Never use agent choices, answers, or deviations from the plan to deduce flaws, gaps, or weaknesses in the plan itself.
+
+        Replanning (if found):
+        1. Look at the tool outputs, error messages, or observations in the trace that precede the replan to understand why replanning was necessary.
+        2. Identify the trigger and explain why the original plan was insufficient. Is the reason for replanning justified?
+        3. Judge the new plan. Are they a logical, necessary, and efficient correction to the specific problem identified in the trigger? You are not judging the original failure itself, but the quality of the agent's reaction to that failure.
+
+        List only inherent plan flaws (e.g., step uses nonexistent tool, redundant action, ignores key context).
+        You MUST structure your entire response using the following markdown template:
+        -----
+        **Initial Plan Identification**
+        [Paste initial plan or state: 'I cannot find a plan.']
+
+        For each replan (if exists):
+        **Replan Identification**
+        [Paste each replan. For each replan, state the written rationale/explanation.]
+
+        **Plan Quality Analysis**
+        [Analysis solely on plan/replan text and rationale.]
+
+        **Verdict on Plan Flaws**
+        [List only actual flaws in the plans themselves.]
+        -----
+        You must assign a single numerical score from {output_space_prompt} based SOLELY on the intrinsic quality of the plan and replans. Do NOT score on the execution quality.
 
         Evaluation criteria:
         {criteria}
         {custom_instructions}
 
-        Ensure that you identify the system's plan and NOT the execution steps within the trace. Be critical in your evaluation. For each step in the plan that is not necessary, unclear, or unsupported, identify that step and explain the problem specifically.
+        Be critical in your evaluation. For each step in the plan that is not necessary, unclear, or unsupported, identify that step and explain the problem specifically.
         """
     )
 
