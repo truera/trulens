@@ -129,8 +129,25 @@ class MetricConfig:
         # Validate selectors first
         self.validate_selectors()
 
+        # For client-side metrics, we don't need serialization since they won't be deferred
+        # Create a non-serializable implementation placeholder to avoid serialization warnings
+        from trulens.core.utils import pyschema as pyschema_utils
+
+        try:
+            # Try to create a serializable implementation
+            implementation = pyschema_utils.FunctionOrMethod.of_callable(
+                self.metric_implementation, loadable=True
+            )
+        except Exception:
+            # If serialization fails (e.g., function in __main__, like client side metrics defined in a notebook), create non-loadable version
+            # This is fine for client-side metrics that execute immediately
+            implementation = pyschema_utils.FunctionOrMethod.of_callable(
+                self.metric_implementation, loadable=False
+            )
+
         return Feedback(
-            self.metric_implementation,
+            imp=self.metric_implementation,
+            implementation=implementation,  # Pre-provide serialized version
             name=self.metric_name,
             higher_is_better=self.higher_is_better,
         ).on(self.selectors)
