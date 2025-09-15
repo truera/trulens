@@ -673,7 +673,6 @@ class Run(BaseModel):
                 logger.warning(f"input_id was None, using fallback: {input_id}")
 
             try:
-                # Create spans using nested OtelRecordingContext for proper context propagation
                 self._create_virtual_spans_with_nested_contexts(
                     row,
                     dataset_spec,
