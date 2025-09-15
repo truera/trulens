@@ -645,7 +645,7 @@ class Run(BaseModel):
         which maps span attribute paths to column names.
         """
 
-        logger.info(f"Creating virtual spans for {len(input_df)} records")
+        logger.debug(f"Creating virtual spans for {len(input_df)} records")
 
         for i, row in input_df.iterrows():
             input_id = (
@@ -671,13 +671,6 @@ class Run(BaseModel):
             if input_id is None:
                 input_id = f"row_{i}"
                 logger.warning(f"input_id was None, using fallback: {input_id}")
-
-            logger.info(
-                f"Creating OtelRecordingContext for input_id: {input_id}"
-            )
-            logger.info(
-                f"App name: {self.app.app_name}, App version: {self.app.app_version}"
-            )
 
             try:
                 # Create spans using nested OtelRecordingContext for proper context propagation
@@ -715,7 +708,7 @@ class Run(BaseModel):
             # Now create nested spans within this context
             self._create_nested_spans_from_dataset_spec(dataset_spec, row)
 
-            logger.info("Created all nested spans")
+            logger.debug("Created all nested spans")
 
     def _create_nested_spans_from_dataset_spec(
         self, dataset_spec: Dict[str, str], row
