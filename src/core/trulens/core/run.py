@@ -13,7 +13,6 @@ from pydantic import BaseModel
 from pydantic import Field
 from pydantic import field_serializer
 from trulens.core.utils.json import obj_id_of_obj
-from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
@@ -707,7 +706,7 @@ class Run(BaseModel):
 
         logger.info("Creating single OtelRecordingContext with all attributes")
 
-        # Create one OtelRecordingContext and set all attributes on the root span
+        # Create OtelRecordingContext and then create proper nested spans
         with OtelRecordingContext(
             tru_app=self.app,
             app_name=self.app.app_name,
@@ -719,106 +718,113 @@ class Run(BaseModel):
         ):
             logger.info("Successfully created OtelRecordingContext")
 
-            # Set all attributes from dataset_spec on the current span
-            self._set_all_attributes_on_current_span(dataset_spec, row)
+            # Now create nested spans within this context
+            self._create_nested_spans_from_dataset_spec(dataset_spec, row)
 
-            logger.info("Set all attributes on current span")
+            logger.info("Created all nested spans")
 
-    def _set_all_attributes_on_current_span(
+    def _create_nested_spans_from_dataset_spec(
         self, dataset_spec: Dict[str, str], row
     ):
-        """Set all attributes from dataset_spec on the current active span"""
-        from opentelemetry import trace
+        """Create properly nested spans within OtelRecordingContext"""
+        from trulens.experimental.otel_tracing.core.span import (
+            set_general_span_attributes,
+        )
 
-        current_span = trace.get_current_span()
-        if not current_span:
-            logger.debug("No active recording span found!")
-            return
+        # Group dataset_spec by span type
+        span_data = self._group_dataset_spec_by_span_type(dataset_spec, row)
+        logger.info(f"Creating nested spans for: {list(span_data.keys())}")
 
-        logger.info("Setting attributes on current active span")
+        # Create record_root span first (parent span) using TruLens infrastructure
+        if "record_root" in span_data:
+            from trulens.core.otel.function_call_context_manager import (
+                create_function_call_context_manager,
+            )
 
-        # Set all attributes from dataset_spec directly on the current span
-        for spec_key, column_name in dataset_spec.items():
-            if column_name in row:
-                value = row[column_name]
-
-                # Use the spec_key as the attribute name (it should already be in proper format)
-                # e.g., "record_root.input" maps to SpanAttributes.RECORD_ROOT.INPUT
-                attribute_key = self._resolve_span_attribute_key(spec_key)
-
-                if attribute_key:
-                    current_span.set_attribute(attribute_key, str(value))
-                    logger.error(f"Set attribute {attribute_key} = {value}")
-                else:
-                    # Fallback: use the spec_key directly
-                    current_span.set_attribute(spec_key, str(value))
-                    logger.error(f"Set fallback attribute {spec_key} = {value}")
-
-    def _resolve_span_attribute_key(self, spec_key: str):
-        """Resolve dataset_spec key to proper SpanAttributes constant"""
-        parts = spec_key.lower().split(".")
-
-        if len(parts) >= 2:
-            span_type = parts[0]  # e.g., 'record_root', 'retrieval'
-            attribute = parts[1]  # e.g., 'input', 'output'
-
-            # Get the appropriate SpanAttributes class
-            span_attrs_class = self._get_span_attributes_class(span_type)
-            if span_attrs_class:
-                # Try to get the attribute constant
-                attr_constant = getattr(
-                    span_attrs_class, attribute.upper(), None
+            with create_function_call_context_manager(
+                True, "app_method"
+            ) as root_span:
+                # Set record_root span type and attributes using TruLens infrastructure
+                set_general_span_attributes(
+                    root_span, SpanAttributes.SpanType.RECORD_ROOT
                 )
-                return attr_constant
+                self._set_span_attributes_from_data(
+                    root_span, span_data["record_root"], "record_root"
+                )
 
-        return None
+                root_span_id = root_span.get_span_context().span_id
+                logger.debug(
+                    f"Created record_root span with ID: {root_span_id}"
+                )
 
-    def _create_virtual_spans_without_app(
-        self,
-        row,
-        dataset_spec,
-        input_id,
-        input_records_count,
-        ground_truth_output,
+                # Create child spans nested WITHIN the root span context
+                for span_type, attributes in span_data.items():
+                    if span_type == "record_root":
+                        continue  # Already handled
+
+                    # Create child span using TruLens infrastructure
+                    span_type_enum = self._get_span_type_enum(span_type)
+                    if span_type_enum:
+                        logger.debug(
+                            f"Creating child span: {span_type} under parent {root_span_id}"
+                        )
+                        with create_function_call_context_manager(
+                            True, f"{span_type}_method"
+                        ) as child_span:
+                            # Set span type and attributes using TruLens infrastructure
+                            set_general_span_attributes(
+                                child_span, span_type_enum
+                            )
+                            self._set_span_attributes_from_data(
+                                child_span, attributes, span_type
+                            )
+
+                            child_span_id = (
+                                child_span.get_span_context().span_id
+                            )
+                            child_parent_span_id = (
+                                child_span.parent.span_id
+                                if child_span.parent
+                                else "None"
+                            )
+                            logger.debug(
+                                f"Created {span_type} child span ID: {child_span_id}, parent ID: {child_parent_span_id}"
+                            )
+                    else:
+                        logger.warning(
+                            f"Unknown span type: {span_type} - skipping"
+                        )
+        else:
+            logger.warning("No record_root defined in dataset_spec")
+
+    def _set_span_attributes_from_data(
+        self, span, attributes: Dict[str, any], span_type: str
     ):
-        """Create virtual spans without an app context by manually setting baggage and span attributes."""
-        from opentelemetry import baggage
-        from opentelemetry import trace
-        import opentelemetry.context as context_api
-        from trulens.experimental.otel_tracing.core.session import (
-            TRULENS_SERVICE_NAME,
-        )
+        """Set span attributes using proper SpanAttributes constants"""
+        span_attrs_class = self._get_span_attributes_class(span_type)
 
-        tracer = trace.get_tracer_provider().get_tracer(TRULENS_SERVICE_NAME)
-
-        # Set baggage context manually for virtual runs
-        ctx = baggage.set_baggage(ResourceAttributes.APP_NAME, self.object_name)
-        ctx = baggage.set_baggage(
-            ResourceAttributes.APP_VERSION, self.object_version or "1.0", ctx
-        )
-        ctx = baggage.set_baggage(SpanAttributes.RUN_NAME, self.run_name, ctx)
-        ctx = baggage.set_baggage(SpanAttributes.INPUT_ID, input_id, ctx)
-        ctx = baggage.set_baggage(
-            SpanAttributes.INPUT_RECORDS_COUNT, str(input_records_count), ctx
-        )
-        if ground_truth_output:
-            ctx = baggage.set_baggage(
-                SpanAttributes.RECORD_ROOT.GROUND_TRUTH_OUTPUT,
-                str(ground_truth_output),
-                ctx,
-            )
-
-        token = context_api.attach(ctx)
-        try:
-            # Group dataset_spec entries by span type
-            span_data = self._group_dataset_spec_by_span_type(dataset_spec, row)
-
-            # Create spans based on what's defined in dataset_spec
-            self._create_spans_from_spec_data(
-                tracer, span_data, include_context_attrs=True
-            )
-        finally:
-            context_api.detach(token)
+        for attr_name, value in attributes.items():
+            if span_attrs_class:
+                attr_constant = getattr(
+                    span_attrs_class, attr_name.upper(), None
+                )
+                if attr_constant:
+                    span.set_attribute(attr_constant, str(value))
+                    logger.info(
+                        f"Set {span_type} attribute {attr_constant} = {value}"
+                    )
+                else:
+                    # Fallback to raw attribute name
+                    fallback_key = f"{span_type}.{attr_name}"
+                    span.set_attribute(fallback_key, str(value))
+                    logger.info(
+                        f"Set fallback attribute {fallback_key} = {value}"
+                    )
+            else:
+                # Fallback to raw attribute name
+                fallback_key = f"{span_type}.{attr_name}"
+                span.set_attribute(fallback_key, str(value))
+                logger.info(f"Set fallback attribute {fallback_key} = {value}")
 
     def _group_dataset_spec_by_span_type(
         self, dataset_spec: Dict[str, str], row
@@ -834,9 +840,9 @@ class Run(BaseModel):
             parts = spec_key.lower().split(".")
 
             if len(parts) >= 2:
-                span_type = parts[
-                    0
-                ]  # e.g., 'record_root', 'retrieval', 'generation'
+                span_type = (
+                    f"{parts[0]}"  # e.g., 'ai.observability.record_root'
+                )
                 attribute = ".".join(
                     parts[1:]
                 )  # e.g., 'input', 'output', 'query_text'
