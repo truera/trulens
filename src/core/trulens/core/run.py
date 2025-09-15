@@ -860,34 +860,6 @@ class Run(BaseModel):
         # Try to get the enum value dynamically
         return getattr(SpanAttributes.SpanType, enum_name, None)
 
-    def _set_span_attributes_from_data(
-        self, span, attributes: Dict[str, any], span_type: str
-    ):
-        """Set span attributes using proper SpanAttributes constants"""
-
-        # Get the appropriate SpanAttributes class for this span type
-        span_attrs_class = self._get_span_attributes_class(span_type)
-
-        if span_attrs_class:
-            for attr_name, value in attributes.items():
-                # Try to get the proper attribute constant
-                attr_constant = getattr(
-                    span_attrs_class, attr_name.upper(), None
-                )
-                if attr_constant:
-                    span.set_attribute(attr_constant, str(value))
-                else:
-                    # Fallback: try common patterns
-                    self._set_attribute_with_fallback(
-                        span, span_type, attr_name, value
-                    )
-        else:
-            # Fallback for unknown span types
-            for attr_name, value in attributes.items():
-                self._set_attribute_with_fallback(
-                    span, span_type, attr_name, value
-                )
-
     def _get_span_attributes_class(self, span_type: str):
         """Get the appropriate SpanAttributes class for a span type dynamically"""
         # Convert span_type to uppercase to match class naming convention
@@ -895,25 +867,6 @@ class Run(BaseModel):
 
         # Try to get the attributes class dynamically
         return getattr(SpanAttributes, class_name, None)
-
-    def _set_attribute_with_fallback(
-        self, span, span_type: str, attr_name: str, value: any
-    ):
-        """Fallback attribute setting with common attribute patterns"""
-
-        # Common attribute patterns that work across span types
-        common_attrs = {
-            "input": f"{span_type}.input",
-            "output": f"{span_type}.output",
-            "query_text": f"{span_type}.query_text",
-            "retrieved_contexts": f"{span_type}.retrieved_contexts",
-            "ground_truth_output": f"{span_type}.ground_truth_output",
-        }
-
-        attr_key = common_attrs.get(
-            attr_name.lower(), f"{span_type}.{attr_name}"
-        )
-        span.set_attribute(attr_key, str(value))
 
     def _get_current_time_in_ms(self) -> int:
         return int(round(time.time() * 1000))
