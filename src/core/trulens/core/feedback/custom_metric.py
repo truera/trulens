@@ -174,31 +174,3 @@ class MetricConfig:
             f"metric_type='{self.metric_type}', "
             f"computation='{self.computation_type}', selectors={len(self.selectors)})"
         )
-
-
-# For backwards compatibility, keep EvaluationConfig as an alias to MetricConfig
-# This allows existing code to continue working
-EvaluationConfig = MetricConfig
-
-
-# Backwards compatibility function - deprecated
-def custom_metric(*args, **kwargs):
-    """
-    DEPRECATED: Use MetricConfig directly instead of this decorator.
-
-    This function is kept for backwards compatibility but will be removed
-    in a future version. Please use MetricConfig directly.
-    """
-    import warnings
-
-    warnings.warn(
-        "custom_metric decorator is deprecated. Use MetricConfig directly instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-
-    # Return a no-op decorator for now
-    def decorator(func):
-        return func
-
-    return decorator
