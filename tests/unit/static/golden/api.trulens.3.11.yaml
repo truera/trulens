@@ -416,6 +416,12 @@ trulens.core.database.migrations.data:
     data_migrate: builtins.function
     sql_alchemy_migration_versions: builtins.list
     sqlalchemy_upgrade_paths: builtins.dict
+trulens.core.database.migrations.util:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    get_table_prefix_from_config: builtins.function
+    make_orm_from_config: builtins.function
 trulens.core.database.orm:
   __class__: builtins.module
   highs: {}
@@ -1419,6 +1425,18 @@ trulens.core.utils.evaluator.Evaluator:
     compute_now: builtins.function
     start_evaluator: builtins.function
     stop_evaluator: builtins.function
+trulens.core.utils.id_based_lock:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    IdBasedLockManager: builtins.type
+trulens.core.utils.id_based_lock.IdBasedLockManager:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    get_stats: builtins.function
+    lock: builtins.function
 trulens.core.utils.imports:
   __class__: builtins.module
   highs: {}
