@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 from typing import Any, Callable, Dict, List, Optional
 
 import pandas as pd
 from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
+from trulens.core.utils.trace_compression import compress_trace_for_feedback
 from trulens.otel.semconv.trace import SpanAttributes
 
 
@@ -87,6 +89,39 @@ class Trace:
         else:
             self.processed_content_roots.append(node)
         return node
+
+    def to_compressed_json(
+        self, verbose: bool = True, default_handler: Callable = str
+    ) -> str:
+        """
+        Convert trace events to compressed JSON format.
+        This reduces token usage while preserving essential information.
+
+        Args:
+            verbose: Whether to print compression statistics
+            default_handler: Function to handle non-serializable objects
+
+        Returns:
+            Compressed JSON string representation of the trace
+        """
+        # First convert to regular JSON
+        if self.events is not None:
+            trace_data = self.events.to_json(default_handler=default_handler)
+        else:
+            # If no events, create minimal trace data
+            trace_data = json.dumps({
+                "events": [],
+                "processed_content_roots": [],
+            })
+
+        # Apply compression
+        print("\n🔄 Compressing trace data for feedback function...")
+        compressed_trace = compress_trace_for_feedback(
+            trace_data, verbose=verbose
+        )
+
+        # Convert compressed data back to JSON string
+        return json.dumps(compressed_trace, default=default_handler)
 
 
 @dataclass
