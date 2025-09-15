@@ -514,7 +514,6 @@ trulens.core.feedback.custom_metric.MetricConfig:
   - builtins.object
   __class__: builtins.type
   attributes:
-    add_selector: builtins.function
     create_feedback_definition: builtins.function
     to_dict: builtins.function
     validate_selectors: builtins.function

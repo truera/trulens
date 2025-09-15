@@ -79,22 +79,6 @@ class MetricConfig:
                 f"Metric function '{self.metric_name}' must have at least one parameter"
             )
 
-    def add_selector(
-        self, parameter_name: str, selector: Selector
-    ) -> "MetricConfig":
-        """
-        Add a selector for a specific parameter.
-
-        Args:
-            parameter_name: Name of the metric function parameter
-            selector: Selector that extracts the value from spans
-
-        Returns:
-            Self for method chaining
-        """
-        self.selectors[parameter_name] = selector
-        return self
-
     def validate_selectors(self) -> None:
         """
         Validate that selectors match the function signature.
