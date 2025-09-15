@@ -645,69 +645,133 @@ class Run(BaseModel):
         This method creates spans dynamically based on the dataset_spec mapping,
         which maps span attribute paths to column names.
         """
-        from trulens.core.otel.instrument import OtelRecordingContext
 
         logger.info(f"Creating virtual spans for {len(input_df)} records")
 
         for i, row in input_df.iterrows():
-            # Extract input_id for the recording context
-            input_id = None
-            input_value = None
-            ground_truth_output = None
+            # Use the EXACT same input_id logic as the working flow
+            input_id = (
+                row[dataset_spec["input_id"]]
+                if "input_id" in dataset_spec
+                else None
+            )
+            input_col = None
+            if input_id is None:
+                if "input" in dataset_spec:
+                    input_col = dataset_spec["input"]
+                elif "record_root.input" in dataset_spec:
+                    input_col = dataset_spec["record_root.input"]
+                if input_col:
+                    input_id = obj_id_of_obj(row[input_col])
 
-            # Look for input_id, input, or record_root.input to establish input_id
-            for spec_key, column_name in dataset_spec.items():
-                if column_name in row:
-                    if spec_key.lower() == "input_id":
-                        input_id = row[column_name]
-                    elif spec_key.lower() in ["input", "record_root.input"]:
-                        input_value = row[column_name]
-                        if input_id is None:
-                            input_id = obj_id_of_obj(input_value)
-                    elif spec_key.lower() in [
-                        "ground_truth_output",
-                        "record_root.ground_truth_output",
-                    ]:
-                        ground_truth_output = row[column_name]
+            ground_truth_output = row.get(
+                dataset_spec.get("ground_truth_output")
+                or dataset_spec.get("record_root.ground_truth_output")
+            )
 
-            # Create OTEL recording context
-            # For virtual runs, check if the TruApp has a real underlying app or is virtual
-            if hasattr(self.app, "app") and self.app.app is None:
-                # This is a virtual TruApp with no underlying app - create spans manually
-                self._create_virtual_spans_without_app(
+            # Ensure input_id is never None - use row index as fallback
+            if input_id is None:
+                input_id = f"row_{i}"
+                logger.warning(f"input_id was None, using fallback: {input_id}")
+
+            logger.info(
+                f"Creating OtelRecordingContext for input_id: {input_id}"
+            )
+            logger.info(
+                f"App name: {self.app.app_name}, App version: {self.app.app_version}"
+            )
+
+            try:
+                # Create spans using nested OtelRecordingContext for proper context propagation
+                self._create_virtual_spans_with_nested_contexts(
                     row,
                     dataset_spec,
                     input_id,
                     input_records_count,
                     ground_truth_output,
                 )
-            else:
-                # Regular TruApp with real app - use normal recording context
-                with OtelRecordingContext(
-                    tru_app=self.app,
-                    app_name=self.app.app_name,
-                    app_version=self.app.app_version,
-                    run_name=self.run_name,
-                    input_id=input_id,
-                    input_records_count=input_records_count,
-                    ground_truth_output=ground_truth_output,
-                ):
-                    self._create_virtual_spans_in_context(row, dataset_spec)
+            except Exception as e:
+                logger.exception(f"Error in virtual span creation: {e}")
+                raise
 
-    def _create_virtual_spans_in_context(self, row, dataset_spec):
-        """Create virtual spans within an existing OTEL recording context based on dataset_spec."""
+    def _create_virtual_spans_with_nested_contexts(
+        self,
+        row,
+        dataset_spec,
+        input_id,
+        input_records_count,
+        ground_truth_output,
+    ):
+        """Create virtual spans using OtelRecordingContext - simplified approach"""
+        from trulens.core.otel.instrument import OtelRecordingContext
+
+        logger.info("Creating single OtelRecordingContext with all attributes")
+
+        # Create one OtelRecordingContext and set all attributes on the root span
+        with OtelRecordingContext(
+            tru_app=self.app,
+            app_name=self.app.app_name,
+            app_version=self.app.app_version,
+            run_name=self.run_name,
+            input_id=input_id,
+            input_records_count=input_records_count,
+            ground_truth_output=ground_truth_output,
+        ):
+            logger.info("Successfully created OtelRecordingContext")
+
+            # Set all attributes from dataset_spec on the current span
+            self._set_all_attributes_on_current_span(dataset_spec, row)
+
+            logger.info("Set all attributes on current span")
+
+    def _set_all_attributes_on_current_span(
+        self, dataset_spec: Dict[str, str], row
+    ):
+        """Set all attributes from dataset_spec on the current active span"""
         from opentelemetry import trace
-        from trulens.experimental.otel_tracing.core.session import (
-            TRULENS_SERVICE_NAME,
-        )
 
-        tracer = trace.get_tracer_provider().get_tracer(TRULENS_SERVICE_NAME)
+        current_span = trace.get_current_span()
+        if not current_span:
+            logger.debug("No active recording span found!")
+            return
 
-        # Group dataset_spec entries by span type
-        span_data = self._group_dataset_spec_by_span_type(dataset_spec, row)
+        logger.info("Setting attributes on current active span")
 
-        # Create spans based on what's defined in dataset_spec
-        self._create_spans_from_spec_data(tracer, span_data)
+        # Set all attributes from dataset_spec directly on the current span
+        for spec_key, column_name in dataset_spec.items():
+            if column_name in row:
+                value = row[column_name]
+
+                # Use the spec_key as the attribute name (it should already be in proper format)
+                # e.g., "record_root.input" maps to SpanAttributes.RECORD_ROOT.INPUT
+                attribute_key = self._resolve_span_attribute_key(spec_key)
+
+                if attribute_key:
+                    current_span.set_attribute(attribute_key, str(value))
+                    logger.error(f"Set attribute {attribute_key} = {value}")
+                else:
+                    # Fallback: use the spec_key directly
+                    current_span.set_attribute(spec_key, str(value))
+                    logger.error(f"Set fallback attribute {spec_key} = {value}")
+
+    def _resolve_span_attribute_key(self, spec_key: str):
+        """Resolve dataset_spec key to proper SpanAttributes constant"""
+        parts = spec_key.lower().split(".")
+
+        if len(parts) >= 2:
+            span_type = parts[0]  # e.g., 'record_root', 'retrieval'
+            attribute = parts[1]  # e.g., 'input', 'output'
+
+            # Get the appropriate SpanAttributes class
+            span_attrs_class = self._get_span_attributes_class(span_type)
+            if span_attrs_class:
+                # Try to get the attribute constant
+                attr_constant = getattr(
+                    span_attrs_class, attribute.upper(), None
+                )
+                return attr_constant
+
+        return None
 
     def _create_virtual_spans_without_app(
         self,
@@ -788,103 +852,68 @@ class Run(BaseModel):
 
         return span_data
 
-    def _create_spans_from_spec_data(
-        self,
-        tracer,
-        span_data: Dict[str, Dict[str, any]],
-        include_context_attrs: bool = False,
-    ):
-        """Create OTEL spans dynamically based on grouped span data"""
+    def _get_span_type_enum(self, span_type: str):
+        """Map span type string to SpanType enum dynamically"""
+        # Convert span_type to uppercase to match enum naming convention
+        enum_name = span_type.upper()
 
-        # Always create record_root span first if it exists
-        if "record_root" in span_data:
-            with tracer.start_as_current_span("app_method") as root_span:
-                # Set span type
-                root_span.set_attribute(
-                    SpanAttributes.SPAN_TYPE,
-                    SpanAttributes.SpanType.RECORD_ROOT.value,
+        # Try to get the enum value dynamically
+        return getattr(SpanAttributes.SpanType, enum_name, None)
+
+    def _set_span_attributes_from_data(
+        self, span, attributes: Dict[str, any], span_type: str
+    ):
+        """Set span attributes using proper SpanAttributes constants"""
+
+        # Get the appropriate SpanAttributes class for this span type
+        span_attrs_class = self._get_span_attributes_class(span_type)
+
+        if span_attrs_class:
+            for attr_name, value in attributes.items():
+                # Try to get the proper attribute constant
+                attr_constant = getattr(
+                    span_attrs_class, attr_name.upper(), None
+                )
+                if attr_constant:
+                    span.set_attribute(attr_constant, str(value))
+                else:
+                    # Fallback: try common patterns
+                    self._set_attribute_with_fallback(
+                        span, span_type, attr_name, value
+                    )
+        else:
+            # Fallback for unknown span types
+            for attr_name, value in attributes.items():
+                self._set_attribute_with_fallback(
+                    span, span_type, attr_name, value
                 )
 
-                # Set context attributes if needed (for spans without app context)
-                if include_context_attrs:
-                    root_span.set_attribute(
-                        ResourceAttributes.APP_NAME, self.object_name
-                    )
-                    root_span.set_attribute(
-                        ResourceAttributes.APP_VERSION,
-                        self.object_version or "1.0",
-                    )
-                    root_span.set_attribute(
-                        SpanAttributes.RUN_NAME, self.run_name
-                    )
+    def _get_span_attributes_class(self, span_type: str):
+        """Get the appropriate SpanAttributes class for a span type dynamically"""
+        # Convert span_type to uppercase to match class naming convention
+        class_name = span_type.upper()
 
-                # Set record_root attributes
-                for attr, value in span_data["record_root"].items():
-                    span_attr = getattr(
-                        SpanAttributes.RECORD_ROOT, attr.upper(), None
-                    )
-                    if span_attr:
-                        root_span.set_attribute(span_attr, str(value))
+        # Try to get the attributes class dynamically
+        return getattr(SpanAttributes, class_name, None)
 
-                # Create other span types as child spans
-                for span_type, attributes in span_data.items():
-                    if span_type == "record_root":
-                        continue  # Already handled
-
-                    self._create_child_span(tracer, span_type, attributes)
-        else:
-            # If no record_root, create other spans independently
-            for span_type, attributes in span_data.items():
-                self._create_child_span(tracer, span_type, attributes)
-
-    def _create_child_span(
-        self, tracer, span_type: str, attributes: Dict[str, any]
+    def _set_attribute_with_fallback(
+        self, span, span_type: str, attr_name: str, value: any
     ):
-        """Create a child span of the specified type with the given attributes"""
+        """Fallback attribute setting with common attribute patterns"""
 
-        # Map span type string to enum
-        span_type_enum = None
-        span_attrs_class = None
+        # Common attribute patterns that work across span types
+        common_attrs = {
+            "input": f"{span_type}.input",
+            "output": f"{span_type}.output",
+            "query_text": f"{span_type}.query_text",
+            "retrieved_contexts": f"{span_type}.retrieved_contexts",
+            "ground_truth_output": f"{span_type}.ground_truth_output",
+        }
 
-        if span_type == "retrieval":
-            span_type_enum = SpanAttributes.SpanType.RETRIEVAL
-            span_attrs_class = SpanAttributes.RETRIEVAL
-        elif span_type == "generation":
-            span_type_enum = SpanAttributes.SpanType.GENERATION
-            span_attrs_class = SpanAttributes.GENERATION
-        elif span_type == "graph_task":
-            span_type_enum = SpanAttributes.SpanType.GRAPH_TASK
-            span_attrs_class = getattr(SpanAttributes, "GRAPH_TASK", None)
-        elif span_type == "graph_node":
-            span_type_enum = SpanAttributes.SpanType.GRAPH_NODE
-            span_attrs_class = getattr(SpanAttributes, "GRAPH_NODE", None)
-        elif span_type == "workflow_step":
-            span_type_enum = SpanAttributes.SpanType.WORKFLOW_STEP
-            span_attrs_class = getattr(SpanAttributes, "WORKFLOW_STEP", None)
-        else:
-            # Unknown span type - skip
-            logger.warning(f"Unknown span type: {span_type}")
-            return
-
-        if span_type_enum:
-            with tracer.start_as_current_span(span_type) as span:
-                # Set span type
-                span.set_attribute(
-                    SpanAttributes.SPAN_TYPE, span_type_enum.value
-                )
-
-                # Set attributes specific to this span type
-                for attr, value in attributes.items():
-                    if span_attrs_class:
-                        span_attr = getattr(
-                            span_attrs_class, attr.upper(), None
-                        )
-                        if span_attr:
-                            span.set_attribute(span_attr, str(value))
-                        else:
-                            logger.warning(
-                                f"Unknown attribute {attr} for span type {span_type}"
-                            )
+        attr_key = common_attrs.get(
+            attr_name.lower(), f"{span_type}.{attr_name}"
+        )
+        span.set_attribute(attr_key, str(value))
 
     def _get_current_time_in_ms(self) -> int:
         return int(round(time.time() * 1000))
