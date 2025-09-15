@@ -170,8 +170,8 @@ class Run(BaseModel):
         exclude=True,
     )
 
-    main_method_name: str = Field(
-        ..., description="Main method of the app.", exclude=True
+    main_method_name: Optional[str] = Field(
+        default=None, description="Main method of the app.", exclude=True
     )
 
     tru_session: Any = Field(
@@ -642,78 +642,42 @@ class Run(BaseModel):
     ):
         """
         Create OTEL spans from existing data without actual app invocation.
-        This method replicates the span structure that would be created by instrumented app methods,
-        but uses existing data from the input DataFrame.
+        This method creates spans dynamically based on the dataset_spec mapping,
+        which maps span attribute paths to column names.
         """
         from trulens.core.otel.instrument import OtelRecordingContext
 
         logger.info(f"Creating virtual spans for {len(input_df)} records")
 
         for i, row in input_df.iterrows():
-            # For virtual runs, directly extract values from dataset_spec mapping
-            # No need for complex input_id guessing since we're not executing apps
-
-            # Extract input value
-            input_value = None
+            # Extract input_id for the recording context
             input_id = None
-            if "input_id" in dataset_spec and dataset_spec["input_id"] in row:
-                input_id = row[dataset_spec["input_id"]]
-            if "input" in dataset_spec and dataset_spec["input"] in row:
-                input_value = row[dataset_spec["input"]]
-                if input_id is None:
-                    input_id = obj_id_of_obj(input_value)
-            elif (
-                "record_root.input" in dataset_spec
-                and dataset_spec["record_root.input"] in row
-            ):
-                input_value = row[dataset_spec["record_root.input"]]
-                if input_id is None:
-                    input_id = obj_id_of_obj(input_value)
-
-            # Extract output value
-            output_value = None
-            if "output" in dataset_spec and dataset_spec["output"] in row:
-                output_value = row[dataset_spec["output"]]
-            elif (
-                "record_root.output" in dataset_spec
-                and dataset_spec["record_root.output"] in row
-            ):
-                output_value = row[dataset_spec["record_root.output"]]
-
-            # Extract ground truth output
+            input_value = None
             ground_truth_output = None
-            if (
-                "ground_truth_output" in dataset_spec
-                and dataset_spec["ground_truth_output"] in row
-            ):
-                ground_truth_output = row[dataset_spec["ground_truth_output"]]
-            elif (
-                "record_root.ground_truth_output" in dataset_spec
-                and dataset_spec["record_root.ground_truth_output"] in row
-            ):
-                ground_truth_output = row[
-                    dataset_spec["record_root.ground_truth_output"]
-                ]
 
-            # Extract contexts if available
-            contexts = None
-            if (
-                "retrieved_contexts" in dataset_spec
-                and dataset_spec["retrieved_contexts"] in row
-            ):
-                contexts_str = row[dataset_spec["retrieved_contexts"]]
-                if contexts_str:
-                    contexts = [ctx.strip() for ctx in contexts_str.split(",")]
+            # Look for input_id, input, or record_root.input to establish input_id
+            for spec_key, column_name in dataset_spec.items():
+                if column_name in row:
+                    if spec_key.lower() == "input_id":
+                        input_id = row[column_name]
+                    elif spec_key.lower() in ["input", "record_root.input"]:
+                        input_value = row[column_name]
+                        if input_id is None:
+                            input_id = obj_id_of_obj(input_value)
+                    elif spec_key.lower() in [
+                        "ground_truth_output",
+                        "record_root.ground_truth_output",
+                    ]:
+                        ground_truth_output = row[column_name]
 
-            # Create OTEL recording context similar to instrumented_invoke_main_method
+            # Create OTEL recording context
             # For virtual runs, check if the TruApp has a real underlying app or is virtual
             if hasattr(self.app, "app") and self.app.app is None:
                 # This is a virtual TruApp with no underlying app - create spans manually
                 self._create_virtual_spans_without_app(
+                    row,
+                    dataset_spec,
                     input_id,
-                    input_value,
-                    output_value,
-                    contexts,
                     input_records_count,
                     ground_truth_output,
                 )
@@ -728,14 +692,10 @@ class Run(BaseModel):
                     input_records_count=input_records_count,
                     ground_truth_output=ground_truth_output,
                 ):
-                    self._create_virtual_spans_in_context(
-                        input_value, output_value, contexts
-                    )
+                    self._create_virtual_spans_in_context(row, dataset_spec)
 
-    def _create_virtual_spans_in_context(
-        self, input_value, output_value, contexts
-    ):
-        """Create virtual spans within an existing OTEL recording context."""
+    def _create_virtual_spans_in_context(self, row, dataset_spec):
+        """Create virtual spans within an existing OTEL recording context based on dataset_spec."""
         from opentelemetry import trace
         from trulens.experimental.otel_tracing.core.session import (
             TRULENS_SERVICE_NAME,
@@ -743,60 +703,17 @@ class Run(BaseModel):
 
         tracer = trace.get_tracer_provider().get_tracer(TRULENS_SERVICE_NAME)
 
-        # Create root span (equivalent to the main method span)
-        with tracer.start_as_current_span("virtual_query") as root_span:
-            # Set root span attributes
-            root_span.set_attribute(
-                SpanAttributes.SPAN_TYPE,
-                SpanAttributes.SpanType.RECORD_ROOT.value,
-            )
-            if input_value is not None:
-                root_span.set_attribute(
-                    SpanAttributes.RECORD_ROOT.INPUT, str(input_value)
-                )
-            if output_value is not None:
-                root_span.set_attribute(
-                    SpanAttributes.RECORD_ROOT.OUTPUT, str(output_value)
-                )
+        # Group dataset_spec entries by span type
+        span_data = self._group_dataset_spec_by_span_type(dataset_spec, row)
 
-            # Create retrieval span if contexts are available
-            if contexts is not None:
-                with tracer.start_as_current_span(
-                    "virtual_retrieval"
-                ) as retrieval_span:
-                    retrieval_span.set_attribute(
-                        SpanAttributes.SPAN_TYPE,
-                        SpanAttributes.SpanType.RETRIEVAL.value,
-                    )
-                    if input_value is not None:
-                        retrieval_span.set_attribute(
-                            SpanAttributes.RETRIEVAL.QUERY_TEXT,
-                            str(input_value),
-                        )
-                    retrieval_span.set_attribute(
-                        SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
-                        str(contexts),
-                    )
-
-            # Create generation span
-            with tracer.start_as_current_span(
-                "virtual_generation"
-            ) as generation_span:
-                generation_span.set_attribute(
-                    SpanAttributes.SPAN_TYPE,
-                    SpanAttributes.SpanType.GENERATION.value,
-                )
-                if output_value is not None:
-                    generation_span.set_attribute(
-                        SpanAttributes.GENERATION.OUTPUT, str(output_value)
-                    )
+        # Create spans based on what's defined in dataset_spec
+        self._create_spans_from_spec_data(tracer, span_data)
 
     def _create_virtual_spans_without_app(
         self,
+        row,
+        dataset_spec,
         input_id,
-        input_value,
-        output_value,
-        contexts,
         input_records_count,
         ground_truth_output,
     ):
@@ -829,71 +746,145 @@ class Run(BaseModel):
 
         token = context_api.attach(ctx)
         try:
-            # Create root span (equivalent to the main method span)
-            with tracer.start_as_current_span("virtual_query") as root_span:
-                # Set root span attributes
+            # Group dataset_spec entries by span type
+            span_data = self._group_dataset_spec_by_span_type(dataset_spec, row)
+
+            # Create spans based on what's defined in dataset_spec
+            self._create_spans_from_spec_data(
+                tracer, span_data, include_context_attrs=True
+            )
+        finally:
+            context_api.detach(token)
+
+    def _group_dataset_spec_by_span_type(
+        self, dataset_spec: Dict[str, str], row
+    ) -> Dict[str, Dict[str, any]]:
+        """Group dataset_spec entries by span type (record_root, retrieval, generation, etc.)"""
+        span_data = {}
+
+        for spec_key, column_name in dataset_spec.items():
+            if column_name not in row:
+                continue
+
+            value = row[column_name]
+            parts = spec_key.lower().split(".")
+
+            if len(parts) >= 2:
+                span_type = parts[
+                    0
+                ]  # e.g., 'record_root', 'retrieval', 'generation'
+                attribute = ".".join(
+                    parts[1:]
+                )  # e.g., 'input', 'output', 'query_text'
+            else:
+                # Handle legacy keys like 'input', 'output' - assume they're record_root
+                span_type = "record_root"
+                attribute = parts[0]
+
+            if span_type not in span_data:
+                span_data[span_type] = {}
+
+            span_data[span_type][attribute] = value
+
+        return span_data
+
+    def _create_spans_from_spec_data(
+        self,
+        tracer,
+        span_data: Dict[str, Dict[str, any]],
+        include_context_attrs: bool = False,
+    ):
+        """Create OTEL spans dynamically based on grouped span data"""
+
+        # Always create record_root span first if it exists
+        if "record_root" in span_data:
+            with tracer.start_as_current_span("app_method") as root_span:
+                # Set span type
                 root_span.set_attribute(
                     SpanAttributes.SPAN_TYPE,
                     SpanAttributes.SpanType.RECORD_ROOT.value,
                 )
-                root_span.set_attribute(
-                    ResourceAttributes.APP_NAME, self.object_name
-                )
-                root_span.set_attribute(
-                    ResourceAttributes.APP_VERSION, self.object_version or "1.0"
-                )
-                root_span.set_attribute(SpanAttributes.RUN_NAME, self.run_name)
-                root_span.set_attribute(SpanAttributes.INPUT_ID, input_id)
-                root_span.set_attribute(
-                    SpanAttributes.INPUT_RECORDS_COUNT, input_records_count
-                )
-                if input_value is not None:
+
+                # Set context attributes if needed (for spans without app context)
+                if include_context_attrs:
                     root_span.set_attribute(
-                        SpanAttributes.RECORD_ROOT.INPUT, str(input_value)
+                        ResourceAttributes.APP_NAME, self.object_name
                     )
-                if output_value is not None:
                     root_span.set_attribute(
-                        SpanAttributes.RECORD_ROOT.OUTPUT, str(output_value)
+                        ResourceAttributes.APP_VERSION,
+                        self.object_version or "1.0",
                     )
-                if ground_truth_output:
                     root_span.set_attribute(
-                        SpanAttributes.RECORD_ROOT.GROUND_TRUTH_OUTPUT,
-                        str(ground_truth_output),
+                        SpanAttributes.RUN_NAME, self.run_name
                     )
 
-                # Create retrieval span if contexts are available
-                if contexts is not None:
-                    with tracer.start_as_current_span(
-                        "virtual_retrieval"
-                    ) as retrieval_span:
-                        retrieval_span.set_attribute(
-                            SpanAttributes.SPAN_TYPE,
-                            SpanAttributes.SpanType.RETRIEVAL.value,
+                # Set record_root attributes
+                for attr, value in span_data["record_root"].items():
+                    span_attr = getattr(
+                        SpanAttributes.RECORD_ROOT, attr.upper(), None
+                    )
+                    if span_attr:
+                        root_span.set_attribute(span_attr, str(value))
+
+                # Create other span types as child spans
+                for span_type, attributes in span_data.items():
+                    if span_type == "record_root":
+                        continue  # Already handled
+
+                    self._create_child_span(tracer, span_type, attributes)
+        else:
+            # If no record_root, create other spans independently
+            for span_type, attributes in span_data.items():
+                self._create_child_span(tracer, span_type, attributes)
+
+    def _create_child_span(
+        self, tracer, span_type: str, attributes: Dict[str, any]
+    ):
+        """Create a child span of the specified type with the given attributes"""
+
+        # Map span type string to enum
+        span_type_enum = None
+        span_attrs_class = None
+
+        if span_type == "retrieval":
+            span_type_enum = SpanAttributes.SpanType.RETRIEVAL
+            span_attrs_class = SpanAttributes.RETRIEVAL
+        elif span_type == "generation":
+            span_type_enum = SpanAttributes.SpanType.GENERATION
+            span_attrs_class = SpanAttributes.GENERATION
+        elif span_type == "graph_task":
+            span_type_enum = SpanAttributes.SpanType.GRAPH_TASK
+            span_attrs_class = getattr(SpanAttributes, "GRAPH_TASK", None)
+        elif span_type == "graph_node":
+            span_type_enum = SpanAttributes.SpanType.GRAPH_NODE
+            span_attrs_class = getattr(SpanAttributes, "GRAPH_NODE", None)
+        elif span_type == "workflow_step":
+            span_type_enum = SpanAttributes.SpanType.WORKFLOW_STEP
+            span_attrs_class = getattr(SpanAttributes, "WORKFLOW_STEP", None)
+        else:
+            # Unknown span type - skip
+            logger.warning(f"Unknown span type: {span_type}")
+            return
+
+        if span_type_enum:
+            with tracer.start_as_current_span(span_type) as span:
+                # Set span type
+                span.set_attribute(
+                    SpanAttributes.SPAN_TYPE, span_type_enum.value
+                )
+
+                # Set attributes specific to this span type
+                for attr, value in attributes.items():
+                    if span_attrs_class:
+                        span_attr = getattr(
+                            span_attrs_class, attr.upper(), None
                         )
-                        if input_value is not None:
-                            retrieval_span.set_attribute(
-                                SpanAttributes.RETRIEVAL.QUERY_TEXT,
-                                str(input_value),
+                        if span_attr:
+                            span.set_attribute(span_attr, str(value))
+                        else:
+                            logger.warning(
+                                f"Unknown attribute {attr} for span type {span_type}"
                             )
-                        retrieval_span.set_attribute(
-                            SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
-                            str(contexts),
-                        )
-
-                # Create generation span
-                with tracer.start_as_current_span(
-                    "virtual_generation"
-                ) as generation_span:
-                    generation_span.set_attribute(
-                        SpanAttributes.SPAN_TYPE,
-                        SpanAttributes.SpanType.GENERATION.value,
-                    )
-                    if output_value is not None:
-                        generation_span.set_attribute(
-                            SpanAttributes.GENERATION.OUTPUT, str(output_value)
-                        )
-        finally:
-            context_api.detach(token)
 
     def _get_current_time_in_ms(self) -> int:
         return int(round(time.time() * 1000))

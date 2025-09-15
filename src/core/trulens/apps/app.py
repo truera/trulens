@@ -356,8 +356,8 @@ class TruApp(core_app.App):
         # Handle virtual runs where app=None
         if app is None:
             # For virtual runs, we don't need to inspect the app for methods
-            kwargs["main_method"] = "virtual_main"  # Placeholder method name
-            kwargs["root_class"] = None  # No root class for virtual apps
+            # Don't set main_method at all for virtual runs
+            kwargs["root_class"] = None
         else:
             # Regular app handling
             if is_otel_tracing_enabled():
