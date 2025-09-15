@@ -57,8 +57,73 @@ class SnowflakeEventTableDB(core_db.DB):
 
             A list of column names that contain feedback results.
         """
+        df = self._get_events(
+            app_ids=app_ids,
+            app_name=app_name,
+            app_version=app_version,
+            app_versions=app_versions,
+            record_ids=record_ids,
+        )
+        events = []
+        for _, row in df.iterrows():
+            trace = json.loads(row["TRACE"])
+            if "parent_id" not in trace:
+                trace["parent_id"] = ""
+            events.append(
+                Event(
+                    event_id=trace["span_id"],
+                    record=json.loads(row["RECORD"]),
+                    record_attributes=json.loads(row["RECORD_ATTRIBUTES"]),
+                    record_type=row["RECORD_TYPE"],
+                    resource_attributes=json.loads(row["RESOURCE_ATTRIBUTES"]),
+                    start_timestamp=row["START_TIMESTAMP"],
+                    timestamp=row["TIMESTAMP"],
+                    trace=trace,
+                )
+            )
+        return self._get_records_and_feedback_otel_from_events(
+            events=events, app_ids=app_ids, app_name=app_name
+        )
+
+    def get_events(
+        self,
+        app_name: Optional[types_schema.AppName] = None,
+        app_version: Optional[types_schema.AppVersion] = None,
+        record_ids: Optional[List[types_schema.RecordID]] = None,
+        start_time: Optional[datetime] = None,
+    ) -> pd.DataFrame:
+        """
+        Get events from the database.
+
+        Args:
+            app_name: The app name to filter events by.
+            app_version: The app version to filter events by.
+            record_ids: The record ids to filter events by.
+            start_time: The minimum time to consider events from.
+
+        Returns:
+            A pandas DataFrame of all relevant events.
+        """
+        return self._get_events(
+            app_name=app_name,
+            app_version=app_version,
+            record_ids=record_ids,
+            start_time=start_time,
+        )
+
+    def _get_events(
+        self,
+        app_ids: Optional[List[types_schema.AppID]] = None,
+        app_name: Optional[types_schema.AppName] = None,
+        app_version: Optional[types_schema.AppVersion] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
+        record_ids: Optional[List[types_schema.RecordID]] = None,
+        start_time: Optional[datetime] = None,
+    ) -> pd.DataFrame:
         if app_name is None:
             raise ValueError("app_name is required!")
+        if app_ids is not None:
+            raise ValueError("app_ids is not supported!")
         database = clean_up_snowflake_identifier(
             self._snowpark_session.get_current_database()
         )
@@ -88,6 +153,9 @@ class SnowflakeEventTableDB(core_db.DB):
             where_clauses.append(
                 f'RECORD_ATTRIBUTES:"{SpanAttributes.RECORD_ID}" IN ({record_ids_str})'
             )
+        if start_time:
+            start_time_str = f"'{start_time}'"
+            where_clauses.append(f"TIMESTAMP >= {start_time_str}")
         if where_clauses:
             q += " WHERE " + " AND ".join(where_clauses)
         df = None
@@ -103,47 +171,7 @@ class SnowflakeEventTableDB(core_db.DB):
                 # external agent or a cortex agent yet so we're trying both
                 # in a hacky way right now for the time being.
                 pass
-        events = []
-        for _, row in df.iterrows():
-            trace = json.loads(row["TRACE"])
-            if "parent_id" not in trace:
-                trace["parent_id"] = ""
-            events.append(
-                Event(
-                    event_id=trace["span_id"],
-                    record=json.loads(row["RECORD"]),
-                    record_attributes=json.loads(row["RECORD_ATTRIBUTES"]),
-                    record_type=row["RECORD_TYPE"],
-                    resource_attributes=json.loads(row["RESOURCE_ATTRIBUTES"]),
-                    start_timestamp=row["START_TIMESTAMP"],
-                    timestamp=row["TIMESTAMP"],
-                    trace=trace,
-                )
-            )
-        return self._get_records_and_feedback_otel_from_events(
-            events=events, app_ids=app_ids, app_name=app_name
-        )
-
-    def get_events(
-        self,
-        app_name: Optional[str],
-        app_version: Optional[str],
-        record_ids: Optional[List[str]],
-        start_time: Optional[datetime],
-    ) -> pd.DataFrame:
-        """
-        Get events from the database.
-
-        Args:
-            app_name: The app name to filter events by.
-            app_version: The app version to filter events by.
-            record_ids: The record ids to filter events by.
-            start_time: The minimum time to consider events from.
-
-        Returns:
-            A pandas DataFrame of all relevant events.
-        """
-        raise NotImplementedError("Not implemented")
+        return df
 
     def check_db_revision(*args, **kwargs):
         # The account level event table does not have versioning.
