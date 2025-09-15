@@ -650,32 +650,27 @@ class Run(BaseModel):
         logger.info(f"Creating virtual spans for {len(input_df)} records")
 
         for i, row in input_df.iterrows():
-            # Extract input information similar to the regular flow
-            input_id = (
-                row[dataset_spec["input_id"]]
-                if "input_id" in dataset_spec
-                else None
-            )
+            # For virtual runs, directly extract values from dataset_spec mapping
+            # No need for complex input_id guessing since we're not executing apps
 
-            # Determine input column and value
-            input_col = None
+            # Extract input value
             input_value = None
-            if input_id is None:
-                if "input" in dataset_spec:
-                    input_col = dataset_spec["input"]
-                elif "record_root.input" in dataset_spec:
-                    input_col = dataset_spec["record_root.input"]
-                if input_col and input_col in row:
-                    input_value = row[input_col]
+            input_id = None
+            if "input_id" in dataset_spec and dataset_spec["input_id"] in row:
+                input_id = row[dataset_spec["input_id"]]
+            if "input" in dataset_spec and dataset_spec["input"] in row:
+                input_value = row[dataset_spec["input"]]
+                if input_id is None:
+                    input_id = obj_id_of_obj(input_value)
+            elif (
+                "record_root.input" in dataset_spec
+                and dataset_spec["record_root.input"] in row
+            ):
+                input_value = row[dataset_spec["record_root.input"]]
+                if input_id is None:
                     input_id = obj_id_of_obj(input_value)
 
-            # Extract ground truth output
-            ground_truth_output = row.get(
-                dataset_spec.get("ground_truth_output")
-                or dataset_spec.get("record_root.ground_truth_output")
-            )
-
-            # Extract output value (assuming it exists in the data)
+            # Extract output value
             output_value = None
             if "output" in dataset_spec and dataset_spec["output"] in row:
                 output_value = row[dataset_spec["output"]]
@@ -684,6 +679,21 @@ class Run(BaseModel):
                 and dataset_spec["record_root.output"] in row
             ):
                 output_value = row[dataset_spec["record_root.output"]]
+
+            # Extract ground truth output
+            ground_truth_output = None
+            if (
+                "ground_truth_output" in dataset_spec
+                and dataset_spec["ground_truth_output"] in row
+            ):
+                ground_truth_output = row[dataset_spec["ground_truth_output"]]
+            elif (
+                "record_root.ground_truth_output" in dataset_spec
+                and dataset_spec["record_root.ground_truth_output"] in row
+            ):
+                ground_truth_output = row[
+                    dataset_spec["record_root.ground_truth_output"]
+                ]
 
             # Extract contexts if available
             contexts = None
@@ -696,7 +706,7 @@ class Run(BaseModel):
                     contexts = [ctx.strip() for ctx in contexts_str.split(",")]
 
             # Create OTEL recording context similar to instrumented_invoke_main_method
-            # For virtual runs, check if the app has a real underlying app or is a placeholder
+            # For virtual runs, check if the TruApp has a real underlying app or is virtual
             if hasattr(self.app, "app") and self.app.app is None:
                 # This is a virtual TruApp with no underlying app - create spans manually
                 self._create_virtual_spans_without_app(
