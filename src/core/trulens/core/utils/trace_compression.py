@@ -14,14 +14,10 @@ logger = logging.getLogger(__name__)
 class TraceCompressor:
     """Compresses trace data to reduce token usage while preserving essential information."""
 
-    def __init__(self, verbose: bool = True):
+    def __init__(self):
         """
         Initialize the trace compressor.
-
-        Args:
-            verbose: Whether to print compression statistics
         """
-        self.verbose = verbose
         self.agent_histories = {}
         self.unique_agents = []
 
@@ -35,9 +31,6 @@ class TraceCompressor:
         Returns:
             Compressed trace data with essential information preserved
         """
-        if self.verbose:
-            print("\n🔄 Compressing trace data for feedback function...")
-
         # Convert to string if needed for processing
         if isinstance(trace_data, str):
             try:
@@ -1135,43 +1128,34 @@ class TraceCompressor:
         return results
 
 
-def compress_trace_for_feedback(
-    trace_data: Any, verbose: bool = True
-) -> Dict[str, Any]:
+def compress_trace_for_feedback(trace_data: Any) -> Dict[str, Any]:
     """
     Convenience function to compress trace data for feedback functions.
 
     Args:
         trace_data: The trace data to compress
-        verbose: Whether to print compression statistics
 
     Returns:
         Compressed trace data
     """
-    compressor = TraceCompressor(verbose=verbose)
+    compressor = TraceCompressor()
     return compressor.compress_trace(trace_data)
 
 
-def compress_multiple_traces(
-    traces: List[Any], verbose: bool = True
-) -> List[Dict[str, Any]]:
+def compress_multiple_traces(traces: List[Any]) -> List[Dict[str, Any]]:
     """
     Compress multiple traces efficiently.
 
     Args:
         traces: List of trace data to compress
-        verbose: Whether to print compression statistics
 
     Returns:
         List of compressed traces
     """
-    compressor = TraceCompressor(verbose=verbose)
+    compressor = TraceCompressor()
     compressed_traces = []
 
-    for i, trace in enumerate(traces):
-        if verbose:
-            print(f"\n🔄 Compressing trace {i + 1}/{len(traces)}...")
-
+    for trace in traces:
         compressed = compressor.compress_trace(trace)
         compressed_traces.append(compressed)
 

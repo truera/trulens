@@ -90,15 +90,12 @@ class Trace:
             self.processed_content_roots.append(node)
         return node
 
-    def to_compressed_json(
-        self, verbose: bool = True, default_handler: Callable = str
-    ) -> str:
+    def to_compressed_json(self, default_handler: Callable = str) -> str:
         """
         Convert trace events to compressed JSON format.
         This reduces token usage while preserving essential information.
 
         Args:
-            verbose: Whether to print compression statistics
             default_handler: Function to handle non-serializable objects
 
         Returns:
@@ -115,9 +112,7 @@ class Trace:
             })
 
         # Apply compression
-        compressed_trace = compress_trace_for_feedback(
-            trace_data, verbose=verbose
-        )
+        compressed_trace = compress_trace_for_feedback(trace_data)
 
         # Convert compressed data back to JSON string
         return json.dumps(compressed_trace, default=default_handler)
