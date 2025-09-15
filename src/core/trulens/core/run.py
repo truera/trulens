@@ -552,14 +552,14 @@ class Run(BaseModel):
             f"Creating or updating invocation metadata with {input_records_count} records from input."
         )
 
-        # user app invocation - will block until the app completes
         try:
             if virtual:
                 self._create_virtual_spans(
                     input_df, dataset_spec, input_records_count
                 )
             else:
-                for i, row in input_df.iterrows():
+                # user app invocation - will block until the app completes
+                for _, row in input_df.iterrows():
                     main_method_args = []
 
                     # Call the instrumented main method with the arguments
@@ -648,7 +648,6 @@ class Run(BaseModel):
         logger.info(f"Creating virtual spans for {len(input_df)} records")
 
         for i, row in input_df.iterrows():
-            # Use the EXACT same input_id logic as the working flow
             input_id = (
                 row[dataset_spec["input_id"]]
                 if "input_id" in dataset_spec
@@ -704,9 +703,6 @@ class Run(BaseModel):
         """Create virtual spans using OtelRecordingContext - simplified approach"""
         from trulens.core.otel.instrument import OtelRecordingContext
 
-        logger.info("Creating single OtelRecordingContext with all attributes")
-
-        # Create OtelRecordingContext and then create proper nested spans
         with OtelRecordingContext(
             tru_app=self.app,
             app_name=self.app.app_name,
@@ -716,8 +712,6 @@ class Run(BaseModel):
             input_records_count=input_records_count,
             ground_truth_output=ground_truth_output,
         ):
-            logger.info("Successfully created OtelRecordingContext")
-
             # Now create nested spans within this context
             self._create_nested_spans_from_dataset_spec(dataset_spec, row)
 
@@ -731,20 +725,17 @@ class Run(BaseModel):
             set_general_span_attributes,
         )
 
-        # Group dataset_spec by span type
         span_data = self._group_dataset_spec_by_span_type(dataset_spec, row)
         logger.info(f"Creating nested spans for: {list(span_data.keys())}")
 
-        # Create record_root span first (parent span) using TruLens infrastructure
         if "record_root" in span_data:
             from trulens.core.otel.function_call_context_manager import (
                 create_function_call_context_manager,
             )
 
             with create_function_call_context_manager(
-                True, "app_method"
+                True, "virtual_record"
             ) as root_span:
-                # Set record_root span type and attributes using TruLens infrastructure
                 set_general_span_attributes(
                     root_span, SpanAttributes.SpanType.RECORD_ROOT
                 )
@@ -760,18 +751,16 @@ class Run(BaseModel):
                 # Create child spans nested WITHIN the root span context
                 for span_type, attributes in span_data.items():
                     if span_type == "record_root":
-                        continue  # Already handled
+                        continue
 
-                    # Create child span using TruLens infrastructure
                     span_type_enum = self._get_span_type_enum(span_type)
                     if span_type_enum:
                         logger.debug(
                             f"Creating child span: {span_type} under parent {root_span_id}"
                         )
                         with create_function_call_context_manager(
-                            True, f"{span_type}_method"
+                            True, f"{span_type}_virtual"
                         ) as child_span:
-                            # Set span type and attributes using TruLens infrastructure
                             set_general_span_attributes(
                                 child_span, span_type_enum
                             )
@@ -821,7 +810,6 @@ class Run(BaseModel):
                         f"Set fallback attribute {fallback_key} = {value}"
                     )
             else:
-                # Fallback to raw attribute name
                 fallback_key = f"{span_type}.{attr_name}"
                 span.set_attribute(fallback_key, str(value))
                 logger.info(f"Set fallback attribute {fallback_key} = {value}")
@@ -840,9 +828,7 @@ class Run(BaseModel):
             parts = spec_key.lower().split(".")
 
             if len(parts) >= 2:
-                span_type = (
-                    f"{parts[0]}"  # e.g., 'ai.observability.record_root'
-                )
+                span_type = f"{parts[0]}"  # e.g., 'record_root'
                 attribute = ".".join(
                     parts[1:]
                 )  # e.g., 'input', 'output', 'query_text'
