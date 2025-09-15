@@ -58,9 +58,11 @@ def _identify_span_types(
 
     for c in call:
         # For OTel spans, use explicit span_type field
-        if c.get("span_type") == "EVAL_ROOT":
+        # if c.get("span_type") == "EVAL_ROOT":
+        if c.lower() == "eval_root":
             eval_root_calls.append(c)
-        elif c.get("span_type") == "EVAL":
+        elif c.lower() == "eval":
+            # elif c.get("span_type") == "EVAL":
             eval_calls.append(c)
         # For legacy spans (pre-OTel), all calls should contain the following fields: args, ret, and meta
         elif "args" in c and "ret" in c and "meta" in c:
