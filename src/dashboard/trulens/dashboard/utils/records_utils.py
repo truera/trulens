@@ -58,11 +58,9 @@ def _identify_span_types(
 
     for c in call:
         # For OTel spans, use explicit span_type field
-        # if c.get("span_type") == "EVAL_ROOT":
-        if c.lower() == "eval_root":
+        if isinstance(c, dict) and c.get("span_type") == "EVAL_ROOT":
             eval_root_calls.append(c)
-        elif c.lower() == "eval":
-            # elif c.get("span_type") == "EVAL":
+        elif isinstance(c, dict) and c.get("span_type") == "EVAL":
             eval_calls.append(c)
         # For legacy spans (pre-OTel), all calls should contain the following fields: args, ret, and meta
         elif "args" in c and "ret" in c and "meta" in c:
@@ -159,9 +157,6 @@ def display_feedback_call(
     if not call:
         st.warning("No feedback details found.")
         return
-
-    st.write("daniel troubleshooting call:")
-    st.write(call)
 
     # First, identify and separate EVAL_ROOT and feedback calls (EVAL spans)
     eval_root_calls, eval_calls = _identify_span_types(call)
