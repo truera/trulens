@@ -8,8 +8,6 @@ import json
 import logging
 from typing import Any, Dict, List, Optional
 
-from trulens.core.utils.token_counter import TokenCounter
-
 logger = logging.getLogger(__name__)
 
 
@@ -24,7 +22,6 @@ class TraceCompressor:
             verbose: Whether to print compression statistics
         """
         self.verbose = verbose
-        self.token_counter = TokenCounter()
         self.agent_histories = {}
         self.unique_agents = []
 
@@ -38,13 +35,8 @@ class TraceCompressor:
         Returns:
             Compressed trace data with essential information preserved
         """
-        # Count tokens before compression
-        original_tokens = self.token_counter.count_tokens(trace_data)
-
         if self.verbose:
-            print(
-                f"\n📊 TOKEN COUNT BEFORE COMPRESSION: {original_tokens:,} tokens"
-            )
+            print("\n🔄 Compressing trace data for feedback function...")
 
         # Convert to string if needed for processing
         if isinstance(trace_data, str):
@@ -59,23 +51,6 @@ class TraceCompressor:
 
         # Apply compression strategies
         compressed = self._apply_compression_strategies(trace_dict)
-
-        # Count tokens after compression
-        compressed_tokens = self.token_counter.count_tokens(compressed)
-        reduction_pct = (
-            ((original_tokens - compressed_tokens) / original_tokens * 100)
-            if original_tokens > 0
-            else 0
-        )
-
-        if self.verbose:
-            print(
-                f"📊 TOKEN COUNT AFTER COMPRESSION: {compressed_tokens:,} tokens"
-            )
-            print(
-                f"✨ TOKEN REDUCTION: {original_tokens - compressed_tokens:,} tokens ({reduction_pct:.1f}% reduction)"
-            )
-            print("-" * 40)
 
         return compressed
 
@@ -1193,32 +1168,11 @@ def compress_multiple_traces(
     compressor = TraceCompressor(verbose=verbose)
     compressed_traces = []
 
-    total_original = 0
-    total_compressed = 0
-
     for i, trace in enumerate(traces):
         if verbose:
             print(f"\n🔄 Compressing trace {i + 1}/{len(traces)}...")
 
-        original_tokens = compressor.token_counter.count_tokens(trace)
         compressed = compressor.compress_trace(trace)
-        compressed_tokens = compressor.token_counter.count_tokens(compressed)
-
-        total_original += original_tokens
-        total_compressed += compressed_tokens
         compressed_traces.append(compressed)
-
-    if verbose and len(traces) > 1:
-        total_reduction = (
-            ((total_original - total_compressed) / total_original * 100)
-            if total_original > 0
-            else 0
-        )
-        print("\n📊 OVERALL COMPRESSION SUMMARY:")
-        print(f"   Total Original: {total_original:,} tokens")
-        print(f"   Total Compressed: {total_compressed:,} tokens")
-        print(
-            f"   Total Saved: {total_original - total_compressed:,} tokens ({total_reduction:.1f}% reduction)"
-        )
 
     return compressed_traces

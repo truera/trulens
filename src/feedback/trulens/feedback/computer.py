@@ -25,8 +25,6 @@ from trulens.core.feedback.selector import ProcessedContentNode
 from trulens.core.feedback.selector import Selector
 from trulens.core.feedback.selector import Trace
 from trulens.core.otel.instrument import OtelFeedbackComputationRecordingContext
-from trulens.core.utils.token_counter import TokenCounter
-from trulens.core.utils.token_counter import format_token_summary
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
 from trulens.experimental.otel_tracing.core.span import (
     set_function_call_attributes,
@@ -853,45 +851,6 @@ def _call_feedback_function_under_eval_span(
         res = None
         exc = None
         try:
-            # Count tokens in the input to the feedback function
-            from trulens.core.feedback.selector import Trace
-
-            token_counter = TokenCounter()
-
-            # Convert Trace objects to their JSON representation for accurate counting
-            kwargs_for_counting = {}
-            for key, value in kwargs.items():
-                if isinstance(value, Trace):
-                    # Count the actual compressed JSON that will be sent
-                    kwargs_for_counting[key] = value.to_compressed_json(
-                        verbose=False
-                    )
-                else:
-                    kwargs_for_counting[key] = value
-
-            param_token_counts = token_counter.count_dict_tokens(
-                kwargs_for_counting
-            )
-            total_tokens = sum(param_token_counts.values())
-
-            # Log token counts
-            token_summary = format_token_summary(
-                param_token_counts, total_tokens
-            )
-            _logger.info(
-                f"Feedback function '{feedback_function.name}' input tokens:\n{token_summary}"
-            )
-
-            # Also print to console for visibility
-            print(f"\n📊 TOKEN COUNT for '{feedback_function.name}':")
-            print(token_summary)
-            print("-" * 40)
-
-            # Also set as span attributes for observability
-            eval_span.set_attribute("feedback.input_tokens.total", total_tokens)
-            for param, count in param_token_counts.items():
-                eval_span.set_attribute(f"feedback.input_tokens.{param}", count)
-
             # Directly call the Feedback object to ensure custom parameters are used
             res = feedback_function(**kwargs)
             metadata = {}

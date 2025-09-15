@@ -39,7 +39,6 @@ from rich.pretty import pretty_repr
 from trulens.core._utils import pycompat as pycompat_utils
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback.selector import Selector
-from trulens.core.feedback.selector import Trace
 from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
@@ -57,14 +56,6 @@ from trulens.core.utils import threading as threading_utils
 if TYPE_CHECKING:
     from trulens.core import session as core_session
 
-# Import token counting utilities if available
-try:
-    from trulens.core.utils.token_counter import TokenCounter
-    from trulens.core.utils.token_counter import format_token_summary
-
-    TOKEN_COUNTER_AVAILABLE = True
-except ImportError:
-    TOKEN_COUNTER_AVAILABLE = False
 
 # WARNING: HACK014: importing schema seems to break pydantic for unknown reason.
 # This happens even if you import it as something else.
@@ -1028,49 +1019,6 @@ Feedback function signature:
 
             for ins in input_combinations:
                 try:
-                    # Count tokens in the input if token counter is available
-                    if TOKEN_COUNTER_AVAILABLE:
-                        token_counter = TokenCounter()
-
-                        # Convert Trace objects to their JSON representation for accurate counting
-                        ins_for_counting = {}
-                        for key, value in ins.items():
-                            if isinstance(value, Trace):
-                                # Count the actual compressed JSON that will be sent
-                                ins_for_counting[key] = (
-                                    value.to_compressed_json(verbose=False)
-                                )
-                            else:
-                                # For non-Trace values, use as-is
-                                ins_for_counting[key] = value
-                                # Debug: Check if we're missing a Trace that looks like one
-                                if hasattr(value, "events") and hasattr(
-                                    value, "to_compressed_json"
-                                ):
-                                    print(
-                                        f"⚠️ WARNING: Found trace-like object of type {type(value)} but not instance of Trace"
-                                    )
-
-                        param_token_counts = token_counter.count_dict_tokens(
-                            ins_for_counting
-                        )
-                        total_tokens = sum(param_token_counts.values())
-
-                        # Log token counts
-                        token_summary = format_token_summary(
-                            param_token_counts, total_tokens
-                        )
-                        logger.info(
-                            f"Feedback function '{self.name}' input tokens:\n{token_summary}"
-                        )
-
-                        # Also print to console for visibility
-                        print(
-                            f"\n📊 TOKEN COUNT for '{self.name}' (actual tokens to LLM):"
-                        )
-                        print(token_summary)
-                        print("-" * 40)
-
                     result_and_meta, part_cost_tally = (
                         core_endpoint.Endpoint.track_all_costs_tally(
                             self, **ins

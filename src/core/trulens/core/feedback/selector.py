@@ -115,7 +115,6 @@ class Trace:
             })
 
         # Apply compression
-        print("\n🔄 Compressing trace data for feedback function...")
         compressed_trace = compress_trace_for_feedback(
             trace_data, verbose=verbose
         )
