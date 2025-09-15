@@ -336,6 +336,8 @@ def _render_feedback_call(
     if MULTI_CALL_NAME_DELIMITER in feedback_col:
         fcol = feedback_col.split(MULTI_CALL_NAME_DELIMITER)[0]
 
+    st.write(selected_row)
+    st.write(selected_row[f"{feedback_col}_calls"])
     feedback_calls = selected_row[f"{feedback_col}_calls"]
     display_feedback_call(
         selected_row["record_id"],
