@@ -506,9 +506,7 @@ trulens.core.feedback.custom_metric:
   __class__: builtins.module
   highs: {}
   lows:
-    EvaluationConfig: builtins.type
     MetricConfig: builtins.type
-    custom_metric: builtins.function
 trulens.core.feedback.custom_metric.MetricConfig:
   __bases__:
   - builtins.object
