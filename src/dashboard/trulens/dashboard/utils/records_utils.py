@@ -160,6 +160,9 @@ def display_feedback_call(
         st.warning("No feedback details found.")
         return
 
+    st.write("daniel troubleshooting call:")
+    st.write(call)
+
     # First, identify and separate EVAL_ROOT and feedback calls (EVAL spans)
     eval_root_calls, eval_calls = _identify_span_types(call)
 
@@ -338,8 +341,6 @@ def _render_feedback_call(
     if MULTI_CALL_NAME_DELIMITER in feedback_col:
         fcol = feedback_col.split(MULTI_CALL_NAME_DELIMITER)[0]
 
-    st.write(selected_row)
-    st.write(selected_row[f"{feedback_col}_calls"])
     feedback_calls = selected_row[f"{feedback_col}_calls"]
     display_feedback_call(
         selected_row["record_id"],
