@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from pydantic import Field
 from pydantic import field_serializer
 from trulens.core.utils.json import obj_id_of_obj
+from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
@@ -520,12 +521,15 @@ class Run(BaseModel):
             all_existing_metrics, invocation_completion_status
         )
 
-    def start(self, input_df: Optional[pd.DataFrame] = None):
+    def start(
+        self, input_df: Optional[pd.DataFrame] = None, virtual: bool = False
+    ):
         """
         Start the run by invoking the main method of the user's app with the input data
 
         Args:
             input_df (Optional[pd.DataFrame], optional): user provided input dataframe.
+            virtual (bool, optional): If True, creates OTEL spans from existing data without app invocation.
         """
         current_status = self.get_status()
         logger.info(f"Current run status: {current_status}")
@@ -551,55 +555,63 @@ class Run(BaseModel):
 
         # user app invocation - will block until the app completes
         try:
-            for i, row in input_df.iterrows():
-                main_method_args = []
-
-                # Call the instrumented main method with the arguments
-                # TODO (dhuang) better way to check span attributes, also is this all we need to support?
-                input_id = (
-                    row[dataset_spec["input_id"]]
-                    if "input_id" in dataset_spec
-                    else None
+            if virtual:
+                self._create_virtual_spans(
+                    input_df, dataset_spec, input_records_count
                 )
-                input_col = None
-                if input_id is None:
-                    if "input" in dataset_spec:
-                        input_col = dataset_spec["input"]
-                    elif "record_root.input" in dataset_spec:
-                        input_col = dataset_spec["record_root.input"]
-                    if input_col:
-                        input_id = obj_id_of_obj(row[input_col])
-                        main_method_args.append(row[input_col])
+            else:
+                for i, row in input_df.iterrows():
+                    main_method_args = []
 
-                # Extract additional method arguments from dataset_spec
-                # Skip fields that are already handled or are special metadata fields
-                special_fields = {
-                    "input_id",
-                    "input",
-                    "record_root.input",
-                    "ground_truth_output",
-                    "record_root.ground_truth_output",
-                }
+                    # Call the instrumented main method with the arguments
+                    # TODO (dhuang) better way to check span attributes, also is this all we need to support?
+                    input_id = (
+                        row[dataset_spec["input_id"]]
+                        if "input_id" in dataset_spec
+                        else None
+                    )
+                    input_col = None
+                    if input_id is None:
+                        if "input" in dataset_spec:
+                            input_col = dataset_spec["input"]
+                        elif "record_root.input" in dataset_spec:
+                            input_col = dataset_spec["record_root.input"]
+                        if input_col:
+                            input_id = obj_id_of_obj(row[input_col])
+                            main_method_args.append(row[input_col])
 
-                for spec_key, column_name in dataset_spec.items():
-                    if spec_key not in special_fields and column_name in row:
-                        main_method_args.append(row[column_name])
+                    # Extract additional method arguments from dataset_spec
+                    # Skip fields that are already handled or are special metadata fields
+                    special_fields = {
+                        "input_id",
+                        "input",
+                        "record_root.input",
+                        "ground_truth_output",
+                        "record_root.ground_truth_output",
+                    }
 
-                ground_truth_output = row.get(
-                    dataset_spec.get("ground_truth_output")
-                    or dataset_spec.get("record_root.ground_truth_output")
-                )
+                    for spec_key, column_name in dataset_spec.items():
+                        if (
+                            spec_key not in special_fields
+                            and column_name in row
+                        ):
+                            main_method_args.append(row[column_name])
 
-                self.app.instrumented_invoke_main_method(
-                    run_name=self.run_name,
-                    input_id=input_id,
-                    input_records_count=input_records_count,
-                    ground_truth_output=ground_truth_output,
-                    main_method_args=tuple(
-                        main_method_args
-                    ),  # Ensure correct order
-                    main_method_kwargs=None,  # don't take any kwargs for now so we don't break TruChain / TruLlama where input argument name cannot be defined by users.
-                )
+                    ground_truth_output = row.get(
+                        dataset_spec.get("ground_truth_output")
+                        or dataset_spec.get("record_root.ground_truth_output")
+                    )
+
+                    self.app.instrumented_invoke_main_method(
+                        run_name=self.run_name,
+                        input_id=input_id,
+                        input_records_count=input_records_count,
+                        ground_truth_output=ground_truth_output,
+                        main_method_args=tuple(
+                            main_method_args
+                        ),  # Ensure correct order
+                        main_method_kwargs=None,  # don't take any kwargs for now so we don't break TruChain / TruLlama where input argument name cannot be defined by users.
+                    )
         except Exception as e:
             logger.exception(
                 f"Error encountered during invoking app main method: {e}."
@@ -621,6 +633,257 @@ class Run(BaseModel):
             input_records_count=input_records_count,
         )
         logger.info("Run started, invocation done and ingestion in process.")
+
+    def _create_virtual_spans(
+        self,
+        input_df: pd.DataFrame,
+        dataset_spec: Dict[str, str],
+        input_records_count: int,
+    ):
+        """
+        Create OTEL spans from existing data without actual app invocation.
+        This method replicates the span structure that would be created by instrumented app methods,
+        but uses existing data from the input DataFrame.
+        """
+        from trulens.core.otel.instrument import OtelRecordingContext
+
+        logger.info(f"Creating virtual spans for {len(input_df)} records")
+
+        for i, row in input_df.iterrows():
+            # Extract input information similar to the regular flow
+            input_id = (
+                row[dataset_spec["input_id"]]
+                if "input_id" in dataset_spec
+                else None
+            )
+
+            # Determine input column and value
+            input_col = None
+            input_value = None
+            if input_id is None:
+                if "input" in dataset_spec:
+                    input_col = dataset_spec["input"]
+                elif "record_root.input" in dataset_spec:
+                    input_col = dataset_spec["record_root.input"]
+                if input_col and input_col in row:
+                    input_value = row[input_col]
+                    input_id = obj_id_of_obj(input_value)
+
+            # Extract ground truth output
+            ground_truth_output = row.get(
+                dataset_spec.get("ground_truth_output")
+                or dataset_spec.get("record_root.ground_truth_output")
+            )
+
+            # Extract output value (assuming it exists in the data)
+            output_value = None
+            if "output" in dataset_spec and dataset_spec["output"] in row:
+                output_value = row[dataset_spec["output"]]
+            elif (
+                "record_root.output" in dataset_spec
+                and dataset_spec["record_root.output"] in row
+            ):
+                output_value = row[dataset_spec["record_root.output"]]
+
+            # Extract contexts if available
+            contexts = None
+            if (
+                "retrieved_contexts" in dataset_spec
+                and dataset_spec["retrieved_contexts"] in row
+            ):
+                contexts_str = row[dataset_spec["retrieved_contexts"]]
+                if contexts_str:
+                    contexts = [ctx.strip() for ctx in contexts_str.split(",")]
+
+            # Create OTEL recording context similar to instrumented_invoke_main_method
+            # For virtual runs, check if the app has a real underlying app or is a placeholder
+            if hasattr(self.app, "app") and self.app.app is None:
+                # This is a virtual TruApp with no underlying app - create spans manually
+                self._create_virtual_spans_without_app(
+                    input_id,
+                    input_value,
+                    output_value,
+                    contexts,
+                    input_records_count,
+                    ground_truth_output,
+                )
+            else:
+                # Regular TruApp with real app - use normal recording context
+                with OtelRecordingContext(
+                    tru_app=self.app,
+                    app_name=self.app.app_name,
+                    app_version=self.app.app_version,
+                    run_name=self.run_name,
+                    input_id=input_id,
+                    input_records_count=input_records_count,
+                    ground_truth_output=ground_truth_output,
+                ):
+                    self._create_virtual_spans_in_context(
+                        input_value, output_value, contexts
+                    )
+
+    def _create_virtual_spans_in_context(
+        self, input_value, output_value, contexts
+    ):
+        """Create virtual spans within an existing OTEL recording context."""
+        from opentelemetry import trace
+        from trulens.experimental.otel_tracing.core.session import (
+            TRULENS_SERVICE_NAME,
+        )
+
+        tracer = trace.get_tracer_provider().get_tracer(TRULENS_SERVICE_NAME)
+
+        # Create root span (equivalent to the main method span)
+        with tracer.start_as_current_span("virtual_query") as root_span:
+            # Set root span attributes
+            root_span.set_attribute(
+                SpanAttributes.SPAN_TYPE,
+                SpanAttributes.SpanType.RECORD_ROOT.value,
+            )
+            if input_value is not None:
+                root_span.set_attribute(
+                    SpanAttributes.RECORD_ROOT.INPUT, str(input_value)
+                )
+            if output_value is not None:
+                root_span.set_attribute(
+                    SpanAttributes.RECORD_ROOT.OUTPUT, str(output_value)
+                )
+
+            # Create retrieval span if contexts are available
+            if contexts is not None:
+                with tracer.start_as_current_span(
+                    "virtual_retrieval"
+                ) as retrieval_span:
+                    retrieval_span.set_attribute(
+                        SpanAttributes.SPAN_TYPE,
+                        SpanAttributes.SpanType.RETRIEVAL.value,
+                    )
+                    if input_value is not None:
+                        retrieval_span.set_attribute(
+                            SpanAttributes.RETRIEVAL.QUERY_TEXT,
+                            str(input_value),
+                        )
+                    retrieval_span.set_attribute(
+                        SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
+                        str(contexts),
+                    )
+
+            # Create generation span
+            with tracer.start_as_current_span(
+                "virtual_generation"
+            ) as generation_span:
+                generation_span.set_attribute(
+                    SpanAttributes.SPAN_TYPE,
+                    SpanAttributes.SpanType.GENERATION.value,
+                )
+                if output_value is not None:
+                    generation_span.set_attribute(
+                        SpanAttributes.GENERATION.OUTPUT, str(output_value)
+                    )
+
+    def _create_virtual_spans_without_app(
+        self,
+        input_id,
+        input_value,
+        output_value,
+        contexts,
+        input_records_count,
+        ground_truth_output,
+    ):
+        """Create virtual spans without an app context by manually setting baggage and span attributes."""
+        from opentelemetry import baggage
+        from opentelemetry import trace
+        import opentelemetry.context as context_api
+        from trulens.experimental.otel_tracing.core.session import (
+            TRULENS_SERVICE_NAME,
+        )
+
+        tracer = trace.get_tracer_provider().get_tracer(TRULENS_SERVICE_NAME)
+
+        # Set baggage context manually for virtual runs
+        ctx = baggage.set_baggage(ResourceAttributes.APP_NAME, self.object_name)
+        ctx = baggage.set_baggage(
+            ResourceAttributes.APP_VERSION, self.object_version or "1.0", ctx
+        )
+        ctx = baggage.set_baggage(SpanAttributes.RUN_NAME, self.run_name, ctx)
+        ctx = baggage.set_baggage(SpanAttributes.INPUT_ID, input_id, ctx)
+        ctx = baggage.set_baggage(
+            SpanAttributes.INPUT_RECORDS_COUNT, str(input_records_count), ctx
+        )
+        if ground_truth_output:
+            ctx = baggage.set_baggage(
+                SpanAttributes.RECORD_ROOT.GROUND_TRUTH_OUTPUT,
+                str(ground_truth_output),
+                ctx,
+            )
+
+        token = context_api.attach(ctx)
+        try:
+            # Create root span (equivalent to the main method span)
+            with tracer.start_as_current_span("virtual_query") as root_span:
+                # Set root span attributes
+                root_span.set_attribute(
+                    SpanAttributes.SPAN_TYPE,
+                    SpanAttributes.SpanType.RECORD_ROOT.value,
+                )
+                root_span.set_attribute(
+                    ResourceAttributes.APP_NAME, self.object_name
+                )
+                root_span.set_attribute(
+                    ResourceAttributes.APP_VERSION, self.object_version or "1.0"
+                )
+                root_span.set_attribute(SpanAttributes.RUN_NAME, self.run_name)
+                root_span.set_attribute(SpanAttributes.INPUT_ID, input_id)
+                root_span.set_attribute(
+                    SpanAttributes.INPUT_RECORDS_COUNT, input_records_count
+                )
+                if input_value is not None:
+                    root_span.set_attribute(
+                        SpanAttributes.RECORD_ROOT.INPUT, str(input_value)
+                    )
+                if output_value is not None:
+                    root_span.set_attribute(
+                        SpanAttributes.RECORD_ROOT.OUTPUT, str(output_value)
+                    )
+                if ground_truth_output:
+                    root_span.set_attribute(
+                        SpanAttributes.RECORD_ROOT.GROUND_TRUTH_OUTPUT,
+                        str(ground_truth_output),
+                    )
+
+                # Create retrieval span if contexts are available
+                if contexts is not None:
+                    with tracer.start_as_current_span(
+                        "virtual_retrieval"
+                    ) as retrieval_span:
+                        retrieval_span.set_attribute(
+                            SpanAttributes.SPAN_TYPE,
+                            SpanAttributes.SpanType.RETRIEVAL.value,
+                        )
+                        if input_value is not None:
+                            retrieval_span.set_attribute(
+                                SpanAttributes.RETRIEVAL.QUERY_TEXT,
+                                str(input_value),
+                            )
+                        retrieval_span.set_attribute(
+                            SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
+                            str(contexts),
+                        )
+
+                # Create generation span
+                with tracer.start_as_current_span(
+                    "virtual_generation"
+                ) as generation_span:
+                    generation_span.set_attribute(
+                        SpanAttributes.SPAN_TYPE,
+                        SpanAttributes.SpanType.GENERATION.value,
+                    )
+                    if output_value is not None:
+                        generation_span.set_attribute(
+                            SpanAttributes.GENERATION.OUTPUT, str(output_value)
+                        )
+        finally:
+            context_api.detach(token)
 
     def _get_current_time_in_ms(self) -> int:
         return int(round(time.time() * 1000))
