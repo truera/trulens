@@ -2,7 +2,6 @@
 Tests for virtual run functionality.
 """
 
-import unittest
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
@@ -11,12 +10,14 @@ import pandas as pd
 try:
     from trulens.core.run import Run
     from trulens.otel.semconv.trace import SpanAttributes
+
+    from tests.util.otel_test_case import OtelTestCase
 except Exception:
     pass
 
 
-class TestVirtualRunMethods(unittest.TestCase):
-    """Test virtual run helper methods"""
+class TestVirtualRunMethods(OtelTestCase):
+    """Test virtual run helper methods with proper OTEL setup"""
 
     def test_virtual_run_start_signature(self):
         """Test that Run.start accepts virtual parameter"""
@@ -145,7 +146,3 @@ class TestVirtualRunMethods(unittest.TestCase):
 
         # Verify OtelRecordingContext was called
         self.assertTrue(mock_otel_context.called)
-
-
-if __name__ == "__main__":
-    unittest.main()
