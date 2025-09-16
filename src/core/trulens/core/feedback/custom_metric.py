@@ -83,21 +83,49 @@ class MetricConfig:
         """
         Validate that selectors match the function signature.
 
+        Only checks required parameters (those without default values).
+
         Raises:
             ValueError: If selectors don't match function parameters
         """
         sig = inspect.signature(self.metric_implementation)
-        func_params = set(sig.parameters.keys())
-        selector_params = set(self.selectors.keys())
 
-        if func_params != selector_params:
-            missing = func_params - selector_params
-            extra = selector_params - func_params
-            error_msg = f"Selectors for metric '{self.metric_name}' don't match function parameters"
-            if missing:
-                error_msg += f"\nMissing selectors: {missing}"
-            if extra:
-                error_msg += f"\nExtra selectors: {extra}"
+        # Get all function parameters
+        function_args = list(sig.parameters.keys())
+
+        # Get only required parameters (those without defaults)
+        required_function_args = [
+            param_name
+            for param_name, param in sig.parameters.items()
+            if param.default == inspect.Parameter.empty
+        ]
+
+        error_msg = ""
+
+        # Check for extra selectors
+        extra_selectors = []
+        for selector in self.selectors:
+            if selector not in function_args:
+                extra_selectors.append(selector)
+        if extra_selectors:
+            error_msg += f"Metric function '{self.metric_name}' has selectors that are not in the function signature:\n"
+            error_msg += f"Extra selectors: {extra_selectors}\n"
+            error_msg += f"Function args: {function_args}\n"
+
+        # Check for missing required selectors (only required parameters)
+        missing_selectors = []
+        for required_function_arg in required_function_args:
+            if required_function_arg not in self.selectors:
+                missing_selectors.append(required_function_arg)
+        if missing_selectors:
+            error_msg += (
+                f"Metric function '{self.metric_name}' has missing selectors:\n"
+            )
+            error_msg += f"Missing selectors: {missing_selectors}\n"
+            error_msg += f"Required function args: {required_function_args}\n"
+
+        # Throw error if there are any issues
+        if error_msg:
             raise ValueError(error_msg)
 
     def create_feedback_definition(self) -> Feedback:
