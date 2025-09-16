@@ -1,3 +1,4 @@
+import json
 import pprint as pp
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
@@ -56,7 +57,35 @@ def _identify_span_types(
     eval_root_calls = []
     eval_calls = []
 
+    # Handle edge cases where call might not be a list
+    if not isinstance(call, list):
+        # Try to parse if it's a JSON string
+        if isinstance(call, str):
+            try:
+                call = json.loads(call)
+                if not isinstance(call, list):
+                    call = [call]
+            except (json.JSONDecodeError, TypeError):
+                # If parsing fails, return empty lists
+                return eval_root_calls, eval_calls
+        else:
+            # If it's not a list or string, wrap it in a list
+            call = [call] if call else []
+
     for c in call:
+        # Skip if c is not a dictionary
+        if not isinstance(c, dict):
+            # Try to parse if it's a JSON string
+            if isinstance(c, str):
+                try:
+                    c = json.loads(c)
+                    if not isinstance(c, dict):
+                        continue
+                except (json.JSONDecodeError, TypeError):
+                    continue
+            else:
+                continue
+
         # For OTel spans, use explicit span_type field
         if c.get("span_type") == "EVAL_ROOT":
             eval_root_calls.append(c)
