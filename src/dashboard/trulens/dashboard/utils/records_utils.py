@@ -1,4 +1,3 @@
-import json
 import pprint as pp
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
@@ -57,49 +56,11 @@ def _identify_span_types(
     eval_root_calls = []
     eval_calls = []
 
-    # Handle columnar/Arrow-like format where data is wrapped in a dict
-    if isinstance(call, dict) and "data" in call:
-        call = call.get("data", [])
-
-    # Handle edge cases where call might not be a list
-    if not isinstance(call, list):
-        # Try to parse if it's a JSON string
-        if isinstance(call, str):
-            try:
-                call = json.loads(call)
-                if not isinstance(call, list):
-                    call = [call]
-            except (json.JSONDecodeError, TypeError):
-                # If parsing fails, return empty lists
-                return eval_root_calls, eval_calls
-        else:
-            # If it's not a list or string, wrap it in a list
-            call = [call] if call else []
-
     for c in call:
-        # Skip if c is not a dictionary
-        if not isinstance(c, dict):
-            # Try to parse if it's a JSON string
-            if isinstance(c, str):
-                try:
-                    parsed_c = json.loads(c)
-                    if isinstance(parsed_c, dict):
-                        c = parsed_c
-                    else:
-                        continue
-                except (json.JSONDecodeError, TypeError):
-                    continue
-            else:
-                continue
-
-        # For OTel spans, use explicit span_type field (case-insensitive)
-        span_type = c.get("span_type", "")
-        if isinstance(span_type, str):
-            span_type = span_type.lower()
-
-        if span_type == "eval_root":
+        # For OTel spans, use explicit span_type field
+        if c.get("span_type") == "EVAL_ROOT":
             eval_root_calls.append(c)
-        elif span_type == "eval":
+        elif c.get("span_type") == "EVAL":
             eval_calls.append(c)
         # For legacy spans (pre-OTel), all calls should contain the following fields: args, ret, and meta
         elif "args" in c and "ret" in c and "meta" in c:
