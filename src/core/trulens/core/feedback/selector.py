@@ -264,8 +264,12 @@ class Selector:
         return ret
 
     @staticmethod
-    def select_record_input() -> Selector:
+    def select_record_input(ignore_none_values: bool = True) -> Selector:
         """Returns a `Selector` that gets the record input.
+
+        Args:
+            ignore_none_values: If True, skip evaluation when the input is None.
+                Defaults to True to prevent errors on missing data.
 
         Returns:
             `Selector` that gets the record input.
@@ -273,11 +277,16 @@ class Selector:
         return Selector(
             span_type=SpanAttributes.SpanType.RECORD_ROOT,
             span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
+            ignore_none_values=ignore_none_values,
         )
 
     @staticmethod
-    def select_record_output() -> Selector:
+    def select_record_output(ignore_none_values: bool = True) -> Selector:
         """Returns a `Selector` that gets the record output.
+
+        Args:
+            ignore_none_values: If True, skip evaluation when the output is None.
+                Defaults to True to prevent errors on missing data.
 
         Returns:
             `Selector` that gets the record output.
@@ -285,10 +294,13 @@ class Selector:
         return Selector(
             span_type=SpanAttributes.SpanType.RECORD_ROOT,
             span_attribute=SpanAttributes.RECORD_ROOT.OUTPUT,
+            ignore_none_values=ignore_none_values,
         )
 
     @staticmethod
-    def select_context(*, collect_list: bool) -> Selector:
+    def select_context(
+        *, collect_list: bool, ignore_none_values: bool = True
+    ) -> Selector:
         """Returns a `Selector` that tries to retrieve contexts.
 
         Args:
@@ -300,6 +312,8 @@ class Selector:
                 2. [if collect_list is False]:
                         Separately for each entry in the list and aggregate the
                         results.
+            ignore_none_values: If True, skip evaluation when contexts are None.
+                Defaults to True to prevent errors on missing data.
 
         Returns:
             `Selector` that tries to retrieve contexts.
@@ -307,7 +321,7 @@ class Selector:
 
         def context_retrieval_processor(
             attributes: Dict[str, Any],
-        ) -> List[str]:
+        ) -> Optional[List[str]]:
             for curr in [
                 SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
                 SpanAttributes.CALL.RETURN,
@@ -319,13 +333,14 @@ class Selector:
                     and all(isinstance(item, str) for item in ret)
                 ):
                     return ret
-            raise ValueError(
-                f"Could not find contexts in attributes: {attributes}"
-            )
+            # Return None instead of raising if we can't find contexts
+            # The ignore_none_values flag will determine whether to skip
+            return None
 
         return Selector(
             span_type=SpanAttributes.SpanType.RETRIEVAL,
             span_attributes_processor=context_retrieval_processor,
             collect_list=collect_list,
             match_only_if_no_ancestor_matched=True,
+            ignore_none_values=ignore_none_values,
         )
