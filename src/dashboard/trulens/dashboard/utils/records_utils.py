@@ -59,7 +59,28 @@ def _identify_span_types(
 
     # Debug: Log the input type and content
     st.write(f"[DEBUG] _identify_span_types received type: {type(call)}")
-    if isinstance(call, str):
+
+    # Check if this is a columnar/Arrow-like format
+    if isinstance(call, dict) and "data" in call:
+        st.write(
+            f"[DEBUG] Dict has columnar structure with keys: {call.keys()}"
+        )
+        st.write(f"[DEBUG] 'data' field type: {type(call['data'])}")
+        if isinstance(call["data"], list) and len(call["data"]) > 0:
+            st.write(f"[DEBUG] 'data' field length: {len(call['data'])}")
+            st.write(f"[DEBUG] First data item type: {type(call['data'][0])}")
+            if isinstance(call["data"][0], dict):
+                st.write(
+                    f"[DEBUG] First data item keys: {call['data'][0].keys()}"
+                )
+            elif isinstance(call["data"][0], str):
+                st.write(
+                    f"[DEBUG] First data item (string, first 200 chars): {call['data'][0][:200]}"
+                )
+        # Try to use the 'data' field as the actual call list
+        call = call.get("data", [])
+        st.write(f"[DEBUG] Extracted 'data' field, new call type: {type(call)}")
+    elif isinstance(call, str):
         st.write(f"[DEBUG] String content (first 500 chars): {call[:500]}")
     elif isinstance(call, list) and len(call) > 0:
         st.write(f"[DEBUG] List length: {len(call)}")
