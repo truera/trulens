@@ -56,8 +56,8 @@ def _identify_span_types(
     eval_root_calls = []
     eval_calls = []
 
-    if not isinstance(call, list) and isinstance(call, dict):
-        call = [call]
+    # if not isinstance(call, list) and isinstance(call, dict):
+    #     call = [call]
     for c in call:
         if isinstance(c, str):
             raise ValueError(call)
