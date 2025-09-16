@@ -57,43 +57,108 @@ def _identify_span_types(
     eval_root_calls = []
     eval_calls = []
 
+    # Debug: Log the input type and content
+    st.write(f"[DEBUG] _identify_span_types received type: {type(call)}")
+    if isinstance(call, str):
+        st.write(f"[DEBUG] String content (first 500 chars): {call[:500]}")
+    elif isinstance(call, list) and len(call) > 0:
+        st.write(f"[DEBUG] List length: {len(call)}")
+        st.write(f"[DEBUG] First item type: {type(call[0])}")
+        if isinstance(call[0], str):
+            st.write(
+                f"[DEBUG] First item (string, first 500 chars): {call[0][:500]}"
+            )
+        elif isinstance(call[0], dict):
+            st.write(
+                f"[DEBUG] First item keys: {call[0].keys() if call[0] else 'empty dict'}"
+            )
+
     # Handle edge cases where call might not be a list
     if not isinstance(call, list):
         # Try to parse if it's a JSON string
         if isinstance(call, str):
             try:
                 call = json.loads(call)
+                st.write(
+                    f"[DEBUG] Successfully parsed JSON string to type: {type(call)}"
+                )
                 if not isinstance(call, list):
                     call = [call]
-            except (json.JSONDecodeError, TypeError):
+            except (json.JSONDecodeError, TypeError) as e:
                 # If parsing fails, return empty lists
+                st.write(f"[DEBUG] Failed to parse JSON string: {e}")
                 return eval_root_calls, eval_calls
         else:
             # If it's not a list or string, wrap it in a list
             call = [call] if call else []
+            st.write(
+                f"[DEBUG] Wrapped non-list into list, new length: {len(call)}"
+            )
 
-    for c in call:
+    parsed_count = 0
+    skipped_count = 0
+
+    for i, c in enumerate(call):
         # Skip if c is not a dictionary
         if not isinstance(c, dict):
             # Try to parse if it's a JSON string
             if isinstance(c, str):
                 try:
-                    c = json.loads(c)
-                    if not isinstance(c, dict):
+                    parsed_c = json.loads(c)
+                    if isinstance(parsed_c, dict):
+                        c = parsed_c
+                        parsed_count += 1
+                        st.write(
+                            f"[DEBUG] Item {i}: Successfully parsed JSON string to dict with keys: {c.keys()}"
+                        )
+                    else:
+                        st.write(
+                            f"[DEBUG] Item {i}: Parsed JSON but got {type(parsed_c)}, skipping"
+                        )
+                        skipped_count += 1
                         continue
-                except (json.JSONDecodeError, TypeError):
+                except (json.JSONDecodeError, TypeError) as e:
+                    st.write(
+                        f"[DEBUG] Item {i}: Failed to parse JSON string: {e}"
+                    )
+                    skipped_count += 1
                     continue
             else:
+                st.write(
+                    f"[DEBUG] Item {i}: Not a dict or string (type: {type(c)}), skipping"
+                )
+                skipped_count += 1
                 continue
 
         # For OTel spans, use explicit span_type field
-        if c.get("span_type") == "EVAL_ROOT":
+        span_type = c.get("span_type")
+        if span_type == "EVAL_ROOT":
             eval_root_calls.append(c)
-        elif c.get("span_type") == "EVAL":
+            st.write(
+                f"[DEBUG] Item {i}: Added to eval_root_calls (span_type=EVAL_ROOT)"
+            )
+        elif span_type == "EVAL":
             eval_calls.append(c)
+            st.write(f"[DEBUG] Item {i}: Added to eval_calls (span_type=EVAL)")
         # For legacy spans (pre-OTel), all calls should contain the following fields: args, ret, and meta
         elif "args" in c and "ret" in c and "meta" in c:
             eval_calls.append(c)
+            st.write(
+                f"[DEBUG] Item {i}: Added to eval_calls (legacy format with args/ret/meta)"
+            )
+        else:
+            st.write(
+                f"[DEBUG] Item {i}: Dict with keys {c.keys()} didn't match any criteria"
+            )
+            if span_type:
+                st.write(f"[DEBUG] Item {i}: Has span_type='{span_type}'")
+
+    st.write(
+        f"[DEBUG] Summary: parsed {parsed_count} JSON strings, skipped {skipped_count} items"
+    )
+    st.write(
+        f"[DEBUG] Result: {len(eval_root_calls)} eval_root_calls, {len(eval_calls)} eval_calls"
+    )
 
     return eval_root_calls, eval_calls
 
