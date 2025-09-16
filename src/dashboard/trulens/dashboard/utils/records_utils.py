@@ -97,26 +97,13 @@ def _identify_span_types(
         if isinstance(span_type, str):
             span_type = span_type.lower()
 
-        # Debug: Check what span_type values we're getting
-        if span_type:
-            st.write(
-                f"[DEBUG] Found span_type: '{span_type}' (original: '{c.get('span_type')}')"
-            )
-
         if span_type == "eval_root":
             eval_root_calls.append(c)
-            st.write("[DEBUG] Added to eval_root_calls")
         elif span_type == "eval":
             eval_calls.append(c)
-            st.write("[DEBUG] Added to eval_calls (via span_type=eval)")
         # For legacy spans (pre-OTel), all calls should contain the following fields: args, ret, and meta
         elif "args" in c and "ret" in c and "meta" in c:
             eval_calls.append(c)
-            st.write("[DEBUG] Added to eval_calls (legacy format)")
-
-    st.write(
-        f"[DEBUG] Final counts: {len(eval_root_calls)} eval_root_calls, {len(eval_calls)} eval_calls"
-    )
 
     return eval_root_calls, eval_calls
 
