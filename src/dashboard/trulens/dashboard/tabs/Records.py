@@ -191,8 +191,6 @@ def _render_trace(
     )
     st.markdown(f"#### Record ID: {selected_row['record_id']}")
 
-    st.session_state[f"{page_name}.app_ids"] = [selected_row["app_id"]]
-
     input_col, output_col = st_columns(2)
     with input_col.expander("Record Input"):
         input_value = selected_row["input"]
