@@ -825,12 +825,9 @@ class Run(BaseModel):
 
                 compute_feedback_by_span_group(
                     events=events,
-                    feedback_name=feedback.name,
-                    feedback_function=feedback.imp,
-                    higher_is_better=feedback.higher_is_better,
-                    kwarg_to_selector=feedback.selectors,
-                    feedback_aggregator=feedback.aggregator,
+                    feedback=feedback,
                     raise_error_on_no_feedbacks_computed=False,
+                    selectors=feedback.selectors,
                 )
                 logger.info(
                     f"Successfully computed client-side metric: {metric_config.metric_name}"
@@ -860,16 +857,46 @@ class Run(BaseModel):
                     app_version=self.app.app_version,
                 )
 
+                # Parse JSON columns and rename to lowercase (same as original implementation)
+                if not events_df.empty:
+                    for json_col in [
+                        "TRACE",
+                        "RESOURCE_ATTRIBUTES",
+                        "RECORD",
+                        "RECORD_ATTRIBUTES",
+                    ]:
+                        if json_col in events_df.columns:
+                            events_df[json_col] = events_df[json_col].apply(
+                                json.loads
+                            )
+
+                    # Rename columns to match expected format (lowercase)
+                    column_mapping = {
+                        "TRACE": "trace",
+                        "RESOURCE_ATTRIBUTES": "resource_attributes",
+                        "RECORD": "record",
+                        "RECORD_ATTRIBUTES": "record_attributes",
+                    }
+
+                    events_df = events_df.rename(columns=column_mapping)
+
+                    # Add parent_id to trace if needed
+                    for idx, row in events_df.iterrows():
+                        if "parent_span_id" in row["record"]:
+                            events_df.at[idx, "trace"]["parent_id"] = row[
+                                "record"
+                            ]["parent_span_id"]
+                        else:
+                            events_df.at[idx, "trace"]["parent_id"] = None
+
+                # Post-process: Filter by run_name since the utility method doesn't support it yet
                 if not events_df.empty and self.run_name:
                     filtered_events = []
                     for _, row in events_df.iterrows():
                         try:
-                            # Check if record_attributes contains the run_name
+                            # Check if record_attributes contains the run_name (now lowercase after remapping)
                             record_attributes = row.get("record_attributes", {})
-                            if isinstance(record_attributes, str):
-                                record_attributes = json.loads(
-                                    record_attributes
-                                )
+                            # record_attributes should already be parsed as dict after JSON processing above
 
                             event_run_name = record_attributes.get(
                                 SpanAttributes.RUN_NAME

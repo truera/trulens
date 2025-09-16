@@ -1,5 +1,6 @@
 from datetime import datetime
 import json
+import logging
 from typing import Iterable, List, Optional, Sequence, Tuple
 
 import pandas as pd
@@ -15,6 +16,8 @@ from trulens.core.utils import serial as serial_utils
 from trulens.otel.semconv.trace import SpanAttributes
 
 from snowflake.snowpark import Session
+
+logger = logging.getLogger(__name__)
 
 
 class SnowflakeEventTableDB(core_db.DB):
@@ -141,12 +144,14 @@ class SnowflakeEventTableDB(core_db.DB):
         if app_version:
             app_version_str = f"'{app_version}'"
             where_clauses.append(
-                f'RECORD_ATTRIBUTES:"snow.ai.observability.agent.version" = {app_version_str}'
+                f'(RECORD_ATTRIBUTES:"snow.ai.observability.agent.version" = {app_version_str} OR '
+                + f'RECORD_ATTRIBUTES:"snow.ai.observability.object.version.name" = {app_version_str})'
             )
         if app_versions:
             app_versions_str = ", ".join([f"'{curr}'" for curr in app_versions])
             where_clauses.append(
-                f'RECORD_ATTRIBUTES:"snow.ai.observability.agent.version" IN ({app_versions_str})'
+                f'(RECORD_ATTRIBUTES:"snow.ai.observability.agent.version" IN ({app_versions_str}) OR '
+                + f'RECORD_ATTRIBUTES:"snow.ai.observability.object.version.name" IN ({app_versions_str}))'
             )
         if record_ids:
             record_ids_str = ", ".join([f"'{curr}'" for curr in record_ids])
