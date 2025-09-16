@@ -1,6 +1,5 @@
 from datetime import datetime
 import json
-import logging
 from typing import Iterable, List, Optional, Sequence, Tuple
 
 import pandas as pd
@@ -16,8 +15,6 @@ from trulens.core.utils import serial as serial_utils
 from trulens.otel.semconv.trace import SpanAttributes
 
 from snowflake.snowpark import Session
-
-logger = logging.getLogger(__name__)
 
 
 class SnowflakeEventTableDB(core_db.DB):
