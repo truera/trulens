@@ -969,6 +969,7 @@ trulens_eval.Tru:
     add_ground_truth_to_dataset: builtins.function
     add_record: builtins.function
     add_record_nowait: builtins.function
+    compute_feedbacks_on_events: builtins.function
     connector: typing.Optional[trulens.core.database.connector.base.DBConnector, builtins.NoneType]
     construct: builtins.classmethod
     copy: builtins.function
@@ -980,6 +981,7 @@ trulens_eval.Tru:
     from_orm: builtins.classmethod
     get_app: builtins.function
     get_apps: builtins.function
+    get_events: builtins.function
     get_ground_truth: builtins.function
     get_leaderboard: builtins.function
     get_records_and_feedback: builtins.function
@@ -7796,6 +7798,7 @@ trulens_eval.tru.Tru:
     add_ground_truth_to_dataset: builtins.function
     add_record: builtins.function
     add_record_nowait: builtins.function
+    compute_feedbacks_on_events: builtins.function
     connector: typing.Optional[trulens.core.database.connector.base.DBConnector, builtins.NoneType]
     construct: builtins.classmethod
     copy: builtins.function
@@ -7807,6 +7810,7 @@ trulens_eval.tru.Tru:
     from_orm: builtins.classmethod
     get_app: builtins.function
     get_apps: builtins.function
+    get_events: builtins.function
     get_ground_truth: builtins.function
     get_leaderboard: builtins.function
     get_records_and_feedback: builtins.function
