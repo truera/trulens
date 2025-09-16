@@ -845,7 +845,6 @@ class Run(BaseModel):
     def _get_events_for_client_metrics(self) -> pd.DataFrame:
         """Get events for client-side metric computation using the appropriate method."""
         try:
-            # Check if we're using Snowflake connector with account event table
             from trulens.connectors.snowflake import SnowflakeConnector
 
             if (
@@ -857,7 +856,6 @@ class Run(BaseModel):
                     app_version=self.app.app_version,
                 )
 
-                # Parse JSON columns and rename to lowercase (same as original implementation)
                 if not events_df.empty:
                     for json_col in [
                         "TRACE",
@@ -870,7 +868,8 @@ class Run(BaseModel):
                                 json.loads
                             )
 
-                    # Rename columns to match expected format (lowercase)
+                    # Rename columns to match expected format (lowercase) in downstream feedback computation
+                    # TODO: remove this once we have a more robust/general way to handle the column names
                     column_mapping = {
                         "TRACE": "trace",
                         "RESOURCE_ATTRIBUTES": "resource_attributes",
@@ -880,7 +879,6 @@ class Run(BaseModel):
 
                     events_df = events_df.rename(columns=column_mapping)
 
-                    # Add parent_id to trace if needed
                     for idx, row in events_df.iterrows():
                         if "parent_span_id" in row["record"]:
                             events_df.at[idx, "trace"]["parent_id"] = row[
@@ -889,14 +887,11 @@ class Run(BaseModel):
                         else:
                             events_df.at[idx, "trace"]["parent_id"] = None
 
-                # Post-process: Filter by run_name since the utility method doesn't support it yet
                 if not events_df.empty and self.run_name:
                     filtered_events = []
                     for _, row in events_df.iterrows():
                         try:
-                            # Check if record_attributes contains the run_name (now lowercase after remapping)
                             record_attributes = row.get("record_attributes", {})
-                            # record_attributes should already be parsed as dict after JSON processing above
 
                             event_run_name = record_attributes.get(
                                 SpanAttributes.RUN_NAME
@@ -905,13 +900,11 @@ class Run(BaseModel):
                                 filtered_events.append(row)
 
                         except Exception as e:
-                            # If we can't parse the attributes, skip this event
                             logger.debug(
                                 f"Skipping event due to parsing error: {e}"
                             )
                             continue
 
-                    # Convert back to DataFrame
                     if filtered_events:
                         events_df = pd.DataFrame(filtered_events)
                         logger.info(
@@ -925,7 +918,6 @@ class Run(BaseModel):
 
                 return events_df
             else:
-                # sqlalchemy connector
                 return self.tru_session.connector.get_events(
                     app_name=self.app.app_name,
                     app_version=self.app.app_version,

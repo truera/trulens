@@ -124,7 +124,6 @@ class MetricConfig:
             error_msg += f"Missing selectors: {missing_selectors}\n"
             error_msg += f"Required function args: {required_function_args}\n"
 
-        # Throw error if there are any issues
         if error_msg:
             raise ValueError(error_msg)
 
@@ -138,7 +137,6 @@ class MetricConfig:
         Raises:
             ValueError: If selectors don't match function parameters
         """
-        # Validate selectors first
         self.validate_selectors()
 
         # For client-side metrics, we don't need serialization since they won't be deferred
