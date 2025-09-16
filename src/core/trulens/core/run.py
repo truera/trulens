@@ -805,7 +805,6 @@ class Run(BaseModel):
             )
             raise
 
-        # Get events using the proper method based on connector type
         events = self._get_events_for_client_metrics()
 
         if events.empty:
@@ -846,63 +845,6 @@ class Run(BaseModel):
         self.tru_session.force_flush()
         logger.info("Flushed OTEL spans for client-side metrics")
 
-    def _compute_client_side_metrics(self, metrics: List[str]) -> None:
-        """Compute client-side custom metrics."""
-        try:
-            from trulens.feedback.computer import compute_feedback_by_span_group
-        except ImportError:
-            logger.error(
-                "trulens.feedback package is not installed. Please install it to use feedback computation functionality."
-            )
-            raise
-
-        # Get events using the proper method based on connector type
-        events = self._get_events_for_client_metrics()
-
-        if events.empty:
-            logger.warning(
-                f"No events found for app {self.app.app_name} version {self.app.app_version} run {self.run_name}"
-            )
-            return
-
-        # Get custom metric definitions
-        app_custom_metrics = self.app.get_custom_metrics()
-        metric_map = {m["metric"].metric_type: m for m in app_custom_metrics}
-
-        # Compute each client-side metric
-        for metric_name in metrics:
-            if metric_name in metric_map:
-                metric_info = metric_map[metric_name]
-                feedback = metric_info["feedback"]
-
-                try:
-                    logger.info(f"Computing client-side metric: {metric_name}")
-                    compute_feedback_by_span_group(
-                        events=events,
-                        feedback_name=feedback.name,
-                        feedback_function=feedback.imp,
-                        higher_is_better=feedback.higher_is_better,
-                        kwarg_to_selector=feedback.selectors,
-                        feedback_aggregator=feedback.aggregator,
-                        raise_error_on_no_feedbacks_computed=False,
-                    )
-                    logger.info(
-                        f"Successfully computed client-side metric: {metric_name}"
-                    )
-                except Exception as e:
-                    logger.error(
-                        f"Error computing client-side metric {metric_name}: {e}"
-                    )
-                    raise
-            else:
-                logger.warning(
-                    f"Client-side metric {metric_name} not found in app custom metrics"
-                )
-
-        # Force flush to ensure spans are uploaded
-        self.tru_session.force_flush()
-        logger.info("Flushed OTEL spans for client-side metrics")
-
     def _get_events_for_client_metrics(self) -> pd.DataFrame:
         """Get events for client-side metric computation using the appropriate method."""
         try:
@@ -913,8 +855,48 @@ class Run(BaseModel):
                 isinstance(self.tru_session.connector, SnowflakeConnector)
                 and self.tru_session.connector.use_account_event_table
             ):
-                # snowflake event table
-                return self._get_events_from_snowflake_event_table()
+                events_df = self.tru_session.connector.db.get_events(
+                    app_name=self.app.app_name,
+                    app_version=self.app.app_version,
+                )
+
+                if not events_df.empty and self.run_name:
+                    filtered_events = []
+                    for _, row in events_df.iterrows():
+                        try:
+                            # Check if record_attributes contains the run_name
+                            record_attributes = row.get("record_attributes", {})
+                            if isinstance(record_attributes, str):
+                                record_attributes = json.loads(
+                                    record_attributes
+                                )
+
+                            event_run_name = record_attributes.get(
+                                SpanAttributes.RUN_NAME
+                            )
+                            if event_run_name == self.run_name:
+                                filtered_events.append(row)
+
+                        except Exception as e:
+                            # If we can't parse the attributes, skip this event
+                            logger.debug(
+                                f"Skipping event due to parsing error: {e}"
+                            )
+                            continue
+
+                    # Convert back to DataFrame
+                    if filtered_events:
+                        events_df = pd.DataFrame(filtered_events)
+                        logger.info(
+                            f"Filtered {len(filtered_events)} events for run {self.run_name}"
+                        )
+                    else:
+                        logger.warning(
+                            f"No events found for run {self.run_name} after filtering"
+                        )
+                        events_df = pd.DataFrame()
+
+                return events_df
             else:
                 # sqlalchemy connector
                 return self.tru_session.connector.get_events(
@@ -926,80 +908,6 @@ class Run(BaseModel):
             raise ValueError(
                 "Snowflake connector is not installed. Please install it to use feedback computation functionality."
             )
-
-    def _get_events_from_snowflake_event_table(self) -> pd.DataFrame:
-        """Get events from Snowflake event table using direct SQL query."""
-        try:
-            import json
-
-            query = """
-                SELECT *
-                FROM TABLE(SNOWFLAKE.LOCAL.GET_AI_OBSERVABILITY_EVENTS(
-                    ?, ?, ?, 'EXTERNAL AGENT'
-                ))
-                WHERE RECORD_ATTRIBUTES[?] = ?
-            """
-
-            params = [
-                self.run_dao.session.get_current_database()[
-                    1:-1
-                ],  # Remove quotes
-                self.run_dao.session.get_current_schema()[
-                    1:-1
-                ],  # Remove quotes
-                self.app.app_name.upper(),
-                SpanAttributes.RUN_NAME,
-                self.run_name,
-            ]
-
-            logger.debug(
-                f"Querying Snowflake event table with params: {params}"
-            )
-            events_df = self.run_dao.session.sql(
-                query, params=params
-            ).to_pandas()
-
-            if events_df.empty:
-                logger.debug("No events found in Snowflake event table")
-                return pd.DataFrame()
-
-            for json_col in [
-                "TRACE",
-                "RESOURCE_ATTRIBUTES",
-                "RECORD",
-                "RECORD_ATTRIBUTES",
-            ]:
-                if json_col in events_df.columns:
-                    events_df[json_col] = events_df[json_col].apply(json.loads)
-
-            # Rename columns to match expected format (lowercase)
-            column_mapping = {
-                "TRACE": "trace",
-                "RESOURCE_ATTRIBUTES": "resource_attributes",
-                "RECORD": "record",
-                "RECORD_ATTRIBUTES": "record_attributes",
-            }
-
-            events_df = events_df.rename(columns=column_mapping)
-
-            for idx, row in events_df.iterrows():
-                if "parent_span_id" in row["record"]:
-                    events_df.at[idx, "trace"]["parent_id"] = row["record"][
-                        "parent_span_id"
-                    ]
-                else:
-                    events_df.at[idx, "trace"]["parent_id"] = None
-
-            logger.info(
-                f"Retrieved {len(events_df)} events from Snowflake event table"
-            )
-            return events_df
-
-        except Exception as e:
-            logger.error(
-                f"Error getting events from Snowflake event table: {e}"
-            )
-            return pd.DataFrame()
 
     def _is_cancelled(self) -> bool:
         return self.get_status() == RunStatus.CANCELLED
