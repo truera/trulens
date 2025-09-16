@@ -584,6 +584,11 @@ def _render_grid_tab(
         return
 
     selected_record = selected_records.iloc[0]
+    st.divider()
+    st.text("KOJIKUN A1")
+    st.text(selected_record)
+    st.text("KOJIKUN A2")
+    st.divider()
     st.session_state[f"{page_name}.selected_record"] = selected_record[
         "record_id"
     ]
