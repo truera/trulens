@@ -56,9 +56,11 @@ def _identify_span_types(
     eval_root_calls = []
     eval_calls = []
 
+    if not isinstance(call, list) and isinstance(call, dict):
+        call = [call]
     for c in call:
         if isinstance(c, str):
-            raise ValueError(c)
+            raise ValueError(call)
         # For OTel spans, use explicit span_type field
         if c.get("span_type") == "EVAL_ROOT":
             eval_root_calls.append(c)
