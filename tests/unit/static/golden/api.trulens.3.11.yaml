@@ -510,6 +510,19 @@ trulens.core.feedback:
     SnowflakeFeedback: pydantic._internal._model_construction.ModelMetaclass
   lows:
     __all__: builtins.list
+trulens.core.feedback.custom_metric:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    MetricConfig: builtins.type
+trulens.core.feedback.custom_metric.MetricConfig:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    create_feedback_definition: builtins.function
+    to_dict: builtins.function
+    validate_selectors: builtins.function
 trulens.core.feedback.endpoint:
   __class__: builtins.module
   highs: {}
