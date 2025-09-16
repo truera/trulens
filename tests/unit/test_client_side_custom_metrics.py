@@ -12,9 +12,6 @@ from tests.util.otel_test_case import OtelTestCase
 
 @pytest.mark.optional
 class TestClientSideCustomMetrics(OtelTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-
     def test_metric_config_creation(self) -> None:
         """Test MetricConfig creation and validation."""
 

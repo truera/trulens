@@ -706,7 +706,7 @@ class Run(BaseModel):
         )
         return True
 
-    def compute_metrics(self, metrics: List[Union[str, "MetricConfig"]]) -> str:
+    def compute_metrics(self, metrics: List[Union[str, MetricConfig]]) -> str:
         """
         Compute metrics for the run.
 
@@ -794,7 +794,7 @@ class Run(BaseModel):
         return "Metrics computation in progress."
 
     def _compute_client_side_metrics_from_configs(
-        self, metric_configs: List["MetricConfig"]
+        self, metric_configs: List[MetricConfig]
     ) -> None:
         """Compute client-side custom metrics from MetricConfig objects."""
         try:
