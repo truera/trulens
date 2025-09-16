@@ -123,27 +123,51 @@ def _filter_eval_calls_by_root(
     Raises:
         KeyError: If eval_root_id is missing from any EVAL_ROOT or EVAL call
     """
+    st.write(
+        f"[DEBUG] _filter_eval_calls_by_root: Started with {len(eval_root_calls)} eval_root_calls, {len(eval_calls)} eval_calls"
+    )
+
     if not eval_root_calls:
+        st.write("[DEBUG] No eval_root_calls, returning all eval_calls")
         return eval_calls
 
     eval_root_df = pd.DataFrame(eval_root_calls)
+    st.write(f"[DEBUG] eval_root_df columns: {list(eval_root_df.columns)}")
+
     if "eval_root_id" not in eval_root_df.columns:
+        st.write(
+            "[DEBUG] ERROR: eval_root_id column missing from EVAL_ROOT spans"
+        )
         raise KeyError("eval_root_id column missing from EVAL_ROOT spans")
 
     if eval_root_df.empty:
+        st.write("[DEBUG] eval_root_df is empty, returning all eval_calls")
         return eval_calls
 
     eval_root_df = _filter_duplicate_span_calls(eval_root_df)
     most_recent_eval_root_ids = set(eval_root_df["eval_root_id"].unique())
+    st.write(f"[DEBUG] Most recent eval_root_ids: {most_recent_eval_root_ids}")
 
     # Verify all eval_calls have eval_root_id
-    for c in eval_calls:
+    for i, c in enumerate(eval_calls):
         if "eval_root_id" not in c:
+            st.write(
+                f"[DEBUG] ERROR: eval_call {i} missing eval_root_id, keys: {c.keys()}"
+            )
             raise KeyError("eval_root_id missing from EVAL spans")
+        else:
+            st.write(
+                f"[DEBUG] eval_call {i} has eval_root_id: {c.get('eval_root_id')}"
+            )
 
-    return [
-        c for c in eval_calls if c["eval_root_id"] in most_recent_eval_root_ids
+    filtered = [
+        c
+        for c in eval_calls
+        if c.get("eval_root_id") in most_recent_eval_root_ids
     ]
+    st.write(f"[DEBUG] Filtered to {len(filtered)} eval_calls")
+
+    return filtered
 
 
 def _process_eval_calls_for_display(
@@ -200,8 +224,16 @@ def display_feedback_call(
     # First, identify and separate EVAL_ROOT and feedback calls (EVAL spans)
     eval_root_calls, eval_calls = _identify_span_types(call)
 
+    st.write(
+        f"[DEBUG] After _identify_span_types: {len(eval_root_calls)} eval_root_calls, {len(eval_calls)} eval_calls"
+    )
+
     # For OTel spans only: filter EVAL_ROOT spans to get most recent ones
     eval_calls = _filter_eval_calls_by_root(eval_root_calls, eval_calls)
+
+    st.write(
+        f"[DEBUG] After _filter_eval_calls_by_root: {len(eval_calls)} eval_calls remaining"
+    )
 
     if not eval_calls:
         st.warning("No feedback details found.")
