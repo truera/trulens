@@ -524,6 +524,11 @@ def _render_grid(
                 data_return_mode=DataReturnMode.FILTERED,
                 allow_unsafe_jscode=True,
             )
+            st.divider()
+            st.text("KOJIKUN F1")
+            st.dataframe(event.selected_rows)
+            st.text("KOJIKUN F2")
+            st.divider()
             return pd.DataFrame(event.selected_rows)
 
         except ImportError:
@@ -554,6 +559,11 @@ def _render_grid(
         hide_index=True,
         use_container_width=True,
     )
+    st.divider()
+    st.text("KOJIKUN E1")
+    st.text(event.selection["rows"])
+    st.text("KOJIKUN E2")
+    st.divider()
     return df.iloc[event.selection["rows"]]
 
 
