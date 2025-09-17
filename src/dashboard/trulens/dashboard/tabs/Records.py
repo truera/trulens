@@ -569,14 +569,35 @@ def _render_grid_tab(
         feedback_directions=feedback_directions,
         version_metadata_col_names=version_metadata_col_names,
     )
+    st.divider()
+    st.text("KOJIKUN D1")
+    st.text(df.shape)
+    st.text(feedback_col_names)
+    st.text(version_metadata_col_names)
+    st.text(selected_records.shape)
+    st.text("KOJIKUN D2")
+    st.divider()
+    if not selected_records.empty:
+        st.divider()
+        st.text("KOJIKUN B1")
+        st.text(selected_records.iloc[0])
+        st.text("KOJIKUN B2")
+        st.divider()
 
     if selected_records.empty:
+        st.divider()
+        st.text("KOJIKUN C1")
         selected_record_id = st.session_state.get(
             f"{page_name}.selected_record", None
         )
+        st.text(selected_record_id)
+        st.divider()
         selected_records = df[df["record_id"] == selected_record_id]
 
     if selected_records.empty:
+        st.divider()
+        st.text("KOJIKUN C2")
+        st.divider()
         st.info(
             "Click a record's checkbox to view details.",
             icon="ℹ️",
