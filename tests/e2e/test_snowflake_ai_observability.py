@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import os
@@ -39,8 +40,10 @@ class TestSnowflakeAIObservability(OtelTestCase, SnowflakeTestCase):
             main_method=app.greet,
         )
         # Record and invoke.
+        start_time = datetime.datetime.now(datetime.timezone.utc)
         with tru_app:
             app.greet("Kojikun")
+        end_time = datetime.datetime.now(datetime.timezone.utc)
         self._validate_num_spans_for_app("test_app", 1)
         # Verify.
         records_df, feedback_cols = tru_session.get_records_and_feedback(
@@ -52,6 +55,25 @@ class TestSnowflakeAIObservability(OtelTestCase, SnowflakeTestCase):
         self.assertEqual(records_df["app_version"].iloc[0], "1.0.0")
         self.assertEqual(records_df["input"].iloc[0], "Kojikun")
         self.assertEqual(records_df["output"].iloc[0], "Hello, Kojikun!")
+        # Verify `get_events` directly.
+        self.assertEqual(
+            1,
+            len(
+                tru_session.connector.db.get_events(
+                    app_name="test_app",
+                    start_time=start_time - datetime.timedelta(seconds=10),
+                )
+            ),
+        )
+        self.assertEqual(
+            0,
+            len(
+                tru_session.connector.db.get_events(
+                    app_name="test_app",
+                    start_time=end_time + datetime.timedelta(seconds=10),
+                )
+            ),
+        )
 
     def test_get_cortex_agent_get_records_and_feedback(self):
         # Create TruSession.

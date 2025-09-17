@@ -138,6 +138,7 @@ class SnowflakeEventTableDB(core_db.DB):
         ))
         """
         where_clauses = []
+        extra_params = []
         if app_version:
             app_version_str = f"'{app_version}'"
             where_clauses.append(
@@ -154,16 +155,15 @@ class SnowflakeEventTableDB(core_db.DB):
                 f'RECORD_ATTRIBUTES:"{SpanAttributes.RECORD_ID}" IN ({record_ids_str})'
             )
         if start_time:
-            start_time_str = f"'{start_time}'"
-            where_clauses.append(f"TIMESTAMP >= {start_time_str}")
+            where_clauses.append("START_TIMESTAMP >= ?")
+            extra_params.append(start_time)
         if where_clauses:
             q += " WHERE " + " AND ".join(where_clauses)
         df = None
         for app_type in ["EXTERNAL AGENT", "CORTEX AGENT"]:
+            params = [database, schema, app_name, app_type] + extra_params
             try:
-                df = self._snowpark_session.sql(
-                    q, params=[database, schema, app_name, app_type]
-                ).to_pandas()
+                df = self._snowpark_session.sql(q, params=params).to_pandas()
                 if not df.empty:
                     break
             except Exception:
