@@ -575,6 +575,7 @@ def _render_grid_tab(
     st.text(feedback_col_names)
     st.text(version_metadata_col_names)
     st.text(selected_records.shape)
+    st.dataframe(df["Context Relevance_calls"])
     st.text("KOJIKUN D2")
     st.divider()
     if not selected_records.empty:
