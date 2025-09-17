@@ -19,6 +19,7 @@ from opentelemetry import trace
 from opentelemetry.trace import INVALID_SPAN_ID
 from opentelemetry.trace.span import Span
 import pandas as pd
+from trulens.core.database.base import DB
 from trulens.core.feedback.feedback import Feedback
 from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
 from trulens.core.feedback.selector import ProcessedContentNode
@@ -35,8 +36,6 @@ from trulens.experimental.otel_tracing.core.span import (
 from trulens.experimental.otel_tracing.core.span import (
     set_span_attribute_safely,
 )
-from trulens.otel.semconv.trace import BASE_SCOPE
-from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 _logger = logging.getLogger(__name__)
@@ -692,7 +691,7 @@ def _call_feedback_function_with_record_root_info(
         record_root_resource_attributes: Resource attributes of record root.
         span_group: Span group of the invocation.
     """
-    app_name, app_version, app_id, run_name = _get_app_and_run_info(
+    app_name, app_version, app_id, run_name = DB.extract_app_and_run_info(
         record_root_attributes, record_root_resource_attributes
     )
     # TODO(otel, dhuang): need to use these when getting the object entity!
@@ -899,39 +898,3 @@ def _set_metadata_attributes(span: Span, metadata: Dict[str, Any]) -> None:
         )
         if k in _EXPLANATION_KEYS:
             set_span_attribute_safely(span, SpanAttributes.EVAL.EXPLANATION, v)
-
-
-def _get_app_and_run_info(
-    attributes: Dict[str, Any], resource_attributes: Dict[str, Any]
-) -> Tuple[str, str, str, str]:
-    """Get app info from attributes.
-
-    Args:
-        attributes: Span attributes of record root.
-        resource_attributes: Resource attributes of record root.
-
-    Returns:
-        Tuple of: app name, app version, and app id, run name.
-    """
-
-    def get_value(keys: List[str]) -> Optional[str]:
-        for key in keys:
-            for attr in [resource_attributes, attributes]:
-                if key in attr:
-                    return attr[key]
-        return None
-
-    app_name = get_value([
-        f"snow.{BASE_SCOPE}.object.name",
-        ResourceAttributes.APP_NAME,
-    ])
-    app_version = get_value([
-        f"snow.{BASE_SCOPE}.object.version.name",
-        ResourceAttributes.APP_VERSION,
-    ])
-    app_id = get_value([ResourceAttributes.APP_ID])
-    run_name = get_value([
-        f"snow.{BASE_SCOPE}.run.name",
-        SpanAttributes.RUN_NAME,
-    ])
-    return app_name, app_version, app_id, run_name
