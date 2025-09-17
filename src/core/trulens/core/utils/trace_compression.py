@@ -1,7 +1,7 @@
 """
-Trace compression utilities to reduce token usage in feedback functions.
+Experimental Trace compression utilities to reduce token usage in feedback functions.
 This module provides functionality to compress trace data while preserving
-essential information needed for evaluation.
+essential information needed for evaluation. Use with caution.
 """
 
 import json
