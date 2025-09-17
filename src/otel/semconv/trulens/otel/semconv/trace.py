@@ -354,6 +354,9 @@ class SpanAttributes:
         INPUT_CONTEXT_SCORES = base + ".input_context_scores"
         """Input scores before reranking."""
 
+        INPUT_RANKS = base + ".input_ranks"
+        """Input ranking order before reranking."""
+
         OUTPUT_RANKS = base + ".output_ranks"
         """Output ranking order after reranking."""
 

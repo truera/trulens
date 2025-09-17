@@ -205,11 +205,15 @@ def _reranker_span() -> Dict[str, Union[SpanAttributes.SpanType, Attributes]]:
         elif "nodes" in kwargs:
             nodes = kwargs.get("nodes")
 
-        # Extract input contexts and scores
+        # Extract input contexts, scores, and ranks
         if nodes and isinstance(nodes, list):
             input_texts = []
             input_scores = []
-            for node in nodes:
+            input_ranks = []
+            for i, node in enumerate(nodes):
+                # Capture rank (position in input list)
+                input_ranks.append(i)
+
                 if hasattr(node, "node") and hasattr(node.node, "get_content"):
                     input_texts.append(node.node.get_content())
                 elif hasattr(node, "get_content"):
@@ -228,6 +232,8 @@ def _reranker_span() -> Dict[str, Union[SpanAttributes.SpanType, Attributes]]:
                 attributes[SpanAttributes.RERANKER.INPUT_CONTEXT_SCORES] = (
                     input_scores
                 )
+            if input_ranks:
+                attributes[SpanAttributes.RERANKER.INPUT_RANKS] = input_ranks
 
         # Extract model information if available from self (first arg)
         if len(args) > 0:
