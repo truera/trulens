@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 from typing import Any, Callable, Dict, List, Optional
 
 import pandas as pd
 from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
+from trulens.core.utils.trace_compression import compress_trace_for_feedback
 from trulens.otel.semconv.trace import SpanAttributes
 
 
@@ -87,6 +89,33 @@ class Trace:
         else:
             self.processed_content_roots.append(node)
         return node
+
+    def to_compressed_json(self, default_handler: Callable = str) -> str:
+        """
+        Convert trace events to compressed JSON format.
+        This reduces token usage while preserving essential information.
+
+        Args:
+            default_handler: Function to handle non-serializable objects
+
+        Returns:
+            Compressed JSON string representation of the trace
+        """
+        # First convert to regular JSON
+        if self.events is not None:
+            trace_data = self.events.to_json(default_handler=default_handler)
+        else:
+            # If no events, create minimal trace data
+            trace_data = json.dumps({
+                "events": [],
+                "processed_content_roots": [],
+            })
+
+        # Apply compression
+        compressed_trace = compress_trace_for_feedback(trace_data)
+
+        # Convert compressed data back to JSON string
+        return json.dumps(compressed_trace, default=default_handler)
 
 
 @dataclass
@@ -235,8 +264,12 @@ class Selector:
         return ret
 
     @staticmethod
-    def select_record_input() -> Selector:
+    def select_record_input(ignore_none_values: bool = True) -> Selector:
         """Returns a `Selector` that gets the record input.
+
+        Args:
+            ignore_none_values: If True, skip evaluation when the input is None.
+                Defaults to True to prevent errors on missing data.
 
         Returns:
             `Selector` that gets the record input.
@@ -244,11 +277,16 @@ class Selector:
         return Selector(
             span_type=SpanAttributes.SpanType.RECORD_ROOT,
             span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
+            ignore_none_values=ignore_none_values,
         )
 
     @staticmethod
-    def select_record_output() -> Selector:
+    def select_record_output(ignore_none_values: bool = True) -> Selector:
         """Returns a `Selector` that gets the record output.
+
+        Args:
+            ignore_none_values: If True, skip evaluation when the output is None.
+                Defaults to True to prevent errors on missing data.
 
         Returns:
             `Selector` that gets the record output.
@@ -256,10 +294,13 @@ class Selector:
         return Selector(
             span_type=SpanAttributes.SpanType.RECORD_ROOT,
             span_attribute=SpanAttributes.RECORD_ROOT.OUTPUT,
+            ignore_none_values=ignore_none_values,
         )
 
     @staticmethod
-    def select_context(*, collect_list: bool) -> Selector:
+    def select_context(
+        *, collect_list: bool, ignore_none_values: bool = True
+    ) -> Selector:
         """Returns a `Selector` that tries to retrieve contexts.
 
         Args:
@@ -271,6 +312,8 @@ class Selector:
                 2. [if collect_list is False]:
                         Separately for each entry in the list and aggregate the
                         results.
+            ignore_none_values: If True, skip evaluation when contexts are None.
+                Defaults to True to prevent errors on missing data.
 
         Returns:
             `Selector` that tries to retrieve contexts.
@@ -278,7 +321,7 @@ class Selector:
 
         def context_retrieval_processor(
             attributes: Dict[str, Any],
-        ) -> List[str]:
+        ) -> Optional[List[str]]:
             for curr in [
                 SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
                 SpanAttributes.CALL.RETURN,
@@ -290,13 +333,14 @@ class Selector:
                     and all(isinstance(item, str) for item in ret)
                 ):
                     return ret
-            raise ValueError(
-                f"Could not find contexts in attributes: {attributes}"
-            )
+            # Return None instead of raising if we can't find contexts
+            # The ignore_none_values flag will determine whether to skip
+            return None
 
         return Selector(
             span_type=SpanAttributes.SpanType.RETRIEVAL,
             span_attributes_processor=context_retrieval_processor,
             collect_list=collect_list,
             match_only_if_no_ancestor_matched=True,
+            ignore_none_values=ignore_none_values,
         )
