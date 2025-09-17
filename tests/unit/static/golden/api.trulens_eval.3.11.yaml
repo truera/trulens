@@ -328,6 +328,7 @@ trulens_eval.Feedback:
     copy: builtins.function
     criteria: typing.Optional[builtins.str, builtins.NoneType]
     dict: builtins.function
+    enable_trace_compression: typing.Optional[builtins.bool, builtins.NoneType]
     evaluate_deferred: builtins.staticmethod
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     extract_selection: builtins.function
@@ -2767,6 +2768,7 @@ trulens_eval.feedback.Feedback:
     copy: builtins.function
     criteria: typing.Optional[builtins.str, builtins.NoneType]
     dict: builtins.function
+    enable_trace_compression: typing.Optional[builtins.bool, builtins.NoneType]
     evaluate_deferred: builtins.staticmethod
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     extract_selection: builtins.function
@@ -3339,6 +3341,7 @@ trulens_eval.feedback.feedback.Feedback:
     copy: builtins.function
     criteria: typing.Optional[builtins.str, builtins.NoneType]
     dict: builtins.function
+    enable_trace_compression: typing.Optional[builtins.bool, builtins.NoneType]
     evaluate_deferred: builtins.staticmethod
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     extract_selection: builtins.function
