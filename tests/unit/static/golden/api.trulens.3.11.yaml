@@ -242,11 +242,22 @@ trulens.core.database.base:
   __class__: builtins.module
   highs: {}
   lows:
+    BASE_SCOPE: builtins.str
+    BaseAppsExtractor: builtins.type
     DB: pydantic._internal._model_construction.ModelMetaclass
     DEFAULT_DATABASE_FILE: builtins.str
     DEFAULT_DATABASE_PREFIX: builtins.str
     DEFAULT_DATABASE_REDACT_KEYS: builtins.bool
     MULTI_CALL_NAME_DELIMITER: builtins.str
+trulens.core.database.base.BaseAppsExtractor:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    all_cols: builtins.list
+    app_cols: builtins.list
+    extra_cols: builtins.list
+    rec_cols: builtins.list
 trulens.core.database.base.DB:
   __bases__:
   - trulens.core.utils.serial.SerialModel
@@ -259,6 +270,7 @@ trulens.core.database.base.DB:
     batch_insert_record: builtins.function
     check_db_revision: builtins.function
     delete_app: builtins.function
+    extract_app_and_run_info: builtins.staticmethod
     get_app: builtins.function
     get_apps: builtins.function
     get_datasets: builtins.function
@@ -435,16 +447,12 @@ trulens.core.database.sqlalchemy:
     flatten: builtins.function
 trulens.core.database.sqlalchemy.AppsExtractor:
   __bases__:
-  - builtins.object
+  - trulens.core.database.base.BaseAppsExtractor
   __class__: builtins.type
   attributes:
-    all_cols: builtins.list
-    app_cols: builtins.list
-    extra_cols: builtins.list
     extract_apps: builtins.function
     extract_records: builtins.function
     get_df_and_cols: builtins.function
-    rec_cols: builtins.list
 trulens.core.database.sqlalchemy.SQLAlchemyDB:
   __bases__:
   - trulens.core.database.base.DB
@@ -502,6 +510,19 @@ trulens.core.feedback:
     SnowflakeFeedback: pydantic._internal._model_construction.ModelMetaclass
   lows:
     __all__: builtins.list
+trulens.core.feedback.custom_metric:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    MetricConfig: builtins.type
+trulens.core.feedback.custom_metric.MetricConfig:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    create_feedback_definition: builtins.function
+    to_dict: builtins.function
+    validate_selectors: builtins.function
 trulens.core.feedback.endpoint:
   __class__: builtins.module
   highs: {}
@@ -2256,7 +2277,6 @@ trulens.feedback.computer:
   __class__: builtins.module
   highs: {}
   lows:
-    BASE_SCOPE: builtins.str
     INVALID_SPAN_ID: builtins.int
     MinimalSpanInfo: builtins.type
     RecordGraphNode: builtins.type

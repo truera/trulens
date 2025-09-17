@@ -5,13 +5,14 @@ import inspect
 import json
 import logging
 import time
-from typing import Any, ClassVar, Dict, List, Optional, Set, Type
+from typing import Any, ClassVar, Dict, List, Optional, Set, Type, Union
 
 import pandas as pd
 import pydantic
 from pydantic import BaseModel
 from pydantic import Field
 from pydantic import field_serializer
+from trulens.core.feedback.custom_metric import MetricConfig
 from trulens.core.utils.json import obj_id_of_obj
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -705,7 +706,17 @@ class Run(BaseModel):
         )
         return True
 
-    def compute_metrics(self, metrics: List[str]) -> str:
+    def compute_metrics(self, metrics: List[Union[str, MetricConfig]]) -> str:
+        """
+        Compute metrics for the run.
+
+        Args:
+            metrics: List of metric identifiers (strings) for server-side metrics,
+                    or MetricConfig objects for client-side metrics
+
+        Returns:
+            Status message indicating computation progress
+        """
         if not metrics:
             raise ValueError(
                 "No metrics provided. Please provide at least one metric to compute."
@@ -714,6 +725,7 @@ class Run(BaseModel):
         run_status = self.get_status()
 
         logger.info(f"Current run status: {run_status}")
+
         if not self._can_start_new_metric_computation(run_status):
             return f"""Cannot start a new metric computation when in run status: {run_status}. Valid statuses are: {RunStatus.INVOCATION_COMPLETED}, {RunStatus.INVOCATION_PARTIALLY_COMPLETED},
         {RunStatus.COMPUTATION_IN_PROGRESS}, {RunStatus.COMPLETED}, {RunStatus.PARTIALLY_COMPLETED}, {RunStatus.FAILED}."""
@@ -729,18 +741,192 @@ class Run(BaseModel):
                 f"{', '.join(computed_metrics)}. If you want to recompute, please cancel the run and start a new one."
             )
 
-        logger.info(f"Metrics to compute: {metrics}.")
+        # Separate client-side and server-side metrics
+        client_metric_configs = []
+        server_metric_names = []
 
-        self.run_dao.call_compute_metrics_query(
-            metrics=metrics,
-            object_name=self.object_name,
-            object_type=self.object_type,
-            object_version=self.object_version,
-            run_name=self.run_name,
+        for metric in metrics:
+            if isinstance(metric, str):
+                # String metrics are server-side
+                server_metric_names.append(metric)
+            else:
+                # MetricConfig objects are client-side
+                if (
+                    hasattr(metric, "computation_type")
+                    and metric.computation_type == "client"
+                ):
+                    client_metric_configs.append(metric)
+                else:
+                    # Default to client-side for MetricConfig objects
+                    client_metric_configs.append(metric)
+
+        logger.info(
+            f"Client-side metrics to compute: {[m.metric_name for m in client_metric_configs]}"
         )
+        logger.info(f"Server-side metrics to compute: {server_metric_names}")
+
+        # Handle client-side metrics
+        if client_metric_configs:
+            try:
+                self._compute_client_side_metrics_from_configs(
+                    client_metric_configs
+                )
+                logger.info(
+                    f"Successfully computed {len(client_metric_configs)} client-side metrics"
+                )
+            except Exception as e:
+                logger.error(f"Error computing client-side metrics: {e}")
+                raise
+
+        if server_metric_names:
+            self.run_dao.call_compute_metrics_query(
+                metrics=server_metric_names,
+                object_name=self.object_name,
+                object_type=self.object_type,
+                object_version=self.object_version,
+                run_name=self.run_name,
+            )
+            logger.info(
+                f"Started server-side computation for {len(server_metric_names)} metrics"
+            )
 
         logger.info("Metrics computation job started")
         return "Metrics computation in progress."
+
+    def _compute_client_side_metrics_from_configs(
+        self, metric_configs: List[MetricConfig]
+    ) -> None:
+        """Compute client-side custom metrics from MetricConfig objects."""
+        try:
+            from trulens.feedback.computer import compute_feedback_by_span_group
+        except ImportError:
+            logger.error(
+                "trulens.feedback package is not installed. Please install it to use feedback computation functionality."
+            )
+            raise
+
+        events = self._get_events_for_client_metrics()
+
+        if events.empty:
+            logger.warning(
+                f"No events found for app {self.app.app_name} version {self.app.app_version} run {self.run_name}"
+            )
+            return
+
+        # Compute each client-side metric
+        for metric_config in metric_configs:
+            try:
+                logger.info(
+                    f"Computing client-side metric: {metric_config.metric_name}"
+                )
+
+                # Create feedback definition from the metric config
+                feedback = metric_config.create_feedback_definition()
+
+                compute_feedback_by_span_group(
+                    events=events,
+                    feedback=feedback,
+                    raise_error_on_no_feedbacks_computed=False,
+                    selectors=feedback.selectors,
+                )
+                logger.info(
+                    f"Successfully computed client-side metric: {metric_config.metric_name}"
+                )
+            except Exception as e:
+                logger.error(
+                    f"Error computing client-side metric {metric_config.metric_name}: {e}"
+                )
+                raise
+
+        # Force flush to ensure spans are uploaded
+        self.tru_session.force_flush()
+        logger.info("Flushed OTEL spans for client-side metrics")
+
+    def _get_events_for_client_metrics(self) -> pd.DataFrame:
+        """Get events for client-side metric computation using the appropriate method."""
+        try:
+            from trulens.connectors.snowflake import SnowflakeConnector
+
+            if (
+                isinstance(self.tru_session.connector, SnowflakeConnector)
+                and self.tru_session.connector.use_account_event_table
+            ):
+                events_df = self.tru_session.connector.db.get_events(
+                    app_name=self.app.app_name,
+                    app_version=self.app.app_version,
+                )
+
+                if not events_df.empty:
+                    for json_col in [
+                        "TRACE",
+                        "RESOURCE_ATTRIBUTES",
+                        "RECORD",
+                        "RECORD_ATTRIBUTES",
+                    ]:
+                        if json_col in events_df.columns:
+                            events_df[json_col] = events_df[json_col].apply(
+                                json.loads
+                            )
+
+                    # Rename columns to match expected format (lowercase) in downstream feedback computation
+                    # TODO: remove this once we have a more robust/general way to handle the column names
+                    column_mapping = {
+                        "TRACE": "trace",
+                        "RESOURCE_ATTRIBUTES": "resource_attributes",
+                        "RECORD": "record",
+                        "RECORD_ATTRIBUTES": "record_attributes",
+                    }
+
+                    events_df = events_df.rename(columns=column_mapping)
+
+                    for idx, row in events_df.iterrows():
+                        if "parent_span_id" in row["record"]:
+                            events_df.at[idx, "trace"]["parent_id"] = row[
+                                "record"
+                            ]["parent_span_id"]
+                        else:
+                            events_df.at[idx, "trace"]["parent_id"] = None
+
+                if not events_df.empty and self.run_name:
+                    filtered_events = []
+                    for _, row in events_df.iterrows():
+                        try:
+                            record_attributes = row.get("record_attributes", {})
+
+                            event_run_name = record_attributes.get(
+                                SpanAttributes.RUN_NAME
+                            )
+                            if event_run_name == self.run_name:
+                                filtered_events.append(row)
+
+                        except Exception as e:
+                            logger.debug(
+                                f"Skipping event due to parsing error: {e}"
+                            )
+                            continue
+
+                    if filtered_events:
+                        events_df = pd.DataFrame(filtered_events)
+                        logger.info(
+                            f"Filtered {len(filtered_events)} events for run {self.run_name}"
+                        )
+                    else:
+                        logger.warning(
+                            f"No events found for run {self.run_name} after filtering"
+                        )
+                        events_df = pd.DataFrame()
+
+                return events_df
+            else:
+                return self.tru_session.connector.get_events(
+                    app_name=self.app.app_name,
+                    app_version=self.app.app_version,
+                    run_name=self.run_name,
+                )
+        except ImportError:
+            raise ValueError(
+                "Snowflake connector is not installed. Please install it to use feedback computation functionality."
+            )
 
     def _is_cancelled(self) -> bool:
         return self.get_status() == RunStatus.CANCELLED

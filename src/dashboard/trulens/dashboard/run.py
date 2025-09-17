@@ -71,7 +71,8 @@ def run_dashboard(
     """
     session = session or core_session.TruSession()
 
-    session.connector.db.check_db_revision()
+    connector = session.connector
+    connector.db.check_db_revision()
 
     IN_COLAB = "google.colab" in sys.modules
     if IN_COLAB and address is not None:
@@ -128,11 +129,10 @@ def run_dashboard(
         main_path,
         "--",
         "--database-prefix",
-        session.connector.db.table_prefix,
+        connector.db.table_prefix,
     ]
-    if (
-        _is_snowflake_connector(session.connector)
-        and not session.connector.password_known
+    if _is_snowflake_connector(connector) and (
+        not connector.password_known or connector.use_account_event_table
     ):
         # If we don't know the password, this is problematic because we run the
         # dashboard in a separate process so we won't be able to recreate the
@@ -143,7 +143,6 @@ def run_dashboard(
             clean_up_snowflake_identifier,
         )
 
-        connector = session.connector
         snowpark_session = connector.snowpark_session
         args_to_add = [
             ("--snowflake-account", snowpark_session.get_current_account()),
@@ -154,18 +153,19 @@ def run_dashboard(
             ("--snowflake-warehouse", snowpark_session.get_current_warehouse()),
             ("--snowflake-host", snowpark_session.connection.host),
         ]
+        if connector.password_known:
+            args_to_add.append(("--snowflake-password", connector._password))
+        else:
+            args_to_add.append(("--snowflake-authenticator", "externalbrowser"))
         for arg, val in args_to_add:
             if val:
                 args += [arg, clean_up_snowflake_identifier(val)]
-        args += ["--snowflake-authenticator", "externalbrowser"]
         if connector.use_account_event_table:
             args.append("--snowflake-use-account-event-table")
     else:
         args += [
             "--database-url",
-            session.connector.db.engine.url.render_as_string(
-                hide_password=False
-            ),
+            connector.db.engine.url.render_as_string(hide_password=False),
         ]
     if sis_compatibility_mode:
         args += ["--sis-compatibility"]
