@@ -90,7 +90,7 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
     record_ingest_mode: RecordIngestMode
     """Mode of records ingestion."""
 
-    root_class: pyschema_utils.Class
+    root_class: Optional[pyschema_utils.Class]
     """Class of the main instrumented object.
 
     Ideally this would be a [ClassVar][typing.ClassVar] but since we want to check this without
@@ -291,7 +291,7 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
     def jsonify_extra(self, content):
         # Called by jsonify for us to add any data we might want to add to the
         # serialization of `app`.
-        if self.app_extra_json is not None:
+        if self.app_extra_json is not None and content["app"] is not None:
             content["app"].update(self.app_extra_json)
 
         return content
