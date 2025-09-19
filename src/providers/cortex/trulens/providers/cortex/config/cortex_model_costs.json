@@ -1,9 +1,11 @@
 {
     "mistral-large": 5.1,
-    "deepseek-r1": 3.06,
+    "deepseek-r1": 1.03,
     "llama3.1-405b": 3,
     "claude-3-5-sonnet": 2.55,
     "claude-3-7-sonnet": 2.55,
+    "claude-4-sonnet": 2.55,
+    "claude-4-opus": 12.00,
     "mistral-large2": 1.95,
     "llama3.1-70b": 1.21,
     "snowflake-llama-3.3-70b": 0.29,
@@ -11,5 +13,12 @@
     "mistral-7b": 0.12,
     "llama3.2-3b": 0.06,
     "llama3.2-1b": 0.04,
-    "llama4-maverick": 0.25
+    "llama4-maverick": 0.25,
+    "openai-gpt-4.1": 1.40,
+    "openai-gpt-5": 1.60,
+    "openai-gpt-5-chat": 1.60,
+    "opeani-gpt-5-mini": 0.32,
+    "openai-gpt-5-nano": 0.06,
+    "openai-gpt-oss-120b": 0.11,
+    "openai-gpt-oss-20b": 0.05
 }
