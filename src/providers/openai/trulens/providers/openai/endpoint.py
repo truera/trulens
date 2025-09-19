@@ -35,11 +35,12 @@ from typing import (
     Union,
 )
 
-from langchain.schema import Generation
-from langchain.schema import LLMResult
-from langchain_community.callbacks.openai_info import OpenAICallbackHandler
+from langchain import schema as langchain_schema
+from langchain_community.callbacks import (
+    openai_info as openai_info_callbacks_langchain_community,
+)
 import pydantic
-from pydantic.v1 import BaseModel as v1BaseModel
+from pydantic import v1 as pydantic_v1
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.schema import base as base_schema
 from trulens.core.utils import constants as constant_utils
@@ -47,13 +48,9 @@ from trulens.core.utils import pace as pace_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
-from trulens.otel.semconv.trace import SpanAttributes
+from trulens.otel.semconv import trace as trace_otel_semconv
 
 import openai
-from openai import resources
-from openai.resources import chat
-from openai.types.chat.chat_completion import ChatCompletion
-from openai.types.create_embedding_response import CreateEmbeddingResponse
 
 logger = logging.getLogger(__name__)
 
@@ -108,15 +105,15 @@ class OpenAICostComputer:
         )
 
         ret = {
-            SpanAttributes.COST.COST: callback.cost.cost,
-            SpanAttributes.COST.CURRENCY: callback.cost.cost_currency,
-            SpanAttributes.COST.NUM_TOKENS: callback.cost.n_tokens,
-            SpanAttributes.COST.NUM_PROMPT_TOKENS: callback.cost.n_prompt_tokens,
-            SpanAttributes.COST.NUM_COMPLETION_TOKENS: callback.cost.n_completion_tokens,
-            SpanAttributes.COST.NUM_REASONING_TOKENS: callback.cost.n_reasoning_tokens,
+            trace_otel_semconv.SpanAttributes.COST.COST: callback.cost.cost,
+            trace_otel_semconv.SpanAttributes.COST.CURRENCY: callback.cost.cost_currency,
+            trace_otel_semconv.SpanAttributes.COST.NUM_TOKENS: callback.cost.n_tokens,
+            trace_otel_semconv.SpanAttributes.COST.NUM_PROMPT_TOKENS: callback.cost.n_prompt_tokens,
+            trace_otel_semconv.SpanAttributes.COST.NUM_COMPLETION_TOKENS: callback.cost.n_completion_tokens,
+            trace_otel_semconv.SpanAttributes.COST.NUM_REASONING_TOKENS: callback.cost.n_reasoning_tokens,
         }
         if model_name:
-            ret[SpanAttributes.COST.MODEL] = model_name
+            ret[trace_otel_semconv.SpanAttributes.COST.MODEL] = model_name
         return ret
 
 
@@ -229,11 +226,12 @@ class OpenAIClient(serial_utils.SerialModel):
 
 
 class OpenAICallback(core_endpoint.EndpointCallback):
-    langchain_handler: OpenAICallbackHandler = pydantic.Field(
-        default_factory=OpenAICallbackHandler, exclude=True
+    langchain_handler: openai_info_callbacks_langchain_community.OpenAICallbackHandler = pydantic.Field(
+        default_factory=openai_info_callbacks_langchain_community.OpenAICallbackHandler,
+        exclude=True,
     )
 
-    chunks: List[Generation] = pydantic.Field(
+    chunks: List[langchain_schema.Generation] = pydantic.Field(
         default_factory=list,
         exclude=True,
     )
@@ -257,7 +255,7 @@ class OpenAICallback(core_endpoint.EndpointCallback):
 
                 for choice in choices:
                     if choice.finish_reason == "stop":
-                        llm_result = LLMResult(
+                        llm_result = langchain_schema.LLMResult(
                             llm_output=dict(
                                 token_usage={}, model_name=response.model
                             ),
@@ -272,7 +270,7 @@ class OpenAICallback(core_endpoint.EndpointCallback):
         finally:
             return response
 
-    def handle_generation(self, response: LLMResult) -> None:
+    def handle_generation(self, response: langchain_schema.LLMResult) -> None:
         super().handle_generation(response)
 
         self.langchain_handler.on_llm_end(response)
@@ -363,8 +361,8 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
         super().__init__(**self_kwargs)
 
         self._instrument_module_members(openai, "create")
-        self._instrument_module_members(resources, "create")
-        self._instrument_module_members(chat, "create")
+        self._instrument_module_members(openai.resources, "create")
+        self._instrument_module_members(openai.resources.chat, "create")
 
     def handle_wrapped_call(
         self,
@@ -443,14 +441,16 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
 
             if isinstance(response.usage, pydantic.BaseModel):
                 usage = response.usage.model_dump()
-            elif isinstance(response.usage, v1BaseModel):
+            elif isinstance(response.usage, pydantic_v1.BaseModel):
                 usage = response.usage.dict()
             elif isinstance(response.usage, Dict):
                 usage = response.usage
             else:
                 usage = None
 
-            if isinstance(response, ChatCompletion):
+            if isinstance(
+                response, openai.types.chat.chat_completion.ChatCompletion
+            ):
                 # Extract reasoning tokens if available (for reasoning models)
                 reasoning_tokens = 0
                 if usage and isinstance(usage, dict):
@@ -462,7 +462,7 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
                         )
 
                 # See how to construct in langchain.llms.openai.OpenAIChat._generate
-                llm_res = LLMResult(
+                llm_res = langchain_schema.LLMResult(
                     generations=[[]],
                     llm_output=dict(token_usage=usage, model_name=model_name),
                     run=None,
@@ -472,7 +472,10 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
                     # Track reasoning tokens separately
                     if reasoning_tokens > 0:
                         callback.cost.n_reasoning_tokens += reasoning_tokens
-            elif isinstance(response, CreateEmbeddingResponse):
+            elif isinstance(
+                response,
+                openai.types.create_embedding_response.CreateEmbeddingResponse,
+            ):
                 for callback in callbacks:
                     callback.handle_embedding(response=response)
             else:
@@ -486,7 +489,9 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
                 # Streaming data.
                 content = response.choices[0].delta.content
 
-                gen = Generation(text=content or "", generation_info=response)
+                gen = langchain_schema.Generation(
+                    text=content or "", generation_info=response
+                )
                 for callback in callbacks:
                     callback.handle_generation_chunk(gen)
 

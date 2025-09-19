@@ -1,7 +1,7 @@
 from abc import abstractmethod
-from concurrent.futures import wait
+from concurrent import futures
 import functools
-from inspect import signature
+import inspect
 import logging
 from typing import (
     Any,
@@ -14,13 +14,14 @@ from typing import (
     get_origin,
 )
 
-import nltk
-from nltk.tokenize import sent_tokenize
+from nltk import tokenize as tokenize_nltk
 import numpy as np
 import requests
 import torch
-from transformers import AutoModelForSequenceClassification
-from transformers import AutoTokenizer
+from transformers.models.auto import modeling_auto as auto_modeling_transformers
+from transformers.models.auto import (
+    tokenization_auto as auto_tokenization_transformers,
+)
 from trulens.core._utils.pycompat import Future  # import style exception
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback import provider as core_provider
@@ -61,7 +62,7 @@ def _tci(func):  # "typecheck inputs"
     sure string inputs are non-empty.
     """
 
-    sig = signature(func)
+    sig = inspect.signature(func)
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -175,7 +176,7 @@ class HuggingfaceBase(core_provider.Provider):
                 self._language_scores_endpoint, text=text2[:max_length]
             )
 
-        wait([f_scores1, f_scores2])
+        futures.wait([f_scores1, f_scores2])
 
         scores1: Dict = f_scores1.result()
         scores2: Dict = f_scores2.result()
@@ -217,13 +218,13 @@ class HuggingfaceBase(core_provider.Provider):
         Returns:
             Tuple[float, str]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a string containing the reasons for the evaluation.
         """
-        nltk.download("punkt_tab", quiet=True)
+        tokenize_nltk.download("punkt_tab", quiet=True)
         groundedness_scores = {}
 
         reasons_str = ""
         if isinstance(source, list):
             source = " ".join(map(str, source))
-        hypotheses = sent_tokenize(statement)
+        hypotheses = tokenize_nltk.sent_tokenize(statement)
         for i, hypothesis in enumerate(hypotheses):
             score = self._doc_groundedness(
                 premise=source, hypothesis=hypothesis
@@ -678,12 +679,16 @@ class HuggingfaceLocal(HuggingfaceBase):
     ) -> Tuple[Any, Any]:
         if key not in self._cached_tokenizers:
             tokenizer_kwargs = tokenizer_kwargs if tokenizer_kwargs else {}
-            self._cached_tokenizers[key] = AutoTokenizer.from_pretrained(
-                key, **tokenizer_kwargs
+            self._cached_tokenizers[key] = (
+                auto_tokenization_transformers.AutoTokenizer.from_pretrained(
+                    key, **tokenizer_kwargs
+                )
             )
         if key not in self._cached_models:
             self._cached_models[key] = (
-                AutoModelForSequenceClassification.from_pretrained(key)
+                auto_modeling_transformers.AutoModelForSequenceClassification.from_pretrained(
+                    key
+                )
             )
         tokenizer = self._cached_tokenizers[key]
         model = self._cached_models[key]

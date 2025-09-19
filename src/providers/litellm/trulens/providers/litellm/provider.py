@@ -3,13 +3,11 @@ import os
 from typing import ClassVar, Dict, Optional, Sequence, Type
 
 import pydantic
-from pydantic import BaseModel
 from trulens.core.feedback import endpoint as core_endpoint
-from trulens.feedback import llm_provider as llm_provider
+from trulens.core.feedback import llm_provider
 from trulens.providers.litellm import endpoint as litellm_endpoint
 
-from litellm import completion
-from litellm import get_supported_openai_params
+import litellm
 
 logger = logging.getLogger(__name__)
 
@@ -50,9 +48,9 @@ class LiteLLM(llm_provider.LLMProvider):
         if model_engine is None:
             model_engine = self.DEFAULT_MODEL_ENGINE
 
-        from litellm.utils import get_llm_provider
+        from litellm import utils as litellm_utils
 
-        litellm_provider = get_llm_provider(model_engine)[1]
+        litellm_provider = litellm_utils.get_llm_provider(model_engine)[1]
 
         if completion_kwargs is None:
             completion_kwargs = {}
@@ -69,7 +67,7 @@ class LiteLLM(llm_provider.LLMProvider):
                 provider = LiteLLM(
                     "azure/your_deployment_name",
                     completion_kwargs={
-                        "api_base": "https://yourendpoint.openai.azure.com/"
+                        "api_base": "[https://yourendpoint.openai.azure.com/](https://yourendpoint.openai.azure.com/)"
                     }
                 )
                 ```
@@ -93,7 +91,7 @@ class LiteLLM(llm_provider.LLMProvider):
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
-        response_format: Optional[Type[BaseModel]] = None,
+        response_format: Optional[Type[pydantic.BaseModel]] = None,
         **kwargs,
     ) -> str:
         completion_args = kwargs
@@ -113,7 +111,7 @@ class LiteLLM(llm_provider.LLMProvider):
             # if we have model provider and model name, verify params
             _model_provider, _model_name = self.model_engine.split("/", 1)
             required_params = ["model", "messages"]
-            supported_params = get_supported_openai_params(
+            supported_params = litellm.get_supported_openai_params(
                 model=_model_name, custom_llm_provider=_model_provider
             )
             params = required_params + (supported_params or [])
@@ -121,5 +119,5 @@ class LiteLLM(llm_provider.LLMProvider):
                 k: v for k, v in completion_args.items() if k in params
             }
 
-        comp = completion(**completion_args)
+        comp = litellm.completion(**completion_args)
         return comp.choices[0].message.content

@@ -18,7 +18,7 @@ from trulens.feedback import llm_provider
 from trulens.feedback import output_schemas as feedback_output_schemas
 from trulens.providers.openai import endpoint as openai_endpoint
 
-import openai as oai
+import openai
 
 logger = logging.getLogger(__name__)
 
@@ -809,7 +809,7 @@ class AzureOpenAI(OpenAI):
             kwargs["model_engine"] = deployment_name
 
         kwargs["client"] = openai_endpoint.OpenAIClient(
-            client=oai.AzureOpenAI(**client_kwargs)
+            client=openai.AzureOpenAI(**client_kwargs)
         )
 
         super().__init__(

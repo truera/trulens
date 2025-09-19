@@ -1,23 +1,21 @@
 import logging
 from typing import Dict, Optional, Sequence, Type, Union
 
-from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.language_models.llms import BaseLLM
-from langchain_core.messages import AIMessage
-from langchain_core.messages import BaseMessage
-from langchain_core.messages import HumanMessage
-from pydantic import BaseModel
+from langchain_core import messages as langchain_messages
+from langchain_core.language_models import chat_models as langchain_chat_models
+from langchain_core.language_models import llms as langchain_llms
+import pydantic
 from trulens.feedback import llm_provider
 from trulens.providers.langchain import endpoint as langchain_endpoint
 
 logger = logging.getLogger(__name__)
 
 
-def _convert_message(message: Dict) -> BaseMessage:
+def _convert_message(message: Dict) -> langchain_messages.BaseMessage:
     """Convert a message to a LangChain BaseMessage."""
     if "role" not in message or message["role"] == "user":
-        return HumanMessage(content=message["content"])
-    return AIMessage(content=message["content"])
+        return langchain_messages.HumanMessage(content=message["content"])
+    return langchain_messages.AIMessage(content=message["content"])
 
 
 class Langchain(llm_provider.LLMProvider):
@@ -42,7 +40,9 @@ class Langchain(llm_provider.LLMProvider):
 
     def __init__(
         self,
-        chain: Union[BaseLLM, BaseChatModel],
+        chain: Union[
+            langchain_llms.BaseLLM, langchain_chat_models.BaseChatModel
+        ],
         *args,
         model_engine: str = "",
         **kwargs,
@@ -59,7 +59,7 @@ class Langchain(llm_provider.LLMProvider):
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
-        response_format: Optional[Type[BaseModel]] = None,
+        response_format: Optional[Type[pydantic.BaseModel]] = None,
         **kwargs,
     ) -> str:
         if prompt is not None:
@@ -68,13 +68,15 @@ class Langchain(llm_provider.LLMProvider):
         elif messages is not None:
             messages = [_convert_message(message) for message in messages]
             predict = self.endpoint.chain.invoke(messages, **kwargs)
-            if isinstance(self.endpoint.chain, BaseChatModel):
-                if not isinstance(predict, BaseMessage):
+            if isinstance(
+                self.endpoint.chain, langchain_chat_models.BaseChatModel
+            ):
+                if not isinstance(predict, langchain_messages.BaseMessage):
                     raise ValueError(
-                        "`chain.invoke` did not return a `langchain_core.messages.BaseMessage` as expected!"
+                        "`chain.invoke` did not return a `langchain_messages.BaseMessage` as expected!"
                     )
                 predict = predict.content
-            elif isinstance(self.endpoint.chain, BaseLLM):
+            elif isinstance(self.endpoint.chain, langchain_llms.BaseLLM):
                 if not isinstance(predict, str):
                     raise ValueError(
                         "`chain.invoke` did not return a `str` as expected!"

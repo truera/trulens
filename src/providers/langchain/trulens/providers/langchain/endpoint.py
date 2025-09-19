@@ -2,8 +2,8 @@ import inspect
 import logging
 from typing import Any, Callable, Dict, Optional, Union
 
-from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.language_models.llms import BaseLLM
+from langchain_core.language_models import chat_models as langchain_chat_models
+from langchain_core.language_models import llms as langchain_llms
 from trulens.core.feedback import endpoint as core_endpoint
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ class LangchainEndpoint(core_endpoint.Endpoint):
     # Cannot validate BaseLLM / BaseChatModel as they are pydantic v1 and there
     # is some bug involving their use within pydantic v2.
     # https://github.com/langchain-ai/langchain/issues/10112
-    chain: Any  # Union[BaseLLM, BaseChatModel]
+    chain: Any  # Union[langchain_llms.BaseLLM, langchain_chat_models.BaseChatModel]
 
     def handle_wrapped_call(
         self,
@@ -39,13 +39,23 @@ class LangchainEndpoint(core_endpoint.Endpoint):
         if callback is not None:
             callback.handle_generation(response=None)
 
-    def __init__(self, chain: Union[BaseLLM, BaseChatModel], *args, **kwargs):
+    def __init__(
+        self,
+        chain: Union[
+            langchain_llms.BaseLLM, langchain_chat_models.BaseChatModel
+        ],
+        *args,
+        **kwargs,
+    ):
         if chain is None:
             raise ValueError("`chain` must be specified.")
 
-        if not (isinstance(chain, BaseLLM) or isinstance(chain, BaseChatModel)):
+        if not (
+            isinstance(chain, langchain_llms.BaseLLM)
+            or isinstance(chain, langchain_chat_models.BaseChatModel)
+        ):
             raise ValueError(
-                f"`chain` must be of type {BaseLLM.__name__} or {BaseChatModel.__name__}. "
+                f"`chain` must be of type {langchain_llms.BaseLLM.__name__} or {langchain_chat_models.BaseChatModel.__name__}. "
                 f"If you are using DEFERRED mode, this may be due to our inability to serialize `chain`."
             )
 

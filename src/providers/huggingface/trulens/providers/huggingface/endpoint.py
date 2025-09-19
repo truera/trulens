@@ -1,6 +1,6 @@
 import inspect
 import logging
-from time import sleep
+import time
 from typing import (
     Callable,
     Dict,
@@ -108,7 +108,7 @@ class HuggingfaceEndpoint(core_endpoint._WithPost, core_endpoint.Endpoint):
         if "estimated_time" in j:
             wait_time = j["estimated_time"]
             logger.error("Waiting for %s (%s) second(s).", j, wait_time)
-            sleep(wait_time + 2)
+            time.sleep(wait_time + 2)
             return self.post(url, json)
 
         elif isinstance(j, Dict) and "error" in j:
@@ -117,7 +117,7 @@ class HuggingfaceEndpoint(core_endpoint._WithPost, core_endpoint.Endpoint):
 
             if error == "overloaded":
                 logger.error("Waiting for overloaded API before trying again.")
-                sleep(10.0)
+                time.sleep(10.0)
                 return self.post(url, json)
             else:
                 raise RuntimeError(error)

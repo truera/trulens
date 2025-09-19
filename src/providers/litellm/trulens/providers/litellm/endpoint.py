@@ -5,10 +5,9 @@ from typing import Any, Callable, Dict, Optional
 
 import pydantic
 from trulens.core.feedback import endpoint as core_endpoint
-from trulens.otel.semconv.trace import SpanAttributes
+from trulens.otel.semconv import trace as trace_otel_semconv
 
 import litellm
-from litellm import completion_cost
 
 logger = logging.getLogger(__name__)
 
@@ -20,14 +19,20 @@ class LiteLLMCostComputer:
     def handle_response(response: Any) -> Dict[str, Any]:
         usage = response.usage
         return {
-            SpanAttributes.COST.NUM_TOKENS: usage["total_tokens"],
-            SpanAttributes.COST.NUM_PROMPT_TOKENS: usage["prompt_tokens"],
-            SpanAttributes.COST.NUM_COMPLETION_TOKENS: usage[
+            trace_otel_semconv.SpanAttributes.COST.NUM_TOKENS: usage[
+                "total_tokens"
+            ],
+            trace_otel_semconv.SpanAttributes.COST.NUM_PROMPT_TOKENS: usage[
+                "prompt_tokens"
+            ],
+            trace_otel_semconv.SpanAttributes.COST.NUM_COMPLETION_TOKENS: usage[
                 "completion_tokens"
             ],
-            SpanAttributes.COST.COST: completion_cost(response),
-            SpanAttributes.COST.CURRENCY: "USD",
-            SpanAttributes.COST.MODEL: response.get("model"),
+            trace_otel_semconv.SpanAttributes.COST.COST: litellm.completion_cost(
+                response
+            ),
+            trace_otel_semconv.SpanAttributes.COST.CURRENCY: "USD",
+            trace_otel_semconv.SpanAttributes.COST.MODEL: response.get("model"),
         }
 
 
@@ -70,7 +75,7 @@ class LiteLLMCallback(core_endpoint.EndpointCallback):
             # The total cost does not seem to be properly tracked except by
             # openai so we can use litellm costs for this.
             try:
-                cost_value = completion_cost(response)
+                cost_value = litellm.completion_cost(response)
             except Exception as e:
                 logger.exception("Failed to compute cost: %s", e)
                 cost_value = None

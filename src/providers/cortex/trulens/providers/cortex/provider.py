@@ -3,12 +3,10 @@ from typing import ClassVar, Dict, Optional, Sequence, Type, Union
 
 from packaging.version import Version
 from pydantic import BaseModel
-from snowflake.cortex import CompleteOptions
-from snowflake.cortex import complete
+from snowflake import cortex as cortex_snowflake
+from snowflake import snowpark as snowpark_snowflake
 import snowflake.ml.version
-from snowflake.snowpark import Session
-from snowflake.snowpark import context
-from snowflake.snowpark.exceptions import SnowparkSessionException
+from snowflake.snowpark import exceptions as snowpark_exceptions
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.feedback import llm_provider
 from trulens.feedback import prompts as feedback_prompts
@@ -20,12 +18,12 @@ class Cortex(
 ):  # require `pip install snowflake-snowpark-python snowflake-ml-python>=1.7.1` and a active Snowflake account with proper privileges
     # https://docs.snowflake.com/en/user-guide/snowflake-cortex/llm-functions#availability
 
-    DEFAULT_SNOWPARK_SESSION: Optional[Session] = None
+    DEFAULT_SNOWPARK_SESSION: Optional[snowpark_snowflake.Session] = None
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "llama3.1-8b"
 
     model_engine: str
     endpoint: cortex_endpoint.CortexEndpoint
-    snowpark_session: Session
+    snowpark_session: snowpark_snowflake.Session
     retry_timeout: Optional[float]
 
     """Snowflake's Cortex COMPLETE endpoint. Defaults to `llama3.1-8b`.
@@ -45,7 +43,7 @@ class Cortex(
                 "schema": <schema>,
                 "warehouse": <warehouse>
             }
-            snowpark_session = Session.builder.configs(connection_parameters).create()
+            snowpark_session = snowpark_snowflake.Session.builder.configs(connection_parameters).create()
             provider = Cortex(snowpark_session=snowpark_session)
             ```
 
@@ -60,7 +58,7 @@ class Cortex(
                 "schema": <schema>,
                 "warehouse": <warehouse>
             }
-            snowpark_session = Session.builder.configs(connection_parameters).create()
+            snowpark_session = snowpark_snowflake.Session.builder.configs(connection_parameters).create()
             provider = Cortex(snowpark_session=snowpark_session)
             ```
 
@@ -76,7 +74,7 @@ class Cortex(
                 "schema": <schema>,
                 "warehouse": <warehouse>
             }
-            snowpark_session = Session.builder.configs(connection_parameters).create()
+            snowpark_session = snowpark_snowflake.Session.builder.configs(connection_parameters).create()
             provider = Cortex(snowpark_session=snowpark_session)
             ```
 
@@ -89,7 +87,7 @@ class Cortex(
 
     def __init__(
         self,
-        snowpark_session: Optional[Session] = None,
+        snowpark_session: Optional[snowpark_snowflake.Session] = None,
         model_engine: Optional[str] = None,
         retry_timeout: Optional[float] = None,
         *args,
@@ -121,8 +119,10 @@ class Cortex(
                 # eval in the warehouse as there should only be one active
                 # session in the execution context.
                 try:
-                    snowpark_session = context.get_active_session()
-                except SnowparkSessionException:
+                    snowpark_session = (
+                        snowpark_snowflake.context.get_active_session()
+                    )
+                except snowpark_exceptions.SnowparkSessionException:
                     class_name = (
                         f"{self.__module__}.{self.__class__.__qualname__}"
                     )
@@ -149,7 +149,7 @@ class Cortex(
             Version(snowflake.ml.version.VERSION) >= Version("1.8.0")
             and response_format is not None
         ):
-            options = CompleteOptions(
+            options = cortex_snowflake.CompleteOptions(
                 temperature=temperature,
                 response_format={
                     "type": "json",
@@ -157,9 +157,9 @@ class Cortex(
                 },
             )
         else:
-            options = CompleteOptions(temperature=temperature)
+            options = cortex_snowflake.CompleteOptions(temperature=temperature)
 
-        completion_res: str = complete(
+        completion_res: str = cortex_snowflake.complete(
             model=model,
             prompt=messages,
             options=options,

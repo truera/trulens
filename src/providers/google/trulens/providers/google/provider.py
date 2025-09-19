@@ -5,9 +5,8 @@ import pydantic
 from trulens.feedback import llm_provider
 from trulens.providers.google import endpoint as google_endpoint
 
-from google.auth.credentials import Credentials
-from google.genai import Client
-from google.genai.types import GenerateContentConfig
+from google import genai as genai_google
+from google.auth import credentials as credentials_auth_google
 
 logger = logging.getLogger(__name__)
 
@@ -73,10 +72,10 @@ class Google(llm_provider.LLMProvider):
     def __init__(
         self,
         endpoint=None,
-        client: Optional["Client"] = None,
+        client: Optional["genai_google.Client"] = None,
         vertexai: Optional[bool] = None,
         api_key: Optional[str] = None,
-        credentials: Optional["Credentials"] = None,
+        credentials: Optional["credentials_auth_google.Credentials"] = None,
         project: Optional[str] = None,
         location: Optional[str] = None,
         model_engine: Optional[str] = None,
@@ -150,7 +149,7 @@ class Google(llm_provider.LLMProvider):
         response = self.endpoint.client.models.generate_content(
             model=self.model_engine,
             contents=contents,
-            config=GenerateContentConfig(**config_kwargs),
+            config=genai_google.types.GenerateContentConfig(**config_kwargs),
         )
 
         if response_format:
