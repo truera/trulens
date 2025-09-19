@@ -2,6 +2,7 @@ import datetime
 import json
 import logging
 import os
+from pprint import pprint
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import requests
@@ -84,26 +85,26 @@ class TestSnowflakeAIObservability(OtelTestCase, SnowflakeTestCase):
         )
         # Create Cortex agent.
         agent = _CortexAgent(
-            "test_cortex_agent",
+            "test_agent",
             os.environ["SNOWFLAKE_PAT"],
             self._database,
             self._schema,
         )
         self.assertEqual(
-            ["TEST_CORTEX_AGENT"], [curr["name"] for curr in agent.get_agents()]
+            ["TEST_AGENT"], [curr["name"] for curr in agent.get_agents()]
         )
         # Invoke.
         agent.call("Why is Kojikun so cute?")
         self._validate_num_spans_for_app(
-            "test_cortex_agent", 1, app_type="CORTEX AGENT"
+            "test_agent", 1, app_type="CORTEX AGENT"
         )
         # Verify.
         records_df, feedback_cols = tru_session.get_records_and_feedback(
-            app_name="test_cortex_agent"
+            app_name="test_agent"
         )
         self.assertEqual(records_df.shape[0], 1)
         self.assertEqual(feedback_cols, [])
-        self.assertEqual(records_df["app_name"].iloc[0], "TEST_CORTEX_AGENT")
+        self.assertEqual(records_df["app_name"].iloc[0], "TEST_AGENT")
         self.assertEqual(
             records_df["app_version"].iloc[0], 2
         )  # TODO(this_pr): not sure what this is about!
@@ -115,23 +116,34 @@ class _CortexAgent:
     logger = logging.getLogger(__name__)
 
     def __init__(
-        self, name: str, pat_token: str, database: str, schema: str
+        self,
+        name: str,
+        pat_token: str,
+        database: str,
+        schema: str,
+        create: bool = True,
     ) -> None:
         self._name = name
         self._database = database
         self._schema = schema
         self._pat_token = pat_token
-        data = {
-            "name": name,
-            "comment": "This is a test agent.",
-            "models": {"orchestration": "llama3.3-70B"},
-        }
-        response = self._rest_post("", data)
-        if response.status_code != 200:
-            raise ValueError(f"Error: {response.status_code}")
+        if create:
+            data = {
+                "name": name,
+                "comment": "This is a test agent.",
+                "models": {"orchestration": "llama3.3-70B"},
+            }
+            response = self._rest_post(data=data)
+            if response.status_code != 200:
+                raise ValueError(f"Error: {response.status_code}")
 
     def _rest_call(
-        self, url_suffix: str, rest_function: Callable, data: Optional[Json]
+        self,
+        *,
+        rest_function: Callable,
+        url: Optional[str] = None,
+        url_suffix: Optional[str] = None,
+        data: Optional[Json] = None,
     ) -> None:
         pat_token = os.environ["SNOWFLAKE_PAT"]
         account_identifier = os.environ["SNOWFLAKE_ACCOUNT"]
@@ -140,34 +152,63 @@ class _CortexAgent:
             "X-Snowflake-Authorization-Token-Type": "PROGRAMMATIC_ACCESS_TOKEN",
             "Accept": "application/json",
         }
-        url = (
-            f"https://{account_identifier}.snowflakecomputing.com"
-            f"/api/v2/databases/{self._database}/schemas/{self._schema}/agents"
-        )
-        url += url_suffix
+        if not url:
+            url = (
+                f"https://{account_identifier}.snowflakecomputing.com"
+                f"/api/v2/databases/{self._database}/schemas/{self._schema}/agents"
+            )
+        if url_suffix:
+            url += url_suffix
         return rest_function(url, headers=headers, json=data)
 
     def _rest_get(
-        self, url_suffix: str, data: Optional[Any]
+        self,
+        *,
+        url: Optional[str] = None,
+        url_suffix: Optional[str] = None,
+        data: Optional[Any] = None,
     ) -> requests.models.Response:
-        return self._rest_call(url_suffix, requests.get, data)
+        return self._rest_call(
+            url=url,
+            url_suffix=url_suffix,
+            rest_function=requests.get,
+            data=data,
+        )
 
     def _rest_post(
-        self, url_suffix: str, data: Optional[Any]
+        self,
+        *,
+        url: Optional[str] = None,
+        url_suffix: Optional[str] = None,
+        data: Optional[Any] = None,
     ) -> requests.models.Response:
-        return self._rest_call(url_suffix, requests.post, data)
+        return self._rest_call(
+            url=url,
+            url_suffix=url_suffix,
+            rest_function=requests.post,
+            data=data,
+        )
 
     def call(self, query: str) -> None:
-        url_suffix = f"/{self._name}:run"
-        input_data = {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [{"type": "text", "text": query}],
-                }
-            ],
-        }
-        response = self._rest_post(url_suffix, input_data)
+        account_identifier = os.environ["SNOWFLAKE_ACCOUNT"]
+        response = self._rest_post(
+            url=f"https://{account_identifier}.snowflakecomputing.com/api/v2/cortex/threads",
+            data={"origin_application": self._name},
+        )
+        thread_id = json.loads(response.text)["thread_id"]
+        response = self._rest_post(
+            url_suffix=f"/{self._name}:run",
+            data={
+                "thread_id": thread_id,
+                "parent_message_id": 0,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [{"type": "text", "text": query}],
+                    }
+                ],
+            },
+        )
         return self._parse_streamed_response(response)
 
     def _parse_event(self, line: bytes) -> Json:
@@ -205,7 +246,8 @@ class _CortexAgent:
         return ret, execution_trace
 
     def get_agents(self) -> Json:
-        response = self._rest_get("", None)
+        response = self._rest_get()
         if response.status_code == 200:
             return response.json()
+        pprint(response.json())
         raise ValueError(f"Error: {response.status_code}!")

@@ -1362,25 +1362,6 @@ class SQLAlchemyDB(core_db.DB):
                 q = sa.select(self.orm.Event).where(sa.and_(*where_clauses))
             return pd.read_sql(q, session.bind)
 
-    def get_events_by_record_id(self, record_id: str) -> pd.DataFrame:
-        """Get all events for a given record ID.
-
-        Args:
-            record_id: The record ID to get events for.
-
-        Returns:
-            A pandas DataFrame containing all events for the given record ID.
-        """
-        with self.session.begin() as session:
-            # Query events where record_attributes contains the record_id
-            record_id_expr = self._json_extract_otel(
-                "record_attributes", SpanAttributes.RECORD_ID
-            )
-            q = sa.select(self.orm.Event).where(record_id_expr == record_id)
-
-            # Execute query and return as DataFrame
-            return pd.read_sql(q, session.bind)
-
     def _extract_namespaced_attributes(
         self, record_attributes: Dict[str, Any], namespace_prefix: str
     ) -> Dict[str, Any]:
