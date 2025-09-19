@@ -14,6 +14,7 @@ from typing import (
     get_origin,
 )
 
+import nltk
 from nltk import tokenize as tokenize_nltk
 import numpy as np
 import requests
@@ -218,7 +219,7 @@ class HuggingfaceBase(core_provider.Provider):
         Returns:
             Tuple[float, str]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a string containing the reasons for the evaluation.
         """
-        tokenize_nltk.download("punkt_tab", quiet=True)
+        nltk.download("punkt_tab", quiet=True)
         groundedness_scores = {}
 
         reasons_str = ""
