@@ -69,7 +69,23 @@ def _stringify_span_attribute(o: Any) -> Tuple[bool, str]:
         return True, json.dumps(o)
     except Exception:
         pass
-    return False, str(o)
+    # Special handling for exceptions to preserve their message
+    if isinstance(o, Exception):
+        try:
+            return False, str(o)
+        except Exception:
+            return False, f"<{type(o).__name__}>"
+    # For everything else, try str() but fallback to type name
+    # This maintains backward compatibility with tests while avoiding
+    # issues with objects that have poor __str__ implementations
+    try:
+        return False, str(o)
+    except Exception:
+        # If str() fails, use type name instead
+        try:
+            return False, f"<{type(o).__name__}>"
+        except Exception:
+            return False, "<unstringifiable>"
 
 
 def _convert_to_valid_span_attribute_type(val: Any) -> AttributeValue:
@@ -185,7 +201,7 @@ def set_user_defined_attributes(
         if key.startswith(f"{SpanAttributes.COST.base}."):
             cost_attributes[key] = value
         else:
-            span.set_attribute(key, value)
+            set_span_attribute_safely(span, key, value)
     if cost_attributes:
         attributes_so_far = dict(getattr(span, "attributes", {}))
         if attributes_so_far:
@@ -202,7 +218,7 @@ def set_user_defined_attributes(
             model = attributes_so_far.get(SpanAttributes.COST.MODEL, None)
             if currency not in [
                 None,
-                cost_attributes[SpanAttributes.COST.CURRENCY],
+                cost_attributes.get(SpanAttributes.COST.CURRENCY),
             ]:
                 cost_attributes[SpanAttributes.COST.CURRENCY] = "mixed"
             if model not in [
@@ -211,7 +227,7 @@ def set_user_defined_attributes(
             ]:
                 cost_attributes[SpanAttributes.COST.MODEL] = "mixed"
             for k, v in cost_attributes.items():
-                span.set_attribute(k, v)
+                set_span_attribute_safely(span, k, v)
 
 
 """

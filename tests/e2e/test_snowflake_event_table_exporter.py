@@ -1,12 +1,10 @@
 import logging
 import os
-import time
-from typing import Any, Callable, Dict, List, Tuple, Type
+from typing import Any, Callable, Dict, Tuple, Type
 import uuid
 
 import pandas as pd
 from snowflake.snowpark import Session
-from snowflake.snowpark.row import Row
 from trulens.apps.app import TruApp
 from trulens.apps.langchain import TruChain
 from trulens.apps.llamaindex import TruLlama
@@ -52,56 +50,6 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         db_connector = self._create_db_connector(self._snowpark_session)
         self._tru_session = TruSession(db_connector)
 
-    def _wait_for_num_results(
-        self,
-        q: str,
-        params: List[str],
-        expected_num_results: int,
-        num_retries: int = 15,
-        retry_cooldown_in_seconds: int = 10,
-    ) -> List[Row]:
-        for _ in range(num_retries):
-            results = self.run_query(q, params)
-            if len(results) == expected_num_results:
-                return results
-            self.logger.info(
-                f"Got {len(results)} results, expecting {expected_num_results}"
-            )
-            time.sleep(retry_cooldown_in_seconds)
-        raise ValueError(
-            f"Did not get the expected number of results! Expected {expected_num_results} results, but last found: {len(results)}! The results:\n{results}"
-        )
-
-    def _validate_results(
-        self, app_name: str, num_expected_spans: int
-    ) -> List[Row]:
-        # Flush exporter and wait for data to be made to stage.
-        self._tru_session.force_flush()
-        # Check that there are no other tables in the schema.
-        self.assertListEqual(self.run_query("SHOW TABLES"), [])
-        # Check that the data is in the event table.
-        return self._wait_for_num_results(
-            """
-            SELECT
-                *
-            FROM
-                table(snowflake.local.GET_AI_OBSERVABILITY_EVENTS(
-                    ?,
-                    ?,
-                    ?,
-                    'EXTERNAL AGENT'
-                ))
-            ORDER BY TIMESTAMP DESC
-            LIMIT 50
-            """,
-            [
-                self._snowpark_session.get_current_database()[1:-1],
-                self._snowpark_session.get_current_schema()[1:-1],
-                app_name.upper(),
-            ],
-            num_expected_spans,
-        )
-
     def _test_tru_app(
         self,
         app: Any,
@@ -135,7 +83,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         run.start(input_df=input_df)
         self._tru_session.force_flush()
         # Validate results.
-        self._validate_results(app_name, num_expected_spans)
+        self._validate_num_spans_for_app(app_name, num_expected_spans)
         return app_name, run
 
     def test_tru_custom_app(self):
@@ -188,6 +136,10 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         app = (
             tests.unit.test_otel_tru_chain.TestOtelTruChain._create_simple_rag()
         )
+        input_df = pd.DataFrame({
+            "custom_input": ["What is multi-headed attention?"],
+            "expected_response": ["Like attention but with more heads."],
+        })
         app_name, run = self._test_tru_app(
             app,
             app.invoke,
@@ -196,20 +148,31 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
                 "input": "custom_input",
                 "ground_truth_output": "expected_response",
             },
-            pd.DataFrame({
-                "custom_input": ["What is multi-headed attention?"],
-                "expected_response": ["Like attention but with more heads."],
-            }),
+            input_df,
             pd.read_csv(
                 "tests/unit/static/golden/test_otel_tru_chain__test_smoke.csv",
                 index_col=0,
             ).shape[0],
         )
-        run.compute_metrics([
+        feedbacks_to_compute = [
             "context_relevance",
             "groundedness",
             "answer_relevance",
             "coherence",
             "correctness",
-        ])
-        self._validate_results(app_name, 23)
+        ]
+        run.compute_metrics(feedbacks_to_compute)
+        self._validate_num_spans_for_app(app_name, 23)
+        records, feedbacks = self._tru_session.get_records_and_feedback(
+            app_name=app_name, app_version="v1"
+        )
+        self.assertEqual(sorted(feedbacks_to_compute), sorted(feedbacks))
+        self.assertEqual(input_df.shape[0], records.shape[0])
+        self.assertEqual(
+            feedbacks_to_compute,
+            [
+                curr
+                for curr in records.columns.tolist()
+                if curr in feedbacks_to_compute
+            ],
+        )
