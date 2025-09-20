@@ -676,7 +676,12 @@ def _get_event_otel_spans(
         )
         return []
     try:
-        events_df = db.get_events(app_name=app_name, record_ids=[record_id])
+        events_df = db.get_events(
+            app_name=app_name,
+            app_version=None,
+            record_ids=[record_id],
+            start_time=None,
+        )
         return _convert_events_to_otel_spans(events_df)
     except Exception as e:
         st.error(f"Error getting events for record {record_id}: {e}")
