@@ -5,10 +5,9 @@ import os
 import pprint
 from typing import Any, Callable, Dict, Optional
 
-from snowflake.cortex._sse_client import Event
-from snowflake.cortex._sse_client import SSEClient
+from snowflake.cortex import _sse_client as sse_client_cortex
 from trulens.core.feedback import endpoint as core_endpoint
-from trulens.otel.semconv.trace import SpanAttributes
+from trulens.otel.semconv import trace as trace_otel_semconv
 
 logger = logging.getLogger(__name__)
 
@@ -34,16 +33,18 @@ class CortexCostComputer:
         endpoint = CortexEndpoint()
         callback = CortexCallback(endpoint=endpoint)
         return {
-            SpanAttributes.COST.MODEL: model,
-            SpanAttributes.COST.CURRENCY: "Snowflake credits",
-            SpanAttributes.COST.COST: callback._compute_credits_consumed(
+            trace_otel_semconv.SpanAttributes.COST.MODEL: model,
+            trace_otel_semconv.SpanAttributes.COST.CURRENCY: "Snowflake credits",
+            trace_otel_semconv.SpanAttributes.COST.COST: callback._compute_credits_consumed(
                 model, usage.get("total_tokens", 0)
             ),
-            SpanAttributes.COST.NUM_TOKENS: usage.get("total_tokens", 0),
-            SpanAttributes.COST.NUM_PROMPT_TOKENS: usage.get(
+            trace_otel_semconv.SpanAttributes.COST.NUM_TOKENS: usage.get(
+                "total_tokens", 0
+            ),
+            trace_otel_semconv.SpanAttributes.COST.NUM_PROMPT_TOKENS: usage.get(
                 "prompt_tokens", 0
             ),
-            SpanAttributes.COST.NUM_COMPLETION_TOKENS: usage.get(
+            trace_otel_semconv.SpanAttributes.COST.NUM_COMPLETION_TOKENS: usage.get(
                 "completion_tokens", 0
             ),
         }
@@ -132,7 +133,7 @@ class CortexEndpoint(core_endpoint.Endpoint):
         super().__init__(*args, **kwargs)
 
         # we instrument the SSEClient class from snowflake.cortex module to get the usage information from the HTTP response when calling the REST Complete endpoint
-        self._instrument_class(SSEClient, "events")
+        self._instrument_class(sse_client_cortex.SSEClient, "events")
 
     def handle_wrapped_call(
         self,
@@ -144,7 +145,7 @@ class CortexEndpoint(core_endpoint.Endpoint):
         response_dict = None, None
 
         try:
-            if isinstance(response, Event):
+            if isinstance(response, sse_client_cortex.Event):
                 response_dict = json.loads(
                     response.data
                 )  # response is a server-sent event (SSE). see _sse_client.py from snowflake.cortex module for reference
