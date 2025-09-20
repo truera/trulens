@@ -836,7 +836,7 @@ def render_app_comparison(app_name: str):
                     st.json(app_json, expanded=1)
                 elif is_otel_tracing_enabled():
                     event_spans = _get_event_otel_spans(
-                        selected_row["record_id"]
+                        selected_row["record_id"], app_name
                     )
                     if event_spans:
                         record_viewer_otel(
