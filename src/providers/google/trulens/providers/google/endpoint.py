@@ -13,12 +13,11 @@ from typing import (
 )
 
 from trulens.core.feedback import endpoint as core_endpoint
-from trulens.otel.semconv.trace import SpanAttributes
+from trulens.otel.semconv import trace as trace_otel_semconv
 
-from google import genai
-from google.auth.credentials import Credentials
-from google.genai import Client
-from google.genai.types import GenerateContentResponse
+from google import genai as genai_google
+from google.auth import credentials as credentials_auth_google
+from google.genai import types as types_genai
 
 logger = logging.getLogger(__name__)
 
@@ -46,17 +45,18 @@ class GoogleCostComputer:
     def handle_response(response: Any) -> Dict[str, Any]:
         usage = response.usage_metadata
         return {
-            SpanAttributes.COST.NUM_TOKENS: usage.total_token_count or 0,
-            SpanAttributes.COST.NUM_PROMPT_TOKENS: usage.prompt_token_count
+            trace_otel_semconv.SpanAttributes.COST.NUM_TOKENS: usage.total_token_count
             or 0,
-            SpanAttributes.COST.NUM_COMPLETION_TOKENS: usage.candidates_token_count
+            trace_otel_semconv.SpanAttributes.COST.NUM_PROMPT_TOKENS: usage.prompt_token_count
             or 0,
-            SpanAttributes.COST.NUM_REASONING_TOKENS: usage.thoughts_token_count
+            trace_otel_semconv.SpanAttributes.COST.NUM_COMPLETION_TOKENS: usage.candidates_token_count
+            or 0,
+            trace_otel_semconv.SpanAttributes.COST.NUM_REASONING_TOKENS: usage.thoughts_token_count
             or 0,
             # TODO: Check the cost computation functionality
-            # SpanAttributes.COST.COST: completion_cost(response),
-            SpanAttributes.COST.CURRENCY: "USD",
-            SpanAttributes.COST.MODEL: response.model_version,
+            # trace_otel_semconv.SpanAttributes.COST.COST: completion_cost(response),
+            trace_otel_semconv.SpanAttributes.COST.CURRENCY: "USD",
+            trace_otel_semconv.SpanAttributes.COST.MODEL: response.model_version,
         }
 
 
@@ -72,7 +72,7 @@ class GoogleCallback(core_endpoint.EndpointCallback):
     def handle_generation(self, response: Any):
         """Get the usage information from GoogleGenAI LLM function response's usage_metadata field."""
         response_dict = response
-        if isinstance(response, GenerateContentResponse):
+        if isinstance(response, types_genai.GenerateContentResponse):
             response_dict = response.to_json_dict()
 
         usage = response_dict.get("usage_metadata")
@@ -95,19 +95,19 @@ class GoogleCallback(core_endpoint.EndpointCallback):
 
 
 class GoogleEndpoint(core_endpoint.Endpoint):
-    client: Optional["Client"] = None
+    client: Optional["genai_google.Client"] = None
     vertexai: Optional[bool] = None
     api_key: Optional[str] = None
-    credentials: Optional["Credentials"] = None
+    credentials: Optional["credentials_auth_google.Credentials"] = None
     project: Optional[str] = None
     location: Optional[str] = None
 
     def __init__(
         self,
-        client: Optional["Client"] = None,
+        client: Optional["genai_google.Client"] = None,
         vertexai: Optional[bool] = None,
         api_key: Optional[str] = None,
-        credentials: Optional["Credentials"] = None,
+        credentials: Optional["credentials_auth_google.Credentials"] = None,
         project: Optional[str] = None,
         location: Optional[str] = None,
         **kwargs: dict,
@@ -115,14 +115,14 @@ class GoogleEndpoint(core_endpoint.Endpoint):
         actual_client_instance = client
         if not actual_client_instance:
             if vertexai:
-                actual_client_instance = genai.Client(
+                actual_client_instance = genai_google.Client(
                     vertexai=vertexai,
                     credentials=credentials,
                     project=project,
                     location=location,
                 )
             else:
-                actual_client_instance = genai.Client(
+                actual_client_instance = genai_google.Client(
                     api_key=api_key or _get_env_api_key()
                 )
 
@@ -150,7 +150,7 @@ class GoogleEndpoint(core_endpoint.Endpoint):
         callback: Optional[core_endpoint.EndpointCallback],
     ) -> Any:
         try:
-            if isinstance(response, GenerateContentResponse):
+            if isinstance(response, types_genai.GenerateContentResponse):
                 response_dict = response.to_json_dict()
         except Exception as e:
             logger.error(f"Error occurred while parsing response: {e}")
