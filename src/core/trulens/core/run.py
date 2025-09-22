@@ -826,7 +826,9 @@ class Run(BaseModel):
                     parts[1:]
                 )  # e.g., 'input', 'output', 'query_text'
             else:
-                # Handle legacy keys like 'input', 'output' - assume they're record_root
+                logger.warning(
+                    f"Legacy key: {spec_key} - assuming it's record_root "
+                )
                 span_type = "record_root"
                 attribute = parts[0]
 
