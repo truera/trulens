@@ -598,6 +598,7 @@ trulens.core.feedback.feedback.Feedback:
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
     criteria: typing.Optional[builtins.str, builtins.NoneType]
+    enable_trace_compression: typing.Optional[builtins.bool, builtins.NoneType]
     evaluate_deferred: builtins.staticmethod
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     extract_selection: builtins.function
@@ -660,6 +661,7 @@ trulens.core.feedback.feedback.SnowflakeFeedback:
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
     criteria: typing.Optional[builtins.str, builtins.NoneType]
+    enable_trace_compression: typing.Optional[builtins.bool, builtins.NoneType]
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     feedback_definition_id: builtins.str
     groundedness_configs: typing.Optional[trulens.core.feedback.feedback.GroundednessConfigs,
@@ -745,6 +747,7 @@ trulens.core.feedback.selector.Trace:
   __class__: builtins.type
   attributes:
     add_event: builtins.function
+    to_compressed_json: builtins.function
 trulens.core.guardrails:
   __class__: builtins.module
   highs: {}
@@ -1930,6 +1933,19 @@ trulens.core.utils.threading.ThreadPoolExecutor:
   - concurrent.futures.thread.ThreadPoolExecutor
   __class__: builtins.type
   attributes: {}
+trulens.core.utils.trace_compression:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    TraceCompressor: builtins.type
+    compress_multiple_traces: builtins.function
+    compress_trace_for_feedback: builtins.function
+trulens.core.utils.trace_compression.TraceCompressor:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    compress_trace: builtins.function
 trulens.core.utils.trulens:
   __class__: builtins.module
   highs: {}

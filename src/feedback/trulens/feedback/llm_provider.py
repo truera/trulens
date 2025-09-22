@@ -2539,6 +2539,7 @@ class LLMProvider(core_provider.Provider):
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
+        enable_trace_compression: bool = True,
     ) -> Tuple[float, Dict]:
         """
         Evaluate the quality of an agentic trace using a rubric focused on logical consistency and reasoning.
@@ -2564,6 +2565,10 @@ class LLMProvider(core_provider.Provider):
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+            enable_trace_compression (bool): Whether to compress the trace data to reduce token usage. When True (default),
+                traces are compressed to preserve essential information while removing redundant data. Set to False to use
+                full, uncompressed traces. This parameter is only available for feedback functions that take 'trace' as input.
+                Defaults to True.
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (no logical consistency) and 1.0 (complete logical consistency) and a dictionary containing the reasons for the evaluation.
         """
@@ -2580,7 +2585,15 @@ class LLMProvider(core_provider.Provider):
         )
 
         if isinstance(trace, Trace):
-            trace = trace.events.to_json(default_handler=str)
+            if enable_trace_compression:
+                trace = trace.to_compressed_json(default_handler=str)
+            else:
+                # Use regular JSON if compression is disabled
+                trace = (
+                    trace.events.to_json(default_handler=str)
+                    if trace.events is not None
+                    else "{}"
+                )
         elif isinstance(trace, str):
             trace = trace
         else:
@@ -2613,6 +2626,7 @@ class LLMProvider(core_provider.Provider):
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
+        enable_trace_compression: bool = True,
     ) -> Tuple[float, Dict]:
         """
         Evaluate the quality of an agentic execution using a rubric focused on execution efficiency.
@@ -2638,6 +2652,10 @@ class LLMProvider(core_provider.Provider):
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+            enable_trace_compression (bool): Whether to compress the trace data to reduce token usage. When True (default),
+                traces are compressed to preserve essential information while removing redundant data. Set to False to use
+                full, uncompressed traces. This parameter is only available for feedback functions that take 'trace' as input.
+                Defaults to True.
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (highly inefficient workflow) and 1.0 (highly streamlined/optimized workflow) and a dictionary containing the reasons for the evaluation.
         """
@@ -2654,7 +2672,15 @@ class LLMProvider(core_provider.Provider):
         )
 
         if isinstance(trace, Trace):
-            trace = trace.events.to_json(default_handler=str)
+            if enable_trace_compression:
+                trace = trace.to_compressed_json(default_handler=str)
+            else:
+                # Use regular JSON if compression is disabled
+                trace = (
+                    trace.events.to_json(default_handler=str)
+                    if trace.events is not None
+                    else "{}"
+                )
         elif isinstance(trace, str):
             trace = trace
         else:
@@ -2687,6 +2713,7 @@ class LLMProvider(core_provider.Provider):
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
+        enable_trace_compression: bool = True,
     ) -> Tuple[float, Dict]:
         """
         Evaluate the quality of an agentic trace using a rubric focused on execution adherence to the plan.
@@ -2712,6 +2739,10 @@ class LLMProvider(core_provider.Provider):
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+            enable_trace_compression (bool): Whether to compress the trace data to reduce token usage. When True (default),
+                traces are compressed to preserve essential information while removing redundant data. Set to False to use
+                full, uncompressed traces. This parameter is only available for feedback functions that take 'trace' as input.
+                Defaults to True.
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (execution did not follow plan) and 1.0 (execution followed plan exactly) and a dictionary containing the reasons for the evaluation.
         """
@@ -2728,7 +2759,15 @@ class LLMProvider(core_provider.Provider):
         )
 
         if isinstance(trace, Trace):
-            trace = trace.events.to_json(default_handler=str)
+            if enable_trace_compression:
+                trace = trace.to_compressed_json(default_handler=str)
+            else:
+                # Use regular JSON if compression is disabled
+                trace = (
+                    trace.events.to_json(default_handler=str)
+                    if trace.events is not None
+                    else "{}"
+                )
         elif isinstance(trace, str):
             trace = trace
         else:
@@ -2759,6 +2798,7 @@ class LLMProvider(core_provider.Provider):
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
+        enable_trace_compression: bool = True,
     ) -> Tuple[float, Dict]:
         """
         Evaluate the quality of an agentic system's plan.
@@ -2784,6 +2824,10 @@ class LLMProvider(core_provider.Provider):
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+            enable_trace_compression (bool): Whether to compress the trace data to reduce token usage. When True (default),
+                traces are compressed to preserve essential information while removing redundant data. Set to False to use
+                full, uncompressed traces. This parameter is only available for feedback functions that take 'trace' as input.
+                Defaults to True.
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (poor plan quality) and 1.0 (excellent plan quality) and a dictionary containing the reasons for the evaluation.
         """
@@ -2800,7 +2844,15 @@ class LLMProvider(core_provider.Provider):
         )
 
         if isinstance(trace, Trace):
-            trace = trace.events.to_json(default_handler=str)
+            if enable_trace_compression:
+                trace = trace.to_compressed_json(default_handler=str)
+            else:
+                # Use regular JSON if compression is disabled
+                trace = (
+                    trace.events.to_json(default_handler=str)
+                    if trace.events is not None
+                    else "{}"
+                )
         elif isinstance(trace, str):
             trace = trace
         else:
