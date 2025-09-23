@@ -425,13 +425,11 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
         self._instrument_module_members(resources, "create")
         self._instrument_module_members(chat, "create")
 
-        # Instrument the responses resource for the new Response API
         try:
             from openai.resources import responses
 
             self._instrument_module_members(responses, "create")
         except ImportError:
-            # Response API not available in this OpenAI version
             pass
 
     def handle_wrapped_call(
