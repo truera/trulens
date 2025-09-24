@@ -22,6 +22,8 @@ class CortexCostComputer:
         usage = {}
         for curr in response:
             data = json.loads(curr.data)
+            logger.warning(f"[daniel]data: {data}")
+
             choice = data["choices"][0]
             if "finish_reason" in choice and choice["finish_reason"] == "stop":
                 model = data["model"]
@@ -29,7 +31,9 @@ class CortexCostComputer:
                 break
 
         if model is None or not usage:
-            logger.warning("No model usage found in response.")
+            logger.warning(
+                f"No model usage found in response. response: {response} usage: {usage}"
+            )
 
         endpoint = CortexEndpoint()
         callback = CortexCallback(endpoint=endpoint)
