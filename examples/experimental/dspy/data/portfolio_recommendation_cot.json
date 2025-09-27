@@ -1,0 +1,77 @@
+{
+  "prog.predict": {
+    "traces": [],
+    "train": [],
+    "demos": [
+      {
+        "augmented": true,
+        "headline": "Logistics Co. benefits from e-commerce boom, but fuel costs rise.",
+        "fundamentals": "P/E: 23, Rev Growth: 12%",
+        "market_conditions": "VIX: 23 (moderate)",
+        "reasoning": "E-commerce tailwinds support volumes and 12% revenue growth, but rising fuel costs threaten margins unless fully passed through via surcharges/hedging. At a P/E of 23, the stock isn’t cheap for its growth rate, leaving less cushion if margins compress. With market volatility moderate (VIX 23), risk-reward looks balanced rather than asymmetric. Prefer to wait for evidence of fuel cost pass-through or margin stabilization.",
+        "answer": "Hold",
+        "rationale": "Benefiting from strong demand but facing cost headwinds, the company’s fundamentals (solid growth, somewhat elevated P/E) and a moderately volatile market argue for patience. The upside from e-commerce is offset by margin risk from fuel, and the current valuation doesn’t offer a clear bargain. Hold pending signs of effective fuel cost mitigation or improved market conditions."
+      },
+      {
+        "augmented": true,
+        "headline": "BioGen gets FDA approval for groundbreaking cancer treatment.",
+        "fundamentals": "P/E: 40, Rev Growth: 5%",
+        "market_conditions": "VIX: 16 (low)",
+        "reasoning": "- FDA approval is a major de-risking catalyst that can unlock a new, sizable revenue stream and accelerate growth.\n- While the P/E of 40 is elevated and current revenue growth is modest (5%), the approval likely changes the forward growth trajectory, making the valuation more defensible.\n- Low VIX (16) indicates a supportive, risk-on market backdrop that tends to reward biotech catalysts.",
+        "answer": "Buy",
+        "rationale": "The breakthrough FDA approval meaningfully improves BioGen’s outlook by reducing regulatory risk and opening substantial revenue potential. Despite a high P/E and currently modest growth, the catalyst can drive a step-change in earnings, and benign market conditions increase the probability of sustained positive momentum. Consider position sizing or buying on dips to manage post-approval volatility."
+      },
+      {
+        "headline": "Global Bank fined $500M for compliance failures; CEO resigns.",
+        "fundamentals": "P/E: 15, Rev Growth: 2%",
+        "market_conditions": "VIX: 28 (high)",
+        "answer": "Sell",
+        "rationale": "Significant fine, leadership uncertainty, and high market volatility create a strong sell signal."
+      },
+      {
+        "headline": "FinTech innovator loses key executive to competitor.",
+        "fundamentals": "P/E: 50, Rev Growth: 30%",
+        "market_conditions": "VIX: 26 (high)",
+        "answer": "Sell",
+        "rationale": "Loss of key talent in a high-growth, high-valuation company amid market volatility is a major red flag."
+      }
+    ],
+    "signature": {
+      "instructions": "Given a news headline, company fundamentals, and market conditions, recommend whether to Buy, Hold, or Sell a stock.",
+      "fields": [
+        {
+          "prefix": "Headline:",
+          "description": "A news headline about a company's stock price."
+        },
+        {
+          "prefix": "Fundamentals:",
+          "description": "Fundamental metrics of the company: P/E ratio, revenue growth, etc."
+        },
+        {
+          "prefix": "Market Conditions:",
+          "description": "Current market conditions: VIX index, market sentiment, etc."
+        },
+        {
+          "prefix": "Reasoning: Let's think step by step in order to",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Answer:",
+          "description": "The recommended action: 'Buy', 'Hold', or 'Sell'."
+        },
+        {
+          "prefix": "Rationale:",
+          "description": "A reasoning for the recommendation based on the headline, fundamentals, and market conditions."
+        }
+      ]
+    },
+    "lm": null
+  },
+  "metadata": {
+    "dependency_versions": {
+      "python": "3.11",
+      "dspy": "3.0.3",
+      "cloudpickle": "3.0"
+    }
+  }
+}
