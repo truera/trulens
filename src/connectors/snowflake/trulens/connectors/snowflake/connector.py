@@ -125,7 +125,17 @@ class SnowflakeConnector(DBConnector):
             if password is not None:
                 self.password_known = True
                 self._password = password
-            self._db = SnowflakeEventTableDB(self.snowpark_session)
+            try:
+                self._db = SnowflakeEventTableDB(self.snowpark_session)
+            except Exception as e:
+                logger.error(
+                    f"Failed to initialize SnowflakeEventTableDB: {e}. "
+                    "This may cause issues with the evaluator thread."
+                )
+                # Set _db to None to indicate initialization failure
+                # The db property will handle this case with a clear error message
+                self._db = None
+                raise
 
     def _create_snowpark_session(
         self, connection_parameters: Dict[str, Optional[str]]
@@ -390,6 +400,12 @@ class SnowflakeConnector(DBConnector):
 
     @cached_property
     def db(self) -> DB:
+        if not hasattr(self, "_db") or self._db is None:
+            raise RuntimeError(
+                "SnowflakeConnector was not properly initialized. "
+                "The '_db' attribute is missing or None, which suggests an initialization error occurred. "
+                "Please check your Snowflake connection parameters and ensure OTEL tracing is properly configured."
+            )
         if isinstance(self._db, python_utils.OpaqueWrapper):
             self._db = self._db.unwrap()
         if not isinstance(self._db, DB):
