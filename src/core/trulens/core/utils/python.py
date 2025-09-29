@@ -1166,7 +1166,7 @@ class SingletonPerNameMeta(type):
                 SingletonPerNameMeta, cls
             ).__call__(*args, **kwargs)
         elif args or kwargs:
-            logger.warning(
+            logger.debug(
                 "Singleton instance %s already exists for name = %s.",
                 cls.__name__,
                 name,
