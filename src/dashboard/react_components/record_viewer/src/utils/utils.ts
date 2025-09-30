@@ -136,6 +136,20 @@ export const createNodeMap = (node: StackTreeNode) => {
   return result;
 };
 
+export const getDefaultExpandedItems = (node: StackTreeNode, maxDepth: number): string[] => {
+  const expanded: string[] = [];
+
+  const traverse = (current: StackTreeNode, depth: number) => {
+    if (depth < maxDepth) {
+      expanded.push(current.nodeId);
+      current.children.forEach((child) => traverse(child, depth + 1));
+    }
+  };
+
+  traverse(node, 0);
+  return expanded;
+};
+
 /**
  * Formatting timestamp to display
  *
