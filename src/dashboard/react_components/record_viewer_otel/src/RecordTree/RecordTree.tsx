@@ -5,6 +5,7 @@ import { Streamlit } from 'streamlit-component-lib';
 
 import RecordTreeCellRecursive from '@/RecordTree/RecordTreeCellRecursive';
 import { ROOT_NODE_ID, StackTreeNode } from '@/types/StackTreeNode';
+import { getDefaultExpandedItems } from '@/functions/getDefaultExpandedItems';
 
 type RecordTreeProps = {
   root: StackTreeNode;
@@ -23,17 +24,7 @@ export default function RecordTree({ root, selectedNodeId, setSelectedNodeId }: 
 
   const { timeTaken: totalTime, startTime: treeStart } = root;
 
-  const getDefaultExpandedItems = (node: StackTreeNode, maxDepth: number): string[] => {
-    const expanded: string[] = [];
-    const traverse = (current: StackTreeNode, depth: number) => {
-      if (depth < maxDepth) {
-        expanded.push(current.id);
-        current.children.forEach((child) => traverse(child, depth + 1));
-      }
-    };
-    traverse(node, 0);
-    return expanded;
-  };
+  
 
   return (
     <SimpleTreeView
