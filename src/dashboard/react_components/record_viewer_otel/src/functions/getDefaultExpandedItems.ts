@@ -13,5 +13,3 @@ export const getDefaultExpandedItems = (node: StackTreeNode, maxDepth: number): 
   traverse(node, 0);
   return expanded;
 };
-
-

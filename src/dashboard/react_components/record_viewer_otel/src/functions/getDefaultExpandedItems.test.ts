@@ -56,5 +56,3 @@ describe('getDefaultExpandedItems (otel)', () => {
     expect(after).toBe(before);
   });
 });
-
-

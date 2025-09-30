@@ -24,7 +24,7 @@ export default function RecordTree({ root, selectedNodeId, setSelectedNodeId }: 
 
   const { timeTaken: totalTime, startTime: treeStart } = root;
 
-  
+
 
   return (
     <SimpleTreeView
