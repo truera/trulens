@@ -20,12 +20,16 @@ class CortexCostComputer:
     def handle_response(response: Any) -> Dict[str, Any]:
         model = None
         usage = {}
+
         for curr in response:
             data = json.loads(curr.data)
-            logger.warning(f"[daniel]data: {data}")
 
             choice = data["choices"][0]
             if "finish_reason" in choice and choice["finish_reason"] == "stop":
+                model = data["model"]
+                usage = data["usage"]
+                break
+            elif "usage" in data and data["usage"]:
                 model = data["model"]
                 usage = data["usage"]
                 break
