@@ -1173,6 +1173,16 @@ class Run(BaseModel):
                 "Snowflake connector is not installed. Please install it to use feedback computation functionality."
             )
 
+    def get_records(
+        self, record_ids: Optional[List[str]] = None
+    ) -> pd.DataFrame:
+        pass
+
+    def get_record_details(
+        self, record_ids: Optional[List[str]] = None
+    ) -> pd.DataFrame:
+        pass
+
     def _is_cancelled(self) -> bool:
         return self.get_status() == RunStatus.CANCELLED
 
