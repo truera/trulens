@@ -644,6 +644,19 @@ class Run(BaseModel):
         Create OTEL spans from existing data without actual app invocation.
         This method creates spans dynamically based on the dataset_spec mapping,
         which maps span attribute paths to column names.
+
+        The input DataFrame must conform to a specific format based on the dataset_spec.
+        Required columns/data:
+        - If 'input_id' is specified in dataset_spec: A column containing unique identifiers
+        - If no 'input_id': Either 'input' or 'record_root.input' column must exist to generate IDs
+        - If neither exists, row indices will be used as fallback IDs
+
+        Optional columns (specified via dataset_spec):
+        - 'ground_truth_output' or 'record_root.ground_truth_output': Ground truth data
+        - Any additional columns mapped in dataset_spec will be used to populate span attributes
+
+        See RECORD_ROOT and other span attribute definitions in trulens.otel.semconv.trace
+        for the full set of supported attribute paths that can be mapped to columns.
         """
 
         logger.debug(f"Creating virtual spans for {len(input_df)} records")
