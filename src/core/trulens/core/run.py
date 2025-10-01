@@ -1174,9 +1174,26 @@ class Run(BaseModel):
             )
 
     def get_records(
-        self, record_ids: Optional[List[str]] = None
+        self,
+        record_ids: Optional[List[str]] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
     ) -> pd.DataFrame:
-        pass
+        raw_df, metrics_columns = self.tru_session.get_records_and_feedback(
+            app_name=self.object_name,
+            app_version=self.object_version,
+            record_ids=record_ids,
+            offset=offset,
+            limit=limit,
+        )
+
+        record_overview_col_names = [
+            "record_id",
+            "input",
+            "output",
+            "latency",
+        ] + metrics_columns
+        return raw_df[record_overview_col_names]
 
     def get_record_details(
         self,
