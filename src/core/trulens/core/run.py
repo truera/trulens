@@ -1179,9 +1179,19 @@ class Run(BaseModel):
         pass
 
     def get_record_details(
-        self, record_ids: Optional[List[str]] = None
+        self,
+        record_ids: Optional[List[str]] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
     ) -> pd.DataFrame:
-        pass
+        """A wrapper API around get_records_and_feedback to retrieve records from event table of the run."""
+        return self.tru_session.get_records_and_feedback(
+            app_name=self.object_name,
+            app_version=self.object_version,
+            record_ids=record_ids,
+            offset=offset,
+            limit=limit,
+        )[0]
 
     def _is_cancelled(self) -> bool:
         return self.get_status() == RunStatus.CANCELLED
