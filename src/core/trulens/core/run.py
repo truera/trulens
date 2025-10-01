@@ -1220,6 +1220,9 @@ class Run(BaseModel):
             record_ids: Optional list of record IDs to filter by. Defaults to None.
             offset: Record row offset.
             limit: Limit on the number of records to return.
+
+        Returns:
+            A DataFrame with the details of records.
         """
         record_details_df, _ = self.tru_session.get_records_and_feedback(
             app_name=self.object_name,
