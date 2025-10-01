@@ -4,7 +4,7 @@ trulens:
   lows: {}
 trulens.benchmark:
   __class__: builtins.module
-  __version__: 2.3.1
+  __version__: 2.4.0
   highs: {}
   lows:
     __version__: builtins.str
@@ -60,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 2.3.1
+  __version__: 2.4.0
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -152,7 +152,7 @@ trulens.core.app.App:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     retrieve_feedback_results: builtins.function
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     select_context: builtins.classmethod
     selector_check_warning: builtins.bool
@@ -865,8 +865,10 @@ trulens.core.run.Run:
     describe: builtins.function
     description: typing.Optional[builtins.str, builtins.NoneType]
     from_metadata_df: builtins.classmethod
+    get_record_details: builtins.function
+    get_records: builtins.function
     get_status: builtins.function
-    main_method_name: builtins.str
+    main_method_name: typing.Optional[builtins.str, builtins.NoneType]
     object_name: builtins.str
     object_type: builtins.str
     object_version: typing.Optional[builtins.str, builtins.NoneType]
@@ -960,7 +962,7 @@ trulens.core.schema.app.AppDefinition:
     metadata: typing.Dict
     new_session: builtins.staticmethod
     record_ingest_mode: trulens.core.schema.app.RecordIngestMode
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     select_inputs: builtins.classmethod
     select_outputs: builtins.classmethod
     tags: builtins.str
@@ -1962,7 +1964,7 @@ trulens.core.utils.trulens.Other:
   attributes: {}
 trulens.dashboard:
   __class__: builtins.module
-  __version__: 2.3.1
+  __version__: 2.4.0
   highs:
     run_dashboard: builtins.function
     run_dashboard_sis: builtins.function
@@ -2264,7 +2266,7 @@ trulens.dashboard.ux.styles.ResultCategoryType:
     value: enum.property
 trulens.feedback:
   __class__: builtins.module
-  __version__: 2.3.1
+  __version__: 2.4.0
   highs:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
@@ -3266,7 +3268,7 @@ trulens.feedback.v2.provider.base.Provider:
     tru_class_info: trulens.core.utils.pyschema.Class
 trulens.hotspots:
   __class__: builtins.module
-  __version__: 2.3.1
+  __version__: 2.4.0
   highs:
     HotspotsConfig: builtins.type
     get_skipped_columns: builtins.function
