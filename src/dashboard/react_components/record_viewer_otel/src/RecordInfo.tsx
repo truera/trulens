@@ -81,12 +81,7 @@ export default function RecordInfo({ nodeMap, root }: RecordTreeProps) {
         {isTimeline ? (
           <RecordTable selectedNodeId={selectedNodeId} setSelectedNodeId={setSelectedNodeId} root={root} />
         ) : (
-          <RecordTree
-            selectedNodeId={selectedNodeId}
-            setSelectedNodeId={setSelectedNodeId}
-            root={root}
-            nodeMap={nodeMap}
-          />
+          <RecordTree selectedNodeId={selectedNodeId} setSelectedNodeId={setSelectedNodeId} root={root} />
         )}
       </Grid2>
 
