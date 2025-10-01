@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 import enum
 import logging
-from typing import Any, Dict, Hashable
+from typing import Any, Dict, Hashable, Optional
 
 from trulens.core.utils import serial as serial_utils
 from typing_extensions import TypedDict
@@ -22,7 +22,7 @@ class EventRecordType(enum.Enum):
 class Trace(TypedDict):
     """The type hint for a trace dictionary."""
 
-    trace_id: str
+    trace_id: Optional[str]
     parent_id: str
     span_id: str
 
