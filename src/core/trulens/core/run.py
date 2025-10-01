@@ -1191,12 +1191,14 @@ class Run(BaseModel):
         Returns:
             A DataFrame with the overview of records.
         """
-        raw_df, metrics_columns = self.tru_session.get_records_and_feedback(
-            app_name=self.object_name,
-            app_version=self.object_version,
-            record_ids=record_ids,
-            offset=offset,
-            limit=limit,
+        record_details_df, metrics_columns = (
+            self.tru_session.get_records_and_feedback(
+                app_name=self.object_name,
+                app_version=self.object_version,
+                record_ids=record_ids,
+                offset=offset,
+                limit=limit,
+            )
         )
 
         record_overview_col_names = [
@@ -1205,7 +1207,7 @@ class Run(BaseModel):
             "output",
             "latency",
         ] + metrics_columns
-        return raw_df[record_overview_col_names]
+        return record_details_df[record_overview_col_names]
 
     def get_record_details(
         self,
