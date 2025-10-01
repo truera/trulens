@@ -1179,6 +1179,18 @@ class Run(BaseModel):
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> pd.DataFrame:
+        """
+        A wrapper API around get_records_and_feedback to retrieve and display overview of records from event table of the run.
+        It aggregates summary information of records into a single DataFrame.
+
+        Args:
+            record_ids: Optional list of record IDs to filter by. Defaults to None.
+            offset: Record row offset.
+            limit: Limit on the number of records to return.
+
+        Returns:
+            A DataFrame with the overview of records.
+        """
         raw_df, metrics_columns = self.tru_session.get_records_and_feedback(
             app_name=self.object_name,
             app_version=self.object_version,
@@ -1201,14 +1213,23 @@ class Run(BaseModel):
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> pd.DataFrame:
-        """A wrapper API around get_records_and_feedback to retrieve records from event table of the run."""
-        return self.tru_session.get_records_and_feedback(
+        """
+        A wrapper API around get_records_and_feedback to retrieve records from event table of the run.
+
+        Args:
+            record_ids: Optional list of record IDs to filter by. Defaults to None.
+            offset: Record row offset.
+            limit: Limit on the number of records to return.
+        """
+        record_details_df, _ = self.tru_session.get_records_and_feedback(
             app_name=self.object_name,
             app_version=self.object_version,
             record_ids=record_ids,
             offset=offset,
             limit=limit,
-        )[0]
+        )
+
+        return record_details_df
 
     def _is_cancelled(self) -> bool:
         return self.get_status() == RunStatus.CANCELLED
