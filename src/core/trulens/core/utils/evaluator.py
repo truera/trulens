@@ -96,19 +96,12 @@ class Evaluator:
             A dict from record id to a pandas DataFrame of all events from that
             record. Only records that aren't fully processed will be included.
         """
-        try:
-            events = self._app_ref().connector.get_events(
-                app_name=self._app_ref().app_name,
-                app_version=self._app_ref().app_version,
-                record_ids=record_ids,
-                start_time=start_time,
-            )
-        except Exception as e:
-            logger.error(
-                f"Failed to get events from connector: {e}. "
-                "This may indicate a connector initialization issue."
-            )
-            return {}
+        events = self._app_ref().connector.get_events(
+            app_name=self._app_ref().app_name,
+            app_version=self._app_ref().app_version,
+            record_ids=record_ids,
+            start_time=start_time,
+        )
         if events is None or len(events) == 0:
             return {}
         record_ids = events["record_attributes"].apply(
@@ -180,10 +173,7 @@ class Evaluator:
                         break
                     time.sleep(0.1)
         except Exception as e:
-            # Most exceptions should be handled at lower levels (e.g., connector issues)
-            # This catch-all is for truly unexpected errors
-            logger.warning(f"Evaluator thread encountered an error: {e}")
-            logger.debug(f"Evaluator thread error details: {e}", exc_info=True)
+            logger.error(f"Evaluator thread encountered an error: {e}")
 
     def start_evaluator(self) -> None:
         """Start the evaluator for the app."""
