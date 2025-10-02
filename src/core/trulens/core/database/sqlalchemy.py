@@ -1362,24 +1362,24 @@ class SQLAlchemyDB(core_db.DB):
                 q = sa.select(self.orm.Event).where(sa.and_(*where_clauses))
             return pd.read_sql(q, session.bind)
 
-    def get_events_by_record_id(self, record_id: str) -> pd.DataFrame:
-        """Get all events for a given record ID.
+    def _extract_namespaced_attributes(
+        self, record_attributes: Dict[str, Any], namespace_prefix: str
+    ) -> Dict[str, Any]:
+        """Extract attributes that are namespaced under a given prefix.
 
         Args:
-            record_id: The record ID to get events for.
+            record_attributes: Dictionary of all span attributes
+            namespace_prefix: The namespace prefix to look for (e.g., "ai.observability.call.kwargs")
 
         Returns:
-            A pandas DataFrame containing all events for the given record ID.
+            Dictionary with namespace-stripped keys and their values
         """
-        with self.session.begin() as session:
-            # Query events where record_attributes contains the record_id
-            record_id_expr = self._json_extract_otel(
-                "record_attributes", SpanAttributes.RECORD_ID
-            )
-            q = sa.select(self.orm.Event).where(record_id_expr == record_id)
-
-            # Execute query and return as DataFrame
-            return pd.read_sql(q, session.bind)
+        prefix_with_dot = namespace_prefix + "."
+        return {
+            key[len(prefix_with_dot) :]: value
+            for key, value in record_attributes.items()
+            if key.startswith(prefix_with_dot)
+        }
 
 
 # Use this Perf for missing Perfs.

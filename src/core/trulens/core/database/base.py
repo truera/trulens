@@ -951,10 +951,13 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
             f"snow.{BASE_SCOPE}.object.name",
             ResourceAttributes.APP_NAME,
         ])
-        app_version = get_value([
-            f"snow.{BASE_SCOPE}.object.version.name",
-            ResourceAttributes.APP_VERSION,
-        ])
+        app_version = (
+            get_value([
+                f"snow.{BASE_SCOPE}.object.version.name",
+                ResourceAttributes.APP_VERSION,
+            ])
+            or "base"
+        )
         app_id = get_value([ResourceAttributes.APP_ID])
         if app_id is None:
             app_id = app_schema.AppDefinition._compute_app_id(
@@ -964,4 +967,4 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
             f"snow.{BASE_SCOPE}.run.name",
             SpanAttributes.RUN_NAME,
         ])
-        return app_name, app_version, app_id, run_name
+        return app_name, str(app_version), app_id, run_name

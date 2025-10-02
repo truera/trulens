@@ -656,26 +656,32 @@ def _convert_events_to_otel_spans(events_df: pd.DataFrame) -> List[OtelSpan]:
 @st.cache_data(
     ttl=dashboard_constants.CACHE_TTL, show_spinner="Getting events for record"
 )
-def _get_event_otel_spans(record_id: str) -> List[OtelSpan]:
+def _get_event_otel_spans(
+    record_id: str, app_name: Optional[str] = None
+) -> List[OtelSpan]:
     """Get all event spans for a given record ID.
 
     Args:
         record_id: The record ID to get events for.
+        app_name: The app name to get events for.
 
     Returns:
         A list of OtelSpans for all events corresponding to the given record ID.
     """
     session = get_session()
     db = session.connector.db
-
-    if not db or not hasattr(db, "get_events_by_record_id"):
+    if not db or not hasattr(db, "get_events"):
         st.error(
-            f"Error getting events by record {record_id}: database must support OTEL spans"
+            f"Error getting events by record {record_id}: database must support OTel spans"
         )
         return []
-
     try:
-        events_df = db.get_events_by_record_id(record_id)
+        events_df = db.get_events(
+            app_name=app_name,
+            app_version=None,
+            record_ids=[record_id],
+            start_time=None,
+        )
         return _convert_events_to_otel_spans(events_df)
     except Exception as e:
         st.error(f"Error getting events for record {record_id}: {e}")

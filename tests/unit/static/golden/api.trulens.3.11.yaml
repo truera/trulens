@@ -463,7 +463,6 @@ trulens.core.database.sqlalchemy.SQLAlchemyDB:
     from_db_engine: builtins.classmethod
     from_db_url: builtins.classmethod
     from_tru_args: builtins.classmethod
-    get_events_by_record_id: builtins.function
     insert_events: builtins.function
     orm: typing.Type[trulens.core.database.orm.ORM]
     redact_keys: builtins.bool
