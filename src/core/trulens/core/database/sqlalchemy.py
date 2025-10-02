@@ -839,6 +839,7 @@ class SQLAlchemyDB(core_db.DB):
         app_name: Optional[types_schema.AppName] = None,
         app_version: Optional[types_schema.AppVersion] = None,
         app_versions: Optional[List[types_schema.AppVersion]] = None,
+        run_name: Optional[types_schema.RunName] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> sa.Select:
@@ -849,6 +850,7 @@ class SQLAlchemyDB(core_db.DB):
             app_name: App name to filter by. Defaults to None.
             app_version: App version to filter by. Defaults to None.
             app_versions: List of app versions to filter by. Defaults to None.
+            run_name: Run name to filter by. Defaults to None.
             offset: Offset for pagination. Defaults to None.
             limit: Limit for pagination. Defaults to None.
 
@@ -914,6 +916,12 @@ class SQLAlchemyDB(core_db.DB):
                 )
             )
 
+        if run_name:
+            run_name_expr = self._json_extract_otel(
+                "record_attributes", SpanAttributes.RUN_NAME
+            )
+            conditions.append(run_name_expr == run_name)
+
         # Apply all conditions
         stmt = stmt.where(sa.and_(*conditions))
 
@@ -937,6 +945,7 @@ class SQLAlchemyDB(core_db.DB):
         app_name: Optional[types_schema.AppName] = None,
         app_version: Optional[types_schema.AppVersion] = None,
         app_versions: Optional[List[types_schema.AppVersion]] = None,
+        run_name: Optional[types_schema.RunName] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
@@ -951,6 +960,7 @@ class SQLAlchemyDB(core_db.DB):
             app_name: App name to filter by. Defaults to None.
             app_version: App version to filter by. Defaults to None.
             app_versions: List of app versions to filter by. Defaults to None.
+            run_name: Run name to filter by. Defaults to None.
             record_ids: List of record IDs to filter by. Defaults to None.
             offset: Offset for pagination. Defaults to None.
             limit: Limit for pagination. Defaults to None.
@@ -966,6 +976,7 @@ class SQLAlchemyDB(core_db.DB):
                     app_name=app_name,
                     app_version=app_version,
                     app_versions=app_versions,
+                    run_name=run_name,
                     offset=offset,
                     limit=limit,
                 )
@@ -994,21 +1005,12 @@ class SQLAlchemyDB(core_db.DB):
         app_name: Optional[types_schema.AppName] = None,
         app_version: Optional[types_schema.AppVersion] = None,
         app_versions: Optional[List[types_schema.AppVersion]] = None,
+        run_name: Optional[types_schema.RunName] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
-        """See [DB.get_records_and_feedback][trulens.core.database.base.DB.get_records_and_feedback].
-
-        Args:
-            app_ids: Optional list of app IDs to filter by. Defaults to None.
-            app_name: Optional app name to filter by. Defaults to None.
-            app_version: Optional app version to filter by. Defaults to None.
-            app_versions: Optional list of app versions to filter by. Defaults to None.
-            record_ids: Optional list of record IDs to filter by. Defaults to None.
-            offset: Optional offset for pagination. Defaults to None.
-            limit: Optional limit for pagination. Defaults to None.
-        """
+        """See [DB.get_records_and_feedback][trulens.core.database.base.DB.get_records_and_feedback]."""
         if app_ids:
             logger.warning(
                 "`app_ids` is deprecated. Please use `app_name`, and `app_versions` instead."
@@ -1023,9 +1025,14 @@ class SQLAlchemyDB(core_db.DB):
                 app_name=app_name,
                 app_version=app_version,
                 app_versions=app_versions,
+                run_name=run_name,
                 record_ids=record_ids,
                 offset=offset,
                 limit=limit,
+            )
+        elif run_name:
+            raise RuntimeError(
+                "`run_name` is not supported in the pre-OTel implementation."
             )
 
         # Original implementation for pre-OTEL ORM

@@ -43,6 +43,9 @@ AppVersion: TypeAlias = str
 See [AppDefinition.app_version][trulens.core.schema.app.AppDefinition.app_version].
 """
 
+RunName: TypeAlias = str
+"""Run name."""
+
 Tags: TypeAlias = str
 """Tags for an app or record.
 
