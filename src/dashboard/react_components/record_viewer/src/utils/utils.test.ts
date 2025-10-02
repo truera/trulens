@@ -60,3 +60,64 @@ describe('formatTime', () => {
     expect(formatTime(23)).toBe('12/31/1969 16:00:00.000023');
   });
 });
+
+// Append tests for getDefaultExpandedItems
+import { getDefaultExpandedItems } from '@/utils/utils';
+import { StackTreeNode } from '@/utils/StackTreeNode';
+
+const makeNode = (name: string, children: StackTreeNode[] = []): StackTreeNode =>
+  new StackTreeNode({ name, children, parentNodes: [] });
+
+const linkParents = (node: StackTreeNode, parents: StackTreeNode[] = []) => {
+  node.parentNodes = parents;
+  node.children.forEach((child) => linkParents(child, [...parents, node]));
+};
+
+const expectNoDuplicates = (arr: string[]) => {
+  expect(new Set(arr).size).toBe(arr.length);
+};
+
+describe('getDefaultExpandedItems (legacy)', () => {
+  test('returns empty for maxDepth=0', () => {
+    const root = makeNode('root');
+    expect(getDefaultExpandedItems(root, 0)).toEqual([]);
+  });
+
+  test('returns only root when maxDepth=1', () => {
+    const root = makeNode('root');
+    linkParents(root);
+    const expanded = getDefaultExpandedItems(root, 1);
+    expect(expanded).toEqual([root.nodeId]);
+  });
+
+  test('returns root and first level when maxDepth=2 (preorder)', () => {
+    const childA = makeNode('A');
+    const childB = makeNode('B');
+    const root = makeNode('root', [childA, childB]);
+    linkParents(root);
+    const expanded = getDefaultExpandedItems(root, 2);
+    expect(new Set(expanded)).toEqual(new Set([root.nodeId, childA.nodeId, childB.nodeId]));
+    expectNoDuplicates(expanded);
+  });
+
+  test('deep chain includes exactly first D nodes', () => {
+    const n3 = makeNode('n3');
+    const n2 = makeNode('n2', [n3]);
+    const n1 = makeNode('n1', [n2]);
+    linkParents(n1);
+    const expanded = getDefaultExpandedItems(n1, 2);
+    expect(expanded).toEqual([n1.nodeId, n2.nodeId]);
+  });
+
+  test('does not mutate input tree', () => {
+    const child = makeNode('child');
+    const root = makeNode('root', [child]);
+    linkParents(root);
+    const safeStringify = (n: StackTreeNode): string =>
+      JSON.stringify(n, (key, value) => (key === 'parentNodes' ? undefined : value));
+    const before = safeStringify(root);
+    getDefaultExpandedItems(root, 2);
+    const after = safeStringify(root);
+    expect(after).toBe(before);
+  });
+});

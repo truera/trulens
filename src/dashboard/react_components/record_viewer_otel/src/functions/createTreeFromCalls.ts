@@ -8,7 +8,13 @@ export const createTreeFromCalls = (spans: Span[]) => {
     throw new Error('No spans provided');
   }
 
-  const nodes = spans
+  // Filter out evaluation-related spans
+  const filteredSpans = spans.filter((span) => {
+    const spanType = span.record_attributes?.[SpanAttributes.SPAN_TYPE];
+    return spanType !== SpanType.EVAL && spanType !== SpanType.EVAL_ROOT;
+  });
+
+  const nodes = filteredSpans
     .map((span) => {
       return new StackTreeNode({
         name: span.record.name,

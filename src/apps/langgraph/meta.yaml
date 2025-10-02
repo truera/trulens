@@ -1,6 +1,6 @@
 {% set name = "trulens-apps-langgraph" %}
 {% set pyname = name.replace('-', '.') %}
-{% set version = "2.3.1" %}
+{% set version = "2.4.0" %}
 
 package:
   name: {{ name|lower }}
@@ -11,7 +11,7 @@ source:
   # path: .
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-apps-langgraph/#files
-  sha256: efee6465bb5aafe41cd5ec1cf796ba87e451358a8f9bed470aead3f2536db807
+  sha256: 297c46d8211f06042f761d8cbaeb571f45c26407eb4845c805a7ca6dec2e813b
 
 build:
   noarch: python
