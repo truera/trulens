@@ -316,6 +316,7 @@ class SnowflakeConnector(DBConnector):
             "max_overflow": 0,
             "pool_recycle": -1,
             "pool_timeout": 120,
+            "connect_args": {"client_session_keep_alive": True},
         }
         if "engine_params" not in database_args:
             database_args["engine_params"] = default_engine_params

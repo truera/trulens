@@ -2,7 +2,10 @@ import argparse
 import json
 import os
 import sys
+import threading
+import time
 from typing import Any, Callable, Dict, List, Optional, Union
+import uuid
 
 import pandas as pd
 import sqlalchemy as sa
@@ -111,7 +114,10 @@ def read_spcs_oauth_token() -> Optional[str]:
         return f.read()
 
 
-@st.cache_resource(show_spinner="Setting up TruLens session")
+@st.cache_resource(
+    show_spinner="Setting up TruLens session",
+    # ttl=60.0 * 30,
+)
 def get_session() -> core_session.TruSession:
     """Parse command line arguments and initialize TruSession with them.
 
@@ -208,7 +214,53 @@ def get_session() -> core_session.TruSession:
     if args.otel_tracing:
         os.environ["TRULENS_OTEL_TRACING"] = "1"
 
+    if args.snowflake_spcs_mode:
+        # Start _ping_session in a daemon thread
+        ping_thread = threading.Thread(
+            target=_ping_session, args=(session,), daemon=True
+        )
+        ping_thread.start()
+
     return session
+
+
+def _ping_session(tru_session: core_session.TruSession):
+    snowpark_session = tru_session.connector.snowpark_session
+    original_snowpark_connection = snowpark_session.connection
+    original_snowpark_connection_cursor = original_snowpark_connection.cursor()
+    time.sleep(30)
+    while True:
+        print("--------------------------------")
+        print("SELECT ABC:")
+        print(snowpark_session.sql("SELECT 1").collect()[0])
+        print(
+            snowpark_session.connection.cursor().execute("SELECT 2").fetchone()
+        )
+        print(
+            original_snowpark_connection.cursor().execute("SELECT 3").fetchone()
+        )
+        print(
+            original_snowpark_connection_cursor.execute("SELECT 4").fetchone()
+        )
+        print(
+            original_snowpark_connection_cursor.execute(
+                f"SELECT '{str(uuid.uuid4())}'"
+            ).fetchone()
+        )
+        print(
+            tru_session.get_events(
+                app_name=str(uuid.uuid4()), app_version=str(uuid.uuid4())
+            ),
+        )
+        print("Num apps:", len(tru_session.get_apps()))
+        import sqlalchemy as sa
+
+        with tru_session.connector.db.session.begin() as session:
+            q = sa.select(tru_session.connector.db.orm.AppDefinition)
+            q = q.filter_by(app_name=str(uuid.uuid4()))
+            print([list(row[0]) for row in session.execute(q)])
+        print("--------------------------------ABC")
+        time.sleep(60)
 
 
 @st.cache_data(
