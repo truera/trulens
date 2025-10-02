@@ -111,7 +111,6 @@ export default function RecordInfo({ appJSON, nodeMap, recordJSON, root }: Recor
             selectedNodeId={selectedNodeId}
             setSelectedNodeId={setSelectedNodeId}
             root={root}
-            nodeMap={nodeMap}
           />
         )}
       </Grid2>

@@ -5,15 +5,15 @@ import { Streamlit } from 'streamlit-component-lib';
 
 import RecordTreeCellRecursive from '@/RecordTree/RecordTreeCellRecursive';
 import { ROOT_NODE_ID, StackTreeNode } from '@/utils/StackTreeNode';
+import { getDefaultExpandedItems } from '@/utils/utils';
 
 type RecordTreeProps = {
-  nodeMap: Record<string, StackTreeNode>;
   root: StackTreeNode;
   selectedNodeId: string | null;
   setSelectedNodeId: (newId: string | null) => void;
 };
 
-export default function RecordTree({ nodeMap, root, selectedNodeId, setSelectedNodeId }: RecordTreeProps) {
+export default function RecordTree({ root, selectedNodeId, setSelectedNodeId }: RecordTreeProps) {
   const handleItemSelectionToggle = (_event: React.SyntheticEvent, itemId: string, isSelected: boolean) => {
     if (isSelected) {
       setSelectedNodeId(itemId);
@@ -23,6 +23,8 @@ export default function RecordTree({ nodeMap, root, selectedNodeId, setSelectedN
   };
 
   const { timeTaken: totalTime, startTime: treeStart } = root;
+
+
 
   return (
     <SimpleTreeView
@@ -44,7 +46,7 @@ export default function RecordTree({ nodeMap, root, selectedNodeId, setSelectedN
         setTimeout(() => Streamlit.setFrameHeight(), 300);
       }}
       defaultSelectedItems={selectedNodeId ?? ROOT_NODE_ID}
-      defaultExpandedItems={Object.keys(nodeMap) ?? []}
+      defaultExpandedItems={getDefaultExpandedItems(root, 2)}
       onItemSelectionToggle={handleItemSelectionToggle}
     >
       <RecordTreeCellRecursive node={root} depth={0} totalTime={totalTime} treeStart={treeStart} />

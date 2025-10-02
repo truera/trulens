@@ -80,6 +80,8 @@ class SnowflakeEventTableDB(core_db.DB):
             trace = json.loads(row["trace"])
             if "parent_id" not in trace:
                 trace["parent_id"] = ""
+            if "trace_id" not in trace:
+                trace["trace_id"] = ""
             events.append(
                 Event(
                     event_id=trace["span_id"],
