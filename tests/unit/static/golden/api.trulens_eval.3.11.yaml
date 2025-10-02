@@ -1111,7 +1111,7 @@ trulens_eval.TruApp:
     replace: builtins.function
     retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
@@ -1228,7 +1228,7 @@ trulens_eval.TruBasicApp:
     replace: builtins.function
     retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
@@ -1346,7 +1346,7 @@ trulens_eval.TruChain:
     replace: builtins.function
     retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
@@ -1463,7 +1463,7 @@ trulens_eval.TruCustomApp:
     replace: builtins.function
     retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
@@ -1579,7 +1579,7 @@ trulens_eval.TruLlama:
     replace: builtins.function
     retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
@@ -1696,7 +1696,7 @@ trulens_eval.TruRails:
     replace: builtins.function
     retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
@@ -1962,7 +1962,7 @@ trulens_eval.app.App:
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
     retrieve_feedback_results: builtins.function
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
@@ -2178,6 +2178,7 @@ trulens_eval.database.base.DB:
     copy: builtins.function
     delete_app: builtins.function
     dict: builtins.function
+    extract_app_and_run_info: builtins.staticmethod
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_app: builtins.function
@@ -2310,7 +2311,7 @@ trulens_eval.database.sqlalchemy:
     no_perf: builtins.dict
 trulens_eval.database.sqlalchemy.AppsExtractor:
   __bases__:
-  - builtins.object
+  - trulens.core.database.base.BaseAppsExtractor
   __class__: builtins.type
   attributes:
     all_cols: builtins.list
@@ -2335,6 +2336,7 @@ trulens_eval.database.sqlalchemy.SQLAlchemyDB:
     dict: builtins.function
     engine: typing.Optional[sqlalchemy.engine.base.Engine, builtins.NoneType]
     engine_params: builtins.dict
+    extract_app_and_run_info: builtins.staticmethod
     formatted_objects: _contextvars.ContextVar
     from_db_engine: builtins.classmethod
     from_db_url: builtins.classmethod
@@ -7301,7 +7303,7 @@ trulens_eval.schema.app.AppDefinition:
     parse_raw: builtins.classmethod
     record_ingest_mode: trulens.core.schema.app.RecordIngestMode
     replace: builtins.function
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     schema: builtins.classmethod
     schema_json: builtins.classmethod
     select_inputs: builtins.classmethod
@@ -7950,7 +7952,7 @@ trulens_eval.tru_basic_app.TruBasicApp:
     replace: builtins.function
     retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
@@ -8112,7 +8114,7 @@ trulens_eval.tru_chain.TruChain:
     replace: builtins.function
     retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
@@ -8237,7 +8239,7 @@ trulens_eval.tru_custom_app.TruCustomApp:
     replace: builtins.function
     retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
@@ -8377,7 +8379,7 @@ trulens_eval.tru_llama.TruLlama:
     replace: builtins.function
     retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
@@ -8560,7 +8562,7 @@ trulens_eval.tru_rails.TruRails:
     replace: builtins.function
     retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
