@@ -114,10 +114,7 @@ def read_spcs_oauth_token() -> Optional[str]:
         return f.read()
 
 
-@st.cache_resource(
-    show_spinner="Setting up TruLens session",
-    # ttl=60.0 * 30,
-)
+@st.cache_resource(show_spinner="Setting up TruLens session")
 def get_session() -> core_session.TruSession:
     """Parse command line arguments and initialize TruSession with them.
 
@@ -215,7 +212,6 @@ def get_session() -> core_session.TruSession:
         os.environ["TRULENS_OTEL_TRACING"] = "1"
 
     if args.snowflake_spcs_mode:
-        # Start _ping_session in a daemon thread
         ping_thread = threading.Thread(
             target=_ping_session, args=(session,), daemon=True
         )
