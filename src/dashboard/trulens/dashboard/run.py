@@ -44,6 +44,7 @@ def run_dashboard(
     address: Optional[str] = None,
     force: bool = False,
     sis_compatibility_mode: bool = False,
+    spcs_mode: bool = False,
     _dev: Optional[Path] = None,
     _watch_changes: bool = False,
 ) -> Process:
@@ -57,6 +58,8 @@ def run_dashboard(
         force (bool): Stop existing dashboard(s) first. Defaults to `False`.
 
         sis_compatibility_mode (bool): Flag to enable compatibility with Streamlit in Snowflake (SiS). SiS runs on Python 3.8, Streamlit 1.35.0, and does not support bidirectional custom components. As a result, enabling this flag will replace custom components in the dashboard with native Streamlit components. Defaults to `False`.
+
+        spcs_mode (bool): Flag to enable compatibility with Snowpark Container Services (SPCS).
 
         _dev (Path): If given, runs the dashboard with the given `PYTHONPATH`. This can be used to run the dashboard from outside of its pip package installation folder. Defaults to `None`.
 
@@ -132,7 +135,9 @@ def run_dashboard(
         connector.db.table_prefix,
     ]
     if _is_snowflake_connector(connector) and (
-        not connector.password_known or connector.use_account_event_table
+        not connector.password_known
+        or connector.use_account_event_table
+        or spcs_mode
     ):
         # If we don't know the password, this is problematic because we run the
         # dashboard in a separate process so we won't be able to recreate the
@@ -153,10 +158,19 @@ def run_dashboard(
             ("--snowflake-warehouse", snowpark_session.get_current_warehouse()),
             ("--snowflake-host", snowpark_session.connection.host),
         ]
-        if connector.password_known:
-            args_to_add.append(("--snowflake-password", connector._password))
+        if spcs_mode:
+            args.append("--snowflake-spcs-mode")
         else:
-            args_to_add.append(("--snowflake-authenticator", "externalbrowser"))
+            if connector.password_known:
+                args_to_add.append((
+                    "--snowflake-password",
+                    connector._password,
+                ))
+            else:
+                args_to_add.append((
+                    "--snowflake-authenticator",
+                    "externalbrowser",
+                ))
         for arg, val in args_to_add:
             if val:
                 args += [arg, clean_up_snowflake_identifier(val)]
