@@ -509,6 +509,54 @@ class TestTruLlamaWorkflowIntegration:
             assert tru_workflow.metadata == {"test_key": "test_value"}
             assert tru_workflow.tags == ["test_tag"]
 
+    def test_function_agent_instrumentation(self, mock_session):
+        """Test that FunctionAgent methods are properly instrumented."""
+        workflow = SimpleTestWorkflow() if LLAMAINDEX_AVAILABLE else Mock()
+
+        with patch(
+            "trulens.apps.llamaindex.tru_llama_workflow.TruSession",
+            return_value=mock_session,
+        ):
+            # Mock the FunctionAgent import and class
+            mock_function_agent = Mock()
+            mock_function_agent.run = Mock()
+            mock_function_agent.arun = Mock()
+            mock_function_agent.chat = Mock()
+            mock_function_agent.achat = Mock()
+
+            with patch(
+                "trulens.apps.llamaindex.tru_llama_workflow.instrument_method"
+            ) as mock_instrument_method:
+                with patch(
+                    "llama_index.core.agent.workflow.FunctionAgent",
+                    mock_function_agent,
+                ):
+                    self.TruLlamaWorkflow(
+                        workflow, app_name="test_workflow", app_version="1.0.0"
+                    )
+
+                    # Verify that instrument_method was called for FunctionAgent methods
+                    expected_methods = [
+                        "run",
+                        "arun",
+                        "chat",
+                        "achat",
+                        "stream_chat",
+                        "astream_chat",
+                    ]
+                    instrumented_methods = []
+
+                    for call in mock_instrument_method.call_args_list:
+                        if call[1].get("cls") == mock_function_agent:
+                            method_name = call[1].get("method_name")
+                            if method_name in expected_methods:
+                                instrumented_methods.append(method_name)
+
+                    # At least some methods should be instrumented (those that exist on the mock)
+                    assert (
+                        len(instrumented_methods) > 0
+                    ), "No FunctionAgent methods were instrumented"
+
 
 @pytest.mark.optional
 class TestWorkflowRecordAssociation:
