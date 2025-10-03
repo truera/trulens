@@ -224,8 +224,7 @@ def _ping_session(tru_session: core_session.TruSession):
     while True:
         print("--------------------------------")
         print("SELECT ABC:")
-        print("Num apps:", len(tru_session.get_apps()))
-        print("--------------------------------ABC (GET_APPS ONLY)")
+        print("--------------------------------ABC (NOTHING)")
         time.sleep(60)
 
 
