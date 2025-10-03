@@ -2,6 +2,7 @@ from typing import List
 from unittest.mock import Mock
 from unittest.mock import patch
 
+from snowflake.connector.errors import DatabaseError
 from trulens.dashboard import run_dashboard
 from trulens.dashboard.main import main
 
@@ -94,18 +95,17 @@ class TestOtelSnowflakeDashboard(OtelTestCase, SnowflakeTestCase):
 
     @patch("trulens.dashboard.utils.dashboard_utils.read_spcs_oauth_token")
     @patch(
-        "trulens.dashboard.utils.dashboard_utils."
-        "argparse.ArgumentParser.parse_args"
+        "trulens.dashboard.utils.dashboard_utils.argparse.ArgumentParser.parse_args"
     )
     def test_main_in_spcs_mode(
         self, mock_parse_args: Mock, mock_read_oauth_token: Mock
     ) -> None:
-        # Get session to extract Snowflake connection parameters
+        # Get session to extract Snowflake connection parameters.
         tru_session = self.get_session("test_run_in_spcs_mode")
         snowpark_session = tru_session.connector.snowpark_session
-        # Mock the OAuth token reading function
+        # Mock the OAuth token reading function.
         mock_read_oauth_token.return_value = "fake_oauth_token"
-        # Create a mock args object with the required attributes for SPCS mode
+        # Create a mock args object with the required attributes for SPCS mode.
         mock_args = Mock()
         mock_args.database_url = None
         mock_args.snowflake_account = snowpark_session.get_current_account()[
@@ -129,7 +129,8 @@ class TestOtelSnowflakeDashboard(OtelTestCase, SnowflakeTestCase):
         mock_args.database_prefix = "trulens_"
         mock_args.otel_tracing = True
         mock_parse_args.return_value = mock_args
-        main()
+        with self.assertRaisesRegex(
+            DatabaseError, "Invalid OAuth access token"
+        ):
+            main()
         mock_read_oauth_token.assert_called_once()
-
-        print("DONE")
