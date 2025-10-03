@@ -159,7 +159,7 @@ def run_dashboard(
             ("--snowflake-host", snowpark_session.connection.host),
         ]
         if spcs_mode:
-            args_to_add.append(("--snowflake-spcs-mode", str(spcs_mode)))
+            args_to_add.append("--snowflake-spcs-mode")
         elif connector.password_known:
             args_to_add.append(("--snowflake-password", connector._password))
         else:
