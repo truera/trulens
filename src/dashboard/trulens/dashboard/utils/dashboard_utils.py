@@ -5,7 +5,6 @@ import sys
 import threading
 import time
 from typing import Any, Callable, Dict, List, Optional, Union
-import uuid
 
 import pandas as pd
 import sqlalchemy as sa
@@ -221,41 +220,12 @@ def get_session() -> core_session.TruSession:
 
 
 def _ping_session(tru_session: core_session.TruSession):
-    snowpark_session = tru_session.connector.snowpark_session
-    original_snowpark_connection = snowpark_session.connection
-    original_snowpark_connection_cursor = original_snowpark_connection.cursor()
     time.sleep(30)
     while True:
         print("--------------------------------")
         print("SELECT ABC:")
-        print(snowpark_session.sql("SELECT 1").collect()[0])
-        print(
-            snowpark_session.connection.cursor().execute("SELECT 2").fetchone()
-        )
-        print(
-            original_snowpark_connection.cursor().execute("SELECT 3").fetchone()
-        )
-        print(
-            original_snowpark_connection_cursor.execute("SELECT 4").fetchone()
-        )
-        print(
-            original_snowpark_connection_cursor.execute(
-                f"SELECT '{str(uuid.uuid4())}'"
-            ).fetchone()
-        )
-        print(
-            tru_session.get_events(
-                app_name=str(uuid.uuid4()), app_version=str(uuid.uuid4())
-            ),
-        )
         print("Num apps:", len(tru_session.get_apps()))
-        import sqlalchemy as sa
-
-        with tru_session.connector.db.session.begin() as session:
-            q = sa.select(tru_session.connector.db.orm.AppDefinition)
-            q = q.filter_by(app_name=str(uuid.uuid4()))
-            print([list(row[0]) for row in session.execute(q)])
-        print("--------------------------------ABC")
+        print("--------------------------------ABC (GET_APPS ONLY)")
         time.sleep(60)
 
 
