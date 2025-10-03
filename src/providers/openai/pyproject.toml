@@ -30,8 +30,8 @@ classifiers = [
 python = "^3.9"
 trulens-core = { version = "^2.0.0" }
 trulens-feedback = { version = "^2.0.0" }
-openai = ">=1.52.1,<1.100.0"
-langchain-community = ">=0.0.20"
+openai = ">=1.52.1,<2.0.0"
+langchain-community = ">=0.3.29"
 
 [tool.poetry.group.dev.dependencies]
 trulens-core = { path = "../../core" }

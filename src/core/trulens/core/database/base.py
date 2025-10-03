@@ -833,6 +833,25 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
 
         return df, feedback_col_names
 
+    def _extract_namespaced_attributes(
+        self, record_attributes: Dict[str, Any], namespace_prefix: str
+    ) -> Dict[str, Any]:
+        """Extract attributes that are namespaced under a given prefix.
+
+        Args:
+            record_attributes: Dictionary of all span attributes
+            namespace_prefix: The namespace prefix to look for (e.g., "ai.observability.call.kwargs")
+
+        Returns:
+            Dictionary with namespace-stripped keys and their values
+        """
+        prefix_with_dot = namespace_prefix + "."
+        return {
+            key[len(prefix_with_dot) :]: value
+            for key, value in record_attributes.items()
+            if key.startswith(prefix_with_dot)
+        }
+
     def _get_event_record_attributes_otel(self, event: Event) -> Dict[str, Any]:
         """Get the record attributes from the event.
 

@@ -132,7 +132,7 @@ def get_session() -> core_session.TruSession:
     parser.add_argument("--snowflake-password", default=None)
     parser.add_argument("--snowflake-authenticator", default=None)
     parser.add_argument("--snowflake-host", default=None)
-    parser.add_argument("--snowflake-spcs-mode", default=None)
+    parser.add_argument("--snowflake-spcs-mode", action="store_true")
     parser.add_argument(
         "--snowflake-use-account-event-table", action="store_true"
     )

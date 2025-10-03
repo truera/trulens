@@ -159,11 +159,18 @@ def run_dashboard(
             ("--snowflake-host", snowpark_session.connection.host),
         ]
         if spcs_mode:
-            args_to_add.append(("--snowflake-spcs-mode", str(spcs_mode)))
-        elif connector.password_known:
-            args_to_add.append(("--snowflake-password", connector._password))
+            args.append("--snowflake-spcs-mode")
         else:
-            args_to_add.append(("--snowflake-authenticator", "externalbrowser"))
+            if connector.password_known:
+                args_to_add.append((
+                    "--snowflake-password",
+                    connector._password,
+                ))
+            else:
+                args_to_add.append((
+                    "--snowflake-authenticator",
+                    "externalbrowser",
+                ))
         for arg, val in args_to_add:
             if val:
                 args += [arg, clean_up_snowflake_identifier(val)]
