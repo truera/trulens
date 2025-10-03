@@ -2119,6 +2119,7 @@ trulens.dashboard.utils.dashboard_utils:
     get_session: streamlit.runtime.caching.cache_utils.CachedFunc
     is_sis_compatibility_enabled: builtins.function
     read_query_params_into_session_state: builtins.function
+    read_spcs_oauth_token: builtins.function
     render_app_version_filters: builtins.function
     render_refresh_button: builtins.function
     render_sidebar: builtins.function
