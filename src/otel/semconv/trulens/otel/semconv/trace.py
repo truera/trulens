@@ -100,6 +100,12 @@ class SpanAttributes:
         WORKFLOW_STEP = "workflow_step"
         """A workflow step execution."""
 
+        AGENT = "agent"
+        """An agent execution."""
+
+        TOOL = "tool"
+        """A tool/function call execution."""
+
         RERANKER = "reranking"
         """A reranking operation."""
 
@@ -333,6 +339,9 @@ class SpanAttributes:
 
         ERROR = base + ".error"
         """Error raised during workflow execution."""
+
+        AGENT_NAME = base + ".agent_name"
+        """Name of the agent executing in the workflow."""
 
     class RERANKER:
         """A reranking operation."""

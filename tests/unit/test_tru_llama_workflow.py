@@ -2,7 +2,6 @@
 
 import asyncio
 from dataclasses import dataclass
-import importlib.util
 import json
 import os
 import sys
@@ -402,9 +401,12 @@ except ImportError:
     Context = Mock
 
 # Check if TruLlamaWorkflow can be imported (for skipif decorator)
-TRULENS_LLAMAINDEX_AVAILABLE = (
-    importlib.util.find_spec("trulens.apps.llamaindex") is not None
-)
+try:
+    import trulens.apps.llamaindex  # noqa: F401
+
+    TRULENS_LLAMAINDEX_AVAILABLE = True
+except ImportError:
+    TRULENS_LLAMAINDEX_AVAILABLE = False
 
 try:
     from trulens.core.session import TruSession
@@ -508,6 +510,47 @@ class TestTruLlamaWorkflowIntegration:
             assert tru_workflow.app_name == "test_workflow"
             assert tru_workflow.metadata == {"test_key": "test_value"}
             assert tru_workflow.tags == ["test_tag"]
+
+    def test_function_agent_instrumentation(self, mock_session):
+        """Test that FunctionAgent methods are properly instrumented."""
+        workflow = SimpleTestWorkflow() if LLAMAINDEX_AVAILABLE else Mock()
+
+        with patch(
+            "trulens.apps.llamaindex.tru_llama_workflow.TruSession",
+            return_value=mock_session,
+        ):
+            # Mock the FunctionAgent import and class
+            mock_function_agent = Mock()
+            mock_function_agent.run = Mock()
+            mock_function_agent.arun = Mock()
+            mock_function_agent.chat = Mock()
+            mock_function_agent.achat = Mock()
+
+            # Mock the FunctionAgent instrumentation setup to avoid import issues
+            with patch(
+                "trulens.apps.llamaindex.tru_llama_workflow._setup_function_agent_instrumentation_on_demand"
+            ) as mock_setup_function_agent:
+                # Make the setup function return True to indicate successful instrumentation
+                mock_setup_function_agent.return_value = True
+
+                # Reset the class instrumentation flag to ensure the setup function is called
+                original_is_instrumented = (
+                    self.TruLlamaWorkflow._is_instrumented
+                )
+                self.TruLlamaWorkflow._is_instrumented = False
+
+                try:
+                    self.TruLlamaWorkflow(
+                        workflow, app_name="test_workflow", app_version="1.0.0"
+                    )
+
+                    # Verify that the setup function was called
+                    mock_setup_function_agent.assert_called_once()
+                finally:
+                    # Restore the original flag value
+                    self.TruLlamaWorkflow._is_instrumented = (
+                        original_is_instrumented
+                    )
 
 
 @pytest.mark.optional
