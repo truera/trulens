@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
+import pandas as pd
 import pytest
 
 try:
@@ -12,14 +13,6 @@ try:
 
 except Exception:
     pass
-
-
-class DummyRow:
-    def __init__(self, d: dict):
-        self._d = d
-
-    def as_dict(self):
-        return self._d
 
 
 @pytest.mark.snowflake
@@ -42,8 +35,8 @@ class TestExternalAgentDao(unittest.TestCase):
     def test_create_agent_agent_not_exists(self, mock_execute_query):
         # Expect: first call (list_agents) returns empty; second call (create_new_agent) returns an empty DataFrame.
         mock_execute_query.side_effect = [
-            [],
-            [],
+            pd.DataFrame(),
+            pd.DataFrame(),
         ]  # first call: list_agents, second: create_new_agent
 
         self.dao.create_agent_if_not_exist("agent1", "v1")
@@ -70,10 +63,10 @@ class TestExternalAgentDao(unittest.TestCase):
     @patch("trulens.connectors.snowflake.dao.external_agent.execute_query")
     def test_create_agent_agent_exists_version_exists(self, mock_execute_query):
         # Simulate that the agent exists and that the version already exists.
-        # Return a list of DummyRow objects to simulate rows.
+        # Return DataFrames to simulate results.
         mock_execute_query.side_effect = [
-            [DummyRow({"name": "AGENT1"})],  # list_agents call
-            [DummyRow({"name": "v1"})],  # list_agent_versions call
+            pd.DataFrame([{"name": "AGENT1"}]),  # list_agents call
+            pd.DataFrame([{"name": "v1"}]),  # list_agent_versions call
         ]
 
         self.dao.create_agent_if_not_exist("agent1", "v1")
@@ -95,11 +88,11 @@ class TestExternalAgentDao(unittest.TestCase):
     ):
         # Simulate that the agent exists.
         mock_execute_query.side_effect = [
-            [
-                DummyRow({"name": "AGENT 1"})
-            ],  # list_agents call returns agent exists
-            [],  # list_agent_versions returns empty list
-            [],  # add_version returns empty list
+            pd.DataFrame([
+                {"name": "AGENT 1"}
+            ]),  # list_agents call returns agent exists
+            pd.DataFrame(),  # list_agent_versions returns empty DataFrame
+            pd.DataFrame(),  # add_version returns empty DataFrame
         ]
 
         self.dao.create_agent_if_not_exist("agent 1", "v2")
@@ -118,12 +111,12 @@ class TestExternalAgentDao(unittest.TestCase):
     ):
         # Simulate that the agent exists and its versions are present but do not include "V3"
         mock_execute_query.side_effect = [
-            [DummyRow({"name": "AGENT1"})],  # list_agents call
-            [
-                DummyRow({"version": "v1"}),
-                DummyRow({"version": "v2"}),
-            ],  # list_agent_versions call
-            [],  # add_version call returns empty list
+            pd.DataFrame([{"name": "AGENT1"}]),  # list_agents call
+            pd.DataFrame([
+                {"version": "v1"},
+                {"version": "v2"},
+            ]),  # list_agent_versions call
+            pd.DataFrame(),  # add_version call returns empty DataFrame
         ]
 
         self.dao.create_agent_if_not_exist("agent1", "v3")
@@ -140,7 +133,7 @@ class TestExternalAgentDao(unittest.TestCase):
     def test_delete_agent(self, mock_execute_query):
         # Simulate that the agent exists.
         mock_execute_query.side_effect = [
-            [DummyRow({"name": "AGENT1"})],  # list_agents call
+            pd.DataFrame([{"name": "AGENT1"}]),  # list_agents call
         ]
 
         self.dao.drop_agent("agent1")
@@ -154,13 +147,13 @@ class TestExternalAgentDao(unittest.TestCase):
     @patch("trulens.connectors.snowflake.dao.external_agent.execute_query")
     def test_drop_default_version_raise(self, mock_execute_query):
         mock_execute_query.side_effect = [
-            [
-                DummyRow({
+            pd.DataFrame([
+                {
                     "name": "v1",
                     "aliases": ["LAST", "DEFAULT", "FIRST"],
-                })
-            ],  # list_agent_versions call
-            [],
+                }
+            ]),  # list_agent_versions call
+            pd.DataFrame(),
         ]
 
         with self.assertRaises(ValueError):
@@ -170,10 +163,10 @@ class TestExternalAgentDao(unittest.TestCase):
     @patch("trulens.connectors.snowflake.dao.external_agent.execute_query")
     def test_drop_current_version(self, mock_execute_query):
         mock_execute_query.side_effect = [
-            [
-                DummyRow({"name": "v2", "aliases": ["LAST"]})
-            ],  # list_agent_versions call
-            [],
+            pd.DataFrame([
+                {"name": "v2", "aliases": ["LAST"]}
+            ]),  # list_agent_versions call
+            pd.DataFrame(),
         ]
         self.dao.drop_current_version("agent1")
         expected_query = (

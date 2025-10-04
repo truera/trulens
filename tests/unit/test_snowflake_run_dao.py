@@ -14,15 +14,6 @@ except Exception:
     RunDao = None
 
 
-# DummyRow simulates a Snowflake Row with an as_dict() method.
-class DummyRow:
-    def __init__(self, d: dict):
-        self._d = d
-
-    def as_dict(self):
-        return self._d
-
-
 @pytest.mark.snowflake
 class TestRunDao(unittest.TestCase):
     def setUp(self):
@@ -97,8 +88,8 @@ class TestRunDao(unittest.TestCase):
 
     @patch("trulens.connectors.snowflake.dao.run.execute_query")
     def test_get_run_no_result(self, mock_execute_query):
-        # Simulate that get_run returns an empty list (no run exists).
-        mock_execute_query.return_value = []
+        # Simulate that get_run returns an empty DataFrame (no run exists).
+        mock_execute_query.return_value = pd.DataFrame()
         result_df = self.dao.get_run(
             run_name="nonexistent_run",
             object_name="MY_AGENT",
@@ -108,9 +99,10 @@ class TestRunDao(unittest.TestCase):
 
     @patch("trulens.connectors.snowflake.dao.run.execute_query")
     def test_get_run_with_result(self, mock_execute_query):
-        # Simulate that get_run returns a single row.
-        dummy = DummyRow({"run_name": "my_run", "run_status": "ACTIVE"})
-        mock_execute_query.return_value = [dummy]
+        # Simulate that get_run returns a DataFrame with a single row.
+        mock_execute_query.return_value = pd.DataFrame([
+            {"run_name": "my_run", "run_status": "ACTIVE"}
+        ])
         result_df = self.dao.get_run(
             run_name="my_run",
             object_name="MY_AGENT",
