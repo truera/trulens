@@ -218,6 +218,7 @@ def get_records_and_feedback(
     app_ids: Optional[List[str]] = None,
     app_name: Optional[str] = None,
     app_versions: Optional[List[str]] = None,
+    run_name: Optional[str] = None,
     offset: Optional[int] = None,
     limit: Optional[int] = None,
 ):
@@ -229,6 +230,7 @@ def get_records_and_feedback(
         app_ids=app_ids,
         app_name=app_name,
         app_versions=app_versions,
+        run_name=run_name,
         offset=offset,
         limit=limit,
     )
