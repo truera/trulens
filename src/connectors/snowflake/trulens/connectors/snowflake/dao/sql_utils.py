@@ -52,7 +52,9 @@ def execute_query(
     Executes a query with optional parameters with qmark parameter binding (if applicable).
     """
     try:
-        return session.sql(query, params=parameters).to_pandas()
+        df = session.sql(query, params=parameters).to_pandas()
+        df.columns = [clean_up_snowflake_identifier(col) for col in df.columns]
+        return df
     except Exception as e:
         logger.exception(
             f"Error executing query: {query}\nParameters: {parameters}\nError: {e}"
