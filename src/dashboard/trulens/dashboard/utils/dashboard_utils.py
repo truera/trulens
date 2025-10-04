@@ -157,39 +157,41 @@ def get_session() -> core_session.TruSession:
         from snowflake.snowpark import Session
         from trulens.connectors.snowflake import SnowflakeConnector
 
-        if args.snowflake_spcs_mode:
-            connection_params = {
-                "account": args.snowflake_account,
-                "user": args.snowflake_user,
-                "role": args.snowflake_role,
-                "database": args.snowflake_database,
-                "schema": args.snowflake_schema,
-                "warehouse": args.snowflake_warehouse,
-                "host": args.snowflake_host,
-                "authenticator": "oauth",
-                "token": read_spcs_oauth_token(),
-            }
-        else:
-            connection_params = {
-                "account": args.snowflake_account,
-                "user": args.snowflake_user,
-                "role": args.snowflake_role,
-                "database": args.snowflake_database,
-                "schema": args.snowflake_schema,
-                "warehouse": args.snowflake_warehouse,
-                "host": args.snowflake_host,
-            }
-            if args.snowflake_password:
-                connection_params["password"] = args.snowflake_password
-            if args.snowflake_authenticator:
-                connection_params["authenticator"] = (
-                    args.snowflake_authenticator
-                )
-        snowpark_session = Session.builder.configs(connection_params).create()
+        def snowpark_session_creator() -> Session:
+            if args.snowflake_spcs_mode:
+                connection_params = {
+                    "account": args.snowflake_account,
+                    "user": args.snowflake_user,
+                    "role": args.snowflake_role,
+                    "database": args.snowflake_database,
+                    "schema": args.snowflake_schema,
+                    "warehouse": args.snowflake_warehouse,
+                    "host": args.snowflake_host,
+                    "authenticator": "oauth",
+                    "token": read_spcs_oauth_token(),
+                }
+            else:
+                connection_params = {
+                    "account": args.snowflake_account,
+                    "user": args.snowflake_user,
+                    "role": args.snowflake_role,
+                    "database": args.snowflake_database,
+                    "schema": args.snowflake_schema,
+                    "warehouse": args.snowflake_warehouse,
+                    "host": args.snowflake_host,
+                }
+                if args.snowflake_password:
+                    connection_params["password"] = args.snowflake_password
+                if args.snowflake_authenticator:
+                    connection_params["authenticator"] = (
+                        args.snowflake_authenticator
+                    )
+            return Session.builder.configs(connection_params).create()
+
         use_account_event_table = bool(args.snowflake_use_account_event_table)
         session = core_session.TruSession(
             connector=SnowflakeConnector(
-                snowpark_session=snowpark_session,
+                snowpark_session_creator=snowpark_session_creator,
                 use_account_event_table=use_account_event_table,
                 database_prefix=args.database_prefix,
             )

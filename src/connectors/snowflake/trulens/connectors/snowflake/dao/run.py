@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from snowflake.snowpark import Session
-from snowflake.snowpark.row import Row
 from trulens.connectors.snowflake.dao.enums import SourceType
 from trulens.connectors.snowflake.dao.sql_utils import (
     clean_up_snowflake_identifier,
@@ -193,17 +192,13 @@ class RunDao:
         logger.debug(
             f"Executing query: {query} with parameters {req_payload_json}"
         )
-        rows: List[Row] = execute_query(
+        result_df = execute_query(
             self.session,
             query,
             parameters=(req_payload_json,),
         )
-
-        if not rows:
-            return pd.DataFrame()
-        else:
-            # Assuming the first row contains our JSON result.
-            return pd.DataFrame([rows[0].as_dict()])
+        # Assuming the first row contains our JSON result.
+        return result_df.iloc[:1]
 
     def list_all_runs(self, object_name: str, object_type: str) -> pd.DataFrame:
         """
@@ -226,13 +221,13 @@ class RunDao:
             f"Executing query: {query} with parameters {req_payload_json}"
         )
 
-        rows: List[Row] = execute_query(
+        result_df = execute_query(
             self.session,
             query,
             parameters=(req_payload_json,),
         )
 
-        return pd.DataFrame([rows[0].as_dict()])
+        return result_df
 
     def _update_run(
         self,
