@@ -3,6 +3,9 @@ from typing import Tuple
 
 import pandas
 from snowflake.snowpark import Session
+from trulens.connectors.snowflake.dao.sql_utils import (
+    clean_up_snowflake_identifier,
+)
 from trulens.connectors.snowflake.dao.sql_utils import execute_query
 
 logger = logging.getLogger(__name__)
@@ -119,13 +122,11 @@ class ExternalAgentDao:
 
     def _list_agents(self) -> pandas.DataFrame:
         """Retrieve a list of all External Agents."""
-        query = "SHOW EXTERNAL AGENTS;"
-
-        rows = execute_query(self.session, query)
-        result_df = pandas.DataFrame([row.as_dict() for row in rows])
-
-        logger.info("Retrieved list of External Agents.")
-        return result_df
+        ret = self.session.sql("SHOW EXTERNAL AGENTS").to_pandas()
+        ret.columns = [
+            clean_up_snowflake_identifier(curr) for curr in list(ret.columns)
+        ]
+        return ret
 
     def check_agent_exists(self, name: str) -> bool:
         """Check if an External Agent exists."""
