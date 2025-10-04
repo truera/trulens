@@ -197,8 +197,8 @@ class RunDao:
             query,
             parameters=(req_payload_json,),
         )
-
-        return result_df
+        # Assuming the first row contains our JSON result.
+        return result_df.iloc[:1]
 
     def list_all_runs(self, object_name: str, object_type: str) -> pd.DataFrame:
         """
