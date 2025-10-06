@@ -12,6 +12,7 @@ import pydantic
 from pydantic import BaseModel
 from pydantic import Field
 from pydantic import field_serializer
+from trulens.core.enums import Mode
 from trulens.core.feedback.custom_metric import MetricConfig
 from trulens.core.utils.json import obj_id_of_obj
 from trulens.otel.semconv.trace import SpanAttributes
@@ -144,6 +145,10 @@ class RunConfig(BaseModel):
         default=None,
         description="Name of the LLM judge to be used for the run.",
     )
+    mode: Mode = Field(
+        default=Mode.APP_INVOCATION,
+        description="Mode of operation: LOG_INGESTION for creating spans from existing data, APP_INVOCATION for actual app execution.",
+    )
 
 
 class Run(BaseModel):
@@ -212,6 +217,10 @@ class Run(BaseModel):
         llm_judge_name: Optional[str] = Field(
             default=None,
             description="Name of the LLM judge to be used for the run.",
+        )
+        mode: Optional[str] = Field(
+            default=Mode.APP_INVOCATION.value,
+            description="Mode of operation: LOG_INGESTION or APP_INVOCATION.",
         )
         invocations: Optional[Dict[str, Run.InvocationMetadata]] = Field(
             default=None,
@@ -521,15 +530,12 @@ class Run(BaseModel):
             all_existing_metrics, invocation_completion_status
         )
 
-    def start(
-        self, input_df: Optional[pd.DataFrame] = None, virtual: bool = False
-    ):
+    def start(self, input_df: Optional[pd.DataFrame] = None):
         """
         Start the run by invoking the main method of the user's app with the input data
 
         Args:
             input_df (Optional[pd.DataFrame], optional): user provided input dataframe.
-            virtual (bool, optional): If True, creates OTEL spans from existing data without app invocation.
         """
         current_status = self.get_status()
         logger.info(f"Current run status: {current_status}")
@@ -553,8 +559,11 @@ class Run(BaseModel):
             f"Creating or updating invocation metadata with {input_records_count} records from input."
         )
 
+        # Determine mode from run metadata
+        mode = self.run_metadata.mode or Mode.APP_INVOCATION.value
+
         try:
-            if virtual:
+            if mode == Mode.LOG_INGESTION.value:
                 self._create_virtual_spans(
                     input_df, dataset_spec, input_records_count
                 )
