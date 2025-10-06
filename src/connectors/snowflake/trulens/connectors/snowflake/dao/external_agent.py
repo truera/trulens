@@ -121,8 +121,7 @@ class ExternalAgentDao:
         """Retrieve a list of all External Agents."""
         query = "SHOW EXTERNAL AGENTS;"
 
-        rows = execute_query(self.session, query)
-        result_df = pandas.DataFrame([row.as_dict() for row in rows])
+        result_df = execute_query(self.session, query)
 
         logger.info("Retrieved list of External Agents.")
         return result_df
@@ -143,8 +142,7 @@ class ExternalAgentDao:
         resolved_name = name.upper()
         query = f"""SHOW VERSIONS IN EXTERNAL AGENT "{resolved_name}";"""
 
-        rows = execute_query(self.session, query)
-        result_df = pandas.DataFrame([row.as_dict() for row in rows])
+        result_df = execute_query(self.session, query)
 
         logger.info(f"Retrieved versions for External Agent {resolved_name}.")
 
