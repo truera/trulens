@@ -77,6 +77,7 @@ class TestRunRecordAPIs(unittest.TestCase):
         self.run.tru_session.get_records_and_feedback.assert_called_once_with(
             app_name="TEST_AGENT",
             app_version="v1",
+            run_name="test_run",
             record_ids=record_ids,
             offset=None,
             limit=None,
@@ -88,6 +89,7 @@ class TestRunRecordAPIs(unittest.TestCase):
         self.run.tru_session.get_records_and_feedback.assert_called_once_with(
             app_name="TEST_AGENT",
             app_version="v1",
+            run_name="test_run",
             record_ids=None,
             offset=10,
             limit=5,
@@ -105,6 +107,7 @@ class TestRunRecordAPIs(unittest.TestCase):
         self.run.tru_session.get_records_and_feedback.assert_called_once_with(
             app_name="TEST_AGENT",
             app_version="v1",
+            run_name="test_run",
             record_ids=record_ids,
             offset=0,
             limit=10,
