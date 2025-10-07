@@ -186,9 +186,9 @@ class LLMProvider(core_provider.Provider):
         """
 
         assert self.endpoint is not None, "Endpoint is not set."
-        assert (
-            max_score_val > min_score_val
-        ), "Max score must be greater than min score."
+        assert max_score_val > min_score_val, (
+            "Max score must be greater than min score."
+        )
 
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
@@ -289,9 +289,9 @@ class LLMProvider(core_provider.Provider):
                 reason metadata dictionary.
         """
         assert self.endpoint is not None, "Endpoint is not set."
-        assert (
-            max_score_val > min_score_val
-        ), "Max score must be greater than min score."
+        assert max_score_val > min_score_val, (
+            "Max score must be greater than min score."
+        )
 
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
@@ -2890,7 +2890,7 @@ class LLMProvider(core_provider.Provider):
         enable_trace_compression: bool = True,
     ) -> Tuple[float, Dict]:
         """
-        Evaluate the quality of an agent's tool selection.
+        Evaluate the quality of an agentic trace using a rubric focused on tool selection.
         Example:
             ```python
             from trulens.core import Feedback
@@ -2974,7 +2974,7 @@ class LLMProvider(core_provider.Provider):
         enable_trace_compression: bool = True,
     ) -> Tuple[float, Dict]:
         """
-        Evaluate the quality of an agent's tool calling.
+        Evaluate the quality of an agentic trace using a rubric focused on tool calling.
         Example:
             ```python
             from trulens.core import Feedback
@@ -3058,7 +3058,7 @@ class LLMProvider(core_provider.Provider):
         enable_trace_compression: bool = True,
     ) -> Tuple[float, Dict]:
         """
-        Evaluate the quality of an agent's tool quality.
+        Evaluate the quality of an agentic trace using a rubric focused on tool quality.
         Example:
             ```python
             from trulens.core import Feedback
