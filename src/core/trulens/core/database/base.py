@@ -379,26 +379,37 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
         app_name: Optional[types_schema.AppName] = None,
         app_version: Optional[types_schema.AppVersion] = None,
         app_versions: Optional[List[types_schema.AppVersion]] = None,
+        run_name: Optional[types_schema.RunName] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
-        """Get records from the database.
+        """Get records, their feedback results, and feedback names.
 
         Args:
-            app_ids: If given, retrieve only the records for the given apps.
-                Otherwise all apps are retrieved.
-            app_name: If given, retrieve only the records for the given app name.
-            app_version: If given, retrieve only the records for the given app version.
-            app_versions: If given, retrieve only the records for the given app versions.
-            record_ids: Optional list of record IDs to filter by. Defaults to None.
-            offset: Database row offset.
-            limit: Limit on rows (records) returned.
+            app_ids:
+                A list of app ids to filter records by. If empty or not given,
+                all apps' records will be returned.
+            app_name:
+                A name of the app to filter records by. If given, only records
+                for this app will be returned.
+            app_version:
+                A version of the app to filter records by. If given, only
+                records for this app version will be returned.
+            run_name:
+                A run name to filter records by. If given, only records for
+                this run will be returned.
+            app_versions:
+                A list of app versions to filter records by. If given, only
+                records for these app versions will be returned.
+            record_ids: An optional list of record ids to filter records by.
+            offset: Record row offset.
+            limit: Limit on the number of records to return.
 
         Returns:
-            A DataFrame with the records.
-
-            A list of column names that contain feedback results.
+            Tuple of:
+            - DataFrame of records with their feedback results.
+            - List of feedback names that are columns in the DataFrame.
         """
         raise NotImplementedError()
 

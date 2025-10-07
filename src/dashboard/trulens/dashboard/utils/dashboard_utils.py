@@ -100,6 +100,17 @@ def is_sis_compatibility_enabled():
     )
 
 
+def read_spcs_oauth_token() -> Optional[str]:
+    """
+    Reads the OAuth token from the file system. This is only available if the
+    container is running in SPCS.
+    """
+    if not os.path.exists("/snowflake/session/token"):
+        return None
+    with open("/snowflake/session/token", "r") as f:
+        return f.read()
+
+
 @st.cache_resource(show_spinner="Setting up TruLens session")
 def get_session() -> core_session.TruSession:
     """Parse command line arguments and initialize TruSession with them.
@@ -118,6 +129,7 @@ def get_session() -> core_session.TruSession:
     parser.add_argument("--snowflake-password", default=None)
     parser.add_argument("--snowflake-authenticator", default=None)
     parser.add_argument("--snowflake-host", default=None)
+    parser.add_argument("--snowflake-spcs-mode", action="store_true")
     parser.add_argument(
         "--snowflake-use-account-event-table", action="store_true"
     )
@@ -145,24 +157,41 @@ def get_session() -> core_session.TruSession:
         from snowflake.snowpark import Session
         from trulens.connectors.snowflake import SnowflakeConnector
 
-        connection_params = {
-            "account": args.snowflake_account,
-            "user": args.snowflake_user,
-            "role": args.snowflake_role,
-            "database": args.snowflake_database,
-            "schema": args.snowflake_schema,
-            "warehouse": args.snowflake_warehouse,
-            "host": args.snowflake_host,
-        }
-        if args.snowflake_password:
-            connection_params["password"] = args.snowflake_password
-        if args.snowflake_authenticator:
-            connection_params["authenticator"] = args.snowflake_authenticator
+        def snowpark_session_creator() -> Session:
+            if args.snowflake_spcs_mode:
+                connection_params = {
+                    "account": args.snowflake_account,
+                    "user": args.snowflake_user,
+                    "role": args.snowflake_role,
+                    "database": args.snowflake_database,
+                    "schema": args.snowflake_schema,
+                    "warehouse": args.snowflake_warehouse,
+                    "host": args.snowflake_host,
+                    "authenticator": "oauth",
+                    "token": read_spcs_oauth_token(),
+                }
+            else:
+                connection_params = {
+                    "account": args.snowflake_account,
+                    "user": args.snowflake_user,
+                    "role": args.snowflake_role,
+                    "database": args.snowflake_database,
+                    "schema": args.snowflake_schema,
+                    "warehouse": args.snowflake_warehouse,
+                    "host": args.snowflake_host,
+                }
+                if args.snowflake_password:
+                    connection_params["password"] = args.snowflake_password
+                if args.snowflake_authenticator:
+                    connection_params["authenticator"] = (
+                        args.snowflake_authenticator
+                    )
+            return Session.builder.configs(connection_params).create()
+
         use_account_event_table = bool(args.snowflake_use_account_event_table)
-        snowpark_session = Session.builder.configs(connection_params).create()
         session = core_session.TruSession(
             connector=SnowflakeConnector(
-                snowpark_session=snowpark_session,
+                snowpark_session_creator=snowpark_session_creator,
                 use_account_event_table=use_account_event_table,
                 database_prefix=args.database_prefix,
             )
@@ -191,6 +220,7 @@ def get_records_and_feedback(
     app_ids: Optional[List[str]] = None,
     app_name: Optional[str] = None,
     app_versions: Optional[List[str]] = None,
+    run_name: Optional[str] = None,
     offset: Optional[int] = None,
     limit: Optional[int] = None,
 ):
@@ -202,6 +232,7 @@ def get_records_and_feedback(
         app_ids=app_ids,
         app_name=app_name,
         app_versions=app_versions,
+        run_name=run_name,
         offset=offset,
         limit=limit,
     )
