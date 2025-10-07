@@ -1303,3 +1303,161 @@ class PlanQuality(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
             output_space_prompt=output_space_prompt, criteria=criteria
         )
     )
+
+
+class ToolSelection(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
+    """
+    Evaluates the agent's *choice of tools* for its tasks/subtasks given tool descriptions.
+    Mapped to PLAN (lower-level complement to Plan Quality).
+    Excludes execution efficiency and adherence; focuses on suitability of selection.
+    """
+
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+
+    criteria_template: ClassVar[str] = """
+    Score the appropriateness of tool SELECTION decisions relative to stated goals and available tools.
+    {max_score}: Consistently selects the most suitable tools for each subtask, honors mandated tools, avoids tools when internal reasoning suffices, and reflects awareness of tool capabilities/limits.
+    Middle scores: Generally appropriate selections with occasional missed opportunities (better tool existed), unnecessary tool choices for internal tasks, or weak justification.
+    {min_score}: Frequently selects ill-suited/irrelevant tools, ignores mandated tools, or bypasses obviously superior tools; relies on non-tools where a tool is necessary.
+    Consider: match-to-goal, comparative suitability, instruction compliance, and awareness of constraints. Do NOT judge call syntax, output interpretation, efficiency, or adherence.
+    """
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """You are a meticulous TOOL SELECTION evaluator. Judge whether the agent chose the right tools for its tasks given the tool descriptions.
+        You must assign a single numerical score from {output_space_prompt}.
+        Evaluation criteria:
+        {criteria}
+        {custom_instructions}
+        Important scope boundaries:
+        - Do NOT penalize call syntax/semantics or output interpretation (Tool Calling).
+        - Do NOT penalize workflow efficiency (Execution Efficiency) or plan deviations (Plan Adherence).
+        - Focus strictly on selection quality per subtask.
+        Be critical. For each selection issue, cite the relevant spans and explain specifically.
+        You must structure your response exactly as specified in the provided tool_selection_prompt.
+        """
+    )
+
+    user_prompt: ClassVar[str] = cleandoc(
+        """{trace}
+        TOOL SELECTION SCORE:
+        """
+    )
+
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
+    )
+
+    # Use the long form prompt when generating; here we set a compact system prompt that references it.
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            custom_instructions="",
+        )
+    )
+
+
+class ToolCalling(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
+    """
+    Evaluates the agent's *tool invocation quality* that is within the agent's control:
+    argument validity/completeness, semantic appropriateness, preconditions/postconditions, and output interpretation.
+    Mapped to ACT (specialized complement to Plan Adherence).
+    Excludes selection and efficiency.
+    """
+
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+
+    criteria_template: ClassVar[str] = """
+    Score the quality of TOOL CALLS within the agent’s control.
+    {max_score}: Inputs are syntactically valid and semantically appropriate; required params and preconditions are satisfied; outputs are interpreted faithfully and integrated correctly; tool-returned errors are acknowledged and handled reasonably.
+    Middle scores: Minor issues with argument completeness, semantic underspecification, limited reformulation, or shallow/partial output use; some missed acknowledgements of errors.
+    {min_score}: Invalid/missing arguments, repeated schema violations, semantically off-target queries without correction; outputs ignored/misread/fabricated; tool errors unacknowledged.
+    Consider only what is under the agent's control. Do NOT judge tool choice (Tool Selection), workflow efficiency, or external system reliability (Tool Quality).
+    """
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """You are a meticulous TOOL CALLING evaluator. Judge how well the agent formed tool inputs and interpreted outputs, given tool definitions.
+        You must assign a single numerical score from {output_space_prompt}.
+        Evaluation criteria:
+        {criteria}
+        {custom_instructions}
+        Important scope boundaries:
+        - In-scope: argument/schema correctness, semantic fit of query, preconditions/postconditions, grounded interpretation of outputs, explicit handling of tool-returned errors.
+        - Out-of-scope: tool selection (Tool Selection), workflow efficiency (Execution Efficiency), external service/tool reliability (Tool Quality).
+        Be critical. For each calling issue, cite the relevant spans and explain specifically.
+        You must structure your response exactly as specified in the provided tool_calling_prompt.
+        """
+    )
+
+    user_prompt: ClassVar[str] = cleandoc(
+        """{trace}
+        TOOL CALLING SCORE:
+        """
+    )
+
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
+    )
+
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            custom_instructions="",
+        )
+    )
+
+
+class ToolQuality(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
+    """
+    Evaluates the *tool/system side* quality and reliability observed in the trace (external errors, availability, stability, domain-specific output quality like search relevance).
+    Independent of agent behavior; complements GPA by isolating tool-side failures.
+    """
+
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+
+    criteria_template: ClassVar[str] = """
+    Score the QUALITY/RELIABILITY of tools as observed, independent of agent choices.
+    {max_score}: Tools respond reliably with relevant/complete outputs; no or rare external errors (5xx/4xx/429), no unexplained timeouts; domain quality (e.g., search relevance) is consistently strong.
+    Middle scores: Occasional external errors or weak outputs; intermittent relevance/latency issues; overall usable but flaky.
+    {min_score}: Frequent external errors, timeouts, rate limits, auth failures, or persistently poor domain output quality.
+    Consider only external/tool-side quality given the inputs. If inputs are clearly invalid, note it but do not penalize Tool Quality (penalize under Tool Calling).
+    """
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """You are a meticulous TOOL QUALITY evaluator. Judge external/tool-side reliability and output quality observed in the trace.
+        You must assign a single numerical score from {output_space_prompt}.
+        Evaluation criteria:
+        {criteria}
+        {custom_instructions}
+        Important scope boundaries:
+        - In-scope: service errors (5xx), rate limiting (429), auth (401/403), resource not found (404), timeouts, flakiness, determinism, and domain-specific output quality (e.g., search relevance).
+        - Out-of-scope: agent’s selection, argument formation, or workflow efficiency.
+        Be critical. For each tool quality issue, cite the relevant spans and explain specifically.
+        You must structure your response exactly as specified in the provided tool_quality_prompt.
+        """
+    )
+
+    user_prompt: ClassVar[str] = cleandoc(
+        """{trace}
+        TOOL QUALITY SCORE:
+        """
+    )
+
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
+    )
+
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            custom_instructions="",
+        )
+    )
