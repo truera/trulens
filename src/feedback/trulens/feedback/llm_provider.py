@@ -186,9 +186,9 @@ class LLMProvider(core_provider.Provider):
         """
 
         assert self.endpoint is not None, "Endpoint is not set."
-        assert max_score_val > min_score_val, (
-            "Max score must be greater than min score."
-        )
+        assert (
+            max_score_val > min_score_val
+        ), "Max score must be greater than min score."
 
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
@@ -289,9 +289,9 @@ class LLMProvider(core_provider.Provider):
                 reason metadata dictionary.
         """
         assert self.endpoint is not None, "Endpoint is not set."
-        assert max_score_val > min_score_val, (
-            "Max score must be greater than min score."
-        )
+        assert (
+            max_score_val > min_score_val
+        ), "Max score must be greater than min score."
 
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
@@ -2562,6 +2562,7 @@ class LLMProvider(core_provider.Provider):
         Args:
             trace (Union[Trace, str]): The trace to evaluate (e.g., as a JSON string or formatted log).
             criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
+            custom_instructions (Optional[str]): Optional custom instructions for evaluation. Defaults to None.
             examples (Optional[List[Tuple[Dict[str, str], int]]]): Optional few-shot examples for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -2581,6 +2582,7 @@ class LLMProvider(core_provider.Provider):
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
+            custom_instructions=custom_instructions,
             output_space=output_space,
             examples=examples,
         )
@@ -2650,6 +2652,7 @@ class LLMProvider(core_provider.Provider):
         Args:
             trace (Union[Trace, str]): The trace to evaluate (e.g., as a JSON string or formatted log).
             criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
+            custom_instructions (Optional[str]): Optional custom instructions for evaluation. Defaults to None.
             examples (Optional[List[Tuple[Dict[str, str], int]]): Optional few-shot examples for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -2669,6 +2672,7 @@ class LLMProvider(core_provider.Provider):
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
+            custom_instructions=custom_instructions,
             output_space=output_space,
             examples=examples,
         )
@@ -2738,6 +2742,7 @@ class LLMProvider(core_provider.Provider):
         Args:
             trace (Union[Trace, str]): The trace to evaluate (e.g., as a JSON string or formatted log).
             criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
+            custom_instructions (Optional[str]): Optional custom instructions for evaluation. Defaults to None.
             examples (Optional[List[Tuple[Dict[str, str], int]]): Optional few-shot examples for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -2757,6 +2762,7 @@ class LLMProvider(core_provider.Provider):
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
+            custom_instructions=custom_instructions,
             output_space=output_space,
             examples=examples,
         )
@@ -2824,6 +2830,7 @@ class LLMProvider(core_provider.Provider):
         Args:
             trace (Union[Trace, str]): The trace to evaluate (e.g., as a JSON string or formatted log).
             criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
+            custom_instructions (Optional[str]): Optional custom instructions for evaluation. Defaults to None.
             examples (Optional[List[Tuple[Dict[str, str], int]]): Optional few-shot examples for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -2843,6 +2850,7 @@ class LLMProvider(core_provider.Provider):
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
+            custom_instructions=custom_instructions,
             output_space=output_space,
             examples=examples,
         )
@@ -2908,7 +2916,8 @@ class LLMProvider(core_provider.Provider):
         Args:
             trace (Union[Trace, str]): The trace to evaluate (e.g., as a JSON string or formatted log).
             criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
-            examples (Optional[List[Tuple[Dict[str, str], int]]): Optional few-shot examples for evaluation. Defaults to None.
+            custom_instructions (Optional[str]): Optional custom instructions for evaluation. Defaults to None.
+            examples (Optional[List[Tuple[Dict[str, str], int]]]): Optional few-shot examples for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
@@ -2927,6 +2936,7 @@ class LLMProvider(core_provider.Provider):
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
+            custom_instructions=custom_instructions,
             output_space=output_space,
             examples=examples,
         )
@@ -2992,6 +3002,7 @@ class LLMProvider(core_provider.Provider):
         Args:
             trace (Union[Trace, str]): The trace to evaluate (e.g., as a JSON string or formatted log).
             criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
+            custom_instructions (Optional[str]): Optional custom instructions for evaluation. Defaults to None.
             examples (Optional[List[Tuple[Dict[str, str], int]]): Optional few-shot examples for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -3011,6 +3022,7 @@ class LLMProvider(core_provider.Provider):
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
+            custom_instructions=custom_instructions,
             output_space=output_space,
             examples=examples,
         )
@@ -3076,6 +3088,7 @@ class LLMProvider(core_provider.Provider):
         Args:
             trace (Union[Trace, str]): The trace to evaluate (e.g., as a JSON string or formatted log).
             criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
+            custom_instructions (Optional[str]): Optional custom instructions for evaluation. Defaults to None.
             examples (Optional[List[Tuple[Dict[str, str], int]]): Optional few-shot examples for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -3095,6 +3108,7 @@ class LLMProvider(core_provider.Provider):
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
+            custom_instructions=custom_instructions,
             output_space=output_space,
             examples=examples,
         )

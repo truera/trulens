@@ -305,6 +305,7 @@ class CriteriaOutputSpaceMixin:
         min_score: int,
         max_score: int,
         criteria: Optional[str] = None,
+        custom_instructions: Optional[str] = None,
         output_space: Optional[str] = None,
         examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
     ) -> str:
@@ -330,6 +331,9 @@ class CriteriaOutputSpaceMixin:
                 criteria=criteria,
             )
         )
+
+        if custom_instructions is not None:
+            prompt += f"\nCustom instructions:\n{custom_instructions}"
 
         if examples is not None:
             fewshot_examples = FewShotExamples.from_examples_list(examples)
@@ -1230,7 +1234,6 @@ class PlanAdherence(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
         Evaluation criteria:
         {criteria}
-
         Adherence is judged step-by-step; if a plan mandates tool usage or sub-tasks, their omission or incomplete execution always counts as a failure of adherence, regardless of the effect on final output completeness or quality. Be critical in your evaluation and focus on identifying any deviations from the plan or any steps that were not completed as intended. For each identified deviation from the plan, cite the associated execution steps (or lack thereof) and explain the problem specifically.
 
         Never elaborate.
@@ -1328,7 +1331,6 @@ class ToolSelection(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         You must assign a single numerical score from {output_space_prompt}.
         Evaluation criteria:
         {criteria}
-        {custom_instructions}
         Important scope boundaries:
         - Do NOT penalize call syntax/semantics or output interpretation (Tool Calling).
         - Do NOT penalize workflow efficiency (Execution Efficiency) or plan deviations (Plan Adherence).
@@ -1354,7 +1356,6 @@ class ToolSelection(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         system_prompt_template.format(
             output_space_prompt=output_space_prompt,
             criteria=criteria,
-            custom_instructions="",
         )
     )
 
@@ -1383,7 +1384,6 @@ class ToolCalling(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         You must assign a single numerical score from {output_space_prompt}.
         Evaluation criteria:
         {criteria}
-        {custom_instructions}
         Important scope boundaries:
         - In-scope: argument/schema correctness, semantic fit of query, preconditions/postconditions, grounded interpretation of outputs, explicit handling of tool-returned errors.
         - Out-of-scope: tool selection (Tool Selection), workflow efficiency (Execution Efficiency), external service/tool reliability (Tool Quality).
@@ -1407,7 +1407,6 @@ class ToolCalling(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         system_prompt_template.format(
             output_space_prompt=output_space_prompt,
             criteria=criteria,
-            custom_instructions="",
         )
     )
 
@@ -1434,7 +1433,6 @@ class ToolQuality(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         You must assign a single numerical score from {output_space_prompt}.
         Evaluation criteria:
         {criteria}
-        {custom_instructions}
         Important scope boundaries:
         - In-scope: service errors (5xx), rate limiting (429), auth (401/403), resource not found (404), timeouts, flakiness, determinism, and domain-specific output quality (e.g., search relevance).
         - Out-of-scope: agent’s selection, argument formation, or workflow efficiency.
@@ -1458,6 +1456,5 @@ class ToolQuality(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         system_prompt_template.format(
             output_space_prompt=output_space_prompt,
             criteria=criteria,
-            custom_instructions="",
         )
     )
