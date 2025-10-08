@@ -13,8 +13,7 @@ sys.path.insert(0, '/Users/dcampos/trulens/src/feedback')
 sys.path.insert(0, '/Users/dcampos/trulens/src/providers/openai')
 
 from trulens.providers.openai import OpenAI as OpenAIProvider
-from trulens.feedback.nuggetized_feedback import (
-    NuggetizerProvider,
+from trulens.core.feedback.nuggetized_feedback import (
     compare_traditional_vs_nuggetized
 )
 
@@ -46,26 +45,23 @@ def evaluate_rag_response():
     large ecosystem of third-party packages.
     """
     
-    # Initialize provider with OpenAI
-    provider = OpenAIProvider()
-    
-    # Custom nuggetizer with gpt-4o-mini (or gpt-5-nano when available)
-    nuggetizer = NuggetizerProvider(model="gpt-4o-mini")
-    
+    # Initialize provider with OpenAI (gpt-4o-mini or any other model)
+    # The provider now has built-in nugget extraction and classification methods
+    provider = OpenAIProvider(model_engine="gpt-4o-mini")
+
     print("=" * 70)
     print("RAG RESPONSE EVALUATION")
     print("=" * 70)
     print(f"\nQuestion: {question}")
     print(f"\nContext (first 150 chars): {context[:150]}...")
     print(f"\nAnswer (first 150 chars): {answer[:150]}...")
-    
-    # Run comparison
+
+    # Run comparison - now uses provider's built-in nugget methods
     results = compare_traditional_vs_nuggetized(
         provider=provider,
         question=question,
         answer=answer,
-        context=context,
-        nuggetizer=nuggetizer
+        context=context
     )
     
     print("\n" + "=" * 70)
@@ -85,12 +81,14 @@ def evaluate_rag_response():
     # Show nugget details
     nugget_g_meta = results['nuggetized']['groundedness_metadata']
     print(f"\n   Evaluated {nugget_g_meta['total_nuggets']} nuggets:")
-    
+
     for i, eval_result in enumerate(nugget_g_meta['nugget_evaluations'][:3], 1):
         nugget = eval_result['nugget']
+        importance = eval_result['importance']
         score = eval_result['score']
-        print(f"   {i}. '{nugget['text'][:50]}...'")
-        print(f"      Importance: {nugget['importance']:.2f}, Score: {score:.1%}")
+        nugget_preview = nugget[:50] if len(nugget) > 50 else nugget
+        print(f"   {i}. '{nugget_preview}...'")
+        print(f"      Importance: {importance}, Score: {score:.1%}")
     
     if nugget_g_meta['total_nuggets'] > 3:
         print(f"   ... and {nugget_g_meta['total_nuggets'] - 3} more nuggets")
