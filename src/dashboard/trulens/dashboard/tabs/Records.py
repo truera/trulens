@@ -243,7 +243,9 @@ def _render_trace(
     elif is_otel_tracing_enabled():
         with trace_details:
             st.subheader("Trace Details")
-            event_spans = _get_event_otel_spans(selected_row["record_id"])
+            event_spans = _get_event_otel_spans(
+                selected_row["record_id"], selected_row["app_name"]
+            )
             if event_spans:
                 record_viewer_otel(spans=event_spans, key=None)
             else:

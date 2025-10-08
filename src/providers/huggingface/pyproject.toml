@@ -35,7 +35,7 @@ numpy = ">=1.23.0"
 nltk = "^3.9.1"
 # HuggingfaceLocal dependencies
 torch = "^2.1.2"
-transformers = "^4.38.1"
+transformers = "^4.38.1,!=4.57.0"
 
 [tool.poetry.group.dev.dependencies]
 trulens-core = { path = "../../core" }
