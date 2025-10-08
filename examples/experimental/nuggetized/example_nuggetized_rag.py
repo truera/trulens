@@ -47,7 +47,7 @@ def evaluate_rag_response():
     
     # Initialize provider with OpenAI (gpt-4o-mini or any other model)
     # The provider now has built-in nugget extraction and classification methods
-    provider = OpenAIProvider(model_engine="gpt-4o-mini")
+    provider = OpenAIProvider(model_engine="gpt-5-nano")
 
     print("=" * 70)
     print("RAG RESPONSE EVALUATION")

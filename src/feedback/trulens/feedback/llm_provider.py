@@ -2203,16 +2203,37 @@ Updated Nugget List:"""
                 temperature=temperature,
             )
 
-            # Parse the response as a Python list
+            # Parse the response - try multiple methods
             content = response.strip()
-            result = eval(content)
-            if isinstance(result, list):
-                return result
-            else:
-                logger.warning(
-                    f"Expected list from extract_nuggets but got {type(result)}. Returning empty list."
-                )
-                return []
+
+            # Try JSON parsing first
+            try:
+                import json
+                result = json.loads(content)
+                if isinstance(result, list):
+                    return result
+            except (json.JSONDecodeError, ValueError):
+                pass
+
+            # Try extracting list from markdown code block
+            if "```" in content:
+                # Extract content between code blocks
+                match = re.search(r'```(?:python|json)?\s*\n?(.*?)\n?```', content, re.DOTALL)
+                if match:
+                    content = match.group(1).strip()
+
+            # Try eval as fallback
+            try:
+                result = eval(content)
+                if isinstance(result, list):
+                    return result
+            except (SyntaxError, ValueError):
+                pass
+
+            logger.warning(
+                f"Could not parse nuggets from response: {content[:100]}... Returning empty list."
+            )
+            return []
 
         except Exception as e:
             logger.error(f"Error extracting nuggets: {e}")
@@ -2266,16 +2287,37 @@ Labels:"""
                 temperature=temperature,
             )
 
-            # Parse the response as a Python list
+            # Parse the response - try multiple methods
             content = response.strip()
-            result = eval(content)
-            if isinstance(result, list):
-                return result
-            else:
-                logger.warning(
-                    f"Expected list from classify_nuggets but got {type(result)}. Returning empty list."
-                )
-                return []
+
+            # Try JSON parsing first
+            try:
+                import json
+                result = json.loads(content)
+                if isinstance(result, list):
+                    return result
+            except (json.JSONDecodeError, ValueError):
+                pass
+
+            # Try extracting list from markdown code block
+            if "```" in content:
+                # Extract content between code blocks
+                match = re.search(r'```(?:python|json)?\s*\n?(.*?)\n?```', content, re.DOTALL)
+                if match:
+                    content = match.group(1).strip()
+
+            # Try eval as fallback
+            try:
+                result = eval(content)
+                if isinstance(result, list):
+                    return result
+            except (SyntaxError, ValueError):
+                pass
+
+            logger.warning(
+                f"Could not parse classifications from response: {content[:100]}... Returning empty list."
+            )
+            return []
 
         except Exception as e:
             logger.error(f"Error classifying nuggets: {e}")

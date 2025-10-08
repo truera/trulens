@@ -22,3 +22,54 @@ To make nuggets fit within the RAG triad we treat the process of nuggetization a
 This process is demonstrated by running the script below. Be sure to set up your OPEN_AI_API_KEY before proceeding. 
 
 [nuggetized_feedback.py](../../../src/feedback/trulens/feedback/nuggetized_feedback.py)
+
+## Expected Output
+======================================================================
+RAG RESPONSE EVALUATION
+======================================================================
+
+Question: What are the key features of Python programming language?
+
+Context (first 150 chars): 
+    Python is a high-level, interpreted programming language known for its 
+    simplicity and readability. It was created by Guido van Rossum and fi...
+
+Answer (first 150 chars): 
+    Python's key features include its simple and readable syntax that emphasizes 
+    code clarity. It supports multiple programming paradigms like o...
+Temperature parameter is not supported for reasoning model gpt-5-nano. Removing temperature parameter.
+Temperature parameter is not supported for reasoning model gpt-5-nano. Removing temperature parameter.
+Temperature parameter is not supported for reasoning model gpt-5-nano. Removing temperature parameter.
+Temperature parameter is not supported for reasoning model gpt-5-nano. Removing temperature parameter.
+
+======================================================================
+EVALUATION RESULTS
+======================================================================
+
+📊 TRADITIONAL EVALUATION:
+   Groundedness: 86.7%
+   Relevance:    100.0%
+
+🔬 NUGGETIZED EVALUATION:
+   Groundedness: 81.2%
+   Relevance:    35.2%
+
+   Evaluated 9 nuggets:
+   1. 'Simple, readable syntax emphasizing code clarity...'
+      Importance: Vital, Score: 66.7%
+   2. 'Supports multiple paradigms: object-oriented and f...'
+      Importance: Vital, Score: 100.0%
+   3. 'Dynamic typing...'
+      Importance: Vital, Score: 100.0%
+   ... and 6 more nuggets
+
+📈 COMPARISON:
+   Groundedness difference: -5.4%
+   Relevance difference:    -64.8%
+
+💡 INTERPRETATION:
+   Both methods show similar groundedness scores.
+   Nuggetized evaluation shows lower relevance,
+   indicating varied relevance across answer components.
+
+✅ Evaluation completed successfully!
