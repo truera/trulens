@@ -185,6 +185,111 @@ def _retrieval_span() -> Dict[str, Union[SpanAttributes.SpanType, Attributes]]:
     }
 
 
+def _reranker_span() -> Dict[str, Union[SpanAttributes.SpanType, Attributes]]:
+    def _attributes(ret, exception, *args, **kwargs) -> Attributes:
+        attributes = {}
+
+        # Extract query text from query_bundle
+        query_bundle = kwargs.get("query_bundle")
+        if query_bundle and hasattr(query_bundle, "query_str"):
+            attributes[SpanAttributes.RERANKER.QUERY_TEXT] = (
+                query_bundle.query_str
+            )
+
+        # Extract nodes/contexts from args if available
+        nodes = None
+        if len(args) > 1:
+            nodes = args[
+                1
+            ]  # nodes is typically the first positional arg after self
+        elif "nodes" in kwargs:
+            nodes = kwargs.get("nodes")
+
+        # Extract input contexts, scores, and ranks
+        if nodes and isinstance(nodes, list):
+            input_texts = []
+            input_scores = []
+            input_ranks = []
+            for i, node in enumerate(nodes):
+                # Capture rank (position in input list)
+                input_ranks.append(i)
+
+                if hasattr(node, "node") and hasattr(node.node, "get_content"):
+                    input_texts.append(node.node.get_content())
+                elif hasattr(node, "get_content"):
+                    input_texts.append(node.get_content())
+                elif hasattr(node, "text"):
+                    input_texts.append(node.text)
+
+                if hasattr(node, "score"):
+                    input_scores.append(node.score)
+
+            if input_texts:
+                attributes[SpanAttributes.RERANKER.INPUT_CONTEXT_TEXTS] = (
+                    input_texts
+                )
+            if input_scores:
+                attributes[SpanAttributes.RERANKER.INPUT_CONTEXT_SCORES] = (
+                    input_scores
+                )
+            if input_ranks:
+                attributes[SpanAttributes.RERANKER.INPUT_RANKS] = input_ranks
+
+        # Extract model information if available from self (first arg)
+        if len(args) > 0:
+            self_obj = args[0]
+            if hasattr(self_obj, "model"):
+                attributes[SpanAttributes.RERANKER.MODEL_NAME] = str(
+                    self_obj.model
+                )
+            elif hasattr(self_obj, "model_name"):
+                attributes[SpanAttributes.RERANKER.MODEL_NAME] = str(
+                    self_obj.model_name
+                )
+
+            if hasattr(self_obj, "top_n"):
+                attributes[SpanAttributes.RERANKER.TOP_N] = self_obj.top_n
+
+        # Extract output ranks, texts, and scores from return value
+        if ret and isinstance(ret, list):
+            output_ranks = []
+            output_texts = []
+            output_scores = []
+
+            for i, node in enumerate(ret):
+                # Capture rank
+                output_ranks.append(i)
+
+                # Capture text content
+                if hasattr(node, "node") and hasattr(node.node, "get_content"):
+                    output_texts.append(node.node.get_content())
+                elif hasattr(node, "get_content"):
+                    output_texts.append(node.get_content())
+                elif hasattr(node, "text"):
+                    output_texts.append(node.text)
+
+                # Capture score if available
+                if hasattr(node, "score"):
+                    output_scores.append(node.score)
+
+            attributes[SpanAttributes.RERANKER.OUTPUT_RANKS] = output_ranks
+            if output_texts:
+                attributes[SpanAttributes.RERANKER.OUTPUT_CONTEXT_TEXTS] = (
+                    output_texts
+                )
+            if output_scores:
+                attributes[SpanAttributes.RERANKER.OUTPUT_CONTEXT_SCORES] = (
+                    output_scores
+                )
+
+        return attributes
+
+    return {
+        "span_type": SpanAttributes.SpanType.RERANKER,
+        "attributes": _attributes,
+    }
+
+
 class LlamaInstrument(core_instruments.Instrument):
     """Instrumentation for LlamaIndex apps."""
 
@@ -303,7 +408,18 @@ class LlamaInstrument(core_instruments.Instrument):
                     WithFeedbackFilterNodes,
                     **_retrieval_span(),
                 ),
-                InstrumentedMethod("_postprocess_nodes", BaseNodePostprocessor),
+                # Reranker instrumentation - applies to all node postprocessors
+                # including SentenceTransformerRerank, CohereRerank, JinaRerank, etc.
+                InstrumentedMethod(
+                    "_postprocess_nodes",
+                    BaseNodePostprocessor,
+                    **_reranker_span(),
+                ),
+                InstrumentedMethod(
+                    "postprocess_nodes",
+                    BaseNodePostprocessor,
+                    **_reranker_span(),
+                ),
                 InstrumentedMethod("_run_component", QueryEngineComponent),
                 InstrumentedMethod("_run_component", RetrieverComponent),
             ]

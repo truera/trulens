@@ -55,18 +55,44 @@ from openai.resources import chat
 from openai.types.chat.chat_completion import ChatCompletion
 from openai.types.create_embedding_response import CreateEmbeddingResponse
 
+# Try to import Response API types (available in newer OpenAI versions)
+try:
+    from openai.types.responses.response import Response as ResponseAPIResponse
+
+    RESPONSE_API_AVAILABLE = True
+except ImportError:
+    # Response API not available in older OpenAI versions
+    ResponseAPIResponse = None
+    RESPONSE_API_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
 
-TOpenAIReturn = Union[
-    openai.types.completion.Completion,
-    openai.Stream[openai.types.completion.Completion],
-    openai.types.chat.chat_completion.ChatCompletion,
-    openai.Stream[openai.types.chat.chat_completion_chunk.ChatCompletionChunk],
-    openai.types.create_embedding_response.CreateEmbeddingResponse,
-    openai.types.moderation.Moderation,
-]
+# Build the union type conditionally based on available types
+if RESPONSE_API_AVAILABLE and ResponseAPIResponse is not None:
+    TOpenAIReturn = Union[
+        openai.types.completion.Completion,
+        openai.Stream[openai.types.completion.Completion],
+        openai.types.chat.chat_completion.ChatCompletion,
+        openai.Stream[
+            openai.types.chat.chat_completion_chunk.ChatCompletionChunk
+        ],
+        openai.types.create_embedding_response.CreateEmbeddingResponse,
+        openai.types.moderation.Moderation,
+        ResponseAPIResponse,
+    ]
+else:
+    TOpenAIReturn = Union[
+        openai.types.completion.Completion,
+        openai.Stream[openai.types.completion.Completion],
+        openai.types.chat.chat_completion.ChatCompletion,
+        openai.Stream[
+            openai.types.chat.chat_completion_chunk.ChatCompletionChunk
+        ],
+        openai.types.create_embedding_response.CreateEmbeddingResponse,
+        openai.types.moderation.Moderation,
+    ]
 """Types that openai responses can attain, or at least the ones we handle in cost tracking."""
 
 TOpenAIResponse = TOpenAIReturn
@@ -117,7 +143,40 @@ class OpenAICostComputer:
         }
         if model_name:
             ret[SpanAttributes.COST.MODEL] = model_name
+
         return ret
+
+    @staticmethod
+    async def ahandle_response(response: Any) -> Dict[str, Any]:
+        """
+        Async version of handle_response that can properly await coroutines.
+
+        Args:
+            response: The response object from OpenAI (can be a coroutine).
+
+        Returns:
+            A dictionary with cost information.
+        """
+        import asyncio
+        import inspect
+
+        # If response is a coroutine, await it
+        if inspect.iscoroutine(response) or asyncio.isfuture(response):
+            try:
+                response = await response
+            except Exception as e:
+                logger.warning(f"Failed to await async response: {e}")
+                return {
+                    SpanAttributes.COST.COST: 0.0,
+                    SpanAttributes.COST.CURRENCY: "USD",
+                    SpanAttributes.COST.NUM_TOKENS: 0,
+                    SpanAttributes.COST.NUM_PROMPT_TOKENS: 0,
+                    SpanAttributes.COST.NUM_COMPLETION_TOKENS: 0,
+                    SpanAttributes.COST.NUM_REASONING_TOKENS: 0,
+                }
+
+        # Now we have the actual response, use the sync handler
+        return OpenAICostComputer.handle_response(response)
 
 
 class OpenAIClient(serial_utils.SerialModel):
@@ -366,6 +425,13 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
         self._instrument_module_members(resources, "create")
         self._instrument_module_members(chat, "create")
 
+        try:
+            from openai.resources import responses
+
+            self._instrument_module_members(responses, "create")
+        except ImportError:
+            pass
+
     def handle_wrapped_call(
         self,
         func: Callable,
@@ -450,6 +516,22 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
             else:
                 usage = None
 
+            # Handle Response API usage format which has different field names
+            if (
+                RESPONSE_API_AVAILABLE
+                and ResponseAPIResponse is not None
+                and isinstance(response, ResponseAPIResponse)
+                and usage
+            ):
+                # Convert Response API usage format to ChatCompletion format for compatibility
+                if "input_tokens" in usage and "prompt_tokens" not in usage:
+                    usage["prompt_tokens"] = usage["input_tokens"]
+                if (
+                    "output_tokens" in usage
+                    and "completion_tokens" not in usage
+                ):
+                    usage["completion_tokens"] = usage["output_tokens"]
+
             if isinstance(response, ChatCompletion):
                 # Extract reasoning tokens if available (for reasoning models)
                 reasoning_tokens = 0
@@ -462,6 +544,32 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
                         )
 
                 # See how to construct in langchain.llms.openai.OpenAIChat._generate
+                llm_res = LLMResult(
+                    generations=[[]],
+                    llm_output=dict(token_usage=usage, model_name=model_name),
+                    run=None,
+                )
+                for callback in callbacks:
+                    callback.handle_generation(response=llm_res)
+                    # Track reasoning tokens separately
+                    if reasoning_tokens > 0:
+                        callback.cost.n_reasoning_tokens += reasoning_tokens
+            elif (
+                RESPONSE_API_AVAILABLE
+                and ResponseAPIResponse is not None
+                and isinstance(response, ResponseAPIResponse)
+            ):
+                # Handle Response API responses (for newer models like gpt-5, o3)
+                reasoning_tokens = 0
+                if usage and isinstance(usage, dict):
+                    # Look for reasoning tokens in output_tokens_details
+                    output_details = usage.get("output_tokens_details", {})
+                    if isinstance(output_details, dict):
+                        reasoning_tokens = output_details.get(
+                            "reasoning_tokens", 0
+                        )
+
+                # Create LLMResult compatible with langchain for Response API
                 llm_res = LLMResult(
                     generations=[[]],
                     llm_output=dict(token_usage=usage, model_name=model_name),

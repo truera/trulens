@@ -809,91 +809,6 @@ class SQLAlchemyDB(core_db.DB):
 
             return _extract_feedback_results(results)
 
-    def _get_event_record_attributes_otel(self, event: Event) -> Dict[str, Any]:
-        """Get the record attributes from the event.
-
-        This implementation differs from the pre-OTEL implementation by using the
-        `record_attributes` field of the event.
-
-        Args:
-            event: The event to extract the record attributes from.
-
-        Returns:
-            Dict[str, Any]: The record attributes from the event.
-        """
-        record_attributes = event.record_attributes
-        if not isinstance(record_attributes, dict):
-            try:
-                record_attributes = json.loads(record_attributes)
-            except (json.JSONDecodeError, TypeError):
-                logger.error(
-                    f"Failed to decode record attributes as JSON: {record_attributes}",
-                )
-
-        return record_attributes
-
-    def _get_event_resource_attributes_otel(
-        self, event: Event
-    ) -> Dict[str, Any]:
-        """Get the resource attributes from the event.
-
-        This implementation differs from the pre-OTEL implementation by using the
-        `resource_attributes` field of the event.
-
-        Args:
-            event: The event to extract the resource attributes from.
-
-        Returns:
-            Dict[str, Any]: The resource attributes from the event.
-        """
-        resource_attributes = event.resource_attributes
-        if not isinstance(resource_attributes, dict):
-            try:
-                resource_attributes = json.loads(resource_attributes)
-            except (json.JSONDecodeError, TypeError):
-                logger.error(
-                    f"Failed to decode resource attributes as JSON: {resource_attributes}",
-                )
-
-        return resource_attributes
-
-    def _update_cost_info_otel(
-        self,
-        target_dict: dict,
-        record_attributes: dict,
-        include_tokens: bool = False,
-    ):
-        """Update cost information in the target dictionary.
-
-        Args:
-            target_dict: Dictionary to update with cost information
-            record_attributes: Source attributes containing cost information
-            include_tokens: Whether to update token count (only for record_events)
-        """
-        if any(
-            key.startswith(SpanAttributes.COST.base)
-            for key in record_attributes
-        ):
-            if include_tokens:
-                target_dict["total_tokens"] += record_attributes.get(
-                    SpanAttributes.COST.NUM_TOKENS, 0
-                )
-
-            target_dict["total_cost"] += record_attributes.get(
-                SpanAttributes.COST.COST, 0.0
-            )
-            target_dict["cost_currency"] = record_attributes.get(
-                SpanAttributes.COST.CURRENCY, "USD"
-            )
-
-        # TODO(SNOW-2061174): convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
-        # Add to total_cost map
-        # cost = record_attributes.get(SpanAttributes.COST.COST, 0.0)
-        # currency = record_attributes.get(SpanAttributes.COST.CURRENCY, "USD")
-        # if currency not in record_events[record_id]["total_cost"]:
-        #     record_events[record_id]["total_cost"][currency] = 0.0
-        # record_events[record_id]["total_cost"][currency] += cost
-
     def _json_extract_otel(self, column: str, path: str) -> sa.Column:
         """Helper function to extract JSON values from a JSON column in the Event table.
 
@@ -924,6 +839,7 @@ class SQLAlchemyDB(core_db.DB):
         app_name: Optional[types_schema.AppName] = None,
         app_version: Optional[types_schema.AppVersion] = None,
         app_versions: Optional[List[types_schema.AppVersion]] = None,
+        run_name: Optional[types_schema.RunName] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> sa.Select:
@@ -934,6 +850,7 @@ class SQLAlchemyDB(core_db.DB):
             app_name: App name to filter by. Defaults to None.
             app_version: App version to filter by. Defaults to None.
             app_versions: List of app versions to filter by. Defaults to None.
+            run_name: Run name to filter by. Defaults to None.
             offset: Offset for pagination. Defaults to None.
             limit: Limit for pagination. Defaults to None.
 
@@ -999,6 +916,12 @@ class SQLAlchemyDB(core_db.DB):
                 )
             )
 
+        if run_name:
+            run_name_expr = self._json_extract_otel(
+                "record_attributes", SpanAttributes.RUN_NAME
+            )
+            conditions.append(run_name_expr == run_name)
+
         # Apply all conditions
         stmt = stmt.where(sa.and_(*conditions))
 
@@ -1022,6 +945,7 @@ class SQLAlchemyDB(core_db.DB):
         app_name: Optional[types_schema.AppName] = None,
         app_version: Optional[types_schema.AppVersion] = None,
         app_versions: Optional[List[types_schema.AppVersion]] = None,
+        run_name: Optional[types_schema.RunName] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
@@ -1036,6 +960,7 @@ class SQLAlchemyDB(core_db.DB):
             app_name: App name to filter by. Defaults to None.
             app_version: App version to filter by. Defaults to None.
             app_versions: List of app versions to filter by. Defaults to None.
+            run_name: Run name to filter by. Defaults to None.
             record_ids: List of record IDs to filter by. Defaults to None.
             offset: Offset for pagination. Defaults to None.
             limit: Limit for pagination. Defaults to None.
@@ -1051,6 +976,7 @@ class SQLAlchemyDB(core_db.DB):
                     app_name=app_name,
                     app_version=app_version,
                     app_versions=app_versions,
+                    run_name=run_name,
                     offset=offset,
                     limit=limit,
                 )
@@ -1067,314 +993,11 @@ class SQLAlchemyDB(core_db.DB):
 
             # Execute query
             events = session.execute(stmt).scalars().all()
-
-            if not events:
-                # Return empty dataframe with expected columns
-                logger.warning(
-                    f"No events found for app_name: {app_name}, app_ids: {app_ids}"
-                )
-                return pd.DataFrame(columns=AppsExtractor.all_cols), []
-
-            # Group events by record_id
-            record_events = {}
-            for event in events:
-                record_attributes = self._get_event_record_attributes_otel(
-                    event
-                )
-                resource_attributes = self._get_event_resource_attributes_otel(
-                    event
-                )
-                record_id = record_attributes.get(SpanAttributes.RECORD_ID)
-                if not record_id:
-                    continue
-                app_name = resource_attributes.get(
-                    ResourceAttributes.APP_NAME, ""
-                )
-                app_version = resource_attributes.get(
-                    ResourceAttributes.APP_VERSION, ""
-                )
-                app_id = resource_attributes.get(
-                    ResourceAttributes.APP_ID,
-                    app_schema.AppDefinition._compute_app_id(
-                        app_name, app_version
-                    ),
-                )
-                if app_ids and app_id not in app_ids:
-                    # TODO(otel):
-                    # This may screw up the pagination and can be slow due to it
-                    # looking at possibly a lot more events if there are many
-                    # that don't have app ids.
-                    # In the future we should either:
-                    # 1. Remove app ids if we're going to assume they're some
-                    #    complex function of app_name and app_version that's
-                    #    hard to replicate for non-TruLens users that want to
-                    #    still use our evaluation/feedback stuff.
-                    # 2. Have the app ids be from some source of truth like the
-                    #    app table but this doesn't work as easily for the
-                    #    Snowflake side.
-                    logger.info(f"Computed {app_id} not in {app_ids}!")
-                    continue
-
-                if record_id not in record_events:
-                    record_events[record_id] = {
-                        "events": [],
-                        "app_name": app_name,
-                        "app_version": app_version,
-                        "app_id": app_id,
-                        "input": "",  # Initialize to empty string, filled below
-                        "output": "",  # Initialize to empty string, filled below
-                        "tags": "",  # Not present in OTEL, use empty string
-                        "ts": pd.NaT,  # Initialize to empty value, filled below
-                        "latency": 0.0,  # Initialize to 0.0, filled below
-                        "total_tokens": 0,  # Initialize to 0, calculated below
-                        "total_cost": 0.0,  # Initialize to 0.0, calculated below
-                        "cost_currency": "USD",  # Initialize to "USD", calculated below
-                        "feedback_results": {},  # Initialize to empty map, calculated below
-                    }
-
-                record_events[record_id]["events"].append(event)
-
-                # Check if the span is of type RECORD_ROOT
-                if (
-                    record_attributes.get(SpanAttributes.SPAN_TYPE)
-                    == SpanAttributes.SpanType.RECORD_ROOT.value
-                ):
-                    record_events[record_id]["input_id"] = (
-                        record_attributes.get(SpanAttributes.INPUT_ID, "")
-                    )
-                    record_events[record_id]["input"] = record_attributes.get(
-                        SpanAttributes.RECORD_ROOT.INPUT, ""
-                    )
-                    record_events[record_id]["output"] = record_attributes.get(
-                        SpanAttributes.RECORD_ROOT.OUTPUT, ""
-                    )
-                    # NOTE: We grab timestamps from the RECORD_ROOT span because it provides a
-                    # more accurate duration/latency.
-                    record_events[record_id]["ts"] = event.start_timestamp
-                    record_events[record_id]["latency"] = (
-                        event.timestamp - event.start_timestamp
-                    ).total_seconds()
-
-                # Check if the span has cost info (tokens, cost, currency), and update record events
-                self._update_cost_info_otel(
-                    record_events[record_id],
-                    record_attributes,
-                    include_tokens=True,
-                )
-
-            # Process feedback results
-            feedback_col_names = []
-            for record_id, record_data in record_events.items():
-                for event in record_data["events"]:
-                    record_attributes = self._get_event_record_attributes_otel(
-                        event
-                    )
-
-                    # Check if the span is of type EVAL or EVAL_ROOT
-                    if record_attributes.get(SpanAttributes.SPAN_TYPE) in [
-                        SpanAttributes.SpanType.EVAL.value,
-                        SpanAttributes.SpanType.EVAL_ROOT.value,
-                    ]:
-                        metric_name = record_attributes.get(
-                            SpanAttributes.EVAL.METRIC_NAME
-                        )
-                        if not metric_name:
-                            logger.warning(
-                                f"Skipping eval span for record_id: {record_id}, no metric name found"
-                            )
-                            continue
-
-                        # Add feedback name to column names if not present
-                        if metric_name not in feedback_col_names:
-                            feedback_col_names.append(metric_name)
-
-                        # Initialize feedback result if not present
-                        if metric_name not in record_data["feedback_results"]:
-                            record_data["feedback_results"][metric_name] = {
-                                "mean_score": None,
-                                "calls": [],
-                                "total_cost": 0.0,
-                                "cost_currency": "USD",  # Initialize to USD, calculated below
-                                "direction": None,
-                            }
-
-                        # Update feedback result
-                        # TODO(otel): This isn't going to work if there are multiple with the same name.
-                        feedback_result = record_data["feedback_results"][
-                            metric_name
-                        ]
-
-                        eval_root_score = record_attributes.get(
-                            SpanAttributes.EVAL_ROOT.SCORE, None
-                        )
-
-                        if (
-                            record_attributes.get(SpanAttributes.SPAN_TYPE)
-                            == SpanAttributes.SpanType.EVAL_ROOT.value
-                        ):
-                            # NOTE: EVAL_ROOT.SCORE should provide the mean score of all related EVAL spans
-                            feedback_result["mean_score"] = eval_root_score
-                            # TODO(SNOW-2112879): HIGHER_IS_BETTER has not been populated in the OTEL spans yet
-                            feedback_result["direction"] = (
-                                record_attributes.get(
-                                    SpanAttributes.EVAL_ROOT.HIGHER_IS_BETTER,
-                                    None,
-                                )
-                            )
-                            # Add call data for EVAL_ROOT spans
-                            args_span_id = self._extract_namespaced_attributes(
-                                record_attributes,
-                                SpanAttributes.EVAL_ROOT.ARGS_SPAN_ID,
-                            )
-                            args_span_attribute = self._extract_namespaced_attributes(
-                                record_attributes,
-                                SpanAttributes.EVAL_ROOT.ARGS_SPAN_ATTRIBUTE,
-                            )
-
-                            call_data = {
-                                "span_type": record_attributes.get(
-                                    SpanAttributes.SPAN_TYPE
-                                ),
-                                "eval_root_id": record_attributes.get(
-                                    SpanAttributes.EVAL.EVAL_ROOT_ID
-                                ),
-                                "timestamp": record_data["ts"],
-                                "args_span_id": args_span_id,
-                                "args_span_attribute": args_span_attribute,
-                            }
-                            feedback_result["calls"].append(call_data)
-
-                            # Update feedback result with cost info if available
-                            self._update_cost_info_otel(
-                                feedback_result, record_attributes
-                            )
-
-                        if (
-                            record_attributes.get(SpanAttributes.SPAN_TYPE)
-                            == SpanAttributes.SpanType.EVAL.value
-                        ):
-                            # Extract namespaced attributes using the helper method
-                            kwargs = self._extract_namespaced_attributes(
-                                record_attributes, SpanAttributes.CALL.KWARGS
-                            )
-
-                            call_data = {
-                                "span_type": record_attributes.get(
-                                    SpanAttributes.SPAN_TYPE
-                                ),
-                                "args": kwargs,
-                                "ret": record_attributes.get(
-                                    SpanAttributes.EVAL.SCORE
-                                ),
-                                "eval_root_id": record_attributes.get(
-                                    SpanAttributes.EVAL.EVAL_ROOT_ID
-                                ),
-                                "timestamp": record_data["ts"],
-                                "meta": {
-                                    "explanation": record_attributes.get(
-                                        SpanAttributes.EVAL.EXPLANATION
-                                    ),
-                                    "metadata": record_attributes.get(
-                                        SpanAttributes.EVAL.METADATA, {}
-                                    ),
-                                },
-                            }
-                            feedback_result["calls"].append(call_data)
-
-                            # Update feedback result with cost info if available
-                            self._update_cost_info_otel(
-                                feedback_result, record_attributes
-                            )
-
-            # Create dataframe
-            records_data = []
-            for record_id, record_data in record_events.items():
-                # TODO: audit created jsons for correctness (app_json, record_json, cost_json, perf_json)
-
-                app_json = {
-                    "app_name": record_data["app_name"],
-                    "app_version": record_data["app_version"],
-                    "app_id": record_data["app_id"],
-                }
-
-                record_json = {
-                    "record_id": record_id,
-                    "app_id": record_data["app_id"],
-                    "input": record_data["input"],
-                    "output": record_data["output"],
-                    "tags": record_data["tags"],
-                    "ts": record_data["ts"],
-                    "meta": {},
-                }
-
-                cost_json = {
-                    "n_tokens": record_data["total_tokens"],
-                    # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
-                    "cost": record_data["total_cost"],
-                }
-
-                perf_json = {
-                    "start_time": record_data["ts"],
-                    "end_time": record_data["ts"]
-                    + pd.Timedelta(seconds=record_data["latency"]),
-                }
-
-                # Create record row
-                record_row = {
-                    "app_id": record_data["app_id"],
-                    "app_name": record_data["app_name"],
-                    "app_version": record_data["app_version"],
-                    "app_json": app_json,
-                    # TODO(nit): consider using a constant here
-                    "type": "SPAN",  # Default type as per orm.py
-                    "record_id": record_id,
-                    "input_id": record_data.get("input_id"),
-                    "input": record_data["input"],
-                    "output": record_data["output"],
-                    "tags": record_data["tags"],
-                    "record_json": record_json,
-                    "cost_json": cost_json,
-                    "perf_json": perf_json,
-                    "ts": record_data["ts"],
-                    "latency": record_data["latency"],
-                    "total_tokens": record_data["total_tokens"],
-                    # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
-                    "total_cost": record_data["total_cost"],
-                    "cost_currency": record_data["cost_currency"],
-                    "num_events": len(record_data["events"]),
-                }
-
-                # Add feedback results
-                for feedback_name, feedback_result in record_data[
-                    "feedback_results"
-                ].items():
-                    # NOTE: we use the mean score as the feedback result
-                    record_row[feedback_name] = feedback_result["mean_score"]
-
-                    record_row[f"{feedback_name}_calls"] = feedback_result[
-                        "calls"
-                    ]
-                    record_row[
-                        f"{feedback_name} feedback cost in {feedback_result['cost_currency']}"
-                    ] = feedback_result["total_cost"]
-                    record_row[f"{feedback_name} direction"] = feedback_result[
-                        "direction"
-                    ]
-
-                records_data.append(record_row)
-
-            # Create dataframe
-            df = pd.DataFrame(records_data)
-
-            # Ensure that all expected columns are present
-            for col in AppsExtractor.all_cols:
-                if col not in df.columns:
-                    logger.warning(
-                        f"Column {col} not found in dataframe, setting to None."
-                    )
-                    df[col] = None
-
-            return df, feedback_col_names
+            return self._get_records_and_feedback_otel_from_events(
+                events=events,
+                app_ids=app_ids,
+                app_name=app_name,
+            )
 
     def get_records_and_feedback(
         self,
@@ -1382,21 +1005,12 @@ class SQLAlchemyDB(core_db.DB):
         app_name: Optional[types_schema.AppName] = None,
         app_version: Optional[types_schema.AppVersion] = None,
         app_versions: Optional[List[types_schema.AppVersion]] = None,
+        run_name: Optional[types_schema.RunName] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
-        """See [DB.get_records_and_feedback][trulens.core.database.base.DB.get_records_and_feedback].
-
-        Args:
-            app_ids: Optional list of app IDs to filter by. Defaults to None.
-            app_name: Optional app name to filter by. Defaults to None.
-            app_version: Optional app version to filter by. Defaults to None.
-            app_versions: Optional list of app versions to filter by. Defaults to None.
-            record_ids: Optional list of record IDs to filter by. Defaults to None.
-            offset: Optional offset for pagination. Defaults to None.
-            limit: Optional limit for pagination. Defaults to None.
-        """
+        """See [DB.get_records_and_feedback][trulens.core.database.base.DB.get_records_and_feedback]."""
         if app_ids:
             logger.warning(
                 "`app_ids` is deprecated. Please use `app_name`, and `app_versions` instead."
@@ -1411,9 +1025,14 @@ class SQLAlchemyDB(core_db.DB):
                 app_name=app_name,
                 app_version=app_version,
                 app_versions=app_versions,
+                run_name=run_name,
                 record_ids=record_ids,
                 offset=offset,
                 limit=limit,
+            )
+        elif run_name:
+            raise RuntimeError(
+                "`run_name` is not supported in the pre-OTel implementation."
             )
 
         # Original implementation for pre-OTEL ORM
@@ -1750,25 +1369,6 @@ class SQLAlchemyDB(core_db.DB):
                 q = sa.select(self.orm.Event).where(sa.and_(*where_clauses))
             return pd.read_sql(q, session.bind)
 
-    def get_events_by_record_id(self, record_id: str) -> pd.DataFrame:
-        """Get all events for a given record ID.
-
-        Args:
-            record_id: The record ID to get events for.
-
-        Returns:
-            A pandas DataFrame containing all events for the given record ID.
-        """
-        with self.session.begin() as session:
-            # Query events where record_attributes contains the record_id
-            record_id_expr = self._json_extract_otel(
-                "record_attributes", SpanAttributes.RECORD_ID
-            )
-            q = sa.select(self.orm.Event).where(record_id_expr == record_id)
-
-            # Execute query and return as DataFrame
-            return pd.read_sql(q, session.bind)
-
     def _extract_namespaced_attributes(
         self, record_attributes: Dict[str, Any], namespace_prefix: str
     ) -> Dict[str, Any]:
@@ -1925,22 +1525,8 @@ def _extract_ground_truths(
     )
 
 
-class AppsExtractor:
+class AppsExtractor(core_db.BaseAppsExtractor):
     """Utilities for creating dataframes from orm instances."""
-
-    app_cols = ["app_name", "app_version", "app_id", "app_json", "type"]
-    rec_cols = [
-        "record_id",
-        "input",
-        "output",
-        "tags",
-        "record_json",
-        "cost_json",
-        "perf_json",
-        "ts",
-    ]
-    extra_cols = ["latency", "total_tokens", "total_cost", "num_events"]
-    all_cols = app_cols + rec_cols + extra_cols
 
     def __init__(self):
         self.feedback_columns = set()

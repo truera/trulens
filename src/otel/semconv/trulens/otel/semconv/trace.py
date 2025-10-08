@@ -97,6 +97,18 @@ class SpanAttributes:
         GRAPH_NODE = "graph_node"
         """A graph node execution."""
 
+        WORKFLOW_STEP = "workflow_step"
+        """A workflow step execution."""
+
+        AGENT = "agent"
+        """An agent execution."""
+
+        TOOL = "tool"
+        """A tool/function call execution."""
+
+        RERANKER = "reranking"
+        """A reranking operation."""
+
     class UNKNOWN:
         """Attributes relevant for spans that could not be categorized otherwise."""
 
@@ -313,3 +325,52 @@ class SpanAttributes:
 
         ERROR = base + ".error"
         """Error raised during graph execution."""
+
+    class WORKFLOW:
+        """A workflow execution."""
+
+        base = BASE_SCOPE + ".workflow"
+
+        INPUT_EVENT = base + ".input_event"
+        """Input event to the workflow."""
+
+        OUTPUT_EVENT = base + ".output_event"
+        """Output event from the workflow."""
+
+        ERROR = base + ".error"
+        """Error raised during workflow execution."""
+
+        AGENT_NAME = base + ".agent_name"
+        """Name of the agent executing in the workflow."""
+
+    class RERANKER:
+        """A reranking operation."""
+
+        base = BASE_SCOPE + ".reranking"
+
+        QUERY_TEXT = base + ".query_text"
+        """Query text used for reranking."""
+
+        MODEL_NAME = base + ".model_name"
+        """Name of the reranking model."""
+
+        TOP_N = base + ".top_n"
+        """Number of top results to return after reranking."""
+
+        INPUT_CONTEXT_TEXTS = base + ".input_context_texts"
+        """Input contexts before reranking."""
+
+        INPUT_CONTEXT_SCORES = base + ".input_context_scores"
+        """Input scores before reranking."""
+
+        INPUT_RANKS = base + ".input_ranks"
+        """Input ranking order before reranking."""
+
+        OUTPUT_RANKS = base + ".output_ranks"
+        """Output ranking order after reranking."""
+
+        OUTPUT_CONTEXT_TEXTS = base + ".output_context_texts"
+        """Output contexts after reranking."""
+
+        OUTPUT_CONTEXT_SCORES = base + ".output_context_scores"
+        """Output scores after reranking."""

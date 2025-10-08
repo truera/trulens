@@ -44,6 +44,7 @@ def run_dashboard(
     address: Optional[str] = None,
     force: bool = False,
     sis_compatibility_mode: bool = False,
+    spcs_mode: bool = False,
     _dev: Optional[Path] = None,
     _watch_changes: bool = False,
 ) -> Process:
@@ -58,6 +59,8 @@ def run_dashboard(
 
         sis_compatibility_mode (bool): Flag to enable compatibility with Streamlit in Snowflake (SiS). SiS runs on Python 3.8, Streamlit 1.35.0, and does not support bidirectional custom components. As a result, enabling this flag will replace custom components in the dashboard with native Streamlit components. Defaults to `False`.
 
+        spcs_mode (bool): Flag to enable compatibility with Snowpark Container Services (SPCS).
+
         _dev (Path): If given, runs the dashboard with the given `PYTHONPATH`. This can be used to run the dashboard from outside of its pip package installation folder. Defaults to `None`.
 
         _watch_changes (bool): If `True`, the dashboard will watch for changes in the code and update the dashboard accordingly. Defaults to `False`.
@@ -71,7 +74,8 @@ def run_dashboard(
     """
     session = session or core_session.TruSession()
 
-    session.connector.db.check_db_revision()
+    connector = session.connector
+    connector.db.check_db_revision()
 
     IN_COLAB = "google.colab" in sys.modules
     if IN_COLAB and address is not None:
@@ -128,11 +132,12 @@ def run_dashboard(
         main_path,
         "--",
         "--database-prefix",
-        session.connector.db.table_prefix,
+        connector.db.table_prefix,
     ]
-    if (
-        _is_snowflake_connector(session.connector)
-        and not session.connector.password_known
+    if _is_snowflake_connector(connector) and (
+        not connector.password_known
+        or connector.use_account_event_table
+        or spcs_mode
     ):
         # If we don't know the password, this is problematic because we run the
         # dashboard in a separate process so we won't be able to recreate the
@@ -143,7 +148,6 @@ def run_dashboard(
             clean_up_snowflake_identifier,
         )
 
-        connector = session.connector
         snowpark_session = connector.snowpark_session
         args_to_add = [
             ("--snowflake-account", snowpark_session.get_current_account()),
@@ -154,18 +158,28 @@ def run_dashboard(
             ("--snowflake-warehouse", snowpark_session.get_current_warehouse()),
             ("--snowflake-host", snowpark_session.connection.host),
         ]
+        if spcs_mode:
+            args.append("--snowflake-spcs-mode")
+        else:
+            if connector.password_known:
+                args_to_add.append((
+                    "--snowflake-password",
+                    connector._password,
+                ))
+            else:
+                args_to_add.append((
+                    "--snowflake-authenticator",
+                    "externalbrowser",
+                ))
         for arg, val in args_to_add:
             if val:
                 args += [arg, clean_up_snowflake_identifier(val)]
-        args += ["--snowflake-authenticator", "externalbrowser"]
         if connector.use_account_event_table:
             args.append("--snowflake-use-account-event-table")
     else:
         args += [
             "--database-url",
-            session.connector.db.engine.url.render_as_string(
-                hide_password=False
-            ),
+            connector.db.engine.url.render_as_string(hide_password=False),
         ]
     if sis_compatibility_mode:
         args += ["--sis-compatibility"]
