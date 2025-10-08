@@ -9,7 +9,6 @@ from dataclasses import dataclass
 from dataclasses import field
 import json
 import logging
-import time
 from typing import Any, Dict, List, Optional
 
 import requests
@@ -198,7 +197,7 @@ class CortexAgentManager:
                 logger.error(
                     f"Error details: {json.dumps(error_detail, indent=2)}"
                 )
-            except:
+            except Exception:
                 pass
 
         response.raise_for_status()

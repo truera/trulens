@@ -11,25 +11,21 @@ A user-friendly interface for:
 7. Comparing and applying results
 """
 
+from datetime import datetime
 import json
 import os
-from datetime import datetime
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
-
-import pandas as pd
-import plotly.graph_objects as go
-import requests
-import streamlit as st
-from dotenv import load_dotenv
-from openai import OpenAI
-from snowflake.snowpark import Session
+from typing import Any, Dict, List, Optional, Tuple
 
 from cortex_agent_manager import AgentInstructions
 from cortex_agent_manager import CortexAgentManager
+from dotenv import load_dotenv
+from openai import OpenAI
+import pandas as pd
+import plotly.graph_objects as go
+import requests
+from snowflake.snowpark import Session
+import streamlit as st
+from trulens.otel.semconv.trace import SpanAttributes
 
 # Optional imports for evaluation
 try:
@@ -127,9 +123,9 @@ def get_trulens_components() -> Tuple[Optional[TruSession], Optional[Any]]:
     ):
         try:
             connection_params = {
-                "account": st.session_state.account_url.replace(
-                    "https://", ""
-                ).replace(".snowflakecomputing.com", ""),
+                "account": st.session_state.account_url.replace("https://", "")
+                .replace(".snowflakecomputing.com", "")
+                .rstrip("/"),
                 "user": os.getenv("SNOWFLAKE_USER"),
                 "password": st.session_state.pat,
                 "database": st.session_state.database,
@@ -565,9 +561,31 @@ def render_data_loading():
         st.text_input("Thread ID (optional)", key="event_thread_id")
 
         if st.button("🔍 Query Event Table", key="query_events"):
-            st.warning(
-                "Event table querying not yet implemented. Use CSV upload for now."
+            tru_session = get_trulens_components()[0]
+            events = tru_session.connector.db.get_events(
+                app_name=st.session_state.selected_agent
             )
+            inputs = []
+            ground_truths = []
+            for _, event in events.iterrows():
+                record_attributes = json.loads(event["record_attributes"])
+                curr_input = record_attributes.get(
+                    SpanAttributes.RECORD_ROOT.INPUT
+                )
+                if curr_input:
+                    curr_ground_truth = record_attributes.get(
+                        SpanAttributes.RECORD_ROOT.GROUND_TRUTH_OUTPUT
+                    )
+                else:
+                    curr_ground_truth = None
+                if curr_input not in inputs:
+                    inputs.append(curr_input)
+                    ground_truths.append(curr_ground_truth)
+            df = pd.DataFrame({"input": inputs, "ground_truth": ground_truths})
+            st.dataframe(df.head(10), use_container_width=True)
+            if st.button("✅ Use This Dataset", key="use_event_table"):
+                st.session_state.eval_dataset = df
+                st.success(f"Loaded {len(df)} rows")
 
     # Display current dataset
     if st.session_state.eval_dataset is not None:
