@@ -41,6 +41,30 @@ from langgraph.graph import StateGraph
 from langgraph.pregel import Pregel
 from langgraph.types import Command
 
+# Import BaseTool and StructuredTool for individual tool instrumentation
+BaseTool = None
+StructuredTool = None
+
+try:
+    from langchain_core.tools import BaseTool
+    from langchain_core.tools import StructuredTool
+except ImportError:
+    try:
+        from langchain.tools.base import BaseTool
+    except ImportError:
+        pass
+
+try:
+    if StructuredTool is None:
+        from langchain_core.tools.structured import StructuredTool
+except ImportError:
+    pass
+
+if not BaseTool or not StructuredTool:
+    logger.warning(
+        f"Tool imports: BaseTool={BaseTool is not None}, StructuredTool={StructuredTool is not None}"
+    )
+
 logger = logging.getLogger(__name__)
 
 # Try to import ToolNode for MCP tool instrumentation
@@ -110,9 +134,10 @@ class LangGraphInstrument(core_instruments.Instrument):
                 StateGraph,
                 Command,
                 ToolNode,  # Add ToolNode for MCP tool instrumentation
+                StructuredTool,  # Add StructuredTool for individual tool spans
                 # Note: TaskFunction (or _TaskFunction) is instrumented at class-level during initialization
             }
-            if ToolNode
+            if ToolNode and StructuredTool
             else {
                 Pregel,
                 StateGraph,
@@ -151,28 +176,22 @@ class LangGraphInstrument(core_instruments.Instrument):
                 object,  # Will be filtered by module name
                 *core_instruments.Instrument.Default.mcp_span("tool_name"),
             ),
-            # ToolNode instrumentation for better MCP tool tracking
+            # ToolNode instrumentation - mark as GRAPH_NODE so individual tool calls show as children
             InstrumentedMethod(
                 "invoke",
                 ToolNode if ToolNode else object,
-                SpanAttributes.SpanType.MCP,
-                lambda ret,
-                exception,
-                *args,
-                **kwargs: TruGraph._extract_toolnode_attributes(
-                    ret, exception, *args, **kwargs
-                ),
+                SpanAttributes.SpanType.GRAPH_NODE,
+                lambda ret, exception, *args, **kwargs: {
+                    "graph_node.name": "tools"
+                },
             ),
             InstrumentedMethod(
                 "ainvoke",
                 ToolNode if ToolNode else object,
-                SpanAttributes.SpanType.MCP,
-                lambda ret,
-                exception,
-                *args,
-                **kwargs: TruGraph._extract_toolnode_attributes(
-                    ret, exception, *args, **kwargs
-                ),
+                SpanAttributes.SpanType.GRAPH_NODE,
+                lambda ret, exception, *args, **kwargs: {
+                    "graph_node.name": "tools"
+                },
             ),
         ]
 
@@ -923,6 +942,110 @@ class TruGraph(TruChain):
             )
 
     @classmethod
+    def _setup_structuredtool_instrumentation(cls):
+        """Set up instrumentation for StructuredTool to create separate spans for each tool call"""
+
+        if not StructuredTool:
+            logger.debug(
+                "StructuredTool not available, skipping tool instrumentation"
+            )
+            return
+
+        if not is_otel_tracing_enabled():
+            logger.debug(
+                "OTEL not enabled, skipping StructuredTool instrumentation"
+            )
+            return
+
+        try:
+            if hasattr(StructuredTool, "ainvoke") and hasattr(
+                getattr(StructuredTool, "ainvoke"),
+                TRULENS_INSTRUMENT_WRAPPER_FLAG,
+            ):
+                logger.debug("StructuredTool.ainvoke already instrumented")
+                return
+
+            logger.info(
+                "Applying class-level instrumentation to StructuredTool.ainvoke"
+            )
+            print(
+                "[SETUP] Instrumenting StructuredTool.ainvoke for individual tool spans"
+            )
+
+            from opentelemetry import trace
+            from trulens.experimental.otel_tracing.core.session import (
+                TRULENS_SERVICE_NAME,
+            )
+            from trulens.experimental.otel_tracing.core.span import (
+                set_general_span_attributes,
+            )
+            import wrapt
+
+            original_ainvoke = StructuredTool.ainvoke
+
+            @wrapt.decorator
+            async def ainvoke_wrapper(wrapped, instance, args, kwargs):
+                tool_name = getattr(instance, "name", "unknown_tool")
+                print(f"[TOOL CALL] Creating span for: {tool_name}")
+
+                tracer = trace.get_tracer_provider().get_tracer(
+                    TRULENS_SERVICE_NAME
+                )
+
+                # Start span with the tool name directly
+                with tracer.start_as_current_span(tool_name) as span:
+                    try:
+                        # Set MCP span type and attributes
+                        set_general_span_attributes(
+                            span, SpanAttributes.SpanType.MCP
+                        )
+                        span.set_attribute(
+                            SpanAttributes.MCP.TOOL_NAME, tool_name
+                        )
+                        span.set_attribute(
+                            SpanAttributes.MCP.INPUT_ARGUMENTS,
+                            str(args) + str(kwargs),
+                        )
+
+                        # Execute the tool
+                        result = await wrapped(*args, **kwargs)
+
+                        # Set output attributes
+                        span.set_attribute(
+                            SpanAttributes.MCP.OUTPUT_CONTENT,
+                            str(result) if result is not None else "",
+                        )
+                        span.set_attribute(
+                            SpanAttributes.MCP.OUTPUT_IS_ERROR, False
+                        )
+
+                        print(f"[TOOL CALL] Completed span for: {tool_name}")
+                        return result
+                    except Exception as e:
+                        # Set error attributes
+                        span.set_attribute(
+                            SpanAttributes.MCP.OUTPUT_IS_ERROR, True
+                        )
+                        span.set_attribute(
+                            SpanAttributes.MCP.OUTPUT_CONTENT, str(e)
+                        )
+                        print(
+                            f"[TOOL CALL] Error in span for: {tool_name} - {e}"
+                        )
+                        raise
+
+            StructuredTool.ainvoke = ainvoke_wrapper(original_ainvoke)
+            setattr(
+                StructuredTool.ainvoke, TRULENS_INSTRUMENT_WRAPPER_FLAG, True
+            )
+
+            logger.debug("Applied instrumentation to StructuredTool.ainvoke")
+            print("[SETUP] StructuredTool.ainvoke instrumentation complete")
+
+        except Exception as e:
+            logger.warning(f"Failed to instrument StructuredTool: {e}")
+
+    @classmethod
     def _setup_runnable_callable_instrumentation(cls):
         """Set up instrumentation for RunnableCallable objects (individual node functions)"""
 
@@ -1063,9 +1186,28 @@ class TruGraph(TruChain):
                                         server_name, list(tools_by_name.keys())
                                     )
 
-                    # Also check messages for tool calls to get the actual tool name
+                    # Extract tool name(s) from the OUTPUT (ret) which contains ToolMessage(s)
+                    # This is more accurate than trying to guess from input messages
+                    tool_names_found = []
+                    if ret and isinstance(ret, dict) and "messages" in ret:
+                        ret_messages = ret["messages"]
+                        if isinstance(ret_messages, list) and ret_messages:
+                            # Look for ALL ToolMessages in the output
+                            for msg in ret_messages:
+                                if hasattr(msg, "name") and msg.name:
+                                    # ToolMessage has the name of the tool that was executed
+                                    tool_names_found.append(msg.name)
+
+                            # If multiple tools were called, join their names
+                            if len(tool_names_found) > 1:
+                                tool_name = " + ".join(tool_names_found)
+                            elif len(tool_names_found) == 1:
+                                tool_name = tool_names_found[0]
+
+                    # Fallback: check input messages for tool calls
                     if (
-                        isinstance(input_data, dict)
+                        tool_name == "unknown"
+                        and isinstance(input_data, dict)
                         and "messages" in input_data
                     ):
                         # Look for tool calls in the messages
@@ -1237,6 +1379,9 @@ class TruGraph(TruChain):
 
             # Set up RunnableCallable instrumentation for individual nodes
             cls._setup_runnable_callable_instrumentation()
+
+            # Set up StructuredTool instrumentation for individual tool calls
+            cls._setup_structuredtool_instrumentation()
 
             # Create enhanced attributes function for Pregel methods
             def pregel_attributes(ret, exception, *args, **kwargs):
