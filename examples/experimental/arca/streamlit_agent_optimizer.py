@@ -528,13 +528,21 @@ def render_data_loading():
         if uploaded_file:
             try:
                 df = pd.read_csv(uploaded_file)
-                st.dataframe(df.head(10), use_container_width=True)
-
-                if st.button("✅ Use This Dataset", key="use_csv"):
-                    st.session_state.eval_dataset = df
-                    st.success(f"Loaded {len(df)} rows")
+                st.session_state.uploaded_csv_data = df
             except Exception as e:
                 st.error(f"Failed to load CSV: {e}")
+
+        # Display and confirm outside the upload conditional
+        if hasattr(st.session_state, "uploaded_csv_data"):
+            st.dataframe(
+                st.session_state.uploaded_csv_data.head(10),
+                use_container_width=True,
+            )
+            if st.button("✅ Use This Dataset", key="use_csv"):
+                st.session_state.eval_dataset = (
+                    st.session_state.uploaded_csv_data
+                )
+                st.success(f"Loaded {len(st.session_state.eval_dataset)} rows")
 
     with tab2:
         st.markdown("Load data from a Snowflake table")
@@ -556,9 +564,9 @@ def render_data_loading():
         st.markdown("Retrieve data from Snowflake AI Observability Event Table")
 
         # Note: These inputs are for future implementation
-        st.date_input("Start Date", key="event_start_date")
-        st.date_input("End Date", key="event_end_date")
-        st.text_input("Thread ID (optional)", key="event_thread_id")
+        # st.date_input("Start Date", key="event_start_date")
+        # st.date_input("End Date", key="event_end_date")
+        # st.text_input("Thread ID (optional)", key="event_thread_id")
 
         if st.button("🔍 Query Event Table", key="query_events"):
             tru_session = get_trulens_components()[0]
@@ -582,10 +590,19 @@ def render_data_loading():
                     inputs.append(curr_input)
                     ground_truths.append(curr_ground_truth)
             df = pd.DataFrame({"input": inputs, "ground_truth": ground_truths})
-            st.dataframe(df.head(10), use_container_width=True)
+            st.session_state.queried_event_data = df
+
+        # Display and confirm outside the query button conditional
+        if hasattr(st.session_state, "queried_event_data"):
+            st.dataframe(
+                st.session_state.queried_event_data.head(10),
+                use_container_width=True,
+            )
             if st.button("✅ Use This Dataset", key="use_event_table"):
-                st.session_state.eval_dataset = df
-                st.success(f"Loaded {len(df)} rows")
+                st.session_state.eval_dataset = (
+                    st.session_state.queried_event_data
+                )
+                st.success(f"Loaded {len(st.session_state.eval_dataset)} rows")
 
     # Display current dataset
     if st.session_state.eval_dataset is not None:
