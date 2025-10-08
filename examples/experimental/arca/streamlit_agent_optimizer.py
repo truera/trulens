@@ -352,6 +352,12 @@ def render_sidebar():
 
         st.subheader("Configuration")
 
+        # Track old values to detect changes
+        old_account_url = st.session_state.account_url
+        old_database = st.session_state.database
+        old_schema = st.session_state.schema
+        old_pat = st.session_state.pat
+
         st.session_state.account_url = st.text_input(
             "Snowflake Account URL",
             value=st.session_state.account_url,
@@ -373,6 +379,22 @@ def render_sidebar():
             value=st.session_state.pat,
             type="password",
         )
+
+        # Clear cached connections if credentials changed
+        if (
+            st.session_state.account_url != old_account_url
+            or st.session_state.database != old_database
+            or st.session_state.schema != old_schema
+            or st.session_state.pat != old_pat
+        ):
+            if st.session_state.agent_manager is not None:
+                st.info("🔄 Credentials changed - clearing cached connections")
+                st.session_state.agent_manager = None
+                st.session_state.tru_session = None
+                st.session_state.tru_provider = None
+                st.session_state.available_agents = []
+                st.session_state.selected_agent = None
+                st.session_state.agent_details = None
 
         st.markdown("---")
 
