@@ -60,12 +60,12 @@ try:
 except ImportError:
     pass
 
+logger = logging.getLogger(__name__)
+
 if not BaseTool or not StructuredTool:
     logger.warning(
         f"Tool imports: BaseTool={BaseTool is not None}, StructuredTool={StructuredTool is not None}"
     )
-
-logger = logging.getLogger(__name__)
 
 # Try to import ToolNode for MCP tool instrumentation
 try:
@@ -968,9 +968,6 @@ class TruGraph(TruChain):
             logger.info(
                 "Applying class-level instrumentation to StructuredTool.ainvoke"
             )
-            print(
-                "[SETUP] Instrumenting StructuredTool.ainvoke for individual tool spans"
-            )
 
             from opentelemetry import trace
             from trulens.experimental.otel_tracing.core.session import (
@@ -986,7 +983,6 @@ class TruGraph(TruChain):
             @wrapt.decorator
             async def ainvoke_wrapper(wrapped, instance, args, kwargs):
                 tool_name = getattr(instance, "name", "unknown_tool")
-                print(f"[TOOL CALL] Creating span for: {tool_name}")
 
                 tracer = trace.get_tracer_provider().get_tracer(
                     TRULENS_SERVICE_NAME
@@ -1019,7 +1015,6 @@ class TruGraph(TruChain):
                             SpanAttributes.MCP.OUTPUT_IS_ERROR, False
                         )
 
-                        print(f"[TOOL CALL] Completed span for: {tool_name}")
                         return result
                     except Exception as e:
                         # Set error attributes
@@ -1029,9 +1024,6 @@ class TruGraph(TruChain):
                         span.set_attribute(
                             SpanAttributes.MCP.OUTPUT_CONTENT, str(e)
                         )
-                        print(
-                            f"[TOOL CALL] Error in span for: {tool_name} - {e}"
-                        )
                         raise
 
             StructuredTool.ainvoke = ainvoke_wrapper(original_ainvoke)
@@ -1040,7 +1032,6 @@ class TruGraph(TruChain):
             )
 
             logger.debug("Applied instrumentation to StructuredTool.ainvoke")
-            print("[SETUP] StructuredTool.ainvoke instrumentation complete")
 
         except Exception as e:
             logger.warning(f"Failed to instrument StructuredTool: {e}")
