@@ -47,32 +47,18 @@ class SnowflakeEventTableDB(core_db.DB):
         app_name: Optional[types_schema.AppName] = None,
         app_version: Optional[types_schema.AppVersion] = None,
         app_versions: Optional[List[types_schema.AppVersion]] = None,
+        run_name: Optional[types_schema.RunName] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
-        """Get records from the database.
-
-        Args:
-            app_ids: If given, retrieve only the records for the given apps.
-                Otherwise all apps are retrieved.
-            app_name: If given, retrieve only the records for the given app name.
-            app_version: If given, retrieve only the records for the given app version.
-            app_versions: If given, retrieve only the records for the given app versions.
-            record_ids: Optional list of record IDs to filter by. Defaults to None.
-            offset: Database row offset.
-            limit: Limit on rows (records) returned.
-
-        Returns:
-            A DataFrame with the records.
-
-            A list of column names that contain feedback results.
-        """
+        """See [DB.get_records_and_feedback][trulens.core.database.base.DB.get_records_and_feedback]."""
         df = self._get_events(
             app_ids=app_ids,
             app_name=app_name,
             app_version=app_version,
             app_versions=app_versions,
+            run_name=run_name,
             record_ids=record_ids,
         )
         events = []
@@ -130,6 +116,7 @@ class SnowflakeEventTableDB(core_db.DB):
         app_name: Optional[types_schema.AppName] = None,
         app_version: Optional[types_schema.AppVersion] = None,
         app_versions: Optional[List[types_schema.AppVersion]] = None,
+        run_name: Optional[types_schema.RunName] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
         start_time: Optional[datetime] = None,
     ) -> pd.DataFrame:
@@ -161,6 +148,11 @@ class SnowflakeEventTableDB(core_db.DB):
             app_versions_str = ", ".join([f"'{curr}'" for curr in app_versions])
             where_clauses.append(
                 f"IFNULL(RECORD_ATTRIBUTES:\"{ResourceAttributes.APP_VERSION}\", 'base') IN ({app_versions_str})"
+            )
+        if run_name:
+            run_name_str = f"'{run_name}'"
+            where_clauses.append(
+                f'RECORD_ATTRIBUTES:"{SpanAttributes.RUN_NAME}" = {run_name_str}'
             )
         if record_ids:
             record_ids_str = ", ".join([f"'{curr}'" for curr in record_ids])

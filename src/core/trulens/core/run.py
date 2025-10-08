@@ -1195,6 +1195,7 @@ class Run(BaseModel):
             self.tru_session.get_records_and_feedback(
                 app_name=self.object_name,
                 app_version=self.object_version,
+                run_name=self.run_name,
                 record_ids=record_ids,
                 offset=offset,
                 limit=limit,
@@ -1229,6 +1230,7 @@ class Run(BaseModel):
         record_details_df, _ = self.tru_session.get_records_and_feedback(
             app_name=self.object_name,
             app_version=self.object_version,
+            run_name=self.run_name,
             record_ids=record_ids,
             offset=offset,
             limit=limit,
