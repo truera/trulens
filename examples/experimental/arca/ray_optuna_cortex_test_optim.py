@@ -321,7 +321,7 @@ def evaluate_agent_response(
     Agent Response: {agent_response_text}
     Ground Truth: {ground_truth}
 
-    Score the agent response on its accuracy given the question and the ground truth.
+    Score the agent response on its accuracy given the question and the ground truth. Score must be between 0 and 1.
 
     Please evaluate using the following template:
     Criteria: <Provide the criteria for this evaluation, restating the
@@ -336,6 +336,8 @@ def evaluate_agent_response(
     accuracy_score, accuracy_reason = tru_provider.generate_score_and_reasons(
         system_prompt=accuracy_prompt,
         temperature=0.0,
+        min_score_val=0,
+        max_score_val=1,
     )
 
     metrics["accuracy"] = {
