@@ -586,7 +586,7 @@ def render_data_loading():
                     )
                 else:
                     curr_ground_truth = None
-                if curr_input not in inputs:
+                if curr_input and curr_input not in inputs:
                     inputs.append(curr_input)
                     ground_truths.append(curr_ground_truth)
             if ground_truths and all(ground_truths):
