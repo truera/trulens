@@ -1090,16 +1090,9 @@ class TruGraph(TruChain):
 
                 # Set attributes based on span type
                 if span_type == SpanAttributes.SpanType.GENERATION:
-                    # For model calls, use generation attributes
-                    attributes[SpanAttributes.GENERATION.MODEL_NAME] = (
-                        "gpt-4o"  # Could be extracted from context
-                    )
-                    attributes[SpanAttributes.GENERATION.INPUT_MESSAGES] = (
-                        str(args[1:]) if len(args) > 1 else str(kwargs)
-                    )
-                    attributes[SpanAttributes.GENERATION.OUTPUT_MESSAGE] = (
-                        str(ret) if ret else ""
-                    )
+                    # For model calls, just mark the span type
+                    # GENERATION attributes would be set here if they were defined
+                    pass
                 elif span_type == SpanAttributes.SpanType.MCP:
                     # For tool calls, use MCP attributes and try to extract server/tool info
                     tool_name = "unknown"  # Don't default to node_name (_func)
