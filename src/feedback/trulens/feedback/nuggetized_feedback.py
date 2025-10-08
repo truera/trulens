@@ -1,7 +1,6 @@
 import json
 import logging
 from typing import Dict, List, Optional, Tuple
-import numpy as np
 from openai import OpenAI
 
 from trulens.core.feedback import feedback as core_feedback
