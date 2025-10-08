@@ -589,7 +589,13 @@ def render_data_loading():
                 if curr_input not in inputs:
                     inputs.append(curr_input)
                     ground_truths.append(curr_ground_truth)
-            df = pd.DataFrame({"input": inputs, "ground_truth": ground_truths})
+            if ground_truths and all(ground_truths):
+                df = pd.DataFrame({
+                    "question": inputs,
+                    "ground_truth": ground_truths,
+                })
+            else:
+                df = pd.DataFrame({"question": inputs})
             st.session_state.queried_event_data = df
 
         # Display and confirm outside the query button conditional
