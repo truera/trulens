@@ -20,12 +20,11 @@ class TestVirtualRunMethods(OtelTestCase):
     """Test virtual run helper methods with proper OTEL setup"""
 
     def test_virtual_run_start_signature(self):
-        """Test that Run.start accepts virtual parameter"""
+        """Test that Run.start no longer accepts virtual parameter"""
         import inspect
 
         sig = inspect.signature(Run.start)
-        self.assertIn("virtual", sig.parameters)
-        self.assertEqual(sig.parameters["virtual"].default, False)
+        self.assertNotIn("virtual", sig.parameters)
 
     def test_span_type_enum_mapping(self):
         """Test dynamic span type enum mapping"""

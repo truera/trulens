@@ -1839,6 +1839,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 description=run_config.description,
                 label=run_config.label,
                 llm_judge_name=run_config.llm_judge_name,
+                mode=run_config.mode,
             )
 
             return Run.from_metadata_df(

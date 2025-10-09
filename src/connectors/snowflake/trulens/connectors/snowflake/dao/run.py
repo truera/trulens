@@ -10,6 +10,7 @@ from trulens.connectors.snowflake.dao.sql_utils import (
     clean_up_snowflake_identifier,
 )
 from trulens.connectors.snowflake.dao.sql_utils import execute_query
+from trulens.core.enums import Mode
 from trulens.core.run import SUPPORTED_ENTRY_TYPES
 from trulens.core.run import SupportedEntryType
 from trulens.core.utils import json as json_utils
@@ -79,6 +80,7 @@ class RunDao:
         description: Optional[str] = "",
         label: Optional[str] = "",
         llm_judge_name: Optional[str] = "",
+        mode: Optional[Mode] = Mode.APP_INVOCATION,
     ) -> pd.DataFrame:
         """
         Create a new RunMetadata entity in Snowflake.
@@ -95,6 +97,7 @@ class RunDao:
             description: A description of the run.
             label: A label for the run.
             llm_judge_name: The name of the LLM judge to use for the evaluation, when applicable.
+            mode: The mode of operation (LOG_INGESTION or APP_INVOCATION).
 
         Returns:
             The result of the Snowflake SQL execution - returning a success message but not the created entity.
@@ -119,6 +122,9 @@ class RunDao:
 
         run_metadata_dict["llm_judge_name"] = (
             llm_judge_name if llm_judge_name else DEFAULT_LLM_JUDGE_NAME
+        )
+        run_metadata_dict["mode"] = (
+            mode.value if mode else Mode.APP_INVOCATION.value
         )
         req_payload["run_metadata"] = run_metadata_dict
 
