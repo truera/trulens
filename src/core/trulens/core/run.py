@@ -147,7 +147,7 @@ class RunConfig(BaseModel):
     )
     mode: Mode = Field(
         default=Mode.APP_INVOCATION,
-        description="Mode of operation: LOG_INGESTION for creating spans from existing data, APP_INVOCATION for actual app execution.",
+        description="Mode of operation: LOG_INGESTION for creating spans from existing data, APP_INVOCATION for instrumenting spans from a new app execution.",
     )
 
 
