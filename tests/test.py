@@ -683,4 +683,11 @@ class TruTestCase(WithJSONTestCase, TestCase):
             for curr in TruSession._singleton_instances
             if curr[0] == "trulens.core.session.TruSession"
         ]:
+            tru_session = TruSession._singleton_instances[key]
+            if (
+                hasattr(tru_session, "experimental_otel_exporter")
+                and tru_session.experimental_otel_exporter is not None
+                and hasattr(tru_session.experimental_otel_exporter, "disable")
+            ):
+                tru_session.experimental_otel_exporter.disable()
             del TruSession._singleton_instances[key]

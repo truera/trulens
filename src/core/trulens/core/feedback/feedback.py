@@ -56,6 +56,7 @@ from trulens.core.utils import threading as threading_utils
 if TYPE_CHECKING:
     from trulens.core import session as core_session
 
+
 # WARNING: HACK014: importing schema seems to break pydantic for unknown reason.
 # This happens even if you import it as something else.
 # from trulens.core import schema # breaks pydantic
@@ -148,6 +149,10 @@ class Feedback(feedback_schema.FeedbackDefinition):
             hugs.language_match # the implementation
         ).on_input_output() # selectors shorthand
         ```
+
+    Note:
+        The `enable_trace_compression` parameter is only applicable to feedback functions
+        that take 'trace' as an input parameter. It has no effect on other feedback functions.
     """
 
     imp: Optional[ImpCallable] = pydantic.Field(None, exclude=True)
@@ -188,6 +193,16 @@ class Feedback(feedback_schema.FeedbackDefinition):
     )
     """Optional groundedness configuration parameters."""
 
+    enable_trace_compression: Optional[bool] = pydantic.Field(
+        None, exclude=True
+    )
+    """Whether to compress trace data to reduce token usage when sending traces to feedback functions.
+
+    When True, traces are compressed to preserve essential information while removing redundant data.
+    When False, full uncompressed traces are used. When None (default), the feedback function's
+    default behavior is used. This flag is only applicable to feedback functions that take
+    'trace' as an input parameter."""
+
     def __init__(
         self,
         imp: Optional[Callable] = None,
@@ -199,6 +214,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
         max_score_val: Optional[int] = 3,
         temperature: Optional[float] = 0.0,
         groundedness_configs: Optional[GroundednessConfigs] = None,
+        enable_trace_compression: Optional[bool] = None,
         **kwargs,
     ):
         # imp is the python function/method while implementation is a serialized
@@ -296,6 +312,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
         self.max_score_val = max_score_val
         self.temperature = temperature
         self.groundedness_configs = groundedness_configs
+        self.enable_trace_compression = enable_trace_compression
 
         # Verify that `imp` expects the arguments specified in `selectors`:
         if self.imp is not None:
@@ -495,6 +512,8 @@ class Feedback(feedback_schema.FeedbackDefinition):
             kwargs["temperature"] = self.temperature
         if self.groundedness_configs is not None:
             kwargs["groundedness_configs"] = self.groundedness_configs
+        if self.enable_trace_compression is not None:
+            kwargs["enable_trace_compression"] = self.enable_trace_compression
 
         # Filter out unexpected keyword arguments
         sig = signature(self.imp)

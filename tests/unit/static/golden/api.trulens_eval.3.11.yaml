@@ -127,6 +127,9 @@ trulens_eval.AzureOpenAI:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -215,6 +218,9 @@ trulens_eval.Bedrock:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -306,6 +312,9 @@ trulens_eval.Cortex:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -328,6 +337,7 @@ trulens_eval.Feedback:
     copy: builtins.function
     criteria: typing.Optional[builtins.str, builtins.NoneType]
     dict: builtins.function
+    enable_trace_compression: typing.Optional[builtins.bool, builtins.NoneType]
     evaluate_deferred: builtins.staticmethod
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     extract_selection: builtins.function
@@ -489,6 +499,9 @@ trulens_eval.Google:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -675,6 +688,9 @@ trulens_eval.Langchain:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -770,6 +786,9 @@ trulens_eval.LiteLLM:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -866,6 +885,9 @@ trulens_eval.OpenAI:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -969,6 +991,7 @@ trulens_eval.Tru:
     add_ground_truth_to_dataset: builtins.function
     add_record: builtins.function
     add_record_nowait: builtins.function
+    compute_feedbacks_on_events: builtins.function
     connector: typing.Optional[trulens.core.database.connector.base.DBConnector, builtins.NoneType]
     construct: builtins.classmethod
     copy: builtins.function
@@ -980,6 +1003,7 @@ trulens_eval.Tru:
     from_orm: builtins.classmethod
     get_app: builtins.function
     get_apps: builtins.function
+    get_events: builtins.function
     get_ground_truth: builtins.function
     get_leaderboard: builtins.function
     get_records_and_feedback: builtins.function
@@ -1108,7 +1132,7 @@ trulens_eval.TruApp:
     replace: builtins.function
     retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
@@ -1225,7 +1249,7 @@ trulens_eval.TruBasicApp:
     replace: builtins.function
     retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
@@ -1343,7 +1367,7 @@ trulens_eval.TruChain:
     replace: builtins.function
     retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
@@ -1460,7 +1484,7 @@ trulens_eval.TruCustomApp:
     replace: builtins.function
     retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
@@ -1576,7 +1600,7 @@ trulens_eval.TruLlama:
     replace: builtins.function
     retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
@@ -1693,7 +1717,7 @@ trulens_eval.TruRails:
     replace: builtins.function
     retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
@@ -1959,7 +1983,7 @@ trulens_eval.app.App:
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
     retrieve_feedback_results: builtins.function
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
@@ -2175,6 +2199,7 @@ trulens_eval.database.base.DB:
     copy: builtins.function
     delete_app: builtins.function
     dict: builtins.function
+    extract_app_and_run_info: builtins.staticmethod
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_app: builtins.function
@@ -2307,7 +2332,7 @@ trulens_eval.database.sqlalchemy:
     no_perf: builtins.dict
 trulens_eval.database.sqlalchemy.AppsExtractor:
   __bases__:
-  - builtins.object
+  - trulens.core.database.base.BaseAppsExtractor
   __class__: builtins.type
   attributes:
     all_cols: builtins.list
@@ -2332,6 +2357,7 @@ trulens_eval.database.sqlalchemy.SQLAlchemyDB:
     dict: builtins.function
     engine: typing.Optional[sqlalchemy.engine.base.Engine, builtins.NoneType]
     engine_params: builtins.dict
+    extract_app_and_run_info: builtins.staticmethod
     formatted_objects: _contextvars.ContextVar
     from_db_engine: builtins.classmethod
     from_db_url: builtins.classmethod
@@ -2342,7 +2368,6 @@ trulens_eval.database.sqlalchemy.SQLAlchemyDB:
     get_datasets: builtins.function
     get_db_revision: builtins.function
     get_events: builtins.function
-    get_events_by_record_id: builtins.function
     get_feedback: builtins.function
     get_feedback_count_by_status: builtins.function
     get_feedback_defs: builtins.function
@@ -2519,6 +2544,9 @@ trulens_eval.feedback.AzureOpenAI:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -2607,6 +2635,9 @@ trulens_eval.feedback.Bedrock:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -2698,6 +2729,9 @@ trulens_eval.feedback.Cortex:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -2765,6 +2799,7 @@ trulens_eval.feedback.Feedback:
     copy: builtins.function
     criteria: typing.Optional[builtins.str, builtins.NoneType]
     dict: builtins.function
+    enable_trace_compression: typing.Optional[builtins.bool, builtins.NoneType]
     evaluate_deferred: builtins.staticmethod
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     extract_selection: builtins.function
@@ -3071,6 +3106,9 @@ trulens_eval.feedback.Langchain:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -3159,6 +3197,9 @@ trulens_eval.feedback.LiteLLM:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -3255,6 +3296,9 @@ trulens_eval.feedback.OpenAI:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -3337,6 +3381,7 @@ trulens_eval.feedback.feedback.Feedback:
     copy: builtins.function
     criteria: typing.Optional[builtins.str, builtins.NoneType]
     dict: builtins.function
+    enable_trace_compression: typing.Optional[builtins.bool, builtins.NoneType]
     evaluate_deferred: builtins.staticmethod
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     extract_selection: builtins.function
@@ -3628,6 +3673,9 @@ trulens_eval.feedback.provider.AzureOpenAI:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -3716,6 +3764,9 @@ trulens_eval.feedback.provider.Bedrock:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -3807,6 +3858,9 @@ trulens_eval.feedback.provider.Cortex:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -3894,6 +3948,9 @@ trulens_eval.feedback.provider.Google:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -4080,6 +4137,9 @@ trulens_eval.feedback.provider.Langchain:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -4168,6 +4228,9 @@ trulens_eval.feedback.provider.LiteLLM:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -4264,6 +4327,9 @@ trulens_eval.feedback.provider.OpenAI:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -4400,6 +4466,9 @@ trulens_eval.feedback.provider.base.LLMProvider:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -4537,6 +4606,9 @@ trulens_eval.feedback.provider.bedrock.Bedrock:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -4634,6 +4706,9 @@ trulens_eval.feedback.provider.cortex.Cortex:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -6472,6 +6547,9 @@ trulens_eval.feedback.provider.google.Google:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -6782,6 +6860,9 @@ trulens_eval.feedback.provider.langchain.Langchain:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -6876,6 +6957,9 @@ trulens_eval.feedback.provider.litellm.LiteLLM:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -6980,6 +7064,9 @@ trulens_eval.feedback.provider.openai.AzureOpenAI:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -7076,6 +7163,9 @@ trulens_eval.feedback.provider.openai.OpenAI:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -7296,7 +7386,7 @@ trulens_eval.schema.app.AppDefinition:
     parse_raw: builtins.classmethod
     record_ingest_mode: trulens.core.schema.app.RecordIngestMode
     replace: builtins.function
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     schema: builtins.classmethod
     schema_json: builtins.classmethod
     select_inputs: builtins.classmethod
@@ -7796,6 +7886,7 @@ trulens_eval.tru.Tru:
     add_ground_truth_to_dataset: builtins.function
     add_record: builtins.function
     add_record_nowait: builtins.function
+    compute_feedbacks_on_events: builtins.function
     connector: typing.Optional[trulens.core.database.connector.base.DBConnector, builtins.NoneType]
     construct: builtins.classmethod
     copy: builtins.function
@@ -7807,6 +7898,7 @@ trulens_eval.tru.Tru:
     from_orm: builtins.classmethod
     get_app: builtins.function
     get_apps: builtins.function
+    get_events: builtins.function
     get_ground_truth: builtins.function
     get_leaderboard: builtins.function
     get_records_and_feedback: builtins.function
@@ -7943,7 +8035,7 @@ trulens_eval.tru_basic_app.TruBasicApp:
     replace: builtins.function
     retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
@@ -8105,7 +8197,7 @@ trulens_eval.tru_chain.TruChain:
     replace: builtins.function
     retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
@@ -8230,7 +8322,7 @@ trulens_eval.tru_custom_app.TruCustomApp:
     replace: builtins.function
     retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
@@ -8370,7 +8462,7 @@ trulens_eval.tru_llama.TruLlama:
     replace: builtins.function
     retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
@@ -8553,7 +8645,7 @@ trulens_eval.tru_rails.TruRails:
     replace: builtins.function
     retrieve_feedback_results: builtins.function
     root_callable: pydantic.fields.FieldInfo
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     schema: builtins.classmethod
     schema_json: builtins.classmethod
