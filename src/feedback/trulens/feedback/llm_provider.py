@@ -2586,7 +2586,6 @@ class LLMProvider(core_provider.Provider):
             output_space=output_space,
             examples=examples,
         )
-
         if isinstance(trace, Trace):
             if enable_trace_compression:
                 trace = trace.to_compressed_json(default_handler=str)
@@ -2702,13 +2701,15 @@ class LLMProvider(core_provider.Provider):
             "EXECUTION EFFICIENCY SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
         )
 
-        return self.generate_score_and_reasons(
+        score, reasons = self.generate_score_and_reasons(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             min_score_val=min_score_val,
             max_score_val=max_score_val,
             temperature=temperature,
         )
+
+        return score, reasons
 
     def plan_adherence_with_cot_reasons(
         self,
