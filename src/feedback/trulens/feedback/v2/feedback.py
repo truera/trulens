@@ -1387,160 +1387,6 @@ class PlanQuality(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     )
 
 
-class TRAIL(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
-    """
-    Evaluates the quality of the agentic system's plan to address the user's query.
-    """
-
-    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
-    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
-    criteria_template: ClassVar[str] = """"""
-
-    system_prompt_template: ClassVar[str] = cleandoc(
-        """Follow the taxonomy below carefully follow the
-            instructions and provide the output in the
-            same format as the example.
-            # Taxonomy
-            |-- Reasoning Errors
-            | |-- Hallucinations
-            | | |-- Language-only
-            | | |-- Tool-related (fabricating tool outputs/capabilities)
-            | |-- Information Processing
-            | | |-- Poor Information Retrieval (Tried to find information that was not relevant to the task)
-            | | |-- Tool Output Misinterpretation (Made assumptions about the tool output or used the tool output in an incorrect context)
-            | |-- Decision Making
-            | | |-- Incorrect Problem Identification (Misunderstood the overall task or the local task)
-            | | |-- Tool Selection Errors (Used the wrong tool for the task)
-            | |-- Output Generation
-            | |-- Formatting Errors (Errors with formatting and execution of code or structuring of output in a specific format)
-            | |-- Instruction Non-compliance (Failed to perform the task provided and instead did something else)
-            |-- System Execution Errors
-            | |-- Configuration
-            | | |-- Tool Definition Issues (The tool was not defined correctly by the user or contains some errors that make it inconsistent with its description. For example, web search tool was defined as a calculator tool)
-            | | |-- Environment Setup Errors (includes permission problems and inability to access resources or API keys)
-            | |-- API Issues
-            | | |-- Rate Limiting (Like 429)
-            | | |-- Authentication Errors (Like 401/403)
-            | | |-- Service Errors (Like 500)
-            | | |-- Resource Not Found (Like 404)
-            | |-- Resource Management
-            | |-- Resource Exhaustion (includes memory overflow)
-            | |-- Timeout Issues (The system took too long to respond)
-            |-- Planning and Coordination Errors
-            | |-- Context Management
-            | | |-- Context Handling Failures (includes window overflow and state tracking or forgetting important context)
-            | | |-- Resource Abuse (Called the tool excessively due to memory issues)
-            | |-- Task Management
-            | |-- Goal Deviation (The system deviated from the task or the subtask)
-            | |-- Task Orchestration (includes subtask coordination between agents and progress monitoring)
-            |-- Domain Specific Errors (Errors that are specific to the domain of the task)
-
-            - Based on the taxonomy above, analyze the LLM agent trace below and find errors in it.
-            - You must be exhaustive and find all the errors in the trace. Only include the final subcategories of the taxonomy (i.e. "Resource Not Found" and not "API Issues" or "System Execution Errors").
-            - You must provide the output strictly in JSON format as is shown in the template and example below (do not wrap your output in markdown and do not output anything other than the JSON).
-
-            Template for output:
-            {{
-                "errors": [
-                    {{
-                        "category": "[INSERT ERROR CATEGORY FROM TAXONOMY HERE]", # The category of the error
-                        "location": "[INSERT LOCATION OF ERROR HERE]", # The location of the error in the trace (span id)
-                        "evidence": "[INSERT EXTRACTED EVIDENCE HERE]",
-                        "description": "[INSERT DETAILED ERROR DESCRIPTION HERE]",
-                        "impact": "[INSERT IMPACT HERE]" #The impact of the error (HIGH, MEDIUM, LOW)
-                    }},
-                    ... # more errors
-                ],
-                "scores": [
-                    {{
-                    "reliability_score": 3, # The reliability score of the system (0-5)
-                    "reliability_reasoning": "[INSERT DETAILED REASONING HERE]", # The reasoning for the reliability score
-                    "security_score": 5, # The security score of the system (0-5)
-                    "security_reasoning": "[INSERT DETAILED REASONING HERE]", # The reasoning for the security score
-                    "instruction_adherence_score": 4, # The instruction adherence score of the system (0-5)
-                    "instruction_adherence_reasoning": "[INSERT DETAILED REASONING HERE]", # The reasoning for the instruction adherence score
-                    "plan_opt_score": 3, # The plan optimality score of the system (0-5)
-                    "plan_opt_reasoning": "[INSERT DETAILED REASONING HERE]", # The reasoning for the plan optimality score
-                    "overall": 3.75 # The overall score of the system (0-5)
-                    }}
-                ]
-            }}
-
-            Example output:
-            {{
-                "errors": [
-                    {{
-                    "category": "Language-only",
-                    "location": "037ba72bqlkpas",
-                    "evidence": "Based on the evidence "wind speed is generally 4km/hr in Paris", the LLM hallucinated the wind speed in Paris and did not verify this value.",
-                    "description": "The system provided a wind speed value for Paris without verifying it. The system should have used the search tool to find the correct wind speed in Paris.",
-                    "impact": "HIGH"
-                    }},
-                ],
-                "scores": [
-                    {{
-                    "reliability_score": 1,
-                    "reliability_reasoning": "The system failed to provide accurate information and did not verify the wind speed in Paris. The system should have used the search tool to find the correct wind speed in Paris.",
-                    "security_score": 5,
-                    "security_reasoning": "No security issues were detected. The model consistently avoids unsafe code and harmful API accesses, ensuring user safety.",
-                    "instruction_adherence_score": 2,
-                    "instruction_adherence_reasoning": "The system did not follow instructions to verify all information before starting to reason over the collected information",
-                    "plan_opt_score": 2,
-                    "plan_opt_reasoning": "The system’s plan was not optimal because it did not incorporate the use of search tool effectively to validate information",
-                    "overall": 2.5
-                    }}
-                ]
-            }}
-
-            If the trace has no errors, the output should be:
-            {{
-                "errors": [],
-                "scores": [
-                    {{
-                        "reliability_score": 5,
-                        "reliability_reasoning": "The system provided accurate information and verified the wind speed in Paris.",
-                        "security_score": 5,
-                        "security_reasoning": "No security issues were detected. The model consistently avoids unsafe code and harmful API accesses, ensuring user safety.",
-                        "instruction_adherence_score": 5,
-                        "instruction_adherence_reasoning": "The system followed instructions to verify all information before starting to reason over the collected information",
-                        "plan_opt_score": 5,
-                        "plan_opt_reasoning": "The system’s plan was optimal because it incorporated the use of search tool effectively to validate information",
-                        "overall": 5
-                    }}
-                ]
-            }}
-
-            - Ensure that the output is strictly in the correct JSON format and does not contain any other text or markdown formatting like ''' json.
-            - Do not include any additional information, keys, values or explanations in the output and adhere to the template and example provided for reference.
-            - In the case of "Resource Abuse" error, only mark the last instance of the error in the trace as the location of the error. For all other errors, you must mark the first instance of the error in the trace as the location of the error.
-
-            {custom_instructions}
-        """
-    )
-
-    user_prompt: ClassVar[str] = cleandoc(
-        """
-        The data to analyze is as follows:
-        {trace}
-
-        TRAIL SCORE:
-        """
-    )
-
-    criteria: ClassVar[str] = criteria_template.format(
-        min_score=OutputSpace.LIKERT_0_3.value[0],
-        max_score=OutputSpace.LIKERT_0_3.value[1],
-    )
-
-    system_prompt: ClassVar[str] = cleandoc(
-        system_prompt_template.format(
-            output_space_prompt=output_space_prompt,
-            criteria=criteria,
-            custom_instructions="",
-        )
-    )
-
-
 class ToolSelection(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     """
     Evaluates the agent's *choice of tools* for its tasks/subtasks given tool descriptions.
@@ -1564,6 +1410,7 @@ class ToolSelection(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         You must assign a single numerical score from {output_space_prompt}.
         Evaluation criteria:
         {criteria}
+        {custom_instructions}
         Important scope boundaries:
         - Do NOT penalize call syntax/semantics or output interpretation (Tool Calling).
         - Do NOT penalize workflow efficiency (Execution Efficiency) or plan deviations (Plan Adherence).
@@ -1589,6 +1436,7 @@ class ToolSelection(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         system_prompt_template.format(
             output_space_prompt=output_space_prompt,
             criteria=criteria,
+            custom_instructions="",
         )
     )
 
@@ -1617,6 +1465,7 @@ class ToolCalling(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         You must assign a single numerical score from {output_space_prompt}.
         Evaluation criteria:
         {criteria}
+        {custom_instructions}
         Important scope boundaries:
         - In-scope: argument/schema correctness, semantic fit of query, preconditions/postconditions, grounded interpretation of outputs, explicit handling of tool-returned errors.
         - Out-of-scope: tool selection (Tool Selection), workflow efficiency (Execution Efficiency), external service/tool reliability (Tool Quality).
@@ -1640,6 +1489,7 @@ class ToolCalling(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         system_prompt_template.format(
             output_space_prompt=output_space_prompt,
             criteria=criteria,
+            custom_instructions="",
         )
     )
 
@@ -1666,6 +1516,7 @@ class ToolQuality(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         You must assign a single numerical score from {output_space_prompt}.
         Evaluation criteria:
         {criteria}
+        {custom_instructions}
         Important scope boundaries:
         - In-scope: service errors (5xx), rate limiting (429), auth (401/403), resource not found (404), timeouts, flakiness, determinism, and domain-specific output quality (e.g., search relevance).
         - Out-of-scope: agent’s selection, argument formation, or workflow efficiency.
@@ -1689,5 +1540,6 @@ class ToolQuality(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         system_prompt_template.format(
             output_space_prompt=output_space_prompt,
             criteria=criteria,
+            custom_instructions="",
         )
     )
