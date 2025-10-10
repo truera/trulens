@@ -343,6 +343,9 @@ class FeedbackDefinition(
     criteria: Optional[str] = None
     """Criteria for the feedback function."""
 
+    custom_instructions: Optional[str] = None
+    """Custom instructions for the feedback function."""
+
     combinations: Optional[FeedbackCombinations] = FeedbackCombinations.PRODUCT
     """Mode of combining selected values to produce arguments to each feedback
     function call."""
