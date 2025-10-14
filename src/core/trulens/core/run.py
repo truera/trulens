@@ -1125,18 +1125,78 @@ class Run(BaseModel):
                     events_df = events_df.rename(columns=column_mapping)
 
                     for idx, row in events_df.iterrows():
-                        if "parent_span_id" in row["record"]:
-                            events_df.at[idx, "trace"]["parent_id"] = row[
-                                "record"
-                            ]["parent_span_id"]
-                        else:
-                            events_df.at[idx, "trace"]["parent_id"] = None
+                        trace = events_df.at[idx, "trace"]
+                        record = events_df.at[idx, "record"]
+                        record_attributes = (
+                            events_df.at[idx, "record_attributes"]
+                            if "record_attributes" in events_df.columns
+                            else {}
+                        )
+
+                        # Ensure trace is a dict, not a string
+                        if isinstance(trace, str):
+                            try:
+                                trace = json.loads(trace)
+                                events_df.at[idx, "trace"] = trace
+                            except json.JSONDecodeError:
+                                logger.warning(
+                                    f"Failed to parse trace JSON at index {idx}"
+                                )
+                                continue
+
+                        # Ensure record is a dict, not a string
+                        if isinstance(record, str):
+                            try:
+                                record = json.loads(record)
+                                events_df.at[idx, "record"] = record
+                            except json.JSONDecodeError:
+                                logger.warning(
+                                    f"Failed to parse record JSON at index {idx}"
+                                )
+                                continue
+
+                        # Ensure record_attributes is a dict, not a string
+                        if isinstance(record_attributes, str):
+                            try:
+                                record_attributes = json.loads(
+                                    record_attributes
+                                )
+                                events_df.at[idx, "record_attributes"] = (
+                                    record_attributes
+                                )
+                            except json.JSONDecodeError:
+                                logger.warning(
+                                    f"Failed to parse record_attributes JSON at index {idx}"
+                                )
+                                # Don't continue here - this is not critical for the parent_id assignment
+
+                        # Now modify the dictionary
+                        if isinstance(trace, dict) and isinstance(record, dict):
+                            if "parent_span_id" in record:
+                                trace["parent_id"] = record["parent_span_id"]
+                            else:
+                                trace["parent_id"] = None
+
+                            # Set the modified dict back into the DataFrame
+                            events_df.at[idx, "trace"] = trace
 
                 if not events_df.empty and self.run_name:
                     filtered_events = []
                     for _, row in events_df.iterrows():
                         try:
                             record_attributes = row.get("record_attributes", {})
+
+                            # Ensure record_attributes is a dict, not a string
+                            if isinstance(record_attributes, str):
+                                try:
+                                    record_attributes = json.loads(
+                                        record_attributes
+                                    )
+                                except json.JSONDecodeError:
+                                    logger.debug(
+                                        "Failed to parse record_attributes JSON"
+                                    )
+                                    continue
 
                             event_run_name = record_attributes.get(
                                 SpanAttributes.RUN_NAME
