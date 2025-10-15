@@ -19,6 +19,41 @@ from trulens.otel.semconv.trace import SpanAttributes
 logger = logging.getLogger(__name__)
 
 
+def _parse_json_field(
+    value: Any,
+    field_name: str,
+    index: Optional[int] = None,
+    critical: bool = True,
+) -> Any:
+    """
+    Helper function to parse JSON fields consistently.
+
+    Args:
+        value: The value to parse (could be string or already parsed dict)
+        field_name: Name of the field being parsed (for logging)
+        index: Optional index for logging context
+        critical: Whether parsing failure should cause the caller to continue processing
+
+    Returns:
+        Parsed dictionary or the original value if already parsed
+
+    Raises:
+        Continues processing on JSONDecodeError if critical=False, otherwise logs warning
+    """
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            index_msg = f" at index {index}" if index is not None else ""
+            if critical:
+                logger.warning(f"Failed to parse {field_name} JSON{index_msg}")
+                raise
+            else:
+                logger.debug(f"Failed to parse {field_name} JSON{index_msg}")
+                return value
+    return value
+
+
 def _get_all_span_attribute_key_constants(cls: Type, prefix: str) -> List[str]:
     ret = []
     for curr_name in dir(cls):
@@ -1134,42 +1169,33 @@ class Run(BaseModel):
                             else {}
                         )
 
-                        # Ensure trace is a dict, not a string
-                        if isinstance(trace, str):
-                            try:
-                                trace = json.loads(trace)
-                                events_df.at[idx, "trace"] = trace
-                            except json.JSONDecodeError:
-                                logger.warning(
-                                    f"Failed to parse trace JSON at index {idx}"
-                                )
-                                continue
+                        # Parse JSON fields using helper function
+                        try:
+                            trace = _parse_json_field(
+                                trace, "trace", idx, critical=True
+                            )
+                            events_df.at[idx, "trace"] = trace
+                        except json.JSONDecodeError:
+                            continue
 
-                        # Ensure record is a dict, not a string
-                        if isinstance(record, str):
-                            try:
-                                record = json.loads(record)
-                                events_df.at[idx, "record"] = record
-                            except json.JSONDecodeError:
-                                logger.warning(
-                                    f"Failed to parse record JSON at index {idx}"
-                                )
-                                continue
+                        try:
+                            record = _parse_json_field(
+                                record, "record", idx, critical=True
+                            )
+                            events_df.at[idx, "record"] = record
+                        except json.JSONDecodeError:
+                            continue
 
-                        # Ensure record_attributes is a dict, not a string
-                        if isinstance(record_attributes, str):
-                            try:
-                                record_attributes = json.loads(
-                                    record_attributes
-                                )
-                                events_df.at[idx, "record_attributes"] = (
-                                    record_attributes
-                                )
-                            except json.JSONDecodeError:
-                                logger.warning(
-                                    f"Failed to parse record_attributes JSON at index {idx}"
-                                )
-                                # Don't continue here - this is not critical for the parent_id assignment
+                        # record_attributes parsing is not critical for parent_id assignment
+                        record_attributes = _parse_json_field(
+                            record_attributes,
+                            "record_attributes",
+                            idx,
+                            critical=False,
+                        )
+                        events_df.at[idx, "record_attributes"] = (
+                            record_attributes
+                        )
 
                         # Now modify the dictionary
                         if isinstance(trace, dict) and isinstance(record, dict):
@@ -1187,17 +1213,20 @@ class Run(BaseModel):
                         try:
                             record_attributes = row.get("record_attributes", {})
 
-                            # Ensure record_attributes is a dict, not a string
-                            if isinstance(record_attributes, str):
-                                try:
-                                    record_attributes = json.loads(
-                                        record_attributes
-                                    )
-                                except json.JSONDecodeError:
-                                    logger.debug(
-                                        "Failed to parse record_attributes JSON"
-                                    )
-                                    continue
+                            # Parse record_attributes using helper function
+                            original_record_attributes = record_attributes
+                            record_attributes = _parse_json_field(
+                                record_attributes,
+                                "record_attributes",
+                                critical=False,
+                            )
+                            # If parsing failed and we still have a string, skip this record
+                            if (
+                                isinstance(record_attributes, str)
+                                and record_attributes
+                                == original_record_attributes
+                            ):
+                                continue
 
                             event_run_name = record_attributes.get(
                                 SpanAttributes.RUN_NAME
