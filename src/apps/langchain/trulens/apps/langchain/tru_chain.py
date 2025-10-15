@@ -33,6 +33,7 @@ from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
+from trulens.otel.semconv.trace import SpanAttributes
 
 from langchain.agents.agent import BaseMultiActionAgent
 from langchain.agents.agent import BaseSingleActionAgent
@@ -62,7 +63,7 @@ class LangChainInstrument(core_instruments.Instrument):
     class Default:
         """Instrumentation specification for LangChain apps."""
 
-        MODULES = {"langchain"}
+        MODULES = {"langchain", "langchain_mcp_adapters"}
         """Filter for module name prefix for modules to be instrumented."""
 
         CLASSES = lambda: {
@@ -125,8 +126,51 @@ class LangChainInstrument(core_instruments.Instrument):
             InstrumentedMethod("aplan", BaseSingleActionAgent),
             InstrumentedMethod("plan", BaseMultiActionAgent),
             InstrumentedMethod("aplan", BaseMultiActionAgent),
-            InstrumentedMethod("_arun", BaseTool),
-            InstrumentedMethod("_run", BaseTool),
+            # Standard tool methods - these will catch MCP tools too
+            InstrumentedMethod(
+                "_arun",
+                BaseTool,
+                SpanAttributes.SpanType.MCP,
+                lambda ret, exception, *args, **kwargs: {
+                    SpanAttributes.MCP.TOOL_NAME: getattr(
+                        args[0], "name", "unknown"
+                    )
+                    if args
+                    else "unknown",
+                    SpanAttributes.MCP.INPUT_ARGUMENTS: str(args[1:])
+                    if len(args) > 1
+                    else str(kwargs),
+                    SpanAttributes.MCP.OUTPUT_CONTENT: str(ret)
+                    if ret is not None
+                    else "",
+                    SpanAttributes.MCP.OUTPUT_IS_ERROR: exception is not None,
+                },
+            ),
+            InstrumentedMethod(
+                "_run",
+                BaseTool,
+                SpanAttributes.SpanType.MCP,
+                lambda ret, exception, *args, **kwargs: {
+                    SpanAttributes.MCP.TOOL_NAME: getattr(
+                        args[0], "name", "unknown"
+                    )
+                    if args
+                    else "unknown",
+                    SpanAttributes.MCP.INPUT_ARGUMENTS: str(args[1:])
+                    if len(args) > 1
+                    else str(kwargs),
+                    SpanAttributes.MCP.OUTPUT_CONTENT: str(ret)
+                    if ret is not None
+                    else "",
+                    SpanAttributes.MCP.OUTPUT_IS_ERROR: exception is not None,
+                },
+            ),
+            # MCP client methods
+            InstrumentedMethod(
+                "get_tools",
+                object,  # Will be filtered by module name
+                *core_instruments.Instrument.Default.mcp_span("server_name"),
+            ),
         ]
         """Methods to be instrumented.
 

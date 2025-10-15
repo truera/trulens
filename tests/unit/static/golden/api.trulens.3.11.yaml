@@ -612,6 +612,7 @@ trulens.core.feedback.feedback.Feedback:
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
     criteria: typing.Optional[builtins.str, builtins.NoneType]
+    custom_instructions: typing.Optional[builtins.str, builtins.NoneType]
     enable_trace_compression: typing.Optional[builtins.bool, builtins.NoneType]
     evaluate_deferred: builtins.staticmethod
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
@@ -675,6 +676,7 @@ trulens.core.feedback.feedback.SnowflakeFeedback:
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
     criteria: typing.Optional[builtins.str, builtins.NoneType]
+    custom_instructions: typing.Optional[builtins.str, builtins.NoneType]
     enable_trace_compression: typing.Optional[builtins.bool, builtins.NoneType]
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     feedback_definition_id: builtins.str
@@ -1127,6 +1129,7 @@ trulens.core.schema.feedback.FeedbackDefinition:
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
     criteria: typing.Optional[builtins.str, builtins.NoneType]
+    custom_instructions: typing.Optional[builtins.str, builtins.NoneType]
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     feedback_definition_id: builtins.str
     higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
@@ -2885,6 +2888,7 @@ trulens.feedback.v2.feedback.EvalSchema:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     criteria: builtins.str
+    custom_instructions: builtins.str
     get_output_scale_prompt: builtins.function
     output_space: builtins.str
     validate_output_space: builtins.classmethod
