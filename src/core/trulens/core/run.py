@@ -1050,6 +1050,10 @@ class Run(BaseModel):
             )
             raise
 
+        # Force flush to ensure spans are uploaded to Snowflake before querying
+        self.tru_session.force_flush()
+        logger.info("Flushed OTEL spans before retrieving events")
+
         events = self._get_events_for_client_metrics()
 
         if events.empty:
@@ -1083,10 +1087,6 @@ class Run(BaseModel):
                 )
                 raise
 
-        # Force flush to ensure spans are uploaded
-        self.tru_session.force_flush()
-        logger.info("Flushed OTEL spans for client-side metrics")
-
     def _get_events_for_client_metrics(self) -> pd.DataFrame:
         """Get events for client-side metric computation using the appropriate method."""
         try:
@@ -1099,6 +1099,7 @@ class Run(BaseModel):
                 events_df = self.tru_session.connector.db.get_events(
                     app_name=self.app.app_name,
                     app_version=self.app.app_version,
+                    run_name=self.run_name,
                 )
 
                 if not events_df.empty:
