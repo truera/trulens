@@ -8,7 +8,7 @@ from snowflake.snowpark.row import Row
 try:
     from trulens.connectors.snowflake.dao.sql_utils import execute_query
 except ImportError:
-    pass
+    pytest.skip("execute_query is not available")
 
 
 @pytest.mark.snowflake
