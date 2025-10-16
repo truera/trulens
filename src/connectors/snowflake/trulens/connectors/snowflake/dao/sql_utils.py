@@ -52,7 +52,19 @@ def execute_query(
     Executes a query with optional parameters with qmark parameter binding (if applicable).
     """
     try:
-        df = session.sql(query, params=parameters).to_pandas()
+        # For SHOW commands, Snowpark has a bug where plan attributes don't match actual results
+        # Use collect() and manually construct DataFrame to avoid schema mismatch
+        if query.strip().upper().startswith("SHOW"):
+            result = session.sql(query, params=parameters).collect()
+            if not result:
+                return pd.DataFrame()
+            # Use actual field names from the Row objects
+            columns = result[0]._fields
+            data = [tuple(row) for row in result]
+            df = pd.DataFrame(data, columns=columns)
+        else:
+            df = session.sql(query, params=parameters).to_pandas()
+
         df.columns = [clean_up_snowflake_identifier(col) for col in df.columns]
         return df
     except Exception as e:

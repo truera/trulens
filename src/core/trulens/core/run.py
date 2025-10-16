@@ -19,6 +19,41 @@ from trulens.otel.semconv.trace import SpanAttributes
 logger = logging.getLogger(__name__)
 
 
+def _parse_json_field(
+    value: Any,
+    field_name: str,
+    index: Optional[int] = None,
+    critical: bool = True,
+) -> Any:
+    """
+    Helper function to parse JSON fields consistently.
+
+    Args:
+        value: The value to parse (could be string or already parsed dict)
+        field_name: Name of the field being parsed (for logging)
+        index: Optional index for logging context
+        critical: Whether parsing failure should cause the caller to continue processing
+
+    Returns:
+        Parsed dictionary or the original value if already parsed
+
+    Raises:
+        Continues processing on JSONDecodeError if critical=False, otherwise logs warning
+    """
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            index_msg = f" at index {index}" if index is not None else ""
+            if critical:
+                logger.warning(f"Failed to parse {field_name} JSON{index_msg}")
+                raise
+            else:
+                logger.debug(f"Failed to parse {field_name} JSON{index_msg}")
+                return value
+    return value
+
+
 def _get_all_span_attribute_key_constants(cls: Type, prefix: str) -> List[str]:
     ret = []
     for curr_name in dir(cls):
@@ -1050,6 +1085,10 @@ class Run(BaseModel):
             )
             raise
 
+        # Force flush to ensure spans are uploaded to Snowflake before querying
+        self.tru_session.force_flush()
+        logger.info("Flushed OTEL spans before retrieving events")
+
         events = self._get_events_for_client_metrics()
 
         if events.empty:
@@ -1083,10 +1122,6 @@ class Run(BaseModel):
                 )
                 raise
 
-        # Force flush to ensure spans are uploaded
-        self.tru_session.force_flush()
-        logger.info("Flushed OTEL spans for client-side metrics")
-
     def _get_events_for_client_metrics(self) -> pd.DataFrame:
         """Get events for client-side metric computation using the appropriate method."""
         try:
@@ -1099,6 +1134,7 @@ class Run(BaseModel):
                 events_df = self.tru_session.connector.db.get_events(
                     app_name=self.app.app_name,
                     app_version=self.app.app_version,
+                    run_name=self.run_name,
                 )
 
                 if not events_df.empty:
@@ -1125,18 +1161,72 @@ class Run(BaseModel):
                     events_df = events_df.rename(columns=column_mapping)
 
                     for idx, row in events_df.iterrows():
-                        if "parent_span_id" in row["record"]:
-                            events_df.at[idx, "trace"]["parent_id"] = row[
-                                "record"
-                            ]["parent_span_id"]
-                        else:
-                            events_df.at[idx, "trace"]["parent_id"] = None
+                        trace = events_df.at[idx, "trace"]
+                        record = events_df.at[idx, "record"]
+                        record_attributes = (
+                            events_df.at[idx, "record_attributes"]
+                            if "record_attributes" in events_df.columns
+                            else {}
+                        )
+
+                        # Parse JSON fields using helper function
+                        try:
+                            trace = _parse_json_field(
+                                trace, "trace", idx, critical=True
+                            )
+                            events_df.at[idx, "trace"] = trace
+                        except json.JSONDecodeError:
+                            continue
+
+                        try:
+                            record = _parse_json_field(
+                                record, "record", idx, critical=True
+                            )
+                            events_df.at[idx, "record"] = record
+                        except json.JSONDecodeError:
+                            continue
+
+                        # record_attributes parsing is not critical for parent_id assignment
+                        record_attributes = _parse_json_field(
+                            record_attributes,
+                            "record_attributes",
+                            idx,
+                            critical=False,
+                        )
+                        events_df.at[idx, "record_attributes"] = (
+                            record_attributes
+                        )
+
+                        # Now modify the dictionary
+                        if isinstance(trace, dict) and isinstance(record, dict):
+                            if "parent_span_id" in record:
+                                trace["parent_id"] = record["parent_span_id"]
+                            else:
+                                trace["parent_id"] = None
+
+                            # Set the modified dict back into the DataFrame
+                            events_df.at[idx, "trace"] = trace
 
                 if not events_df.empty and self.run_name:
                     filtered_events = []
                     for _, row in events_df.iterrows():
                         try:
                             record_attributes = row.get("record_attributes", {})
+
+                            # Parse record_attributes using helper function
+                            original_record_attributes = record_attributes
+                            record_attributes = _parse_json_field(
+                                record_attributes,
+                                "record_attributes",
+                                critical=False,
+                            )
+                            # If parsing failed and we still have a string, skip this record
+                            if (
+                                isinstance(record_attributes, str)
+                                and record_attributes
+                                == original_record_attributes
+                            ):
+                                continue
 
                             event_run_name = record_attributes.get(
                                 SpanAttributes.RUN_NAME
