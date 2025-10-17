@@ -3,10 +3,11 @@ from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
-from snowflake.snowpark.row import Row
 
 try:
+    from snowflake.snowpark.row import Row
     from trulens.connectors.snowflake.dao.sql_utils import execute_query
+
 except ImportError:
     pytest.skip("execute_query is not available")
 
