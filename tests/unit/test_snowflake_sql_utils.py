@@ -9,7 +9,7 @@ try:
     from trulens.connectors.snowflake.dao.sql_utils import execute_query
 
 except ImportError:
-    pytest.skip("execute_query is not available")
+    pytest.skip("execute_query is not available", allow_module_level=True)
 
 
 @pytest.mark.snowflake
