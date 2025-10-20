@@ -35,8 +35,21 @@ from typing import (
     Union,
 )
 
-from langchain.schema import Generation
-from langchain.schema import LLMResult
+# Handle langchain version compatibility
+try:
+    # langchain <1.0
+    from langchain.schema import Generation
+    from langchain.schema import LLMResult
+except ImportError:
+    # langchain >=1.0
+    try:
+        from langchain_core.outputs import Generation
+        from langchain_core.outputs import LLMResult
+    except ImportError:
+        # Fallback - try langchain_core.messages
+        from langchain_core.messages import Generation
+        from langchain_core.outputs import LLMResult
+
 from langchain_community.callbacks.openai_info import OpenAICallbackHandler
 import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel

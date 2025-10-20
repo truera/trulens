@@ -44,10 +44,36 @@ from langchain.load.serializable import Serializable
 from langchain.memory.chat_memory import BaseChatMemory
 from langchain.prompts.base import BasePromptTemplate
 from langchain.retrievers.multi_query import MultiQueryRetriever
-from langchain.schema import BaseChatMessageHistory  # subclass of above
-from langchain.schema import BaseMemory  # no methods instrumented
-from langchain.schema import BaseRetriever
-from langchain.schema.document import Document
+
+# Handle langchain version compatibility for schema imports
+try:
+    # langchain <1.0
+    from langchain.schema import BaseChatMessageHistory  # subclass of above
+    from langchain.schema import BaseMemory  # no methods instrumented
+    from langchain.schema import BaseRetriever
+    from langchain.schema.document import Document
+except ImportError:
+    # langchain >=1.0
+    try:
+        from langchain_core.chat_history import BaseChatMessageHistory
+    except ImportError:
+        from langchain_community.chat_message_histories import (
+            BaseChatMessageHistory,
+        )
+
+    # BaseMemory moved to langchain_classic in 1.0
+    # If it's not available, we'll handle it below when building the CLASSES set
+    try:
+        from langchain_classic.base_memory import BaseMemory
+    except ImportError:
+        try:
+            from langchain_core.memory import BaseMemory
+        except ImportError:
+            # BaseMemory not available - will exclude from instrumentation
+            BaseMemory = None
+
+    from langchain_core.documents import Document
+    from langchain_core.retrievers import BaseRetriever
 
 # langchain.adapters.openai.ChatCompletion, # no bases
 from langchain.tools.base import BaseTool
@@ -66,26 +92,32 @@ class LangChainInstrument(core_instruments.Instrument):
         MODULES = {"langchain", "langchain_mcp_adapters"}
         """Filter for module name prefix for modules to be instrumented."""
 
-        CLASSES = lambda: {
-            RunnableSerializable,
-            Serializable,
-            Document,
-            Chain,
-            BaseRetriever,
-            BaseLLM,
-            BasePromptTemplate,
-            BaseMemory,  # no methods instrumented
-            BaseChatMemory,  # no methods instrumented
-            BaseChatMessageHistory,  # subclass of above
-            # langchain.agents.agent.AgentExecutor, # is langchain.chains.base.Chain
-            BaseSingleActionAgent,
-            BaseMultiActionAgent,
-            BaseLanguageModel,
-            # langchain.load.serializable.Serializable, # this seems to be work in progress over at langchain
-            # langchain.adapters.openai.ChatCompletion, # no bases
-            BaseTool,
-            langchain_guardrails.WithFeedbackFilterDocuments,
-        }
+        CLASSES = (
+            lambda: {
+                cls
+                for cls in [
+                    RunnableSerializable,
+                    Serializable,
+                    Document,
+                    Chain,
+                    BaseRetriever,
+                    BaseLLM,
+                    BasePromptTemplate,
+                    BaseMemory,  # no methods instrumented; may be None if not available
+                    BaseChatMemory,  # no methods instrumented
+                    BaseChatMessageHistory,  # subclass of above
+                    # langchain.agents.agent.AgentExecutor, # is langchain.chains.base.Chain
+                    BaseSingleActionAgent,
+                    BaseMultiActionAgent,
+                    BaseLanguageModel,
+                    # langchain.load.serializable.Serializable, # this seems to be work in progress over at langchain
+                    # langchain.adapters.openai.ChatCompletion, # no bases
+                    BaseTool,
+                    langchain_guardrails.WithFeedbackFilterDocuments,
+                ]
+                if cls is not None
+            }
+        )
         """Filter for classes to be instrumented."""
 
         # Instrument only methods with these names and of these classes.
