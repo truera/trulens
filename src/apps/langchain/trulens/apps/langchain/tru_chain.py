@@ -35,15 +35,61 @@ from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.otel.semconv.trace import SpanAttributes
 
-from langchain.agents.agent import BaseMultiActionAgent
-from langchain.agents.agent import BaseSingleActionAgent
-from langchain.chains.base import Chain
-from langchain.load.serializable import Serializable
+# Handle langchain version compatibility for agent imports
+try:
+    # langchain <1.0
+    from langchain.agents.agent import BaseMultiActionAgent
+    from langchain.agents.agent import BaseSingleActionAgent
+except ImportError:
+    # langchain >=1.0
+    from langchain.agents import BaseMultiActionAgent
+    from langchain.agents import BaseSingleActionAgent
 
-# this seems to be work in progress over at langchain
-from langchain.memory.chat_memory import BaseChatMemory
-from langchain.prompts.base import BasePromptTemplate
-from langchain.retrievers.multi_query import MultiQueryRetriever
+# Handle langchain version compatibility for chains
+try:
+    # langchain <1.0
+    from langchain.chains.base import Chain
+except ImportError:
+    # langchain >=1.0
+    from langchain.chains import Chain
+
+# Handle langchain version compatibility for serialization
+try:
+    # langchain <1.0
+    from langchain.load.serializable import Serializable
+except ImportError:
+    # langchain >=1.0
+    from langchain_core.load.serializable import Serializable
+
+# Handle langchain version compatibility for memory
+try:
+    # langchain <1.0
+    from langchain.memory.chat_memory import BaseChatMemory
+except ImportError:
+    # langchain >=1.0
+    try:
+        from langchain.memory import BaseChatMemory
+    except ImportError:
+        from langchain_community.chat_message_histories import BaseChatMemory
+
+# Handle langchain version compatibility for prompts
+try:
+    # langchain <1.0
+    from langchain.prompts.base import BasePromptTemplate
+except ImportError:
+    # langchain >=1.0
+    from langchain_core.prompts import BasePromptTemplate
+
+# Handle langchain version compatibility for retrievers
+try:
+    # langchain <1.0
+    from langchain.retrievers.multi_query import MultiQueryRetriever
+except ImportError:
+    # langchain >=1.0
+    try:
+        from langchain.retrievers import MultiQueryRetriever
+    except ImportError:
+        from langchain_community.retrievers import MultiQueryRetriever
 
 # Handle langchain version compatibility for schema imports
 try:
@@ -75,8 +121,16 @@ except ImportError:
     from langchain_core.documents import Document
     from langchain_core.retrievers import BaseRetriever
 
-# langchain.adapters.openai.ChatCompletion, # no bases
-from langchain.tools.base import BaseTool
+# Handle langchain version compatibility for tools
+try:
+    # langchain <1.0
+    from langchain.tools.base import BaseTool
+except ImportError:
+    # langchain >=1.0
+    try:
+        from langchain_core.tools import BaseTool
+    except ImportError:
+        from langchain_community.tools import BaseTool
 
 logger = logging.getLogger(__name__)
 
