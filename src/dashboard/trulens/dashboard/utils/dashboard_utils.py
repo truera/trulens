@@ -756,13 +756,18 @@ def _check_cross_format_records(
             # Check non-OTEL records (RECORD table)
             query = sa.select(sa.func.count(db.orm.Record.record_id))  # type: ignore
 
+            # Need to join with AppDefinition to access app_name or app_version
+            if app_name or app_versions:
+                query = query.join(db.orm.Record.app)  # type: ignore
+
             if app_name:
-                # For non-OTEL records, need to join with AppDefinition
-                query = query.join(db.orm.Record.app).where(  # type: ignore
+                query = query.where(  # type: ignore
                     db.orm.AppDefinition.app_name == app_name  # type: ignore
                 )
             if app_versions:
-                query = query.where(db.orm.Record.app_version.in_(app_versions))  # type: ignore
+                query = query.where(
+                    db.orm.AppDefinition.app_version.in_(app_versions)
+                )  # type: ignore
 
             result = session_ctx.execute(query).scalar()
             non_otel_count = result or 0
