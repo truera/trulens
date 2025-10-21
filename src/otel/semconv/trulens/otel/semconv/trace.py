@@ -100,8 +100,17 @@ class SpanAttributes:
         WORKFLOW_STEP = "workflow_step"
         """A workflow step execution."""
 
+        AGENT = "agent"
+        """An agent execution."""
+
+        TOOL = "tool"
+        """A tool/function call execution."""
+
         RERANKER = "reranking"
         """A reranking operation."""
+
+        MCP = "MCP"
+        """A Model Context Protocol (MCP) tool call."""
 
     class UNKNOWN:
         """Attributes relevant for spans that could not be categorized otherwise."""
@@ -278,6 +287,8 @@ class SpanAttributes:
         """The retrieved contexts."""
 
     class GENERATION:
+        """A generation call to an LLM."""
+
         base = BASE_SCOPE + ".generation"
 
     class GRAPH_TASK:
@@ -334,6 +345,9 @@ class SpanAttributes:
         ERROR = base + ".error"
         """Error raised during workflow execution."""
 
+        AGENT_NAME = base + ".agent_name"
+        """Name of the agent executing in the workflow."""
+
     class RERANKER:
         """A reranking operation."""
 
@@ -365,3 +379,32 @@ class SpanAttributes:
 
         OUTPUT_CONTEXT_SCORES = base + ".output_context_scores"
         """Output scores after reranking."""
+
+    class MCP:
+        """Attributes relevant for Model Context Protocol (MCP) tool calls."""
+
+        base = BASE_SCOPE + ".mcp"
+
+        TOOL_NAME = base + ".tool_name"
+        """Name of the MCP tool being called."""
+
+        TOOL_DESCRIPTION = base + ".tool_description"
+        """Description of the MCP tool."""
+
+        SERVER_NAME = base + ".server_name"
+        """Name of the MCP server providing the tool."""
+
+        INPUT_SCHEMA = base + ".input_schema"
+        """Schema of the input parameters for the MCP tool."""
+
+        INPUT_ARGUMENTS = base + ".input_arguments"
+        """Arguments passed to the MCP tool."""
+
+        OUTPUT_CONTENT = base + ".output_content"
+        """Content returned by the MCP tool."""
+
+        OUTPUT_IS_ERROR = base + ".output_is_error"
+        """Whether the MCP tool call resulted in an error."""
+
+        EXECUTION_TIME_MS = base + ".execution_time_ms"
+        """Time taken to execute the MCP tool call in milliseconds."""

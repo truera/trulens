@@ -461,7 +461,7 @@ def task_factory_with_stack(loop, coro, *args, **kwargs) -> asyncio.Task:
     """
 
     if "context" in kwargs:
-        logger.warning(
+        logger.debug(
             "Context is being overwritten, TruLens may not be able to record traces."
         )
 
@@ -1166,7 +1166,7 @@ class SingletonPerNameMeta(type):
                 SingletonPerNameMeta, cls
             ).__call__(*args, **kwargs)
         elif args or kwargs:
-            logger.warning(
+            logger.debug(
                 "Singleton instance %s already exists for name = %s.",
                 cls.__name__,
                 name,

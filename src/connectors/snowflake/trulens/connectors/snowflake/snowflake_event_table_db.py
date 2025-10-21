@@ -30,54 +30,52 @@ class SnowflakeEventTableDB(core_db.DB):
         self._snowpark_session = snowpark_session
         self._external_agent_dao = ExternalAgentDao(snowpark_session)
 
+    def _is_cortex_agent(self, app_name: types_schema.AppName) -> bool:
+        q = "SHOW AGENTS IN ACCOUNT"
+        df = self._snowpark_session.sql(q).to_pandas()
+        if app_name in df['"name"'].values:
+            # Technically, because we can have multiple cortex agents with the
+            # same name but in different schemas, this is a bit problematic, but
+            # there's not much we can do about it unfortunately.
+            return True
+        return False
+
     def get_records_and_feedback(
         self,
         app_ids: Optional[List[types_schema.AppID]] = None,
         app_name: Optional[types_schema.AppName] = None,
         app_version: Optional[types_schema.AppVersion] = None,
         app_versions: Optional[List[types_schema.AppVersion]] = None,
+        run_name: Optional[types_schema.RunName] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
-        """Get records from the database.
-
-        Args:
-            app_ids: If given, retrieve only the records for the given apps.
-                Otherwise all apps are retrieved.
-            app_name: If given, retrieve only the records for the given app name.
-            app_version: If given, retrieve only the records for the given app version.
-            app_versions: If given, retrieve only the records for the given app versions.
-            record_ids: Optional list of record IDs to filter by. Defaults to None.
-            offset: Database row offset.
-            limit: Limit on rows (records) returned.
-
-        Returns:
-            A DataFrame with the records.
-
-            A list of column names that contain feedback results.
-        """
+        """See [DB.get_records_and_feedback][trulens.core.database.base.DB.get_records_and_feedback]."""
         df = self._get_events(
             app_ids=app_ids,
             app_name=app_name,
             app_version=app_version,
             app_versions=app_versions,
+            run_name=run_name,
             record_ids=record_ids,
         )
         events = []
         for _, row in df.iterrows():
-            trace = json.loads(row["TRACE"])
+            trace = json.loads(row["trace"])
             if "parent_id" not in trace:
                 trace["parent_id"] = ""
+            if "trace_id" not in trace:
+                trace["trace_id"] = ""
             events.append(
                 Event(
                     event_id=trace["span_id"],
-                    record=json.loads(row["RECORD"]),
-                    record_attributes=json.loads(row["RECORD_ATTRIBUTES"]),
-                    record_type=row["RECORD_TYPE"],
-                    resource_attributes=json.loads(row["RESOURCE_ATTRIBUTES"]),
-                    start_timestamp=row["START_TIMESTAMP"],
-                    timestamp=row["TIMESTAMP"],
+                    record=json.loads(row["record"]),
+                    record_attributes=json.loads(row["record_attributes"]),
+                    record_type=row["record_type"],
+                    resource_attributes=json.loads(row["resource_attributes"]),
+                    start_timestamp=row["start_timestamp"],
+                    timestamp=row["timestamp"],
                     trace=trace,
                 )
             )
@@ -89,6 +87,7 @@ class SnowflakeEventTableDB(core_db.DB):
         self,
         app_name: Optional[types_schema.AppName] = None,
         app_version: Optional[types_schema.AppVersion] = None,
+        run_name: Optional[types_schema.RunName] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
         start_time: Optional[datetime] = None,
     ) -> pd.DataFrame:
@@ -98,6 +97,7 @@ class SnowflakeEventTableDB(core_db.DB):
         Args:
             app_name: The app name to filter events by.
             app_version: The app version to filter events by.
+            run_name: The run name to filter events by.
             record_ids: The record ids to filter events by.
             start_time: The minimum time to consider events from.
 
@@ -107,6 +107,7 @@ class SnowflakeEventTableDB(core_db.DB):
         return self._get_events(
             app_name=app_name,
             app_version=app_version,
+            run_name=run_name,
             record_ids=record_ids,
             start_time=start_time,
         )
@@ -117,6 +118,7 @@ class SnowflakeEventTableDB(core_db.DB):
         app_name: Optional[types_schema.AppName] = None,
         app_version: Optional[types_schema.AppVersion] = None,
         app_versions: Optional[List[types_schema.AppVersion]] = None,
+        run_name: Optional[types_schema.RunName] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
         start_time: Optional[datetime] = None,
     ) -> pd.DataFrame:
@@ -142,12 +144,17 @@ class SnowflakeEventTableDB(core_db.DB):
         if app_version:
             app_version_str = f"'{app_version}'"
             where_clauses.append(
-                f'(RECORD_ATTRIBUTES:"snow.ai.observability.agent.version" = {app_version_str} OR RECORD_ATTRIBUTES:"snow.ai.observability.object.version.name" = {app_version_str})'
+                f"IFNULL(RECORD_ATTRIBUTES:\"snow.ai.observability.object.version.name\", 'base') = {app_version_str}"
             )
         if app_versions:
             app_versions_str = ", ".join([f"'{curr}'" for curr in app_versions])
             where_clauses.append(
-                f'(RECORD_ATTRIBUTES:"snow.ai.observability.agent.version" IN ({app_versions_str}) OR RECORD_ATTRIBUTES:"snow.ai.observability.object.version.name" IN ({app_versions_str}))'
+                f"IFNULL(RECORD_ATTRIBUTES:\"snow.ai.observability.object.version.name\", 'base') IN ({app_versions_str})"
+            )
+        if run_name:
+            run_name_str = f"'{run_name}'"
+            where_clauses.append(
+                f'RECORD_ATTRIBUTES:"ai.observability.run.name" = {run_name_str}'
             )
         if record_ids:
             record_ids_str = ", ".join([f"'{curr}'" for curr in record_ids])
@@ -171,6 +178,7 @@ class SnowflakeEventTableDB(core_db.DB):
                 # external agent or a cortex agent yet so we're trying both
                 # in a hacky way right now for the time being.
                 pass
+        df.columns = df.columns.str.lower()
         return df
 
     def check_db_revision(*args, **kwargs):
@@ -201,10 +209,13 @@ class SnowflakeEventTableDB(core_db.DB):
         else:
             app_names = [app_name]
         for app_name in app_names:
-            for _, row in self._external_agent_dao.list_agent_versions(
-                app_name
-            ).iterrows():
-                app_version = row["name"]
+            if self._is_cortex_agent(app_name):
+                agent_versions = ["base"]
+            else:
+                agent_versions = self._external_agent_dao.list_agent_versions(
+                    app_name
+                )["name"].values
+            for app_version in agent_versions:
                 app_id = (
                     app_schema.AppDefinition._compute_app_id(
                         app_name, app_version
@@ -234,8 +245,17 @@ class SnowflakeEventTableDB(core_db.DB):
     def get_feedback_count_by_status(*args, **kwargs):
         raise NotImplementedError()
 
-    def get_feedback_defs(*args, **kwargs):
-        raise NotImplementedError()
+    def get_feedback_defs(
+        self,
+        feedback_definition_id: Optional[
+            types_schema.FeedbackDefinitionID
+        ] = None,
+    ) -> pd.DataFrame:
+        """See [DB.get_feedback_defs][trulens.core.database.base.DB.get_feedback_defs]."""
+        # TODO(otel): Find all feedback definitions!
+        return pd.DataFrame(
+            columns=["feedback_definition_id", "feedback_json"],
+        )
 
     def get_ground_truth(*args, **kwargs):
         raise NotImplementedError()

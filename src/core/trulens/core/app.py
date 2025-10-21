@@ -523,7 +523,8 @@ class App(
         main_method = None
 
         if otel_enabled:
-            if app is None:
+            # Allow app=None for virtual runs, but still require it for regular runs with main_method
+            if app is None and "main_method" in kwargs:
                 raise ValueError(
                     "A valid app instance must be provided when specifying 'main_method'."
                 )
@@ -531,20 +532,24 @@ class App(
             if "main_method" in kwargs:
                 main_method = kwargs["main_method"]
 
-                # Instead of always checking for binding,  enforce it except when app is an instance of TruWrapperApp (tru basic app).
-                try:
-                    from trulens.apps.basic import TruWrapperApp
-                except ImportError:
-                    TruWrapperApp = None
+                # Only do binding checks if app is not None (i.e., not a virtual run)
+                if app is not None:
+                    # Instead of always checking for binding,  enforce it except when app is an instance of TruWrapperApp (tru basic app).
+                    try:
+                        from trulens.apps.basic import TruWrapperApp
+                    except ImportError:
+                        TruWrapperApp = None
 
-                if TruWrapperApp is None or not isinstance(app, TruWrapperApp):
-                    if (
-                        not hasattr(main_method, "__self__")
-                        or main_method.__self__ != app
+                    if TruWrapperApp is None or not isinstance(
+                        app, TruWrapperApp
                     ):
-                        raise ValueError(
-                            f"main_method `{main_method.__name__}` must be bound to the provided `app` instance."
-                        )
+                        if (
+                            not hasattr(main_method, "__self__")
+                            or main_method.__self__ != app
+                        ):
+                            raise ValueError(
+                                f"main_method `{main_method.__name__}` must be bound to the provided `app` instance."
+                            )
 
         super().__init__(**kwargs)
 
@@ -1834,6 +1839,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 description=run_config.description,
                 label=run_config.label,
                 llm_judge_name=run_config.llm_judge_name,
+                mode=run_config.mode,
             )
 
             return Run.from_metadata_df(

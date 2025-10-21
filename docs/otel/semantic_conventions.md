@@ -44,3 +44,42 @@
 | `ai.observability.retrieval.query_text` | Input text whose related contexts are being retrieved. | Never | | str |
 | `ai.observability.retrieval.num_contexts` | The number of contexts requested, not necessarily retrieved. | Never | | int |
 | `ai.observability.retrieval.retrieved_contexts` | The retrieved contexts. | Never | | List[str] |
+| `ai.observability.mcp` | Namespace for attributes specific to Model Context Protocol (MCP) tool calls. | | Y | |
+| `ai.observability.mcp.tool_name` | Name of the MCP tool being called. | Never | | str |
+| `ai.observability.mcp.tool_description` | Description of the MCP tool. | Never | | str |
+| `ai.observability.mcp.server_name` | Name of the MCP server providing the tool. | Never | | str |
+| `ai.observability.mcp.input_schema` | Schema of the input parameters for the MCP tool. | Never | | str |
+| `ai.observability.mcp.input_arguments` | Arguments passed to the MCP tool. | Never | | str |
+| `ai.observability.mcp.output_content` | Content returned by the MCP tool. | Never | | str |
+| `ai.observability.mcp.output_is_error` | Whether the MCP tool call resulted in an error. | Never | | bool |
+| `ai.observability.mcp.execution_time_ms` | Time taken to execute the MCP tool call in milliseconds. | Never | | float |
+| `ai.observability.generation` | Namespace for attributes specific to a generation span. | | Y | |
+| `ai.observability.graph_task` | Namespace for attributes specific to a graph task function execution span. | | Y | |
+| `ai.observability.graph_task.task_name` | Name of the task function. | Never | | str |
+| `ai.observability.graph_task.input_state` | Input state to the task. | Never | | Any |
+| `ai.observability.graph_task.output_state` | Output state from the task. | Never | | Any |
+| `ai.observability.graph_task.error` | Error raised during task execution. | Never | | Any (but usually str) |
+| `ai.observability.graph_node` | Namespace for attributes specific to a graph node execution span. | | Y | |
+| `ai.observability.graph_node.node_name` | Name of the node. | Never | | str |
+| `ai.observability.graph_node.input_state` | Input state to the graph. | Never | | Any |
+| `ai.observability.graph_node.output_state` | Output state from the graph. | Never | | Any |
+| `ai.observability.graph_node.latest_message` | Latest message flowing between nodes. | Never | | Any |
+| `ai.observability.graph_node.nodes_executed` | List of nodes executed in the graph. | Never | | List[str] |
+| `ai.observability.graph_node.error` | Error raised during graph execution. | Never | | Any (but usually str) |
+| `ai.observability.workflow` | Namespace for attributes specific to a workflow execution span. | | Y | |
+| `ai.observability.workflow.input_event` | Input event to the workflow. | Never | | Any |
+| `ai.observability.workflow.output_event` | Output event from the workflow. | Never | | Any |
+| `ai.observability.workflow.error` | Error raised during workflow execution. | Never | | Any (but usually str) |
+| `ai.observability.workflow.agent_name` | Name of the agent executing in the workflow. | Never | | str |
+| `ai.observability.agent` | Namespace for attributes specific to an agent execution span. | | Y | |
+| `ai.observability.tool` | Namespace for attributes specific to a tool/function call execution span. | | Y | |
+| `ai.observability.reranking` | Namespace for attributes specific to a reranking operation span. | | Y | |
+| `ai.observability.reranking.query_text` | Query text used for reranking. | Never | | str |
+| `ai.observability.reranking.model_name` | Name of the reranking model. | Never | | str |
+| `ai.observability.reranking.top_n` | Number of top results to return after reranking. | Never | | int |
+| `ai.observability.reranking.input_context_texts` | Input contexts before reranking. | Never | | List[str] |
+| `ai.observability.reranking.input_context_scores` | Input scores before reranking. | Never | | List[float] |
+| `ai.observability.reranking.input_ranks` | Input ranking order before reranking. | Never | | List[int] |
+| `ai.observability.reranking.output_ranks` | Output ranking order after reranking. | Never | | List[int] |
+| `ai.observability.reranking.output_context_texts` | Output contexts after reranking. | Never | | List[str] |
+| `ai.observability.reranking.output_context_scores` | Output scores after reranking. | Never | | List[float] |

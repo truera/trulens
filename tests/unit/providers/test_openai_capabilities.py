@@ -275,6 +275,58 @@ def test_is_reasoning_model_gpt5():
     assert OpenAI(model_engine="gpt-4o-mini")._is_reasoning_model() is False
 
 
+@pytest.mark.optional
+def test_response_api_backward_compatibility():
+    from trulens.providers.openai.endpoint import OpenAIEndpoint
+
+    endpoint = OpenAIEndpoint()
+    assert endpoint is not None
+
+
+@pytest.mark.optional
+def test_response_api_usage_field_mapping():
+    from trulens.providers.openai.endpoint import OpenAICallback
+    from trulens.providers.openai.endpoint import OpenAIEndpoint
+
+    class MockResponseAPIResponse:
+        def __init__(self):
+            self.model = "gpt-5-mini"
+            self.usage = MockUsage()
+
+        def __getitem__(self, key):
+            if key == "results":
+                raise KeyError("results")
+            return getattr(self, key, {})
+
+        def __contains__(self, key):
+            return hasattr(self, key)
+
+    class MockUsage:
+        def __init__(self):
+            self.input_tokens = 15
+            self.output_tokens = 25
+            self.total_tokens = 40
+            self.output_tokens_details = {"reasoning_tokens": 8}
+
+        def model_dump(self):
+            return {
+                "input_tokens": self.input_tokens,
+                "output_tokens": self.output_tokens,
+                "total_tokens": self.total_tokens,
+                "output_tokens_details": self.output_tokens_details,
+            }
+
+    endpoint = OpenAIEndpoint()
+    callback = OpenAICallback(endpoint=endpoint)
+    response = MockResponseAPIResponse()
+
+    result = OpenAIEndpoint._handle_response(
+        model_name="gpt-5-mini", response=response, callbacks=[callback]
+    )
+
+    assert result == response
+
+
 class _DummyResponsesWithCreate:
     def __init__(self, *, should_succeed: bool, tool_input: str = "ok_cfg"):
         self.should_succeed = should_succeed

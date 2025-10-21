@@ -8,27 +8,19 @@ import pytest
 
 try:
     from trulens.connectors.snowflake.dao.run import RunDao
-
+    from trulens.core.enums import Mode
 
 except Exception:
     RunDao = None
-
-
-# DummyRow simulates a Snowflake Row with an as_dict() method.
-class DummyRow:
-    def __init__(self, d: dict):
-        self._d = d
-
-    def as_dict(self):
-        return self._d
+    Mode = None
 
 
 @pytest.mark.snowflake
 class TestRunDao(unittest.TestCase):
     def setUp(self):
-        if RunDao is None:
+        if RunDao is None or Mode is None:
             self.skipTest(
-                "RunDao is not available because optional tests are disabled."
+                "RunDao or Mode is not available because optional tests are disabled."
             )
 
         self.sf_session = MagicMock()
@@ -58,6 +50,7 @@ class TestRunDao(unittest.TestCase):
             "run_metadata": {
                 "labels": ["label"],
                 "llm_judge_name": "mistral-large2",
+                "mode": "APP_INVOCATION",
             },
             "source_info": {
                 "name": dataset_name,
@@ -78,6 +71,125 @@ class TestRunDao(unittest.TestCase):
             label="label",
             llm_judge_name="mistral-large2",
             run_name=run_name,
+            mode=Mode.APP_INVOCATION,
+        )
+
+        self.assertEqual(mock_execute_query.call_count, 2)
+
+        for call in mock_execute_query.call_args_list:
+            if call[0][1] == "SELECT SYSTEM$AIML_RUN_OPERATION('CREATE', ?);":
+                actual_parameters = call[1].get("parameters", [])
+                if actual_parameters:
+                    actual_payload = json.loads(actual_parameters[0])
+                    expected_payload = json.loads(req_payload_json)
+
+                    print("Expected Payload:", expected_payload)
+                    print("Actual Payload:", actual_payload)
+
+                    # Perform deep comparison of the dictionaries (ignoring order)
+                    self.assertEqual(actual_payload, expected_payload)
+
+    @patch("trulens.connectors.snowflake.dao.run.execute_query")
+    def test_create_new_run_log_ingestion_mode(self, mock_execute_query):
+        object_name = "MY_AGENT"
+        object_type = "EXTERNAL AGENT"
+        object_version = "V1"
+        run_name = "my_run_log_ingestion"
+        dataset_name = "db.schema.table"
+        source_type = "TABLE"
+        dataset_spec = {"col1": "col1"}
+
+        req_payload = {
+            "object_name": object_name,
+            "object_type": object_type,
+            "object_version": object_version,
+            "run_name": run_name,
+            "description": "desc",
+            "run_metadata": {
+                "labels": ["label"],
+                "llm_judge_name": "mistral-large2",
+                "mode": "LOG_INGESTION",
+            },
+            "source_info": {
+                "name": dataset_name,
+                "column_spec": dataset_spec,
+                "source_type": source_type,
+            },
+        }
+        req_payload_json = json.dumps(req_payload)
+
+        self.dao.create_new_run(
+            object_name=object_name,
+            object_type=object_type,
+            object_version=object_version,
+            dataset_name=dataset_name,
+            source_type=source_type,
+            dataset_spec=dataset_spec,
+            description="desc",
+            label="label",
+            llm_judge_name="mistral-large2",
+            run_name=run_name,
+            mode=Mode.LOG_INGESTION,
+        )
+
+        self.assertEqual(mock_execute_query.call_count, 2)
+
+        for call in mock_execute_query.call_args_list:
+            if call[0][1] == "SELECT SYSTEM$AIML_RUN_OPERATION('CREATE', ?);":
+                actual_parameters = call[1].get("parameters", [])
+                if actual_parameters:
+                    actual_payload = json.loads(actual_parameters[0])
+                    expected_payload = json.loads(req_payload_json)
+
+                    print("Expected Payload:", expected_payload)
+                    print("Actual Payload:", actual_payload)
+
+                    # Perform deep comparison of the dictionaries (ignoring order)
+                    self.assertEqual(actual_payload, expected_payload)
+
+    @patch("trulens.connectors.snowflake.dao.run.execute_query")
+    def test_create_new_run_default_mode(self, mock_execute_query):
+        """Test that when no mode is specified, it defaults to APP_INVOCATION."""
+        object_name = "MY_AGENT"
+        object_type = "EXTERNAL AGENT"
+        object_version = "V1"
+        run_name = "my_run_default"
+        dataset_name = "db.schema.table"
+        source_type = "TABLE"
+        dataset_spec = {"col1": "col1"}
+
+        req_payload = {
+            "object_name": object_name,
+            "object_type": object_type,
+            "object_version": object_version,
+            "run_name": run_name,
+            "description": "desc",
+            "run_metadata": {
+                "labels": ["label"],
+                "llm_judge_name": "mistral-large2",
+                "mode": "APP_INVOCATION",  # Should default to this
+            },
+            "source_info": {
+                "name": dataset_name,
+                "column_spec": dataset_spec,
+                "source_type": source_type,
+            },
+        }
+        req_payload_json = json.dumps(req_payload)
+
+        # Call without specifying mode parameter
+        self.dao.create_new_run(
+            object_name=object_name,
+            object_type=object_type,
+            object_version=object_version,
+            dataset_name=dataset_name,
+            source_type=source_type,
+            dataset_spec=dataset_spec,
+            description="desc",
+            label="label",
+            llm_judge_name="mistral-large2",
+            run_name=run_name,
+            # mode parameter omitted to test default behavior
         )
 
         self.assertEqual(mock_execute_query.call_count, 2)
@@ -97,8 +209,8 @@ class TestRunDao(unittest.TestCase):
 
     @patch("trulens.connectors.snowflake.dao.run.execute_query")
     def test_get_run_no_result(self, mock_execute_query):
-        # Simulate that get_run returns an empty list (no run exists).
-        mock_execute_query.return_value = []
+        # Simulate that get_run returns an empty DataFrame (no run exists).
+        mock_execute_query.return_value = pd.DataFrame()
         result_df = self.dao.get_run(
             run_name="nonexistent_run",
             object_name="MY_AGENT",
@@ -108,9 +220,10 @@ class TestRunDao(unittest.TestCase):
 
     @patch("trulens.connectors.snowflake.dao.run.execute_query")
     def test_get_run_with_result(self, mock_execute_query):
-        # Simulate that get_run returns a single row.
-        dummy = DummyRow({"run_name": "my_run", "run_status": "ACTIVE"})
-        mock_execute_query.return_value = [dummy]
+        # Simulate that get_run returns a DataFrame with a single row.
+        mock_execute_query.return_value = pd.DataFrame([
+            {"run_name": "my_run", "run_status": "ACTIVE"}
+        ])
         result_df = self.dao.get_run(
             run_name="my_run",
             object_name="MY_AGENT",

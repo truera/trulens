@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-providers-huggingface"
-version = "2.4.0"
+version = "2.4.1"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -35,7 +35,7 @@ numpy = ">=1.23.0"
 nltk = "^3.9.1"
 # HuggingfaceLocal dependencies
 torch = "^2.1.2"
-transformers = "^4.38.1"
+transformers = "^4.38.1,!=4.57.0"
 
 [tool.poetry.group.dev.dependencies]
 trulens-core = { path = "../../core" }

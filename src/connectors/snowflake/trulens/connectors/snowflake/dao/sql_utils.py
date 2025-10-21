@@ -1,7 +1,7 @@
 import logging
-from typing import List, Optional
+from typing import Optional
 
-from snowflake.snowpark import Row
+import pandas as pd
 from snowflake.snowpark import Session
 
 logger = logging.getLogger(__name__)
@@ -47,12 +47,25 @@ def execute_query(
     session: Session,
     query: str,
     parameters: Optional[tuple] = None,
-) -> List[Row]:
+) -> pd.DataFrame:
     """
     Executes a query with optional parameters with qmark parameter binding (if applicable).
     """
     try:
-        return session.sql(query, params=parameters).collect()
+        if query.strip().upper().startswith("SELECT"):
+            # snowpark to_pandas supports only SELECT statements up until recent releases https://github.com/snowflakedb/snowpark-python/blob/main/CHANGELOG.md
+            df = session.sql(query, params=parameters).to_pandas()
+        else:
+            result = session.sql(query, params=parameters).collect()
+            if not result:
+                return pd.DataFrame()
+            # Use actual field names from the Row objects
+            columns = result[0]._fields
+            data = [tuple(row) for row in result]
+            df = pd.DataFrame(data, columns=columns)
+
+        df.columns = [clean_up_snowflake_identifier(col) for col in df.columns]
+        return df
     except Exception as e:
         logger.exception(
             f"Error executing query: {query}\nParameters: {parameters}\nError: {e}"

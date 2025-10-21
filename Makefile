@@ -49,12 +49,11 @@ env-tests-basic:
 		&& make env-tests
 
 env-tests-optional: env env-tests
+	poetry install --with apps,providers
 	poetry run pip install \
 		chromadb \
 	 	faiss-cpu \
-		langchain-core \
-		langchain-openai \
-		langgraph \
+		"langchain-openai<1.0" \
 		llama-index-embeddings-huggingface \
 		llama-index-embeddings-openai \
 		unstructured

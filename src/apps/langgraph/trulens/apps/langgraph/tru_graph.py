@@ -41,7 +41,72 @@ from langgraph.graph import StateGraph
 from langgraph.pregel import Pregel
 from langgraph.types import Command
 
+# Import BaseTool and StructuredTool for individual tool instrumentation
+BaseTool = None
+StructuredTool = None
+
+try:
+    from langchain_core.tools import BaseTool
+    from langchain_core.tools import StructuredTool
+except ImportError:
+    try:
+        from langchain.tools.base import BaseTool
+    except ImportError:
+        pass
+
+try:
+    if StructuredTool is None:
+        from langchain_core.tools.structured import StructuredTool
+except ImportError:
+    pass
+
 logger = logging.getLogger(__name__)
+
+if not BaseTool or not StructuredTool:
+    logger.warning(
+        f"Tool imports: BaseTool={BaseTool is not None}, StructuredTool={StructuredTool is not None}"
+    )
+
+# Try to import ToolNode for MCP tool instrumentation
+try:
+    from langgraph.prebuilt import ToolNode
+except ImportError:
+    logger.warning(
+        "ToolNode not found, MCP tool instrumentation may be limited"
+    )
+    ToolNode = None
+
+# Global registry to track MCP server configurations and tool->server mappings
+_mcp_server_registry = {}
+_mcp_tool_to_server_map = {}
+
+
+def register_mcp_server(server_name: str, config: dict):
+    """Register an MCP server configuration for instrumentation."""
+    _mcp_server_registry[server_name] = config
+
+
+def register_mcp_tools(server_name: str, tool_names: list):
+    """Register which tools belong to which server."""
+    for tool_name in tool_names:
+        _mcp_tool_to_server_map[tool_name] = server_name
+
+
+def get_mcp_server_name_for_tool(tool_name: str) -> str:
+    """Get the MCP server name for a given tool name."""
+    # First check if we have a direct mapping
+    if tool_name in _mcp_tool_to_server_map:
+        return _mcp_tool_to_server_map[tool_name]
+
+    # If we have registered servers, return the first one
+    if _mcp_server_registry:
+        # Return the first registered server name (most common case is single server)
+        return list(_mcp_server_registry.keys())[0]
+
+    # DON'T extract from tool name - that's unreliable and incorrect
+    # Just use generic fallback
+    return "mcp_server"
+
 
 # Handle backward compatibility for TaskFunction rename
 try:
@@ -60,18 +125,75 @@ class LangGraphInstrument(core_instruments.Instrument):
     class Default:
         """Instrumentation specification for LangGraph apps."""
 
-        MODULES = {"langgraph"}
+        MODULES = {"langgraph", "langchain_mcp_adapters"}
         """Modules by prefix to instrument."""
 
-        CLASSES = lambda: {
-            Pregel,
-            StateGraph,
-            Command,
-            # Note: TaskFunction (or _TaskFunction) is instrumented at class-level during initialization
-        }
+        CLASSES = (
+            lambda: {
+                Pregel,
+                StateGraph,
+                Command,
+                ToolNode,  # Add ToolNode for MCP tool instrumentation
+                StructuredTool,  # Add StructuredTool for individual tool spans
+                # Note: TaskFunction (or _TaskFunction) is instrumented at class-level during initialization
+            }
+            if ToolNode and StructuredTool
+            else {
+                Pregel,
+                StateGraph,
+                Command,
+            }
+        )
         """Classes to instrument."""
 
-        METHODS: List[InstrumentedMethod] = []
+        METHODS: List[InstrumentedMethod] = [
+            # MCP-specific instrumentation
+            InstrumentedMethod(
+                "get_tools",
+                object,  # Will be filtered by module name
+                *core_instruments.Instrument.Default.mcp_span("server_name"),
+            ),
+            # ToolNode.__init__ to capture server info when ToolNode is created
+            InstrumentedMethod(
+                "__init__",
+                ToolNode if ToolNode else object,
+                SpanAttributes.SpanType.UNKNOWN,
+                lambda ret,
+                exception,
+                *args,
+                **kwargs: TruGraph._register_toolnode_tools(
+                    args[0] if args else None,
+                    args[1] if len(args) > 1 else kwargs.get("tools"),
+                ),
+            ),
+            InstrumentedMethod(
+                "call_tool",
+                object,  # Will be filtered by module name
+                *core_instruments.Instrument.Default.mcp_span("tool_name"),
+            ),
+            InstrumentedMethod(
+                "acall_tool",
+                object,  # Will be filtered by module name
+                *core_instruments.Instrument.Default.mcp_span("tool_name"),
+            ),
+            # ToolNode instrumentation - mark as GRAPH_NODE so individual tool calls show as children
+            InstrumentedMethod(
+                "invoke",
+                ToolNode if ToolNode else object,
+                SpanAttributes.SpanType.GRAPH_NODE,
+                lambda ret, exception, *args, **kwargs: {
+                    "graph_node.name": "tools"
+                },
+            ),
+            InstrumentedMethod(
+                "ainvoke",
+                ToolNode if ToolNode else object,
+                SpanAttributes.SpanType.GRAPH_NODE,
+                lambda ret, exception, *args, **kwargs: {
+                    "graph_node.name": "tools"
+                },
+            ),
+        ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(
@@ -256,6 +378,127 @@ class TruGraph(TruChain):
             attributes[state_key] = cls._serialize_state_for_attributes(data)
 
         return attributes
+
+    @classmethod
+    def _register_toolnode_tools(cls, instance, tools):
+        """Register tools and extract server name when ToolNode is created."""
+        if tools and isinstance(tools, (list, tuple)) and len(tools) > 0:
+            first_tool = tools[0]
+
+            # Check the tool's coroutine closure for MultiServerMCPClient
+            if hasattr(first_tool, "coroutine") and first_tool.coroutine:
+                if (
+                    hasattr(first_tool.coroutine, "__closure__")
+                    and first_tool.coroutine.__closure__
+                ):
+                    for cell in first_tool.coroutine.__closure__:
+                        cell_contents = cell.cell_contents
+                        # Check if it's the MultiServerMCPClient
+                        if (
+                            type(cell_contents).__name__
+                            == "MultiServerMCPClient"
+                        ):
+                            if hasattr(cell_contents, "connections"):
+                                connections = cell_contents.connections
+                                if isinstance(connections, dict):
+                                    for srv_name in connections.keys():
+                                        register_mcp_server(srv_name, {})
+                                    # Register all tools for this server
+                                    tool_names = [
+                                        t.name
+                                        for t in tools
+                                        if hasattr(t, "name")
+                                    ]
+                                    for srv_name in connections.keys():
+                                        register_mcp_tools(srv_name, tool_names)
+                            break
+
+        return {}  # Return empty dict for attributes
+
+    @classmethod
+    def _extract_toolnode_attributes(cls, ret, exception, *args, **kwargs):
+        """Extract MCP attributes from ToolNode execution."""
+        attributes = {
+            SpanAttributes.MCP.INPUT_ARGUMENTS: str(kwargs),
+            SpanAttributes.MCP.OUTPUT_CONTENT: str(ret)
+            if ret is not None
+            else "",
+            SpanAttributes.MCP.OUTPUT_IS_ERROR: exception is not None,
+        }
+
+        # Extract tool name and server name from ToolNode instance and input
+        tool_name = "unknown"
+        server_name = "mcp_server"
+
+        # Get the ToolNode instance (first argument)
+        if args:
+            toolnode_instance = args[0]
+
+            # Extract server name from tools in the ToolNode
+            if hasattr(toolnode_instance, "tools") and toolnode_instance.tools:
+                tools = toolnode_instance.tools
+                first_tool = tools[0] if isinstance(tools, list) else tools
+
+                # Try to get server name from tool client (using connections attribute)
+                if hasattr(first_tool, "client"):
+                    if hasattr(first_tool.client, "connections"):
+                        connections = first_tool.client.connections
+                        if isinstance(connections, dict) and connections:
+                            server_name = list(connections.keys())[0]
+                            # Register the server
+                            for srv_name in connections.keys():
+                                register_mcp_server(srv_name, {})
+                    elif hasattr(first_tool.client, "server_configs"):
+                        server_configs = first_tool.client.server_configs
+                        if isinstance(server_configs, dict) and server_configs:
+                            server_name = list(server_configs.keys())[0]
+                            # Register the server configs
+                            for srv_name, srv_config in server_configs.items():
+                                register_mcp_server(srv_name, srv_config)
+
+            # Extract tool name from the input state (second argument)
+            if len(args) > 1:
+                input_state = args[1]
+                if isinstance(input_state, dict) and "messages" in input_state:
+                    messages = input_state["messages"]
+                    if isinstance(messages, list) and messages:
+                        # Look for the last message with tool calls
+                        for msg in reversed(messages):
+                            if hasattr(msg, "tool_calls") and msg.tool_calls:
+                                tool_call = msg.tool_calls[0]
+                                if hasattr(tool_call, "name"):
+                                    tool_name = tool_call.name
+                                    break
+                                elif hasattr(tool_call, "function") and hasattr(
+                                    tool_call.function, "name"
+                                ):
+                                    tool_name = tool_call.function.name
+                                    break
+
+        attributes[SpanAttributes.MCP.TOOL_NAME] = tool_name
+        attributes[SpanAttributes.MCP.SERVER_NAME] = server_name
+
+        return attributes
+
+    @classmethod
+    def _register_mcp_servers_from_instance(cls, instance) -> dict:
+        """Register MCP servers from a MultiServerMCPClient instance."""
+        try:
+            if instance and hasattr(instance, "server_configs"):
+                server_configs = instance.server_configs
+                if isinstance(server_configs, dict):
+                    for server_name, config in server_configs.items():
+                        register_mcp_server(server_name, config)
+                    return {
+                        SpanAttributes.MCP.SERVER_NAME: list(
+                            server_configs.keys()
+                        )[0]
+                        if server_configs
+                        else "mcp_server"
+                    }
+        except Exception as e:
+            logger.debug(f"Failed to register MCP servers: {e}")
+        return {}
 
     @classmethod
     def _update_span_name(cls, span_name: str) -> None:
@@ -538,45 +781,86 @@ class TruGraph(TruChain):
         return attributes
 
     @classmethod
-    def _wrap_stream_generator(cls, original_generator):
+    def _wrap_stream_generator(cls, original_generator, is_async=False):
         """Wrap a LangGraph stream generator to capture individual node updates as spans"""
 
         try:
+            if is_async:
+                # Handle async generator
+                async def instrumented_async_generator():
+                    async for chunk in original_generator:
+                        # Each chunk typically contains node updates
+                        if isinstance(chunk, dict):
+                            for node_name, node_data in chunk.items():
+                                span_name = f"graph_node.{node_name}"
 
-            def instrumented_generator():
-                for chunk in original_generator:
-                    # Each chunk typically contains node updates
-                    if isinstance(chunk, dict):
-                        for node_name, node_data in chunk.items():
-                            span_name = f"graph_node.{node_name}"
-
-                            try:
-                                with create_function_call_context_manager(
-                                    create_new_span=True, span_name=span_name
-                                ) as span:
-                                    set_general_span_attributes(
-                                        span, SpanAttributes.SpanType.GRAPH_NODE
-                                    )
-
-                                    attributes = (
-                                        cls._create_node_update_attributes(
-                                            node_name, node_data
+                                try:
+                                    with create_function_call_context_manager(
+                                        create_new_span=True,
+                                        span_name=span_name,
+                                    ) as span:
+                                        set_general_span_attributes(
+                                            span,
+                                            SpanAttributes.SpanType.GRAPH_NODE,
                                         )
+
+                                        attributes = (
+                                            cls._create_node_update_attributes(
+                                                node_name, node_data
+                                            )
+                                        )
+
+                                        set_user_defined_attributes(
+                                            span, attributes=attributes
+                                        )
+
+                                except Exception as e:
+                                    logger.debug(
+                                        f"Failed to create span for node {node_name}: {e}"
                                     )
 
-                                    set_user_defined_attributes(
-                                        span, attributes=attributes
+                        # Yield the original chunk unchanged
+                        yield chunk
+
+                return instrumented_async_generator()
+            else:
+                # Handle sync generator
+                def instrumented_generator():
+                    for chunk in original_generator:
+                        # Each chunk typically contains node updates
+                        if isinstance(chunk, dict):
+                            for node_name, node_data in chunk.items():
+                                span_name = f"graph_node.{node_name}"
+
+                                try:
+                                    with create_function_call_context_manager(
+                                        create_new_span=True,
+                                        span_name=span_name,
+                                    ) as span:
+                                        set_general_span_attributes(
+                                            span,
+                                            SpanAttributes.SpanType.GRAPH_NODE,
+                                        )
+
+                                        attributes = (
+                                            cls._create_node_update_attributes(
+                                                node_name, node_data
+                                            )
+                                        )
+
+                                        set_user_defined_attributes(
+                                            span, attributes=attributes
+                                        )
+
+                                except Exception as e:
+                                    logger.debug(
+                                        f"Failed to create span for node {node_name}: {e}"
                                     )
 
-                            except Exception as e:
-                                logger.debug(
-                                    f"Failed to create span for node {node_name}: {e}"
-                                )
+                        # Yield the original chunk unchanged
+                        yield chunk
 
-                    # Yield the original chunk unchanged
-                    yield chunk
-
-            return instrumented_generator()
+                return instrumented_generator()
 
         except Exception as e:
             logger.warning(f"Failed to wrap stream generator: {e}")
@@ -600,15 +884,48 @@ class TruGraph(TruChain):
             def create_instrumented_streaming_method(
                 original_method, method_name
             ):
-                def instrumented_method(self, *args, **kwargs):
-                    original_generator = original_method(self, *args, **kwargs)
+                # Check if this is an async method
+                if method_name.startswith("a"):  # astream, astream_mode
 
-                    return cls._wrap_stream_generator(original_generator)
+                    async def instrumented_async_method(self, *args, **kwargs):
+                        original_generator = original_method(
+                            self, *args, **kwargs
+                        )
+                        # For async methods, await the original generator to get the actual async generator
+                        if hasattr(original_generator, "__aiter__"):
+                            # It's already an async generator
+                            return cls._wrap_stream_generator(
+                                original_generator, is_async=True
+                            )
+                        else:
+                            # It might be a coroutine that returns an async generator
+                            actual_generator = await original_generator
+                            return cls._wrap_stream_generator(
+                                actual_generator, is_async=True
+                            )
 
-                setattr(
-                    instrumented_method, TRULENS_INSTRUMENT_WRAPPER_FLAG, True
-                )
-                return instrumented_method
+                    setattr(
+                        instrumented_async_method,
+                        TRULENS_INSTRUMENT_WRAPPER_FLAG,
+                        True,
+                    )
+                    return instrumented_async_method
+                else:
+
+                    def instrumented_method(self, *args, **kwargs):
+                        original_generator = original_method(
+                            self, *args, **kwargs
+                        )
+                        return cls._wrap_stream_generator(
+                            original_generator, is_async=False
+                        )
+
+                    setattr(
+                        instrumented_method,
+                        TRULENS_INSTRUMENT_WRAPPER_FLAG,
+                        True,
+                    )
+                    return instrumented_method
 
             instrumented_method = create_instrumented_streaming_method(
                 original_method, method_name
@@ -623,6 +940,101 @@ class TruGraph(TruChain):
             logger.warning(
                 f"Failed to instrument streaming method {method_name}: {e}"
             )
+
+    @classmethod
+    def _setup_structuredtool_instrumentation(cls):
+        """Set up instrumentation for StructuredTool to create separate spans for each tool call"""
+
+        if not StructuredTool:
+            logger.debug(
+                "StructuredTool not available, skipping tool instrumentation"
+            )
+            return
+
+        if not is_otel_tracing_enabled():
+            logger.debug(
+                "OTEL not enabled, skipping StructuredTool instrumentation"
+            )
+            return
+
+        try:
+            if hasattr(StructuredTool, "ainvoke") and hasattr(
+                getattr(StructuredTool, "ainvoke"),
+                TRULENS_INSTRUMENT_WRAPPER_FLAG,
+            ):
+                logger.debug("StructuredTool.ainvoke already instrumented")
+                return
+
+            logger.info(
+                "Applying class-level instrumentation to StructuredTool.ainvoke"
+            )
+
+            from opentelemetry import trace
+            from trulens.experimental.otel_tracing.core.session import (
+                TRULENS_SERVICE_NAME,
+            )
+            from trulens.experimental.otel_tracing.core.span import (
+                set_general_span_attributes,
+            )
+            import wrapt
+
+            original_ainvoke = StructuredTool.ainvoke
+
+            @wrapt.decorator
+            async def ainvoke_wrapper(wrapped, instance, args, kwargs):
+                tool_name = getattr(instance, "name", "unknown_tool")
+
+                tracer = trace.get_tracer_provider().get_tracer(
+                    TRULENS_SERVICE_NAME
+                )
+
+                # Start span with the tool name directly
+                with tracer.start_as_current_span(tool_name) as span:
+                    try:
+                        # Set MCP span type and attributes
+                        set_general_span_attributes(
+                            span, SpanAttributes.SpanType.MCP
+                        )
+                        span.set_attribute(
+                            SpanAttributes.MCP.TOOL_NAME, tool_name
+                        )
+                        span.set_attribute(
+                            SpanAttributes.MCP.INPUT_ARGUMENTS,
+                            str(args) + str(kwargs),
+                        )
+
+                        # Execute the tool
+                        result = await wrapped(*args, **kwargs)
+
+                        # Set output attributes
+                        span.set_attribute(
+                            SpanAttributes.MCP.OUTPUT_CONTENT,
+                            str(result) if result is not None else "",
+                        )
+                        span.set_attribute(
+                            SpanAttributes.MCP.OUTPUT_IS_ERROR, False
+                        )
+
+                        return result
+                    except Exception as e:
+                        # Set error attributes
+                        span.set_attribute(
+                            SpanAttributes.MCP.OUTPUT_IS_ERROR, True
+                        )
+                        span.set_attribute(
+                            SpanAttributes.MCP.OUTPUT_CONTENT, str(e)
+                        )
+                        raise
+
+            StructuredTool.ainvoke = ainvoke_wrapper(original_ainvoke)
+            setattr(
+                StructuredTool.ainvoke, TRULENS_INSTRUMENT_WRAPPER_FLAG, True
+            )
+
+            logger.debug("Applied instrumentation to StructuredTool.ainvoke")
+
+        except Exception as e:
+            logger.warning(f"Failed to instrument StructuredTool: {e}")
 
     @classmethod
     def _setup_runnable_callable_instrumentation(cls):
@@ -660,19 +1072,196 @@ class TruGraph(TruChain):
 
                 # Get the function reference to extract the actual function name
                 node_name = "unknown_node"
-                if args and hasattr(args[0], "func"):
-                    func = args[0].func
+                instance = args[0] if args else None
+
+                if instance and hasattr(instance, "func"):
+                    func = instance.func
                     if hasattr(func, "__name__"):
                         node_name = func.__name__
                     else:
                         node_name = str(func)
 
-                attributes[SpanAttributes.GRAPH_NODE.NODE_NAME] = node_name
+                # Determine span type for this instance
+                span_type = (
+                    cls._determine_span_type(instance)
+                    if instance
+                    else SpanAttributes.SpanType.GRAPH_NODE
+                )
 
-                # Update the span name to the actual node function name
-                cls._update_span_name(node_name)
+                # Set attributes based on span type
+                if span_type == SpanAttributes.SpanType.GENERATION:
+                    # For model calls, just mark the span type
+                    # GENERATION attributes would be set here if they were defined
+                    pass
+                elif span_type == SpanAttributes.SpanType.MCP:
+                    # For tool calls, use MCP attributes and try to extract server/tool info
+                    tool_name = "unknown"  # Don't default to node_name (_func)
+                    server_name = None
 
-                # Handle input/output state and exceptions
+                    # Try to extract tool information from the input data
+                    input_data = args[1] if len(args) > 1 else kwargs
+
+                    # For _func node_name, the instance is actually a ToolNode
+                    if node_name == "_func" and instance:
+                        # ToolNode has a tools_by_name attribute with the actual tool objects
+                        if hasattr(instance, "tools_by_name"):
+                            tools_by_name = instance.tools_by_name
+                            if (
+                                isinstance(tools_by_name, dict)
+                                and tools_by_name
+                            ):
+                                # Get the first tool to extract server info from closure
+                                first_tool = list(tools_by_name.values())[0]
+
+                                # Check coroutine closure for MultiServerMCPClient (async tools)
+                                if (
+                                    hasattr(first_tool, "coroutine")
+                                    and first_tool.coroutine
+                                ):
+                                    if (
+                                        hasattr(
+                                            first_tool.coroutine, "__closure__"
+                                        )
+                                        and first_tool.coroutine.__closure__
+                                    ):
+                                        for (
+                                            cell
+                                        ) in first_tool.coroutine.__closure__:
+                                            cell_contents = cell.cell_contents
+                                            # Check if it's the MultiServerMCPClient
+                                            if (
+                                                type(cell_contents).__name__
+                                                == "MultiServerMCPClient"
+                                            ):
+                                                if hasattr(
+                                                    cell_contents, "connections"
+                                                ):
+                                                    connections = cell_contents.connections
+                                                    if (
+                                                        isinstance(
+                                                            connections, dict
+                                                        )
+                                                        and connections
+                                                    ):
+                                                        server_name = list(
+                                                            connections.keys()
+                                                        )[0]
+                                                        # Register servers and tools
+                                                        for (
+                                                            srv_name
+                                                        ) in connections.keys():
+                                                            register_mcp_server(
+                                                                srv_name, {}
+                                                            )
+                                                        register_mcp_tools(
+                                                            server_name,
+                                                            list(
+                                                                tools_by_name.keys()
+                                                            ),
+                                                        )
+                                                break
+
+                                # If registry has servers, use it
+                                if not server_name and _mcp_server_registry:
+                                    server_name = list(
+                                        _mcp_server_registry.keys()
+                                    )[0]
+                                    register_mcp_tools(
+                                        server_name, list(tools_by_name.keys())
+                                    )
+
+                    # Extract tool name(s) from the OUTPUT (ret) which contains ToolMessage(s)
+                    # This is more accurate than trying to guess from input messages
+                    tool_names_found = []
+                    if ret and isinstance(ret, dict) and "messages" in ret:
+                        ret_messages = ret["messages"]
+                        if isinstance(ret_messages, list) and ret_messages:
+                            # Look for ALL ToolMessages in the output
+                            for msg in ret_messages:
+                                if hasattr(msg, "name") and msg.name:
+                                    # ToolMessage has the name of the tool that was executed
+                                    tool_names_found.append(msg.name)
+
+                            # If multiple tools were called, join their names
+                            if len(tool_names_found) > 1:
+                                tool_name = " + ".join(tool_names_found)
+                            elif len(tool_names_found) == 1:
+                                tool_name = tool_names_found[0]
+
+                    # Fallback: check input messages for tool calls
+                    if (
+                        tool_name == "unknown"
+                        and isinstance(input_data, dict)
+                        and "messages" in input_data
+                    ):
+                        # Look for tool calls in the messages
+                        messages = input_data["messages"]
+                        if isinstance(messages, list) and messages:
+                            last_msg = messages[-1]
+                            if (
+                                hasattr(last_msg, "tool_calls")
+                                and last_msg.tool_calls
+                            ):
+                                tool_call = last_msg.tool_calls[0]
+
+                                # Tool call can be a dict or an object
+                                if isinstance(tool_call, dict):
+                                    tool_name = tool_call.get("name", "unknown")
+                                elif hasattr(tool_call, "name"):
+                                    tool_name = tool_call.name
+
+                                    # Try to extract from function attribute if available
+                                    if hasattr(
+                                        tool_call, "function"
+                                    ) and hasattr(tool_call.function, "name"):
+                                        tool_full_name = tool_call.function.name
+                                        tool_name = tool_full_name
+
+                    # Try to extract server name from instance attributes if available
+                    if not server_name and instance:
+                        # Check if instance has server information
+                        if hasattr(instance, "server_name"):
+                            server_name = instance.server_name
+                        elif hasattr(instance, "_server_name"):
+                            server_name = instance._server_name
+                        elif hasattr(instance, "name") and "_" in str(
+                            instance.name
+                        ):
+                            # Sometimes server name is embedded in the instance name
+                            server_name = str(instance.name).split("_")[0]
+
+                    # Fallback to extracting from tool name or use default
+                    if not server_name:
+                        server_name = get_mcp_server_name_for_tool(tool_name)
+
+                    # For _func spans, use the TOOL_NAME as the span name
+                    # For tools_condition and other non-_func MCP spans, keep original name
+                    if node_name == "_func":
+                        span_name_to_use = (
+                            tool_name if tool_name != "unknown" else node_name
+                        )
+                        # Update span name for _func spans only
+                        cls._update_span_name(span_name_to_use)
+
+                    attributes[SpanAttributes.MCP.TOOL_NAME] = tool_name
+                    if server_name:
+                        attributes[SpanAttributes.MCP.SERVER_NAME] = server_name
+                    attributes[SpanAttributes.MCP.INPUT_ARGUMENTS] = (
+                        str(args[1:]) if len(args) > 1 else str(kwargs)
+                    )
+                    attributes[SpanAttributes.MCP.OUTPUT_CONTENT] = (
+                        str(ret) if ret else ""
+                    )
+                    attributes[SpanAttributes.MCP.OUTPUT_IS_ERROR] = (
+                        exception is not None
+                    )
+                else:
+                    # For graph nodes, use graph node attributes
+                    attributes[SpanAttributes.GRAPH_NODE.NODE_NAME] = node_name
+                    # Update the span name to the actual node function name
+                    cls._update_span_name(node_name)
+
+                # Handle input/output state and exceptions for all types
                 input_data = args[1] if len(args) > 1 else None
                 cls._handle_input_output_state(
                     input_data, ret, exception, attributes
@@ -691,6 +1280,27 @@ class TruGraph(TruChain):
 
         except Exception as e:
             logger.warning(f"Failed to instrument RunnableCallable: {e}")
+
+    @classmethod
+    def _determine_span_type(cls, instance):
+        """Determine the appropriate span type based on the function being called"""
+        if not hasattr(instance, "func"):
+            return SpanAttributes.SpanType.GRAPH_NODE
+
+        func = instance.func
+        func_name = getattr(func, "__name__", "unknown")
+
+        # Check if this is a model/LLM call
+        if "call_model" in func_name or "model" in func_name.lower():
+            return SpanAttributes.SpanType.GENERATION
+
+        # Check if this is an MCP tool call - ONLY _func is the actual tool execution
+        # tools_condition is a routing function, not a tool call
+        if func_name == "_func":
+            return SpanAttributes.SpanType.MCP
+
+        # Default to graph node
+        return SpanAttributes.SpanType.GRAPH_NODE
 
     @classmethod
     def _instrument_runnable_callable_method(
@@ -713,9 +1323,12 @@ class TruGraph(TruChain):
                 ]:
                     return wrapped(*args, **kwargs)
 
-            # For user-defined nodes, apply full instrumentation
+            # Determine the appropriate span type
+            span_type = cls._determine_span_type(instance)
+
+            # For user-defined nodes, apply full instrumentation with dynamic span type
             instrumented_method = instrument(
-                span_type=SpanAttributes.SpanType.GRAPH_NODE,
+                span_type=span_type,
                 attributes=attributes_func,
             )(wrapped)
             return instrumented_method(*args, **kwargs)
@@ -750,6 +1363,9 @@ class TruGraph(TruChain):
 
             # Set up RunnableCallable instrumentation for individual nodes
             cls._setup_runnable_callable_instrumentation()
+
+            # Set up StructuredTool instrumentation for individual tool calls
+            cls._setup_structuredtool_instrumentation()
 
             # Create enhanced attributes function for Pregel methods
             def pregel_attributes(ret, exception, *args, **kwargs):
@@ -804,9 +1420,12 @@ class TruGraph(TruChain):
             async_methods = ["ainvoke"]
             streaming_methods = [
                 "stream",
-                "astream",
+                # TODO: Re-enable async streaming instrumentation after fixing async generator handling
+                # The issue is that LangGraph's astream returns complex async generator patterns
+                # that need special handling to avoid "TypeError: 'async for' requires an object with __aiter__ method"
+                # "astream",
                 "stream_mode",
-                "astream_mode",
+                # "astream_mode",
             ]
 
             for method_name in sync_methods + async_methods:

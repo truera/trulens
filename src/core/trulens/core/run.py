@@ -12,11 +12,47 @@ import pydantic
 from pydantic import BaseModel
 from pydantic import Field
 from pydantic import field_serializer
+from trulens.core.enums import Mode
 from trulens.core.feedback.custom_metric import MetricConfig
 from trulens.core.utils.json import obj_id_of_obj
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
+
+
+def _parse_json_field(
+    value: Any,
+    field_name: str,
+    index: Optional[int] = None,
+    critical: bool = True,
+) -> Any:
+    """
+    Helper function to parse JSON fields consistently.
+
+    Args:
+        value: The value to parse (could be string or already parsed dict)
+        field_name: Name of the field being parsed (for logging)
+        index: Optional index for logging context
+        critical: Whether parsing failure should cause the caller to continue processing
+
+    Returns:
+        Parsed dictionary or the original value if already parsed
+
+    Raises:
+        Continues processing on JSONDecodeError if critical=False, otherwise logs warning
+    """
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            index_msg = f" at index {index}" if index is not None else ""
+            if critical:
+                logger.warning(f"Failed to parse {field_name} JSON{index_msg}")
+                raise
+            else:
+                logger.debug(f"Failed to parse {field_name} JSON{index_msg}")
+                return value
+    return value
 
 
 def _get_all_span_attribute_key_constants(cls: Type, prefix: str) -> List[str]:
@@ -144,6 +180,10 @@ class RunConfig(BaseModel):
         default=None,
         description="Name of the LLM judge to be used for the run.",
     )
+    mode: Mode = Field(
+        default=Mode.APP_INVOCATION,
+        description="Mode of operation: LOG_INGESTION for creating spans from existing data, APP_INVOCATION for instrumenting spans from a new app execution.",
+    )
 
 
 class Run(BaseModel):
@@ -170,8 +210,8 @@ class Run(BaseModel):
         exclude=True,
     )
 
-    main_method_name: str = Field(
-        ..., description="Main method of the app.", exclude=True
+    main_method_name: Optional[str] = Field(
+        default=None, description="Main method of the app.", exclude=True
     )
 
     tru_session: Any = Field(
@@ -212,6 +252,10 @@ class Run(BaseModel):
         llm_judge_name: Optional[str] = Field(
             default=None,
             description="Name of the LLM judge to be used for the run.",
+        )
+        mode: Optional[str] = Field(
+            default=Mode.APP_INVOCATION.value,
+            description="Mode of operation: LOG_INGESTION or APP_INVOCATION.",
         )
         invocations: Optional[Dict[str, Run.InvocationMetadata]] = Field(
             default=None,
@@ -550,57 +594,68 @@ class Run(BaseModel):
             f"Creating or updating invocation metadata with {input_records_count} records from input."
         )
 
-        # user app invocation - will block until the app completes
+        # Determine mode from run metadata
+        mode = self.run_metadata.mode or Mode.APP_INVOCATION.value
+
         try:
-            for i, row in input_df.iterrows():
-                main_method_args = []
-
-                # Call the instrumented main method with the arguments
-                # TODO (dhuang) better way to check span attributes, also is this all we need to support?
-                input_id = (
-                    row[dataset_spec["input_id"]]
-                    if "input_id" in dataset_spec
-                    else None
+            if mode == Mode.LOG_INGESTION.value:
+                self._create_virtual_spans(
+                    input_df, dataset_spec, input_records_count
                 )
-                input_col = None
-                if input_id is None:
-                    if "input" in dataset_spec:
-                        input_col = dataset_spec["input"]
-                    elif "record_root.input" in dataset_spec:
-                        input_col = dataset_spec["record_root.input"]
-                    if input_col:
-                        input_id = obj_id_of_obj(row[input_col])
-                        main_method_args.append(row[input_col])
+            else:
+                # user app invocation - will block until the app completes
+                for _, row in input_df.iterrows():
+                    main_method_args = []
 
-                # Extract additional method arguments from dataset_spec
-                # Skip fields that are already handled or are special metadata fields
-                special_fields = {
-                    "input_id",
-                    "input",
-                    "record_root.input",
-                    "ground_truth_output",
-                    "record_root.ground_truth_output",
-                }
+                    # Call the instrumented main method with the arguments
+                    # TODO (dhuang) better way to check span attributes, also is this all we need to support?
+                    input_id = (
+                        row[dataset_spec["input_id"]]
+                        if "input_id" in dataset_spec
+                        else None
+                    )
+                    input_col = None
+                    if input_id is None:
+                        if "input" in dataset_spec:
+                            input_col = dataset_spec["input"]
+                        elif "record_root.input" in dataset_spec:
+                            input_col = dataset_spec["record_root.input"]
+                        if input_col:
+                            input_id = obj_id_of_obj(row[input_col])
+                            main_method_args.append(row[input_col])
 
-                for spec_key, column_name in dataset_spec.items():
-                    if spec_key not in special_fields and column_name in row:
-                        main_method_args.append(row[column_name])
+                    # Extract additional method arguments from dataset_spec
+                    # Skip fields that are already handled or are special metadata fields
+                    special_fields = {
+                        "input_id",
+                        "input",
+                        "record_root.input",
+                        "ground_truth_output",
+                        "record_root.ground_truth_output",
+                    }
 
-                ground_truth_output = row.get(
-                    dataset_spec.get("ground_truth_output")
-                    or dataset_spec.get("record_root.ground_truth_output")
-                )
+                    for spec_key, column_name in dataset_spec.items():
+                        if (
+                            spec_key not in special_fields
+                            and column_name in row
+                        ):
+                            main_method_args.append(row[column_name])
 
-                self.app.instrumented_invoke_main_method(
-                    run_name=self.run_name,
-                    input_id=input_id,
-                    input_records_count=input_records_count,
-                    ground_truth_output=ground_truth_output,
-                    main_method_args=tuple(
-                        main_method_args
-                    ),  # Ensure correct order
-                    main_method_kwargs=None,  # don't take any kwargs for now so we don't break TruChain / TruLlama where input argument name cannot be defined by users.
-                )
+                    ground_truth_output = row.get(
+                        dataset_spec.get("ground_truth_output")
+                        or dataset_spec.get("record_root.ground_truth_output")
+                    )
+
+                    self.app.instrumented_invoke_main_method(
+                        run_name=self.run_name,
+                        input_id=input_id,
+                        input_records_count=input_records_count,
+                        ground_truth_output=ground_truth_output,
+                        main_method_args=tuple(
+                            main_method_args
+                        ),  # Ensure correct order
+                        main_method_kwargs=None,  # don't take any kwargs for now so we don't break TruChain / TruLlama where input argument name cannot be defined by users.
+                    )
         except Exception as e:
             logger.exception(
                 f"Error encountered during invoking app main method: {e}."
@@ -622,6 +677,240 @@ class Run(BaseModel):
             input_records_count=input_records_count,
         )
         logger.info("Run started, invocation done and ingestion in process.")
+
+    def _create_virtual_spans(
+        self,
+        input_df: pd.DataFrame,
+        dataset_spec: Dict[str, str],
+        input_records_count: int,
+    ):
+        """
+        Create OTEL spans from existing data without actual app invocation.
+        This method creates spans dynamically based on the dataset_spec mapping,
+        which maps span attribute paths to column names.
+
+        The input DataFrame must conform to a specific format based on the dataset_spec.
+        Required columns/data:
+        - If 'input_id' is specified in dataset_spec: A column containing unique identifiers
+        - If no 'input_id': Either 'input' or 'record_root.input' column must exist to generate IDs
+        - If neither exists, row indices will be used as fallback IDs
+
+        Optional columns (specified via dataset_spec):
+        - 'ground_truth_output' or 'record_root.ground_truth_output': Ground truth data
+        - Any additional columns mapped in dataset_spec will be used to populate span attributes
+
+        See RECORD_ROOT and other span attribute definitions in trulens.otel.semconv.trace
+        for the full set of supported attribute paths that can be mapped to columns.
+        """
+
+        logger.debug(f"Creating virtual spans for {len(input_df)} records")
+
+        for i, row in input_df.iterrows():
+            input_id = (
+                row[dataset_spec["input_id"]]
+                if "input_id" in dataset_spec
+                else None
+            )
+            input_col = None
+            if input_id is None:
+                if "input" in dataset_spec:
+                    input_col = dataset_spec["input"]
+                elif "record_root.input" in dataset_spec:
+                    input_col = dataset_spec["record_root.input"]
+                if input_col:
+                    input_id = obj_id_of_obj(row[input_col])
+
+            ground_truth_output = row.get(
+                dataset_spec.get("ground_truth_output")
+                or dataset_spec.get("record_root.ground_truth_output")
+            )
+
+            # Ensure input_id is never None - use row index as fallback
+            if input_id is None:
+                input_id = f"row_{i}"
+                logger.warning(f"input_id was None, using fallback: {input_id}")
+
+            try:
+                self._create_virtual_spans_with_nested_contexts(
+                    row,
+                    dataset_spec,
+                    input_id,
+                    input_records_count,
+                    ground_truth_output,
+                )
+            except Exception as e:
+                logger.exception(f"Error in virtual span creation: {e}")
+                raise
+
+    def _create_virtual_spans_with_nested_contexts(
+        self,
+        row,
+        dataset_spec,
+        input_id,
+        input_records_count,
+        ground_truth_output,
+    ):
+        """Create virtual spans using OtelRecordingContext - simplified approach"""
+        from trulens.core.otel.instrument import OtelRecordingContext
+
+        with OtelRecordingContext(
+            tru_app=self.app,
+            app_name=self.app.app_name,
+            app_version=self.app.app_version,
+            run_name=self.run_name,
+            input_id=input_id,
+            input_records_count=input_records_count,
+            ground_truth_output=ground_truth_output,
+        ):
+            # Now create nested spans within this context
+            self._create_nested_spans_from_dataset_spec(dataset_spec, row)
+
+            logger.debug("Created all nested spans")
+
+    def _create_nested_spans_from_dataset_spec(
+        self, dataset_spec: Dict[str, str], row
+    ):
+        """Create properly nested spans within OtelRecordingContext"""
+        from trulens.experimental.otel_tracing.core.span import (
+            set_general_span_attributes,
+        )
+
+        span_data = self._group_dataset_spec_by_span_type(dataset_spec, row)
+        logger.info(f"Creating nested spans for: {list(span_data.keys())}")
+
+        if "record_root" in span_data:
+            from trulens.core.otel.function_call_context_manager import (
+                create_function_call_context_manager,
+            )
+
+            with create_function_call_context_manager(
+                True, "virtual_record"
+            ) as root_span:
+                set_general_span_attributes(
+                    root_span, SpanAttributes.SpanType.RECORD_ROOT
+                )
+                self._set_span_attributes_from_data(
+                    root_span, span_data["record_root"], "record_root"
+                )
+
+                root_span_id = root_span.get_span_context().span_id
+                logger.debug(
+                    f"Created record_root span with ID: {root_span_id}"
+                )
+
+                # Create child spans nested WITHIN the root span context
+                for span_type, attributes in span_data.items():
+                    if span_type == "record_root":
+                        continue
+
+                    span_type_enum = self._get_span_type_enum(span_type)
+                    if span_type_enum:
+                        logger.debug(
+                            f"Creating child span: {span_type} under parent {root_span_id}"
+                        )
+                        with create_function_call_context_manager(
+                            True, f"{span_type}_virtual"
+                        ) as child_span:
+                            set_general_span_attributes(
+                                child_span, span_type_enum
+                            )
+                            self._set_span_attributes_from_data(
+                                child_span, attributes, span_type
+                            )
+
+                            child_span_id = (
+                                child_span.get_span_context().span_id
+                            )
+                            child_parent_span_id = (
+                                child_span.parent.span_id
+                                if child_span.parent
+                                else "None"
+                            )
+                            logger.debug(
+                                f"Created {span_type} child span ID: {child_span_id}, parent ID: {child_parent_span_id}"
+                            )
+                    else:
+                        logger.warning(
+                            f"Unknown span type: {span_type} - skipping"
+                        )
+        else:
+            logger.warning("No record_root defined in dataset_spec")
+
+    def _set_span_attributes_from_data(
+        self, span, attributes: Dict[str, any], span_type: str
+    ):
+        """Set span attributes using proper SpanAttributes constants"""
+        span_attrs_class = self._get_span_attributes_class(span_type)
+
+        for attr_name, value in attributes.items():
+            if span_attrs_class:
+                attr_constant = getattr(
+                    span_attrs_class, attr_name.upper(), None
+                )
+                if attr_constant:
+                    span.set_attribute(attr_constant, str(value))
+                    logger.info(
+                        f"Set {span_type} attribute {attr_constant} = {value}"
+                    )
+                else:
+                    # Fallback to raw attribute name
+                    fallback_key = f"{span_type}.{attr_name}"
+                    span.set_attribute(fallback_key, str(value))
+                    logger.info(
+                        f"Set fallback attribute {fallback_key} = {value}"
+                    )
+            else:
+                fallback_key = f"{span_type}.{attr_name}"
+                span.set_attribute(fallback_key, str(value))
+                logger.info(f"Set fallback attribute {fallback_key} = {value}")
+
+    def _group_dataset_spec_by_span_type(
+        self, dataset_spec: Dict[str, str], row
+    ) -> Dict[str, Dict[str, any]]:
+        """Group dataset_spec entries by span type (record_root, retrieval, generation, etc.)"""
+        span_data = {}
+
+        for spec_key, column_name in dataset_spec.items():
+            if column_name not in row:
+                continue
+
+            value = row[column_name]
+            parts = spec_key.lower().split(".")
+
+            if len(parts) >= 2:
+                span_type = f"{parts[0]}"  # e.g., 'record_root'
+                attribute = ".".join(
+                    parts[1:]
+                )  # e.g., 'input', 'output', 'query_text'
+            else:
+                logger.warning(
+                    f"Legacy key: {spec_key} - assuming it's record_root "
+                )
+                span_type = "record_root"
+                attribute = parts[0]
+
+            if span_type not in span_data:
+                span_data[span_type] = {}
+
+            span_data[span_type][attribute] = value
+
+        return span_data
+
+    def _get_span_type_enum(self, span_type: str):
+        """Map span type string to SpanType enum dynamically"""
+        # Convert span_type to uppercase to match enum naming convention
+        enum_name = span_type.upper()
+
+        # Try to get the enum value dynamically
+        return getattr(SpanAttributes.SpanType, enum_name, None)
+
+    def _get_span_attributes_class(self, span_type: str):
+        """Get the appropriate SpanAttributes class for a span type dynamically"""
+        # Convert span_type to uppercase to match class naming convention
+        class_name = span_type.upper()
+
+        # Try to get the attributes class dynamically
+        return getattr(SpanAttributes, class_name, None)
 
     def _get_current_time_in_ms(self) -> int:
         return int(round(time.time() * 1000))
@@ -805,6 +1094,10 @@ class Run(BaseModel):
             )
             raise
 
+        # Force flush to ensure spans are uploaded to Snowflake before querying
+        self.tru_session.force_flush()
+        logger.info("Flushed OTEL spans before retrieving events")
+
         events = self._get_events_for_client_metrics()
 
         if events.empty:
@@ -838,10 +1131,6 @@ class Run(BaseModel):
                 )
                 raise
 
-        # Force flush to ensure spans are uploaded
-        self.tru_session.force_flush()
-        logger.info("Flushed OTEL spans for client-side metrics")
-
     def _get_events_for_client_metrics(self) -> pd.DataFrame:
         """Get events for client-side metric computation using the appropriate method."""
         try:
@@ -854,6 +1143,7 @@ class Run(BaseModel):
                 events_df = self.tru_session.connector.db.get_events(
                     app_name=self.app.app_name,
                     app_version=self.app.app_version,
+                    run_name=self.run_name,
                 )
 
                 if not events_df.empty:
@@ -880,18 +1170,72 @@ class Run(BaseModel):
                     events_df = events_df.rename(columns=column_mapping)
 
                     for idx, row in events_df.iterrows():
-                        if "parent_span_id" in row["record"]:
-                            events_df.at[idx, "trace"]["parent_id"] = row[
-                                "record"
-                            ]["parent_span_id"]
-                        else:
-                            events_df.at[idx, "trace"]["parent_id"] = None
+                        trace = events_df.at[idx, "trace"]
+                        record = events_df.at[idx, "record"]
+                        record_attributes = (
+                            events_df.at[idx, "record_attributes"]
+                            if "record_attributes" in events_df.columns
+                            else {}
+                        )
+
+                        # Parse JSON fields using helper function
+                        try:
+                            trace = _parse_json_field(
+                                trace, "trace", idx, critical=True
+                            )
+                            events_df.at[idx, "trace"] = trace
+                        except json.JSONDecodeError:
+                            continue
+
+                        try:
+                            record = _parse_json_field(
+                                record, "record", idx, critical=True
+                            )
+                            events_df.at[idx, "record"] = record
+                        except json.JSONDecodeError:
+                            continue
+
+                        # record_attributes parsing is not critical for parent_id assignment
+                        record_attributes = _parse_json_field(
+                            record_attributes,
+                            "record_attributes",
+                            idx,
+                            critical=False,
+                        )
+                        events_df.at[idx, "record_attributes"] = (
+                            record_attributes
+                        )
+
+                        # Now modify the dictionary
+                        if isinstance(trace, dict) and isinstance(record, dict):
+                            if "parent_span_id" in record:
+                                trace["parent_id"] = record["parent_span_id"]
+                            else:
+                                trace["parent_id"] = None
+
+                            # Set the modified dict back into the DataFrame
+                            events_df.at[idx, "trace"] = trace
 
                 if not events_df.empty and self.run_name:
                     filtered_events = []
                     for _, row in events_df.iterrows():
                         try:
                             record_attributes = row.get("record_attributes", {})
+
+                            # Parse record_attributes using helper function
+                            original_record_attributes = record_attributes
+                            record_attributes = _parse_json_field(
+                                record_attributes,
+                                "record_attributes",
+                                critical=False,
+                            )
+                            # If parsing failed and we still have a string, skip this record
+                            if (
+                                isinstance(record_attributes, str)
+                                and record_attributes
+                                == original_record_attributes
+                            ):
+                                continue
 
                             event_run_name = record_attributes.get(
                                 SpanAttributes.RUN_NAME
@@ -927,6 +1271,71 @@ class Run(BaseModel):
             raise ValueError(
                 "Snowflake connector is not installed. Please install it to use feedback computation functionality."
             )
+
+    def get_records(
+        self,
+        record_ids: Optional[List[str]] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> pd.DataFrame:
+        """
+        A wrapper API around get_records_and_feedback to retrieve and display overview of records from event table of the run.
+        It aggregates summary information of records into a single DataFrame.
+
+        Args:
+            record_ids: Optional list of record IDs to filter by. Defaults to None.
+            offset: Record row offset.
+            limit: Limit on the number of records to return.
+
+        Returns:
+            A DataFrame with the overview of records.
+        """
+        record_details_df, metrics_columns = (
+            self.tru_session.get_records_and_feedback(
+                app_name=self.object_name,
+                app_version=self.object_version,
+                run_name=self.run_name,
+                record_ids=record_ids,
+                offset=offset,
+                limit=limit,
+            )
+        )
+
+        record_overview_col_names = [
+            "record_id",
+            "input",
+            "output",
+            "latency",
+        ] + metrics_columns
+        return record_details_df[record_overview_col_names]
+
+    def get_record_details(
+        self,
+        record_ids: Optional[List[str]] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> pd.DataFrame:
+        """
+        A wrapper API around get_records_and_feedback to retrieve records from event table of the run.
+
+        Args:
+            record_ids: Optional list of record IDs to filter by. Defaults to None.
+            offset: Record row offset.
+            limit: Limit on the number of records to return.
+
+        Returns:
+            A DataFrame with the details of records.
+        """
+        record_details_df, _ = self.tru_session.get_records_and_feedback(
+            app_name=self.object_name,
+            app_version=self.object_version,
+            run_name=self.run_name,
+            record_ids=record_ids,
+            offset=offset,
+            limit=limit,
+        )
+
+        return record_details_df
 
     def _is_cancelled(self) -> bool:
         return self.get_status() == RunStatus.CANCELLED

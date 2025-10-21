@@ -379,26 +379,37 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
         app_name: Optional[types_schema.AppName] = None,
         app_version: Optional[types_schema.AppVersion] = None,
         app_versions: Optional[List[types_schema.AppVersion]] = None,
+        run_name: Optional[types_schema.RunName] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
-        """Get records from the database.
+        """Get records, their feedback results, and feedback names.
 
         Args:
-            app_ids: If given, retrieve only the records for the given apps.
-                Otherwise all apps are retrieved.
-            app_name: If given, retrieve only the records for the given app name.
-            app_version: If given, retrieve only the records for the given app version.
-            app_versions: If given, retrieve only the records for the given app versions.
-            record_ids: Optional list of record IDs to filter by. Defaults to None.
-            offset: Database row offset.
-            limit: Limit on rows (records) returned.
+            app_ids:
+                A list of app ids to filter records by. If empty or not given,
+                all apps' records will be returned.
+            app_name:
+                A name of the app to filter records by. If given, only records
+                for this app will be returned.
+            app_version:
+                A version of the app to filter records by. If given, only
+                records for this app version will be returned.
+            run_name:
+                A run name to filter records by. If given, only records for
+                this run will be returned.
+            app_versions:
+                A list of app versions to filter records by. If given, only
+                records for these app versions will be returned.
+            record_ids: An optional list of record ids to filter records by.
+            offset: Record row offset.
+            limit: Limit on the number of records to return.
 
         Returns:
-            A DataFrame with the records.
-
-            A list of column names that contain feedback results.
+            Tuple of:
+            - DataFrame of records with their feedback results.
+            - List of feedback names that are columns in the DataFrame.
         """
         raise NotImplementedError()
 
@@ -822,6 +833,25 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
 
         return df, feedback_col_names
 
+    def _extract_namespaced_attributes(
+        self, record_attributes: Dict[str, Any], namespace_prefix: str
+    ) -> Dict[str, Any]:
+        """Extract attributes that are namespaced under a given prefix.
+
+        Args:
+            record_attributes: Dictionary of all span attributes
+            namespace_prefix: The namespace prefix to look for (e.g., "ai.observability.call.kwargs")
+
+        Returns:
+            Dictionary with namespace-stripped keys and their values
+        """
+        prefix_with_dot = namespace_prefix + "."
+        return {
+            key[len(prefix_with_dot) :]: value
+            for key, value in record_attributes.items()
+            if key.startswith(prefix_with_dot)
+        }
+
     def _get_event_record_attributes_otel(self, event: Event) -> Dict[str, Any]:
         """Get the record attributes from the event.
 
@@ -932,10 +962,13 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
             f"snow.{BASE_SCOPE}.object.name",
             ResourceAttributes.APP_NAME,
         ])
-        app_version = get_value([
-            f"snow.{BASE_SCOPE}.object.version.name",
-            ResourceAttributes.APP_VERSION,
-        ])
+        app_version = (
+            get_value([
+                f"snow.{BASE_SCOPE}.object.version.name",
+                ResourceAttributes.APP_VERSION,
+            ])
+            or "base"
+        )
         app_id = get_value([ResourceAttributes.APP_ID])
         if app_id is None:
             app_id = app_schema.AppDefinition._compute_app_id(
@@ -945,4 +978,4 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
             f"snow.{BASE_SCOPE}.run.name",
             SpanAttributes.RUN_NAME,
         ])
-        return app_name, app_version, app_id, run_name
+        return app_name, str(app_version), app_id, run_name

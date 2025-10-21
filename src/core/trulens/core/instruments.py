@@ -473,6 +473,119 @@ class Instrument:
                 },
             )
 
+        @staticmethod
+        def mcp_span(
+            tool_name_argname: str,
+        ) -> Tuple[SpanAttributes.SpanType, Attributes]:
+            def extract_mcp_attributes(ret, exception, *args, **kwargs):
+                attributes = {
+                    SpanAttributes.MCP.TOOL_NAME: kwargs.get(
+                        tool_name_argname, "unknown"
+                    ),
+                    SpanAttributes.MCP.INPUT_ARGUMENTS: str(kwargs),
+                    SpanAttributes.MCP.OUTPUT_CONTENT: str(ret)
+                    if ret is not None
+                    else "",
+                    SpanAttributes.MCP.OUTPUT_IS_ERROR: exception is not None,
+                }
+
+                # Try to extract server name from various sources
+                server_name = None
+
+                # For get_tools, register the server configs
+                if tool_name_argname == "server_name" and args:
+                    instance = args[0]
+                    # This is a get_tools call on MultiServerMCPClient
+                    # MultiServerMCPClient uses 'connections' attribute, not 'server_configs'
+                    if hasattr(instance, "connections"):
+                        connections = instance.connections
+                        if isinstance(connections, dict):
+                            try:
+                                from trulens.apps.langgraph.tru_graph import (
+                                    register_mcp_server,
+                                )
+                                from trulens.apps.langgraph.tru_graph import (
+                                    register_mcp_tools,
+                                )
+
+                                # Register each server
+                                for srv_name in connections.keys():
+                                    register_mcp_server(srv_name, {})
+
+                                # Register tools if they're returned
+                                if ret and isinstance(ret, (list, tuple)):
+                                    tool_names = [
+                                        t.name
+                                        for t in ret
+                                        if hasattr(t, "name")
+                                    ]
+                                    for srv_name in connections.keys():
+                                        register_mcp_tools(srv_name, tool_names)
+
+                                server_name = list(connections.keys())[0]
+                            except ImportError:
+                                pass
+                    elif hasattr(instance, "server_configs"):
+                        # Fallback for other MCP client implementations
+                        server_configs = instance.server_configs
+                        if isinstance(server_configs, dict):
+                            try:
+                                from trulens.apps.langgraph.tru_graph import (
+                                    register_mcp_server,
+                                )
+                                from trulens.apps.langgraph.tru_graph import (
+                                    register_mcp_tools,
+                                )
+
+                                for srv_name in server_configs.keys():
+                                    register_mcp_server(
+                                        srv_name, server_configs[srv_name]
+                                    )
+                                if ret and isinstance(ret, (list, tuple)):
+                                    tool_names = [
+                                        t.name
+                                        for t in ret
+                                        if hasattr(t, "name")
+                                    ]
+                                    for srv_name in server_configs.keys():
+                                        register_mcp_tools(srv_name, tool_names)
+                                server_name = list(server_configs.keys())[0]
+                            except ImportError:
+                                pass
+
+                # Check if server_name is directly available in kwargs
+                if not server_name and "server_name" in kwargs:
+                    server_name = kwargs["server_name"]
+
+                # Try to extract from instance (first arg) if it has server info
+                if not server_name and args:
+                    instance = args[0]
+                    if hasattr(instance, "server_name"):
+                        server_name = instance.server_name
+                    elif hasattr(instance, "_server_name"):
+                        server_name = instance._server_name
+
+                # Try to extract from tool name using the registry
+                if not server_name:
+                    tool_name = attributes[SpanAttributes.MCP.TOOL_NAME]
+                    try:
+                        from trulens.apps.langgraph.tru_graph import (
+                            get_mcp_server_name_for_tool,
+                        )
+
+                        server_name = get_mcp_server_name_for_tool(tool_name)
+                    except ImportError:
+                        # Fallback if TruGraph not available
+                        if "_" in tool_name:
+                            server_name = tool_name.split("_")[0]
+
+                if server_name:
+                    attributes[SpanAttributes.MCP.SERVER_NAME] = server_name
+
+                return attributes
+
+            return (SpanAttributes.SpanType.MCP, extract_mcp_attributes)
+
     def print_instrumentation(self) -> None:
         """Print out description of the modules, classes, methods this class
         will instrument."""

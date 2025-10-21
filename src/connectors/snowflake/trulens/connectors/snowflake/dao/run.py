@@ -5,12 +5,12 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from snowflake.snowpark import Session
-from snowflake.snowpark.row import Row
 from trulens.connectors.snowflake.dao.enums import SourceType
 from trulens.connectors.snowflake.dao.sql_utils import (
     clean_up_snowflake_identifier,
 )
 from trulens.connectors.snowflake.dao.sql_utils import execute_query
+from trulens.core.enums import Mode
 from trulens.core.run import SUPPORTED_ENTRY_TYPES
 from trulens.core.run import SupportedEntryType
 from trulens.core.utils import json as json_utils
@@ -80,6 +80,7 @@ class RunDao:
         description: Optional[str] = "",
         label: Optional[str] = "",
         llm_judge_name: Optional[str] = "",
+        mode: Optional[Mode] = Mode.APP_INVOCATION,
     ) -> pd.DataFrame:
         """
         Create a new RunMetadata entity in Snowflake.
@@ -96,6 +97,7 @@ class RunDao:
             description: A description of the run.
             label: A label for the run.
             llm_judge_name: The name of the LLM judge to use for the evaluation, when applicable.
+            mode: The mode of operation (LOG_INGESTION or APP_INVOCATION).
 
         Returns:
             The result of the Snowflake SQL execution - returning a success message but not the created entity.
@@ -120,6 +122,9 @@ class RunDao:
 
         run_metadata_dict["llm_judge_name"] = (
             llm_judge_name if llm_judge_name else DEFAULT_LLM_JUDGE_NAME
+        )
+        run_metadata_dict["mode"] = (
+            mode.value if mode else Mode.APP_INVOCATION.value
         )
         req_payload["run_metadata"] = run_metadata_dict
 
@@ -193,17 +198,13 @@ class RunDao:
         logger.debug(
             f"Executing query: {query} with parameters {req_payload_json}"
         )
-        rows: List[Row] = execute_query(
+        result_df = execute_query(
             self.session,
             query,
             parameters=(req_payload_json,),
         )
-
-        if not rows:
-            return pd.DataFrame()
-        else:
-            # Assuming the first row contains our JSON result.
-            return pd.DataFrame([rows[0].as_dict()])
+        # Assuming the first row contains our JSON result.
+        return result_df.iloc[:1]
 
     def list_all_runs(self, object_name: str, object_type: str) -> pd.DataFrame:
         """
@@ -226,13 +227,13 @@ class RunDao:
             f"Executing query: {query} with parameters {req_payload_json}"
         )
 
-        rows: List[Row] = execute_query(
+        result_df = execute_query(
             self.session,
             query,
             parameters=(req_payload_json,),
         )
 
-        return pd.DataFrame([rows[0].as_dict()])
+        return result_df
 
     def _update_run(
         self,
