@@ -12,7 +12,6 @@ from trulens.core.schema import app as app_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.schema.event import Event
 from trulens.core.utils import serial as serial_utils
-from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 from snowflake.snowpark import Session
@@ -88,6 +87,7 @@ class SnowflakeEventTableDB(core_db.DB):
         self,
         app_name: Optional[types_schema.AppName] = None,
         app_version: Optional[types_schema.AppVersion] = None,
+        run_name: Optional[types_schema.RunName] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
         start_time: Optional[datetime] = None,
     ) -> pd.DataFrame:
@@ -97,6 +97,7 @@ class SnowflakeEventTableDB(core_db.DB):
         Args:
             app_name: The app name to filter events by.
             app_version: The app version to filter events by.
+            run_name: The run name to filter events by.
             record_ids: The record ids to filter events by.
             start_time: The minimum time to consider events from.
 
@@ -106,6 +107,7 @@ class SnowflakeEventTableDB(core_db.DB):
         return self._get_events(
             app_name=app_name,
             app_version=app_version,
+            run_name=run_name,
             record_ids=record_ids,
             start_time=start_time,
         )
@@ -142,17 +144,17 @@ class SnowflakeEventTableDB(core_db.DB):
         if app_version:
             app_version_str = f"'{app_version}'"
             where_clauses.append(
-                f"IFNULL(RECORD_ATTRIBUTES:\"{ResourceAttributes.APP_VERSION}\", 'base') = {app_version_str}"
+                f"IFNULL(RECORD_ATTRIBUTES:\"snow.ai.observability.object.version.name\", 'base') = {app_version_str}"
             )
         if app_versions:
             app_versions_str = ", ".join([f"'{curr}'" for curr in app_versions])
             where_clauses.append(
-                f"IFNULL(RECORD_ATTRIBUTES:\"{ResourceAttributes.APP_VERSION}\", 'base') IN ({app_versions_str})"
+                f"IFNULL(RECORD_ATTRIBUTES:\"snow.ai.observability.object.version.name\", 'base') IN ({app_versions_str})"
             )
         if run_name:
             run_name_str = f"'{run_name}'"
             where_clauses.append(
-                f'RECORD_ATTRIBUTES:"{SpanAttributes.RUN_NAME}" = {run_name_str}'
+                f'RECORD_ATTRIBUTES:"ai.observability.run.name" = {run_name_str}'
             )
         if record_ids:
             record_ids_str = ", ".join([f"'{curr}'" for curr in record_ids])

@@ -336,6 +336,7 @@ trulens_eval.Feedback:
     construct: builtins.classmethod
     copy: builtins.function
     criteria: typing.Optional[builtins.str, builtins.NoneType]
+    custom_instructions: typing.Optional[builtins.str, builtins.NoneType]
     dict: builtins.function
     enable_trace_compression: typing.Optional[builtins.bool, builtins.NoneType]
     evaluate_deferred: builtins.staticmethod
@@ -2798,6 +2799,7 @@ trulens_eval.feedback.Feedback:
     construct: builtins.classmethod
     copy: builtins.function
     criteria: typing.Optional[builtins.str, builtins.NoneType]
+    custom_instructions: typing.Optional[builtins.str, builtins.NoneType]
     dict: builtins.function
     enable_trace_compression: typing.Optional[builtins.bool, builtins.NoneType]
     evaluate_deferred: builtins.staticmethod
@@ -3380,6 +3382,7 @@ trulens_eval.feedback.feedback.Feedback:
     construct: builtins.classmethod
     copy: builtins.function
     criteria: typing.Optional[builtins.str, builtins.NoneType]
+    custom_instructions: typing.Optional[builtins.str, builtins.NoneType]
     dict: builtins.function
     enable_trace_compression: typing.Optional[builtins.bool, builtins.NoneType]
     evaluate_deferred: builtins.staticmethod
@@ -7522,6 +7525,7 @@ trulens_eval.schema.feedback.FeedbackDefinition:
     construct: builtins.classmethod
     copy: builtins.function
     criteria: typing.Optional[builtins.str, builtins.NoneType]
+    custom_instructions: typing.Optional[builtins.str, builtins.NoneType]
     dict: builtins.function
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     feedback_definition_id: builtins.str

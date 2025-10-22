@@ -52,7 +52,18 @@ def execute_query(
     Executes a query with optional parameters with qmark parameter binding (if applicable).
     """
     try:
-        df = session.sql(query, params=parameters).to_pandas()
+        if query.strip().upper().startswith("SELECT"):
+            # snowpark to_pandas supports only SELECT statements up until recent releases https://github.com/snowflakedb/snowpark-python/blob/main/CHANGELOG.md
+            df = session.sql(query, params=parameters).to_pandas()
+        else:
+            result = session.sql(query, params=parameters).collect()
+            if not result:
+                return pd.DataFrame()
+            # Use actual field names from the Row objects
+            columns = result[0]._fields
+            data = [tuple(row) for row in result]
+            df = pd.DataFrame(data, columns=columns)
+
         df.columns = [clean_up_snowflake_identifier(col) for col in df.columns]
         return df
     except Exception as e:

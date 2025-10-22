@@ -12,11 +12,47 @@ import pydantic
 from pydantic import BaseModel
 from pydantic import Field
 from pydantic import field_serializer
+from trulens.core.enums import Mode
 from trulens.core.feedback.custom_metric import MetricConfig
 from trulens.core.utils.json import obj_id_of_obj
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
+
+
+def _parse_json_field(
+    value: Any,
+    field_name: str,
+    index: Optional[int] = None,
+    critical: bool = True,
+) -> Any:
+    """
+    Helper function to parse JSON fields consistently.
+
+    Args:
+        value: The value to parse (could be string or already parsed dict)
+        field_name: Name of the field being parsed (for logging)
+        index: Optional index for logging context
+        critical: Whether parsing failure should cause the caller to continue processing
+
+    Returns:
+        Parsed dictionary or the original value if already parsed
+
+    Raises:
+        Continues processing on JSONDecodeError if critical=False, otherwise logs warning
+    """
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            index_msg = f" at index {index}" if index is not None else ""
+            if critical:
+                logger.warning(f"Failed to parse {field_name} JSON{index_msg}")
+                raise
+            else:
+                logger.debug(f"Failed to parse {field_name} JSON{index_msg}")
+                return value
+    return value
 
 
 def _get_all_span_attribute_key_constants(cls: Type, prefix: str) -> List[str]:
@@ -144,6 +180,10 @@ class RunConfig(BaseModel):
         default=None,
         description="Name of the LLM judge to be used for the run.",
     )
+    mode: Mode = Field(
+        default=Mode.APP_INVOCATION,
+        description="Mode of operation: LOG_INGESTION for creating spans from existing data, APP_INVOCATION for instrumenting spans from a new app execution.",
+    )
 
 
 class Run(BaseModel):
@@ -212,6 +252,10 @@ class Run(BaseModel):
         llm_judge_name: Optional[str] = Field(
             default=None,
             description="Name of the LLM judge to be used for the run.",
+        )
+        mode: Optional[str] = Field(
+            default=Mode.APP_INVOCATION.value,
+            description="Mode of operation: LOG_INGESTION or APP_INVOCATION.",
         )
         invocations: Optional[Dict[str, Run.InvocationMetadata]] = Field(
             default=None,
@@ -521,15 +565,12 @@ class Run(BaseModel):
             all_existing_metrics, invocation_completion_status
         )
 
-    def start(
-        self, input_df: Optional[pd.DataFrame] = None, virtual: bool = False
-    ):
+    def start(self, input_df: Optional[pd.DataFrame] = None):
         """
         Start the run by invoking the main method of the user's app with the input data
 
         Args:
             input_df (Optional[pd.DataFrame], optional): user provided input dataframe.
-            virtual (bool, optional): If True, creates OTEL spans from existing data without app invocation.
         """
         current_status = self.get_status()
         logger.info(f"Current run status: {current_status}")
@@ -553,8 +594,11 @@ class Run(BaseModel):
             f"Creating or updating invocation metadata with {input_records_count} records from input."
         )
 
+        # Determine mode from run metadata
+        mode = self.run_metadata.mode or Mode.APP_INVOCATION.value
+
         try:
-            if virtual:
+            if mode == Mode.LOG_INGESTION.value:
                 self._create_virtual_spans(
                     input_df, dataset_spec, input_records_count
                 )
@@ -1050,6 +1094,10 @@ class Run(BaseModel):
             )
             raise
 
+        # Force flush to ensure spans are uploaded to Snowflake before querying
+        self.tru_session.force_flush()
+        logger.info("Flushed OTEL spans before retrieving events")
+
         events = self._get_events_for_client_metrics()
 
         if events.empty:
@@ -1083,10 +1131,6 @@ class Run(BaseModel):
                 )
                 raise
 
-        # Force flush to ensure spans are uploaded
-        self.tru_session.force_flush()
-        logger.info("Flushed OTEL spans for client-side metrics")
-
     def _get_events_for_client_metrics(self) -> pd.DataFrame:
         """Get events for client-side metric computation using the appropriate method."""
         try:
@@ -1099,6 +1143,7 @@ class Run(BaseModel):
                 events_df = self.tru_session.connector.db.get_events(
                     app_name=self.app.app_name,
                     app_version=self.app.app_version,
+                    run_name=self.run_name,
                 )
 
                 if not events_df.empty:
@@ -1125,18 +1170,72 @@ class Run(BaseModel):
                     events_df = events_df.rename(columns=column_mapping)
 
                     for idx, row in events_df.iterrows():
-                        if "parent_span_id" in row["record"]:
-                            events_df.at[idx, "trace"]["parent_id"] = row[
-                                "record"
-                            ]["parent_span_id"]
-                        else:
-                            events_df.at[idx, "trace"]["parent_id"] = None
+                        trace = events_df.at[idx, "trace"]
+                        record = events_df.at[idx, "record"]
+                        record_attributes = (
+                            events_df.at[idx, "record_attributes"]
+                            if "record_attributes" in events_df.columns
+                            else {}
+                        )
+
+                        # Parse JSON fields using helper function
+                        try:
+                            trace = _parse_json_field(
+                                trace, "trace", idx, critical=True
+                            )
+                            events_df.at[idx, "trace"] = trace
+                        except json.JSONDecodeError:
+                            continue
+
+                        try:
+                            record = _parse_json_field(
+                                record, "record", idx, critical=True
+                            )
+                            events_df.at[idx, "record"] = record
+                        except json.JSONDecodeError:
+                            continue
+
+                        # record_attributes parsing is not critical for parent_id assignment
+                        record_attributes = _parse_json_field(
+                            record_attributes,
+                            "record_attributes",
+                            idx,
+                            critical=False,
+                        )
+                        events_df.at[idx, "record_attributes"] = (
+                            record_attributes
+                        )
+
+                        # Now modify the dictionary
+                        if isinstance(trace, dict) and isinstance(record, dict):
+                            if "parent_span_id" in record:
+                                trace["parent_id"] = record["parent_span_id"]
+                            else:
+                                trace["parent_id"] = None
+
+                            # Set the modified dict back into the DataFrame
+                            events_df.at[idx, "trace"] = trace
 
                 if not events_df.empty and self.run_name:
                     filtered_events = []
                     for _, row in events_df.iterrows():
                         try:
                             record_attributes = row.get("record_attributes", {})
+
+                            # Parse record_attributes using helper function
+                            original_record_attributes = record_attributes
+                            record_attributes = _parse_json_field(
+                                record_attributes,
+                                "record_attributes",
+                                critical=False,
+                            )
+                            # If parsing failed and we still have a string, skip this record
+                            if (
+                                isinstance(record_attributes, str)
+                                and record_attributes
+                                == original_record_attributes
+                            ):
+                                continue
 
                             event_run_name = record_attributes.get(
                                 SpanAttributes.RUN_NAME

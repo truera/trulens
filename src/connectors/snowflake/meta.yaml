@@ -1,6 +1,6 @@
 {% set name = "trulens-connectors-snowflake" %}
 {% set pyname = name.replace('-', '.') %}
-{% set version = "2.4.0" %}
+{% set version = "2.4.2" %}
 
 package:
   name: {{ name|lower }}
@@ -12,7 +12,7 @@ source:
   {% else %}
   url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-connectors-snowflake/#files
-  sha256: 7e7c867edb10af9d7e4a3719a9de19c73e6bd434ccacd39b2baa11cd1dac781e
+  sha256: ab44b3a7ef5c3af71f2d9dc78fa4fc6222274d80e7d1493a95c93e7f9d839bc3
   {% endif %}
 
 build:
@@ -22,7 +22,7 @@ build:
 
 requirements:
   host:
-    - python >=3.9
+    - python >=3.9,<3.13
     - poetry-core <2.0.0
     - pip
   run:

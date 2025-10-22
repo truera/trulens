@@ -1,6 +1,6 @@
 {% set name = "trulens-apps-langchain" %}
 {% set pyname = name.replace('-', '.') %}
-{% set version = "2.4.0" %}
+{% set version = "2.4.2" %}
 
 package:
   name: {{ name|lower }}
@@ -11,7 +11,7 @@ source:
   # path: .
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-apps-langchain/#files
-  sha256: e2696471c44111383979dfb6035ff952bc19f72c7e330d4cacd5fd75630d3861
+  sha256: e5d3356bb3ac6c0979ae9dc52cba7e79ed6581d696f5ab94cd4146922c126d23
 
 build:
   noarch: python
@@ -20,14 +20,14 @@ build:
 
 requirements:
   host:
-    - python >=3.9
+    - python >=3.9,<3.13
     - poetry-core <2.0.0
     - pip
   run:
     - python >=3.9,<3.13
     - trulens-core >=1.0.0,<3.0.0
-    - langchain >=0.2.10
-    - langchain-core >=0.2.0
+    - langchain >=0.2.10,<1.0
+    - langchain-core >=0.2.0,<1.0
     - pydantic >=2.4.2
 
 test:

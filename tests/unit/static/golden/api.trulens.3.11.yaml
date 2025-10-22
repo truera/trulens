@@ -4,7 +4,7 @@ trulens:
   lows: {}
 trulens.benchmark:
   __class__: builtins.module
-  __version__: 2.2.3
+  __version__: 2.4.0
   highs: {}
   lows:
     __version__: builtins.str
@@ -60,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 2.2.3
+  __version__: 2.4.0
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -483,6 +483,21 @@ trulens.core.database.utils:
     copy_database: builtins.function
     is_legacy_sqlite: builtins.function
     is_memory_sqlite: builtins.function
+trulens.core.enums:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    Mode: enum.EnumType
+trulens.core.enums.Mode:
+  __bases__:
+  - builtins.str
+  - enum.Enum
+  __class__: enum.EnumType
+  attributes:
+    APP_INVOCATION: trulens.core.enums.Mode
+    LOG_INGESTION: trulens.core.enums.Mode
+    name: enum.property
+    value: enum.property
 trulens.core.experimental:
   __class__: builtins.module
   highs: {}
@@ -597,6 +612,7 @@ trulens.core.feedback.feedback.Feedback:
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
     criteria: typing.Optional[builtins.str, builtins.NoneType]
+    custom_instructions: typing.Optional[builtins.str, builtins.NoneType]
     enable_trace_compression: typing.Optional[builtins.bool, builtins.NoneType]
     evaluate_deferred: builtins.staticmethod
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
@@ -660,6 +676,7 @@ trulens.core.feedback.feedback.SnowflakeFeedback:
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
     criteria: typing.Optional[builtins.str, builtins.NoneType]
+    custom_instructions: typing.Optional[builtins.str, builtins.NoneType]
     enable_trace_compression: typing.Optional[builtins.bool, builtins.NoneType]
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     feedback_definition_id: builtins.str
@@ -889,6 +906,7 @@ trulens.core.run.RunConfig:
     description: typing.Optional[builtins.str, builtins.NoneType]
     label: typing.Optional[builtins.str, builtins.NoneType]
     llm_judge_name: typing.Optional[builtins.str, builtins.NoneType]
+    mode: trulens.core.enums.Mode
     run_name: builtins.str
     source_type: builtins.str
 trulens.core.run.RunStatus:
@@ -1111,6 +1129,7 @@ trulens.core.schema.feedback.FeedbackDefinition:
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
     criteria: typing.Optional[builtins.str, builtins.NoneType]
+    custom_instructions: typing.Optional[builtins.str, builtins.NoneType]
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     feedback_definition_id: builtins.str
     higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
@@ -1963,7 +1982,7 @@ trulens.core.utils.trulens.Other:
   attributes: {}
 trulens.dashboard:
   __class__: builtins.module
-  __version__: 2.2.3
+  __version__: 2.4.0
   highs:
     run_dashboard: builtins.function
     run_dashboard_sis: builtins.function
@@ -2266,7 +2285,7 @@ trulens.dashboard.ux.styles.ResultCategoryType:
     value: enum.property
 trulens.feedback:
   __class__: builtins.module
-  __version__: 2.2.3
+  __version__: 2.4.0
   highs:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
@@ -2869,6 +2888,7 @@ trulens.feedback.v2.feedback.EvalSchema:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     criteria: builtins.str
+    custom_instructions: builtins.str
     get_output_scale_prompt: builtins.function
     output_space: builtins.str
     validate_output_space: builtins.classmethod
@@ -3319,7 +3339,7 @@ trulens.feedback.v2.provider.base.Provider:
     tru_class_info: trulens.core.utils.pyschema.Class
 trulens.hotspots:
   __class__: builtins.module
-  __version__: 2.2.3
+  __version__: 2.4.0
   highs:
     HotspotsConfig: builtins.type
     get_skipped_columns: builtins.function

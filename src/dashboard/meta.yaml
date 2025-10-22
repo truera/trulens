@@ -1,6 +1,6 @@
 {% set name = "trulens-dashboard" %}
 {% set pyname = name.replace('-', '.') %}
-{% set version = "2.4.0" %}
+{% set version = "2.4.2" %}
 
 package:
   name: {{ name|lower }}
@@ -12,7 +12,7 @@ source:
   {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-dashboard/#files
-  sha256: 2f85604280e90f770787e4141416de4628bbddc1e4f6f7c8afc3637ce4abf9f7
+  sha256: eaa38b8c9e003ca66a0d577db5dedeab0fc2b8da0026ddb531af4f90d5bdb69b
   {% endif %}
 
 build:
@@ -22,7 +22,7 @@ build:
 
 requirements:
   host:
-    - python >=3.9
+    - python >=3.9,<3.13
     - poetry-core <2.0.0
     - pip
   run:

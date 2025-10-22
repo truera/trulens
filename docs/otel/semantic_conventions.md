@@ -44,6 +44,15 @@
 | `ai.observability.retrieval.query_text` | Input text whose related contexts are being retrieved. | Never | | str |
 | `ai.observability.retrieval.num_contexts` | The number of contexts requested, not necessarily retrieved. | Never | | int |
 | `ai.observability.retrieval.retrieved_contexts` | The retrieved contexts. | Never | | List[str] |
+| `ai.observability.mcp` | Namespace for attributes specific to Model Context Protocol (MCP) tool calls. | | Y | |
+| `ai.observability.mcp.tool_name` | Name of the MCP tool being called. | Never | | str |
+| `ai.observability.mcp.tool_description` | Description of the MCP tool. | Never | | str |
+| `ai.observability.mcp.server_name` | Name of the MCP server providing the tool. | Never | | str |
+| `ai.observability.mcp.input_schema` | Schema of the input parameters for the MCP tool. | Never | | str |
+| `ai.observability.mcp.input_arguments` | Arguments passed to the MCP tool. | Never | | str |
+| `ai.observability.mcp.output_content` | Content returned by the MCP tool. | Never | | str |
+| `ai.observability.mcp.output_is_error` | Whether the MCP tool call resulted in an error. | Never | | bool |
+| `ai.observability.mcp.execution_time_ms` | Time taken to execute the MCP tool call in milliseconds. | Never | | float |
 | `ai.observability.generation` | Namespace for attributes specific to a generation span. | | Y | |
 | `ai.observability.graph_task` | Namespace for attributes specific to a graph task function execution span. | | Y | |
 | `ai.observability.graph_task.task_name` | Name of the task function. | Never | | str |

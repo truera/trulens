@@ -461,7 +461,7 @@ def task_factory_with_stack(loop, coro, *args, **kwargs) -> asyncio.Task:
     """
 
     if "context" in kwargs:
-        logger.warning(
+        logger.debug(
             "Context is being overwritten, TruLens may not be able to record traces."
         )
 
