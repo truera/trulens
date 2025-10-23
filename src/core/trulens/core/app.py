@@ -98,6 +98,8 @@ manager as in this Example:
 
     record: Record = recorder.get() # get the record of the invocation if needed
 ```
+
+ADDING A COMMENT TO TRIGGER A TEST
 """
 
 _component_impls: Dict[str, Type[ComponentView]] = {}
