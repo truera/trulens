@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-apps-nemo"
-version = "2.4.1"
+version = "2.4.2"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -32,6 +32,8 @@ trulens-core = { version = "^2.0.0" }
 trulens-apps-langchain = { version = "^2.0.0" }
 pydantic = "^2.4.2"
 nemoguardrails = ">=0.9"
+langchain = ">=0.2.10,<1.0"
+langchain-core = ">=0.2.0,<1.0"
 onnxruntime = [
   { version = ">=1.14.0,<1.20.0", python = "<3.10" },
   { version = ">=1.14.0", python = ">=3.10" },
