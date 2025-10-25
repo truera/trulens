@@ -1,4 +1,5 @@
 import inspect
+import json
 import logging
 import os
 import pprint
@@ -45,18 +46,27 @@ class GoogleCostComputer:
     @staticmethod
     def handle_response(response: Any) -> Dict[str, Any]:
         usage = response.usage_metadata
+
+        endpoint = GoogleEndpoint()
+        callback = GoogleCallback(endpoint=endpoint)
+
+        model_name = response.model_version
+        n_total_tokens = usage.total_token_count or 0
+        n_prompt_tokens = usage.prompt_token_count or 0
+        n_completion_tokens = usage.candidates_token_count or 0
+        n_reasoning_tokens = usage.thoughts_token_count or 0
+
         return {
-            SpanAttributes.COST.NUM_TOKENS: usage.total_token_count or 0,
-            SpanAttributes.COST.NUM_PROMPT_TOKENS: usage.prompt_token_count
-            or 0,
-            SpanAttributes.COST.NUM_COMPLETION_TOKENS: usage.candidates_token_count
-            or 0,
-            SpanAttributes.COST.NUM_REASONING_TOKENS: usage.thoughts_token_count
-            or 0,
+            SpanAttributes.COST.NUM_TOKENS: n_total_tokens,
+            SpanAttributes.COST.NUM_PROMPT_TOKENS: n_prompt_tokens,
+            SpanAttributes.COST.NUM_COMPLETION_TOKENS: n_completion_tokens,
+            SpanAttributes.COST.NUM_REASONING_TOKENS: n_reasoning_tokens,
             # TODO: Check the cost computation functionality
-            # SpanAttributes.COST.COST: completion_cost(response),
+            SpanAttributes.COST.COST: callback._compute_cost(
+                model_name, n_prompt_tokens, n_completion_tokens
+            ),
             SpanAttributes.COST.CURRENCY: "USD",
-            SpanAttributes.COST.MODEL: response.model_version,
+            SpanAttributes.COST.MODEL: model_name,
         }
 
 
@@ -68,6 +78,8 @@ class GoogleCallback(core_endpoint.EndpointCallback):
         ("n_prompt_tokens", "prompt_tokens"),
         ("n_completion_tokens", "completion_tokens"),
     ]
+
+    _model_costs: Optional[dict] = None
 
     def handle_generation(self, response: Any):
         """Get the usage information from GoogleGenAI LLM function response's usage_metadata field."""
@@ -91,7 +103,87 @@ class GoogleCallback(core_endpoint.EndpointCallback):
                 getattr(self.cost, cost_field, 0) + usage.get(google_field, 0),
             )
 
-        # TODO: missing code for cost calculation
+        # Compute and set cost
+        model_name = response_dict.get("model_version")
+        n_prompt_tokens = usage.get("prompt_token_count", 0)
+        n_completion_tokens = usage.get("candidates_token_count", 0)
+        calculated_cost = self._compute_cost(
+            model_name, n_prompt_tokens, n_completion_tokens
+        )
+
+        setattr(
+            self.cost, "cost", getattr(self.cost, "cost", 0) + calculated_cost
+        )
+        setattr(self.cost, "cost_currency", "USD")
+
+    def _compute_cost(
+        self, model_name: str, n_prompt_tokens: int, n_completion_tokens: int
+    ) -> float:
+        """Compute cost in USD based on model name and token counts.
+
+        Args:
+            model_name: Full model name from Google API (e.g., "gemini-2.5-flash-001")
+            n_prompt_tokens: Number of input/prompt tokens
+            n_completion_tokens: Number of output/completion tokens
+
+        Returns:
+            Cost in USD
+        """
+        try:
+            if self._model_costs is None:
+                # Load pricing configuration from JSON file
+                # Reference: https://ai.google.dev/gemini-api/docs/pricing
+                with open(
+                    os.path.join(
+                        os.path.dirname(__file__),
+                        "config/google_model_costs.json",
+                    ),
+                    "r",
+                ) as f:
+                    self._model_costs = json.load(f)
+
+            logger.debug(f"Received model_version: {model_name}")
+            if model_name and model_name in self._model_costs:
+                if (
+                    n_prompt_tokens > 2e5
+                    and "input_large" in self._model_costs[model_name]
+                ):
+                    cost = (
+                        self._model_costs[model_name]["input_large"]
+                        * n_prompt_tokens
+                        / 1e6
+                    )
+                else:
+                    cost = (
+                        self._model_costs[model_name]["input"]
+                        * n_prompt_tokens
+                        / 1e6
+                    )
+                if (
+                    n_prompt_tokens > 2e5
+                    and "output_large" in self._model_costs[model_name]
+                ):
+                    cost += (
+                        self._model_costs[model_name]["output_large"]
+                        * n_completion_tokens
+                        / 1e6
+                    )
+                else:
+                    cost += (
+                        self._model_costs[model_name]["output"]
+                        * n_completion_tokens
+                        / 1e6
+                    )
+                return cost
+            else:
+                raise ValueError(
+                    f"Model {model_name} not valid or not supported yet for cost estimation."
+                )
+        except Exception as e:
+            logger.error(
+                f"Error occurred while computing cost for model {model_name}: {e}"
+            )
+            return 0.0
 
 
 class GoogleEndpoint(core_endpoint.Endpoint):
