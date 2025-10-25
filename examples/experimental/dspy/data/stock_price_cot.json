@@ -1,0 +1,32 @@
+{
+  "prog.predict": {
+    "traces": [],
+    "train": [],
+    "demos": [],
+    "signature": {
+      "instructions": "Predict whether a stock's price will go up, down, or remain neutral based on the news headline.",
+      "fields": [
+        {
+          "prefix": "Headline:",
+          "description": "A news headline about a company's stock price."
+        },
+        {
+          "prefix": "Reasoning: Let's think step by step in order to",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Answer:",
+          "description": "The predicted sentiment of the stock price: 'Up', 'Down', or 'Neutral'."
+        }
+      ]
+    },
+    "lm": null
+  },
+  "metadata": {
+    "dependency_versions": {
+      "python": "3.11",
+      "dspy": "3.0.3",
+      "cloudpickle": "3.0"
+    }
+  }
+}
