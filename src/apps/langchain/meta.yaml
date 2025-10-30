@@ -1,6 +1,6 @@
 {% set name = "trulens-apps-langchain" %}
 {% set pyname = name.replace('-', '.') %}
-{% set version = "2.4.1" %}
+{% set version = "2.4.2" %}
 
 package:
   name: {{ name|lower }}
@@ -11,7 +11,7 @@ source:
   # path: .
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-apps-langchain/#files
-  sha256: 7efbf7928d2a007e78f85074198a4efba94ccda1d2b70d595bd9143c083b454e
+  sha256: e5d3356bb3ac6c0979ae9dc52cba7e79ed6581d696f5ab94cd4146922c126d23
 
 build:
   noarch: python
