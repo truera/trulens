@@ -386,3 +386,21 @@ class _TruSession(core_session.TruSession):
                 **kwargs: LiteLLMCostComputer.handle_response(ret),
                 must_be_first_wrapper=True,
             )
+
+        if _can_import("trulens.providers.google.endpoint"):
+            from google.genai import Client
+            from trulens.core.otel.instrument import instrument_cost_computer
+            from trulens.providers.google.endpoint import GoogleCostComputer
+
+            # Get the Models class dynamically by creating a temporary client
+            client = Client()
+            models_class = type(client.models)
+
+            instrument_cost_computer(
+                models_class,
+                "generate_content",
+                attributes=lambda ret,
+                exception,
+                *args,
+                **kwargs: GoogleCostComputer.handle_response(ret),
+            )
