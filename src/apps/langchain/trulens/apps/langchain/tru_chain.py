@@ -143,7 +143,12 @@ class LangChainInstrument(core_instruments.Instrument):
     class Default:
         """Instrumentation specification for LangChain apps."""
 
-        MODULES = {"langchain", "langchain_mcp_adapters"}
+        MODULES = {
+            "langchain",
+            "langchain_core",
+            "langchain_community",
+            "langchain_mcp_adapters",
+        }
         """Filter for module name prefix for modules to be instrumented."""
 
         CLASSES = (
@@ -287,8 +292,8 @@ class TruChain(core_app.App):
 
         ```python
         from langchain import hub
-        from langchain.chat_models import ChatOpenAI
-        from langchain.schema import StrOutputParser
+        from langchain_openai import ChatOpenAI
+        from langchain_core.output_parsers import StrOutputParser
         from langchain_core.runnables import RunnablePassthrough
 
         retriever = vectorstore.as_retriever()

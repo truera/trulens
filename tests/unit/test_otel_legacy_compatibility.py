@@ -15,8 +15,8 @@ from tests.util.otel_test_case import OtelTestCase
 try:
     # These imports require optional dependencies to be installed.
     from langchain.chains import LLMChain
-    from langchain.llms.fake import FakeListLLM
-    from langchain.prompts import PromptTemplate
+    from langchain_community.llms import FakeListLLM
+    from langchain_core.prompts import PromptTemplate
     from trulens.apps.langchain import TruChain
 except Exception:
     pass

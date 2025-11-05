@@ -15,11 +15,11 @@ from tests.utils import enable_otel_backwards_compatibility
 try:
     # These imports require optional dependencies to be installed.
     from langchain import hub
-    from langchain.schema import StrOutputParser
     from langchain_community.document_loaders import PyPDFLoader
     from langchain_community.embeddings import DeterministicFakeEmbedding
     from langchain_community.llms import FakeListLLM
     from langchain_community.vectorstores import FAISS
+    from langchain_core.output_parsers import StrOutputParser
     from langchain_core.runnables import RunnablePassthrough
     from langchain_text_splitters import RecursiveCharacterTextSplitter
     from trulens.apps.langchain import TruChain

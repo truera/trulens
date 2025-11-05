@@ -90,8 +90,8 @@ class TestTru(TestCase):
     def _create_chain(self):
         # Note that while langchain is required, openai is not so tests using
         # this app are optional.
-        from langchain.prompts import PromptTemplate
-        from langchain.schema import StrOutputParser
+        from langchain_core.output_parsers import StrOutputParser
+        from langchain_core.prompts import PromptTemplate
         from langchain_openai import OpenAI
 
         prompt = PromptTemplate.from_template(
