@@ -18,13 +18,13 @@ First, this requires loading data into a vector store.
 
     ```python
     import bs4
-    from langchain.document_loaders import WebBaseLoader
+    from langchain_community.document_loaders import WebBaseLoader
     from langchain_community.vectorstores import FAISS
     from langchain_openai import OpenAIEmbeddings
     from langchain_text_splitters import RecursiveCharacterTextSplitter
     from langchain import hub
-    from langchain.chat_models import ChatOpenAI
-    from langchain.schema import StrOutputParser
+    from langchain_openai import ChatOpenAI
+    from langchain_core.output_parsers import StrOutputParser
     from langchain_core.runnables import RunnablePassthrough
 
     loader = WebBaseLoader(
