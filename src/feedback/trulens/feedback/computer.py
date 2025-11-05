@@ -911,9 +911,12 @@ def _call_feedback_function_under_eval_span(
                             SpanAttributes.COST.NUM_REASONING_TOKENS,
                             int(cost.n_reasoning_tokens),
                         )
-            except Exception:
-                # Do not fail feedback evaluation if cost aggregation fails
-                pass
+            except Exception as e:
+                # Do not fail feedback evaluation if cost aggregation fails, but log for debugging
+                _logger.warning(
+                    "Failed to attach eval cost attributes to EVAL_ROOT span: %s",
+                    str(e),
+                )
             return res
         except Exception as e:
             exc = e

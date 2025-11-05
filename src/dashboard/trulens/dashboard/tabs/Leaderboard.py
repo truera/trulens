@@ -30,6 +30,22 @@ APP_AGG_COLS = [
 ]
 
 
+def _get_nonzero_cost_columns(df: pd.DataFrame) -> List[str]:
+    """Return cost column names that have any nonzero values in the dataframe.
+
+    The order is USD first, then Snowflake credits.
+    """
+    cols: List[str] = []
+    if "Total Cost (USD)" in df.columns and (df["Total Cost (USD)"] != 0).any():
+        cols.append("Total Cost (USD)")
+    if (
+        "Total Cost (Snowflake Credits)" in df.columns
+        and (df["Total Cost (Snowflake Credits)"] != 0).any()
+    ):
+        cols.append("Total Cost (Snowflake Credits)")
+    return cols
+
+
 def init_page_state():
     if st.session_state.get(
         f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.initialized", False
@@ -123,14 +139,7 @@ def _build_grid_options(
     )
 
     gb.configure_columns(APP_COLS, filter="agMultiColumnFilter")
-    cost_cols_to_show: List[str] = []
-    if "Total Cost (USD)" in df.columns and (df["Total Cost (USD)"] != 0).any():
-        cost_cols_to_show.append("Total Cost (USD)")
-    if (
-        "Total Cost (Snowflake Credits)" in df.columns
-        and (df["Total Cost (Snowflake Credits)"] != 0).any()
-    ):
-        cost_cols_to_show.append("Total Cost (Snowflake Credits)")
+    cost_cols_to_show: List[str] = _get_nonzero_cost_columns(df)
 
     gb.configure_columns(
         feedback_col_names
@@ -264,14 +273,7 @@ def _render_grid(
             # Fallback to st.dataframe if st_aggrid is not installed
             pass
 
-    cost_cols_to_show = []
-    if "Total Cost (USD)" in df.columns and (df["Total Cost (USD)"] != 0).any():
-        cost_cols_to_show.append("Total Cost (USD)")
-    if (
-        "Total Cost (Snowflake Credits)" in df.columns
-        and (df["Total Cost (Snowflake Credits)"] != 0).any()
-    ):
-        cost_cols_to_show.append("Total Cost (Snowflake Credits)")
+    cost_cols_to_show = _get_nonzero_cost_columns(df)
 
     column_order = [
         "app_version",
@@ -511,14 +513,8 @@ def _render_grid_tab(
     agg_cost_cols: List[str] = [
         "Records",
         "Average Latency (s)",
+        *_get_nonzero_cost_columns(df),
     ]
-    if "Total Cost (USD)" in df.columns and (df["Total Cost (USD)"] != 0).any():
-        agg_cost_cols.append("Total Cost (USD)")
-    if (
-        "Total Cost (Snowflake Credits)" in df.columns
-        and (df["Total Cost (Snowflake Credits)"] != 0).any()
-    ):
-        agg_cost_cols.append("Total Cost (Snowflake Credits)")
 
     df = order_columns(
         df,
