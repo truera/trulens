@@ -36,22 +36,27 @@ from trulens.core.utils import serial as serial_utils
 from trulens.otel.semconv.trace import SpanAttributes
 
 # Handle langchain version compatibility for agent imports
+# Be defensive: importing langchain.agents can pull in modules that may not
+# exist depending on installed versions (e.g., langchain_core.memory).
 try:
     # langchain <1.0
-    from langchain.agents.agent import BaseMultiActionAgent
-    from langchain.agents.agent import BaseSingleActionAgent
-except ImportError:
-    # langchain >=1.0
-    from langchain.agents import BaseMultiActionAgent
-    from langchain.agents import BaseSingleActionAgent
+    from langchain.agents.agent import BaseMultiActionAgent  # type: ignore
+    from langchain.agents.agent import BaseSingleActionAgent  # type: ignore
+except Exception:
+    try:
+        # langchain >=1.0
+        from langchain.agents import BaseMultiActionAgent  # type: ignore
+        from langchain.agents import BaseSingleActionAgent  # type: ignore
+    except Exception:
+        # If agents are unavailable or import chains pull unsupported modules,
+        # skip agent instrumentation gracefully.
+        BaseMultiActionAgent = None  # type: ignore[assignment]
+        BaseSingleActionAgent = None  # type: ignore[assignment]
 
-# Handle langchain version compatibility for chains
-try:
-    # langchain <1.0
-    from langchain.chains.base import Chain
-except ImportError:
-    # langchain >=1.0
-    from langchain.chains import Chain
+# Skip importing classic Chain to avoid transitive imports that require
+# modules not present in some 1.x installs (e.g., langchain_core.memory).
+# Instrumentation will proceed without classic Chain support if unavailable.
+Chain = None  # type: ignore[assignment]
 
 # Handle langchain version compatibility for serialization
 try:
@@ -63,14 +68,22 @@ except ImportError:
 
 # Handle langchain version compatibility for memory
 try:
-    # langchain <1.0
-    from langchain.memory.chat_memory import BaseChatMemory
-except ImportError:
-    # langchain >=1.0
+    # Prefer 1.x community package first
+    from langchain_community.chat_message_histories import (
+        BaseChatMemory,  # type: ignore
+    )
+except Exception:
     try:
-        from langchain.memory import BaseChatMemory
-    except ImportError:
-        from langchain_community.chat_message_histories import BaseChatMemory
+        # langchain >=0.3 sometimes exposes in langchain.memory
+        from langchain.memory import BaseChatMemory  # type: ignore
+    except Exception:
+        try:
+            # legacy path
+            from langchain.memory.chat_memory import (
+                BaseChatMemory,  # type: ignore
+            )
+        except Exception:
+            BaseChatMemory = None  # type: ignore[assignment]
 
 # Handle langchain version compatibility for prompts
 try:
@@ -82,44 +95,54 @@ except ImportError:
 
 # Handle langchain version compatibility for retrievers
 try:
-    # langchain <1.0
-    from langchain.retrievers.multi_query import MultiQueryRetriever
-except ImportError:
-    # langchain >=1.0
+    # Prefer 1.x community package first
+    from langchain_community.retrievers import (
+        MultiQueryRetriever,  # type: ignore
+    )
+except Exception:
     try:
-        from langchain.retrievers import MultiQueryRetriever
-    except ImportError:
-        from langchain_community.retrievers import MultiQueryRetriever
+        # 1.x sometimes keeps it under langchain.retrievers
+        from langchain.retrievers import MultiQueryRetriever  # type: ignore
+    except Exception:
+        try:
+            # legacy path
+            from langchain.retrievers.multi_query import (
+                MultiQueryRetriever,  # type: ignore
+            )
+        except Exception:
+            MultiQueryRetriever = None  # type: ignore[assignment]
 
-# Handle langchain version compatibility for schema imports
+# Handle langchain version compatibility for schema-like imports
 try:
-    # langchain <1.0
-    from langchain.schema import BaseChatMessageHistory  # subclass of above
-    from langchain.schema import BaseMemory  # no methods instrumented
-    from langchain.schema import BaseRetriever
-    from langchain.schema.document import Document
-except ImportError:
-    # langchain >=1.0
+    # Prefer 1.x first
+    from langchain_core.chat_history import (
+        BaseChatMessageHistory,  # type: ignore
+    )
+except Exception:
     try:
-        from langchain_core.chat_history import BaseChatMessageHistory
-    except ImportError:
-        from langchain_community.chat_message_histories import (
+        from langchain_community.chat_message_histories import (  # type: ignore
             BaseChatMessageHistory,
         )
+    except Exception:
+        # Legacy fallback
+        from langchain.schema import BaseChatMessageHistory  # type: ignore
 
-    # BaseMemory moved to langchain_classic in 1.0
-    # If it's not available, we'll handle it below when building the CLASSES set
+# BaseMemory in 1.x is either in langchain_classic or langchain_core; make optional
+try:
+    from langchain_classic.base_memory import BaseMemory  # type: ignore
+except Exception:
     try:
-        from langchain_classic.base_memory import BaseMemory
-    except ImportError:
-        try:
-            from langchain_core.memory import BaseMemory
-        except ImportError:
-            # BaseMemory not available - will exclude from instrumentation
-            BaseMemory = None
+        from langchain_core.memory import BaseMemory  # type: ignore
+    except Exception:
+        BaseMemory = None  # type: ignore[assignment]
 
-    from langchain_core.documents import Document
-    from langchain_core.retrievers import BaseRetriever
+try:
+    from langchain_core.documents import Document  # type: ignore
+    from langchain_core.retrievers import BaseRetriever  # type: ignore
+except Exception:
+    # Legacy fallback
+    from langchain.schema import BaseRetriever  # type: ignore
+    from langchain.schema.document import Document  # type: ignore
 
 # Handle langchain version compatibility for tools
 try:
@@ -180,89 +203,147 @@ class LangChainInstrument(core_instruments.Instrument):
         """Filter for classes to be instrumented."""
 
         # Instrument only methods with these names and of these classes.
-        METHODS: List[InstrumentedMethod] = [
-            InstrumentedMethod("invoke", Runnable),
-            InstrumentedMethod("ainvoke", Runnable),
-            InstrumentedMethod("stream", Runnable),
-            InstrumentedMethod("astream", Runnable),
-            InstrumentedMethod("save_context", BaseMemory),
-            InstrumentedMethod("clear", BaseMemory),
-            InstrumentedMethod("run", Chain),
-            InstrumentedMethod("arun", Chain),
-            InstrumentedMethod("_call", Chain),
-            InstrumentedMethod("__call__", Chain),
-            InstrumentedMethod("_acall", Chain),
-            InstrumentedMethod("acall", Chain),
-            InstrumentedMethod(
-                "_get_relevant_documents",
-                RunnableSerializable,
-                *core_instruments.Instrument.Default.retrieval_span("query"),
-            ),
-            InstrumentedMethod(
-                "get_relevant_documents",
-                RunnableSerializable,
-                *core_instruments.Instrument.Default.retrieval_span("query"),
-            ),
-            InstrumentedMethod(
-                "aget_relevant_documents",
-                RunnableSerializable,
-                *core_instruments.Instrument.Default.retrieval_span("query"),
-            ),
-            InstrumentedMethod(
-                "_aget_relevant_documents",
-                RunnableSerializable,
-                *core_instruments.Instrument.Default.retrieval_span("query"),
-            ),
-            InstrumentedMethod("plan", BaseSingleActionAgent),
-            InstrumentedMethod("aplan", BaseSingleActionAgent),
-            InstrumentedMethod("plan", BaseMultiActionAgent),
-            InstrumentedMethod("aplan", BaseMultiActionAgent),
-            # Standard tool methods - these will catch MCP tools too
-            InstrumentedMethod(
-                "_arun",
-                BaseTool,
-                SpanAttributes.SpanType.MCP,
-                lambda ret, exception, *args, **kwargs: {
-                    SpanAttributes.MCP.TOOL_NAME: getattr(
-                        args[0], "name", "unknown"
+        @staticmethod
+        def METHODS() -> List[InstrumentedMethod]:
+            methods: List[InstrumentedMethod] = [
+                InstrumentedMethod("invoke", Runnable),
+                InstrumentedMethod("ainvoke", Runnable),
+                InstrumentedMethod("stream", Runnable),
+                InstrumentedMethod("astream", Runnable),
+                InstrumentedMethod(
+                    "_get_relevant_documents",
+                    RunnableSerializable,
+                    *core_instruments.Instrument.Default.retrieval_span(
+                        "query"
+                    ),
+                ),
+                InstrumentedMethod(
+                    "get_relevant_documents",
+                    RunnableSerializable,
+                    *core_instruments.Instrument.Default.retrieval_span(
+                        "query"
+                    ),
+                ),
+                InstrumentedMethod(
+                    "aget_relevant_documents",
+                    RunnableSerializable,
+                    *core_instruments.Instrument.Default.retrieval_span(
+                        "query"
+                    ),
+                ),
+                InstrumentedMethod(
+                    "_aget_relevant_documents",
+                    RunnableSerializable,
+                    *core_instruments.Instrument.Default.retrieval_span(
+                        "query"
+                    ),
+                ),
+                # MCP client methods
+                InstrumentedMethod(
+                    "get_tools",
+                    object,  # Will be filtered by module name
+                    *core_instruments.Instrument.Default.mcp_span(
+                        "server_name"
+                    ),
+                ),
+            ]
+
+            # Optional: memory methods
+            try:
+                if BaseMemory is not None:  # type: ignore[name-defined]
+                    methods.extend([
+                        InstrumentedMethod("save_context", BaseMemory),
+                        InstrumentedMethod("clear", BaseMemory),
+                    ])
+            except NameError:
+                pass
+
+            # Optional: classic Chain methods
+            try:
+                if Chain is not None:  # type: ignore[name-defined]
+                    methods.extend([
+                        InstrumentedMethod("run", Chain),
+                        InstrumentedMethod("arun", Chain),
+                        InstrumentedMethod("_call", Chain),
+                        InstrumentedMethod("__call__", Chain),
+                        InstrumentedMethod("_acall", Chain),
+                        InstrumentedMethod("acall", Chain),
+                    ])
+            except NameError:
+                pass
+
+            # Optional: agent plan methods
+            try:
+                if BaseSingleActionAgent is not None:  # type: ignore[name-defined]
+                    methods.append(
+                        InstrumentedMethod("plan", BaseSingleActionAgent)
                     )
-                    if args
-                    else "unknown",
-                    SpanAttributes.MCP.INPUT_ARGUMENTS: str(args[1:])
-                    if len(args) > 1
-                    else str(kwargs),
-                    SpanAttributes.MCP.OUTPUT_CONTENT: str(ret)
-                    if ret is not None
-                    else "",
-                    SpanAttributes.MCP.OUTPUT_IS_ERROR: exception is not None,
-                },
-            ),
-            InstrumentedMethod(
-                "_run",
-                BaseTool,
-                SpanAttributes.SpanType.MCP,
-                lambda ret, exception, *args, **kwargs: {
-                    SpanAttributes.MCP.TOOL_NAME: getattr(
-                        args[0], "name", "unknown"
+                    methods.append(
+                        InstrumentedMethod("aplan", BaseSingleActionAgent)
                     )
-                    if args
-                    else "unknown",
-                    SpanAttributes.MCP.INPUT_ARGUMENTS: str(args[1:])
-                    if len(args) > 1
-                    else str(kwargs),
-                    SpanAttributes.MCP.OUTPUT_CONTENT: str(ret)
-                    if ret is not None
-                    else "",
-                    SpanAttributes.MCP.OUTPUT_IS_ERROR: exception is not None,
-                },
-            ),
-            # MCP client methods
-            InstrumentedMethod(
-                "get_tools",
-                object,  # Will be filtered by module name
-                *core_instruments.Instrument.Default.mcp_span("server_name"),
-            ),
-        ]
+            except NameError:
+                pass
+
+            try:
+                if BaseMultiActionAgent is not None:  # type: ignore[name-defined]
+                    methods.append(
+                        InstrumentedMethod("plan", BaseMultiActionAgent)
+                    )
+                    methods.append(
+                        InstrumentedMethod("aplan", BaseMultiActionAgent)
+                    )
+            except NameError:
+                pass
+
+            # Tools
+            try:
+                methods.extend([
+                    InstrumentedMethod(
+                        "_arun",
+                        BaseTool,
+                        SpanAttributes.SpanType.MCP,
+                        lambda ret, exception, *args, **kwargs: {
+                            SpanAttributes.MCP.TOOL_NAME: getattr(
+                                args[0], "name", "unknown"
+                            )
+                            if args
+                            else "unknown",
+                            SpanAttributes.MCP.INPUT_ARGUMENTS: str(args[1:])
+                            if len(args) > 1
+                            else str(kwargs),
+                            SpanAttributes.MCP.OUTPUT_CONTENT: str(ret)
+                            if ret is not None
+                            else "",
+                            SpanAttributes.MCP.OUTPUT_IS_ERROR: exception
+                            is not None,
+                        },
+                    ),
+                    InstrumentedMethod(
+                        "_run",
+                        BaseTool,
+                        SpanAttributes.SpanType.MCP,
+                        lambda ret, exception, *args, **kwargs: {
+                            SpanAttributes.MCP.TOOL_NAME: getattr(
+                                args[0], "name", "unknown"
+                            )
+                            if args
+                            else "unknown",
+                            SpanAttributes.MCP.INPUT_ARGUMENTS: str(args[1:])
+                            if len(args) > 1
+                            else str(kwargs),
+                            SpanAttributes.MCP.OUTPUT_CONTENT: str(ret)
+                            if ret is not None
+                            else "",
+                            SpanAttributes.MCP.OUTPUT_IS_ERROR: exception
+                            is not None,
+                        },
+                    ),
+                ])
+            except NameError:
+                pass
+
+            return methods
+
         """Methods to be instrumented.
 
         Key is method name and value is filter for objects that need those
@@ -272,7 +353,7 @@ class LangChainInstrument(core_instruments.Instrument):
         super().__init__(
             include_modules=LangChainInstrument.Default.MODULES,
             include_classes=LangChainInstrument.Default.CLASSES(),
-            include_methods=LangChainInstrument.Default.METHODS,
+            include_methods=LangChainInstrument.Default.METHODS(),
             *args,
             **kwargs,
         )
