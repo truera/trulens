@@ -388,6 +388,11 @@ def _build_grid_options(
         filter="agNumberColumnFilter",
     )
     gb.configure_column(
+        "eval_cost",
+        header_name="Eval Cost (Feedback)",
+        filter="agNumberColumnFilter",
+    )
+    gb.configure_column(
         "cost_currency",
         header_name="Cost Currency",
         filter="agMultiColumnFilter",
@@ -539,6 +544,7 @@ def _render_grid(
         "record_metadata",
         "total_tokens",
         "total_cost",
+        "eval_cost",
         "cost_currency",
         "latency",
         "tags",
