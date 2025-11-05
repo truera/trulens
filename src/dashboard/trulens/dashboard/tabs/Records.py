@@ -387,11 +387,31 @@ def _build_grid_options(
         header_name="Total Cost (App)",
         filter="agNumberColumnFilter",
     )
-    gb.configure_column(
-        "eval_cost",
-        header_name="Eval Cost (Feedback)",
-        filter="agNumberColumnFilter",
+    # Dynamically include exactly one eval cost column and hide the other
+    has_eval_sf = (
+        "eval_cost_snowflake" in df.columns
+        and (df["eval_cost_snowflake"] != 0).any()
     )
+    has_eval_usd = "eval_cost" in df.columns and (df["eval_cost"] != 0).any()
+
+    # Show all nonzero eval cost columns (both if applicable); hide zero/missing
+    if has_eval_sf:
+        gb.configure_column(
+            "eval_cost_snowflake",
+            header_name="Eval Costs (Snowflake Credits)",
+            filter="agNumberColumnFilter",
+        )
+    elif "eval_cost_snowflake" in df.columns:
+        gb.configure_column("eval_cost_snowflake", hide=True)
+
+    if has_eval_usd:
+        gb.configure_column(
+            "eval_cost",
+            header_name="Eval Costs",
+            filter="agNumberColumnFilter",
+        )
+    elif "eval_cost" in df.columns:
+        gb.configure_column("eval_cost", hide=True)
     gb.configure_column(
         "cost_currency",
         header_name="Cost Currency",
@@ -537,6 +557,18 @@ def _render_grid(
             # Fallback to st.dataframe if st_aggrid is not installed
             pass
 
+    # Build column order dynamically for eval cost columns
+    eval_cols_to_show = []
+    has_eval_sf = (
+        "eval_cost_snowflake" in df.columns
+        and (df["eval_cost_snowflake"] != 0).any()
+    )
+    has_eval_usd = "eval_cost" in df.columns and (df["eval_cost"] != 0).any()
+    if has_eval_sf:
+        eval_cols_to_show.append("eval_cost_snowflake")
+    if has_eval_usd:
+        eval_cols_to_show.append("eval_cost")
+
     column_order = [
         "app_version",
         "input",
@@ -544,7 +576,7 @@ def _render_grid(
         "record_metadata",
         "total_tokens",
         "total_cost",
-        "eval_cost",
+        *eval_cols_to_show,
         "cost_currency",
         "latency",
         "tags",
