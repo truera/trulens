@@ -387,7 +387,7 @@ def _build_grid_options(
         header_name="Total Cost (App)",
         filter="agNumberColumnFilter",
     )
-    # Dynamically include exactly one eval cost column and hide the other
+    # Dynamically include all nonzero eval cost columns and hide zero/missing ones
     has_eval_sf = (
         "eval_cost_snowflake" in df.columns
         and (df["eval_cost_snowflake"] != 0).any()
