@@ -10,7 +10,9 @@ from typing import List
 import pandas as pd
 from trulens.apps.app import TruApp
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
+from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.otel.instrument import instrument
+from trulens.core.schema import base as base_schema
 from trulens.core.schema.app import AppDefinition
 from trulens.core.schema.event import Event
 from trulens.core.session import TruSession
@@ -638,9 +640,109 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
                     non_eval_cost_sum += cost_val
 
             self.assertIn("eval_cost", df.columns)
-            self.assertGreater(row["eval_cost"], 0.0)
+            # eval_cost may be zero if feedbacks do not call providers
             self.assertAlmostEqual(row["eval_cost"], eval_cost_sum)
             self.assertAlmostEqual(row["total_cost"], non_eval_cost_sum)
+
+    def test_eval_cost_tracked_via_tally(self):
+        """Ensure eval_cost is actually tracked from cost tally during feedback execution."""
+        # Create app and record one run
+        app = _TestApp()
+        tru_app = TruApp(
+            app,
+            app_name=self.app_name,
+            app_version=self.app_version,
+            app_id=self.app_id,
+            main_method=app.query,
+        )
+
+        tru_app.instrumented_invoke_main_method(
+            run_name="test run",
+            input_id="42",
+            main_method_kwargs={"question": self.GEN_QUESTION},
+        )
+        self.session.force_flush()
+
+        # Monkeypatch Endpoint.track_all_costs_tally to return a non-zero cost
+        original = core_endpoint.Endpoint.track_all_costs_tally
+
+        def fake_track_all_costs_tally(__func, *args, **kwargs):
+            # Call through to get actual result
+            result = __func(*args, **kwargs)
+
+            def thunk():
+                return base_schema.Cost(
+                    cost=1.23,
+                    cost_currency="USD",
+                    n_tokens=42,
+                    n_prompt_tokens=20,
+                    n_completion_tokens=22,
+                )
+
+            return result, thunk
+
+        try:
+            core_endpoint.Endpoint.track_all_costs_tally = staticmethod(
+                fake_track_all_costs_tally
+            )
+
+            # Compute feedback which should record cost attributes on EVAL_ROOT
+            from trulens.core.feedback import Feedback
+
+            f_gen = Feedback(
+                feedback_function,
+                name=self.GEN_FEEDBACK_NAME,
+                higher_is_better=True,
+            )
+
+            events = self._get_events()
+            spans = tests.unit.test_otel_feedback_computation._convert_events_to_MinimalSpanInfos(
+                events
+            )
+            record_root = RecordGraphNode.build_graph(spans)
+
+            _compute_feedback(
+                record_root,
+                self.GEN_FEEDBACK_NAME,
+                f_gen,
+                True,
+                all_retrieval_span_attributes,
+            )
+            self.session.force_flush()
+
+            # Validate that eval_cost is tracked and equals our fake cost
+            df, _ = self.db._get_records_and_feedback_otel()
+            row = self._verify_dataframe_structure(df)
+            self.assertIn("eval_cost", df.columns)
+            self.assertAlmostEqual(row["eval_cost"], 1.23)
+
+            # Also ensure total_cost excludes eval cost (remains from non-eval spans only)
+            # and that EVAL_ROOT span contains token/cost attributes
+            events_after = self._get_events()
+            has_eval_root_cost_attrs = False
+            for ev in events_after.itertuples(index=False):
+                attrs = ev.record_attributes
+                if (
+                    attrs.get(SpanAttributes.SPAN_TYPE)
+                    == SpanAttributes.SpanType.EVAL_ROOT
+                ):
+                    # Confirm cost attributes were recorded
+                    self.assertEqual(
+                        attrs.get(SpanAttributes.COST.CURRENCY), "USD"
+                    )
+                    self.assertEqual(attrs.get(SpanAttributes.COST.COST), 1.23)
+                    self.assertEqual(
+                        attrs.get(SpanAttributes.COST.NUM_TOKENS), 42
+                    )
+                    has_eval_root_cost_attrs = True
+                    break
+            self.assertTrue(
+                has_eval_root_cost_attrs,
+                msg="EVAL_ROOT span missing cost attributes",
+            )
+        finally:
+            # Restore original method
+            core_endpoint.Endpoint.track_all_costs_tally = original
 
     def test_get_paginated_record_ids_otel(self):
         """Test that _get_paginated_record_ids_otel correctly paginates and filters record IDs."""
