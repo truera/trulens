@@ -115,7 +115,6 @@ class GoogleCallback(core_endpoint.EndpointCallback):
         n_prompt_tokens = usage.get("prompt_token_count", 0)
         n_completion_tokens = usage.get("candidates_token_count", 0)
 
-        # Try LiteLLM first
         calculated_cost = self._compute_cost(
             model_name, n_prompt_tokens, n_completion_tokens
         )
