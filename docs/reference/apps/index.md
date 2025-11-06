@@ -7,7 +7,7 @@ Apps derive from [AppDefinition][trulens.core.schema.app.AppDefinition] and
 
 - [TruBasicApp][trulens.apps.basic.TruBasicApp]
 
-- [TruCustomApp][trulens.apps.custom.TruCustomApp]
+- [TruApp][trulens.apps.app.TruApp]
 
 - [TruVirtual][trulens.apps.virtual.TruVirtual]
 
