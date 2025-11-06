@@ -388,16 +388,13 @@ class _TruSession(core_session.TruSession):
             )
 
         if _can_import("trulens.providers.google.endpoint"):
-            from google.genai import Client
+            from google.genai.models import Models
             from trulens.core.otel.instrument import instrument_cost_computer
             from trulens.providers.google.endpoint import GoogleCostComputer
 
-            # Get the Models class dynamically by creating a temporary client
-            client = Client()
-            models_class = type(client.models)
-
+            # Use the Models class directly without creating a client
             instrument_cost_computer(
-                models_class,
+                Models,
                 "generate_content",
                 attributes=lambda ret,
                 exception,
