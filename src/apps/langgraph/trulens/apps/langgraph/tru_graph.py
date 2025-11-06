@@ -146,60 +146,64 @@ class LangGraphInstrument(core_instruments.Instrument):
         )
         """Classes to instrument."""
 
-        METHODS: List[InstrumentedMethod] = [
-            # MCP-specific instrumentation
-            InstrumentedMethod(
-                "get_tools",
-                object,  # Will be filtered by module name
-                *core_instruments.Instrument.Default.mcp_span("server_name"),
-            ),
-            # ToolNode.__init__ to capture server info when ToolNode is created
-            InstrumentedMethod(
-                "__init__",
-                ToolNode if ToolNode else object,
-                SpanAttributes.SpanType.UNKNOWN,
-                lambda ret,
-                exception,
-                *args,
-                **kwargs: TruGraph._register_toolnode_tools(
-                    args[0] if args else None,
-                    args[1] if len(args) > 1 else kwargs.get("tools"),
+        @staticmethod
+        def METHODS() -> List[InstrumentedMethod]:
+            return [
+                # MCP-specific instrumentation
+                InstrumentedMethod(
+                    "get_tools",
+                    object,  # Will be filtered by module name
+                    *core_instruments.Instrument.Default.mcp_span(
+                        "server_name"
+                    ),
                 ),
-            ),
-            InstrumentedMethod(
-                "call_tool",
-                object,  # Will be filtered by module name
-                *core_instruments.Instrument.Default.mcp_span("tool_name"),
-            ),
-            InstrumentedMethod(
-                "acall_tool",
-                object,  # Will be filtered by module name
-                *core_instruments.Instrument.Default.mcp_span("tool_name"),
-            ),
-            # ToolNode instrumentation - mark as GRAPH_NODE so individual tool calls show as children
-            InstrumentedMethod(
-                "invoke",
-                ToolNode if ToolNode else object,
-                SpanAttributes.SpanType.GRAPH_NODE,
-                lambda ret, exception, *args, **kwargs: {
-                    "graph_node.name": "tools"
-                },
-            ),
-            InstrumentedMethod(
-                "ainvoke",
-                ToolNode if ToolNode else object,
-                SpanAttributes.SpanType.GRAPH_NODE,
-                lambda ret, exception, *args, **kwargs: {
-                    "graph_node.name": "tools"
-                },
-            ),
-        ]
+                # ToolNode.__init__ to capture server info when ToolNode is created
+                InstrumentedMethod(
+                    "__init__",
+                    ToolNode if ToolNode else object,
+                    SpanAttributes.SpanType.UNKNOWN,
+                    lambda ret,
+                    exception,
+                    *args,
+                    **kwargs: TruGraph._register_toolnode_tools(
+                        args[0] if args else None,
+                        args[1] if len(args) > 1 else kwargs.get("tools"),
+                    ),
+                ),
+                InstrumentedMethod(
+                    "call_tool",
+                    object,  # Will be filtered by module name
+                    *core_instruments.Instrument.Default.mcp_span("tool_name"),
+                ),
+                InstrumentedMethod(
+                    "acall_tool",
+                    object,  # Will be filtered by module name
+                    *core_instruments.Instrument.Default.mcp_span("tool_name"),
+                ),
+                # ToolNode instrumentation - mark as GRAPH_NODE so individual tool calls show as children
+                InstrumentedMethod(
+                    "invoke",
+                    ToolNode if ToolNode else object,
+                    SpanAttributes.SpanType.GRAPH_NODE,
+                    lambda ret, exception, *args, **kwargs: {
+                        "graph_node.name": "tools"
+                    },
+                ),
+                InstrumentedMethod(
+                    "ainvoke",
+                    ToolNode if ToolNode else object,
+                    SpanAttributes.SpanType.GRAPH_NODE,
+                    lambda ret, exception, *args, **kwargs: {
+                        "graph_node.name": "tools"
+                    },
+                ),
+            ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(
             include_modules=LangGraphInstrument.Default.MODULES,
             include_classes=LangGraphInstrument.Default.CLASSES(),
-            include_methods=LangGraphInstrument.Default.METHODS,
+            include_methods=LangGraphInstrument.Default.METHODS(),
             *args,
             **kwargs,
         )
@@ -1498,7 +1502,7 @@ class TruGraph(TruChain):
                     langgraph_default.CLASSES()
                 )
                 combined_methods = (
-                    langchain_default.METHODS + langgraph_default.METHODS
+                    langchain_default.METHODS() + langgraph_default.METHODS()
                 )
 
                 super().__init__(
