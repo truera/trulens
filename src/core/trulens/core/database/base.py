@@ -67,7 +67,14 @@ class BaseAppsExtractor:
         "perf_json",
         "ts",
     ]
-    extra_cols = ["latency", "total_tokens", "total_cost", "num_events"]
+    extra_cols = [
+        "latency",
+        "total_tokens",
+        "total_cost",
+        "eval_cost",
+        "eval_cost_snowflake",
+        "num_events",
+    ]
     all_cols = app_cols + rec_cols + extra_cols
 
 
@@ -587,6 +594,8 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                     "latency": 0.0,  # Initialize to 0.0, filled below
                     "total_tokens": 0,  # Initialize to 0, calculated below
                     "total_cost": 0.0,  # Initialize to 0.0, calculated below
+                    "eval_cost": 0.0,  # Initialize to 0.0, calculated below (USD or non-Snowflake)
+                    "eval_cost_snowflake": 0.0,  # Initialize to 0.0, calculated below (Snowflake credits)
                     "cost_currency": "USD",  # Initialize to "USD", calculated below
                     "feedback_results": {},  # Initialize to empty map, calculated below
                 }
@@ -614,12 +623,29 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                     event.timestamp - event.start_timestamp
                 ).total_seconds()
 
-            # Check if the span has cost info (tokens, cost, currency), and update record events
-            self._update_cost_info_otel(
-                record_events[record_id],
-                record_attributes,
-                include_tokens=True,
-            )
+            # Check if the span has cost info (tokens, cost, currency)
+            # For EVAL/EVAL_ROOT spans, track the cost separately as eval_cost.
+            span_type = record_attributes.get(SpanAttributes.SPAN_TYPE)
+            if span_type in [
+                SpanAttributes.SpanType.EVAL.value,
+                SpanAttributes.SpanType.EVAL_ROOT.value,
+            ]:
+                currency = record_attributes.get(
+                    SpanAttributes.COST.CURRENCY, "USD"
+                )
+                amount = record_attributes.get(SpanAttributes.COST.COST, 0.0)
+                if currency == "Snowflake credits":
+                    record_events[record_id]["eval_cost_snowflake"] += amount
+                else:
+                    record_events[record_id]["eval_cost"] += amount
+                # Do not add EVAL costs to total_cost to avoid lumping
+            else:
+                # For non-eval spans, update total_cost and tokens
+                self._update_cost_info_otel(
+                    record_events[record_id],
+                    record_attributes,
+                    include_tokens=True,
+                )
 
         # Process feedback results
         feedback_col_names = []
@@ -799,6 +825,8 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                 "total_tokens": record_data["total_tokens"],
                 # TODO: convert to map (see comment: https://github.com/truera/trulens/pull/1939#discussion_r2054802093)
                 "total_cost": record_data["total_cost"],
+                "eval_cost": record_data["eval_cost"],
+                "eval_cost_snowflake": record_data["eval_cost_snowflake"],
                 "cost_currency": record_data["cost_currency"],
                 "num_events": len(record_data["events"]),
             }
