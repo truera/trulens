@@ -852,7 +852,7 @@ def _call_feedback_function_under_eval_span(
         exc = None
         try:
             # Track provider call costs during feedback execution
-            result_and_meta, part_cost_tally = (
+            result_and_meta, get_eval_cost = (
                 core_endpoint.Endpoint.track_all_costs_tally(
                     feedback_function, **kwargs
                 )
@@ -882,7 +882,7 @@ def _call_feedback_function_under_eval_span(
 
             # Attach cost attributes to the EVAL_ROOT span so feedback costs are visible
             try:
-                cost = part_cost_tally()
+                cost = get_eval_cost()
                 # Only set attributes when non-zero/meaningful to avoid noise
                 if cost is not None:
                     eval_root_span.set_attribute(
