@@ -20,6 +20,7 @@ from opentelemetry.trace import INVALID_SPAN_ID
 from opentelemetry.trace.span import Span
 import pandas as pd
 from trulens.core.database.base import DB
+from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback.feedback import Feedback
 from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
 from trulens.core.feedback.selector import ProcessedContentNode
@@ -850,8 +851,13 @@ def _call_feedback_function_under_eval_span(
         res = None
         exc = None
         try:
-            # Directly call the Feedback object to ensure custom parameters are used
-            res = feedback_function(**kwargs)
+            # Track provider call costs during feedback execution
+            result_and_meta, get_eval_cost = (
+                core_endpoint.Endpoint.track_all_costs_tally(
+                    feedback_function, **kwargs
+                )
+            )
+            res = result_and_meta
             metadata = {}
             if isinstance(res, tuple):
                 # If the result is a tuple, it must be (score, metadata) where
@@ -873,6 +879,44 @@ def _call_feedback_function_under_eval_span(
             _set_metadata_attributes(eval_span, metadata)
             if is_only_child:
                 _set_metadata_attributes(eval_root_span, metadata)
+
+            # Attach cost attributes to the EVAL_ROOT span so feedback costs are visible
+            try:
+                cost = get_eval_cost()
+                # Only set attributes when non-zero/meaningful to avoid noise
+                if cost is not None:
+                    eval_root_span.set_attribute(
+                        SpanAttributes.COST.CURRENCY,
+                        cost.cost_currency or "USD",
+                    )
+                    eval_root_span.set_attribute(
+                        SpanAttributes.COST.COST, float(cost.cost or 0.0)
+                    )
+                    if getattr(cost, "n_tokens", 0):
+                        eval_root_span.set_attribute(
+                            SpanAttributes.COST.NUM_TOKENS, int(cost.n_tokens)
+                        )
+                    if getattr(cost, "n_prompt_tokens", 0):
+                        eval_root_span.set_attribute(
+                            SpanAttributes.COST.NUM_PROMPT_TOKENS,
+                            int(cost.n_prompt_tokens),
+                        )
+                    if getattr(cost, "n_completion_tokens", 0):
+                        eval_root_span.set_attribute(
+                            SpanAttributes.COST.NUM_COMPLETION_TOKENS,
+                            int(cost.n_completion_tokens),
+                        )
+                    if getattr(cost, "n_reasoning_tokens", 0):
+                        eval_root_span.set_attribute(
+                            SpanAttributes.COST.NUM_REASONING_TOKENS,
+                            int(cost.n_reasoning_tokens),
+                        )
+            except Exception as e:
+                # Do not fail feedback evaluation if cost aggregation fails, but log for debugging
+                _logger.warning(
+                    "Failed to attach eval cost attributes to EVAL_ROOT span: %s",
+                    str(e),
+                )
             return res
         except Exception as e:
             exc = e
