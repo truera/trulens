@@ -1,5 +1,4 @@
 import inspect
-import json
 import logging
 import os
 import pprint
@@ -13,6 +12,7 @@ from typing import (
     Tuple,
 )
 
+from litellm import model_cost
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -45,6 +45,14 @@ def _get_env_api_key() -> Optional[str]:
 class GoogleCostComputer:
     @staticmethod
     def handle_response(response: Any) -> Dict[str, Any]:
+        """Process Google API response and extract cost/usage metadata.
+
+        Args:
+            response: GenerateContentResponse object from Google API
+
+        Returns:
+            Dictionary with cost and usage attributes for OpenTelemetry span
+        """
         usage = response.usage_metadata
 
         endpoint = GoogleEndpoint()
@@ -55,16 +63,16 @@ class GoogleCostComputer:
         n_prompt_tokens = usage.prompt_token_count or 0
         n_completion_tokens = usage.candidates_token_count or 0
         n_reasoning_tokens = usage.thoughts_token_count or 0
+        calculated_cost = callback._compute_cost(
+            model_name, n_prompt_tokens, n_completion_tokens
+        )
 
         return {
             SpanAttributes.COST.NUM_TOKENS: n_total_tokens,
             SpanAttributes.COST.NUM_PROMPT_TOKENS: n_prompt_tokens,
             SpanAttributes.COST.NUM_COMPLETION_TOKENS: n_completion_tokens,
             SpanAttributes.COST.NUM_REASONING_TOKENS: n_reasoning_tokens,
-            # TODO: Check the cost computation functionality
-            SpanAttributes.COST.COST: callback._compute_cost(
-                model_name, n_prompt_tokens, n_completion_tokens
-            ),
+            SpanAttributes.COST.COST: calculated_cost,
             SpanAttributes.COST.CURRENCY: "USD",
             SpanAttributes.COST.MODEL: model_name,
         }
@@ -103,10 +111,11 @@ class GoogleCallback(core_endpoint.EndpointCallback):
                 getattr(self.cost, cost_field, 0) + usage.get(google_field, 0),
             )
 
-        # Compute and set cost
         model_name = response_dict.get("model_version")
         n_prompt_tokens = usage.get("prompt_token_count", 0)
         n_completion_tokens = usage.get("candidates_token_count", 0)
+
+        # Try LiteLLM first
         calculated_cost = self._compute_cost(
             model_name, n_prompt_tokens, n_completion_tokens
         )
@@ -119,7 +128,8 @@ class GoogleCallback(core_endpoint.EndpointCallback):
     def _compute_cost(
         self, model_name: str, n_prompt_tokens: int, n_completion_tokens: int
     ) -> float:
-        """Compute cost in USD based on model name and token counts.
+        """Compute cost in USD based on model name and token counts using LiteLLM community-maintained pricing list.
+        Reference: https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json
 
         Args:
             model_name: Full model name from Google API (e.g., "gemini-2.5-flash-001")
@@ -130,55 +140,60 @@ class GoogleCallback(core_endpoint.EndpointCallback):
             Cost in USD
         """
         try:
-            if self._model_costs is None:
-                # Load pricing configuration from JSON file
-                # Reference: https://ai.google.dev/gemini-api/docs/pricing
-                with open(
-                    os.path.join(
-                        os.path.dirname(__file__),
-                        "config/google_model_costs.json",
-                    ),
-                    "r",
-                ) as f:
-                    self._model_costs = json.load(f)
+            self._model_costs = model_cost
+
+            if not model_name:
+                logger.warning("No model name provided for cost calculation")
+                return 0.0
 
             logger.debug(f"Received model_version: {model_name}")
-            if model_name and model_name in self._model_costs:
-                if (
-                    n_prompt_tokens > 2e5
-                    and "input_large" in self._model_costs[model_name]
-                ):
-                    cost = (
-                        self._model_costs[model_name]["input_large"]
-                        * n_prompt_tokens
-                        / 1e6
+
+            if model_name in self._model_costs:
+                pricing = self._model_costs[model_name]
+
+                if n_prompt_tokens > pricing.get(
+                    "max_input_tokens"
+                ) or n_completion_tokens > pricing.get("max_output_tokens"):
+                    logger.warning(
+                        f"Model {model_name} has exceeded the maximum input or output tokens. Skipping cost calculation."
+                    )
+                    return 0.0
+
+                # Determine input pricing based on prompt size (<=200K vs >200K tokens)
+                if n_prompt_tokens > 200000:
+                    input_price = pricing.get(
+                        "input_cost_per_token_above_200k_tokens",
+                        pricing.get("input_cost_per_token", 0),
                     )
                 else:
-                    cost = (
-                        self._model_costs[model_name]["input"]
-                        * n_prompt_tokens
-                        / 1e6
-                    )
-                if (
-                    n_prompt_tokens > 2e5
-                    and "output_large" in self._model_costs[model_name]
-                ):
-                    cost += (
-                        self._model_costs[model_name]["output_large"]
-                        * n_completion_tokens
-                        / 1e6
+                    input_price = pricing.get("input_cost_per_token", 0)
+
+                # Determine output pricing based on prompt size (<=200K vs >200K tokens)
+                if n_prompt_tokens > 200000:
+                    output_price = pricing.get(
+                        "output_cost_per_token_above_200k_tokens",
+                        pricing.get("output_cost_per_token", 0),
                     )
                 else:
-                    cost += (
-                        self._model_costs[model_name]["output"]
-                        * n_completion_tokens
-                        / 1e6
-                    )
-                return cost
-            else:
-                raise ValueError(
-                    f"Model {model_name} not valid or not supported yet for cost estimation."
+                    output_price = pricing.get("output_cost_per_token", 0)
+
+                # Calculate total cost
+                cost = (
+                    n_prompt_tokens * input_price
+                    + n_completion_tokens * output_price
                 )
+                logger.debug(
+                    f"JSON pricing cost calculated: ${cost:.6f} for {model_name} "
+                )
+                return cost
+
+            # Model not found in pricing config
+            logger.warning(
+                f"Model {model_name} not found in pricing configuration. "
+                f"Cost tracking will be incomplete. Available models: {list(self._model_costs.keys())}"
+            )
+            return 0.0
+
         except Exception as e:
             logger.error(
                 f"Error occurred while computing cost for model {model_name}: {e}"
