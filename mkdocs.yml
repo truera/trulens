@@ -75,7 +75,6 @@ plugins:
             - http://pandas.pydata.org/pandas-docs/stable/objects.inv
             - https://docs.pydantic.dev/latest/objects.inv
             - https://typing-extensions.readthedocs.io/en/latest/objects.inv
-            - https://docs.llamaindex.ai/en/stable/objects.inv
             - https://docs.sqlalchemy.org/en/20/objects.inv
           paths:
             - src/core
@@ -226,6 +225,8 @@ nav:
           - getting_started/quickstarts/streaming_apps.ipynb
           - getting_started/quickstarts/text2text_quickstart.ipynb
           - getting_started/quickstarts/adding_human_feedback.ipynb
+          - getting_started/quickstarts/groundtruth_evals_for_retrieval_systems.ipynb
+          - getting_started/quickstarts/web-search-agent-evaluation.ipynb
       - ⭐ Core Concepts:
           - getting_started/core_concepts/index.md
           - ☔ Feedback Functions: getting_started/core_concepts/feedback_functions.md
