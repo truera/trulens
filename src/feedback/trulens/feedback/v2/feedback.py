@@ -231,7 +231,6 @@ class FewShotExamples(pydantic.BaseModel):
 
 class EvalSchema(pydantic.BaseModel):
     criteria: str
-    custom_instructions: str
     output_space: str
 
     @pydantic.field_validator("output_space")
@@ -296,12 +295,9 @@ class CriteriaOutputSpaceMixin:
     examples: ClassVar[Optional[str]] = None
 
     @staticmethod
-    def validate_criteria_and_output_space(
-        criteria: str, custom_instructions: str, output_space: str
-    ):
+    def validate_criteria_and_output_space(criteria: str, output_space: str):
         validated = EvalSchema(
             criteria=criteria,
-            custom_instructions=custom_instructions,
             output_space=output_space,
         )
         return validated
@@ -331,13 +327,15 @@ class CriteriaOutputSpaceMixin:
         if custom_instructions is None:
             custom_instructions = ""
         else:
-            custom_instructions = "Custom instructions: " + custom_instructions
+            custom_instructions = (
+                "\nCustom instructions:\n" + custom_instructions
+            )
 
         if output_space is None:
             output_space_prompt = cls.output_space_prompt
         else:
             validated = cls.validate_criteria_and_output_space(
-                criteria, custom_instructions, output_space
+                criteria, output_space
             )
             output_space_prompt = validated.get_output_scale_prompt()
 
@@ -348,9 +346,6 @@ class CriteriaOutputSpaceMixin:
                 custom_instructions=custom_instructions,
             )
         )
-
-        if custom_instructions is not None:
-            prompt += f"\nCustom instructions:\n{custom_instructions}"
 
         if examples is not None:
             fewshot_examples = FewShotExamples.from_examples_list(examples)
