@@ -1047,13 +1047,13 @@ Feedback function signature:
 
             for ins in input_combinations:
                 try:
-                    result_and_meta, part_cost_tally = (
+                    result_and_meta, get_eval_cost = (
                         core_endpoint.Endpoint.track_all_costs_tally(
                             self, **ins
                         )
                     )
 
-                    cost += part_cost_tally()
+                    cost += get_eval_cost()
 
                 except SkipEval as e:
                     e.feedback = self

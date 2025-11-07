@@ -158,6 +158,7 @@ for package in packages:
             if len(parts) > 2 and parts[2] == "react_components":
                 continue
         elif path.parent.name == "apps" and path.name in [
+            "app.py",
             "basic.py",
             "custom.py",
             "virtual.py",

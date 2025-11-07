@@ -22,7 +22,28 @@ from trulens.dashboard.ux import components as dashboard_components
 from trulens.dashboard.ux import styles as dashboard_styles
 
 APP_COLS = ["app_version", "app_id", "app_name"]
-APP_AGG_COLS = ["Records", "Average Latency (s)"]
+APP_AGG_COLS = [
+    "Records",
+    "Average Latency (s)",
+    "Total Cost (USD)",
+    "Total Cost (Snowflake Credits)",
+]
+
+
+def _get_nonzero_cost_columns(df: pd.DataFrame) -> List[str]:
+    """Return cost column names that have any nonzero values in the dataframe.
+
+    The order is USD first, then Snowflake credits.
+    """
+    cols: List[str] = []
+    if "Total Cost (USD)" in df.columns and (df["Total Cost (USD)"] != 0).any():
+        cols.append("Total Cost (USD)")
+    if (
+        "Total Cost (Snowflake Credits)" in df.columns
+        and (df["Total Cost (Snowflake Credits)"] != 0).any()
+    ):
+        cols.append("Total Cost (Snowflake Credits)")
+    return cols
 
 
 def init_page_state():
@@ -118,8 +139,15 @@ def _build_grid_options(
     )
 
     gb.configure_columns(APP_COLS, filter="agMultiColumnFilter")
+    cost_cols_to_show: List[str] = _get_nonzero_cost_columns(df)
+
     gb.configure_columns(
-        feedback_col_names + ["records", "latency"],
+        feedback_col_names
+        + [
+            "records",
+            "latency",
+            *cost_cols_to_show,
+        ],
         filter="agNumberColumnFilter",
     )
     gb.configure_columns(
@@ -245,10 +273,13 @@ def _render_grid(
             # Fallback to st.dataframe if st_aggrid is not installed
             pass
 
+    cost_cols_to_show = _get_nonzero_cost_columns(df)
+
     column_order = [
         "app_version",
         "records",
         "latency",
+        *cost_cols_to_show,
         *feedback_col_names,
     ]
     column_order = [col for col in column_order if col in df.columns]
@@ -478,9 +509,16 @@ def _render_grid_tab(
     ):
         metadata_cols.append(dashboard_constants.PINNED_COL_NAME)
 
+    # Only include cost columns if nonzero across the grouped app versions
+    agg_cost_cols: List[str] = [
+        "Records",
+        "Average Latency (s)",
+        *_get_nonzero_cost_columns(df),
+    ]
+
     df = order_columns(
         df,
-        APP_COLS + APP_AGG_COLS + feedback_col_names + metadata_cols,
+        APP_COLS + agg_cost_cols + feedback_col_names + metadata_cols,
     )
 
     if only_show_pinned := c1.toggle(

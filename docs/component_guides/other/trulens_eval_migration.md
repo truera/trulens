@@ -36,7 +36,7 @@ As a result of these changes, the package structure for TruLens differs from Tru
 | `trulens_eval.Tru` | [trulens.core.TruSession][trulens.core.TruSession] | |
 | `trulens_eval.Feedback` | [trulens.core.Feedback][trulens.core.Feedback] | |
 | `trulens_eval.Select` | [trulens.core.Select][trulens.core.Select] | |
-| `trulens_eval.TruCustomApp`, `TruSession().Custom(...)` | [trulens.apps.custom.TruCustomApp][trulens.apps.custom.TruCustomApp] | |
+| `trulens_eval.TruCustomApp`, `TruSession().Custom(...)` | [trulens.apps.app.TruApp][trulens.apps.app.TruApp] | |
 | `trulens_eval.TruChain`, `Tru().Chain(...)` | [`TruSession().App(...)`][trulens.core.session.TruSession.App] or [trulens.apps.langchain.TruChain][trulens.apps.langchain.TruChain] | `trulens-apps-langchain` |
 | `trulens_eval.TruLlama`, `Tru().Llama(...)` | [`TruSession().App(...)`][trulens.core.session.TruSession.App] or [trulens.apps.llamaindex.TruLlama][trulens.apps.llamaindex.TruLlama] | `trulens-apps-llamaindex` |
 | `trulens_eval.TruRails`, `Tru().Rails(...)` | [`TruSession().App(...)`][trulens.core.session.TruSession.App] or [trulens.apps.nemo.TruRails][trulens.apps.nemo.TruRails] | `trulens-apps-nemo` |
