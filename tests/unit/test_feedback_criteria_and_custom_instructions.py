@@ -1,9 +1,5 @@
 """Unit tests for feedback function criteria and custom_instructions parameters."""
 
-import os
-
-os.environ["TRULENS_OTEL_TRACING"] = "0"
-
 from typing import Dict, Optional, Tuple
 import unittest
 from unittest import TestCase

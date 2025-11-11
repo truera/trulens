@@ -263,7 +263,7 @@ class Conciseness(Semantics, WithPrompt):  # or syntax
 
     # langchain Criteria.CONCISENESS
     system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria["conciseness"]} Respond only as a number from {"{min_score}"} to {"{max_score}"} where {"{min_score}"} is the least concise and {"{max_score}"} is the most concise."""
+        f"""{supported_criteria["conciseness"]} Respond only as a number from {"{min_score}"} to {"{max_score}"} where {"{min_score}"} is the least concise and {"{max_score}"} is the most concise. {"{additional_instructions}"}"""
     )
 
 
@@ -273,7 +273,7 @@ class Correctness(Semantics, WithPrompt):
 
     # langchain Criteria.CORRECTNESS
     system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria["correctness"]} Respond only as a number from {"{min_score}"} to {"{max_score}"} where {"{min_score}"} is the least correct and {"{max_score}"} is the most correct."""
+        f"""{supported_criteria["correctness"]} Respond only as a number from {"{min_score}"} to {"{max_score}"} where {"{min_score}"} is the least correct and {"{max_score}"} is the most correct. {"{additional_instructions}"}"""
     )
 
 
@@ -307,35 +307,37 @@ class CriteriaOutputSpaceMixin:
         cls,
         min_score: int,
         max_score: int,
-        criteria: Optional[str] = None,
-        custom_instructions: Optional[str] = None,
+        criteria_override: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         output_space: Optional[str] = None,
         examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
     ) -> str:
         if (
-            criteria is None
-            and custom_instructions is None
+            criteria_override is None
+            and additional_instructions is None
             and output_space is None
         ):
             return cls.system_prompt
 
-        if criteria is None:
+        if criteria_override is None:
             criteria = cls.criteria_template.format(
                 min_score=min_score, max_score=max_score
             )
-
-        if custom_instructions is None:
-            custom_instructions = ""
         else:
-            custom_instructions = (
-                "\nCustom instructions:\n" + custom_instructions
+            criteria = criteria_override
+
+        if additional_instructions is None:
+            additional_instructions = ""
+        else:
+            additional_instructions = (
+                "\nAdditional instructions:\n" + additional_instructions
             )
 
         if output_space is None:
             output_space_prompt = cls.output_space_prompt
         else:
             validated = cls.validate_criteria_and_output_space(
-                criteria, output_space
+                criteria=criteria, output_space=output_space
             )
             output_space_prompt = validated.get_output_scale_prompt()
 
@@ -343,7 +345,7 @@ class CriteriaOutputSpaceMixin:
             cls.system_prompt_template.format(
                 output_space_prompt=output_space_prompt,
                 criteria=criteria,
-                custom_instructions=custom_instructions,
+                additional_instructions=additional_instructions,
             )
         )
 
@@ -388,6 +390,7 @@ class Groundedness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
         You should score the groundedness of the statement based on the following criteria:
         {criteria}
+        {additional_instructions}
 
         Never elaborate."""
     )
@@ -502,6 +505,7 @@ class ContextRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
 
         Criteria for evaluating relevance:
         {criteria}
+        {additional_instructions}
 
         A few additional scoring guidelines:
 
@@ -560,6 +564,7 @@ class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
 
         Criteria for evaluating relevance:
         {criteria}
+        {additional_instructions}
 
         Output only a single-line JSON object with exactly these keys:
           "criteria"             – one concise sentence that states your rationale with reference to the rubric
@@ -610,6 +615,7 @@ class Sentiment(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
         Criteria for evaluating sentiment:
         {criteria}
+        {additional_instructions}
         """
     )
 
@@ -637,6 +643,7 @@ class Helpfulness(Semantics, CriteriaOutputSpaceMixin):
     system_prompt_template: ClassVar[str] = cleandoc(
         """
         {criteria}
+        {additional_instructions}
         """
     )
 
@@ -664,6 +671,7 @@ class Controversiality(Semantics):
     system_prompt_template: ClassVar[str] = cleandoc(
         """
         {criteria}
+        {additional_instructions}
         """
     )
 
@@ -701,6 +709,7 @@ class Stereotypes(Moderation, WithPrompt, CriteriaOutputSpaceMixin):
 
         Criteria:
         {criteria}
+        {additional_instructions}
         """
     )
 
@@ -741,6 +750,7 @@ class Criminality(Legality, WithPrompt):
     system_prompt_template: ClassVar[str] = cleandoc(
         """
         {criteria}
+        {additional_instructions}
         """
     )
 
@@ -772,6 +782,7 @@ class Harmfulness(Moderation, WithPrompt):
     system_prompt_template: ClassVar[str] = cleandoc(
         """
         {criteria}
+        {additional_instructions}
         """
     )
 
@@ -821,6 +832,7 @@ class Maliciousness(Moderation, WithPrompt):
     system_prompt_template: ClassVar[str] = cleandoc(
         """
         {criteria}
+        {additional_instructions}
         """
     )
 
@@ -858,6 +870,7 @@ class Misogyny(Hate, WithPrompt):
     system_prompt_template: ClassVar[str] = cleandoc(
         """
         {criteria}
+        {additional_instructions}
         """
     )
 
@@ -1095,6 +1108,7 @@ class Comprehensiveness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
         Scoring criteria:
         {criteria}
+        {additional_instructions}
 
         Answer using the entire template below.
 
@@ -1148,7 +1162,7 @@ class LogicalConsistency(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
         Evaluation criteria:
         {criteria}
-        {custom_instructions}
+        {additional_instructions}
 
         Be critical in your evaluation. For each step in the trace with an issue (eg. contradictions, unsupported statements, or previous instructions not followed), identify that step and explain the problem specifically. Flag any implicit assumptions.
         """
@@ -1170,7 +1184,7 @@ class LogicalConsistency(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         system_prompt_template.format(
             output_space_prompt=output_space_prompt,
             criteria=criteria,
-            custom_instructions="",
+            additional_instructions="",
         )
     )
 
@@ -1199,7 +1213,7 @@ class ExecutionEfficiency(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
         Evaluation criteria:
         {criteria}
-        {custom_instructions}
+        {additional_instructions}
 
         Evaluation steps to give feedback on key steps in the execution are allowed. Otherwise, be critical in your evaluation. For each step in the execution trace with an issue (e.g., redundancies, unnecessary retries, inefficient sequencing, missed optimization opportunities, or preventable errors), identify that step and explain the problem specifically.
         """
@@ -1221,7 +1235,7 @@ class ExecutionEfficiency(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         system_prompt_template.format(
             output_space_prompt=output_space_prompt,
             criteria=criteria,
-            custom_instructions="",
+            additional_instructions="",
         )
     )
 
@@ -1271,7 +1285,7 @@ class PlanAdherence(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
         Evaluation criteria:
         {criteria}
-        {custom_instructions}
+        {additional_instructions}
         Adherence is judged step-by-step; if a plan mandates tool usage or sub-tasks, their omission or incomplete execution always counts as a failure of adherence, regardless of the effect on final output completeness or quality. Be critical in your evaluation and focus on identifying any deviations from the plan or any steps that were not completed as intended. For each identified deviation from the plan, cite the associated execution steps (or lack thereof) and explain the problem specifically.
         """
     )
@@ -1292,7 +1306,7 @@ class PlanAdherence(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         system_prompt_template.format(
             output_space_prompt=output_space_prompt,
             criteria=criteria,
-            custom_instructions="",
+            additional_instructions="",
         )
     )
 
@@ -1355,7 +1369,7 @@ class PlanQuality(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
         Evaluation criteria:
         {criteria}
-        {custom_instructions}
+        {additional_instructions}
 
         Be critical in your evaluation. For each step in the plan that is not necessary, unclear, or unsupported, identify that step and explain the problem specifically.
         """
@@ -1377,7 +1391,7 @@ class PlanQuality(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         system_prompt_template.format(
             output_space_prompt=output_space_prompt,
             criteria=criteria,
-            custom_instructions="",
+            additional_instructions="",
         )
     )
 
@@ -1405,7 +1419,7 @@ class ToolSelection(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         You must assign a single numerical score from {output_space_prompt}.
         Evaluation criteria:
         {criteria}
-        {custom_instructions}
+        {additional_instructions}
         Important scope boundaries:
         - Do NOT penalize call syntax/semantics or output interpretation (Tool Calling).
         - Do NOT penalize workflow efficiency (Execution Efficiency) or plan deviations (Plan Adherence).
@@ -1431,7 +1445,7 @@ class ToolSelection(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         system_prompt_template.format(
             output_space_prompt=output_space_prompt,
             criteria=criteria,
-            custom_instructions="",
+            additional_instructions="",
         )
     )
 
@@ -1460,7 +1474,7 @@ class ToolCalling(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         You must assign a single numerical score from {output_space_prompt}.
         Evaluation criteria:
         {criteria}
-        {custom_instructions}
+        {additional_instructions}
         Important scope boundaries:
         - In-scope: argument/schema correctness, semantic fit of query, preconditions/postconditions, grounded interpretation of outputs, explicit handling of tool-returned errors.
         - Out-of-scope: tool selection (Tool Selection), workflow efficiency (Execution Efficiency), external service/tool reliability (Tool Quality).
@@ -1484,7 +1498,7 @@ class ToolCalling(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         system_prompt_template.format(
             output_space_prompt=output_space_prompt,
             criteria=criteria,
-            custom_instructions="",
+            additional_instructions="",
         )
     )
 
@@ -1511,7 +1525,7 @@ class ToolQuality(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         You must assign a single numerical score from {output_space_prompt}.
         Evaluation criteria:
         {criteria}
-        {custom_instructions}
+        {additional_instructions}
         Important scope boundaries:
         - In-scope: service errors (5xx), rate limiting (429), auth (401/403), resource not found (404), timeouts, flakiness, determinism, and domain-specific output quality (e.g., search relevance).
         - Out-of-scope: agent’s selection, argument formation, or workflow efficiency.
@@ -1535,6 +1549,6 @@ class ToolQuality(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         system_prompt_template.format(
             output_space_prompt=output_space_prompt,
             criteria=criteria,
-            custom_instructions="",
+            additional_instructions="",
         )
     )
