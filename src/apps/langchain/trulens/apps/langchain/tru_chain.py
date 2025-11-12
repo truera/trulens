@@ -53,10 +53,13 @@ except Exception:
         BaseMultiActionAgent = None  # type: ignore[assignment]
         BaseSingleActionAgent = None  # type: ignore[assignment]
 
-# Skip importing classic Chain to avoid transitive imports that require
-# modules not present in some 1.x installs (e.g., langchain_core.memory).
-# Instrumentation will proceed without classic Chain support if unavailable.
-Chain = None  # type: ignore[assignment]
+# Try to import classic Chain for backward compatibility (e.g., LLMChain.run).
+# If unavailable in the installed langchain version, gracefully degrade.
+try:
+    # langchain <1.0 and many 0.x versions
+    from langchain.chains.base import Chain  # type: ignore
+except Exception:
+    Chain = None  # type: ignore[assignment]
 
 # Handle langchain version compatibility for serialization
 try:
