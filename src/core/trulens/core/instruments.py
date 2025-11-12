@@ -584,7 +584,14 @@ class Instrument:
 
                 return attributes
 
-            return (SpanAttributes.SpanType.MCP, extract_mcp_attributes)
+            # Be resilient to environments that lack the MCP span type.
+            try:
+                span_type = SpanAttributes.SpanType.MCP  # type: ignore[attr-defined]
+            except AttributeError:
+                # Fallback to TOOL span type if MCP is unavailable.
+                span_type = SpanAttributes.SpanType.TOOL
+
+            return (span_type, extract_mcp_attributes)
 
     def print_instrumentation(self) -> None:
         """Print out description of the modules, classes, methods this class

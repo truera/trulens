@@ -300,11 +300,17 @@ class LangChainInstrument(core_instruments.Instrument):
 
             # Tools
             try:
+                # Use MCP span type when available; fallback to TOOL for older schemas.
+                try:
+                    MCP_SPAN = SpanAttributes.SpanType.MCP  # type: ignore[attr-defined]
+                except AttributeError:
+                    MCP_SPAN = SpanAttributes.SpanType.TOOL
+
                 methods.extend([
                     InstrumentedMethod(
                         "_arun",
                         BaseTool,
-                        SpanAttributes.SpanType.MCP,
+                        MCP_SPAN,
                         lambda ret, exception, *args, **kwargs: {
                             SpanAttributes.MCP.TOOL_NAME: getattr(
                                 args[0], "name", "unknown"
@@ -324,7 +330,7 @@ class LangChainInstrument(core_instruments.Instrument):
                     InstrumentedMethod(
                         "_run",
                         BaseTool,
-                        SpanAttributes.SpanType.MCP,
+                        MCP_SPAN,
                         lambda ret, exception, *args, **kwargs: {
                             SpanAttributes.MCP.TOOL_NAME: getattr(
                                 args[0], "name", "unknown"
