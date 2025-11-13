@@ -1290,9 +1290,7 @@ class TruGraph(TruChain):
         func = instance.func
         func_name = getattr(func, "__name__", "unknown")
 
-        # Check if this is a model/LLM call
-        if "call_model" in func_name or "model" in func_name.lower():
-            return SpanAttributes.SpanType.GENERATION
+        # Do not label RunnableCallable nodes as GENERATION; BaseChatModel handles that.
 
         # Check if this is an MCP tool call - ONLY _func is the actual tool execution
         # tools_condition is a routing function, not a tool call
