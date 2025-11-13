@@ -903,7 +903,6 @@ class Run(BaseModel):
         # Define attributes that should be treated as arrays based on semantic conventions
         array_attributes = {
             SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
-            SpanAttributes.SPAN_GROUPS,
             SpanAttributes.GRAPH_NODE.NODES_EXECUTED,
             SpanAttributes.RERANKER.INPUT_CONTEXT_TEXTS,
             SpanAttributes.RERANKER.INPUT_CONTEXT_SCORES,
@@ -928,7 +927,6 @@ class Run(BaseModel):
         # Attribute names that suggest array content
         array_attribute_names = {
             "retrieved_contexts",
-            "span_groups",
             "nodes_executed",
             "input_context_texts",
             "input_context_scores",
