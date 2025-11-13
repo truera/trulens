@@ -1614,8 +1614,25 @@ class TruGraph(TruChain):
                 combined_classes = langchain_default.CLASSES().union(
                     langgraph_default.CLASSES()
                 )
-                combined_methods = (
-                    langchain_default.METHODS + langgraph_default.METHODS
+                # Support both callable METHODS() and list METHODS across versions
+                try:
+                    lc_methods = (
+                        langchain_default.METHODS()
+                        if callable(getattr(langchain_default, "METHODS", None))
+                        else langchain_default.METHODS
+                    )
+                except Exception:
+                    lc_methods = []
+                try:
+                    lg_methods = (
+                        langgraph_default.METHODS()
+                        if callable(getattr(langgraph_default, "METHODS", None))
+                        else langgraph_default.METHODS
+                    )
+                except Exception:
+                    lg_methods = []
+                combined_methods = list(lc_methods or []) + list(
+                    lg_methods or []
                 )
 
                 super().__init__(
