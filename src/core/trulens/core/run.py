@@ -1210,7 +1210,9 @@ class Run(BaseModel):
 
         # Force flush to ensure spans are uploaded to Snowflake before querying
         self.tru_session.force_flush()
-        logger.info("Flushed OTEL spans before retrieving events")
+        logger.debug(
+            "Flushed OTel spans to event table before retrieving them for client-side metric computation"
+        )
 
         events = self._get_events_for_client_metrics()
 
@@ -1244,6 +1246,10 @@ class Run(BaseModel):
                     f"Error computing client-side metric {metric_config.metric_name}: {e}"
                 )
                 raise
+        self.tru_session.force_flush()
+        logger.debug(
+            "Flushed OTel eval spans to event table to ensure all spans are ingested before main process exits"
+        )
 
     def _get_events_for_client_metrics(self) -> pd.DataFrame:
         """Get events for client-side metric computation using the appropriate method."""
