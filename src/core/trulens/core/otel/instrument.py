@@ -546,6 +546,8 @@ class OtelRecordingContext(OtelBaseRecordingContext):
         self.attach_to_context(ResourceAttributes.APP_NAME, self.app_name)
         self.attach_to_context(ResourceAttributes.APP_VERSION, self.app_version)
         self.attach_to_context(ResourceAttributes.APP_ID, self.app_id)
+        # Attach self so child spans can register baggage tokens for cleanup at app exit.
+        self.attach_to_context("__trulens_otel_ctx__", self)
         self.attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
         self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
 
