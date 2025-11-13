@@ -1223,33 +1223,36 @@ class Run(BaseModel):
             return
 
         # Compute each client-side metric
-        for metric_config in metric_configs:
-            try:
-                logger.info(
-                    f"Computing client-side metric: {metric_config.metric_name}"
-                )
+        try:
+            for metric_config in metric_configs:
+                try:
+                    logger.info(
+                        f"Computing client-side metric: {metric_config.metric_name}"
+                    )
 
-                # Create feedback definition from the metric config
-                feedback = metric_config.create_feedback_definition()
+                    # Create feedback definition from the metric config
+                    feedback = metric_config.create_feedback_definition()
 
-                compute_feedback_by_span_group(
-                    events=events,
-                    feedback=feedback,
-                    raise_error_on_no_feedbacks_computed=False,
-                    selectors=feedback.selectors,
-                )
-                logger.info(
-                    f"Successfully computed client-side metric: {metric_config.metric_name}"
-                )
-            except Exception as e:
-                logger.error(
-                    f"Error computing client-side metric {metric_config.metric_name}: {e}"
-                )
-                raise
-        self.tru_session.force_flush()
-        logger.debug(
-            "Flushed OTel eval spans to event table to ensure all spans are ingested before main process exits"
-        )
+                    compute_feedback_by_span_group(
+                        events=events,
+                        feedback=feedback,
+                        raise_error_on_no_feedbacks_computed=False,
+                        selectors=feedback.selectors,
+                    )
+                    logger.info(
+                        f"Successfully computed client-side metric: {metric_config.metric_name}"
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"Error computing client-side metric {metric_config.metric_name}: {e}"
+                    )
+                    raise
+        finally:
+            self.tru_session.force_flush()
+
+            logger.debug(
+                "Flushed OTel eval spans to event table to ensure all spans are ingested before main process exits"
+            )
 
     def _get_events_for_client_metrics(self) -> pd.DataFrame:
         """Get events for client-side metric computation using the appropriate method."""
