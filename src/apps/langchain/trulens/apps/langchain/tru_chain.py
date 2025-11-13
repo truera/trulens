@@ -58,7 +58,7 @@ except Exception:
 try:
     # langchain <1.0 and many 0.x versions
     from langchain.chains.base import Chain  # type: ignore
-except Exception:
+except ImportError:
     Chain = None  # type: ignore[assignment]
 
 # Handle langchain version compatibility for serialization
