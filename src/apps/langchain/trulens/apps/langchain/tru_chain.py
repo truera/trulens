@@ -921,6 +921,35 @@ class TruChain(core_app.App):
         `bindings`.
         """
 
+        # Prefer LCEL-style messages input if present
+        try:
+            # Case 1: messages passed directly
+            if "messages" in bindings.arguments:
+                msgs = bindings.arguments["messages"]
+                if isinstance(msgs, Sequence) and len(msgs) > 0:
+                    last = msgs[-1]
+                    if hasattr(last, "content"):
+                        return getattr(last, "content")
+                    if isinstance(last, Dict) and isinstance(
+                        last.get("content"), str
+                    ):
+                        return last.get("content")
+            # Case 2: messages nested inside input dict
+            if "input" in bindings.arguments and isinstance(
+                bindings.arguments["input"], Dict
+            ):
+                msgs = bindings.arguments["input"].get("messages")
+                if isinstance(msgs, Sequence) and len(msgs) > 0:
+                    last = msgs[-1]
+                    if hasattr(last, "content"):
+                        return getattr(last, "content")
+                    if isinstance(last, Dict) and isinstance(
+                        last.get("content"), str
+                    ):
+                        return last.get("content")
+        except Exception:
+            pass
+
         if "input" in bindings.arguments:
             temp = bindings.arguments["input"]
             if isinstance(temp, str):
@@ -968,6 +997,37 @@ class TruChain(core_app.App):
         signature `sig` after it is called with the given `bindings` and has
         returned `ret`.
         """
+
+        # Prefer LCEL results shape: dict with "messages" or list of Message-like objects
+        try:
+            # Case 1: result dict with "messages"
+            if (
+                isinstance(ret, Dict)
+                and "messages" in ret
+                and isinstance(ret["messages"], Sequence)
+            ):
+                messages = ret["messages"]
+                # Pick last message with textual content
+                for last in reversed(messages):
+                    if hasattr(last, "content") and getattr(last, "content"):
+                        return getattr(last, "content")
+                    if isinstance(last, Dict) and isinstance(
+                        last.get("content"), str
+                    ):
+                        if last.get("content"):
+                            return last.get("content")
+            # Case 2: result is a sequence of Message-like items
+            if isinstance(ret, Sequence) and len(ret) > 0:
+                for last in reversed(ret):
+                    if hasattr(last, "content") and getattr(last, "content"):
+                        return getattr(last, "content")
+                    if isinstance(last, Dict) and isinstance(
+                        last.get("content"), str
+                    ):
+                        if last.get("content"):
+                            return last.get("content")
+        except Exception:
+            pass
 
         if isinstance(ret, (AIMessage, AIMessageChunk)):
             return ret.content
@@ -1057,7 +1117,12 @@ class TruChain(core_app.App):
 
         if isinstance(ret, Sequence) and all(isinstance(x, str) for x in ret):
             # Streaming outputs of main stream methods like Runnable.stream are
-            # bundled by us into a sequence of strings.
+            # sometimes bundled by us into a sequence of strings that includes
+            # intermediary tool messages. Prefer the last non-empty string which
+            # is typically the final assistant output.
+            for s in reversed(ret):
+                if isinstance(s, str) and s.strip():
+                    return s
             return "".join(ret)
 
         if isinstance(ret, Dict) and python_utils.safe_hasattr(
