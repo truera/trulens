@@ -9,6 +9,7 @@ This test suite covers:
 5. CreateSpanFunctionCallContextManager baggage cleanup
 """
 
+from typing import Any, Optional
 from unittest.mock import Mock
 from unittest.mock import patch
 import uuid
@@ -25,9 +26,7 @@ from trulens.otel.semconv.trace import SpanAttributes
 from tests.util.otel_test_case import OtelTestCase
 
 try:
-    from langchain_community.embeddings import DeterministicFakeEmbedding
     from langchain_community.llms import FakeListLLM
-    from langchain_community.vectorstores import FAISS
     from langchain_core.documents import Document
     from langchain_core.language_models.base import BaseLanguageModel
     from langchain_core.language_models.fake_chat_models import FakeChatModel
@@ -37,10 +36,51 @@ try:
     from langchain_core.messages import AIMessage
     from langchain_core.messages import AIMessageChunk
     from langchain_core.runnables import RunnablePassthrough
+    from langchain_core.vectorstores import VectorStore
     from trulens.apps.langchain import TruChain
     from trulens.apps.langchain.tru_chain import LangChainInstrument
 except ImportError:
     pytest.skip("langchain not installed", allow_module_level=True)
+
+
+class DummyVectorStore(VectorStore):
+    """Minimal VectorStore implementation for testing instrumentation."""
+
+    def __init__(self, documents: list[Document]):
+        self._documents = documents
+
+    def similarity_search(
+        self, query: str, k: int = 4, **kwargs: Any
+    ) -> list[Document]:
+        # Return up to k documents deterministically.
+        _ = query, kwargs
+        return self._documents[:k]
+
+    def similarity_search_with_score(
+        self, query: str, k: int = 4, **kwargs: Any
+    ) -> list[tuple[Document, float]]:
+        docs = self.similarity_search(query, k=k, **kwargs)
+        return [(doc, 1.0) for doc in docs]
+
+    def _select_relevance_score_fn(self):
+        return lambda distance: 1.0 - distance
+
+    @classmethod
+    def from_texts(
+        cls,
+        texts: list[str],
+        embedding: Any,
+        metadatas: Optional[list[dict]] = None,
+        **kwargs: Any,
+    ) -> "DummyVectorStore":
+        _ = embedding, kwargs
+        documents = [
+            Document(
+                page_content=text, metadata=(metadatas[i] if metadatas else {})
+            )
+            for i, text in enumerate(texts)
+        ]
+        return cls(documents)
 
 
 @pytest.mark.optional
@@ -55,7 +95,10 @@ class TestLangChainInstrumentation(OtelTestCase):
             responses=["response 1", "response 2", "response 3"]
         )
         self.chat_model = FakeMessagesListChatModel(
-            responses=["chat response 1", "chat response 2"]
+            responses=[
+                AIMessage(content="chat response 1"),
+                AIMessage(content="chat response 2"),
+            ]
         )
 
         # Create documents and vector store for retrieval tests
@@ -64,8 +107,7 @@ class TestLangChainInstrumentation(OtelTestCase):
             Document(page_content="Document 2 content", metadata={"id": 2}),
             Document(page_content="Document 3 content", metadata={"id": 3}),
         ]
-        embeddings = DeterministicFakeEmbedding(size=10)
-        self.vectorstore = FAISS.from_documents(docs, embeddings)
+        self.vectorstore = DummyVectorStore(docs)
 
     def test_base_language_model_invoke_generation_span(self):
         """Test 1: BaseLanguageModel.invoke is instrumented with GENERATION span type."""

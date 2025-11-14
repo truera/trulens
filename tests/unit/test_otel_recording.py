@@ -65,12 +65,7 @@ class TestOtelRecording(OtelTestCase):
             recording1.get()
         self.assertEqual(2, len(recording1))
         self.assertEqual(2, len(recording1.records))
-        import trulens.core.otel.recording as recording_module
-
-        print("DEBUG recording module file", recording_module.__file__)
-        print("DEBUG type recording1[-1]", type(recording1[-1]))
         res = recording1[-1].retrieve_feedback_results()
-        print("DEBUG recording1[-1] res", res)
         pd.testing.assert_frame_equal(expected_all_recordings.iloc[1:2], res)
         res = recording1.retrieve_feedback_results()
         pd.testing.assert_frame_equal(expected_all_recordings.iloc[:2], res)
