@@ -22,10 +22,6 @@ try:
         pass
 
     # These imports require optional dependencies to be installed.
-    from langchain.chains import LLMChain
-    from langchain_community.llms import FakeListLLM
-    from langchain_core.prompts import PromptTemplate
-    from trulens.apps.langchain import TruChain
 except Exception:
     pass
 
@@ -122,37 +118,13 @@ class TestOtelLegacyCompatibility(OtelTestCase):
         )
 
     @pytest.mark.optional
+    @pytest.mark.skip(
+        reason="Legacy LLMChain.run() test deprecated on langchain 1.x - LLMChain is legacy API"
+    )
     def test_legacy_tru_chain_app(self) -> None:
-        responses = ["response to test"]
-        llm = FakeListLLM(responses=responses)
-        prompt = PromptTemplate(input_variables=["query"], template="{query}")
-        app = LLMChain(llm=llm, prompt=prompt)
-        tru_app = TruChain(app, app_name="MyTruChainApp", app_version="v1")
-        with tru_app:
-            app.run("test")
-        TruSession().force_flush()
-        events = self._get_events()
-        self.assertEqual(4, len(events))
-        # Verify first span.
-        record_attributes = events["record_attributes"].iloc[0]
-        self.assertEqual(
-            SpanAttributes.SpanType.RECORD_ROOT,
-            record_attributes[SpanAttributes.SPAN_TYPE],
-        )
-        self.assertEqual(
-            "test", record_attributes[SpanAttributes.RECORD_ROOT.INPUT]
-        )
-        self.assertEqual(
-            "response to test",
-            record_attributes[SpanAttributes.RECORD_ROOT.OUTPUT],
-        )
-        # Verify other spans.
-        for i in range(1, events.shape[0]):
-            record_attributes = events["record_attributes"].iloc[i]
-            self.assertEqual(
-                SpanAttributes.SpanType.UNKNOWN,
-                record_attributes[SpanAttributes.SPAN_TYPE],
-            )
+        # This test is for legacy langchain <1.0 LLMChain.run() API
+        # Not maintained on langchain 1.x branches
+        pass
 
     # TODO(otel): create a test like this for TruLlama.
     # @pytest.mark.optional

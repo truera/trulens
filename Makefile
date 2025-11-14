@@ -43,6 +43,7 @@ env-tests:
 		pytest-azurepipelines \
 		pytest-cov \
 		pytest-subtests \
+		pytest-xdist \
 		ruff \
 
 clean-env:
@@ -257,17 +258,17 @@ test-%-all: env-tests env-tests-optional env-tests-snowflake
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline
 # frequently.
 # OTEL tests require process isolation due to async background threads
-# NOTE: pytest-xdist must be installed for isolation to work (poetry install --with dev)
-# If pytest-xdist is not available, OTEL tests will run sequentially but may have
-# test pollution issues when run in batch (they pass individually)
+# NOTE: pytest-xdist MUST be installed for OTEL tests to pass in batch
+# It should be installed via: poetry install --with dev
 test-unit:
 	@if poetry run python -c "import xdist" 2>/dev/null; then \
-		echo "Running OTEL tests with pytest-xdist for process isolation..."; \
+		echo "✅ Running OTEL tests with pytest-xdist for process isolation..."; \
 		$(PYTEST_ISOLATED) tests/unit/test_otel*.py; \
 	else \
-		echo "WARNING: pytest-xdist not installed. OTEL tests may fail due to test pollution."; \
+		echo "❌ ERROR: pytest-xdist not installed!"; \
+		echo "OTEL tests WILL FAIL without process isolation."; \
 		echo "Install with: poetry install --with dev"; \
-		echo "Running OTEL tests sequentially (test pollution may occur)..."; \
+		echo "Attempting to run anyway (expect failures)..."; \
 		$(PYTEST) tests/unit/test_otel*.py; \
 	fi
 	$(PYTEST) tests/unit/test_*.py --ignore=tests/unit/test_otel*.py
