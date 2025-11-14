@@ -7,6 +7,7 @@
 SHELL := /bin/bash
 REPO_ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 PYTEST := poetry run pytest --rootdir=. -s -r fex --durations=0
+PYTEST_ISOLATED := poetry run pytest --rootdir=. -s -r fex --durations=0 -n auto --dist=loadscope
 POETRY_DIRS := $(shell find . \
 	-not -path "./dist/*" \
 	-maxdepth 4 \
@@ -49,7 +50,10 @@ env-tests-basic:
 		&& make env-tests
 
 env-tests-optional: env env-tests
-	poetry install --with apps,providers
+	# NOTE: Excluding nemo group due to langchain 1.x incompatibility
+	# nemoguardrails requires langchain<0.4.0, but langgraph requires langchain>=1.0.0
+	# Install nemo separately with: poetry install --with nemo (requires langchain<1.0)
+	poetry install --with apps,providers --without nemo
 	poetry run pip install \
 		chromadb \
 	 	faiss-cpu \
@@ -248,8 +252,21 @@ test-%-all: env-tests env-tests-optional env-tests-snowflake
 
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline
 # frequently.
+# OTEL tests require process isolation due to async background threads
+# NOTE: pytest-xdist must be installed for isolation to work (poetry install --with dev)
+# If pytest-xdist is not available, OTEL tests will run sequentially but may have
+# test pollution issues when run in batch (they pass individually)
 test-unit:
-	$(PYTEST) tests/unit/*
+	@if poetry run python -c "import xdist" 2>/dev/null; then \
+		echo "Running OTEL tests with pytest-xdist for process isolation..."; \
+		$(PYTEST_ISOLATED) tests/unit/test_otel*.py; \
+	else \
+		echo "WARNING: pytest-xdist not installed. OTEL tests may fail due to test pollution."; \
+		echo "Install with: poetry install --with dev"; \
+		echo "Running OTEL tests sequentially (test pollution may occur)..."; \
+		$(PYTEST) tests/unit/test_otel*.py; \
+	fi
+	$(PYTEST) tests/unit/test_*.py --ignore=tests/unit/test_otel*.py
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
 test-e2e:

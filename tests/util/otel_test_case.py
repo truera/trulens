@@ -18,12 +18,15 @@ from tests.util.df_comparison import (
     compare_dfs_accounting_for_ids_and_timestamps,
 )
 
+# Removed autouse fixture - it was initializing TruSession too early
+
 
 class OtelTestCase(TruTestCase):
     _orig_TRULENS_OTEL_TRACING: Optional[str] = None
 
     @classmethod
     def setUpClass(cls) -> None:
+        # Each test class gets completely fresh state
         cls._orig_TRULENS_OTEL_TRACING = os.environ.get("TRULENS_OTEL_TRACING")
         os.environ["TRULENS_OTEL_TRACING"] = "1"
         instrument.enable_all_instrumentation()
@@ -35,7 +38,8 @@ class OtelTestCase(TruTestCase):
         if cls._orig_TRULENS_OTEL_TRACING is not None:
             os.environ["TRULENS_OTEL_TRACING"] = cls._orig_TRULENS_OTEL_TRACING
         else:
-            del os.environ["TRULENS_OTEL_TRACING"]
+            if "TRULENS_OTEL_TRACING" in os.environ:
+                del os.environ["TRULENS_OTEL_TRACING"]
         return super().tearDownClass()
 
     def setUp(self) -> None:
