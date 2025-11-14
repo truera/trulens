@@ -44,6 +44,11 @@ class OtelTestCase(TruTestCase):
 
     def setUp(self) -> None:
         super().setUp()
+        # Delete database file before creating TruSession to avoid migration issues
+        import os
+
+        if os.path.exists("default.sqlite"):
+            os.remove("default.sqlite")
         tru_session = TruSession()
         tru_session.reset_database()
         self.clear_TruSession_singleton()
