@@ -40,13 +40,6 @@ class CreateSpanFunctionCallContextManager:
             recording = get_baggage("__trulens_recording__")
             if recording is not None:
                 recording.add_record_id(record_id)
-            # If running inside a Tru OTEL app context, register this token for cleanup at app exit.
-            otel_ctx = get_baggage("__trulens_otel_ctx__")
-            try:
-                if otel_ctx is not None and hasattr(otel_ctx, "tokens"):
-                    otel_ctx.tokens.append(self.token)
-            except Exception:
-                pass
         self._started_record = started_record
         # Create span.
         self.span_context_manager = (
@@ -73,12 +66,8 @@ class CreateSpanFunctionCallContextManager:
         # Clean up context.
         try:
             if self.token is not None:
-                # If we are within a Tru OTEL app recording context, defer record_id cleanup
-                # to the app context manager's __exit__ so the whole run shares a single RECORD_ID.
-                otel_ctx = get_baggage("__trulens_otel_ctx__")
-                if otel_ctx is None:
-                    remove_baggage(SpanAttributes.RECORD_ID)
-                    context_api.detach(self.token)
+                remove_baggage(SpanAttributes.RECORD_ID)
+                context_api.detach(self.token)
                 self.token = None
         except Exception as e_context:
             e_ret = e_context if e_ret is None else e_ret

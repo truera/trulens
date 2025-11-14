@@ -50,6 +50,10 @@ class Recording:
         Returns:
             A dataframe with records as rows and feedbacks as columns.
         """
+        print(
+            "DEBUG Recording.retrieve_feedback_results call",
+            [curr.record_id for curr in self.records],
+        )
         return self._tru_app.retrieve_feedback_results(
             record_ids=[curr.record_id for curr in self.records],
             timeout=timeout,
@@ -160,6 +164,7 @@ class Record:
         Returns:
             A dataframe with a single row and feedbacks as columns.
         """
+        print("DEBUG Record.retrieve_feedback_results call", self.record_id)
         return self._tru_app.retrieve_feedback_results(
             record_ids=[self.record_id], timeout=timeout
         )

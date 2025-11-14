@@ -774,6 +774,11 @@ class App(
             TruSession().wait_for_records(
                 record_ids=record_ids, timeout=timeout
             )
+            print(
+                "DEBUG TruApp.retrieve_feedback_results compute_now",
+                record_ids,
+                len(self.feedbacks),
+            )
             self._evaluator.compute_now(record_ids)
         records_df, feedback_cols = TruSession().get_records_and_feedback(
             record_ids=record_ids

@@ -131,6 +131,13 @@ class Evaluator:
         in_evaluator_thread: bool = True,
         lock: Optional[threading.Lock] = None,
     ) -> None:
+        print(
+            "DEBUG _compute_feedbacks start",
+            record_ids,
+            self._processed_time,
+            "thread",
+            "bg" if in_evaluator_thread else "direct",
+        )
         new_processed_time = datetime.datetime.now()
         if lock is None:
             lock = self._compute_feedbacks_lock
@@ -145,6 +152,12 @@ class Evaluator:
                 record_ids,
                 self._processed_time,
             )
+            if not record_id_to_events:
+                print(
+                    "DEBUG _compute_feedbacks: no events to process",
+                    record_ids,
+                    self._processed_time,
+                )
             for record_id, events in record_id_to_events.items():
                 try:
                     self._app_ref().compute_feedbacks(
@@ -154,6 +167,11 @@ class Evaluator:
                 except Exception as e:
                     logger.warning(
                         f"Error computing feedbacks in evaluator thread (record_id={record_id}): {e}\n{traceback.format_exc()}"
+                    )
+                    print(
+                        "DEBUG _compute_feedbacks exception",
+                        record_id,
+                        e,
                     )
                 finally:
                     self._record_id_to_event_count[record_id] = len(events)
