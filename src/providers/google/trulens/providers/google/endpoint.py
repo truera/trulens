@@ -25,6 +25,8 @@ logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
 
+LITELLM_MODEL_COSTS_TABLE = model_cost
+
 
 def _get_env_api_key() -> Optional[str]:
     """Gets the API key from environment variables, prioritizing GOOGLE_API_KEY.
@@ -87,8 +89,6 @@ class GoogleCallback(core_endpoint.EndpointCallback):
         ("n_completion_tokens", "completion_tokens"),
     ]
 
-    _model_costs: Optional[dict] = None
-
     def handle_generation(self, response: Any):
         """Get the usage information from GoogleGenAI LLM function response's usage_metadata field."""
         response_dict = response
@@ -139,24 +139,14 @@ class GoogleCallback(core_endpoint.EndpointCallback):
             Cost in USD
         """
         try:
-            self._model_costs = model_cost
-
             if not model_name:
                 logger.warning("No model name provided for cost calculation")
                 return 0.0
 
             logger.debug(f"Received model_version: {model_name}")
 
-            if model_name in self._model_costs:
-                pricing = self._model_costs[model_name]
-
-                if n_prompt_tokens > pricing.get(
-                    "max_input_tokens"
-                ) or n_completion_tokens > pricing.get("max_output_tokens"):
-                    logger.warning(
-                        f"Model {model_name} has exceeded the maximum input or output tokens. Skipping cost calculation."
-                    )
-                    return 0.0
+            if model_name in LITELLM_MODEL_COSTS_TABLE:
+                pricing = LITELLM_MODEL_COSTS_TABLE[model_name]
 
                 # Determine input pricing based on prompt size (<=200K vs >200K tokens)
                 if n_prompt_tokens > 200000:
@@ -189,7 +179,7 @@ class GoogleCallback(core_endpoint.EndpointCallback):
             # Model not found in pricing config
             logger.warning(
                 f"Model {model_name} not found in pricing configuration. "
-                f"Cost tracking will be incomplete. Available models: {list(self._model_costs.keys())}"
+                f"Cost tracking will be incomplete. Available models: {list(LITELLM_MODEL_COSTS_TABLE.keys())}"
             )
             return 0.0
 
