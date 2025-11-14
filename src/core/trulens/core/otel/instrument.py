@@ -236,6 +236,25 @@ class instrument:
     def __call__(self, func: Callable) -> Callable:
         func_name = get_func_name(func)
 
+        def _func_name_for_instance(instance) -> str:
+            target = None
+            if instance is None:
+                target = None
+            elif inspect.isclass(instance):
+                target = instance
+            else:
+                target = instance.__class__
+            if target is None:
+                return func_name
+            module = getattr(target, "__module__", "")
+            qualname = getattr(
+                target, "__qualname__", getattr(target, "__name__", "")
+            )
+            base = ".".join([p for p in [module, qualname] if p])
+            if not base:
+                return func_name
+            return f"{base}.{func.__name__}"
+
         @wrapt.decorator
         def sync_wrapper(func, instance, args, kwargs):
             if not self.enabled or get_baggage("__trulens_recording__") is None:
@@ -256,8 +275,9 @@ class instrument:
 
         def convert_to_generator(func, instance, args, kwargs):
             span_end_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
+            func_name_for_call = _func_name_for_instance(instance)
             with create_function_call_context_manager(
-                self.create_new_span, func_name
+                self.create_new_span, func_name_for_call
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
@@ -283,7 +303,7 @@ class instrument:
                     _finalize_span(
                         span,
                         self.span_type,
-                        func_name,
+                        func_name_for_call,
                         func,
                         func_exception,
                         self.attributes,
@@ -301,8 +321,9 @@ class instrument:
             if not self.enabled or get_baggage("__trulens_recording__") is None:
                 return await func(*args, **kwargs)
             span_end_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
+            func_name_for_call = _func_name_for_instance(instance)
             with create_function_call_context_manager(
-                self.create_new_span, func_name
+                self.create_new_span, func_name_for_call
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
@@ -318,7 +339,7 @@ class instrument:
                 _finalize_span(
                     span,
                     self.span_type,
-                    func_name,
+                    func_name_for_call,
                     func,
                     func_exception,
                     self.attributes,
@@ -338,8 +359,9 @@ class instrument:
                     yield curr
                 return
             span_end_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
+            func_name_for_call = _func_name_for_instance(instance)
             with create_function_call_context_manager(
-                self.create_new_span, func_name
+                self.create_new_span, func_name_for_call
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
@@ -359,7 +381,7 @@ class instrument:
                     _finalize_span(
                         span,
                         self.span_type,
-                        func_name,
+                        func_name_for_call,
                         func,
                         func_exception,
                         self.attributes,

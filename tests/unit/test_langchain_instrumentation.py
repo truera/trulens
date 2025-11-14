@@ -139,6 +139,12 @@ class TestLangChainInstrumentation(OtelTestCase):
                 and "FakeListLLM" in x.get("name", "")
             )
         ]
+        llm_events = llm_events[
+            llm_events["record_attributes"].apply(
+                lambda attrs: attrs.get(SpanAttributes.SPAN_TYPE)
+                == SpanAttributes.SpanType.GENERATION
+            )
+        ]
 
         # Verify at least one LLM invoke event exists
         self.assertGreater(len(llm_events), 0, "No LLM invoke events found")
@@ -181,6 +187,12 @@ class TestLangChainInstrumentation(OtelTestCase):
             events_df["record"].apply(
                 lambda x: "ainvoke" in x.get("name", "")
                 and "FakeListLLM" in x.get("name", "")
+            )
+        ]
+        llm_events = llm_events[
+            llm_events["record_attributes"].apply(
+                lambda attrs: attrs.get(SpanAttributes.SPAN_TYPE)
+                == SpanAttributes.SpanType.GENERATION
             )
         ]
 

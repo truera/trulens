@@ -342,8 +342,12 @@ class LangChainInstrument(core_instruments.Instrument):
                     else []
                 ),
                 # Generic runnable instrumentation (fallback when no specific span type applies)
-                InstrumentedMethod("invoke", Runnable),
-                InstrumentedMethod("ainvoke", Runnable),
+                InstrumentedMethod(
+                    "invoke", Runnable, must_be_first_wrapper=False
+                ),
+                InstrumentedMethod(
+                    "ainvoke", Runnable, must_be_first_wrapper=False
+                ),
                 InstrumentedMethod("stream", Runnable),
                 InstrumentedMethod("astream", Runnable),
                 # Also instrument event-style streaming APIs when used
