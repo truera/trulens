@@ -331,9 +331,9 @@ class LlamaInstrument(core_instruments.Instrument):
         }.union(mod_tru_chain.LangChainInstrument.Default.CLASSES())
         """Classes to instrument."""
 
-        METHODS: List[InstrumentedMethod] = (
-            mod_tru_chain.LangChainInstrument.Default.METHODS
-            + [
+        @staticmethod
+        def METHODS() -> List[InstrumentedMethod]:
+            return mod_tru_chain.LangChainInstrument.Default.METHODS() + [
                 InstrumentedMethod("chat", BaseLLM),
                 InstrumentedMethod("complete", BaseLLM),
                 InstrumentedMethod("stream_chat", BaseLLM),
@@ -423,14 +423,14 @@ class LlamaInstrument(core_instruments.Instrument):
                 InstrumentedMethod("_run_component", QueryEngineComponent),
                 InstrumentedMethod("_run_component", RetrieverComponent),
             ]
-        )
+
         """Methods to instrument."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(
             include_modules=LlamaInstrument.Default.MODULES,
             include_classes=LlamaInstrument.Default.CLASSES(),
-            include_methods=LlamaInstrument.Default.METHODS,
+            include_methods=LlamaInstrument.Default.METHODS(),
             *args,
             **kwargs,
         )

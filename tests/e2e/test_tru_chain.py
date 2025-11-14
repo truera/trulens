@@ -5,9 +5,9 @@ import json
 from typing import Optional
 import weakref
 
-from langchain.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from langchain_openai.chat_models.base import ChatOpenAI
+from langchain_core.prompts import PromptTemplate
+from langchain_openai import ChatOpenAI
 import pandas as pd
 import pytest
 from trulens.apps.langchain import tru_chain as mod_tru_chain

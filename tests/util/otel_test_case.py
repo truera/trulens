@@ -18,12 +18,15 @@ from tests.util.df_comparison import (
     compare_dfs_accounting_for_ids_and_timestamps,
 )
 
+# Removed autouse fixture - it was initializing TruSession too early
+
 
 class OtelTestCase(TruTestCase):
     _orig_TRULENS_OTEL_TRACING: Optional[str] = None
 
     @classmethod
     def setUpClass(cls) -> None:
+        # Each test class gets completely fresh state
         cls._orig_TRULENS_OTEL_TRACING = os.environ.get("TRULENS_OTEL_TRACING")
         os.environ["TRULENS_OTEL_TRACING"] = "1"
         instrument.enable_all_instrumentation()
@@ -35,11 +38,17 @@ class OtelTestCase(TruTestCase):
         if cls._orig_TRULENS_OTEL_TRACING is not None:
             os.environ["TRULENS_OTEL_TRACING"] = cls._orig_TRULENS_OTEL_TRACING
         else:
-            del os.environ["TRULENS_OTEL_TRACING"]
+            if "TRULENS_OTEL_TRACING" in os.environ:
+                del os.environ["TRULENS_OTEL_TRACING"]
         return super().tearDownClass()
 
     def setUp(self) -> None:
         super().setUp()
+        # Delete database file before creating TruSession to avoid migration issues
+        import os
+
+        if os.path.exists("default.sqlite"):
+            os.remove("default.sqlite")
         tru_session = TruSession()
         tru_session.reset_database()
         self.clear_TruSession_singleton()
@@ -52,6 +61,7 @@ class OtelTestCase(TruTestCase):
     @staticmethod
     def _get_events() -> pd.DataFrame:
         tru_session = TruSession()
+        tru_session.force_flush()
         db = tru_session.connector.db
         with db.session.begin() as db_session:
             q = sa.select(db.orm.Event).order_by(db.orm.Event.start_timestamp)

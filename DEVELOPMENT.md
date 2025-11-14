@@ -149,7 +149,24 @@ where `<TEST(S) TO RUN>` is any valid argument to `pytest` such as:
 To run all unit tests:
 ```bash
 # Runs tests from tests/unit with the current environment
+# OTEL tests are automatically run with process isolation (requires pytest-xdist)
 make test-unit
+```
+
+**Important for OTEL tests:** OTEL instrumentation tests (`test_otel*.py`) require process isolation due to async background threads in the OTEL BatchSpanProcessor. The Makefile automatically runs these with `pytest-xdist` when available. If `pytest-xdist` is not installed, OTEL tests may experience test pollution when run in batch (though they pass individually).
+
+**Important for langchain>=1.0 branches:** The `trulens-apps-nemo` package has been **deprecated and removed** from branches supporting `langchain>=1.0.0` due to `nemoguardrails` requiring `langchain<0.4.0`. The nemo package is now in an optional group that is excluded by default:
+```bash
+# Standard install (excludes nemo):
+poetry install --with dev --with apps
+
+# To explicitly include nemo (only works on langchain <1.0 branches):
+poetry install --with dev --with nemo --without apps
+```
+
+Install dev dependencies to enable isolation:
+```bash
+poetry install --with dev
 ```
 
 Tests can also be run in two predetermined environments: `required` and `optional`.

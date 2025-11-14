@@ -16,6 +16,18 @@ from typing import (
 
 from langchain_core.language_models.base import BaseLanguageModel
 from langchain_core.language_models.llms import BaseLLM
+
+try:
+    # Newer LangChain
+    from langchain_core.language_models.chat_models import (
+        BaseChatModel,  # type: ignore
+    )
+except Exception:
+    try:
+        # Legacy
+        from langchain.chat_models.base import BaseChatModel  # type: ignore
+    except Exception:
+        BaseChatModel = None  # type: ignore[assignment]
 from langchain_core.messages.ai import AIMessage
 from langchain_core.messages.ai import AIMessageChunk
 from langchain_core.runnables.base import Runnable
@@ -35,23 +47,77 @@ from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.otel.semconv.trace import SpanAttributes
 
-# Handle langchain version compatibility for agent imports
+# Optional LangGraph support (LC agents may use Pregel under the hood)
 try:
-    # langchain <1.0
-    from langchain.agents.agent import BaseMultiActionAgent
-    from langchain.agents.agent import BaseSingleActionAgent
-except ImportError:
-    # langchain >=1.0
-    from langchain.agents import BaseMultiActionAgent
-    from langchain.agents import BaseSingleActionAgent
+    from langgraph.pregel import Pregel  # type: ignore
+except Exception:
+    Pregel = None  # type: ignore[assignment]
 
-# Handle langchain version compatibility for chains
+# Optional VectorStore base for direct similarity_search instrumentation
+try:
+    from langchain_core.vectorstores import VectorStore  # type: ignore
+except Exception:
+    try:
+        from langchain.vectorstores.base import VectorStore  # type: ignore
+    except Exception:
+        VectorStore = None  # type: ignore[assignment]
+
+# Optional VectorStoreRetriever concrete retriever (used by as_retriever)
+try:
+    from langchain_core.vectorstores import VectorStoreRetriever  # type: ignore
+except Exception:
+    try:
+        from langchain.vectorstores.base import (
+            VectorStoreRetriever,  # type: ignore
+        )
+    except Exception:
+        VectorStoreRetriever = None  # type: ignore[assignment]
+
+# Handle langchain version compatibility for agent imports
+# Be defensive: importing langchain.agents can pull in modules that may not
+# exist depending on installed versions (e.g., langchain_core.memory).
 try:
     # langchain <1.0
-    from langchain.chains.base import Chain
+    from langchain.agents.agent import BaseMultiActionAgent  # type: ignore
+    from langchain.agents.agent import BaseSingleActionAgent  # type: ignore
+
+    try:
+        from langchain.agents import (
+            AgentExecutor as _AgentExecutor,  # type: ignore
+        )
+    except Exception:
+        try:
+            from langchain.agents.agent import (
+                AgentExecutor as _AgentExecutor,  # type: ignore
+            )
+        except Exception:
+            _AgentExecutor = None  # type: ignore[assignment]
+except Exception:
+    try:
+        # langchain >=1.0
+        from langchain.agents import BaseMultiActionAgent  # type: ignore
+        from langchain.agents import BaseSingleActionAgent  # type: ignore
+
+        try:
+            from langchain.agents import (
+                AgentExecutor as _AgentExecutor,  # type: ignore
+            )
+        except Exception:
+            _AgentExecutor = None  # type: ignore[assignment]
+    except Exception:
+        # If agents are unavailable or import chains pull unsupported modules,
+        # skip agent instrumentation gracefully.
+        BaseMultiActionAgent = None  # type: ignore[assignment]
+        BaseSingleActionAgent = None  # type: ignore[assignment]
+        _AgentExecutor = None  # type: ignore[assignment]
+
+# Try to import classic Chain for backward compatibility (e.g., LLMChain.run).
+# If unavailable in the installed langchain version, gracefully degrade.
+try:
+    # langchain <1.0 and many 0.x versions
+    from langchain.chains.base import Chain  # type: ignore
 except ImportError:
-    # langchain >=1.0
-    from langchain.chains import Chain
+    Chain = None  # type: ignore[assignment]
 
 # Handle langchain version compatibility for serialization
 try:
@@ -63,14 +129,22 @@ except ImportError:
 
 # Handle langchain version compatibility for memory
 try:
-    # langchain <1.0
-    from langchain.memory.chat_memory import BaseChatMemory
-except ImportError:
-    # langchain >=1.0
+    # Prefer 1.x community package first
+    from langchain_community.chat_message_histories import (
+        BaseChatMemory,  # type: ignore
+    )
+except Exception:
     try:
-        from langchain.memory import BaseChatMemory
-    except ImportError:
-        from langchain_community.chat_message_histories import BaseChatMemory
+        # langchain >=0.3 sometimes exposes in langchain.memory
+        from langchain.memory import BaseChatMemory  # type: ignore
+    except Exception:
+        try:
+            # legacy path
+            from langchain.memory.chat_memory import (
+                BaseChatMemory,  # type: ignore
+            )
+        except Exception:
+            BaseChatMemory = None  # type: ignore[assignment]
 
 # Handle langchain version compatibility for prompts
 try:
@@ -82,55 +156,86 @@ except ImportError:
 
 # Handle langchain version compatibility for retrievers
 try:
-    # langchain <1.0
-    from langchain.retrievers.multi_query import MultiQueryRetriever
-except ImportError:
-    # langchain >=1.0
+    # Prefer 1.x community package first
+    from langchain_community.retrievers import (
+        MultiQueryRetriever,  # type: ignore
+    )
+except Exception:
     try:
-        from langchain.retrievers import MultiQueryRetriever
-    except ImportError:
-        from langchain_community.retrievers import MultiQueryRetriever
+        # 1.x sometimes keeps it under langchain.retrievers
+        from langchain.retrievers import MultiQueryRetriever  # type: ignore
+    except Exception:
+        try:
+            # legacy path
+            from langchain.retrievers.multi_query import (
+                MultiQueryRetriever,  # type: ignore
+            )
+        except Exception:
+            MultiQueryRetriever = None  # type: ignore[assignment]
 
-# Handle langchain version compatibility for schema imports
+# Handle langchain version compatibility for schema-like imports
 try:
-    # langchain <1.0
-    from langchain.schema import BaseChatMessageHistory  # subclass of above
-    from langchain.schema import BaseMemory  # no methods instrumented
-    from langchain.schema import BaseRetriever
-    from langchain.schema.document import Document
-except ImportError:
-    # langchain >=1.0
+    # Prefer 1.x first
+    from langchain_core.chat_history import (
+        BaseChatMessageHistory,  # type: ignore
+    )
+except Exception:
     try:
-        from langchain_core.chat_history import BaseChatMessageHistory
-    except ImportError:
-        from langchain_community.chat_message_histories import (
+        from langchain_community.chat_message_histories import (  # type: ignore
             BaseChatMessageHistory,
         )
+    except Exception:
+        # Legacy fallback
+        from langchain.schema import BaseChatMessageHistory  # type: ignore
 
-    # BaseMemory moved to langchain_classic in 1.0
-    # If it's not available, we'll handle it below when building the CLASSES set
+# BaseMemory in 1.x is either in langchain_classic or langchain_core; make optional
+try:
+    from langchain_classic.base_memory import BaseMemory  # type: ignore
+except Exception:
     try:
-        from langchain_classic.base_memory import BaseMemory
-    except ImportError:
-        try:
-            from langchain_core.memory import BaseMemory
-        except ImportError:
-            # BaseMemory not available - will exclude from instrumentation
-            BaseMemory = None
+        from langchain_core.memory import BaseMemory  # type: ignore
+    except Exception:
+        BaseMemory = None  # type: ignore[assignment]
 
-    from langchain_core.documents import Document
-    from langchain_core.retrievers import BaseRetriever
+try:
+    from langchain_core.documents import Document  # type: ignore
+    from langchain_core.retrievers import BaseRetriever  # type: ignore
+except Exception:
+    # Legacy fallback
+    from langchain.schema import BaseRetriever  # type: ignore
+    from langchain.schema.document import Document  # type: ignore
 
 # Handle langchain version compatibility for tools
 try:
     # langchain <1.0
     from langchain.tools.base import BaseTool
+
+    try:
+        from langchain.tools import (
+            StructuredTool as _StructuredTool,  # type: ignore
+        )
+    except Exception:
+        _StructuredTool = None  # type: ignore[assignment]
 except ImportError:
     # langchain >=1.0
     try:
         from langchain_core.tools import BaseTool
+
+        try:
+            from langchain_core.tools import (
+                StructuredTool as _StructuredTool,  # type: ignore
+            )
+        except Exception:
+            _StructuredTool = None  # type: ignore[assignment]
     except ImportError:
         from langchain_community.tools import BaseTool
+
+        try:
+            from langchain_community.tools import (
+                StructuredTool as _StructuredTool,  # type: ignore
+            )
+        except Exception:
+            _StructuredTool = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +248,14 @@ class LangChainInstrument(core_instruments.Instrument):
     class Default:
         """Instrumentation specification for LangChain apps."""
 
-        MODULES = {"langchain", "langchain_mcp_adapters"}
+        MODULES = {
+            "langchain",
+            "langchain_core",
+            "langchain_community",
+            "langchain_mcp_adapters",
+            # Include langgraph to capture agent streams backed by Pregel
+            "langgraph",
+        }
         """Filter for module name prefix for modules to be instrumented."""
 
         CLASSES = (
@@ -154,6 +266,9 @@ class LangChainInstrument(core_instruments.Instrument):
                     Serializable,
                     Document,
                     Chain,
+                    Pregel,  # Instrument Pregel when present
+                    VectorStore,  # Instrument VectorStore similarity_search
+                    _AgentExecutor,  # include AgentExecutor explicitly when available
                     BaseRetriever,
                     BaseLLM,
                     BasePromptTemplate,
@@ -175,89 +290,266 @@ class LangChainInstrument(core_instruments.Instrument):
         """Filter for classes to be instrumented."""
 
         # Instrument only methods with these names and of these classes.
-        METHODS: List[InstrumentedMethod] = [
-            InstrumentedMethod("invoke", Runnable),
-            InstrumentedMethod("ainvoke", Runnable),
-            InstrumentedMethod("stream", Runnable),
-            InstrumentedMethod("astream", Runnable),
-            InstrumentedMethod("save_context", BaseMemory),
-            InstrumentedMethod("clear", BaseMemory),
-            InstrumentedMethod("run", Chain),
-            InstrumentedMethod("arun", Chain),
-            InstrumentedMethod("_call", Chain),
-            InstrumentedMethod("__call__", Chain),
-            InstrumentedMethod("_acall", Chain),
-            InstrumentedMethod("acall", Chain),
-            InstrumentedMethod(
-                "_get_relevant_documents",
-                RunnableSerializable,
-                *core_instruments.Instrument.Default.retrieval_span("query"),
-            ),
-            InstrumentedMethod(
-                "get_relevant_documents",
-                RunnableSerializable,
-                *core_instruments.Instrument.Default.retrieval_span("query"),
-            ),
-            InstrumentedMethod(
-                "aget_relevant_documents",
-                RunnableSerializable,
-                *core_instruments.Instrument.Default.retrieval_span("query"),
-            ),
-            InstrumentedMethod(
-                "_aget_relevant_documents",
-                RunnableSerializable,
-                *core_instruments.Instrument.Default.retrieval_span("query"),
-            ),
-            InstrumentedMethod("plan", BaseSingleActionAgent),
-            InstrumentedMethod("aplan", BaseSingleActionAgent),
-            InstrumentedMethod("plan", BaseMultiActionAgent),
-            InstrumentedMethod("aplan", BaseMultiActionAgent),
-            # Standard tool methods - these will catch MCP tools too
-            InstrumentedMethod(
-                "_arun",
-                BaseTool,
-                SpanAttributes.SpanType.MCP,
-                lambda ret, exception, *args, **kwargs: {
-                    SpanAttributes.MCP.TOOL_NAME: getattr(
-                        args[0], "name", "unknown"
+        @staticmethod
+        def METHODS() -> List[InstrumentedMethod]:
+            methods: List[InstrumentedMethod] = [
+                # Mark LLM calls as GENERATION
+                InstrumentedMethod(
+                    "invoke",
+                    BaseLanguageModel,
+                    SpanAttributes.SpanType.GENERATION,
+                ),
+                InstrumentedMethod(
+                    "ainvoke",
+                    BaseLanguageModel,
+                    SpanAttributes.SpanType.GENERATION,
+                ),
+                InstrumentedMethod(
+                    "stream",
+                    BaseLanguageModel,
+                    SpanAttributes.SpanType.GENERATION,
+                ),
+                InstrumentedMethod(
+                    "astream",
+                    BaseLanguageModel,
+                    SpanAttributes.SpanType.GENERATION,
+                ),
+                # Some chat models may derive from BaseChatModel separately
+                *(
+                    [
+                        InstrumentedMethod(
+                            "invoke",
+                            BaseChatModel,
+                            SpanAttributes.SpanType.GENERATION,
+                        ),
+                        InstrumentedMethod(
+                            "ainvoke",
+                            BaseChatModel,
+                            SpanAttributes.SpanType.GENERATION,
+                        ),
+                        InstrumentedMethod(
+                            "stream",
+                            BaseChatModel,
+                            SpanAttributes.SpanType.GENERATION,
+                        ),
+                        InstrumentedMethod(
+                            "astream",
+                            BaseChatModel,
+                            SpanAttributes.SpanType.GENERATION,
+                        ),
+                    ]
+                    if BaseChatModel is not None
+                    else []
+                ),
+                # Generic runnable instrumentation (fallback when no specific span type applies)
+                InstrumentedMethod(
+                    "invoke", Runnable, must_be_first_wrapper=False
+                ),
+                InstrumentedMethod(
+                    "ainvoke", Runnable, must_be_first_wrapper=False
+                ),
+                InstrumentedMethod("stream", Runnable),
+                InstrumentedMethod("astream", Runnable),
+                # Also instrument event-style streaming APIs when used
+                InstrumentedMethod("stream_events", Runnable),
+                InstrumentedMethod("astream_events", Runnable),
+                # AgentExecutor may not be a Runnable in some versions; instrument directly.
+                InstrumentedMethod(
+                    "stream",
+                    object
+                    if "_AgentExecutor" not in globals()
+                    or _AgentExecutor is None
+                    else _AgentExecutor,
+                ),
+                InstrumentedMethod(
+                    "astream",
+                    object
+                    if "_AgentExecutor" not in globals()
+                    or _AgentExecutor is None
+                    else _AgentExecutor,
+                ),
+                InstrumentedMethod(
+                    "stream_events",
+                    object
+                    if "_AgentExecutor" not in globals()
+                    or _AgentExecutor is None
+                    else _AgentExecutor,
+                ),
+                InstrumentedMethod(
+                    "astream_events",
+                    object
+                    if "_AgentExecutor" not in globals()
+                    or _AgentExecutor is None
+                    else _AgentExecutor,
+                ),
+                # Pregel methods (langgraph) frequently used by agents underneath
+                InstrumentedMethod(
+                    "invoke", object if Pregel is None else Pregel
+                ),
+                InstrumentedMethod(
+                    "ainvoke", object if Pregel is None else Pregel
+                ),
+                InstrumentedMethod(
+                    "stream", object if Pregel is None else Pregel
+                ),
+                InstrumentedMethod(
+                    "astream", object if Pregel is None else Pregel
+                ),
+                InstrumentedMethod(
+                    "stream_mode", object if Pregel is None else Pregel
+                ),
+                # VectorStore direct retrieval to emit RETRIEVAL spans
+                InstrumentedMethod(
+                    "similarity_search",
+                    object if VectorStore is None else VectorStore,
+                    *core_instruments.Instrument.Default.retrieval_span(
+                        "query"
+                    ),
+                ),
+                InstrumentedMethod(
+                    "asimilarity_search",
+                    object if VectorStore is None else VectorStore,
+                    *core_instruments.Instrument.Default.retrieval_span(
+                        "query"
+                    ),
+                ),
+                # Properly mark retrieval spans on retrievers
+                InstrumentedMethod(
+                    "_get_relevant_documents",
+                    BaseRetriever,
+                    *core_instruments.Instrument.Default.retrieval_span(
+                        "query"
+                    ),
+                ),
+                InstrumentedMethod(
+                    "get_relevant_documents",
+                    BaseRetriever,
+                    *core_instruments.Instrument.Default.retrieval_span(
+                        "query"
+                    ),
+                ),
+                InstrumentedMethod(
+                    "aget_relevant_documents",
+                    BaseRetriever,
+                    *core_instruments.Instrument.Default.retrieval_span(
+                        "query"
+                    ),
+                ),
+                InstrumentedMethod(
+                    "_aget_relevant_documents",
+                    BaseRetriever,
+                    *core_instruments.Instrument.Default.retrieval_span(
+                        "query"
+                    ),
+                ),
+                # MCP client methods
+                InstrumentedMethod(
+                    "get_tools",
+                    object,  # Will be filtered by module name
+                    *core_instruments.Instrument.Default.mcp_span(
+                        "server_name"
+                    ),
+                ),
+            ]
+
+            # Optional: memory methods
+            try:
+                if BaseMemory is not None:  # type: ignore[name-defined]
+                    methods.extend([
+                        InstrumentedMethod("save_context", BaseMemory),
+                        InstrumentedMethod("clear", BaseMemory),
+                    ])
+            except NameError:
+                pass
+
+            # Optional: classic Chain methods
+            try:
+                if Chain is not None:  # type: ignore[name-defined]
+                    methods.extend([
+                        InstrumentedMethod("run", Chain),
+                        InstrumentedMethod("arun", Chain),
+                        InstrumentedMethod("_call", Chain),
+                        InstrumentedMethod("__call__", Chain),
+                        InstrumentedMethod("_acall", Chain),
+                        InstrumentedMethod("acall", Chain),
+                    ])
+            except NameError:
+                pass
+
+            # Optional: agent plan methods
+            try:
+                if BaseSingleActionAgent is not None:  # type: ignore[name-defined]
+                    methods.append(
+                        InstrumentedMethod("plan", BaseSingleActionAgent)
                     )
-                    if args
-                    else "unknown",
-                    SpanAttributes.MCP.INPUT_ARGUMENTS: str(args[1:])
-                    if len(args) > 1
-                    else str(kwargs),
-                    SpanAttributes.MCP.OUTPUT_CONTENT: str(ret)
-                    if ret is not None
-                    else "",
-                    SpanAttributes.MCP.OUTPUT_IS_ERROR: exception is not None,
-                },
-            ),
-            InstrumentedMethod(
-                "_run",
-                BaseTool,
-                SpanAttributes.SpanType.MCP,
-                lambda ret, exception, *args, **kwargs: {
-                    SpanAttributes.MCP.TOOL_NAME: getattr(
-                        args[0], "name", "unknown"
+                    methods.append(
+                        InstrumentedMethod("aplan", BaseSingleActionAgent)
                     )
-                    if args
-                    else "unknown",
-                    SpanAttributes.MCP.INPUT_ARGUMENTS: str(args[1:])
-                    if len(args) > 1
-                    else str(kwargs),
-                    SpanAttributes.MCP.OUTPUT_CONTENT: str(ret)
-                    if ret is not None
-                    else "",
-                    SpanAttributes.MCP.OUTPUT_IS_ERROR: exception is not None,
-                },
-            ),
-            # MCP client methods
-            InstrumentedMethod(
-                "get_tools",
-                object,  # Will be filtered by module name
-                *core_instruments.Instrument.Default.mcp_span("server_name"),
-            ),
-        ]
+            except NameError:
+                pass
+
+            try:
+                if BaseMultiActionAgent is not None:  # type: ignore[name-defined]
+                    methods.append(
+                        InstrumentedMethod("plan", BaseMultiActionAgent)
+                    )
+                    methods.append(
+                        InstrumentedMethod("aplan", BaseMultiActionAgent)
+                    )
+            except NameError:
+                pass
+
+            # Tools
+            try:
+                methods.extend([
+                    InstrumentedMethod(
+                        "_arun",
+                        BaseTool,
+                        # Default tools are TOOL; MCP adapters will override to MCP via their own wrappers
+                        SpanAttributes.SpanType.TOOL,
+                        lambda ret, exception, *args, **kwargs: {
+                            SpanAttributes.MCP.TOOL_NAME: getattr(
+                                args[0], "name", "unknown"
+                            )
+                            if args
+                            else "unknown",
+                            SpanAttributes.MCP.INPUT_ARGUMENTS: str(args[1:])
+                            if len(args) > 1
+                            else str(kwargs),
+                            SpanAttributes.MCP.OUTPUT_CONTENT: str(ret)
+                            if ret is not None
+                            else "",
+                            SpanAttributes.MCP.OUTPUT_IS_ERROR: exception
+                            is not None,
+                        },
+                    ),
+                    InstrumentedMethod(
+                        "_run",
+                        BaseTool,
+                        # Default tools are TOOL; MCP adapters will override to MCP via their own wrappers
+                        SpanAttributes.SpanType.TOOL,
+                        lambda ret, exception, *args, **kwargs: {
+                            SpanAttributes.MCP.TOOL_NAME: getattr(
+                                args[0], "name", "unknown"
+                            )
+                            if args
+                            else "unknown",
+                            SpanAttributes.MCP.INPUT_ARGUMENTS: str(args[1:])
+                            if len(args) > 1
+                            else str(kwargs),
+                            SpanAttributes.MCP.OUTPUT_CONTENT: str(ret)
+                            if ret is not None
+                            else "",
+                            SpanAttributes.MCP.OUTPUT_IS_ERROR: exception
+                            is not None,
+                        },
+                    ),
+                ])
+            except NameError:
+                pass
+
+            return methods
+
         """Methods to be instrumented.
 
         Key is method name and value is filter for objects that need those
@@ -267,7 +559,7 @@ class LangChainInstrument(core_instruments.Instrument):
         super().__init__(
             include_modules=LangChainInstrument.Default.MODULES,
             include_classes=LangChainInstrument.Default.CLASSES(),
-            include_methods=LangChainInstrument.Default.METHODS,
+            include_methods=LangChainInstrument.Default.METHODS(),
             *args,
             **kwargs,
         )
@@ -287,8 +579,8 @@ class TruChain(core_app.App):
 
         ```python
         from langchain import hub
-        from langchain.chat_models import ChatOpenAI
-        from langchain.schema import StrOutputParser
+        from langchain_openai import ChatOpenAI
+        from langchain_core.output_parsers import StrOutputParser
         from langchain_core.runnables import RunnablePassthrough
 
         retriever = vectorstore.as_retriever()
@@ -383,6 +675,191 @@ class TruChain(core_app.App):
         else:
             TruSession()
 
+        # Ensure class-level instrumentation for common components under OTEL
+        try:
+            from trulens.core.experimental import Feature as _Feature
+            from trulens.core.otel.instrument import (
+                instrument_method as _otel_instrument_method,
+            )
+
+            otel_enabled = TruSession().experimental_feature(
+                _Feature.OTEL_TRACING
+            )
+        except Exception:
+            otel_enabled = False
+
+        if otel_enabled:
+            # Idempotent guard
+            if not hasattr(TruChain, "_otel_langchain_class_instrumented"):
+                try:
+                    # Generation spans for LLMs
+                    try:
+                        _otel_instrument_method(
+                            cls=BaseLanguageModel,
+                            method_name="invoke",
+                            span_type=SpanAttributes.SpanType.GENERATION,
+                        )
+                        _otel_instrument_method(
+                            cls=BaseLanguageModel,
+                            method_name="ainvoke",
+                            span_type=SpanAttributes.SpanType.GENERATION,
+                        )
+                        _otel_instrument_method(
+                            cls=BaseLanguageModel,
+                            method_name="stream",
+                            span_type=SpanAttributes.SpanType.GENERATION,
+                        )
+                        _otel_instrument_method(
+                            cls=BaseLanguageModel,
+                            method_name="astream",
+                            span_type=SpanAttributes.SpanType.GENERATION,
+                        )
+                        # Chat model base (some LC versions)
+                        try:
+                            from langchain_core.language_models.chat_models import (
+                                BaseChatModel as _BaseChatModel,  # type: ignore
+                            )
+                        except Exception:
+                            try:
+                                from langchain.chat_models.base import (
+                                    BaseChatModel as _BaseChatModel,  # type: ignore
+                                )
+                            except Exception:
+                                _BaseChatModel = None  # type: ignore[assignment]
+                        if _BaseChatModel is not None:
+                            for _m in [
+                                "invoke",
+                                "ainvoke",
+                                "stream",
+                                "astream",
+                            ]:
+                                try:
+                                    _otel_instrument_method(
+                                        cls=_BaseChatModel,
+                                        method_name=_m,
+                                        span_type=SpanAttributes.SpanType.GENERATION,
+                                    )
+                                except Exception:
+                                    pass
+                    except Exception:
+                        pass
+
+                    # Retrieval spans for retrievers
+                    try:
+                        _otel_instrument_method(
+                            cls=BaseRetriever,
+                            method_name="get_relevant_documents",
+                            span_type=SpanAttributes.SpanType.RETRIEVAL,
+                            attributes=core_instruments.Instrument.Default.retrieval_span(
+                                "query"
+                            )[1],
+                        )
+                        _otel_instrument_method(
+                            cls=BaseRetriever,
+                            method_name="aget_relevant_documents",
+                            span_type=SpanAttributes.SpanType.RETRIEVAL,
+                            attributes=core_instruments.Instrument.Default.retrieval_span(
+                                "query"
+                            )[1],
+                        )
+                        # Also instrument the concrete VectorStoreRetriever
+                        if VectorStoreRetriever is not None:
+                            for _m in [
+                                "get_relevant_documents",
+                                "aget_relevant_documents",
+                                "_get_relevant_documents",
+                                "_aget_relevant_documents",
+                            ]:
+                                try:
+                                    _otel_instrument_method(
+                                        cls=VectorStoreRetriever,
+                                        method_name=_m,
+                                        span_type=SpanAttributes.SpanType.RETRIEVAL,
+                                        attributes=core_instruments.Instrument.Default.retrieval_span(
+                                            "query"
+                                        )[1],
+                                    )
+                                except Exception:
+                                    pass
+                    except Exception:
+                        pass
+
+                    # Retrieval spans for VectorStore direct usage
+                    try:
+                        if VectorStore is not None:
+                            _retrieval_attr = core_instruments.Instrument.Default.retrieval_span(
+                                "query"
+                            )[1]
+                            _vs_methods = [
+                                "similarity_search",
+                                "asimilarity_search",
+                                "similarity_search_with_relevance_scores",
+                                "asimilarity_search_with_relevance_scores",
+                                "max_marginal_relevance_search",
+                                "amax_marginal_relevance_search",
+                            ]
+                            # Instrument base
+                            for _m in _vs_methods:
+                                try:
+                                    _otel_instrument_method(
+                                        cls=VectorStore,
+                                        method_name=_m,
+                                        span_type=SpanAttributes.SpanType.RETRIEVAL,
+                                        attributes=_retrieval_attr,
+                                        must_be_first_wrapper=True,
+                                    )
+                                except Exception:
+                                    pass
+                            # Instrument currently loaded subclasses as well
+                            try:
+
+                                def _instrument_subclasses(base):
+                                    for sub in list(
+                                        getattr(
+                                            base, "__subclasses__", lambda: []
+                                        )()
+                                    ):
+                                        for _m in _vs_methods:
+                                            if hasattr(sub, _m):
+                                                try:
+                                                    _otel_instrument_method(
+                                                        cls=sub,
+                                                        method_name=_m,
+                                                        span_type=SpanAttributes.SpanType.RETRIEVAL,
+                                                        attributes=_retrieval_attr,
+                                                        must_be_first_wrapper=True,
+                                                    )
+                                                except Exception:
+                                                    pass
+                                        # Recurse
+                                        _instrument_subclasses(sub)
+
+                                _instrument_subclasses(VectorStore)
+                            except Exception:
+                                pass
+                    except Exception:
+                        pass
+
+                    # Do not force TOOL overrides at the OTEL layer; rely on Default.METHODS.
+
+                    # Finally, ensure LangGraph class-level instrumentation (graph nodes/tasks).
+                    # Doing this last ensures our LLM/retriever/tool span types are preserved.
+                    try:
+                        from trulens.apps.langgraph.tru_graph import (
+                            TruGraph,  # type: ignore
+                        )
+
+                        TruGraph._ensure_instrumentation()  # idempotent
+                    except Exception:
+                        pass
+
+                    # Mark as done
+                    setattr(
+                        TruChain, "_otel_langchain_class_instrumented", True
+                    )
+                except Exception:
+                    pass
+
         if main_method is not None:
             kwargs["main_method"] = main_method
         kwargs["root_class"] = pyschema_utils.Class.of_object(app)
@@ -449,6 +926,35 @@ class TruChain(core_app.App):
         `bindings`.
         """
 
+        # Prefer LCEL-style messages input if present
+        try:
+            # Case 1: messages passed directly
+            if "messages" in bindings.arguments:
+                msgs = bindings.arguments["messages"]
+                if isinstance(msgs, Sequence) and len(msgs) > 0:
+                    last = msgs[-1]
+                    if hasattr(last, "content"):
+                        return getattr(last, "content")
+                    if isinstance(last, Dict) and isinstance(
+                        last.get("content"), str
+                    ):
+                        return last.get("content")
+            # Case 2: messages nested inside input dict
+            if "input" in bindings.arguments and isinstance(
+                bindings.arguments["input"], Dict
+            ):
+                msgs = bindings.arguments["input"].get("messages")
+                if isinstance(msgs, Sequence) and len(msgs) > 0:
+                    last = msgs[-1]
+                    if hasattr(last, "content"):
+                        return getattr(last, "content")
+                    if isinstance(last, Dict) and isinstance(
+                        last.get("content"), str
+                    ):
+                        return last.get("content")
+        except Exception:
+            pass
+
         if "input" in bindings.arguments:
             temp = bindings.arguments["input"]
             if isinstance(temp, str):
@@ -497,6 +1003,41 @@ class TruChain(core_app.App):
         returned `ret`.
         """
 
+        # Preserve simple JSON-friendly returns (strings, numbers, etc.) verbatim.
+        if isinstance(ret, serial_utils.JSON_BASES):
+            return str(ret)
+
+        # Prefer LCEL results shape: dict with "messages" or list of Message-like objects
+        try:
+            # Case 1: result dict with "messages"
+            if (
+                isinstance(ret, Dict)
+                and "messages" in ret
+                and isinstance(ret["messages"], Sequence)
+            ):
+                messages = ret["messages"]
+                # Pick last message with textual content
+                for last in reversed(messages):
+                    if hasattr(last, "content") and getattr(last, "content"):
+                        return getattr(last, "content")
+                    if isinstance(last, Dict) and isinstance(
+                        last.get("content"), str
+                    ):
+                        if last.get("content"):
+                            return last.get("content")
+            # Case 2: result is a sequence of Message-like items
+            if isinstance(ret, Sequence) and len(ret) > 0:
+                for last in reversed(ret):
+                    if hasattr(last, "content") and getattr(last, "content"):
+                        return getattr(last, "content")
+                    if isinstance(last, Dict) and isinstance(
+                        last.get("content"), str
+                    ):
+                        if last.get("content"):
+                            return last.get("content")
+        except Exception:
+            pass
+
         if isinstance(ret, (AIMessage, AIMessageChunk)):
             return ret.content
 
@@ -507,6 +1048,75 @@ class TruChain(core_app.App):
             # with each having "content".
             return "".join(x["content"] for x in ret)
 
+        # Handle event-style streaming outputs (e.g., Runnable.stream_events/astream_events)
+        if isinstance(ret, Sequence) and all(isinstance(x, Dict) for x in ret):
+
+            def _extract_event_content(e: Dict) -> str:
+                # Direct content
+                if "content" in e and isinstance(e["content"], str):
+                    return e["content"]
+                # Values-mode dicts: often {'messages': [...]} from stream(stream_mode="values")
+                msgs = e.get("messages")
+                if isinstance(msgs, list) and len(msgs) > 0:
+                    last_msg = msgs[-1]
+                    if hasattr(last_msg, "content"):
+                        return getattr(last_msg, "content") or ""
+                    if isinstance(last_msg, Dict) and isinstance(
+                        last_msg.get("content"), str
+                    ):
+                        return last_msg.get("content", "") or ""
+                # Nested data payloads used by LangChain event streams
+                data = e.get("data")
+                if isinstance(data, Dict):
+                    # Agent final outputs often appear under 'output' or 'return_values'
+                    if isinstance(data.get("output"), str):
+                        return data.get("output") or ""
+                    rv = data.get("return_values")
+                    if isinstance(rv, Dict):
+                        # Common shape: {'output': '...'}
+                        if isinstance(rv.get("output"), str):
+                            return rv.get("output") or ""
+                        # Sometimes nested under another key (first string wins)
+                        for v in rv.values():
+                            if isinstance(v, str):
+                                return v
+                    # Messages list with AIMessage-like objects
+                    messages = data.get("messages")
+                    if isinstance(messages, list) and len(messages) > 0:
+                        last_msg = messages[-1]
+                        if hasattr(last_msg, "content"):
+                            return getattr(last_msg, "content") or ""
+                        if isinstance(last_msg, Dict) and isinstance(
+                            last_msg.get("content"), str
+                        ):
+                            return last_msg.get("content", "") or ""
+                    chunk = data.get("chunk")
+                    # chunk may be an AIMessageChunk-like object or a dict
+                    if hasattr(chunk, "content"):
+                        return getattr(chunk, "content") or ""
+                    if isinstance(chunk, Dict) and isinstance(
+                        chunk.get("content"), str
+                    ):
+                        return chunk.get("content", "") or ""
+                    # Some events carry output/result objects
+                    output = data.get("output") or data.get("result")
+                    if hasattr(output, "content"):
+                        return getattr(output, "content") or ""
+                    if isinstance(output, Dict) and isinstance(
+                        output.get("content"), str
+                    ):
+                        return output.get("content", "") or ""
+                    # Some agent events carry 'final_output' or similar
+                    for key in ("final_output", "final_answer"):
+                        val = data.get(key)
+                        if isinstance(val, str):
+                            return val
+                return ""
+
+            parts = [_extract_event_content(x) for x in ret]
+            if any(parts):
+                return "".join(parts)
+
         if isinstance(ret, Sequence) and all(
             isinstance(x, (AIMessage, AIMessageChunk)) for x in ret
         ):
@@ -516,7 +1126,12 @@ class TruChain(core_app.App):
 
         if isinstance(ret, Sequence) and all(isinstance(x, str) for x in ret):
             # Streaming outputs of main stream methods like Runnable.stream are
-            # bundled by us into a sequence of strings.
+            # sometimes bundled by us into a sequence of strings that includes
+            # intermediary tool messages. Prefer the last non-empty string which
+            # is typically the final assistant output.
+            for s in reversed(ret):
+                if isinstance(s, str) and s.strip():
+                    return s
             return "".join(ret)
 
         if isinstance(ret, Dict) and python_utils.safe_hasattr(

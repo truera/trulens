@@ -114,10 +114,14 @@ class TestDeprecation(TestCase):
                     continue
 
                 for name in names:
+                    if name == "TruRails":
+                        # TruRails (nemoguardrails) is deprecated on langchain>=1.0 branches
+                        # due to nemoguardrails requiring langchain<0.4.0
+                        continue
+
                     if name in [
                         "Cortex",
                         "CortexEndpoint",
-                        "TruRails",
                     ] and sys.version_info >= (3, 12):
                         # These require python < 3.12 .
                         continue

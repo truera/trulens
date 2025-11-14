@@ -584,7 +584,14 @@ class Instrument:
 
                 return attributes
 
-            return (SpanAttributes.SpanType.MCP, extract_mcp_attributes)
+            # Be resilient to environments that lack the MCP span type.
+            try:
+                span_type = SpanAttributes.SpanType.MCP  # type: ignore[attr-defined]
+            except AttributeError:
+                # Fallback to TOOL span type if MCP is unavailable.
+                span_type = SpanAttributes.SpanType.TOOL
+
+            return (span_type, extract_mcp_attributes)
 
     def print_instrumentation(self) -> None:
         """Print out description of the modules, classes, methods this class
@@ -1041,12 +1048,113 @@ class Instrument:
                     # Will add placeholder to the record:
                     update_call_info(temp_rets, final=False)
 
-                    return python_utils.wrap_lazy(
-                        rets,
-                        wrap=None,
-                        on_done=rewrap,
-                        context_vars=context_vars,
-                    )
+                    # For streaming-like methods, also update incrementally per chunk
+                    stream_method_names = {
+                        "stream",
+                        "astream",
+                        "stream_events",
+                        "astream_events",
+                    }
+
+                    if method_name in stream_method_names:
+                        # Accumulate human-visible chunks and update the record incrementally.
+                        accumulated_chunks: List[str] = []
+
+                        def _normalize_chunk(val: Any) -> str:
+                            # Common LangChain chunk types
+                            try:
+                                from langchain_core.messages.ai import (  # type: ignore
+                                    AIMessage,
+                                )
+                                from langchain_core.messages.ai import (  # type: ignore
+                                    AIMessageChunk,
+                                )
+                            except Exception:
+                                AIMessage = None  # type: ignore
+                                AIMessageChunk = None  # type: ignore
+
+                            # AIMessage or AIMessageChunk
+                            if AIMessage is not None and isinstance(
+                                val, AIMessage
+                            ):
+                                return val.content or ""
+                            if AIMessageChunk is not None and isinstance(
+                                val, AIMessageChunk
+                            ):
+                                return val.content or ""
+
+                            # Dict-based events or chunks
+                            if isinstance(val, dict):
+                                # Direct 'content'
+                                if "content" in val and isinstance(
+                                    val["content"], str
+                                ):
+                                    return val["content"]
+
+                                # LangChain astream_events style: {'event': ..., 'data': {...}}
+                                data = val.get("data")
+                                if isinstance(data, dict):
+                                    # Try nested 'chunk' first (often an AIMessageChunk or dict with content)
+                                    chunk = data.get("chunk")
+                                    if hasattr(chunk, "content"):
+                                        return getattr(chunk, "content") or ""
+                                    if isinstance(chunk, dict) and isinstance(
+                                        chunk.get("content"), str
+                                    ):
+                                        return chunk.get("content", "") or ""
+
+                                    # Some events carry 'output' or 'result' that may contain content
+                                    output = data.get("output") or data.get(
+                                        "result"
+                                    )
+                                    if hasattr(output, "content"):
+                                        return getattr(output, "content") or ""
+                                    if isinstance(output, dict) and isinstance(
+                                        output.get("content"), str
+                                    ):
+                                        return output.get("content", "") or ""
+
+                                # Fallback: empty for non-text events
+                                return ""
+
+                            # Plain string chunk
+                            if isinstance(val, str):
+                                return val
+
+                            # Fallback to string; avoid noisy representations for non-text events
+                            try:
+                                return str(val) if val is not None else ""
+                            except Exception:
+                                return ""
+
+                        def _per_chunk_wrapper(val: Any) -> Any:
+                            try:
+                                chunk_str = _normalize_chunk(val)
+                                if chunk_str:
+                                    accumulated_chunks.append(chunk_str)
+                                    # Emit incremental update without finalizing
+                                    update_call_info(
+                                        list(accumulated_chunks), final=False
+                                    )
+                            except Exception:
+                                # Never break the user stream due to our logging; skip incremental update
+                                pass
+                            # Always return the original value to preserve API semantics
+                            return val
+
+                        return python_utils.wrap_lazy(
+                            rets,
+                            wrap=_per_chunk_wrapper,
+                            on_done=rewrap,
+                            context_vars=context_vars,
+                        )
+                    else:
+                        return python_utils.wrap_lazy(
+                            rets,
+                            wrap=None,
+                            on_done=rewrap,
+                            context_vars=context_vars,
+                        )
 
                 # Handle app-specific lazy values (like llama_index StreamResponse):
                 # NOTE(piotrm): self.app is a weakref
