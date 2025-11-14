@@ -88,6 +88,8 @@ pipeline {
                 '''
                 sh label: 'Run pre-commit hooks', script: '''
                     set -e
+                    # Note: --sync removes packages not in lock file
+                    # This ensures clean state after poetry.lock changes
                     poetry install --only dev --sync
                     make run-precommit
                 '''

@@ -19,11 +19,14 @@ class TestOtelTruSession(OtelTestCase):
         tru_app = TruApp(
             app, app_name="test_get_records_and_feedback", app_version="v1"
         )
-        # Record multiple records.
-        with tru_app as recording:
+        # Record two separate records using two recording contexts.
+        record_ids: List[str] = []
+        with tru_app as recording1:
             app.query("Who is the best baby?")
+            record_ids.extend([rec.record_id for rec in recording1.records])
+        with tru_app as recording2:
             app.query("Who is the cutest baby?")
-        record_ids = [rec.record_id for rec in recording.records]
+            record_ids.extend([rec.record_id for rec in recording2.records])
         # Get records and feedback.
         tru_session = TruSession()
         tru_session.force_flush()

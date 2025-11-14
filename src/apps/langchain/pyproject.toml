@@ -29,8 +29,13 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.9"
 trulens-core = { version = "^2.0.0" }
-langchain = ">=0.2.10,<1.0"
-langchain-core = ">=0.2.0,<1.0"
+# LangChain 1.x package structure:
+# - langchain (meta package) >= 1.0
+# - langchain-core >= 1.0
+# - langchain-community still at 0.x (as of early 2025)
+langchain = ">=1.0.0"
+langchain-core = ">=1.0.0"
+langchain-community = ">=0.3.0"
 pydantic = "^2.4.2"
 
 [tool.poetry.group.dev.dependencies]

@@ -408,3 +408,11 @@ class SpanAttributes:
 
         EXECUTION_TIME_MS = base + ".execution_time_ms"
         """Time taken to execute the MCP tool call in milliseconds."""
+
+    class INLINE_EVAL:
+        """Attributes specific to inline evaluation instrumentation."""
+
+        base = BASE_SCOPE + ".inline_eval"
+
+        EMIT_SPAN = base + ".emit_span"
+        """Boolean flag indicating whether a span should be exported."""

@@ -1290,9 +1290,7 @@ class TruGraph(TruChain):
         func = instance.func
         func_name = getattr(func, "__name__", "unknown")
 
-        # Check if this is a model/LLM call
-        if "call_model" in func_name or "model" in func_name.lower():
-            return SpanAttributes.SpanType.GENERATION
+        # Do not label RunnableCallable nodes as GENERATION; BaseChatModel handles that.
 
         # Check if this is an MCP tool call - ONLY _func is the actual tool execution
         # tools_condition is a routing function, not a tool call
@@ -1325,12 +1323,131 @@ class TruGraph(TruChain):
 
             # Determine the appropriate span type
             span_type = cls._determine_span_type(instance)
+            # Harden classification for tool execution nodes: force TOOL unless we
+            # positively detect MCP adapters.
+            try:
+                if (
+                    hasattr(instance, "func")
+                    and getattr(instance.func, "__name__", "") == "_func"
+                ):
+                    is_mcp = False
+                    tools_by_name = getattr(instance, "tools_by_name", None)
+                    if isinstance(tools_by_name, dict) and tools_by_name:
+                        first_tool = list(tools_by_name.values())[0]
+                        tool_module = (
+                            getattr(type(first_tool), "__module__", "") or ""
+                        )
+                        if "langchain_mcp_adapters" in tool_module:
+                            is_mcp = True
+                        elif (
+                            hasattr(first_tool, "coroutine")
+                            and first_tool.coroutine
+                        ):
+                            closure = getattr(
+                                first_tool.coroutine, "__closure__", None
+                            )
+                            if closure:
+                                for cell in closure:
+                                    if (
+                                        type(
+                                            getattr(cell, "cell_contents", None)
+                                        ).__name__
+                                        == "MultiServerMCPClient"
+                                    ):
+                                        is_mcp = True
+                                        break
+                    span_type = (
+                        SpanAttributes.SpanType.MCP
+                        if is_mcp
+                        else SpanAttributes.SpanType.TOOL
+                    )
+            except Exception:
+                # On error, prefer TOOL to avoid false MCP classification
+                if (
+                    hasattr(instance, "func")
+                    and getattr(instance.func, "__name__", "") == "_func"
+                ):
+                    span_type = SpanAttributes.SpanType.TOOL
 
             # For user-defined nodes, apply full instrumentation with dynamic span type
             instrumented_method = instrument(
                 span_type=span_type,
                 attributes=attributes_func,
             )(wrapped)
+
+            # If this is a tool execution (_func), try to resolve the tool name up-front
+            # and pass a span-end callback to rename the span reliably.
+            if (
+                hasattr(instance, "func")
+                and getattr(instance.func, "__name__", "") == "_func"
+                and span_type
+                in (SpanAttributes.SpanType.TOOL, SpanAttributes.SpanType.MCP)
+            ):
+                resolved_tool_name = None
+                # Prefer instance.tools_by_name when available
+                try:
+                    tools_by_name = getattr(instance, "tools_by_name", None)
+                    if isinstance(tools_by_name, dict) and tools_by_name:
+                        resolved_tool_name = list(tools_by_name.keys())[0]
+                except Exception:
+                    pass
+                # Fallback: try to find tool call name in kwargs/args
+                if not resolved_tool_name:
+                    input_data = args[1] if len(args) > 1 else kwargs
+                    try:
+                        if isinstance(input_data, dict):
+                            # LCEL tool call shape
+                            messages = input_data.get("messages")
+                            if isinstance(messages, list) and messages:
+                                last_msg = messages[-1]
+                                if (
+                                    hasattr(last_msg, "tool_calls")
+                                    and last_msg.tool_calls
+                                ):
+                                    tool_call = last_msg.tool_calls[0]
+                                    if isinstance(tool_call, dict):
+                                        resolved_tool_name = tool_call.get(
+                                            "name"
+                                        )
+                                    elif hasattr(tool_call, "name"):
+                                        resolved_tool_name = tool_call.name
+                                        if hasattr(
+                                            tool_call, "function"
+                                        ) and hasattr(
+                                            tool_call.function, "name"
+                                        ):
+                                            resolved_tool_name = (
+                                                tool_call.function.name
+                                            )
+                    except Exception:
+                        pass
+
+                if resolved_tool_name:
+                    try:
+                        from trulens.otel.semconv.constants import (
+                            TRULENS_SPAN_END_CALLBACKS,
+                        )
+
+                        def _rename(span):
+                            try:
+                                if hasattr(span, "update_name"):
+                                    span.update_name(resolved_tool_name)
+                            except Exception:
+                                pass
+
+                        # Inject span-end callback to ensure name is updated after attributes are set
+                        kwargs = dict(kwargs)
+                        callbacks = kwargs.get(TRULENS_SPAN_END_CALLBACKS, [])
+                        callbacks = (
+                            list(callbacks)
+                            if isinstance(callbacks, (list, tuple))
+                            else []
+                        )
+                        callbacks.append(_rename)
+                        kwargs[TRULENS_SPAN_END_CALLBACKS] = callbacks
+                    except Exception:
+                        pass
+
             return instrumented_method(*args, **kwargs)
 
         # Apply the wrapper using wrapt
@@ -1497,8 +1614,25 @@ class TruGraph(TruChain):
                 combined_classes = langchain_default.CLASSES().union(
                     langgraph_default.CLASSES()
                 )
-                combined_methods = (
-                    langchain_default.METHODS + langgraph_default.METHODS
+                # Support both callable METHODS() and list METHODS across versions
+                try:
+                    lc_methods = (
+                        langchain_default.METHODS()
+                        if callable(getattr(langchain_default, "METHODS", None))
+                        else langchain_default.METHODS
+                    )
+                except Exception:
+                    lc_methods = []
+                try:
+                    lg_methods = (
+                        langgraph_default.METHODS()
+                        if callable(getattr(langgraph_default, "METHODS", None))
+                        else langgraph_default.METHODS
+                    )
+                except Exception:
+                    lg_methods = []
+                combined_methods = list(lc_methods or []) + list(
+                    lg_methods or []
                 )
 
                 super().__init__(
