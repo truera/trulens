@@ -12,6 +12,7 @@ from typing import (
     Tuple,
 )
 
+from litellm import model_cost
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -23,6 +24,8 @@ from google.genai.types import GenerateContentResponse
 logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
+
+LITELLM_MODEL_COSTS_TABLE = model_cost
 
 
 def _get_env_api_key() -> Optional[str]:
@@ -44,19 +47,36 @@ def _get_env_api_key() -> Optional[str]:
 class GoogleCostComputer:
     @staticmethod
     def handle_response(response: Any) -> Dict[str, Any]:
+        """Process Google API response and extract cost/usage metadata.
+
+        Args:
+            response: GenerateContentResponse object from Google API
+
+        Returns:
+            Dictionary with cost and usage attributes for OpenTelemetry span
+        """
         usage = response.usage_metadata
+
+        endpoint = GoogleEndpoint()
+        callback = GoogleCallback(endpoint=endpoint)
+
+        model_name = response.model_version
+        n_total_tokens = usage.total_token_count or 0
+        n_prompt_tokens = usage.prompt_token_count or 0
+        n_completion_tokens = usage.candidates_token_count or 0
+        n_reasoning_tokens = usage.thoughts_token_count or 0
+        calculated_cost = callback._compute_cost(
+            model_name, n_prompt_tokens, n_completion_tokens
+        )
+
         return {
-            SpanAttributes.COST.NUM_TOKENS: usage.total_token_count or 0,
-            SpanAttributes.COST.NUM_PROMPT_TOKENS: usage.prompt_token_count
-            or 0,
-            SpanAttributes.COST.NUM_COMPLETION_TOKENS: usage.candidates_token_count
-            or 0,
-            SpanAttributes.COST.NUM_REASONING_TOKENS: usage.thoughts_token_count
-            or 0,
-            # TODO: Check the cost computation functionality
-            # SpanAttributes.COST.COST: completion_cost(response),
+            SpanAttributes.COST.NUM_TOKENS: n_total_tokens,
+            SpanAttributes.COST.NUM_PROMPT_TOKENS: n_prompt_tokens,
+            SpanAttributes.COST.NUM_COMPLETION_TOKENS: n_completion_tokens,
+            SpanAttributes.COST.NUM_REASONING_TOKENS: n_reasoning_tokens,
+            SpanAttributes.COST.COST: calculated_cost,
             SpanAttributes.COST.CURRENCY: "USD",
-            SpanAttributes.COST.MODEL: response.model_version,
+            SpanAttributes.COST.MODEL: model_name,
         }
 
 
@@ -91,7 +111,83 @@ class GoogleCallback(core_endpoint.EndpointCallback):
                 getattr(self.cost, cost_field, 0) + usage.get(google_field, 0),
             )
 
-        # TODO: missing code for cost calculation
+        model_name = response_dict.get("model_version")
+        n_prompt_tokens = usage.get("prompt_token_count", 0)
+        n_completion_tokens = usage.get("candidates_token_count", 0)
+
+        calculated_cost = self._compute_cost(
+            model_name, n_prompt_tokens, n_completion_tokens
+        )
+
+        setattr(
+            self.cost, "cost", getattr(self.cost, "cost", 0) + calculated_cost
+        )
+        setattr(self.cost, "cost_currency", "USD")
+
+    def _compute_cost(
+        self, model_name: str, n_prompt_tokens: int, n_completion_tokens: int
+    ) -> float:
+        """Compute cost in USD based on model name and token counts using LiteLLM community-maintained pricing list.
+        Reference: https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json
+
+        Args:
+            model_name: Full model name from Google API (e.g., "gemini-2.5-flash-001")
+            n_prompt_tokens: Number of input/prompt tokens
+            n_completion_tokens: Number of output/completion tokens
+
+        Returns:
+            Cost in USD
+        """
+        try:
+            if not model_name:
+                logger.warning("No model name provided for cost calculation")
+                return 0.0
+
+            logger.debug(f"Received model_version: {model_name}")
+
+            if model_name in LITELLM_MODEL_COSTS_TABLE:
+                pricing = LITELLM_MODEL_COSTS_TABLE[model_name]
+
+                # Determine input pricing based on prompt size (<=200K vs >200K tokens)
+                if n_prompt_tokens > 200000:
+                    input_price = pricing.get(
+                        "input_cost_per_token_above_200k_tokens",
+                        pricing.get("input_cost_per_token", 0),
+                    )
+                else:
+                    input_price = pricing.get("input_cost_per_token", 0)
+
+                # Determine output pricing based on prompt size (<=200K vs >200K tokens)
+                if n_prompt_tokens > 200000:
+                    output_price = pricing.get(
+                        "output_cost_per_token_above_200k_tokens",
+                        pricing.get("output_cost_per_token", 0),
+                    )
+                else:
+                    output_price = pricing.get("output_cost_per_token", 0)
+
+                # Calculate total cost
+                cost = (
+                    n_prompt_tokens * input_price
+                    + n_completion_tokens * output_price
+                )
+                logger.debug(
+                    f"JSON pricing cost calculated: ${cost:.6f} for {model_name} "
+                )
+                return cost
+
+            # Model not found in pricing config
+            logger.warning(
+                f"Model {model_name} not found in pricing configuration. "
+                f"Cost tracking will be incomplete. Available models: {list(LITELLM_MODEL_COSTS_TABLE.keys())}"
+            )
+            return 0.0
+
+        except Exception as e:
+            logger.error(
+                f"Error occurred while computing cost for model {model_name}: {e}"
+            )
+            return 0.0
 
 
 class GoogleEndpoint(core_endpoint.Endpoint):

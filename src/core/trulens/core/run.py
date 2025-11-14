@@ -848,21 +848,135 @@ class Run(BaseModel):
                     span_attrs_class, attr_name.upper(), None
                 )
                 if attr_constant:
-                    span.set_attribute(attr_constant, str(value))
-                    logger.info(
-                        f"Set {span_type} attribute {attr_constant} = {value}"
-                    )
+                    # Check if this attribute should be treated as an array
+                    if self._should_process_as_array(attr_constant):
+                        processed_value = self._process_array_attribute(value)
+                        span.set_attribute(attr_constant, processed_value)
+                        logger.info(
+                            f"Set {span_type} attribute {attr_constant} = {processed_value}"
+                        )
+                    else:
+                        span.set_attribute(attr_constant, str(value))
+                        logger.info(
+                            f"Set {span_type} attribute {attr_constant} = {value}"
+                        )
                 else:
                     # Fallback to raw attribute name
                     fallback_key = f"{span_type}.{attr_name}"
+                    # Check if this attribute name suggests it should be an array
+                    if self._should_process_as_array_by_name(attr_name):
+                        processed_value = self._process_array_attribute(value)
+                        span.set_attribute(fallback_key, processed_value)
+                        logger.info(
+                            f"Set fallback attribute {fallback_key} = {processed_value}"
+                        )
+                    else:
+                        span.set_attribute(fallback_key, str(value))
+                        logger.info(
+                            f"Set fallback attribute {fallback_key} = {value}"
+                        )
+            else:
+                fallback_key = f"{span_type}.{attr_name}"
+                # Check if this attribute name suggests it should be an array
+                if self._should_process_as_array_by_name(attr_name):
+                    processed_value = self._process_array_attribute(value)
+                    span.set_attribute(fallback_key, processed_value)
+                    logger.info(
+                        f"Set fallback attribute {fallback_key} = {processed_value}"
+                    )
+                else:
                     span.set_attribute(fallback_key, str(value))
                     logger.info(
                         f"Set fallback attribute {fallback_key} = {value}"
                     )
-            else:
-                fallback_key = f"{span_type}.{attr_name}"
-                span.set_attribute(fallback_key, str(value))
-                logger.info(f"Set fallback attribute {fallback_key} = {value}")
+
+    def _should_process_as_array(self, attr_constant: str) -> bool:
+        """
+        Determine if a span attribute constant should be processed as an array.
+
+        Args:
+            attr_constant: The span attribute constant (e.g., SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS)
+
+        Returns:
+            bool: True if the attribute should be processed as an array
+        """
+        # Define attributes that should be treated as arrays based on semantic conventions
+        array_attributes = {
+            SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
+            SpanAttributes.GRAPH_NODE.NODES_EXECUTED,
+            SpanAttributes.RERANKER.INPUT_CONTEXT_TEXTS,
+            SpanAttributes.RERANKER.INPUT_CONTEXT_SCORES,
+            SpanAttributes.RERANKER.INPUT_RANKS,
+            SpanAttributes.RERANKER.OUTPUT_RANKS,
+            SpanAttributes.RERANKER.OUTPUT_CONTEXT_TEXTS,
+            SpanAttributes.RERANKER.OUTPUT_CONTEXT_SCORES,
+        }
+        return attr_constant in array_attributes
+
+    def _should_process_as_array_by_name(self, attr_name: str) -> bool:
+        """
+        Determine if an attribute should be processed as an array based on its name.
+        This is used for fallback cases where we don't have the constant.
+
+        Args:
+            attr_name: The attribute name (e.g., "retrieved_contexts")
+
+        Returns:
+            bool: True if the attribute should be processed as an array
+        """
+        # Attribute names that suggest array content
+        array_attribute_names = {
+            "retrieved_contexts",
+            "nodes_executed",
+            "input_context_texts",
+            "input_context_scores",
+            "input_ranks",
+            "output_ranks",
+            "output_context_texts",
+            "output_context_scores",
+        }
+        return attr_name.lower() in array_attribute_names
+
+    def _process_array_attribute(self, value: any) -> List[str]:
+        """
+        Process a value that should be treated as an array attribute.
+
+        Args:
+            value: The raw value from the dataset, could be a string, list, or other type
+
+        Returns:
+            List[str]: A list of string values
+        """
+        if value is None:
+            return []
+
+        # If it's already a list, return it (converting items to strings)
+        if isinstance(value, list):
+            return [str(item) for item in value]
+
+        # If it's a string, try to parse it as JSON first, then fall back to comma-separated
+        if isinstance(value, str):
+            value = value.strip()
+            if not value:
+                return []
+
+            # Try to parse as JSON array first
+            try:
+                parsed = json.loads(value)
+                if isinstance(parsed, list):
+                    return [str(item) for item in parsed]
+            except (json.JSONDecodeError, ValueError):
+                pass
+
+            # Fall back to comma-separated parsing
+            # Split by comma and clean up whitespace
+            items = [item.strip() for item in value.split(",")]
+            # Remove empty strings
+            items = [item for item in items if item]
+            return items
+
+        # For any other type, convert to string and treat as single item
+        return [str(value)]
 
     def _group_dataset_spec_by_span_type(
         self, dataset_spec: Dict[str, str], row
@@ -1096,7 +1210,9 @@ class Run(BaseModel):
 
         # Force flush to ensure spans are uploaded to Snowflake before querying
         self.tru_session.force_flush()
-        logger.info("Flushed OTEL spans before retrieving events")
+        logger.debug(
+            "Flushed OTel spans to event table before retrieving them for client-side metric computation"
+        )
 
         events = self._get_events_for_client_metrics()
 
@@ -1107,29 +1223,36 @@ class Run(BaseModel):
             return
 
         # Compute each client-side metric
-        for metric_config in metric_configs:
-            try:
-                logger.info(
-                    f"Computing client-side metric: {metric_config.metric_name}"
-                )
+        try:
+            for metric_config in metric_configs:
+                try:
+                    logger.info(
+                        f"Computing client-side metric: {metric_config.metric_name}"
+                    )
 
-                # Create feedback definition from the metric config
-                feedback = metric_config.create_feedback_definition()
+                    # Create feedback definition from the metric config
+                    feedback = metric_config.create_feedback_definition()
 
-                compute_feedback_by_span_group(
-                    events=events,
-                    feedback=feedback,
-                    raise_error_on_no_feedbacks_computed=False,
-                    selectors=feedback.selectors,
-                )
-                logger.info(
-                    f"Successfully computed client-side metric: {metric_config.metric_name}"
-                )
-            except Exception as e:
-                logger.error(
-                    f"Error computing client-side metric {metric_config.metric_name}: {e}"
-                )
-                raise
+                    compute_feedback_by_span_group(
+                        events=events,
+                        feedback=feedback,
+                        raise_error_on_no_feedbacks_computed=False,
+                        selectors=feedback.selectors,
+                    )
+                    logger.info(
+                        f"Successfully computed client-side metric: {metric_config.metric_name}"
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"Error computing client-side metric {metric_config.metric_name}: {e}"
+                    )
+                    raise
+        finally:
+            self.tru_session.force_flush()
+
+            logger.debug(
+                "Flushed OTel eval spans to event table to ensure all spans are ingested before main process exits"
+            )
 
     def _get_events_for_client_metrics(self) -> pd.DataFrame:
         """Get events for client-side metric computation using the appropriate method."""
