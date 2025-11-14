@@ -2530,6 +2530,98 @@ class LLMProvider(core_provider.Provider):
 
         return average_groundedness_score, {"reasons": reasons_list}
 
+    def logical_consistency_with_cot_reasons_claude(
+        self,
+        # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
+        trace: Union[Trace, str],
+        criteria: Optional[str] = None,
+        custom_instructions: Optional[str] = None,
+        examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+        enable_trace_compression: bool = True,
+    ) -> Tuple[float, Dict]:
+        """
+        Evaluate the quality of an agentic trace using a rubric focused on logical consistency and reasoning for Claude model family.
+
+        Example:
+            ```python
+            from trulens.core import Feedback
+            from trulens.providers.cortex import Cortex
+
+            provider = Cortex()
+
+            f_logical_consistency = (
+                Feedback(provider.logical_consistency_with_cot_reasons)
+                .on({
+                    "trace": Selector(trace_level=True),
+                })
+            ```
+
+        Args:
+            trace (Union[Trace, str]): The trace to evaluate (e.g., as a JSON string or formatted log).
+            criteria (Optional[str]): Optional custom criteria for evaluation. Defaults to None.
+            custom_instructions (Optional[str]): Optional custom instructions for evaluation. Defaults to None.
+            examples (Optional[List[Tuple[Dict[str, str], int]]]): Optional few-shot examples for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+            enable_trace_compression (bool): Whether to compress the trace data to reduce token usage. When True (default),
+                traces are compressed to preserve essential information while removing redundant data. Set to False to use
+                full, uncompressed traces. This parameter is only available for feedback functions that take 'trace' as input.
+                Defaults to True.
+        Returns:
+            Tuple[float, Dict]: A tuple containing a value between 0.0 (no logical consistency) and 1.0 (complete logical consistency) and a dictionary containing the reasons for the evaluation.
+        """
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        system_prompt = (
+            feedback_v2.LogicalConsistencyClaude.generate_system_prompt(
+                min_score=min_score_val,
+                max_score=max_score_val,
+                criteria=criteria,
+                custom_instructions=custom_instructions,
+                output_space=output_space,
+                examples=examples,
+            )
+        )
+
+        if isinstance(trace, Trace):
+            if enable_trace_compression:
+                trace = trace.to_compressed_json(default_handler=str)
+            else:
+                # Use regular JSON if compression is disabled
+                trace = (
+                    trace.events.to_json(default_handler=str)
+                    if trace.events is not None
+                    else "{}"
+                )
+        elif isinstance(trace, str):
+            trace = trace
+        else:
+            raise ValueError(
+                f"Invalid trace type: {type(trace)}. Must be a Trace or a string."
+            )
+
+        user_prompt = feedback_v2.LogicalConsistencyClaude.user_prompt.format(
+            trace=trace
+        )
+
+        user_prompt = user_prompt.replace(
+            "LOGICAL CONSISTENCY SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
+        )
+
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
+
     def logical_consistency_with_cot_reasons(
         self,
         # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.

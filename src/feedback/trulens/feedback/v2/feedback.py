@@ -1124,6 +1124,78 @@ class Comprehensiveness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     )
 
 
+class LogicalConsistencyClaude(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
+    """
+    Evaluates the logical consistency of the agentic system's plan and execution.
+    """
+
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+    criteria_template: ClassVar[str] = """
+    <score_definition max_score="{max_score}" min_score="{min_score}">
+        <score_level value="{max_score}">
+            Every action, claim, and transition in the trace is explicitly justified using information available in the prior context. Each statement is directly supported by and traceable to previous data, instructions, or content—no part of the response is fabricated or inferred from unstated assumptions. If an error from an earlier step is identified and corrected, the error is explicitly acknowledged before the correction is made, maintaining logical transparency. Each system instruction is followed. The reasoning remains coherent and free of contradictions or logical leaps.
+        </score_level>
+
+        <score_level value="Middle scores">
+            There are occasional lapses in logic, minor unsupported assertions, or isolated explanatory gaps. Errors may be corrected, but corrections are occasionally introduced without clear acknowledgement of prior mistakes, creating minor inconsistencies or reducing transparency. Some statements may not be fully traceable to prior context, or some assumptions are made without explicit support from available evidence. Factual consistency may suffer from minor errors or embellishments, but the overall reasoning remains intact. Most previously assigned tasks and instructions remain intact.
+        </score_level>
+
+        <score_level value="{min_score}">
+            There is frequent or severe breakdown in the logical flow; many statements are either unsupported by, or cannot be grounded in, the prior context. Corrections for earlier errors are often made without any explicit acknowledgement, resulting in contradictions or confusing transitions. Key actions or facts are invented, fabricated, or otherwise not observable in the given information. Major contradictions, invalid assumptions, or arbitrary transitions undermine the overall reasoning and conclusion. Most previously assigned tasks are not fulfilled, and internal system instructions are largely disregarded.
+        </score_level>
+    </score_definition>
+    """
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """You are a meticulous and analytical LOGICAL CONSISTENCY EVALUATOR. Your sole and exclusive task is to provide a detailed evaluation and a single numerical score for an agentic system's trace.
+
+    <evaluation_criteria>
+    {criteria}
+    </evaluation_criteria>
+
+    <output_format>
+    1. Your final score MUST be a single, isolated numerical value within the tag: <LOGICAL_CONSISTENCY_SCORE>X</LOGICAL_CONSISTENCY_SCORE>.
+    2. Your detailed critique MUST precede the final score.
+    </output_format>
+
+    <instructions>
+    1. **Scoring:** You must assign a single numerical score from the range defined in {output_space_prompt}.
+    2. **Detailed Critique:** For every step in the trace with an issue (e.g., contradictions, unsupported statements, or previous instructions not followed), you must:
+        a. Explicitly identify the trace step number or segment.
+        b. Explain the specific logical problem or violation.
+        c. Flag any implicit assumptions made by the agent.
+    3. **Tone:** Be critical and rigorous in your evaluation.
+    </instructions>
+
+    {custom_instructions}
+    """
+    )
+
+    user_prompt: ClassVar[str] = cleandoc(
+        """
+    {trace}
+
+    Begin the logical consistency evaluation now.
+
+    CRITIQUE:
+    """
+    )
+
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
+    )
+
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            custom_instructions="",
+        )
+    )
+
+
 class LogicalConsistency(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     """
     Evaluates the logical consistency of the agentic system's plan and execution.
