@@ -15,6 +15,8 @@ parameters:
 steps:
   - bash: |
       set -e
+      # Clean up any existing database files to avoid migration errors
+      rm -f default.sqlite *.db some_filename.db
       make test-${{ parameters.testSuite }}-${{ parameters.pytestMarker }}
     condition: or(ne(variables['python-version'], 3.12), ne('${{ parameters.pytestMarker }}', 'snowflake'))
     env:
