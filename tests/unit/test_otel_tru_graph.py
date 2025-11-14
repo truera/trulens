@@ -15,6 +15,17 @@ from trulens.otel.semconv.trace import SpanAttributes
 import tests.util.otel_tru_app_test_case
 
 try:
+    # Initialize langchain globals for langchain 1.x compatibility
+    # This prevents errors with langchain.debug/langchain.verbose in callbacks
+    try:
+        from langchain_core import globals as langchain_globals
+
+        langchain_globals.set_debug(False)
+        langchain_globals.set_verbose(False)
+    except (ImportError, AttributeError):
+        # Fallback for older langchain or if globals API changes
+        pass
+
     from langchain_core.messages import AIMessage
     from langchain_core.messages import HumanMessage
     from langgraph.checkpoint.memory import MemorySaver

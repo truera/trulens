@@ -24,8 +24,17 @@ try:
     from langchain_core.runnables import RunnablePassthrough
     from langchain_text_splitters import RecursiveCharacterTextSplitter
     from trulens.apps.langchain import TruChain
-except Exception:
-    pass
+except Exception as e:
+    # If imports fail, skip tests in this module
+    import sys
+
+    print(
+        f"Skipping test_otel_tru_chain tests due to import error: {e}",
+        file=sys.stderr,
+    )
+    pytest.skip(
+        f"LangChain dependencies not available: {e}", allow_module_level=True
+    )
 
 # Suppress noisy DeprecationWarnings emitted by optional deps (PyMuPDF + LangGraph)
 for message in (

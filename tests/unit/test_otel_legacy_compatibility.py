@@ -12,6 +12,15 @@ from trulens.otel.semconv.trace import SpanAttributes
 from tests.util.otel_test_case import OtelTestCase
 
 try:
+    # Initialize langchain globals for langchain 1.x compatibility
+    try:
+        from langchain_core import globals as langchain_globals
+
+        langchain_globals.set_debug(False)
+        langchain_globals.set_verbose(False)
+    except (ImportError, AttributeError):
+        pass
+
     # These imports require optional dependencies to be installed.
     from langchain.chains import LLMChain
     from langchain_community.llms import FakeListLLM
