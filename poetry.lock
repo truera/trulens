@@ -2559,7 +2559,7 @@ version = "0.4.3"
 description = "Consume Server-Sent Event (SSE) messages with HTTPX."
 optional = false
 python-versions = ">=3.9"
-groups = ["providers"]
+groups = ["apps", "providers"]
 files = [
     {file = "httpx_sse-0.4.3-py3-none-any.whl", hash = "sha256:0ac1c9fe3c0afad2e0ebb25a934a59f4c7823b60792691f779fad2c5568830fc"},
     {file = "httpx_sse-0.4.3.tar.gz", hash = "sha256:9b1ed0127459a66014aec3c56bebd93da3c1bc8bb6618c8082039a44889a755d"},
@@ -3675,7 +3675,7 @@ version = "0.3.31"
 description = "Community contributed LangChain integrations."
 optional = false
 python-versions = "<4.0.0,>=3.9.0"
-groups = ["providers"]
+groups = ["apps", "providers"]
 files = [
     {file = "langchain_community-0.3.31-py3-none-any.whl", hash = "sha256:1c727e3ebbacd4d891b07bd440647668001cea3e39cbe732499ad655ec5cb569"},
     {file = "langchain_community-0.3.31.tar.gz", hash = "sha256:250e4c1041539130f6d6ac6f9386cb018354eafccd917b01a4cff1950b80fd81"},
@@ -7419,7 +7419,7 @@ version = "2.11.0"
 description = "Settings management using Pydantic"
 optional = false
 python-versions = ">=3.9"
-groups = ["providers"]
+groups = ["apps", "providers"]
 files = [
     {file = "pydantic_settings-2.11.0-py3-none-any.whl", hash = "sha256:fe2cea3413b9530d10f3a5875adffb17ada5c1e1bab0b2885546d7310415207c"},
     {file = "pydantic_settings-2.11.0.tar.gz", hash = "sha256:d0e87a1c7d33593beb7194adb8470fc426e95ba02af83a0f23474a04c9a08180"},
@@ -10307,6 +10307,7 @@ develop = true
 
 [package.dependencies]
 langchain = ">=1.0.0"
+langchain-community = ">=0.3.0"
 langchain-core = ">=1.0.0"
 pydantic = "^2.4.2"
 trulens-core = "^2.0.0"
@@ -10327,6 +10328,7 @@ develop = true
 
 [package.dependencies]
 langchain = ">=1.0.0"
+langchain-community = ">=0.3.0"
 langchain-core = ">=1.0.0"
 langgraph = ">=0.4.4"
 opentelemetry-api = ">=1.23.0"
@@ -10683,7 +10685,7 @@ files = []
 develop = true
 
 [package.dependencies]
-langchain-community = ">=0.3.29,<1.0"
+langchain-community = ">=0.3.29"
 openai = ">=1.52.1,<2.0.0"
 trulens-core = "^2.0.0"
 trulens-feedback = "^2.0.0"

@@ -45,6 +45,10 @@ env-tests:
 		pytest-subtests \
 		ruff \
 
+clean-env:
+	@echo "Removing virtual environment to ensure clean state..."
+	poetry env remove --all || true
+
 env-tests-basic:
 	poetry install --only required \
 		&& make env-tests
