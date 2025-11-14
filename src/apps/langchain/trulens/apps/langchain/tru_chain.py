@@ -293,10 +293,6 @@ class LangChainInstrument(core_instruments.Instrument):
         @staticmethod
         def METHODS() -> List[InstrumentedMethod]:
             methods: List[InstrumentedMethod] = [
-                InstrumentedMethod("invoke", Runnable),
-                InstrumentedMethod("ainvoke", Runnable),
-                InstrumentedMethod("stream", Runnable),
-                InstrumentedMethod("astream", Runnable),
                 # Mark LLM calls as GENERATION
                 InstrumentedMethod(
                     "invoke",
@@ -345,6 +341,11 @@ class LangChainInstrument(core_instruments.Instrument):
                     if BaseChatModel is not None
                     else []
                 ),
+                # Generic runnable instrumentation (fallback when no specific span type applies)
+                InstrumentedMethod("invoke", Runnable),
+                InstrumentedMethod("ainvoke", Runnable),
+                InstrumentedMethod("stream", Runnable),
+                InstrumentedMethod("astream", Runnable),
                 # Also instrument event-style streaming APIs when used
                 InstrumentedMethod("stream_events", Runnable),
                 InstrumentedMethod("astream_events", Runnable),

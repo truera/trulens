@@ -3,6 +3,7 @@ Tests for OTEL TruChain app.
 """
 
 import gc
+import warnings
 import weakref
 
 import pytest
@@ -25,6 +26,17 @@ try:
     from trulens.apps.langchain import TruChain
 except Exception:
     pass
+
+# Suppress noisy DeprecationWarnings emitted by optional deps (PyMuPDF + LangGraph)
+for message in (
+    "builtin type SwigPyPacked has no __module__ attribute",
+    "builtin type SwigPyObject has no __module__ attribute",
+    "builtin type swigvarlink has no __module__ attribute",
+    "AgentStatePydantic has been moved to `langchain.agents`",
+):
+    warnings.filterwarnings(
+        "ignore", message=message, category=DeprecationWarning
+    )
 
 
 @pytest.mark.optional
