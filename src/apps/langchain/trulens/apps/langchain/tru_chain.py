@@ -999,6 +999,10 @@ class TruChain(core_app.App):
         returned `ret`.
         """
 
+        # Preserve simple JSON-friendly returns (strings, numbers, etc.) verbatim.
+        if isinstance(ret, serial_utils.JSON_BASES):
+            return str(ret)
+
         # Prefer LCEL results shape: dict with "messages" or list of Message-like objects
         try:
             # Case 1: result dict with "messages"
