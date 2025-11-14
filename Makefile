@@ -45,8 +45,8 @@ env-tests:
 		ruff \
 
 env-tests-basic:
-	poetry install --only required \
-		&& make env-tests
+	poetry install --only required
+	make env-tests
 
 env-tests-optional: env env-tests
 	poetry install --with apps,providers
