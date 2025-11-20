@@ -154,7 +154,7 @@ class SnowflakeEventTableDB(core_db.DB):
         if run_name:
             run_name_str = f"'{run_name}'"
             where_clauses.append(
-                f'RECORD_ATTRIBUTES:"ai.observability.run.name" = {run_name_str}'
+                f'RECORD_ATTRIBUTES:"ai.observability.run.name" = {run_name_str} OR RECORD_ATTRIBUTES:"snow.ai.observability.run.name" = {run_name_str}'
             )
         if record_ids:
             record_ids_str = ", ".join([f"'{curr}'" for curr in record_ids])
