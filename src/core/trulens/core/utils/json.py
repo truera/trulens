@@ -340,11 +340,12 @@ def jsonify(
             computed_fields_map = getattr(
                 cls, "__pydantic_computed_fields__", {}
             )
+        if not isinstance(computed_fields_map, dict):
+            computed_fields_map = {}
 
-        if isinstance(computed_fields_map, dict):
-            for k in computed_fields_map.keys():
-                if recur_key(k):
-                    forward_value[k] = recur(python_utils.safe_getattr(obj, k))
+        for k in computed_fields_map.keys():
+            if recur_key(k):
+                forward_value[k] = recur(python_utils.safe_getattr(obj, k))
 
         # Redact possible secrets based on key name and value.
         if redact_keys:
