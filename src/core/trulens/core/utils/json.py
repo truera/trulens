@@ -340,8 +340,6 @@ def jsonify(
             computed_fields_map = getattr(
                 cls, "__pydantic_computed_fields__", {}
             )
-        if not isinstance(computed_fields_map, dict):
-            computed_fields_map = {}
 
         for k in computed_fields_map.keys():
             if recur_key(k):
