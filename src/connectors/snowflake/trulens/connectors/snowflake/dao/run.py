@@ -635,7 +635,7 @@ class RunDao:
             logger.info(
                 f"Executing SQL command for metrics computation: {sql_cmd}"
             )
-            sql_cmd.collect_nowait()  # metric computation query can be asynchronous
+            sql_cmd.collect()  # metric computation itself is asynchronous, but we need to wait at least for ingestion so that if the eval runs in a Python script, the python doesn't exit before the query finishes.
         except Exception as e:
             logger.exception(
                 f"Error encountered during calling compute metrics query: {e}."
