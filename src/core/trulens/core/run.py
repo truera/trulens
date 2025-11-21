@@ -1168,32 +1168,40 @@ class Run(BaseModel):
         )
         logger.info(f"Server-side metrics to compute: {server_metric_names}")
 
-        # Handle client-side metrics
-        if client_metric_configs:
-            try:
-                self._compute_client_side_metrics_from_configs(
-                    client_metric_configs
+        try:
+            # Handle client-side metrics
+            if client_metric_configs:
+                try:
+                    self._compute_client_side_metrics_from_configs(
+                        client_metric_configs
+                    )
+                    logger.info(
+                        f"Successfully computed {len(client_metric_configs)} client-side metrics"
+                    )
+                except Exception as e:
+                    logger.error(f"Error computing client-side metrics: {e}")
+                    raise
+
+            if server_metric_names:
+                self.run_dao.call_compute_metrics_query(
+                    metrics=server_metric_names,
+                    object_name=self.object_name,
+                    object_type=self.object_type,
+                    object_version=self.object_version,
+                    run_name=self.run_name,
                 )
                 logger.info(
-                    f"Successfully computed {len(client_metric_configs)} client-side metrics"
+                    f"Started server-side computation for {len(server_metric_names)} metrics"
                 )
-            except Exception as e:
-                logger.error(f"Error computing client-side metrics: {e}")
-                raise
 
-        if server_metric_names:
-            self.run_dao.call_compute_metrics_query(
-                metrics=server_metric_names,
-                object_name=self.object_name,
-                object_type=self.object_type,
-                object_version=self.object_version,
-                run_name=self.run_name,
-            )
-            logger.info(
-                f"Started server-side computation for {len(server_metric_names)} metrics"
+            logger.info("Metrics computation job started")
+        finally:
+            self.tru_session.force_flush()
+
+            logger.debug(
+                "Flushed OTel eval spans to event table to ensure all spans are ingested before main process exits"
             )
 
-        logger.info("Metrics computation job started")
         return "Metrics computation in progress."
 
     def _compute_client_side_metrics_from_configs(
@@ -1223,36 +1231,30 @@ class Run(BaseModel):
             return
 
         # Compute each client-side metric
-        try:
-            for metric_config in metric_configs:
-                try:
-                    logger.info(
-                        f"Computing client-side metric: {metric_config.metric_name}"
-                    )
 
-                    # Create feedback definition from the metric config
-                    feedback = metric_config.create_feedback_definition()
+        for metric_config in metric_configs:
+            try:
+                logger.info(
+                    f"Computing client-side metric: {metric_config.metric_name}"
+                )
 
-                    compute_feedback_by_span_group(
-                        events=events,
-                        feedback=feedback,
-                        raise_error_on_no_feedbacks_computed=False,
-                        selectors=feedback.selectors,
-                    )
-                    logger.info(
-                        f"Successfully computed client-side metric: {metric_config.metric_name}"
-                    )
-                except Exception as e:
-                    logger.error(
-                        f"Error computing client-side metric {metric_config.metric_name}: {e}"
-                    )
-                    raise
-        finally:
-            self.tru_session.force_flush()
+                # Create feedback definition from the metric config
+                feedback = metric_config.create_feedback_definition()
 
-            logger.debug(
-                "Flushed OTel eval spans to event table to ensure all spans are ingested before main process exits"
-            )
+                compute_feedback_by_span_group(
+                    events=events,
+                    feedback=feedback,
+                    raise_error_on_no_feedbacks_computed=False,
+                    selectors=feedback.selectors,
+                )
+                logger.info(
+                    f"Successfully computed client-side metric: {metric_config.metric_name}"
+                )
+            except Exception as e:
+                logger.error(
+                    f"Error computing client-side metric {metric_config.metric_name}: {e}"
+                )
+                raise
 
     def _get_events_for_client_metrics(self) -> pd.DataFrame:
         """Get events for client-side metric computation using the appropriate method."""
