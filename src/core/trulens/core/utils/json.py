@@ -331,9 +331,20 @@ def jsonify(
             if (not skip_excluded or not v.exclude) and recur_key(k)
         })
 
-        for k, _ in type(obj).model_computed_fields.items():
-            if recur_key(k):
-                forward_value[k] = recur(python_utils.safe_getattr(obj, k))
+        # Computed fields: read them from the class, not the instance.
+        # In Pydantic ≥ 2.10 the instance attribute may not be a dict.
+        # Use the class mapping first, and fall back to __pydantic_computed_fields__.
+        cls = type(obj)
+        computed_fields_map = getattr(cls, "model_computed_fields", None)
+        if not isinstance(computed_fields_map, dict):
+            computed_fields_map = getattr(
+                cls, "__pydantic_computed_fields__", {}
+            )
+
+        if isinstance(computed_fields_map, dict):
+            for k in computed_fields_map.keys():
+                if recur_key(k):
+                    forward_value[k] = recur(python_utils.safe_getattr(obj, k))
 
         # Redact possible secrets based on key name and value.
         if redact_keys:
