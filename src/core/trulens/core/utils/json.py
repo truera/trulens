@@ -332,7 +332,7 @@ def jsonify(
         })
 
         # Computed fields: read them from the class, not the instance.
-        # In Pydantic ≥ 2.10 the instance attribute may not be a dict.
+        # In Pydantic ≥ 2.10 the public attribute may not be a plain dict.
         # Use the class mapping first, and fall back to __pydantic_computed_fields__.
         cls = type(obj)
         computed_fields_map = getattr(cls, "model_computed_fields", None)
