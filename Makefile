@@ -51,8 +51,8 @@ clean-env:
 	poetry env remove --all || true
 
 env-tests-basic:
-	poetry install --only required \
-		&& make env-tests
+	poetry install --only required
+	make env-tests
 
 env-tests-optional: env env-tests
 	# NOTE: Excluding nemo group due to langchain 1.x incompatibility
