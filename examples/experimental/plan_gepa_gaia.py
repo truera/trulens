@@ -35,11 +35,17 @@ lm = dspy.LM(
     max_tokens=32000,
     api_key=os.environ["SNOWFLAKE_JWT"],
 )
+dspy.configure_cache(
+    enable_disk_cache=False,
+    enable_memory_cache=False,
+)
 dspy.configure(lm=lm)
 
 # Setup logging to file
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-log_file = open(f"gepa_gaia_run_{timestamp}.log", "w", encoding="utf-8")
+log_file = open(
+    f"final-full-baseline-gaia_{timestamp}.log", "w", encoding="utf-8"
+)
 
 
 def log(message=""):
@@ -240,10 +246,22 @@ class MetaJudgeSignature(dspy.Signature):
     #     desc="Detailed analysis: list each golden error and identify whether the student_critique caught or missed it. The student_critique does not need to explicitly mention the golden error category, but it should match the description and evidence of the golden error."
     # )
     feedback_analysis: str = dspy.OutputField(
-        desc="Detailed analysis: which **golden errors** were caught versus missed. **A golden error is considered 'caught' if the student_critique captures its essential nature or core problem**, even if the language or specific error category doesn't match the golden error exactly. If the student_critique mentions a relevant error, count it."
+        desc="""Detailed analysis of which **golden errors** were CAUGHT (identified/mentioned) versus MISSED (not mentioned at all).
+
+Evaluation criteria for 'caught':
+- A golden error is considered 'caught' if the critique mentions or describes the same underlying problem behavior in ANY way.
+- Exact wording, impact labels, specific error categories, or location IDs do not need to match, as the critique does not have access to the golden errors.
+- The critique does not need to explicitly characterize the impact, error category, or location of the golden error.
+- Focus on: Does the critique correctly identify the error behavior?
+
+For each golden error, state:
+1. Whether it was CAUGHT or MISSED
+2. If CAUGHT: Quote the relevant portion of the critique that mentions it
+3. If MISSED: Explain what the critique missed and provide specific guidance for improvement (e.g., "Should have identified the repeated failed tool calls with invalid arguments" or "Missed the inefficient search pattern - look for unnecessary repeated operations")
+"""
     )
     overall_score: str = dspy.OutputField(
-        desc="Recall: fraction of golden errors successfully identified. Return a string in the format: # of caught / # of golden errors (e.g. 3/5)."
+        desc="Recall score showing fraction of golden errors successfully caught. Return ONLY a simple fraction string in the format: <integer caught>/<integer total> (e.g., '3/5' or '0/4'). Each error is either fully caught or fully missed - no partial credit. Count conservatively but fairly based on your analysis above."
     )
 
 
@@ -382,7 +400,7 @@ def gepa_metric_with_feedback(
 # ============================================================
 
 # Set this to True to run optimization, False to load saved prompts
-RUN_OPTIMIZATION = True
+RUN_OPTIMIZATION = False
 output_file = "gaia_planadherence_optimized_judge_prompts.json"
 
 if RUN_OPTIMIZATION:
@@ -520,7 +538,7 @@ if RUN_OPTIMIZATION:
         optimized_prompts[category] = final_prompt
         optimized_students[category] = optimized_student
         with open(output_file, "w") as f:
-            json.dump(optimized_prompts[category], f, indent=2)
+            json.dump({category: final_prompt}, f, indent=2)
 
         log("\n--- Optimized prompt (first 300 chars) ---")
         log(final_prompt)
@@ -532,7 +550,7 @@ else:
     log(f"{'=' * 60}\n")
 
     # Change this to the file containing your saved prompts
-    prompt_file = "gaia_optimized_judge_prompts.json"  # or "gaia_plan_optimized_judge_prompts.json"
+    prompt_file = "full_baseline_prompts_gaia.json"  # or "gaia_plan_optimized_judge_prompts.json"
 
     try:
         with open(prompt_file, "r") as f:
@@ -570,13 +588,13 @@ else:
 # 6. SAVE OPTIMIZED PROMPTS
 # ============================================================
 
-log(f"\n{'=' * 60}")
-log("SAVING OPTIMIZED PROMPTS")
-log(f"{'=' * 60}\n")
+# log(f"\n{'=' * 60}")
+# log("SAVING OPTIMIZED PROMPTS")
+# log(f"{'=' * 60}\n")
 
 
-log(f"Saved optimized prompts to: {output_file}")
-log("\nYou can now use these prompts in your production judge system!")
+# log(f"Saved optimized prompts to: {output_file}")
+# log("\nYou can now use these prompts in your production judge system!")
 
 # ============================================================
 # 7. FINAL EVALUATION ON TEST SET
@@ -592,21 +610,74 @@ for category, optimized_student in optimized_students.items():
         log(f"{category}: No test examples")
         continue
 
-    scores = []
+    total_caught_errors = 0
+    total_errors = 0
+    true_total_errors = 0
+    successful_predictions = 0
+    failed_predictions = 0
 
-    for ex in test_examples:
-        log(f"trace: {ex.file}")
+    for idx, ex in enumerate(test_examples):
+        log(f"\nTest example {idx + 1}/{len(test_examples)}: {ex.file}")
+        log(f"category: {category}")
         log(f"errors: {ex.errors}")
-        log(f"number of errors: {len(ex.errors)}")
-        pred = optimized_student(trace=ex.trace)
-        log(f"pred: {pred}")
-        result = gepa_metric_with_feedback(gold=ex, pred=pred)
-        log(f"result: {result}")
-        scores.append(result.score)
+        log(f"num errors: {len(ex.errors)}")
+
+        try:
+            pred = optimized_student(trace=ex.trace)
+            log(f"pred: {pred}")
+
+            # Get the meta-judge evaluation
+            golden_errors_str = "\n".join([f"- {err}" for err in ex.errors])
+            evaluation = meta_judge(
+                agent_trace=ex.trace,
+                golden_errors=golden_errors_str,
+                student_critique=pred.critique,
+            )
+
+            # Parse the caught/total from the score (e.g., "4/5")
+            score_line = evaluation.overall_score.strip().split("\n")[0].strip()
+            score_parts = score_line.split("/")
+            caught_errors_in_example = int(score_parts[0])
+            num_errors_in_example = int(score_parts[1])
+
+            # Add to totals
+            total_caught_errors += caught_errors_in_example
+            total_errors += num_errors_in_example
+            true_total_errors += len(ex.errors)
+            successful_predictions += 1
+
+            score_decimal = (
+                caught_errors_in_example / num_errors_in_example
+                if num_errors_in_example > 0
+                else 0.0
+            )
+            log(
+                f"  ✓ Test score: {score_decimal:.2f} ({caught_errors_in_example}/{num_errors_in_example} errors caught)"
+            )
+            log(f"  Feedback: {evaluation.feedback_analysis}")
+        except Exception as e:
+            log(
+                f"  ⚠️  Test prediction failed: {type(e).__name__}: {str(e)[:100]}"
+            )
+            log("  → Skipping this example (not counting in final metrics)")
+            log(f"ERROR: {e}")
+            failed_predictions += 1
+
         log("********************************************************")
 
-    avg_score = sum(scores) / len(scores)
-    log(f"{category}: Test Avg Score = {avg_score:.2f} (n={len(scores)})")
+    # Calculate and log final metrics
+    if total_errors > 0:
+        recall = total_caught_errors / total_errors
+        log(f"\n{category}: Test Set Results:")
+        log(f"  Total caught errors: {total_caught_errors}")
+        log(f"  Total errors: {total_errors}")
+        log(f"  True total errors: {true_total_errors}")
+        log(f"  Recall: {recall:.3f} ({total_caught_errors}/{total_errors})")
+        log(f"  Successful predictions: {successful_predictions}")
+        log(f"  Failed predictions: {failed_predictions}")
+    else:
+        log(f"\n{category}: No successful predictions to evaluate")
+
 
 # Close the log file
 log_file.close()
