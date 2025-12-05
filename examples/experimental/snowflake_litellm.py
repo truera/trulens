@@ -8,7 +8,7 @@ from trulens.feedback.v2 import feedback as feedback_v2
 ## set ENV variables
 os.environ["SNOWFLAKE_ACCOUNT_ID"] = "SFCOGSOPS-SNOWHOUSE-AWS-US-WEST-2"
 # os.environ["SNOWFLAKE_USER"] = "AJIA"
-os.environ["SNOWFLAKE_JWT"] = "pat/"
+os.environ["SNOWFLAKE_JWT"] = "pat/..."
 
 # response = completion(
 #     model="snowflake/claude-sonnet-4-5",
@@ -27,7 +27,6 @@ class StudentJudgeSignature(dspy.Signature):
     )
 
 
-# Ensure LM works properly
 lm = dspy.LM(
     "snowflake/claude-sonnet-4-5",
     temperature=1,
@@ -36,43 +35,19 @@ lm = dspy.LM(
 )
 dspy.configure(lm=lm)
 
-# Test the LM connection
-print("Testing LM connection...")
-try:
-    response = lm("Hello, how are you?")
-    print(f"✓ LM connection successful: {response[:100]}...")
-except Exception as e:
-    print(f"✗ LM connection FAILED: {type(e).__name__}: {e}")
-    print("Please check your JWT token and network connection.")
-    import sys
+response = lm("Hello, how are you?")
 
-    sys.exit(1)
+print(response)
 
-# For each metric, build grouped structure of errors per trace example
+# Build grouped structure directly
 grouped_examples = defaultdict(list)
 
-print("\nLoading data files...")
-try:
-    df = pd.read_csv(
-        "examples/experimental/GPA Judge Error Analysis - TRAIN_CSV.csv"
-    )
-    print(f"✓ Loaded training CSV: {len(df)} rows")
-except Exception as e:
-    print(f"✗ Error loading training CSV: {e}")
-    import sys
-
-    sys.exit(1)
-
-try:
-    judge_df = pd.read_csv(
-        "examples/experimental/TRAIL_GAIA_Judge_Output_Per_Trace.csv"
-    )
-    print(f"✓ Loaded judge CSV: {len(judge_df)} rows")
-except Exception as e:
-    print(f"✗ Error loading judge CSV: {e}")
-    import sys
-
-    sys.exit(1)
+df = pd.read_csv(
+    "examples/experimental/GPA Judge Error Analysis - TRAIN_CSV.csv"
+)
+judge_df = pd.read_csv(
+    "examples/experimental/TRAIL_GAIA_Judge_Output_Per_Trace.csv"
+)
 
 
 def parse_gpa_category(value):
@@ -120,28 +95,17 @@ for file_value, file_group in df.groupby("Filename"):
                 errors_list.append(df.loc[idx, "Raw Error"])
 
         # Create dspy.Example directly and add to category group
-        try:
-            trace_content = open(
+        example = dspy.Example(
+            trace=open(
                 f"examples/experimental/{file_value}.txt",
                 "r",
-            ).read()
+            ).read(),
+            error_category=error_code,
+            errors=errors_list,
+            file=file_value,  # Keep for debugging
+        ).with_inputs("trace")
 
-            example = dspy.Example(
-                trace=trace_content,
-                error_category=error_code,
-                errors=errors_list,
-                file=file_value,  # Keep for debugging
-            ).with_inputs("trace")
-
-            grouped_examples[error_code].append(example)
-        except FileNotFoundError:
-            print(
-                f"⚠️  Warning: File not found: examples/experimental/{file_value}.txt"
-            )
-            continue
-        except Exception as e:
-            print(f"⚠️  Error loading {file_value}: {e}")
-            continue
+        grouped_examples[error_code].append(example)
 
 error_feedback_mapping = {
     "LC": "LogicalConsistency",
@@ -152,49 +116,18 @@ error_feedback_mapping = {
     "TS": "ToolSelection",
 }
 
-# For each metric, test the baseline prediction
 for category, category_examples in grouped_examples.items():
-    print(f"\n{'=' * 60}")
-    print(f"Testing category: {category}")
-    print(f"{'=' * 60}")
-    if category != "PA":
-        continue
-    try:
-        # A. Get the starting prompt from your TruLens feedback system
-        feedback_class_name = error_feedback_mapping[category]
-        starting_instruction = getattr(
-            feedback_v2, feedback_class_name
-        ).system_prompt
-
-        test_ex = category_examples[0]
-        print(f"filename: {test_ex.file}")
-        print(
-            f"Test trace length: {len(test_ex.trace) + len(starting_instruction)} chars (~{(len(test_ex.trace) + len(starting_instruction)) / 4:.0f} tokens)"
-        )
-
-        student = dspy.Predict(StudentJudgeSignature)
-        student.signature = StudentJudgeSignature.with_instructions(
-            starting_instruction
-        )
-
-        print(f"Running baseline prediction for {category}...")
-        print(f"student signature: {student.signature}")
-        print(f"trace: {test_ex.trace}")
-        baseline_pred = student(trace=test_ex.trace)
-        # Check if prediction has expected fields
-        if hasattr(baseline_pred, "critique"):
-            print("✓ Baseline prediction successful")
-            print(f"Critique preview: {baseline_pred.critique[:200]}...")
-        else:
-            print("⚠️  Warning: Prediction missing 'critique' field")
-            print(f"Prediction: {baseline_pred}")
-
-    except Exception as e:
-        print(f"⚠️  Error on category {category}: {type(e).__name__}: {e}")
-        import traceback
-
-        traceback.print_exc()
-        print(f"Skipping {category} and continuing to next category...")
-        continue
-
+    # A. Get the starting prompt from your TruLens feedback system
+    feedback_class_name = error_feedback_mapping[category]
+    starting_instruction = getattr(
+        feedback_v2, feedback_class_name
+    ).system_prompt
+    test_ex = category_examples[0]
+    student = dspy.Predict(StudentJudgeSignature)
+    student.signature = StudentJudgeSignature.with_instructions(
+        starting_instruction
+    )
+    baseline_pred = student(trace=test_ex.trace)
+    print(f"baseline prediction for {category}")
+    print(baseline_pred)
     print("********************************************************")

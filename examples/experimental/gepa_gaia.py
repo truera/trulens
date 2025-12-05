@@ -12,16 +12,12 @@ from trulens.feedback.v2 import feedback as feedback_v2
 ## set ENV variables
 os.environ["SNOWFLAKE_ACCOUNT_ID"] = "SFCOGSOPS-SNOWHOUSE-AWS-US-WEST-2"
 # os.environ["SNOWFLAKE_USER"] = "AJIA"
-os.environ["SNOWFLAKE_JWT"] = "pat/"
+os.environ["SNOWFLAKE_JWT"] = "pat/..."
 lm = dspy.LM(
     "snowflake/claude-sonnet-4-5",
     temperature=1,
     max_tokens=32000,
     api_key=os.environ["SNOWFLAKE_JWT"],
-)
-dspy.configure_cache(
-    enable_disk_cache=False,
-    enable_memory_cache=False,
 )
 dspy.configure(lm=lm)
 
@@ -32,7 +28,14 @@ log_file = open(f"gepa_gaia_run_{timestamp}.log", "w", encoding="utf-8")
 
 def log(message=""):
     """Write message to log file and optionally to console."""
-    print(message, file=log_file, flush=True)
+    # print(message, file=log_file, flush=True)
+
+
+def truncate_trace(trace, max_chars=80000):
+    """Truncate trace if it exceeds max_chars to avoid token limits."""
+    if len(trace) > max_chars:
+        return trace[:max_chars] + "\n\n[... trace truncated due to length ...]"
+    return trace
 
 
 df = pd.read_csv(
@@ -185,40 +188,6 @@ for file_value, file_group in test_df.groupby("Filename"):
 
 
 # ============================================================
-# CHECK TOKEN LIMITS
-# ============================================================
-
-log("\nChecking trace token counts...")
-TOKEN_LIMIT = 200000
-max_tokens = 0
-max_file = ""
-
-for category, examples in grouped_examples.items():
-    for ex in examples:
-        tokens = len(ex.trace) // 4
-        if tokens > max_tokens:
-            max_tokens = tokens
-            max_file = ex.file
-        if tokens > TOKEN_LIMIT:
-            log(
-                f"⚠️  WARNING: {ex.file} has ~{tokens:,} tokens (exceeds {TOKEN_LIMIT:,} limit)"
-            )
-
-for category, examples in test_grouped_examples.items():
-    for ex in examples:
-        tokens = len(ex.trace) // 4
-        if tokens > max_tokens:
-            max_tokens = tokens
-            max_file = ex.file
-        if tokens > TOKEN_LIMIT:
-            log(
-                f"⚠️  WARNING: {ex.file} has ~{tokens:,} tokens (exceeds {TOKEN_LIMIT:,} limit)"
-            )
-
-log(f"Max trace: {max_file} with ~{max_tokens:,} tokens\n")
-
-
-# ============================================================
 # 2. STUDENT JUDGE SIGNATURE (Fixed structure)
 # ============================================================
 
@@ -269,83 +238,86 @@ class MetaJudgeSignature(dspy.Signature):
 
 
 meta_judge = dspy.ChainOfThought(MetaJudgeSignature)
+# print history of Chain of Thought module (inspect_history)
+# print(meta_judge.inspect_history())
+# print(f"meta judge reasoning: {meta_judge['reasoning']}")
 
 # ============================================================
 # 4. META JUDGE VALIDATION
 # ============================================================
 
-# validation_results = "examples/experimental/lax_validation_results.txt"
+validation_results = "examples/experimental/lax_validation_results.txt"
 
 
-# def meta_judge_validation():
-#     correct_count = 0
-#     total_actual_aligned = 0
-#     total_actual_caught = 0
-#     total_metajudge_aligned = 0
-#     total_metajudge_caught = 0
-#     for category, category_examples in grouped_examples.items():
-#         example_count = 0
-#         for ex in category_examples:
-#             if example_count >= 15:
-#                 break
-#             example_count += 1
-#             filename = ex.file
-#             # print(f"filename: {filename}")
-#             judge_output = judge_df[judge_df["filename"] == filename][
-#                 category
-#             ].values[0]
-#             # print(f"judge_output: {judge_output}")
-#             evaluation = meta_judge(
-#                 agent_trace=ex.trace,
-#                 golden_errors=ex.errors,
-#                 student_critique=judge_output,
-#             )
-#             score = evaluation.overall_score.split("/")
-#             total_metajudge_caught += int(score[0])
-#             total_metajudge_aligned += int(score[1])
-#             # print(f"evaluation: {evaluation}")
-#             # print(f"aligned_list: {df[df['Filename'] == filename]['aligned_list']}")
-#             num_aligned = 0
-#             num_caught = 0
-#             for _, row in df[df["Filename"] == filename].iterrows():
-#                 if category in row["aligned_list"]:
-#                     num_aligned += 1
-#                     if category in row["caught_list"]:
-#                         num_caught += 1
-#             print(f"true caught/aligned ratio: {num_caught / num_aligned}")
-#             print(f"metajudge score: {score}")
-#             if num_caught / num_aligned == int(score[0]) / int(score[1]):
-#                 correct_count += 1
-#             total_actual_aligned += num_aligned
-#             total_actual_caught += num_caught
-#             with open(validation_results, "a") as f:
-#                 f.write(f"filename: {filename}\n")
-#                 f.write(f"category: {category}\n")
-#                 f.write(f"evaluation: {evaluation}\n")
-#                 f.write(
-#                     f"metajudge caught/aligned ratio: {int(score[0])}/{int(score[1])}\n"
-#                 )
-#                 f.write(
-#                     f"true caught/aligned ratio: {num_caught}/{num_aligned}\n"
-#                 )
-#                 f.write(
-#                     f"correct: {num_caught / num_aligned == int(score[0]) / int(score[1])}\n"
-#                 )
-#                 f.write("\n")
-#     with open(validation_results, "a") as f:
-#         f.write(f"correct count: {correct_count}\n")
-#         f.write("total count: 60\n")
-#         f.write(f"accuracy: {correct_count / 60}\n")
-#         f.write(f"total_actual_aligned: {total_actual_aligned}\n")
-#         f.write(f"total_actual_caught: {total_actual_caught}\n")
-#         f.write(f"total_metajudge_aligned: {total_metajudge_aligned}\n")
-#         f.write(f"total_metajudge_caught: {total_metajudge_caught}\n")
-#         f.write(
-#             f"total_actual_caught/total_actual_aligned: {total_actual_caught / total_actual_aligned}\n"
-#         )
-#         f.write(
-#             f"total_metajudge_caught/total_metajudge_aligned: {total_metajudge_caught / total_metajudge_aligned}\n"
-#         )
+def meta_judge_validation():
+    correct_count = 0
+    total_actual_aligned = 0
+    total_actual_caught = 0
+    total_metajudge_aligned = 0
+    total_metajudge_caught = 0
+    for category, category_examples in grouped_examples.items():
+        example_count = 0
+        for ex in category_examples:
+            if example_count >= 15:
+                break
+            example_count += 1
+            filename = ex.file
+            # print(f"filename: {filename}")
+            judge_output = judge_df[judge_df["filename"] == filename][
+                category
+            ].values[0]
+            # print(f"judge_output: {judge_output}")
+            evaluation = meta_judge(
+                agent_trace=ex.trace,
+                golden_errors=ex.errors,
+                student_critique=judge_output,
+            )
+            score = evaluation.overall_score.split("/")
+            total_metajudge_caught += int(score[0])
+            total_metajudge_aligned += int(score[1])
+            # print(f"evaluation: {evaluation}")
+            # print(f"aligned_list: {df[df['Filename'] == filename]['aligned_list']}")
+            num_aligned = 0
+            num_caught = 0
+            for _, row in df[df["Filename"] == filename].iterrows():
+                if category in row["aligned_list"]:
+                    num_aligned += 1
+                    if category in row["caught_list"]:
+                        num_caught += 1
+            print(f"true caught/aligned ratio: {num_caught / num_aligned}")
+            print(f"metajudge score: {score}")
+            if num_caught / num_aligned == int(score[0]) / int(score[1]):
+                correct_count += 1
+            total_actual_aligned += num_aligned
+            total_actual_caught += num_caught
+            with open(validation_results, "a") as f:
+                f.write(f"filename: {filename}\n")
+                f.write(f"category: {category}\n")
+                f.write(f"evaluation: {evaluation}\n")
+                f.write(
+                    f"metajudge caught/aligned ratio: {int(score[0])}/{int(score[1])}\n"
+                )
+                f.write(
+                    f"true caught/aligned ratio: {num_caught}/{num_aligned}\n"
+                )
+                f.write(
+                    f"correct: {num_caught / num_aligned == int(score[0]) / int(score[1])}\n"
+                )
+                f.write("\n")
+    with open(validation_results, "a") as f:
+        f.write(f"correct count: {correct_count}\n")
+        f.write("total count: 60\n")
+        f.write(f"accuracy: {correct_count / 60}\n")
+        f.write(f"total_actual_aligned: {total_actual_aligned}\n")
+        f.write(f"total_actual_caught: {total_actual_caught}\n")
+        f.write(f"total_metajudge_aligned: {total_metajudge_aligned}\n")
+        f.write(f"total_metajudge_caught: {total_metajudge_caught}\n")
+        f.write(
+            f"total_actual_caught/total_actual_aligned: {total_actual_caught / total_actual_aligned}\n"
+        )
+        f.write(
+            f"total_metajudge_caught/total_metajudge_aligned: {total_metajudge_caught / total_metajudge_aligned}\n"
+        )
 
 
 # meta_judge_validation()
@@ -376,57 +348,26 @@ def gepa_metric_with_feedback(
     Returns:
         dspy.Prediction with 'score' and 'feedback' fields
     """
-    try:
-        # Check if prediction has the required field
-        if not hasattr(pred, "critique"):
-            print(
-                "⚠️  Prediction missing 'critique' field - skipping this example"
-            )
-            print(f"   Prediction fields: {list(pred.__dict__.keys())}")
-            return dspy.Prediction(
-                score=0.0, feedback="Missing critique field - example skipped"
-            )
+    # Format golden errors nicely
+    golden_errors_str = "\n".join([f"- {err}" for err in gold.errors])
 
-        # Format golden errors nicely
-        golden_errors_str = "\n".join([f"- {err}" for err in gold.errors])
+    # Truncate trace to avoid token limits
+    truncated_agent_trace = truncate_trace(gold.trace)
 
-        # Ask meta-judge to evaluate
-        try:
-            evaluation = meta_judge(
-                agent_trace=gold.trace,
-                golden_errors=golden_errors_str,
-                student_critique=pred.critique,
-            )
-        except Exception as e:
-            print(
-                f"⚠️  Meta-judge failed - skipping this example: {type(e).__name__}: {str(e)[:100]}"
-            )
-            return dspy.Prediction(
-                score=0.0, feedback="Meta-judge error - example skipped"
-            )
+    # Ask meta-judge to evaluate
+    evaluation = meta_judge(
+        agent_trace=truncated_agent_trace,
+        golden_errors=golden_errors_str,
+        student_critique=pred.critique,
+    )
 
-        # Parse the score safely
-        try:
-            score_parts = evaluation.overall_score.split("/")
-            numeric_score = float(score_parts[0]) / float(score_parts[1])
-        except (ValueError, ZeroDivisionError, IndexError) as e:
-            print(
-                f"⚠️  Error parsing score '{evaluation.overall_score}' - skipping this example: {e}"
-            )
-            numeric_score = 0.0
-
-        return dspy.Prediction(
-            score=numeric_score,
-            feedback=evaluation.feedback_analysis,
-        )
-
-    except Exception as e:
-        print(
-            f"⚠️  Error in metric function - skipping this example: {type(e).__name__}: {str(e)[:100]}"
-        )
-        return dspy.Prediction(
-            score=0.0, feedback="Evaluation error - example skipped"
-        )
+    numeric_score = float(evaluation.overall_score.split("/")[0]) / float(
+        evaluation.overall_score.split("/")[1]
+    )
+    return dspy.Prediction(
+        score=numeric_score,
+        feedback=evaluation.feedback_analysis,
+    )
 
 
 # ============================================================
@@ -435,14 +376,11 @@ def gepa_metric_with_feedback(
 
 optimized_prompts = {}
 optimized_students = {}
-iteration_prompts = {}  # Track prompts at each iteration
 
-timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-output_file = f"gaia_optimized_judge_prompts_{timestamp}.json"
-iteration_file = f"gaia_prompt_iterations_{timestamp}.json"
+output_file = "gaia_optimized_judge_prompts_plan_adherence.json"
 
 for category, category_examples in grouped_examples.items():
-    if category in ["PA"]:
+    if category in ["LC", "EE", "TC", "TS", "PQ"]:
         continue
     log(f"\n{'=' * 60}")
     log(f"OPTIMIZING CATEGORY: {category}")
@@ -454,6 +392,7 @@ for category, category_examples in grouped_examples.items():
         feedback_v2, feedback_class_name
     ).system_prompt
 
+    print("student is being created")
     # B. Create a dspy.Predict instance
     student = dspy.Predict(StudentJudgeSignature)
 
@@ -465,39 +404,42 @@ for category, category_examples in grouped_examples.items():
     # D. Test BEFORE optimization
     log("\n--- Testing BEFORE optimization ---")
     test_ex = category_examples[0]
-    print(f"test file: {test_ex.file}")
-    print(f"category: {category}")
+
+    print("baseline prediction before")
+    print(f"Test trace length: {len(test_ex.trace)}")
+
+    # Truncate trace if too large (keep first 80k chars ≈ 20k tokens)
+    max_trace_chars = 80000
+    truncated_trace = test_ex.trace
+    if len(test_ex.trace) > max_trace_chars:
+        truncated_trace = (
+            test_ex.trace[:max_trace_chars]
+            + "\n\n[... trace truncated due to length ...]"
+        )
+        print(
+            f"⚠️  Trace truncated from {len(test_ex.trace)} to {len(truncated_trace)} chars"
+        )
 
     print(
-        f"Test trace length: {len(test_ex.trace)} chars (~{len(test_ex.trace) / 4:.0f} tokens)"
+        f"Using trace length: {len(truncated_trace)} chars (~{len(truncated_trace) / 4:.0f} tokens)"
     )
 
     try:
-        baseline_pred = student(trace=test_ex.trace)
+        baseline_pred = student(trace=truncated_trace)
+        print("baseline prediction after")
     except Exception as e:
         print(f"ERROR during baseline prediction: {type(e).__name__}: {e}")
         import traceback
 
         traceback.print_exc()
-        print("\n⚠️  Skipping baseline test and continuing with optimization...")
-        # Create a dummy prediction to continue
-        baseline_pred = dspy.Prediction(critique="[Baseline prediction failed]")
-        baseline_result = dspy.Prediction(score=0.0, feedback="Baseline failed")
+        raise
 
-    if "baseline prediction failed" not in baseline_pred.critique.lower():
-        try:
-            baseline_result = gepa_metric_with_feedback(
-                gold=test_ex, pred=baseline_pred
-            )
-            log(f"\nBaseline score: {baseline_result.score:.2f}")
-            log(f"Baseline feedback: {baseline_result.feedback}...")
-        except Exception as e:
-            print(f"⚠️  Error evaluating baseline: {e}")
-            baseline_result = dspy.Prediction(
-                score=0.0, feedback="Evaluation failed"
-            )
-    else:
-        log("\nBaseline prediction failed, skipping evaluation")
+    baseline_result = gepa_metric_with_feedback(
+        gold=test_ex, pred=baseline_pred
+    )
+    log(f"\nBaseline score: {baseline_result.score:.2f}")
+    log(f"Baseline feedback: {baseline_result.feedback}...")
+    time.sleep(1)  # Rate limiting: wait before starting optimization
 
     # E. Split into train/val (for small datasets, use all for both)
     if len(category_examples) >= 10:
@@ -516,7 +458,6 @@ for category, category_examples in grouped_examples.items():
 
     # F. Run GEPA optimization (conservative settings for small dataset)
     log("\n--- Running GEPA optimization ---")
-
     optimizer = GEPA(
         metric=gepa_metric_with_feedback,
         # Use a stronger model for optimization/reflection (recommended)
@@ -528,62 +469,16 @@ for category, category_examples in grouped_examples.items():
         ),
         # Budget control - CRITICAL for small datasets!
         auto="medium",  # For testing.
-        # Tracking - track_stats keeps metrics in memory (no pickle if log_dir=None)
-        track_stats=True,  # Track optimization statistics in memory
+        # Tracking (useful for debugging)
+        track_stats=True,
+        track_best_outputs=True,
         # Parallelization - set to 1 to avoid rate limiting
         num_threads=1,  # Sequential processing to avoid rate limits
     )
 
-    try:
-        optimized_student = optimizer.compile(
-            student=student, trainset=train_set, valset=val_set
-        )
-        print("✓ GEPA optimization completed successfully")
-
-        # Save the optimized prompt info
-        iteration_prompts[category] = {
-            "starting_prompt": starting_instruction,
-            "final_prompt": optimized_student.signature.instructions,
-        }
-
-        # Access tracked stats if available (kept in memory)
-        if hasattr(optimizer, "stats") and optimizer.stats:
-            print("\n  📊 Optimization Statistics:")
-            stats = optimizer.stats
-            iteration_prompts[category]["stats"] = {}
-
-            # Display key metrics (exact attributes may vary by GEPA version)
-            if hasattr(stats, "num_iterations"):
-                print(f"     - Iterations completed: {stats.num_iterations}")
-                iteration_prompts[category]["stats"]["num_iterations"] = (
-                    stats.num_iterations
-                )
-            if hasattr(stats, "total_metric_calls"):
-                print(f"     - Total metric calls: {stats.total_metric_calls}")
-                iteration_prompts[category]["stats"]["total_metric_calls"] = (
-                    stats.total_metric_calls
-                )
-            if hasattr(stats, "best_score"):
-                print(f"     - Best score achieved: {stats.best_score:.3f}")
-                iteration_prompts[category]["stats"]["best_score"] = float(
-                    stats.best_score
-                )
-            if hasattr(stats, "scores"):
-                print(f"     - Score progression: {stats.scores}")
-                iteration_prompts[category]["stats"]["scores"] = stats.scores
-
-        # Save iteration tracking after each category
-        with open(iteration_file, "w") as f:
-            json.dump(iteration_prompts, f, indent=2)
-        print(f"  ✓ Saved iteration metadata to {iteration_file}")
-
-    except Exception as e:
-        print(f"⚠️  GEPA optimization failed: {type(e).__name__}: {e}")
-        import traceback
-
-        traceback.print_exc()
-        print(f"Skipping category {category} and continuing to next...")
-        continue
+    optimized_student = optimizer.compile(
+        student=student, trainset=train_set, valset=val_set
+    )
 
     # G. Test AFTER optimization on VALIDATION SET
     log("\n--- Testing AFTER optimization (on validation set) ---")
@@ -595,36 +490,22 @@ for category, category_examples in grouped_examples.items():
     all_scores_after = []
 
     for i, ex in enumerate(val_set):
-        print(f"\nValidation example {i + 1}/{len(val_set)}: {ex['file']}")
+        truncated = truncate_trace(ex.trace)
 
-        # Test unoptimized with error handling
-        try:
-            baseline_pred_ex = student(trace=ex.trace)
-            result_before = gepa_metric_with_feedback(
-                gold=ex, pred=baseline_pred_ex
-            )
-            score_before = result_before.score
-            print(f"  ✓ Baseline: {score_before:.2f}")
-        except Exception as e:
-            print(f"  ⚠️  Baseline failed: {type(e).__name__}: {str(e)[:100]}")
-            print("  → Assigning score 0.0 and continuing to next example")
-            score_before = 0.0
-
+        # Test unoptimized
+        baseline_pred_ex = student(trace=truncated)
+        result_before = gepa_metric_with_feedback(
+            gold=ex, pred=baseline_pred_ex
+        )
+        score_before = result_before.score
         all_scores_before.append(score_before)
 
-        # Test optimized with error handling
-        try:
-            optimized_pred_ex = optimized_student(trace=ex.trace)
-            result_after = gepa_metric_with_feedback(
-                gold=ex, pred=optimized_pred_ex
-            )
-            score_after = result_after.score
-            print(f"  ✓ Optimized: {score_after:.2f}")
-        except Exception as e:
-            print(f"  ⚠️  Optimized failed: {type(e).__name__}: {str(e)[:100]}")
-            print("  → Assigning score 0.0 and continuing to next example")
-            score_after = 0.0
-
+        # Test optimized
+        optimized_pred_ex = optimized_student(trace=truncated)
+        result_after = gepa_metric_with_feedback(
+            gold=ex, pred=optimized_pred_ex
+        )
+        score_after = result_after.score
         all_scores_after.append(score_after)
 
         log(
@@ -646,39 +527,11 @@ for category, category_examples in grouped_examples.items():
     optimized_prompts[category] = final_prompt
     optimized_students[category] = optimized_student
 
-    # Save ALL optimized prompts so far (cumulative)
     with open(output_file, "w") as f:
-        json.dump(optimized_prompts, f, indent=2)
-
-    print(
-        f"\n✓ Saved {len(optimized_prompts)} category prompt(s) to {output_file}"
-    )
+        json.dump(optimized_prompts[category], f, indent=2)
 
     log("\n--- Optimized prompt ---")
     log(final_prompt)
-
-# ============================================================
-# 6.5. SAVE FINAL OPTIMIZED PROMPTS
-# ============================================================
-
-print(f"\n{'=' * 60}")
-print("SAVING ALL OPTIMIZED PROMPTS")
-print(f"{'=' * 60}")
-
-# Save all final optimized prompts
-with open(output_file, "w") as f:
-    json.dump(optimized_prompts, f, indent=2)
-print(f"✓ Saved {len(optimized_prompts)} optimized prompt(s) to: {output_file}")
-
-# Save iteration metadata
-if iteration_prompts:
-    with open(iteration_file, "w") as f:
-        json.dump(iteration_prompts, f, indent=2)
-    print(
-        f"✓ Saved iteration metadata for {len(iteration_prompts)} category(s) to: {iteration_file}"
-    )
-
-print(f"\nOptimized categories: {list(optimized_prompts.keys())}")
 
 # ============================================================
 # 7. FINAL EVALUATION ON TEST SET
@@ -696,26 +549,15 @@ for category, optimized_student in optimized_students.items():
 
     scores = []
 
-    for idx, ex in enumerate(test_examples):
-        print(f"\nTest example {idx + 1}/{len(test_examples)}: {ex.file}")
+    for ex in test_examples:
         log(f"trace: {ex.file}")
         log(f"errors: {ex.errors}")
-
-        try:
-            pred = optimized_student(trace=ex.trace)
-            log(f"pred: {pred}")
-            result = gepa_metric_with_feedback(gold=ex, pred=pred)
-            log(f"result: {result}")
-            scores.append(result.score)
-            print(f"  ✓ Test score: {result.score:.2f}")
-        except Exception as e:
-            print(
-                f"  ⚠️  Test prediction failed: {type(e).__name__}: {str(e)[:100]}"
-            )
-            print("  → Assigning score 0.0 and continuing to next example")
-            log(f"ERROR: {e}")
-            scores.append(0.0)
-
+        truncated = truncate_trace(ex.trace)
+        pred = optimized_student(trace=truncated)
+        log(f"pred: {pred}")
+        result = gepa_metric_with_feedback(gold=ex, pred=pred)
+        log(f"result: {result}")
+        scores.append(result.score)
         log("********************************************************")
         time.sleep(1)  # Rate limiting: wait 1 second between test examples
 
