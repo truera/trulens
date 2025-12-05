@@ -25,6 +25,7 @@ class CreateSpanFunctionCallContextManager:
         self.span_name = span_name
         self.span_context_manager = None
         self.token = None
+        self._started_record = False
 
     def __enter__(self) -> Span:
         # Set record_id into context.
@@ -39,6 +40,7 @@ class CreateSpanFunctionCallContextManager:
             recording = get_baggage("__trulens_recording__")
             if recording is not None:
                 recording.add_record_id(record_id)
+        self._started_record = started_record
         # Create span.
         self.span_context_manager = (
             trace.get_tracer_provider()

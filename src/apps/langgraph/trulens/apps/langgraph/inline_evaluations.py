@@ -112,6 +112,12 @@ class inline_evaluation:
 
             kwargs_copy = kwargs.copy()
             span_callbacks = kwargs_copy.pop(TRULENS_SPAN_END_CALLBACKS, [])
+            if not self._emit_spans:
+                span_callbacks.append(
+                    lambda span: span.set_attribute(
+                        SpanAttributes.INLINE_EVAL.EMIT_SPAN, False
+                    )
+                )
             span_callbacks.append(span_end_callback)
             kwargs_copy[TRULENS_SPAN_END_CALLBACKS] = span_callbacks
 

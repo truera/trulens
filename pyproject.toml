@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens"
-version = "2.4.2"
+version = "2.5.0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -48,6 +48,7 @@ build = "^1.2"
 twine = "^5.1"
 codespell = "^2.3"
 pytest-asyncio = "^0.21.0"
+pytest-xdist = "^3.6"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = ">=1.6"
@@ -71,7 +72,9 @@ mkdocs-section-index = ">=0.3"
 trulens-apps-langchain = { path = "src/apps/langchain", develop = true }
 trulens-apps-langgraph = { path = "src/apps/langgraph", develop = true }
 trulens-apps-llamaindex = { path = "src/apps/llamaindex", develop = true }
-trulens-apps-nemo = { path = "src/apps/nemo", develop = true, python = "<3.13" }
+# NOTE: trulens-apps-nemo has been DEPRECATED and removed from this branch
+# due to incompatibility with langchain>=1.0.0
+# nemoguardrails requires langchain<0.4.0 which conflicts with langgraph's requirement of langchain>=1.0.0
 
 [tool.poetry.group.providers.dependencies]
 trulens-providers-bedrock = { path = "src/providers/bedrock", develop = true }

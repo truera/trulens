@@ -335,9 +335,9 @@ class RailsInstrument(Instrument):
         }.union(LangChainInstrument.Default.CLASSES())
         """Instrument only these classes."""
 
-        METHODS: List[InstrumentedMethod] = (
-            LangChainInstrument.Default.METHODS
-            + [
+        @staticmethod
+        def METHODS() -> List[InstrumentedMethod]:
+            return LangChainInstrument.Default.METHODS() + [
                 InstrumentedMethod("execute_action", ActionDispatcher),
                 InstrumentedMethod("generate", LLMRails),
                 InstrumentedMethod("generate_async", LLMRails),
@@ -359,14 +359,14 @@ class RailsInstrument(Instrument):
                 ),
                 InstrumentedMethod("feedback", FeedbackActions),
             ]
-        )
+
         """Instrument only methods with these names and of these classes."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(
             include_modules=RailsInstrument.Default.MODULES,
             include_classes=RailsInstrument.Default.CLASSES(),
-            include_methods=RailsInstrument.Default.METHODS,
+            include_methods=RailsInstrument.Default.METHODS(),
             *args,
             **kwargs,
         )
