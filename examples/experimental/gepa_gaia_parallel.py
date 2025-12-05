@@ -1,19 +1,3 @@
-"""
-GEPA Judge Optimization and Evaluation Script for SWE-Bench
-
-USAGE:
-------
-1. To run GEPA optimization (generate new prompts):
-   - Set RUN_OPTIMIZATION = True (around line 406)
-   - Optionally adjust categories_to_skip in the categories_to_optimize line (around line 694)
-   - Run the script
-
-2. To evaluate using saved prompts (skip optimization):
-   - Set RUN_OPTIMIZATION = False (around line 406)
-   - Set prompt_file to your saved prompts file (around line 737)
-   - Run the script - it will load prompts and run test evaluation only
-"""
-
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
@@ -32,7 +16,6 @@ from trulens.feedback.v2 import feedback as feedback_v2
 os.environ["SNOWFLAKE_ACCOUNT_ID"] = "SFCOGSOPS-SNOWHOUSE-AWS-US-WEST-2"
 # os.environ["SNOWFLAKE_USER"] = "AJIA"
 os.environ["SNOWFLAKE_JWT"] = "pat/..."
-
 
 # ============================================================
 # RETRY LOGIC FOR RATE LIMITS (429 errors)
@@ -87,7 +70,7 @@ dspy.configure(lm=lm)
 # Setup logging to file with thread-safe lock
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 log_file = open(
-    f"simple-baseline_swebench_run4_{timestamp}.log", "w", encoding="utf-8"
+    f"auto_light_gepa_gaia_run_{timestamp}.log", "w", encoding="utf-8"
 )
 log_lock = threading.Lock()  # Thread-safe logging
 
@@ -98,23 +81,30 @@ def log(message=""):
         print(message, file=log_file, flush=True)
 
 
-df = pd.read_csv("examples/experimental/SWE-Bench_Train.csv")
-test_df = pd.read_csv("examples/experimental/SWE-Bench_Test.csv")
+df = pd.read_csv(
+    "examples/experimental/GPA Judge Error Analysis - TRAIN_CSV.csv"
+)
+judge_df = pd.read_csv(
+    "examples/experimental/TRAIL_GAIA_Judge_Output_Per_Trace.csv"
+)
+test_df = pd.read_csv(
+    "examples/experimental/GPA Judge Error Analysis - TEST_CSV.csv"
+)
 
-# for i in range(len(df)):
-#     file_name = df.iloc[i]["file"]
-#     df.loc[i, "trace"] = open(
-#         f"examples/experimental/SWE_Bench/{file_name}".replace("json", "txt"),
-#         "r",
-#     ).read()
+for i in range(len(df)):
+    file_name = df.iloc[i]["Filename"]
+    df.loc[i, "trace"] = open(
+        f"examples/experimental/{file_name}.txt",
+        "r",
+    ).read()
 
-# # Prepare test_df similarly
-# for i in range(len(test_df)):
-#     file_name = test_df.iloc[i]["file"]
-#     test_df.loc[i, "trace"] = open(
-#         f"examples/experimental/SWE_Bench/{file_name}".replace("json", "txt"),
-#         "r",
-#     ).read()
+# Prepare test_df similarly
+for i in range(len(test_df)):
+    file_name = test_df.iloc[i]["Filename"]
+    test_df.loc[i, "trace"] = open(
+        f"examples/experimental/{file_name}.txt",
+        "r",
+    ).read()
 
 
 # Convert GPA Category (AJ) to gpa_list, ignoring empty values
@@ -138,10 +128,14 @@ def parse_gpa_category(value):
     return []
 
 
-df["gpa_list"] = df["GPA Category (AJ)"].apply(parse_gpa_category)
+df["gpa_list"] = df["Align_Judges"].apply(parse_gpa_category)
+df["caught_list"] = df["Caught"].apply(parse_gpa_category)
+df["aligned_list"] = df["Align_Judges"].apply(parse_gpa_category)
 
 # Parse test_df similarly
-test_df["gpa_list"] = test_df["GPA Category (AJ)"].apply(parse_gpa_category)
+test_df["gpa_list"] = test_df["Align_Judges"].apply(parse_gpa_category)
+test_df["caught_list"] = test_df["Caught"].apply(parse_gpa_category)
+test_df["aligned_list"] = test_df["Align_Judges"].apply(parse_gpa_category)
 
 # ============================================================
 # BUILD EXAMPLES GROUPED BY ERROR CATEGORY
@@ -159,7 +153,7 @@ error_feedback_mapping = {
 # Build grouped structure directly
 grouped_examples = defaultdict(list)
 
-for file_value, file_group in df.groupby("file"):
+for file_value, file_group in df.groupby("Filename"):
     # Get all unique error codes in this trace
     all_error_codes = set()
     for gpa_list in file_group["gpa_list"]:
@@ -175,18 +169,16 @@ for file_value, file_group in df.groupby("file"):
         errors_list = []
         for idx in rows_with_error.index:
             if (
-                "error" in df.columns
-                and pd.notna(df.loc[idx, "error"])
-                and str(df.loc[idx, "error"]).strip() != ""
+                "Raw Error" in df.columns
+                and pd.notna(df.loc[idx, "Raw Error"])
+                and str(df.loc[idx, "Raw Error"]).strip() != ""
             ):
-                errors_list.append(df.loc[idx, "error"])
+                errors_list.append(df.loc[idx, "Raw Error"])
 
         # Create dspy.Example directly and add to category group
         example = dspy.Example(
             trace=open(
-                f"examples/experimental/SWE_Bench/{file_value}".replace(
-                    "json", "txt"
-                ),
+                f"examples/experimental/{file_value}.txt",
                 "r",
             ).read(),
             error_category=error_code,
@@ -197,57 +189,12 @@ for file_value, file_group in df.groupby("file"):
         grouped_examples[error_code].append(example)
 
 # ============================================================
-# PRINT EXAMPLES OF GROUPED_EXAMPLES
-# ============================================================
-
-# print(f"\n{'=' * 60}")
-# print("GROUPED EXAMPLES STRUCTURE")
-# print(f"{'=' * 60}\n")
-
-# print(f"Total categories: {len(grouped_examples)}")
-# print(f"Categories: {list(grouped_examples.keys())}\n")
-
-# for category, examples in grouped_examples.items():
-#     print(f"\n{'─' * 60}")
-#     print(f"Category: {category} ({error_feedback_mapping.get(category, 'Unknown')})")
-#     print(f"Number of examples: {len(examples)}")
-#     print(f"{'─' * 60}")
-
-#     # Print first example details
-#     if examples:
-#         ex = examples[0]
-#         print(f"\nExample 1:")
-#         print(f"  File: {ex.file}")
-#         print(f"  Error category: {ex.error_category}")
-#         print(f"  Number of errors: {len(ex.errors)}")
-#         print(f"  Errors:")
-#         for i, error in enumerate(ex.errors, 1):
-#             print(f"    {i}. {error[:200]}{'...' if len(error) > 200 else ''}")
-#         print(f"  Trace length: {len(ex.trace)} chars (~{len(ex.trace) / 4:.0f} tokens)")
-#         print(f"  Trace preview (first 300 chars):")
-#         print(f"    {ex.trace[:300]}...")
-
-#     # Print second example if exists
-#     if len(examples) > 1:
-#         ex = examples[1]
-#         print(f"\nExample 2:")
-#         print(f"  File: {ex.file}")
-#         print(f"  Error category: {ex.error_category}")
-#         print(f"  Number of errors: {len(ex.errors)}")
-#         print(f"  Errors:")
-#         for i, error in enumerate(ex.errors, 1):
-#             print(f"    {i}. {error[:200]}{'...' if len(error) > 200 else ''}")
-#         print(f"  Trace length: {len(ex.trace)} chars (~{len(ex.trace) / 4:.0f} tokens)")
-
-# print(f"\n{'=' * 60}\n")
-
-# ============================================================
 # BUILD TEST EXAMPLES GROUPED BY ERROR CATEGORY
 # ============================================================
 
 test_grouped_examples = defaultdict(list)
 
-for file_value, file_group in test_df.groupby("file"):
+for file_value, file_group in test_df.groupby("Filename"):
     # Get all unique error codes in this trace
     all_error_codes = set()
     for gpa_list in file_group["gpa_list"]:
@@ -263,18 +210,16 @@ for file_value, file_group in test_df.groupby("file"):
         errors_list = []
         for idx in rows_with_error.index:
             if (
-                "error" in test_df.columns
-                and pd.notna(test_df.loc[idx, "error"])
-                and str(test_df.loc[idx, "error"]).strip() != ""
+                "Raw Error" in test_df.columns
+                and pd.notna(test_df.loc[idx, "Raw Error"])
+                and str(test_df.loc[idx, "Raw Error"]).strip() != ""
             ):
-                errors_list.append(test_df.loc[idx, "error"])
+                errors_list.append(test_df.loc[idx, "Raw Error"])
 
         # Create dspy.Example directly and add to category group
         example = dspy.Example(
             trace=open(
-                f"examples/experimental/SWE_Bench/{file_value}".replace(
-                    "json", "txt"
-                ),
+                f"examples/experimental/{file_value}.txt",
                 "r",
             ).read(),
             error_category=error_code,
@@ -284,37 +229,18 @@ for file_value, file_group in test_df.groupby("file"):
 
         test_grouped_examples[error_code].append(example)
 
-
-# ============================================================
-# PRINT EXAMPLES OF TEST_GROUPED_EXAMPLES
-# ============================================================
-
-# print(f"\n{'=' * 60}")
-# print("TEST GROUPED EXAMPLES STRUCTURE")
-# print(f"{'=' * 60}\n")
-
-# print(f"Total categories: {len(test_grouped_examples)}")
-# print(f"Categories: {list(test_grouped_examples.keys())}\n")
-
-# for category, examples in test_grouped_examples.items():
-#     print(f"\n{'─' * 60}")
-#     print(f"Category: {category} ({error_feedback_mapping.get(category, 'Unknown')})")
-#     print(f"Number of test examples: {len(examples)}")
-#     print(f"{'─' * 60}")
-
-#     # Print first example details
-#     if examples:
-#         ex = examples[0]
-#         print(f"\nTest Example 1:")
-#         print(f"  File: {ex.file}")
-#         print(f"  Error category: {ex.error_category}")
-#         print(f"  Number of errors: {len(ex.errors)}")
-#         print(f"  Errors:")
-#         for i, error in enumerate(ex.errors, 1):
-#             print(f"    {i}. {error[:200]}{'...' if len(error) > 200 else ''}")
-#         print(f"  Trace length: {len(ex.trace)} chars (~{len(ex.trace) / 4:.0f} tokens)")
-
-# print(f"\n{'=' * 60}\n")
+check_examples = "check_examples.txt"
+for error_code in test_grouped_examples:
+    error_count = 0
+    with open(check_examples, "a") as f:
+        f.write(f"error_code: {error_code}\n")
+        for error in test_grouped_examples[error_code]:
+            f.write(f"  error: {error.errors}\n")
+            f.write(f"  file: {error.file}\n")
+            error_count += len(error.errors)
+            f.write("\n")
+        f.write(f"error count: {error_count}\n")
+        f.write("********************************************************\n")
 
 # ============================================================
 # 2. STUDENT JUDGE SIGNATURE (Fixed structure)
@@ -383,6 +309,85 @@ meta_judge = dspy.ChainOfThought(MetaJudgeSignature)
 # print(meta_judge.inspect_history())
 # print(f"meta judge reasoning: {meta_judge['reasoning']}")
 
+# ============================================================
+# 4. META JUDGE VALIDATION
+# ============================================================
+
+# validation_results = "examples/experimental/lax_validation_results.txt"
+
+
+# def meta_judge_validation():
+#     correct_count = 0
+#     total_actual_aligned = 0
+#     total_actual_caught = 0
+#     total_metajudge_aligned = 0
+#     total_metajudge_caught = 0
+#     for category, category_examples in grouped_examples.items():
+#         example_count = 0
+#         for ex in category_examples:
+#             if example_count >= 15:
+#                 break
+#             example_count += 1
+#             filename = ex.file
+#             # print(f"filename: {filename}")
+#             judge_output = judge_df[judge_df["filename"] == filename][
+#                 category
+#             ].values[0]
+#             # print(f"judge_output: {judge_output}")
+#             evaluation = meta_judge(
+#                 agent_trace=ex.trace,
+#                 golden_errors=ex.errors,
+#                 student_critique=judge_output,
+#             )
+#             score = evaluation.overall_score.split("/")
+#             total_metajudge_caught += int(score[0])
+#             total_metajudge_aligned += int(score[1])
+#             # print(f"evaluation: {evaluation}")
+#             # print(f"aligned_list: {df[df['Filename'] == filename]['aligned_list']}")
+#             num_aligned = 0
+#             num_caught = 0
+#             for _, row in df[df["Filename"] == filename].iterrows():
+#                 if category in row["aligned_list"]:
+#                     num_aligned += 1
+#                     if category in row["caught_list"]:
+#                         num_caught += 1
+#             print(f"true caught/aligned ratio: {num_caught / num_aligned}")
+#             print(f"metajudge score: {score}")
+#             if num_caught / num_aligned == int(score[0]) / int(score[1]):
+#                 correct_count += 1
+#             total_actual_aligned += num_aligned
+#             total_actual_caught += num_caught
+#             with open(validation_results, "a") as f:
+#                 f.write(f"filename: {filename}\n")
+#                 f.write(f"category: {category}\n")
+#                 f.write(f"evaluation: {evaluation}\n")
+#                 f.write(
+#                     f"metajudge caught/aligned ratio: {int(score[0])}/{int(score[1])}\n"
+#                 )
+#                 f.write(
+#                     f"true caught/aligned ratio: {num_caught}/{num_aligned}\n"
+#                 )
+#                 f.write(
+#                     f"correct: {num_caught / num_aligned == int(score[0]) / int(score[1])}\n"
+#                 )
+#                 f.write("\n")
+#     with open(validation_results, "a") as f:
+#         f.write(f"correct count: {correct_count}\n")
+#         f.write("total count: 60\n")
+#         f.write(f"accuracy: {correct_count / 60}\n")
+#         f.write(f"total_actual_aligned: {total_actual_aligned}\n")
+#         f.write(f"total_actual_caught: {total_actual_caught}\n")
+#         f.write(f"total_metajudge_aligned: {total_metajudge_aligned}\n")
+#         f.write(f"total_metajudge_caught: {total_metajudge_caught}\n")
+#         f.write(
+#             f"total_actual_caught/total_actual_aligned: {total_actual_caught / total_actual_aligned}\n"
+#         )
+#         f.write(
+#             f"total_metajudge_caught/total_metajudge_aligned: {total_metajudge_caught / total_metajudge_aligned}\n"
+#         )
+
+
+# meta_judge_validation()
 
 # ============================================================
 # 4. METRIC FUNCTION (uses meta-judge to score)
@@ -466,25 +471,8 @@ def gepa_metric_with_feedback(
 
 
 # ============================================================
-# 5. RUN GEPA OPTIMIZATION OR LOAD SAVED PROMPTS
+# 5. RUN GEPA OPTIMIZATION PER CATEGORY
 # ============================================================
-
-"""
-USAGE:
-------
-1. To run GEPA optimization (generate new prompts):
-   - Set RUN_OPTIMIZATION = True
-   - Optionally adjust categories_to_skip
-   - Run the script
-
-2. To evaluate using saved prompts (skip optimization):
-   - Set RUN_OPTIMIZATION = False
-   - Set prompt_file to your saved prompts file
-   - Run the script - it will load prompts and run test evaluation only
-"""
-
-# Set this to True to run optimization, False to load saved prompts
-RUN_OPTIMIZATION = False
 
 # Thread-safe file I/O
 file_write_lock = threading.Lock()
@@ -494,8 +482,8 @@ optimized_students = {}
 iteration_prompts = {}  # Track prompts at each iteration
 
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-output_file = f"auto_light_swebench_optimized_judge_prompts_{timestamp}.json"
-iteration_file = f"auto_light_swebench_prompt_iterations_{timestamp}.json"
+output_file = f"auto_light_gaia_optimized_judge_prompts_{timestamp}.json"
+iteration_file = f"auto_light_gaia_prompt_iterations_{timestamp}.json"
 
 
 # ============================================================
@@ -753,127 +741,67 @@ def optimize_category(category, category_examples):
         return (category, None, None)
 
 
-if RUN_OPTIMIZATION:
-    # ============================================================
-    # RUN PARALLEL OPTIMIZATION WITH THREADPOOLEXECUTOR
-    # ============================================================
+# ============================================================
+# RUN PARALLEL OPTIMIZATION WITH THREADPOOLEXECUTOR
+# ============================================================
 
-    # Get categories to optimize (excluding skipped ones)
-    categories_to_optimize = [
-        (cat, examples)
-        for cat, examples in grouped_examples.items()
-        if cat not in ["PA", "PQ", "TS"]
-    ]  # Adjust skip list as needed
+# Get categories to optimize (excluding skipped ones)
+categories_to_optimize = [
+    (cat, examples) for cat, examples in grouped_examples.items()
+]  # Adjust skip list as needed
 
-    print(f"\n{'=' * 60}")
-    print(
-        f"Starting PARALLEL optimization of {len(categories_to_optimize)} categories"
-    )
-    print("Max parallel workers: 2")
-    print("num_threads per GEPA: 2")
-    print(f"{'=' * 60}\n")
+print(f"\n{'=' * 60}")
+print(
+    f"Starting PARALLEL optimization of {len(categories_to_optimize)} categories"
+)
+print("Max parallel workers: 2")
+print("num_threads per GEPA: 2")
+print(f"{'=' * 60}\n")
 
-    # Run optimizations in parallel with ThreadPoolExecutor
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        futures = [
-            executor.submit(optimize_category, category, examples)
-            for category, examples in categories_to_optimize
-        ]
+# Run optimizations in parallel with ThreadPoolExecutor
+with ThreadPoolExecutor(max_workers=2) as executor:
+    futures = [
+        executor.submit(optimize_category, category, examples)
+        for category, examples in categories_to_optimize
+    ]
 
-        # Wait for all to complete and collect results
-        for future in futures:
-            category, student, prompt = future.result()
-            if student:
-                print(f"✓ {category} optimization completed successfully")
-            else:
-                print(
-                    f"✗ {category} optimization failed (continuing with other categories)"
-                )
-
-    print(f"\n{'=' * 60}")
-    print("All parallel optimizations complete!")
-    print(f"Successfully optimized: {list(optimized_students.keys())}")
-    print(f"{'=' * 60}\n")
-
-else:
-    # ============================================================
-    # LOAD SAVED PROMPTS AND CREATE STUDENTS
-    # ============================================================
-
-    log(f"\n{'=' * 60}")
-    log("LOADING SAVED OPTIMIZED PROMPTS")
-    log(f"{'=' * 60}\n")
-
-    # Change this to the file containing your saved prompts
-    prompt_file = (
-        "baseline_prompts_swebench.json"  # Change to your saved prompts file
-    )
-
-    try:
-        with open(prompt_file, "r") as f:
-            optimized_prompts = json.load(f)
-
-        log(
-            f"Loaded {len(optimized_prompts)} optimized prompts from {prompt_file}"
-        )
-        print(
-            f"✓ Loaded {len(optimized_prompts)} optimized prompts from {prompt_file}"
-        )
-
-        # Create optimized students from saved prompts
-        for category, optimized_prompt in optimized_prompts.items():
-            log(f"\n{category}: Creating student with optimized prompt")
-            log(f"  Prompt preview: {optimized_prompt[:200]}...")
-
-            # Create a new student with the optimized prompt
-            student = dspy.Predict(StudentJudgeSignature)
-            student.signature = student.signature.with_instructions(
-                optimized_prompt
+    # Wait for all to complete and collect results
+    for future in futures:
+        category, student, prompt = future.result()
+        if student:
+            print(f"✓ {category} optimization completed successfully")
+        else:
+            print(
+                f"✗ {category} optimization failed (continuing with other categories)"
             )
-            optimized_students[category] = student
 
-        log(f"\n{'=' * 60}")
-        log(f"Created {len(optimized_students)} optimized students")
-        log(f"{'=' * 60}\n")
-
-        print(f"✓ Created {len(optimized_students)} optimized students")
-        print(f"  Categories: {list(optimized_students.keys())}")
-
-    except FileNotFoundError:
-        log(f"❌ Error: Could not find {prompt_file}")
-        log("Please run with RUN_OPTIMIZATION=True first to generate prompts.")
-        print(f"❌ Error: Could not find {prompt_file}")
-        print(
-            "Please run with RUN_OPTIMIZATION=True first to generate prompts."
-        )
-        log_file.close()
-        exit(1)
+print(f"\n{'=' * 60}")
+print("All parallel optimizations complete!")
+print(f"Successfully optimized: {list(optimized_students.keys())}")
+print(f"{'=' * 60}\n")
 
 # ============================================================
-# 6. SAVE FINAL OPTIMIZED PROMPTS (only if RUN_OPTIMIZATION=True)
+# 6.5. SAVE FINAL OPTIMIZED PROMPTS
 # ============================================================
 
-if RUN_OPTIMIZATION:
-    print(f"\n{'=' * 60}")
-    print("SAVING ALL OPTIMIZED PROMPTS")
-    print(f"{'=' * 60}")
+print(f"\n{'=' * 60}")
+print("SAVING ALL OPTIMIZED PROMPTS")
+print(f"{'=' * 60}")
 
-    # Save all final optimized prompts
-    with open(output_file, "w") as f:
-        json.dump(optimized_prompts, f, indent=2)
+# Save all final optimized prompts
+with open(output_file, "w") as f:
+    json.dump(optimized_prompts, f, indent=2)
+print(f"✓ Saved {len(optimized_prompts)} optimized prompt(s) to: {output_file}")
+
+# Save iteration metadata
+if iteration_prompts:
+    with open(iteration_file, "w") as f:
+        json.dump(iteration_prompts, f, indent=2)
     print(
-        f"✓ Saved {len(optimized_prompts)} optimized prompt(s) to: {output_file}"
+        f"✓ Saved iteration metadata for {len(iteration_prompts)} category(s) to: {iteration_file}"
     )
 
-    # Save iteration metadata
-    if iteration_prompts:
-        with open(iteration_file, "w") as f:
-            json.dump(iteration_prompts, f, indent=2)
-        print(
-            f"✓ Saved iteration metadata for {len(iteration_prompts)} category(s) to: {iteration_file}"
-        )
-
-    print(f"\nOptimized categories: {list(optimized_prompts.keys())}")
+print(f"\nOptimized categories: {list(optimized_prompts.keys())}")
 
 # ============================================================
 # 7. FINAL EVALUATION ON TEST SET
@@ -893,7 +821,7 @@ for category, optimized_student in optimized_students.items():
     total_errors = 0
     successful_predictions = 0
     failed_predictions = 0
-    true_total_errors = 0
+    total_true_errors = 0
 
     for idx, ex in enumerate(test_examples):
         log(f"\nTest example {idx + 1}/{len(test_examples)}: {ex.file}")
@@ -918,7 +846,7 @@ for category, optimized_student in optimized_students.items():
             score_parts = score_line.split("/")
             caught_errors_in_example = int(score_parts[0])
             num_errors_in_example = int(score_parts[1])
-            true_total_errors += len(ex.errors)
+            total_true_errors += len(ex.errors)
 
             # Add to totals
             total_caught_errors += caught_errors_in_example
@@ -951,7 +879,7 @@ for category, optimized_student in optimized_students.items():
         log(f"\n{category}: Test Set Results:")
         log(f"  Total caught errors: {total_caught_errors}")
         log(f"  Total errors: {total_errors}")
-        log(f"  True total errors: {true_total_errors}")
+        log(f"  True total errors: {total_true_errors}")
         log(f"  Recall: {recall:.3f} ({total_caught_errors}/{total_errors})")
         log(f"  Successful predictions: {successful_predictions}")
         log(f"  Failed predictions: {failed_predictions}")
