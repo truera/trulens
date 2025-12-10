@@ -1313,7 +1313,13 @@ class LLMProvider(core_provider.Provider):
                 )
             )
         else:
-            criteria = criteria_override
+            criteria = (
+                criteria_override
+                + "\nAdditional instructions:\n"
+                + additional_instructions
+                if additional_instructions
+                else criteria_override
+            )
 
         return self._langchain_evaluate(
             text=text,
@@ -1386,7 +1392,13 @@ class LLMProvider(core_provider.Provider):
                 )
             )
         else:
-            criteria = criteria_override
+            criteria = (
+                criteria_override
+                + "\nAdditional instructions:\n"
+                + additional_instructions
+                if additional_instructions
+                else criteria_override
+            )
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
             criteria=criteria,
@@ -1459,7 +1471,13 @@ class LLMProvider(core_provider.Provider):
                 )
             )
         else:
-            criteria = criteria_override
+            criteria = (
+                criteria_override
+                + "\nAdditional instructions:\n"
+                + additional_instructions
+                if additional_instructions
+                else criteria_override
+            )
         return self._langchain_evaluate(
             text=text,
             criteria=criteria,
@@ -1533,7 +1551,13 @@ class LLMProvider(core_provider.Provider):
                 )
             )
         else:
-            criteria = criteria_override
+            criteria = (
+                criteria_override
+                + "\nAdditional instructions:\n"
+                + additional_instructions
+                if additional_instructions
+                else criteria_override
+            )
 
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
@@ -1607,7 +1631,13 @@ class LLMProvider(core_provider.Provider):
                 )
             )
         else:
-            criteria = criteria_override
+            criteria = (
+                criteria_override
+                + "\nAdditional instructions:\n"
+                + additional_instructions
+                if additional_instructions
+                else criteria_override
+            )
 
         return self._langchain_evaluate(
             text=text,
@@ -1682,7 +1712,13 @@ class LLMProvider(core_provider.Provider):
                 )
             )
         else:
-            criteria = criteria_override
+            criteria = (
+                criteria_override
+                + "\nAdditional instructions:\n"
+                + additional_instructions
+                if additional_instructions
+                else criteria_override
+            )
 
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
@@ -1756,7 +1792,13 @@ class LLMProvider(core_provider.Provider):
                 )
             )
         else:
-            criteria = criteria_override
+            criteria = (
+                criteria_override
+                + "\nAdditional instructions:\n"
+                + additional_instructions
+                if additional_instructions
+                else criteria_override
+            )
 
         return self._langchain_evaluate(
             text=text,
@@ -1831,7 +1873,13 @@ class LLMProvider(core_provider.Provider):
                 )
             )
         else:
-            criteria = criteria_override
+            criteria = (
+                criteria_override
+                + "\nAdditional instructions:\n"
+                + additional_instructions
+                if additional_instructions
+                else criteria_override
+            )
 
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
@@ -1905,7 +1953,13 @@ class LLMProvider(core_provider.Provider):
                 )
             )
         else:
-            criteria = criteria_override
+            criteria = (
+                criteria_override
+                + "\nAdditional instructions:\n"
+                + additional_instructions
+                if additional_instructions
+                else criteria_override
+            )
 
         return self._langchain_evaluate(
             text=text,
@@ -1980,7 +2034,13 @@ class LLMProvider(core_provider.Provider):
                 )
             )
         else:
-            criteria = criteria_override
+            criteria = (
+                criteria_override
+                + "\nAdditional instructions:\n"
+                + additional_instructions
+                if additional_instructions
+                else criteria_override
+            )
 
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
@@ -2054,7 +2114,13 @@ class LLMProvider(core_provider.Provider):
                 )
             )
         else:
-            criteria = criteria_override
+            criteria = (
+                criteria_override
+                + "\nAdditional instructions:\n"
+                + additional_instructions
+                if additional_instructions
+                else criteria_override
+            )
         return self._langchain_evaluate(
             text=text,
             criteria=criteria,
@@ -2129,7 +2195,13 @@ class LLMProvider(core_provider.Provider):
                 )
             )
         else:
-            criteria = criteria_override
+            criteria = (
+                criteria_override
+                + "\nAdditional instructions:\n"
+                + additional_instructions
+                if additional_instructions
+                else criteria_override
+            )
 
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
@@ -2203,7 +2275,13 @@ class LLMProvider(core_provider.Provider):
                 additional_instructions=additional_instructions
             )
         else:
-            criteria = criteria_override
+            criteria = (
+                criteria_override
+                + "\nAdditional instructions:\n"
+                + additional_instructions
+                if additional_instructions
+                else criteria_override
+            )
 
         return self._langchain_evaluate(
             text=text,
@@ -2276,7 +2354,13 @@ class LLMProvider(core_provider.Provider):
                 additional_instructions=additional_instructions
             )
         else:
-            criteria = criteria_override
+            criteria = (
+                criteria_override
+                + "\nAdditional instructions:\n"
+                + additional_instructions
+                if additional_instructions
+                else criteria_override
+            )
 
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
@@ -2348,7 +2432,13 @@ class LLMProvider(core_provider.Provider):
                 additional_instructions=additional_instructions
             )
         else:
-            criteria = criteria_override
+            criteria = (
+                criteria_override
+                + "\nAdditional instructions:\n"
+                + additional_instructions
+                if additional_instructions
+                else criteria_override
+            )
 
         return self._langchain_evaluate(
             text=text,
@@ -2421,7 +2511,13 @@ class LLMProvider(core_provider.Provider):
                 additional_instructions=additional_instructions
             )
         else:
-            criteria = criteria_override
+            criteria = (
+                criteria_override
+                + "\nAdditional instructions:\n"
+                + additional_instructions
+                if additional_instructions
+                else criteria_override
+            )
 
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
@@ -2496,7 +2592,13 @@ class LLMProvider(core_provider.Provider):
                 )
             )
         else:
-            criteria = criteria_override
+            criteria = (
+                criteria_override
+                + "\nAdditional instructions:\n"
+                + additional_instructions
+                if additional_instructions
+                else criteria_override
+            )
 
         return self._langchain_evaluate(
             text=text,
@@ -2571,7 +2673,13 @@ class LLMProvider(core_provider.Provider):
                 )
             )
         else:
-            criteria = criteria_override
+            criteria = (
+                criteria_override
+                + "\nAdditional instructions:\n"
+                + additional_instructions
+                if additional_instructions
+                else criteria_override
+            )
 
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
@@ -2645,7 +2753,13 @@ class LLMProvider(core_provider.Provider):
                 )
             )
         else:
-            criteria = criteria_override
+            criteria = (
+                criteria_override
+                + "\nAdditional instructions:\n"
+                + additional_instructions
+                if additional_instructions
+                else criteria_override
+            )
 
         return self._langchain_evaluate(
             text=text,
@@ -2720,7 +2834,13 @@ class LLMProvider(core_provider.Provider):
                 )
             )
         else:
-            criteria = criteria_override
+            criteria = (
+                criteria_override
+                + "\nAdditional instructions:\n"
+                + additional_instructions
+                if additional_instructions
+                else criteria_override
+            )
 
         return self._langchain_evaluate_with_cot_reasons(
             text=text,

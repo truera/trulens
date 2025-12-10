@@ -426,7 +426,9 @@ class Groundedness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
     system_prompt: ClassVar[str] = cleandoc(
         system_prompt_template.format(
-            output_space_prompt=output_space_prompt, criteria=criteria
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            additional_instructions="",
         )
     )
 
@@ -534,7 +536,9 @@ class ContextRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
 
     system_prompt: ClassVar[str] = cleandoc(
         system_prompt_template.format(
-            output_space_prompt=output_space_prompt, criteria=criteria
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            additional_instructions="",
         )
     )
 
@@ -575,7 +579,9 @@ class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
 
     system_prompt: ClassVar[str] = cleandoc(
         system_prompt_template.format(
-            output_space_prompt=output_space_prompt, criteria=criteria
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            additional_instructions="",
         )
     )
 
@@ -621,7 +627,9 @@ class Sentiment(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
     system_prompt: ClassVar[str] = cleandoc(
         system_prompt_template.format(
-            output_space_prompt=output_space_prompt, criteria=criteria
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            additional_instructions="",
         )
     )
 
@@ -649,7 +657,9 @@ class Helpfulness(Semantics, CriteriaOutputSpaceMixin):
 
     system_prompt: ClassVar[str] = cleandoc(
         system_prompt_template.format(
-            output_space_prompt=output_space_prompt, criteria=criteria
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            additional_instructions="",
         )
     )
 
@@ -677,7 +687,9 @@ class Controversiality(Semantics):
 
     system_prompt: ClassVar[str] = cleandoc(
         system_prompt_template.format(
-            output_space_prompt=output_space_prompt, criteria=criteria
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            additional_instructions="",
         )
     )
 
@@ -715,7 +727,9 @@ class Stereotypes(Moderation, WithPrompt, CriteriaOutputSpaceMixin):
 
     system_prompt: ClassVar[str] = cleandoc(
         system_prompt_template.format(
-            output_space_prompt=output_space_prompt, criteria=criteria
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            additional_instructions="",
         )
     )
 
@@ -756,7 +770,9 @@ class Criminality(Legality, WithPrompt):
 
     system_prompt: ClassVar[str] = cleandoc(
         system_prompt_template.format(
-            output_space_prompt=output_space_prompt, criteria=criteria
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            additional_instructions="",
         )
     )
 
@@ -788,7 +804,9 @@ class Harmfulness(Moderation, WithPrompt):
 
     system_prompt: ClassVar[str] = cleandoc(
         system_prompt_template.format(
-            output_space_prompt=output_space_prompt, criteria=criteria
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            additional_instructions="",
         )
     )
 
@@ -838,7 +856,9 @@ class Maliciousness(Moderation, WithPrompt):
 
     system_prompt: ClassVar[str] = cleandoc(
         system_prompt_template.format(
-            output_space_prompt=output_space_prompt, criteria=criteria
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            additional_instructions="",
         )
     )
 
@@ -876,7 +896,9 @@ class Misogyny(Hate, WithPrompt):
 
     system_prompt: ClassVar[str] = cleandoc(
         system_prompt_template.format(
-            output_space_prompt=output_space_prompt, criteria=criteria
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            additional_instructions="",
         )
     )
 
@@ -1121,7 +1143,9 @@ class Comprehensiveness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
     system_prompt: ClassVar[str] = cleandoc(
         system_prompt_template.format(
-            output_space_prompt=output_space_prompt, criteria=criteria
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            additional_instructions="",
         )
     )
 
