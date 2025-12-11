@@ -34,7 +34,6 @@ def test_chain_of_thought_response_schema_has_additional_properties_false():
 def test_base_feedback_response_rejects_extra_fields():
     """Verify BaseFeedbackResponse rejects extra fields at runtime."""
     from pydantic import ValidationError
-
     from trulens.feedback.output_schemas import BaseFeedbackResponse
 
     # Valid input should work
@@ -49,7 +48,6 @@ def test_base_feedback_response_rejects_extra_fields():
 def test_chain_of_thought_response_rejects_extra_fields():
     """Verify ChainOfThoughtResponse rejects extra fields at runtime."""
     from pydantic import ValidationError
-
     from trulens.feedback.output_schemas import ChainOfThoughtResponse
 
     # Valid input should work
@@ -73,10 +71,8 @@ def test_chain_of_thought_response_rejects_extra_fields():
 
 def test_schema_required_fields():
     """Verify required fields are correctly specified in schemas."""
-    from trulens.feedback.output_schemas import (
-        BaseFeedbackResponse,
-        ChainOfThoughtResponse,
-    )
+    from trulens.feedback.output_schemas import BaseFeedbackResponse
+    from trulens.feedback.output_schemas import ChainOfThoughtResponse
 
     base_schema = BaseFeedbackResponse.model_json_schema()
     assert "score" in base_schema.get("required", [])
