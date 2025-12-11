@@ -336,6 +336,12 @@ bump-version-%: $(POETRY_DIRS)
 		popd; \
 	done
 
+## Step: Update meta.yaml files with versions and SHA256 from PyPI
+# This should be run AFTER the packages have been released to PyPI
+update-meta-yaml:
+	poetry run python update_meta_yaml.py
+
+
 ## Step: Upload wheels to pypi
 # Usage: TOKEN=... make upload-trulens-instrument-langchain
 # In all cases, we need to clean, build, zip-wheels, then build again. The reason is because we want the final build to have the zipped wheels.
