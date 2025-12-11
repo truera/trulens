@@ -1307,15 +1307,17 @@ class LLMProvider(core_provider.Provider):
             additional_instructions = ""
 
         if criteria_override is None:
-            criteria = (
-                feedback_prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT.format(
-                    additional_instructions=additional_instructions
+            criteria = feedback_prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT
+            if additional_instructions:
+                criteria = (
+                    criteria
+                    + "\n\nAdditional instructions:\n"
+                    + additional_instructions
                 )
-            )
         else:
             criteria = (
                 criteria_override
-                + "\nAdditional instructions:\n"
+                + "\n\nAdditional instructions:\n"
                 + additional_instructions
                 if additional_instructions
                 else criteria_override
@@ -1386,15 +1388,17 @@ class LLMProvider(core_provider.Provider):
             additional_instructions = ""
 
         if criteria_override is None:
-            criteria = (
-                feedback_prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT.format(
-                    additional_instructions=additional_instructions
+            criteria = feedback_prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT
+            if additional_instructions:
+                criteria = (
+                    criteria
+                    + "\n\nAdditional instructions:\n"
+                    + additional_instructions
                 )
-            )
         else:
             criteria = (
                 criteria_override
-                + "\nAdditional instructions:\n"
+                + "\n\nAdditional instructions:\n"
                 + additional_instructions
                 if additional_instructions
                 else criteria_override
@@ -1465,15 +1469,17 @@ class LLMProvider(core_provider.Provider):
             additional_instructions = ""
 
         if criteria_override is None:
-            criteria = (
-                feedback_prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT.format(
-                    additional_instructions=additional_instructions
+            criteria = feedback_prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT
+            if additional_instructions:
+                criteria = (
+                    criteria
+                    + "\n\nAdditional instructions:\n"
+                    + additional_instructions
                 )
-            )
         else:
             criteria = (
                 criteria_override
-                + "\nAdditional instructions:\n"
+                + "\n\nAdditional instructions:\n"
                 + additional_instructions
                 if additional_instructions
                 else criteria_override
@@ -1545,15 +1551,17 @@ class LLMProvider(core_provider.Provider):
             additional_instructions = ""
 
         if criteria_override is None:
-            criteria = (
-                feedback_prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT.format(
-                    additional_instructions=additional_instructions
+            criteria = feedback_prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT
+            if additional_instructions:
+                criteria = (
+                    criteria
+                    + "\n\nAdditional instructions:\n"
+                    + additional_instructions
                 )
-            )
         else:
             criteria = (
                 criteria_override
-                + "\nAdditional instructions:\n"
+                + "\n\nAdditional instructions:\n"
                 + additional_instructions
                 if additional_instructions
                 else criteria_override
@@ -1625,15 +1633,17 @@ class LLMProvider(core_provider.Provider):
             additional_instructions = ""
 
         if criteria_override is None:
-            criteria = (
-                feedback_prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT.format(
-                    additional_instructions=additional_instructions
+            criteria = feedback_prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT
+            if additional_instructions:
+                criteria = (
+                    criteria
+                    + "\n\nAdditional instructions:\n"
+                    + additional_instructions
                 )
-            )
         else:
             criteria = (
                 criteria_override
-                + "\nAdditional instructions:\n"
+                + "\n\nAdditional instructions:\n"
                 + additional_instructions
                 if additional_instructions
                 else criteria_override
@@ -1706,15 +1716,17 @@ class LLMProvider(core_provider.Provider):
             additional_instructions = ""
 
         if criteria_override is None:
-            criteria = (
-                feedback_prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT.format(
-                    additional_instructions=additional_instructions
+            criteria = feedback_prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT
+            if additional_instructions:
+                criteria = (
+                    criteria
+                    + "\n\nAdditional instructions:\n"
+                    + additional_instructions
                 )
-            )
         else:
             criteria = (
                 criteria_override
-                + "\nAdditional instructions:\n"
+                + "\n\nAdditional instructions:\n"
                 + additional_instructions
                 if additional_instructions
                 else criteria_override
@@ -1786,15 +1798,17 @@ class LLMProvider(core_provider.Provider):
             additional_instructions = ""
 
         if criteria_override is None:
-            criteria = (
-                feedback_prompts.LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT.format(
-                    additional_instructions=additional_instructions
+            criteria = feedback_prompts.LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT
+            if additional_instructions:
+                criteria = (
+                    criteria
+                    + "\n\nAdditional instructions:\n"
+                    + additional_instructions
                 )
-            )
         else:
             criteria = (
                 criteria_override
-                + "\nAdditional instructions:\n"
+                + "\n\nAdditional instructions:\n"
                 + additional_instructions
                 if additional_instructions
                 else criteria_override
@@ -1867,15 +1881,17 @@ class LLMProvider(core_provider.Provider):
             additional_instructions = ""
 
         if criteria_override is None:
-            criteria = (
-                feedback_prompts.LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT.format(
-                    additional_instructions=additional_instructions
+            criteria = feedback_prompts.LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT
+            if additional_instructions:
+                criteria = (
+                    criteria
+                    + "\n\nAdditional instructions:\n"
+                    + additional_instructions
                 )
-            )
         else:
             criteria = (
                 criteria_override
-                + "\nAdditional instructions:\n"
+                + "\n\nAdditional instructions:\n"
                 + additional_instructions
                 if additional_instructions
                 else criteria_override
@@ -1947,15 +1963,17 @@ class LLMProvider(core_provider.Provider):
             additional_instructions = ""
 
         if criteria_override is None:
-            criteria = (
-                feedback_prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT.format(
-                    additional_instructions=additional_instructions
+            criteria = feedback_prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT
+            if additional_instructions:
+                criteria = (
+                    criteria
+                    + "\n\nAdditional instructions:\n"
+                    + additional_instructions
                 )
-            )
         else:
             criteria = (
                 criteria_override
-                + "\nAdditional instructions:\n"
+                + "\n\nAdditional instructions:\n"
                 + additional_instructions
                 if additional_instructions
                 else criteria_override
@@ -2028,15 +2046,17 @@ class LLMProvider(core_provider.Provider):
             additional_instructions = ""
 
         if criteria_override is None:
-            criteria = (
-                feedback_prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT.format(
-                    additional_instructions=additional_instructions
+            criteria = feedback_prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT
+            if additional_instructions:
+                criteria = (
+                    criteria
+                    + "\n\nAdditional instructions:\n"
+                    + additional_instructions
                 )
-            )
         else:
             criteria = (
                 criteria_override
-                + "\nAdditional instructions:\n"
+                + "\n\nAdditional instructions:\n"
                 + additional_instructions
                 if additional_instructions
                 else criteria_override
@@ -2108,15 +2128,17 @@ class LLMProvider(core_provider.Provider):
             additional_instructions = ""
 
         if criteria_override is None:
-            criteria = (
-                feedback_prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT.format(
-                    additional_instructions=additional_instructions
+            criteria = feedback_prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT
+            if additional_instructions:
+                criteria = (
+                    criteria
+                    + "\n\nAdditional instructions:\n"
+                    + additional_instructions
                 )
-            )
         else:
             criteria = (
                 criteria_override
-                + "\nAdditional instructions:\n"
+                + "\n\nAdditional instructions:\n"
                 + additional_instructions
                 if additional_instructions
                 else criteria_override
@@ -2189,15 +2211,17 @@ class LLMProvider(core_provider.Provider):
             additional_instructions = ""
 
         if criteria_override is None:
-            criteria = (
-                feedback_prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT.format(
-                    additional_instructions=additional_instructions
+            criteria = feedback_prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT
+            if additional_instructions:
+                criteria = (
+                    criteria
+                    + "\n\nAdditional instructions:\n"
+                    + additional_instructions
                 )
-            )
         else:
             criteria = (
                 criteria_override
-                + "\nAdditional instructions:\n"
+                + "\n\nAdditional instructions:\n"
                 + additional_instructions
                 if additional_instructions
                 else criteria_override
@@ -2271,13 +2295,17 @@ class LLMProvider(core_provider.Provider):
             additional_instructions = ""
 
         if criteria_override is None:
-            criteria = feedback_prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT.format(
-                additional_instructions=additional_instructions
-            )
+            criteria = feedback_prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT
+            if additional_instructions:
+                criteria = (
+                    criteria
+                    + "\n\nAdditional instructions:\n"
+                    + additional_instructions
+                )
         else:
             criteria = (
                 criteria_override
-                + "\nAdditional instructions:\n"
+                + "\n\nAdditional instructions:\n"
                 + additional_instructions
                 if additional_instructions
                 else criteria_override
@@ -2350,13 +2378,17 @@ class LLMProvider(core_provider.Provider):
             additional_instructions = ""
 
         if criteria_override is None:
-            criteria = feedback_prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT.format(
-                additional_instructions=additional_instructions
-            )
+            criteria = feedback_prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT
+            if additional_instructions:
+                criteria = (
+                    criteria
+                    + "\n\nAdditional instructions:\n"
+                    + additional_instructions
+                )
         else:
             criteria = (
                 criteria_override
-                + "\nAdditional instructions:\n"
+                + "\n\nAdditional instructions:\n"
                 + additional_instructions
                 if additional_instructions
                 else criteria_override
@@ -2428,13 +2460,17 @@ class LLMProvider(core_provider.Provider):
             additional_instructions = ""
 
         if criteria_override is None:
-            criteria = feedback_prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT.format(
-                additional_instructions=additional_instructions
-            )
+            criteria = feedback_prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT
+            if additional_instructions:
+                criteria = (
+                    criteria
+                    + "\n\nAdditional instructions:\n"
+                    + additional_instructions
+                )
         else:
             criteria = (
                 criteria_override
-                + "\nAdditional instructions:\n"
+                + "\n\nAdditional instructions:\n"
                 + additional_instructions
                 if additional_instructions
                 else criteria_override
@@ -2507,13 +2543,17 @@ class LLMProvider(core_provider.Provider):
             additional_instructions = ""
 
         if criteria_override is None:
-            criteria = feedback_prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT.format(
-                additional_instructions=additional_instructions
-            )
+            criteria = feedback_prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT
+            if additional_instructions:
+                criteria = (
+                    criteria
+                    + "\n\nAdditional instructions:\n"
+                    + additional_instructions
+                )
         else:
             criteria = (
                 criteria_override
-                + "\nAdditional instructions:\n"
+                + "\n\nAdditional instructions:\n"
                 + additional_instructions
                 if additional_instructions
                 else criteria_override
@@ -2586,15 +2626,17 @@ class LLMProvider(core_provider.Provider):
             additional_instructions = ""
 
         if criteria_override is None:
-            criteria = (
-                feedback_prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT.format(
-                    additional_instructions=additional_instructions
+            criteria = feedback_prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT
+            if additional_instructions:
+                criteria = (
+                    criteria
+                    + "\n\nAdditional instructions:\n"
+                    + additional_instructions
                 )
-            )
         else:
             criteria = (
                 criteria_override
-                + "\nAdditional instructions:\n"
+                + "\n\nAdditional instructions:\n"
                 + additional_instructions
                 if additional_instructions
                 else criteria_override
@@ -2667,15 +2709,17 @@ class LLMProvider(core_provider.Provider):
             additional_instructions = ""
 
         if criteria_override is None:
-            criteria = (
-                feedback_prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT.format(
-                    additional_instructions=additional_instructions
+            criteria = feedback_prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT
+            if additional_instructions:
+                criteria = (
+                    criteria
+                    + "\n\nAdditional instructions:\n"
+                    + additional_instructions
                 )
-            )
         else:
             criteria = (
                 criteria_override
-                + "\nAdditional instructions:\n"
+                + "\n\nAdditional instructions:\n"
                 + additional_instructions
                 if additional_instructions
                 else criteria_override
@@ -2747,15 +2791,17 @@ class LLMProvider(core_provider.Provider):
             additional_instructions = ""
 
         if criteria_override is None:
-            criteria = (
-                feedback_prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT.format(
-                    additional_instructions=additional_instructions
+            criteria = feedback_prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT
+            if additional_instructions:
+                criteria = (
+                    criteria
+                    + "\n\nAdditional instructions:\n"
+                    + additional_instructions
                 )
-            )
         else:
             criteria = (
                 criteria_override
-                + "\nAdditional instructions:\n"
+                + "\n\nAdditional instructions:\n"
                 + additional_instructions
                 if additional_instructions
                 else criteria_override
@@ -2828,15 +2874,17 @@ class LLMProvider(core_provider.Provider):
             additional_instructions = ""
 
         if criteria_override is None:
-            criteria = (
-                feedback_prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT.format(
-                    additional_instructions=additional_instructions
+            criteria = feedback_prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT
+            if additional_instructions:
+                criteria = (
+                    criteria
+                    + "\n\nAdditional instructions:\n"
+                    + additional_instructions
                 )
-            )
         else:
             criteria = (
                 criteria_override
-                + "\nAdditional instructions:\n"
+                + "\n\nAdditional instructions:\n"
                 + additional_instructions
                 if additional_instructions
                 else criteria_override
