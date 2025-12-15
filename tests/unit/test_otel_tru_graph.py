@@ -317,3 +317,258 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         self.assertIsInstance(result, dict)
         self.assertIn("messages", result)
         self.assertIn("Custom class response", result["messages"][-1].content)
+
+    def test_input_key_messages(self) -> None:
+        """Test that input_key='messages' correctly transforms string input."""
+
+        def echo_agent(state):
+            messages = state.get("messages", [])
+            if messages:
+                last_message = messages[-1]
+                content = (
+                    last_message.content
+                    if hasattr(last_message, "content")
+                    else str(last_message)
+                )
+                return {"messages": [AIMessage(content=f"Echo: {content}")]}
+            return {"messages": [AIMessage(content="Echo: No message")]}
+
+        workflow = StateGraph(MessagesState)
+        workflow.add_node("echo", echo_agent)
+        workflow.add_edge("echo", END)
+        workflow.set_entry_point("echo")
+
+        graph = workflow.compile()
+
+        # Use input_key="messages" to auto-wrap string input
+        tru_app = TruGraph(
+            graph,
+            app_name="InputKeyTest",
+            app_version="v1",
+            input_key="messages",
+        )
+
+        # Test main_call with simple string - should be wrapped in HumanMessage
+        result = tru_app.main_call("Hello World")
+        self.assertIsInstance(result, str)
+        self.assertIn("Hello World", result)
+
+    def test_input_fn_custom(self) -> None:
+        """Test that input_fn correctly transforms input with custom logic."""
+
+        def stateful_agent(state):
+            messages = state.get("messages", [])
+            user_query = state.get("user_query", "")
+            enabled = state.get("enabled_agents", [])
+
+            if messages:
+                last_message = messages[-1]
+                content = (
+                    last_message.content
+                    if hasattr(last_message, "content")
+                    else str(last_message)
+                )
+                response = f"Query: {content}, User Query: {user_query}, Agents: {len(enabled)}"
+                return {"messages": [AIMessage(content=response)]}
+            return {"messages": [AIMessage(content="No message")]}
+
+        workflow = StateGraph(MessagesState)
+        workflow.add_node("agent", stateful_agent)
+        workflow.add_edge("agent", END)
+        workflow.set_entry_point("agent")
+
+        graph = workflow.compile()
+
+        # Use input_fn for complex state building
+        tru_app = TruGraph(
+            graph,
+            app_name="InputFnTest",
+            app_version="v1",
+            input_fn=lambda query: {
+                "messages": [HumanMessage(content=query)],
+                "user_query": query,
+                "enabled_agents": ["agent1", "agent2"],
+            },
+        )
+
+        # Test main_call - should use input_fn to build state
+        result = tru_app.main_call("Test query")
+        self.assertIsInstance(result, str)
+        self.assertIn("Test query", result)
+        self.assertIn("Agents: 2", result)
+
+    def test_input_key_custom_key(self) -> None:
+        """Test that input_key with custom key correctly transforms input."""
+
+        def query_agent(state):
+            query = state.get("query", "")
+            return {"messages": [AIMessage(content=f"Processed: {query}")]}
+
+        workflow = StateGraph(MessagesState)
+        workflow.add_node("agent", query_agent)
+        workflow.add_edge("agent", END)
+        workflow.set_entry_point("agent")
+
+        graph = workflow.compile()
+
+        # Use input_key with custom key
+        tru_app = TruGraph(
+            graph,
+            app_name="CustomKeyTest",
+            app_version="v1",
+            input_key="query",
+        )
+
+        # Test main_call with custom key mapping
+        result = tru_app.main_call("My custom query")
+        self.assertIsInstance(result, str)
+        self.assertIn("My custom query", result)
+
+    def test_input_fn_and_input_key_conflict(self) -> None:
+        """Test that providing both input_fn and input_key raises an error."""
+
+        def simple_agent(state):
+            return {"messages": [AIMessage(content="Response")]}
+
+        workflow = StateGraph(MessagesState)
+        workflow.add_node("agent", simple_agent)
+        workflow.add_edge("agent", END)
+        workflow.set_entry_point("agent")
+
+        graph = workflow.compile()
+
+        # Should raise ValueError when both are provided
+        with self.assertRaises(ValueError) as context:
+            TruGraph(
+                graph,
+                app_name="ConflictTest",
+                app_version="v1",
+                input_fn=lambda x: {"messages": [HumanMessage(content=x)]},
+                input_key="messages",
+            )
+
+        self.assertIn("Cannot specify both", str(context.exception))
+
+    def test_input_fn_with_custom_class_error(self) -> None:
+        """Test that input_fn/input_key with custom class raises an error."""
+
+        def simple_agent(state):
+            return {"messages": [AIMessage(content="Response")]}
+
+        workflow = StateGraph(MessagesState)
+        workflow.add_node("agent", simple_agent)
+        workflow.add_edge("agent", END)
+        workflow.set_entry_point("agent")
+
+        class CustomAgent:
+            def __init__(self):
+                self.workflow = workflow.compile()
+
+            def run(self, input_data):
+                return self.workflow.invoke(input_data)
+
+        custom_agent = CustomAgent()
+
+        # Should raise ValueError when used with custom class
+        with self.assertRaises(ValueError) as context:
+            TruGraph(
+                custom_agent,
+                app_name="CustomClassTest",
+                app_version="v1",
+                input_key="messages",
+            )
+
+        self.assertIn(
+            "can only be used with LangGraph apps", str(context.exception)
+        )
+
+    def test_direct_graph_registration_without_wrapper(self) -> None:
+        """Test that graphs can be registered directly with input transformation."""
+
+        def research_agent(state):
+            messages = state.get("messages", [])
+            user_query = state.get("user_query", "")
+            if messages:
+                last_message = messages[-1]
+                content = (
+                    last_message.content
+                    if hasattr(last_message, "content")
+                    else str(last_message)
+                )
+                return {
+                    "messages": [
+                        AIMessage(
+                            content=f"Research for: {content} (query: {user_query})"
+                        )
+                    ]
+                }
+            return {"messages": [AIMessage(content="No input")]}
+
+        workflow = StateGraph(MessagesState)
+        workflow.add_node("researcher", research_agent)
+        workflow.add_edge("researcher", END)
+        workflow.set_entry_point("researcher")
+
+        graph = workflow.compile()
+
+        # Direct registration with input_fn - no wrapper class needed!
+        tru_app = TruGraph(
+            graph,
+            app_name="DirectRegistration",
+            app_version="v1",
+            input_fn=lambda query: {
+                "messages": [HumanMessage(content=query)],
+                "user_query": query,
+            },
+        )
+
+        # The main_method should be the wrapped invoke
+        self.assertIsNotNone(tru_app.main_method)
+
+        # Test that it works with simple string input
+        result = tru_app.main_call("What is AI?")
+        self.assertIsInstance(result, str)
+        self.assertIn("What is AI?", result)
+
+    def test_backward_compatibility_without_input_params(self) -> None:
+        """Test that existing code without input_fn/input_key still works."""
+
+        def simple_agent(state):
+            messages = state.get("messages", [])
+            if messages:
+                last_message = messages[-1]
+                # Handle both tuple and HumanMessage formats
+                if hasattr(last_message, "content"):
+                    content = last_message.content
+                elif isinstance(last_message, tuple):
+                    content = last_message[1]
+                else:
+                    content = str(last_message)
+                return {"messages": [AIMessage(content=f"Got: {content}")]}
+            return {"messages": [AIMessage(content="No message")]}
+
+        workflow = StateGraph(MessagesState)
+        workflow.add_node("agent", simple_agent)
+        workflow.add_edge("agent", END)
+        workflow.set_entry_point("agent")
+
+        graph = workflow.compile()
+
+        # Old pattern - no input_fn or input_key
+        tru_app = TruGraph(
+            graph,
+            app_name="BackwardCompatTest",
+            app_version="v1",
+        )
+
+        # Direct invoke with dict still works
+        result = tru_app.app.invoke({
+            "messages": [HumanMessage(content="Direct invoke")]
+        })
+        self.assertIn("messages", result)
+        self.assertIn("Direct invoke", result["messages"][-1].content)
+
+        # main_call also still works (uses default tuple format)
+        result2 = tru_app.main_call("Main call test")
+        self.assertIsInstance(result2, str)
+        self.assertIn("Main call test", result2)

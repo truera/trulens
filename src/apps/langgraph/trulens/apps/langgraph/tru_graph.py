@@ -14,6 +14,7 @@ from typing import (
     Optional,
 )
 
+from langchain_core.messages import HumanMessage
 from opentelemetry.trace import get_current_span
 from pydantic import Field
 from trulens.apps.langchain.tru_chain import TruChain
@@ -1585,10 +1586,42 @@ class TruGraph(TruChain):
         self,
         app: Any,
         main_method: Optional[Callable] = None,
+        input_fn: Optional[Callable[[Any], dict]] = None,
+        input_key: Optional[str] = None,
         **kwargs: Any,
     ):
+        """Initialize TruGraph.
+
+        Args:
+            app: A LangGraph application (Pregel, StateGraph, or custom class).
+            main_method: Optional callable to use as the main entry point.
+            input_fn: Optional callable that transforms input to a state dict.
+                Example: `input_fn=lambda query: {"messages": [HumanMessage(content=query)]}`
+            input_key: Optional string key for simple input transformation.
+                If "messages", auto-wraps: query -> {"messages": [HumanMessage(content=query)]}
+                Otherwise: query -> {input_key: query}
+            **kwargs: Additional arguments passed to App.
+        """
         # Ensure instrumentation is set up before initializing
         self._ensure_instrumentation()
+
+        # Validate input_fn and input_key usage
+        if input_fn is not None and input_key is not None:
+            raise ValueError(
+                "Cannot specify both 'input_fn' and 'input_key'. Use one or the other."
+            )
+
+        # Validate that input_fn/input_key is only used with graph apps
+        is_graph_app = isinstance(app, (Pregel, StateGraph))
+        if (input_fn is not None or input_key is not None) and not is_graph_app:
+            raise ValueError(
+                "'input_fn' and 'input_key' can only be used with LangGraph apps "
+                "(Pregel or StateGraph). For custom classes, use 'main_method' instead."
+            )
+
+        # Store transformation settings
+        self._input_fn = input_fn
+        self._input_key = input_key
 
         kwargs["app"] = app
 
@@ -1598,8 +1631,19 @@ class TruGraph(TruChain):
         else:
             TruSession()
 
-        if main_method is not None:
+        # If input transformation is specified and no main_method provided,
+        # create a wrapper method that applies the transformation
+        if (
+            input_fn is not None or input_key is not None
+        ) and main_method is None:
+            # Create wrapped invoke method
+            wrapped_method = self._create_wrapped_invoke(
+                app, input_fn, input_key
+            )
+            kwargs["main_method"] = wrapped_method
+        elif main_method is not None:
             kwargs["main_method"] = main_method
+
         kwargs["root_class"] = pyschema_utils.Class.of_object(app)
         from trulens.apps.langchain.tru_chain import LangChainInstrument
 
@@ -1646,6 +1690,70 @@ class TruGraph(TruChain):
         kwargs["instrument"] = CombinedInstrument(app=self)
 
         core_app.App.__init__(self, **kwargs)
+
+    @staticmethod
+    def _transform_input(
+        raw_input: Any,
+        input_fn: Optional[Callable[[Any], dict]] = None,
+        input_key: Optional[str] = None,
+    ) -> dict:
+        """Transform raw input into a state dict for the graph.
+
+        Args:
+            raw_input: The raw input (typically a string query).
+            input_fn: Optional callable for custom transformation.
+            input_key: Optional key for simple transformation patterns.
+
+        Returns:
+            A state dict suitable for graph.invoke().
+        """
+        if input_fn is not None:
+            return input_fn(raw_input)
+        elif input_key is not None:
+            if input_key == "messages":
+                # Special handling for messages - wrap in HumanMessage
+                return {"messages": [HumanMessage(content=str(raw_input))]}
+            else:
+                # Simple key-value mapping
+                return {input_key: raw_input}
+        else:
+            # No transformation - return as-is if dict, or wrap in default format
+            if isinstance(raw_input, dict):
+                return raw_input
+            else:
+                # Default to tuple format for backward compatibility
+                return {"messages": [("user", str(raw_input))]}
+
+    @staticmethod
+    def _create_wrapped_invoke(
+        app: Any,
+        input_fn: Optional[Callable[[Any], dict]] = None,
+        input_key: Optional[str] = None,
+    ) -> Callable:
+        """Create a wrapper method that transforms input and invokes the graph.
+
+        Args:
+            app: The LangGraph application (Pregel or StateGraph).
+            input_fn: Optional callable for custom transformation.
+            input_key: Optional key for simple transformation patterns.
+
+        Returns:
+            A callable that can be used as main_method.
+        """
+        # Compile StateGraph if needed
+        graph = app.compile() if isinstance(app, StateGraph) else app
+
+        def wrapped_invoke(raw_input: Any) -> Any:
+            """Invoke the graph with transformed input."""
+            state = TruGraph._transform_input(raw_input, input_fn, input_key)
+            return graph.invoke(state)
+
+        # Store reference to the graph for async version
+        wrapped_invoke._graph = graph
+        wrapped_invoke._input_fn = input_fn
+        wrapped_invoke._input_key = input_key
+
+        return wrapped_invoke
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
@@ -1730,7 +1838,11 @@ class TruGraph(TruChain):
         """A single text to a single text invocation of this app."""
         self._validate_pregel_app()
         try:
-            result = self.app.invoke({"messages": [("user", human)]})
+            # Use input transformation if configured
+            state = self._transform_input(
+                human, self._input_fn, self._input_key
+            )
+            result = self.app.invoke(state)
             return self._extract_output_from_result(result)
         except Exception as e:
             raise Exception(f"Error invoking Langgraph workflow: {str(e)}")
@@ -1739,7 +1851,11 @@ class TruGraph(TruChain):
         """A single text to a single text async invocation of this app."""
         self._validate_pregel_app()
         try:
-            result = await self.app.ainvoke({"messages": [("user", human)]})
+            # Use input transformation if configured
+            state = self._transform_input(
+                human, self._input_fn, self._input_key
+            )
+            result = await self.app.ainvoke(state)
             return self._extract_output_from_result(result)
         except Exception as e:
             raise Exception(f"Error invoking Langgraph workflow: {str(e)}")
