@@ -355,6 +355,15 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
 
     def test_input_fn_custom(self) -> None:
         """Test that input_fn correctly transforms input with custom logic."""
+        from typing import List, Optional
+
+        from typing_extensions import TypedDict
+
+        # Create custom state that includes all fields
+        class CustomState(TypedDict):
+            messages: List
+            user_query: Optional[str]
+            enabled_agents: Optional[List[str]]
 
         def stateful_agent(state):
             messages = state.get("messages", [])
@@ -372,7 +381,7 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
                 return {"messages": [AIMessage(content=response)]}
             return {"messages": [AIMessage(content="No message")]}
 
-        workflow = StateGraph(MessagesState)
+        workflow = StateGraph(CustomState)
         workflow.add_node("agent", stateful_agent)
         workflow.add_edge("agent", END)
         workflow.set_entry_point("agent")
@@ -399,12 +408,20 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
 
     def test_input_key_custom_key(self) -> None:
         """Test that input_key with custom key correctly transforms input."""
+        from typing import List, Optional
+
+        from typing_extensions import TypedDict
+
+        # Create custom state that includes query field
+        class QueryState(TypedDict):
+            messages: List
+            query: Optional[str]
 
         def query_agent(state):
             query = state.get("query", "")
             return {"messages": [AIMessage(content=f"Processed: {query}")]}
 
-        workflow = StateGraph(MessagesState)
+        workflow = StateGraph(QueryState)
         workflow.add_node("agent", query_agent)
         workflow.add_edge("agent", END)
         workflow.set_entry_point("agent")
@@ -484,6 +501,14 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
 
     def test_direct_graph_registration_without_wrapper(self) -> None:
         """Test that graphs can be registered directly with input transformation."""
+        from typing import List, Optional
+
+        from typing_extensions import TypedDict
+
+        # Create custom state that includes user_query
+        class ResearchState(TypedDict):
+            messages: List
+            user_query: Optional[str]
 
         def research_agent(state):
             messages = state.get("messages", [])
@@ -504,7 +529,7 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
                 }
             return {"messages": [AIMessage(content="No input")]}
 
-        workflow = StateGraph(MessagesState)
+        workflow = StateGraph(ResearchState)
         workflow.add_node("researcher", research_agent)
         workflow.add_edge("researcher", END)
         workflow.set_entry_point("researcher")
@@ -522,8 +547,8 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
             },
         )
 
-        # The main_method should be the wrapped invoke
-        self.assertIsNotNone(tru_app.main_method)
+        # The app should have the wrapped_invoke method set
+        self.assertTrue(hasattr(tru_app.app, "wrapped_invoke"))
 
         # Test that it works with simple string input
         result = tru_app.main_call("What is AI?")

@@ -17,6 +17,7 @@ from typing import (
 from langchain_core.messages import HumanMessage
 from opentelemetry.trace import get_current_span
 from pydantic import Field
+from pydantic import PrivateAttr
 from trulens.apps.langchain.tru_chain import TruChain
 from trulens.core import app as core_app
 from trulens.core import instruments as core_instruments
@@ -562,6 +563,13 @@ class TruGraph(TruChain):
         default=None
     )
     """The root callable of the wrapped app."""
+
+    # Private attributes for input transformation
+    _input_fn: Optional[Callable[[Any], dict]] = PrivateAttr(default=None)
+    """Optional callable for input transformation."""
+
+    _input_key: Optional[str] = PrivateAttr(default=None)
+    """Optional key for simple input transformation patterns."""
 
     @classmethod
     def _setup_task_function_instrumentation(cls):
@@ -1619,9 +1627,9 @@ class TruGraph(TruChain):
                 "(Pregel or StateGraph). For custom classes, use 'main_method' instead."
             )
 
-        # Store transformation settings
-        self._input_fn = input_fn
-        self._input_key = input_key
+        # Store transformation settings temporarily (will be set after parent init)
+        _temp_input_fn = input_fn
+        _temp_input_key = input_key
 
         kwargs["app"] = app
 
@@ -1634,11 +1642,11 @@ class TruGraph(TruChain):
         # If input transformation is specified and no main_method provided,
         # create a wrapper method that applies the transformation
         if (
-            input_fn is not None or input_key is not None
+            _temp_input_fn is not None or _temp_input_key is not None
         ) and main_method is None:
             # Create wrapped invoke method
             wrapped_method = self._create_wrapped_invoke(
-                app, input_fn, input_key
+                app, _temp_input_fn, _temp_input_key
             )
             kwargs["main_method"] = wrapped_method
         elif main_method is not None:
@@ -1691,6 +1699,10 @@ class TruGraph(TruChain):
 
         core_app.App.__init__(self, **kwargs)
 
+        # Set private attributes after parent init (Pydantic requirement)
+        self._input_fn = _temp_input_fn
+        self._input_key = _temp_input_key
+
     @staticmethod
     def _transform_input(
         raw_input: Any,
@@ -1738,22 +1750,24 @@ class TruGraph(TruChain):
             input_key: Optional key for simple transformation patterns.
 
         Returns:
-            A callable that can be used as main_method.
+            A callable that can be used as main_method, bound to the app.
         """
+        import types
+
         # Compile StateGraph if needed
         graph = app.compile() if isinstance(app, StateGraph) else app
 
-        def wrapped_invoke(raw_input: Any) -> Any:
+        def wrapped_invoke(self_app: Any, raw_input: Any) -> Any:
             """Invoke the graph with transformed input."""
             state = TruGraph._transform_input(raw_input, input_fn, input_key)
             return graph.invoke(state)
 
-        # Store reference to the graph for async version
-        wrapped_invoke._graph = graph
-        wrapped_invoke._input_fn = input_fn
-        wrapped_invoke._input_key = input_key
+        # Bind the function to the app instance and set it as an attribute
+        # This is required because the parent class checks hasattr(app, method_name)
+        bound_method = types.MethodType(wrapped_invoke, app)
+        setattr(app, "wrapped_invoke", bound_method)
 
-        return wrapped_invoke
+        return bound_method
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
