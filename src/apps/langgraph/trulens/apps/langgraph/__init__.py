@@ -2,6 +2,7 @@
 
 from importlib.metadata import version
 
+# Import trace provider to auto-register it
 from trulens.apps.langgraph.tru_graph import LangGraphInstrument
 from trulens.apps.langgraph.tru_graph import TruGraph
 from trulens.core.utils import imports as import_utils
