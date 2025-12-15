@@ -2,12 +2,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+import logging
 from typing import Any, Callable, Dict, List, Optional
 
 import pandas as pd
 from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
 from trulens.core.utils.trace_compression import compress_trace_for_feedback
 from trulens.otel.semconv.trace import SpanAttributes
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -111,11 +114,55 @@ class Trace:
                 "processed_content_roots": [],
             })
 
-        # Apply compression
-        compressed_trace = compress_trace_for_feedback(trace_data)
+        # Apply compression with explicit plan preservation
+        compressed_trace = compress_trace_for_feedback(
+            trace_data, preserve_plan=True, target_token_limit=100000
+        )
 
-        # Convert compressed data back to JSON string
-        return json.dumps(compressed_trace, default=default_handler)
+        # Convert compressed data back to JSON string with error handling
+        try:
+            result = json.dumps(
+                compressed_trace, default=default_handler, ensure_ascii=False
+            )
+
+            # Check size - if too large, it might cause LLM issues
+            if len(result) > 500000:  # 500KB limit
+                logger.warning(
+                    f"Compressed trace is very large ({len(result)} chars), may cause LLM issues"
+                )
+                # Keep only the plan and essential info
+                essential_trace = {
+                    "compressed": True,
+                    "size_warning": f"Original trace was {len(result)} characters",
+                    "plan": compressed_trace.get("plan")
+                    if isinstance(compressed_trace, dict)
+                    else None,
+                    "execution_flow": compressed_trace.get(
+                        "execution_flow", []
+                    )[:5]
+                    if isinstance(compressed_trace, dict)
+                    else [],
+                    "trace_summary": "Large trace compressed to essential elements",
+                }
+                result = json.dumps(
+                    essential_trace, default=str, ensure_ascii=False
+                )
+
+            # Validate it's proper JSON by parsing it back
+            json.loads(result)
+            return result
+        except Exception as e:
+            logger.warning(f"Error serializing compressed trace: {e}")
+            # Fallback to basic trace structure that won't break the LLM
+            fallback = {
+                "compressed": True,
+                "serialization_error": f"Failed to serialize: {str(e)[:100]}",
+                "plan": compressed_trace.get("plan")
+                if isinstance(compressed_trace, dict)
+                else None,
+                "trace_summary": "Trace compression encountered serialization issues",
+            }
+            return json.dumps(fallback, default=str, ensure_ascii=False)
 
 
 @dataclass

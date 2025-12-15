@@ -31,6 +31,9 @@ class TraceCompressor:
         Returns:
             Compressed trace data with essential information preserved
         """
+        logger.warning(
+            "PLAN_PRESERVATION_DEBUG: Using modified trace compression with plan preservation"
+        )
         # Convert to string if needed for processing
         if isinstance(trace_data, str):
             try:
@@ -46,6 +49,97 @@ class TraceCompressor:
         compressed = self._apply_compression_strategies(trace_dict)
 
         return compressed
+
+    def compress_trace_with_plan_priority(
+        self, trace_data: Any, target_token_limit: int = 100000
+    ) -> Dict[str, Any]:
+        """
+        Compress trace with plan preservation as highest priority.
+        If context window is exceeded, compress other data more aggressively while keeping plan intact.
+
+        Args:
+            trace_data: The raw trace data to compress
+            target_token_limit: Target token limit for context window management
+
+        Returns:
+            Compressed trace data with plan always preserved
+        """
+        # First, apply normal compression (which now preserves plans)
+        compressed = self.compress_trace(trace_data)
+
+        # Rough token estimation (4 chars per token approximation)
+        estimated_tokens = len(json.dumps(compressed, default=str)) // 4
+
+        if estimated_tokens <= target_token_limit:
+            logger.info(
+                f"Trace fits within limit: {estimated_tokens}/{target_token_limit} tokens"
+            )
+            return compressed
+
+        # If still too large, compress non-plan data more aggressively
+        logger.warning(
+            f"Trace ({estimated_tokens} tokens) exceeds limit ({target_token_limit}), "
+            f"applying aggressive compression to non-plan data while preserving plan"
+        )
+
+        # Extract and preserve plan completely
+        plan = compressed.get("plan")
+        plan_tokens = len(json.dumps(plan, default=str)) // 4 if plan else 0
+
+        if plan_tokens > target_token_limit:
+            logger.warning(
+                f"Plan alone ({plan_tokens} tokens) exceeds target limit, but preserving for metrics"
+            )
+
+        # Rebuild with plan first, then add other data within budget
+        result = {}
+        if plan:
+            result["plan"] = plan  # Always preserve plan completely
+
+        # Add other data within remaining budget, prioritizing important data
+        used_tokens = plan_tokens
+        priority_order = [
+            "execution_flow",
+            "agent_interactions",
+            "spans",
+            "decisions",
+            "issues",
+            "results",
+        ]
+
+        for key in priority_order:
+            if key in compressed and used_tokens < target_token_limit:
+                value = compressed[key]
+                value_tokens = len(json.dumps(value, default=str)) // 4
+
+                if used_tokens + value_tokens <= target_token_limit:
+                    result[key] = value
+                    used_tokens += value_tokens
+                else:
+                    # Try to fit a truncated version for lists
+                    if isinstance(value, list) and len(value) > 1:
+                        for i in range(len(value) - 1, 0, -1):
+                            truncated = value[:i]
+                            truncated_tokens = (
+                                len(json.dumps(truncated, default=str)) // 4
+                            )
+                            if (
+                                used_tokens + truncated_tokens
+                                <= target_token_limit
+                            ):
+                                result[key] = truncated
+                                used_tokens += truncated_tokens
+                                logger.info(
+                                    f"Truncated {key} from {len(value)} to {len(truncated)} items"
+                                )
+                                break
+
+        final_tokens = len(json.dumps(result, default=str)) // 4
+        logger.info(
+            f"Final compressed trace: {final_tokens} tokens (plan: {plan_tokens}, other: {final_tokens - plan_tokens})"
+        )
+
+        return result
 
     def _apply_compression_strategies(
         self, data: Dict[str, Any]
@@ -82,20 +176,510 @@ class TraceCompressor:
         if interactions:
             compressed["agent_interactions"] = interactions
 
-        # 4. Extract plan if present (keep structure)
-        if "plan" in data:
-            compressed["plan"] = self._compress_plan(data["plan"])
-        elif "spans" in data:
+        # 4. Extract plan if present (CRITICAL: preserve completely for metrics)
+        plan_found = False
+        # Check for plan in multiple common locations
+        plan_locations = [
+            "plan",
+            "execution_plan",
+            "agent_plan",
+            "workflow_plan",
+        ]
+        for plan_key in plan_locations:
+            if plan_key in data:
+                compressed["plan"] = self._compress_plan(data[plan_key])
+                logger.info(
+                    f"Plan found in '{plan_key}' and preserved completely for metrics evaluation"
+                )
+                plan_found = True
+                break
+
+        # Check for LangGraph Command structure: Command(update={'execution_plan': {...}})
+        if not plan_found:
+            for key in ["update", "command_update", "state_update"]:
+                if key in data and isinstance(data[key], dict):
+                    update_data = data[key]
+                    for plan_key in plan_locations:
+                        if plan_key in update_data:
+                            compressed["plan"] = self._compress_plan(
+                                update_data[plan_key]
+                            )
+                            logger.info(
+                                f"Plan found in {key}.{plan_key} and preserved completely for metrics evaluation"
+                            )
+                            plan_found = True
+                            break
+                    if plan_found:
+                        break
+
+        if not plan_found and "spans" in data:
             # Try to extract plan from span attributes
             for span in data["spans"]:
-                if isinstance(span, dict) and "plan" in span:
-                    compressed["plan"] = self._compress_plan(span["plan"])
-                    break
-                elif isinstance(span, dict) and "span_attributes" in span:
-                    attrs = span["span_attributes"]
-                    if isinstance(attrs, dict) and "plan" in attrs:
-                        compressed["plan"] = self._compress_plan(attrs["plan"])
+                if isinstance(span, dict):
+                    # Check for plan in multiple locations within span
+                    for plan_key in plan_locations:
+                        if plan_key in span:
+                            compressed["plan"] = self._compress_plan(
+                                span[plan_key]
+                            )
+                            logger.info(
+                                f"Plan found in span.{plan_key} and preserved completely for metrics evaluation"
+                            )
+                            plan_found = True
+                            break
+
+                    if not plan_found and "span_attributes" in span:
+                        attrs = span["span_attributes"]
+                        if isinstance(attrs, dict):
+                            # Check direct plan keys in attributes
+                            for plan_key in plan_locations:
+                                if plan_key in attrs:
+                                    compressed["plan"] = self._compress_plan(
+                                        attrs[plan_key]
+                                    )
+                                    logger.info(
+                                        f"Plan found in span_attributes.{plan_key} and preserved completely for metrics evaluation"
+                                    )
+                                    plan_found = True
+                                    break
+
+                            # Check LangGraph observability attributes for state information
+                            if not plan_found:
+                                langgraph_state_keys = [
+                                    "ai.observability.graph_node.input_state",
+                                    "ai.observability.graph_node.output_state",
+                                    "ai.observability.call.kwargs.input",
+                                    "ai.observability.call.return",
+                                ]
+                                for state_key in langgraph_state_keys:
+                                    if state_key in attrs:
+                                        state_value = attrs[state_key]
+                                        if isinstance(state_value, str):
+                                            # First try JSON parsing
+                                            try:
+                                                parsed_state = json.loads(
+                                                    state_value
+                                                )
+                                                if isinstance(
+                                                    parsed_state, dict
+                                                ):
+                                                    for (
+                                                        plan_key
+                                                    ) in plan_locations:
+                                                        if (
+                                                            plan_key
+                                                            in parsed_state
+                                                        ):
+                                                            compressed[
+                                                                "plan"
+                                                            ] = self._compress_plan(
+                                                                parsed_state[
+                                                                    plan_key
+                                                                ]
+                                                            )
+                                                            logger.info(
+                                                                f"Plan found in span_attributes.{state_key}.{plan_key} and preserved completely for metrics evaluation"
+                                                            )
+                                                            plan_found = True
+                                                            break
+                                                    if plan_found:
+                                                        break
+                                            except Exception:
+                                                pass
+
+                                            # If JSON parsing failed, check for any string containing "plan"
+                                            if (
+                                                not plan_found
+                                                and "plan"
+                                                in state_value.lower()
+                                            ):
+                                                # This is likely a Command string representation or state containing the plan
+                                                compressed["plan"] = (
+                                                    self._compress_plan(
+                                                        state_value
+                                                    )
+                                                )
+                                                logger.info(
+                                                    f"Plan found in span_attributes.{state_key} string (contains 'plan') and preserved completely for metrics evaluation"
+                                                )
+                                                plan_found = True
+                                                break
+                                        elif isinstance(state_value, dict):
+                                            for plan_key in plan_locations:
+                                                if plan_key in state_value:
+                                                    compressed["plan"] = (
+                                                        self._compress_plan(
+                                                            state_value[
+                                                                plan_key
+                                                            ]
+                                                        )
+                                                    )
+                                                    logger.info(
+                                                        f"Plan found in span_attributes.{state_key}.{plan_key} and preserved completely for metrics evaluation"
+                                                    )
+                                                    plan_found = True
+                                                    break
+                                            if plan_found:
+                                                break
+                                    if plan_found:
+                                        break
+
+                    if plan_found:
                         break
+
+        # Additional plan search in more locations
+        if not plan_found:
+            # Look for plan in processed_content or other common locations
+            search_locations = [
+                "processed_content",
+                "events",
+                "raw_trace",
+                "state",
+                "langgraph_state",
+                "workflow_state",
+            ]
+            for key in search_locations:
+                if key in data:
+                    value = data[key]
+                    if isinstance(value, str):
+                        try:
+                            parsed = json.loads(value)
+                            if isinstance(parsed, dict):
+                                for plan_key in plan_locations:
+                                    if plan_key in parsed:
+                                        compressed["plan"] = (
+                                            self._compress_plan(
+                                                parsed[plan_key]
+                                            )
+                                        )
+                                        logger.info(
+                                            f"Plan found in {key}.{plan_key} and preserved completely for metrics evaluation"
+                                        )
+                                        plan_found = True
+                                        break
+                                if plan_found:
+                                    break
+                        except Exception:
+                            pass
+                    elif isinstance(value, dict):
+                        for plan_key in plan_locations:
+                            if plan_key in value:
+                                compressed["plan"] = self._compress_plan(
+                                    value[plan_key]
+                                )
+                                logger.info(
+                                    f"Plan found in {key}.{plan_key} and preserved completely for metrics evaluation"
+                                )
+                                plan_found = True
+                                break
+                        if plan_found:
+                            break
+
+            # Look for plan-related fields in LangGraph/agent traces
+            if not plan_found and "spans" in data:
+                plan_keywords = [
+                    "plan",
+                    "planning",
+                    "strategy",
+                    "steps",
+                    "workflow",
+                    "agent_plan",
+                    "execution_plan",
+                ]
+                for span in data["spans"]:
+                    if isinstance(span, dict):
+                        # Check span name - any node could output a plan
+                        span_name = span.get("span_name", "").lower()
+                        # Don't limit to specific node names - any node could create a plan
+
+                        # Check if this span has plan-like content
+                        for attr_key in [
+                            "input",
+                            "output",
+                            "span_attributes",
+                            "state",
+                            "update",
+                            "command",
+                            "result",
+                        ]:
+                            if attr_key in span:
+                                attr_value = span[attr_key]
+                                if isinstance(attr_value, dict):
+                                    # Look for execution_plan or other plan keys directly
+                                    for plan_key in (
+                                        plan_locations + plan_keywords
+                                    ):
+                                        if plan_key in attr_value:
+                                            compressed["plan"] = (
+                                                self._compress_plan(
+                                                    attr_value[plan_key]
+                                                )
+                                            )
+                                            logger.info(
+                                                f"Plan found in span '{span_name}' {attr_key}.{plan_key} and preserved completely"
+                                            )
+                                            plan_found = True
+                                            break
+
+                                    # Look for LangGraph Command structure: {update: {execution_plan: {...}}}
+                                    if not plan_found:
+                                        for cmd_key in [
+                                            "update",
+                                            "command_update",
+                                            "state_update",
+                                        ]:
+                                            if (
+                                                cmd_key in attr_value
+                                                and isinstance(
+                                                    attr_value[cmd_key], dict
+                                                )
+                                            ):
+                                                cmd_data = attr_value[cmd_key]
+                                                for plan_key in plan_locations:
+                                                    if plan_key in cmd_data:
+                                                        compressed["plan"] = (
+                                                            self._compress_plan(
+                                                                cmd_data[
+                                                                    plan_key
+                                                                ]
+                                                            )
+                                                        )
+                                                        logger.info(
+                                                            f"Plan found in span '{span_name}' {attr_key}.{cmd_key}.{plan_key} and preserved completely"
+                                                        )
+                                                        plan_found = True
+                                                        break
+                                                if plan_found:
+                                                    break
+
+                                    if plan_found:
+                                        break
+                                elif isinstance(attr_value, str):
+                                    # Try to parse JSON strings that might contain plans
+                                    if (
+                                        attr_value.startswith("{")
+                                        and len(attr_value) > 50
+                                    ):
+                                        try:
+                                            parsed_attr = json.loads(attr_value)
+                                            if isinstance(parsed_attr, dict):
+                                                # Look for plan keys directly
+                                                for plan_key in (
+                                                    plan_locations
+                                                    + plan_keywords
+                                                ):
+                                                    if plan_key in parsed_attr:
+                                                        compressed["plan"] = (
+                                                            self._compress_plan(
+                                                                parsed_attr[
+                                                                    plan_key
+                                                                ]
+                                                            )
+                                                        )
+                                                        logger.info(
+                                                            f"Plan found in span '{span_name}' {attr_key} JSON.{plan_key} and preserved completely"
+                                                        )
+                                                        plan_found = True
+                                                        break
+
+                                                # Look for LangGraph Command structure in JSON
+                                                if not plan_found:
+                                                    for cmd_key in [
+                                                        "update",
+                                                        "command_update",
+                                                        "state_update",
+                                                    ]:
+                                                        if (
+                                                            cmd_key
+                                                            in parsed_attr
+                                                            and isinstance(
+                                                                parsed_attr[
+                                                                    cmd_key
+                                                                ],
+                                                                dict,
+                                                            )
+                                                        ):
+                                                            cmd_data = (
+                                                                parsed_attr[
+                                                                    cmd_key
+                                                                ]
+                                                            )
+                                                            for (
+                                                                plan_key
+                                                            ) in plan_locations:
+                                                                if (
+                                                                    plan_key
+                                                                    in cmd_data
+                                                                ):
+                                                                    compressed[
+                                                                        "plan"
+                                                                    ] = self._compress_plan(
+                                                                        cmd_data[
+                                                                            plan_key
+                                                                        ]
+                                                                    )
+                                                                    logger.info(
+                                                                        f"Plan found in span '{span_name}' {attr_key} JSON.{cmd_key}.{plan_key} and preserved completely"
+                                                                    )
+                                                                    plan_found = True
+                                                                    break
+                                                            if plan_found:
+                                                                break
+
+                                                if plan_found:
+                                                    break
+                                        except Exception:
+                                            pass
+
+                                    # Also check for Command(...) string patterns or any plan mention
+                                    elif "plan" in attr_value.lower():
+                                        # Try to extract the execution_plan from various string representations
+                                        try:
+                                            # Check for Command string pattern
+                                            if "Command(" in attr_value and (
+                                                "'update':" in attr_value
+                                                or '"update":' in attr_value
+                                            ):
+                                                # This is a Command string representation containing the plan
+                                                compressed["plan"] = (
+                                                    self._compress_plan(
+                                                        attr_value
+                                                    )
+                                                )
+                                                logger.info(
+                                                    f"Plan found in span '{span_name}' {attr_key} Command string and preserved completely"
+                                                )
+                                                plan_found = True
+                                                break
+                                            # Check for any string containing "plan" (could be serialized state)
+                                            elif (
+                                                len(attr_value) > 100
+                                            ):  # Reasonable size for a plan
+                                                compressed["plan"] = (
+                                                    self._compress_plan(
+                                                        attr_value
+                                                    )
+                                                )
+                                                logger.info(
+                                                    f"Plan found in span '{span_name}' {attr_key} string containing 'plan' and preserved completely"
+                                                )
+                                                plan_found = True
+                                                break
+                                        except Exception:
+                                            pass
+
+                                    # Check if string content looks like a plan (from any node)
+                                    if len(attr_value) > 50:
+                                        attr_lower = attr_value.lower()
+                                        # Look for plan-like content indicators
+                                        plan_indicators = [
+                                            "step",
+                                            "action",
+                                            "tool",
+                                            "execute",
+                                            "agent",
+                                            "plan_summary",
+                                            "combination_strategy",
+                                        ]
+                                        if any(
+                                            keyword in attr_lower
+                                            for keyword in plan_indicators
+                                        ):
+                                            compressed["plan"] = (
+                                                self._compress_plan(attr_value)
+                                            )
+                                            logger.info(
+                                                f"Plan-like content found in span '{span_name}' {attr_key} and preserved completely"
+                                            )
+                                            plan_found = True
+                                            break
+                        if plan_found:
+                            break
+
+        if not plan_found:
+            logger.warning(
+                "No plan found in trace data - this may impact metrics evaluation"
+            )
+            # Log detailed structure to help debug
+            if isinstance(data, dict):
+                logger.warning(
+                    f"DEBUG: Top-level trace keys: {list(data.keys())}"
+                )
+
+                # Log span structure if present
+                if "spans" in data and isinstance(data["spans"], list):
+                    logger.warning(f"DEBUG: Found {len(data['spans'])} spans")
+                    for i, span in enumerate(
+                        data["spans"][:3]
+                    ):  # Log first 3 spans
+                        if isinstance(span, dict):
+                            span_name = span.get("span_name", "unknown")
+                            span_keys = list(span.keys())
+                            logger.warning(
+                                f"DEBUG: Span {i} '{span_name}' keys: {span_keys}"
+                            )
+
+                            # Check span attributes
+                            if "span_attributes" in span and isinstance(
+                                span["span_attributes"], dict
+                            ):
+                                attr_keys = list(span["span_attributes"].keys())
+                                logger.warning(
+                                    f"DEBUG: Span {i} attributes keys: {attr_keys}"
+                                )
+
+                                # Log LangGraph state content if present
+                                attrs = span["span_attributes"]
+                                for state_key in [
+                                    "ai.observability.graph_node.input_state",
+                                    "ai.observability.graph_node.output_state",
+                                ]:
+                                    if state_key in attrs:
+                                        state_value = attrs[state_key]
+                                        if isinstance(state_value, str):
+                                            logger.warning(
+                                                f"DEBUG: {state_key} is string of length {len(state_value)}"
+                                            )
+                                            if "execution_plan" in state_value:
+                                                logger.warning(
+                                                    f"DEBUG: Found 'execution_plan' in {state_key}!"
+                                                )
+                                            # Show first 200 chars to see the structure
+                                            logger.warning(
+                                                f"DEBUG: {state_key} content preview: {state_value[:200]}..."
+                                            )
+                                        elif isinstance(state_value, dict):
+                                            state_keys = list(
+                                                state_value.keys()
+                                            )
+                                            logger.warning(
+                                                f"DEBUG: {state_key} dict keys: {state_keys}"
+                                            )
+                                            if "execution_plan" in state_keys:
+                                                logger.warning(
+                                                    f"DEBUG: Found 'execution_plan' key in {state_key}!"
+                                                )
+
+                # Log other potential locations
+                for key in ["processed_content", "events", "raw_trace"]:
+                    if key in data:
+                        value = data[key]
+                        if isinstance(value, str):
+                            logger.warning(
+                                f"DEBUG: {key} is string of length {len(value)}"
+                            )
+                            if value.startswith("{"):
+                                logger.warning(
+                                    f"DEBUG: {key} appears to be JSON"
+                                )
+                        elif isinstance(value, dict):
+                            logger.warning(
+                                f"DEBUG: {key} dict keys: {list(value.keys())}"
+                            )
+                        else:
+                            logger.warning(f"DEBUG: {key} type: {type(value)}")
+            else:
+                logger.warning(f"DEBUG: Trace data type: {type(data)}")
 
         # 5. Extract key decisions with context
         decisions = self._extract_key_decisions_with_context(data)
@@ -1059,32 +1643,22 @@ class TraceCompressor:
         return decisions
 
     def _compress_plan(self, plan: Any) -> Any:
-        """Compress a plan while keeping essential structure."""
-        if isinstance(plan, list):
-            # Keep only step summaries
-            compressed_plan = []
-            for step in plan:  # Process all steps
-                if isinstance(step, dict):
-                    compressed_step = {
-                        "step": step.get("step", step.get("id", "unknown")),
-                        "action": self._summarize_content(
-                            step.get("action", step.get("description", ""))
-                        ),
-                    }
-                    compressed_plan.append(compressed_step)
-                else:
-                    compressed_plan.append(self._summarize_content(step))
-            return compressed_plan
-        elif isinstance(plan, dict):
-            # Keep only key fields
-            return {
-                "summary": self._summarize_content(
-                    plan.get("summary", plan.get("description", ""))
-                ),
-                "steps": self._compress_plan(plan.get("steps", [])),
-            }
-        else:
-            return self._summarize_content(plan)
+        """
+        Preserve plan completely - no compression for metrics evaluation.
+
+        The plan is critical for metrics and should never be compressed or summarized.
+        If context window is an issue, compress other data instead.
+        """
+        if not plan:
+            return None
+
+        # Log that we're preserving the complete plan
+        logger.info(
+            "Preserving complete plan for metrics evaluation (no compression)"
+        )
+
+        # Return plan exactly as-is - no compression applied
+        return plan
 
     def _extract_issues(self, data: Dict[str, Any]) -> List[str]:
         """Extract errors, warnings, and issues."""
@@ -1128,18 +1702,30 @@ class TraceCompressor:
         return results
 
 
-def compress_trace_for_feedback(trace_data: Any) -> Dict[str, Any]:
+def compress_trace_for_feedback(
+    trace_data: Any,
+    preserve_plan: bool = True,
+    target_token_limit: int = 100000,
+) -> Dict[str, Any]:
     """
     Convenience function to compress trace data for feedback functions.
 
     Args:
         trace_data: The trace data to compress
+        preserve_plan: Whether to preserve complete plan (recommended for metrics)
+        target_token_limit: Target token limit for context window management
 
     Returns:
-        Compressed trace data
+        Compressed trace data with plan preservation prioritized
     """
     compressor = TraceCompressor()
-    return compressor.compress_trace(trace_data)
+
+    if preserve_plan:
+        return compressor.compress_trace_with_plan_priority(
+            trace_data, target_token_limit
+        )
+    else:
+        return compressor.compress_trace(trace_data)
 
 
 def compress_multiple_traces(traces: List[Any]) -> List[Dict[str, Any]]:
