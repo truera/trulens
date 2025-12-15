@@ -547,13 +547,75 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
             },
         )
 
-        # The app should have the wrapped_invoke method set
+        # The app should have both wrapped_invoke and wrapped_ainvoke methods set
         self.assertTrue(hasattr(tru_app.app, "wrapped_invoke"))
+        self.assertTrue(hasattr(tru_app.app, "wrapped_ainvoke"))
 
         # Test that it works with simple string input
         result = tru_app.main_call("What is AI?")
         self.assertIsInstance(result, str)
         self.assertIn("What is AI?", result)
+
+    def test_wrapped_ainvoke_with_input_transformation(self) -> None:
+        """Test that wrapped_ainvoke is created and works with input transformation."""
+        import asyncio
+        from typing import List, Optional
+
+        from typing_extensions import TypedDict
+
+        # Create custom state
+        class AsyncTestState(TypedDict):
+            messages: List
+            user_query: Optional[str]
+
+        def async_agent(state):
+            messages = state.get("messages", [])
+            user_query = state.get("user_query", "")
+            if messages:
+                last_message = messages[-1]
+                content = (
+                    last_message.content
+                    if hasattr(last_message, "content")
+                    else str(last_message)
+                )
+                return {
+                    "messages": [
+                        AIMessage(
+                            content=f"Async response for: {content} (query: {user_query})"
+                        )
+                    ]
+                }
+            return {"messages": [AIMessage(content="No input")]}
+
+        workflow = StateGraph(AsyncTestState)
+        workflow.add_node("async_agent", async_agent)
+        workflow.add_edge("async_agent", END)
+        workflow.set_entry_point("async_agent")
+
+        graph = workflow.compile()
+
+        # Direct registration with input_fn
+        tru_app = TruGraph(
+            graph,
+            app_name="AsyncTest",
+            app_version="v1",
+            input_fn=lambda query: {
+                "messages": [HumanMessage(content=query)],
+                "user_query": query,
+            },
+        )
+
+        # Verify wrapped_ainvoke exists
+        self.assertTrue(hasattr(tru_app.app, "wrapped_ainvoke"))
+
+        # Test async invocation via main_acall
+        async def run_async_test():
+            result = await tru_app.main_acall("Async test query")
+            return result
+
+        result = asyncio.get_event_loop().run_until_complete(run_async_test())
+        self.assertIsInstance(result, str)
+        self.assertIn("Async test query", result)
 
     def test_backward_compatibility_without_input_params(self) -> None:
         """Test that existing code without input_fn/input_key still works."""

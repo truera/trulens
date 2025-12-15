@@ -1742,7 +1742,9 @@ class TruGraph(TruChain):
         input_fn: Optional[Callable[[Any], dict]] = None,
         input_key: Optional[str] = None,
     ) -> Callable:
-        """Create a wrapper method that transforms input and invokes the graph.
+        """Create wrapper methods that transform input and invoke the graph.
+
+        Creates both sync (wrapped_invoke) and async (wrapped_ainvoke) wrappers.
 
         Args:
             app: The LangGraph application (Pregel or StateGraph).
@@ -1762,12 +1764,19 @@ class TruGraph(TruChain):
             state = TruGraph._transform_input(raw_input, input_fn, input_key)
             return graph.invoke(state)
 
-        # Bind the function to the app instance and set it as an attribute
-        # This is required because the parent class checks hasattr(app, method_name)
-        bound_method = types.MethodType(wrapped_invoke, app)
-        setattr(app, "wrapped_invoke", bound_method)
+        async def wrapped_ainvoke(self_app: Any, raw_input: Any) -> Any:
+            """Async invoke the graph with transformed input."""
+            state = TruGraph._transform_input(raw_input, input_fn, input_key)
+            return await graph.ainvoke(state)
 
-        return bound_method
+        # Bind the functions to the app instance and set them as attributes
+        # This is required because the parent class checks hasattr(app, method_name)
+        bound_invoke = types.MethodType(wrapped_invoke, app)
+        bound_ainvoke = types.MethodType(wrapped_ainvoke, app)
+        setattr(app, "wrapped_invoke", bound_invoke)
+        setattr(app, "wrapped_ainvoke", bound_ainvoke)
+
+        return bound_invoke
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
