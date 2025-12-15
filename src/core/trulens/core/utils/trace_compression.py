@@ -24,12 +24,18 @@ class TraceCompressor:
         """Initialize the trace compressor."""
         pass
 
-    def compress_trace_with_plan_priority(
-        self, trace_data: Any, target_token_limit: int = 100000
-    ) -> Dict[str, Any]:
+    def _normalize_trace_data(self, trace_data: Any) -> Dict[str, Any]:
         """
-        Compress trace with plan preservation as highest priority.
-        If context window is exceeded, compress other data more aggressively.
+        Convert trace data to a normalized dictionary format.
+
+        Args:
+            trace_data: Raw trace data (string or dict)
+
+        Returns:
+            Normalized trace data as dictionary
+
+        Raises:
+            ValueError: If trace data cannot be normalized
         """
         # Convert string to dict if needed
         if isinstance(trace_data, str):
@@ -37,13 +43,27 @@ class TraceCompressor:
                 data = json.loads(trace_data)
             except json.JSONDecodeError:
                 logger.warning("Failed to parse trace data as JSON")
-                return {"error": "Invalid JSON trace data"}
+                raise ValueError("Invalid JSON trace data")
         else:
             data = trace_data
 
         if not isinstance(data, dict):
             logger.warning("Trace data is not a dictionary")
-            return {"error": "Trace data must be a dictionary"}
+            raise ValueError("Trace data must be a dictionary")
+
+        return data
+
+    def compress_trace_with_plan_priority(
+        self, trace_data: Any, target_token_limit: int = 100000
+    ) -> Dict[str, Any]:
+        """
+        Compress trace with plan preservation as highest priority.
+        If context window is exceeded, compress other data more aggressively.
+        """
+        try:
+            data = self._normalize_trace_data(trace_data)
+        except ValueError as e:
+            return {"error": str(e)}
 
         # Use global provider registry
         from trulens.core.utils.trace_provider import get_trace_provider
@@ -61,19 +81,10 @@ class TraceCompressor:
         Returns:
             Compressed trace data
         """
-        # Convert string to dict if needed
-        if isinstance(trace_data, str):
-            try:
-                data = json.loads(trace_data)
-            except json.JSONDecodeError:
-                logger.warning("Failed to parse trace data as JSON")
-                return {"error": "Invalid JSON trace data"}
-        else:
-            data = trace_data
-
-        if not isinstance(data, dict):
-            logger.warning("Trace data is not a dictionary")
-            return {"error": "Trace data must be a dictionary"}
+        try:
+            data = self._normalize_trace_data(trace_data)
+        except ValueError as e:
+            return {"error": str(e)}
 
         logger.info(
             "PLAN_PRESERVATION_DEBUG: Using modified trace compression with plan preservation"
