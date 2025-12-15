@@ -22,53 +22,7 @@ class TraceCompressor:
 
     def __init__(self):
         """Initialize the trace compressor."""
-        self.providers = {}
-        self._register_default_providers()
-
-    def _register_default_providers(self):
-        """Register default trace providers."""
-        # Import providers here to avoid circular imports
-        try:
-            from trulens.core.utils.trace_provider import DefaultTraceProvider
-
-            self.providers["default"] = DefaultTraceProvider()
-        except ImportError:
-            logger.warning("Default trace provider not available")
-
-        try:
-            from trulens.apps.langgraph.trace_provider import (
-                LangGraphTraceProvider,
-            )
-
-            self.providers["langgraph"] = LangGraphTraceProvider()
-        except ImportError:
-            logger.debug("LangGraph trace provider not available")
-
-    def register_provider(self, name: str, provider):
-        """Register a custom trace provider."""
-        self.providers[name] = provider
-
-    def _detect_trace_type(self, data: Any) -> str:
-        """Detect the type of trace data."""
-        if isinstance(data, str):
-            try:
-                data = json.loads(data)
-            except json.JSONDecodeError:
-                return "default"
-
-        if isinstance(data, dict):
-            # Check for LangGraph indicators
-            if "spans" in data:
-                for span in data.get("spans", []):
-                    if isinstance(span, dict):
-                        attrs = span.get("span_attributes", {})
-                        if any(
-                            "langgraph" in str(key).lower()
-                            for key in attrs.keys()
-                        ):
-                            return "langgraph"
-
-        return "default"
+        pass
 
     def compress_trace_with_plan_priority(
         self, trace_data: Any, target_token_limit: int = 100000
@@ -77,17 +31,25 @@ class TraceCompressor:
         Compress trace with plan preservation as highest priority.
         If context window is exceeded, compress other data more aggressively.
         """
-        # Detect trace type and use appropriate provider
-        trace_type = self._detect_trace_type(trace_data)
-        provider = self.providers.get(trace_type, self.providers.get("default"))
+        # Convert string to dict if needed
+        if isinstance(trace_data, str):
+            try:
+                data = json.loads(trace_data)
+            except json.JSONDecodeError:
+                logger.warning("Failed to parse trace data as JSON")
+                return {"error": "Invalid JSON trace data"}
+        else:
+            data = trace_data
 
-        if provider:
-            return provider.compress_with_plan_priority(
-                trace_data, target_token_limit
-            )
+        if not isinstance(data, dict):
+            logger.warning("Trace data is not a dictionary")
+            return {"error": "Trace data must be a dictionary"}
 
-        # Fallback to basic compression
-        return self.compress_trace(trace_data)
+        # Use global provider registry
+        from trulens.core.utils.trace_provider import get_trace_provider
+
+        provider = get_trace_provider(data)
+        return provider.compress_with_plan_priority(data, target_token_limit)
 
     def compress_trace(self, trace_data: Any) -> Dict[str, Any]:
         """
@@ -117,15 +79,11 @@ class TraceCompressor:
             "PLAN_PRESERVATION_DEBUG: Using modified trace compression with plan preservation"
         )
 
-        # Detect trace type and use appropriate provider
-        trace_type = self._detect_trace_type(data)
-        provider = self.providers.get(trace_type, self.providers.get("default"))
+        # Use global provider registry
+        from trulens.core.utils.trace_provider import get_trace_provider
 
-        if provider:
-            return provider.compress_trace(data)
-
-        # Fallback compression if no provider available
-        return self._basic_compression(data)
+        provider = get_trace_provider(data)
+        return provider.compress_trace(data)
 
     def _basic_compression(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Basic compression fallback."""
