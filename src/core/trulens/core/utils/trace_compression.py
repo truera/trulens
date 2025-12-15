@@ -31,9 +31,6 @@ class TraceCompressor:
         Returns:
             Compressed trace data with essential information preserved
         """
-        logger.warning(
-            "PLAN_PRESERVATION_DEBUG: Using modified trace compression with plan preservation"
-        )
         # Convert to string if needed for processing
         if isinstance(trace_data, str):
             try:
