@@ -1766,7 +1766,7 @@ class TruGraph(TruChain):
             result = self.app.invoke(state)
             return self._extract_output_from_result(result)
         except Exception as e:
-            raise Exception(f"Error invoking Langgraph workflow: {str(e)}")
+            raise Exception(f"Error invoking LangGraph workflow: {str(e)}")
 
     async def main_acall(self, input: Union[str, Dict[str, Any]]):
         """Async invoke the LangGraph workflow.
