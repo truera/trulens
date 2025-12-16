@@ -317,3 +317,103 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         self.assertIsInstance(result, dict)
         self.assertIn("messages", result)
         self.assertIn("Custom class response", result["messages"][-1].content)
+
+    def test_main_call_with_dict_input(self) -> None:
+        """Test that main_call accepts dict state directly (for JSON blob inputs)."""
+
+        def echo_agent(state):
+            messages = state.get("messages", [])
+            context = state.get("context", "no context")
+            if messages:
+                last_message = messages[-1]
+                content = (
+                    last_message.content
+                    if hasattr(last_message, "content")
+                    else str(last_message)
+                )
+                return {
+                    "messages": [
+                        AIMessage(
+                            content=f"Echo: {content}, Context: {context}"
+                        )
+                    ]
+                }
+            return {"messages": [AIMessage(content="Echo: No message")]}
+
+        from typing import List, Optional
+
+        from typing_extensions import TypedDict
+
+        class StateWithContext(TypedDict):
+            messages: List
+            context: Optional[str]
+
+        workflow = StateGraph(StateWithContext)
+        workflow.add_node("echo", echo_agent)
+        workflow.add_edge("echo", END)
+        workflow.set_entry_point("echo")
+
+        graph = workflow.compile()
+
+        tru_app = TruGraph(
+            graph,
+            app_name="DictInputTest",
+            app_version="v1",
+        )
+
+        # Test main_call with dict input (simulates JSON blob from Snowflake Run)
+        dict_input = {
+            "messages": [HumanMessage(content="Hello from JSON")],
+            "context": "important context",
+        }
+        result = tru_app.main_call(dict_input)
+        self.assertIsInstance(result, str)
+        self.assertIn("Hello from JSON", result)
+        self.assertIn("important context", result)
+
+        # String input should still work (wrapped in default format)
+        result2 = tru_app.main_call("Simple string input")
+        self.assertIsInstance(result2, str)
+        self.assertIn("Simple string input", result2)
+
+    def test_main_call_string_and_dict_compatibility(self) -> None:
+        """Test that main_call handles both string and dict inputs correctly."""
+
+        def simple_agent(state):
+            messages = state.get("messages", [])
+            if messages:
+                last_message = messages[-1]
+                # Handle both tuple and HumanMessage formats
+                if hasattr(last_message, "content"):
+                    content = last_message.content
+                elif isinstance(last_message, tuple):
+                    content = last_message[1]
+                else:
+                    content = str(last_message)
+                return {"messages": [AIMessage(content=f"Got: {content}")]}
+            return {"messages": [AIMessage(content="No message")]}
+
+        workflow = StateGraph(MessagesState)
+        workflow.add_node("agent", simple_agent)
+        workflow.add_edge("agent", END)
+        workflow.set_entry_point("agent")
+
+        graph = workflow.compile()
+
+        tru_app = TruGraph(
+            graph,
+            app_name="BackwardCompatTest",
+            app_version="v1",
+        )
+
+        # Direct invoke with dict still works
+        result = tru_app.app.invoke({
+            "messages": [HumanMessage(content="Direct invoke")]
+        })
+        self.assertIn("messages", result)
+        self.assertIn("Direct invoke", result["messages"][-1].content)
+
+        # main_call also still works (uses default tuple format)
+        result2 = tru_app.main_call("Main call test")
+        self.assertIsInstance(result2, str)
+        self.assertIn("Main call test", result2)
