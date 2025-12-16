@@ -107,16 +107,51 @@ class Trace:
         # First convert to regular JSON
         if self.events is not None:
             trace_data = self.events.to_json(default_handler=default_handler)
+            print(
+                f"🔍 SELECTOR_DEBUG: events.to_json() produced type: {type(trace_data)}"
+            )
+            print(
+                f"🔍 SELECTOR_DEBUG: events.to_json() size: {len(str(trace_data))}"
+            )
+
+            # Try to parse and inspect the structure
+            try:
+                if isinstance(trace_data, str):
+                    parsed = json.loads(trace_data)
+                    print(
+                        f"🔍 SELECTOR_DEBUG: Parsed JSON keys: {list(parsed.keys()) if isinstance(parsed, dict) else 'Not a dict'}"
+                    )
+                    if isinstance(parsed, dict) and "events" in parsed:
+                        events = parsed["events"]
+                        print(
+                            f"🔍 SELECTOR_DEBUG: Found {len(events) if isinstance(events, list) else 'non-list'} events in parsed JSON"
+                        )
+                        if isinstance(events, list) and len(events) > 0:
+                            first_event = events[0]
+                            print(
+                                f"🔍 SELECTOR_DEBUG: First event keys: {list(first_event.keys()) if isinstance(first_event, dict) else 'Not a dict'}"
+                            )
+                else:
+                    print(
+                        f"🔍 SELECTOR_DEBUG: trace_data is not a string: {type(trace_data)}"
+                    )
+            except Exception as e:
+                print(f"🔍 SELECTOR_DEBUG: Failed to parse trace_data: {e}")
         else:
             # If no events, create minimal trace data
             trace_data = json.dumps({
                 "events": [],
                 "processed_content_roots": [],
             })
+            print("🔍 SELECTOR_DEBUG: No events, created minimal trace data")
 
         # Apply compression with explicit plan preservation
+        print("🔍 SELECTOR_DEBUG: Calling compress_trace_for_feedback")
         compressed_trace = compress_trace_for_feedback(
             trace_data, preserve_plan=True, target_token_limit=100000
+        )
+        print(
+            f"🔍 SELECTOR_DEBUG: Compression returned keys: {list(compressed_trace.keys()) if isinstance(compressed_trace, dict) else 'Not a dict'}"
         )
 
         # Convert compressed data back to JSON string with error handling

@@ -21,30 +21,61 @@ class LangGraphTraceProvider(TraceProvider):
         """
         Check if this is a LangGraph trace by looking for LangGraph-specific indicators.
         """
+        logger.warning(
+            "LANGGRAPH_DEBUG: LangGraphTraceProvider.can_handle called"
+        )
+
         if not isinstance(trace_data, dict):
+            logger.warning("LANGGRAPH_DEBUG: trace_data is not a dict")
             return False
+
+        logger.warning(
+            f"LANGGRAPH_DEBUG: trace_data keys: {list(trace_data.keys())}"
+        )
 
         # Look for LangGraph-specific span names or attributes
         if "spans" in trace_data:
-            for span in trace_data["spans"]:
-                if isinstance(span, dict):
-                    span_name = span.get("span_name", "")
-                    if (
-                        "langgraph" in span_name.lower()
-                        or "graph" in span_name.lower()
-                    ):
-                        return True
+            spans = trace_data["spans"]
+            logger.warning(
+                f"LANGGRAPH_DEBUG: Found {len(spans) if isinstance(spans, list) else 'non-list'} spans"
+            )
 
-                    # Check for LangGraph observability attributes
-                    attrs = span.get("span_attributes", {})
-                    if isinstance(attrs, dict):
-                        for key in attrs.keys():
-                            if (
-                                "graph_node" in key
-                                or "langgraph" in key.lower()
-                            ):
-                                return True
+            if isinstance(spans, list):
+                for i, span in enumerate(spans[:3]):  # Check first 3 spans
+                    if isinstance(span, dict):
+                        span_name = span.get("span_name", "")
+                        logger.warning(
+                            f"LANGGRAPH_DEBUG: Span {i} name: '{span_name}'"
+                        )
 
+                        if (
+                            "langgraph" in span_name.lower()
+                            or "graph" in span_name.lower()
+                        ):
+                            logger.warning(
+                                f"LANGGRAPH_DEBUG: Found LangGraph span name: '{span_name}'"
+                            )
+                            return True
+
+                        # Check for LangGraph observability attributes
+                        attrs = span.get("span_attributes", {})
+                        if isinstance(attrs, dict):
+                            attr_keys = list(attrs.keys())
+                            logger.warning(
+                                f"LANGGRAPH_DEBUG: Span {i} attribute keys: {attr_keys[:5]}"
+                            )  # First 5 keys
+
+                            for key in attrs.keys():
+                                if (
+                                    "graph_node" in key
+                                    or "langgraph" in key.lower()
+                                ):
+                                    logger.warning(
+                                        f"LANGGRAPH_DEBUG: Found LangGraph attribute: '{key}'"
+                                    )
+                                    return True
+
+        logger.warning("LANGGRAPH_DEBUG: No LangGraph indicators found")
         return False
 
     def extract_plan(self, trace_data: Dict[str, Any]) -> Optional[Any]:
@@ -288,7 +319,9 @@ def register_langgraph_provider():
 
     provider = LangGraphTraceProvider()
     register_trace_provider(provider)
-    logger.info("LangGraph trace provider registered")
+    logger.warning(
+        "PROVIDER_DEBUG: LangGraph trace provider registered successfully"
+    )
 
 
 # Auto-register when module is imported
