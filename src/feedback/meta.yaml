@@ -1,6 +1,6 @@
 {% set name = "trulens-feedback" %}
 {% set pyname = name.replace('-', '.') %}
-{% set version = "2.5.0" %}
+{% set version = "2.5.2" %}
 
 package:
   name: {{ name|lower }}
@@ -12,7 +12,7 @@ source:
   {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-feedback/#files
-  sha256: 9fc194800cb835583a1637a9edf79df963d5fde584c72c0d0fa4afd2dc841bfa
+  sha256: ec1771d6b183ad6ac75a6ce39924a3d516623162a0b103d81ec8a1e802d75e27
   {% endif %}
 
 build:
