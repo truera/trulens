@@ -93,6 +93,41 @@ class Trace:
             self.processed_content_roots.append(node)
         return node
 
+    def _clean_plan_for_cortex(self, plan_str: str) -> str:
+        """
+        Clean plan content by removing debug messages for Cortex compatibility.
+
+        Args:
+            plan_str: Raw plan string that may contain debug messages
+
+        Returns:
+            Cleaned plan string with debug messages removed
+        """
+        import re
+
+        # Patterns to remove - ONLY obvious debug/error messages, be very conservative
+        patterns_to_remove = [
+            r"^Agent error: [^\n]*\n?",  # Remove lines that START with "Agent error: "
+            r"^DEBUG: [^\n]*\n?",  # Remove lines that START with "DEBUG: "
+            r"^Query ID: [^\n]*\n?",  # Remove lines that START with "Query ID: "
+        ]
+
+        cleaned_plan = plan_str
+        for pattern in patterns_to_remove:
+            cleaned_plan = re.sub(pattern, "", cleaned_plan, flags=re.MULTILINE)
+
+        # Only remove completely empty lines, preserve all other content
+        lines = cleaned_plan.split("\n")
+        cleaned_lines = []
+
+        for line in lines:
+            if line.strip():  # Keep any line with content
+                cleaned_lines.append(line)
+
+        # Join back with single newlines, preserve original formatting
+        final_cleaned = "\n".join(cleaned_lines)
+        return final_cleaned if final_cleaned.strip() else plan_str
+
     def to_compressed_json(self, default_handler: Callable = str) -> str:
         """
         Convert trace events to compressed JSON format.
@@ -147,6 +182,9 @@ class Trace:
 
         # Apply compression with explicit plan preservation
         print("🔍 SELECTOR_DEBUG: Calling compress_trace_for_feedback")
+        print(
+            f"🔍 SELECTOR_DEBUG: Input trace_data size: {len(str(trace_data))} chars"
+        )
         compressed_trace = compress_trace_for_feedback(
             trace_data, preserve_plan=True, target_token_limit=100000
         )
@@ -159,33 +197,270 @@ class Trace:
             result = json.dumps(
                 compressed_trace, default=default_handler, ensure_ascii=False
             )
+            print(
+                f"🔍 SELECTOR_DEBUG: Initial JSON serialization successful, size: {len(result)} chars"
+            )
 
-            # Check size - if too large, it might cause LLM issues
-            if len(result) > 500000:  # 500KB limit
-                logger.warning(
-                    f"Compressed trace is very large ({len(result)} chars), may cause LLM issues"
+            # Check size - Allow up to 100k tokens (roughly 400k characters)
+            # Using conservative estimate of 4 characters per token
+            MAX_SIZE = 400000  # 400KB limit for 100k token compatibility
+            if len(result) > MAX_SIZE:
+                print(
+                    f"🔍 SELECTOR_DEBUG: Trace too large ({len(result)} chars), compressing to essentials"
                 )
-                # Keep only the plan and essential info
+                logger.warning(
+                    f"Compressed trace is too large ({len(result)} chars), reducing to essentials for Cortex compatibility"
+                )
+                # Keep ALL keys with "plan" in them and minimal essential info
                 essential_trace = {
                     "compressed": True,
-                    "size_warning": f"Original trace was {len(result)} characters",
-                    "plan": compressed_trace.get("plan")
-                    if isinstance(compressed_trace, dict)
-                    else None,
-                    "execution_flow": compressed_trace.get(
-                        "execution_flow", []
-                    )[:5]
-                    if isinstance(compressed_trace, dict)
-                    else [],
-                    "trace_summary": "Large trace compressed to essential elements",
+                    "size_warning": f"Original trace was {len(result)} characters, reduced for LLM compatibility",
+                    "trace_summary": "Large trace compressed to essential elements for Cortex LLM",
                 }
+
+                # Preserve ALL keys containing "plan" (case-insensitive)
+                if isinstance(compressed_trace, dict):
+                    for key, value in compressed_trace.items():
+                        if "plan" in key.lower():
+                            essential_trace[key] = value
+                            print(
+                                f"🔍 SELECTOR_DEBUG: Preserved plan key '{key}' with size {len(str(value))}"
+                            )
+
+                    # Also keep minimal execution flow if no plan keys found
+                    if not any(
+                        "plan" in k.lower() for k in essential_trace.keys()
+                    ):
+                        execution_flow = compressed_trace.get(
+                            "execution_flow", []
+                        )
+                        if execution_flow:
+                            essential_trace["execution_flow"] = execution_flow[
+                                :3
+                            ]
                 result = json.dumps(
                     essential_trace, default=str, ensure_ascii=False
                 )
 
+                # Double-check the reduced size
+                if len(result) > MAX_SIZE:
+                    print(
+                        f"🔍 SELECTOR_DEBUG: Still too large ({len(result)} chars), keeping only plan keys"
+                    )
+                    # If still too large, keep only keys with "plan" in them
+                    all_plan_data = {}
+                    if isinstance(compressed_trace, dict):
+                        for key, value in compressed_trace.items():
+                            if "plan" in key.lower():
+                                all_plan_data[key] = value
+                                print(
+                                    f"🔍 SELECTOR_DEBUG: Found plan key '{key}' to preserve"
+                                )
+
+                    # Use the first plan key found, or combine if multiple
+                    plan_data = None
+                    if len(all_plan_data) == 1:
+                        plan_data = list(all_plan_data.values())[0]
+                    elif len(all_plan_data) > 1:
+                        # If multiple plan keys, combine them
+                        plan_data = all_plan_data
+                    else:
+                        # Fallback to looking for "plan" key specifically
+                        plan_data = (
+                            compressed_trace.get("plan")
+                            if isinstance(compressed_trace, dict)
+                            else None
+                        )
+
+                    # If plan itself is too large, clean and truncate it aggressively
+                    if (
+                        plan_data and len(str(plan_data)) > MAX_SIZE - 500
+                    ):  # Leave room for JSON structure
+                        plan_str = str(plan_data)
+
+                        # First, apply plan cleaning to remove debug messages
+                        cleaned_plan = self._clean_plan_for_cortex(plan_str)
+                        print(
+                            f"🔍 SELECTOR_DEBUG: Plan cleaned from {len(plan_str)} to {len(cleaned_plan)} chars"
+                        )
+
+                        # Then truncate if still too large
+                        max_plan_size = MAX_SIZE - 500
+                        if len(cleaned_plan) > max_plan_size:
+                            # Try to find a good truncation point (end of sentence, etc.)
+                            truncate_at = (
+                                max_plan_size - 100
+                            )  # Leave room for truncation message
+
+                            # Look for natural break points
+                            for break_point in [". ", "}\n", "],", "\n\n"]:
+                                last_break = cleaned_plan.rfind(
+                                    break_point, 0, truncate_at
+                                )
+                                if (
+                                    last_break > truncate_at // 2
+                                ):  # Don't truncate too early
+                                    truncate_at = last_break + len(break_point)
+                                    break
+
+                            plan_data = (
+                                cleaned_plan[:truncate_at]
+                                + "... [PLAN TRUNCATED - LARGE DATA DETECTED]"
+                            )
+                            print(
+                                f"🔍 SELECTOR_DEBUG: Plan truncated from {len(cleaned_plan)} to {len(plan_data)} chars"
+                            )
+                        else:
+                            plan_data = cleaned_plan
+
+                    minimal_trace = {
+                        "compressed": True,
+                        "trace_summary": "Trace reduced to plan only due to Cortex size constraints",
+                    }
+
+                    # Add all plan-related data
+                    if isinstance(plan_data, dict) and len(all_plan_data) > 1:
+                        # If we have multiple plan keys, preserve them all
+                        minimal_trace.update(all_plan_data)
+                    else:
+                        # Single plan or fallback
+                        minimal_trace["plan"] = plan_data
+                    result = json.dumps(
+                        minimal_trace, default=str, ensure_ascii=False
+                    )
+
+                    # Final safety check - if STILL too large, create absolute minimal structure
+                    if len(result) > MAX_SIZE:
+                        print(
+                            f"🔍 SELECTOR_DEBUG: Even minimal trace too large ({len(result)} chars), creating absolute minimal"
+                        )
+                        absolute_minimal = {
+                            "compressed": True,
+                            "plan": "Large plan detected and truncated for Cortex",
+                            "trace_summary": "Ultra-minimal trace",
+                        }
+                        result = json.dumps(
+                            absolute_minimal, default=str, ensure_ascii=False
+                        )
+
+                        # Ultimate fallback - if even this is too large (shouldn't happen)
+                        if len(result) > MAX_SIZE:
+                            print(
+                                "🔍 SELECTOR_DEBUG: Ultimate fallback - even absolute minimal too large"
+                            )
+                            result = '{"compressed":true,"plan":"truncated","summary":"minimal"}'
+
             # Validate it's proper JSON by parsing it back
-            json.loads(result)
-            return result
+            try:
+                json.loads(result)
+                print(
+                    f"🔍 SELECTOR_DEBUG: Final JSON validation passed, size: {len(result)} chars"
+                )
+                print(
+                    f"🔍 SELECTOR_DEBUG: Final JSON preview (first 500 chars): {result[:500]}"
+                )
+                print(
+                    f"🔍 SELECTOR_DEBUG: Final JSON preview (last 500 chars): {result[-500:]}"
+                )
+
+                # Check for potential encoding issues
+                try:
+                    result_bytes = result.encode("utf-8")
+                    print(
+                        f"🔍 SELECTOR_DEBUG: UTF-8 encoding successful, byte size: {len(result_bytes)}"
+                    )
+                except UnicodeEncodeError as e:
+                    print(f"🔍 SELECTOR_DEBUG: UTF-8 encoding failed: {e}")
+                    # Replace problematic characters
+                    result = result.encode("utf-8", errors="replace").decode(
+                        "utf-8"
+                    )
+                    print(
+                        f"🔍 SELECTOR_DEBUG: Fixed encoding issues, new size: {len(result)}"
+                    )
+
+                # Extra safety check - ensure JSON ends properly
+                if not result.strip().endswith("}"):
+                    print(
+                        f"🔍 SELECTOR_DEBUG: WARNING - JSON doesn't end with }}, last 50 chars: {result[-50:]}"
+                    )
+                    # Try to fix by ensuring proper closure
+                    if result.strip().endswith(","):
+                        result = result.strip()[:-1] + "}"
+                        print(
+                            f"🔍 SELECTOR_DEBUG: Fixed trailing comma, new size: {len(result)}"
+                        )
+
+                # Final validation after all fixes
+                try:
+                    json.loads(result)
+                    print(
+                        "🔍 SELECTOR_DEBUG: Final validation after fixes passed"
+                    )
+                except json.JSONDecodeError as final_err:
+                    print(
+                        f"🔍 SELECTOR_DEBUG: Final validation failed even after fixes: {final_err}"
+                    )
+                    result = json.dumps(
+                        {
+                            "compressed": True,
+                            "plan": "JSON validation failed",
+                            "trace_summary": "Fallback structure",
+                        },
+                        default=str,
+                        ensure_ascii=False,
+                    )
+
+                # Ultimate size check before returning
+                if len(result) > MAX_SIZE:
+                    print(
+                        f"🔍 SELECTOR_DEBUG: CRITICAL - Final result still too large ({len(result)} chars), forcing safe truncation"
+                    )
+                    # Create a guaranteed small, valid JSON structure
+                    safe_minimal = {
+                        "compressed": True,
+                        "plan": "Plan truncated for Cortex compatibility",
+                        "trace_summary": "Minimal safe structure",
+                    }
+                    result = json.dumps(
+                        safe_minimal, default=str, ensure_ascii=False
+                    )
+                    print(
+                        f"🔍 SELECTOR_DEBUG: Created safe minimal JSON: {len(result)} chars"
+                    )
+
+                # Final JSON validation with repair if needed
+                try:
+                    json.loads(result)
+                    print("🔍 SELECTOR_DEBUG: Final JSON validation successful")
+                except json.JSONDecodeError as e:
+                    print(
+                        f"🔍 SELECTOR_DEBUG: JSON validation failed, creating emergency fallback: {e}"
+                    )
+                    # Emergency fallback - guaranteed valid JSON
+                    emergency_fallback = '{"compressed":true,"plan":"Emergency fallback","error":"JSON validation failed"}'
+                    result = emergency_fallback
+
+                return result
+            except json.JSONDecodeError as json_err:
+                print(f"🔍 SELECTOR_DEBUG: JSON validation failed: {json_err}")
+                print(
+                    f"🔍 SELECTOR_DEBUG: Invalid JSON preview: {result[:200]}...{result[-200:]}"
+                )
+                # If JSON is malformed, create a minimal valid structure
+                minimal_fallback = {
+                    "compressed": True,
+                    "json_validation_error": str(json_err)[:100],
+                    "plan": "Plan available but JSON validation failed",
+                    "trace_summary": "JSON validation failed, minimal structure provided",
+                }
+                fallback_result = json.dumps(
+                    minimal_fallback, default=str, ensure_ascii=False
+                )
+                print(
+                    f"🔍 SELECTOR_DEBUG: Fallback JSON size: {len(fallback_result)} chars"
+                )
+                return fallback_result
         except Exception as e:
             logger.warning(f"Error serializing compressed trace: {e}")
             # Fallback to basic trace structure that won't break the LLM

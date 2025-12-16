@@ -91,7 +91,7 @@ class TraceProvider(ABC):
 
         compressed = {}
 
-        # Always preserve plan first
+        # Always preserve plan first - use extract_plan method
         logger.info("DEBUG: Extracting plan")
         plan = self.extract_plan(trace_data)
         logger.info(f"DEBUG: Extracted plan: {plan is not None}")
@@ -101,7 +101,20 @@ class TraceProvider(ABC):
                 f"DEBUG: Plan preserved, size: {len(json.dumps(plan, default=str))} characters"
             )
             logger.info("Plan preserved completely for metrics evaluation")
-        else:
+
+        # Also preserve any top-level keys containing "plan" (case-insensitive)
+        plan_keys_found = 0
+        for key, value in trace_data.items():
+            if (
+                "plan" in key.lower() and key.lower() != "plan"
+            ):  # Don't duplicate the main plan
+                compressed[key] = value
+                plan_keys_found += 1
+                logger.info(
+                    f"DEBUG: Additional plan key '{key}' preserved, size: {len(json.dumps(value, default=str))} characters"
+                )
+
+        if plan_keys_found == 0 and not plan:
             logger.warning(
                 "No plan found in trace data - this may impact metrics evaluation"
             )
@@ -177,24 +190,38 @@ class TraceProvider(ABC):
             f"applying aggressive compression to non-plan data"
         )
 
-        # Extract plan first
-        plan = compressed.get("plan")
-        plan_tokens = len(json.dumps(plan, default=str)) // 4 if plan else 0
-        logger.info(f"DEBUG: Plan tokens: {plan_tokens}")
+        # Extract ALL keys containing "plan" first
+        plan_keys = {}
+        plan_tokens = 0
+
+        for key, value in compressed.items():
+            if "plan" in key.lower():
+                plan_keys[key] = value
+                key_tokens = len(json.dumps(value, default=str)) // 4
+                plan_tokens += key_tokens
+                logger.info(
+                    f"DEBUG: Found plan key '{key}': {key_tokens} tokens"
+                )
+
+        logger.info(f"DEBUG: Total plan tokens: {plan_tokens}")
 
         # Rebuild with more aggressive compression for non-plan data
         result = {}
-        if plan:
-            result["plan"] = plan  # Always preserve plan
-            logger.info("DEBUG: Plan preserved in aggressive compression")
+
+        # Always preserve ALL plan-related keys
+        for key, value in plan_keys.items():
+            result[key] = value
+            logger.info(
+                f"DEBUG: Plan key '{key}' preserved in aggressive compression"
+            )
 
         # Add other data within budget
         used_tokens = plan_tokens
         logger.info(f"DEBUG: Starting with {used_tokens} tokens used")
 
         for key, value in compressed.items():
-            if key == "plan":
-                continue
+            if "plan" in key.lower():
+                continue  # Already added above
 
             value_tokens = len(json.dumps(value, default=str)) // 4
             logger.info(f"DEBUG: Considering {key}: {value_tokens} tokens")
@@ -247,11 +274,431 @@ class GenericTraceProvider(TraceProvider):
         """Generic provider handles any trace data as fallback."""
         return True
 
+    def _clean_plan_content(self, plan_value: Any) -> Any:
+        """
+        Clean plan content by removing debug messages, error logs, and other noise.
+
+        Args:
+            plan_value: Raw plan data that may contain debug messages
+
+        Returns:
+            Cleaned plan data with debug messages removed
+        """
+        if not isinstance(plan_value, str):
+            # If it's not a string, convert to string for cleaning, then back
+            plan_str = str(plan_value)
+        else:
+            plan_str = plan_value
+
+        # Patterns to remove - ONLY obvious debug/error messages, be very conservative
+        patterns_to_remove = [
+            r"^Agent error: [^\n]*\n?",  # Remove lines that START with "Agent error: "
+            r"^DEBUG: [^\n]*\n?",  # Remove lines that START with "DEBUG: "
+            r"^Query ID: [^\n]*\n?",  # Remove lines that START with "Query ID: "
+        ]
+
+        import re
+
+        cleaned_plan = plan_str
+
+        for pattern in patterns_to_remove:
+            cleaned_plan = re.sub(
+                pattern, "", cleaned_plan, flags=re.IGNORECASE | re.MULTILINE
+            )
+
+        # Only remove completely empty lines, preserve all other content
+        lines = cleaned_plan.split("\n")
+        cleaned_lines = []
+
+        for line in lines:
+            # Keep the line if it has any content, even just whitespace
+            # Only remove completely empty lines
+            if line.strip():  # Keep any line with content
+                cleaned_lines.append(line)
+
+        # Join back with single newlines, preserve original formatting
+        final_cleaned = "\n".join(cleaned_lines)
+
+        # If the original was not a string, try to preserve the original type
+        if not isinstance(plan_value, str):
+            try:
+                # Try to parse back to original format if it was JSON-like
+                import json
+
+                if plan_str.strip().startswith(("{", "[")):
+                    return (
+                        json.loads(final_cleaned)
+                        if final_cleaned.strip()
+                        else plan_value
+                    )
+            except Exception:
+                pass
+
+        return final_cleaned if final_cleaned.strip() else plan_value
+
+    def _extract_plan_from_spans(
+        self, trace_data: Dict[str, Any]
+    ) -> Optional[Any]:
+        """
+        Extract plan from spans, looking for Command structures and state attributes.
+        This is used as a fallback when top-level plan keys contain debug messages.
+        """
+        if "spans" not in trace_data or not isinstance(
+            trace_data["spans"], list
+        ):
+            logger.warning(
+                "🔍 GENERIC_PLAN_DEBUG: No spans found in trace_data"
+            )
+            return None
+
+        logger.warning(
+            f"🔍 GENERIC_PLAN_DEBUG: Checking {len(trace_data['spans'])} spans for plan data"
+        )
+
+        for i, span in enumerate(trace_data["spans"]):
+            if not isinstance(span, dict):
+                logger.warning(
+                    f"🔍 GENERIC_PLAN_DEBUG: Span {i} is not a dict: {type(span)}"
+                )
+                continue
+
+            span_name = span.get("span_name", f"span_{i}")
+            span_attrs = span.get("span_attributes", {})
+
+            logger.warning(
+                f"🔍 GENERIC_PLAN_DEBUG: Span {i} '{span_name}' has {len(span_attrs) if isinstance(span_attrs, dict) else 0} attributes"
+            )
+
+            if not isinstance(span_attrs, dict):
+                logger.warning(
+                    f"🔍 GENERIC_PLAN_DEBUG: Span {i} attributes not a dict: {type(span_attrs)}"
+                )
+                continue
+
+            # Log all attribute keys for debugging
+            attr_keys = list(span_attrs.keys())
+            logger.warning(
+                f"🔍 GENERIC_PLAN_DEBUG: Span {i} '{span_name}' attribute keys: {attr_keys[:10]}{'...' if len(attr_keys) > 10 else ''}"
+            )
+
+            # Check for LangGraph-style state attributes
+            state_keys = [
+                "ai.observability.graph_node.output_state",
+                "ai.observability.graph_node.input_state",
+            ]
+
+            # Collect all potential plans and prioritize them
+            potential_plans = []
+
+            for state_key in state_keys:
+                if state_key in span_attrs:
+                    state_value = span_attrs[state_key]
+                    logger.warning(
+                        f"🔍 GENERIC_PLAN_DEBUG: Found {state_key} in {span_name}, type: {type(state_value)}, size: {len(str(state_value))}"
+                    )
+                    logger.warning(
+                        f"🔍 GENERIC_PLAN_DEBUG: State value preview: {str(state_value)[:200]}..."
+                    )
+
+                    # Check if it contains Command structure
+                    if (
+                        isinstance(state_value, str)
+                        and "Command(" in state_value
+                    ):
+                        logger.warning(
+                            f"🔍 GENERIC_PLAN_DEBUG: Found Command structure in {span_name}.{state_key}"
+                        )
+
+                        # Prioritize Commands with 'plan' over Commands with 'messages'
+                        priority = 0
+                        if "'plan':" in state_value or '"plan":' in state_value:
+                            priority = 100  # High priority for real plans
+                            logger.warning(
+                                "🔍 GENERIC_PLAN_DEBUG: Command contains 'plan' key - HIGH PRIORITY"
+                            )
+                        elif (
+                            "'execution_plan':" in state_value
+                            or '"execution_plan":' in state_value
+                        ):
+                            priority = 90  # High priority for execution plans
+                            logger.warning(
+                                "🔍 GENERIC_PLAN_DEBUG: Command contains 'execution_plan' key - HIGH PRIORITY"
+                            )
+                        elif (
+                            "'messages':" in state_value
+                            and "Agent error:" in state_value
+                        ):
+                            priority = 10  # Low priority for debug messages
+                            logger.warning(
+                                "🔍 GENERIC_PLAN_DEBUG: Command contains debug messages - LOW PRIORITY"
+                            )
+                        else:
+                            priority = 50  # Medium priority for other Commands
+                            logger.warning(
+                                "🔍 GENERIC_PLAN_DEBUG: Command structure found - MEDIUM PRIORITY"
+                            )
+
+                        potential_plans.append({
+                            "content": state_value,
+                            "priority": priority,
+                            "span_name": span_name,
+                            "state_key": state_key,
+                        })
+
+                    # Also check for direct plan content (non-Command)
+                    elif (
+                        isinstance(state_value, str)
+                        and "plan" in state_value.lower()
+                        and len(state_value) > 50
+                    ):
+                        if "Agent error:" not in state_value:
+                            logger.warning(
+                                f"🔍 GENERIC_PLAN_DEBUG: Found direct plan content in {span_name}.{state_key}"
+                            )
+                            potential_plans.append({
+                                "content": state_value,
+                                "priority": 70,  # Medium-high priority for direct plans
+                                "span_name": span_name,
+                                "state_key": state_key,
+                            })
+
+            # Sort by priority (highest first) and return the best plan
+            if potential_plans:
+                potential_plans.sort(key=lambda x: x["priority"], reverse=True)
+                best_plan = potential_plans[0]
+                logger.warning(
+                    f"🔍 GENERIC_PLAN_DEBUG: Selected best plan from {best_plan['span_name']}.{best_plan['state_key']} with priority {best_plan['priority']}"
+                )
+
+                # Try to extract structured plan from Command if applicable
+                if "Command(" in best_plan["content"]:
+                    if best_plan["priority"] >= 90:  # High priority plans
+                        extracted_plan = (
+                            self._extract_execution_plan_from_command_string(
+                                best_plan["content"]
+                            )
+                        )
+                        if extracted_plan:
+                            logger.warning(
+                                "🔍 GENERIC_PLAN_DEBUG: Successfully extracted structured plan from Command"
+                            )
+                            return extracted_plan
+
+                # Return the raw content if extraction failed or not applicable
+                return best_plan["content"]
+
+            # Also check other attributes that might contain plans
+            for attr_key, attr_value in span_attrs.items():
+                if (
+                    "plan" in attr_key.lower()
+                    and isinstance(attr_value, str)
+                    and len(attr_value) > 50
+                ):
+                    logger.warning(
+                        f"🔍 GENERIC_PLAN_DEBUG: Found plan-related attribute '{attr_key}' in {span_name}"
+                    )
+                    if "Agent error:" not in attr_value:
+                        return attr_value
+
+        logger.warning("🔍 GENERIC_PLAN_DEBUG: No plan found in any spans")
+        return None
+
+    def _extract_execution_plan_from_command_string(
+        self, command_str: str
+    ) -> Optional[str]:
+        """
+        Extract execution_plan or plan from Command string using brace counting.
+        This is a simplified version of the LangGraph provider logic.
+        """
+        try:
+            import ast
+
+            # Try multiple plan key patterns
+            plan_markers = [
+                "'execution_plan':",
+                "'plan':",
+                '"execution_plan":',
+                '"plan":',
+            ]
+            start_pos = -1
+
+            for marker in plan_markers:
+                pos = command_str.find(marker)
+                if pos != -1:
+                    start_pos = pos
+                    logger.warning(
+                        f"🔍 GENERIC_PLAN_DEBUG: Found plan marker '{marker}' at position {pos}"
+                    )
+                    break
+
+            if start_pos == -1:
+                logger.warning(
+                    "🔍 GENERIC_PLAN_DEBUG: No plan markers found in Command string"
+                )
+                return None
+
+            dict_start = command_str.find("{", start_pos)
+            if dict_start == -1:
+                return None
+
+            brace_count = 0
+            dict_end = dict_start
+
+            for i in range(dict_start, len(command_str)):
+                if command_str[i] == "{":
+                    brace_count += 1
+                elif command_str[i] == "}":
+                    brace_count -= 1
+                    if brace_count == 0:
+                        dict_end = i
+                        break
+
+            if brace_count == 0:
+                execution_plan_str = command_str[dict_start : dict_end + 1]
+
+                try:
+                    execution_plan_dict = ast.literal_eval(execution_plan_str)
+                    if isinstance(execution_plan_dict, dict):
+                        return self._format_execution_plan_simple(
+                            execution_plan_dict
+                        )
+                except (ValueError, SyntaxError):
+                    return execution_plan_str
+
+            return None
+        except Exception as e:
+            logger.warning(
+                f"🔍 GENERIC_PLAN_DEBUG: Error extracting execution_plan: {e}"
+            )
+            return None
+
+    def _format_execution_plan_simple(
+        self, execution_plan_dict: Dict[str, Any]
+    ) -> str:
+        """
+        Simple formatting of execution_plan dictionary.
+        """
+        formatted_parts = []
+
+        if "plan_summary" in execution_plan_dict:
+            formatted_parts.append(
+                f"Plan Summary: {execution_plan_dict['plan_summary']}"
+            )
+
+        if "steps" in execution_plan_dict and isinstance(
+            execution_plan_dict["steps"], list
+        ):
+            formatted_parts.append("Steps:")
+            for i, step in enumerate(execution_plan_dict["steps"], 1):
+                if isinstance(step, dict):
+                    step_text = f"{i}. "
+                    if "agent" in step:
+                        step_text += f"Agent: {step['agent']} - "
+                    if "purpose" in step:
+                        step_text += f"Purpose: {step['purpose']}"
+                    formatted_parts.append(step_text)
+
+        if "expected_final_output" in execution_plan_dict:
+            formatted_parts.append(
+                f"Expected Output: {execution_plan_dict['expected_final_output']}"
+            )
+
+        return "\n".join(formatted_parts)
+
+    def _extract_execution_plan_from_command_string(
+        self, command_str: str
+    ) -> Optional[str]:
+        """
+        Extract the execution_plan content from a Command string representation.
+        Simplified version for GenericTraceProvider.
+        """
+        try:
+            import ast
+
+            # Use brace counting to find the execution_plan content
+            start_marker = "'execution_plan':"
+            start_pos = command_str.find(start_marker)
+
+            if start_pos == -1:
+                return None
+
+            # Find the start of the dictionary after the colon
+            dict_start = command_str.find("{", start_pos)
+            if dict_start == -1:
+                return None
+
+            # Count braces to find the matching closing brace
+            brace_count = 0
+            dict_end = dict_start
+
+            for i in range(dict_start, len(command_str)):
+                if command_str[i] == "{":
+                    brace_count += 1
+                elif command_str[i] == "}":
+                    brace_count -= 1
+                    if brace_count == 0:
+                        dict_end = i
+                        break
+
+            if brace_count == 0:
+                execution_plan_str = command_str[dict_start : dict_end + 1]
+
+                # Try to parse it as a Python literal
+                try:
+                    execution_plan_dict = ast.literal_eval(execution_plan_str)
+                    if isinstance(execution_plan_dict, dict):
+                        # Format the execution plan nicely
+                        formatted_plan = self._format_execution_plan_simple(
+                            execution_plan_dict
+                        )
+                        return formatted_plan
+                except (ValueError, SyntaxError):
+                    # Return the raw string if parsing fails
+                    return execution_plan_str
+
+        except Exception as e:
+            logger.warning(
+                f"🔍 GENERIC_PLAN_DEBUG: Error extracting execution_plan: {e}"
+            )
+
+        return None
+
+    def _format_execution_plan_simple(self, execution_plan_dict: dict) -> str:
+        """
+        Simple formatting of execution_plan dictionary.
+        """
+        formatted_parts = []
+
+        if "plan_summary" in execution_plan_dict:
+            formatted_parts.append(
+                f"Plan Summary: {execution_plan_dict['plan_summary']}"
+            )
+
+        if "steps" in execution_plan_dict and isinstance(
+            execution_plan_dict["steps"], list
+        ):
+            formatted_parts.append("Steps:")
+            for i, step in enumerate(execution_plan_dict["steps"], 1):
+                if isinstance(step, dict):
+                    step_text = f"{i}. "
+                    if "agent" in step:
+                        step_text += f"Agent: {step['agent']} - "
+                    if "purpose" in step:
+                        step_text += f"Purpose: {step['purpose']}"
+                    formatted_parts.append(step_text)
+
+        if "expected_final_output" in execution_plan_dict:
+            formatted_parts.append(
+                f"Expected Output: {execution_plan_dict['expected_final_output']}"
+            )
+
+        return "\n".join(formatted_parts)
+
     def extract_plan(self, trace_data: Dict[str, Any]) -> Optional[Any]:
         """Extract plan using generic field names."""
         logger.info("DEBUG: GenericTraceProvider.extract_plan called")
         logger.warning(
-            f"PLAN_DEBUG: Available trace_data keys: {list(trace_data.keys())}"
+            f"🔍 GENERIC_PLAN_DEBUG: Available trace_data keys: {list(trace_data.keys())}"
         )
 
         # Log first few keys and their types for debugging
@@ -270,10 +717,61 @@ class GenericTraceProvider(TraceProvider):
         for field in plan_fields:
             if field in trace_data:
                 plan_value = trace_data[field]
+                plan_size = len(str(plan_value))
                 logger.warning(
-                    f"PLAN_DEBUG: Plan found in generic field '{field}', type: {type(plan_value)}, size: {len(str(plan_value))}"
+                    f"🔍 GENERIC_PLAN_DEBUG: Plan found in generic field '{field}', type: {type(plan_value)}, size: {plan_size}"
                 )
-                return plan_value
+                logger.warning(
+                    f"🔍 GENERIC_PLAN_DEBUG: Plan content preview: {str(plan_value)[:300]}..."
+                )
+
+                # Check if this looks like debug messages - if so, skip it and look in spans instead
+                plan_str = str(plan_value)
+                if (
+                    "Agent error:" in plan_str
+                    and len(plan_str.split("Agent error:")) > 3
+                ):
+                    logger.warning(
+                        f"🔍 GENERIC_PLAN_DEBUG: Top-level '{field}' contains debug messages, checking spans instead"
+                    )
+                    # Look for better plan in spans first
+                    span_plan = self._extract_plan_from_spans(trace_data)
+                    if span_plan:
+                        logger.warning(
+                            "🔍 GENERIC_PLAN_DEBUG: Found better plan in spans, using that instead"
+                        )
+                        return span_plan
+                    # If no span plan found, continue with cleaning the debug messages
+
+                # Clean the plan by removing debug/error messages
+                cleaned_plan = self._clean_plan_content(plan_value)
+                cleaned_size = len(str(cleaned_plan))
+
+                if cleaned_size != plan_size:
+                    logger.warning(
+                        f"PLAN_DEBUG: Plan cleaned from {plan_size} to {cleaned_size} chars (removed debug messages)"
+                    )
+
+                # If plan is extremely large (>10KB), truncate it aggressively
+                if cleaned_size > 10000:
+                    logger.warning(
+                        f"PLAN_DEBUG: Plan is very large ({cleaned_size} chars), applying aggressive truncation"
+                    )
+                    plan_str = str(cleaned_plan)
+
+                    # Keep only first 5KB and add truncation notice
+                    truncated_plan = (
+                        plan_str[:5000]
+                        + "... [PLAN TRUNCATED - ORIGINAL SIZE: "
+                        + str(cleaned_size)
+                        + " CHARS]"
+                    )
+                    logger.warning(
+                        f"PLAN_DEBUG: Plan truncated from {cleaned_size} to {len(truncated_plan)} chars"
+                    )
+                    return truncated_plan
+
+                return cleaned_plan
             else:
                 logger.info(f"DEBUG: Field '{field}' not found in trace_data")
 

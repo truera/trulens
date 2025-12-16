@@ -82,22 +82,243 @@ class LangGraphTraceProvider(TraceProvider):
         """
         Extract plan from LangGraph trace, handling Command structures and graph state.
         """
+        logger.warning(
+            f"🔍 LANGGRAPH_PLAN_DEBUG: Starting plan extraction from trace with keys: {list(trace_data.keys())}"
+        )
+
         # Strategy 1: Look for direct plan fields
+        logger.warning(
+            "🔍 LANGGRAPH_PLAN_DEBUG: Strategy 1 - Checking direct plan fields"
+        )
         plan = self._extract_direct_plan_fields(trace_data)
         if plan:
+            logger.warning(
+                f"🔍 LANGGRAPH_PLAN_DEBUG: Strategy 1 SUCCESS - Found plan of type {type(plan)}, length {len(str(plan))}"
+            )
+            logger.warning(
+                f"🔍 LANGGRAPH_PLAN_DEBUG: Plan preview: {str(plan)[:200]}..."
+            )
             return plan
 
         # Strategy 2: Look for plans in LangGraph state attributes
+        logger.warning(
+            "🔍 LANGGRAPH_PLAN_DEBUG: Strategy 2 - Checking LangGraph state attributes"
+        )
         plan = self._extract_plan_from_graph_state(trace_data)
         if plan:
+            logger.warning(
+                f"🔍 LANGGRAPH_PLAN_DEBUG: Strategy 2 SUCCESS - Found plan of type {type(plan)}, length {len(str(plan))}"
+            )
+            logger.warning(
+                f"🔍 LANGGRAPH_PLAN_DEBUG: Plan preview: {str(plan)[:200]}..."
+            )
             return plan
 
         # Strategy 3: Look for Command structures in span outputs
+        logger.warning(
+            "🔍 LANGGRAPH_PLAN_DEBUG: Strategy 3 - Checking Command structures in span outputs"
+        )
         plan = self._extract_plan_from_command_structures(trace_data)
         if plan:
+            logger.warning(
+                f"🔍 LANGGRAPH_PLAN_DEBUG: Strategy 3 SUCCESS - Found plan of type {type(plan)}, length {len(str(plan))}"
+            )
+            logger.warning(
+                f"🔍 LANGGRAPH_PLAN_DEBUG: Plan preview: {str(plan)[:200]}..."
+            )
             return plan
 
+        logger.warning("🔍 LANGGRAPH_PLAN_DEBUG: No plan found in any strategy")
         return None
+
+    def _clean_plan_content(self, plan_value: Any) -> Any:
+        """
+        Clean plan content by removing debug messages and error logs.
+
+        Args:
+            plan_value: Raw plan data that may contain debug messages
+
+        Returns:
+            Cleaned plan data with debug messages removed
+        """
+        if not isinstance(plan_value, str):
+            plan_str = str(plan_value)
+        else:
+            plan_str = plan_value
+
+        # Patterns to remove - ONLY obvious debug/error messages, be very conservative
+        patterns_to_remove = [
+            r"^Agent error: [^\n]*\n?",  # Remove lines that START with "Agent error: "
+            r"^DEBUG: [^\n]*\n?",  # Remove lines that START with "DEBUG: "
+            r"^Query ID: [^\n]*\n?",  # Remove lines that START with "Query ID: "
+        ]
+
+        import re
+
+        cleaned_plan = plan_str
+
+        for pattern in patterns_to_remove:
+            cleaned_plan = re.sub(
+                pattern, "", cleaned_plan, flags=re.IGNORECASE | re.MULTILINE
+            )
+
+        # Only remove completely empty lines, preserve all other content
+        lines = cleaned_plan.split("\n")
+        cleaned_lines = []
+
+        for line in lines:
+            # Keep the line if it has any content, even just whitespace
+            # Only remove completely empty lines
+            if line.strip():  # Keep any line with content
+                cleaned_lines.append(line)
+
+        # Join back with single newlines, preserve original formatting
+        final_cleaned = "\n".join(cleaned_lines)
+
+        # If the original was not a string, try to preserve the original type
+        if not isinstance(plan_value, str):
+            try:
+                import json
+
+                if plan_str.strip().startswith(("{", "[")):
+                    return (
+                        json.loads(final_cleaned)
+                        if final_cleaned.strip()
+                        else plan_value
+                    )
+            except Exception:
+                pass
+
+        return final_cleaned if final_cleaned.strip() else plan_value
+
+    def _extract_execution_plan_from_command_string(
+        self, command_str: str
+    ) -> Optional[str]:
+        """
+        Extract the execution_plan content from a Command string representation.
+
+        Example input: "Command(update={'execution_plan': {'plan_summary': '...', 'steps': [...]}, ...})"
+        """
+        try:
+            import ast
+            import re
+
+            # Look for the execution_plan part specifically
+            if "execution_plan" not in command_str:
+                return None
+
+            # Try to extract any plan-related dictionary
+            # Use a more robust approach to find plan content
+            plan_key_pattern = r"['\"]([^'\"]*plan[^'\"]*)['\"]:"
+            plan_keys = re.findall(plan_key_pattern, command_str, re.IGNORECASE)
+
+            if not plan_keys:
+                return None
+
+            # Use the first plan key found
+            plan_key = plan_keys[0]
+            start_marker = f"'{plan_key}':"
+            start_pos = command_str.find(start_marker)
+
+            # Also try double quotes if single quotes not found
+            if start_pos == -1:
+                start_marker = f'"{plan_key}":'
+                start_pos = command_str.find(start_marker)
+
+            if start_pos == -1:
+                return None
+
+            # Find the start of the dictionary after the colon
+            dict_start = command_str.find("{", start_pos)
+            if dict_start == -1:
+                return None
+
+            # Count braces to find the matching closing brace
+            brace_count = 0
+            dict_end = dict_start
+
+            for i in range(dict_start, len(command_str)):
+                if command_str[i] == "{":
+                    brace_count += 1
+                elif command_str[i] == "}":
+                    brace_count -= 1
+                    if brace_count == 0:
+                        dict_end = i
+                        break
+
+            if brace_count == 0:
+                plan_str = command_str[dict_start : dict_end + 1]
+                logger.info(
+                    f"LangGraph extracted plan string for key '{plan_key}': {plan_str[:200]}..."
+                )
+
+                # Try to parse it as a Python literal
+                try:
+                    plan_dict = ast.literal_eval(plan_str)
+                    if isinstance(plan_dict, dict):
+                        # Format the plan nicely
+                        formatted_plan = self._format_execution_plan(plan_dict)
+                        logger.info(
+                            f"LangGraph successfully parsed plan dict with keys: {list(plan_dict.keys())}"
+                        )
+                        return formatted_plan
+                except (ValueError, SyntaxError) as e:
+                    logger.warning(
+                        f"LangGraph failed to parse plan as dict: {e}"
+                    )
+                    # Return the raw string if parsing fails
+                    return plan_str
+
+            return None
+
+        except Exception as e:
+            logger.warning(
+                f"LangGraph error extracting execution_plan from command: {e}"
+            )
+
+        return None
+
+    def _format_execution_plan(self, execution_plan_dict: dict) -> str:
+        """
+        Format an execution_plan dictionary into a readable string.
+        """
+        formatted_parts = []
+
+        # Add plan summary
+        if "plan_summary" in execution_plan_dict:
+            formatted_parts.append(
+                f"Plan Summary: {execution_plan_dict['plan_summary']}"
+            )
+
+        # Add steps
+        if "steps" in execution_plan_dict and isinstance(
+            execution_plan_dict["steps"], list
+        ):
+            formatted_parts.append("Steps:")
+            for i, step in enumerate(execution_plan_dict["steps"], 1):
+                if isinstance(step, dict):
+                    step_text = f"{i}. "
+                    if "agent" in step:
+                        step_text += f"Agent: {step['agent']} - "
+                    if "purpose" in step:
+                        step_text += f"Purpose: {step['purpose']}"
+                    if "expected_output" in step:
+                        step_text += f" | Expected: {step['expected_output']}"
+                    formatted_parts.append(step_text)
+
+        # Add combination strategy
+        if "combination_strategy" in execution_plan_dict:
+            formatted_parts.append(
+                f"Strategy: {execution_plan_dict['combination_strategy']}"
+            )
+
+        # Add expected final output
+        if "expected_final_output" in execution_plan_dict:
+            formatted_parts.append(
+                f"Expected Output: {execution_plan_dict['expected_final_output']}"
+            )
+
+        return "\n".join(formatted_parts)
 
     def _extract_direct_plan_fields(
         self, trace_data: Dict[str, Any]
@@ -108,7 +329,12 @@ class LangGraphTraceProvider(TraceProvider):
         for field in plan_fields:
             if field in trace_data:
                 logger.info(f"LangGraph plan found in direct field '{field}'")
-                return trace_data[field]
+                raw_plan = trace_data[field]
+                cleaned_plan = self._clean_plan_content(raw_plan)
+                logger.info(
+                    f"LangGraph plan cleaned: {len(str(raw_plan))} -> {len(str(cleaned_plan))} chars"
+                )
+                return cleaned_plan
 
         return None
 
@@ -119,57 +345,231 @@ class LangGraphTraceProvider(TraceProvider):
         if "spans" not in trace_data:
             return None
 
+        # Collect all potential plans with priority scoring
+        potential_plans = []
+
         for span in trace_data["spans"]:
             if not isinstance(span, dict):
                 continue
 
+            span_name = span.get("span_name", "")
             attrs = span.get("span_attributes", {})
             if not isinstance(attrs, dict):
                 continue
 
-            # Check LangGraph-specific state attributes
+            # Check LangGraph-specific state attributes - prioritize output_state
             state_keys = [
+                "ai.observability.graph_node.output_state",  # Check output_state first (more likely to have plan)
                 "ai.observability.graph_node.input_state",
-                "ai.observability.graph_node.output_state",
                 "ai.observability.call.kwargs.input",
                 "ai.observability.call.return",
             ]
 
             for state_key in state_keys:
                 if state_key in attrs:
-                    plan = self._extract_plan_from_state_value(
-                        attrs[state_key], state_key
+                    state_value = attrs[state_key]
+                    logger.warning(
+                        f"🔍 LANGGRAPH_PLAN_DEBUG: Checking {state_key} in span '{span_name}'"
                     )
-                    if plan:
-                        return plan
+                    logger.warning(
+                        f"🔍 LANGGRAPH_PLAN_DEBUG: State value type: {type(state_value)}, length: {len(str(state_value))}"
+                    )
+                    logger.warning(
+                        f"🔍 LANGGRAPH_PLAN_DEBUG: State value preview: {str(state_value)[:300]}..."
+                    )
+
+                    # Calculate priority for this potential plan
+                    priority = self._calculate_plan_priority(
+                        state_value, state_key, span_name
+                    )
+
+                    if (
+                        priority > 0
+                    ):  # Only consider if it has some plan content
+                        potential_plans.append({
+                            "content": state_value,
+                            "priority": priority,
+                            "state_key": state_key,
+                            "span_name": span_name,
+                        })
+                        logger.warning(
+                            f"🔍 LANGGRAPH_PLAN_DEBUG: Found potential plan with priority {priority} from {span_name}.{state_key}"
+                        )
+
+        # Sort by priority (highest first) and extract the best plan
+        if potential_plans:
+            potential_plans.sort(key=lambda x: x["priority"], reverse=True)
+            best_plan = potential_plans[0]
+            logger.warning(
+                f"🔍 LANGGRAPH_PLAN_DEBUG: Selected best plan with priority {best_plan['priority']} from {best_plan['span_name']}.{best_plan['state_key']}"
+            )
+
+            # Extract the actual plan content
+            plan = self._extract_plan_from_state_value(
+                best_plan["content"],
+                f"{best_plan['span_name']}.{best_plan['state_key']}",
+            )
+            if plan:
+                logger.warning(
+                    f"🔍 LANGGRAPH_PLAN_DEBUG: Successfully extracted plan from {best_plan['span_name']}.{best_plan['state_key']}"
+                )
+                return plan
 
         return None
+
+    def _calculate_plan_priority(
+        self, state_value: Any, state_key: str, span_name: str
+    ) -> int:
+        """Calculate priority score for a potential plan source."""
+        priority = 0
+        state_str = str(state_value)
+
+        # Base priority by state key type
+        if "output_state" in state_key:
+            priority += 50  # High base priority for output state
+        elif "input_state" in state_key:
+            priority += 30  # Medium priority for input state
+        elif "call.return" in state_key:
+            priority += 10  # Low priority for call returns
+
+        # High priority for Command structures with any key containing "plan"
+        if "Command(" in state_str:
+            # Look for any key containing "plan" as a substring
+            import re
+
+            plan_key_pattern = r"['\"]([^'\"]*plan[^'\"]*)['\"]:"
+            plan_keys = re.findall(plan_key_pattern, state_str, re.IGNORECASE)
+
+            if plan_keys:
+                priority += (
+                    100  # Very high priority for Command with plan-related key
+                )
+                logger.warning(
+                    f"🔍 LANGGRAPH_PLAN_DEBUG: Command with plan-related key(s) found: {plan_keys} - adding 100 priority points"
+                )
+            else:
+                priority += 40  # Medium priority for other Commands
+
+        # Bonus for nodes that commonly contain planning logic (general patterns)
+        planning_node_patterns = [
+            "plan",
+            "planning",
+            "coordinator",
+            "orchestrator",
+            "manager",
+            "router",
+            "decision",
+            "strategy",
+            "workflow",
+            "control",
+        ]
+        if any(
+            pattern in span_name.lower() for pattern in planning_node_patterns
+        ):
+            priority += 15
+            logger.warning(
+                "🔍 LANGGRAPH_PLAN_DEBUG: Planning-related node name detected - adding 15 priority points"
+            )
+
+        # Penalty for debug messages
+        if "Agent error:" in state_str:
+            debug_count = len(state_str.split("Agent error:"))
+            penalty = min(debug_count * 10, 50)  # Cap penalty at 50
+            priority -= penalty
+            logger.warning(
+                f"🔍 LANGGRAPH_PLAN_DEBUG: Debug messages detected - subtracting {penalty} priority points"
+            )
+
+        # Bonus for plan-related content (but less than Command structures)
+        if any(
+            keyword in state_str.lower()
+            for keyword in ["plan_summary", "steps", "agent", "strategy"]
+        ):
+            priority += 20
+
+        logger.warning(
+            f"🔍 LANGGRAPH_PLAN_DEBUG: Final priority for {span_name}.{state_key}: {priority}"
+        )
+        return priority
 
     def _extract_plan_from_state_value(
         self, state_value: Any, state_key: str
     ) -> Optional[Any]:
         """Extract plan from a state value (string or dict)."""
+        logger.warning(
+            f"🔍 LANGGRAPH_PLAN_DEBUG: _extract_plan_from_state_value called for {state_key}"
+        )
+        logger.warning(
+            f"🔍 LANGGRAPH_PLAN_DEBUG: State value type: {type(state_value)}"
+        )
+
         if isinstance(state_value, str):
+            logger.warning(
+                f"🔍 LANGGRAPH_PLAN_DEBUG: Processing string state value, length: {len(state_value)}"
+            )
+            logger.warning(
+                f"🔍 LANGGRAPH_PLAN_DEBUG: String preview: {state_value[:500]}..."
+            )
+
+            # Check if this looks like a Command structure with any plan-related key
+            if "Command(" in state_value:
+                # Look for any key containing "plan" as a substring
+                import re
+
+                plan_key_pattern = r"['\"]([^'\"]*plan[^'\"]*)['\"]:"
+                plan_keys = re.findall(
+                    plan_key_pattern, state_value, re.IGNORECASE
+                )
+
+                if plan_keys:
+                    logger.warning(
+                        f"🔍 LANGGRAPH_PLAN_DEBUG: Found Command structure with plan key(s): {plan_keys}!"
+                    )
+                    extracted_plan = (
+                        self._extract_execution_plan_from_command_string(
+                            state_value
+                        )
+                    )
+                    if extracted_plan:
+                        logger.warning(
+                            "🔍 LANGGRAPH_PLAN_DEBUG: Successfully extracted plan from Command"
+                        )
+                        return extracted_plan
+
             # Try JSON parsing first
             try:
                 parsed_state = json.loads(state_value)
                 if isinstance(parsed_state, dict):
+                    logger.warning(
+                        f"🔍 LANGGRAPH_PLAN_DEBUG: Parsed JSON dict with keys: {list(parsed_state.keys())}"
+                    )
                     plan_fields = ["execution_plan", "plan", "agent_plan"]
                     for field in plan_fields:
                         if field in parsed_state:
-                            logger.info(
-                                f"LangGraph plan found in {state_key}.{field}"
+                            logger.warning(
+                                f"🔍 LANGGRAPH_PLAN_DEBUG: Found {field} in parsed JSON"
                             )
-                            return parsed_state[field]
-            except json.JSONDecodeError:
-                pass
+                            raw_plan = parsed_state[field]
+                            cleaned_plan = self._clean_plan_content(raw_plan)
+                            logger.info(
+                                f"LangGraph plan cleaned from state: {len(str(raw_plan))} -> {len(str(cleaned_plan))} chars"
+                            )
+                            return cleaned_plan
+            except json.JSONDecodeError as e:
+                logger.warning(
+                    f"🔍 LANGGRAPH_PLAN_DEBUG: JSON parsing failed: {e}"
+                )
 
             # Check for plan-related content in string
             if "plan" in state_value.lower() and len(state_value) > 100:
-                logger.info(
-                    f"LangGraph plan found in {state_key} string content"
+                logger.warning(
+                    "🔍 LANGGRAPH_PLAN_DEBUG: Found plan-related content in string"
                 )
-                return state_value
+                cleaned_plan = self._clean_plan_content(state_value)
+                logger.info(
+                    f"LangGraph plan cleaned from string: {len(state_value)} -> {len(str(cleaned_plan))} chars"
+                )
+                return cleaned_plan
 
         elif isinstance(state_value, dict):
             plan_fields = ["execution_plan", "plan", "agent_plan"]
@@ -218,11 +618,31 @@ class LangGraphTraceProvider(TraceProvider):
                 logger.info(
                     f"LangGraph plan found in {location} Command structure"
                 )
-                return value
+                # Try to extract just the execution_plan part from the Command string
+                extracted_plan = (
+                    self._extract_execution_plan_from_command_string(value)
+                )
+                if extracted_plan:
+                    cleaned_plan = self._clean_plan_content(extracted_plan)
+                    logger.info(
+                        f"LangGraph execution_plan extracted and cleaned: {len(extracted_plan)} -> {len(str(cleaned_plan))} chars"
+                    )
+                    return cleaned_plan
+                else:
+                    # Fallback to cleaning the whole command
+                    cleaned_plan = self._clean_plan_content(value)
+                    logger.info(
+                        f"LangGraph plan cleaned from Command: {len(value)} -> {len(str(cleaned_plan))} chars"
+                    )
+                    return cleaned_plan
             # Look for any plan-related content
             elif "plan" in value.lower() and len(value) > 100:
                 logger.info(f"LangGraph plan found in {location} content")
-                return value
+                cleaned_plan = self._clean_plan_content(value)
+                logger.info(
+                    f"LangGraph plan cleaned from content: {len(value)} -> {len(str(cleaned_plan))} chars"
+                )
+                return cleaned_plan
 
         elif isinstance(value, dict):
             # Look for update structures: Command(update={...})
@@ -235,57 +655,365 @@ class LangGraphTraceProvider(TraceProvider):
                             logger.info(
                                 f"LangGraph plan found in {location}.update.{field}"
                             )
-                            return update_data[field]
+                            raw_plan = update_data[field]
+                            cleaned_plan = self._clean_plan_content(raw_plan)
+                            logger.info(
+                                f"LangGraph plan cleaned from update: {len(str(raw_plan))} -> {len(str(cleaned_plan))} chars"
+                            )
+                            return cleaned_plan
 
         return None
 
     def extract_execution_flow(
         self, trace_data: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
-        """Extract execution flow from LangGraph spans."""
-        flow = []
+        """Extract detailed execution flow with reasoning chain from LangGraph trace."""
+        logger.info(
+            "DEBUG: LangGraphTraceProvider.extract_execution_flow called"
+        )
 
         if "spans" not in trace_data:
-            return flow
+            return []
 
+        execution_flow = []
         for span in trace_data["spans"]:
-            if not isinstance(span, dict):
-                continue
+            if isinstance(span, dict):
+                span_name = span.get("span_name", "unknown")
+                attrs = span.get("span_attributes", {})
 
-            span_name = span.get("span_name", "")
+                # Skip internal spans but be less aggressive
+                if any(
+                    skip in span_name.lower()
+                    for skip in ["debug", "log", "trace", "monitor"]
+                ):
+                    continue
 
-            # Skip internal LangGraph spans
-            if any(
-                skip in span_name.lower()
-                for skip in ["debug", "log", "trace", "monitor"]
+                # Extract detailed step information
+                step = self._extract_detailed_step(span_name, attrs)
+                if step:
+                    execution_flow.append(step)
+
+        logger.info(
+            f"DEBUG: Extracted {len(execution_flow)} detailed execution steps"
+        )
+        return execution_flow
+
+    def _extract_detailed_step(
+        self, span_name: str, attrs: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """Extract detailed step information including tool calls, reasoning, and data flow."""
+        if not isinstance(attrs, dict):
+            return None
+
+        step = {
+            "name": span_name,
+            "type": self._classify_step_type(span_name),
+        }
+
+        # Extract tool calls and their results
+        tool_info = self._extract_tool_information(attrs)
+        if tool_info:
+            step.update(tool_info)
+
+        # Extract agent reasoning and decision points
+        reasoning_info = self._extract_reasoning_information(attrs)
+        if reasoning_info:
+            step.update(reasoning_info)
+
+        # Extract data transformations and calculations
+        data_info = self._extract_data_transformations(attrs)
+        if data_info:
+            step.update(data_info)
+
+        # Extract state transitions and agent handoffs
+        transition_info = self._extract_state_transitions(attrs)
+        if transition_info:
+            step.update(transition_info)
+
+        return (
+            step if len(step) > 2 else None
+        )  # Only return if we found meaningful content
+
+    def _classify_step_type(self, span_name: str) -> str:
+        """Classify the type of execution step."""
+        name_lower = span_name.lower()
+
+        if "supervisor" in name_lower or "coordinator" in name_lower:
+            return "coordination"
+        elif "agent" in name_lower:
+            return "agent_execution"
+        elif "tool" in name_lower or "search" in name_lower:
+            return "tool_call"
+        elif "langgraph" in name_lower:
+            return "framework"
+        elif "graph" == name_lower:
+            return "graph_node"
+        else:
+            return "step"
+
+    def _extract_tool_information(
+        self, attrs: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """Extract tool call details including inputs, outputs, and metadata."""
+        tool_info = {}
+
+        # Look for tool-related attributes
+        for key, value in attrs.items():
+            key_lower = key.lower()
+
+            # Tool call detection
+            if (
+                "tool" in key_lower
+                or "search" in key_lower
+                or "call" in key_lower
             ):
-                continue
+                if isinstance(value, str) and len(value) > 10:
+                    # Try to extract structured tool information
+                    if "(" in value and ")" in value:
+                        tool_info["tool_call"] = self._parse_tool_call(value)
+                    else:
+                        tool_info["tool_output"] = value[
+                            :1000
+                        ]  # Limit size but preserve detail
 
-            flow_item = {
-                "name": span_name,
-                "type": "langgraph_node"
-                if "graph" in span_name.lower()
-                else "step",
-            }
+            # Function calls
+            elif "function" in key_lower and isinstance(value, str):
+                tool_info["function"] = value
 
-            # Add LangGraph-specific attributes
-            attrs = span.get("span_attributes", {})
-            if isinstance(attrs, dict):
-                if "ai.observability.graph_node.latest_message" in attrs:
-                    message = attrs[
-                        "ai.observability.graph_node.latest_message"
+            # Return values that might contain tool results
+            elif "return" in key_lower and isinstance(value, str):
+                if len(value) > 50:  # Substantial content
+                    parsed_result = self._parse_tool_result(value)
+                    if parsed_result:
+                        tool_info["tool_result"] = parsed_result
+
+        return tool_info if tool_info else None
+
+    def _parse_tool_call(self, call_str: str) -> Dict[str, Any]:
+        """Parse tool call string to extract structured information."""
+        try:
+            # Look for function name and parameters
+            if "(" in call_str:
+                func_name = call_str.split("(")[0].strip()
+
+                # Try to extract parameters
+                param_start = call_str.find("(")
+                param_end = call_str.rfind(")")
+                if param_start != -1 and param_end != -1:
+                    params_str = call_str[param_start + 1 : param_end]
+
+                    return {
+                        "function": func_name,
+                        "parameters": params_str[
+                            :500
+                        ],  # Limit but preserve detail
+                        "raw_call": call_str[:200],
+                    }
+
+            return {"raw_call": call_str[:200]}
+        except Exception:
+            return {"raw_call": call_str[:200]}
+
+    def _parse_tool_result(self, result_str: str) -> Optional[Dict[str, Any]]:
+        """Parse tool result to extract key information."""
+        try:
+            # Try JSON parsing first
+            if result_str.strip().startswith("{"):
+                import json
+
+                try:
+                    parsed = json.loads(result_str)
+                    if isinstance(parsed, dict):
+                        # Extract key fields for reasoning validation
+                        return {
+                            "type": "structured_result",
+                            "data": {
+                                k: v
+                                for k, v in parsed.items()
+                                if len(str(v)) < 500
+                            },
+                            "summary": str(parsed)[:300],
+                        }
+                except json.JSONDecodeError:
+                    pass
+
+            # Look for specific patterns that indicate data retrieval
+            if any(
+                keyword in result_str.lower()
+                for keyword in [
+                    "found",
+                    "results",
+                    "tickets",
+                    "customers",
+                    "data",
+                ]
+            ):
+                return {
+                    "type": "data_retrieval",
+                    "content": result_str[:1000],  # Preserve substantial detail
+                    "indicators": self._extract_data_indicators(result_str),
+                }
+
+            # For other substantial results
+            if len(result_str) > 100:
+                return {"type": "execution_result", "content": result_str[:800]}
+
+        except Exception:
+            pass
+
+        return None
+
+    def _extract_data_indicators(self, text: str) -> Dict[str, Any]:
+        """Extract key data indicators from text for logical consistency validation."""
+        indicators = {}
+
+        # Look for counts and quantities
+        import re
+
+        # Numbers that might be counts
+        numbers = re.findall(
+            r"\b(\d+)\s*(tickets?|customers?|results?|items?)\b",
+            text,
+            re.IGNORECASE,
+        )
+        if numbers:
+            indicators["counts"] = {item: int(count) for count, item in numbers}
+
+        # Ticket IDs
+        ticket_ids = re.findall(r"TKT_\d+", text, re.IGNORECASE)
+        if ticket_ids:
+            indicators["ticket_ids"] = ticket_ids
+
+        # Risk scores
+        risk_scores = re.findall(r"(\d+(?:\.\d+)?)\s*[/\\]\s*(\d+)", text)
+        if risk_scores:
+            indicators["risk_scores"] = [
+                f"{score}/{max_score}" for score, max_score in risk_scores
+            ]
+
+        # Keywords that indicate data types
+        data_types = []
+        for keyword in [
+            "api",
+            "churn",
+            "satisfaction",
+            "usage",
+            "support",
+            "complaints",
+        ]:
+            if keyword in text.lower():
+                data_types.append(keyword)
+        if data_types:
+            indicators["data_types"] = data_types
+
+        return indicators
+
+    def _extract_reasoning_information(
+        self, attrs: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """Extract agent reasoning and decision points."""
+        reasoning_info = {}
+
+        for key, value in attrs.items():
+            key_lower = key.lower()
+
+            # Look for thinking or reasoning content
+            if (
+                "thinking" in key_lower
+                or "reason" in key_lower
+                or "analysis" in key_lower
+            ):
+                if isinstance(value, str) and len(value) > 20:
+                    reasoning_info["thinking"] = value[:800]
+
+            # Look for decision points
+            elif "decision" in key_lower or "choice" in key_lower:
+                if isinstance(value, str):
+                    reasoning_info["decision"] = value[:400]
+
+            # Look for state values that contain reasoning
+            elif "state" in key_lower and isinstance(value, str):
+                if any(
+                    keyword in value.lower()
+                    for keyword in [
+                        "because",
+                        "since",
+                        "therefore",
+                        "analysis",
+                        "conclusion",
                     ]
-                    if isinstance(message, str) and len(message) < 200:
-                        flow_item["message"] = message
+                ):
+                    reasoning_info["state_reasoning"] = value[:600]
 
-            flow.append(flow_item)
+        return reasoning_info if reasoning_info else None
 
-        return flow
+    def _extract_data_transformations(
+        self, attrs: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """Extract data transformations and calculations."""
+        data_info = {}
+
+        for key, value in attrs.items():
+            key_lower = key.lower()
+
+            # Look for input/output patterns
+            if "input" in key_lower and isinstance(value, str):
+                if len(value) > 10:
+                    data_info["input_data"] = value[:500]
+
+            elif "output" in key_lower and isinstance(value, str):
+                if len(value) > 10:
+                    data_info["output_data"] = value[:500]
+
+            # Look for calculations or scores
+            elif any(
+                calc_word in key_lower
+                for calc_word in ["score", "calc", "result", "metric"]
+            ):
+                if isinstance(value, (str, int, float)):
+                    data_info["calculation"] = str(value)[:200]
+
+        return data_info if data_info else None
+
+    def _extract_state_transitions(
+        self, attrs: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """Extract state transitions and agent handoffs."""
+        transition_info = {}
+
+        for key, value in attrs.items():
+            key_lower = key.lower()
+
+            # Look for agent transitions
+            if "agent" in key_lower or "node" in key_lower:
+                if isinstance(value, str) and len(value) < 100:
+                    transition_info["agent_context"] = value
+
+            # Look for Command structures that indicate transitions
+            elif (
+                "command" in key_lower
+                or isinstance(value, str)
+                and "Command(" in value
+            ):
+                if isinstance(value, str):
+                    # Extract goto information
+                    if "goto=" in value:
+                        import re
+
+                        goto_match = re.search(
+                            r"goto=['\"]?([^'\")\s,]+)", value
+                        )
+                        if goto_match:
+                            transition_info["next_agent"] = goto_match.group(1)
+
+                    transition_info["command_context"] = value[:300]
+
+        return transition_info if transition_info else None
 
     def extract_agent_interactions(
         self, trace_data: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
-        """Extract agent interactions from LangGraph traces."""
+        """Extract detailed agent interactions with reasoning and data flow."""
         interactions = []
 
         if "spans" not in trace_data:
@@ -295,22 +1023,407 @@ class LangGraphTraceProvider(TraceProvider):
             if not isinstance(span, dict):
                 continue
 
+            span_name = span.get("span_name", "unknown")
             attrs = span.get("span_attributes", {})
             if not isinstance(attrs, dict):
                 continue
 
-            # Look for LangGraph message attributes
-            if "ai.observability.graph_node.latest_message" in attrs:
-                message = attrs["ai.observability.graph_node.latest_message"]
-                if isinstance(message, str):
-                    interaction = {
-                        "type": "langgraph_message",
-                        "node": span.get("span_name", "unknown"),
-                        "content": message[:300],  # Limit content
-                    }
-                    interactions.append(interaction)
+            # Extract detailed interaction information
+            interaction = self._extract_detailed_interaction(span_name, attrs)
+            if interaction:
+                interactions.append(interaction)
 
         return interactions
+
+    def _extract_detailed_interaction(
+        self, span_name: str, attrs: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """Extract detailed interaction including context, reasoning, and outcomes."""
+        interaction = {
+            "type": "agent_interaction",
+            "node": span_name,
+        }
+
+        # Extract message content with more detail
+        message_content = self._extract_message_content(attrs)
+        if message_content:
+            interaction.update(message_content)
+
+        # Extract conversation context
+        context_info = self._extract_conversation_context(attrs)
+        if context_info:
+            interaction.update(context_info)
+
+        # Extract agent decisions and justifications
+        decision_info = self._extract_agent_decisions(attrs)
+        if decision_info:
+            interaction.update(decision_info)
+
+        return interaction if len(interaction) > 2 else None
+
+    def _extract_message_content(
+        self, attrs: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """Extract message content with preservation of reasoning details."""
+        content_info = {}
+
+        for key, value in attrs.items():
+            if not isinstance(value, str):
+                continue
+
+            key_lower = key.lower()
+
+            # Primary message content
+            if "message" in key_lower or "content" in key_lower:
+                if len(value) > 20:
+                    # Preserve more detail for reasoning validation
+                    content_info["message"] = value[:1500]  # Increased from 300
+
+                    # Extract specific reasoning elements
+                    reasoning_elements = self._extract_reasoning_elements(value)
+                    if reasoning_elements:
+                        content_info["reasoning_elements"] = reasoning_elements
+
+            # Output state that might contain conclusions
+            elif "output" in key_lower and len(value) > 50:
+                # Look for conclusions and analysis
+                if any(
+                    keyword in value.lower()
+                    for keyword in [
+                        "summary",
+                        "conclusion",
+                        "analysis",
+                        "assessment",
+                    ]
+                ):
+                    content_info["analysis_output"] = value[:1000]
+
+        return content_info if content_info else None
+
+    def _extract_reasoning_elements(self, text: str) -> Dict[str, Any]:
+        """Extract specific reasoning elements for logical consistency validation."""
+        elements = {}
+
+        # Look for explicit claims and their support
+        import re
+
+        # Risk assessments
+        risk_patterns = re.findall(
+            r"(high|medium|low|critical)\s+(?:churn\s+)?risk",
+            text,
+            re.IGNORECASE,
+        )
+        if risk_patterns:
+            elements["risk_assessments"] = risk_patterns
+
+        # Numerical claims
+        numerical_claims = re.findall(
+            r"(\d+(?:\.\d+)?)\s*(?:[/\\]\s*\d+)?\s*(customers?|tickets?|percent|%)",
+            text,
+            re.IGNORECASE,
+        )
+        if numerical_claims:
+            elements["numerical_claims"] = [
+                f"{num} {unit}" for num, unit in numerical_claims
+            ]
+
+        # Causal relationships
+        causal_indicators = []
+        for pattern in [
+            r"because\s+([^.]+)",
+            r"due to\s+([^.]+)",
+            r"caused by\s+([^.]+)",
+            r"indicates?\s+([^.]+)",
+        ]:
+            matches = re.findall(pattern, text, re.IGNORECASE)
+            causal_indicators.extend(matches)
+        if causal_indicators:
+            elements["causal_claims"] = [
+                claim.strip() for claim in causal_indicators
+            ]
+
+        # Evidence references
+        evidence_refs = re.findall(
+            r"(TKT_\d+|ticket\s+\w+|data shows?|results? indicate)",
+            text,
+            re.IGNORECASE,
+        )
+        if evidence_refs:
+            elements["evidence_references"] = evidence_refs
+
+        return elements
+
+    def _extract_conversation_context(
+        self, attrs: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """Extract conversation context and flow."""
+        context_info = {}
+
+        for key, value in attrs.items():
+            key_lower = key.lower()
+
+            # Input state that shows what the agent received
+            if "input" in key_lower and isinstance(value, str):
+                if len(value) > 10:
+                    context_info["input_context"] = value[:400]
+
+            # Latest message that shows conversation flow
+            elif "latest" in key_lower and isinstance(value, str):
+                if len(value) > 10:
+                    context_info["latest_message"] = value[:400]
+
+        return context_info if context_info else None
+
+    def _extract_agent_decisions(
+        self, attrs: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """Extract agent decisions and their justifications."""
+        decision_info = {}
+
+        for key, value in attrs.items():
+            if not isinstance(value, str):
+                continue
+
+            # Look for Command structures that show decisions
+            if "Command(" in value:
+                # Extract the decision and its target
+                if "goto=" in value:
+                    import re
+
+                    goto_match = re.search(r"goto=['\"]?([^'\")\s,]+)", value)
+                    if goto_match:
+                        decision_info["agent_decision"] = {
+                            "action": "agent_handoff",
+                            "target": goto_match.group(1),
+                            "context": value[:300],
+                        }
+
+                # Look for update information that shows what was decided
+                if "update=" in value:
+                    decision_info["state_update"] = value[:500]
+
+        return decision_info if decision_info else None
+
+    def compress_trace(self, trace_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Compress trace with enhanced detail preservation for logical consistency."""
+        logger.info("DEBUG: LangGraphTraceProvider.compress_trace called")
+
+        compressed = {}
+
+        # Extract plan with full detail
+        plan = self.extract_plan(trace_data)
+        if plan:
+            compressed["plan"] = plan
+            logger.info("LangGraph plan preserved with full detail")
+
+        # Extract enhanced execution flow with reasoning chain
+        execution_flow = self.extract_execution_flow(trace_data)
+        if execution_flow:
+            compressed["execution_flow"] = execution_flow
+            logger.info(
+                f"LangGraph execution flow preserved with {len(execution_flow)} detailed steps"
+            )
+
+        # Extract detailed agent interactions
+        agent_interactions = self.extract_agent_interactions(trace_data)
+        if agent_interactions:
+            compressed["agent_interactions"] = agent_interactions
+            logger.info(
+                f"LangGraph agent interactions preserved with {len(agent_interactions)} detailed interactions"
+            )
+
+        # Add trace metadata
+        if "trace_id" in trace_data:
+            compressed["trace_id"] = trace_data["trace_id"]
+
+        # Add evidence linking for logical consistency
+        evidence_links = self._extract_evidence_links(trace_data)
+        if evidence_links:
+            compressed["evidence_links"] = evidence_links
+
+        logger.info(
+            f"LangGraph compressed trace keys: {list(compressed.keys())}"
+        )
+        return compressed
+
+    def compress_with_plan_priority(
+        self, trace_data: Dict[str, Any], target_token_limit: int = 100000
+    ) -> Dict[str, Any]:
+        """Compress trace with plan priority and enhanced reasoning preservation."""
+        logger.info(
+            "DEBUG: LangGraphTraceProvider.compress_with_plan_priority called"
+        )
+        logger.info(f"Target token limit: {target_token_limit}")
+
+        # Use the enhanced compression by default since we have plenty of token budget
+        return self.compress_trace(trace_data)
+
+    def _extract_evidence_links(
+        self, trace_data: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """Extract evidence links between claims and supporting data."""
+        if "spans" not in trace_data:
+            return None
+
+        evidence_links = {}
+        claims = []
+        evidence = []
+
+        # Collect claims and evidence from spans
+        for span in trace_data["spans"]:
+            if not isinstance(span, dict):
+                continue
+
+            attrs = span.get("span_attributes", {})
+            span_name = span.get("span_name", "")
+
+            # Look for claims in outputs
+            for key, value in attrs.items():
+                if isinstance(value, str):
+                    # Extract claims (statements that need evidence)
+                    span_claims = self._extract_claims(value, span_name)
+                    claims.extend(span_claims)
+
+                    # Extract evidence (data that supports claims)
+                    span_evidence = self._extract_evidence(value, span_name)
+                    evidence.extend(span_evidence)
+
+        if claims or evidence:
+            evidence_links["claims"] = claims
+            evidence_links["evidence"] = evidence
+            evidence_links["links"] = self._link_claims_to_evidence(
+                claims, evidence
+            )
+
+        return evidence_links if evidence_links else None
+
+    def _extract_claims(self, text: str, source: str) -> List[Dict[str, Any]]:
+        """Extract claims that need evidence support."""
+        claims = []
+        import re
+
+        # Risk assessment claims
+        risk_claims = re.findall(
+            r"(high|medium|low|critical)\s+(?:churn\s+)?risk(?:\s+\(([^)]+)\))?",
+            text,
+            re.IGNORECASE,
+        )
+        for risk_level, score in risk_claims:
+            claims.append({
+                "type": "risk_assessment",
+                "claim": f"{risk_level} churn risk"
+                + (f" ({score})" if score else ""),
+                "source": source,
+                "needs_evidence": ["data_source", "calculation_method"],
+            })
+
+        # Numerical claims
+        numerical_claims = re.findall(
+            r"(\d+)\s+(customers?|tickets?|complaints?)", text, re.IGNORECASE
+        )
+        for count, entity in numerical_claims:
+            claims.append({
+                "type": "numerical_claim",
+                "claim": f"{count} {entity}",
+                "source": source,
+                "needs_evidence": ["data_source", "query_results"],
+            })
+
+        # Causal claims
+        causal_patterns = [
+            r"indicates?\s+([^.]+)",
+            r"shows?\s+([^.]+)",
+            r"suggests?\s+([^.]+)",
+        ]
+        for pattern in causal_patterns:
+            causal_matches = re.findall(pattern, text, re.IGNORECASE)
+            for match in causal_matches:
+                claims.append({
+                    "type": "causal_claim",
+                    "claim": match.strip(),
+                    "source": source,
+                    "needs_evidence": ["supporting_data", "logical_connection"],
+                })
+
+        return claims
+
+    def _extract_evidence(self, text: str, source: str) -> List[Dict[str, Any]]:
+        """Extract evidence that can support claims."""
+        evidence = []
+        import re
+
+        # Ticket IDs as evidence
+        ticket_ids = re.findall(r"TKT_\d+", text, re.IGNORECASE)
+        for ticket_id in ticket_ids:
+            evidence.append({
+                "type": "data_reference",
+                "evidence": ticket_id,
+                "source": source,
+                "supports": ["numerical_claims", "data_retrieval"],
+            })
+
+        # Tool results as evidence
+        if any(
+            keyword in text.lower()
+            for keyword in ["found", "retrieved", "search", "query"]
+        ):
+            evidence.append({
+                "type": "tool_execution",
+                "evidence": text[:300],
+                "source": source,
+                "supports": ["data_source", "query_results"],
+            })
+
+        # Calculations as evidence
+        calc_patterns = re.findall(
+            r"(\d+(?:\.\d+)?)\s*[+\-*/]\s*(\d+(?:\.\d+)?)\s*=\s*(\d+(?:\.\d+)?)",
+            text,
+        )
+        for calc in calc_patterns:
+            evidence.append({
+                "type": "calculation",
+                "evidence": f"{calc[0]} + {calc[1]} = {calc[2]}",
+                "source": source,
+                "supports": ["calculation_method", "numerical_claims"],
+            })
+
+        return evidence
+
+    def _link_claims_to_evidence(
+        self, claims: List[Dict], evidence: List[Dict]
+    ) -> List[Dict[str, Any]]:
+        """Link claims to their supporting evidence."""
+        links = []
+
+        for claim in claims:
+            supporting_evidence = []
+
+            for evidence_item in evidence:
+                # Check if evidence supports this type of claim
+                if any(
+                    need in evidence_item.get("supports", [])
+                    for need in claim.get("needs_evidence", [])
+                ):
+                    supporting_evidence.append(evidence_item["evidence"])
+
+            if supporting_evidence:
+                links.append({
+                    "claim": claim["claim"],
+                    "claim_source": claim["source"],
+                    "supporting_evidence": supporting_evidence,
+                    "evidence_strength": "strong"
+                    if len(supporting_evidence) >= 2
+                    else "weak",
+                })
+            else:
+                links.append({
+                    "claim": claim["claim"],
+                    "claim_source": claim["source"],
+                    "supporting_evidence": [],
+                    "evidence_strength": "none",
+                })
+
+        return links
 
 
 def register_langgraph_provider():

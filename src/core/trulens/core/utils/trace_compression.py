@@ -97,6 +97,9 @@ class TraceCompressor:
         logger.info("DEBUG: Getting trace provider")
         provider = get_trace_provider(data)
         logger.info(f"DEBUG: Selected provider: {type(provider).__name__}")
+        logger.info(
+            f"DEBUG: Provider can_handle result: {provider.can_handle(data)}"
+        )
 
         logger.info("DEBUG: Calling provider.compress_with_plan_priority")
         result = provider.compress_with_plan_priority(data, target_token_limit)
@@ -137,6 +140,9 @@ class TraceCompressor:
         logger.info("DEBUG: Getting trace provider")
         provider = get_trace_provider(data)
         logger.info(f"DEBUG: Selected provider: {type(provider).__name__}")
+        logger.info(
+            f"DEBUG: Provider can_handle result: {provider.can_handle(data)}"
+        )
 
         logger.info("DEBUG: Calling provider.compress_trace")
         result = provider.compress_trace(data)
@@ -297,7 +303,7 @@ class TraceCompressor:
                         if important_attrs:
                             compressed_span["span_attributes"] = important_attrs
 
-                compressed_spans.append(compressed_span)
+            compressed_spans.append(compressed_span)
 
         return compressed_spans
 
@@ -412,6 +418,22 @@ def _convert_trulens_trace_format(trace_data: Any) -> Dict[str, Any]:
         # Format 2: Record contains array-like structure with numeric keys
         print("🔄 TRACE_CONVERSION_DEBUG: Found record format")
         logger.warning("TRACE_CONVERSION_DEBUG: Found record format")
+        print(
+            f"🔄 TRACE_CONVERSION_DEBUG: Top-level parsed_data keys: {list(parsed_data.keys())}"
+        )
+        print(
+            f"🔄 TRACE_CONVERSION_DEBUG: record_attributes present: {'record_attributes' in parsed_data}"
+        )
+        if "record_attributes" in parsed_data:
+            attrs_data = parsed_data["record_attributes"]
+            print(
+                f"🔄 TRACE_CONVERSION_DEBUG: record_attributes type: {type(attrs_data)}"
+            )
+            if isinstance(attrs_data, dict):
+                attrs_keys = list(attrs_data.keys())
+                print(
+                    f"🔄 TRACE_CONVERSION_DEBUG: record_attributes keys (first 10): {attrs_keys[:10]}"
+                )
 
         record = parsed_data["record"]
         if isinstance(record, dict):
@@ -448,16 +470,66 @@ def _convert_trulens_trace_format(trace_data: Any) -> Dict[str, Any]:
                                 # This is a direct record object, but we need to get the attributes from the outer structure
                                 # The record_attributes should be in the parent parsed_data
                                 record_attrs = {}
+
+                                # First, try to get record_attributes from the same level as the record
                                 if "record_attributes" in parsed_data:
-                                    # This might be an array-like structure too
                                     attrs_data = parsed_data[
                                         "record_attributes"
                                     ]
-                                    if (
-                                        isinstance(attrs_data, dict)
-                                        and key in attrs_data
-                                    ):
-                                        record_attrs = attrs_data[key]
+                                    print(
+                                        f"🔄 TRACE_CONVERSION_DEBUG: record_attributes type: {type(attrs_data)}, keys: {list(attrs_data.keys())[:5] if isinstance(attrs_data, dict) else 'Not a dict'}"
+                                    )
+
+                                    if isinstance(attrs_data, dict):
+                                        # Check if it's an array-like structure with numeric keys
+                                        if key in attrs_data:
+                                            record_attrs = attrs_data[key]
+                                            print(
+                                                f"🔄 TRACE_CONVERSION_DEBUG: Found attrs for key {key} in record_attributes array"
+                                            )
+                                        # Or if it's a direct attributes dict for this event
+                                        elif (
+                                            len(record_keys) == 1
+                                        ):  # Single event case
+                                            record_attrs = attrs_data
+                                            print(
+                                                "🔄 TRACE_CONVERSION_DEBUG: Using direct record_attributes for single event"
+                                            )
+
+                                print(
+                                    f"🔄 TRACE_CONVERSION_DEBUG: Event {key} record_attrs keys: {list(record_attrs.keys())[:10] if isinstance(record_attrs, dict) else 'Not a dict'}"
+                                )
+
+                                # Also check if record_attributes is directly in the event_data
+                                if (
+                                    not record_attrs
+                                    and "record_attributes" in event_data
+                                ):
+                                    record_attrs = event_data[
+                                        "record_attributes"
+                                    ]
+                                    print(
+                                        f"🔄 TRACE_CONVERSION_DEBUG: Found record_attributes in event_data for {key}"
+                                    )
+
+                                # Check for output_state specifically
+                                if (
+                                    isinstance(record_attrs, dict)
+                                    and "ai.observability.graph_node.output_state"
+                                    in record_attrs
+                                ):
+                                    output_state = record_attrs[
+                                        "ai.observability.graph_node.output_state"
+                                    ]
+                                    print(
+                                        f"🔄 TRACE_CONVERSION_DEBUG: Found output_state in event {key}: {str(output_state)[:100]}..."
+                                    )
+                                    if "Command(" in str(
+                                        output_state
+                                    ) and "execution_plan" in str(output_state):
+                                        print(
+                                            f"🔄 TRACE_CONVERSION_DEBUG: ✅ Found Command with execution_plan in event {key}!"
+                                        )
 
                                 span = {
                                     "span_id": f"span_{key}",
@@ -605,6 +677,24 @@ def compress_trace_for_feedback(
     logger.info(f"DEBUG: target_token_limit: {target_token_limit}")
     logger.info(f"DEBUG: trace_data type: {type(trace_data)}")
     logger.info(f"DEBUG: trace_data size: {len(str(trace_data))}")
+
+    # Check for extremely large traces and apply aggressive pre-compression
+    trace_size = len(str(trace_data))
+    if trace_size > 500000:  # 500KB+ traces need aggressive handling
+        print(
+            f"🚀 COMPRESS_DEBUG: MASSIVE TRACE DETECTED ({trace_size} chars), applying aggressive pre-compression"
+        )
+        logger.warning(
+            f"MASSIVE TRACE: {trace_size} characters, applying aggressive compression"
+        )
+
+        # For massive traces, use a much smaller target token limit
+        target_token_limit = min(
+            target_token_limit, 5000
+        )  # Force very small limit
+        print(
+            f"🚀 COMPRESS_DEBUG: Reduced target_token_limit to {target_token_limit} for massive trace"
+        )
 
     # Convert TruLens trace format to expected format
     converted_trace = _convert_trulens_trace_format(trace_data)
