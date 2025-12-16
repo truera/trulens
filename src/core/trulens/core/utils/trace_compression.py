@@ -281,31 +281,15 @@ def _convert_trulens_trace_format(trace_data: Any) -> Dict[str, Any]:
     TruLens traces have events with record_attributes, but our providers expect
     spans with span_attributes.
     """
-    print("🔄 TRACE_CONVERSION_DEBUG: Converting TruLens trace format")
-    print(f"🔄 TRACE_CONVERSION_DEBUG: Input type: {type(trace_data)}")
-    print(f"🔄 TRACE_CONVERSION_DEBUG: Input size: {len(str(trace_data))}")
-    logger.warning("TRACE_CONVERSION_DEBUG: Converting TruLens trace format")
-    logger.warning(f"TRACE_CONVERSION_DEBUG: Input type: {type(trace_data)}")
-    logger.warning(
-        f"TRACE_CONVERSION_DEBUG: Input size: {len(str(trace_data))}"
-    )
-
     if isinstance(trace_data, str):
-        logger.warning("TRACE_CONVERSION_DEBUG: Input is string, parsing JSON")
         try:
             parsed_data = json.loads(trace_data)
         except json.JSONDecodeError:
             return {"trace_id": "unknown", "spans": []}
     else:
         parsed_data = trace_data
-        logger.warning(
-            "TRACE_CONVERSION_DEBUG: Input is not string, using as-is"
-        )
 
     if not isinstance(parsed_data, dict):
-        logger.warning(
-            f"TRACE_CONVERSION_DEBUG: Trace data is not a dict, type: {type(parsed_data)}"
-        )
         return {"trace_id": "unknown", "spans": []}
 
     # Convert TruLens events format to spans format
@@ -358,10 +342,6 @@ def _convert_trulens_trace_format(trace_data: Any) -> Dict[str, Any]:
                     if key.isdigit():
                         event_data = record[key]
                         if isinstance(event_data, dict):
-                            print(
-                                f"🔄 TRACE_CONVERSION_DEBUG: Processing event {key}, keys: {list(event_data.keys())[:5]}"
-                            )
-
                             # Check if this is a direct record (has 'name', 'kind', etc.)
                             if "name" in event_data:
                                 # This is a direct record object, but we need to get the attributes from the outer structure

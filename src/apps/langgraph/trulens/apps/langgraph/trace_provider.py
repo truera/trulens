@@ -67,7 +67,6 @@ class LangGraphTraceProvider(TraceProvider):
         if plan:
             return plan
 
-        logger.warning("🔍 LANGGRAPH_PLAN_DEBUG: No plan found in any strategy")
         return None
 
     def _clean_plan_content(self, plan_value: Any) -> Any:
@@ -295,15 +294,6 @@ class LangGraphTraceProvider(TraceProvider):
             for state_key in state_keys:
                 if state_key in attrs:
                     state_value = attrs[state_key]
-                    logger.warning(
-                        f"🔍 LANGGRAPH_PLAN_DEBUG: Checking {state_key} in span '{span_name}'"
-                    )
-                    logger.warning(
-                        f"🔍 LANGGRAPH_PLAN_DEBUG: State value type: {type(state_value)}, length: {len(str(state_value))}"
-                    )
-                    logger.warning(
-                        f"🔍 LANGGRAPH_PLAN_DEBUG: State value preview: {str(state_value)[:300]}..."
-                    )
 
                     # Calculate priority for this potential plan
                     priority = self._calculate_plan_priority(
@@ -319,17 +309,11 @@ class LangGraphTraceProvider(TraceProvider):
                             "state_key": state_key,
                             "span_name": span_name,
                         })
-                        logger.warning(
-                            f"🔍 LANGGRAPH_PLAN_DEBUG: Found potential plan with priority {priority} from {span_name}.{state_key}"
-                        )
 
         # Sort by priority (highest first) and extract the best plan
         if potential_plans:
             potential_plans.sort(key=lambda x: x["priority"], reverse=True)
             best_plan = potential_plans[0]
-            logger.warning(
-                f"🔍 LANGGRAPH_PLAN_DEBUG: Selected best plan with priority {best_plan['priority']} from {best_plan['span_name']}.{best_plan['state_key']}"
-            )
 
             # Extract the actual plan content
             plan = self._extract_plan_from_state_value(
@@ -337,9 +321,6 @@ class LangGraphTraceProvider(TraceProvider):
                 f"{best_plan['span_name']}.{best_plan['state_key']}",
             )
             if plan:
-                logger.warning(
-                    f"🔍 LANGGRAPH_PLAN_DEBUG: Successfully extracted plan from {best_plan['span_name']}.{best_plan['state_key']}"
-                )
                 return plan
 
         return None
@@ -371,9 +352,6 @@ class LangGraphTraceProvider(TraceProvider):
                 priority += (
                     100  # Very high priority for Command with plan-related key
                 )
-                logger.warning(
-                    f"🔍 LANGGRAPH_PLAN_DEBUG: Command with plan-related key(s) found: {plan_keys} - adding 100 priority points"
-                )
             else:
                 priority += 40  # Medium priority for other Commands
 
@@ -394,18 +372,12 @@ class LangGraphTraceProvider(TraceProvider):
             pattern in span_name.lower() for pattern in planning_node_patterns
         ):
             priority += 15
-            logger.warning(
-                "🔍 LANGGRAPH_PLAN_DEBUG: Planning-related node name detected - adding 15 priority points"
-            )
 
         # Penalty for debug messages
         if "Agent error:" in state_str:
             debug_count = len(state_str.split("Agent error:"))
             penalty = min(debug_count * 10, 50)  # Cap penalty at 50
             priority -= penalty
-            logger.warning(
-                f"🔍 LANGGRAPH_PLAN_DEBUG: Debug messages detected - subtracting {penalty} priority points"
-            )
 
         # Bonus for plan-related content (but less than Command structures)
         if any(
@@ -414,30 +386,13 @@ class LangGraphTraceProvider(TraceProvider):
         ):
             priority += 20
 
-        logger.warning(
-            f"🔍 LANGGRAPH_PLAN_DEBUG: Final priority for {span_name}.{state_key}: {priority}"
-        )
         return priority
 
     def _extract_plan_from_state_value(
         self, state_value: Any, state_key: str
     ) -> Optional[Any]:
         """Extract plan from a state value (string or dict)."""
-        logger.warning(
-            f"🔍 LANGGRAPH_PLAN_DEBUG: _extract_plan_from_state_value called for {state_key}"
-        )
-        logger.warning(
-            f"🔍 LANGGRAPH_PLAN_DEBUG: State value type: {type(state_value)}"
-        )
-
         if isinstance(state_value, str):
-            logger.warning(
-                f"🔍 LANGGRAPH_PLAN_DEBUG: Processing string state value, length: {len(state_value)}"
-            )
-            logger.warning(
-                f"🔍 LANGGRAPH_PLAN_DEBUG: String preview: {state_value[:500]}..."
-            )
-
             # Check if this looks like a Command structure with any plan-related key
             if "Command(" in state_value:
                 # Look for any key containing "plan" as a substring
@@ -449,31 +404,19 @@ class LangGraphTraceProvider(TraceProvider):
                 )
 
                 if plan_keys:
-                    logger.warning(
-                        f"🔍 LANGGRAPH_PLAN_DEBUG: Found Command structure with plan key(s): {plan_keys}!"
-                    )
                     extracted_plan = self._extract_plan_from_command_string(
                         state_value
                     )
                     if extracted_plan:
-                        logger.warning(
-                            "🔍 LANGGRAPH_PLAN_DEBUG: Successfully extracted plan from Command"
-                        )
                         return extracted_plan
 
             # Try JSON parsing first
             try:
                 parsed_state = json.loads(state_value)
                 if isinstance(parsed_state, dict):
-                    logger.warning(
-                        f"🔍 LANGGRAPH_PLAN_DEBUG: Parsed JSON dict with keys: {list(parsed_state.keys())}"
-                    )
                     plan_fields = ["plan", "plan", "agent_plan"]
                     for field in plan_fields:
                         if field in parsed_state:
-                            logger.warning(
-                                f"🔍 LANGGRAPH_PLAN_DEBUG: Found {field} in parsed JSON"
-                            )
                             raw_plan = parsed_state[field]
                             cleaned_plan = self._clean_plan_content(raw_plan)
                             logger.info(
@@ -481,19 +424,13 @@ class LangGraphTraceProvider(TraceProvider):
                             )
                             return cleaned_plan
             except json.JSONDecodeError as e:
-                logger.warning(
+                logger.debug(
                     f"🔍 LANGGRAPH_PLAN_DEBUG: JSON parsing failed: {e}"
                 )
 
             # Check for plan-related content in string
             if "plan" in state_value.lower() and len(state_value) > 100:
-                logger.warning(
-                    "🔍 LANGGRAPH_PLAN_DEBUG: Found plan-related content in string"
-                )
                 cleaned_plan = self._clean_plan_content(state_value)
-                logger.info(
-                    f"LangGraph plan cleaned from string: {len(state_value)} -> {len(str(cleaned_plan))} chars"
-                )
                 return cleaned_plan
 
         elif isinstance(state_value, dict):
