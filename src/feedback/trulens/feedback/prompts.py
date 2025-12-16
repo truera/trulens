@@ -8,7 +8,7 @@ from trulens.feedback.v2 import feedback as v2
 COT_REASONS_TEMPLATE = """
 Please evaluate using the following template:
 
-Criteria: <Provide the criteria for this evaluation, restating the criteria you are using to evaluate. If you are using additional instructions, include them in the criteria.>
+Criteria: <Provide the criteria for this evaluation, restating the criteria you are using to evaluate. If your criteria includes additional instructions, always repeat them here.>
 Supporting Evidence: <Provide your reasons for scoring based on the listed criteria step by step. Tie it back to the evaluation being completed.>
 Score: <The score based on the given criteria>
 

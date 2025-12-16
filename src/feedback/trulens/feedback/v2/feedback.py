@@ -263,7 +263,7 @@ class Conciseness(Semantics, WithPrompt):  # or syntax
 
     # langchain Criteria.CONCISENESS
     system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria["conciseness"]} Respond only as a number from {"{min_score}"} to {"{max_score}"} where {"{min_score}"} is the least concise and {"{max_score}"} is the most concise. {"{additional_instructions}"}"""
+        f"""{supported_criteria["conciseness"]} Respond only as a number from {"{min_score}"} to {"{max_score}"} where {"{min_score}"} is the least concise and {"{max_score}"} is the most concise."""
     )
 
 
@@ -273,7 +273,7 @@ class Correctness(Semantics, WithPrompt):
 
     # langchain Criteria.CORRECTNESS
     system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria["correctness"]} Respond only as a number from {"{min_score}"} to {"{max_score}"} where {"{min_score}"} is the least correct and {"{max_score}"} is the most correct. {"{additional_instructions}"}"""
+        f"""{supported_criteria["correctness"]} Respond only as a number from {"{min_score}"} to {"{max_score}"} where {"{min_score}"} is the least correct and {"{max_score}"} is the most correct."""
     )
 
 
@@ -307,24 +307,24 @@ class CriteriaOutputSpaceMixin:
         cls,
         min_score: int,
         max_score: int,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         output_space: Optional[str] = None,
         examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
     ) -> str:
         if (
-            criteria_override is None
+            criteria is None
             and additional_instructions is None
             and output_space is None
         ):
             return cls.system_prompt
 
-        if criteria_override is None:
-            criteria = cls.criteria_template.format(
+        if criteria is None:
+            final_criteria = cls.criteria_template.format(
                 min_score=min_score, max_score=max_score
             )
         else:
-            criteria = criteria_override
+            final_criteria = criteria
 
         if additional_instructions is None:
             additional_instructions = ""
@@ -337,14 +337,14 @@ class CriteriaOutputSpaceMixin:
             output_space_prompt = cls.output_space_prompt
         else:
             validated = cls.validate_criteria_and_output_space(
-                criteria=criteria, output_space=output_space
+                criteria=final_criteria, output_space=output_space
             )
             output_space_prompt = validated.get_output_scale_prompt()
 
         prompt = cleandoc(
             cls.system_prompt_template.format(
                 output_space_prompt=output_space_prompt,
-                criteria=criteria,
+                criteria=final_criteria,
                 additional_instructions=additional_instructions,
             )
         )

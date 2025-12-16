@@ -176,8 +176,8 @@ class Feedback(feedback_schema.FeedbackDefinition):
     criteria: Optional[str] = pydantic.Field(None, exclude=True)
     """Criteria for the feedback function."""
 
-    custom_instructions: Optional[str] = pydantic.Field(None, exclude=True)
-    """Custom instructions for the feedback function."""
+    additional_instructions: Optional[str] = pydantic.Field(None, exclude=True)
+    """Additional instructions for the feedback function."""
 
     min_score_val: Optional[int] = pydantic.Field(None, exclude=True)
     """Minimum score value for the feedback function."""
@@ -209,7 +209,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
         agg: Optional[Callable] = None,
         examples: Optional[List[Tuple]] = None,
         criteria: Optional[str] = None,
-        custom_instructions: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: Optional[int] = 0,
         max_score_val: Optional[int] = 3,
         temperature: Optional[float] = 0.0,
@@ -217,6 +217,19 @@ class Feedback(feedback_schema.FeedbackDefinition):
         enable_trace_compression: Optional[bool] = None,
         **kwargs,
     ):
+        # Handle deprecated parameter name
+        if "custom_instructions" in kwargs:
+            warnings.warn(
+                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
+                "Please update your code to use `additional_instructions` instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if additional_instructions is None:
+                additional_instructions = kwargs.pop("custom_instructions")
+            else:
+                kwargs.pop("custom_instructions")
+
         # imp is the python function/method while implementation is a serialized
         # json structure. Create the one that is missing based on the one that
         # is provided:
@@ -296,8 +309,8 @@ class Feedback(feedback_schema.FeedbackDefinition):
         # Pass custom parameters to parent class for serialization
         if criteria is not None:
             kwargs["criteria"] = criteria
-        if custom_instructions is not None:
-            kwargs["custom_instructions"] = custom_instructions
+        if additional_instructions is not None:
+            kwargs["additional_instructions"] = additional_instructions
         if examples is not None:
             kwargs["examples"] = examples
 
@@ -307,7 +320,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
         self.agg = agg
         self.examples = examples
         self.criteria = criteria
-        self.custom_instructions = custom_instructions
+        self.additional_instructions = additional_instructions
         self.min_score_val = min_score_val
         self.max_score_val = max_score_val
         self.temperature = temperature
@@ -502,8 +515,8 @@ class Feedback(feedback_schema.FeedbackDefinition):
             kwargs["examples"] = self.examples
         if self.criteria is not None:
             kwargs["criteria"] = self.criteria
-        if self.custom_instructions is not None:
-            kwargs["custom_instructions"] = self.custom_instructions
+        if self.additional_instructions is not None:
+            kwargs["additional_instructions"] = self.additional_instructions
         if self.min_score_val is not None:
             kwargs["min_score_val"] = self.min_score_val
         if self.max_score_val is not None:
@@ -737,6 +750,11 @@ class Feedback(feedback_schema.FeedbackDefinition):
             param_name
             for param_name, param in sig.parameters.items()
             if param.default == inspect.Parameter.empty
+            and param.kind
+            not in (
+                inspect.Parameter.VAR_KEYWORD,
+                inspect.Parameter.VAR_POSITIONAL,
+            )
         ]
         error_msg = ""
         # Check for extra selectors. Technically, this shouldn't happen ever

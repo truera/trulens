@@ -547,7 +547,7 @@ class LLMProvider(core_provider.Provider):
         self,
         question: str,
         context: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         examples: Optional[List[str]] = None,
         min_score_val: int = 0,
@@ -565,7 +565,7 @@ class LLMProvider(core_provider.Provider):
             context = TruChain.select_context(rag_app)
             feedback = (
                 Feedback(provider.context_relevance,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions,
                     examples=examples)
                 .on_input()
@@ -577,7 +577,7 @@ class LLMProvider(core_provider.Provider):
         Args:
             question (str): A question being asked.
             context (str): Context related to the question.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             examples (Optional[List[str]]): Optional few-shot examples to guide the evaluation. Defaults to None.
             min_score_val (int): The minimum score value. Defaults to 0.
@@ -588,16 +588,6 @@ class LLMProvider(core_provider.Provider):
             float: A value between 0.0 (not relevant) and 1.0 (relevant).
         """
         # Handle deprecated parameter names
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
-
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -615,7 +605,7 @@ class LLMProvider(core_provider.Provider):
         system_prompt = feedback_v2.ContextRelevance.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
-            criteria_override=criteria_override,
+            criteria=criteria,
             additional_instructions=additional_instructions,
             examples=examples,
             output_space=output_space,
@@ -637,7 +627,7 @@ class LLMProvider(core_provider.Provider):
         self,
         question: str,
         context: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         examples: Optional[List[str]] = None,
         min_score_val: int = 0,
@@ -656,7 +646,7 @@ class LLMProvider(core_provider.Provider):
             context = TruChain.select_context(rag_app)
             feedback = (
                 Feedback(provider.context_relevance_with_cot_reasons,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions,
                     examples=examples)
                 .on_input()
@@ -668,7 +658,7 @@ class LLMProvider(core_provider.Provider):
         Args:
             question (str): A question being asked.
             context (str): Context related to the question.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             examples (Optional[List[str]]): Optional few-shot examples to guide the evaluation. Defaults to None.
             min_score_val (int): The minimum score value. Defaults to 0.
@@ -679,16 +669,6 @@ class LLMProvider(core_provider.Provider):
             float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
         """
         # Handle deprecated parameter names
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
-
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -707,7 +687,7 @@ class LLMProvider(core_provider.Provider):
         user_prompt = user_prompt.replace(
             "RELEVANCE:", feedback_prompts.COT_REASONS_TEMPLATE
         )
-        if criteria_override is None:
+        if criteria is None:
             system_prompt = feedback_v2.ContextRelevance.default_cot_prompt
         else:
             output_space = self._determine_output_space(
@@ -717,7 +697,7 @@ class LLMProvider(core_provider.Provider):
             system_prompt = feedback_v2.ContextRelevance.generate_system_prompt(
                 min_score=min_score_val,
                 max_score=max_score_val,
-                criteria_override=criteria_override,
+                criteria=criteria,
                 additional_instructions=additional_instructions,
                 examples=examples,
                 output_space=output_space,
@@ -735,7 +715,7 @@ class LLMProvider(core_provider.Provider):
         self,
         prompt: str,
         response: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         examples: Optional[List[str]] = None,
         min_score_val: int = 0,
@@ -751,7 +731,7 @@ class LLMProvider(core_provider.Provider):
             ```python
             feedback = (
             Feedback(provider.relevance,
-                criteria_override=criteria_override,
+                criteria=criteria,
                 additional_instructions=additional_instructions,
                 examples=examples)
                 .on_input_output()
@@ -762,7 +742,7 @@ class LLMProvider(core_provider.Provider):
             ```python
             feedback = (
                 Feedback(provider.relevance,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions,
                     examples=examples)
                 .on_input()
@@ -774,7 +754,7 @@ class LLMProvider(core_provider.Provider):
         Args:
             prompt (str): A text prompt to an agent.
             response (str): The agent's response to the prompt.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             examples (Optional[List[str]]): Optional few-shot examples to guide the evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
@@ -785,16 +765,6 @@ class LLMProvider(core_provider.Provider):
             float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
         """
         # Handle deprecated parameter names
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
-
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -813,7 +783,7 @@ class LLMProvider(core_provider.Provider):
             feedback_v2.PromptResponseRelevance.generate_system_prompt(
                 min_score=min_score_val,
                 max_score=max_score_val,
-                criteria_override=criteria_override,
+                criteria=criteria,
                 additional_instructions=additional_instructions,
                 examples=examples,
                 output_space=output_space,
@@ -836,7 +806,7 @@ class LLMProvider(core_provider.Provider):
         self,
         prompt: str,
         response: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         examples: Optional[List[str]] = None,
         min_score_val: int = 0,
@@ -853,7 +823,7 @@ class LLMProvider(core_provider.Provider):
             ```python
             feedback = (
                 Feedback(provider.relevance_with_cot_reasons,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions,
                     examples=examples)
                 .on_input()
@@ -864,7 +834,7 @@ class LLMProvider(core_provider.Provider):
         Args:
             prompt (str): A text prompt to an agent.
             response (str): The agent's response to the prompt.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow.. Defaults to None.
             examples (Optional[List[str]]): Optional few-shot examples to guide the evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
@@ -876,16 +846,6 @@ class LLMProvider(core_provider.Provider):
                 "relevant".
         """
         # Handle deprecated parameter names
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
-
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -904,7 +864,7 @@ class LLMProvider(core_provider.Provider):
             feedback_v2.PromptResponseRelevance.generate_system_prompt(
                 min_score=min_score_val,
                 max_score=max_score_val,
-                criteria_override=criteria_override,
+                criteria=criteria,
                 additional_instructions=additional_instructions,
                 examples=examples,
                 output_space=output_space,
@@ -931,7 +891,7 @@ class LLMProvider(core_provider.Provider):
     def sentiment(
         self,
         text: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         examples: Optional[List[str]] = None,
         min_score_val: int = 0,
@@ -947,7 +907,7 @@ class LLMProvider(core_provider.Provider):
             ```python
             feedback = (
                 Feedback(provider.sentiment,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions,
                     examples=examples)
                 .on_output()
@@ -956,7 +916,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate sentiment of.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow.
             examples (Optional[List[str]]): Optional few-shot examples to guide the evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
@@ -968,16 +928,6 @@ class LLMProvider(core_provider.Provider):
                 being "positive sentiment".
         """
         # Handle deprecated parameter names
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
-
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -995,7 +945,7 @@ class LLMProvider(core_provider.Provider):
         system_prompt = feedback_v2.Sentiment.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
-            criteria_override=criteria_override,
+            criteria=criteria,
             additional_instructions=additional_instructions,
             examples=examples,
             output_space=output_space,
@@ -1013,7 +963,7 @@ class LLMProvider(core_provider.Provider):
     def sentiment_with_cot_reasons(
         self,
         text: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         examples: Optional[List[str]] = None,
         min_score_val: int = 0,
@@ -1030,7 +980,7 @@ class LLMProvider(core_provider.Provider):
             ```python
             feedback = (
                 Feedback(provider.sentiment_with_cot_reasons,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions,
                     examples=examples)
                 .on_output()
@@ -1039,7 +989,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): Text to evaluate.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow.
             examples (Optional[List[str]]): Optional few-shot examples to guide the evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
@@ -1050,16 +1000,6 @@ class LLMProvider(core_provider.Provider):
             float: A value between 0.0 (negative sentiment) and 1.0 (positive sentiment).
         """
         # Handle deprecated parameter names
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
-
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -1077,7 +1017,7 @@ class LLMProvider(core_provider.Provider):
         system_prompt = feedback_v2.Sentiment.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
-            criteria_override=criteria_override,
+            criteria=criteria,
             additional_instructions=additional_instructions,
             examples=examples,
             output_space=output_space,
@@ -1132,6 +1072,40 @@ class LLMProvider(core_provider.Provider):
             )
             / 3
         )
+
+    def _build_criteria_with_instructions(
+        self,
+        criteria: Optional[str],
+        default_criteria: str,
+        additional_instructions: Optional[str] = None,
+    ) -> str:
+        """Build the final criteria prompt with optional additional instructions.
+
+        Args:
+            criteria: User-provided criteria, or None to use default.
+            default_criteria: The default criteria to use if criteria is None.
+            additional_instructions: Optional instructions to append.
+
+        Returns:
+            The final criteria string with any additional instructions appended.
+        """
+        final_criteria = criteria if criteria is not None else default_criteria
+
+        # Handle {additional_instructions} placeholder in default prompts (e.g., Correctness)
+        if "{additional_instructions}" in final_criteria:
+            final_criteria = final_criteria.replace(
+                "{additional_instructions}",
+                f"Additional instructions: {additional_instructions}"
+                if additional_instructions
+                else "",
+            )
+        elif additional_instructions:
+            # Append as a new section for prompts without the placeholder
+            final_criteria += (
+                "\n\nAdditional instructions:\n" + additional_instructions
+            )
+
+        return final_criteria
 
     def _langchain_evaluate(
         self,
@@ -1250,7 +1224,7 @@ class LLMProvider(core_provider.Provider):
     def conciseness(
         self,
         text: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -1265,7 +1239,7 @@ class LLMProvider(core_provider.Provider):
             ```python
             feedback = (
                 Feedback(provider.conciseness,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions)
                 .on_output()
                 )
@@ -1273,7 +1247,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate the conciseness of.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -1283,16 +1257,6 @@ class LLMProvider(core_provider.Provider):
             float: A value between 0.0 (not concise) and 1.0 (concise).
 
         """
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
-
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -1303,25 +1267,11 @@ class LLMProvider(core_provider.Provider):
             if additional_instructions is None:
                 additional_instructions = kwargs.pop("custom_instructions")
 
-        if additional_instructions is None:
-            additional_instructions = ""
-
-        if criteria_override is None:
-            criteria = feedback_prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT
-            if additional_instructions:
-                criteria = (
-                    criteria
-                    + "\n\nAdditional instructions:\n"
-                    + additional_instructions
-                )
-        else:
-            criteria = (
-                criteria_override
-                + "\n\nAdditional instructions:\n"
-                + additional_instructions
-                if additional_instructions
-                else criteria_override
-            )
+        criteria = self._build_criteria_with_instructions(
+            criteria,
+            feedback_prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT,
+            additional_instructions,
+        )
 
         return self._langchain_evaluate(
             text=text,
@@ -1334,7 +1284,7 @@ class LLMProvider(core_provider.Provider):
     def conciseness_with_cot_reasons(
         self,
         text: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -1349,14 +1299,14 @@ class LLMProvider(core_provider.Provider):
             ```python
             feedback = (
                 Feedback(provider.conciseness_with_cot_reasons,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions)
                 .on_output()
                 )
             ```
         Args:
             text (str): The text to evaluate the conciseness of.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -1365,15 +1315,6 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (not concise) and 1.0 (concise) and a dictionary containing the reasons for the evaluation.
         """
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -1384,25 +1325,12 @@ class LLMProvider(core_provider.Provider):
             if additional_instructions is None:
                 additional_instructions = kwargs.pop("custom_instructions")
 
-        if additional_instructions is None:
-            additional_instructions = ""
+        criteria = self._build_criteria_with_instructions(
+            criteria,
+            feedback_prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT,
+            additional_instructions,
+        )
 
-        if criteria_override is None:
-            criteria = feedback_prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT
-            if additional_instructions:
-                criteria = (
-                    criteria
-                    + "\n\nAdditional instructions:\n"
-                    + additional_instructions
-                )
-        else:
-            criteria = (
-                criteria_override
-                + "\n\nAdditional instructions:\n"
-                + additional_instructions
-                if additional_instructions
-                else criteria_override
-            )
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
             criteria=criteria,
@@ -1414,7 +1342,7 @@ class LLMProvider(core_provider.Provider):
     def correctness(
         self,
         text: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -1429,7 +1357,7 @@ class LLMProvider(core_provider.Provider):
             ```python
             feedback = (
                 Feedback(provider.correctness,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions)
                 .on_output()
                 )
@@ -1437,7 +1365,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): A prompt to an agent.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -1446,15 +1374,6 @@ class LLMProvider(core_provider.Provider):
         Returns:
             float: A value between 0.0 (not correct) and 1.0 (correct).
         """
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -1465,25 +1384,12 @@ class LLMProvider(core_provider.Provider):
             if additional_instructions is None:
                 additional_instructions = kwargs.pop("custom_instructions")
 
-        if additional_instructions is None:
-            additional_instructions = ""
+        criteria = self._build_criteria_with_instructions(
+            criteria,
+            feedback_prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT,
+            additional_instructions,
+        )
 
-        if criteria_override is None:
-            criteria = feedback_prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT
-            if additional_instructions:
-                criteria = (
-                    criteria
-                    + "\n\nAdditional instructions:\n"
-                    + additional_instructions
-                )
-        else:
-            criteria = (
-                criteria_override
-                + "\n\nAdditional instructions:\n"
-                + additional_instructions
-                if additional_instructions
-                else criteria_override
-            )
         return self._langchain_evaluate(
             text=text,
             criteria=criteria,
@@ -1495,7 +1401,7 @@ class LLMProvider(core_provider.Provider):
     def correctness_with_cot_reasons(
         self,
         text: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -1511,7 +1417,7 @@ class LLMProvider(core_provider.Provider):
             ```python
             feedback = (
                 Feedback(provider.correctness_with_cot_reasons,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions)
                 .on_output()
                 )
@@ -1519,7 +1425,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): Text to evaluate.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -1528,15 +1434,6 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (not correct) and 1.0 (correct) and a dictionary containing the reasons for the evaluation.
         """
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -1547,25 +1444,11 @@ class LLMProvider(core_provider.Provider):
             if additional_instructions is None:
                 additional_instructions = kwargs.pop("custom_instructions")
 
-        if additional_instructions is None:
-            additional_instructions = ""
-
-        if criteria_override is None:
-            criteria = feedback_prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT
-            if additional_instructions:
-                criteria = (
-                    criteria
-                    + "\n\nAdditional instructions:\n"
-                    + additional_instructions
-                )
-        else:
-            criteria = (
-                criteria_override
-                + "\n\nAdditional instructions:\n"
-                + additional_instructions
-                if additional_instructions
-                else criteria_override
-            )
+        criteria = self._build_criteria_with_instructions(
+            criteria,
+            feedback_prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT,
+            additional_instructions,
+        )
 
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
@@ -1578,7 +1461,7 @@ class LLMProvider(core_provider.Provider):
     def coherence(
         self,
         text: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -1593,7 +1476,7 @@ class LLMProvider(core_provider.Provider):
             ```python
             feedback = (
                 Feedback(provider.coherence,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions)
                 .on_output()
                 )
@@ -1601,7 +1484,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -1610,15 +1493,6 @@ class LLMProvider(core_provider.Provider):
         Returns:
             float: A value between 0.0 (not coherent) and 1.0 (coherent).
         """
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -1629,25 +1503,11 @@ class LLMProvider(core_provider.Provider):
             if additional_instructions is None:
                 additional_instructions = kwargs.pop("custom_instructions")
 
-        if additional_instructions is None:
-            additional_instructions = ""
-
-        if criteria_override is None:
-            criteria = feedback_prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT
-            if additional_instructions:
-                criteria = (
-                    criteria
-                    + "\n\nAdditional instructions:\n"
-                    + additional_instructions
-                )
-        else:
-            criteria = (
-                criteria_override
-                + "\n\nAdditional instructions:\n"
-                + additional_instructions
-                if additional_instructions
-                else criteria_override
-            )
+        criteria = self._build_criteria_with_instructions(
+            criteria,
+            feedback_prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT,
+            additional_instructions,
+        )
 
         return self._langchain_evaluate(
             text=text,
@@ -1660,7 +1520,7 @@ class LLMProvider(core_provider.Provider):
     def coherence_with_cot_reasons(
         self,
         text: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -1676,7 +1536,7 @@ class LLMProvider(core_provider.Provider):
             ```python
             feedback = (
                 Feedback(provider.coherence_with_cot_reasons,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions)
                 .on_output()
                 )
@@ -1684,7 +1544,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -1693,15 +1553,6 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (not coherent) and 1.0 (coherent) and a dictionary containing the reasons for the evaluation.
         """
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -1712,25 +1563,11 @@ class LLMProvider(core_provider.Provider):
             if additional_instructions is None:
                 additional_instructions = kwargs.pop("custom_instructions")
 
-        if additional_instructions is None:
-            additional_instructions = ""
-
-        if criteria_override is None:
-            criteria = feedback_prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT
-            if additional_instructions:
-                criteria = (
-                    criteria
-                    + "\n\nAdditional instructions:\n"
-                    + additional_instructions
-                )
-        else:
-            criteria = (
-                criteria_override
-                + "\n\nAdditional instructions:\n"
-                + additional_instructions
-                if additional_instructions
-                else criteria_override
-            )
+        criteria = self._build_criteria_with_instructions(
+            criteria,
+            feedback_prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT,
+            additional_instructions,
+        )
 
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
@@ -1743,7 +1580,7 @@ class LLMProvider(core_provider.Provider):
     def harmfulness(
         self,
         text: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -1758,7 +1595,7 @@ class LLMProvider(core_provider.Provider):
             ```python
             feedback = (
                 Feedback(provider.harmfulness,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions)
                 .on_output()
                 )
@@ -1766,7 +1603,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -1775,15 +1612,6 @@ class LLMProvider(core_provider.Provider):
         Returns:
             float: A value between 0.0 (not harmful) and 1.0 (harmful)".
         """
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -1794,25 +1622,11 @@ class LLMProvider(core_provider.Provider):
             if additional_instructions is None:
                 additional_instructions = kwargs.pop("custom_instructions")
 
-        if additional_instructions is None:
-            additional_instructions = ""
-
-        if criteria_override is None:
-            criteria = feedback_prompts.LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT
-            if additional_instructions:
-                criteria = (
-                    criteria
-                    + "\n\nAdditional instructions:\n"
-                    + additional_instructions
-                )
-        else:
-            criteria = (
-                criteria_override
-                + "\n\nAdditional instructions:\n"
-                + additional_instructions
-                if additional_instructions
-                else criteria_override
-            )
+        criteria = self._build_criteria_with_instructions(
+            criteria,
+            feedback_prompts.LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT,
+            additional_instructions,
+        )
 
         return self._langchain_evaluate(
             text=text,
@@ -1825,7 +1639,7 @@ class LLMProvider(core_provider.Provider):
     def harmfulness_with_cot_reasons(
         self,
         text: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -1841,7 +1655,7 @@ class LLMProvider(core_provider.Provider):
             ```python
             feedback = (
                 Feedback(provider.harmfulness_with_cot_reasons,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions)
                 .on_output()
                 )
@@ -1849,7 +1663,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -1858,15 +1672,6 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (not harmful) and 1.0 (harmful) and a dictionary containing the reasons for the evaluation.
         """
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -1877,25 +1682,11 @@ class LLMProvider(core_provider.Provider):
             if additional_instructions is None:
                 additional_instructions = kwargs.pop("custom_instructions")
 
-        if additional_instructions is None:
-            additional_instructions = ""
-
-        if criteria_override is None:
-            criteria = feedback_prompts.LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT
-            if additional_instructions:
-                criteria = (
-                    criteria
-                    + "\n\nAdditional instructions:\n"
-                    + additional_instructions
-                )
-        else:
-            criteria = (
-                criteria_override
-                + "\n\nAdditional instructions:\n"
-                + additional_instructions
-                if additional_instructions
-                else criteria_override
-            )
+        criteria = self._build_criteria_with_instructions(
+            criteria,
+            feedback_prompts.LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT,
+            additional_instructions,
+        )
 
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
@@ -1908,7 +1699,7 @@ class LLMProvider(core_provider.Provider):
     def maliciousness(
         self,
         text: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -1923,7 +1714,7 @@ class LLMProvider(core_provider.Provider):
             ```python
             feedback = (
                 Feedback(provider.maliciousness,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions)
                 .on_output()
                 )
@@ -1931,7 +1722,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -1940,15 +1731,6 @@ class LLMProvider(core_provider.Provider):
         Returns:
             float: A value between 0.0 (not malicious) and 1.0 (malicious).
         """
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -1959,25 +1741,11 @@ class LLMProvider(core_provider.Provider):
             if additional_instructions is None:
                 additional_instructions = kwargs.pop("custom_instructions")
 
-        if additional_instructions is None:
-            additional_instructions = ""
-
-        if criteria_override is None:
-            criteria = feedback_prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT
-            if additional_instructions:
-                criteria = (
-                    criteria
-                    + "\n\nAdditional instructions:\n"
-                    + additional_instructions
-                )
-        else:
-            criteria = (
-                criteria_override
-                + "\n\nAdditional instructions:\n"
-                + additional_instructions
-                if additional_instructions
-                else criteria_override
-            )
+        criteria = self._build_criteria_with_instructions(
+            criteria,
+            feedback_prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT,
+            additional_instructions,
+        )
 
         return self._langchain_evaluate(
             text=text,
@@ -1990,7 +1758,7 @@ class LLMProvider(core_provider.Provider):
     def maliciousness_with_cot_reasons(
         self,
         text: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -2006,7 +1774,7 @@ class LLMProvider(core_provider.Provider):
             ```python
             feedback = (
                 Feedback(provider.maliciousness_with_cot_reasons,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions)
                 .on_output()
                 )
@@ -2014,7 +1782,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -2023,15 +1791,6 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (not malicious) and 1.0 (malicious) and a dictionary containing the reasons for the evaluation.
         """
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -2042,25 +1801,11 @@ class LLMProvider(core_provider.Provider):
             if additional_instructions is None:
                 additional_instructions = kwargs.pop("custom_instructions")
 
-        if additional_instructions is None:
-            additional_instructions = ""
-
-        if criteria_override is None:
-            criteria = feedback_prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT
-            if additional_instructions:
-                criteria = (
-                    criteria
-                    + "\n\nAdditional instructions:\n"
-                    + additional_instructions
-                )
-        else:
-            criteria = (
-                criteria_override
-                + "\n\nAdditional instructions:\n"
-                + additional_instructions
-                if additional_instructions
-                else criteria_override
-            )
+        criteria = self._build_criteria_with_instructions(
+            criteria,
+            feedback_prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT,
+            additional_instructions,
+        )
 
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
@@ -2073,7 +1818,7 @@ class LLMProvider(core_provider.Provider):
     def helpfulness(
         self,
         text: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -2088,7 +1833,7 @@ class LLMProvider(core_provider.Provider):
             ```python
             feedback = (
                 Feedback(provider.helpfulness,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions)
                 .on_output()
                 )
@@ -2096,7 +1841,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -2105,15 +1850,6 @@ class LLMProvider(core_provider.Provider):
         Returns:
             float: A value between 0.0 (not helpful) and 1.0 (helpful).
         """
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -2124,25 +1860,12 @@ class LLMProvider(core_provider.Provider):
             if additional_instructions is None:
                 additional_instructions = kwargs.pop("custom_instructions")
 
-        if additional_instructions is None:
-            additional_instructions = ""
+        criteria = self._build_criteria_with_instructions(
+            criteria,
+            feedback_prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT,
+            additional_instructions,
+        )
 
-        if criteria_override is None:
-            criteria = feedback_prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT
-            if additional_instructions:
-                criteria = (
-                    criteria
-                    + "\n\nAdditional instructions:\n"
-                    + additional_instructions
-                )
-        else:
-            criteria = (
-                criteria_override
-                + "\n\nAdditional instructions:\n"
-                + additional_instructions
-                if additional_instructions
-                else criteria_override
-            )
         return self._langchain_evaluate(
             text=text,
             criteria=criteria,
@@ -2154,7 +1877,7 @@ class LLMProvider(core_provider.Provider):
     def helpfulness_with_cot_reasons(
         self,
         text: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -2170,7 +1893,7 @@ class LLMProvider(core_provider.Provider):
             ```python
             feedback = (
                 Feedback(provider.helpfulness_with_cot_reasons,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions)
                 .on_output()
                 )
@@ -2178,7 +1901,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -2187,16 +1910,6 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (not helpful) and 1.0 (helpful) and a dictionary containing the reasons for the evaluation.
         """
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
-
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -2207,25 +1920,11 @@ class LLMProvider(core_provider.Provider):
             if additional_instructions is None:
                 additional_instructions = kwargs.pop("custom_instructions")
 
-        if additional_instructions is None:
-            additional_instructions = ""
-
-        if criteria_override is None:
-            criteria = feedback_prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT
-            if additional_instructions:
-                criteria = (
-                    criteria
-                    + "\n\nAdditional instructions:\n"
-                    + additional_instructions
-                )
-        else:
-            criteria = (
-                criteria_override
-                + "\n\nAdditional instructions:\n"
-                + additional_instructions
-                if additional_instructions
-                else criteria_override
-            )
+        criteria = self._build_criteria_with_instructions(
+            criteria,
+            feedback_prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT,
+            additional_instructions,
+        )
 
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
@@ -2238,7 +1937,7 @@ class LLMProvider(core_provider.Provider):
     def controversiality(
         self,
         text: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -2254,7 +1953,7 @@ class LLMProvider(core_provider.Provider):
             ```python
             feedback = (
                 Feedback(provider.controversiality,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions)
                 .on_output()
                 )
@@ -2262,7 +1961,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -2272,15 +1971,6 @@ class LLMProvider(core_provider.Provider):
             float: A value between 0.0 (not controversial) and 1.0
                 (controversial).
         """
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -2291,25 +1981,11 @@ class LLMProvider(core_provider.Provider):
             if additional_instructions is None:
                 additional_instructions = kwargs.pop("custom_instructions")
 
-        if additional_instructions is None:
-            additional_instructions = ""
-
-        if criteria_override is None:
-            criteria = feedback_prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT
-            if additional_instructions:
-                criteria = (
-                    criteria
-                    + "\n\nAdditional instructions:\n"
-                    + additional_instructions
-                )
-        else:
-            criteria = (
-                criteria_override
-                + "\n\nAdditional instructions:\n"
-                + additional_instructions
-                if additional_instructions
-                else criteria_override
-            )
+        criteria = self._build_criteria_with_instructions(
+            criteria,
+            feedback_prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT,
+            additional_instructions,
+        )
 
         return self._langchain_evaluate(
             text=text,
@@ -2322,7 +1998,7 @@ class LLMProvider(core_provider.Provider):
     def controversiality_with_cot_reasons(
         self,
         text: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -2338,7 +2014,7 @@ class LLMProvider(core_provider.Provider):
             ```python
             feedback = (
                 Feedback(provider.controversiality_with_cot_reasons,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions)
                 .on_output()
                 )
@@ -2346,7 +2022,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -2355,15 +2031,6 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (not controversial) and 1.0 (controversial) and a dictionary containing the reasons for the evaluation.
         """
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -2374,25 +2041,11 @@ class LLMProvider(core_provider.Provider):
             if additional_instructions is None:
                 additional_instructions = kwargs.pop("custom_instructions")
 
-        if additional_instructions is None:
-            additional_instructions = ""
-
-        if criteria_override is None:
-            criteria = feedback_prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT
-            if additional_instructions:
-                criteria = (
-                    criteria
-                    + "\n\nAdditional instructions:\n"
-                    + additional_instructions
-                )
-        else:
-            criteria = (
-                criteria_override
-                + "\n\nAdditional instructions:\n"
-                + additional_instructions
-                if additional_instructions
-                else criteria_override
-            )
+        criteria = self._build_criteria_with_instructions(
+            criteria,
+            feedback_prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT,
+            additional_instructions,
+        )
 
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
@@ -2405,7 +2058,7 @@ class LLMProvider(core_provider.Provider):
     def misogyny(
         self,
         text: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -2420,7 +2073,7 @@ class LLMProvider(core_provider.Provider):
             ```python
             feedback = (
                 Feedback(provider.misogyny,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions)
                 .on_output()
                 )
@@ -2428,7 +2081,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -2437,15 +2090,6 @@ class LLMProvider(core_provider.Provider):
         Returns:
             float: A value between 0.0 (not misogynistic) and 1.0 (misogynistic).
         """
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -2456,25 +2100,11 @@ class LLMProvider(core_provider.Provider):
             if additional_instructions is None:
                 additional_instructions = kwargs.pop("custom_instructions")
 
-        if additional_instructions is None:
-            additional_instructions = ""
-
-        if criteria_override is None:
-            criteria = feedback_prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT
-            if additional_instructions:
-                criteria = (
-                    criteria
-                    + "\n\nAdditional instructions:\n"
-                    + additional_instructions
-                )
-        else:
-            criteria = (
-                criteria_override
-                + "\n\nAdditional instructions:\n"
-                + additional_instructions
-                if additional_instructions
-                else criteria_override
-            )
+        criteria = self._build_criteria_with_instructions(
+            criteria,
+            feedback_prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT,
+            additional_instructions,
+        )
 
         return self._langchain_evaluate(
             text=text,
@@ -2487,7 +2117,7 @@ class LLMProvider(core_provider.Provider):
     def misogyny_with_cot_reasons(
         self,
         text: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -2503,7 +2133,7 @@ class LLMProvider(core_provider.Provider):
             ```python
             feedback = (
                 Feedback(provider.misogyny_with_cot_reasons,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions)
                 .on_output()
                 )
@@ -2511,7 +2141,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -2520,15 +2150,6 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (not misogynistic) and 1.0 (misogynistic) and a dictionary containing the reasons for the evaluation.
         """
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -2539,25 +2160,11 @@ class LLMProvider(core_provider.Provider):
             if additional_instructions is None:
                 additional_instructions = kwargs.pop("custom_instructions")
 
-        if additional_instructions is None:
-            additional_instructions = ""
-
-        if criteria_override is None:
-            criteria = feedback_prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT
-            if additional_instructions:
-                criteria = (
-                    criteria
-                    + "\n\nAdditional instructions:\n"
-                    + additional_instructions
-                )
-        else:
-            criteria = (
-                criteria_override
-                + "\n\nAdditional instructions:\n"
-                + additional_instructions
-                if additional_instructions
-                else criteria_override
-            )
+        criteria = self._build_criteria_with_instructions(
+            criteria,
+            feedback_prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT,
+            additional_instructions,
+        )
 
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
@@ -2570,7 +2177,7 @@ class LLMProvider(core_provider.Provider):
     def criminality(
         self,
         text: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -2585,7 +2192,7 @@ class LLMProvider(core_provider.Provider):
             ```python
             feedback = (
                 Feedback(provider.criminality,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions)
                 .on_output()
                 )
@@ -2593,7 +2200,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -2603,15 +2210,6 @@ class LLMProvider(core_provider.Provider):
             float: A value between 0.0 (not criminal) and 1.0 (criminal).
 
         """
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -2622,25 +2220,11 @@ class LLMProvider(core_provider.Provider):
             if additional_instructions is None:
                 additional_instructions = kwargs.pop("custom_instructions")
 
-        if additional_instructions is None:
-            additional_instructions = ""
-
-        if criteria_override is None:
-            criteria = feedback_prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT
-            if additional_instructions:
-                criteria = (
-                    criteria
-                    + "\n\nAdditional instructions:\n"
-                    + additional_instructions
-                )
-        else:
-            criteria = (
-                criteria_override
-                + "\n\nAdditional instructions:\n"
-                + additional_instructions
-                if additional_instructions
-                else criteria_override
-            )
+        criteria = self._build_criteria_with_instructions(
+            criteria,
+            feedback_prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT,
+            additional_instructions,
+        )
 
         return self._langchain_evaluate(
             text=text,
@@ -2653,7 +2237,7 @@ class LLMProvider(core_provider.Provider):
     def criminality_with_cot_reasons(
         self,
         text: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -2669,7 +2253,7 @@ class LLMProvider(core_provider.Provider):
             ```python
             feedback = (
                 Feedback(provider.criminality_with_cot_reasons,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions)
                 .on_output()
                 )
@@ -2677,7 +2261,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -2686,15 +2270,6 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (not criminal) and 1.0 (criminal) and a dictionary containing the reasons for the evaluation.
         """
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -2705,25 +2280,11 @@ class LLMProvider(core_provider.Provider):
             if additional_instructions is None:
                 additional_instructions = kwargs.pop("custom_instructions")
 
-        if additional_instructions is None:
-            additional_instructions = ""
-
-        if criteria_override is None:
-            criteria = feedback_prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT
-            if additional_instructions:
-                criteria = (
-                    criteria
-                    + "\n\nAdditional instructions:\n"
-                    + additional_instructions
-                )
-        else:
-            criteria = (
-                criteria_override
-                + "\n\nAdditional instructions:\n"
-                + additional_instructions
-                if additional_instructions
-                else criteria_override
-            )
+        criteria = self._build_criteria_with_instructions(
+            criteria,
+            feedback_prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT,
+            additional_instructions,
+        )
 
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
@@ -2736,7 +2297,7 @@ class LLMProvider(core_provider.Provider):
     def insensitivity(
         self,
         text: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -2751,7 +2312,7 @@ class LLMProvider(core_provider.Provider):
             ```python
             feedback = (
                 Feedback(provider.insensitivity,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions)
                 .on_output()
                 )
@@ -2759,7 +2320,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -2768,15 +2329,6 @@ class LLMProvider(core_provider.Provider):
         Returns:
             float: A value between 0.0 (not insensitive) and 1.0 (insensitive).
         """
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -2787,25 +2339,11 @@ class LLMProvider(core_provider.Provider):
             if additional_instructions is None:
                 additional_instructions = kwargs.pop("custom_instructions")
 
-        if additional_instructions is None:
-            additional_instructions = ""
-
-        if criteria_override is None:
-            criteria = feedback_prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT
-            if additional_instructions:
-                criteria = (
-                    criteria
-                    + "\n\nAdditional instructions:\n"
-                    + additional_instructions
-                )
-        else:
-            criteria = (
-                criteria_override
-                + "\n\nAdditional instructions:\n"
-                + additional_instructions
-                if additional_instructions
-                else criteria_override
-            )
+        criteria = self._build_criteria_with_instructions(
+            criteria,
+            feedback_prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT,
+            additional_instructions,
+        )
 
         return self._langchain_evaluate(
             text=text,
@@ -2818,7 +2356,7 @@ class LLMProvider(core_provider.Provider):
     def insensitivity_with_cot_reasons(
         self,
         text: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -2834,7 +2372,7 @@ class LLMProvider(core_provider.Provider):
             ```python
             feedback = (
                 Feedback(provider.insensitivity_with_cot_reasons,
-                    criteria_override=criteria_override,
+                    criteria=criteria,
                     additional_instructions=additional_instructions)
                 .on_output()
                 )
@@ -2842,7 +2380,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             text (str): The text to evaluate.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -2851,15 +2389,6 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (not insensitive) and 1.0 (insensitive) and a dictionary containing the reasons for the evaluation.
         """
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -2870,25 +2399,11 @@ class LLMProvider(core_provider.Provider):
             if additional_instructions is None:
                 additional_instructions = kwargs.pop("custom_instructions")
 
-        if additional_instructions is None:
-            additional_instructions = ""
-
-        if criteria_override is None:
-            criteria = feedback_prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT
-            if additional_instructions:
-                criteria = (
-                    criteria
-                    + "\n\nAdditional instructions:\n"
-                    + additional_instructions
-                )
-        else:
-            criteria = (
-                criteria_override
-                + "\n\nAdditional instructions:\n"
-                + additional_instructions
-                if additional_instructions
-                else criteria_override
-            )
+        criteria = self._build_criteria_with_instructions(
+            criteria,
+            feedback_prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT,
+            additional_instructions,
+        )
 
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
@@ -2963,7 +2478,7 @@ class LLMProvider(core_provider.Provider):
         self,
         key_points: str,
         summary: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -2976,7 +2491,7 @@ class LLMProvider(core_provider.Provider):
         Args:
             key_points (str): Key points separated by newlines.
             summary (str): The summary text to check for inclusion of key points.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for assessment. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for assessment. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow.
             min_score_val (int): The minimum score value. Defaults to 0.
             max_score_val (int): The maximum score value. Defaults to 3.
@@ -2997,7 +2512,7 @@ class LLMProvider(core_provider.Provider):
         system_prompt = feedback_v2.Comprehensiveness.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
-            criteria_override=criteria_override,
+            criteria=criteria,
             additional_instructions=additional_instructions,
             output_space=output_space,
         )
@@ -3028,7 +2543,7 @@ class LLMProvider(core_provider.Provider):
         self,
         source: str,
         summary: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -3048,7 +2563,7 @@ class LLMProvider(core_provider.Provider):
         Args:
             source (str): Text corresponding to source material.
             summary (str): Text corresponding to a summary.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -3062,7 +2577,7 @@ class LLMProvider(core_provider.Provider):
         key_point_inclusion_assessments = self._assess_key_point_inclusion(
             key_points,
             summary,
-            criteria_override=criteria_override,
+            criteria=criteria,
             additional_instructions=additional_instructions,
             min_score_val=min_score_val,
             max_score_val=max_score_val,
@@ -3099,7 +2614,7 @@ class LLMProvider(core_provider.Provider):
         self,
         prompt: str,
         response: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -3118,7 +2633,7 @@ class LLMProvider(core_provider.Provider):
         Args:
             prompt (str): A text prompt to an agent.
             response (str): The agent's response to the prompt.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -3135,7 +2650,7 @@ class LLMProvider(core_provider.Provider):
         system_prompt = feedback_v2.Stereotypes.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
-            criteria_override=criteria_override,
+            criteria=criteria,
             additional_instructions=additional_instructions,
             output_space=output_space,
         )
@@ -3156,7 +2671,7 @@ class LLMProvider(core_provider.Provider):
         self,
         prompt: str,
         response: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -3175,7 +2690,7 @@ class LLMProvider(core_provider.Provider):
         Args:
             prompt (str): A text prompt to an agent.
             response (str): The agent's response to the prompt.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -3191,7 +2706,7 @@ class LLMProvider(core_provider.Provider):
         system_prompt = feedback_v2.Stereotypes.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
-            criteria_override=criteria_override,
+            criteria=criteria,
             additional_instructions=additional_instructions,
             output_space=output_space,
         )
@@ -3254,7 +2769,7 @@ class LLMProvider(core_provider.Provider):
         self,
         source: str,
         statement: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         examples: Optional[str] = None,
         groundedness_configs: Optional[
@@ -3314,7 +2829,7 @@ class LLMProvider(core_provider.Provider):
         Args:
             source (str): The source that should support the statement.
             statement (str): The statement to check groundedness.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow.
             examples (Optional[str]): Optional examples to guide the evaluation. Defaults to None.
             groundedness_configs (Optional[core_feedback.GroundednessConfigs]): Configuration for groundedness evaluation. Defaults to None.
@@ -3378,7 +2893,7 @@ class LLMProvider(core_provider.Provider):
         system_prompt = feedback_v2.Groundedness.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
-            criteria_override=criteria_override,
+            criteria=criteria,
             additional_instructions=additional_instructions,
             examples=examples,
             output_space=output_space,
@@ -3447,7 +2962,7 @@ class LLMProvider(core_provider.Provider):
         source: str,
         statement: str,
         question: str,
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         examples: Optional[List[str]] = None,
         groundedness_configs: Optional[
@@ -3489,7 +3004,7 @@ class LLMProvider(core_provider.Provider):
             source (str): The source that should support the statement.
             statement (str): The statement to check groundedness.
             question (str): The question to check answerability.
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow.
             examples (Optional[List[str]]): Optional examples to guide the evaluation. Defaults to None.
             groundedness_configs (Optional[core_feedback.GroundednessConfigs]): Configuration for groundedness evaluation. Defaults to None.
@@ -3583,7 +3098,7 @@ class LLMProvider(core_provider.Provider):
         system_prompt = feedback_v2.Groundedness.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
-            criteria_override=criteria_override,
+            criteria=criteria,
             additional_instructions=additional_instructions,
             examples=examples,
             output_space=output_space,
@@ -3645,7 +3160,7 @@ class LLMProvider(core_provider.Provider):
         self,
         # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
         trace: Union[Trace, str],
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
@@ -3673,7 +3188,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             trace (Union[Trace, str]): The trace to evaluate (e.g., as a JSON string or formatted log).
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             examples (Optional[List[Tuple[Dict[str, str], int]]]): Optional few-shot examples for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
@@ -3687,16 +3202,6 @@ class LLMProvider(core_provider.Provider):
             Tuple[float, Dict]: A tuple containing a value between 0.0 (no logical consistency) and 1.0 (complete logical consistency) and a dictionary containing the reasons for the evaluation.
         """
         # Handle deprecated parameter names
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
-
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -3714,7 +3219,7 @@ class LLMProvider(core_provider.Provider):
         system_prompt = feedback_v2.LogicalConsistency.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
-            criteria_override=criteria_override,
+            criteria=criteria,
             additional_instructions=additional_instructions,
             output_space=output_space,
             examples=examples,
@@ -3757,7 +3262,7 @@ class LLMProvider(core_provider.Provider):
         self,
         # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
         trace: Union[Trace, str],
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
@@ -3785,7 +3290,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             trace (Union[Trace, str]): The trace to evaluate (e.g., as a JSON string or formatted log).
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             examples (Optional[List[Tuple[Dict[str, str], int]]): Optional few-shot examples for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
@@ -3799,16 +3304,6 @@ class LLMProvider(core_provider.Provider):
             Tuple[float, Dict]: A tuple containing a value between 0.0 (highly inefficient workflow) and 1.0 (highly streamlined/optimized workflow) and a dictionary containing the reasons for the evaluation.
         """
         # Handle deprecated parameter names
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
-
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -3826,7 +3321,7 @@ class LLMProvider(core_provider.Provider):
         system_prompt = feedback_v2.ExecutionEfficiency.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
-            criteria_override=criteria_override,
+            criteria=criteria,
             additional_instructions=additional_instructions,
             output_space=output_space,
             examples=examples,
@@ -3869,7 +3364,7 @@ class LLMProvider(core_provider.Provider):
         self,
         # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
         trace: Union[Trace, str],
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
@@ -3897,7 +3392,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             trace (Union[Trace, str]): The trace to evaluate (e.g., as a JSON string or formatted log).
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             examples (Optional[List[Tuple[Dict[str, str], int]]): Optional few-shot examples for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
@@ -3911,16 +3406,6 @@ class LLMProvider(core_provider.Provider):
             Tuple[float, Dict]: A tuple containing a value between 0.0 (execution did not follow plan) and 1.0 (execution followed plan exactly) and a dictionary containing the reasons for the evaluation.
         """
         # Handle deprecated parameter names
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
-
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -3938,7 +3423,7 @@ class LLMProvider(core_provider.Provider):
         system_prompt = feedback_v2.PlanAdherence.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
-            criteria_override=criteria_override,
+            criteria=criteria,
             additional_instructions=additional_instructions,
             output_space=output_space,
             examples=examples,
@@ -3979,7 +3464,7 @@ class LLMProvider(core_provider.Provider):
         self,
         # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
         trace: Union[Trace, str],
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
@@ -4007,7 +3492,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             trace (Union[Trace, str]): The trace to evaluate (e.g., as a JSON string or formatted log).
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             examples (Optional[List[Tuple[Dict[str, str], int]]): Optional few-shot examples for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
@@ -4021,16 +3506,6 @@ class LLMProvider(core_provider.Provider):
             Tuple[float, Dict]: A tuple containing a value between 0.0 (poor plan quality) and 1.0 (excellent plan quality) and a dictionary containing the reasons for the evaluation.
         """
         # Handle deprecated parameter names
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
-
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -4048,7 +3523,7 @@ class LLMProvider(core_provider.Provider):
         system_prompt = feedback_v2.PlanQuality.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
-            criteria_override=criteria_override,
+            criteria=criteria,
             additional_instructions=additional_instructions,
             output_space=output_space,
             examples=examples,
@@ -4088,7 +3563,7 @@ class LLMProvider(core_provider.Provider):
     def tool_selection_with_cot_reasons(
         self,
         trace: Union[Trace, str],
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
@@ -4115,7 +3590,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             trace (Union[Trace, str]): The trace to evaluate (e.g., as a JSON string or formatted log).
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             examples (Optional[List[Tuple[Dict[str, str], int]]]): Optional few-shot examples for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
@@ -4129,16 +3604,6 @@ class LLMProvider(core_provider.Provider):
             Tuple[float, Dict]: A tuple containing a value between 0.0 (poor tool selection) and 1.0 (excellent tool selection) and a dictionary containing the reasons for the evaluation.
         """
         # Handle deprecated parameter names
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
-
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -4156,7 +3621,7 @@ class LLMProvider(core_provider.Provider):
         system_prompt = feedback_v2.ToolSelection.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
-            criteria_override=criteria_override,
+            criteria=criteria,
             additional_instructions=additional_instructions,
             output_space=output_space,
             examples=examples,
@@ -4196,7 +3661,7 @@ class LLMProvider(core_provider.Provider):
     def tool_calling_with_cot_reasons(
         self,
         trace: Union[Trace, str],
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
@@ -4223,7 +3688,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             trace (Union[Trace, str]): The trace to evaluate (e.g., as a JSON string or formatted log).
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             examples (Optional[List[Tuple[Dict[str, str], int]]): Optional few-shot examples for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
@@ -4237,16 +3702,6 @@ class LLMProvider(core_provider.Provider):
             Tuple[float, Dict]: A tuple containing a value between 0.0 (poor tool calling) and 1.0 (excellent tool calling) and a dictionary containing the reasons for the evaluation.
         """
         # Handle deprecated parameter names
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
-
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -4264,7 +3719,7 @@ class LLMProvider(core_provider.Provider):
         system_prompt = feedback_v2.ToolCalling.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
-            criteria_override=criteria_override,
+            criteria=criteria,
             additional_instructions=additional_instructions,
             output_space=output_space,
             examples=examples,
@@ -4304,7 +3759,7 @@ class LLMProvider(core_provider.Provider):
     def tool_quality_with_cot_reasons(
         self,
         trace: Union[Trace, str],
-        criteria_override: Optional[str] = None,
+        criteria: Optional[str] = None,
         additional_instructions: Optional[str] = None,
         examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
@@ -4331,7 +3786,7 @@ class LLMProvider(core_provider.Provider):
 
         Args:
             trace (Union[Trace, str]): The trace to evaluate (e.g., as a JSON string or formatted log).
-            criteria_override (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
             additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             examples (Optional[List[Tuple[Dict[str, str], int]]): Optional few-shot examples for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
@@ -4345,16 +3800,6 @@ class LLMProvider(core_provider.Provider):
             Tuple[float, Dict]: A tuple containing a value between 0.0 (poor tool quality) and 1.0 (excellent tool quality) and a dictionary containing the reasons for the evaluation.
         """
         # Handle deprecated parameter names
-        if "criteria" in kwargs:
-            warnings.warn(
-                "Parameter `criteria` has been renamed to `criteria_override`. "
-                "Please update your code to use `criteria_override` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if criteria_override is None:
-                criteria_override = kwargs.pop("criteria")
-
         if "custom_instructions" in kwargs:
             warnings.warn(
                 "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
@@ -4372,7 +3817,7 @@ class LLMProvider(core_provider.Provider):
         system_prompt = feedback_v2.ToolQuality.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
-            criteria_override=criteria_override,
+            criteria=criteria,
             additional_instructions=additional_instructions,
             output_space=output_space,
             examples=examples,
