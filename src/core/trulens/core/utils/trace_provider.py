@@ -83,24 +83,13 @@ class TraceProvider(ABC):
         Returns:
             Compressed trace data
         """
-        logger.info(f"DEBUG: {type(self).__name__}.compress_trace called")
-        logger.info(f"DEBUG: Input trace_data keys: {list(trace_data.keys())}")
-        logger.info(
-            f"DEBUG: Input trace_data size: {len(json.dumps(trace_data, default=str))} characters"
-        )
 
         compressed = {}
 
         # Always preserve plan first - use extract_plan method
-        logger.info("DEBUG: Extracting plan")
         plan = self.extract_plan(trace_data)
-        logger.info(f"DEBUG: Extracted plan: {plan is not None}")
         if plan:
             compressed["plan"] = plan
-            logger.info(
-                f"DEBUG: Plan preserved, size: {len(json.dumps(plan, default=str))} characters"
-            )
-            logger.info("Plan preserved completely for metrics evaluation")
 
         # Also preserve any top-level keys containing "plan" (case-insensitive)
         plan_keys_found = 0
@@ -110,43 +99,22 @@ class TraceProvider(ABC):
             ):  # Don't duplicate the main plan
                 compressed[key] = value
                 plan_keys_found += 1
-                logger.info(
-                    f"DEBUG: Additional plan key '{key}' preserved, size: {len(json.dumps(value, default=str))} characters"
-                )
-
         if plan_keys_found == 0 and not plan:
-            logger.warning(
-                "No plan found in trace data - this may impact metrics evaluation"
-            )
-
-        # Add execution flow
-        logger.info("DEBUG: Extracting execution flow")
-        flow = self.extract_execution_flow(trace_data)
-        logger.info(f"DEBUG: Extracted flow items: {len(flow) if flow else 0}")
+            # Add execution flow
+            flow = self.extract_execution_flow(trace_data)
         if flow:
             compressed["execution_flow"] = flow
 
         # Add agent interactions
-        logger.info("DEBUG: Extracting agent interactions")
         interactions = self.extract_agent_interactions(trace_data)
-        logger.info(
-            f"DEBUG: Extracted interactions: {len(interactions) if interactions else 0}"
-        )
         if interactions:
             compressed["agent_interactions"] = interactions
 
         # Add basic trace info
         if "trace_id" in trace_data:
             compressed["trace_id"] = trace_data["trace_id"]
-            logger.info("DEBUG: Added trace_id")
         if "metadata" in trace_data:
             compressed["metadata"] = trace_data["metadata"]
-            logger.info("DEBUG: Added metadata")
-
-        logger.info(f"DEBUG: Final compressed keys: {list(compressed.keys())}")
-        logger.info(
-            f"DEBUG: Final compressed size: {len(json.dumps(compressed, default=str))} characters"
-        )
         return compressed
 
     def compress_with_plan_priority(
@@ -163,33 +131,16 @@ class TraceProvider(ABC):
         Returns:
             Compressed trace data with plan preservation prioritized
         """
-        import json
-
-        logger.info(
-            f"DEBUG: {type(self).__name__}.compress_with_plan_priority called"
-        )
-        logger.info(f"DEBUG: target_token_limit: {target_token_limit}")
 
         # First, try normal compression but preserve plan
-        logger.info("DEBUG: Calling compress_trace for initial compression")
         compressed = self.compress_trace(trace_data)
 
         # Estimate tokens (rough approximation)
         estimated_tokens = len(json.dumps(compressed, default=str)) // 4
-        logger.info(
-            f"DEBUG: Initial compressed size: {estimated_tokens} tokens"
-        )
-
         if estimated_tokens <= target_token_limit:
-            logger.info("DEBUG: Trace fits within token limit, returning as-is")
             return compressed
 
         # If still too large, compress non-plan data more aggressively
-        logger.warning(
-            f"Trace ({estimated_tokens} tokens) exceeds limit ({target_token_limit}), "
-            f"applying aggressive compression to non-plan data"
-        )
-
         # Extract ALL keys containing "plan" first
         plan_keys = {}
         plan_tokens = 0
@@ -203,21 +154,15 @@ class TraceProvider(ABC):
                     f"DEBUG: Found plan key '{key}': {key_tokens} tokens"
                 )
 
-        logger.info(f"DEBUG: Total plan tokens: {plan_tokens}")
-
         # Rebuild with more aggressive compression for non-plan data
         result = {}
 
         # Always preserve ALL plan-related keys
         for key, value in plan_keys.items():
             result[key] = value
-            logger.info(
-                f"DEBUG: Plan key '{key}' preserved in aggressive compression"
-            )
 
         # Add other data within budget
         used_tokens = plan_tokens
-        logger.info(f"DEBUG: Starting with {used_tokens} tokens used")
 
         for key, value in compressed.items():
             if "plan" in key.lower():
@@ -245,24 +190,11 @@ class TraceProvider(ABC):
                         if used_tokens + truncated_tokens <= target_token_limit:
                             result[key] = truncated
                             used_tokens += truncated_tokens
-                            logger.info(
-                                f"DEBUG: Added truncated {key} ({i} items), now using {used_tokens} tokens"
-                            )
                             break
-                    else:
-                        logger.info(
-                            f"DEBUG: Could not fit {key} even truncated"
-                        )
-                else:
-                    logger.info(
-                        f"DEBUG: {key} is not a list or too small to truncate"
-                    )
-
         final_tokens = len(json.dumps(result, default=str)) // 4
-        logger.info(
+        logger.debug(
             f"Final compressed trace: {final_tokens} tokens (plan: {plan_tokens})"
         )
-        logger.info(f"DEBUG: Final result keys: {list(result.keys())}")
 
         return result
 
@@ -417,12 +349,11 @@ class GenericTraceProvider(TraceProvider):
                                 "🔍 GENERIC_PLAN_DEBUG: Command contains 'plan' key - HIGH PRIORITY"
                             )
                         elif (
-                            "'execution_plan':" in state_value
-                            or '"execution_plan":' in state_value
+                            "'plan':" in state_value or '"plan":' in state_value
                         ):
                             priority = 90  # High priority for execution plans
                             logger.warning(
-                                "🔍 GENERIC_PLAN_DEBUG: Command contains 'execution_plan' key - HIGH PRIORITY"
+                                "🔍 GENERIC_PLAN_DEBUG: Command contains 'plan' key - HIGH PRIORITY"
                             )
                         elif (
                             "'messages':" in state_value
@@ -503,11 +434,11 @@ class GenericTraceProvider(TraceProvider):
         logger.warning("🔍 GENERIC_PLAN_DEBUG: No plan found in any spans")
         return None
 
-    def _extract_execution_plan_from_command_string(
+    def _extract_plan_from_command_string(
         self, command_str: str
     ) -> Optional[str]:
         """
-        Extract execution_plan or plan from Command string using brace counting.
+        Extract plan or plan from Command string using brace counting.
         This is a simplified version of the LangGraph provider logic.
         """
         try:
@@ -515,8 +446,6 @@ class GenericTraceProvider(TraceProvider):
 
             # Try multiple plan key patterns
             plan_markers = [
-                "'execution_plan':",
-                "'plan':",
                 '"execution_plan":',
                 '"plan":',
             ]
@@ -526,13 +455,10 @@ class GenericTraceProvider(TraceProvider):
                 pos = command_str.find(marker)
                 if pos != -1:
                     start_pos = pos
-                    logger.warning(
-                        f"🔍 GENERIC_PLAN_DEBUG: Found plan marker '{marker}' at position {pos}"
-                    )
                     break
 
             if start_pos == -1:
-                logger.warning(
+                logger.debug(
                     "🔍 GENERIC_PLAN_DEBUG: No plan markers found in Command string"
                 )
                 return None
@@ -554,42 +480,32 @@ class GenericTraceProvider(TraceProvider):
                         break
 
             if brace_count == 0:
-                execution_plan_str = command_str[dict_start : dict_end + 1]
+                plan_str = command_str[dict_start : dict_end + 1]
 
                 try:
-                    execution_plan_dict = ast.literal_eval(execution_plan_str)
-                    if isinstance(execution_plan_dict, dict):
-                        return self._format_execution_plan_simple(
-                            execution_plan_dict
-                        )
+                    plan_dict = ast.literal_eval(plan_str)
+                    if isinstance(plan_dict, dict):
+                        return self._format_plan_simple(plan_dict)
                 except (ValueError, SyntaxError):
-                    return execution_plan_str
+                    return plan_str
 
             return None
         except Exception as e:
-            logger.warning(
-                f"🔍 GENERIC_PLAN_DEBUG: Error extracting execution_plan: {e}"
-            )
+            logger.warning(f"🔍 GENERIC_PLAN_DEBUG: Error extracting plan: {e}")
             return None
 
-    def _format_execution_plan_simple(
-        self, execution_plan_dict: Dict[str, Any]
-    ) -> str:
+    def _format_plan_simple(self, plan_dict: Dict[str, Any]) -> str:
         """
-        Simple formatting of execution_plan dictionary.
+        Simple formatting of plan dictionary.
         """
         formatted_parts = []
 
-        if "plan_summary" in execution_plan_dict:
-            formatted_parts.append(
-                f"Plan Summary: {execution_plan_dict['plan_summary']}"
-            )
+        if "plan_summary" in plan_dict:
+            formatted_parts.append(f"Plan Summary: {plan_dict['plan_summary']}")
 
-        if "steps" in execution_plan_dict and isinstance(
-            execution_plan_dict["steps"], list
-        ):
+        if "steps" in plan_dict and isinstance(plan_dict["steps"], list):
             formatted_parts.append("Steps:")
-            for i, step in enumerate(execution_plan_dict["steps"], 1):
+            for i, step in enumerate(plan_dict["steps"], 1):
                 if isinstance(step, dict):
                     step_text = f"{i}. "
                     if "agent" in step:
@@ -598,25 +514,25 @@ class GenericTraceProvider(TraceProvider):
                         step_text += f"Purpose: {step['purpose']}"
                     formatted_parts.append(step_text)
 
-        if "expected_final_output" in execution_plan_dict:
+        if "expected_final_output" in plan_dict:
             formatted_parts.append(
-                f"Expected Output: {execution_plan_dict['expected_final_output']}"
+                f"Expected Output: {plan_dict['expected_final_output']}"
             )
 
         return "\n".join(formatted_parts)
 
-    def _extract_execution_plan_from_command_string(
+    def _extract_plan_from_command_string(
         self, command_str: str
     ) -> Optional[str]:
         """
-        Extract the execution_plan content from a Command string representation.
+        Extract the plan content from a Command string representation.
         Simplified version for GenericTraceProvider.
         """
         try:
             import ast
 
-            # Use brace counting to find the execution_plan content
-            start_marker = "'execution_plan':"
+            # Use brace counting to find the plan content
+            start_marker = "'plan':"
             start_pos = command_str.find(start_marker)
 
             if start_pos == -1:
@@ -641,44 +557,36 @@ class GenericTraceProvider(TraceProvider):
                         break
 
             if brace_count == 0:
-                execution_plan_str = command_str[dict_start : dict_end + 1]
+                plan_str = command_str[dict_start : dict_end + 1]
 
                 # Try to parse it as a Python literal
                 try:
-                    execution_plan_dict = ast.literal_eval(execution_plan_str)
-                    if isinstance(execution_plan_dict, dict):
+                    plan_dict = ast.literal_eval(plan_str)
+                    if isinstance(plan_dict, dict):
                         # Format the execution plan nicely
-                        formatted_plan = self._format_execution_plan_simple(
-                            execution_plan_dict
-                        )
+                        formatted_plan = self._format_plan_simple(plan_dict)
                         return formatted_plan
                 except (ValueError, SyntaxError):
                     # Return the raw string if parsing fails
-                    return execution_plan_str
+                    return plan_str
 
         except Exception as e:
-            logger.warning(
-                f"🔍 GENERIC_PLAN_DEBUG: Error extracting execution_plan: {e}"
-            )
+            logger.warning(f"🔍 GENERIC_PLAN_DEBUG: Error extracting plan: {e}")
 
         return None
 
-    def _format_execution_plan_simple(self, execution_plan_dict: dict) -> str:
+    def _format_plan_simple(self, plan_dict: dict) -> str:
         """
-        Simple formatting of execution_plan dictionary.
+        Simple formatting of plan dictionary.
         """
         formatted_parts = []
 
-        if "plan_summary" in execution_plan_dict:
-            formatted_parts.append(
-                f"Plan Summary: {execution_plan_dict['plan_summary']}"
-            )
+        if "plan_summary" in plan_dict:
+            formatted_parts.append(f"Plan Summary: {plan_dict['plan_summary']}")
 
-        if "steps" in execution_plan_dict and isinstance(
-            execution_plan_dict["steps"], list
-        ):
+        if "steps" in plan_dict and isinstance(plan_dict["steps"], list):
             formatted_parts.append("Steps:")
-            for i, step in enumerate(execution_plan_dict["steps"], 1):
+            for i, step in enumerate(plan_dict["steps"], 1):
                 if isinstance(step, dict):
                     step_text = f"{i}. "
                     if "agent" in step:
@@ -687,9 +595,9 @@ class GenericTraceProvider(TraceProvider):
                         step_text += f"Purpose: {step['purpose']}"
                     formatted_parts.append(step_text)
 
-        if "expected_final_output" in execution_plan_dict:
+        if "expected_final_output" in plan_dict:
             formatted_parts.append(
-                f"Expected Output: {execution_plan_dict['expected_final_output']}"
+                f"Expected Output: {plan_dict['expected_final_output']}"
             )
 
         return "\n".join(formatted_parts)
@@ -711,7 +619,7 @@ class GenericTraceProvider(TraceProvider):
                 )
 
         # Check common plan field names
-        plan_fields = ["plan", "execution_plan", "agent_plan", "workflow_plan"]
+        plan_fields = ["plan", "plan", "agent_plan", "workflow_plan"]
         logger.info(f"DEBUG: Checking plan fields: {plan_fields}")
 
         for field in plan_fields:
@@ -807,13 +715,11 @@ class GenericTraceProvider(TraceProvider):
                                         or "state" in attr_key.lower()
                                     ):
                                         attr_value = attrs[attr_key]
-                                        logger.warning(
+                                        logger.debug(
                                             f"PLAN_DEBUG: Found potential plan in span {i} attr '{attr_key}': {type(attr_value)}, size: {len(str(attr_value))}"
                                         )
 
-        logger.warning(
-            "PLAN_DEBUG: No plan found in any generic field or spans"
-        )
+        logger.debug("PLAN_DEBUG: No plan found in any generic field or spans")
         return None
 
     def extract_execution_flow(
@@ -871,36 +777,15 @@ class TraceProviderRegistry:
 
     def get_provider(self, trace_data: Dict[str, Any]) -> TraceProvider:
         """Get the first provider that can handle the trace data."""
-        logger.info("DEBUG: TraceProviderRegistry.get_provider called")
-        logger.warning(
-            f"PROVIDER_DEBUG: Available providers: {[type(p).__name__ for p in self._providers]}"
-        )
 
         for i, provider in enumerate(self._providers):
-            provider_name = type(provider).__name__
-            logger.warning(
-                f"PROVIDER_DEBUG: Checking provider {i}: {provider_name}"
-            )
-
             can_handle = provider.can_handle(trace_data)
-            logger.warning(
-                f"PROVIDER_DEBUG: {provider_name}.can_handle() returned: {can_handle}"
-            )
 
             if can_handle:
-                logger.warning(
-                    f"PROVIDER_DEBUG: Selected provider: {provider_name}"
-                )
                 return provider
 
         # This should never happen since GenericTraceProvider handles everything
-        logger.warning(
-            "PROVIDER_DEBUG: No provider could handle trace data, using fallback"
-        )
         fallback = self._providers[-1]
-        logger.warning(
-            f"PROVIDER_DEBUG: Fallback provider: {type(fallback).__name__}"
-        )
         return fallback
 
 

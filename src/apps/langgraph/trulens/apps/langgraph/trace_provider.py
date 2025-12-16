@@ -21,58 +21,29 @@ class LangGraphTraceProvider(TraceProvider):
         """
         Check if this is a LangGraph trace by looking for LangGraph-specific indicators.
         """
-        logger.warning(
-            "LANGGRAPH_DEBUG: LangGraphTraceProvider.can_handle called"
-        )
-
-        if not isinstance(trace_data, dict):
-            logger.warning("LANGGRAPH_DEBUG: trace_data is not a dict")
-            return False
-
-        logger.warning(
-            f"LANGGRAPH_DEBUG: trace_data keys: {list(trace_data.keys())}"
-        )
 
         # Look for LangGraph-specific span names or attributes
         if "spans" in trace_data:
             spans = trace_data["spans"]
-            logger.warning(
-                f"LANGGRAPH_DEBUG: Found {len(spans) if isinstance(spans, list) else 'non-list'} spans"
-            )
-
             if isinstance(spans, list):
                 for i, span in enumerate(spans[:3]):  # Check first 3 spans
                     if isinstance(span, dict):
                         span_name = span.get("span_name", "")
-                        logger.warning(
-                            f"LANGGRAPH_DEBUG: Span {i} name: '{span_name}'"
-                        )
 
                         if (
                             "langgraph" in span_name.lower()
                             or "graph" in span_name.lower()
                         ):
-                            logger.warning(
-                                f"LANGGRAPH_DEBUG: Found LangGraph span name: '{span_name}'"
-                            )
                             return True
 
                         # Check for LangGraph observability attributes
                         attrs = span.get("span_attributes", {})
                         if isinstance(attrs, dict):
-                            attr_keys = list(attrs.keys())
-                            logger.warning(
-                                f"LANGGRAPH_DEBUG: Span {i} attribute keys: {attr_keys[:5]}"
-                            )  # First 5 keys
-
                             for key in attrs.keys():
                                 if (
                                     "graph_node" in key
                                     or "langgraph" in key.lower()
                                 ):
-                                    logger.warning(
-                                        f"LANGGRAPH_DEBUG: Found LangGraph attribute: '{key}'"
-                                    )
                                     return True
 
         logger.warning("LANGGRAPH_DEBUG: No LangGraph indicators found")
@@ -82,50 +53,18 @@ class LangGraphTraceProvider(TraceProvider):
         """
         Extract plan from LangGraph trace, handling Command structures and graph state.
         """
-        logger.warning(
-            f"🔍 LANGGRAPH_PLAN_DEBUG: Starting plan extraction from trace with keys: {list(trace_data.keys())}"
-        )
-
-        # Strategy 1: Look for direct plan fields
-        logger.warning(
-            "🔍 LANGGRAPH_PLAN_DEBUG: Strategy 1 - Checking direct plan fields"
-        )
         plan = self._extract_direct_plan_fields(trace_data)
         if plan:
-            logger.warning(
-                f"🔍 LANGGRAPH_PLAN_DEBUG: Strategy 1 SUCCESS - Found plan of type {type(plan)}, length {len(str(plan))}"
-            )
-            logger.warning(
-                f"🔍 LANGGRAPH_PLAN_DEBUG: Plan preview: {str(plan)[:200]}..."
-            )
             return plan
 
         # Strategy 2: Look for plans in LangGraph state attributes
-        logger.warning(
-            "🔍 LANGGRAPH_PLAN_DEBUG: Strategy 2 - Checking LangGraph state attributes"
-        )
         plan = self._extract_plan_from_graph_state(trace_data)
         if plan:
-            logger.warning(
-                f"🔍 LANGGRAPH_PLAN_DEBUG: Strategy 2 SUCCESS - Found plan of type {type(plan)}, length {len(str(plan))}"
-            )
-            logger.warning(
-                f"🔍 LANGGRAPH_PLAN_DEBUG: Plan preview: {str(plan)[:200]}..."
-            )
             return plan
 
         # Strategy 3: Look for Command structures in span outputs
-        logger.warning(
-            "🔍 LANGGRAPH_PLAN_DEBUG: Strategy 3 - Checking Command structures in span outputs"
-        )
         plan = self._extract_plan_from_command_structures(trace_data)
         if plan:
-            logger.warning(
-                f"🔍 LANGGRAPH_PLAN_DEBUG: Strategy 3 SUCCESS - Found plan of type {type(plan)}, length {len(str(plan))}"
-            )
-            logger.warning(
-                f"🔍 LANGGRAPH_PLAN_DEBUG: Plan preview: {str(plan)[:200]}..."
-            )
             return plan
 
         logger.warning("🔍 LANGGRAPH_PLAN_DEBUG: No plan found in any strategy")
@@ -191,20 +130,20 @@ class LangGraphTraceProvider(TraceProvider):
 
         return final_cleaned if final_cleaned.strip() else plan_value
 
-    def _extract_execution_plan_from_command_string(
+    def _extract_plan_from_command_string(
         self, command_str: str
     ) -> Optional[str]:
         """
-        Extract the execution_plan content from a Command string representation.
+        Extract the plan content from a Command string representation.
 
-        Example input: "Command(update={'execution_plan': {'plan_summary': '...', 'steps': [...]}, ...})"
+        Example input: "Command(update={'plan': {'plan_summary': '...', 'steps': [...]}, ...})"
         """
         try:
             import ast
             import re
 
-            # Look for the execution_plan part specifically
-            if "execution_plan" not in command_str:
+            # Look for the plan part specifically
+            if "plan" not in command_str:
                 return None
 
             # Try to extract any plan-related dictionary
@@ -257,45 +196,33 @@ class LangGraphTraceProvider(TraceProvider):
                     plan_dict = ast.literal_eval(plan_str)
                     if isinstance(plan_dict, dict):
                         # Format the plan nicely
-                        formatted_plan = self._format_execution_plan(plan_dict)
-                        logger.info(
-                            f"LangGraph successfully parsed plan dict with keys: {list(plan_dict.keys())}"
-                        )
+                        formatted_plan = self._format_plan(plan_dict)
                         return formatted_plan
-                except (ValueError, SyntaxError) as e:
-                    logger.warning(
-                        f"LangGraph failed to parse plan as dict: {e}"
-                    )
+                except (ValueError, SyntaxError):
                     # Return the raw string if parsing fails
                     return plan_str
 
             return None
 
         except Exception as e:
-            logger.warning(
-                f"LangGraph error extracting execution_plan from command: {e}"
-            )
+            logger.warning(f"LangGraph error extracting plan from command: {e}")
 
         return None
 
-    def _format_execution_plan(self, execution_plan_dict: dict) -> str:
+    def _format_plan(self, plan_dict: dict) -> str:
         """
-        Format an execution_plan dictionary into a readable string.
+        Format an plan dictionary into a readable string.
         """
         formatted_parts = []
 
         # Add plan summary
-        if "plan_summary" in execution_plan_dict:
-            formatted_parts.append(
-                f"Plan Summary: {execution_plan_dict['plan_summary']}"
-            )
+        if "plan_summary" in plan_dict:
+            formatted_parts.append(f"Plan Summary: {plan_dict['plan_summary']}")
 
         # Add steps
-        if "steps" in execution_plan_dict and isinstance(
-            execution_plan_dict["steps"], list
-        ):
+        if "steps" in plan_dict and isinstance(plan_dict["steps"], list):
             formatted_parts.append("Steps:")
-            for i, step in enumerate(execution_plan_dict["steps"], 1):
+            for i, step in enumerate(plan_dict["steps"], 1):
                 if isinstance(step, dict):
                     step_text = f"{i}. "
                     if "agent" in step:
@@ -307,15 +234,15 @@ class LangGraphTraceProvider(TraceProvider):
                     formatted_parts.append(step_text)
 
         # Add combination strategy
-        if "combination_strategy" in execution_plan_dict:
+        if "combination_strategy" in plan_dict:
             formatted_parts.append(
-                f"Strategy: {execution_plan_dict['combination_strategy']}"
+                f"Strategy: {plan_dict['combination_strategy']}"
             )
 
         # Add expected final output
-        if "expected_final_output" in execution_plan_dict:
+        if "expected_final_output" in plan_dict:
             formatted_parts.append(
-                f"Expected Output: {execution_plan_dict['expected_final_output']}"
+                f"Expected Output: {plan_dict['expected_final_output']}"
             )
 
         return "\n".join(formatted_parts)
@@ -324,7 +251,7 @@ class LangGraphTraceProvider(TraceProvider):
         self, trace_data: Dict[str, Any]
     ) -> Optional[Any]:
         """Extract plan from direct field names."""
-        plan_fields = ["execution_plan", "plan", "agent_plan", "workflow_plan"]
+        plan_fields = ["plan", "plan", "agent_plan", "workflow_plan"]
 
         for field in plan_fields:
             if field in trace_data:
@@ -525,10 +452,8 @@ class LangGraphTraceProvider(TraceProvider):
                     logger.warning(
                         f"🔍 LANGGRAPH_PLAN_DEBUG: Found Command structure with plan key(s): {plan_keys}!"
                     )
-                    extracted_plan = (
-                        self._extract_execution_plan_from_command_string(
-                            state_value
-                        )
+                    extracted_plan = self._extract_plan_from_command_string(
+                        state_value
                     )
                     if extracted_plan:
                         logger.warning(
@@ -543,7 +468,7 @@ class LangGraphTraceProvider(TraceProvider):
                     logger.warning(
                         f"🔍 LANGGRAPH_PLAN_DEBUG: Parsed JSON dict with keys: {list(parsed_state.keys())}"
                     )
-                    plan_fields = ["execution_plan", "plan", "agent_plan"]
+                    plan_fields = ["plan", "plan", "agent_plan"]
                     for field in plan_fields:
                         if field in parsed_state:
                             logger.warning(
@@ -572,7 +497,7 @@ class LangGraphTraceProvider(TraceProvider):
                 return cleaned_plan
 
         elif isinstance(state_value, dict):
-            plan_fields = ["execution_plan", "plan", "agent_plan"]
+            plan_fields = ["plan", "plan", "agent_plan"]
             for field in plan_fields:
                 if field in state_value:
                     logger.info(f"LangGraph plan found in {state_key}.{field}")
@@ -613,19 +538,17 @@ class LangGraphTraceProvider(TraceProvider):
     ) -> Optional[Any]:
         """Extract plan from a value that might contain Command structures."""
         if isinstance(value, str):
-            # Look for Command(...) patterns with execution_plan
-            if "Command(" in value and "execution_plan" in value:
+            # Look for Command(...) patterns with plan
+            if "Command(" in value and "plan" in value:
                 logger.info(
                     f"LangGraph plan found in {location} Command structure"
                 )
-                # Try to extract just the execution_plan part from the Command string
-                extracted_plan = (
-                    self._extract_execution_plan_from_command_string(value)
-                )
+                # Try to extract just the plan part from the Command string
+                extracted_plan = self._extract_plan_from_command_string(value)
                 if extracted_plan:
                     cleaned_plan = self._clean_plan_content(extracted_plan)
                     logger.info(
-                        f"LangGraph execution_plan extracted and cleaned: {len(extracted_plan)} -> {len(str(cleaned_plan))} chars"
+                        f"LangGraph plan extracted and cleaned: {len(extracted_plan)} -> {len(str(cleaned_plan))} chars"
                     )
                     return cleaned_plan
                 else:
@@ -649,7 +572,7 @@ class LangGraphTraceProvider(TraceProvider):
             if "update" in value:
                 update_data = value["update"]
                 if isinstance(update_data, dict):
-                    plan_fields = ["execution_plan", "plan", "agent_plan"]
+                    plan_fields = ["plan", "plan", "agent_plan"]
                     for field in plan_fields:
                         if field in update_data:
                             logger.info(
@@ -1214,24 +1137,16 @@ class LangGraphTraceProvider(TraceProvider):
         plan = self.extract_plan(trace_data)
         if plan:
             compressed["plan"] = plan
-            logger.info("LangGraph plan preserved with full detail")
 
         # Extract enhanced execution flow with reasoning chain
         execution_flow = self.extract_execution_flow(trace_data)
         if execution_flow:
             compressed["execution_flow"] = execution_flow
-            logger.info(
-                f"LangGraph execution flow preserved with {len(execution_flow)} detailed steps"
-            )
 
         # Extract detailed agent interactions
         agent_interactions = self.extract_agent_interactions(trace_data)
         if agent_interactions:
             compressed["agent_interactions"] = agent_interactions
-            logger.info(
-                f"LangGraph agent interactions preserved with {len(agent_interactions)} detailed interactions"
-            )
-
         # Add trace metadata
         if "trace_id" in trace_data:
             compressed["trace_id"] = trace_data["trace_id"]
@@ -1241,19 +1156,12 @@ class LangGraphTraceProvider(TraceProvider):
         if evidence_links:
             compressed["evidence_links"] = evidence_links
 
-        logger.info(
-            f"LangGraph compressed trace keys: {list(compressed.keys())}"
-        )
         return compressed
 
     def compress_with_plan_priority(
         self, trace_data: Dict[str, Any], target_token_limit: int = 100000
     ) -> Dict[str, Any]:
         """Compress trace with plan priority and enhanced reasoning preservation."""
-        logger.info(
-            "DEBUG: LangGraphTraceProvider.compress_with_plan_priority called"
-        )
-        logger.info(f"Target token limit: {target_token_limit}")
 
         # Use the enhanced compression by default since we have plenty of token budget
         return self.compress_trace(trace_data)
@@ -1432,9 +1340,6 @@ def register_langgraph_provider():
 
     provider = LangGraphTraceProvider()
     register_trace_provider(provider)
-    logger.warning(
-        "PROVIDER_DEBUG: LangGraph trace provider registered successfully"
-    )
 
 
 # Auto-register when module is imported
