@@ -46,6 +46,7 @@ from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import select as select_schema
 from trulens.core.schema import types as types_schema
+from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
@@ -218,17 +219,12 @@ class Feedback(feedback_schema.FeedbackDefinition):
         **kwargs,
     ):
         # Handle deprecated parameter name
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
-            else:
-                kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         # imp is the python function/method while implementation is a serialized
         # json structure. Create the one that is missing based on the one that

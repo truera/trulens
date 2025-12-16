@@ -588,15 +588,12 @@ class LLMProvider(core_provider.Provider):
             float: A value between 0.0 (not relevant) and 1.0 (relevant).
         """
         # Handle deprecated parameter names
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         output_space = self._determine_output_space(
             min_score_val, max_score_val
@@ -669,15 +666,12 @@ class LLMProvider(core_provider.Provider):
             float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
         """
         # Handle deprecated parameter names
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         user_prompt = str.format(
             feedback_prompts.CONTEXT_RELEVANCE_USER,
@@ -766,15 +760,12 @@ class LLMProvider(core_provider.Provider):
             float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
         """
         # Handle deprecated parameter names
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         output_space = self._determine_output_space(
             min_score_val, max_score_val
@@ -847,15 +838,12 @@ class LLMProvider(core_provider.Provider):
                 "relevant".
         """
         # Handle deprecated parameter names
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         output_space = self._determine_output_space(
             min_score_val, max_score_val
@@ -929,15 +917,12 @@ class LLMProvider(core_provider.Provider):
                 being "positive sentiment".
         """
         # Handle deprecated parameter names
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         output_space = self._determine_output_space(
             min_score_val=min_score_val, max_score_val=max_score_val
@@ -1001,15 +986,12 @@ class LLMProvider(core_provider.Provider):
             float: A value between 0.0 (negative sentiment) and 1.0 (positive sentiment).
         """
         # Handle deprecated parameter names
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         output_space = self._determine_output_space(
             min_score_val=min_score_val, max_score_val=max_score_val
@@ -1258,15 +1240,12 @@ class LLMProvider(core_provider.Provider):
             float: A value between 0.0 (not concise) and 1.0 (concise).
 
         """
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         criteria = self._build_criteria_with_instructions(
             criteria,
@@ -1316,15 +1295,12 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (not concise) and 1.0 (concise) and a dictionary containing the reasons for the evaluation.
         """
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         criteria = self._build_criteria_with_instructions(
             criteria,
@@ -1375,15 +1351,12 @@ class LLMProvider(core_provider.Provider):
         Returns:
             float: A value between 0.0 (not correct) and 1.0 (correct).
         """
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         criteria = self._build_criteria_with_instructions(
             criteria,
@@ -1435,15 +1408,12 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (not correct) and 1.0 (correct) and a dictionary containing the reasons for the evaluation.
         """
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         criteria = self._build_criteria_with_instructions(
             criteria,
@@ -1494,15 +1464,12 @@ class LLMProvider(core_provider.Provider):
         Returns:
             float: A value between 0.0 (not coherent) and 1.0 (coherent).
         """
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         criteria = self._build_criteria_with_instructions(
             criteria,
@@ -1554,15 +1521,12 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (not coherent) and 1.0 (coherent) and a dictionary containing the reasons for the evaluation.
         """
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         criteria = self._build_criteria_with_instructions(
             criteria,
@@ -1613,15 +1577,12 @@ class LLMProvider(core_provider.Provider):
         Returns:
             float: A value between 0.0 (not harmful) and 1.0 (harmful)".
         """
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         criteria = self._build_criteria_with_instructions(
             criteria,
@@ -1673,15 +1634,12 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (not harmful) and 1.0 (harmful) and a dictionary containing the reasons for the evaluation.
         """
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         criteria = self._build_criteria_with_instructions(
             criteria,
@@ -1732,15 +1690,12 @@ class LLMProvider(core_provider.Provider):
         Returns:
             float: A value between 0.0 (not malicious) and 1.0 (malicious).
         """
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         criteria = self._build_criteria_with_instructions(
             criteria,
@@ -1792,15 +1747,12 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (not malicious) and 1.0 (malicious) and a dictionary containing the reasons for the evaluation.
         """
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         criteria = self._build_criteria_with_instructions(
             criteria,
@@ -1851,15 +1803,12 @@ class LLMProvider(core_provider.Provider):
         Returns:
             float: A value between 0.0 (not helpful) and 1.0 (helpful).
         """
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         criteria = self._build_criteria_with_instructions(
             criteria,
@@ -1911,15 +1860,12 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (not helpful) and 1.0 (helpful) and a dictionary containing the reasons for the evaluation.
         """
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         criteria = self._build_criteria_with_instructions(
             criteria,
@@ -1972,15 +1918,12 @@ class LLMProvider(core_provider.Provider):
             float: A value between 0.0 (not controversial) and 1.0
                 (controversial).
         """
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         criteria = self._build_criteria_with_instructions(
             criteria,
@@ -2032,15 +1975,12 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (not controversial) and 1.0 (controversial) and a dictionary containing the reasons for the evaluation.
         """
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         criteria = self._build_criteria_with_instructions(
             criteria,
@@ -2091,15 +2031,12 @@ class LLMProvider(core_provider.Provider):
         Returns:
             float: A value between 0.0 (not misogynistic) and 1.0 (misogynistic).
         """
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         criteria = self._build_criteria_with_instructions(
             criteria,
@@ -2151,15 +2088,12 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (not misogynistic) and 1.0 (misogynistic) and a dictionary containing the reasons for the evaluation.
         """
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         criteria = self._build_criteria_with_instructions(
             criteria,
@@ -2211,15 +2145,12 @@ class LLMProvider(core_provider.Provider):
             float: A value between 0.0 (not criminal) and 1.0 (criminal).
 
         """
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         criteria = self._build_criteria_with_instructions(
             criteria,
@@ -2271,15 +2202,12 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (not criminal) and 1.0 (criminal) and a dictionary containing the reasons for the evaluation.
         """
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         criteria = self._build_criteria_with_instructions(
             criteria,
@@ -2330,15 +2258,12 @@ class LLMProvider(core_provider.Provider):
         Returns:
             float: A value between 0.0 (not insensitive) and 1.0 (insensitive).
         """
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         criteria = self._build_criteria_with_instructions(
             criteria,
@@ -2390,15 +2315,12 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (not insensitive) and 1.0 (insensitive) and a dictionary containing the reasons for the evaluation.
         """
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         criteria = self._build_criteria_with_instructions(
             criteria,
@@ -2502,15 +2424,12 @@ class LLMProvider(core_provider.Provider):
             List[str]: A list of strings indicating whether each key point is included in the summary.
         """
         # Handle deprecated parameter names
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         assert self.endpoint is not None, "Endpoint is not set."
         key_points_list = [
@@ -2586,15 +2505,12 @@ class LLMProvider(core_provider.Provider):
             Tuple[float, Dict]: A tuple containing a value between 0.0 (not comprehensive) and 1.0 (comprehensive) and a dictionary containing the reasons for the evaluation.
         """
         # Handle deprecated parameter names
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         key_points = self._generate_key_points(source)
         key_point_inclusion_assessments = self._assess_key_point_inclusion(
@@ -2667,15 +2583,12 @@ class LLMProvider(core_provider.Provider):
             float: A value between 0.0 (no stereotypes assumed) and 1.0 (stereotypes assumed).
         """
         # Handle deprecated parameter names
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         output_space = self._determine_output_space(
             min_score_val, max_score_val
@@ -2735,15 +2648,12 @@ class LLMProvider(core_provider.Provider):
             Tuple[float, Dict]: A tuple containing a value between 0.0 (no stereotypes assumed) and 1.0 (stereotypes assumed) and a dictionary containing the reasons for the evaluation.
         """
         # Handle deprecated parameter names
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         output_space = self._determine_output_space(
             min_score_val, max_score_val
@@ -2888,15 +2798,12 @@ class LLMProvider(core_provider.Provider):
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
         # Handle deprecated parameter names
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         assert self.endpoint is not None, "Endpoint is not set."
 
@@ -3074,15 +2981,12 @@ class LLMProvider(core_provider.Provider):
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
         # Handle deprecated parameter names
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         use_sent_tokenize = (
             groundedness_configs.use_sent_tokenize
@@ -3270,15 +3174,12 @@ class LLMProvider(core_provider.Provider):
             Tuple[float, Dict]: A tuple containing a value between 0.0 (no logical consistency) and 1.0 (complete logical consistency) and a dictionary containing the reasons for the evaluation.
         """
         # Handle deprecated parameter names
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         output_space = self._determine_output_space(
             min_score_val, max_score_val
@@ -3372,15 +3273,12 @@ class LLMProvider(core_provider.Provider):
             Tuple[float, Dict]: A tuple containing a value between 0.0 (highly inefficient workflow) and 1.0 (highly streamlined/optimized workflow) and a dictionary containing the reasons for the evaluation.
         """
         # Handle deprecated parameter names
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         output_space = self._determine_output_space(
             min_score_val, max_score_val
@@ -3474,15 +3372,12 @@ class LLMProvider(core_provider.Provider):
             Tuple[float, Dict]: A tuple containing a value between 0.0 (execution did not follow plan) and 1.0 (execution followed plan exactly) and a dictionary containing the reasons for the evaluation.
         """
         # Handle deprecated parameter names
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         output_space = self._determine_output_space(
             min_score_val, max_score_val
@@ -3574,15 +3469,12 @@ class LLMProvider(core_provider.Provider):
             Tuple[float, Dict]: A tuple containing a value between 0.0 (poor plan quality) and 1.0 (excellent plan quality) and a dictionary containing the reasons for the evaluation.
         """
         # Handle deprecated parameter names
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         output_space = self._determine_output_space(
             min_score_val, max_score_val
@@ -3672,15 +3564,12 @@ class LLMProvider(core_provider.Provider):
             Tuple[float, Dict]: A tuple containing a value between 0.0 (poor tool selection) and 1.0 (excellent tool selection) and a dictionary containing the reasons for the evaluation.
         """
         # Handle deprecated parameter names
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         output_space = self._determine_output_space(
             min_score_val, max_score_val
@@ -3770,15 +3659,12 @@ class LLMProvider(core_provider.Provider):
             Tuple[float, Dict]: A tuple containing a value between 0.0 (poor tool calling) and 1.0 (excellent tool calling) and a dictionary containing the reasons for the evaluation.
         """
         # Handle deprecated parameter names
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         output_space = self._determine_output_space(
             min_score_val, max_score_val
@@ -3868,15 +3754,12 @@ class LLMProvider(core_provider.Provider):
             Tuple[float, Dict]: A tuple containing a value between 0.0 (poor tool quality) and 1.0 (excellent tool quality) and a dictionary containing the reasons for the evaluation.
         """
         # Handle deprecated parameter names
-        if "custom_instructions" in kwargs:
-            warnings.warn(
-                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
-                "Please update your code to use `additional_instructions` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if additional_instructions is None:
-                additional_instructions = kwargs.pop("custom_instructions")
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
 
         output_space = self._determine_output_space(
             min_score_val, max_score_val
