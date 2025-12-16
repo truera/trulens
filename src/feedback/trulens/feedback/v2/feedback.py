@@ -330,7 +330,7 @@ class CriteriaOutputSpaceMixin:
             additional_instructions = ""
         else:
             additional_instructions = (
-                "\nAdditional instructions:\n" + additional_instructions
+                "\nAdditional Instructions:\n" + additional_instructions
             )
 
         if output_space is None:
@@ -571,7 +571,7 @@ class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
         {additional_instructions}
 
         Output only a single-line JSON object with exactly these keys:
-          "criteria"             – one concise sentence that states your rationale with reference to the rubric
+          "criteria"             – One concise sentence that states your rationale with reference to the rubric. If your criteria includes additional instructions, repeat them here.
           "supporting_evidence"  – An explanation of why you scored the way you did using exact words or evidence from the response
           "score"                – {output_space_prompt}
         """
@@ -590,6 +590,8 @@ class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
         PROMPT: {prompt}
 
         RESPONSE: {response}
+
+        RELEVANCE:
 
         Produce the JSON object now.
         """

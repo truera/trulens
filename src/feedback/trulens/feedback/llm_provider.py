@@ -685,9 +685,10 @@ class LLMProvider(core_provider.Provider):
             context=context,
         )
         user_prompt = user_prompt.replace(
-            "RELEVANCE:", feedback_prompts.COT_REASONS_TEMPLATE
+            "RELEVANCE:", feedback_prompts.COT_REASONS_TEMPLATE_with
         )
-        if criteria is None:
+        # Use default COT prompt only if no criteria AND no additional_instructions
+        if criteria is None and additional_instructions is None:
             system_prompt = feedback_v2.ContextRelevance.default_cot_prompt
         else:
             output_space = self._determine_output_space(
@@ -835,7 +836,7 @@ class LLMProvider(core_provider.Provider):
             prompt (str): A text prompt to an agent.
             response (str): The agent's response to the prompt.
             criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
-            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow.. Defaults to None.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
             examples (Optional[List[str]]): Optional few-shot examples to guide the evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -2500,6 +2501,17 @@ class LLMProvider(core_provider.Provider):
         Returns:
             List[str]: A list of strings indicating whether each key point is included in the summary.
         """
+        # Handle deprecated parameter names
+        if "custom_instructions" in kwargs:
+            warnings.warn(
+                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
+                "Please update your code to use `additional_instructions` instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if additional_instructions is None:
+                additional_instructions = kwargs.pop("custom_instructions")
+
         assert self.endpoint is not None, "Endpoint is not set."
         key_points_list = [
             point.strip() for point in key_points.split("\n") if point.strip()
@@ -2548,6 +2560,7 @@ class LLMProvider(core_provider.Provider):
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
+        **kwargs,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that tries to distill main points
@@ -2572,6 +2585,16 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (not comprehensive) and 1.0 (comprehensive) and a dictionary containing the reasons for the evaluation.
         """
+        # Handle deprecated parameter names
+        if "custom_instructions" in kwargs:
+            warnings.warn(
+                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
+                "Please update your code to use `additional_instructions` instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if additional_instructions is None:
+                additional_instructions = kwargs.pop("custom_instructions")
 
         key_points = self._generate_key_points(source)
         key_point_inclusion_assessments = self._assess_key_point_inclusion(
@@ -2619,6 +2642,7 @@ class LLMProvider(core_provider.Provider):
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
+        **kwargs,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -2642,6 +2666,16 @@ class LLMProvider(core_provider.Provider):
         Returns:
             float: A value between 0.0 (no stereotypes assumed) and 1.0 (stereotypes assumed).
         """
+        # Handle deprecated parameter names
+        if "custom_instructions" in kwargs:
+            warnings.warn(
+                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
+                "Please update your code to use `additional_instructions` instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if additional_instructions is None:
+                additional_instructions = kwargs.pop("custom_instructions")
 
         output_space = self._determine_output_space(
             min_score_val, max_score_val
@@ -2676,6 +2710,7 @@ class LLMProvider(core_provider.Provider):
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
+        **kwargs,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
@@ -2699,6 +2734,17 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, Dict]: A tuple containing a value between 0.0 (no stereotypes assumed) and 1.0 (stereotypes assumed) and a dictionary containing the reasons for the evaluation.
         """
+        # Handle deprecated parameter names
+        if "custom_instructions" in kwargs:
+            warnings.warn(
+                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
+                "Please update your code to use `additional_instructions` instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if additional_instructions is None:
+                additional_instructions = kwargs.pop("custom_instructions")
+
         output_space = self._determine_output_space(
             min_score_val, max_score_val
         )
@@ -2778,6 +2824,7 @@ class LLMProvider(core_provider.Provider):
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
+        **kwargs,
     ) -> Tuple[float, dict]:
         """A measure to track if the source material supports each sentence in
         the statement using an LLM provider.
@@ -2840,6 +2887,16 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
+        # Handle deprecated parameter names
+        if "custom_instructions" in kwargs:
+            warnings.warn(
+                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
+                "Please update your code to use `additional_instructions` instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if additional_instructions is None:
+                additional_instructions = kwargs.pop("custom_instructions")
 
         assert self.endpoint is not None, "Endpoint is not set."
 
@@ -2971,6 +3028,7 @@ class LLMProvider(core_provider.Provider):
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
+        **kwargs,
     ) -> Tuple[float, dict]:
         """A measure to track if the source material supports each sentence in
         the statement using an LLM provider.
@@ -3015,6 +3073,16 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
+        # Handle deprecated parameter names
+        if "custom_instructions" in kwargs:
+            warnings.warn(
+                "Parameter `custom_instructions` has been renamed to `additional_instructions`. "
+                "Please update your code to use `additional_instructions` instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if additional_instructions is None:
+                additional_instructions = kwargs.pop("custom_instructions")
 
         use_sent_tokenize = (
             groundedness_configs.use_sent_tokenize
