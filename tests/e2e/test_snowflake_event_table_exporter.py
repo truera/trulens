@@ -195,7 +195,10 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             last_message = state["messages"][-1]
             if hasattr(last_message, "content"):
                 content = last_message.content
-            elif isinstance(last_message, (list, tuple)) and len(last_message) > 1:
+            elif (
+                isinstance(last_message, (list, tuple))
+                and len(last_message) > 1
+            ):
                 content = last_message[1]
             else:
                 content = str(last_message)
