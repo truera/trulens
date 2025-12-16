@@ -400,7 +400,6 @@ class TestOtelTruGraph(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
 
         graph = workflow.compile()
 
-        # Old pattern - no input_fn or input_key
         tru_app = TruGraph(
             graph,
             app_name="BackwardCompatTest",
