@@ -20,33 +20,65 @@ class LangGraphTraceProvider(TraceProvider):
     def can_handle(self, trace_data: Dict[str, Any]) -> bool:
         """
         Check if this is a LangGraph trace by looking for LangGraph-specific indicators.
+        Checks ALL spans for indicators, not just the first few.
         """
+
+        # OTEL semantic convention prefixes used by TruLens for LangGraph
+        LANGGRAPH_INDICATORS = [
+            "ai.observability.graph_node",
+            "ai.observability.graph_task",
+            "ai.observability.mcp",  # MCP tools often used with LangGraph
+            "graph_node",
+            "graph_task",
+            "langgraph",
+        ]
 
         # Look for LangGraph-specific span names or attributes
         if "spans" in trace_data:
             spans = trace_data["spans"]
             if isinstance(spans, list):
-                for i, span in enumerate(spans[:3]):  # Check first 3 spans
+                # Check ALL spans, not just first 3
+                for span in spans:
                     if isinstance(span, dict):
                         span_name = span.get("span_name", "")
 
-                        if (
-                            "langgraph" in span_name.lower()
-                            or "graph" in span_name.lower()
+                        # Check span name
+                        if any(
+                            indicator in span_name.lower()
+                            for indicator in ["langgraph", "graph", "pregel"]
                         ):
+                            logger.info(
+                                f"LANGGRAPH_DEBUG: Found LangGraph span name: {span_name}"
+                            )
                             return True
 
-                        # Check for LangGraph observability attributes
+                        # Check for LangGraph/OTEL observability attributes
                         attrs = span.get("span_attributes", {})
                         if isinstance(attrs, dict):
                             for key in attrs.keys():
-                                if (
-                                    "graph_node" in key
-                                    or "langgraph" in key.lower()
+                                if any(
+                                    indicator in key.lower()
+                                    for indicator in LANGGRAPH_INDICATORS
                                 ):
+                                    logger.info(
+                                        f"LANGGRAPH_DEBUG: Found LangGraph attribute: {key}"
+                                    )
                                     return True
 
-        logger.warning("LANGGRAPH_DEBUG: No LangGraph indicators found")
+                            # Also check for Command structures in attribute values
+                            for value in attrs.values():
+                                if (
+                                    isinstance(value, str)
+                                    and "Command(" in value
+                                ):
+                                    logger.info(
+                                        "LANGGRAPH_DEBUG: Found Command structure in attributes"
+                                    )
+                                    return True
+
+        logger.warning(
+            "LANGGRAPH_DEBUG: No LangGraph indicators found in any span"
+        )
         return False
 
     def extract_plan(self, trace_data: Dict[str, Any]) -> Optional[Any]:
@@ -710,13 +742,16 @@ class LangGraphTraceProvider(TraceProvider):
             ):
                 return {
                     "type": "data_retrieval",
-                    "content": result_str[:1000],  # Preserve substantial detail
+                    "content": self._safe_truncate(result_str, 1000),
                     "indicators": self._extract_data_indicators(result_str),
                 }
 
             # For other substantial results
             if len(result_str) > 100:
-                return {"type": "execution_result", "content": result_str[:800]}
+                return {
+                    "type": "execution_result",
+                    "content": self._safe_truncate(result_str, 800),
+                }
 
         except Exception:
             pass
@@ -937,7 +972,7 @@ class LangGraphTraceProvider(TraceProvider):
             if "message" in key_lower or "content" in key_lower:
                 if len(value) > 20:
                     # Preserve more detail for reasoning validation
-                    content_info["message"] = value[:1500]  # Increased from 300
+                    content_info["message"] = self._safe_truncate(value, 1500)
 
                     # Extract specific reasoning elements
                     reasoning_elements = self._extract_reasoning_elements(value)
@@ -956,7 +991,9 @@ class LangGraphTraceProvider(TraceProvider):
                         "assessment",
                     ]
                 ):
-                    content_info["analysis_output"] = value[:1000]
+                    content_info["analysis_output"] = self._safe_truncate(
+                        value, 1000
+                    )
 
         return content_info if content_info else None
 
@@ -1064,6 +1101,471 @@ class LangGraphTraceProvider(TraceProvider):
 
         return decision_info if decision_info else None
 
+    def _extract_tool_execution_evidence(
+        self, trace_data: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Extract explicit tool execution evidence for plan adherence verification.
+
+        Uses TruLens OTEL semantic conventions to detect:
+        - MCP tool calls (ai.observability.mcp.*)
+        - Graph node outputs (ai.observability.graph_node.*)
+        - Function call returns (ai.observability.call.*)
+        """
+        if "spans" not in trace_data:
+            return None
+
+        tool_evidence = {
+            "tool_calls": [],
+            "node_outputs": [],
+            "execution_sequence": [],
+        }
+
+        # TruLens OTEL semantic convention prefixes
+        MCP_PREFIX = "ai.observability.mcp."
+        GRAPH_NODE_PREFIX = "ai.observability.graph_node."
+        GRAPH_TASK_PREFIX = "ai.observability.graph_task."
+        CALL_PREFIX = "ai.observability.call."
+
+        # Key attributes to extract for each type
+        MCP_TOOL_NAME = MCP_PREFIX + "tool_name"
+        MCP_INPUT_ARGS = MCP_PREFIX + "input_arguments"
+        MCP_OUTPUT = MCP_PREFIX + "output_content"
+
+        GRAPH_NODE_NAME = GRAPH_NODE_PREFIX + "node_name"
+        GRAPH_OUTPUT_STATE = GRAPH_NODE_PREFIX + "output_state"
+        GRAPH_LATEST_MSG = GRAPH_NODE_PREFIX + "latest_message"
+
+        CALL_FUNCTION = CALL_PREFIX + "function"
+        CALL_RETURN = CALL_PREFIX + "return"
+
+        for span in trace_data.get("spans", []):
+            if not isinstance(span, dict):
+                continue
+
+            span_name = span.get("span_name", "")
+            attrs = span.get("span_attributes", {})
+
+            if not isinstance(attrs, dict):
+                continue
+
+            # 1. Extract MCP tool calls (ai.observability.mcp.*)
+            if MCP_TOOL_NAME in attrs or MCP_OUTPUT in attrs:
+                tool_call = {"span": span_name}
+                if MCP_TOOL_NAME in attrs:
+                    tool_call["tool_name"] = str(attrs[MCP_TOOL_NAME])
+                if MCP_INPUT_ARGS in attrs:
+                    val = str(attrs[MCP_INPUT_ARGS])
+                    tool_call["input"] = self._safe_truncate(val, 1000)
+                if MCP_OUTPUT in attrs:
+                    val = str(attrs[MCP_OUTPUT])
+                    tool_call["output"] = self._safe_truncate(val, 2000)
+                tool_evidence["tool_calls"].append(tool_call)
+
+            # 2. Extract graph node outputs (ai.observability.graph_node.*)
+            # AND parse for embedded tool calls in any format
+            if GRAPH_OUTPUT_STATE in attrs or GRAPH_NODE_NAME in attrs:
+                node_output = {"span": span_name}
+                if GRAPH_NODE_NAME in attrs:
+                    node_output["node_name"] = str(attrs[GRAPH_NODE_NAME])
+                if GRAPH_OUTPUT_STATE in attrs:
+                    val = str(attrs[GRAPH_OUTPUT_STATE])
+                    node_output["output_state"] = self._safe_truncate(val, 3000)
+
+                    # Parse output_state for embedded tool calls (any format)
+                    if self._has_tool_call_indicators(val):
+                        tool_calls_found = self._extract_embedded_tool_calls(
+                            val, span_name
+                        )
+                        tool_evidence["tool_calls"].extend(tool_calls_found)
+                    if self._has_tool_result_indicators(val):
+                        tool_results_found = (
+                            self._extract_embedded_tool_results(val, span_name)
+                        )
+                        tool_evidence["execution_sequence"].extend(
+                            tool_results_found
+                        )
+
+                if GRAPH_LATEST_MSG in attrs:
+                    val = str(attrs[GRAPH_LATEST_MSG])
+                    node_output["latest_message"] = self._safe_truncate(
+                        val, 2000
+                    )
+
+                    # Also check latest_message for embedded tool patterns
+                    if self._has_tool_call_indicators(val):
+                        tool_calls_found = self._extract_embedded_tool_calls(
+                            val, span_name
+                        )
+                        tool_evidence["tool_calls"].extend(tool_calls_found)
+                    if self._has_tool_result_indicators(val):
+                        tool_results_found = (
+                            self._extract_embedded_tool_results(val, span_name)
+                        )
+                        tool_evidence["execution_sequence"].extend(
+                            tool_results_found
+                        )
+
+                tool_evidence["node_outputs"].append(node_output)
+
+            # 3. Extract graph task outputs (ai.observability.graph_task.*)
+            task_output_state = GRAPH_TASK_PREFIX + "output_state"
+            task_name = GRAPH_TASK_PREFIX + "task_name"
+            if task_output_state in attrs or task_name in attrs:
+                task_output = {"span": span_name, "type": "graph_task"}
+                if task_name in attrs:
+                    task_output["task_name"] = str(attrs[task_name])
+                if task_output_state in attrs:
+                    val = str(attrs[task_output_state])
+                    task_output["output_state"] = self._safe_truncate(val, 2000)
+                tool_evidence["execution_sequence"].append(task_output)
+
+            # 4. Extract function call returns (ai.observability.call.*)
+            if CALL_RETURN in attrs or CALL_FUNCTION in attrs:
+                call_info = {"span": span_name, "type": "function_call"}
+                if CALL_FUNCTION in attrs:
+                    call_info["function"] = str(attrs[CALL_FUNCTION])
+                if CALL_RETURN in attrs:
+                    val = str(attrs[CALL_RETURN])
+                    call_info["return_value"] = self._safe_truncate(val, 2000)
+                tool_evidence["execution_sequence"].append(call_info)
+
+            # 5. Scan all other attributes for embedded tool calls
+            for key, value in attrs.items():
+                if not isinstance(value, str):
+                    continue
+
+                # Skip already processed OTEL keys
+                if key.startswith((
+                    MCP_PREFIX,
+                    GRAPH_NODE_PREFIX,
+                    GRAPH_TASK_PREFIX,
+                    CALL_PREFIX,
+                )):
+                    continue
+
+                # Look for embedded tool patterns in any attribute value
+                if self._has_tool_call_indicators(value):
+                    tool_calls_found = self._extract_embedded_tool_calls(
+                        value, span_name
+                    )
+                    tool_evidence["tool_calls"].extend(tool_calls_found)
+
+                if self._has_tool_result_indicators(value):
+                    tool_results_found = self._extract_embedded_tool_results(
+                        value, span_name
+                    )
+                    tool_evidence["execution_sequence"].extend(
+                        tool_results_found
+                    )
+
+                # Check for Command structures (LangGraph routing)
+                if len(value) >= 100:
+                    key_lower = key.lower()
+
+                    if "Command(" in value and (
+                        "goto" in value or "update" in value
+                    ):
+                        # Extract tool evidence from Command content
+                        if self._has_tool_call_indicators(value):
+                            tool_calls_found = (
+                                self._extract_embedded_tool_calls(
+                                    value, span_name
+                                )
+                            )
+                            tool_evidence["tool_calls"].extend(tool_calls_found)
+                        if self._has_tool_result_indicators(value):
+                            tool_results_found = (
+                                self._extract_embedded_tool_results(
+                                    value, span_name
+                                )
+                            )
+                            tool_evidence["execution_sequence"].extend(
+                                tool_results_found
+                            )
+
+                        tool_evidence["execution_sequence"].append({
+                            "span": span_name,
+                            "type": "command",
+                            "attribute": key,
+                            "content": self._safe_truncate(value, 1500),
+                        })
+                    # Look for any output-like attributes not caught above
+                    elif any(
+                        pattern in key_lower
+                        for pattern in [
+                            "output",
+                            "result",
+                            "return",
+                            "response",
+                        ]
+                    ):
+                        tool_evidence["execution_sequence"].append({
+                            "span": span_name,
+                            "attribute": key,
+                            "content": self._safe_truncate(value, 1500),
+                        })
+
+        # Only return if we found actual evidence
+        has_evidence = (
+            tool_evidence["tool_calls"]
+            or tool_evidence["node_outputs"]
+            or tool_evidence["execution_sequence"]
+        )
+
+        return tool_evidence if has_evidence else None
+
+    def _has_tool_call_indicators(self, content: str) -> bool:
+        """
+        Check if content contains indicators of tool calls.
+
+        Generic patterns that indicate tool invocations across frameworks:
+        - 'name': combined with 'input': or 'arguments':
+        - 'tool_use' or 'tool_call' type markers
+        - 'function': with nested structure
+        """
+        # Must have a name field
+        if "'name':" not in content and '"name":' not in content:
+            return False
+
+        # And one of these indicators
+        indicators = [
+            "'input':",  # Common input pattern
+            '"input":',
+            "'arguments':",  # OpenAI-style
+            '"arguments":',
+            "tool_use",  # Anthropic/generic
+            "tool_call",  # OpenAI-style
+            "'function':",  # Function call pattern
+        ]
+        return any(ind in content for ind in indicators)
+
+    def _has_tool_result_indicators(self, content: str) -> bool:
+        """
+        Check if content contains indicators of tool results.
+
+        Generic patterns that indicate tool responses:
+        - 'status': 'success' or 'error'
+        - 'tool_result' or 'tool_response' markers
+        - Result data patterns (doc_id, search_results, etc.)
+        """
+        indicators = [
+            "'status':",  # Status field present
+            '"status":',
+            "tool_result",  # Anthropic-style
+            "tool_response",  # Generic
+            "search_results",  # Search tool results
+            "'doc_id':",  # Document IDs
+            "'record_id':",  # Record IDs
+        ]
+        return any(ind in content for ind in indicators)
+
+    def _safe_truncate(self, s: str, max_len: int) -> str:
+        """
+        Safely truncate a string without breaking JSON structure.
+        Ensures balanced quotes and removes trailing incomplete escapes.
+        """
+        if len(s) <= max_len:
+            return s
+
+        truncated = s[:max_len]
+
+        # Remove any trailing backslash that could break escape sequences
+        while truncated.endswith("\\"):
+            truncated = truncated[:-1]
+
+        # Try to end at a safe boundary (comma, space, or closing bracket)
+        for i in range(len(truncated) - 1, max(0, len(truncated) - 50), -1):
+            if truncated[i] in ",} \n":
+                truncated = truncated[: i + 1]
+                break
+
+        return truncated + "..."
+
+    def _extract_embedded_tool_calls(
+        self, content: str, span_name: str
+    ) -> List[Dict[str, Any]]:
+        """
+        Extract tool calls embedded in message content.
+
+        Detects common patterns for tool invocations:
+        - {'type': 'tool_use', 'name': '...', 'input': {...}}
+        - {'type': 'tool_call', 'function': {'name': '...', 'arguments': ...}}
+        - {'tool_use': {'name': '...', ...}}
+        """
+        import re
+
+        tool_calls = []
+
+        # Generic patterns for tool names in various formats
+        name_patterns = [
+            r"'name':\s*'([^']+)'",  # 'name': 'tool_name'
+            r'"name":\s*"([^"]+)"',  # "name": "tool_name"
+            r"'function':\s*\{[^}]*'name':\s*'([^']+)'",  # function.name
+        ]
+
+        # Metadata keys to exclude (not actual tool names)
+        excluded = {
+            "thinking",
+            "text",
+            "json",
+            "citation",
+            "annotation",
+            "type",
+            "content",
+        }
+
+        seen_tools = set()
+        for pattern in name_patterns:
+            for tool_name in re.findall(pattern, content):
+                tool_lower = tool_name.lower()
+                if (
+                    tool_name not in seen_tools
+                    and tool_lower not in excluded
+                    and not tool_lower.endswith("_citation")
+                ):
+                    seen_tools.add(tool_name)
+
+                    tool_call = {"span": span_name, "tool_name": tool_name}
+
+                    # Try to extract input/arguments - just get the query value, not full JSON
+                    query_match = re.search(
+                        rf"'name':\s*'{re.escape(tool_name)}'[^}}]*'query':\s*'([^']*)'",
+                        content,
+                    )
+                    if query_match:
+                        tool_call["query"] = self._safe_truncate(
+                            query_match.group(1), 200
+                        )
+
+                    tool_calls.append(tool_call)
+
+        return tool_calls
+
+    def _extract_embedded_tool_results(
+        self, content: str, span_name: str
+    ) -> List[Dict[str, Any]]:
+        """
+        Extract tool results embedded in message content.
+
+        Captures:
+        - Tool execution status (success/error)
+        - Result data summaries (row counts, sample values)
+        - Error messages when present
+        """
+        import re
+
+        tool_results = []
+
+        # Find tool result blocks - match tool_result with name and status
+        # This handles nested structures like {'tool_result': {..., 'name': 'X', 'status': 'success'}}
+        result_pattern = r"'tool_result':\s*\{[^}]*'name':\s*'([^']+)'[^}]*'status':\s*'([^']+)'"
+        for match in re.finditer(result_pattern, content):
+            tool_name = match.group(1)
+            status = match.group(2).lower()
+
+            # Skip metadata types
+            if tool_name.lower() in {"thinking", "text", "json", "annotation"}:
+                continue
+            if tool_name.lower().endswith("_citation"):
+                continue
+
+            tool_results.append({
+                "span": span_name,
+                "type": "tool_result",
+                "tool_name": tool_name,
+                "status": status,
+            })
+
+        # Fallback: find standalone status patterns if no structured results found
+        if not tool_results:
+            status_pattern = r"'status':\s*'(success|error|failed|completed)'"
+            name_pattern = r"'name':\s*'([^']+)'"
+
+            statuses = re.findall(status_pattern, content, re.IGNORECASE)
+            excluded = {
+                "thinking",
+                "text",
+                "json",
+                "annotation",
+                "type",
+                "content",
+            }
+            names = [
+                n
+                for n in re.findall(name_pattern, content)
+                if n.lower() not in excluded
+                and not n.lower().endswith("_citation")
+            ]
+
+            seen = set()
+            for i, status in enumerate(statuses):
+                tool_name = names[i] if i < len(names) else "tool"
+                key = f"{tool_name}_{status}"
+                if key not in seen:
+                    seen.add(key)
+                    tool_results.append({
+                        "span": span_name,
+                        "type": "tool_result",
+                        "tool_name": tool_name,
+                        "status": status.lower(),
+                    })
+
+        # Extract result_set summaries (shows data was actually retrieved)
+        # Pattern: 'result_set': {'data': [...], 'numRows': N, ...}
+        num_rows_match = re.search(r"'numRows':\s*(\d+)", content)
+        if num_rows_match:
+            num_rows = int(num_rows_match.group(1))
+
+            # Extract column names from rowType metadata
+            col_names = re.findall(r"'name':\s*'([A-Z][A-Z_0-9]+)'", content)
+            # Filter to likely SQL column names
+            columns = list(dict.fromkeys(c for c in col_names if len(c) > 2))[
+                :8
+            ]
+
+            result_summary = {
+                "span": span_name,
+                "type": "query_result",
+                "rows_returned": num_rows,
+            }
+            if columns:
+                result_summary["columns"] = columns
+            tool_results.append(result_summary)
+
+        # Extract sample data values from result sets
+        # Look for common ID patterns in data arrays
+        data_patterns = [
+            (r"'(CUST_\d+)'", "customer_id"),
+            (r"'(TKT_\d+)'", "ticket_id"),
+            (r"'doc_id':\s*'([^']+)'", "doc_id"),
+        ]
+
+        for pattern, id_type in data_patterns:
+            ids = re.findall(pattern, content)
+            if ids:
+                unique_ids = list(dict.fromkeys(ids))[:10]  # Preserve order
+                tool_results.append({
+                    "span": span_name,
+                    "type": "data_retrieved",
+                    "id_type": id_type,
+                    "sample_values": unique_ids,
+                    "count": len(set(ids)),
+                })
+
+        # Extract error details when present
+        if "'status': 'error'" in content or '"status": "error"' in content:
+            # Look for error message
+            error_match = re.search(r"'Message':\s*'([^']{1,200})", content)
+            if error_match:
+                tool_results.append({
+                    "span": span_name,
+                    "type": "error_detail",
+                    "message": error_match.group(1),
+                })
+
+        return tool_results
+
     def compress_trace(self, trace_data: Dict[str, Any]) -> Dict[str, Any]:
         """Compress trace with enhanced detail preservation for logical consistency."""
         logger.info("DEBUG: LangGraphTraceProvider.compress_trace called")
@@ -1075,6 +1577,10 @@ class LangGraphTraceProvider(TraceProvider):
         if plan:
             compressed["plan"] = plan
 
+        tool_evidence = self._extract_tool_execution_evidence(trace_data)
+        if tool_evidence:
+            compressed["tool_execution_evidence"] = tool_evidence
+
         # Extract enhanced execution flow with reasoning chain
         execution_flow = self.extract_execution_flow(trace_data)
         if execution_flow:
@@ -1084,6 +1590,7 @@ class LangGraphTraceProvider(TraceProvider):
         agent_interactions = self.extract_agent_interactions(trace_data)
         if agent_interactions:
             compressed["agent_interactions"] = agent_interactions
+
         # Add trace metadata
         if "trace_id" in trace_data:
             compressed["trace_id"] = trace_data["trace_id"]

@@ -128,6 +128,29 @@ class Trace:
         final_cleaned = "\n".join(cleaned_lines)
         return final_cleaned if final_cleaned.strip() else plan_str
 
+    @staticmethod
+    def _safe_truncate(s: str, max_len: int) -> str:
+        """
+        Safely truncate a string without breaking JSON structure.
+        Ensures we don't cut mid-escape sequence or leave unclosed quotes.
+        """
+        if not isinstance(s, str) or len(s) <= max_len:
+            return s
+
+        truncated = s[:max_len]
+
+        # Remove any trailing backslash that could break escape sequences
+        while truncated.endswith("\\"):
+            truncated = truncated[:-1]
+
+        # Try to end at a safe boundary
+        for i in range(len(truncated) - 1, max(0, len(truncated) - 50), -1):
+            if truncated[i] in ",} \n":
+                truncated = truncated[: i + 1]
+                break
+
+        return truncated + "..."
+
     def to_compressed_json(self, default_handler: Callable = str) -> str:
         """
         Convert trace events to compressed JSON format.
@@ -176,18 +199,61 @@ class Trace:
                 logger.debug(
                     f"Compressed trace is too large ({len(result)} chars), reducing to essentials for Cortex compatibility"
                 )
-                # Keep ALL keys with "plan" in them and minimal essential info
+                # Keep plan AND tool_execution_evidence for plan adherence evaluation
                 essential_trace = {
                     "compressed": True,
                     "size_warning": f"Original trace was {len(result)} characters, reduced for LLM compatibility",
                     "trace_summary": "Large trace compressed to essential elements for Cortex LLM",
                 }
 
-                # Preserve ALL keys containing "plan" (case-insensitive)
                 if isinstance(compressed_trace, dict):
+                    # Preserve ALL keys containing "plan" (case-insensitive)
                     for key, value in compressed_trace.items():
                         if "plan" in key.lower():
                             essential_trace[key] = value
+
+                    # CRITICAL: Preserve tool_execution_evidence for plan adherence verification
+                    if "tool_execution_evidence" in compressed_trace:
+                        tool_evidence = compressed_trace[
+                            "tool_execution_evidence"
+                        ]
+                        # Truncate individual items if needed, but keep the structure
+                        if isinstance(tool_evidence, dict):
+                            truncated_evidence = {}
+                            for key, items in tool_evidence.items():
+                                if isinstance(items, list):
+                                    # Keep first 10 items of each category, truncate content
+                                    truncated_items = []
+                                    for item in items[:10]:
+                                        if isinstance(item, dict):
+                                            truncated_item = {}
+                                            for k, v in item.items():
+                                                if (
+                                                    isinstance(v, str)
+                                                    and len(v) > 500
+                                                ):
+                                                    truncated_item[k] = (
+                                                        self._safe_truncate(
+                                                            v, 500
+                                                        )
+                                                    )
+                                                else:
+                                                    truncated_item[k] = v
+                                            truncated_items.append(
+                                                truncated_item
+                                            )
+                                        else:
+                                            truncated_items.append(item)
+                                    truncated_evidence[key] = truncated_items
+                                else:
+                                    truncated_evidence[key] = items
+                            essential_trace["tool_execution_evidence"] = (
+                                truncated_evidence
+                            )
+                        else:
+                            essential_trace["tool_execution_evidence"] = (
+                                tool_evidence
+                            )
 
                     # Also keep minimal execution flow if no plan keys found
                     if not any(
@@ -256,8 +322,13 @@ class Trace:
                                     truncate_at = last_break + len(break_point)
                                     break
 
+                            # Use safe truncation to avoid breaking escape sequences
+                            truncated_part = cleaned_plan[:truncate_at]
+                            # Remove any trailing backslash
+                            while truncated_part.endswith("\\"):
+                                truncated_part = truncated_part[:-1]
                             plan_data = (
-                                cleaned_plan[:truncate_at]
+                                truncated_part
                                 + "... [PLAN TRUNCATED - LARGE DATA DETECTED]"
                             )
                         else:
@@ -265,7 +336,7 @@ class Trace:
 
                     minimal_trace = {
                         "compressed": True,
-                        "trace_summary": "Trace reduced to plan only due to Cortex size constraints",
+                        "trace_summary": "Trace reduced to plan and evidence due to common LLM context window limits.",
                     }
 
                     # Add all plan-related data
@@ -275,6 +346,44 @@ class Trace:
                     else:
                         # Single plan or fallback
                         minimal_trace["plan"] = plan_data
+
+                    # CRITICAL: Also preserve minimal tool_execution_evidence
+                    if (
+                        isinstance(compressed_trace, dict)
+                        and "tool_execution_evidence" in compressed_trace
+                    ):
+                        tool_evidence = compressed_trace[
+                            "tool_execution_evidence"
+                        ]
+                        if isinstance(tool_evidence, dict):
+                            # Create a very minimal summary of execution evidence
+                            minimal_evidence = {}
+                            for category, items in tool_evidence.items():
+                                if isinstance(items, list) and items:
+                                    # Keep only first 3 items, heavily truncated
+                                    minimal_items = []
+                                    for item in items[:3]:
+                                        if isinstance(item, dict):
+                                            mini_item = {
+                                                k: (
+                                                    self._safe_truncate(
+                                                        str(v), 200
+                                                    )
+                                                    if isinstance(v, str)
+                                                    and len(v) > 200
+                                                    else v
+                                                )
+                                                for k, v in item.items()
+                                            }
+                                            minimal_items.append(mini_item)
+                                    if minimal_items:
+                                        minimal_evidence[category] = (
+                                            minimal_items
+                                        )
+                            if minimal_evidence:
+                                minimal_trace["tool_execution_evidence"] = (
+                                    minimal_evidence
+                                )
                     result = json.dumps(
                         minimal_trace, default=str, ensure_ascii=False
                     )

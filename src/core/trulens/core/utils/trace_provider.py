@@ -91,6 +91,11 @@ class TraceProvider(ABC):
         if plan:
             compressed["plan"] = plan
 
+        # Extract tool execution evidence for plan adherence verification
+        tool_evidence = self._extract_tool_execution_evidence(trace_data)
+        if tool_evidence:
+            compressed["tool_execution_evidence"] = tool_evidence
+
         # Also preserve any top-level keys containing "plan" (case-insensitive)
         plan_keys_found = 0
         for key, value in trace_data.items():
@@ -116,6 +121,464 @@ class TraceProvider(ABC):
         if "metadata" in trace_data:
             compressed["metadata"] = trace_data["metadata"]
         return compressed
+
+    def _extract_tool_execution_evidence(
+        self, trace_data: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Extract tool execution evidence for plan adherence verification.
+
+        Extracts from multiple formats:
+        - TruLens OTEL semantic conventions (ai.observability.*)
+        - Snowflake Cortex Agent tool_use/tool_result in AIMessage content
+        - LangGraph Command structures
+
+        This is a base implementation that can be overridden by specific providers.
+        """
+        if "spans" not in trace_data:
+            return None
+
+        tool_evidence = {
+            "tool_calls": [],
+            "node_outputs": [],
+            "execution_sequence": [],
+        }
+
+        # TruLens OTEL semantic convention prefixes
+        MCP_PREFIX = "ai.observability.mcp."
+        GRAPH_NODE_PREFIX = "ai.observability.graph_node."
+        GRAPH_TASK_PREFIX = "ai.observability.graph_task."
+        CALL_PREFIX = "ai.observability.call."
+
+        # Key attributes to extract
+        MCP_TOOL_NAME = MCP_PREFIX + "tool_name"
+        MCP_INPUT_ARGS = MCP_PREFIX + "input_arguments"
+        MCP_OUTPUT = MCP_PREFIX + "output_content"
+
+        GRAPH_NODE_NAME = GRAPH_NODE_PREFIX + "node_name"
+        GRAPH_OUTPUT_STATE = GRAPH_NODE_PREFIX + "output_state"
+        GRAPH_LATEST_MSG = GRAPH_NODE_PREFIX + "latest_message"
+
+        CALL_FUNCTION = CALL_PREFIX + "function"
+        CALL_RETURN = CALL_PREFIX + "return"
+
+        for span in trace_data.get("spans", []):
+            if not isinstance(span, dict):
+                continue
+
+            span_name = span.get("span_name", "")
+            attrs = span.get("span_attributes", {})
+
+            if not isinstance(attrs, dict):
+                continue
+
+            # 1. Extract MCP tool calls (OTEL format)
+            if MCP_TOOL_NAME in attrs or MCP_OUTPUT in attrs:
+                tool_call = {"span": span_name}
+                if MCP_TOOL_NAME in attrs:
+                    tool_call["tool_name"] = str(attrs[MCP_TOOL_NAME])
+                if MCP_INPUT_ARGS in attrs:
+                    val = str(attrs[MCP_INPUT_ARGS])
+                    tool_call["input"] = self._safe_truncate(val, 1000)
+                if MCP_OUTPUT in attrs:
+                    val = str(attrs[MCP_OUTPUT])
+                    tool_call["output"] = self._safe_truncate(val, 2000)
+                tool_evidence["tool_calls"].append(tool_call)
+
+            # 2. Extract graph node outputs (OTEL format)
+            # AND parse for embedded tool calls in any format
+            if GRAPH_OUTPUT_STATE in attrs or GRAPH_NODE_NAME in attrs:
+                node_output = {"span": span_name}
+                if GRAPH_NODE_NAME in attrs:
+                    node_output["node_name"] = str(attrs[GRAPH_NODE_NAME])
+                if GRAPH_OUTPUT_STATE in attrs:
+                    val = str(attrs[GRAPH_OUTPUT_STATE])
+                    node_output["output_state"] = self._safe_truncate(val, 3000)
+
+                    # Parse output_state for embedded tool calls (any format)
+                    if self._has_tool_call_indicators(val):
+                        tool_calls_found = self._extract_embedded_tool_calls(
+                            val, span_name
+                        )
+                        tool_evidence["tool_calls"].extend(tool_calls_found)
+                    if self._has_tool_result_indicators(val):
+                        tool_results_found = (
+                            self._extract_embedded_tool_results(val, span_name)
+                        )
+                        tool_evidence["execution_sequence"].extend(
+                            tool_results_found
+                        )
+
+                if GRAPH_LATEST_MSG in attrs:
+                    val = str(attrs[GRAPH_LATEST_MSG])
+                    node_output["latest_message"] = self._safe_truncate(
+                        val, 2000
+                    )
+
+                    # Also check latest_message for embedded tool patterns
+                    if self._has_tool_call_indicators(val):
+                        tool_calls_found = self._extract_embedded_tool_calls(
+                            val, span_name
+                        )
+                        tool_evidence["tool_calls"].extend(tool_calls_found)
+                    if self._has_tool_result_indicators(val):
+                        tool_results_found = (
+                            self._extract_embedded_tool_results(val, span_name)
+                        )
+                        tool_evidence["execution_sequence"].extend(
+                            tool_results_found
+                        )
+
+                tool_evidence["node_outputs"].append(node_output)
+
+            # 3. Extract graph task outputs
+            task_output_state = GRAPH_TASK_PREFIX + "output_state"
+            task_name = GRAPH_TASK_PREFIX + "task_name"
+            if task_output_state in attrs or task_name in attrs:
+                task_output = {"span": span_name, "type": "graph_task"}
+                if task_name in attrs:
+                    task_output["task_name"] = str(attrs[task_name])
+                if task_output_state in attrs:
+                    val = str(attrs[task_output_state])
+                    task_output["output_state"] = self._safe_truncate(val, 2000)
+                tool_evidence["execution_sequence"].append(task_output)
+
+            # 4. Extract function call returns
+            if CALL_RETURN in attrs or CALL_FUNCTION in attrs:
+                call_info = {"span": span_name, "type": "function_call"}
+                if CALL_FUNCTION in attrs:
+                    call_info["function"] = str(attrs[CALL_FUNCTION])
+                if CALL_RETURN in attrs:
+                    val = str(attrs[CALL_RETURN])
+                    call_info["return_value"] = self._safe_truncate(val, 2000)
+                tool_evidence["execution_sequence"].append(call_info)
+
+            # 5. Scan all other attributes for embedded tool calls
+            for key, value in attrs.items():
+                if not isinstance(value, str):
+                    continue
+
+                # Look for embedded tool patterns in any attribute value
+                if self._has_tool_call_indicators(value):
+                    tool_calls_found = self._extract_embedded_tool_calls(
+                        value, span_name
+                    )
+                    tool_evidence["tool_calls"].extend(tool_calls_found)
+
+                if self._has_tool_result_indicators(value):
+                    tool_results_found = self._extract_embedded_tool_results(
+                        value, span_name
+                    )
+                    tool_evidence["execution_sequence"].extend(
+                        tool_results_found
+                    )
+
+                # Also check for Command structures (LangGraph routing)
+                if len(value) >= 100:
+                    key_lower = key.lower()
+
+                    if "Command(" in value and (
+                        "goto" in value or "update" in value
+                    ):
+                        # Extract tool evidence from Command content
+                        if self._has_tool_call_indicators(value):
+                            tool_calls_found = (
+                                self._extract_embedded_tool_calls(
+                                    value, span_name
+                                )
+                            )
+                            tool_evidence["tool_calls"].extend(tool_calls_found)
+                        if self._has_tool_result_indicators(value):
+                            tool_results_found = (
+                                self._extract_embedded_tool_results(
+                                    value, span_name
+                                )
+                            )
+                            tool_evidence["execution_sequence"].extend(
+                                tool_results_found
+                            )
+
+                        tool_evidence["execution_sequence"].append({
+                            "span": span_name,
+                            "type": "command",
+                            "attribute": key,
+                            "content": self._safe_truncate(value, 1500),
+                        })
+                    # Look for any output-like attributes
+                    elif any(
+                        pattern in key_lower
+                        for pattern in [
+                            "output",
+                            "result",
+                            "return",
+                            "response",
+                        ]
+                    ):
+                        tool_evidence["execution_sequence"].append({
+                            "span": span_name,
+                            "attribute": key,
+                            "content": self._safe_truncate(value, 1500),
+                        })
+
+        # Only return if we found actual evidence
+        has_evidence = (
+            tool_evidence["tool_calls"]
+            or tool_evidence["node_outputs"]
+            or tool_evidence["execution_sequence"]
+        )
+
+        return tool_evidence if has_evidence else None
+
+    def _has_tool_call_indicators(self, content: str) -> bool:
+        """
+        Check if content contains indicators of tool calls.
+
+        Generic patterns that indicate tool invocations across frameworks:
+        - 'name': combined with 'input': or 'arguments':
+        - 'tool_use' or 'tool_call' type markers
+        - 'function': with nested structure
+        """
+        # Must have a name field
+        if "'name':" not in content and '"name":' not in content:
+            return False
+
+        # And one of these indicators
+        indicators = [
+            "'input':",  # Common input pattern
+            '"input":',
+            "'arguments':",  # OpenAI-style
+            '"arguments":',
+            "tool_use",  # Anthropic/generic
+            "tool_call",  # OpenAI-style
+            "'function':",  # Function call pattern
+        ]
+        return any(ind in content for ind in indicators)
+
+    def _has_tool_result_indicators(self, content: str) -> bool:
+        """
+        Check if content contains indicators of tool results.
+
+        Generic patterns that indicate tool responses:
+        - 'status': 'success' or 'error'
+        - 'tool_result' or 'tool_response' markers
+        - Result data patterns (doc_id, search_results, etc.)
+        """
+        indicators = [
+            "'status':",  # Status field present
+            '"status":',
+            "tool_result",  # Anthropic-style
+            "tool_response",  # Generic
+            "search_results",  # Search tool results
+            "'doc_id':",  # Document IDs
+            "'record_id':",  # Record IDs
+        ]
+        return any(ind in content for ind in indicators)
+
+    def _safe_truncate(self, s: str, max_len: int) -> str:
+        """
+        Safely truncate a string without breaking JSON structure.
+        Ensures balanced quotes and removes trailing incomplete escapes.
+        """
+        if len(s) <= max_len:
+            return s
+
+        truncated = s[:max_len]
+
+        # Remove any trailing backslash that could break escape sequences
+        while truncated.endswith("\\"):
+            truncated = truncated[:-1]
+
+        # Try to end at a safe boundary (comma, space, or closing bracket)
+        for i in range(len(truncated) - 1, max(0, len(truncated) - 50), -1):
+            if truncated[i] in ",} \n":
+                truncated = truncated[: i + 1]
+                break
+
+        return truncated + "..."
+
+    def _extract_embedded_tool_calls(
+        self, content: str, span_name: str
+    ) -> List[Dict[str, Any]]:
+        """
+        Extract tool calls embedded in message content.
+
+        Detects common patterns for tool invocations:
+        - {'type': 'tool_use', 'name': '...', 'input': {...}}
+        - {'type': 'tool_call', 'function': {'name': '...', 'arguments': ...}}
+        - {'tool_use': {'name': '...', ...}}
+        """
+        import re
+
+        tool_calls = []
+
+        # Generic patterns for tool names in various formats
+        name_patterns = [
+            r"'name':\s*'([^']+)'",  # 'name': 'tool_name'
+            r'"name":\s*"([^"]+)"',  # "name": "tool_name"
+            r"'function':\s*\{[^}]*'name':\s*'([^']+)'",  # function.name
+        ]
+
+        # Metadata keys to exclude (not actual tool names)
+        excluded = {
+            "thinking",
+            "text",
+            "json",
+            "citation",
+            "annotation",
+            "type",
+            "content",
+        }
+
+        seen_tools = set()
+        for pattern in name_patterns:
+            for tool_name in re.findall(pattern, content):
+                tool_lower = tool_name.lower()
+                if (
+                    tool_name not in seen_tools
+                    and tool_lower not in excluded
+                    and not tool_lower.endswith("_citation")
+                ):
+                    seen_tools.add(tool_name)
+
+                    tool_call = {"span": span_name, "tool_name": tool_name}
+
+                    # Try to extract input/arguments - just get the query value, not full JSON
+                    query_match = re.search(
+                        rf"'name':\s*'{re.escape(tool_name)}'[^}}]*'query':\s*'([^']*)'",
+                        content,
+                    )
+                    if query_match:
+                        tool_call["query"] = self._safe_truncate(
+                            query_match.group(1), 200
+                        )
+
+                    tool_calls.append(tool_call)
+
+        return tool_calls
+
+    def _extract_embedded_tool_results(
+        self, content: str, span_name: str
+    ) -> List[Dict[str, Any]]:
+        """
+        Extract tool results embedded in message content.
+
+        Captures:
+        - Tool execution status (success/error)
+        - Result data summaries (row counts, sample values)
+        - Error messages when present
+        """
+        import re
+
+        tool_results = []
+
+        # Find tool result blocks - match tool_result with name and status
+        # This handles nested structures like {'tool_result': {..., 'name': 'X', 'status': 'success'}}
+        result_pattern = r"'tool_result':\s*\{[^}]*'name':\s*'([^']+)'[^}]*'status':\s*'([^']+)'"
+        for match in re.finditer(result_pattern, content):
+            tool_name = match.group(1)
+            status = match.group(2).lower()
+
+            # Skip metadata types
+            if tool_name.lower() in {"thinking", "text", "json", "annotation"}:
+                continue
+            if tool_name.lower().endswith("_citation"):
+                continue
+
+            tool_results.append({
+                "span": span_name,
+                "type": "tool_result",
+                "tool_name": tool_name,
+                "status": status,
+            })
+
+        # Fallback: find standalone status patterns if no structured results found
+        if not tool_results:
+            status_pattern = r"'status':\s*'(success|error|failed|completed)'"
+            name_pattern = r"'name':\s*'([^']+)'"
+
+            statuses = re.findall(status_pattern, content, re.IGNORECASE)
+            excluded = {
+                "thinking",
+                "text",
+                "json",
+                "annotation",
+                "type",
+                "content",
+            }
+            names = [
+                n
+                for n in re.findall(name_pattern, content)
+                if n.lower() not in excluded
+                and not n.lower().endswith("_citation")
+            ]
+
+            seen = set()
+            for i, status in enumerate(statuses):
+                tool_name = names[i] if i < len(names) else "tool"
+                key = f"{tool_name}_{status}"
+                if key not in seen:
+                    seen.add(key)
+                    tool_results.append({
+                        "span": span_name,
+                        "type": "tool_result",
+                        "tool_name": tool_name,
+                        "status": status.lower(),
+                    })
+
+        # Extract result_set summaries (shows data was actually retrieved)
+        # Pattern: 'result_set': {'data': [...], 'numRows': N, ...}
+        num_rows_match = re.search(r"'numRows':\s*(\d+)", content)
+        if num_rows_match:
+            num_rows = int(num_rows_match.group(1))
+
+            # Extract column names from rowType metadata
+            col_names = re.findall(r"'name':\s*'([A-Z][A-Z_0-9]+)'", content)
+            # Filter to likely SQL column names
+            columns = list(dict.fromkeys(c for c in col_names if len(c) > 2))[
+                :8
+            ]
+
+            result_summary = {
+                "span": span_name,
+                "type": "query_result",
+                "rows_returned": num_rows,
+            }
+            if columns:
+                result_summary["columns"] = columns
+            tool_results.append(result_summary)
+
+        # Extract sample data values from result sets
+        # Look for common ID patterns in data arrays
+        data_patterns = [
+            (r"'(CUST_\d+)'", "customer_id"),
+            (r"'(TKT_\d+)'", "ticket_id"),
+            (r"'doc_id':\s*'([^']+)'", "doc_id"),
+        ]
+
+        for pattern, id_type in data_patterns:
+            ids = re.findall(pattern, content)
+            if ids:
+                unique_ids = list(dict.fromkeys(ids))[:10]  # Preserve order
+                tool_results.append({
+                    "span": span_name,
+                    "type": "data_retrieved",
+                    "id_type": id_type,
+                    "sample_values": unique_ids,
+                    "count": len(set(ids)),
+                })
+
+        # Extract error details when present
+        if "'status': 'error'" in content or '"status": "error"' in content:
+            # Look for error message
+            error_match = re.search(r"'Message':\s*'([^']{1,200})", content)
+            if error_match:
+                tool_results.append({
+                    "span": span_name,
+                    "type": "error_detail",
+                    "message": error_match.group(1),
+                })
+
+        return tool_results
 
     def compress_with_plan_priority(
         self, trace_data: Dict[str, Any], target_token_limit: int = 100000
@@ -625,13 +1088,6 @@ class GenericTraceProvider(TraceProvider):
         for field in plan_fields:
             if field in trace_data:
                 plan_value = trace_data[field]
-                plan_size = len(str(plan_value))
-                logger.warning(
-                    f"🔍 GENERIC_PLAN_DEBUG: Plan found in generic field '{field}', type: {type(plan_value)}, size: {plan_size}"
-                )
-                logger.warning(
-                    f"🔍 GENERIC_PLAN_DEBUG: Plan content preview: {str(plan_value)[:300]}..."
-                )
 
                 # Check if this looks like debug messages - if so, skip it and look in spans instead
                 plan_str = str(plan_value)
@@ -645,9 +1101,6 @@ class GenericTraceProvider(TraceProvider):
                     # Look for better plan in spans first
                     span_plan = self._extract_plan_from_spans(trace_data)
                     if span_plan:
-                        logger.warning(
-                            "🔍 GENERIC_PLAN_DEBUG: Found better plan in spans, using that instead"
-                        )
                         return span_plan
                     # If no span plan found, continue with cleaning the debug messages
 
@@ -655,16 +1108,8 @@ class GenericTraceProvider(TraceProvider):
                 cleaned_plan = self._clean_plan_content(plan_value)
                 cleaned_size = len(str(cleaned_plan))
 
-                if cleaned_size != plan_size:
-                    logger.warning(
-                        f"PLAN_DEBUG: Plan cleaned from {plan_size} to {cleaned_size} chars (removed debug messages)"
-                    )
-
                 # If plan is extremely large (>10KB), truncate it aggressively
                 if cleaned_size > 10000:
-                    logger.warning(
-                        f"PLAN_DEBUG: Plan is very large ({cleaned_size} chars), applying aggressive truncation"
-                    )
                     plan_str = str(cleaned_plan)
 
                     # Keep only first 5KB and add truncation notice
@@ -673,9 +1118,6 @@ class GenericTraceProvider(TraceProvider):
                         + "... [PLAN TRUNCATED - ORIGINAL SIZE: "
                         + str(cleaned_size)
                         + " CHARS]"
-                    )
-                    logger.warning(
-                        f"PLAN_DEBUG: Plan truncated from {cleaned_size} to {len(truncated_plan)} chars"
                     )
                     return truncated_plan
 
@@ -686,28 +1128,16 @@ class GenericTraceProvider(TraceProvider):
         # Check if this might be a LangGraph trace with spans
         if "spans" in trace_data:
             spans = trace_data["spans"]
-            logger.warning(
-                f"PLAN_DEBUG: Found {len(spans) if isinstance(spans, list) else 'non-list'} spans, checking for LangGraph plan data"
-            )
 
             if isinstance(spans, list) and spans:
                 # Check first few spans for plan-related data
                 for i, span in enumerate(spans[:3]):
                     if isinstance(span, dict):
-                        span_name = span.get("span_name", "unknown")
-                        logger.warning(
-                            f"PLAN_DEBUG: Span {i} '{span_name}' keys: {list(span.keys())}"
-                        )
-
                         # Check span attributes
                         if "span_attributes" in span:
                             attrs = span["span_attributes"]
                             if isinstance(attrs, dict):
                                 attr_keys = list(attrs.keys())
-                                logger.warning(
-                                    f"PLAN_DEBUG: Span {i} attributes: {attr_keys}"
-                                )
-
                                 # Look for LangGraph state or plan-related attributes
                                 for attr_key in attr_keys:
                                     if (
