@@ -282,7 +282,7 @@ class LangGraphTraceProvider(TraceProvider):
         self, trace_data: Dict[str, Any]
     ) -> Optional[Any]:
         """Extract plan from direct field names."""
-        plan_fields = ["plan", "plan", "agent_plan", "workflow_plan"]
+        plan_fields = ["plan", "agent_plan", "workflow_plan"]
 
         for field in plan_fields:
             if field in trace_data:
