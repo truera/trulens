@@ -5,12 +5,6 @@ Shows how to use nuggetized feedback for more granular evaluation.
 """
 
 import os
-import sys
-
-# Add TruLens to path
-sys.path.insert(0, "/Users/dcampos/trulens/src/core")
-sys.path.insert(0, "/Users/dcampos/trulens/src/feedback")
-sys.path.insert(0, "/Users/dcampos/trulens/src/providers/openai")
 
 from trulens.core.feedback.nuggetized_feedback import (
     compare_traditional_vs_nuggetized,

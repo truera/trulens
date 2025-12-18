@@ -2319,6 +2319,162 @@ Labels:"""
             logger.error(f"Error classifying nuggets: {e}")
             return []
 
+    def groundedness_nuggetized(
+        self,
+        source: str,
+        statement: str,
+        query: Optional[str] = None,
+    ) -> Tuple[float, Dict]:
+        """
+        Evaluate groundedness at nugget level.
+        Args:
+            source: Source context
+            statement: Statement to evaluate
+            query: Optional query for nugget extraction context
+        Returns:
+            Tuple of (aggregate_score, metadata_dict)
+        """
+        # Extract nuggets from statement using the query (or statement itself) as context
+        query_text = query if query is not None else statement
+        nuggets = self.extract_nuggets(
+            context_text=statement, query_text=query_text
+        )
+        logger.debug(f"Extracted {len(nuggets)} nuggets from statement")
+
+        if not nuggets:
+            return 0.0, {
+                "nugget_evaluations": [],
+                "total_nuggets": 0,
+                "method": "nuggetized",
+                "reason": "No nuggets extracted",
+            }
+
+        # Classify nuggets for importance weighting
+        classifications = self.classify_nuggets(
+            nuggets=nuggets, query_text=query_text
+        )
+
+        # Evaluate each nugget
+        nugget_evaluations = []
+        for i, nugget in enumerate(nuggets):
+            score, reasons = self.groundedness_measure_with_cot_reasons(
+                source=source, statement=nugget
+            )
+
+            importance = (
+                classifications[i] if i < len(classifications) else "okay"
+            )
+            nugget_evaluations.append({
+                "nugget": nugget,
+                "importance": importance,
+                "score": score,
+                "reasons": reasons,
+            })
+
+        # Aggregate with importance weighting
+        aggregate_score = self._aggregate_scores(
+            nugget_evaluations, score_key="score"
+        )
+
+        metadata = {
+            "nugget_evaluations": nugget_evaluations,
+            "total_nuggets": len(nuggets),
+            "method": "nuggetized",
+        }
+
+        return aggregate_score, metadata
+
+    def relevance_nuggetized(
+        self, prompt: str, response: str
+    ) -> Tuple[float, Dict]:
+        """
+        Evaluate answer relevance at nugget level.
+        Args:
+            prompt: Question/prompt
+            response: Answer/response to evaluate
+        Returns:
+            Tuple of (aggregate_score, metadata_dict)
+        """
+        # Extract nuggets from response
+        nuggets = self.extract_nuggets(context_text=response, query_text=prompt)
+        logger.debug(f"Extracted {len(nuggets)} nuggets from response")
+
+        if not nuggets:
+            return 0.0, {
+                "nugget_evaluations": [],
+                "total_nuggets": 0,
+                "method": "nuggetized",
+                "reason": "No nuggets extracted",
+            }
+
+        # Classify nuggets for importance weighting
+        classifications = self.classify_nuggets(
+            nuggets=nuggets, query_text=prompt
+        )
+
+        # Evaluate each nugget
+        nugget_evaluations = []
+        for i, nugget in enumerate(nuggets):
+            score, reasons = self.relevance_with_cot_reasons(
+                prompt=prompt, response=nugget
+            )
+
+            importance = (
+                classifications[i] if i < len(classifications) else "okay"
+            )
+            nugget_evaluations.append({
+                "nugget": nugget,
+                "importance": importance,
+                "score": score,
+                "reasons": reasons,
+            })
+
+        # Aggregate with importance weighting
+        aggregate_score = self._aggregate_scores(
+            nugget_evaluations, score_key="score"
+        )
+
+        metadata = {
+            "nugget_evaluations": nugget_evaluations,
+            "total_nuggets": len(nuggets),
+            "method": "nuggetized",
+        }
+
+        return aggregate_score, metadata
+
+    def _aggregate_scores(
+        self, nugget_evaluations: List[Dict], score_key: str = "score"
+    ) -> float:
+        """
+        Aggregate nugget scores using importance weighting.
+        Args:
+            nugget_evaluations: List of nugget evaluation dictionaries
+            score_key: Key for score in evaluation dict
+        Returns:
+            Weighted average score (vital nuggets get 2x weight, okay nuggets get 1x weight)
+        """
+        if not nugget_evaluations:
+            return 0.0
+
+        # Calculate weighted sum: vital = 2x, okay = 1x
+        total_weight = 0.0
+        weighted_sum = 0.0
+
+        for eval_dict in nugget_evaluations:
+            importance = eval_dict.get("importance", "okay").lower()
+            weight = 2.0 if importance == "vital" else 1.0
+
+            total_weight += weight
+            weighted_sum += eval_dict[score_key] * weight
+
+        if total_weight == 0:
+            # Fallback to equal weighting
+            return np.mean([
+                eval_dict[score_key] for eval_dict in nugget_evaluations
+            ])
+
+        return weighted_sum / total_weight
+
     def groundedness_measure_with_cot_reasons(
         self,
         source: str,
