@@ -11,6 +11,9 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+MAX_TRACE_SIZE = 500000  # 500KB
+MAX_TRACE_SIZE_TOKEN_LIMIT = 50000  # Minimum token limit for very large traces
+
 
 class TraceCompressor:
     """
@@ -452,13 +455,15 @@ def compress_trace_for_feedback(
         Compressed trace data with plan preservation prioritized
     """
 
-    # Check for extremely large traces and apply aggressive pre-compression
+    # Check for extremely large traces and scale down token limit proportionally
     trace_size = len(str(trace_data))
-    if trace_size > 500000:  # 500KB+ traces need aggressive handling
-        # For massive traces, use a much smaller target token limit
-        target_token_limit = min(
-            target_token_limit, 5000
-        )  # Force very small limit
+    if trace_size > MAX_TRACE_SIZE:
+        # Scale down proportionally based on how oversized the trace is
+        scale_factor = MAX_TRACE_SIZE / trace_size
+        target_token_limit = max(
+            int(target_token_limit * scale_factor),
+            MAX_TRACE_SIZE_TOKEN_LIMIT,  # Don't go below the minimum floor
+        )
 
     # Convert TruLens trace format to expected format
     converted_trace = _convert_trulens_trace_format(trace_data)
