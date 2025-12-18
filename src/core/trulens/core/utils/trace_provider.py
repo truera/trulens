@@ -138,7 +138,7 @@ class TraceProvider(ABC):
         if "spans" not in trace_data:
             return None
 
-        tool_evidence = {
+        tool_evidence: Dict[str, List[Any]] = {
             "tool_calls": [],
             "node_outputs": [],
             "execution_sequence": [],
@@ -867,10 +867,8 @@ class GenericTraceProvider(TraceProvider):
                 # Try to extract structured plan from Command if applicable
                 if "Command(" in best_plan["content"]:
                     if best_plan["priority"] >= 90:  # High priority plans
-                        extracted_plan = (
-                            self._extract_execution_plan_from_command_string(
-                                best_plan["content"]
-                            )
+                        extracted_plan = self._extract_plan_from_command_string(
+                            best_plan["content"]
                         )
                         if extracted_plan:
                             logger.warning(
@@ -958,87 +956,6 @@ class GenericTraceProvider(TraceProvider):
             return None
 
     def _format_plan_simple(self, plan_dict: Dict[str, Any]) -> str:
-        """
-        Simple formatting of plan dictionary.
-        """
-        formatted_parts = []
-
-        if "plan_summary" in plan_dict:
-            formatted_parts.append(f"Plan Summary: {plan_dict['plan_summary']}")
-
-        if "steps" in plan_dict and isinstance(plan_dict["steps"], list):
-            formatted_parts.append("Steps:")
-            for i, step in enumerate(plan_dict["steps"], 1):
-                if isinstance(step, dict):
-                    step_text = f"{i}. "
-                    if "agent" in step:
-                        step_text += f"Agent: {step['agent']} - "
-                    if "purpose" in step:
-                        step_text += f"Purpose: {step['purpose']}"
-                    formatted_parts.append(step_text)
-
-        if "expected_final_output" in plan_dict:
-            formatted_parts.append(
-                f"Expected Output: {plan_dict['expected_final_output']}"
-            )
-
-        return "\n".join(formatted_parts)
-
-    def _extract_plan_from_command_string(
-        self, command_str: str
-    ) -> Optional[str]:
-        """
-        Extract the plan content from a Command string representation.
-        Simplified version for GenericTraceProvider.
-        """
-        try:
-            import ast
-
-            # Use brace counting to find the plan content
-            start_marker = "'plan':"
-            start_pos = command_str.find(start_marker)
-
-            if start_pos == -1:
-                return None
-
-            # Find the start of the dictionary after the colon
-            dict_start = command_str.find("{", start_pos)
-            if dict_start == -1:
-                return None
-
-            # Count braces to find the matching closing brace
-            brace_count = 0
-            dict_end = dict_start
-
-            for i in range(dict_start, len(command_str)):
-                if command_str[i] == "{":
-                    brace_count += 1
-                elif command_str[i] == "}":
-                    brace_count -= 1
-                    if brace_count == 0:
-                        dict_end = i
-                        break
-
-            if brace_count == 0:
-                plan_str = command_str[dict_start : dict_end + 1]
-
-                # Try to parse it as a Python literal
-                try:
-                    plan_dict = ast.literal_eval(plan_str)
-                    if isinstance(plan_dict, dict):
-                        # Format the execution plan nicely
-                        formatted_plan = self._format_plan_simple(plan_dict)
-                        return formatted_plan
-                except (ValueError, SyntaxError):
-                    # Return the raw string if parsing fails
-                    return plan_str
-
-        except Exception as e:
-            logger.warning(f"🔍 GENERIC_PLAN_DEBUG: Error extracting plan: {e}")
-
-        return None
-
-    def _format_plan_simple(self, plan_dict: dict) -> str:
         """
         Simple formatting of plan dictionary.
         """
