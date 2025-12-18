@@ -613,9 +613,7 @@ class TraceProvider(ABC):
                 plan_keys[key] = value
                 key_tokens = len(json.dumps(value, default=str)) // 4
                 plan_tokens += key_tokens
-                logger.info(
-                    f"DEBUG: Found plan key '{key}': {key_tokens} tokens"
-                )
+                logger.debug(f"Found plan key '{key}': {key_tokens} tokens")
 
         # Rebuild with more aggressive compression for non-plan data
         result = {}
@@ -632,16 +630,14 @@ class TraceProvider(ABC):
                 continue  # Already added above
 
             value_tokens = len(json.dumps(value, default=str)) // 4
-            logger.info(f"DEBUG: Considering {key}: {value_tokens} tokens")
+            logger.debug(f"Considering {key}: {value_tokens} tokens")
 
             if used_tokens + value_tokens <= target_token_limit:
                 result[key] = value
                 used_tokens += value_tokens
-                logger.info(
-                    f"DEBUG: Added {key}, now using {used_tokens} tokens"
-                )
+                logger.debug(f"Added {key}, now using {used_tokens} tokens")
             else:
-                logger.info(f"DEBUG: {key} too large, trying truncation")
+                logger.debug(f"{key} too large, trying truncation")
                 # Try to fit a truncated version
                 if isinstance(value, list) and len(value) > 1:
                     # For lists, try with fewer items
@@ -741,39 +737,33 @@ class GenericTraceProvider(TraceProvider):
         if "spans" not in trace_data or not isinstance(
             trace_data["spans"], list
         ):
-            logger.warning(
-                "🔍 GENERIC_PLAN_DEBUG: No spans found in trace_data"
-            )
+            logger.debug("No spans found in trace_data")
             return None
 
-        logger.warning(
-            f"🔍 GENERIC_PLAN_DEBUG: Checking {len(trace_data['spans'])} spans for plan data"
-        )
+        logger.debug(f"Checking {len(trace_data['spans'])} spans for plan data")
 
         for i, span in enumerate(trace_data["spans"]):
             if not isinstance(span, dict):
-                logger.warning(
-                    f"🔍 GENERIC_PLAN_DEBUG: Span {i} is not a dict: {type(span)}"
-                )
+                logger.debug(f"Span {i} is not a dict: {type(span)}")
                 continue
 
             span_name = span.get("span_name", f"span_{i}")
             span_attrs = span.get("span_attributes", {})
 
-            logger.warning(
-                f"🔍 GENERIC_PLAN_DEBUG: Span {i} '{span_name}' has {len(span_attrs) if isinstance(span_attrs, dict) else 0} attributes"
+            logger.debug(
+                f"Span {i} '{span_name}' has {len(span_attrs) if isinstance(span_attrs, dict) else 0} attributes"
             )
 
             if not isinstance(span_attrs, dict):
-                logger.warning(
-                    f"🔍 GENERIC_PLAN_DEBUG: Span {i} attributes not a dict: {type(span_attrs)}"
+                logger.debug(
+                    f"Span {i} attributes not a dict: {type(span_attrs)}"
                 )
                 continue
 
             # Log all attribute keys for debugging
             attr_keys = list(span_attrs.keys())
-            logger.warning(
-                f"🔍 GENERIC_PLAN_DEBUG: Span {i} '{span_name}' attribute keys: {attr_keys[:10]}{'...' if len(attr_keys) > 10 else ''}"
+            logger.debug(
+                f"Span {i} '{span_name}' attribute keys: {attr_keys[:10]}{'...' if len(attr_keys) > 10 else ''}"
             )
 
             # Check for LangGraph-style state attributes
@@ -788,11 +778,11 @@ class GenericTraceProvider(TraceProvider):
             for state_key in state_keys:
                 if state_key in span_attrs:
                     state_value = span_attrs[state_key]
-                    logger.warning(
-                        f"🔍 GENERIC_PLAN_DEBUG: Found {state_key} in {span_name}, type: {type(state_value)}, size: {len(str(state_value))}"
+                    logger.debug(
+                        f"Found {state_key} in {span_name}, type: {type(state_value)}, size: {len(str(state_value))}"
                     )
-                    logger.warning(
-                        f"🔍 GENERIC_PLAN_DEBUG: State value preview: {str(state_value)[:200]}..."
+                    logger.debug(
+                        f"State value preview: {str(state_value)[:200]}..."
                     )
 
                     # Check if it contains Command structure
@@ -800,36 +790,36 @@ class GenericTraceProvider(TraceProvider):
                         isinstance(state_value, str)
                         and "Command(" in state_value
                     ):
-                        logger.warning(
-                            f"🔍 GENERIC_PLAN_DEBUG: Found Command structure in {span_name}.{state_key}"
+                        logger.debug(
+                            f"Found Command structure in {span_name}.{state_key}"
                         )
 
                         # Prioritize Commands with 'plan' over Commands with 'messages'
                         priority = 0
                         if "'plan':" in state_value or '"plan":' in state_value:
                             priority = 100  # High priority for real plans
-                            logger.warning(
-                                "🔍 GENERIC_PLAN_DEBUG: Command contains 'plan' key - HIGH PRIORITY"
+                            logger.debug(
+                                "Command contains 'plan' key - HIGH PRIORITY"
                             )
                         elif (
                             "'plan':" in state_value or '"plan":' in state_value
                         ):
                             priority = 90  # High priority for execution plans
-                            logger.warning(
-                                "🔍 GENERIC_PLAN_DEBUG: Command contains 'plan' key - HIGH PRIORITY"
+                            logger.debug(
+                                "Command contains 'plan' key - HIGH PRIORITY"
                             )
                         elif (
                             "'messages':" in state_value
                             and "Agent error:" in state_value
                         ):
                             priority = 10  # Low priority for debug messages
-                            logger.warning(
-                                "🔍 GENERIC_PLAN_DEBUG: Command contains debug messages - LOW PRIORITY"
+                            logger.debug(
+                                "Command contains debug messages - LOW PRIORITY"
                             )
                         else:
                             priority = 50  # Medium priority for other Commands
-                            logger.warning(
-                                "🔍 GENERIC_PLAN_DEBUG: Command structure found - MEDIUM PRIORITY"
+                            logger.debug(
+                                "Command structure found - MEDIUM PRIORITY"
                             )
 
                         potential_plans.append({
@@ -846,8 +836,8 @@ class GenericTraceProvider(TraceProvider):
                         and len(state_value) > 50
                     ):
                         if "Agent error:" not in state_value:
-                            logger.warning(
-                                f"🔍 GENERIC_PLAN_DEBUG: Found direct plan content in {span_name}.{state_key}"
+                            logger.debug(
+                                f"Found direct plan content in {span_name}.{state_key}"
                             )
                             potential_plans.append({
                                 "content": state_value,
@@ -860,8 +850,8 @@ class GenericTraceProvider(TraceProvider):
             if potential_plans:
                 potential_plans.sort(key=lambda x: x["priority"], reverse=True)
                 best_plan = potential_plans[0]
-                logger.warning(
-                    f"🔍 GENERIC_PLAN_DEBUG: Selected best plan from {best_plan['span_name']}.{best_plan['state_key']} with priority {best_plan['priority']}"
+                logger.debug(
+                    f"Selected best plan from {best_plan['span_name']}.{best_plan['state_key']} with priority {best_plan['priority']}"
                 )
 
                 # Try to extract structured plan from Command if applicable
@@ -871,8 +861,8 @@ class GenericTraceProvider(TraceProvider):
                             best_plan["content"]
                         )
                         if extracted_plan:
-                            logger.warning(
-                                "🔍 GENERIC_PLAN_DEBUG: Successfully extracted structured plan from Command"
+                            logger.debug(
+                                "Successfully extracted structured plan from Command"
                             )
                             return extracted_plan
 
@@ -886,13 +876,13 @@ class GenericTraceProvider(TraceProvider):
                     and isinstance(attr_value, str)
                     and len(attr_value) > 50
                 ):
-                    logger.warning(
-                        f"🔍 GENERIC_PLAN_DEBUG: Found plan-related attribute '{attr_key}' in {span_name}"
+                    logger.debug(
+                        f"Found plan-related attribute '{attr_key}' in {span_name}"
                     )
                     if "Agent error:" not in attr_value:
                         return attr_value
 
-        logger.warning("🔍 GENERIC_PLAN_DEBUG: No plan found in any spans")
+        logger.debug("No plan found in any spans")
         return None
 
     def _extract_plan_from_command_string(
@@ -952,7 +942,7 @@ class GenericTraceProvider(TraceProvider):
 
             return None
         except Exception as e:
-            logger.warning(f"🔍 GENERIC_PLAN_DEBUG: Error extracting plan: {e}")
+            logger.debug(f"Error extracting plan: {e}")
             return None
 
     def _format_plan_simple(self, plan_dict: Dict[str, Any]) -> str:
@@ -984,23 +974,21 @@ class GenericTraceProvider(TraceProvider):
 
     def extract_plan(self, trace_data: Dict[str, Any]) -> Optional[Any]:
         """Extract plan using generic field names."""
-        logger.info("DEBUG: GenericTraceProvider.extract_plan called")
-        logger.warning(
-            f"🔍 GENERIC_PLAN_DEBUG: Available trace_data keys: {list(trace_data.keys())}"
-        )
+        logger.debug("GenericTraceProvider.extract_plan called")
+        logger.debug(f"Available trace_data keys: {list(trace_data.keys())}")
 
         # Log first few keys and their types for debugging
         if trace_data:
             sample_keys = list(trace_data.keys())[:5]
             for key in sample_keys:
                 value = trace_data[key]
-                logger.warning(
-                    f"PLAN_DEBUG: Key '{key}' -> type: {type(value)}, size: {len(str(value))}"
+                logger.debug(
+                    f"Key '{key}' -> type: {type(value)}, size: {len(str(value))}"
                 )
 
         # Check common plan field names
         plan_fields = ["plan", "plan", "agent_plan", "workflow_plan"]
-        logger.info(f"DEBUG: Checking plan fields: {plan_fields}")
+        logger.debug(f"Checking plan fields: {plan_fields}")
 
         for field in plan_fields:
             if field in trace_data:
@@ -1012,8 +1000,8 @@ class GenericTraceProvider(TraceProvider):
                     "Agent error:" in plan_str
                     and len(plan_str.split("Agent error:")) > 3
                 ):
-                    logger.warning(
-                        f"🔍 GENERIC_PLAN_DEBUG: Top-level '{field}' contains debug messages, checking spans instead"
+                    logger.debug(
+                        f"Top-level '{field}' contains debug messages, checking spans instead"
                     )
                     # Look for better plan in spans first
                     span_plan = self._extract_plan_from_spans(trace_data)
@@ -1040,7 +1028,7 @@ class GenericTraceProvider(TraceProvider):
 
                 return cleaned_plan
             else:
-                logger.info(f"DEBUG: Field '{field}' not found in trace_data")
+                logger.debug(f"Field '{field}' not found in trace_data")
 
         # Check if this might be a LangGraph trace with spans
         if "spans" in trace_data:

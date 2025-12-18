@@ -43,33 +43,29 @@ class TraceCompressor:
 
         # Convert string to dict if needed
         if isinstance(trace_data, str):
-            logger.info("DEBUG: Converting string trace data to dict")
+            logger.debug("Converting string trace data to dict")
             try:
                 data = json.loads(trace_data)
-                logger.info(
-                    f"DEBUG: Successfully parsed JSON, result type: {type(data)}"
+                logger.debug(
+                    f"Successfully parsed JSON, result type: {type(data)}"
                 )
-                logger.info(
-                    f"DEBUG: Parsed JSON keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}"
+                logger.debug(
+                    f"Parsed JSON keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}"
                 )
             except json.JSONDecodeError as e:
-                logger.warning(
-                    f"DEBUG: Failed to parse trace data as JSON: {e}"
-                )
+                logger.debug(f"Failed to parse trace data as JSON: {e}")
                 raise ValueError("Invalid JSON trace data")
         else:
             data = trace_data
-            logger.info(f"DEBUG: Using trace data as-is, type: {type(data)}")
+            logger.debug(f"Using trace data as-is, type: {type(data)}")
             if isinstance(data, dict):
-                logger.info(f"DEBUG: Input dict keys: {list(data.keys())}")
+                logger.debug(f"Input dict keys: {list(data.keys())}")
 
         if not isinstance(data, dict):
-            logger.warning(
-                f"DEBUG: Trace data is not a dictionary, type: {type(data)}"
-            )
+            logger.debug(f"Trace data is not a dictionary, type: {type(data)}")
             raise ValueError("Trace data must be a dictionary")
 
-        logger.info(f"DEBUG: Normalized trace data keys: {list(data.keys())}")
+        logger.debug(f"Normalized trace data keys: {list(data.keys())}")
         return data
 
     def compress_trace_with_plan_priority(
@@ -79,19 +75,19 @@ class TraceCompressor:
         Compress trace with plan preservation as highest priority.
         If context window is exceeded, compress other data more aggressively.
         """
-        logger.info("DEBUG: compress_trace_with_plan_priority called")
-        logger.info(f"DEBUG: target_token_limit: {target_token_limit}")
+        logger.debug("compress_trace_with_plan_priority called")
+        logger.debug(f"target_token_limit: {target_token_limit}")
 
         try:
             data = self._normalize_trace_data(trace_data)
         except ValueError as e:
-            logger.error(f"DEBUG: Failed to normalize trace data: {e}")
+            logger.debug(f"Failed to normalize trace data: {e}")
             return {"error": str(e)}
 
         # Use global provider registry
         from trulens.core.utils.trace_provider import get_trace_provider
 
-        logger.info("DEBUG: Getting trace provider")
+        logger.debug("Getting trace provider")
         provider = get_trace_provider(data)
         result = provider.compress_with_plan_priority(data, target_token_limit)
 
@@ -107,17 +103,15 @@ class TraceCompressor:
         Returns:
             Compressed trace data
         """
-        logger.info("DEBUG: compress_trace called")
+        logger.debug("compress_trace called")
 
         try:
             data = self._normalize_trace_data(trace_data)
         except ValueError as e:
-            logger.error(f"DEBUG: Failed to normalize trace data: {e}")
+            logger.debug(f"Failed to normalize trace data: {e}")
             return {"error": str(e)}
 
-        logger.info(
-            "PLAN_PRESERVATION_DEBUG: Using modified trace compression with plan preservation"
-        )
+        logger.debug("Using modified trace compression with plan preservation")
 
         # Use global provider registry
         from trulens.core.utils.trace_provider import get_trace_provider
