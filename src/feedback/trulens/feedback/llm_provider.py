@@ -2319,7 +2319,38 @@ Labels:"""
             logger.error(f"Error classifying nuggets: {e}")
             return []
 
-    def groundedness_nuggetized(
+    def _parse_single_reason(
+        self, reasons: Optional[Union[List[Dict], Dict]]
+    ) -> List[str]:
+        if reasons is None:
+            return ""
+        elif isinstance(reasons, list):
+            if len(reasons) == 0:
+                return ""
+            elif len(reasons) == 1:
+                if "reasons" in reasons[0]:
+                    return reasons[0]["reasons"][0]
+                elif "reason" in reasons[0]:
+                    return reasons[0]["reason"]
+                else:
+                    return ""
+            else:
+                raise ValueError(
+                    f"Expected 1 reason but got {len(reasons)} reasons!"
+                )
+        elif isinstance(reasons, dict):
+            if "reasons" in reasons:
+                return reasons["reasons"][0]
+            elif "reason" in reasons:
+                return reasons["reason"]
+            else:
+                return ""
+        else:
+            raise ValueError(
+                f"Expected reasons to be a list or dict but got {type(reasons)}!"
+            )
+
+    def _groundedness_nuggetized(
         self,
         source: str,
         statement: str,
@@ -2358,9 +2389,13 @@ Labels:"""
         nugget_evaluations = []
         for i, nugget in enumerate(nuggets):
             score, reasons = self.groundedness_measure_with_cot_reasons(
-                source=source, statement=nugget
+                source=source,
+                statement=nugget,
+                groundedness_configs=core_feedback.GroundednessConfigs(
+                    splitter="none"
+                ),
             )
-
+            reason = reasons["reasons"][0]
             importance = (
                 classifications[i] if i < len(classifications) else "okay"
             )
@@ -2368,76 +2403,19 @@ Labels:"""
                 "nugget": nugget,
                 "importance": importance,
                 "score": score,
-                "reasons": reasons,
+                "reason": reason,
             })
-
         # Aggregate with importance weighting
         aggregate_score = self._aggregate_scores(
             nugget_evaluations, score_key="score"
         )
-
         metadata = {
             "nugget_evaluations": nugget_evaluations,
             "total_nuggets": len(nuggets),
             "method": "nuggetized",
-        }
-
-        return aggregate_score, metadata
-
-    def relevance_nuggetized(
-        self, prompt: str, response: str
-    ) -> Tuple[float, Dict]:
-        """
-        Evaluate answer relevance at nugget level.
-        Args:
-            prompt: Question/prompt
-            response: Answer/response to evaluate
-        Returns:
-            Tuple of (aggregate_score, metadata_dict)
-        """
-        # Extract nuggets from response
-        nuggets = self.extract_nuggets(context_text=response, query_text=prompt)
-        logger.debug(f"Extracted {len(nuggets)} nuggets from response")
-
-        if not nuggets:
-            return 0.0, {
-                "nugget_evaluations": [],
-                "total_nuggets": 0,
-                "method": "nuggetized",
-                "reason": "No nuggets extracted",
-            }
-
-        # Classify nuggets for importance weighting
-        classifications = self.classify_nuggets(
-            nuggets=nuggets, query_text=prompt
-        )
-
-        # Evaluate each nugget
-        nugget_evaluations = []
-        for i, nugget in enumerate(nuggets):
-            score, reasons = self.relevance_with_cot_reasons(
-                prompt=prompt, response=nugget
-            )
-
-            importance = (
-                classifications[i] if i < len(classifications) else "okay"
-            )
-            nugget_evaluations.append({
-                "nugget": nugget,
-                "importance": importance,
-                "score": score,
-                "reasons": reasons,
-            })
-
-        # Aggregate with importance weighting
-        aggregate_score = self._aggregate_scores(
-            nugget_evaluations, score_key="score"
-        )
-
-        metadata = {
-            "nugget_evaluations": nugget_evaluations,
-            "total_nuggets": len(nuggets),
-            "method": "nuggetized",
+            "reasons": [
+                eval_dict.get("reason", {}) for eval_dict in nugget_evaluations
+            ],
         }
 
         return aggregate_score, metadata
@@ -2554,20 +2532,29 @@ Labels:"""
         groundedness_scores = {}
         reasons_list = []
 
-        use_sent_tokenize = (
-            groundedness_configs.use_sent_tokenize
-            if groundedness_configs
-            else True
-        )
+        splitter = "sent_tokenize"
+        if groundedness_configs:
+            if groundedness_configs.splitter:
+                splitter = groundedness_configs.splitter
+            elif groundedness_configs.use_sent_tokenize:
+                splitter = "sent_tokenize"
+            else:
+                splitter = "llm"
         filter_trivial_statements = (
             groundedness_configs.filter_trivial_statements
             if groundedness_configs
             else True
         )
 
-        if use_sent_tokenize:
+        if splitter == "sent_tokenize":
             nltk.download("punkt_tab", quiet=True)
             hypotheses = sent_tokenize(statement)
+        elif splitter == "nuggetize":
+            return self._groundedness_nuggetized(
+                source=source, statement=statement
+            )
+        elif splitter == "none":
+            hypotheses = [statement]
         else:
             llm_messages = [
                 {
@@ -2576,7 +2563,6 @@ Labels:"""
                 },
                 {"role": "user", "content": statement},
             ]
-
             hypotheses = self.endpoint.run_in_pace(
                 func=self._create_chat_completion,
                 messages=llm_messages,
