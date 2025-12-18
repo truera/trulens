@@ -97,16 +97,14 @@ class TraceProvider(ABC):
             compressed["tool_execution_evidence"] = tool_evidence
 
         # Also preserve any top-level keys containing "plan" (case-insensitive)
-        plan_keys_found = 0
         for key, value in trace_data.items():
             if (
                 "plan" in key.lower() and key.lower() != "plan"
             ):  # Don't duplicate the main plan
                 compressed[key] = value
-                plan_keys_found += 1
-        if plan_keys_found == 0 and not plan:
-            # Add execution flow
-            flow = self.extract_execution_flow(trace_data)
+
+        # Always extract execution flow - useful alongside plan for adherence evaluation
+        flow = self.extract_execution_flow(trace_data)
         if flow:
             compressed["execution_flow"] = flow
 
