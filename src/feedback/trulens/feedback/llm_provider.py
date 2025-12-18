@@ -2392,10 +2392,16 @@ Labels:"""
                 source=source,
                 statement=nugget,
                 groundedness_configs=core_feedback.GroundednessConfigs(
-                    splitter="none"
+                    use_sent_tokenize=False,
+                    filter_trivial_statements=False,
+                    splitter="none",
                 ),
             )
-            reason = reasons["reasons"][0]
+            reason = (
+                reasons.get("reasons", [{}])[0]
+                if reasons.get("reasons")
+                else reasons.get("reason", {})
+            )
             importance = (
                 classifications[i] if i < len(classifications) else "okay"
             )
