@@ -2053,7 +2053,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 )
             except Exception as e:
                 logger.exception(
-                    f"Failed to flush remaining OTEL spans and/or start Snowflake query to wait for ingested batches: {e}"
+                    f"Failed to flush remaining OTEL spans and/or start Snowflake query to wait for ingested batches: {repr(e).replace('$', '\$')}"
                 )
 
     def instrumented_invoke_main_method(
@@ -2260,7 +2260,7 @@ def trace_with_run(
                     )
                 except Exception as e:
                     logger.exception(
-                        f"Failed to flush remaining OTEL spans and/or start Snowflake query to wait for ingested batches: {e}"
+                        f"Failed to flush remaining OTEL spans and/or start Snowflake query to wait for ingested batches: {repr(e).replace('$', '\$')}"
                     )
 
         return wrapper
