@@ -343,7 +343,7 @@ class FeedbackDefinition(
     criteria: Optional[str] = None
     """Criteria for the feedback function."""
 
-    custom_instructions: Optional[str] = None
+    additional_instructions: Optional[str] = None
     """Custom instructions for the feedback function."""
 
     combinations: Optional[FeedbackCombinations] = FeedbackCombinations.PRODUCT
@@ -391,7 +391,7 @@ class FeedbackDefinition(
         ] = None,
         examples: Optional[List[Tuple]] = None,
         criteria: Optional[str] = None,
-        custom_instructions: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         if_exists: Optional[serial_utils.Lens] = None,
         if_missing: FeedbackOnMissingParameters = FeedbackOnMissingParameters.ERROR,
         selectors: Optional[Dict[str, serial_utils.Lens]] = None,
@@ -411,7 +411,7 @@ class FeedbackDefinition(
             aggregator=aggregator,
             examples=examples,
             criteria=criteria,
-            custom_instructions=custom_instructions,
+            additional_instructions=additional_instructions,
             selectors=selectors,
             if_exists=if_exists,
             if_missing=if_missing,

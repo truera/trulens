@@ -2582,13 +2582,13 @@ reference = "pypi-public"
 
 [[package]]
 name = "ipykernel"
-version = "7.1.0"
+version = "6.31.0"
 description = "IPython Kernel for Jupyter"
 optional = false
-python-versions = ">=3.10"
+python-versions = ">=3.9"
 files = [
-    {file = "ipykernel-7.1.0-py3-none-any.whl", hash = "sha256:763b5ec6c5b7776f6a8d7ce09b267693b4e5ce75cb50ae696aaefb3c85e1ea4c"},
-    {file = "ipykernel-7.1.0.tar.gz", hash = "sha256:58a3fc88533d5930c3546dc7eac66c6d288acde4f801e2001e65edc5dc9cf0db"},
+    {file = "ipykernel-6.31.0-py3-none-any.whl", hash = "sha256:abe5386f6ced727a70e0eb0cf1da801fa7c5fa6ff82147747d5a0406cd8c94af"},
+    {file = "ipykernel-6.31.0.tar.gz", hash = "sha256:2372ce8bc1ff4f34e58cafed3a0feb2194b91fc7cad0fc72e79e47b45ee9e8f6"},
 ]
 
 [package.dependencies]
@@ -2608,7 +2608,7 @@ traitlets = ">=5.4.0"
 
 [package.extras]
 cov = ["coverage[toml]", "matplotlib", "pytest-cov", "trio"]
-docs = ["intersphinx-registry", "myst-parser", "pydata-sphinx-theme", "sphinx (<8.2.0)", "sphinx-autodoc-typehints", "sphinxcontrib-github-alt", "sphinxcontrib-spelling", "trio"]
+docs = ["intersphinx-registry", "myst-parser", "pydata-sphinx-theme", "sphinx", "sphinx-autodoc-typehints", "sphinxcontrib-github-alt", "sphinxcontrib-spelling", "trio"]
 pyqt5 = ["pyqt5"]
 pyside6 = ["pyside6"]
 test = ["flaky", "ipyparallel", "pre-commit", "pytest (>=7.0,<9)", "pytest-asyncio (>=0.23.5)", "pytest-cov", "pytest-timeout"]
@@ -4552,24 +4552,22 @@ reference = "pypi-public"
 
 [[package]]
 name = "mkdocs-jupyter"
-version = "0.24.1"
+version = "0.25.1"
 description = "Use Jupyter in mkdocs websites"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.9"
 files = [
-    {file = "mkdocs_jupyter-0.24.1-py3-none-any.whl", hash = "sha256:759833c7d1528ae2d6337342786be7bc1e2235b0b98e9326427d4cf8d4eebee0"},
-    {file = "mkdocs_jupyter-0.24.1.tar.gz", hash = "sha256:9677037fb7e931268f3df7599fc0828c261247df3d1575bced320ba8b7d1d46d"},
+    {file = "mkdocs_jupyter-0.25.1-py3-none-any.whl", hash = "sha256:3f679a857609885d322880e72533ef5255561bbfdb13cfee2a1e92ef4d4ad8d8"},
+    {file = "mkdocs_jupyter-0.25.1.tar.gz", hash = "sha256:0e9272ff4947e0ec683c92423a4bfb42a26477c103ab1a6ab8277e2dcc8f7afe"},
 ]
 
 [package.dependencies]
+ipykernel = ">6.0.0,<7.0.0"
 jupytext = ">1.13.8,<2"
 mkdocs = ">=1.4.0,<2"
 mkdocs-material = ">9.0.0"
 nbconvert = ">=7.2.9,<8"
 pygments = ">2.12.0"
-
-[package.extras]
-test = ["pytest", "pytest-cov"]
 
 [package.source]
 type = "legacy"
@@ -9838,7 +9836,7 @@ reference = "pypi-public"
 
 [[package]]
 name = "trulens-apps-langchain"
-version = "2.5.1"
+version = "2.5.2"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -9858,7 +9856,7 @@ url = "src/apps/langchain"
 
 [[package]]
 name = "trulens-apps-langgraph"
-version = "2.5.1"
+version = "2.5.2"
 description = "Library to systematically track and evaluate LangGraph based applications."
 optional = false
 python-versions = "^3.9"
@@ -9883,7 +9881,7 @@ url = "src/apps/langgraph"
 
 [[package]]
 name = "trulens-apps-llamaindex"
-version = "2.5.1"
+version = "2.5.2"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -9906,7 +9904,7 @@ url = "src/apps/llamaindex"
 
 [[package]]
 name = "trulens-benchmark"
-version = "2.5.1"
+version = "2.5.2"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -9923,7 +9921,7 @@ url = "src/benchmark"
 
 [[package]]
 name = "trulens-connectors-snowflake"
-version = "2.5.1"
+version = "2.5.2"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9,<3.13"
@@ -9941,7 +9939,7 @@ url = "src/connectors/snowflake"
 
 [[package]]
 name = "trulens-core"
-version = "2.5.1"
+version = "2.5.2"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -9975,7 +9973,7 @@ url = "src/core"
 
 [[package]]
 name = "trulens-dashboard"
-version = "2.5.1"
+version = "2.5.2"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9,!=3.9.7"
@@ -10004,7 +10002,7 @@ url = "src/dashboard"
 
 [[package]]
 name = "trulens-eval"
-version = "2.5.1"
+version = "2.5.2"
 description = "Backwards-compatibility package for API of trulens_eval<1.0.0 using API of trulens-*>=1.0.0."
 optional = false
 python-versions = "^3.9,!=3.9.7"
@@ -10022,7 +10020,7 @@ url = "src/trulens_eval"
 
 [[package]]
 name = "trulens-feedback"
-version = "2.5.1"
+version = "2.5.2"
 description = "A TruLens extension package implementing feedback functions for LLM App evaluation."
 optional = false
 python-versions = "^3.9"
@@ -10044,7 +10042,7 @@ url = "src/feedback"
 
 [[package]]
 name = "trulens-hotspots"
-version = "2.5.1"
+version = "2.5.2"
 description = "Library and command-line tool to list features lowering your evaluation score."
 optional = false
 python-versions = "^3.9"
@@ -10063,7 +10061,7 @@ url = "src/hotspots"
 
 [[package]]
 name = "trulens-otel-semconv"
-version = "2.5.1"
+version = "2.5.2"
 description = "Semantic conventions for spans produced by TruLens."
 optional = false
 python-versions = "^3.9"
@@ -10079,7 +10077,7 @@ url = "src/otel/semconv"
 
 [[package]]
 name = "trulens-providers-bedrock"
-version = "2.5.1"
+version = "2.5.2"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10098,7 +10096,7 @@ url = "src/providers/bedrock"
 
 [[package]]
 name = "trulens-providers-cortex"
-version = "2.5.1"
+version = "2.5.2"
 description = "A TruLens extension package adding Snowflake Cortex support for LLM App evaluation."
 optional = false
 python-versions = "^3.9,<3.13"
@@ -10119,7 +10117,7 @@ url = "src/providers/cortex"
 
 [[package]]
 name = "trulens-providers-google"
-version = "2.5.1"
+version = "2.5.2"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10138,7 +10136,7 @@ url = "src/providers/google"
 
 [[package]]
 name = "trulens-providers-huggingface"
-version = "2.5.1"
+version = "2.5.2"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10160,7 +10158,7 @@ url = "src/providers/huggingface"
 
 [[package]]
 name = "trulens-providers-langchain"
-version = "2.5.1"
+version = "2.5.2"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10178,7 +10176,7 @@ url = "src/providers/langchain"
 
 [[package]]
 name = "trulens-providers-litellm"
-version = "2.5.1"
+version = "2.5.2"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10196,7 +10194,7 @@ url = "src/providers/litellm"
 
 [[package]]
 name = "trulens-providers-openai"
-version = "2.5.1"
+version = "2.5.2"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -11299,4 +11297,4 @@ reference = "pypi-public"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "49bce863979de4245edf76f1a41d033a28a579deea41ac72c00f80521e1c76ad"
+content-hash = "19571b8b6457080a5875867e97d857675f1700746a39a436f0d6c514b811c2c0"
