@@ -93,7 +93,7 @@ trulens.core.app:
     Tool: trulens.core.app.ComponentViewMeta
     TrulensComponent: trulens.core.app.ComponentViewMeta
     instrumented_component_views: builtins.function
-    trace_with_run: builtins.staticmethod
+    trace_with_run: builtins.function
 trulens.core.app.Agent:
   __bases__:
   - trulens.core.app.ComponentView
@@ -1435,6 +1435,7 @@ trulens.core.utils.deprecation:
     deprecated_property: builtins.function
     deprecated_str: builtins.function
     function_moved: builtins.function
+    handle_deprecated_kwarg: builtins.function
     has_deprecated: builtins.function
     has_moved: builtins.function
     is_deprecated: builtins.function
