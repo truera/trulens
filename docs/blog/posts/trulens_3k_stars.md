@@ -28,7 +28,7 @@ We [benchmarked this framework to cover 95% of internal agent errors on the open
 
 ## Enabling reasoning models for agent evals
 
-A major paradigm shift in the industry has been the rise of reasoning models. These powerful models often have different API shapes and output formats. We enabled support for [Deepseek](https://github.com/truera/trulens/pull/2191) models, models, and OpenAI’s [GPT-5](https://github.com/truera/trulens/pull/2189) and [o-series](https://github.com/truera/trulens/pull/2138), so they can be used as LLM judges in TruLens and enable richer reasoning for evaluation.
+A major paradigm shift in the industry has been the rise of reasoning models. These powerful models often have different API shapes and output formats. We enabled support for [Deepseek](https://github.com/truera/trulens/pull/2191) models, and OpenAI's [GPT-5](https://github.com/truera/trulens/pull/2189) and [o-series](https://github.com/truera/trulens/pull/2138), so they can be used as LLM judges in TruLens and enable richer reasoning for evaluation.
 
 Because agent traces are massively more complex than prior evolutions of LLM applications, reasoning models are particularly useful for evaluation. In internal benchmarks of agent evaluation metrics, particularly logical consistency, we saw significant improvements for using reasoning models (such as GPT-4o) compared to oneshot (such as GPT-4.1).
 
