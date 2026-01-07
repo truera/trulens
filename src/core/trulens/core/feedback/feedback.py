@@ -129,7 +129,13 @@ class InvalidSelector(Exception):
 
 class GroundednessConfigs(BaseModel):
     use_sent_tokenize: bool
+    """[DEPRECATED in favor of `splitter`] Whether to use the sentence tokenizer to split the statement into sentences."""
+
     filter_trivial_statements: bool
+    """Whether to filter out trivial statements."""
+
+    splitter: str
+    """The splitter to use to split the statement into sentences. Must be one of `sent_tokenize`, `nuggetize`, `llm`, or `none`."""
 
 
 class Feedback(feedback_schema.FeedbackDefinition):

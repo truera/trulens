@@ -2721,6 +2721,320 @@ class LLMProvider(core_provider.Provider):
 
         return statements
 
+    def extract_nuggets(
+        self,
+        context_text: str,
+        query_text: str,
+        max_nuggets: int = 30,
+        nuggets: Optional[List[str]] = None,
+        temperature: float = 0.0,
+    ) -> List[str]:
+        """
+        Extract atomic nuggets of information from text using the LLM.
+        This method can be used as a preprocessing step for answer relevance and
+        groundedness evaluation, replacing the simpler sentence tokenization approach.
+        Args:
+            context_text: Context text to extract nuggets from
+            query_text: Query text to condition nugget extraction on
+            max_nuggets: Maximum number of nuggets to extract (default: 30)
+            nuggets: Optional initial list of nuggets for iterative extraction
+            temperature: Temperature for LLM response (default: 0.0)
+        Returns:
+            List of atomic nugget strings
+        """
+        assert self.endpoint is not None, "Endpoint is not set."
+
+        if nuggets is None:
+            nuggets = []
+
+        system_prompt = (
+            "You are NuggetizeLLM, an intelligent assistant that can update a list of "
+            "atomic nuggets to best provide all the information required for the query."
+        )
+
+        user_prompt = f"""Update the list of atomic nuggets of information (1-12 words), if needed, so they best provide the information required for the query. Leverage only the initial list of nuggets (if exists) and the provided context (this is an iterative process). Return only the final list of all nuggets in a Pythonic list format (even if no updates). Make sure there is no redundant information. Ensure the updated nugget list has at most {max_nuggets} nuggets (can be less), keeping only the most vital ones. Order them in decreasing order of importance. Prefer nuggets that provide more interesting information.
+Search Query: {query_text}
+Context:
+{context_text}
+Search Query: {query_text}
+Initial Nugget List: {nuggets}
+Initial Nugget List Length: {len(nuggets)}
+Only update the list of atomic nuggets (if needed, else return as is). Do not explain. Always answer in short nuggets (not questions). List in the form ["a", "b", ...] and a and b are strings with no mention of ".
+Updated Nugget List:"""
+
+        llm_messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+
+        try:
+            response = self.endpoint.run_in_pace(
+                func=self._create_chat_completion,
+                messages=llm_messages,
+                temperature=temperature,
+            )
+
+            # Parse the response - try multiple methods
+            content = response.strip()
+
+            # Try JSON parsing first
+            try:
+                import json
+
+                result = json.loads(content)
+                if isinstance(result, list):
+                    return result
+            except (json.JSONDecodeError, ValueError):
+                pass
+
+            # Try extracting list from markdown code block
+            if "```" in content:
+                # Extract content between code blocks
+                match = re.search(
+                    r"```(?:python|json)?\s*\n?(.*?)\n?```", content, re.DOTALL
+                )
+                if match:
+                    content = match.group(1).strip()
+
+            # Try eval as fallback
+            try:
+                result = eval(content)
+                if isinstance(result, list):
+                    return result
+            except (SyntaxError, ValueError):
+                pass
+
+            logger.warning(
+                f"Could not parse nuggets from response: {content[:100]}... Returning empty list."
+            )
+            return []
+
+        except Exception as e:
+            logger.error(f"Error extracting nuggets: {e}")
+            return []
+
+    def classify_nuggets(
+        self,
+        nuggets: List[str],
+        query_text: str,
+        temperature: float = 0.0,
+    ) -> List[str]:
+        """
+        Classify the importance of nuggets using the LLM.
+        Labels each nugget as either "vital" or "okay" based on relevance to the query.
+        Vital nuggets represent concepts that must be present in a good answer, while
+        okay nuggets contribute worthwhile but non-essential information.
+        Args:
+            nuggets: List of nugget strings to classify
+            query_text: Query text to condition classification on
+            temperature: Temperature for LLM response (default: 0.0)
+        Returns:
+            List of classification labels ("vital" or "okay") in the same order as input nuggets
+        """
+        assert self.endpoint is not None, "Endpoint is not set."
+
+        system_prompt = (
+            "You are NuggetizeLLM, an intelligent assistant that can update a list of "
+            "atomic nuggets to best provide all the information required for the query."
+        )
+
+        user_prompt = f"""Based on the query, label each of the {len(nuggets)} nuggets either a vital or okay based on the following criteria. Vital nuggets represent concepts that must be present in a "good" answer; on the other hand, okay nuggets contribute worthwhile information about the target but are not essential. Return the list of labels in a Pythonic list format (type: List[str]). The list should be in the same order as the input nuggets. Make sure to provide a label for each nugget.
+Search Query: {query_text}
+Nugget List: {[nugget for nugget in nuggets]}
+Only return the list of labels (List[str]). Do not explain.
+Labels:"""
+
+        llm_messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+
+        try:
+            response = self.endpoint.run_in_pace(
+                func=self._create_chat_completion,
+                messages=llm_messages,
+                temperature=temperature,
+            )
+
+            # Parse the response - try multiple methods
+            content = response.strip()
+
+            # Try JSON parsing first
+            try:
+                import json
+
+                result = json.loads(content)
+                if isinstance(result, list):
+                    return result
+            except (json.JSONDecodeError, ValueError):
+                pass
+
+            # Try extracting list from markdown code block
+            if "```" in content:
+                # Extract content between code blocks
+                match = re.search(
+                    r"```(?:python|json)?\s*\n?(.*?)\n?```", content, re.DOTALL
+                )
+                if match:
+                    content = match.group(1).strip()
+
+            # Try eval as fallback
+            try:
+                result = eval(content)
+                if isinstance(result, list):
+                    return result
+            except (SyntaxError, ValueError):
+                pass
+
+            logger.warning(
+                f"Could not parse classifications from response: {content[:100]}... Returning empty list."
+            )
+            return []
+
+        except Exception as e:
+            logger.error(f"Error classifying nuggets: {e}")
+            return []
+
+    def _parse_single_reason(
+        self, reasons: Optional[Union[List[Dict], Dict]]
+    ) -> List[str]:
+        if reasons is None:
+            return ""
+        elif isinstance(reasons, list):
+            if len(reasons) == 0:
+                return ""
+            elif len(reasons) == 1:
+                if "reasons" in reasons[0]:
+                    return reasons[0]["reasons"][0]
+                elif "reason" in reasons[0]:
+                    return reasons[0]["reason"]
+                else:
+                    return ""
+            else:
+                raise ValueError(
+                    f"Expected 1 reason but got {len(reasons)} reasons!"
+                )
+        elif isinstance(reasons, dict):
+            if "reasons" in reasons:
+                return reasons["reasons"][0]
+            elif "reason" in reasons:
+                return reasons["reason"]
+            else:
+                return ""
+        else:
+            raise ValueError(
+                f"Expected reasons to be a list or dict but got {type(reasons)}!"
+            )
+
+    def _groundedness_nuggetized(
+        self,
+        source: str,
+        statement: str,
+        query: Optional[str] = None,
+    ) -> Tuple[float, Dict]:
+        """
+        Evaluate groundedness at nugget level.
+        Args:
+            source: Source context
+            statement: Statement to evaluate
+            query: Optional query for nugget extraction context
+        Returns:
+            Tuple of (aggregate_score, metadata_dict)
+        """
+        # Extract nuggets from statement using the query (or statement itself) as context
+        query_text = query if query is not None else statement
+        nuggets = self.extract_nuggets(
+            context_text=statement, query_text=query_text
+        )
+        logger.debug(f"Extracted {len(nuggets)} nuggets from statement")
+
+        if not nuggets:
+            return 0.0, {
+                "nugget_evaluations": [],
+                "total_nuggets": 0,
+                "method": "nuggetized",
+                "reason": "No nuggets extracted",
+            }
+
+        # Classify nuggets for importance weighting
+        classifications = self.classify_nuggets(
+            nuggets=nuggets, query_text=query_text
+        )
+
+        # Evaluate each nugget
+        nugget_evaluations = []
+        for i, nugget in enumerate(nuggets):
+            score, reasons = self.groundedness_measure_with_cot_reasons(
+                source=source,
+                statement=nugget,
+                groundedness_configs=core_feedback.GroundednessConfigs(
+                    use_sent_tokenize=False,
+                    filter_trivial_statements=False,
+                    splitter="none",
+                ),
+            )
+            reason = (
+                reasons.get("reasons", [{}])[0]
+                if reasons.get("reasons")
+                else reasons.get("reason", {})
+            )
+            importance = (
+                classifications[i] if i < len(classifications) else "okay"
+            )
+            nugget_evaluations.append({
+                "nugget": nugget,
+                "importance": importance,
+                "score": score,
+                "reason": reason,
+            })
+        # Aggregate with importance weighting
+        aggregate_score = self._aggregate_scores(
+            nugget_evaluations, score_key="score"
+        )
+        metadata = {
+            "nugget_evaluations": nugget_evaluations,
+            "total_nuggets": len(nuggets),
+            "method": "nuggetized",
+            "reasons": [
+                eval_dict.get("reason", {}) for eval_dict in nugget_evaluations
+            ],
+        }
+
+        return aggregate_score, metadata
+
+    def _aggregate_scores(
+        self, nugget_evaluations: List[Dict], score_key: str = "score"
+    ) -> float:
+        """
+        Aggregate nugget scores using importance weighting.
+        Args:
+            nugget_evaluations: List of nugget evaluation dictionaries
+            score_key: Key for score in evaluation dict
+        Returns:
+            Weighted average score (vital nuggets get 2x weight, okay nuggets get 1x weight)
+        """
+        if not nugget_evaluations:
+            return 0.0
+
+        # Calculate weighted sum: vital = 2x, okay = 1x
+        total_weight = 0.0
+        weighted_sum = 0.0
+
+        for eval_dict in nugget_evaluations:
+            importance = eval_dict.get("importance", "okay").lower()
+            weight = 2.0 if importance == "vital" else 1.0
+
+            total_weight += weight
+            weighted_sum += eval_dict[score_key] * weight
+
+        if total_weight == 0:
+            # Fallback to equal weighting
+            return np.mean([
+                eval_dict[score_key] for eval_dict in nugget_evaluations
+            ])
+
+        return weighted_sum / total_weight
+
     def groundedness_measure_with_cot_reasons(
         self,
         source: str,
@@ -2810,20 +3124,29 @@ class LLMProvider(core_provider.Provider):
         groundedness_scores = {}
         reasons_list = []
 
-        use_sent_tokenize = (
-            groundedness_configs.use_sent_tokenize
-            if groundedness_configs
-            else True
-        )
+        splitter = "sent_tokenize"
+        if groundedness_configs:
+            if groundedness_configs.splitter:
+                splitter = groundedness_configs.splitter
+            elif groundedness_configs.use_sent_tokenize:
+                splitter = "sent_tokenize"
+            else:
+                splitter = "llm"
         filter_trivial_statements = (
             groundedness_configs.filter_trivial_statements
             if groundedness_configs
             else True
         )
 
-        if use_sent_tokenize:
+        if splitter == "sent_tokenize":
             nltk.download("punkt_tab", quiet=True)
             hypotheses = sent_tokenize(statement)
+        elif splitter == "nuggetize":
+            return self._groundedness_nuggetized(
+                source=source, statement=statement
+            )
+        elif splitter == "none":
+            hypotheses = [statement]
         else:
             llm_messages = [
                 {
@@ -2832,7 +3155,6 @@ class LLMProvider(core_provider.Provider):
                 },
                 {"role": "user", "content": statement},
             ]
-
             hypotheses = self.endpoint.run_in_pace(
                 func=self._create_chat_completion,
                 messages=llm_messages,
