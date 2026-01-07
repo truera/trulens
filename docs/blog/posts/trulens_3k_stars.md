@@ -22,7 +22,7 @@ One challenge we’ve observed with teams building agents is that annotating age
 
 To address this challenge, we’ve introduced a new framework for evaluating the alignment of an agent’s goal, plan and actions which we’ve dubbed the [Agent’s GPA.](https://www.snowflake.com/en/engineering-blog/ai-agent-evaluation-gpa-framework/)
 
-We [benchmarked this framework to cover 95% of internal agent errors on the open-source TRAIL dataset](https://arxiv.org/abs/2510.08847?), composed of agent traces for software engineering and data tasks. This framework provides an exciting new set of reference-free metrics that review agent traces and identify ways to improve the agent.
+We [benchmarked this framework to cover 95% of internal agent errors on the open-source TRAIL dataset](https://arxiv.org/abs/2510.08847), composed of agent traces for software engineering and data tasks. This framework provides an exciting new set of reference-free metrics that review agent traces and identify ways to improve the agent.
 
 ![TruLens Agent GPA](../assets/agent_gpa.png)
 
