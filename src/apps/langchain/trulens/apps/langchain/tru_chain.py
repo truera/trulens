@@ -237,13 +237,17 @@ except ImportError:
         except Exception:
             _StructuredTool = None  # type: ignore[assignment]
 
+logger = logging.getLogger(__name__)
+
 # Handle optional MCP client import for MCP-specific instrumentation
 try:
     from langchain_mcp_adapters.client import MultiServerMCPClient
-except ImportError:
+except Exception as e:
     MultiServerMCPClient = None  # type: ignore[assignment]
-
-logger = logging.getLogger(__name__)
+    logger.debug(
+        "langchain_mcp_adapters not available, MCP instrumentation disabled: %s",
+        e,
+    )
 
 pp = PrettyPrinter()
 
