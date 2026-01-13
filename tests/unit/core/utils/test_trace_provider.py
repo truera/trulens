@@ -485,4 +485,3 @@ class TestTraceCompression:
         result = compressor.compress_trace(invalid_json)
 
         assert "error" in result
-        
