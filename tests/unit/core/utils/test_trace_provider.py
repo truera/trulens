@@ -2,7 +2,6 @@
 
 import pytest
 from trulens.core.utils.trace_compression import MAX_TRACE_SIZE
-from trulens.core.utils.trace_compression import MAX_TRACE_SIZE_TOKEN_LIMIT
 from trulens.core.utils.trace_compression import TraceCompressor
 from trulens.core.utils.trace_compression import compress_trace_for_feedback
 from trulens.core.utils.trace_provider import GenericTraceProvider
