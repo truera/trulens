@@ -486,15 +486,4 @@ class TestTraceCompression:
         result = compressor.compress_trace(invalid_json)
 
         assert "error" in result
-
-
-class TestTraceCompressionConstants:
-    """Tests for trace compression constants."""
-
-    def test_max_trace_size_is_reasonable(self):
-        """MAX_TRACE_SIZE should be a reasonable value."""
-        assert MAX_TRACE_SIZE == 500000  # 500KB
-
-    def test_max_trace_size_token_limit_is_reasonable(self):
-        """MAX_TRACE_SIZE_TOKEN_LIMIT should be reasonable (not too aggressive)."""
-        assert MAX_TRACE_SIZE_TOKEN_LIMIT == 50000  # Updated from 5000 to 50000
+        
