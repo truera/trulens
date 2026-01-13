@@ -101,66 +101,6 @@ class LangGraphTraceProvider(TraceProvider):
 
         return None
 
-    def _clean_plan_content(self, plan_value: Any) -> Any:
-        """
-        Clean plan content by removing debug messages and error logs.
-
-        Args:
-            plan_value: Raw plan data that may contain debug messages
-
-        Returns:
-            Cleaned plan data with debug messages removed
-        """
-        if not isinstance(plan_value, str):
-            plan_str = str(plan_value)
-        else:
-            plan_str = plan_value
-
-        # Patterns to remove - ONLY obvious debug/error messages, be very conservative
-        patterns_to_remove = [
-            r"^Agent error: [^\n]*\n?",  # Remove lines that START with "Agent error: "
-            r"^DEBUG: [^\n]*\n?",  # Remove lines that START with "DEBUG: "
-            r"^Query ID: [^\n]*\n?",  # Remove lines that START with "Query ID: "
-        ]
-
-        import re
-
-        cleaned_plan = plan_str
-
-        for pattern in patterns_to_remove:
-            cleaned_plan = re.sub(
-                pattern, "", cleaned_plan, flags=re.IGNORECASE | re.MULTILINE
-            )
-
-        # Only remove completely empty lines, preserve all other content
-        lines = cleaned_plan.split("\n")
-        cleaned_lines = []
-
-        for line in lines:
-            # Keep the line if it has any content, even just whitespace
-            # Only remove completely empty lines
-            if line.strip():  # Keep any line with content
-                cleaned_lines.append(line)
-
-        # Join back with single newlines, preserve original formatting
-        final_cleaned = "\n".join(cleaned_lines)
-
-        # If the original was not a string, try to preserve the original type
-        if not isinstance(plan_value, str):
-            try:
-                import json
-
-                if plan_str.strip().startswith(("{", "[")):
-                    return (
-                        json.loads(final_cleaned)
-                        if final_cleaned.strip()
-                        else plan_value
-                    )
-            except Exception:
-                pass
-
-        return final_cleaned if final_cleaned.strip() else plan_value
-
     def _extract_plan_from_command_string(
         self, command_str: str
     ) -> Optional[str]:
@@ -1359,28 +1299,6 @@ class LangGraphTraceProvider(TraceProvider):
             "'record_id':",  # Record IDs
         ]
         return any(ind in content for ind in indicators)
-
-    def _safe_truncate(self, s: str, max_len: int) -> str:
-        """
-        Safely truncate a string without breaking JSON structure.
-        Ensures balanced quotes and removes trailing incomplete escapes.
-        """
-        if len(s) <= max_len:
-            return s
-
-        truncated = s[:max_len]
-
-        # Remove any trailing backslash that could break escape sequences
-        while truncated.endswith("\\"):
-            truncated = truncated[:-1]
-
-        # Try to end at a safe boundary (comma, space, or closing bracket)
-        for i in range(len(truncated) - 1, max(0, len(truncated) - 50), -1):
-            if truncated[i] in ",} \n":
-                truncated = truncated[: i + 1]
-                break
-
-        return truncated + "..."
 
     def _extract_embedded_tool_calls(
         self, content: str, span_name: str

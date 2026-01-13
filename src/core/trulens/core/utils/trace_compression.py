@@ -15,6 +15,36 @@ MAX_TRACE_SIZE = 500000  # 500KB
 MAX_TRACE_SIZE_TOKEN_LIMIT = 50000  # Minimum token limit for very large traces
 
 
+def safe_truncate(s: str, max_len: int) -> str:
+    """
+    Safely truncate a string without breaking JSON structure.
+    Ensures we don't cut mid-escape sequence or leave unclosed quotes.
+
+    Args:
+        s: String to truncate
+        max_len: Maximum length
+
+    Returns:
+        Truncated string with "..." suffix if truncated, or original if not a string
+    """
+    if not isinstance(s, str) or len(s) <= max_len:
+        return s
+
+    truncated = s[:max_len]
+
+    # Remove any trailing backslash that could break escape sequences
+    while truncated.endswith("\\"):
+        truncated = truncated[:-1]
+
+    # Try to end at a safe boundary (comma, space, or closing bracket)
+    for i in range(len(truncated) - 1, max(0, len(truncated) - 50), -1):
+        if truncated[i] in ",} \n":
+            truncated = truncated[: i + 1]
+            break
+
+    return truncated + "..."
+
+
 class TraceCompressor:
     """
     Compresses trace data for LLM context windows while preserving critical information.

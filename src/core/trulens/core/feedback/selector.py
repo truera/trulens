@@ -8,6 +8,7 @@ from typing import Any, Callable, Dict, List, Optional
 import pandas as pd
 from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
 from trulens.core.utils.trace_compression import compress_trace_for_feedback
+from trulens.core.utils.trace_compression import safe_truncate
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
@@ -128,29 +129,6 @@ class Trace:
         final_cleaned = "\n".join(cleaned_lines)
         return final_cleaned if final_cleaned.strip() else plan_str
 
-    @staticmethod
-    def _safe_truncate(s: str, max_len: int) -> str:
-        """
-        Safely truncate a string without breaking JSON structure.
-        Ensures we don't cut mid-escape sequence or leave unclosed quotes.
-        """
-        if not isinstance(s, str) or len(s) <= max_len:
-            return s
-
-        truncated = s[:max_len]
-
-        # Remove any trailing backslash that could break escape sequences
-        while truncated.endswith("\\"):
-            truncated = truncated[:-1]
-
-        # Try to end at a safe boundary
-        for i in range(len(truncated) - 1, max(0, len(truncated) - 50), -1):
-            if truncated[i] in ",} \n":
-                truncated = truncated[: i + 1]
-                break
-
-        return truncated + "..."
-
     def to_compressed_json(self, default_handler: Callable = str) -> str:
         """
         Convert trace events to compressed JSON format.
@@ -233,9 +211,7 @@ class Trace:
                                                     and len(v) > 500
                                                 ):
                                                     truncated_item[k] = (
-                                                        self._safe_truncate(
-                                                            v, 500
-                                                        )
+                                                        safe_truncate(v, 500)
                                                     )
                                                 else:
                                                     truncated_item[k] = v
@@ -366,9 +342,7 @@ class Trace:
                                         if isinstance(item, dict):
                                             mini_item = {
                                                 k: (
-                                                    self._safe_truncate(
-                                                        str(v), 200
-                                                    )
+                                                    safe_truncate(str(v), 200)
                                                     if isinstance(v, str)
                                                     and len(v) > 200
                                                     else v

@@ -9,7 +9,10 @@ from abc import ABC
 from abc import abstractmethod
 import json
 import logging
+import re
 from typing import Any, Dict, List, Optional
+
+from trulens.core.utils.trace_compression import safe_truncate
 
 logger = logging.getLogger(__name__)
 
@@ -375,24 +378,9 @@ class TraceProvider(ABC):
     def _safe_truncate(self, s: str, max_len: int) -> str:
         """
         Safely truncate a string without breaking JSON structure.
-        Ensures balanced quotes and removes trailing incomplete escapes.
+        Delegates to the shared safe_truncate utility.
         """
-        if len(s) <= max_len:
-            return s
-
-        truncated = s[:max_len]
-
-        # Remove any trailing backslash that could break escape sequences
-        while truncated.endswith("\\"):
-            truncated = truncated[:-1]
-
-        # Try to end at a safe boundary (comma, space, or closing bracket)
-        for i in range(len(truncated) - 1, max(0, len(truncated) - 50), -1):
-            if truncated[i] in ",} \n":
-                truncated = truncated[: i + 1]
-                break
-
-        return truncated + "..."
+        return safe_truncate(s, max_len)
 
     def _extract_embedded_tool_calls(
         self, content: str, span_name: str
@@ -405,7 +393,6 @@ class TraceProvider(ABC):
         - {'type': 'tool_call', 'function': {'name': '...', 'arguments': ...}}
         - {'tool_use': {'name': '...', ...}}
         """
-        import re
 
         tool_calls = []
 
@@ -655,14 +642,6 @@ class TraceProvider(ABC):
 
         return result
 
-
-class GenericTraceProvider(TraceProvider):
-    """Generic trace provider for standard trace formats."""
-
-    def can_handle(self, trace_data: Dict[str, Any]) -> bool:
-        """Generic provider handles any trace data as fallback."""
-        return True
-
     def _clean_plan_content(self, plan_value: Any) -> Any:
         """
         Clean plan content by removing debug messages, error logs, and other noise.
@@ -673,6 +652,7 @@ class GenericTraceProvider(TraceProvider):
         Returns:
             Cleaned plan data with debug messages removed
         """
+
         if not isinstance(plan_value, str):
             # If it's not a string, convert to string for cleaning, then back
             plan_str = str(plan_value)
@@ -685,8 +665,6 @@ class GenericTraceProvider(TraceProvider):
             r"^DEBUG: [^\n]*\n?",  # Remove lines that START with "DEBUG: "
             r"^Query ID: [^\n]*\n?",  # Remove lines that START with "Query ID: "
         ]
-
-        import re
 
         cleaned_plan = plan_str
 
@@ -712,8 +690,6 @@ class GenericTraceProvider(TraceProvider):
         if not isinstance(plan_value, str):
             try:
                 # Try to parse back to original format if it was JSON-like
-                import json
-
                 if plan_str.strip().startswith(("{", "[")):
                     return (
                         json.loads(final_cleaned)
@@ -724,6 +700,14 @@ class GenericTraceProvider(TraceProvider):
                 pass
 
         return final_cleaned if final_cleaned.strip() else plan_value
+
+
+class GenericTraceProvider(TraceProvider):
+    """Generic trace provider for standard trace formats."""
+
+    def can_handle(self, trace_data: Dict[str, Any]) -> bool:
+        """Generic provider handles any trace data as fallback."""
+        return True
 
     def _extract_plan_from_spans(
         self, trace_data: Dict[str, Any]
@@ -799,13 +783,7 @@ class GenericTraceProvider(TraceProvider):
                             logger.debug(
                                 "Command contains 'plan' key - HIGH PRIORITY"
                             )
-                        elif (
-                            "'plan':" in state_value or '"plan":' in state_value
-                        ):
-                            priority = 90  # High priority for execution plans
-                            logger.debug(
-                                "Command contains 'plan' key - HIGH PRIORITY"
-                            )
+
                         elif (
                             "'messages':" in state_value
                             and "Agent error:" in state_value
