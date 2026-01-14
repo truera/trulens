@@ -370,6 +370,16 @@ class Endpoint(
             Endpoint.instrumented_methods[mod].append((func, w, type(self)))
 
     def _instrument_class(self, cls, method_name: str) -> None:
+        # Skip Enum classes - they don't allow attribute reassignment
+        from enum import EnumMeta
+
+        if isinstance(cls, EnumMeta):
+            logger.debug(
+                "Skipping instrumentation of enum class %s",
+                python_utils.class_name(cls),
+            )
+            return
+
         if python_utils.safe_hasattr(cls, method_name):
             logger.debug(
                 "Instrumenting %s.%s for %s",
