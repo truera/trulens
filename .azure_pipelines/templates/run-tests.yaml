@@ -15,6 +15,20 @@ parameters:
 steps:
   - bash: |
       set -e
+      echo "=== Freeing disk space before tests ==="
+      # Clear pip/poetry caches that accumulated during installs
+      pip cache purge || true
+      rm -rf ~/.cache/pip || true
+      rm -rf ~/.cache/pypoetry || true
+      # Clear pytest cache
+      rm -rf .pytest_cache || true
+      find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+      # Show disk space
+      df -h /
+    displayName: Free disk space before ${{ parameters.pytestMarker }} tests
+
+  - bash: |
+      set -e
       # Clean up ALL database files to avoid migration errors with legacy schemas
       # Exclude release_dbs which contains reference databases for testing
       # This must run before any TruSession is created
