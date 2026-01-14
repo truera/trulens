@@ -12,6 +12,7 @@ import logging
 import re
 from typing import Any, Dict, List, Optional
 
+from trulens.core.utils.trace_compression import DEFAULT_TOKEN_LIMIT
 from trulens.core.utils.trace_compression import safe_truncate
 
 logger = logging.getLogger(__name__)
@@ -566,7 +567,9 @@ class TraceProvider(ABC):
         return tool_results
 
     def compress_with_plan_priority(
-        self, trace_data: Dict[str, Any], target_token_limit: int = 100000
+        self,
+        trace_data: Dict[str, Any],
+        target_token_limit: int = DEFAULT_TOKEN_LIMIT,
     ) -> Dict[str, Any]:
         """
         Compress trace with plan preservation as highest priority.

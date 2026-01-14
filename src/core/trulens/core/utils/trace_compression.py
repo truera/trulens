@@ -12,7 +12,8 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 MAX_TRACE_SIZE = 500000  # 500KB
-MAX_TRACE_SIZE_TOKEN_LIMIT = 50000  # Minimum token limit for very large traces
+MAX_TRACE_SIZE_TOKEN_LIMIT = 20000  # Minimum token limit for very large traces
+DEFAULT_TOKEN_LIMIT = 40000  # Default target, leaves room for model output
 
 
 def safe_truncate(s: str, max_len: int) -> str:
@@ -99,7 +100,7 @@ class TraceCompressor:
         return data
 
     def compress_trace_with_plan_priority(
-        self, trace_data: Any, target_token_limit: int = 100000
+        self, trace_data: Any, target_token_limit: int = DEFAULT_TOKEN_LIMIT
     ) -> Dict[str, Any]:
         """
         Compress trace with plan preservation as highest priority.
@@ -465,7 +466,7 @@ def _convert_trulens_trace_format(trace_data: Any) -> Dict[str, Any]:
 def compress_trace_for_feedback(
     trace_data: Any,
     preserve_plan: bool = True,
-    target_token_limit: int = 100000,
+    target_token_limit: int = DEFAULT_TOKEN_LIMIT,
 ) -> Dict[str, Any]:
     """
     Convenience function to compress trace data for feedback functions.
