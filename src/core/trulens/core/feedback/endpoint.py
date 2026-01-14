@@ -731,6 +731,14 @@ class Endpoint(
     def wrap_function(self, func):
         """Create a wrapper of the given function to perform cost tracking."""
 
+        # Skip non-callable objects (e.g., enum values like CallTypes.completion)
+        if not callable(func):
+            logger.debug(
+                "Skipping instrumentation of non-callable %s",
+                func,
+            )
+            return func
+
         if python_utils.safe_hasattr(func, INSTRUMENT):
             # Store the types of callback classes that will handle calls to the
             # wrapped function in the INSTRUMENT attribute. This will be used to
