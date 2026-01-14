@@ -94,10 +94,16 @@ class MetricConfig:
         function_args = list(sig.parameters.keys())
 
         # Get only required parameters (those without defaults)
+        # Exclude *args and **kwargs as they are never required selectors
         required_function_args = [
             param_name
             for param_name, param in sig.parameters.items()
             if param.default == inspect.Parameter.empty
+            and param.kind
+            not in (
+                inspect.Parameter.VAR_POSITIONAL,
+                inspect.Parameter.VAR_KEYWORD,
+            )
         ]
 
         error_msg = ""
