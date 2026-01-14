@@ -7,6 +7,15 @@ steps:
       versionSpec: '$(python-version)'
 
   - bash: |
+      echo "Clearing package caches to free disk space..."
+      pip cache purge || true
+      rm -rf ~/.cache/pip || true
+      rm -rf ~/.cache/pypoetry || true
+      echo "Disk space after cache clear:"
+      df -h
+    displayName: Clear caches
+
+  - bash: |
       # Install poetry
       curl -sSL https://install.python-poetry.org | python3 - --version 1.8.5
 
