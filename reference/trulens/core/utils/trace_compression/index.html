@@ -14,14 +14,14 @@
         <link rel="prev" href="../threading/">
       
       
-        <link rel="next" href="../trulens/">
+        <link rel="next" href="../trace_provider/">
       
       
         
       
       
       <link rel="icon" href="../../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
     
     
       
@@ -29,7 +29,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.618322db.min.css">
+      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.484c7ddc.min.css">
       
         
         <link rel="stylesheet" href="../../../../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -4002,6 +4002,8 @@
       
         
       
+        
+      
     
     
     
@@ -4071,6 +4073,34 @@
     
   
     inline_evaluations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../apps/langgraph/trace_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    trace_provider
   
 
     
@@ -6460,6 +6490,8 @@
       
         
       
+        
+      
     
     
     
@@ -7060,6 +7092,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#trulens.core.utils.trace_compression.TraceCompressor.compress_trace_with_plan_priority" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;compress_trace_with_plan_priority
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#trulens.core.utils.trace_compression.TraceCompressor.compress_trace" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7098,10 +7141,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#trulens.core.utils.trace_compression.compress_trace_for_feedback" class="md-nav__link">
+  <a href="#trulens.core.utils.trace_compression.safe_truncate" class="md-nav__link">
     <span class="md-ellipsis">
       
-        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;compress_trace_for_feedback
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;safe_truncate
       
     </span>
   </a>
@@ -7109,10 +7152,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#trulens.core.utils.trace_compression.compress_multiple_traces" class="md-nav__link">
+  <a href="#trulens.core.utils.trace_compression.compress_trace_for_feedback" class="md-nav__link">
     <span class="md-ellipsis">
       
-        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;compress_multiple_traces
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;compress_trace_for_feedback
       
     </span>
   </a>
@@ -7133,6 +7176,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trace_provider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    <code class="doc-symbol doc-symbol-nav doc-symbol-module"></code> trace_provider
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -12876,6 +12947,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#trulens.core.utils.trace_compression.TraceCompressor.compress_trace_with_plan_priority" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;compress_trace_with_plan_priority
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#trulens.core.utils.trace_compression.TraceCompressor.compress_trace" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -12914,10 +12996,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#trulens.core.utils.trace_compression.compress_trace_for_feedback" class="md-nav__link">
+  <a href="#trulens.core.utils.trace_compression.safe_truncate" class="md-nav__link">
     <span class="md-ellipsis">
       
-        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;compress_trace_for_feedback
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;safe_truncate
       
     </span>
   </a>
@@ -12925,10 +13007,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#trulens.core.utils.trace_compression.compress_multiple_traces" class="md-nav__link">
+  <a href="#trulens.core.utils.trace_compression.compress_trace_for_feedback" class="md-nav__link">
     <span class="md-ellipsis">
       
-        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;compress_multiple_traces
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;compress_trace_for_feedback
       
     </span>
   </a>
@@ -13061,9 +13143,9 @@
 
     <div class="doc doc-contents first">
 
-        <p>Experimental Trace compression utilities to reduce token usage in feedback functions.
-This module provides functionality to compress trace data while preserving
-essential information needed for evaluation. Use with caution.</p>
+        <p>Trace compression utilities for reducing token usage in LLM feedback functions.</p>
+<p>This module provides functionality to compress trace data while preserving
+essential information like plans, key decisions, and error details.</p>
 
 
 
@@ -13099,7 +13181,9 @@ essential information needed for evaluation. Use with caution.</p>
 
 
 
-        <p>Compresses trace data to reduce token usage while preserving essential information.</p>
+        <p>Compresses trace data for LLM context windows while preserving critical information.</p>
+<p>Uses a provider-based approach to handle different trace formats (LangGraph, etc.)
+while maintaining plan preservation as the highest priority.</p>
 
 
 
@@ -13145,6 +13229,30 @@ essential information needed for evaluation. Use with caution.</p>
 <div class="doc doc-object doc-function">
 
 
+<h6 id="trulens.core.utils.trace_compression.TraceCompressor.compress_trace_with_plan_priority" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">compress_trace_with_plan_priority</span>
+
+
+<a href="#trulens.core.utils.trace_compression.TraceCompressor.compress_trace_with_plan_priority" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">compress_trace_with_plan_priority</span><span class="p">(</span>
+    <span class="n">trace_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">,</span>
+    <span class="n">target_token_limit</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span> <span class="o">=</span> <span class="n"><span title="trulens.core.utils.trace_compression.DEFAULT_TOKEN_LIMIT">DEFAULT_TOKEN_LIMIT</span></span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compress trace with plan preservation as highest priority.
+If context window is exceeded, compress other data more aggressively.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h6 id="trulens.core.utils.trace_compression.TraceCompressor.compress_trace" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">compress_trace</span>
 
@@ -13155,90 +13263,7 @@ essential information needed for evaluation. Use with caution.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Compress trace data to reduce token usage.</p>
-
-
-<table>
-      <thead>
-        <tr>
-          <th><span class="doc-section-title">PARAMETER</span></th>
-          <th><span>DESCRIPTION</span></th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>trace_data</code>
-            </td>
-            <td class="doc-param-details">
-              <div class="doc-md-description">
-                <p>The raw trace data to compress</p>
-              </div>
-              <p>
-                  <span class="doc-param-annotation">
-                    <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></code>
-                  </span>
-              </p>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-<table>
-      <thead>
-        <tr>
-          <th><span class="doc-section-title">RETURNS</span></th>
-          <th><span>DESCRIPTION</span></th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <span class="doc-returns-annotation">
-                    <code><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>, <a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a>]</code>
-                </span>
-            </td>
-            <td class="doc-returns-details">
-              <div class="doc-md-description">
-                <p>Compressed trace data with essential information preserved</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    </div>
-
-</div>
-
-
-
-  </div>
-
-    </div>
-
-</div>
-<h3 id="trulens.core.utils.trace_compression-functions">Functions<a href="#trulens.core.utils.trace_compression-functions" class="headerlink" title="Permanent link">&para;</a></h3>
-
-<div class="doc doc-object doc-function">
-
-
-<h4 id="trulens.core.utils.trace_compression.compress_trace_for_feedback" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">compress_trace_for_feedback</span>
-
-
-<a href="#trulens.core.utils.trace_compression.compress_trace_for_feedback" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">compress_trace_for_feedback</span><span class="p">(</span>
-    <span class="n">trace_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">]</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Convenience function to compress trace data for feedback functions.</p>
+        <p>Compress trace data using the appropriate provider.</p>
 
 
 <table>
@@ -13297,22 +13322,30 @@ essential information needed for evaluation. Use with caution.</p>
 
 </div>
 
+
+
+  </div>
+
+    </div>
+
+</div>
+<h3 id="trulens.core.utils.trace_compression-functions">Functions<a href="#trulens.core.utils.trace_compression-functions" class="headerlink" title="Permanent link">&para;</a></h3>
+
 <div class="doc doc-object doc-function">
 
 
-<h4 id="trulens.core.utils.trace_compression.compress_multiple_traces" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">compress_multiple_traces</span>
+<h4 id="trulens.core.utils.trace_compression.safe_truncate" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">safe_truncate</span>
 
 
-<a href="#trulens.core.utils.trace_compression.compress_multiple_traces" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">compress_multiple_traces</span><span class="p">(</span>
-    <span class="n">traces</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">],</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">]]</span>
+<a href="#trulens.core.utils.trace_compression.safe_truncate" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">safe_truncate</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">max_len</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Compress multiple traces efficiently.</p>
+        <p>Safely truncate a string without breaking JSON structure.
+Ensures we don't cut mid-escape sequence or leave unclosed quotes.</p>
 
 
 <table>
@@ -13325,16 +13358,32 @@ essential information needed for evaluation. Use with caution.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                <code>traces</code>
+                <code>s</code>
             </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
-                <p>List of trace data to compress</p>
+                <p>String to truncate</p>
               </div>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a>[<a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a>]</code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>max_len</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Maximum length</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
                   </span>
               </p>
             </td>
@@ -13354,12 +13403,128 @@ essential information needed for evaluation. Use with caution.</p>
           <tr class="doc-section-item">
             <td>
                 <span class="doc-returns-annotation">
-                    <code><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a>[<a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>, <a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a>]]</code>
+                    <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                 </span>
             </td>
             <td class="doc-returns-details">
               <div class="doc-md-description">
-                <p>List of compressed traces</p>
+                <p>Truncated string with "..." suffix if truncated, or original if not a string</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="trulens.core.utils.trace_compression.compress_trace_for_feedback" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">compress_trace_for_feedback</span>
+
+
+<a href="#trulens.core.utils.trace_compression.compress_trace_for_feedback" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">compress_trace_for_feedback</span><span class="p">(</span>
+    <span class="n">trace_data</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">,</span>
+    <span class="n">preserve_plan</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">target_token_limit</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span> <span class="o">=</span> <span class="n"><span title="trulens.core.utils.trace_compression.DEFAULT_TOKEN_LIMIT">DEFAULT_TOKEN_LIMIT</span></span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Convenience function to compress trace data for feedback functions.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>trace_data</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The trace data to compress</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>preserve_plan</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Whether to preserve complete plan (recommended for metrics)</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>True</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>target_token_limit</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Target token limit for context window management</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code><span title="trulens.core.utils.trace_compression.DEFAULT_TOKEN_LIMIT">DEFAULT_TOKEN_LIMIT</span></code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RETURNS</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <span class="doc-returns-annotation">
+                    <code><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>, <a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a>]</code>
+                </span>
+            </td>
+            <td class="doc-returns-details">
+              <div class="doc-md-description">
+                <p>Compressed trace data with plan preservation prioritized</p>
               </div>
             </td>
           </tr>
@@ -13430,10 +13595,10 @@ essential information needed for evaluation. Use with caution.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "search.highlight", "toc.follow", "content.code.copy", "content.tabs"], "search": "../../../../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "search.highlight", "toc.follow", "content.code.copy", "content.tabs"], "search": "../../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      <script src="../../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
         <script src="../../../../../javascript/config.js"></script>
       
