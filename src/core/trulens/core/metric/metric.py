@@ -222,6 +222,8 @@ class Metric(feedback_schema.FeedbackDefinition):
         temperature: Optional[float] = 0.0,
         groundedness_configs: Optional[GroundednessConfigs] = None,
         enable_trace_compression: Optional[bool] = None,
+        metric_type: Optional[str] = None,
+        description: Optional[str] = None,
         # Legacy parameter name support
         imp: Optional[Callable] = None,
         **kwargs,
@@ -241,6 +243,9 @@ class Metric(feedback_schema.FeedbackDefinition):
             temperature: Temperature parameter for LLM-based metrics (default: 0.0).
             groundedness_configs: Optional groundedness configuration.
             enable_trace_compression: Whether to compress trace data.
+            metric_type: Implementation identifier (e.g., "relevance", "groundedness").
+                If not provided, defaults to the function name.
+            description: Human-readable description of what this metric measures.
             imp: DEPRECATED. Use `implementation` instead.
             **kwargs: Additional arguments passed to parent class.
         """
@@ -339,6 +344,10 @@ class Metric(feedback_schema.FeedbackDefinition):
             kwargs["additional_instructions"] = additional_instructions
         if examples is not None:
             kwargs["examples"] = examples
+        if metric_type is not None:
+            kwargs["metric_type"] = metric_type
+        if description is not None:
+            kwargs["description"] = description
 
         super().__init__(**kwargs)
 
