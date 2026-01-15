@@ -265,9 +265,9 @@ class Metric(feedback_schema.FeedbackDefinition):
         # json structure. Create the one that is missing based on the one that
         # is provided:
         if implementation is not None:
-            # Check if implementation is already serialized (dict) or a callable
+            # Check if implementation is already serialized (dict or FunctionOrMethod) or a callable
             if isinstance(implementation, dict):
-                # Already serialized - load it and put in kwargs for parent
+                # Raw dict - validate and load it
                 kwargs["implementation"] = implementation
                 implementation = (
                     pyschema_utils.FunctionOrMethod.model_validate(
@@ -276,6 +276,11 @@ class Metric(feedback_schema.FeedbackDefinition):
                     if implementation is not None
                     else None
                 )
+            elif isinstance(implementation, pyschema_utils.FunctionOrMethod):
+                # Already a FunctionOrMethod object (Pydantic may have converted it)
+                # Keep it in kwargs for parent and load the callable
+                kwargs["implementation"] = implementation
+                implementation = implementation.load()
             else:
                 # It's a callable - serialize it for storage
                 if "implementation" not in kwargs:
@@ -302,21 +307,29 @@ class Metric(feedback_schema.FeedbackDefinition):
 
         else:
             if "implementation" in kwargs:
-                implementation: ImpCallable = (
-                    pyschema_utils.FunctionOrMethod.model_validate(
-                        kwargs["implementation"]
-                    ).load()
-                    if kwargs["implementation"] is not None
-                    else None
-                )
+                impl_val = kwargs["implementation"]
+                if isinstance(impl_val, pyschema_utils.FunctionOrMethod):
+                    # Already a FunctionOrMethod object - just load it
+                    implementation = impl_val.load()
+                elif impl_val is not None:
+                    # Raw dict - validate and load
+                    implementation = (
+                        pyschema_utils.FunctionOrMethod.model_validate(
+                            impl_val
+                        ).load()
+                    )
 
         # Similarly with agg and aggregator.
         if agg is not None:
-            # Check if agg is already serialized (dict) or a callable
+            # Check if agg is already serialized (dict or FunctionOrMethod) or a callable
             if isinstance(agg, dict):
-                # Already serialized - load it and put in kwargs for parent
+                # Raw dict - validate and load it
                 kwargs["aggregator"] = agg
                 agg = pyschema_utils.FunctionOrMethod.model_validate(agg).load()
+            elif isinstance(agg, pyschema_utils.FunctionOrMethod):
+                # Already a FunctionOrMethod object (Pydantic may have converted it)
+                kwargs["aggregator"] = agg
+                agg = agg.load()
             elif kwargs.get("aggregator") is None:
                 try:
                     # These are for serialization to/from json and for db storage.
@@ -343,12 +356,16 @@ class Metric(feedback_schema.FeedbackDefinition):
                     )
 
         else:
-            if kwargs.get("aggregator") is not None:
-                agg: AggCallable = (
-                    pyschema_utils.FunctionOrMethod.model_validate(
-                        kwargs["aggregator"]
+            agg_val = kwargs.get("aggregator")
+            if agg_val is not None:
+                if isinstance(agg_val, pyschema_utils.FunctionOrMethod):
+                    # Already a FunctionOrMethod object - just load it
+                    agg = agg_val.load()
+                else:
+                    # Raw dict - validate and load
+                    agg = pyschema_utils.FunctionOrMethod.model_validate(
+                        agg_val
                     ).load()
-                )
             else:
                 # Default aggregator if neither serialized `aggregator` or
                 # loaded `agg` were specified.
