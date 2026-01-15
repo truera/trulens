@@ -8,6 +8,8 @@ import os
 from trulens.core.feedback.feedback import Feedback
 from trulens.core.feedback.feedback import SnowflakeFeedback
 from trulens.core.feedback.provider import Provider
+from trulens.core.metric import Metric
+from trulens.core.metric import Selector
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.select import Select
 from trulens.core.session import Tru
@@ -27,7 +29,10 @@ __all__ = [
     "TruSession",  # main interface
     # app setup
     "FeedbackMode",
-    # feedback setup
+    # metric setup (new unified API)
+    "Metric",
+    "Selector",
+    # feedback setup (deprecated, use Metric instead)
     "Feedback",
     "SnowflakeFeedback",
     "Select",

@@ -1,4 +1,23 @@
-"""Serializable feedback-related classes."""
+"""Serializable feedback-related classes.
+
+TODO: Rename schema classes from Feedback* to Metric* naming convention.
+
+As part of the Feedback -> Metric migration, these schema classes should be renamed:
+  - FeedbackMode -> MetricMode
+  - FeedbackRunLocation -> MetricRunLocation
+  - FeedbackResultStatus -> MetricResultStatus
+  - FeedbackOnMissingParameters -> MetricOnMissingParameters
+  - FeedbackCall -> MetricCall
+  - FeedbackResult -> MetricResult
+  - FeedbackCombinations -> MetricCombinations
+  - FeedbackDefinition -> MetricDefinition
+
+The new classes should be created in schema/metric.py, and this file should re-export
+them with deprecation warnings for backward compatibility. Database column names
+should remain as feedback_* to avoid migration.
+
+See: trulens.core.metric.Metric for the user-facing class that already uses the new naming.
+"""
 
 from __future__ import annotations
 
