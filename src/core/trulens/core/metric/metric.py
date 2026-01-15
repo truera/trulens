@@ -249,10 +249,6 @@ class Metric(feedback_schema.FeedbackDefinition):
             imp: DEPRECATED. Use `implementation` instead.
             **kwargs: Additional arguments passed to parent class.
         """
-        # Support legacy 'imp' parameter name
-        if imp is not None and implementation is None:
-            implementation = imp
-
         # Handle deprecated parameter name
         additional_instructions = deprecation_utils.handle_deprecated_kwarg(
             kwargs,
@@ -260,6 +256,22 @@ class Metric(feedback_schema.FeedbackDefinition):
             "additional_instructions",
             additional_instructions,
         )
+
+        # Support legacy 'imp' parameter name - if imp is provided, use it as the callable
+        if imp is not None:
+            # imp is the actual callable to use
+            if implementation is None:
+                implementation = imp
+            elif isinstance(implementation, pyschema_utils.FunctionOrMethod):
+                # Both imp (callable) and implementation (serialized) provided
+                # Use imp as callable, keep implementation for storage
+                kwargs["implementation"] = implementation
+                implementation = imp
+            elif isinstance(implementation, dict):
+                # Both imp and serialized dict provided - use imp, keep dict for storage
+                kwargs["implementation"] = implementation
+                implementation = imp
+            # else: implementation is also a callable, imp takes precedence
 
         # imp is the python function/method while implementation is a serialized
         # json structure. Create the one that is missing based on the one that
