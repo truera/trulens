@@ -1,6 +1,6 @@
-In many cases, developers have already logged runs of an LLM app they wish to evaluate or wish to log their app using another system. Feedback functions can also be run on existing data, independent of the `recorder`.
+In many cases, developers have already logged runs of an LLM app they wish to evaluate or wish to log their app using another system. Metrics can also be run on existing data, independent of the `recorder`.
 
-At the most basic level, feedback implementations are simple callables that can be run on any arguments
+At the most basic level, metric implementations are simple callables that can be run on any arguments
 matching their signatures.
 
 !!! example
@@ -10,7 +10,7 @@ matching their signatures.
     ```
 
 !!! note
-    Running the feedback implementation in isolation will not log the evaluation results in TruLens.
+    Running the metric implementation in isolation will not log the evaluation results in TruLens.
 
 In the case that you have already logged a run of your application with TruLens and have the record available, the process for running an (additional) evaluation on that record is by using `tru.run_feedback_functions`:
 
@@ -140,7 +140,10 @@ To ingest the data in this form, we can iterate through the dataframe to ingest 
         data.append(rec)
     ```
 
-Now that we've ingested and constructed the virtual records, we can build our feedback functions. This is done just the same as normal, except the context selector will instead refer to the new `context_call` we added to the virtual record.
+Now that we've ingested and constructed the virtual records, we can build our metrics. This is done just the same as normal, except the context selector will instead refer to the new `context_call` we added to the virtual record.
+
+!!! note
+    Virtual apps use the legacy `Select` API for referencing call components. For new apps, consider using the standard `Metric` class with `Selector`.
 
 !!! example
 
@@ -151,7 +154,7 @@ Now that we've ingested and constructed the virtual records, we can build our fe
     # Initialize provider class
     openai = OpenAI()
 
-    # Select context to be used in feedback. We select the return values of the
+    # Select context to be used in evaluation. We select the return values of the
     # virtual `get_context` call in the virtual `retriever` component. Names are
     # arbitrary except for `rets`.
     context = context_call.rets[:]
@@ -164,7 +167,7 @@ Now that we've ingested and constructed the virtual records, we can build our fe
     )
     ```
 
-Then, the feedback functions can be passed to `TruVirtual` to construct the `recorder`. Most of the fields that other non-virtual apps take can also be specified here.
+Then, the metrics can be passed to `TruVirtual` to construct the `recorder`. Most of the fields that other non-virtual apps take can also be specified here.
 
 !!! example
 
@@ -178,7 +181,7 @@ Then, the feedback functions can be passed to `TruVirtual` to construct the `rec
     )
     ```
 
-To finally ingest the record and run feedbacks, we can use `add_record`.
+To finally ingest the record and run metrics, we can use `add_record`.
 
 !!! example
 

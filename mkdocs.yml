@@ -249,6 +249,7 @@ nav:
     - 🎯 Evaluation:
         - component_guides/evaluation/index.md
         - Anatomy of a Feedback Function: component_guides/evaluation/feedback_anatomy.md
+        - Migrating to Metric API: component_guides/evaluation/metric_migration.md
         - Feedback Implementations:
             - component_guides/evaluation/feedback_implementations/index.md
             - Stock Feedback Functions: component_guides/evaluation/feedback_implementations/stock.md
