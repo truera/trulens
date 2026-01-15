@@ -265,28 +265,40 @@ class Metric(feedback_schema.FeedbackDefinition):
         # json structure. Create the one that is missing based on the one that
         # is provided:
         if implementation is not None:
-            # These are for serialization to/from json and for db storage.
-            if "implementation" not in kwargs:
-                try:
-                    kwargs["implementation"] = (
-                        pyschema_utils.FunctionOrMethod.of_callable(
-                            implementation, loadable=True
+            # Check if implementation is already serialized (dict) or a callable
+            if isinstance(implementation, dict):
+                # Already serialized - load it and put in kwargs for parent
+                kwargs["implementation"] = implementation
+                implementation = (
+                    pyschema_utils.FunctionOrMethod.model_validate(
+                        implementation
+                    ).load()
+                    if implementation is not None
+                    else None
+                )
+            else:
+                # It's a callable - serialize it for storage
+                if "implementation" not in kwargs:
+                    try:
+                        kwargs["implementation"] = (
+                            pyschema_utils.FunctionOrMethod.of_callable(
+                                implementation, loadable=True
+                            )
                         )
-                    )
 
-                except Exception as e:
-                    logger.warning(
-                        "Metric implementation %s cannot be serialized: %s "
-                        "This may be ok unless you are using the deferred feedback mode.",
-                        implementation,
-                        e,
-                    )
-
-                    kwargs["implementation"] = (
-                        pyschema_utils.FunctionOrMethod.of_callable(
-                            implementation, loadable=False
+                    except Exception as e:
+                        logger.warning(
+                            "Metric implementation %s cannot be serialized: %s "
+                            "This may be ok unless you are using the deferred feedback mode.",
+                            implementation,
+                            e,
                         )
-                    )
+
+                        kwargs["implementation"] = (
+                            pyschema_utils.FunctionOrMethod.of_callable(
+                                implementation, loadable=False
+                            )
+                        )
 
         else:
             if "implementation" in kwargs:
@@ -300,7 +312,12 @@ class Metric(feedback_schema.FeedbackDefinition):
 
         # Similarly with agg and aggregator.
         if agg is not None:
-            if kwargs.get("aggregator") is None:
+            # Check if agg is already serialized (dict) or a callable
+            if isinstance(agg, dict):
+                # Already serialized - load it and put in kwargs for parent
+                kwargs["aggregator"] = agg
+                agg = pyschema_utils.FunctionOrMethod.model_validate(agg).load()
+            elif kwargs.get("aggregator") is None:
                 try:
                     # These are for serialization to/from json and for db storage.
                     kwargs["aggregator"] = (

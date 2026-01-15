@@ -27,7 +27,7 @@ class TestOtelApp(OtelTestCase):
         app = Greeter()
         with self.assertRaisesRegex(
             ValueError,
-            "^Feedback function `custom` has missing selectors:\n"
+            "^Metric function `custom` has missing selectors:\n"
             "Missing selectors: \['greeting'\]\n"
             "Required function args: \['name', 'greeting'\]\n$",
         ):
