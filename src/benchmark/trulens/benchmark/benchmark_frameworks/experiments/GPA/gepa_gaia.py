@@ -13,6 +13,12 @@ USAGE:
    - Set INPUT_PROMPT_FILE to your saved prompts file
    - Run the script
 
+3. To run meta-judge validation (compare meta-judge scores to human annotations):
+   - Set RUN_META_JUDGE_VALIDATION = True
+   - Ensure TRAIL_GAIA_Judge_Output_Per_Trace.csv exists with judge outputs
+   - Results will be written to VALIDATION_RESULTS_FILE
+   - Run the script
+
 Environment Variables Required:
     SNOWFLAKE_ACCOUNT: Snowflake account identifier
     SNOWFLAKE_JWT: JWT token for authentication
@@ -58,10 +64,13 @@ LM_MAX_TOKENS = 32000
 DATA_DIR = Path(
     "src/benchmark/trulens/benchmark/benchmark_frameworks/experiments/GPA"
 )
-TRAIN_CSV = DATA_DIR / "GPA Judge Error Analysis - TRAIN_CSV.csv"
-TEST_CSV = DATA_DIR / "GPA Judge Error Analysis - TEST_CSV.csv"
-JUDGE_OUTPUT_CSV = DATA_DIR / "TRAIL_GAIA_Judge_Output_Per_Trace.csv"
-VALIDATION_RESULTS_FILE = DATA_DIR / "lax_validation_results.txt"
+TRAIN_CSV = DATA_DIR / "GAIA_Train.csv"
+TEST_CSV = DATA_DIR / "GAIA_Test.csv"
+JUDGE_OUTPUT_CSV = DATA_DIR / "GAIA_Metajudge_Validation.csv"
+# Validation results file: used to validate the meta-judge prompt by comparing
+# its scores against human annotations. This iterative validation process was
+# used to refine the final MetaJudgeSignature prompt.
+VALIDATION_RESULTS_FILE = DATA_DIR / "meta_judge_validation_results.txt"
 TRACE_DIR = DATA_DIR / "GAIA"
 
 # Optimization settings
@@ -86,6 +95,13 @@ ITERATION_FILE_PREFIX = "gaia_prompt_iterations"
 TEST_SINGLE_EXAMPLE = False
 SINGLE_EXAMPLE_CATEGORY = "PA"
 SINGLE_EXAMPLE_FILE = "18efa24e637b9423f34180d1f2041d3e"  # Just the filename (no directory prefix)
+
+# Meta-judge validation settings
+# This validation compares meta-judge scores against human annotations to ensure
+# the MetaJudgeSignature prompt produces reliable evaluations. This iterative
+# process was used to refine the final meta-judge prompt.
+RUN_META_JUDGE_VALIDATION = False
+META_JUDGE_VALIDATION_MAX_EXAMPLES = 15  # Max examples per category to validate
 
 # Error category mappings
 ERROR_FEEDBACK_MAPPING = {
@@ -462,6 +478,165 @@ def gepa_metric_with_feedback(
     return dspy.Prediction(
         score=numeric_score,
         feedback=evaluation.feedback_analysis,
+    )
+
+
+def run_meta_judge_validation(
+    grouped_examples: dict[str, list[dspy.Example]],
+    judge_df: pd.DataFrame,
+    train_df: pd.DataFrame,
+    output_file: Path,
+    max_examples_per_category: int = 15,
+) -> None:
+    """
+    Validate the meta-judge by comparing its scores against human annotations.
+
+    This function evaluates how well the meta-judge's scoring aligns with
+    human-annotated caught/aligned ratios from the training data.
+
+    Args:
+        grouped_examples: Examples grouped by error category
+        judge_df: DataFrame with judge outputs per trace (from TRAIL_GAIA_Judge_Output_Per_Trace.csv)
+        train_df: Training DataFrame with human annotations
+        output_file: Path to write validation results
+        max_examples_per_category: Maximum examples to evaluate per category
+    """
+    meta_judge = get_meta_judge()
+
+    correct_count = 0
+    total_evaluated = 0
+    total_actual_aligned = 0
+    total_actual_caught = 0
+    total_metajudge_aligned = 0
+    total_metajudge_caught = 0
+
+    with open(output_file, "w") as f:
+        f.write("META-JUDGE VALIDATION RESULTS\n")
+        f.write("=" * 60 + "\n\n")
+
+    for category, category_examples in grouped_examples.items():
+        print(f"\nValidating category: {category}")
+        example_count = 0
+
+        for ex in category_examples:
+            if example_count >= max_examples_per_category:
+                break
+            example_count += 1
+            total_evaluated += 1
+
+            filename = ex.file
+            # judge_df may have GAIA/ prefix while train_df doesn't
+            judge_filename = f"GAIA/{filename}"
+
+            judge_output_rows = judge_df[judge_df["filename"] == judge_filename]
+            if (
+                judge_output_rows.empty
+                or category not in judge_output_rows.columns
+            ):
+                print(f"  Skipping {filename}: no judge output for {category}")
+                continue
+
+            judge_output = judge_output_rows[category].values[0]
+            if pd.isna(judge_output):
+                print(f"  Skipping {filename}: judge output is NaN")
+                continue
+
+            try:
+                with dspy.settings.context(
+                    lm=create_lm(
+                        model=META_LM_MODEL, temperature=LM_TEMPERATURE_EVAL
+                    )
+                ):
+                    evaluation = meta_judge(
+                        agent_trace=ex.trace,
+                        golden_errors=format_golden_errors(ex.errors),
+                        student_critique=str(judge_output),
+                    )
+
+                score_parts = evaluation.overall_score.strip().split("/")
+                metajudge_caught = int(score_parts[0])
+                metajudge_aligned = int(score_parts[1])
+
+                total_metajudge_caught += metajudge_caught
+                total_metajudge_aligned += metajudge_aligned
+
+                num_aligned = 0
+                num_caught = 0
+                for _, row in train_df[train_df["file"] == filename].iterrows():
+                    if category in row["aligned_list"]:
+                        num_aligned += 1
+                        if category in row["caught_list"]:
+                            num_caught += 1
+
+                if num_aligned == 0:
+                    print(f"  Skipping {filename}: no aligned annotations")
+                    continue
+
+                total_actual_aligned += num_aligned
+                total_actual_caught += num_caught
+
+                true_ratio = num_caught / num_aligned
+                metajudge_ratio = (
+                    metajudge_caught / metajudge_aligned
+                    if metajudge_aligned > 0
+                    else 0
+                )
+
+                is_correct = abs(true_ratio - metajudge_ratio) < 0.001
+
+                if is_correct:
+                    correct_count += 1
+
+                print(
+                    f"  {filename}: true={num_caught}/{num_aligned}, "
+                    f"metajudge={metajudge_caught}/{metajudge_aligned}, "
+                    f"correct={is_correct}"
+                )
+
+                with open(output_file, "a") as f:
+                    f.write(f"filename: {filename}\n")
+                    f.write(f"category: {category}\n")
+                    f.write(f"evaluation: {evaluation}\n")
+                    f.write(
+                        f"metajudge caught/aligned: {metajudge_caught}/{metajudge_aligned}\n"
+                    )
+                    f.write(
+                        f"true caught/aligned: {num_caught}/{num_aligned}\n"
+                    )
+                    f.write(f"correct: {is_correct}\n")
+                    f.write("\n")
+
+            except Exception as e:
+                print(
+                    f"  Error evaluating {filename}: {type(e).__name__}: {str(e)[:100]}"
+                )
+                continue
+
+    with open(output_file, "a") as f:
+        f.write("=" * 60 + "\n")
+        f.write("SUMMARY\n")
+        f.write("=" * 60 + "\n")
+        f.write(f"correct count: {correct_count}\n")
+        f.write(f"total evaluated: {total_evaluated}\n")
+        f.write(
+            f"accuracy: {correct_count / total_evaluated if total_evaluated > 0 else 0:.3f}\n"
+        )
+        f.write(f"total_actual_aligned: {total_actual_aligned}\n")
+        f.write(f"total_actual_caught: {total_actual_caught}\n")
+        f.write(f"total_metajudge_aligned: {total_metajudge_aligned}\n")
+        f.write(f"total_metajudge_caught: {total_metajudge_caught}\n")
+        if total_actual_aligned > 0:
+            f.write(
+                f"total_actual_caught/total_actual_aligned: {total_actual_caught / total_actual_aligned:.3f}\n"
+            )
+        if total_metajudge_aligned > 0:
+            f.write(
+                f"total_metajudge_caught/total_metajudge_aligned: {total_metajudge_caught / total_metajudge_aligned:.3f}\n"
+            )
+
+    print(f"\n✓ Validation results written to {output_file}")
+    print(
+        f"  Accuracy: {correct_count}/{total_evaluated} = {correct_count / total_evaluated if total_evaluated > 0 else 0:.3f}"
     )
 
 
@@ -974,9 +1149,23 @@ def main() -> None:
 
     with Logger(log_path, console_output=False) as logger:
         # Load data
-        train_df, test_df, _judge_df = load_dataframes()
+        train_df, test_df, judge_df = load_dataframes()
         grouped_examples = build_grouped_examples(train_df)
         test_grouped_examples = build_grouped_examples(test_df)
+
+        # Run meta-judge validation if enabled
+        if RUN_META_JUDGE_VALIDATION:
+            print(f"\n{'=' * 60}")
+            print("RUNNING META-JUDGE VALIDATION")
+            print(f"{'=' * 60}\n")
+            run_meta_judge_validation(
+                grouped_examples=grouped_examples,
+                judge_df=judge_df,
+                train_df=train_df,
+                output_file=VALIDATION_RESULTS_FILE,
+                max_examples_per_category=META_JUDGE_VALIDATION_MAX_EXAMPLES,
+            )
+            return
 
         # Run optimization or load saved prompts
         if RUN_OPTIMIZATION:

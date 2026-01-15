@@ -37,9 +37,9 @@ GPA/
 │   ├── *.json                      # Raw JSON trace files from SWE-Bench benchmark
 │   └── *.txt                       # Preprocessed text traces (generated)
 │
-├── GPA Judge Error Analysis - TRAIN_CSV.csv   # GAIA training set with error annotations
-├── GPA Judge Error Analysis - TEST_CSV.csv    # GAIA test set with error annotations
-├── TRAIL_GAIA_Judge_Output_Per_Trace.csv      # GAIA judge outputs per trace
+├── GAIA_Train.csv                             # GAIA training set with error annotations
+├── GAIA_Test.csv                              # GAIA test set with error annotations
+├── GAIA_Metajudge_Validation.csv              # Judge outputs for meta-judge validation
 ├── SWE-Bench_Train.csv                        # SWE-Bench training set with error annotations
 ├── SWE-Bench_Test.csv                         # SWE-Bench test set with error annotations
 └── README.md                                  # This file
@@ -75,8 +75,8 @@ export SNOWFLAKE_JWT="your-jwt-token"
 
 | File | Description |
 |------|-------------|
-| `GPA Judge Error Analysis - TRAIN_CSV.csv` | GAIA training annotations with columns: `Filename`, `Align_Judges`, `Caught`, `Raw Error` |
-| `GPA Judge Error Analysis - TEST_CSV.csv` | GAIA test annotations (same schema) |
+| `GAIA_Train.csv` | GAIA training annotations with columns: `Filename`, `Align_Judges`, `Caught`, `Raw Error` |
+| `GAIA_Test.csv` | GAIA test annotations (same schema) |
 | `SWE-Bench_Train.csv` | SWE-Bench training annotations with columns: `file`, `GPA Category (AJ)`, `error` |
 | `SWE-Bench_Test.csv` | SWE-Bench test annotations (same schema) |
 
@@ -130,6 +130,10 @@ GEPA_NUM_THREADS = 2      # Threads per GEPA optimizer
 TEST_SINGLE_EXAMPLE = False                        # Test single trace instead of full set
 SINGLE_EXAMPLE_CATEGORY = "PA"                     # Category for single example test
 SINGLE_EXAMPLE_FILE = "18efa24e637b9423f34180d1f2041d3e"  # Trace file for single test
+
+# Meta-judge validation (to reproduce validation process)
+RUN_META_JUDGE_VALIDATION = False  # Set True to run validation instead of optimization
+META_JUDGE_VALIDATION_MAX_EXAMPLES = 15  # Max examples per category
 ```
 
 **Run optimization:**
@@ -139,10 +143,20 @@ export SNOWFLAKE_JWT="your-jwt-token"
 python gepa_gaia.py
 ```
 
+**Run meta-judge validation:**
+```bash
+export SNOWFLAKE_ACCOUNT="your-account"
+export SNOWFLAKE_JWT="your-jwt-token"
+# Edit gepa_gaia.py: set RUN_META_JUDGE_VALIDATION = True
+python gepa_gaia.py
+# Results written to: lax_validation_results.txt
+```
+
 **Outputs:**
 - `gaia_optimized_judge_prompts_<timestamp>.json` - Optimized prompts per category
 - `gaia_prompt_iterations_<timestamp>.json` - Starting and final prompts for comparison
 - `auto-medium-fixed-metajudge-gaia_<timestamp>.log` - Detailed execution log
+- `meta_judge_validation_results.txt` - Meta-judge validation results (when RUN_META_JUDGE_VALIDATION=True)
 
 ### 3. Running GEPA Optimization (gepa_swebench.py)
 
@@ -271,7 +285,7 @@ SINGLE_EXAMPLE_FILE = "your_trace_file_id"
 
 | Script | Required Files |
 |--------|----------------|
-| `gepa_gaia.py` | `GPA Judge Error Analysis - TRAIN_CSV.csv`, `GPA Judge Error Analysis - TEST_CSV.csv`, `TRAIL_GAIA_Judge_Output_Per_Trace.csv`, `GAIA/*.txt` |
+| `gepa_gaia.py` | `GAIA_Train.csv`, `GAIA_Test.csv`, `GAIA_Metajudge_Validation.csv`, `GAIA/*.txt` |
 | `gepa_swebench.py` | `SWE-Bench_Train.csv`, `SWE-Bench_Test.csv`, `SWE_Bench/*.txt` |
 | `preprocess_trail_gaia.py` | `GAIA/*.json` |
 | `preprocess_trail_swebench.py` | `SWE_Bench/*.json` |
