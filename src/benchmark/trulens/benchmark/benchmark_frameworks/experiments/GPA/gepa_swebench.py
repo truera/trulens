@@ -63,7 +63,7 @@ TEST_CSV = DATA_DIR / "SWE-Bench_Test.csv"
 TRACE_DIR = DATA_DIR / "SWE_Bench"
 
 # Optimization settings
-RUN_OPTIMIZATION = True
+RUN_OPTIMIZATION = False
 OPTIMIZATION_CATEGORIES: list[str] = [
     "LC",
     "EE",
@@ -71,16 +71,22 @@ OPTIMIZATION_CATEGORIES: list[str] = [
 ]  # Empty list = all categories, non-empty = only these
 MAX_PARALLEL_WORKERS = 2
 GEPA_NUM_THREADS = 2
-INPUT_PROMPT_FILE = "fixed-metajudge-auto_light_swebench_optimized_judge_prompts_20251210_002150.json"
+INPUT_PROMPT_FILE = (
+    "auto_light_swebench_optimized_judge_prompts_20251129_221543.json"
+)
 
 # Retry settings
 MAX_RETRIES = 5
 INITIAL_RETRY_DELAY = 2
 
 # Output file names (timestamp will be appended)
-LOG_FILE_PREFIX = "randomtest"
-OUTPUT_PROMPT_FILE = "swebench_optimized_judge_prompts"
-ITERATION_FILE_PREFIX = "swebench_prompt_iterations"
+LOG_FILE_PREFIX = "auto_light_swebench_metajudge_temp0_eval"
+OUTPUT_PROMPT_FILE = (
+    "fixed_metajudge_auto_light_swebench_optimized_judge_prompts_run2"
+)
+ITERATION_FILE_PREFIX = (
+    "fixed_metajudge_auto_light_swebench_prompt_iterations_run2"
+)
 
 # Debug settings
 TEST_SINGLE_EXAMPLE = False

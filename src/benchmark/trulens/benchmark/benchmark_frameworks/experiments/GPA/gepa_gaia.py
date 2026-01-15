@@ -958,12 +958,13 @@ def main() -> None:
         print("Error: SNOWFLAKE_JWT environment variable not set")
         sys.exit(1)
 
+    # Set environment variables for Snowflake
+    os.environ["SNOWFLAKE_ACCOUNT"] = SNOWFLAKE_ACCOUNT
+
     # Configure DSPy
     lm = create_lm(model=STUDENT_LM_MODEL, temperature=LM_TEMPERATURE_DEFAULT)
+    dspy.configure_cache(enable_disk_cache=False, enable_memory_cache=False)
     dspy.configure(lm=lm)
-
-    # Quick connectivity test
-    print(lm("hello whats up"))
 
     # Setup logging
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
