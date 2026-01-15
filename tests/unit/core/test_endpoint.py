@@ -2,7 +2,6 @@
 
 from enum import Enum
 
-import pytest
 from trulens.core.feedback.endpoint import Endpoint
 
 
