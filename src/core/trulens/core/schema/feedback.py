@@ -1,4 +1,23 @@
-"""Serializable feedback-related classes."""
+"""Serializable feedback-related classes.
+
+TODO: Rename schema classes from Feedback* to Metric* naming convention.
+
+As part of the Feedback -> Metric migration, these schema classes should be renamed:
+  - FeedbackMode -> MetricMode
+  - FeedbackRunLocation -> MetricRunLocation
+  - FeedbackResultStatus -> MetricResultStatus
+  - FeedbackOnMissingParameters -> MetricOnMissingParameters
+  - FeedbackCall -> MetricCall
+  - FeedbackResult -> MetricResult
+  - FeedbackCombinations -> MetricCombinations
+  - FeedbackDefinition -> MetricDefinition
+
+The new classes should be created in schema/metric.py, and this file should re-export
+them with deprecation warnings for backward compatibility. Database column names
+should remain as feedback_* to avoid migration.
+
+See: trulens.core.metric.Metric for the user-facing class that already uses the new naming.
+"""
 
 from __future__ import annotations
 
@@ -378,6 +397,17 @@ class FeedbackDefinition(
     higher_is_better: Optional[bool] = None
     """Feedback result magnitude interpretation."""
 
+    metric_type: Optional[str] = None
+    """Implementation identifier for this metric.
+
+    E.g., "relevance", "groundedness", "text2sql". If not provided, defaults to
+    the function name. This allows the same metric implementation to be used
+    multiple times with different configurations and names.
+    """
+
+    description: Optional[str] = None
+    """Human-readable description of what this metric measures."""
+
     def __init__(
         self,
         feedback_definition_id: Optional[
@@ -398,6 +428,8 @@ class FeedbackDefinition(
         name: Optional[str] = None,
         higher_is_better: Optional[bool] = None,
         run_location: Optional[FeedbackRunLocation] = None,
+        metric_type: Optional[str] = None,
+        description: Optional[str] = None,
         **kwargs,
     ):
         selectors = selectors or {}
@@ -416,6 +448,8 @@ class FeedbackDefinition(
             if_exists=if_exists,
             if_missing=if_missing,
             run_location=run_location,
+            metric_type=metric_type,
+            description=description,
             **kwargs,
         )
 
