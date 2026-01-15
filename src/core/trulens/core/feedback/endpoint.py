@@ -370,6 +370,16 @@ class Endpoint(
             Endpoint.instrumented_methods[mod].append((func, w, type(self)))
 
     def _instrument_class(self, cls, method_name: str) -> None:
+        # Skip Enum classes - they don't allow attribute reassignment
+        from enum import EnumMeta
+
+        if isinstance(cls, EnumMeta):
+            logger.debug(
+                "Skipping instrumentation of enum class %s",
+                python_utils.class_name(cls),
+            )
+            return
+
         if python_utils.safe_hasattr(cls, method_name):
             logger.debug(
                 "Instrumenting %s.%s for %s",
@@ -730,6 +740,14 @@ class Endpoint(
 
     def wrap_function(self, func):
         """Create a wrapper of the given function to perform cost tracking."""
+
+        # Skip non-callable objects (e.g., enum values like CallTypes.completion)
+        if not callable(func):
+            logger.debug(
+                "Skipping instrumentation of non-callable %s",
+                func,
+            )
+            return func
 
         if python_utils.safe_hasattr(func, INSTRUMENT):
             # Store the types of callback classes that will handle calls to the
