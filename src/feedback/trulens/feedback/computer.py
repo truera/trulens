@@ -21,11 +21,11 @@ from opentelemetry.trace.span import Span
 import pandas as pd
 from trulens.core.database.base import DB
 from trulens.core.feedback import endpoint as core_endpoint
-from trulens.core.feedback.feedback import Feedback
 from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
 from trulens.core.feedback.selector import ProcessedContentNode
 from trulens.core.feedback.selector import Selector
 from trulens.core.feedback.selector import Trace
+from trulens.core.metric.metric import Metric
 from trulens.core.otel.instrument import OtelFeedbackComputationRecordingContext
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
 from trulens.experimental.otel_tracing.core.span import (
@@ -90,7 +90,7 @@ class RecordGraphNode:
 def _compute_feedback(
     record_root: RecordGraphNode,
     feedback_name: str,
-    feedback_function: Feedback,
+    feedback_function: Metric,
     higher_is_better: bool,
     selector_function: Callable[[RecordGraphNode], List[Dict[str, Any]]],
 ) -> None:
@@ -129,7 +129,7 @@ def _compute_feedback(
 
 def compute_feedback_by_span_group(
     events: pd.DataFrame,
-    feedback: Feedback,
+    feedback: Metric,
     raise_error_on_no_feedbacks_computed: bool = True,
     selectors: Optional[Dict[str, Selector]] = None,
 ) -> None:
@@ -631,7 +631,7 @@ def _run_feedback_on_inputs(
         Tuple[str, Optional[str], Dict[str, FeedbackFunctionInput]]
     ],
     feedback_name: str,
-    feedback_function: Feedback,
+    feedback_function: Metric,
     higher_is_better: bool,
     feedback_aggregator: Optional[Callable[[List[float]], float]],
     record_id_to_record_root: Dict[str, pd.Series],
@@ -672,7 +672,7 @@ def _run_feedback_on_inputs(
 
 def _call_feedback_function_with_record_root_info(
     feedback_name: str,
-    feedback_function: Feedback,
+    feedback_function: Metric,
     higher_is_better: bool,
     feedback_aggregator: Optional[Callable[[List[float]], float]],
     kwarg_inputs: Dict[str, FeedbackFunctionInput],
@@ -722,7 +722,7 @@ def _call_feedback_function_with_record_root_info(
 
 def _call_feedback_function(
     feedback_name: str,
-    feedback_function: Feedback,
+    feedback_function: Metric,
     higher_is_better: bool,
     feedback_aggregator: Optional[Callable[[List[float]], float]],
     kwarg_inputs: Dict[str, FeedbackFunctionInput],
@@ -822,7 +822,7 @@ def _call_feedback_function(
 
 
 def _call_feedback_function_under_eval_span(
-    feedback_function: Feedback,
+    feedback_function: Metric,
     kwargs: Dict[str, Any],
     eval_root_span: Span,
     is_only_child: bool,

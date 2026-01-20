@@ -21,6 +21,7 @@ import dill
 import pydantic
 from trulens.core.feedback import feedback as core_feedback
 import trulens.core.instruments as core_instruments
+from trulens.core.metric import metric as core_metric
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
@@ -299,7 +300,7 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
     @staticmethod
     def _submit_feedback_functions(
         record: record_schema.Record,
-        feedback_functions: Sequence[core_feedback.Feedback],
+        feedback_functions: Sequence[core_metric.Metric],
         connector: db_connector.DBConnector,
         app: Optional[AppDefinition] = None,
         on_done: Optional[
@@ -314,7 +315,7 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
             ]
         ] = None,
     ) -> List[
-        Tuple[core_feedback.Feedback, Future[feedback_schema.FeedbackResult]]
+        Tuple[core_metric.Metric, Future[feedback_schema.FeedbackResult]]
     ]:
         """Schedules to run the given feedback functions.
 

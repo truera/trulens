@@ -3,7 +3,7 @@ import inspect
 import logging
 from typing import Optional
 
-from trulens.core.feedback import feedback as core_feedback
+from trulens.core.metric import metric as core_metric
 from trulens.core.utils import threading as threading_utils
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ class context_filter:
 
     def __init__(
         self,
-        feedback: core_feedback.Feedback,
+        feedback: core_metric.Metric,
         threshold: float,
         keyword_for_prompt: Optional[str] = None,
     ):
@@ -147,7 +147,7 @@ class block_input:
 
     def __init__(
         self,
-        feedback: core_feedback.Feedback,
+        feedback: core_metric.Metric,
         threshold: float,
         keyword_for_prompt: Optional[str] = None,
         return_value: Optional[str] = None,
@@ -236,7 +236,7 @@ class block_output:
 
     def __init__(
         self,
-        feedback: core_feedback.Feedback,
+        feedback: core_metric.Metric,
         threshold: float,
         return_value: Optional[str] = None,
     ):
