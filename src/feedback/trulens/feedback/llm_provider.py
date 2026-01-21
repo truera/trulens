@@ -2721,6 +2721,184 @@ class LLMProvider(core_provider.Provider):
 
         return statements
 
+    def extract_nuggets(
+        self,
+        context_text: str,
+        query_text: str,
+        max_nuggets: int = 30,
+        nuggets: Optional[List[str]] = None,
+        temperature: float = 0.0,
+    ) -> List[str]:
+        """
+        Extract atomic nuggets of information from text using the LLM.
+
+        This method can be used as a preprocessing step for answer relevance and
+        groundedness evaluation, replacing the simpler sentence tokenization approach.
+
+        Args:
+            context_text: Context text to extract nuggets from
+            query_text: Query text to condition nugget extraction on
+            max_nuggets: Maximum number of nuggets to extract (default: 30)
+            nuggets: Optional initial list of nuggets for iterative extraction
+            temperature: Temperature for LLM response (default: 0.0)
+
+        Returns:
+            List of atomic nugget strings
+        """
+        assert self.endpoint is not None, "Endpoint is not set."
+
+        if nuggets is None:
+            nuggets = []
+
+        system_prompt = (
+            "You are NuggetizeLLM, an intelligent assistant that can update a list of "
+            "atomic nuggets to best provide all the information required for the query."
+        )
+
+        user_prompt = f"""Update the list of atomic nuggets of information (1-12 words), if needed, so they best provide the information required for the query. Leverage only the initial list of nuggets (if exists) and the provided context (this is an iterative process). Return only the final list of all nuggets in a Pythonic list format (even if no updates). Make sure there is no redundant information. Ensure the updated nugget list has at most {max_nuggets} nuggets (can be less), keeping only the most vital ones. Order them in decreasing order of importance. Prefer nuggets that provide more interesting information.
+
+Search Query: {query_text}
+Context:
+{context_text}
+Search Query: {query_text}
+Initial Nugget List: {nuggets}
+Initial Nugget List Length: {len(nuggets)}
+
+Only update the list of atomic nuggets (if needed, else return as is). Do not explain. Always answer in short nuggets (not questions). List in the form ["a", "b", ...] and a and b are strings with no mention of ".
+Updated Nugget List:"""
+
+        llm_messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+
+        try:
+            response = self.endpoint.run_in_pace(
+                func=self._create_chat_completion,
+                messages=llm_messages,
+                temperature=temperature,
+            )
+
+            # Parse the response - try multiple methods
+            content = response.strip()
+
+            # Try JSON parsing first
+            try:
+                import json
+                result = json.loads(content)
+                if isinstance(result, list):
+                    return result
+            except (json.JSONDecodeError, ValueError):
+                pass
+
+            # Try extracting list from markdown code block
+            if "```" in content:
+                # Extract content between code blocks
+                match = re.search(r'```(?:python|json)?\s*\n?(.*?)\n?```', content, re.DOTALL)
+                if match:
+                    content = match.group(1).strip()
+
+            # Try eval as fallback
+            try:
+                result = eval(content)
+                if isinstance(result, list):
+                    return result
+            except (SyntaxError, ValueError):
+                pass
+
+            logger.warning(
+                f"Could not parse nuggets from response: {content[:100]}... Returning empty list."
+            )
+            return []
+
+        except Exception as e:
+            logger.error(f"Error extracting nuggets: {e}")
+            return []
+
+    def classify_nuggets(
+        self,
+        nuggets: List[str],
+        query_text: str,
+        temperature: float = 0.0,
+    ) -> List[str]:
+        """
+        Classify the importance of nuggets using the LLM.
+
+        Labels each nugget as either "vital" or "okay" based on relevance to the query.
+        Vital nuggets represent concepts that must be present in a good answer, while
+        okay nuggets contribute worthwhile but non-essential information.
+
+        Args:
+            nuggets: List of nugget strings to classify
+            query_text: Query text to condition classification on
+            temperature: Temperature for LLM response (default: 0.0)
+
+        Returns:
+            List of classification labels ("vital" or "okay") in the same order as input nuggets
+        """
+        assert self.endpoint is not None, "Endpoint is not set."
+
+        system_prompt = (
+            "You are NuggetizeLLM, an intelligent assistant that can update a list of "
+            "atomic nuggets to best provide all the information required for the query."
+        )
+
+        user_prompt = f"""Based on the query, label each of the {len(nuggets)} nuggets either a vital or okay based on the following criteria. Vital nuggets represent concepts that must be present in a "good" answer; on the other hand, okay nuggets contribute worthwhile information about the target but are not essential. Return the list of labels in a Pythonic list format (type: List[str]). The list should be in the same order as the input nuggets. Make sure to provide a label for each nugget.
+
+Search Query: {query_text}
+Nugget List: {[nugget for nugget in nuggets]}
+
+Only return the list of labels (List[str]). Do not explain.
+Labels:"""
+
+        llm_messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+
+        try:
+            response = self.endpoint.run_in_pace(
+                func=self._create_chat_completion,
+                messages=llm_messages,
+                temperature=temperature,
+            )
+
+            # Parse the response - try multiple methods
+            content = response.strip()
+
+            # Try JSON parsing first
+            try:
+                import json
+                result = json.loads(content)
+                if isinstance(result, list):
+                    return result
+            except (json.JSONDecodeError, ValueError):
+                pass
+
+            # Try extracting list from markdown code block
+            if "```" in content:
+                # Extract content between code blocks
+                match = re.search(r'```(?:python|json)?\s*\n?(.*?)\n?```', content, re.DOTALL)
+                if match:
+                    content = match.group(1).strip()
+
+            # Try eval as fallback
+            try:
+                result = eval(content)
+                if isinstance(result, list):
+                    return result
+            except (SyntaxError, ValueError):
+                pass
+
+            logger.warning(
+                f"Could not parse classifications from response: {content[:100]}... Returning empty list."
+            )
+            return []
+
+        except Exception as e:
+            logger.error(f"Error classifying nuggets: {e}")
+            return []
+
     def groundedness_measure_with_cot_reasons(
         self,
         source: str,
