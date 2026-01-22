@@ -187,7 +187,10 @@ class SnowflakeConnector(DBConnector):
             "warehouse": snowpark_session.get_current_warehouse(),
             "role": snowpark_session.get_current_role(),
         }
-
+        if "host" in connection_parameters:
+            snowpark_session_connection_parameters["host"] = (
+                connection_parameters["host"]
+            )
         for k, v in snowpark_session_connection_parameters.items():
             if v and v.startswith('"') and v.endswith('"'):
                 snowpark_session_connection_parameters[k] = v.strip('"')

@@ -2142,7 +2142,6 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             self._evaluator.stop_evaluator()
 
 
-@staticmethod
 def trace_with_run(
     app: Optional["App"],
     run_name: Optional[str] = None,

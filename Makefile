@@ -34,7 +34,7 @@ env-%:
 	poetry install --with $*
 
 env-tests:
-	poetry run pip install \
+	poetry run pip install --no-cache-dir \
 		jsondiff \
 		nbconvert \
 		nbformat \
@@ -50,6 +50,17 @@ clean-env:
 	@echo "Removing virtual environment to ensure clean state..."
 	poetry env remove --all || true
 
+# Clean pip and poetry caches to free disk space (useful in CI)
+clean-caches:
+	@echo "Cleaning pip cache..."
+	pip cache purge || true
+	@echo "Cleaning poetry cache..."
+	poetry cache clear --all pypi -n || true
+	@echo "Cleaning build artifacts..."
+	rm -rf dist/ build/ .eggs/ *.egg-info/ || true
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+
 env-tests-basic:
 	poetry install --only required
 	make env-tests
@@ -59,7 +70,7 @@ env-tests-optional: env env-tests
 	# nemoguardrails requires langchain<0.4.0, but langgraph requires langchain>=1.0.0
 	# Install nemo separately with: poetry install --with nemo (requires langchain<1.0)
 	poetry install --with apps,providers --without nemo
-	poetry run pip install \
+	poetry run pip install --no-cache-dir \
 		chromadb \
 	 	faiss-cpu \
 		"langchain-openai>=0.2.0" \
@@ -70,16 +81,16 @@ env-tests-optional: env env-tests
 
 env-tests-snowflake: env-tests-optional
 	poetry install --with snowflake
-	poetry run pip install certifi==2025.1.31
+	poetry run pip install --no-cache-dir certifi==2025.1.31
 
 env-tests-db: env-tests
-	poetry run pip install \
+	poetry run pip install --no-cache-dir \
 		cryptography \
 		psycopg2-binary \
 		pymysql
 
 env-tests-notebook: env-tests env-tests-optional
-	poetry run pip install \
+	poetry run pip install --no-cache-dir \
 		faiss-cpu \
 		ipytree \
 		llama-index-readers-web \

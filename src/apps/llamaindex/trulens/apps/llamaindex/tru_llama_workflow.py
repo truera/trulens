@@ -520,7 +520,8 @@ class TruLlamaWorkflow(core_app.App):
 
         # Try to instrument common agent methods - focus on primary execution methods
         # Note: Excluding 'handle_tool_call_results' as it's a post-processing method that creates redundant spans
-        methods_to_try = [
+        # Agent methods are for agent reasoning/orchestration, tool methods are for tool invocations
+        agent_methods = [
             "run",
             "arun",
             "chat",
@@ -530,16 +531,24 @@ class TruLlamaWorkflow(core_app.App):
             "__call__",
             "acall",
             "run_agent_step",
-            "take_step",
-            "call_tool",
             "aggregate_tool_results",
         ]
+        # Tool-calling methods should be marked as TOOL spans
+        tool_methods = [
+            "call_tool",
+            "take_step",  # take_step often involves tool execution
+        ]
+        methods_to_try = agent_methods + tool_methods
 
         for method_name in methods_to_try:
             if hasattr(agent, method_name):
                 method = getattr(agent, method_name)
                 if callable(method):
-                    logger.info(f"Instrumenting {agent_name}.{method_name}")
+                    # Determine if this is a tool method or agent method
+                    is_tool_method = method_name in tool_methods
+                    logger.info(
+                        f"Instrumenting {agent_name}.{method_name} as {'TOOL' if is_tool_method else 'AGENT'}"
+                    )
                     try:
                         # For Pydantic models, we need to use a different approach
                         # Instead of replacing the method, we'll monkey-patch the class
@@ -547,7 +556,11 @@ class TruLlamaWorkflow(core_app.App):
 
                         # Create the instrumented wrapper
                         def create_instrumented_method(
-                            original_func, agent_name, method_name, agent_tools
+                            original_func,
+                            agent_name,
+                            method_name,
+                            agent_tools,
+                            is_tool_method,
                         ):
                             from trulens.core.otel.instrument import instrument
 
@@ -685,9 +698,14 @@ class TruLlamaWorkflow(core_app.App):
 
                                 return attrs
 
-                            # Apply the instrument decorator
+                            # Apply the instrument decorator with appropriate span type
+                            span_type = (
+                                SpanAttributes.SpanType.TOOL
+                                if is_tool_method
+                                else SpanAttributes.SpanType.AGENT
+                            )
                             return instrument(
-                                span_type=SpanAttributes.SpanType.AGENT,
+                                span_type=span_type,
                                 attributes=agent_attributes,
                             )(original_func)
 
@@ -697,6 +715,7 @@ class TruLlamaWorkflow(core_app.App):
                             agent_name,
                             method_name,
                             agent_tools,
+                            is_tool_method,
                         )
 
                         # Try to replace the method on the instance
@@ -835,11 +854,16 @@ class TruLlamaWorkflow(core_app.App):
 
                                     return class_agent_attributes
 
-                                # Apply instrumentation at class level
+                                # Apply instrumentation at class level with appropriate span type
+                                class_span_type = (
+                                    SpanAttributes.SpanType.TOOL
+                                    if is_tool_method
+                                    else SpanAttributes.SpanType.AGENT
+                                )
                                 instrument_method(
                                     cls=agent_class,
                                     method_name=method_name,
-                                    span_type=SpanAttributes.SpanType.AGENT,
+                                    span_type=class_span_type,
                                     attributes=create_class_attributes_func(),
                                 )
                         except Exception as e2:

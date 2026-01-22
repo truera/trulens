@@ -1,6 +1,6 @@
 {% set name = "trulens-dashboard" %}
 {% set pyname = name.replace('-', '.') %}
-{% set version = "2.5.2" %}
+{% set version = "2.5.3" %}
 
 package:
   name: {{ name|lower }}
@@ -12,7 +12,7 @@ source:
   {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-dashboard/#files
-  sha256: 8367452aa6eaa5c62fe732f97c4e66e835964deb572d3f74ba69a33e09deef65
+  sha256: e4a8725c118ff44869749e157c701a1f10e2829e77f84c805894a0816ad5d47e
   {% endif %}
 
 build:
@@ -33,7 +33,7 @@ requirements:
     - pandas >=1.0.0
     - psutil >=5.9.0,<6.0.0
     - rich >=13.6.0,<14.0.0
-    - plotly >=5.22.0,<6.0.0
+    - plotly >=6.0.0,<7.0.0
     - streamlit >=1.35.0,<2.0.0
     - traitlets >=5.0.5,<6.0.0
     - packaging >=23.0
