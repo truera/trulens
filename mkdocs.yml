@@ -282,7 +282,7 @@ nav:
       - ✅ Standards: contributing/standards.md
       - 💣 Tech Debt: contributing/techdebt.md
       - ⛅ Optional Packages: contributing/optional.md
-      - ✨ Database Migration: contributing/migration.md
+      - 🗄️ Database Schema: contributing/database.md
       - 🏁 Release History: contributing/release_history.md
   - ✍️ Blog:
       - blog/index.md
