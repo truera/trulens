@@ -10,6 +10,114 @@ tags: [trulens, llm, instrumentation, opentelemetry, tracing]
 
 Instrument your LLM application to capture traces for evaluation and debugging.
 
+## Interactive Instrumentation Setup
+
+**Let's identify what you need to instrument for visualization and/or evaluation.**
+
+### Question 1: What framework are you using?
+
+| Framework | Wrapper | Auto-instrumented |
+|-----------|---------|-------------------|
+| **LangChain** | `TruChain` | Chain components, LLM calls |
+| **LangGraph** | `TruGraph` | Graph nodes, `@task` decorators |
+| **LlamaIndex** | `TruLlama` / `TruLlamaWorkflow` | Query engines, retrievers, workflows |
+| **Custom/Other** | `TruApp` | Only what you explicitly `@instrument()` |
+
+→ If using a framework, the wrapper handles basic instrumentation automatically. Continue to Question 2 to add custom attributes.
+
+---
+
+### Question 2: What data do you want to capture?
+
+**Tell me what's important to track in your app.** This could be for:
+- **Visualization**: Understanding execution flow in the dashboard
+- **Evaluation**: Feeding data into feedback functions
+
+Common attributes to instrument:
+
+| What to Capture | Span Type | Attributes |
+|-----------------|-----------|------------|
+| **User query/input** | `RECORD_ROOT` | `INPUT` |
+| **Final response** | `RECORD_ROOT` | `OUTPUT` |
+| **Retrieved documents/chunks** | `RETRIEVAL` | `QUERY_TEXT`, `RETRIEVED_CONTEXTS` |
+| **LLM prompts/completions** | `GENERATION` | (auto-captured by wrappers) |
+| **Tool calls** | `TOOL` | Tool name, arguments, results |
+| **Agent reasoning** | `AGENT` | Plans, decisions |
+| **Reranking results** | `RERANKING` | `QUERY_TEXT`, `INPUT_CONTEXT_TEXTS`, `TOP_N` |
+
+**What specific data do you want to capture that isn't listed above?**
+
+Examples:
+- "I want to capture the similarity scores from my retriever"
+- "I need to track which documents were filtered out"
+- "I want to see the intermediate chain-of-thought reasoning"
+- "I need to capture metadata about each retrieved chunk (source, page number)"
+
+---
+
+### Question 3: Do you have custom functions that need instrumentation?
+
+If you have functions that aren't automatically instrumented, list them:
+
+**Example response:**
+- `retrieve_documents(query)` - returns list of documents
+- `rerank_results(query, docs)` - reranks and filters documents
+- `generate_response(query, context)` - calls LLM to generate answer
+
+**For each function, I'll help you add the right `@instrument()` decorator with appropriate span types and attributes.**
+
+---
+
+### Template: Instrumenting Your Custom Function
+
+Tell me about your function and I'll generate the instrumentation:
+
+```
+Function name: _______________
+What it does: _______________
+Input parameters: _______________
+What it returns: _______________
+What data should be captured for eval/visualization: _______________
+```
+
+**Example:**
+
+```
+Function name: retrieve_documents
+What it does: Searches vector store for relevant documents
+Input parameters: query (str), top_k (int)
+What it returns: List of document dicts with 'text', 'source', 'score' keys
+What data should be captured: The query text and the document texts (not scores/sources)
+```
+
+→ Generated instrumentation:
+
+```python
+@instrument(
+    span_type=SpanAttributes.SpanType.RETRIEVAL,
+    attributes={
+        SpanAttributes.RETRIEVAL.QUERY_TEXT: "query",
+        SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: "return",
+    }
+)
+def retrieve_documents(query: str, top_k: int = 5) -> list:
+    # If you need to extract just the text from complex returns:
+    pass
+
+# Or with lambda for complex extraction:
+@instrument(
+    span_type=SpanAttributes.SpanType.RETRIEVAL,
+    attributes=lambda ret, exception, *args, **kwargs: {
+        SpanAttributes.RETRIEVAL.QUERY_TEXT: kwargs.get("query", args[0]),
+        SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: [doc["text"] for doc in ret],
+    }
+)
+def retrieve_documents(query: str, top_k: int = 5) -> list:
+    pass
+```
+
+---
+
 ## Overview
 
 TruLens provides two approaches to instrumentation:
@@ -60,7 +168,7 @@ with tru_recorder as recording:
 ```python
 from trulens.apps.langgraph import TruGraph
 
-# TruGraph auto-detects @task decorators
+# TruGraph auto-detects graph nodes and @task decorators
 tru_recorder = TruGraph(
     graph,
     app_name="MyLangGraphAgent",
@@ -193,7 +301,7 @@ def custom_retrieve(query: str) -> list:
     """Custom retrieval with semantic attributes for evaluation."""
     return ["context1", "context2"]
 
-# TruGraph will capture both @task spans and your @instrument spans
+# TruGraph will capture both auto-instrumented spans and your @instrument spans
 tru_recorder = TruGraph(graph, app_name="EnhancedAgent", app_version="v1")
 ```
 

@@ -2,324 +2,82 @@
 skill_spec_version: 0.1.0
 name: trulens-running-evaluations
 version: 1.0.0
-description: Execute TruLens evaluations for RAG and Agent applications
+description: Execute TruLens evaluations and view results
 tags: [trulens, llm, evaluation, rag, agents]
 ---
 
 # TruLens Running Evaluations
 
-Execute evaluations appropriate to your app type (RAG vs Agent).
-
-## Overview
-
-TruLens evaluations differ based on app type:
-
-- **RAG Apps**: Prioritize the RAG Triad (context relevance, groundedness, answer relevance)
-- **Agent Apps**: Prioritize Agent GPA metrics (logical consistency, plan quality, execution efficiency, tool metrics)
+Execute your configured evaluations and analyze results.
 
 ## Prerequisites
 
-```bash
-pip install trulens trulens-providers-openai
-```
+Before running evaluations, ensure you have:
+
+1. **Instrumented your app** (see `instrumentation` skill)
+2. **Configured your feedback functions** (see `evaluation-setup` skill)
 
 ## Instructions
 
-### Step 1: Identify Your App Type
+### Step 1: Wrap Your App with Feedbacks
 
-| App Type | Characteristics | Primary Metrics |
-|----------|-----------------|-----------------|
-| **RAG** | Retriever + generator pattern, returns grounded responses | RAG Triad |
-| **Agent** | Tool-calling, multi-step reasoning, planning | Agent GPA |
-
-### Step 2: Set Up Evaluations Based on App Type
-
-#### For RAG Applications
+Pass your configured feedbacks to the appropriate wrapper:
 
 ```python
-import numpy as np
-from trulens.core import TruSession, Feedback
-from trulens.providers.openai import OpenAI
+from trulens.core import TruSession
 
 session = TruSession()
-provider = OpenAI()
 
-# RAG Triad Feedbacks
-f_context_relevance = (
-    Feedback(provider.context_relevance_with_cot_reasons, name="Context Relevance")
-    .on_input()
-    .on_context(collect_list=False)
-    .aggregate(np.mean)
-)
-
-f_groundedness = (
-    Feedback(provider.groundedness_measure_with_cot_reasons, name="Groundedness")
-    .on_context(collect_list=True)
-    .on_output()
-)
-
-f_answer_relevance = (
-    Feedback(provider.relevance_with_cot_reasons, name="Answer Relevance")
-    .on_input()
-    .on_output()
-)
-
-rag_feedbacks = [f_context_relevance, f_groundedness, f_answer_relevance]
-```
-
-#### For Agent Applications
-
-```python
-from trulens.core import TruSession, Feedback
-from trulens.core.feedback.selector import Selector
-from trulens.providers.openai import OpenAI
-
-session = TruSession()
-provider = OpenAI()
-
-# All GPA metrics use trace-level selection
-trace_selector = {"trace": Selector(trace_level=True)}
-
-# Core Agent GPA Feedbacks (always include)
-f_logical_consistency = (
-    Feedback(provider.logical_consistency_with_cot_reasons, name="Logical Consistency")
-    .on(trace_selector)
-)
-
-f_execution_efficiency = (
-    Feedback(provider.execution_efficiency_with_cot_reasons, name="Execution Efficiency")
-    .on(trace_selector)
-)
-
-f_tool_selection = (
-    Feedback(provider.tool_selection_with_cot_reasons, name="Tool Selection")
-    .on(trace_selector)
-)
-
-f_tool_calling = (
-    Feedback(provider.tool_calling_with_cot_reasons, name="Tool Calling")
-    .on(trace_selector)
-)
-
-f_tool_quality = (
-    Feedback(provider.tool_quality_with_cot_reasons, name="Tool Quality")
-    .on(trace_selector)
-)
-
-# Planning metrics (include only if agent does explicit planning)
-f_plan_quality = (
-    Feedback(provider.plan_quality_with_cot_reasons, name="Plan Quality")
-    .on(trace_selector)
-)
-
-f_plan_adherence = (
-    Feedback(provider.plan_adherence_with_cot_reasons, name="Plan Adherence")
-    .on(trace_selector)
-)
-
-# Choose feedbacks based on whether agent does planning
-agent_feedbacks = [
-    f_logical_consistency,
-    f_plan_quality,        # Include if agent plans
-    f_plan_adherence,      # Include if agent plans
-    f_execution_efficiency,
-    f_tool_selection,
-    f_tool_calling,
-    f_tool_quality,
-]
-
-# If agent does NOT do explicit planning, use this instead:
-# agent_feedbacks = [
-#     f_logical_consistency,
-#     f_execution_efficiency,
-#     f_tool_selection,
-#     f_tool_calling,
-#     f_tool_quality,
-# ]
-```
-
-### Step 3: Wrap Your App with the Appropriate Wrapper
-
-#### RAG with TruLlama
-
-```python
-from trulens.apps.llamaindex import TruLlama
-
-query_engine = index.as_query_engine()
-
-tru_rag = TruLlama(
-    query_engine,
-    app_name="MyRAG",
-    app_version="v1",
-    feedbacks=rag_feedbacks,
-)
-```
-
-#### RAG with TruChain
-
-```python
-from trulens.apps.langchain import TruChain
-
-tru_rag = TruChain(
-    rag_chain,
-    app_name="MyRAG",
-    app_version="v1",
-    feedbacks=rag_feedbacks,
-)
-```
-
-#### Agent with TruGraph
-
-```python
-from trulens.apps.langgraph import TruGraph
-
-tru_agent = TruGraph(
-    agent_graph,
-    app_name="MyAgent",
-    app_version="v1",
-    feedbacks=agent_feedbacks,
-)
-```
-
-#### Custom App with TruApp
-
-```python
-from trulens.apps.app import TruApp
-
-tru_app = TruApp(
-    my_custom_app,
+# Use the wrapper that matches your framework
+tru_app = YourWrapper(
+    your_app,
     app_name="MyApp",
     app_version="v1",
-    feedbacks=rag_feedbacks,  # or agent_feedbacks
+    feedbacks=your_feedbacks,  # From evaluation-setup
 )
 ```
 
-### Step 4: Run Your App and Record Traces
+| Framework | Wrapper |
+|-----------|---------|
+| LangChain | `TruChain` |
+| LangGraph | `TruGraph` |
+| LlamaIndex | `TruLlama` / `TruLlamaWorkflow` |
+| Custom | `TruApp` |
+
+### Step 2: Run Your App with Recording
+
+Use the context manager to record traces and run evaluations:
 
 ```python
-# Run with recording
-with tru_rag as recording:
-    response = query_engine.query("What is TruLens?")
+# Single query
+with tru_app as recording:
+    result = your_app.query("What is TruLens?")
 
-# Or for agents
-with tru_agent as recording:
-    result = agent_graph.invoke({"messages": [HumanMessage(content="Research AI trends")]})
-```
-
-### Step 5: View Results
-
-```python
-# View leaderboard
-leaderboard = session.get_leaderboard()
-print(leaderboard)
-
-# Launch dashboard for detailed analysis
-from trulens.dashboard import run_dashboard
-
-run_dashboard(session)
-```
-
-## Common Patterns
-
-### Complete RAG Evaluation Flow
-
-```python
-import numpy as np
-from trulens.core import TruSession, Feedback
-from trulens.apps.llamaindex import TruLlama
-from trulens.providers.openai import OpenAI
-
-# Setup
-session = TruSession()
-provider = OpenAI()
-
-# RAG Triad
-f_context_relevance = (
-    Feedback(provider.context_relevance_with_cot_reasons, name="Context Relevance")
-    .on_input()
-    .on_context(collect_list=False)
-    .aggregate(np.mean)
-)
-
-f_groundedness = (
-    Feedback(provider.groundedness_measure_with_cot_reasons, name="Groundedness")
-    .on_context(collect_list=True)
-    .on_output()
-)
-
-f_answer_relevance = (
-    Feedback(provider.relevance_with_cot_reasons, name="Answer Relevance")
-    .on_input()
-    .on_output()
-)
-
-# Wrap and run
-tru_rag = TruLlama(
-    query_engine,
-    app_name="ProductionRAG",
-    app_version="v1",
-    feedbacks=[f_context_relevance, f_groundedness, f_answer_relevance],
-)
-
+# Multiple queries
 test_queries = [
     "What is machine learning?",
     "How does RAG work?",
     "Explain transformers.",
 ]
 
-with tru_rag as recording:
+with tru_app as recording:
     for query in test_queries:
-        query_engine.query(query)
-
-# Review
-print(session.get_leaderboard())
+        your_app.query(query)
 ```
 
-### Complete Agent Evaluation Flow
+### Step 3: View Results
 
 ```python
-from trulens.core import TruSession, Feedback
-from trulens.core.feedback.selector import Selector
-from trulens.apps.langgraph import TruGraph
-from trulens.providers.openai import OpenAI
-
-# Setup
-session = TruSession()
-provider = OpenAI()
-trace_selector = {"trace": Selector(trace_level=True)}
-
-# Agent GPA (with planning)
-feedbacks = [
-    Feedback(provider.logical_consistency_with_cot_reasons, name="Logical Consistency").on(trace_selector),
-    Feedback(provider.plan_quality_with_cot_reasons, name="Plan Quality").on(trace_selector),
-    Feedback(provider.plan_adherence_with_cot_reasons, name="Plan Adherence").on(trace_selector),
-    Feedback(provider.execution_efficiency_with_cot_reasons, name="Execution Efficiency").on(trace_selector),
-    Feedback(provider.tool_selection_with_cot_reasons, name="Tool Selection").on(trace_selector),
-    Feedback(provider.tool_calling_with_cot_reasons, name="Tool Calling").on(trace_selector),
-    Feedback(provider.tool_quality_with_cot_reasons, name="Tool Quality").on(trace_selector),
-]
-
-# Wrap and run
-tru_agent = TruGraph(
-    agent_graph,
-    app_name="ResearchAgent",
-    app_version="v1",
-    feedbacks=feedbacks,
-)
-
-test_tasks = [
-    "Research the latest AI trends and summarize",
-    "Find information about climate change policies",
-    "Analyze stock market performance this quarter",
-]
-
-with tru_agent as recording:
-    for task in test_tasks:
-        agent_graph.invoke({"messages": [HumanMessage(content=task)]})
-
-# Review
+# View leaderboard summary
 print(session.get_leaderboard())
+
+# Launch interactive dashboard
+from trulens.dashboard import run_dashboard
+
+run_dashboard(session)
 ```
+
+## Common Patterns
 
 ### Comparing App Versions
 
@@ -336,13 +94,46 @@ with tru_v2 as recording:
     for q in test_queries:
         query_engine_v2.query(q)
 
-# Compare on leaderboard
+# Compare on leaderboard (same app_name, different app_version)
 print(session.get_leaderboard())
+```
+
+### Batch Evaluation with Test Dataset
+
+```python
+import pandas as pd
+
+# Load test dataset
+test_df = pd.read_csv("test_queries.csv")
+
+with tru_app as recording:
+    for _, row in test_df.iterrows():
+        result = your_app.query(row["query"])
+        # Optionally store results
+        # results.append({"query": row["query"], "response": result})
+```
+
+### Evaluating with Ground Truth
+
+```python
+from trulens.feedback import GroundTruthAgreement
+
+# Load ground truth dataset (see dataset-curation skill)
+ground_truth_df = session.get_ground_truth("my_dataset")
+
+# Add ground truth feedback
+ground_truth = GroundTruthAgreement(ground_truth_df, provider=provider)
+f_agreement = Feedback(ground_truth.agreement_measure, name="Ground Truth Agreement").on_input_output()
+
+# Include with other feedbacks
+all_feedbacks = your_feedbacks + [f_agreement]
 ```
 
 ## Troubleshooting
 
-- **No evaluation results**: Ensure feedbacks list is passed to the wrapper
-- **Missing context scores**: Verify `RETRIEVAL.RETRIEVED_CONTEXTS` is instrumented
-- **Agent metrics empty**: Check that trace contains tool calls and reasoning steps
-- **Dashboard not loading**: Run `pip install trulens-dashboard` and ensure port 8501 is available
+| Issue | Solution |
+|-------|----------|
+| No evaluation results | Ensure `feedbacks` list is passed to wrapper |
+| Missing context scores | Verify `RETRIEVAL.RETRIEVED_CONTEXTS` is instrumented |
+| Agent metrics empty | Check that trace contains tool calls and reasoning |
+| Dashboard not loading | Run `pip install trulens-dashboard`, check port 8501 |

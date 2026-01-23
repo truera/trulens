@@ -10,6 +10,136 @@ tags: [trulens, llm, evaluation, feedback, selectors]
 
 Configure feedback functions to evaluate your LLM app's quality.
 
+## Interactive Evaluation Selection
+
+**Before proceeding, let's determine the right evaluations for your app.**
+
+### Question 1: What type of app are you building?
+
+**Option A: RAG (Retrieval-Augmented Generation)**
+- Your app retrieves documents/chunks from a knowledge base
+- It generates responses grounded in the retrieved context
+- Examples: Q&A systems, document search, knowledge assistants
+
+→ **Recommended: RAG Triad metrics**
+- Context Relevance
+- Groundedness
+- Answer Relevance
+
+**Option B: Agent**
+- Your app uses tools to accomplish tasks
+- It may involve multi-step reasoning or planning
+- Examples: research agents, coding assistants, task automation
+
+→ **Recommended: Agent GPA metrics** (continue to Question 2)
+
+---
+
+### Question 2 (Agents only): Does your agent do explicit planning?
+
+**Yes, my agent creates plans before executing:**
+- Agent outputs a plan/strategy before taking actions
+- Agent references its plan during execution
+
+→ **Use all Agent GPA metrics:**
+- Logical Consistency
+- Plan Quality
+- Plan Adherence
+- Execution Efficiency
+- Tool Selection
+- Tool Calling
+- Tool Quality
+
+**No, my agent acts without explicit planning:**
+- Agent takes actions directly without stating a plan
+- Agent uses reactive decision-making
+
+→ **Use Agent GPA metrics (excluding plan metrics):**
+- Logical Consistency
+- Execution Efficiency
+- Tool Selection
+- Tool Calling
+- Tool Quality
+
+---
+
+### Question 3: Do you want to add any additional evaluations?
+
+Consider adding these based on your needs:
+
+| Evaluation | Use Case |
+|------------|----------|
+| **Coherence** | Check if output is well-structured and readable |
+| **Conciseness** | Ensure responses aren't unnecessarily verbose |
+| **Harmlessness** | Detect potentially harmful content |
+| **Sentiment** | Analyze emotional tone of responses |
+| **Custom metrics** | Domain-specific evaluations (see below) |
+
+#### Creating Custom Metrics
+
+If you need domain-specific evaluations, describe what you want to measure:
+
+**What aspect of your app do you want to evaluate?**
+
+Examples:
+- "Check if the response follows our brand voice guidelines"
+- "Verify the output contains required legal disclaimers"
+- "Measure technical accuracy for code generation"
+- "Evaluate if customer support responses show empathy"
+
+**Template for custom metrics:**
+
+```python
+def my_custom_metric(input_text: str, output_text: str) -> float:
+    """
+    Describe what this metric evaluates.
+
+    Returns:
+        float: Score between 0.0 (worst) and 1.0 (best)
+    """
+    # Option 1: Rule-based logic
+    # score = 1.0 if "required phrase" in output_text else 0.0
+
+    # Option 2: Use LLM-as-judge
+    # provider = OpenAI()
+    # response = provider.client.chat.completions.create(
+    #     model="gpt-4o",
+    #     messages=[{
+    #         "role": "user",
+    #         "content": f"Rate this response on [YOUR CRITERIA]. Input: {input_text} Output: {output_text}. Return only a number 0-10."
+    #     }]
+    # )
+    # score = float(response.choices[0].message.content) / 10.0
+
+    return score
+
+f_custom = (
+    Feedback(my_custom_metric, name="My Custom Metric")
+    .on_input()
+    .on_output()
+)
+```
+
+**Custom metric with context:**
+
+```python
+def custom_with_context(query: str, context: str, response: str) -> float:
+    """Evaluate using query, retrieved context, and response."""
+    # Your evaluation logic
+    return score
+
+f_custom_context = (
+    Feedback(custom_with_context, name="Custom Context Metric")
+    .on_input()
+    .on_context(collect_list=True)
+    .on_output()
+)
+```
+
+**Tell me what you want to evaluate and I'll help you create the metric!**
+
+---
+
 ## Overview
 
 Feedback functions evaluate specific aspects of your app by:
