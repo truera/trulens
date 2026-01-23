@@ -123,7 +123,7 @@ Before contributing, familiarize yourself with:
 | [Package Architecture](optional.md) | Modular package structure since TruLens 1.0 |
 | [Release Policies](policies.md) | Versioning, deprecation, and experimental features |
 | [Tech Debt](techdebt.md) | Known issues and areas needing refactoring |
-| [Database Migration](migration.md) | Schema evolution and migration procedures |
+| [Database Schema](database.md) | OTEL events table, legacy schema, and migrations |
 
 ---
 
