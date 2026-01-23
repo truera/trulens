@@ -195,11 +195,20 @@ f_groundedness = (
 
 **Shortcut Reference:**
 
-| Shortcut | Selects | Span Attribute |
-|----------|---------|----------------|
-| `on_input()` | App input | `RECORD_ROOT.INPUT` |
-| `on_output()` | App output | `RECORD_ROOT.OUTPUT` |
-| `on_context()` | Retrieved contexts | `RETRIEVAL.RETRIEVED_CONTEXTS` |
+| Shortcut | Selects | Required Span Type |
+|----------|---------|-------------------|
+| `on_input()` | App input | `RECORD_ROOT` |
+| `on_output()` | App output | `RECORD_ROOT` |
+| `on_context()` | Retrieved contexts | `RETRIEVAL` |
+
+**⚠️ IMPORTANT: `.on_input()` and `.on_output()` require `RECORD_ROOT` spans!**
+
+These shortcuts look for spans with `span_type=SpanAttributes.SpanType.RECORD_ROOT`. If you use manual instrumentation with a different span type (like `AGENT`), the shortcuts will not find any data.
+
+**Solutions:**
+- Use framework wrappers (`TruGraph`, `TruChain`, `TruLlama`) which create `RECORD_ROOT` automatically
+- Use explicit `@instrument(span_type=SpanAttributes.SpanType.RECORD_ROOT, ...)` on your entry point
+- Use explicit `Selector` objects instead of shortcuts (see Step 3)
 
 ### Step 3: Using Explicit Selectors
 
@@ -416,3 +425,5 @@ f_custom = (
 - **Selector not finding data**: Ensure the span attribute was set during instrumentation
 - **Empty context**: Verify `RETRIEVAL.RETRIEVED_CONTEXTS` is mapped in your `@instrument()` decorator
 - **Aggregation errors**: Check that `collect_list=False` is set when using `.aggregate()`
+- **`.on_input()/.on_output()` returning no data**: These shortcuts require `RECORD_ROOT` span type. Use framework wrappers or explicit `@instrument(span_type=SpanAttributes.SpanType.RECORD_ROOT, ...)`. See the instrumentation skill for details.
+- **Feedback columns show empty/null**: Verify your instrumentation creates `RECORD_ROOT` spans with `INPUT` and `OUTPUT` attributes

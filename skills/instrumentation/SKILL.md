@@ -368,8 +368,71 @@ def call_tool(self, tool_name, args): ...
 def execute_workflow(self, steps): ...
 ```
 
+## Deep Agents / LangGraph Instrumentation
+
+LangChain's **Deep Agents** framework is built on LangGraph. Use `TruGraph` for full instrumentation:
+
+```python
+from deepagents import create_deep_agent
+from trulens.apps.langgraph import TruGraph
+from trulens.core import TruSession
+
+# Create the Deep Agent
+agent = create_deep_agent(
+    model=model,
+    tools=[your_tools],
+    system_prompt="Your prompt"
+)
+
+# Wrap with TruGraph - captures all internal nodes, tool calls, planning steps
+tru_agent = TruGraph(
+    agent,
+    app_name="DeepAgent",
+    app_version="v1",
+    feedbacks=[f_answer_relevance]
+)
+
+with tru_agent as recording:
+    result = agent.invoke({"messages": [{"role": "user", "content": query}]})
+```
+
+**Why TruGraph instead of TruApp + @instrument?**
+
+- TruGraph automatically captures all LangGraph nodes and transitions
+- TruGraph creates `RECORD_ROOT` spans required for `.on_input()/.on_output()` shortcuts
+- Manual `@instrument(span_type=SpanType.AGENT)` will NOT work with feedback selector shortcuts
+
+## Critical: Span Types and Feedback Selectors
+
+The `.on_input()` and `.on_output()` feedback selector shortcuts look for spans with type `RECORD_ROOT`:
+
+```python
+# This WORKS - TruGraph creates RECORD_ROOT spans automatically
+tru_agent = TruGraph(agent, feedbacks=[f_answer_relevance])
+
+# This also WORKS - explicit RECORD_ROOT
+@instrument(
+    span_type=SpanAttributes.SpanType.RECORD_ROOT,
+    attributes={
+        SpanAttributes.RECORD_ROOT.INPUT: "query",
+        SpanAttributes.RECORD_ROOT.OUTPUT: "return",
+    }
+)
+def query(self, query: str) -> str:
+    ...
+
+# This WILL NOT WORK with .on_input()/.on_output() shortcuts!
+@instrument(span_type=SpanAttributes.SpanType.AGENT)  # Wrong span type
+def run_agent(self, task):
+    ...
+```
+
+**If your evaluations show empty feedback columns**, check that your root span uses `RECORD_ROOT` span type.
+
 ## Troubleshooting
 
 - **Spans not appearing**: Ensure you're using `@instrument()` with parentheses (not `@instrument`)
 - **Missing context in evaluations**: Add semantic attributes to map function args/returns
 - **Framework not detected**: Verify the correct wrapper is imported (TruChain vs TruGraph vs TruLlama)
+- **Feedback columns empty/evaluations not running**: Your root span must use `SpanType.RECORD_ROOT` for `.on_input()/.on_output()` shortcuts to work. Use framework wrappers (TruGraph, TruChain) which handle this automatically.
+- **Pydantic errors with Deep Agents**: Deep Agents uses `NotRequired` type annotations that can cause Pydantic schema errors. If you see `PydanticForbiddenQualifier` errors, update to the latest TruLens version which handles this gracefully.

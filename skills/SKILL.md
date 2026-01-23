@@ -18,6 +18,29 @@ Use this skill when you want to:
 - Understand the full TruLens workflow
 - Know which sub-skill to use for your current task
 
+## Required Questions to Ask User
+
+**Before implementing, always ask the user these questions:**
+
+### 1. App Type (determines instrumentation wrapper)
+- What framework is your app built with? (LangChain, LangGraph/Deep Agents, LlamaIndex, Custom)
+
+### 2. Evaluation Metrics (determines feedback functions)
+Ask: **"Which evaluation metrics would you like to use?"**
+
+| App Type | Recommended Metrics | Description |
+|----------|--------------------| ------------|
+| **RAG** | RAG Triad | Context Relevance, Groundedness, Answer Relevance |
+| **Agent** | Agent GPA | Tool Selection, Tool Calling, Execution Efficiency, etc. |
+| **Simple** | Answer Relevance | Basic input-to-output relevance check |
+| **Custom** | Ask user | Let user describe what they want to evaluate |
+
+**For Agents, also ask:**
+- Does your agent do explicit planning? (determines if Plan Quality/Adherence metrics apply)
+
+### 3. Additional Metrics (optional)
+- Do you want any additional evaluations? (Coherence, Conciseness, Harmlessness, custom metrics)
+
 ## The Evaluation Workflow
 
 ```
@@ -101,9 +124,11 @@ Use this skill when you want to:
 
 ### Path B: Evaluate an Agent
 
-1. **Instrument** → Wrap with `TruGraph`
-2. **Configure** → Set up Agent GPA metrics
+1. **Instrument** → Wrap with `TruGraph` (for LangGraph/Deep Agents)
+2. **Configure** → Set up Agent GPA metrics (or Answer Relevance for simple evals)
 3. **Run** → Execute tasks and analyze traces
+
+**Note**: For LangGraph-based frameworks like Deep Agents, always use `TruGraph` rather than manual `@instrument()` decorators. TruGraph automatically creates the correct span types and captures all graph transitions.
 
 ### Path C: Regression Testing
 
@@ -141,3 +166,16 @@ If your app does both (e.g., agentic RAG), use metrics from both categories.
 ## Getting Help
 
 If you're unsure which skill to use, describe your goal and I'll guide you to the right one.
+
+## Known Compatibility Notes
+
+### Deep Agents / LangGraph
+
+- **Always use `TruGraph`** for LangGraph-based apps (including Deep Agents)
+- The `.on_input()` and `.on_output()` feedback shortcuts require `RECORD_ROOT` spans
+- Framework wrappers (TruGraph, TruChain) create these automatically
+- Manual `@instrument(span_type=SpanType.AGENT)` will NOT work with selector shortcuts
+
+### Pydantic Compatibility
+
+Some LangGraph/Deep Agents versions use `NotRequired` type annotations that older Pydantic versions can't handle. If you see `PydanticForbiddenQualifier` errors, update to the latest TruLens version.

@@ -65,10 +65,20 @@ with tru_app as recording:
         your_app.query(query)
 ```
 
-### Step 3: View Results
+### Step 3: Wait for and View Results
+
+Evaluations run asynchronously. Use `retrieve_feedback_results()` to wait for them to complete:
 
 ```python
-# View leaderboard summary
+# Wait for evaluations to complete and get results as a DataFrame
+# The timeout parameter controls how long to wait (default: 180 seconds)
+feedback_results = recording.retrieve_feedback_results(timeout=300)
+print(feedback_results)
+
+# For a single record:
+single_record_results = recording[0].retrieve_feedback_results(timeout=300)
+
+# View leaderboard summary across all records
 print(session.get_leaderboard())
 
 # Launch interactive dashboard
@@ -76,6 +86,11 @@ from trulens.dashboard import run_dashboard
 
 run_dashboard(session)
 ```
+
+**Important**: Do NOT use `time.sleep()` to wait for evaluations. The `retrieve_feedback_results()` method properly waits for:
+1. Records to be written to the database
+2. Feedback evaluations to complete
+3. Results to be available
 
 ## Common Patterns
 
@@ -137,3 +152,24 @@ all_feedbacks = your_feedbacks + [f_agreement]
 | Missing context scores | Verify `RETRIEVAL.RETRIEVED_CONTEXTS` is instrumented |
 | Agent metrics empty | Check that trace contains tool calls and reasoning |
 | Dashboard not loading | Run `pip install trulens-dashboard`, check port 8501 |
+| Feedback columns empty | Your root span must use `SpanType.RECORD_ROOT` for `.on_input()/.on_output()` to work. Use framework wrappers (TruGraph, TruChain) which handle this automatically |
+| `PydanticForbiddenQualifier` error | Update to latest TruLens version - this error occurs with Deep Agents/LangGraph apps that use `NotRequired` type annotations |
+| Results not appearing | Use `recording.retrieve_feedback_results()` instead of `time.sleep()` - it properly waits for evaluations to complete |
+
+### Deep Agents / LangGraph Specific Issues
+
+If evaluating a Deep Agent or LangGraph app:
+
+1. **Use `TruGraph`** instead of `TruApp` + manual instrumentation:
+   ```python
+   from trulens.apps.langgraph import TruGraph
+
+   tru_agent = TruGraph(agent, app_name="DeepAgent", feedbacks=[...])
+   ```
+
+2. **Why?** TruGraph automatically:
+   - Creates `RECORD_ROOT` spans (required for `.on_input()/.on_output()`)
+   - Captures all graph nodes and transitions
+   - Handles LangGraph-specific data structures
+
+3. **Common mistake**: Using `@instrument(span_type=SpanType.AGENT)` instead of `RECORD_ROOT` will cause feedback selector shortcuts to fail silently
