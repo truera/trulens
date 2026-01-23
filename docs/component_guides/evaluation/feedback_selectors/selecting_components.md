@@ -38,6 +38,10 @@ Let's walk through an example. Take this example where a method named `query` is
 
 Once we've done this, now we can map the inputs to a feedback function to these span attributes:
 
+!!! info "Connection to Instrumentation"
+
+    The span attributes used in evaluation (`RECORD_ROOT.INPUT`, `RETRIEVAL.RETRIEVED_CONTEXTS`, etc.) must first be set during instrumentation. If you're using custom attributes, make sure they are properly instrumented using the techniques described in [Instrumenting Custom Attributes](../../instrumentation/index.md#instrumenting-custom-attributes) and [Manipulating Custom Attributes](../../instrumentation/index.md#manipulating-custom-attributes).
+
 !!! example "Selecting Instrumented Span Attributes for Evaluation"
 
     ```python
