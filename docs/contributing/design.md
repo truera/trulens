@@ -235,4 +235,4 @@ The legacy implementation relied on Python call stack inspection:
 - This required custom thread/async handling to preserve stack information
 - Stack inspection is CPython-specific
 
-This approach is being phased out in favor of OTEL context propagation.
+This approach is phased out in favor of OTEL context propagation.

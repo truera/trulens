@@ -137,8 +137,3 @@ produce "deprecated" errors instead of warnings.
 For adoption, the feature will be integrated somewhere in the API without the
 `experimental_` prefix and use of that prefix/flag will instead raise an error
 indicating where in the stable API that feature relocated.
-
-### Previously Experimental Features
-
-- **OTEL Tracing (adopted)**: OpenTelemetry-based instrumentation is now the
-  standard tracing approach in TruLens. See `trulens.core.otel.instrument`.

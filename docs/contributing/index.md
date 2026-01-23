@@ -2,136 +2,139 @@
 
 Interested in contributing to TruLens? Here's how to get started!
 
-Step 1: Join the [community](https://snowflake.discourse.group/c/ai-research-and-development-community/89).
+**Step 1:** Join the [community](https://snowflake.discourse.group/c/ai-research-and-development-community/89).
 
-## What can you work on?
+**Step 2:** Find something to work on below, or browse [open issues](https://github.com/truera/trulens/issues).
 
-1. [💪 Add new feedback functions](#add-new-feedback-functions)
-2. [🤝 Add new feedback function providers](#add-new-feedback-function-providers)
-3. [🐛 Fix bugs](#fix-bugs)
-4. [🎉 Add usage examples](#add-usage-examples)
-5. [🧪 Add experimental features](#add-experimental-features)
-6. [📄 Improve code quality & documentation](#improve-code-quality--documentation)
-7. [⛅ Address open issues](#address-open-issues)
+---
 
-## 💪 Add new [feedback functions][trulens.core.feedback.provider.Provider]
+## Getting Started
 
-Feedback functions are the backbone of TruLens, and evaluating unique LLM apps
-may require new evaluations. We'd love your contribution to extend the feedback
-functions library so others can benefit!
+New to TruLens? These are great entry points:
 
-- To add a feedback function for an existing model provider, you can add it to
-  an existing provider module. You can read more about the structure of a
-  feedback function in this
-  [guide](https://www.trulens.org/component_guides/evaluation/feedback_implementations/custom_feedback_functions/).
-- New methods can either take a single text (str) as a parameter or two
-  different texts (str), such as prompt and retrieved context. It should return
-  a float, or a dict of multiple floats. Each output value should be a float on
-  the scale of 0 (worst) to 1 (best).
+### Good First Issues
 
-## 🤝 Add new feedback function providers
+Issues tagged [`good first issue`](https://github.com/truera/trulens/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+are curated for new contributors. They're well-scoped and often include guidance
+on where to start.
 
-Feedback functions often rely on a model provider, such as OpenAI or
-HuggingFace. If you need a new model provider to utilize feedback functions for
-your use case, we'd love if you added a new provider class, e.g. Ollama.
+### Add Usage Examples
 
-You can do so by creating a new provider module in this
-[folder](https://github.com/truera/trulens/blob/main/src/providers/).
+Applied TruLens to an interesting use case? Share it as a cookbook example
+notebook—like [Evaluating Weaviate Query Agents](https://www.trulens.org/cookbook/vector_stores/weaviate/weaviate_query_agent/).
 
-Alternatively, we also appreciate if you open a GitHub Issue if there's a model
-provider you need!
+Example notebooks should:
 
-## 🐛 Fix Bugs
+- Start with a clear title and description
+- Include versioned dependencies: `# !pip install trulens trulens-apps-langchain==1.2.0`
+- Be self-contained and runnable
 
-Most bugs are reported and tracked in the Github [Issues](https://github.com/truera/trulens/issues) Page. We try our best in
-triaging and tagging these issues:
+### Improve Documentation
 
-Issues tagged as bug are confirmed bugs. New contributors may want to start with
-issues tagged with good first issue. Please feel free to open an issue and/or
-assign an issue to yourself.
+Found something confusing? If it confused you, it's confusing others too. Documentation improvements are always welcome—from fixing typos to clarifying concepts.
 
-## 🎉 Add Usage Examples
+---
 
-If you have applied TruLens to track and evaluate a unique use-case, we would
-love your contribution to the cookbook in the form of an example notebook: e.g. [Evaluating Weaviate Query Agents](https://www.trulens.org/cookbook/vector_stores/weaviate/weaviate_query_agent/)
+## Core Contributions
 
-All example notebooks are expected to:
+Ready to dive deeper? These areas have significant impact:
 
-- Start with a title and description of the example
-- Include a commented out list of dependencies and their versions, e.g. `# !pip
-  install trulens-core==2.5.3 langchain==1.2.7`
-- Include a linked button to a Google colab version of the notebook
-- Add any additional requirements
+### Feedback Functions
 
-## 🧪 Add Experimental Features
+Feedback functions are the backbone of TruLens evaluations. Extend the library
+with new evaluation methods:
 
-If you have a crazy idea, make a PR for it! Whether if it's the latest research,
-or what you thought of in the shower, we'd love to see creative ways to improve
-TruLens.
+- Add to an existing [provider module](https://github.com/truera/trulens/tree/main/src/providers/)
+- See the [custom feedback functions guide](https://www.trulens.org/component_guides/evaluation/feedback_implementations/custom_feedback_functions/)
 
-Community contributions that have been accepted in the past include the SQLAlchemy logging connection and the LiteLLM provider.
+**Requirements:** Functions should accept text input(s) and return a `float` (0.0–1.0) or `dict[str, float]`.
 
-## 📄 Improve Code Quality & Documentation
+### Provider Integrations
 
-We would love your help in making the project cleaner, more robust, and more
-understandable. If you find something confusing, it most likely is for other
-people as well. Help us be better!
+Need a model provider we don't support? Add a new `trulens-providers-*` package:
 
-Big parts of the code base currently do not follow the code standards outlined
-in [Standards index](standards.md). Many good contributions can be made in
-adapting us to the standards.
+- Browse existing providers in [`src/providers/`](https://github.com/truera/trulens/tree/main/src/providers/)
+- Each provider is a separate installable package (see [Package Architecture](optional.md))
 
-## ⛅ Address Open Issues
+Or [open an issue](https://github.com/truera/trulens/issues/new) requesting a provider—we track demand.
 
-See [🍼 good first
-issue](https://github.com/truera/trulens/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
-or [🧙 all open issues](https://github.com/truera/trulens/issues).
+### App Integrations
 
-## 👀 Things to be Aware Of
+Instrument a new LLM framework by adding a `trulens-apps-*` package:
 
-### Development guide
+- See existing integrations: LangChain, LlamaIndex, NeMo Guardrails
+- App packages live in [`src/apps/`](https://github.com/truera/trulens/tree/main/src/apps/)
 
-See [Development guide](development.md).
+### Connector Integrations
 
-### 🧭 Design Goals and Principles
+Connectors define where TruLens stores trace and evaluation logs. Add a new
+`trulens-connectors-*` package to support additional databases:
 
-The design of the API is governed by the principles outlined in the
-[Design](design.md) doc.
+- See the existing Snowflake connector in [`src/connectors/`](https://github.com/truera/trulens/tree/main/src/connectors/)
+- Connectors implement the storage interface for traces, records, and feedback results
 
-### 📦 Release Policies
+### Bug Fixes
 
-Versioning and deprecation guidelines are included. [Release policies](policies.md).
+Bugs are tracked in [GitHub Issues](https://github.com/truera/trulens/issues?q=is%3Aissue+is%3Aopen+label%3Abug).
+Feel free to claim an issue by commenting or assigning yourself.
 
-### ✅ Standards
+---
 
-We try to respect various code, testing, and documentation standards outlined in
-the [Standards index](standards.md).
+## Advanced Contributions
 
-### 💣 Tech Debt
+For contributors familiar with the codebase:
 
-Parts of the code are nuanced in ways should be avoided by new contributors.
-Discussions of these points are welcome to help the project rid itself of these
-problematic designs. See [Tech debt index](techdebt.md).
+### Dashboard & Frontend
 
-### ⛅ Optional Packages
+The TruLens dashboard (`src/dashboard/`) uses React + TypeScript. Contributions welcome for:
 
-Since TruLens 1.0, the package has been modularized into separate installable
-packages (`trulens-apps-*`, `trulens-providers-*`, `trulens-connectors-*`).
-Users install only the packages they need. See [Optional Packages](optional.md)
-for details on the package architecture.
+- UI/UX improvements
+- New visualizations
+- Performance optimizations
 
-### ✨ Database Migration
+### Instrumentation & OTEL
 
-[Database migration](migration.md).
+TruLens uses OpenTelemetry for tracing. Work in this area includes:
 
-## 👋👋🏻👋🏼👋🏽👋🏾👋🏿 Contributors
+- Span and attribute improvements in `trulens.core.otel`
+- New exporters and integrations
+- Performance and reliability enhancements
+
+See [Design Principles](design.md) for architecture context.
+
+### Experimental Features
+
+Have an idea that pushes TruLens in a new direction? Experimental features use
+the `experimental_` prefix and can be toggled via `TruSession.experimental_enable_feature()`.
+
+Past community contributions include the SQLAlchemy connector and LiteLLM provider.
+
+---
+
+## Reference
+
+Before contributing, familiarize yourself with:
+
+| Guide | Description |
+| ----- | ----------- |
+| [Development Setup](development.md) | Environment setup, running tests, local development |
+| [Standards](standards.md) | Code style, testing, and documentation conventions |
+| [Design Principles](design.md) | Architecture goals and API design rationale |
+| [Package Architecture](optional.md) | Modular package structure since TruLens 1.0 |
+| [Release Policies](policies.md) | Versioning, deprecation, and experimental features |
+| [Tech Debt](techdebt.md) | Known issues and areas needing refactoring |
+| [Database Migration](migration.md) | Schema evolution and migration procedures |
+
+---
+
+## Contributors
 
 {%
    include-markdown "../../CONTRIBUTORS.md"
    heading-offset=2
 %}
 
-## 🧰 Maintainers
+## Maintainers
 
 {%
    include-markdown "../../MAINTAINERS.md"
