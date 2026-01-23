@@ -23,11 +23,20 @@ on where to start.
 Applied TruLens to an interesting use case? Share it as a cookbook example
 notebook—like [Evaluating Weaviate Query Agents](https://www.trulens.org/cookbook/vector_stores/weaviate/weaviate_query_agent/).
 
+Examples live in `examples/` and are organized into folders:
+
+| Folder | Purpose |
+| ------ | ------- |
+| `quickstart/` | Minimal, focused notebooks for getting started fast. These should be simple and demonstrate core TruLens concepts with minimal dependencies. |
+| `expositional/` | In-depth tutorials organized by topic (`frameworks/`, `models/`, `use_cases/`, `vector_stores/`). These can be longer and cover advanced integrations. |
+| `experimental/` | Work-in-progress examples, internal testing notebooks, or demos of experimental features. Not published to docs. |
+
 Example notebooks should:
 
 - Start with a clear title and description
 - Include versioned dependencies: `# !pip install trulens trulens-apps-langchain==1.2.0`
 - Be self-contained and runnable
+- Go in the appropriate folder based on scope and audience
 
 ### Improve Documentation
 
