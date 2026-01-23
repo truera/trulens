@@ -14,7 +14,7 @@ class DummyReranker(Dummy):
         self.top_n = top_n
         self.model_name = "herpderp-v1-reranker"
 
-    @instrument
+    @instrument()
     def rerank(
         self,
         query_text: str,
@@ -36,7 +36,7 @@ class DummyReranker(Dummy):
 
         return sorted(chunks_and_scores, key=lambda cs: cs[1])[: self.top_n]
 
-    @instrument
+    @instrument()
     async def arerank(
         self,
         query_text: str,

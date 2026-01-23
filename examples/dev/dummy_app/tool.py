@@ -43,7 +43,7 @@ class DummyTool(Dummy):
 
         self.dummy_allocate()
 
-    @instrument
+    @instrument()
     def invoke(self, data: str):
         """Invoke the dummy tool."""
 
@@ -51,7 +51,7 @@ class DummyTool(Dummy):
 
         return self.imp(data)
 
-    @instrument
+    @instrument()
     async def ainvoke(self, data: str):
         """Invoke the dummy tool."""
 

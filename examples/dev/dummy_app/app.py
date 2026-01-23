@@ -131,7 +131,7 @@ class DummyApp(Dummy):
 
         self.dummy_allocate()
 
-    @instrument
+    @instrument()
     def process_chunk_by_tool(
         self, chunk_and_score: Tuple[str, float], tool_num: int = 0
     ) -> str:
@@ -145,7 +145,7 @@ class DummyApp(Dummy):
 
         return self.tools[tool_num % len(self.tools)].invoke(chunk_and_score[0])
 
-    @instrument
+    @instrument()
     async def aprocess_chunk_by_tool(
         self, chunk_and_score: Tuple[str, float], tool_num: int = 0
     ) -> str:
@@ -161,7 +161,7 @@ class DummyApp(Dummy):
             chunk_and_score[0]
         )
 
-    @instrument
+    @instrument()
     def get_context(self, query: str) -> List[str]:
         """Invoke and process contexts retrieval.
 
@@ -201,7 +201,7 @@ class DummyApp(Dummy):
 
         return chunks
 
-    @instrument
+    @instrument()
     async def aget_context(self, query: str) -> List[str]:
         """Invoke and process contexts retrieval.
 
@@ -240,7 +240,7 @@ class DummyApp(Dummy):
 
         return chunks
 
-    @instrument
+    @instrument()
     def respond_to_query(self, query: str) -> str:
         """Respond to a query.
 
@@ -275,7 +275,7 @@ class DummyApp(Dummy):
 
         return answer
 
-    @instrument
+    @instrument()
     async def arespond_to_query(self, query: str) -> str:
         """Respond to a query.
 
@@ -313,7 +313,7 @@ class DummyApp(Dummy):
 
         return answer
 
-    @instrument
+    @instrument()
     def stream_respond_to_query(self, query: str) -> Iterable[str]:
         """Respond to a query.
 
@@ -351,7 +351,7 @@ class DummyApp(Dummy):
         # Do some more remembering.
         self.memory.remember(answer)
 
-    @instrument
+    @instrument()
     async def astream_respond_to_query(self, query: str) -> AsyncIterable[str]:
         """Respond to a query.
 

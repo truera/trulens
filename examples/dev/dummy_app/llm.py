@@ -23,7 +23,7 @@ class DummyLLM(Dummy):
 
         self.api = DummyAPI(*args, **kwargs)
 
-    @instrument
+    @instrument()
     def stream(
         self, prompt: str, temperature: Optional[float] = None
     ) -> Iterable[str]:
@@ -42,7 +42,7 @@ class DummyLLM(Dummy):
             self.dummy_wait(delay=0.05)
             yield c + " "
 
-    @instrument
+    @instrument()
     async def astream(
         self, prompt: str, temperature: Optional[float] = None
     ) -> AsyncIterable[str]:
@@ -61,7 +61,7 @@ class DummyLLM(Dummy):
             await self.dummy_await(delay=0.05)
             yield c + " "
 
-    @instrument
+    @instrument()
     def generate(self, prompt: str, temperature: Optional[float] = None) -> str:
         """Fake LLM generation."""
 
@@ -72,7 +72,7 @@ class DummyLLM(Dummy):
             model=self.model, temperature=temperature, prompt=prompt
         )["completion"]
 
-    @instrument
+    @instrument()
     async def agenerate(
         self, prompt: str, temperature: Optional[float] = None
     ) -> str:

@@ -18,7 +18,7 @@ class DummyMemory(Dummy):
 
         self.messages = []
 
-    @instrument
+    @instrument()
     def remember(self, data: str):
         """Add a piece of data to memory."""
 
@@ -30,7 +30,7 @@ class DummyMemory(Dummy):
             + f" and I'm keeping around {sys.getsizeof(self.temporary)} bytes"
         )
 
-    @instrument
+    @instrument()
     async def aremember(self, data: str):
         """Add a piece of data to memory."""
 

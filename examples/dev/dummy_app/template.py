@@ -16,7 +16,7 @@ class DummyTemplate(Dummy):
 
         self.template = template
 
-    @instrument
+    @instrument()
     def fill(self, question: str, context: str) -> str:
         """Fill in the template with the question and answer.
 
