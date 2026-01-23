@@ -1,5 +1,6 @@
 {% set name = "trulens-dashboard" %}
-{% set version = "1.4.9" %}
+{% set pyname = name.replace('-', '.') %}
+{% set version = "2.5.3" %}
 
 package:
   name: {{ name|lower }}
@@ -11,7 +12,7 @@ source:
   {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-dashboard/#files
-  sha256: 48f0a488ec37996aa21f7dcd495c945e24a02b57002920de76222c24765694fa
+  sha256: e4a8725c118ff44869749e157c701a1f10e2829e77f84c805894a0816ad5d47e
   {% endif %}
 
 build:
@@ -21,18 +22,18 @@ build:
 
 requirements:
   host:
-    - python >=3.9,<3.12
+    - python >=3.9,<3.13
     - poetry-core <2.0.0
     - pip
   run:
-    - python >=3.9,<3.12
-    - trulens-core >=1.0.0,<2.0.0
+    - python >=3.9,<3.13
+    - trulens-core >=1.0.0,<3.0.0
     - ipywidgets >=7.1.2
     - jupyter >=1.0.0,<2.0.0
     - pandas >=1.0.0
     - psutil >=5.9.0,<6.0.0
     - rich >=13.6.0,<14.0.0
-    - plotly >=5.22.0,<6.0.0
+    - plotly >=6.0.0,<7.0.0
     - streamlit >=1.35.0,<2.0.0
     - traitlets >=5.0.5,<6.0.0
     - packaging >=23.0
@@ -40,13 +41,16 @@ requirements:
     - tqdm >=4.2.0
     - openai >=1.0.0
     - httpx >=0.27
+    - smmap >=3.0.1,<5.0.0
 
 test:
   imports:
-    - trulens.dashboard
+    - {{ pyname }}
   commands:
     - pip check
+    - python -c 'import {{ pyname }}; assert {{ pyname }}.__version__ == "{{ version }}", "Installed version does not match expected version"'
   requires:
+    - python >=3.9,<3.13
     - pip
 
 about:

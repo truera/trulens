@@ -1,11 +1,11 @@
 # 💣 Tech Debt
 
 This is a (likely incomplete) list of hacks present in the TruLens library.
-They are likely a source of debugging problems so ideally they can be
+They are likely a source of debugging problems, so ideally they can be
 addressed/removed in time. This document is to serve as a warning in the
 meantime and a resource for hard-to-debug issues when they arise.
 
-In notes below, "HACK###" can be used to find places in the code where the hack
+In the notes below, "HACK###" can be used to find places in the code where the hack
 lives.
 
 ## OpenTelemetry Migration
@@ -25,14 +25,14 @@ candidates for removal now that OTEL is the primary instrumentation approach.
 
 ## Stack Inspecting
 
-See `instruments.py` docstring for discussion why these are done.
+See `instruments.py` docstring for a discussion of why these are done.
 
 - __Addressed with contextvars and OTEL context__. Stack walking was removed in
   favor of contextvars in 1.0.3. OTEL now handles context propagation.
 
-- "HACK012" -- In the optional imports scheme, we have to make sure that imports
-  that happen from outside of TruLens raise exceptions instead of
-  producing dummies without raising exceptions.
+- "HACK012" -- In the optional imports scheme, we have to ensure that imports
+  from outside of TruLens raise exceptions instead of
+  producing dummy objects silently.
 
 ## Method Overriding
 
@@ -72,8 +72,7 @@ threads, but are still present for backwards compatibility.
 ### Pydantic
 
 - "HACK006" -- `endpoint` needs to be added as a keyword arg with default value
-  in some `__init__` because Pydantic overrides signature without default value
-  otherwise.
+  in some `__init__` methods because Pydantic would otherwise override the signature without a default value.
 
 - "HACK005" -- `model_validate` inside `WithClassInfo` is implemented in
   decorated method because Pydantic doesn't call it otherwise. It is uncertain
@@ -91,11 +90,11 @@ threads, but are still present for backwards compatibility.
 
 - __Partially fixed with asynchro module:__ async/sync code duplication -- Many
   of our methods are almost identical duplicates due to supporting both async
-  and synced versions. Having trouble with a working approach to de-duplicated
+  and sync versions. Having trouble with a working approach to de-duplicated
   the identical code.
 
-- __Fixed in endpoint code:__ "HACK008" -- async generator -- Some special
-  handling is used for tracking costs when async generators are involved. See
+- __Fixed in endpoint code:__ "HACK008" -- async generator -- We implement special
+  handling to track costs when async generators are involved. See
   `feedback/provider/endpoint/base.py`.
 
 - "HACK010" -- Cannot tell whether something is a coroutine and need additional
@@ -109,7 +108,7 @@ threads, but are still present for backwards compatibility.
 - __May be removable (Python >= 3.9 required).__ "HACK012" -- same but with
   `Queue`. Note: This is different from HACK012 in the optional imports context.
 
-- Similarly, we define `NoneType` for older Python versions.
+- Similarly, we define `NoneType` for older Python versions that don't include it natively.
 
 - "HACK013" -- when using `from __future__ import annotations` for more
   convenient type annotation specification, one may have to call Pydantic's

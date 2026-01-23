@@ -7,10 +7,11 @@ DummyAPI for its requests.
 
 from pathlib import Path
 
-from trulens.apps import custom as custom_app
+from trulens.apps import app
 from trulens.core import session as core_session
 
 from examples.dev.dummy_app.app import DummyApp
+from examples.dev.dummy_app.tool import DummyStackTool
 from tests import test as mod_test
 
 
@@ -18,8 +19,14 @@ class TestDummy(mod_test.TruTestCase):
     """Tests for cost tracking of endpoints."""
 
     def setUp(self):
+        DummyStackTool.clear_stack()
         self.session = core_session.TruSession()
         self.session.reset_database()
+        super().setUp()
+
+    def tearDown(self):
+        DummyStackTool.clear_stack()
+        super().tearDown()
 
     def test_dummy(self):
         """Check that recording of example custom app using dummy endpoint works
@@ -31,9 +38,7 @@ class TestDummy(mod_test.TruTestCase):
         )  # uses DummyAPI internally
 
         # Create trulens wrapper:
-        ta = custom_app.TruCustomApp(
-            ca, app_name="customapp", app_version="base"
-        )
+        ta = app.TruApp(ca, app_name="customapp", app_version="base")
 
         with ta as recorder:
             ca.respond_to_query("hello")

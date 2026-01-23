@@ -1,23 +1,58 @@
 from __future__ import annotations  # defers evaluation of annotations
 
-from collections import defaultdict
 from enum import Enum
 import inspect
 import json
 import logging
 import time
-from typing import Any, ClassVar, Dict, List, Optional, Set, Type
-import uuid
+from typing import Any, ClassVar, Dict, List, Optional, Set, Type, Union
 
 import pandas as pd
 import pydantic
 from pydantic import BaseModel
-from pydantic import ConfigDict
 from pydantic import Field
+from pydantic import field_serializer
+from trulens.core.enums import Mode
+from trulens.core.feedback.custom_metric import MetricConfig
 from trulens.core.utils.json import obj_id_of_obj
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
+
+
+def _parse_json_field(
+    value: Any,
+    field_name: str,
+    index: Optional[int] = None,
+    critical: bool = True,
+) -> Any:
+    """
+    Helper function to parse JSON fields consistently.
+
+    Args:
+        value: The value to parse (could be string or already parsed dict)
+        field_name: Name of the field being parsed (for logging)
+        index: Optional index for logging context
+        critical: Whether parsing failure should cause the caller to continue processing
+
+    Returns:
+        Parsed dictionary or the original value if already parsed
+
+    Raises:
+        Continues processing on JSONDecodeError if critical=False, otherwise logs warning
+    """
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            index_msg = f" at index {index}" if index is not None else ""
+            if critical:
+                logger.warning(f"Failed to parse {field_name} JSON{index_msg}")
+                raise
+            else:
+                logger.debug(f"Failed to parse {field_name} JSON{index_msg}")
+                return value
+    return value
 
 
 def _get_all_span_attribute_key_constants(cls: Type, prefix: str) -> List[str]:
@@ -108,14 +143,6 @@ def validate_dataset_spec(
 
     for key, value in dataset_spec.items():
         normalized_key = key.lower()
-
-        # Ensure that the key is one of the valid reserved fields or its subscripted form
-        if not any(
-            normalized_key.startswith(reserved_field)
-            for reserved_field in DATASET_RESERVED_FIELDS
-        ):
-            raise ValueError(f"Invalid field '{key}' found in dataset_spec.")
-
         # Add the normalized field to the dictionary
         normalized_spec[normalized_key] = value
 
@@ -153,6 +180,10 @@ class RunConfig(BaseModel):
         default=None,
         description="Name of the LLM judge to be used for the run.",
     )
+    mode: Mode = Field(
+        default=Mode.APP_INVOCATION,
+        description="Mode of operation: LOG_INGESTION for creating spans from existing data, APP_INVOCATION for instrumenting spans from a new app execution.",
+    )
 
 
 class Run(BaseModel):
@@ -179,8 +210,8 @@ class Run(BaseModel):
         exclude=True,
     )
 
-    main_method_name: str = Field(
-        ..., description="Main method of the app.", exclude=True
+    main_method_name: Optional[str] = Field(
+        default=None, description="Main method of the app.", exclude=True
     )
 
     tru_session: Any = Field(
@@ -222,6 +253,10 @@ class Run(BaseModel):
             default=None,
             description="Name of the LLM judge to be used for the run.",
         )
+        mode: Optional[str] = Field(
+            default=Mode.APP_INVOCATION.value,
+            description="Mode of operation: LOG_INGESTION or APP_INVOCATION.",
+        )
         invocations: Optional[Dict[str, Run.InvocationMetadata]] = Field(
             default=None,
             description="Map of invocation metadata with invocation ID as key.",
@@ -261,6 +296,7 @@ class Run(BaseModel):
 
     class CompletionStatusStatus(str, Enum):
         UNKNOWN = "UNKNOWN"
+        STARTED = "STARTED"
         PARTIALLY_COMPLETED = "PARTIALLY_COMPLETED"
         COMPLETED = "COMPLETED"
         FAILED = "FAILED"
@@ -272,7 +308,10 @@ class Run(BaseModel):
         record_count: Optional[int] = Field(
             default=None, description="The count of records processed."
         )
-        model_config = ConfigDict(json_encoders={Enum: lambda o: o.value})
+
+        @field_serializer("status")
+        def serialize_status(self, status: Run.CompletionStatusStatus, _info):
+            return status.value
 
     class InvocationMetadata(BaseModel):
         input_records_count: Optional[int] = Field(
@@ -430,6 +469,8 @@ class Run(BaseModel):
                 == Run.CompletionStatusStatus.PARTIALLY_COMPLETED
             ):
                 return RunStatus.INVOCATION_PARTIALLY_COMPLETED
+            elif completion_status == Run.CompletionStatusStatus.STARTED:
+                return RunStatus.INVOCATION_IN_PROGRESS
             elif completion_status == Run.CompletionStatusStatus.FAILED:
                 return RunStatus.FAILED
             else:
@@ -437,85 +478,6 @@ class Run(BaseModel):
                     f"Unknown completion status {completion_status} for invocation {latest_invocation.id}"
                 )
                 return RunStatus.UNKNOWN
-
-        current_ingested_records_count = (
-            self.run_dao.read_spans_count_from_event_table(
-                object_name=self.object_name,
-                run_name=self.run_name,
-                span_type="record_root",
-            )
-        )
-        logger.info(
-            f"Current ingested records count: {current_ingested_records_count}"
-        )
-
-        latest_record_root_timestamp_in_ms = (
-            self.run_dao.read_latest_record_root_timestamp_in_ms(
-                object_name=self.object_name, run_name=self.run_name
-            )
-        )
-
-        logger.debug(
-            f"Latest record root timestamp in ms: {latest_record_root_timestamp_in_ms}"
-        )
-
-        if (
-            latest_invocation.input_records_count
-            and current_ingested_records_count
-            >= latest_invocation.input_records_count
-        ):
-            # greater than or equal to input records count to account for the edge case where multiple tru recorders are set on the same run
-            # happy case, add end time and update status
-            self.run_dao.upsert_run_metadata_fields(
-                entry_type=SupportedEntryType.INVOCATIONS.value,
-                entry_id=latest_invocation.id,
-                input_records_count=latest_invocation.input_records_count,
-                start_time_ms=latest_invocation.start_time_ms,
-                end_time_ms=self._get_current_time_in_ms(),
-                completion_status=Run.CompletionStatus(
-                    status=Run.CompletionStatusStatus.COMPLETED,
-                    record_count=current_ingested_records_count,
-                ).model_dump(),
-                run_name=self.run_name,
-                object_name=self.object_name,
-                object_type=self.object_type,
-                object_version=self.object_version,
-            )
-
-            return RunStatus.INVOCATION_COMPLETED
-
-        elif (
-            latest_invocation.start_time_ms
-            and latest_record_root_timestamp_in_ms
-            and time.time() * 1000 - latest_record_root_timestamp_in_ms
-            > EXPECTED_TELEMETRY_LATENCY_IN_MS
-        ):
-            # inconclusive case, timeout reached and add end time and update completion status in DPO
-            logger.warning("Invocation timed out.")
-            self.run_dao.upsert_run_metadata_fields(
-                entry_type=SupportedEntryType.INVOCATIONS.value,
-                entry_id=latest_invocation.id,
-                input_records_count=latest_invocation.input_records_count,
-                start_time_ms=latest_invocation.start_time_ms,
-                end_time_ms=self._get_current_time_in_ms(),
-                completion_status=Run.CompletionStatus(
-                    status=Run.CompletionStatusStatus.PARTIALLY_COMPLETED,
-                    record_count=current_ingested_records_count,
-                ).model_dump(),
-                run_name=self.run_name,
-                object_name=self.object_name,
-                object_type=self.object_type,
-                object_version=self.object_version,
-            )
-
-            return RunStatus.INVOCATION_PARTIALLY_COMPLETED
-
-        else:
-            return (
-                RunStatus.INVOCATION_IN_PROGRESS
-                if latest_invocation.end_time_ms == 0
-                else RunStatus.UNKNOWN
-            )
 
     def _metrics_computation_started(self, run: Run) -> bool:
         return (
@@ -558,6 +520,12 @@ class Run(BaseModel):
             for metric in all_metrics
         ):
             return RunStatus.PARTIALLY_COMPLETED
+        elif any(
+            metric.completion_status.status
+            == Run.CompletionStatusStatus.STARTED
+            for metric in all_metrics
+        ):
+            return RunStatus.COMPUTATION_IN_PROGRESS
         else:
             logger.warning(
                 "Cannot determine run status. Metrics: %s",
@@ -584,114 +552,18 @@ class Run(BaseModel):
             or not metric.completion_status.status
         ]
 
-        if len(metrics_status_not_set) == 0:
-            # early return cases as status of all metrics are set
-            logger.info("All metrics statuses are set.")
-            return self._resolve_overall_metrics_status(
-                all_existing_metrics, invocation_completion_status
+        if len(metrics_status_not_set) != 0:
+            logger.warning(
+                f"Metrics status not set for: {[metric.name for metric in metrics_status_not_set]}."
             )
-        else:
-            logger.info(
-                f"Metrics status not set for: {[metric.name for metric in metrics_status_not_set]}. Checking sproc query status via query history"
+            raise ValueError(
+                f"Metrics status not set for: {[metric.name for metric in metrics_status_not_set]}."
             )
-            # multiple metrics can be associated with the same computation
-            computation_id_to_metrics = defaultdict(list)
-            for metric in metrics_status_not_set:
-                computation_id_to_metrics[metric.computation_id].append(metric)
 
-            all_computations = run.run_metadata.computations.values()
-            # Check the status of sproc query with metrics that are not complete,
-            # update the ones that are done.
-
-            some_computation_in_progress = False
-            for computation in all_computations:
-                if computation.id in computation_id_to_metrics:
-                    query_id = computation.query_id
-                    query_status = (
-                        self.run_dao.fetch_query_execution_status_by_id(
-                            query_start_time_ms=computation.start_time_ms,
-                            query_id=query_id,
-                        )
-                    )
-                    if query_status == "IN_PROGRESS":
-                        logger.info(
-                            f"Computation {computation.id} is still running or being queued."
-                        )
-                        some_computation_in_progress = True
-
-                    elif query_status == "FAILED" or query_status == "SUCCESS":
-                        logger.warning(
-                            f"Computation query_id: {query_id} finished with status: {query_status}. Updating run metadata."
-                        )
-
-                        self.run_dao.upsert_run_metadata_fields(
-                            entry_type=SupportedEntryType.COMPUTATIONS.value,
-                            entry_id=computation.id,
-                            query_id=query_id,
-                            start_time_ms=computation.start_time_ms,
-                            end_time_ms=self._get_current_time_in_ms(),
-                            run_name=self.run_name,
-                            object_name=self.object_name,
-                            object_type=self.object_type,
-                            object_version=self.object_version,
-                        )
-                        metrics_in_computation = computation_id_to_metrics[
-                            computation.id
-                        ]
-                        result_rows = self.run_dao.fetch_computation_job_results_by_query_id(
-                            query_id
-                        )
-
-                        metric_name_to_status = {
-                            row["METRIC"]: row["STATUS"]
-                            for _, row in result_rows.iterrows()
-                        }
-
-                        metric_name_to_computed_records_count = {
-                            row["METRIC"]: int(
-                                row["MESSAGE"].split(" ")[
-                                    1
-                                ]  # TODO unbrittel this - directly read the field when available
-                            )
-                            for _, row in result_rows.iterrows()
-                        }
-
-                        for metric in metrics_in_computation:
-                            if (
-                                metric.name in metric_name_to_status
-                                and metric.name
-                                in metric_name_to_computed_records_count
-                            ):
-                                logger.info(
-                                    f"Updating metric {metric.name} metadata."
-                                )
-                                self.run_dao.upsert_run_metadata_fields(
-                                    entry_type=SupportedEntryType.METRICS.value,
-                                    entry_id=metric.id,
-                                    computation_id=computation.id,
-                                    name=metric.name,
-                                    completion_status=Run.CompletionStatus(
-                                        status=Run.CompletionStatusStatus.COMPLETED
-                                        if metric_name_to_status[metric.name]
-                                        == "SUCCESS"
-                                        else Run.CompletionStatusStatus.FAILED,
-                                        record_count=metric_name_to_computed_records_count[
-                                            metric.name
-                                        ],  # TODO: read from event table if possible
-                                    ).model_dump(),
-                                    run_name=self.run_name,
-                                    object_name=self.object_name,
-                                    object_type=self.object_type,
-                                    object_version=self.object_version,
-                                )
-
-            if some_computation_in_progress:
-                return RunStatus.COMPUTATION_IN_PROGRESS
-            else:
-                logger.info("All computations concluded.")
-                return self._resolve_overall_metrics_status(
-                    all_existing_metrics, invocation_completion_status
-                )
+        logger.info("All metrics statuses are set as expected.")
+        return self._resolve_overall_metrics_status(
+            all_existing_metrics, invocation_completion_status
+        )
 
     def start(self, input_df: Optional[pd.DataFrame] = None):
         """
@@ -716,99 +588,455 @@ class Run(BaseModel):
 
         dataset_spec = self.source_info.column_spec
 
-        # Preprocess the dataset_spec to create mappings for input columns
-        # and map the inputs for reserved fields only once, before the iteration over rows.
-
-        reserved_field_column_mapping = {}
-
-        # Process dataset column spec to handle subscripting logic for input columns
-        for reserved_field, user_column in dataset_spec.items():
-            reserved_field_column_mapping[reserved_field] = user_column
-
         input_records_count = len(input_df)
-
-        invocation_metadata_id = self.run_dao._compute_invocation_metadata_id(
-            dataset_name=self.source_info.name,
-            input_records_count=input_records_count,
-        )
-        start_time_ms = self._get_current_time_in_ms()
 
         logger.info(
             f"Creating or updating invocation metadata with {input_records_count} records from input."
         )
 
-        self.run_dao.upsert_run_metadata_fields(
-            entry_type=SupportedEntryType.INVOCATIONS.value,
-            entry_id=invocation_metadata_id,
-            start_time_ms=start_time_ms,
-            end_time_ms=0,  # required field
-            run_name=self.run_name,
-            input_records_count=input_records_count,
-            object_name=self.object_name,
-            object_type=self.object_type,
-            object_version=self.object_version,
-        )
+        # Determine mode from run metadata
+        mode = self.run_metadata.mode or Mode.APP_INVOCATION.value
 
-        # user app invocation - will block until the app completes
         try:
-            for i, row in input_df.iterrows():
-                main_method_args = []
-
-                # Call the instrumented main method with the arguments
-                # TODO (dhuang) better way to check span attributes, also is this all we need to support?
-                input_id = (
-                    row[dataset_spec["input_id"]]
-                    if "input_id" in dataset_spec
-                    else None
+            if mode == Mode.LOG_INGESTION.value:
+                self._create_virtual_spans(
+                    input_df, dataset_spec, input_records_count
                 )
-                input_col = None
-                if input_id is None:
-                    if "input" in dataset_spec:
-                        input_col = dataset_spec["input"]
-                    elif "record_root.input" in dataset_spec:
-                        input_col = dataset_spec["record_root.input"]
-                    if input_col:
-                        input_id = obj_id_of_obj(row[input_col])
-                        main_method_args.append(row[input_col])
+            else:
+                # user app invocation - will block until the app completes
+                for _, row in input_df.iterrows():
+                    main_method_args = []
 
-                ground_truth_output = row.get(
-                    dataset_spec.get("ground_truth_output")
-                    or dataset_spec.get("record_root.ground_truth_output")
-                )
+                    # Call the instrumented main method with the arguments
+                    # TODO (dhuang) better way to check span attributes, also is this all we need to support?
+                    input_id = (
+                        row[dataset_spec["input_id"]]
+                        if "input_id" in dataset_spec
+                        else None
+                    )
+                    input_col = None
+                    if input_id is None:
+                        if "input" in dataset_spec:
+                            input_col = dataset_spec["input"]
+                        elif "record_root.input" in dataset_spec:
+                            input_col = dataset_spec["record_root.input"]
+                        if input_col:
+                            input_value = row[input_col]
+                            # Parse JSON string to dict if the input is a JSON blob
+                            # This supports LangGraph state dicts from Snowflake VARIANT columns
+                            if isinstance(input_value, str):
+                                try:
+                                    import json
 
-                self.app.instrumented_invoke_main_method(
-                    run_name=self.run_name,
-                    input_id=input_id,
-                    ground_truth_output=ground_truth_output,
-                    main_method_args=tuple(
-                        main_method_args
-                    ),  # Ensure correct order
-                    main_method_kwargs=None,  # don't take any kwargs for now so we don't break TruChain / TruLlama where input argument name cannot be defined by users.
-                )
+                                    parsed = json.loads(input_value)
+                                    if isinstance(parsed, dict):
+                                        input_value = parsed
+                                except (json.JSONDecodeError, TypeError):
+                                    pass  # Keep as string if not valid JSON
+                            input_id = obj_id_of_obj(input_value)
+                            main_method_args.append(input_value)
+
+                    # Extract additional method arguments from dataset_spec
+                    # Skip fields that are already handled or are special metadata fields
+                    special_fields = {
+                        "input_id",
+                        "input",
+                        "record_root.input",
+                        "ground_truth_output",
+                        "record_root.ground_truth_output",
+                    }
+
+                    for spec_key, column_name in dataset_spec.items():
+                        if (
+                            spec_key not in special_fields
+                            and column_name in row
+                        ):
+                            main_method_args.append(row[column_name])
+
+                    ground_truth_output = row.get(
+                        dataset_spec.get("ground_truth_output")
+                        or dataset_spec.get("record_root.ground_truth_output")
+                    )
+
+                    self.app.instrumented_invoke_main_method(
+                        run_name=self.run_name,
+                        input_id=input_id,
+                        input_records_count=input_records_count,
+                        ground_truth_output=ground_truth_output,
+                        main_method_args=tuple(
+                            main_method_args
+                        ),  # Ensure correct order
+                        main_method_kwargs=None,  # don't take any kwargs for now so we don't break TruChain / TruLlama where input argument name cannot be defined by users.
+                    )
         except Exception as e:
             logger.exception(
                 f"Error encountered during invoking app main method: {e}."
             )
-
-            self.run_dao.upsert_run_metadata_fields(
-                entry_type=SupportedEntryType.INVOCATIONS.value,
-                entry_id=invocation_metadata_id,
-                start_time_ms=start_time_ms,
-                input_records_count=input_records_count,
-                end_time_ms=self._get_current_time_in_ms(),
-                completion_status=Run.CompletionStatus(
-                    status=Run.CompletionStatusStatus.FAILED,
-                ).model_dump(),
-                run_name=self.run_name,
-                object_name=self.object_name,
-                object_type=self.object_type,
-                object_version=self.object_version,
-            )
-
             raise
 
         self.tru_session.force_flush()
+        logger.info(
+            f"Flushed all spans for the run {self.run_name}; and exported them to the telemetry pipeline."
+        )
+
+        # we start the ingestion sproc after the app invocation is done, so that
+        # app invocation time does not count toward the ingestion timeout set on the task orchestration layer.
+        self.run_dao.start_ingestion_query(
+            object_name=self.object_name,
+            object_type=self.object_type,
+            object_version=self.object_version,
+            run_name=self.run_name,
+            input_records_count=input_records_count,
+        )
         logger.info("Run started, invocation done and ingestion in process.")
+
+    def _create_virtual_spans(
+        self,
+        input_df: pd.DataFrame,
+        dataset_spec: Dict[str, str],
+        input_records_count: int,
+    ):
+        """
+        Create OTEL spans from existing data without actual app invocation.
+        This method creates spans dynamically based on the dataset_spec mapping,
+        which maps span attribute paths to column names.
+
+        The input DataFrame must conform to a specific format based on the dataset_spec.
+        Required columns/data:
+        - If 'input_id' is specified in dataset_spec: A column containing unique identifiers
+        - If no 'input_id': Either 'input' or 'record_root.input' column must exist to generate IDs
+        - If neither exists, row indices will be used as fallback IDs
+
+        Optional columns (specified via dataset_spec):
+        - 'ground_truth_output' or 'record_root.ground_truth_output': Ground truth data
+        - Any additional columns mapped in dataset_spec will be used to populate span attributes
+
+        See RECORD_ROOT and other span attribute definitions in trulens.otel.semconv.trace
+        for the full set of supported attribute paths that can be mapped to columns.
+        """
+
+        logger.debug(f"Creating virtual spans for {len(input_df)} records")
+
+        for i, row in input_df.iterrows():
+            input_id = (
+                row[dataset_spec["input_id"]]
+                if "input_id" in dataset_spec
+                else None
+            )
+            input_col = None
+            if input_id is None:
+                if "input" in dataset_spec:
+                    input_col = dataset_spec["input"]
+                elif "record_root.input" in dataset_spec:
+                    input_col = dataset_spec["record_root.input"]
+                if input_col:
+                    input_id = obj_id_of_obj(row[input_col])
+
+            ground_truth_output = row.get(
+                dataset_spec.get("ground_truth_output")
+                or dataset_spec.get("record_root.ground_truth_output")
+            )
+
+            # Ensure input_id is never None - use row index as fallback
+            if input_id is None:
+                input_id = f"row_{i}"
+                logger.warning(f"input_id was None, using fallback: {input_id}")
+
+            try:
+                self._create_virtual_spans_with_nested_contexts(
+                    row,
+                    dataset_spec,
+                    input_id,
+                    input_records_count,
+                    ground_truth_output,
+                )
+            except Exception as e:
+                logger.exception(f"Error in virtual span creation: {e}")
+                raise
+
+    def _create_virtual_spans_with_nested_contexts(
+        self,
+        row,
+        dataset_spec,
+        input_id,
+        input_records_count,
+        ground_truth_output,
+    ):
+        """Create virtual spans using OtelRecordingContext - simplified approach"""
+        from trulens.core.otel.instrument import OtelRecordingContext
+
+        with OtelRecordingContext(
+            tru_app=self.app,
+            app_name=self.app.app_name,
+            app_version=self.app.app_version,
+            run_name=self.run_name,
+            input_id=input_id,
+            input_records_count=input_records_count,
+            ground_truth_output=ground_truth_output,
+        ):
+            # Now create nested spans within this context
+            self._create_nested_spans_from_dataset_spec(dataset_spec, row)
+
+            logger.debug("Created all nested spans")
+
+    def _create_nested_spans_from_dataset_spec(
+        self, dataset_spec: Dict[str, str], row
+    ):
+        """Create properly nested spans within OtelRecordingContext"""
+        from trulens.experimental.otel_tracing.core.span import (
+            set_general_span_attributes,
+        )
+
+        span_data = self._group_dataset_spec_by_span_type(dataset_spec, row)
+        logger.info(f"Creating nested spans for: {list(span_data.keys())}")
+
+        if "record_root" in span_data:
+            from trulens.core.otel.function_call_context_manager import (
+                create_function_call_context_manager,
+            )
+
+            with create_function_call_context_manager(
+                True, "virtual_record"
+            ) as root_span:
+                set_general_span_attributes(
+                    root_span, SpanAttributes.SpanType.RECORD_ROOT
+                )
+                self._set_span_attributes_from_data(
+                    root_span, span_data["record_root"], "record_root"
+                )
+
+                root_span_id = root_span.get_span_context().span_id
+                logger.debug(
+                    f"Created record_root span with ID: {root_span_id}"
+                )
+
+                # Create child spans nested WITHIN the root span context
+                for span_type, attributes in span_data.items():
+                    if span_type == "record_root":
+                        continue
+
+                    span_type_enum = self._get_span_type_enum(span_type)
+                    if span_type_enum:
+                        logger.debug(
+                            f"Creating child span: {span_type} under parent {root_span_id}"
+                        )
+                        with create_function_call_context_manager(
+                            True, f"{span_type}_virtual"
+                        ) as child_span:
+                            set_general_span_attributes(
+                                child_span, span_type_enum
+                            )
+                            self._set_span_attributes_from_data(
+                                child_span, attributes, span_type
+                            )
+
+                            child_span_id = (
+                                child_span.get_span_context().span_id
+                            )
+                            child_parent_span_id = (
+                                child_span.parent.span_id
+                                if child_span.parent
+                                else "None"
+                            )
+                            logger.debug(
+                                f"Created {span_type} child span ID: {child_span_id}, parent ID: {child_parent_span_id}"
+                            )
+                    else:
+                        logger.warning(
+                            f"Unknown span type: {span_type} - skipping"
+                        )
+        else:
+            logger.warning("No record_root defined in dataset_spec")
+
+    def _set_span_attributes_from_data(
+        self, span, attributes: Dict[str, any], span_type: str
+    ):
+        """Set span attributes using proper SpanAttributes constants"""
+        span_attrs_class = self._get_span_attributes_class(span_type)
+
+        for attr_name, value in attributes.items():
+            if span_attrs_class:
+                attr_constant = getattr(
+                    span_attrs_class, attr_name.upper(), None
+                )
+                if attr_constant:
+                    # Check if this attribute should be treated as an array
+                    if self._should_process_as_array(attr_constant):
+                        processed_value = self._process_array_attribute(value)
+                        span.set_attribute(attr_constant, processed_value)
+                        logger.info(
+                            f"Set {span_type} attribute {attr_constant} = {processed_value}"
+                        )
+                    else:
+                        span.set_attribute(attr_constant, str(value))
+                        logger.info(
+                            f"Set {span_type} attribute {attr_constant} = {value}"
+                        )
+                else:
+                    # Fallback to raw attribute name
+                    fallback_key = f"{span_type}.{attr_name}"
+                    # Check if this attribute name suggests it should be an array
+                    if self._should_process_as_array_by_name(attr_name):
+                        processed_value = self._process_array_attribute(value)
+                        span.set_attribute(fallback_key, processed_value)
+                        logger.info(
+                            f"Set fallback attribute {fallback_key} = {processed_value}"
+                        )
+                    else:
+                        span.set_attribute(fallback_key, str(value))
+                        logger.info(
+                            f"Set fallback attribute {fallback_key} = {value}"
+                        )
+            else:
+                fallback_key = f"{span_type}.{attr_name}"
+                # Check if this attribute name suggests it should be an array
+                if self._should_process_as_array_by_name(attr_name):
+                    processed_value = self._process_array_attribute(value)
+                    span.set_attribute(fallback_key, processed_value)
+                    logger.info(
+                        f"Set fallback attribute {fallback_key} = {processed_value}"
+                    )
+                else:
+                    span.set_attribute(fallback_key, str(value))
+                    logger.info(
+                        f"Set fallback attribute {fallback_key} = {value}"
+                    )
+
+    def _should_process_as_array(self, attr_constant: str) -> bool:
+        """
+        Determine if a span attribute constant should be processed as an array.
+
+        Args:
+            attr_constant: The span attribute constant (e.g., SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS)
+
+        Returns:
+            bool: True if the attribute should be processed as an array
+        """
+        # Define attributes that should be treated as arrays based on semantic conventions
+        array_attributes = {
+            SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
+            SpanAttributes.GRAPH_NODE.NODES_EXECUTED,
+            SpanAttributes.RERANKER.INPUT_CONTEXT_TEXTS,
+            SpanAttributes.RERANKER.INPUT_CONTEXT_SCORES,
+            SpanAttributes.RERANKER.INPUT_RANKS,
+            SpanAttributes.RERANKER.OUTPUT_RANKS,
+            SpanAttributes.RERANKER.OUTPUT_CONTEXT_TEXTS,
+            SpanAttributes.RERANKER.OUTPUT_CONTEXT_SCORES,
+        }
+        return attr_constant in array_attributes
+
+    def _should_process_as_array_by_name(self, attr_name: str) -> bool:
+        """
+        Determine if an attribute should be processed as an array based on its name.
+        This is used for fallback cases where we don't have the constant.
+
+        Args:
+            attr_name: The attribute name (e.g., "retrieved_contexts")
+
+        Returns:
+            bool: True if the attribute should be processed as an array
+        """
+        # Attribute names that suggest array content
+        array_attribute_names = {
+            "retrieved_contexts",
+            "nodes_executed",
+            "input_context_texts",
+            "input_context_scores",
+            "input_ranks",
+            "output_ranks",
+            "output_context_texts",
+            "output_context_scores",
+        }
+        return attr_name.lower() in array_attribute_names
+
+    def _process_array_attribute(self, value: any) -> List[str]:
+        """
+        Process a value that should be treated as an array attribute.
+
+        Args:
+            value: The raw value from the dataset, could be a string, list, or other type
+
+        Returns:
+            List[str]: A list of string values
+        """
+        if value is None:
+            return []
+
+        # If it's already a list, return it (converting items to strings)
+        if isinstance(value, list):
+            return [str(item) for item in value]
+
+        # If it's a string, try to parse it as JSON first, then fall back to comma-separated
+        if isinstance(value, str):
+            value = value.strip()
+            if not value:
+                return []
+
+            # Try to parse as JSON array first
+            try:
+                parsed = json.loads(value)
+                if isinstance(parsed, list):
+                    return [str(item) for item in parsed]
+            except (json.JSONDecodeError, ValueError):
+                pass
+
+            # Fall back to comma-separated parsing
+            # Split by comma and clean up whitespace
+            items = [item.strip() for item in value.split(",")]
+            # Remove empty strings
+            items = [item for item in items if item]
+            return items
+
+        # For any other type, convert to string and treat as single item
+        return [str(value)]
+
+    def _group_dataset_spec_by_span_type(
+        self, dataset_spec: Dict[str, str], row
+    ) -> Dict[str, Dict[str, any]]:
+        """Group dataset_spec entries by span type (record_root, retrieval, generation, etc.)"""
+        span_data = {}
+
+        for spec_key, column_name in dataset_spec.items():
+            if column_name not in row:
+                continue
+
+            value = row[column_name]
+            parts = spec_key.lower().split(".")
+
+            if len(parts) >= 2:
+                span_type = f"{parts[0]}"  # e.g., 'record_root'
+                attribute = ".".join(
+                    parts[1:]
+                )  # e.g., 'input', 'output', 'query_text'
+            else:
+                logger.warning(
+                    f"Legacy key: {spec_key} - assuming it's record_root "
+                )
+                span_type = "record_root"
+                attribute = parts[0]
+
+            if span_type not in span_data:
+                span_data[span_type] = {}
+
+            span_data[span_type][attribute] = value
+
+        return span_data
+
+    def _get_span_type_enum(self, span_type: str):
+        """Map span type string to SpanType enum dynamically"""
+        # Convert span_type to uppercase to match enum naming convention
+        enum_name = span_type.upper()
+
+        # Try to get the enum value dynamically
+        return getattr(SpanAttributes.SpanType, enum_name, None)
+
+    def _get_span_attributes_class(self, span_type: str):
+        """Get the appropriate SpanAttributes class for a span type dynamically"""
+        # Convert span_type to uppercase to match class naming convention
+        class_name = span_type.upper()
+
+        # Try to get the attributes class dynamically
+        return getattr(SpanAttributes, class_name, None)
 
     def _get_current_time_in_ms(self) -> int:
         return int(round(time.time() * 1000))
@@ -850,17 +1078,19 @@ class Run(BaseModel):
             return self._compute_latest_invocation_status(run)
 
     def _should_skip_computation(self, metric_name: str, run: Run) -> bool:
-        if run.run_metadata.metrics is None:
+        metrics_metadata = (
+            run.describe().get("run_metadata", {}).get("metrics", {})
+        )
+
+        if metrics_metadata is None:
             return False
 
         statuses = []  # will store statuses for all matching metric entries
-        for metric_metadata in run.run_metadata.metrics.values():
-            if metric_metadata.name == metric_name:
-                # If completion_status is not set, we treat it as "in progress"
-                if metric_metadata.completion_status is None:
-                    statuses.append("IN_PROGRESS")
-                else:
-                    statuses.append(metric_metadata.completion_status.status)
+        for metric_metadata in metrics_metadata.values():
+            if metric_metadata.get("name", "") == metric_name:
+                statuses.append(
+                    metric_metadata.get("completion_status", {}).get("status")
+                )
 
         # If no matching metric entries found, don't skip.
         if not statuses:
@@ -872,8 +1102,8 @@ class Run(BaseModel):
             )
             return True
 
-        # If any metric is in progress (i.e. no completion status), we skip because it's still computing.
-        if any(s == "IN_PROGRESS" for s in statuses):
+        # If any metric is in progress (i.e. started), we skip because it's still computing.
+        if any(s == Run.CompletionStatusStatus.STARTED for s in statuses):
             logger.info(
                 f"Metric {metric_name} is in progress (at least one entry not complete); skipping computation."
             )
@@ -891,79 +1121,358 @@ class Run(BaseModel):
         )
         return True
 
-    def compute_metrics(self, metrics: List[str]) -> str:
+    def compute_metrics(self, metrics: List[Union[str, MetricConfig]]) -> str:
+        """
+        Compute metrics for the run.
+
+        Args:
+            metrics: List of metric identifiers (strings) for server-side metrics,
+                    or MetricConfig objects for client-side metrics
+
+        Returns:
+            Status message indicating computation progress
+        """
+        if not metrics:
+            raise ValueError(
+                "No metrics provided. Please provide at least one metric to compute."
+            )
+
         run_status = self.get_status()
 
         logger.info(f"Current run status: {run_status}")
+
         if not self._can_start_new_metric_computation(run_status):
             return f"""Cannot start a new metric computation when in run status: {run_status}. Valid statuses are: {RunStatus.INVOCATION_COMPLETED}, {RunStatus.INVOCATION_PARTIALLY_COMPLETED},
         {RunStatus.COMPUTATION_IN_PROGRESS}, {RunStatus.COMPLETED}, {RunStatus.PARTIALLY_COMPLETED}, {RunStatus.FAILED}."""
 
-        run_metadata_df = self.run_dao.get_run(
-            run_name=self.run_name,
-            object_name=self.object_name,
-            object_type=self.object_type,
-            object_version=self.object_version,
+        computed_metrics = []
+        for metric in metrics:
+            if self._should_skip_computation(metric, self):
+                computed_metrics.append(metric)
+
+        if computed_metrics:
+            return (
+                f"Cannot compute metrics because the following metric(s) are already computed or in progress: "
+                f"{', '.join(computed_metrics)}. If you want to recompute, please cancel the run and start a new one."
+            )
+
+        # Separate client-side and server-side metrics
+        client_metric_configs = []
+        server_metric_names = []
+
+        for metric in metrics:
+            if isinstance(metric, str):
+                # String metrics are server-side
+                server_metric_names.append(metric)
+            else:
+                # MetricConfig objects are client-side
+                if (
+                    hasattr(metric, "computation_type")
+                    and metric.computation_type == "client"
+                ):
+                    client_metric_configs.append(metric)
+                else:
+                    # Default to client-side for MetricConfig objects
+                    client_metric_configs.append(metric)
+
+        logger.info(
+            f"Client-side metrics to compute: {[m.metric_name for m in client_metric_configs]}"
         )
+        logger.info(f"Server-side metrics to compute: {server_metric_names}")
 
-        run = Run.from_metadata_df(
-            run_metadata_df,
-            {
-                "app": self,
-                "main_method_name": self.main_method_name,
-                "run_dao": self.run_dao,
-                "tru_session": self.tru_session,
-            },
-        )
+        try:
+            # Handle client-side metrics
+            if client_metric_configs:
+                try:
+                    self._compute_client_side_metrics_from_configs(
+                        client_metric_configs
+                    )
+                    logger.info(
+                        f"Successfully computed {len(client_metric_configs)} client-side metrics"
+                    )
+                except Exception as e:
+                    logger.error(f"Error computing client-side metrics: {e}")
+                    raise
 
-        computation_metadata_id = str(uuid.uuid4())
-
-        for metric_name in metrics:
-            if not self._should_skip_computation(metric_name, run):
-                logger.info(
-                    f"Adding metric: {metric_name} to run metadata for computation."
-                )
-                # add placeholder entries to metrics field in run metadata
-                metric_metadata_id = str(uuid.uuid4())
-                self.run_dao.upsert_run_metadata_fields(
-                    entry_type=SupportedEntryType.METRICS.value,
-                    entry_id=metric_metadata_id,
-                    computation_id=computation_metadata_id,
-                    name=metric_name,
-                    completion_status=None,  # starting w/ null, will be updated after the computation
-                    run_name=self.run_name,
+            if server_metric_names:
+                self.run_dao.call_compute_metrics_query(
+                    metrics=server_metric_names,
                     object_name=self.object_name,
                     object_type=self.object_type,
                     object_version=self.object_version,
+                    run_name=self.run_name,
+                )
+                logger.info(
+                    f"Started server-side computation for {len(server_metric_names)} metrics"
                 )
 
-        computation_start_time_ms = self._get_current_time_in_ms()
+            logger.info("Metrics computation job started")
+        finally:
+            self.tru_session.force_flush()
 
-        async_job = self.run_dao.call_compute_metrics_query(
-            metrics=metrics,
-            object_name=self.object_name,
-            object_version=self.object_version,
-            object_type=self.object_type,
-            run_name=self.run_name,
-        )
+            logger.debug(
+                "Flushed OTel eval spans to event table to ensure all spans are ingested before main process exits"
+            )
 
-        query_id = async_job.query_id
-
-        logger.info(f"Query id for metrics computation: {query_id}")
-        self.run_dao.upsert_run_metadata_fields(
-            entry_type=SupportedEntryType.COMPUTATIONS.value,
-            entry_id=computation_metadata_id,
-            query_id=query_id,
-            start_time_ms=computation_start_time_ms,
-            end_time_ms=0,
-            run_name=self.run_name,
-            object_name=self.object_name,
-            object_type=self.object_type,
-            object_version=self.object_version,
-        )
-
-        logger.info("Metrics computation job started")
         return "Metrics computation in progress."
+
+    def _compute_client_side_metrics_from_configs(
+        self, metric_configs: List[MetricConfig]
+    ) -> None:
+        """Compute client-side custom metrics from MetricConfig objects."""
+        try:
+            from trulens.feedback.computer import compute_feedback_by_span_group
+        except ImportError:
+            logger.error(
+                "trulens.feedback package is not installed. Please install it to use feedback computation functionality."
+            )
+            raise
+
+        # Force flush to ensure spans are uploaded to Snowflake before querying
+        self.tru_session.force_flush()
+        logger.debug(
+            "Flushed OTel spans to event table before retrieving them for client-side metric computation"
+        )
+
+        events = self._get_events_for_client_metrics()
+
+        if events.empty:
+            logger.warning(
+                f"No events found for app {self.app.app_name} version {self.app.app_version} run {self.run_name}"
+            )
+            return
+
+        # Compute each client-side metric
+
+        for metric_config in metric_configs:
+            try:
+                logger.info(
+                    f"Computing client-side metric: {metric_config.metric_name}"
+                )
+
+                # Create feedback definition from the metric config
+                feedback = metric_config.create_feedback_definition()
+
+                compute_feedback_by_span_group(
+                    events=events,
+                    feedback=feedback,
+                    raise_error_on_no_feedbacks_computed=False,
+                    selectors=feedback.selectors,
+                )
+                logger.info(
+                    f"Successfully computed client-side metric: {metric_config.metric_name}"
+                )
+            except Exception as e:
+                logger.error(
+                    f"Error computing client-side metric {metric_config.metric_name}: {e}"
+                )
+                raise
+
+    def _get_events_for_client_metrics(self) -> pd.DataFrame:
+        """Get events for client-side metric computation using the appropriate method."""
+        try:
+            from trulens.connectors.snowflake import SnowflakeConnector
+
+            if (
+                isinstance(self.tru_session.connector, SnowflakeConnector)
+                and self.tru_session.connector.use_account_event_table
+            ):
+                events_df = self.tru_session.connector.db.get_events(
+                    app_name=self.app.app_name,
+                    app_version=self.app.app_version,
+                    run_name=self.run_name,
+                )
+
+                if not events_df.empty:
+                    for json_col in [
+                        "TRACE",
+                        "RESOURCE_ATTRIBUTES",
+                        "RECORD",
+                        "RECORD_ATTRIBUTES",
+                    ]:
+                        if json_col in events_df.columns:
+                            events_df[json_col] = events_df[json_col].apply(
+                                json.loads
+                            )
+
+                    # Rename columns to match expected format (lowercase) in downstream feedback computation
+                    # TODO: remove this once we have a more robust/general way to handle the column names
+                    column_mapping = {
+                        "TRACE": "trace",
+                        "RESOURCE_ATTRIBUTES": "resource_attributes",
+                        "RECORD": "record",
+                        "RECORD_ATTRIBUTES": "record_attributes",
+                    }
+
+                    events_df = events_df.rename(columns=column_mapping)
+
+                    for idx, row in events_df.iterrows():
+                        trace = events_df.at[idx, "trace"]
+                        record = events_df.at[idx, "record"]
+                        record_attributes = (
+                            events_df.at[idx, "record_attributes"]
+                            if "record_attributes" in events_df.columns
+                            else {}
+                        )
+
+                        # Parse JSON fields using helper function
+                        try:
+                            trace = _parse_json_field(
+                                trace, "trace", idx, critical=True
+                            )
+                            events_df.at[idx, "trace"] = trace
+                        except json.JSONDecodeError:
+                            continue
+
+                        try:
+                            record = _parse_json_field(
+                                record, "record", idx, critical=True
+                            )
+                            events_df.at[idx, "record"] = record
+                        except json.JSONDecodeError:
+                            continue
+
+                        # record_attributes parsing is not critical for parent_id assignment
+                        record_attributes = _parse_json_field(
+                            record_attributes,
+                            "record_attributes",
+                            idx,
+                            critical=False,
+                        )
+                        events_df.at[idx, "record_attributes"] = (
+                            record_attributes
+                        )
+
+                        # Now modify the dictionary
+                        if isinstance(trace, dict) and isinstance(record, dict):
+                            if "parent_span_id" in record:
+                                trace["parent_id"] = record["parent_span_id"]
+                            else:
+                                trace["parent_id"] = None
+
+                            # Set the modified dict back into the DataFrame
+                            events_df.at[idx, "trace"] = trace
+
+                if not events_df.empty and self.run_name:
+                    filtered_events = []
+                    for _, row in events_df.iterrows():
+                        try:
+                            record_attributes = row.get("record_attributes", {})
+
+                            # Parse record_attributes using helper function
+                            original_record_attributes = record_attributes
+                            record_attributes = _parse_json_field(
+                                record_attributes,
+                                "record_attributes",
+                                critical=False,
+                            )
+                            # If parsing failed and we still have a string, skip this record
+                            if (
+                                isinstance(record_attributes, str)
+                                and record_attributes
+                                == original_record_attributes
+                            ):
+                                continue
+
+                            event_run_name = record_attributes.get(
+                                SpanAttributes.RUN_NAME
+                            )
+                            if event_run_name == self.run_name:
+                                filtered_events.append(row)
+
+                        except Exception as e:
+                            logger.debug(
+                                f"Skipping event due to parsing error: {e}"
+                            )
+                            continue
+
+                    if filtered_events:
+                        events_df = pd.DataFrame(filtered_events)
+                        logger.info(
+                            f"Filtered {len(filtered_events)} events for run {self.run_name}"
+                        )
+                    else:
+                        logger.warning(
+                            f"No events found for run {self.run_name} after filtering"
+                        )
+                        events_df = pd.DataFrame()
+
+                return events_df
+            else:
+                return self.tru_session.connector.get_events(
+                    app_name=self.app.app_name,
+                    app_version=self.app.app_version,
+                    run_name=self.run_name,
+                )
+        except ImportError:
+            raise ValueError(
+                "Snowflake connector is not installed. Please install it to use feedback computation functionality."
+            )
+
+    def get_records(
+        self,
+        record_ids: Optional[List[str]] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> pd.DataFrame:
+        """
+        A wrapper API around get_records_and_feedback to retrieve and display overview of records from event table of the run.
+        It aggregates summary information of records into a single DataFrame.
+
+        Args:
+            record_ids: Optional list of record IDs to filter by. Defaults to None.
+            offset: Record row offset.
+            limit: Limit on the number of records to return.
+
+        Returns:
+            A DataFrame with the overview of records.
+        """
+        record_details_df, metrics_columns = (
+            self.tru_session.get_records_and_feedback(
+                app_name=self.object_name,
+                app_version=self.object_version,
+                run_name=self.run_name,
+                record_ids=record_ids,
+                offset=offset,
+                limit=limit,
+            )
+        )
+
+        record_overview_col_names = [
+            "record_id",
+            "input",
+            "output",
+            "latency",
+        ] + metrics_columns
+        return record_details_df[record_overview_col_names]
+
+    def get_record_details(
+        self,
+        record_ids: Optional[List[str]] = None,
+        offset: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> pd.DataFrame:
+        """
+        A wrapper API around get_records_and_feedback to retrieve records from event table of the run.
+
+        Args:
+            record_ids: Optional list of record IDs to filter by. Defaults to None.
+            offset: Record row offset.
+            limit: Limit on the number of records to return.
+
+        Returns:
+            A DataFrame with the details of records.
+        """
+        record_details_df, _ = self.tru_session.get_records_and_feedback(
+            app_name=self.object_name,
+            app_version=self.object_version,
+            run_name=self.run_name,
+            record_ids=record_ids,
+            offset=offset,
+            limit=limit,
+        )
+
+        return record_details_df
 
     def _is_cancelled(self) -> bool:
         return self.get_status() == RunStatus.CANCELLED

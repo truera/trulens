@@ -1,14 +1,15 @@
 exclude: src\/(core|feedback|providers/.+)\/meta.yaml
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
       - id: check-added-large-files
         exclude: |
           (?x)^(
             src/dashboard/trulens/dashboard/.*/dist/.*|
-            poetry.lock
+            poetry.lock|
+            src/dashboard/react_components/.*/package-lock.json
           )$
       - id: check-yaml
         exclude: meta.yaml

@@ -1,0 +1,48 @@
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = [
+  "poetry-core",
+]
+
+[tool.poetry]
+name = "trulens-apps-langgraph"
+version = "2.5.3"
+description = "Library to systematically track and evaluate LangGraph based applications."
+authors = [
+  "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
+]
+license = "MIT"
+readme = "README.md"
+packages = [
+  { include = "trulens" },
+]
+homepage = "https://trulens.org/"
+documentation = "https://trulens.org/getting_started/"
+repository = "https://github.com/truera/trulens"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+opentelemetry-api = ">=1.23.0"
+opentelemetry-sdk = ">=1.23.0"
+opentelemetry-proto = ">=1.23.0"
+trulens-core = { version = "^2.0.0" }
+trulens-apps-langchain = { version = "^2.0.0" }
+langgraph = ">=0.4.4"
+# LangChain 1.x package structure:
+# - langchain (meta package) >= 1.0
+# - langchain-core >= 1.0
+# - langchain-community still at 0.x (as of early 2025)
+langchain = ">=1.0.0"
+langchain-core = ">=1.0.0"
+langchain-community = ">=0.3.0"
+pydantic = "^2.4.2"
+
+[tool.poetry.group.dev.dependencies]
+trulens-core = { path = "../../core" }
+trulens-apps-langchain = { path = "../langchain" }

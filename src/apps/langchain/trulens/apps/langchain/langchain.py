@@ -13,7 +13,11 @@ from trulens.core.utils import serial as serial_utils
 class LangChainComponent(core_app.ComponentView):
     @staticmethod
     def class_is(cls_obj: pyschema_utils.Class) -> bool:
-        if core_app.ComponentView.innermost_base(cls_obj.bases) == "langchain":
+        if core_app.ComponentView.innermost_base(cls_obj.bases) in (
+            "langchain",
+            "langchain_core",
+            "langchain_community",
+        ):
             return True
 
         return False
@@ -33,13 +37,20 @@ class Prompt(core_app.Prompt, LangChainComponent):
 
     @staticmethod
     def class_is(cls_obj: pyschema_utils.Class) -> bool:
-        return cls_obj.noserio_issubclass(
-            module_name="langchain.prompts.base",
-            class_name="BasePromptTemplate",
-        ) or cls_obj.noserio_issubclass(
-            module_name="langchain.schema.prompt_template",
-            class_name="BasePromptTemplate",
-        )  # langchain >= 0.230
+        return (
+            cls_obj.noserio_issubclass(
+                module_name="langchain.prompts.base",
+                class_name="BasePromptTemplate",
+            )
+            or cls_obj.noserio_issubclass(
+                module_name="langchain.schema.prompt_template",
+                class_name="BasePromptTemplate",
+            )
+            or cls_obj.noserio_issubclass(
+                module_name="langchain_core.prompts",
+                class_name="BasePromptTemplate",
+            )
+        )  # langchain >= 0.230 and 1.x
 
 
 class LLM(core_app.LLM, LangChainComponent):
@@ -54,6 +65,9 @@ class LLM(core_app.LLM, LangChainComponent):
     def class_is(cls_obj: pyschema_utils.Class) -> bool:
         return cls_obj.noserio_issubclass(
             module_name="langchain.llms.base", class_name="BaseLLM"
+        ) or cls_obj.noserio_issubclass(
+            module_name="langchain_core.language_models.llms",
+            class_name="BaseLLM",
         )
 
 

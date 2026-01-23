@@ -1,8 +1,19 @@
+from __future__ import annotations
+
 import inspect
 import logging
 import types
 from types import TracebackType
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+)
 
 from opentelemetry import trace
 from opentelemetry.baggage import get_baggage
@@ -13,6 +24,8 @@ from opentelemetry.trace.span import Span
 from trulens.core.otel.function_call_context_manager import (
     create_function_call_context_manager,
 )
+from trulens.core.otel.recording import Recording
+from trulens.core.schema.app import AppDefinition
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
 from trulens.experimental.otel_tracing.core.span import Attributes
 from trulens.experimental.otel_tracing.core.span import (
@@ -27,17 +40,26 @@ from trulens.experimental.otel_tracing.core.span import (
 from trulens.experimental.otel_tracing.core.span import (
     set_user_defined_attributes,
 )
+from trulens.otel.semconv.constants import (
+    TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG,
+)
 from trulens.otel.semconv.constants import TRULENS_INSTRUMENT_WRAPPER_FLAG
 from trulens.otel.semconv.constants import (
     TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
 )
+from trulens.otel.semconv.constants import TRULENS_SPAN_END_CALLBACKS
+from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 import wrapt
+
+if TYPE_CHECKING:
+    from trulens.core.app import App
+
 
 logger = logging.getLogger(__name__)
 
 
-def _get_func_name(func: Callable) -> str:
+def get_func_name(func: Callable) -> str:
     if (
         hasattr(func, "__module__")
         and func.__module__
@@ -75,7 +97,7 @@ def _resolve_attributes(
 def _set_span_attributes(
     span: Span,
     span_type: SpanAttributes.SpanType,
-    span_name: str,
+    func_name: str,
     func: Callable,
     func_exception: Optional[Exception],
     attributes: Attributes,
@@ -85,6 +107,15 @@ def _set_span_attributes(
     ret: Any,
     only_set_user_defined_attributes: bool = False,
 ):
+    if (
+        hasattr(span, "attributes")
+        and span.attributes is not None
+        and SpanAttributes.SPAN_TYPE in span.attributes
+        and span.attributes[SpanAttributes.SPAN_TYPE]
+        not in [None, "", SpanAttributes.SpanType.UNKNOWN]
+    ):
+        # If the span already has a span type, we override what we were given.
+        span_type = span.attributes[SpanAttributes.SPAN_TYPE]
     # Determine args/kwargs to pass to the attributes
     # callable.
     sig = inspect.signature(func)
@@ -92,7 +123,6 @@ def _set_span_attributes(
     all_kwargs = {**kwargs, **bound_args}
     if not only_set_user_defined_attributes:
         # Set general span attributes.
-        span.set_attribute("name", span_name)
         set_general_span_attributes(span, span_type)
         # Set record root span attributes if necessary.
         if span_type == SpanAttributes.SpanType.RECORD_ROOT:
@@ -105,7 +135,9 @@ def _set_span_attributes(
                 func_exception,
             )
         # Set function call attributes.
-        set_function_call_attributes(span, ret, func_exception, all_kwargs)
+        set_function_call_attributes(
+            span, ret, func_name, func_exception, all_kwargs
+        )
     # Resolve the attributes.
     if instance is not None:
         args_with_self_possibly = (instance,) + args
@@ -120,48 +152,113 @@ def _set_span_attributes(
     )
     if resolved_attributes:
         # Set the user-provided attributes.
-        set_user_defined_attributes(
+        set_user_defined_attributes(span, attributes=resolved_attributes)
+
+
+def _finalize_span(
+    span: Span,
+    span_type: SpanAttributes.SpanType,
+    func_name: str,
+    func: Callable,
+    func_exception: Optional[Exception],
+    attributes: Attributes,
+    instance: Any,
+    args: Tuple[Any],
+    kwargs: Dict[str, Any],
+    ret: Any,
+    only_set_user_defined_attributes: bool = False,
+    span_end_callbacks: List[Callable[[Span], None]] = [],
+):
+    attributes_exception: Optional[Exception] = None
+    try:
+        _set_span_attributes(
             span,
-            span_type=span_type,
-            attributes=resolved_attributes,
+            span_type,
+            func_name,
+            func,
+            func_exception,
+            attributes,
+            instance,
+            args,
+            kwargs,
+            ret,
+            only_set_user_defined_attributes=only_set_user_defined_attributes,
         )
+    except Exception as e:
+        logger.error(f"Error setting attributes: {e}")
+        attributes_exception = e
+    for span_end_callback in span_end_callbacks:
+        span_end_callback(span)
+    # Raise any exceptions that occurred.
+    exception = func_exception or attributes_exception
+    if exception:
+        raise exception
 
 
-def instrument(
-    *,
-    span_type: SpanAttributes.SpanType = SpanAttributes.SpanType.UNKNOWN,
-    attributes: Attributes = None,
-    must_be_first_wrapper: bool = False,
-    **kwargs,
-) -> Callable[[Callable], Any]:  # TODO(this_pr): get type!
-    """
-    Decorator for marking functions to be instrumented with OpenTelemetry
-    tracing.
+class instrument:
+    enabled: bool = True
 
-    span_type: Span type to be used for the span.
-    attributes:
-        A dictionary or a callable that returns a dictionary of attributes
-        (i.e. a `typing.Dict[str, typing.Any]`) to be set on the span.
-    must_be_first_wrapper:
-        If this is True and the function is already wrapped with the TruLens
-        decorator, then the function will not be wrapped again.
-    """
-    if attributes is None:
-        attributes = {}
-    is_record_root = span_type == SpanAttributes.SpanType.RECORD_ROOT
-    is_app_specific_record_root = kwargs.get(
-        "is_app_specific_record_root", False
-    )
-    create_new_span = kwargs.get("create_new_span", True)
-    only_set_user_defined_attributes = kwargs.get(
-        "only_set_user_defined_attributes", False
-    )
+    def __init__(
+        self,
+        *,
+        span_type: SpanAttributes.SpanType = SpanAttributes.SpanType.UNKNOWN,
+        attributes: Attributes = None,
+        **kwargs,
+    ) -> None:
+        """
+        Decorator for marking functions to be instrumented with OpenTelemetry
+        tracing.
 
-    def inner_decorator(func: Callable):
-        span_name = _get_func_name(func)
+        span_type: Span type to be used for the span.
+        attributes:
+            A dictionary or a callable that returns a dictionary of attributes
+            (i.e. a `typing.Dict[str, typing.Any]`) to be set on the span.
+        """
+        self.user_specified_span_type = span_type
+        self.span_type = span_type
+        if span_type == SpanAttributes.SpanType.RECORD_ROOT:
+            logger.warning(
+                "Cannot explicitly set 'record_root' span type, setting to 'unknown'."
+            )
+            self.span_type = SpanAttributes.SpanType.UNKNOWN
+        if attributes is None:
+            attributes = {}
+        self.attributes = attributes
+        self.is_app_specific_instrumentation = kwargs.get(
+            "is_app_specific_instrumentation", False
+        )
+        self.create_new_span = kwargs.get("create_new_span", True)
+        self.only_set_user_defined_attributes = kwargs.get(
+            "only_set_user_defined_attributes", False
+        )
+        self.must_be_first_wrapper = kwargs.get("must_be_first_wrapper", False)
+
+    def __call__(self, func: Callable) -> Callable:
+        func_name = get_func_name(func)
+
+        def _func_name_for_instance(instance) -> str:
+            target = None
+            if instance is None:
+                target = None
+            elif inspect.isclass(instance):
+                target = instance
+            else:
+                target = instance.__class__
+            if target is None:
+                return func_name
+            module = getattr(target, "__module__", "")
+            qualname = getattr(
+                target, "__qualname__", getattr(target, "__name__", "")
+            )
+            base = ".".join([p for p in [module, qualname] if p])
+            if not base:
+                return func_name
+            return f"{base}.{func.__name__}"
 
         @wrapt.decorator
         def sync_wrapper(func, instance, args, kwargs):
+            if not self.enabled or get_baggage("__trulens_recording__") is None:
+                return func(*args, **kwargs)
             ret = convert_to_generator(func, instance, args, kwargs)
             if next(ret) == "is_not_generator":
                 res = next(ret)
@@ -177,12 +274,13 @@ def instrument(
             return ret
 
         def convert_to_generator(func, instance, args, kwargs):
+            span_end_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
+            func_name_for_call = _func_name_for_instance(instance)
             with create_function_call_context_manager(
-                create_new_span, span_name, is_record_root
+                self.create_new_span, func_name_for_call
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
-                attributes_exception: Optional[Exception] = None
                 # Run function.
                 try:
                     result = func(*args, **kwargs)
@@ -202,38 +300,33 @@ def instrument(
                     # None as a return value.
                     func_exception = e
                 finally:
-                    # Set span attributes.
-                    try:
-                        _set_span_attributes(
-                            span,
-                            span_type,
-                            span_name,
-                            func,
-                            func_exception,
-                            attributes,
-                            instance,
-                            args,
-                            kwargs,
-                            ret,
-                            only_set_user_defined_attributes=only_set_user_defined_attributes,
-                        )
-                    except Exception as e:
-                        logger.error(f"Error setting attributes: {e}")
-                        attributes_exception = e
-                    # Raise any exceptions that occurred.
-                    exception = func_exception or attributes_exception
-                    if exception:
-                        raise exception
+                    _finalize_span(
+                        span,
+                        self.span_type,
+                        func_name_for_call,
+                        func,
+                        func_exception,
+                        self.attributes,
+                        instance,
+                        args,
+                        kwargs,
+                        ret,
+                        self.only_set_user_defined_attributes,
+                        span_end_callbacks,
+                    )
                     return ret
 
         @wrapt.decorator
         async def async_wrapper(func, instance, args, kwargs):
+            if not self.enabled or get_baggage("__trulens_recording__") is None:
+                return await func(*args, **kwargs)
+            span_end_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
+            func_name_for_call = _func_name_for_instance(instance)
             with create_function_call_context_manager(
-                create_new_span, span_name, is_record_root
+                self.create_new_span, func_name_for_call
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
-                attributes_exception: Optional[Exception] = None
                 # Run function.
                 try:
                     ret = await func(*args, **kwargs)
@@ -243,36 +336,35 @@ def instrument(
                     # None as a return value.
                     func_exception = e
                 # Set span attributes.
-                try:
-                    _set_span_attributes(
-                        span,
-                        span_type,
-                        span_name,
-                        func,
-                        func_exception,
-                        attributes,
-                        instance,
-                        args,
-                        kwargs,
-                        ret,
-                    )
-                except Exception as e:
-                    logger.error(f"Error setting attributes: {e}")
-                    attributes_exception = e
-                # Raise any exceptions that occurred.
-                exception = func_exception or attributes_exception
-                if exception:
-                    raise exception
+                _finalize_span(
+                    span,
+                    self.span_type,
+                    func_name_for_call,
+                    func,
+                    func_exception,
+                    self.attributes,
+                    instance,
+                    args,
+                    kwargs,
+                    ret,
+                    self.only_set_user_defined_attributes,
+                    span_end_callbacks,
+                )
             return ret
 
         @wrapt.decorator
         async def async_generator_wrapper(func, instance, args, kwargs):
+            if not self.enabled or get_baggage("__trulens_recording__") is None:
+                async for curr in func(*args, **kwargs):
+                    yield curr
+                return
+            span_end_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
+            func_name_for_call = _func_name_for_instance(instance)
             with create_function_call_context_manager(
-                create_new_span, span_name, is_record_root
+                self.create_new_span, func_name_for_call
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
-                attributes_exception: Optional[Exception] = None
                 # Run function.
                 try:
                     result = func(*args, **kwargs)
@@ -286,30 +378,23 @@ def instrument(
                     # None as a return value.
                     func_exception = e
                 finally:
-                    # Set span attributes.
-                    try:
-                        _set_span_attributes(
-                            span,
-                            span_type,
-                            span_name,
-                            func,
-                            func_exception,
-                            attributes,
-                            instance,
-                            args,
-                            kwargs,
-                            ret,
-                        )
-                    except Exception as e:
-                        logger.error(f"Error setting attributes: {e}")
-                        attributes_exception = e
-                    # Raise any exceptions that occurred.
-                    exception = func_exception or attributes_exception
-                    if exception:
-                        raise exception
+                    _finalize_span(
+                        span,
+                        self.span_type,
+                        func_name_for_call,
+                        func,
+                        func_exception,
+                        self.attributes,
+                        instance,
+                        args,
+                        kwargs,
+                        ret,
+                        self.only_set_user_defined_attributes,
+                        span_end_callbacks,
+                    )
 
         # Check if already wrapped if not allowing multiple wrappers.
-        if must_be_first_wrapper:
+        if self.must_be_first_wrapper:
             if hasattr(func, TRULENS_INSTRUMENT_WRAPPER_FLAG):
                 return func
             curr = func
@@ -327,11 +412,19 @@ def instrument(
         else:
             ret = sync_wrapper(func)
         ret.__dict__[TRULENS_INSTRUMENT_WRAPPER_FLAG] = True
-        if is_record_root and not is_app_specific_record_root:
+        if self.user_specified_span_type == SpanAttributes.SpanType.RECORD_ROOT:
             ret.__dict__[TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG] = True
+        if self.is_app_specific_instrumentation:
+            ret.__dict__[TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG] = True
         return ret
 
-    return inner_decorator
+    @classmethod
+    def enable_all_instrumentation(cls) -> None:
+        cls.enabled = True
+
+    @classmethod
+    def disable_all_instrumentation(cls) -> None:
+        cls.enabled = False
 
 
 def instrument_method(
@@ -385,10 +478,17 @@ class OtelBaseRecordingContext:
     """
 
     def __init__(
-        self, *, app_name: str, app_version: str, run_name: str, input_id: str
+        self,
+        *,
+        app_name: str,
+        app_version: str,
+        app_id: str,
+        run_name: str,
+        input_id: str,
     ):
         self.app_name = app_name
         self.app_version = app_version
+        self.app_id = app_id
         self.run_name = run_name
         self.input_id = input_id
         self.tokens = []
@@ -438,31 +538,56 @@ class OtelRecordingContext(OtelBaseRecordingContext):
     def __init__(
         self,
         *,
+        tru_app: App,
         app_name: str,
         app_version: str,
         run_name: str,
         input_id: str,
+        input_records_count: Optional[int] = None,
         ground_truth_output: Optional[str] = None,
+        input_selector: Optional[
+            Callable[[Tuple[Any, ...], Dict[str, Any]], Any]
+        ] = None,
     ) -> None:
+        app_id = AppDefinition._compute_app_id(app_name, app_version)
         super().__init__(
             app_name=app_name,
             app_version=app_version,
+            app_id=app_id,
             run_name=run_name,
             input_id=input_id,
         )
+        self.tru_app = tru_app
+        self.input_records_count = input_records_count
         self.ground_truth_output = ground_truth_output
+        self.input_selector = input_selector
 
     # For use as a context manager.
-    def __enter__(self) -> None:
-        self.attach_to_context(SpanAttributes.APP_NAME, self.app_name)
-        self.attach_to_context(SpanAttributes.APP_VERSION, self.app_version)
-
+    def __enter__(self) -> Recording:
+        self.attach_to_context("__trulens_app__", self.tru_app)
+        self.attach_to_context(ResourceAttributes.APP_NAME, self.app_name)
+        self.attach_to_context(ResourceAttributes.APP_VERSION, self.app_version)
+        self.attach_to_context(ResourceAttributes.APP_ID, self.app_id)
+        # Attach self so child spans can register baggage tokens for cleanup at app exit.
+        self.attach_to_context("__trulens_otel_ctx__", self)
         self.attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
         self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
+
+        self.attach_to_context(
+            SpanAttributes.INPUT_RECORDS_COUNT,
+            self.input_records_count,
+        )
         self.attach_to_context(
             SpanAttributes.RECORD_ROOT.GROUND_TRUTH_OUTPUT,
             self.ground_truth_output,
         )
+        self.attach_to_context(
+            "__trulens_input_selector__", self.input_selector
+        )
+
+        ret = Recording(self.tru_app)
+        self.attach_to_context("__trulens_recording__", ret)
+        return ret
 
 
 class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
@@ -478,8 +603,9 @@ class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
         self.attach_to_context(
             SpanAttributes.RECORD_ID, self.target_record_id
         )  # TODO(otel): Should we include this? It's automatically getting added to the span.
-        self.attach_to_context(SpanAttributes.APP_NAME, self.app_name)
-        self.attach_to_context(SpanAttributes.APP_VERSION, self.app_version)
+        self.attach_to_context(ResourceAttributes.APP_NAME, self.app_name)
+        self.attach_to_context(ResourceAttributes.APP_VERSION, self.app_version)
+        self.attach_to_context(ResourceAttributes.APP_ID, self.app_id)
 
         self.attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
         self.attach_to_context(
@@ -501,9 +627,13 @@ class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
         )
 
         # Set general span attributes
-        root_span.set_attribute("name", "eval_root")
         set_general_span_attributes(
             root_span, SpanAttributes.SpanType.EVAL_ROOT
         )
+        root_span.set_attribute(
+            SpanAttributes.EVAL_ROOT.METRIC_NAME, self.feedback_name
+        )
+
+        self.attach_to_context("__trulens_recording__", True)
 
         return root_span

@@ -2,6 +2,7 @@
 Tests server-side feedback evaluations in Snowflake.
 """
 
+import os
 import time
 
 import pytest
@@ -22,6 +23,20 @@ def silly_feedback_function(q: str) -> float:
 
 
 class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls._orig_TRULENS_OTEL_TRACING = os.getenv("TRULENS_OTEL_TRACING")
+        os.environ["TRULENS_OTEL_TRACING"] = "0"
+        return super().setUpClass()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        if cls._orig_TRULENS_OTEL_TRACING is not None:
+            os.environ["TRULENS_OTEL_TRACING"] = cls._orig_TRULENS_OTEL_TRACING
+        else:
+            del os.environ["TRULENS_OTEL_TRACING"]
+        return super().tearDownClass()
+
     def _suspend_task(self) -> None:
         self._snowpark_session.sql(
             f"ALTER TASK {self._database}.{self._schema}.{ssea._TASK_NAME} SUSPEND"
@@ -51,7 +66,9 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         self,
     ) -> core_feedback.SnowflakeFeedback:
         return core_feedback.SnowflakeFeedback(
-            cortex_provider.Cortex(self._snowpark_session).relevance
+            cortex_provider.Cortex(
+                self._snowpark_session, retry_timeout=60
+            ).relevance
         ).on_input_output()
 
     def _start_evaluator_as_snowflake(self, session: core_session.TruSession):

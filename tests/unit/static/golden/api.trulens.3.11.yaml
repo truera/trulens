@@ -4,7 +4,7 @@ trulens:
   lows: {}
 trulens.benchmark:
   __class__: builtins.module
-  __version__: 1.4.6
+  __version__: 2.5.2
   highs: {}
   lows:
     __version__: builtins.str
@@ -32,7 +32,7 @@ trulens.benchmark.benchmark_frameworks.tru_benchmark_experiment.TruBenchmarkExpe
   - builtins.object
   __class__: builtins.type
   attributes:
-    run_score_generation_on_single_row: builtins.function
+    run_score_generation_on_single_row: builtins.FunctionWrapper
 trulens.benchmark.generate:
   __class__: builtins.module
   highs: {}
@@ -60,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 1.4.6
+  __version__: 2.5.2
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -83,13 +83,17 @@ trulens.core.app:
     ComponentViewMeta: builtins.type
     CustomComponent: trulens.core.app.ComponentViewMeta
     LLM: trulens.core.app.ComponentViewMeta
+    LiveRunContext: builtins.type
     Memory: trulens.core.app.ComponentViewMeta
     Other: trulens.core.app.ComponentViewMeta
     Prompt: trulens.core.app.ComponentViewMeta
+    TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG: builtins.str
+    TRULENS_INSTRUMENT_WRAPPER_FLAG: builtins.str
     TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG: builtins.str
     Tool: trulens.core.app.ComponentViewMeta
     TrulensComponent: trulens.core.app.ComponentViewMeta
     instrumented_component_views: builtins.function
+    trace_with_run: builtins.function
 trulens.core.app.Agent:
   __bases__:
   - trulens.core.app.ComponentView
@@ -113,6 +117,7 @@ trulens.core.app.App:
     app_version: builtins.str
     awith_: builtins.function
     awith_record: builtins.function
+    compute_feedbacks: builtins.function
     connector: builtins.property
     db: builtins.property
     delete: builtins.function
@@ -131,6 +136,7 @@ trulens.core.app.App:
     instrumented_invoke_main_method: builtins.function
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     list_runs: builtins.function
+    live_run: builtins.function
     main_acall: builtins.function
     main_call: builtins.function
     main_input: builtins.function
@@ -145,7 +151,8 @@ trulens.core.app.App:
     record_ingest_mode: trulens.core.schema.app.RecordIngestMode
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
-    root_class: trulens.core.utils.pyschema.Class
+    retrieve_feedback_results: builtins.function
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     run: builtins.function
     select_context: builtins.classmethod
     selector_check_warning: builtins.bool
@@ -156,6 +163,8 @@ trulens.core.app.App:
     snowflake_object_type: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_object_version: typing.Optional[builtins.str, builtins.NoneType]
     snowflake_run_dao: typing.Optional[typing.Any, builtins.NoneType]
+    start_evaluator: builtins.function
+    stop_evaluator: builtins.function
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -191,6 +200,13 @@ trulens.core.app.LLM:
   __class__: trulens.core.app.ComponentViewMeta
   attributes:
     model_name: builtins.property
+trulens.core.app.LiveRunContext:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    count_input: builtins.function
+    input: builtins.function
 trulens.core.app.Memory:
   __bases__:
   - trulens.core.app.ComponentView
@@ -226,11 +242,22 @@ trulens.core.database.base:
   __class__: builtins.module
   highs: {}
   lows:
+    BASE_SCOPE: builtins.str
+    BaseAppsExtractor: builtins.type
     DB: pydantic._internal._model_construction.ModelMetaclass
     DEFAULT_DATABASE_FILE: builtins.str
     DEFAULT_DATABASE_PREFIX: builtins.str
     DEFAULT_DATABASE_REDACT_KEYS: builtins.bool
     MULTI_CALL_NAME_DELIMITER: builtins.str
+trulens.core.database.base.BaseAppsExtractor:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    all_cols: builtins.list
+    app_cols: builtins.list
+    extra_cols: builtins.list
+    rec_cols: builtins.list
 trulens.core.database.base.DB:
   __bases__:
   - trulens.core.utils.serial.SerialModel
@@ -243,10 +270,12 @@ trulens.core.database.base.DB:
     batch_insert_record: builtins.function
     check_db_revision: builtins.function
     delete_app: builtins.function
+    extract_app_and_run_info: builtins.staticmethod
     get_app: builtins.function
     get_apps: builtins.function
     get_datasets: builtins.function
     get_db_revision: builtins.function
+    get_events: builtins.function
     get_feedback: builtins.function
     get_feedback_count_by_status: builtins.function
     get_feedback_defs: builtins.function
@@ -299,6 +328,7 @@ trulens.core.database.connector.base.DBConnector:
     delete_app: builtins.function
     get_app: builtins.function
     get_apps: builtins.function
+    get_events: builtins.function
     get_leaderboard: builtins.function
     get_records_and_feedback: builtins.function
     migrate_database: builtins.function
@@ -417,16 +447,12 @@ trulens.core.database.sqlalchemy:
     flatten: builtins.function
 trulens.core.database.sqlalchemy.AppsExtractor:
   __bases__:
-  - builtins.object
+  - trulens.core.database.base.BaseAppsExtractor
   __class__: builtins.type
   attributes:
-    all_cols: builtins.list
-    app_cols: builtins.list
-    extra_cols: builtins.list
     extract_apps: builtins.function
     extract_records: builtins.function
     get_df_and_cols: builtins.function
-    rec_cols: builtins.list
 trulens.core.database.sqlalchemy.SQLAlchemyDB:
   __bases__:
   - trulens.core.database.base.DB
@@ -437,6 +463,7 @@ trulens.core.database.sqlalchemy.SQLAlchemyDB:
     from_db_engine: builtins.classmethod
     from_db_url: builtins.classmethod
     from_tru_args: builtins.classmethod
+    insert_events: builtins.function
     orm: typing.Type[trulens.core.database.orm.ORM]
     redact_keys: builtins.bool
     session: typing.Optional[sqlalchemy.orm.session.sessionmaker, builtins.NoneType]
@@ -456,6 +483,21 @@ trulens.core.database.utils:
     copy_database: builtins.function
     is_legacy_sqlite: builtins.function
     is_memory_sqlite: builtins.function
+trulens.core.enums:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    Mode: enum.EnumType
+trulens.core.enums.Mode:
+  __bases__:
+  - builtins.str
+  - enum.Enum
+  __class__: enum.EnumType
+  attributes:
+    APP_INVOCATION: trulens.core.enums.Mode
+    LOG_INGESTION: trulens.core.enums.Mode
+    name: enum.property
+    value: enum.property
 trulens.core.experimental:
   __class__: builtins.module
   highs: {}
@@ -482,6 +524,19 @@ trulens.core.feedback:
     SnowflakeFeedback: pydantic._internal._model_construction.ModelMetaclass
   lows:
     __all__: builtins.list
+trulens.core.feedback.custom_metric:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    MetricConfig: builtins.type
+trulens.core.feedback.custom_metric.MetricConfig:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    create_feedback_definition: builtins.function
+    to_dict: builtins.function
+    validate_selectors: builtins.function
 trulens.core.feedback.endpoint:
   __class__: builtins.module
   highs: {}
@@ -547,15 +602,18 @@ trulens.core.feedback.feedback.Feedback:
   - trulens.core.schema.feedback.FeedbackDefinition
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    additional_instructions: typing.Optional[builtins.str, builtins.NoneType]
     agg: typing.Optional[typing.Callable[[typing.Union[typing.Iterable[float], typing.Iterable[typing.Tuple[float,
       float]]]], builtins.float], builtins.NoneType]
     aggregate: builtins.function
     aggregator: typing.Union[trulens.core.utils.pyschema.Function, trulens.core.utils.pyschema.Method,
       builtins.NoneType]
+    check_otel_selectors: builtins.function
     check_selectors: builtins.function
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
     criteria: typing.Optional[builtins.str, builtins.NoneType]
+    enable_trace_compression: typing.Optional[builtins.bool, builtins.NoneType]
     evaluate_deferred: builtins.staticmethod
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     extract_selection: builtins.function
@@ -573,6 +631,7 @@ trulens.core.feedback.feedback.Feedback:
     min_score_val: typing.Optional[builtins.int, builtins.NoneType]
     of_feedback_definition: builtins.staticmethod
     'on': builtins.function
+    on_context: builtins.function
     on_default: builtins.function
     on_input: builtins.function
     on_input_output: builtins.function
@@ -610,6 +669,7 @@ trulens.core.feedback.feedback.SnowflakeFeedback:
   - trulens.core.feedback.feedback.Feedback
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    additional_instructions: typing.Optional[builtins.str, builtins.NoneType]
     agg: typing.Optional[typing.Callable[[typing.Union[typing.Iterable[float], typing.Iterable[typing.Tuple[float,
       float]]]], builtins.float], builtins.NoneType]
     aggregator: typing.Union[trulens.core.utils.pyschema.Function, trulens.core.utils.pyschema.Method,
@@ -617,6 +677,7 @@ trulens.core.feedback.feedback.SnowflakeFeedback:
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
     criteria: typing.Optional[builtins.str, builtins.NoneType]
+    enable_trace_compression: typing.Optional[builtins.bool, builtins.NoneType]
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     feedback_definition_id: builtins.str
     groundedness_configs: typing.Optional[trulens.core.feedback.feedback.GroundednessConfigs,
@@ -636,6 +697,20 @@ trulens.core.feedback.feedback.SnowflakeFeedback:
     supplied_name: typing.Optional[builtins.str, builtins.NoneType]
     temperature: typing.Optional[builtins.float, builtins.NoneType]
     tru_class_info: trulens.core.utils.pyschema.Class
+trulens.core.feedback.feedback_function_input:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    FeedbackFunctionInput: builtins.type
+trulens.core.feedback.feedback_function_input.FeedbackFunctionInput:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    collect_list: builtins.bool
+    span_attribute: builtins.NoneType
+    span_id: builtins.NoneType
+    value: builtins.NoneType
 trulens.core.feedback.provider:
   __class__: builtins.module
   highs: {}
@@ -649,6 +724,46 @@ trulens.core.feedback.provider.Provider:
   attributes:
     endpoint: typing.Optional[trulens.core.feedback.endpoint.Endpoint, builtins.NoneType]
     tru_class_info: trulens.core.utils.pyschema.Class
+trulens.core.feedback.selector:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    ProcessedContentNode: builtins.type
+    Selector: builtins.type
+    Trace: builtins.type
+trulens.core.feedback.selector.ProcessedContentNode:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes: {}
+trulens.core.feedback.selector.Selector:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    collect_list: builtins.bool
+    describes_same_spans: builtins.function
+    function_attribute: builtins.NoneType
+    function_name: builtins.NoneType
+    ignore_none_values: builtins.bool
+    match_only_if_no_ancestor_matched: builtins.bool
+    matches_span: builtins.function
+    process_span: builtins.function
+    select_context: builtins.staticmethod
+    select_record_input: builtins.staticmethod
+    select_record_output: builtins.staticmethod
+    span_attribute: builtins.NoneType
+    span_attributes_processor: builtins.NoneType
+    span_name: builtins.NoneType
+    span_type: builtins.NoneType
+    trace_level: builtins.bool
+trulens.core.feedback.selector.Trace:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    add_event: builtins.function
+    to_compressed_json: builtins.function
 trulens.core.guardrails:
   __class__: builtins.module
   highs: {}
@@ -766,8 +881,10 @@ trulens.core.run.Run:
     describe: builtins.function
     description: typing.Optional[builtins.str, builtins.NoneType]
     from_metadata_df: builtins.classmethod
+    get_record_details: builtins.function
+    get_records: builtins.function
     get_status: builtins.function
-    main_method_name: builtins.str
+    main_method_name: typing.Optional[builtins.str, builtins.NoneType]
     object_name: builtins.str
     object_type: builtins.str
     object_version: typing.Optional[builtins.str, builtins.NoneType]
@@ -789,6 +906,7 @@ trulens.core.run.RunConfig:
     description: typing.Optional[builtins.str, builtins.NoneType]
     label: typing.Optional[builtins.str, builtins.NoneType]
     llm_judge_name: typing.Optional[builtins.str, builtins.NoneType]
+    mode: trulens.core.enums.Mode
     run_name: builtins.str
     source_type: builtins.str
 trulens.core.run.RunStatus:
@@ -861,7 +979,7 @@ trulens.core.schema.app.AppDefinition:
     metadata: typing.Dict
     new_session: builtins.staticmethod
     record_ingest_mode: trulens.core.schema.app.RecordIngestMode
-    root_class: trulens.core.utils.pyschema.Class
+    root_class: typing.Optional[trulens.core.utils.pyschema.Class, builtins.NoneType]
     select_inputs: builtins.classmethod
     select_outputs: builtins.classmethod
     tags: builtins.str
@@ -899,6 +1017,7 @@ trulens.core.schema.base.Cost:
     n_embedding_requests: builtins.int
     n_embeddings: builtins.int
     n_prompt_tokens: builtins.int
+    n_reasoning_tokens: builtins.int
     n_requests: builtins.int
     n_stream_chunks: builtins.int
     n_successful_requests: builtins.int
@@ -1005,6 +1124,7 @@ trulens.core.schema.feedback.FeedbackDefinition:
   - typing.Generic
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    additional_instructions: typing.Optional[builtins.str, builtins.NoneType]
     aggregator: typing.Union[trulens.core.utils.pyschema.Function, trulens.core.utils.pyschema.Method,
       builtins.NoneType]
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
@@ -1236,16 +1356,19 @@ trulens.core.session.TruSession:
     Virtual: builtins.function
     add_app: builtins.function
     add_feedback: builtins.function
+    add_feedback_result: builtins.function
     add_feedbacks: builtins.function
     add_ground_truth_to_dataset: builtins.function
     add_record: builtins.function
     add_record_nowait: builtins.function
+    compute_feedbacks_on_events: builtins.function
     connector: typing.Optional[trulens.core.database.connector.base.DBConnector, builtins.NoneType]
     delete_app: builtins.function
     find_unused_port: builtins.function
     force_flush: builtins.function
     get_app: builtins.function
     get_apps: builtins.function
+    get_events: builtins.function
     get_ground_truth: builtins.function
     get_leaderboard: builtins.function
     get_records_and_feedback: builtins.function
@@ -1259,6 +1382,7 @@ trulens.core.session.TruSession:
     stop_dashboard: builtins.function
     stop_evaluator: builtins.function
     update_record: builtins.function
+    wait_for_records: builtins.function
 trulens.core.utils:
   __class__: builtins.module
   highs: {}
@@ -1311,6 +1435,7 @@ trulens.core.utils.deprecation:
     deprecated_property: builtins.function
     deprecated_str: builtins.function
     function_moved: builtins.function
+    handle_deprecated_kwarg: builtins.function
     has_deprecated: builtins.function
     has_moved: builtins.function
     is_deprecated: builtins.function
@@ -1319,6 +1444,19 @@ trulens.core.utils.deprecation:
     moved: builtins.function
     packages_dep_warn: builtins.function
     staticmethod_renamed: builtins.function
+trulens.core.utils.evaluator:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    Evaluator: builtins.type
+trulens.core.utils.evaluator.Evaluator:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    compute_now: builtins.function
+    start_evaluator: builtins.function
+    stop_evaluator: builtins.function
 trulens.core.utils.imports:
   __class__: builtins.module
   highs: {}
@@ -1816,6 +1954,19 @@ trulens.core.utils.threading.ThreadPoolExecutor:
   - concurrent.futures.thread.ThreadPoolExecutor
   __class__: builtins.type
   attributes: {}
+trulens.core.utils.trace_compression:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    TraceCompressor: builtins.type
+    compress_multiple_traces: builtins.function
+    compress_trace_for_feedback: builtins.function
+trulens.core.utils.trace_compression.TraceCompressor:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    compress_trace: builtins.function
 trulens.core.utils.trulens:
   __class__: builtins.module
   highs: {}
@@ -1832,7 +1983,7 @@ trulens.core.utils.trulens.Other:
   attributes: {}
 trulens.dashboard:
   __class__: builtins.module
-  __version__: 1.4.6
+  __version__: 2.5.2
   highs:
     run_dashboard: builtins.function
     run_dashboard_sis: builtins.function
@@ -1840,20 +1991,6 @@ trulens.dashboard:
   lows:
     __all__: builtins.list
     __version__: builtins.str
-trulens.dashboard.Leaderboard:
-  __class__: builtins.module
-  highs: {}
-  lows:
-    APP_AGG_COLS: builtins.list
-    APP_COLS: builtins.list
-    handle_add_metadata: builtins.function
-    handle_add_virtual_app: builtins.function
-    handle_pin_toggle: builtins.function
-    handle_table_edit: builtins.function
-    init_page_state: builtins.function
-    leaderboard_main: builtins.function
-    order_columns: builtins.function
-    render_leaderboard: builtins.function
 trulens.dashboard.appui:
   __class__: builtins.module
   highs: {}
@@ -1910,6 +2047,29 @@ trulens.dashboard.components.record_viewer:
   highs: {}
   lows:
     record_viewer: builtins.function
+trulens.dashboard.components.record_viewer_otel:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    OtelSpan: typing_extensions._TypedDictMeta
+    SpanRecord: typing_extensions._TypedDictMeta
+    SpanTrace: typing_extensions._TypedDictMeta
+    record_viewer_otel: builtins.function
+trulens.dashboard.components.record_viewer_otel.OtelSpan:
+  __bases__:
+  - builtins.dict
+  __class__: typing_extensions._TypedDictMeta
+  attributes: {}
+trulens.dashboard.components.record_viewer_otel.SpanRecord:
+  __bases__:
+  - builtins.dict
+  __class__: typing_extensions._TypedDictMeta
+  attributes: {}
+trulens.dashboard.components.record_viewer_otel.SpanTrace:
+  __bases__:
+  - builtins.dict
+  __class__: typing_extensions._TypedDictMeta
+  attributes: {}
 trulens.dashboard.constants:
   __class__: builtins.module
   highs: {}
@@ -1930,6 +2090,11 @@ trulens.dashboard.display:
     get_feedback_result: builtins.function
     get_icon: builtins.function
     highlight: builtins.function
+trulens.dashboard.main:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    main: builtins.function
 trulens.dashboard.run:
   __class__: builtins.module
   highs: {}
@@ -1974,6 +2139,7 @@ trulens.dashboard.utils.dashboard_utils:
     get_session: streamlit.runtime.caching.cache_utils.CachedFunc
     is_sis_compatibility_enabled: builtins.function
     read_query_params_into_session_state: builtins.function
+    read_spcs_oauth_token: builtins.function
     render_app_version_filters: builtins.function
     render_refresh_button: builtins.function
     render_sidebar: builtins.function
@@ -2120,7 +2286,7 @@ trulens.dashboard.ux.styles.ResultCategoryType:
     value: enum.property
 trulens.feedback:
   __class__: builtins.module
-  __version__: 1.4.6
+  __version__: 2.5.2
   highs:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
@@ -2133,18 +2299,16 @@ trulens.feedback.computer:
   __class__: builtins.module
   highs: {}
   lows:
-    BASE_SCOPE: builtins.str
     INVALID_SPAN_ID: builtins.int
     MinimalSpanInfo: builtins.type
     RecordGraphNode: builtins.type
+    TRULENS_SERVICE_NAME: builtins.str
+    compute_feedback_by_span_group: builtins.function
 trulens.feedback.computer.MinimalSpanInfo:
   __bases__:
   - builtins.object
   __class__: builtins.type
-  attributes:
-    attributes: builtins.dict
-    parent_span_id: builtins.NoneType
-    span_id: builtins.NoneType
+  attributes: {}
 trulens.feedback.computer.RecordGraphNode:
   __bases__:
   - builtins.object
@@ -2332,12 +2496,21 @@ trulens.feedback.llm_provider:
   __class__: builtins.module
   highs: {}
   lows:
+    CapabilityCacheEntry: typing._TypedDictMeta
     LLMProvider: pydantic._internal._model_construction.ModelMetaclass
+    REASONING_MODEL_PREFIXES: builtins.tuple
+trulens.feedback.llm_provider.CapabilityCacheEntry:
+  __bases__:
+  - builtins.dict
+  __class__: typing._TypedDictMeta
+  attributes: {}
 trulens.feedback.llm_provider.LLMProvider:
   __bases__:
   - trulens.core.feedback.provider.Provider
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    clear_capabilities_cache: builtins.function
+    clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -2352,6 +2525,7 @@ trulens.feedback.llm_provider.LLMProvider:
     criminality: builtins.function
     criminality_with_cot_reasons: builtins.function
     endpoint: typing.Optional[trulens.core.feedback.endpoint.Endpoint, builtins.NoneType]
+    execution_efficiency_with_cot_reasons: builtins.function
     generate_score: builtins.function
     generate_score_and_reasons: builtins.function
     groundedness_measure_with_cot_reasons: builtins.function
@@ -2362,12 +2536,15 @@ trulens.feedback.llm_provider.LLMProvider:
     helpfulness_with_cot_reasons: builtins.function
     insensitivity: builtins.function
     insensitivity_with_cot_reasons: builtins.function
+    logical_consistency_with_cot_reasons: builtins.function
     maliciousness: builtins.function
     maliciousness_with_cot_reasons: builtins.function
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
     model_engine: builtins.str
+    plan_adherence_with_cot_reasons: builtins.function
+    plan_quality_with_cot_reasons: builtins.function
     qs_relevance: builtins.function
     qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
@@ -2377,7 +2554,30 @@ trulens.feedback.llm_provider.LLMProvider:
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
+    tool_calling_with_cot_reasons: builtins.function
+    tool_quality_with_cot_reasons: builtins.function
+    tool_selection_with_cot_reasons: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
+trulens.feedback.output_schemas:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    BaseFeedbackResponse: pydantic._internal._model_construction.ModelMetaclass
+    ChainOfThoughtResponse: pydantic._internal._model_construction.ModelMetaclass
+trulens.feedback.output_schemas.BaseFeedbackResponse:
+  __bases__:
+  - pydantic.main.BaseModel
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    score: builtins.int
+trulens.feedback.output_schemas.ChainOfThoughtResponse:
+  __bases__:
+  - pydantic.main.BaseModel
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    criteria: builtins.str
+    score: builtins.int
+    supporting_evidence: builtins.str
 trulens.feedback.prompts:
   __class__: builtins.module
   highs: {}
@@ -2392,6 +2592,7 @@ trulens.feedback.prompts:
     CONTEXT_RELEVANCE_USER: builtins.str
     CORRECT_SYSTEM: builtins.str
     COT_REASONS_TEMPLATE: builtins.str
+    EXECUTION_EFFICIENCY_SYSTEM_PROMPT: builtins.str
     GENERATE_KEY_POINTS_SYSTEM_PROMPT: builtins.str
     GENERATE_KEY_POINTS_USER_PROMPT: builtins.str
     GROUNDEDNESS_REASON_TEMPLATE: builtins.str
@@ -2412,12 +2613,14 @@ trulens.feedback.prompts:
     LLM_ABSTENTION_USER: builtins.str
     LLM_ANSWERABILITY_SYSTEM: builtins.str
     LLM_ANSWERABILITY_USER: builtins.str
-    LLM_GROUNDEDNESS_FULL_PROMPT: builtins.str
     LLM_GROUNDEDNESS_SENTENCES_SPLITTER: builtins.str
     LLM_GROUNDEDNESS_SYSTEM: builtins.str
     LLM_GROUNDEDNESS_USER: builtins.str
     LLM_TRIVIAL_SYSTEM: builtins.str
     LLM_TRIVIAL_USER: builtins.str
+    LOGICAL_CONSISTENCY_SYSTEM_PROMPT: builtins.str
+    PLAN_ADHERENCE_SYSTEM_PROMPT: builtins.str
+    PLAN_QUALITY_SYSTEM_PROMPT: builtins.str
     REMOVE_Y_N: builtins.str
     SENTIMENT_SYSTEM: builtins.str
     SENTIMENT_USER: builtins.str
@@ -2452,6 +2655,7 @@ trulens.feedback.v2.feedback:
     CriteriaOutputSpaceMixin: builtins.type
     DigitalOutputType: pydantic._internal._model_construction.ModelMetaclass
     EvalSchema: pydantic._internal._model_construction.ModelMetaclass
+    ExecutionEfficiency: pydantic._internal._model_construction.ModelMetaclass
     Explained: pydantic._internal._model_construction.ModelMetaclass
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackOutput: pydantic._internal._model_construction.ModelMetaclass
@@ -2470,6 +2674,7 @@ trulens.feedback.v2.feedback:
     LIKERT_0_3_PROMPT: builtins.str
     LanguageMatch: pydantic._internal._model_construction.ModelMetaclass
     Legality: pydantic._internal._model_construction.ModelMetaclass
+    LogicalConsistency: pydantic._internal._model_construction.ModelMetaclass
     Maliciousness: pydantic._internal._model_construction.ModelMetaclass
     Misogyny: pydantic._internal._model_construction.ModelMetaclass
     Model: pydantic._internal._model_construction.ModelMetaclass
@@ -2478,6 +2683,8 @@ trulens.feedback.v2.feedback:
     OutputSpace: enum.EnumType
     OutputWithCOTExplanation: pydantic._internal._model_construction.ModelMetaclass
     OutputWithExplanation: pydantic._internal._model_construction.ModelMetaclass
+    PlanAdherence: pydantic._internal._model_construction.ModelMetaclass
+    PlanQuality: pydantic._internal._model_construction.ModelMetaclass
     PromptResponseRelevance: pydantic._internal._model_construction.ModelMetaclass
     Relevance: pydantic._internal._model_construction.ModelMetaclass
     SelfHarm: pydantic._internal._model_construction.ModelMetaclass
@@ -2487,6 +2694,9 @@ trulens.feedback.v2.feedback:
     SexualMinors: pydantic._internal._model_construction.ModelMetaclass
     Stereotypes: pydantic._internal._model_construction.ModelMetaclass
     Syntax: pydantic._internal._model_construction.ModelMetaclass
+    ToolCalling: pydantic._internal._model_construction.ModelMetaclass
+    ToolQuality: pydantic._internal._model_construction.ModelMetaclass
+    ToolSelection: pydantic._internal._model_construction.ModelMetaclass
     Toxicity: pydantic._internal._model_construction.ModelMetaclass
     Trivial: pydantic._internal._model_construction.ModelMetaclass
     Violence: pydantic._internal._model_construction.ModelMetaclass
@@ -2682,6 +2892,21 @@ trulens.feedback.v2.feedback.EvalSchema:
     get_output_scale_prompt: builtins.function
     output_space: builtins.str
     validate_output_space: builtins.classmethod
+trulens.feedback.v2.feedback.ExecutionEfficiency:
+  __bases__:
+  - trulens.feedback.v2.feedback.Semantics
+  - trulens.feedback.v2.feedback.WithPrompt
+  - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+    output_space: builtins.str
+    output_space_prompt: builtins.str
+    system_prompt: builtins.str
+    system_prompt_template: builtins.str
+    user_prompt: builtins.str
 trulens.feedback.v2.feedback.Explained:
   __bases__:
   - trulens.feedback.v2.feedback.Feedback
@@ -2814,6 +3039,21 @@ trulens.feedback.v2.feedback.Legality:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+trulens.feedback.v2.feedback.LogicalConsistency:
+  __bases__:
+  - trulens.feedback.v2.feedback.Semantics
+  - trulens.feedback.v2.feedback.WithPrompt
+  - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+    output_space: builtins.str
+    output_space_prompt: builtins.str
+    system_prompt: builtins.str
+    system_prompt_template: builtins.str
+    user_prompt: builtins.str
 trulens.feedback.v2.feedback.Maliciousness:
   __bases__:
   - trulens.feedback.v2.feedback.Moderation
@@ -2886,6 +3126,36 @@ trulens.feedback.v2.feedback.OutputWithExplanation:
     feedback: builtins.float
     reason: builtins.str
     typ: trulens.feedback.v2.feedback.FeedbackOutputType
+trulens.feedback.v2.feedback.PlanAdherence:
+  __bases__:
+  - trulens.feedback.v2.feedback.Semantics
+  - trulens.feedback.v2.feedback.WithPrompt
+  - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+    output_space: builtins.str
+    output_space_prompt: builtins.str
+    system_prompt: builtins.str
+    system_prompt_template: builtins.str
+    user_prompt: builtins.str
+trulens.feedback.v2.feedback.PlanQuality:
+  __bases__:
+  - trulens.feedback.v2.feedback.Semantics
+  - trulens.feedback.v2.feedback.WithPrompt
+  - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+    output_space: builtins.str
+    output_space_prompt: builtins.str
+    system_prompt: builtins.str
+    system_prompt_template: builtins.str
+    user_prompt: builtins.str
 trulens.feedback.v2.feedback.PromptResponseRelevance:
   __bases__:
   - trulens.feedback.v2.feedback.Relevance
@@ -2967,6 +3237,51 @@ trulens.feedback.v2.feedback.Syntax:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+trulens.feedback.v2.feedback.ToolCalling:
+  __bases__:
+  - trulens.feedback.v2.feedback.Semantics
+  - trulens.feedback.v2.feedback.WithPrompt
+  - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+    output_space: builtins.str
+    output_space_prompt: builtins.str
+    system_prompt: builtins.str
+    system_prompt_template: builtins.str
+    user_prompt: builtins.str
+trulens.feedback.v2.feedback.ToolQuality:
+  __bases__:
+  - trulens.feedback.v2.feedback.Semantics
+  - trulens.feedback.v2.feedback.WithPrompt
+  - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+    output_space: builtins.str
+    output_space_prompt: builtins.str
+    system_prompt: builtins.str
+    system_prompt_template: builtins.str
+    user_prompt: builtins.str
+trulens.feedback.v2.feedback.ToolSelection:
+  __bases__:
+  - trulens.feedback.v2.feedback.Semantics
+  - trulens.feedback.v2.feedback.WithPrompt
+  - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+    output_space: builtins.str
+    output_space_prompt: builtins.str
+    system_prompt: builtins.str
+    system_prompt_template: builtins.str
+    user_prompt: builtins.str
 trulens.feedback.v2.feedback.Toxicity:
   __bases__:
   - trulens.feedback.v2.feedback.Semantics
@@ -3024,7 +3339,7 @@ trulens.feedback.v2.provider.base.Provider:
     tru_class_info: trulens.core.utils.pyschema.Class
 trulens.hotspots:
   __class__: builtins.module
-  __version__: 1.4.6
+  __version__: 2.5.2
   highs:
     HotspotsConfig: builtins.type
     get_skipped_columns: builtins.function

@@ -1,10 +1,10 @@
 ---
-name: Feature request
+name: Feature Request
 about: Thanks for taking the time to fill out this feature request! Please complete
   the following form to help us assist you.
 title: "[FEAT] "
 labels: enhancement
-assignees: sfc-gh-pdharmana
+assignees:
 
 ---
 

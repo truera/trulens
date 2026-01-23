@@ -17,7 +17,6 @@ from pathlib import Path
 
 from trulens.apps import custom as custom_app
 from trulens.core.feedback import feedback as core_feedback
-from trulens.core.utils import threading as threading_utils
 from trulens.feedback.dummy import provider as dummy_provider
 from trulens.providers.huggingface import provider as huggingface_provider
 
@@ -32,13 +31,6 @@ class TestSerial(mod_test.TruTestCase):
 
     def setUp(self):
         pass
-
-    def tearDown(self):
-        # Need to shutdown threading pools as otherwise the thread cleanup
-        # checks will fail.
-        threading_utils.TP().shutdown()
-
-        super().tearDown()
 
     def test_app_serial(self):
         """Check that the custom app and products are serialized consistently."""

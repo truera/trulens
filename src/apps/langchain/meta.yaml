@@ -1,5 +1,6 @@
 {% set name = "trulens-apps-langchain" %}
-{% set version = "1.4.9" %}
+{% set pyname = name.replace('-', '.') %}
+{% set version = "2.5.3" %}
 
 package:
   name: {{ name|lower }}
@@ -10,7 +11,7 @@ source:
   # path: .
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-apps-langchain/#files
-  sha256: a7683b98861ab0e2dfad6c5562d03f4c518fd30b53aefffd43098e0f6f2a95a1
+  sha256: c9cc50553aa904fdf05ed72709c7af28aa4a1d63dfa1a9ab7a8897b697f0983a
 
 build:
   noarch: python
@@ -19,22 +20,24 @@ build:
 
 requirements:
   host:
-    - python >=3.9,<3.12
+    - python >=3.9,<3.13
     - poetry-core <2.0.0
     - pip
   run:
-    - python >=3.9,<3.12
-    - trulens-core >=1.0.0,<2.0.0
-    - langchain >=0.2.10
-    - langchain-core >=0.2.0
+    - python >=3.9,<3.13
+    - trulens-core >=1.0.0,<3.0.0
+    - langchain >=0.2.10,<1.0
+    - langchain-core >=0.2.0,<1.0
     - pydantic >=2.4.2
 
 test:
   imports:
-    - trulens.apps.langchain
+    - {{ pyname }}
   commands:
     - pip check
+    - python -c 'import {{ pyname }}; assert {{ pyname }}.__version__ == "{{ version }}", "Installed version does not match expected version"'
   requires:
+    - python >=3.9,<3.13
     - pip
 
 about:

@@ -196,11 +196,10 @@ import logging
 from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Optional, Set
 
-import pydantic
 from pydantic import Field
 from trulens.core import app as core_app
-from trulens.core import experimental as core_experimental
 from trulens.core import instruments as core_instruments
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.session import TruSession
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
@@ -328,10 +327,6 @@ class TruApp(core_app.App):
             and [AppDefinition][trulens.core.schema.app.AppDefinition]
     """
 
-    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
-        arbitrary_types_allowed=True
-    )
-
     app: Any
 
     root_callable: ClassVar[pyschema_utils.FunctionOrMethod] = Field(None)
@@ -352,28 +347,36 @@ class TruApp(core_app.App):
         **kwargs: Any,
     ):
         kwargs["app"] = app
-        tru_session = (
+        # Create `TruSession` if not already created.
+        if "connector" in kwargs:
+            TruSession(connector=kwargs["connector"])
+        else:
             TruSession()
-            if "connector" not in kwargs
-            else TruSession(connector=kwargs["connector"])
-        )
-        if tru_session.experimental_feature(
-            core_experimental.Feature.OTEL_TRACING
-        ):
-            main_methods = set()
+
+        # Handle virtual runs where app=None
+        if app is None:
+            # For virtual runs, we don't need to inspect the app for methods
+            # Don't set main_method at all for virtual runs
+            kwargs["root_class"] = None
+        else:
+            # Regular app handling
+            if is_otel_tracing_enabled():
+                main_methods = set()
+                if main_method is not None:
+                    main_methods.add(main_method)
+                for _, method in inspect.getmembers(app, inspect.ismethod):
+                    if self._has_record_root_instrumentation(method):
+                        main_methods.add(method)
+                if len(main_methods) > 1:
+                    raise ValueError(
+                        f"Must not have more than one main method or method decorated with span type 'record_root'! Found: {list(main_methods)}"
+                    )
+                if len(main_methods) > 0:
+                    main_method = main_methods.pop()
+
             if main_method is not None:
-                main_methods.add(main_method)
-            for _, method in inspect.getmembers(app, inspect.ismethod):
-                if self._has_record_root_instrumentation(method):
-                    main_methods.add(method)
-            if len(main_methods) != 1:
-                raise ValueError(
-                    f"Must have exactly one main method or method decorated with span type 'record_root'! Found: {list(main_methods)}"
-                )
-            main_method = main_methods.pop()
-        if main_method is not None:
-            kwargs["main_method"] = main_method
-        kwargs["root_class"] = pyschema_utils.Class.of_object(app)
+                kwargs["main_method"] = main_method
+            kwargs["root_class"] = pyschema_utils.Class.of_object(app)
 
         instrument = core_instruments.Instrument(
             app=self  # App mixes in WithInstrumentCallbacks
@@ -471,7 +474,7 @@ class TruApp(core_app.App):
         return main_method(human)
 
 
-class instrument(core_instruments.instrument):
+class legacy_instrument(core_instruments.instrument):
     """
     Decorator for marking methods to be instrumented in custom classes that are
     wrapped by TruApp.
@@ -485,5 +488,12 @@ class instrument(core_instruments.instrument):
         # after init.
         TruApp.functions_to_instrument.add(getattr(inst_cls, name))
 
+
+if is_otel_tracing_enabled():
+    from trulens.core.otel.instrument import instrument as otel_instrument
+
+    instrument = otel_instrument()
+else:
+    instrument = legacy_instrument
 
 TruApp.model_rebuild()

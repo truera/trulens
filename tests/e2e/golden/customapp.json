@@ -1205,7 +1205,7 @@
   ],
   "feedback_mode": "with_app_thread",
   "initial_app_loader_dump": null,
-  "main_method": null,
+  "main_method_name": null,
   "metadata": {},
   "record_ingest_mode": "immediate",
   "root_class": {
@@ -1218,6 +1218,9 @@
   },
   "selector_check_warning": false,
   "selector_nocheck": false,
+  "snowflake_object_name": null,
+  "snowflake_object_type": null,
+  "snowflake_object_version": null,
   "tags": "-",
   "tru_class_info": {
     "bases": [
@@ -1228,6 +1231,14 @@
           "package_name": "trulens.apps"
         },
         "name": "TruCustomApp"
+      },
+      {
+       "bases": null,
+        "module": {
+          "module_name": "trulens.apps.app",
+          "package_name": "trulens.apps"
+        },
+        "name": "TruApp"
       },
       {
         "bases": null,

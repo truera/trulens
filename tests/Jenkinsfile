@@ -28,6 +28,20 @@ def vault_settings = [
     ]
 ]
 
+def reactComponentsUpdated() {
+    // Fetch main branch without checkout
+    sh(script: 'git fetch origin main:refs/remotes/origin/main', returnStdout: false)
+
+    // Compare changes between current branch and main
+    def changedFiles = sh(
+        script: 'git diff --name-only origin/main HEAD | grep -E "^src/dashboard/react_components/" | wc -l',
+        returnStdout: true
+    ).trim() as Integer
+
+    echo "Number of changed files in src/dashboard/react_components/: ${changedFiles}"
+    return changedFiles > 0
+}
+
 pipeline {
     agent {
         docker {
@@ -66,9 +80,16 @@ pipeline {
                     poetry run pip install pip==24.1.2
                     poetry run python --version
                     poetry run pip --version
+
+                    # Install Node.js and npm
+                    apt-get update
+                    apt-get install -y nodejs npm
+                    echo "Using Node $(node --version) and NPM $(npm --version)"
                 '''
                 sh label: 'Run pre-commit hooks', script: '''
                     set -e
+                    # Note: --sync removes packages not in lock file
+                    # This ensures clean state after poetry.lock changes
                     poetry install --only dev --sync
                     make run-precommit
                 '''
@@ -78,6 +99,10 @@ pipeline {
                     apt-get install -y zip
                     apt-get install -y unzip
                     make build-with-zip-wheels
+                '''
+                sh label : 'Install & register the kernel for notebook tests', script: '''
+                poetry run pip install ipykernel
+                poetry run python -m ipykernel install --name trulens-llm --display-name trulens-llm --sys-prefix
                 '''
             }
         }
@@ -92,10 +117,10 @@ pipeline {
                         // We will revisit this once we re-enable parallelism.
                         catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                             withVault(vault_settings) {
-                                sh label: 'Run "e2e" Test Suite', script: '''
+                                sh label: 'Run stable "e2e" Test Suite', script: '''
                                     set -e
 
-                                    make test-e2e-all
+                                    make test-e2e-stable
                                 '''
                             }
                         }
@@ -118,11 +143,53 @@ pipeline {
                 stage('notebook') {
                     steps {
                         withVault(vault_settings) {
-                            sh label: 'Run pipeline "notebook" Test Suite', script: '''
+                            sh label: 'Run optional "notebook" Test Suite', script: '''
                                 set -e
 
-                                make test-notebook-all
+                                make test-notebook-stable
                             '''
+                        }
+                    }
+                }
+                stage('record-viewer') {
+                    when {
+                        expression {
+                            reactComponentsUpdated()
+                        }
+                    }
+
+                    steps {
+                        script {
+                            withVault(vault_settings) {
+                                sh label: 'Build the OTEL Record viewer', script: '''
+                                    set -e
+                                    make build-record-viewer-otel
+                                '''
+
+                                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                                    sh label: 'Run Jest tests for the OTEL Record viewer', script: '''
+                                        set -e
+                                        make test-record-viewer-otel
+                                    '''
+                                }
+
+                                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                                    sh label: 'Run Storybook tests', script: '''
+                                        set -e
+                                        cd src/dashboard/react_components/record_viewer_otel
+                                        npm i
+                                        npx playwright install --with-deps chromium
+                                        npm run build-storybook
+                                        ./test-wrapper.sh
+                                    '''
+                                }
+                            }
+                        }
+                    }
+
+                    post {
+                        always {
+                            archiveArtifacts  allowEmptyArchive: true, artifacts: '**/react_components/**/*.png'
                         }
                     }
                 }

@@ -1,7 +1,7 @@
 import inspect
 from typing import Callable, List, Optional
 
-from trulens.apps.custom import instrument
+from trulens.apps.app import instrument
 from trulens.core.utils import python as python_utils
 
 from examples.dev.dummy_app.dummy import Dummy
@@ -72,7 +72,8 @@ class DummyStackTool(DummyTool):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, imp=self.save_stack, **kwargs)
 
-    def save_stack(self, data: str) -> str:
+    @staticmethod
+    def save_stack(data: str) -> str:
         """Save the call stack for later rendering or inspection in the recorded
         trace."""
 
@@ -116,3 +117,8 @@ class DummyStackTool(DummyTool):
         ret += "</table>\n"
 
         return ret
+
+    @staticmethod
+    def clear_stack() -> None:
+        """Clear the call stack"""
+        DummyStackTool.last_stacks = []

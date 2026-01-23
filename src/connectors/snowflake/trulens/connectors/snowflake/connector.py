@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from functools import cached_property
 import logging
-import os
 import re
 from typing import (
     Any,
+    Callable,
     Dict,
     List,
     Optional,
@@ -16,6 +16,9 @@ from typing import (
 from trulens.connectors.snowflake.dao.enums import ObjectType
 from trulens.connectors.snowflake.dao.external_agent import ExternalAgentDao
 from trulens.connectors.snowflake.dao.run import RunDao
+from trulens.connectors.snowflake.snowflake_event_table_db import (
+    SnowflakeEventTableDB,
+)
 from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import (
     ServerSideEvaluationArtifacts,
 )
@@ -27,12 +30,26 @@ from trulens.core.database.base import DB
 from trulens.core.database.connector.base import DBConnector
 from trulens.core.database.exceptions import DatabaseVersionException
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.utils import python as python_utils
 
 from snowflake.snowpark import Session
 from snowflake.sqlalchemy import URL
 
 logger = logging.getLogger(__name__)
+
+# [HACK!] To have sqlalchemy.JSON work with Snowflake, we need to monkey patch
+# the SnowflakeDialect to have the JSON serializer and deserializer set to None.
+# This is because by default, SQLAlchemy will set these correctly if they're set
+# to None.
+try:
+    from snowflake.sqlalchemy.snowdialect import SnowflakeDialect
+
+    for attr in ["_json_deserializer", "_json_serializer"]:
+        if not hasattr(SnowflakeDialect, attr):
+            setattr(SnowflakeDialect, attr, None)
+except ImportError:
+    pass
 
 
 class SnowflakeConnector(DBConnector):
@@ -51,6 +68,7 @@ class SnowflakeConnector(DBConnector):
         port: Optional[int] = 443,
         host: Optional[str] = None,
         snowpark_session: Optional[Session] = None,
+        snowpark_session_creator: Optional[Callable[[], Session]] = None,
         init_server_side: bool = False,
         init_server_side_with_staged_packages: bool = False,
         init_sis_dashboard: bool = False,
@@ -58,6 +76,7 @@ class SnowflakeConnector(DBConnector):
         database_prefix: Optional[str] = None,
         database_args: Optional[Dict[str, Any]] = None,
         database_check_revision: bool = True,
+        use_account_event_table: bool = True,
     ):
         connection_parameters = {
             "account": account,
@@ -70,26 +89,35 @@ class SnowflakeConnector(DBConnector):
             "protocol": protocol,
             "port": port,
         }
-
         if host is not None:
             connection_parameters["host"] = host
-
-        if snowpark_session is None:
-            snowpark_session = self._create_snowpark_session(
+        if snowpark_session_creator is None and snowpark_session is None:
+            snowpark_session_creator = lambda: self._create_snowpark_session(
                 connection_parameters
             )
-        else:
-            connection_parameters = (
-                self._validate_snowpark_session_with_connection_parameters(
-                    snowpark_session, connection_parameters
-                )
+        if snowpark_session_creator is not None:
+            snowpark_session = snowpark_session_creator()
+            database_args = database_args or {}
+            database_args["engine_params"] = database_args.get(
+                "engine_params", {}
             )
+            database_args["engine_params"]["creator"] = (
+                lambda: self._refresh_snowpark_session(
+                    snowpark_session_creator
+                ).connection
+            )
+        connection_parameters = (
+            self._validate_snowpark_session_with_connection_parameters(
+                snowpark_session, connection_parameters
+            )
+        )
 
         self.snowpark_session: Session = snowpark_session
         self.connection_parameters: Dict[str, str] = connection_parameters
         self.use_staged_packages: bool = init_server_side_with_staged_packages
+        self.use_account_event_table: bool = use_account_event_table
 
-        if os.getenv("TRULENS_OTEL_TRACING", "").lower() not in ["1", "true"]:
+        if not is_otel_tracing_enabled() or not use_account_event_table:
             self._init_with_snowpark_session(
                 snowpark_session,
                 init_server_side,
@@ -101,6 +129,24 @@ class SnowflakeConnector(DBConnector):
                 database_check_revision,
                 connection_parameters,
             )
+        else:
+            self.password_known = False
+            self._password = None
+            if password is not None:
+                self.password_known = True
+                self._password = password
+            self._db = SnowflakeEventTableDB(self.snowpark_session)
+
+    def _refresh_snowpark_session(
+        self, snowpark_session_creator: Callable[[], Session]
+    ) -> Session:
+        if (
+            not hasattr(self, "snowpark_session")
+            or self.snowpark_session is None
+            or self.snowpark_session.connection.is_closed()
+        ):
+            self.snowpark_session = snowpark_session_creator()
+        return self.snowpark_session
 
     def _create_snowpark_session(
         self, connection_parameters: Dict[str, Optional[str]]
@@ -141,7 +187,10 @@ class SnowflakeConnector(DBConnector):
             "warehouse": snowpark_session.get_current_warehouse(),
             "role": snowpark_session.get_current_role(),
         }
-
+        if "host" in connection_parameters:
+            snowpark_session_connection_parameters["host"] = (
+                connection_parameters["host"]
+            )
         for k, v in snowpark_session_connection_parameters.items():
             if v and v.startswith('"') and v.endswith('"'):
                 snowpark_session_connection_parameters[k] = v.strip('"')
@@ -281,17 +330,30 @@ class SnowflakeConnector(DBConnector):
     ) -> Dict[str, Any]:
         database_args = database_args or {}
         # Set engine_params.
-        default_engine_params = {
-            "creator": lambda: snowpark_session.connection,
-            "paramstyle": "qmark",
-            # The following parameters ensure the pool does not allocate new
-            # connections that it will close. This is a problem because the
-            # "creator" does not create new connections, it only passes around
-            # the single one it has.
-            "max_overflow": 0,
-            "pool_recycle": -1,
-            "pool_timeout": 120,
-        }
+        if (
+            database_args
+            and database_args.get("engine_params")
+            and database_args["engine_params"].get("creator") is not None
+        ):
+            default_engine_params = {
+                "paramstyle": "qmark",
+                "pool_timeout": 120,
+                "pool_pre_ping": True,
+            }
+        else:
+            default_engine_params = {
+                "creator": lambda: snowpark_session.connection,
+                "paramstyle": "qmark",
+                # The following parameters ensure the pool does not allocate new
+                # connections that it will close. This is a problem because the
+                # "creator" does not create new connections, it only passes around
+                # the single one it has.
+                "max_overflow": 0,
+                "pool_recycle": -1,
+                "pool_timeout": 120,
+                "pool_size": 1,
+                "pool_pre_ping": True,
+            }
         if "engine_params" not in database_args:
             database_args["engine_params"] = default_engine_params
         else:
@@ -300,6 +362,7 @@ class SnowflakeConnector(DBConnector):
                     raise ValueError(
                         f"Cannot set `database_args['engine_params']['{k}']!"
                     )
+                database_args["engine_params"][k] = v
         # Set remaining parameters.
         database_args.update({
             k: v

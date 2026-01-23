@@ -7,6 +7,30 @@ steps:
       versionSpec: '$(python-version)'
 
   - bash: |
+      echo "=== Disk space before cleanup ==="
+      df -h
+      echo ""
+      echo "=== Clearing package caches ==="
+      pip cache purge || true
+      rm -rf ~/.cache/pip || true
+      rm -rf ~/.cache/pypoetry || true
+      rm -rf ~/.local/share/pypoetry || true
+      echo ""
+      echo "=== Clearing apt cache ==="
+      sudo apt-get clean || true
+      sudo rm -rf /var/lib/apt/lists/* || true
+      echo ""
+      echo "=== Removing large pre-installed packages ==="
+      sudo rm -rf /usr/share/dotnet || true
+      sudo rm -rf /usr/local/lib/android || true
+      sudo rm -rf /opt/ghc || true
+      sudo rm -rf /opt/hostedtoolcache/CodeQL || true
+      echo ""
+      echo "=== Disk space after cleanup ==="
+      df -h
+    displayName: Free disk space
+
+  - bash: |
       # Install poetry
       curl -sSL https://install.python-poetry.org | python3 - --version 1.8.5
 

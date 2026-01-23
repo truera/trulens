@@ -5,9 +5,11 @@ from __future__ import annotations
 import builtins
 from collections import namedtuple
 import ctypes
+from functools import wraps
 import gc
 import importlib
 import inspect
+import os
 import pkgutil
 from queue import Queue
 from types import ModuleType
@@ -130,12 +132,12 @@ def get_submodule_names(mod: ModuleType) -> Iterable[str]:
     for modname in get_module_names_of_path(path, prefix=mod.__name__ + "."):
         if (
             modname.endswith("._bundle")
-            or modname.startswith("trulens.dashboard.pages")
+            or modname.startswith("trulens.dashboard.tabs")
             or modname.endswith("_mods")
         ):
             # Skip _bundle this as it is not a real module/package.
 
-            # Skip trulens.dashboard.pages* because importing them executes a lot of stuff.
+            # Skip trulens.dashboard.tabs* because importing them executes a lot of stuff.
 
             # Skip _mods because it is a special module for static tools is not
             # meant to be imported.
@@ -827,3 +829,21 @@ def print_referent_lens(lens: Optional[serial_utils.Lens], origin) -> None:
             )
         else:
             print("  ", type(step).__name__, repr(step), obj_ident)
+
+
+def enable_otel_backwards_compatibility(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        original_value = os.getenv("TRULENS_OTEL_BACKWARDS_COMPATIBILITY")
+        os.environ["TRULENS_OTEL_BACKWARDS_COMPATIBILITY"] = "1"
+        try:
+            return func(*args, **kwargs)
+        finally:
+            if original_value is not None:
+                os.environ["TRULENS_OTEL_BACKWARDS_COMPATIBILITY"] = (
+                    original_value
+                )
+            else:
+                del os.environ["TRULENS_OTEL_BACKWARDS_COMPATIBILITY"]
+
+    return wrapper

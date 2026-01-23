@@ -53,6 +53,12 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
         *args,
         **kwargs,
     ):
+        super().__init__(
+            retriever=query_engine.retriever,
+            response_synthesizer=query_engine._response_synthesizer,
+            node_postprocessors=query_engine._node_postprocessors,
+            callback_manager=query_engine.callback_manager,
+        )
         self.query_engine = query_engine
         self.feedback = feedback
         self.threshold = threshold

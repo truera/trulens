@@ -4,19 +4,23 @@ Test class to use for Snowflake testing.
 
 import logging
 import os
+import time
 from typing import Any, Dict, List, Optional
-from unittest import TestCase
 import uuid
 
 from snowflake.snowpark import Session
 from snowflake.snowpark.row import Row
 from trulens.connectors import snowflake as snowflake_connector
 from trulens.core import session as core_session
+from trulens.core.session import TruSession
 from trulens.providers.cortex.provider import Cortex
 
+from tests.test import TruTestCase
 
-class SnowflakeTestCase(TestCase):
+
+class SnowflakeTestCase(TruTestCase):
     def setUp(self):
+        super().setUp()
         self._logger = logging.getLogger(__name__)
         self._database = os.environ["SNOWFLAKE_DATABASE"]
         self._snowflake_connection_parameters: Dict[str, str] = {
@@ -58,6 +62,7 @@ class SnowflakeTestCase(TestCase):
             raise ValueError(error_msg)
         # Close session.
         self._snowpark_session.close()
+        super().tearDown()
 
     def list_schemas(self):
         res = self.run_query(
@@ -78,6 +83,9 @@ class SnowflakeTestCase(TestCase):
         schema_name: Optional[str] = None,
         schema_already_exists: bool = False,
         connect_via_snowpark_session: bool = True,
+        init_server_side: bool = True,
+        init_server_side_with_staged_packages: bool = True,
+        use_account_event_table: bool = True,
     ) -> core_session.TruSession:
         if bool(app_base_name) == bool(schema_name):
             raise ValueError(
@@ -98,16 +106,18 @@ class SnowflakeTestCase(TestCase):
             connector = snowflake_connector.SnowflakeConnector(
                 schema=self._schema,
                 **self._snowflake_connection_parameters,
-                init_server_side=True,
-                init_server_side_with_staged_packages=True,
+                init_server_side=init_server_side,
+                init_server_side_with_staged_packages=init_server_side_with_staged_packages,
+                use_account_event_table=use_account_event_table,
             )
         else:
             if not schema_already_exists:
                 self.create_and_use_schema(self._schema)
             connector = snowflake_connector.SnowflakeConnector(
                 snowpark_session=self._snowpark_session,
-                init_server_side=True,
-                init_server_side_with_staged_packages=True,
+                init_server_side=init_server_side,
+                init_server_side_with_staged_packages=init_server_side_with_staged_packages,
+                use_account_event_table=use_account_event_table,
             )
         session = core_session.TruSession(connector=connector)
         self.assertIn(self._schema, self.list_schemas())
@@ -137,3 +147,54 @@ class SnowflakeTestCase(TestCase):
             self._snowflake_schemas_to_delete.add(schema_name)
         self._snowpark_session.use_schema(schema_name)
         return schema_name
+
+    def _validate_num_spans_for_app(
+        self,
+        app_name: str,
+        num_expected_spans: int,
+        app_type: str = "EXTERNAL AGENT",
+    ) -> List[Row]:
+        # Flush exporter and wait for data to be made to stage.
+        TruSession().force_flush()
+        # Check that there are no other tables in the schema.
+        self.assertListEqual(self.run_query("SHOW TABLES"), [])
+        # Check that the data is in the event table.
+        return self._wait_for_num_results(
+            """
+            SELECT
+                *
+            FROM
+                table(snowflake.local.GET_AI_OBSERVABILITY_EVENTS(
+                    ?, ?, ?, ?
+                ))
+            ORDER BY TIMESTAMP DESC
+            LIMIT 1000
+            """,
+            [
+                self._snowpark_session.get_current_database()[1:-1],
+                self._snowpark_session.get_current_schema()[1:-1],
+                app_name.upper(),
+                app_type,
+            ],
+            num_expected_spans,
+        )
+
+    def _wait_for_num_results(
+        self,
+        q: str,
+        params: List[str],
+        expected_num_results: int,
+        num_retries: int = 15,
+        retry_cooldown_in_seconds: int = 10,
+    ) -> List[Row]:
+        for _ in range(num_retries):
+            results = self.run_query(q, params)
+            if len(results) == expected_num_results:
+                return results
+            self.logger.info(
+                f"Got {len(results)} results, expecting {expected_num_results}"
+            )
+            time.sleep(retry_cooldown_in_seconds)
+        raise ValueError(
+            f"Did not get the expected number of results! Expected {expected_num_results} results, but last found: {len(results)}! The results:\n{results}"
+        )

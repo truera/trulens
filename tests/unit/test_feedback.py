@@ -1,5 +1,11 @@
 """Tests for Feedback class."""
 
+import os
+
+# CRITICAL: Set OTEL environment variable BEFORE any TruLens imports
+# This must be done before any TruSession is created to avoid freezing the experimental flag
+os.environ["TRULENS_OTEL_TRACING"] = "0"
+
 import time
 from unittest import TestCase
 
@@ -81,6 +87,9 @@ class TestFeedbackEval(TestCase):
         # But status should be DONE (as opposed to SKIPPED or ERROR)
 
     @pytest.mark.optional
+    @pytest.mark.skip(
+        reason="Non-OTEL test importing OTEL fixtures - deprecated on langchain 1.x branch"
+    )
     def test_same_provider_for_app_and_feedback(self) -> None:
         tru_session = TruSession()
         tru_session.reset_database()

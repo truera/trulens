@@ -21,7 +21,6 @@ import llama_index
 from pydantic import Field
 from trulens.apps.langchain import tru_chain as mod_tru_chain
 from trulens.core import app as core_app
-from trulens.core import experimental as core_experimental
 from trulens.core import instruments as core_instruments
 from trulens.core._utils.pycompat import EmptyType  # import style exception
 from trulens.core._utils.pycompat import (
@@ -57,7 +56,12 @@ legacy = (
 
 if not legacy:
     from llama_index.core.base.base_query_engine import BaseQueryEngine
-    from llama_index.core.base.base_query_engine import QueryEngineComponent
+
+    try:
+        from llama_index.core.base.base_query_engine import QueryEngineComponent
+    except ImportError:
+        # QueryEngineComponent might not exist in some versions
+        QueryEngineComponent = EmptyType
     from llama_index.core.base.embeddings.base import BaseEmbedding
     from llama_index.core.base.llms.base import BaseLLM
     from llama_index.core.base.llms.types import LLMMetadata
@@ -181,6 +185,111 @@ def _retrieval_span() -> Dict[str, Union[SpanAttributes.SpanType, Attributes]]:
     }
 
 
+def _reranker_span() -> Dict[str, Union[SpanAttributes.SpanType, Attributes]]:
+    def _attributes(ret, exception, *args, **kwargs) -> Attributes:
+        attributes = {}
+
+        # Extract query text from query_bundle
+        query_bundle = kwargs.get("query_bundle")
+        if query_bundle and hasattr(query_bundle, "query_str"):
+            attributes[SpanAttributes.RERANKER.QUERY_TEXT] = (
+                query_bundle.query_str
+            )
+
+        # Extract nodes/contexts from args if available
+        nodes = None
+        if len(args) > 1:
+            nodes = args[
+                1
+            ]  # nodes is typically the first positional arg after self
+        elif "nodes" in kwargs:
+            nodes = kwargs.get("nodes")
+
+        # Extract input contexts, scores, and ranks
+        if nodes and isinstance(nodes, list):
+            input_texts = []
+            input_scores = []
+            input_ranks = []
+            for i, node in enumerate(nodes):
+                # Capture rank (position in input list)
+                input_ranks.append(i)
+
+                if hasattr(node, "node") and hasattr(node.node, "get_content"):
+                    input_texts.append(node.node.get_content())
+                elif hasattr(node, "get_content"):
+                    input_texts.append(node.get_content())
+                elif hasattr(node, "text"):
+                    input_texts.append(node.text)
+
+                if hasattr(node, "score"):
+                    input_scores.append(node.score)
+
+            if input_texts:
+                attributes[SpanAttributes.RERANKER.INPUT_CONTEXT_TEXTS] = (
+                    input_texts
+                )
+            if input_scores:
+                attributes[SpanAttributes.RERANKER.INPUT_CONTEXT_SCORES] = (
+                    input_scores
+                )
+            if input_ranks:
+                attributes[SpanAttributes.RERANKER.INPUT_RANKS] = input_ranks
+
+        # Extract model information if available from self (first arg)
+        if len(args) > 0:
+            self_obj = args[0]
+            if hasattr(self_obj, "model"):
+                attributes[SpanAttributes.RERANKER.MODEL_NAME] = str(
+                    self_obj.model
+                )
+            elif hasattr(self_obj, "model_name"):
+                attributes[SpanAttributes.RERANKER.MODEL_NAME] = str(
+                    self_obj.model_name
+                )
+
+            if hasattr(self_obj, "top_n"):
+                attributes[SpanAttributes.RERANKER.TOP_N] = self_obj.top_n
+
+        # Extract output ranks, texts, and scores from return value
+        if ret and isinstance(ret, list):
+            output_ranks = []
+            output_texts = []
+            output_scores = []
+
+            for i, node in enumerate(ret):
+                # Capture rank
+                output_ranks.append(i)
+
+                # Capture text content
+                if hasattr(node, "node") and hasattr(node.node, "get_content"):
+                    output_texts.append(node.node.get_content())
+                elif hasattr(node, "get_content"):
+                    output_texts.append(node.get_content())
+                elif hasattr(node, "text"):
+                    output_texts.append(node.text)
+
+                # Capture score if available
+                if hasattr(node, "score"):
+                    output_scores.append(node.score)
+
+            attributes[SpanAttributes.RERANKER.OUTPUT_RANKS] = output_ranks
+            if output_texts:
+                attributes[SpanAttributes.RERANKER.OUTPUT_CONTEXT_TEXTS] = (
+                    output_texts
+                )
+            if output_scores:
+                attributes[SpanAttributes.RERANKER.OUTPUT_CONTEXT_SCORES] = (
+                    output_scores
+                )
+
+        return attributes
+
+    return {
+        "span_type": SpanAttributes.SpanType.RERANKER,
+        "attributes": _attributes,
+    }
+
+
 class LlamaInstrument(core_instruments.Instrument):
     """Instrumentation for LlamaIndex apps."""
 
@@ -222,9 +331,9 @@ class LlamaInstrument(core_instruments.Instrument):
         }.union(mod_tru_chain.LangChainInstrument.Default.CLASSES())
         """Classes to instrument."""
 
-        METHODS: List[InstrumentedMethod] = (
-            mod_tru_chain.LangChainInstrument.Default.METHODS
-            + [
+        @staticmethod
+        def METHODS() -> List[InstrumentedMethod]:
+            return mod_tru_chain.LangChainInstrument.Default.METHODS() + [
                 InstrumentedMethod("chat", BaseLLM),
                 InstrumentedMethod("complete", BaseLLM),
                 InstrumentedMethod("stream_chat", BaseLLM),
@@ -299,18 +408,29 @@ class LlamaInstrument(core_instruments.Instrument):
                     WithFeedbackFilterNodes,
                     **_retrieval_span(),
                 ),
-                InstrumentedMethod("_postprocess_nodes", BaseNodePostprocessor),
+                # Reranker instrumentation - applies to all node postprocessors
+                # including SentenceTransformerRerank, CohereRerank, JinaRerank, etc.
+                InstrumentedMethod(
+                    "_postprocess_nodes",
+                    BaseNodePostprocessor,
+                    **_reranker_span(),
+                ),
+                InstrumentedMethod(
+                    "postprocess_nodes",
+                    BaseNodePostprocessor,
+                    **_reranker_span(),
+                ),
                 InstrumentedMethod("_run_component", QueryEngineComponent),
                 InstrumentedMethod("_run_component", RetrieverComponent),
             ]
-        )
+
         """Methods to instrument."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(
             include_modules=LlamaInstrument.Default.MODULES,
             include_classes=LlamaInstrument.Default.CLASSES(),
-            include_methods=LlamaInstrument.Default.METHODS,
+            include_methods=LlamaInstrument.Default.METHODS(),
             *args,
             **kwargs,
         )
@@ -393,8 +513,6 @@ class TruLlama(core_app.App):
             and [AppDefinition][trulens.core.schema.app.AppDefinition].
     """
 
-    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
-
     app: Union[BaseQueryEngine, BaseChatEngine]
 
     # TODEP
@@ -408,21 +526,14 @@ class TruLlama(core_app.App):
     ):
         # TruLlama specific:
         kwargs["app"] = app
-        tru_session = (
+        # Create `TruSession` if not already created.
+        if "connector" in kwargs:
+            TruSession(connector=kwargs["connector"])
+        else:
             TruSession()
-            if "connector" not in kwargs
-            else TruSession(connector=kwargs["connector"])
-        )
-        if (
-            tru_session.experimental_feature(
-                core_experimental.Feature.OTEL_TRACING
-            )
-            and main_method is None
-        ):
-            raise ValueError(
-                "When OTEL_TRACING is enabled, 'main_method' must be provided in App constructor."
-            )
-        kwargs["main_method"] = main_method
+
+        if main_method is not None:
+            kwargs["main_method"] = main_method
         kwargs["root_class"] = pyschema_utils.Class.of_object(
             app
         )  # TODO: make class property

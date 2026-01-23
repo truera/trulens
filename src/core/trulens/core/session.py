@@ -9,6 +9,7 @@ from multiprocessing import Process
 import threading
 from threading import Thread
 from time import sleep
+from time import time
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -30,6 +31,7 @@ from trulens.core._utils import optional as optional_utils
 from trulens.core._utils.pycompat import Future  # code style exception
 from trulens.core.database import connector as core_connector
 from trulens.core.feedback import feedback as core_feedback
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import feedback as feedback_schema
@@ -43,11 +45,15 @@ from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
 from trulens.core.utils import threading as threading_utils
 from trulens.experimental.otel_tracing import _feature as otel_tracing_feature
+from trulens.otel.semconv.trace import ResourceAttributes
+from trulens.otel.semconv.trace import SpanAttributes
 
 if TYPE_CHECKING:
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import SpanExporter
     from trulens.core import app as base_app
+    from trulens.core.feedback import Feedback
+    from trulens.core.otel.recording import Record
 
 tqdm = None
 with import_utils.OptionalImports(messages=optional_utils.REQUIREMENT_TQDM):
@@ -320,6 +326,17 @@ class TruSession(
                 *args, app=app, connector=self.connector, **kwargs
             )
 
+        elif app.__module__.startswith("langgraph"):
+            with import_utils.OptionalImports(
+                messages=optional_utils.REQUIREMENT_APPS_LANGGRAPH
+            ):
+                from trulens.apps.langgraph import tru_graph
+
+            print(f"{text_utils.UNICODE_SQUID} Instrumenting LangGraph app.")
+            return tru_graph.TruGraph(
+                *args, app=app, connector=self.connector, **kwargs
+            )
+
         elif app.__module__.startswith("llamaindex"):
             with import_utils.OptionalImports(
                 messages=optional_utils.REQUIREMENT_APPS_LLAMA
@@ -511,6 +528,8 @@ class TruSession(
             [trulens.core.session.TruSession.connector][trulens.core.session.TruSession.connector] [.db.insert_record][trulens.core.database.base.DB.insert_record]
             instead.
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         assert self.connector is not None
         return self.connector.db.insert_record(*args, **kwargs)
 
@@ -552,6 +571,8 @@ class TruSession(
             Unique record identifier [str][] .
 
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         return self.connector.add_record(record=record, **kwargs)
 
     def add_record_nowait(
@@ -559,6 +580,8 @@ class TruSession(
         record: record_schema.Record,
     ) -> None:
         """Add a record to the queue to be inserted in the next batch."""
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         return self.connector.add_record_nowait(record)
 
     def run_feedback_functions(
@@ -593,6 +616,8 @@ class TruSession(
                 [FeedbackResult][trulens.core.schema.feedback.FeedbackResult] if `wait`
                 is disabled.
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         if not isinstance(record, record_schema.Record):
             raise ValueError(
@@ -700,6 +725,8 @@ class TruSession(
             A unique result identifier [str][].
 
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         return self.connector.add_feedback(
             feedback_result_or_future=feedback_result_or_future, **kwargs
         )
@@ -723,6 +750,8 @@ class TruSession(
             List of unique result identifiers [str][] in the same order as input
                 `feedback_results`.
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         return self.connector.add_feedbacks(feedback_results=feedback_results)
 
     def get_app(
@@ -767,26 +796,50 @@ class TruSession(
     def get_records_and_feedback(
         self,
         app_ids: Optional[List[types_schema.AppID]] = None,
+        app_name: Optional[types_schema.AppName] = None,
+        app_version: Optional[types_schema.AppVersion] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
+        run_name: Optional[types_schema.RunName] = None,
+        record_ids: Optional[List[types_schema.RecordID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pandas.DataFrame, List[str]]:
         """Get records, their feedback results, and feedback names.
 
         Args:
-            app_ids: A list of app ids to filter records by. If empty or not given, all
-                apps' records will be returned.
-
+            app_ids:
+                A list of app ids to filter records by. If empty or not given,
+                all apps' records will be returned.
+            app_name:
+                A name of the app to filter records by. If given, only records
+                for this app will be returned.
+            app_version:
+                A version of the app to filter records by. If given, only
+                records for this app version will be returned.
+            app_versions:
+                A list of app versions to filter records by. If given, only
+                records for these app versions will be returned.
+            run_name:
+                A run name to filter records by. If given, only records for
+                this run will be returned.
+            record_ids: An optional list of record ids to filter records by.
             offset: Record row offset.
-
             limit: Limit on the number of records to return.
 
         Returns:
-            DataFrame of records with their feedback results.
-
-            List of feedback names that are columns in the DataFrame.
+            Tuple of:
+            - DataFrame of records with their feedback results.
+            - List of feedback names that are columns in the DataFrame.
         """
         return self.connector.get_records_and_feedback(
-            app_ids=app_ids, offset=offset, limit=limit
+            app_ids=app_ids,
+            app_name=app_name,
+            app_version=app_version,
+            app_versions=app_versions,
+            run_name=run_name,
+            record_ids=record_ids,
+            offset=offset,
+            limit=limit,
         )
 
     def get_leaderboard(
@@ -925,6 +978,10 @@ class TruSession(
 
             [MAX_THREADS][trulens.core.utils.threading.TP.MAX_THREADS]
         """
+        if is_otel_tracing_enabled():
+            raise ValueError(
+                "Deferred evaluator not supported with OTEL tracing!"
+            )
 
         assert not fork, "Fork mode not yet implemented."
         assert (
@@ -1161,6 +1218,158 @@ class TruSession(
             self._evaluator_stop = None
 
         self._evaluator_proc = None
+
+    def wait_for_records(
+        self,
+        record_ids: List[str],
+        timeout: float = 10,
+        poll_interval: float = 0.5,
+    ) -> None:
+        """
+        Wait for specific record_ids to appear in the TruLens session.
+
+        Args:
+            record_ids: The record ids to wait for.
+            timeout: Maximum time to wait in seconds.
+            poll_interval: How often to poll in seconds.
+        """
+        if is_otel_tracing_enabled():
+            self.force_flush()
+        start_time = time()
+        while time() - start_time < timeout:
+            # TODO: There's really no need to fetch everything, we should just
+            #       check the existence of the record_ids.
+            records_df, _ = self.get_records_and_feedback(
+                record_ids=record_ids,
+            )
+            known_record_ids = set(records_df["record_id"])
+            if not records_df.empty and all(
+                record_id in known_record_ids for record_id in record_ids
+            ):
+                return
+            sleep(poll_interval)
+        raise RuntimeError(
+            f"Could not find all record IDs: {record_ids} in database!"
+        )
+
+    def add_feedback_result(
+        self,
+        record: Record,
+        feedback_name: str,
+        feedback_result: Union[float, int],
+        higher_is_better: bool,
+    ) -> None:
+        """
+        Add a feedback result for a given record.
+
+        Args:
+            record: The Record object to add feedback for.
+            feedback_name: The name of the feedback function.
+            feedback_result: The feedback score/result (float or int).
+            higher_is_better: Whether higher values are better.
+        """
+        if not is_otel_tracing_enabled():
+            raise RuntimeError(
+                "add_feedback_result is only supported when OTEL tracing is enabled!"
+            )
+
+        from trulens.core.feedback.feedback import Feedback
+        from trulens.feedback.computer import _call_feedback_function
+
+        # Get necessary information from the record root.
+        record_root_event = record._get_record_root_event()
+        resource_attributes = record_root_event["resource_attributes"]
+        record_attributes = record_root_event["record_attributes"]
+        app_name = resource_attributes.get(ResourceAttributes.APP_NAME)
+        app_version = resource_attributes.get(ResourceAttributes.APP_VERSION)
+        app_id = resource_attributes.get(ResourceAttributes.APP_ID)
+        run_name = record_attributes.get(SpanAttributes.RUN_NAME)
+        input_id = record_attributes.get(SpanAttributes.INPUT_ID)
+
+        # Wrap constant result in a Feedback object to align with new API
+        const_feedback = Feedback(
+            lambda: feedback_result,
+            name=feedback_name,
+            higher_is_better=higher_is_better,
+        )
+
+        # Create feedback computation recording context
+        feedback_result = _call_feedback_function(
+            feedback_name,
+            const_feedback,
+            higher_is_better,
+            None,
+            {},
+            app_name,
+            app_version,
+            app_id,
+            run_name,
+            input_id,
+            record.record_id,
+            None,
+        )
+
+    def compute_feedbacks_on_events(
+        self,
+        events: pandas.DataFrame,
+        feedbacks: List[Feedback],
+        raise_error_on_no_feedbacks_computed: bool = False,
+    ) -> None:
+        """Compute feedbacks/metrics on events.
+
+        Args:
+            events:
+                Events to compute feedbacks on. This can be from multiple
+                records.
+            feedbacks: Feedback functions to compute.
+            raise_error_on_no_feedbacks_computed:
+                Raise an error if no feedbacks were computed. Default is False.
+        """
+        if not is_otel_tracing_enabled():
+            raise ValueError(
+                "This method is only supported for OTEL Tracing. Please enable OTEL tracing in the environment!"
+            )
+
+        try:
+            from trulens.feedback.computer import compute_feedback_by_span_group
+        except ImportError:
+            logger.error(
+                "trulens.feedback package is not installed. Please install it to use feedback computation functionality."
+            )
+            raise
+
+        for feedback in feedbacks:
+            compute_feedback_by_span_group(
+                events,
+                feedback,
+                raise_error_on_no_feedbacks_computed,
+            )
+
+    def get_events(
+        self,
+        app_name: Optional[str],
+        app_version: Optional[str],
+        record_ids: Optional[List[str]] = None,
+        start_time: Optional[datetime] = None,
+    ) -> pandas.DataFrame:
+        """
+        Get events/spans from the database in OTel mode.
+
+        Args:
+            app_name: The app name to filter events by.
+            app_version: The app version to filter events by.
+            record_ids: The record ids to filter events by.
+            start_time: The minimum time to consider events from.
+
+        Returns:
+            A pandas DataFrame of all relevant events/spans.
+        """
+        return self.connector.get_events(
+            app_name=app_name,
+            app_version=app_version,
+            record_ids=record_ids,
+            start_time=start_time,
+        )
 
 
 def Tru(*args, **kwargs) -> TruSession:

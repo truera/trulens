@@ -11,6 +11,7 @@ from opentelemetry.proto.trace.v1.trace_pb2 import Status
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.trace import StatusCode
 from trulens.core.schema import event as event_schema
+from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
@@ -19,16 +20,16 @@ logger = logging.getLogger(__name__)
 def convert_to_any_value(value: Any) -> AnyValue:
     """
     Converts a given value to an AnyValue object.
-    This function takes a value of various types (str, bool, int, float, bytes, list, dict)
-    and converts it into an AnyValue object. If the value is a list or a dictionary, it
-    recursively converts the elements or key-value pairs. Tuples are converted into lists.
+    This function takes a value of various types (str, bool, int, float, bytes,
+    list, dict) and converts it into an AnyValue object. If the value is a list
+    or a dictionary, it recursively converts the elements or key-value pairs.
+    Tuples are converted into lists.
     Args:
-        value (Any): The value to be converted. It can be of type str, bool, int, float,
-                     bytes, list, tuple, or dict.
+        value:
+            The value to be converted. It can be of type str, bool, int, float,
+            bytes, list, tuple, or dict.
     Returns:
-        AnyValue: The converted AnyValue object.
-    Raises:
-        ValueError: If the value type is unsupported.
+        The converted AnyValue object.
     """
     if isinstance(value, tuple):
         value = list(value)
@@ -65,7 +66,7 @@ def convert_readable_span_to_proto(span: ReadableSpan) -> SpanProto:
     """
     Converts a ReadableSpan object to a protobuf object for a Span.
     Args:
-        span (ReadableSpan): The span to be converted.
+        span: The span to be converted.
     Returns:
         SpanProto: The converted span in SpanProto format.
     """
@@ -91,6 +92,10 @@ def convert_readable_span_to_proto(span: ReadableSpan) -> SpanProto:
         else None,
         status=Status(code=Status.StatusCode.STATUS_CODE_UNSET),
     )
+    # TODO(otel): Remove this once the Snowflake backend no longer uses this!
+    span_proto.attributes.append(
+        KeyValue(key="name", value=convert_to_any_value(span.name))
+    )
     return span_proto
 
 
@@ -111,13 +116,20 @@ def check_if_trulens_span(span: ReadableSpan) -> bool:
     contains a TruLens-specific attribute, identified by the presence of
     `SpanAttributes.RECORD_ID`.
     Args:
-        span (ReadableSpan): The span to be checked.
+        span: The span to be checked.
     Returns:
-        bool: True if the span contains the TruLens-specific attribute, False otherwise.
+        True if the span contains the TruLens-specific attribute, False otherwise.
     """
     if not span.attributes:
         return False
-    app_name = span.attributes.get(SpanAttributes.APP_NAME)
+    if (
+        span.attributes.get(SpanAttributes.INLINE_EVAL.EMIT_SPAN) is False
+        and span.attributes.get(SpanAttributes.SPAN_TYPE)
+        != SpanAttributes.SpanType.RECORD_ROOT
+    ):
+        return False
+    # TODO(otel, semconv): Should have this in `span.resource.attributes`!
+    app_name = span.attributes.get(ResourceAttributes.APP_NAME)
     return bool(app_name)
 
 
@@ -128,7 +140,7 @@ def construct_event(span: ReadableSpan) -> event_schema.Event:
     if context is None:
         raise ValueError("Span context is None")
 
-    return event_schema.Event(
+    ret = event_schema.Event(
         event_id=str(context.span_id),
         record={
             "name": span.name,
@@ -149,3 +161,14 @@ def construct_event(span: ReadableSpan) -> event_schema.Event:
             "parent_id": str(parent.span_id if parent else ""),
         },
     )
+    # TODO(otel, semconv, SNOW-2130988):
+    # This is only a workaround for now until we can directly put these into the
+    # resource attributes.
+    for k in [
+        ResourceAttributes.APP_ID,
+        ResourceAttributes.APP_NAME,
+        ResourceAttributes.APP_VERSION,
+    ]:
+        if k in ret.record_attributes:
+            ret.resource_attributes[k] = ret.record_attributes[k]
+    return ret

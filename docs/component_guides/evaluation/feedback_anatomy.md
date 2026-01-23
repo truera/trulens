@@ -23,9 +23,9 @@ The components of this specifications are:
 ## Feedback Providers
 
 The provider is the back-end on which a given feedback function is run.
-Multiple underlying models are available througheach provider, such as GPT-4 or
+Multiple underlying models are available through each provider, such as GPT-4 or
 Llama-2. In many, but not all cases, the feedback implementation is shared
-cross providers (such as with LLM-based evaluations).
+across providers (such as with LLM-based evaluations).
 
 Read more about [feedback providers][trulens.core.feedback.provider.Provider].
 
@@ -67,9 +67,9 @@ form of this specification is done using
 [on][trulens.core.Feedback.on] but several shorthands are
 provided. For example,
 [on_input_output][trulens.core.Feedback.on_input_output]
-states that the first two argument to
+states that the first two arguments to
 [context_relevance][trulens.providers.openai.OpenAI.context_relevance]
-(`prompt` and `context`) are to be the main app input and the main output,
+(`prompt` and `context`) are to be the main app input and the main app output,
 respectively.
 
 Read more about [argument
@@ -80,7 +80,7 @@ shortcuts](./feedback_selectors/selector_shortcuts.md).
 
 The last line `aggregate(numpy.mean)` specifies how feedback outputs are to be
 aggregated. This only applies to cases where the argument specification names
-more than one value for an input. The second specification, for `statement` was
+more than one value for an input. The second specification, for `statement`, was
 of this type. The input to
 [aggregate][trulens.core.Feedback.aggregate] must be a method
 which can be imported globally. This requirement is further elaborated in the

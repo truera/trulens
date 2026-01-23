@@ -19,6 +19,20 @@ _DATA_DIRECTORY = "tests/e2e/data/"
 
 
 class TestSnowflakeNotebooks(SnowflakeTestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls._orig_TRULENS_OTEL_TRACING = os.getenv("TRULENS_OTEL_TRACING")
+        os.environ["TRULENS_OTEL_TRACING"] = "0"
+        return super().setUpClass()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        if cls._orig_TRULENS_OTEL_TRACING is not None:
+            os.environ["TRULENS_OTEL_TRACING"] = cls._orig_TRULENS_OTEL_TRACING
+        else:
+            del os.environ["TRULENS_OTEL_TRACING"]
+        return super().tearDownClass()
+
     def test_simple(self) -> None:
         self.create_and_use_schema("test_simple", append_uuid=True)
         self._upload_and_run_notebook("simple", _TRULENS_PACKAGES)

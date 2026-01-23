@@ -323,7 +323,9 @@ class FeedbackDefinition(
     [Feedback][trulens.core.Feedback] class.
     """
 
-    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
+    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
+        arbitrary_types_allowed=True
+    )
 
     implementation: Optional[
         Union[pyschema_utils.Function, pyschema_utils.Method]
@@ -340,6 +342,9 @@ class FeedbackDefinition(
 
     criteria: Optional[str] = None
     """Criteria for the feedback function."""
+
+    additional_instructions: Optional[str] = None
+    """Custom instructions for the feedback function."""
 
     combinations: Optional[FeedbackCombinations] = FeedbackCombinations.PRODUCT
     """Mode of combining selected values to produce arguments to each feedback
@@ -386,6 +391,7 @@ class FeedbackDefinition(
         ] = None,
         examples: Optional[List[Tuple]] = None,
         criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         if_exists: Optional[serial_utils.Lens] = None,
         if_missing: FeedbackOnMissingParameters = FeedbackOnMissingParameters.ERROR,
         selectors: Optional[Dict[str, serial_utils.Lens]] = None,
@@ -405,6 +411,7 @@ class FeedbackDefinition(
             aggregator=aggregator,
             examples=examples,
             criteria=criteria,
+            additional_instructions=additional_instructions,
             selectors=selectors,
             if_exists=if_exists,
             if_missing=if_missing,

@@ -558,7 +558,7 @@ from trulens_eval import TruCustomApp
 from trulens_eval import TruBasicApp
 ```
 ```python
-from trulens.apps.custom import TruCustomApp
+from trulens.apps.app import TruApp
 from trulens.apps.basic import TruBasicApp
 ```
 

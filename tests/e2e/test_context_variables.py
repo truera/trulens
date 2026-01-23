@@ -2,38 +2,14 @@
 Tests for context variable issues.
 """
 
-import os
-import unittest
-
 import pytest
-from snowflake.snowpark import Session
-from trulens.apps.custom import TruCustomApp
-from trulens.apps.custom import instrument
-from trulens.connectors.snowflake import SnowflakeConnector
-from trulens.core import TruSession
+from trulens.apps.app import TruApp
+from trulens.apps.app import instrument
+
+from tests.util.snowflake_test_case import SnowflakeTestCase
 
 
-class TestContextVariables(unittest.TestCase):
-    def setUp(self):
-        connection_parameters = {
-            "account": os.environ["SNOWFLAKE_ACCOUNT"],
-            "user": os.environ["SNOWFLAKE_USER"],
-            "password": os.environ["SNOWFLAKE_USER_PASSWORD"],
-            "database": os.environ["SNOWFLAKE_DATABASE"],
-            "role": os.environ["SNOWFLAKE_ROLE"],
-            "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
-            "schema": "TestContextVariables",
-        }
-        self._snowpark_session = Session.builder.configs(
-            connection_parameters
-        ).create()
-        connector = SnowflakeConnector(
-            **connection_parameters,
-            init_server_side=True,
-            init_server_side_with_staged_packages=True,
-        )
-        self._session = TruSession(connector=connector)
-
+class TestContextVariables(SnowflakeTestCase):
     @pytest.mark.optional
     def test_endpoint_contextvar_always_cleaned(self):
         class FailingRAG:
@@ -54,8 +30,9 @@ class TestContextVariables(unittest.TestCase):
                 return completion
 
         # Set up trulens.
+        self.get_session("test_endpoint_contextvar_always_cleaned")
         rag = FailingRAG()
-        tru_rag = TruCustomApp(
+        tru_rag = TruApp(
             rag,
             app_name="FailingRAG",
             app_version="base",

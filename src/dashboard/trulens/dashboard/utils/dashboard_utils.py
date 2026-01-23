@@ -1,8 +1,11 @@
 import argparse
+import json
+import os
 import sys
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import pandas as pd
+import sqlalchemy as sa
 import streamlit as st
 from trulens import core as mod_core
 from trulens import dashboard as mod_dashboard
@@ -10,10 +13,16 @@ from trulens.core import experimental as core_experimental
 from trulens.core import experimental as mod_experimental
 from trulens.core import session as core_session
 from trulens.core.database import base as core_db
+from trulens.core.database.sqlalchemy import SQLAlchemyDB
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.utils import imports as import_utils
 from trulens.dashboard import constants as dashboard_constants
+from trulens.dashboard.components.record_viewer_otel import OtelSpan
+from trulens.dashboard.components.record_viewer_otel import SpanRecord
+from trulens.dashboard.components.record_viewer_otel import SpanTrace
 from trulens.dashboard.utils import metadata_utils
 from trulens.dashboard.utils.streamlit_compat import st_columns
+from trulens.otel.semconv.trace import ResourceAttributes
 
 ST_APP_NAME = "app_name"
 ST_RECORDS_LIMIT = "records_limit"
@@ -30,26 +39,12 @@ def set_page_config(page_title: Optional[str] = None):
     if is_sis_compatibility_enabled():
         pass
     else:
-        if st.get_option("theme.base") == "dark":
-            logo = str(
-                import_utils.static_resource(
-                    "dashboard", "ux/trulens_logo_light.svg"
-                )
-            )
-            logo_small = str(
-                import_utils.static_resource(
-                    "dashboard", "ux/trulens_squid_light.svg"
-                )
-            )
-        else:
-            logo = str(
-                import_utils.static_resource("dashboard", "ux/trulens_logo.svg")
-            )
-            logo_small = str(
-                import_utils.static_resource(
-                    "dashboard", "ux/trulens_squid.svg"
-                )
-            )
+        logo = str(
+            import_utils.static_resource("dashboard", "ux/trulens_logo.svg")
+        )
+        logo_small = str(
+            import_utils.static_resource("dashboard", "ux/trulens_squid.svg")
+        )
         st.logo(logo, icon_image=logo_small, link="https://www.trulens.org/")
 
     if ST_RECORDS_LIMIT not in st.session_state:
@@ -105,6 +100,17 @@ def is_sis_compatibility_enabled():
     )
 
 
+def read_spcs_oauth_token() -> Optional[str]:
+    """
+    Reads the OAuth token from the file system. This is only available if the
+    container is running in SPCS.
+    """
+    if not os.path.exists("/snowflake/session/token"):
+        return None
+    with open("/snowflake/session/token", "r") as f:
+        return f.read()
+
+
 @st.cache_resource(show_spinner="Setting up TruLens session")
 def get_session() -> core_session.TruSession:
     """Parse command line arguments and initialize TruSession with them.
@@ -114,9 +120,27 @@ def get_session() -> core_session.TruSession:
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--database-url", default=None)
+    parser.add_argument("--snowflake-account", default=None)
+    parser.add_argument("--snowflake-user", default=None)
+    parser.add_argument("--snowflake-role", default=None)
+    parser.add_argument("--snowflake-database", default=None)
+    parser.add_argument("--snowflake-schema", default=None)
+    parser.add_argument("--snowflake-warehouse", default=None)
+    parser.add_argument("--snowflake-password", default=None)
+    parser.add_argument("--snowflake-authenticator", default=None)
+    parser.add_argument("--snowflake-host", default=None)
+    parser.add_argument("--snowflake-spcs-mode", action="store_true")
+    parser.add_argument(
+        "--snowflake-use-account-event-table", action="store_true"
+    )
     parser.add_argument("--sis-compatibility", action="store_true")
     parser.add_argument(
         "--database-prefix", default=core_db.DEFAULT_DATABASE_PREFIX
+    )
+    parser.add_argument(
+        "--otel-tracing",
+        action="store_true",
+        help="Enable OTEL tracing in the dashboard",
     )
 
     try:
@@ -129,14 +153,63 @@ def get_session() -> core_session.TruSession:
         # so we have to do a hard exit.
         sys.exit(e.code)
 
-    session = core_session.TruSession(
-        database_url=args.database_url, database_prefix=args.database_prefix
-    )
+    if args.snowflake_account:
+        from snowflake.snowpark import Session
+        from trulens.connectors.snowflake import SnowflakeConnector
+
+        def snowpark_session_creator() -> Session:
+            if args.snowflake_spcs_mode:
+                connection_params = {
+                    "account": args.snowflake_account,
+                    "user": args.snowflake_user,
+                    "role": args.snowflake_role,
+                    "database": args.snowflake_database,
+                    "schema": args.snowflake_schema,
+                    "warehouse": args.snowflake_warehouse,
+                    "host": args.snowflake_host,
+                    "authenticator": "oauth",
+                    "token": read_spcs_oauth_token(),
+                }
+            else:
+                connection_params = {
+                    "account": args.snowflake_account,
+                    "user": args.snowflake_user,
+                    "role": args.snowflake_role,
+                    "database": args.snowflake_database,
+                    "schema": args.snowflake_schema,
+                    "warehouse": args.snowflake_warehouse,
+                    "host": args.snowflake_host,
+                }
+                if args.snowflake_password:
+                    connection_params["password"] = args.snowflake_password
+                if args.snowflake_authenticator:
+                    connection_params["authenticator"] = (
+                        args.snowflake_authenticator
+                    )
+            return Session.builder.configs(connection_params).create()
+
+        use_account_event_table = bool(args.snowflake_use_account_event_table)
+        session = core_session.TruSession(
+            connector=SnowflakeConnector(
+                snowpark_session_creator=snowpark_session_creator,
+                use_account_event_table=use_account_event_table,
+                database_prefix=args.database_prefix,
+            )
+        )
+    else:
+        session = core_session.TruSession(
+            database_url=args.database_url, database_prefix=args.database_prefix
+        )
 
     if args.sis_compatibility:
         session.experimental_enable_feature(
             mod_experimental.Feature.SIS_COMPATIBILITY
         )
+
+    # Store the otel_tracing flag in the session state
+    if args.otel_tracing:
+        os.environ["TRULENS_OTEL_TRACING"] = "1"
+
     return session
 
 
@@ -144,15 +217,24 @@ def get_session() -> core_session.TruSession:
     ttl=dashboard_constants.CACHE_TTL, show_spinner="Getting record data"
 )
 def get_records_and_feedback(
-    app_name: str,
     app_ids: Optional[List[str]] = None,
+    app_name: Optional[str] = None,
+    app_versions: Optional[List[str]] = None,
+    run_name: Optional[str] = None,
+    offset: Optional[int] = None,
     limit: Optional[int] = None,
 ):
     session = get_session()
     lms = session.connector.db
     assert lms
+
     records_df, feedback_col_names = lms.get_records_and_feedback(
-        app_name=app_name, app_ids=app_ids, limit=limit
+        app_ids=app_ids,
+        app_name=app_name,
+        app_versions=app_versions,
+        run_name=run_name,
+        offset=offset,
+        limit=limit,
     )
 
     records_df["record_metadata"] = records_df["record_json"].apply(
@@ -225,6 +307,8 @@ def _handle_app_selection(app_names: List[str]):
 def render_refresh_button():
     if st.sidebar.button("↻ Refresh Data", use_container_width=True):
         st.cache_data.clear()
+        st.query_params.clear()
+        st.session_state.clear()
         st.rerun()
 
 
@@ -262,10 +346,12 @@ def render_sidebar():
         st.text(f"{mod_core.__package__} {mod_core.__version__}")
         st.text(f"{mod_dashboard.__package__} {mod_dashboard.__version__}")
 
+        BUG_REPORT_URL = "https://github.com/truera/trulens/issues/new?template=bug-report.md"
+
         st.link_button(
-            "Share Feedback",
-            "https://forms.gle/HAc4HBk5nZRpgw7C6",
-            help="Help us improve TruLens!",
+            "Report a Bug 🐞",
+            BUG_REPORT_URL,
+            help="Help us fix bugs! (Emoji: Ladybug)",
             use_container_width=True,
         )
     if app_name is None:
@@ -318,8 +404,13 @@ def get_app_versions(app_name: str):
 
 
 def _get_query_args_handler(key: str, max_options: Optional[int] = None):
-    new_val = st.session_state.get(key)
-    if isinstance(new_val, list):
+    new_val = st.session_state.get(key, None)
+    if not new_val:
+        # if no new value, remove query param
+        if key in st.query_params:
+            del st.query_params[key]
+        return
+    elif isinstance(new_val, list):
         if len(new_val) == max_options:
             # don't need to explicitly add query args as default is all options
             if key in st.query_params:
@@ -387,6 +478,8 @@ def render_app_version_filters(
         active_adv_filters = [k for k, v in other_query_params_kv.items() if v]
     else:
         active_adv_filters = []
+
+    st.session_state.setdefault("filter.search", "")
     if version_str_query := col0.text_input(
         "Search App Version",
         key="filter.search",
@@ -449,11 +542,13 @@ def render_app_version_filters(
                     metadata_selections[metadata_key]
                 )
             ]
-        filtered_app_versions = filtered_app_versions[
-            filtered_app_versions["tags"].apply(
-                lambda x: any(tag in x for tag in selected_tags)
-            )
-        ]
+
+        if len(selected_tags):
+            filtered_app_versions = filtered_app_versions.loc[
+                filtered_app_versions["tags"].apply(
+                    lambda x: any(tag in x for tag in selected_tags)
+                )
+            ]
 
     if len(active_adv_filters):
         col2.button(
@@ -465,3 +560,243 @@ def render_app_version_filters(
         )
 
     return filtered_app_versions, app_version_metadata_cols
+
+
+def _parse_json_fields(field: Any) -> Dict[str, Any]:
+    """Parse a JSON field from the database, handling potential errors.
+
+    Args:
+        field: The field to parse, can be a string or dict
+
+    Returns:
+        Parsed dictionary or error dictionary if parsing fails
+    """
+    if isinstance(field, dict):
+        return field
+    if isinstance(field, str):
+        try:
+            return json.loads(field)
+        except Exception as e:
+            return {"error": f"Unable to parse {field}: {e}"}
+    return {"error": f"Invalid {field} format"}
+
+
+def _convert_timestamp(ts: Any) -> Union[int, float]:
+    """Convert various timestamp formats to Unix timestamp in seconds.
+
+    Args:
+        ts: Timestamp in any supported format (int, float, str, pd.Timestamp)
+
+    Returns:
+        Unix timestamp in seconds, or 0 if conversion fails
+    """
+    if pd.isna(ts):
+        return 0
+    elif isinstance(ts, (int, float)):
+        return int(ts)
+    elif isinstance(ts, str):
+        return int(pd.Timestamp(ts).timestamp())
+    elif isinstance(ts, pd.Timestamp):
+        return int(ts.timestamp())
+    else:
+        return 0
+
+
+def _make_serializable(value: Any) -> Any:
+    """Convert a value to a JSON-serializable format.
+
+    Args:
+        value: Any value to convert
+
+    Returns:
+        JSON-serializable version of the value
+    """
+    try:
+        json.dumps({"test": value})
+        return value
+    except (TypeError, OverflowError):
+        return str(value)
+
+
+def _map_event_to_otel_span(row: pd.Series) -> Optional[OtelSpan]:
+    """Convert an Event ORM table row to an OtelSpan format.
+
+    Args:
+        row: A pandas Series containing the Event ORM table row data
+
+    Returns:
+        An OtelSpan object if conversion is successful, None otherwise
+    """
+    try:
+        # Parse record data
+        record_data = _parse_json_fields(row.get("record", {}))
+        span_record: SpanRecord = {
+            "name": str(record_data.get("name", "")),
+            "parent_span_id": str(record_data.get("parent_span_id", "")),
+            "status": str(record_data.get("status", "")),
+        }
+
+        # Parse trace data
+        trace_data = _parse_json_fields(row.get("trace", {}))
+        span_trace: SpanTrace = {
+            "trace_id": str(trace_data.get("trace_id", "")),
+            "parent_id": str(trace_data.get("parent_id", "")),
+            "span_id": str(trace_data.get("span_id", "")),
+        }
+
+        # Process record attributes
+        record_attributes = _parse_json_fields(row.get("record_attributes", {}))
+        serializable_attributes = {
+            k: _make_serializable(v) for k, v in record_attributes.items()
+        }
+
+        # Create span with converted timestamps
+        span: OtelSpan = {
+            "event_id": str(row.get("event_id", "")),
+            "record": span_record,
+            "record_attributes": serializable_attributes,
+            "start_timestamp": _convert_timestamp(row.get("start_timestamp")),
+            "timestamp": _convert_timestamp(row.get("timestamp")),
+            "trace": span_trace,
+        }
+
+        return span
+    except Exception as e:
+        st.warning(f"Error processing span: {e}")
+        return None
+
+
+def _convert_events_to_otel_spans(events_df: pd.DataFrame) -> List[OtelSpan]:
+    """Convert a DataFrame of Event ORM table rows to a list of OtelSpans.
+
+    Args:
+        events_df: DataFrame containing Event ORM table rows
+
+    Returns:
+        A list of OtelSpans for all successfully converted events
+    """
+    serializable_spans: List[OtelSpan] = []
+
+    for _, row in events_df.iterrows():
+        if span := _map_event_to_otel_span(row):
+            serializable_spans.append(span)
+
+    return serializable_spans
+
+
+@st.cache_data(
+    ttl=dashboard_constants.CACHE_TTL, show_spinner="Getting events for record"
+)
+def _get_event_otel_spans(
+    record_id: str, app_name: Optional[str] = None
+) -> List[OtelSpan]:
+    """Get all event spans for a given record ID.
+
+    Args:
+        record_id: The record ID to get events for.
+        app_name: The app name to get events for.
+
+    Returns:
+        A list of OtelSpans for all events corresponding to the given record ID.
+    """
+    session = get_session()
+    db = session.connector.db
+    if not db or not hasattr(db, "get_events"):
+        st.error(
+            f"Error getting events by record {record_id}: database must support OTel spans"
+        )
+        return []
+    try:
+        events_df = db.get_events(
+            app_name=app_name,
+            app_version=None,
+            record_ids=[record_id],
+            start_time=None,
+        )
+        return _convert_events_to_otel_spans(events_df)
+    except Exception as e:
+        st.error(f"Error getting events for record {record_id}: {e}")
+        return []
+
+
+def _check_cross_format_records(
+    app_name: Optional[str] = None, app_versions: Optional[List[str]] = None
+) -> tuple[int, int]:
+    """Check record counts in both OTEL and non-OTEL formats.
+
+    Returns:
+        Tuple of (otel_count, non_otel_count)
+    """
+    session = get_session()
+    otel_count = 0
+    non_otel_count = 0
+
+    if isinstance(session.connector.db, SQLAlchemyDB):
+        db = session.connector.db  # type: ignore
+
+        with db.session.begin() as session_ctx:  # type: ignore
+            # Check OTEL records (EVENT table)
+            query = sa.select(sa.func.count(db.orm.Event.event_id))  # type: ignore
+
+            if app_name:
+                # For OTEL events, app_name is in resource_attributes JSON
+                app_name_expr = db._json_extract_otel(
+                    "resource_attributes", ResourceAttributes.APP_NAME
+                )
+                query = query.where(app_name_expr == app_name)
+            if app_versions:
+                app_version_expr = db._json_extract_otel(
+                    "resource_attributes", ResourceAttributes.APP_VERSION
+                )
+                query = query.where(app_version_expr.in_(app_versions))
+
+            result = session_ctx.execute(query).scalar()
+            otel_count = result or 0
+
+            # Check non-OTEL records (RECORD table)
+            query = sa.select(sa.func.count(db.orm.Record.record_id))  # type: ignore
+
+            # Need to join with AppDefinition to access app_name or app_version
+            if app_name or app_versions:
+                query = query.join(db.orm.Record.app)  # type: ignore
+
+            if app_name:
+                query = query.where(  # type: ignore
+                    db.orm.AppDefinition.app_name == app_name  # type: ignore
+                )
+            if app_versions:
+                query = query.where(
+                    db.orm.AppDefinition.app_version.in_(app_versions)
+                )  # type: ignore
+
+            result = session_ctx.execute(query).scalar()
+            non_otel_count = result or 0
+
+    return otel_count, non_otel_count
+
+
+def _show_no_records_error(
+    app_name: Optional[str] = None, app_versions: Optional[List[str]] = None
+) -> None:
+    """Show helpful error message when no records found, with cross-format record counts."""
+    is_otel_mode = is_otel_tracing_enabled()
+    otel_count, non_otel_count = _check_cross_format_records(
+        app_name=app_name, app_versions=app_versions
+    )
+
+    if is_otel_mode and otel_count == 0 and non_otel_count > 0:
+        st.error(
+            f"No records found for app `{app_name}` in OTEL mode. "
+            f"However, {non_otel_count} records exist in non-OTEL format. "
+            f"Set `TRULENS_OTEL_TRACING=0` to disable OTEL mode and access them.",
+            icon="🔄",
+        )
+    elif not is_otel_mode and non_otel_count == 0 and otel_count > 0:
+        st.error(
+            f"No records found for app `{app_name}` in non-OTEL mode. "
+            f"However, {otel_count} records exist in OTEL format. "
+            f"Remove `TRULENS_OTEL_TRACING=0` to enable OTEL mode and access them.",
+            icon="🔄",
+        )
+    else:
+        st.error(f"No records found for app `{app_name}`.")

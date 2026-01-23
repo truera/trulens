@@ -95,7 +95,6 @@ NOTEBOOKS_TO_TEST_BACKWARDS_COMPATIBILITY = [
     "langchain_quickstart.ipynb",
     "llama_index_quickstart.ipynb",
     "quickstart.ipynb",
-    "prototype_evals.ipynb",
     "human_feedback.ipynb",
     "groundtruth_evals.ipynb",
     "logging.ipynb",

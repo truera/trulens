@@ -1,5 +1,6 @@
 {% set name = "trulens-connectors-snowflake" %}
-{% set version = "1.4.9" %}
+{% set pyname = name.replace('-', '.') %}
+{% set version = "2.5.3" %}
 
 package:
   name: {{ name|lower }}
@@ -11,7 +12,7 @@ source:
   {% else %}
   url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-connectors-snowflake/#files
-  sha256: 7bf8e398611d8f6234be3e75594565ae75a2cea39a448eb0d52d4305892d38c2
+  sha256: 5e120982f397c6bdc8af209ee8b0d2160cec6f1fe4d3cc6beff4fe1892563b02
   {% endif %}
 
 build:
@@ -21,21 +22,23 @@ build:
 
 requirements:
   host:
-    - python >=3.9,<3.12
+    - python >=3.9,<3.13
     - poetry-core <2.0.0
     - pip
   run:
-    - python >=3.9,<3.12
-    - trulens-core >=1.0.0,<2.0.0
+    - python >=3.9,<3.13
+    - trulens-core >=1.0.0,<3.0.0
     - snowflake-snowpark-python >=1.18.0,<2.0.0
     - snowflake-sqlalchemy >=1.6.0,<2.0.0
 
 test:
   imports:
-    - trulens.connectors.snowflake
+    - {{ pyname }}
   commands:
     - pip check
+    - python -c 'import {{ pyname }}; assert {{ pyname }}.__version__ == "{{ version }}", "Installed version does not match expected version"'
   requires:
+    - python >=3.9,<3.13
     - pip
 
 about:

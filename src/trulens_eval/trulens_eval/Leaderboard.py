@@ -2,7 +2,7 @@
 """
 !!! warning
     This module is deprecated and will be removed. Use
-    `trulens.dashboard.Leaderboard` instead.
+    `trulens.dashboard.tabs.Leaderboard` instead.
 """
 
 from trulens.core.utils import deprecation as deprecation_utils
@@ -10,4 +10,4 @@ from trulens.core.utils import deprecation as deprecation_utils
 deprecation_utils.packages_dep_warn()
 
 from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
-from trulens.dashboard.Leaderboard import render_leaderboard as leaderboard
+from trulens.dashboard.tabs.Leaderboard import render_leaderboard as leaderboard

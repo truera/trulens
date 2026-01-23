@@ -102,8 +102,13 @@ def highlight(
     if "distance" in selected_feedback:
         return [f"background-color: {CATEGORY.DISTANCE.color}"] * len(row)
 
+    # Handle None scores
+    score = row.get("score")
+    if score is None:
+        return [f"background-color: {CATEGORY.UNKNOWN.color}"] * len(row)
+
     cat = CATEGORY.of_score(
-        row["score"],
+        score,
         higher_is_better=feedback_directions.get(
             selected_feedback, default_direction == "HIGHER_IS_BETTER"
         ),
@@ -114,49 +119,162 @@ def highlight(
 
 def expand_groundedness_df(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Expand the groundedness DataFrame by splitting the reasons column into separate rows and columns.
+    Expand the groundedness reasons into a DataFrame.
 
     Args:
-        df (pd.DataFrame): The groundedness DataFrame.
+        df (pd.DataFrame): A DataFrame containing 'reasons' column.
 
     Returns:
-        pd.DataFrame: The expanded DataFrame.
+        pd.DataFrame: A DataFrame with expanded groundedness reasons.
     """
-    # Split the reasons value into separate rows and columns
-    reasons = df["reasons"].iloc[0]
-    # Split the reasons into separate statements
-    statements = reasons.split("STATEMENT")
+    # First check for new list[dict] reasons format (preferred going forward)
+    if "reasons" in df.columns and df["reasons"].notna().any():
+        first_val = df.loc[df["reasons"].notna(), "reasons"].iloc[0]
+        if isinstance(first_val, list):
+            reasons_list = first_val
+            if not reasons_list:
+                return pd.DataFrame({
+                    "Statement": [],
+                    "Supporting Evidence from Source": [],
+                    "score": [],
+                })
+
+            reasons_df = pd.DataFrame(reasons_list)
+            # Normalize key names
+            reasons_df.rename(
+                columns={
+                    "criteria": "Statement",
+                    "supporting_evidence": "Supporting Evidence from Source",
+                },
+                inplace=True,
+            )
+
+            # Ensure expected columns exist
+            for col in [
+                "Statement",
+                "Supporting Evidence from Source",
+                "score",
+            ]:
+                if col not in reasons_df.columns:
+                    reasons_df[col] = None
+
+            return reasons_df[
+                [
+                    "Statement",
+                    "Supporting Evidence from Source",
+                    "score",
+                ]
+            ].reset_index(drop=True)
+
+    # -------------------- explanation column as list[str] -------------------------
+    if "explanation" in df.columns and df["explanation"].notna().any():
+        exp_val = df.loc[df["explanation"].notna(), "explanation"].iloc[0]
+
+        # Try to parse JSON string to list[dict]
+        if isinstance(exp_val, str) and exp_val.strip().startswith("["):
+            import json
+
+            try:
+                parsed = json.loads(exp_val)
+                if isinstance(parsed, list):
+                    exp_val = parsed
+            except Exception:
+                pass
+
+        # Case: list of dicts with keys
+        if isinstance(exp_val, list) and all(
+            isinstance(i, dict) for i in exp_val
+        ):
+            reasons_df = pd.DataFrame(exp_val)
+            reasons_df.rename(
+                columns={
+                    "criteria": "Statement",
+                    "supporting_evidence": "Supporting Evidence from Source",
+                },
+                inplace=True,
+            )
+            if "score" not in reasons_df.columns:
+                reasons_df["score"] = None
+            return reasons_df[
+                [
+                    "Statement",
+                    "Supporting Evidence from Source",
+                    "score",
+                ]
+            ].reset_index(drop=True)
+
+        # Case: list[str] legacy
+        if isinstance(exp_val, list):
+            rows = []
+            for item in exp_val:
+                if not isinstance(item, str):
+                    item = str(item)
+                crit_match = re.search(
+                    r"Criteria:\s*(.+?)(?:\n|Supporting Evidence:|$)",
+                    item,
+                    re.DOTALL,
+                )
+                criteria = (
+                    crit_match.group(1).strip() if crit_match else item.strip()
+                )
+
+                sup_match = re.search(
+                    r"Supporting Evidence:\s*(.+)", item, re.DOTALL
+                )
+                evidence = sup_match.group(1).strip() if sup_match else ""
+
+                score_match = re.search(r"Score:\s*([0-9]*\.?[0-9]+)", item)
+                score_val = float(score_match.group(1)) if score_match else None
+
+                rows.append({
+                    "Statement": criteria,
+                    "Supporting Evidence from Source": evidence,
+                    "score": score_val,
+                })
+
+            return pd.DataFrame(rows).reset_index(drop=True)
+
+    # -------------------- legacy string-based parsing -----------------------------
+    reasons = None
+    if "explanation" in df.columns and df["explanation"].notna().any():
+        reasons = df.loc[df["explanation"].notna(), "explanation"].iloc[0]
+    elif "reasons" in df.columns and df["reasons"].notna().any():
+        candidate = df.loc[df["reasons"].notna(), "reasons"].iloc[0]
+        if isinstance(candidate, str):
+            reasons = candidate
+
+    if reasons is None:
+        # nothing to expand
+        return pd.DataFrame({
+            "Statement": [],
+            "Supporting Evidence from Source": [],
+            "score": [],
+        })
+
+    # Convert to string
+    if not isinstance(reasons, str):
+        reasons = str(reasons)
+
+    statements = re.split(r"\bSTATEMENT \d+:", reasons)[1:]
     data = []
-    # Each reason has three components: statement, supporting evidence, and score
-    # Parse each reason into these components and add them to the data list
-    for statement in statements[1:]:
-        try:
-            criteria = statement.split("Criteria: ")[1].split(
-                "Supporting Evidence: "
-            )[0]
-            supporting_evidence = statement.split("Supporting Evidence: ")[
-                1
-            ].split("Score: ")[0]
-            score_pattern = re.compile(r"([0-9]*\.?[0-9]+)(?=\D*$)")
-            score_split = statement.split("Score: ")[1]
-            score_match = score_pattern.search(score_split)
-            if score_match:
-                score = float(score_match.group(1))
-            else:
-                score = None
-        except IndexError:
-            # Handle cases where the expected substrings are not found
-            criteria = None
-            supporting_evidence = None
-            score = None
+    for s in statements:
+        s = s.strip()
+        if not s:
+            continue
+        crit_match = re.search(
+            r"Criteria:\s*(.+?)(?:\n|Supporting Evidence:)", s, re.DOTALL
+        )
+        criteria = crit_match.group(1).strip() if crit_match else ""
+        sup_match = re.search(
+            r"Supporting Evidence:\s*(.+?)(?:\n|Score:)", s, re.DOTALL
+        )
+        evidence = sup_match.group(1).strip() if sup_match else ""
+        score_match = re.search(r"Score:\s*([0-9]*\.?[0-9]+)", s)
+        score_val = float(score_match.group(1)) if score_match else None
         data.append({
             "Statement": criteria,
-            "Supporting Evidence from Source": supporting_evidence,
-            "Groundedness Score": score,
+            "Supporting Evidence from Source": evidence,
+            "score": score_val,
         })
-    reasons_df = pd.DataFrame(data)
 
-    reasons_df.rename(columns={"Groundedness Score": "score"}, inplace=True)
-
-    # Return only the expanded reasons DataFrame
-    return reasons_df.reset_index(drop=True)
+    return pd.DataFrame(data).reset_index(drop=True)

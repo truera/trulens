@@ -327,11 +327,21 @@ def jsonify(
         new_dicted[id(obj)] = forward_value
         forward_value.update({
             k: recur(python_utils.safe_getattr(obj, k))
-            for k, v in obj.model_fields.items()
+            for k, v in type(obj).model_fields.items()
             if (not skip_excluded or not v.exclude) and recur_key(k)
         })
 
-        for k, _ in obj.model_computed_fields.items():
+        # Computed fields: read them from the class, not the instance.
+        # In Pydantic ≥ 2.10 the public attribute may not be a plain dict.
+        # Use the class mapping first, and fall back to __pydantic_computed_fields__.
+        cls = type(obj)
+        computed_fields_map = getattr(cls, "model_computed_fields", None)
+        if not isinstance(computed_fields_map, dict):
+            computed_fields_map = getattr(
+                cls, "__pydantic_computed_fields__", {}
+            )
+
+        for k in computed_fields_map.keys():
             if recur_key(k):
                 forward_value[k] = recur(python_utils.safe_getattr(obj, k))
 

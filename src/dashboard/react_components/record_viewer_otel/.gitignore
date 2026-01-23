@@ -1,0 +1,13 @@
+# Node modules
+node_modules/
+
+# Build outputs
+dist/
+storybook-static/
+
+# Test artifacts
+**/test-results/
+**/test-results/.last-run.json
+
+# Keep test snapshots in version control
+!**/test/snapshots/

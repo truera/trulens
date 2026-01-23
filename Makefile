@@ -7,6 +7,7 @@
 SHELL := /bin/bash
 REPO_ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 PYTEST := poetry run pytest --rootdir=. -s -r fex --durations=0
+PYTEST_ISOLATED := poetry run pytest --rootdir=. -s -r fex --durations=0 -n auto --dist=loadscope
 POETRY_DIRS := $(shell find . \
 	-not -path "./dist/*" \
 	-maxdepth 4 \
@@ -17,6 +18,8 @@ CONDA_BUILD_DIRS := $(shell find . \
 	-name "*meta.yaml" \
 	-exec dirname {} \;)
 LAST_TRULENS_EVAL_COMMIT := 4cadb05 # commit that includes the last pre-namespace trulens_eval package
+TOKEN ?= $(shell echo $$TOKEN)
+
 
 # Global setting: execute all commands of a target in a single shell session.
 # Note for MAC OS, the default make is too old to support this. "brew install
@@ -31,7 +34,7 @@ env-%:
 	poetry install --with $*
 
 env-tests:
-	poetry run pip install \
+	poetry run pip install --no-cache-dir \
 		jsondiff \
 		nbconvert \
 		nbformat \
@@ -40,35 +43,59 @@ env-tests:
 		pytest-azurepipelines \
 		pytest-cov \
 		pytest-subtests \
+		pytest-xdist \
 		ruff \
 
+clean-env:
+	@echo "Removing virtual environment to ensure clean state..."
+	poetry env remove --all || true
+
+# Clean pip and poetry caches to free disk space (useful in CI)
+clean-caches:
+	@echo "Cleaning pip cache..."
+	pip cache purge || true
+	@echo "Cleaning poetry cache..."
+	poetry cache clear --all pypi -n || true
+	@echo "Cleaning build artifacts..."
+	rm -rf dist/ build/ .eggs/ *.egg-info/ || true
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+
 env-tests-basic:
-	poetry install --only required \
-		&& make env-tests
+	poetry install --only required
+	make env-tests
 
 env-tests-optional: env env-tests
-	poetry run pip install \
+	# NOTE: Excluding nemo group due to langchain 1.x incompatibility
+	# nemoguardrails requires langchain<0.4.0, but langgraph requires langchain>=1.0.0
+	# Install nemo separately with: poetry install --with nemo (requires langchain<1.0)
+	poetry install --with apps,providers --without nemo
+	poetry run pip install --no-cache-dir \
 		chromadb \
 	 	faiss-cpu \
-		langchain-openai \
+		"langchain-openai>=0.2.0" \
 		llama-index-embeddings-huggingface \
 		llama-index-embeddings-openai \
 		unstructured
 
+
 env-tests-snowflake: env-tests-optional
 	poetry install --with snowflake
+	poetry run pip install --no-cache-dir certifi==2025.1.31
 
 env-tests-db: env-tests
-	poetry run pip install \
+	poetry run pip install --no-cache-dir \
 		cryptography \
 		psycopg2-binary \
 		pymysql
 
 env-tests-notebook: env-tests env-tests-optional
-	poetry run pip install \
+	poetry run pip install --no-cache-dir \
 		faiss-cpu \
 		ipytree \
-		llama-index-readers-web
+		llama-index-readers-web \
+		markdown
+
 
 # Lock the poetry dependencies for all the subprojects.
 lock: $(POETRY_DIRS)
@@ -76,6 +103,10 @@ lock: $(POETRY_DIRS)
 		echo "Creating lockfile for $$dir/pyproject.toml"; \
 		poetry lock -C $$dir; \
 	done
+
+# Install all the subprojects using pip.
+pip-install: $(POETRY_DIRS)
+	pip install $(POETRY_DIRS)
 
 # Test build of conda packages against the Snowflake channel
 # This does not publish packages, only builds them locally.
@@ -229,22 +260,36 @@ test-%-huggingface: env-tests-optional
 test-%-snowflake: env-tests-snowflake
 	SKIP_BASIC_TESTS=1 TEST_SNOWFLAKE=true make test-$*
 
-# TODO: Update the E2E pipeline to use test-%-all instead (as of PR#1907, it currently tests optional and huggingface only)
-# This requires reducing flakiness in both basic and snowflake tests
+test-%-stable: env-tests env-tests-optional env-tests-snowflake
+	TEST_OPTIONAL=true TEST_SNOWFLAKE=true TEST_HUGGINGFACE=false make test-$*
+
 test-%-all: env-tests env-tests-optional env-tests-snowflake
 	TEST_OPTIONAL=true TEST_SNOWFLAKE=true TEST_HUGGINGFACE=true make test-$*
 
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline
 # frequently.
+# OTEL tests require process isolation due to async background threads
+# NOTE: pytest-xdist MUST be installed for OTEL tests to pass in batch
+# It should be installed via: poetry install --with dev
 test-unit:
-	$(PYTEST) tests/unit/*
+	@if poetry run python -c "import xdist" 2>/dev/null; then \
+		echo "✅ Running OTEL tests with pytest-xdist for process isolation..."; \
+		$(PYTEST_ISOLATED) tests/unit/test_otel*.py; \
+	else \
+		echo "❌ ERROR: pytest-xdist not installed!"; \
+		echo "OTEL tests WILL FAIL without process isolation."; \
+		echo "Install with: poetry install --with dev"; \
+		echo "Attempting to run anyway (expect failures)..."; \
+		$(PYTEST) tests/unit/test_otel*.py; \
+	fi
+	$(PYTEST) tests/unit/test_*.py --ignore=tests/unit/test_otel*.py
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
 test-e2e:
 	$(PYTEST) tests/e2e/*
 
 # Runs the notebook test
-test-notebook:
+test-notebook: env-tests-notebook
 	$(PYTEST) tests/docs_notebooks/*
 
 install-wheels:
@@ -254,8 +299,8 @@ install-wheels:
 ## Step: Clean repo:
 clean:
 	git clean --dry-run -fxd
-	@read -p "Do you wish to remove these files? (y/N)" -n 1 -r
-	echo
+	@read -p "Do you wish to remove these files? (y/N)" -n 1 -r; \
+	echo; \
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
 		git clean -fxd; \
 	else \
@@ -302,6 +347,12 @@ bump-version-%: $(POETRY_DIRS)
 		popd; \
 	done
 
+## Step: Update meta.yaml files with versions and SHA256 from PyPI
+# This should be run AFTER the packages have been released to PyPI
+update-meta-yaml:
+	poetry run python update_meta_yaml.py
+
+
 ## Step: Upload wheels to pypi
 # Usage: TOKEN=... make upload-trulens-instrument-langchain
 # In all cases, we need to clean, build, zip-wheels, then build again. The reason is because we want the final build to have the zipped wheels.
@@ -326,3 +377,13 @@ upload-testpypi-all: clean build
 		&& make build \
 		&& poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl \
 		&& poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.tar.gz
+
+build-record-viewer-otel:
+	cd src/dashboard/react_components/record_viewer_otel \
+		&& npm install \
+		&& npm run build
+
+test-record-viewer-otel:
+	cd src/dashboard/react_components/record_viewer_otel \
+	 	&& npm install \
+		&& npm run test

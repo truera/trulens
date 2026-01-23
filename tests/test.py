@@ -30,6 +30,7 @@ import pandas as pd
 import pydantic
 from pydantic import BaseModel
 from trulens.core._utils.pycompat import ReferenceType
+from trulens.core.session import TruSession
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 import yaml
@@ -145,7 +146,7 @@ def canonical(obj: T, skips: Set[str]) -> Union[T, Dict, Tuple]:
 
     elif isinstance(obj, BaseModel):
         ret = OrderedDict()
-        for f in sorted(obj.model_fields):
+        for f in sorted(type(obj).model_fields):
             if f in skips:
                 continue
 
@@ -398,6 +399,9 @@ class WithJSONTestCase(TestCase):
 
         ps = str(path)
 
+        if ps in skips:
+            return
+
         self.assertIsInstance(j1, type(j2), ps)
 
         if isinstance(j1, serial_utils.JSON_BASES):
@@ -450,7 +454,7 @@ class WithJSONTestCase(TestCase):
                     )
 
         elif isinstance(j1, BaseModel):
-            for f in j1.model_fields:
+            for f in type(j1).model_fields:
                 if f in skips:
                     continue
 
@@ -579,6 +583,10 @@ class TruTestCase(WithJSONTestCase, TestCase):
                     print(f"Reference path from test frame to {ref}:")
                     test_utils.print_referent_lens(origin=alls, lens=path)
 
+    def setUp(self) -> None:
+        super().setUp()
+        self.clear_TruSession_singleton()
+
     def tearDown(self):
         """Check for running tasks and non-main threads after each test.
 
@@ -589,6 +597,7 @@ class TruTestCase(WithJSONTestCase, TestCase):
             AssertionError: If there are any non-main threads running and the
                 environment variable `TEST_THREADS_CLEANUP` is set.
         """
+        self.clear_TruSession_singleton()
 
         # GC here to make sure we don't have any references to tasks or threads
         # that are keeping them alive.
@@ -664,3 +673,21 @@ class TruTestCase(WithJSONTestCase, TestCase):
             print("    " + str(thread))
 
         super().tearDownClass()
+
+    @classmethod
+    def clear_TruSession_singleton(cls) -> None:
+        # [HACK!] Clean up any instances of `TruSession` so tests don't
+        # interfere with each other.
+        for key in [
+            curr
+            for curr in TruSession._singleton_instances
+            if curr[0] == "trulens.core.session.TruSession"
+        ]:
+            tru_session = TruSession._singleton_instances[key]
+            if (
+                hasattr(tru_session, "experimental_otel_exporter")
+                and tru_session.experimental_otel_exporter is not None
+                and hasattr(tru_session.experimental_otel_exporter, "disable")
+            ):
+                tru_session.experimental_otel_exporter.disable()
+            del TruSession._singleton_instances[key]

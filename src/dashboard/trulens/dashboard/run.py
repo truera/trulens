@@ -44,6 +44,7 @@ def run_dashboard(
     address: Optional[str] = None,
     force: bool = False,
     sis_compatibility_mode: bool = False,
+    spcs_mode: bool = False,
     _dev: Optional[Path] = None,
     _watch_changes: bool = False,
 ) -> Process:
@@ -58,6 +59,8 @@ def run_dashboard(
 
         sis_compatibility_mode (bool): Flag to enable compatibility with Streamlit in Snowflake (SiS). SiS runs on Python 3.8, Streamlit 1.35.0, and does not support bidirectional custom components. As a result, enabling this flag will replace custom components in the dashboard with native Streamlit components. Defaults to `False`.
 
+        spcs_mode (bool): Flag to enable compatibility with Snowpark Container Services (SPCS).
+
         _dev (Path): If given, runs the dashboard with the given `PYTHONPATH`. This can be used to run the dashboard from outside of its pip package installation folder. Defaults to `None`.
 
         _watch_changes (bool): If `True`, the dashboard will watch for changes in the code and update the dashboard accordingly. Defaults to `False`.
@@ -70,7 +73,9 @@ def run_dashboard(
 
     """
     session = session or core_session.TruSession()
-    session.connector.db.check_db_revision()
+
+    connector = session.connector
+    connector.db.check_db_revision()
 
     IN_COLAB = "google.colab" in sys.modules
     if IN_COLAB and address is not None:
@@ -81,10 +86,8 @@ def run_dashboard(
 
     print("Starting dashboard ...")
 
-    # run leaderboard with subprocess
-    leaderboard_path = import_utils.static_resource(
-        "dashboard", "Leaderboard.py"
-    )
+    # run main dashboard with subprocess
+    main_path = import_utils.static_resource("dashboard", "main.py")
 
     if session._dashboard_proc is not None:
         print("Dashboard already running at path:", session._dashboard_urls)
@@ -105,7 +108,7 @@ def run_dashboard(
         "--server.headless=True",
         "--theme.base=dark",
         "--theme.primaryColor=#E0735C",
-        "--theme.font=sans serif",
+        "--theme.font=sans-serif",
     ]
     if _watch_changes:
         args.extend([
@@ -125,22 +128,59 @@ def run_dashboard(
     if address is not None:
         args.append(f"--server.address={address}")
 
-    if (
-        _is_snowflake_connector(session.connector)
-        and not session.connector.password_known
+    args += [
+        main_path,
+        "--",
+        "--database-prefix",
+        connector.db.table_prefix,
+    ]
+    if _is_snowflake_connector(connector) and (
+        not connector.password_known
+        or connector.use_account_event_table
+        or spcs_mode
     ):
-        raise ValueError(
-            "SnowflakeConnector was made via an established Snowpark session which did not pass through authentication details to the SnowflakeConnector. To fix, supply password argument during SnowflakeConnector construction."
+        # If we don't know the password, this is problematic because we run the
+        # dashboard in a separate process so we won't be able to recreate the
+        # snowpark session in the child process. Thus, in this case we default
+        # to using external browser authentication.
+        # TODO: support other passwordless token authentication such as PAT.
+        from trulens.connectors.snowflake.dao.sql_utils import (
+            clean_up_snowflake_identifier,
         )
 
-    args += [
-        leaderboard_path,
-        "--",
-        "--database-url",
-        session.connector.db.engine.url.render_as_string(hide_password=False),
-        "--database-prefix",
-        session.connector.db.table_prefix,
-    ]
+        snowpark_session = connector.snowpark_session
+        args_to_add = [
+            ("--snowflake-account", snowpark_session.get_current_account()),
+            ("--snowflake-user", snowpark_session.get_current_user()),
+            ("--snowflake-role", snowpark_session.get_current_role()),
+            ("--snowflake-database", snowpark_session.get_current_database()),
+            ("--snowflake-schema", snowpark_session.get_current_schema()),
+            ("--snowflake-warehouse", snowpark_session.get_current_warehouse()),
+            ("--snowflake-host", snowpark_session.connection.host),
+        ]
+        if spcs_mode:
+            args.append("--snowflake-spcs-mode")
+        else:
+            if connector.password_known:
+                args_to_add.append((
+                    "--snowflake-password",
+                    connector._password,
+                ))
+            else:
+                args_to_add.append((
+                    "--snowflake-authenticator",
+                    "externalbrowser",
+                ))
+        for arg, val in args_to_add:
+            if val:
+                args += [arg, clean_up_snowflake_identifier(val)]
+        if connector.use_account_event_table:
+            args.append("--snowflake-use-account-event-table")
+    else:
+        args += [
+            "--database-url",
+            connector.db.engine.url.render_as_string(hide_password=False),
+        ]
     if sis_compatibility_mode:
         args += ["--sis-compatibility"]
 
@@ -311,7 +351,7 @@ def stop_dashboard(
                     cmd = " ".join(p.cmdline())
                     if (
                         "streamlit" in cmd
-                        and "Leaderboard.py" in cmd
+                        and "main.py" in cmd
                         and p.username() == username
                     ):
                         print(f"killing {p}")

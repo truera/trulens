@@ -1,5 +1,6 @@
 {% set name = "trulens-core" %}
-{% set version = "1.4.9" %}
+{% set pyname = name.replace('-', '.') %}
+{% set version = "2.5.3" %}
 
 package:
   name: {{ name|lower }}
@@ -11,7 +12,7 @@ source:
   {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-core/#files
-  sha256: 9890e15fd493846d21a096fe01823e0ff5bebdfd4c95a22976d4ae8a16e1c3a2
+  sha256: c49f5574ada85d2b42e7bba7771b61d0ffb5b6bff2d3eb5280e29275f8301674
   {% endif %}
 
 build:
@@ -21,12 +22,12 @@ build:
 
 requirements:
   host:
-    - python >=3.9
+    - python >=3.9,<3.13
     - poetry-core <2.0.0
     - pip
   run:
-    - python >=3.9,<3.12
-    - trulens-otel-semconv >=1.4.7,<2.0.0
+    - python >=3.9,<3.13
+    - trulens-otel-semconv >=2.0.0, <3.0.0
     - opentelemetry-api >=1.23.0
     - opentelemetry-sdk >=1.23.0
     - opentelemetry-proto >=1.23.0
@@ -44,17 +45,21 @@ requirements:
     - requests >=2.31.0,<3.0.0
     - packaging >=23.0
     - importlib-resources >=6.0.0
+    - wrapt >=1.17.0
   run_constrained:
     - tqdm >=4.2.0
     - openai >=1.0.0
     - httpx >=0.27
+    - trulens-feedback >=2.0.0
 
 test:
   imports:
-    - trulens.core
+    - {{ pyname }}
   commands:
     - pip check
+    - python -c 'import {{ pyname }}; assert {{ pyname }}.__version__ == "{{ version }}", "Installed version does not match expected version"'
   requires:
+    - python >=3.9,<3.13
     - pip
 
 about:

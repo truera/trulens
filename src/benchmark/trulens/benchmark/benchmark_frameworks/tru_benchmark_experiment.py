@@ -1,13 +1,17 @@
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
 import logging
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 from pydantic import BaseModel
-from trulens.apps import custom as custom_app
+from trulens.apps import app
 from trulens.core.feedback import feedback as core_feedback
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import select as select_schema
+
+if is_otel_tracing_enabled():
+    from trulens.core.feedback.selector import Selector as OTelSelector
 
 log = logging.getLogger(__name__)
 
@@ -78,19 +82,32 @@ class TruBenchmarkExperiment:
         self.feedback_fn = feedback_fn
         self.benchmark_params = benchmark_params
 
+        if is_otel_tracing_enabled():
+            # In OTEL mode, selectors are dictionaries mapping feedback function
+            # argument names to `Selector` objects. The feedback implementation
+            # function is `lambda x: x`, so the dictionary has one key, `'x'`.
+            # The value for this key is a selector that points to the return
+            # value of `run_score_generation_on_single_row`.
+            on_selector = {
+                "x": OTelSelector(
+                    function_name="TruBenchmarkExperiment.run_score_generation_on_single_row",
+                    function_attribute="return",
+                )
+            }
+        else:
+            on_selector = select_schema.Select.RecordCalls.run_score_generation_on_single_row.rets
+
         self.f_benchmark_metrics: List[core_feedback.Feedback] = [
             core_feedback.Feedback(
                 lambda x: x,
                 name=f"metric_{agg_func.__name__}",
             )
-            .on(
-                select_schema.Select.RecordCalls.run_score_generation_on_single_row.rets
-            )
+            .on(on_selector)
             .aggregate(agg_func)
             for agg_func in agg_funcs
         ]
 
-    @custom_app.instrument
+    @app.instrument
     def run_score_generation_on_single_row(
         self,
         feedback_fn: Callable,
@@ -143,7 +160,7 @@ class TruBenchmarkExperiment:
             traceback.print_exc()
             return float("nan")  # return NaN to indicate an invalid result
 
-    @custom_app.instrument
+    @app.instrument
     def __call__(
         self,
         ground_truth: pd.DataFrame,
@@ -166,7 +183,7 @@ class TruBenchmarkExperiment:
         meta_scores = []
         with ThreadPoolExecutor() as executor:
             future_to_index = {}
-            index_to_results = {}
+            index_to_results: Dict[int, List] = {}
 
             for index, row in ground_truth.iterrows():
                 if "expected_chunks" in row:
@@ -217,8 +234,8 @@ def create_benchmark_experiment_app(
     app_version: str,
     benchmark_experiment: TruBenchmarkExperiment,
     **kwargs,
-) -> custom_app.TruCustomApp:
-    """Create a Custom app for special use case: benchmarking feedback
+) -> app.TruApp:
+    """Create an app for special use case: benchmarking feedback
     functions.
 
     Args:
@@ -239,7 +256,7 @@ def create_benchmark_experiment_app(
             feedback functions.
     """
 
-    return custom_app.TruCustomApp(
+    return app.TruApp(
         benchmark_experiment,
         app_name=app_name,
         app_version=app_version,

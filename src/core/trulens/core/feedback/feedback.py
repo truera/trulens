@@ -1,3 +1,8 @@
+"""
+USER-FACING FEEDBACK CONTAINER: Runtime wrapper that users interact with to create feedback functions.
+Handles execution, parameter management (examples, criteria, scoring), and database integration.
+"""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -33,12 +38,15 @@ from rich.markdown import Markdown
 from rich.pretty import pretty_repr
 from trulens.core._utils import pycompat as pycompat_utils
 from trulens.core.feedback import endpoint as core_endpoint
+from trulens.core.feedback.selector import Selector
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import select as select_schema
 from trulens.core.schema import types as types_schema
+from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
@@ -48,6 +56,7 @@ from trulens.core.utils import threading as threading_utils
 
 if TYPE_CHECKING:
     from trulens.core import session as core_session
+
 
 # WARNING: HACK014: importing schema seems to break pydantic for unknown reason.
 # This happens even if you import it as something else.
@@ -141,6 +150,10 @@ class Feedback(feedback_schema.FeedbackDefinition):
             hugs.language_match # the implementation
         ).on_input_output() # selectors shorthand
         ```
+
+    Note:
+        The `enable_trace_compression` parameter is only applicable to feedback functions
+        that take 'trace' as an input parameter. It has no effect on other feedback functions.
     """
 
     imp: Optional[ImpCallable] = pydantic.Field(None, exclude=True)
@@ -164,6 +177,9 @@ class Feedback(feedback_schema.FeedbackDefinition):
     criteria: Optional[str] = pydantic.Field(None, exclude=True)
     """Criteria for the feedback function."""
 
+    additional_instructions: Optional[str] = pydantic.Field(None, exclude=True)
+    """Additional instructions for the feedback function."""
+
     min_score_val: Optional[int] = pydantic.Field(None, exclude=True)
     """Minimum score value for the feedback function."""
 
@@ -178,18 +194,38 @@ class Feedback(feedback_schema.FeedbackDefinition):
     )
     """Optional groundedness configuration parameters."""
 
+    enable_trace_compression: Optional[bool] = pydantic.Field(
+        None, exclude=True
+    )
+    """Whether to compress trace data to reduce token usage when sending traces to feedback functions.
+
+    When True, traces are compressed to preserve essential information while removing redundant data.
+    When False, full uncompressed traces are used. When None (default), the feedback function's
+    default behavior is used. This flag is only applicable to feedback functions that take
+    'trace' as an input parameter."""
+
     def __init__(
         self,
         imp: Optional[Callable] = None,
         agg: Optional[Callable] = None,
         examples: Optional[List[Tuple]] = None,
         criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: Optional[int] = 0,
         max_score_val: Optional[int] = 3,
         temperature: Optional[float] = 0.0,
         groundedness_configs: Optional[GroundednessConfigs] = None,
+        enable_trace_compression: Optional[bool] = None,
         **kwargs,
     ):
+        # Handle deprecated parameter name
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
+
         # imp is the python function/method while implementation is a serialized
         # json structure. Create the one that is missing based on the one that
         # is provided:
@@ -266,16 +302,26 @@ class Feedback(feedback_schema.FeedbackDefinition):
                 # loaded `agg` were specified.
                 agg = np.mean
 
+        # Pass custom parameters to parent class for serialization
+        if criteria is not None:
+            kwargs["criteria"] = criteria
+        if additional_instructions is not None:
+            kwargs["additional_instructions"] = additional_instructions
+        if examples is not None:
+            kwargs["examples"] = examples
+
         super().__init__(**kwargs)
 
         self.imp = imp
         self.agg = agg
         self.examples = examples
         self.criteria = criteria
+        self.additional_instructions = additional_instructions
         self.min_score_val = min_score_val
         self.max_score_val = max_score_val
         self.temperature = temperature
         self.groundedness_configs = groundedness_configs
+        self.enable_trace_compression = enable_trace_compression
 
         # Verify that `imp` expects the arguments specified in `selectors`:
         if self.imp is not None:
@@ -304,13 +350,34 @@ class Feedback(feedback_schema.FeedbackDefinition):
         Returns a new Feedback object with this specification.
         """
 
-        ret = Feedback.model_copy(self)
-
-        ret._default_selectors()
-
-        return ret
+        if self.imp is None:
+            raise ValueError(
+                "Feedback function implementation is required to determine default argument names."
+            )
+        sig: Signature = signature(self.imp)
+        num_remaining_parameters = len(
+            list(k for k in sig.parameters.keys() if k not in self.selectors)
+        )
+        if num_remaining_parameters == 0:
+            return self
+        if num_remaining_parameters == 1:
+            # If there is only one parameter left, we assume it is the output.
+            return self.on_output()
+        if num_remaining_parameters == 2:
+            # If there are two parameters left, we assume they are the input
+            # and output.
+            return self.on_input_output()
+        # If there are more than two parameters left, we cannot guess what to
+        # do.
+        raise RuntimeError(
+            f"Cannot determine default paths for feedback function arguments. "
+            f"The feedback function has signature {sig}."
+        )
 
     def _print_guessed_selector(self, par_name, par_path):
+        if is_otel_tracing_enabled():
+            return
+
         if par_path == select_schema.Select.RecordCalls:
             alias_info = " or `Select.RecordCalls`"
         elif par_path == select_schema.Select.RecordInput:
@@ -324,54 +391,6 @@ class Feedback(feedback_schema.FeedbackDefinition):
             f"{text_utils.UNICODE_CHECK} In {self.supplied_name if self.supplied_name is not None else self.name}, "
             f"input {par_name} will be set to {par_path}{alias_info} ."
         )
-
-    def _default_selectors(self):
-        """
-        Fill in default selectors for any remaining feedback function arguments.
-        """
-
-        assert (
-            self.imp is not None
-        ), "Feedback function implementation is required to determine default argument names."
-
-        sig: Signature = signature(self.imp)
-        par_names = list(
-            k for k in sig.parameters.keys() if k not in self.selectors
-        )
-
-        if len(par_names) == 1:
-            # A single argument remaining. Assume it is record output.
-            selectors = {par_names[0]: select_schema.Select.RecordOutput}
-            self._print_guessed_selector(
-                par_names[0], select_schema.Select.RecordOutput
-            )
-
-            # TODO: replace with on_output ?
-
-        elif len(par_names) == 2:
-            # Two arguments remaining. Assume they are record input and output
-            # respectively.
-            selectors = {
-                par_names[0]: select_schema.Select.RecordInput,
-                par_names[1]: select_schema.Select.RecordOutput,
-            }
-            self._print_guessed_selector(
-                par_names[0], select_schema.Select.RecordInput
-            )
-            self._print_guessed_selector(
-                par_names[1], select_schema.Select.RecordOutput
-            )
-
-            # TODO: replace on_input_output ?
-        else:
-            # Otherwise give up.
-
-            raise RuntimeError(
-                f"Cannot determine default paths for feedback function arguments. "
-                f"The feedback function has signature {sig}."
-            )
-
-        self.selectors = selectors
 
     @staticmethod
     def evaluate_deferred(
@@ -492,6 +511,8 @@ class Feedback(feedback_schema.FeedbackDefinition):
             kwargs["examples"] = self.examples
         if self.criteria is not None:
             kwargs["criteria"] = self.criteria
+        if self.additional_instructions is not None:
+            kwargs["additional_instructions"] = self.additional_instructions
         if self.min_score_val is not None:
             kwargs["min_score_val"] = self.min_score_val
         if self.max_score_val is not None:
@@ -500,6 +521,8 @@ class Feedback(feedback_schema.FeedbackDefinition):
             kwargs["temperature"] = self.temperature
         if self.groundedness_configs is not None:
             kwargs["groundedness_configs"] = self.groundedness_configs
+        if self.enable_trace_compression is not None:
+            kwargs["enable_trace_compression"] = self.enable_trace_compression
 
         # Filter out unexpected keyword arguments
         sig = signature(self.imp)
@@ -576,19 +599,16 @@ class Feedback(feedback_schema.FeedbackDefinition):
         Create a variant of `self` that will take in the main app input or
         "prompt" as input, sending it as an argument `arg` to implementation.
         """
-
         new_selectors = self.selectors.copy()
-
         if arg is None:
             arg = self._next_unselected_arg_name()
             self._print_guessed_selector(arg, select_schema.Select.RecordInput)
-
-        new_selectors[arg] = select_schema.Select.RecordInput
-
+        if is_otel_tracing_enabled():
+            new_selectors[arg] = Selector.select_record_input()
+        else:
+            new_selectors[arg] = select_schema.Select.RecordInput
         ret = self.model_copy()
-
         ret.selectors = new_selectors
-
         return ret
 
     # alias
@@ -599,23 +619,44 @@ class Feedback(feedback_schema.FeedbackDefinition):
         Create a variant of `self` that will take in the main app output or
         "response" as input, sending it as an argument `arg` to implementation.
         """
-
         new_selectors = self.selectors.copy()
-
         if arg is None:
             arg = self._next_unselected_arg_name()
             self._print_guessed_selector(arg, select_schema.Select.RecordOutput)
-
-        new_selectors[arg] = select_schema.Select.RecordOutput
-
+        if is_otel_tracing_enabled():
+            new_selectors[arg] = Selector.select_record_output()
+        else:
+            new_selectors[arg] = select_schema.Select.RecordOutput
         ret = self.model_copy()
-
         ret.selectors = new_selectors
-
         return ret
 
     # alias
     on_output = on_response
+
+    def on_context(
+        self,
+        arg: Optional[str] = None,
+        *,
+        collect_list: bool,
+    ):
+        """
+        Create a variant of `self` that will attempt to take in the context from
+        a context retrieval as input, sending it as an argument `arg` to
+        implementation.
+        """
+        if not is_otel_tracing_enabled():
+            raise RuntimeError(
+                "Context feedback functions are only supported in OTel mode!"
+            )
+        new_selectors = self.selectors.copy()
+        if arg is None:
+            arg = self._next_unselected_arg_name()
+            self._print_guessed_selector(arg, select_schema.Select.RecordOutput)
+        new_selectors[arg] = Selector.select_context(collect_list=collect_list)
+        ret = self.model_copy()
+        ret.selectors = new_selectors
+        return ret
 
     def on(self, *args, **kwargs) -> Feedback:
         """
@@ -624,6 +665,36 @@ class Feedback(feedback_schema.FeedbackDefinition):
         name guessed and those provided as kwargs get their name from the kwargs
         key.
         """
+        if is_otel_tracing_enabled():
+            if len(args) != 1 or len(kwargs) > 0:
+                raise ValueError(
+                    "OTEL mode only supports a single positional argument to `on`."
+                )
+            selectors = args[0]
+            if not isinstance(selectors, dict):
+                raise ValueError(
+                    f"OTEL mode only supports dictionary selectors, not {type(selectors)}!"
+                )
+            sig = signature(self.imp)
+            feedback_function_parameters = set(sig.parameters.keys())
+            new_selectors = self.selectors.copy()
+            for k, v in selectors.items():
+                if not isinstance(k, str):
+                    raise ValueError(
+                        f"OTEL mode only supports string keys, not {type(k)}!"
+                    )
+                if k not in feedback_function_parameters:
+                    raise ValueError(
+                        f"Selector key {k} not found in feedback function parameters {feedback_function_parameters}!"
+                    )
+                if not isinstance(v, Selector):
+                    raise ValueError(
+                        f"OTEL mode only supports Selector values, not {type(v)}!"
+                    )
+                new_selectors[k] = v
+            ret = self.model_copy()
+            ret.selectors = new_selectors
+            return ret
 
         new_selectors = self.selectors.copy()
 
@@ -662,6 +733,51 @@ class Feedback(feedback_schema.FeedbackDefinition):
             )
 
         return signature(self.imp)
+
+    def check_otel_selectors(self):
+        if self.imp is None:
+            raise RuntimeError(
+                "Cannot check selectors of feedback function without its definition."
+            )
+
+        sig = signature(self.imp)
+        function_args = list(sig.parameters.keys())
+        required_function_args = [
+            param_name
+            for param_name, param in sig.parameters.items()
+            if param.default == inspect.Parameter.empty
+            and param.kind
+            not in (
+                inspect.Parameter.VAR_KEYWORD,
+                inspect.Parameter.VAR_POSITIONAL,
+            )
+        ]
+        error_msg = ""
+        # Check for extra selectors. Technically, this shouldn't happen ever
+        # since we'd fail before this point, but we check it anyway in case
+        # things change.
+        extra_selectors = []
+        for selector in self.selectors:
+            if selector not in function_args:
+                extra_selectors.append(selector)
+        if extra_selectors:
+            error_msg += f"Feedback function `{self.name}` has selectors that are not in the function signature:\n"
+            error_msg += f"Extra selectors: {extra_selectors}\n"
+            error_msg += f"Function args: {function_args}\n"
+        # Check for missing selectors.
+        missing_selectors = []
+        for required_function_arg in required_function_args:
+            if required_function_arg not in self.selectors:
+                missing_selectors.append(required_function_arg)
+        if missing_selectors:
+            error_msg += (
+                f"Feedback function `{self.name}` has missing selectors:\n"
+            )
+            error_msg += f"Missing selectors: {missing_selectors}\n"
+            error_msg += f"Required function args: {required_function_args}\n"
+        # Throw error if there are any issues.
+        if error_msg:
+            raise ValueError(error_msg)
 
     def check_selectors(
         self,
@@ -945,13 +1061,13 @@ Feedback function signature:
 
             for ins in input_combinations:
                 try:
-                    result_and_meta, part_cost_tally = (
+                    result_and_meta, get_eval_cost = (
                         core_endpoint.Endpoint.track_all_costs_tally(
                             self, **ins
                         )
                     )
 
-                    cost += part_cost_tally()
+                    cost += get_eval_cost()
 
                 except SkipEval as e:
                     e.feedback = self
@@ -1278,7 +1394,10 @@ Feedback function signature:
 
 
 class SnowflakeFeedback(Feedback):
-    """Similar to the parent class Feedback except this ensures the feedback is run only on the Snowflake server."""
+    """[DEPRECATED] Similar to the parent class Feedback except this ensures the feedback is run only on the Snowflake server.
+
+    This class is deprecated and will be removed in the next major release. Please use Feedback or [Snowflake AI Observability](https://docs.snowflake.com/en/user-guide/snowflake-cortex/ai-observability/evaluate-ai-applications) instead.
+    """
 
     def __init__(
         self,
@@ -1286,6 +1405,11 @@ class SnowflakeFeedback(Feedback):
         agg: Optional[Callable] = None,
         **kwargs,
     ):
+        warnings.warn(
+            "SnowflakeFeedback is deprecated and will be removed in the next major release. Please use Feedback or [Snowflake AI Observability](https://docs.snowflake.com/en/user-guide/snowflake-cortex/ai-observability/evaluate-ai-applications) instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if (
             not hasattr(imp, "__self__")
             or str(type(imp.__self__))

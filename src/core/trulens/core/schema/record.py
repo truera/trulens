@@ -118,10 +118,9 @@ class Record(serial_utils.SerialModel, Hashable):
 
         return ret
 
-    model_config: ClassVar[dict] = {
-        # for `Future[FeedbackResult]`
-        "arbitrary_types_allowed": True
-    }
+    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
+        arbitrary_types_allowed=True
+    )
 
     record_id: types_schema.RecordID
     """Unique identifier for this record."""
@@ -250,7 +249,6 @@ class Record(serial_utils.SerialModel, Hashable):
         Returns:
             A mapping of feedback functions to their results.
         """
-
         if feedback_timeout is None:
             feedback_timeout = threading_utils.TP.DEBUG_TIMEOUT
 

@@ -197,9 +197,18 @@ def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
         try:
             v = v.fget(obj)
             return v
-
+        except NotImplementedError:
+            # some properties (like Chain._chain_type) deliberately raise
+            # NotImplementedError to signal "no saving" — just skip them
+            return None
+        except ImportError:
+            # Optional dependency properties (e.g., BaseChatModel.profile) may
+            # raise ImportError to hint at extra packages; skip gracefully.
+            return None
         except Exception as e:
-            raise RuntimeError(f"Failed to get property {k}.") from e
+            raise RuntimeError(
+                f"Failed to get property {k} due to {str(e)}"
+            ) from e
 
     else:
         return v
@@ -454,11 +463,6 @@ def task_factory_with_stack(loop, coro, *args, **kwargs) -> asyncio.Task:
     [stack_with_tasks][trulens.core.utils.python.stack_with_tasks] as one merged
     stack.
     """
-
-    if "context" in kwargs:
-        logger.warning(
-            "Context is being overwritten, TruLens may not be able to record traces."
-        )
 
     parent_task = asyncio.current_task(loop=loop)
     task = asyncio.tasks.Task(coro=coro, loop=loop, *args, **kwargs)
@@ -1161,7 +1165,7 @@ class SingletonPerNameMeta(type):
                 SingletonPerNameMeta, cls
             ).__call__(*args, **kwargs)
         elif args or kwargs:
-            logger.warning(
+            logger.debug(
                 "Singleton instance %s already exists for name = %s.",
                 cls.__name__,
                 name,

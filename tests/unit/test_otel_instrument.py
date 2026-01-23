@@ -1,16 +1,21 @@
 import asyncio
+from collections import defaultdict
 import gc
 from typing import Callable
 import unittest
 
 from opentelemetry import trace
+from opentelemetry.baggage import remove_baggage
+from opentelemetry.baggage import set_baggage
+import opentelemetry.context as context_api
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
 import pandas as pd
-from trulens.core.otel.instrument import _get_func_name
+from trulens.core.otel.instrument import get_func_name
 from trulens.core.otel.instrument import instrument
+from trulens.core.otel.recording import Recording
 from trulens.experimental.otel_tracing.core.session import (
     _set_up_tracer_provider,
 )
@@ -18,29 +23,57 @@ from trulens.otel.semconv.trace import SpanAttributes
 
 
 class TestOtelInstrument(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        instrument.enable_all_instrumentation()
+        return super().setUpClass()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        instrument.disable_all_instrumentation()
+        return super().tearDownClass()
+
     def setUp(self) -> None:
         # Set up OTEL tracing.
         self.exporter = InMemorySpanExporter()
         _set_up_tracer_provider()
         self.span_processor = SimpleSpanProcessor(self.exporter)
         trace.get_tracer_provider().add_span_processor(self.span_processor)
+        # We attach the following to the context so that any instrumented
+        # functions will believe they are part of a recording but not the record
+        # root.
+        self.tokens = []
+        self.tokens.append(
+            context_api.attach(
+                set_baggage("__trulens_recording__", Recording(None))
+            )
+        )
+        self.tokens.append(
+            context_api.attach(
+                set_baggage(SpanAttributes.RECORD_ID, "test_record_id")
+            )
+        )
         return super().setUp()
 
     def tearDown(self) -> None:
         self.span_processor.shutdown()
+        remove_baggage("__trulens_recording__")
+        remove_baggage(SpanAttributes.RECORD_ID)
+        for token in self.tokens[::-1]:
+            context_api.detach(token)
         return super().tearDown()
 
-    def test__get_func_name(self) -> None:
+    def test_get_func_name(self) -> None:
         self.assertEqual(
-            _get_func_name(lambda: None),
-            "tests.unit.test_otel_instrument.TestOtelInstrument.test__get_func_name.<locals>.<lambda>",
+            get_func_name(lambda: None),
+            "tests.unit.test_otel_instrument.TestOtelInstrument.test_get_func_name.<locals>.<lambda>",
         )
         self.assertEqual(
-            _get_func_name(self.test__get_func_name),
-            "tests.unit.test_otel_instrument.TestOtelInstrument.test__get_func_name",
+            get_func_name(self.test_get_func_name),
+            "tests.unit.test_otel_instrument.TestOtelInstrument.test_get_func_name",
         )
         self.assertEqual(
-            _get_func_name(pd.DataFrame.transpose),
+            get_func_name(pd.DataFrame.transpose),
             "pandas.core.frame.DataFrame.transpose",
         )
 
@@ -218,3 +251,29 @@ class TestOtelInstrument(unittest.TestCase):
             spans[1].attributes[f"{SpanAttributes.UNKNOWN.base}.best_babies"],
             ("Kojikun", "Nolan"),
         )
+
+    def test_disabled_instrumentation(self) -> None:
+        instrument_info = defaultdict(int)
+
+        # Set up instrumented function.
+        def fake_attributes(ret, exception, *args, **kwargs):
+            instrument_info["cnt"] += 1
+            instrument_info["ret"] = ret
+            return {}
+
+        @instrument(attributes=fake_attributes)
+        def my_function() -> str:
+            return "Kojikun is the best baby!"
+
+        # Run the function.
+        my_function()
+        self.assertEqual(instrument_info["cnt"], 1)
+        self.assertEqual(instrument_info["ret"], "Kojikun is the best baby!")
+        instrument.disable_all_instrumentation()
+        my_function()
+        self.assertEqual(instrument_info["cnt"], 1)
+        self.assertEqual(instrument_info["ret"], "Kojikun is the best baby!")
+        instrument.enable_all_instrumentation()
+        my_function()
+        self.assertEqual(instrument_info["cnt"], 2)
+        self.assertEqual(instrument_info["ret"], "Kojikun is the best baby!")

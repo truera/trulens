@@ -78,3 +78,14 @@ from trulens.core.utils.imports import format_import_errors
 with OptionalImports(messages=format_import_errors("some-optional-package")):
     import some_optional_package
 ```
+
+This makes it so that `some_optional_package` gets defined even if the import
+fails. However, if the user tries to use it, they will be presented with a
+helpful message explaining how to install the missing package.
+
+### When to Fail
+
+Imports from a general package that does not imply an optional package should
+not produce an error immediately. However, imports from packages that do imply
+the use of an optional dependency should fail immediately with a helpful
+message.

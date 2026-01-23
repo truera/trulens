@@ -1,0 +1,1261 @@
+"""
+Tests for the _get_records_and_feedback_otel method in SQLAlchemyDB.
+"""
+
+from datetime import datetime
+import json
+from pathlib import Path
+from typing import List
+
+import pandas as pd
+from trulens.apps.app import TruApp
+from trulens.core.database.sqlalchemy import SQLAlchemyDB
+from trulens.core.feedback import endpoint as core_endpoint
+from trulens.core.otel.instrument import instrument
+from trulens.core.schema import base as base_schema
+from trulens.core.schema.app import AppDefinition
+from trulens.core.schema.event import Event
+from trulens.core.session import TruSession
+from trulens.feedback.computer import RecordGraphNode
+from trulens.feedback.computer import _compute_feedback
+from trulens.otel.semconv.trace import SpanAttributes
+
+from tests.util.mock_otel_feedback_computation import (
+    all_retrieval_span_attributes,
+)
+from tests.util.mock_otel_feedback_computation import feedback_function
+from tests.util.otel_test_case import OtelTestCase
+
+try:
+    import tests.unit.test_otel_feedback_computation
+except ImportError:
+    pass
+
+
+class _TestApp:
+    @instrument()
+    def query(self, question: str) -> str:
+        # Call retrieval and generation methods
+        self.retrieve(question)
+        response = self.generate(question)
+        return response
+
+    @instrument(span_type=SpanAttributes.SpanType.RETRIEVAL)
+    def retrieve(self, question: str) -> List[str]:
+        # Simulate retrieval of documents
+        return ["Document 1", "Document 2"]
+
+    @instrument(span_type=SpanAttributes.SpanType.GENERATION)
+    def generate(self, question: str) -> str:
+        # Simulate generation of response
+        return f"Answer to: {question}"
+
+
+class TestOtelGetRecordsAndFeedback(OtelTestCase):
+    """Test the _get_records_and_feedback_otel method in SQLAlchemyDB."""
+
+    def setUp(self):
+        """Set up the test environment."""
+        super().setUp()
+        # OTEL tracing is enabled by via OtelTestCase
+
+        # Create a TruSession and reset the database
+        self.session = TruSession()
+        self.session.reset_database()
+
+        # Ensure connector is properly initialized
+        if self.session.connector is None:
+            raise RuntimeError("Session connector is None")
+
+        self.db: SQLAlchemyDB = self.session.connector.db
+
+        # Set app name and version
+        self.app_name = "test_app"
+        self.app_version = "1.0.0"
+        self.app_id = AppDefinition._compute_app_id(
+            self.app_name, self.app_version
+        )
+
+        # Define common test constants
+        # Constants for static RAG test
+        self.STATIC_START_TIME = "2025-04-11 10:19:55.993955"
+        self.STATIC_END_TIME = "2025-04-11 10:19:58.166175"
+        self.STATIC_RECORD_ID = "dd121e81-ccc2-449f-a3ba-e12467d0d671"
+        self.STATIC_QUESTION = "What is the best coffee?"
+        self.STATIC_ANSWER = (
+            "Hello! I'm happy to help. \n\nWhen it comes to the best coffee"
+        )
+        self.STATIC_APP_NAME = "coffee_rag"
+        self.STATIC_APP_VERSION = "openai"
+        self.STATIC_APP_ID = AppDefinition._compute_app_id(
+            self.STATIC_APP_NAME, self.STATIC_APP_VERSION
+        )
+        self.STATIC_NUM_EVENTS = 3
+
+        # Constants for static eval test
+        self.STATIC_FEEDBACK_NAME = "answer_relevance"
+        # NOTE: there are 2 total calls for the feedback column, see:
+        # test_otel_spans/{eval_span_1.json, eval_span_2.json}
+        self.STATIC_NUM_CALLS = 3
+        self.STATIC_COST_CURRENCY = "USD"
+
+        # Constants for generated tests
+        self.GEN_QUESTION = "What is the capital of France?"
+        self.GEN_ANSWER = "Answer to: What is the capital of France?"
+        self.GEN_FEEDBACK_NAME = "groundedness"
+        # NOTE: there are 3 calls: see tests.util.mock_otel_feedback_computation.feedback_function
+        self.GEN_NUM_CALLS = 4
+        self.GEN_COST_CURRENCY = "USD"
+
+    # Helper methods
+    def _verify_dataframe_structure(self, df, expected_num_rows=1):
+        """Verify the basic structure of the dataframe.
+
+        Args:
+            df: The dataframe to verify
+            expected_num_rows: Expected number of rows in the dataframe
+
+        Returns:
+            The first row of the dataframe if expected_num_rows > 0, otherwise None
+        """
+        # Verify that the dataframe is not empty if expected_num_rows > 0
+        if expected_num_rows > 0:
+            self.assertGreater(len(df), 0, "Dataframe should not be empty")
+        else:
+            self.assertEqual(len(df), 0, "Dataframe should be empty")
+
+        # Verify that the dataframe is appropriately grouping the spans by record_id
+        self.assertEqual(len(df), expected_num_rows)
+
+        return df.iloc[0] if expected_num_rows > 0 and len(df) > 0 else None
+
+    def _verify_record_information(
+        self,
+        row,
+        app_name,
+        app_version,
+        input_text,
+        output_text,
+        expected_num_events=None,
+    ):
+        """Verify the basic record information in a row.
+
+        Args:
+            row: The row to verify (can be None)
+            app_name: Expected app name
+            app_version: Expected app version
+            input_text: Expected input text
+            output_text: Expected output text
+            expected_num_events: Expected number of events (if None, not verified)
+        """
+        if row is None:
+            return
+
+        # Verify the basic record information
+        self.assertEqual(row["app_name"], app_name)
+        self.assertEqual(row["app_version"], app_version)
+        # (hacky): uses startswith to circumvent typing out long inputs/outputs
+        self.assertTrue(row["input"].startswith(input_text))
+        self.assertTrue(row["output"].startswith(output_text))
+
+        # Verify that the dataframe is appropriately grouping the spans by record_id
+        if expected_num_events is not None:
+            self.assertEqual(row["num_events"], expected_num_events)
+
+    def _verify_json_fields(
+        self, row, app_id, input_text, output_text, record_id=None
+    ):
+        """Verify the JSON fields in a row.
+
+        Args:
+            row: The row to verify (can be None)
+            app_id: Expected app ID
+            input_text: Expected input text
+            output_text: Expected output text
+            record_id: Expected record ID (if None, not verified)
+        """
+        if row is None:
+            return
+
+        # Verify that the record_json, cost_json, and perf_json are correctly created
+        self.assertIsNotNone(row["record_json"])
+        self.assertIsNotNone(row["cost_json"])
+        self.assertIsNotNone(row["perf_json"])
+
+        # Verify that the record_json contains the expected fields
+        record_json = row["record_json"]
+        self.assertEqual(record_json["app_id"], app_id)
+        # Use startswith to handle potential variations in the text
+        self.assertTrue(record_json["input"].startswith(input_text))
+        self.assertTrue(record_json["output"].startswith(output_text))
+
+        if record_id is not None:
+            self.assertEqual(record_json["record_id"], record_id)
+
+    def _verify_feedback_columns(
+        self,
+        feedback_cols,
+        df,
+        feedback_name,
+        expected_num_calls,
+        cost_currency="USD",
+    ):
+        """Verify the feedback columns in the dataframe.
+
+        Args:
+            feedback_cols: The feedback column names
+            df: The dataframe to verify
+            feedback_name: Expected feedback name
+            expected_num_calls: Expected number of calls
+            cost_currency: Expected cost currency
+        """
+        # Verify feedback columns are properly created
+        self.assertEqual(len(feedback_cols), 1)
+        self.assertEqual(feedback_cols[0], feedback_name)
+
+        # Assert that all expected feedback columns exist
+        self.assertIn(f"{feedback_name}_calls", df.columns)
+        self.assertEqual(
+            len(df[f"{feedback_name}_calls"][0]), expected_num_calls
+        )
+        self.assertIn(
+            f"{feedback_name} feedback cost in {cost_currency}",
+            df.columns,
+        )
+        self.assertIn(f"{feedback_name} direction", df.columns)
+
+    def _load_events_from_json(self, event_files):
+        """Load events from JSON files.
+
+        Args:
+            event_files: List of event file names to load
+
+        Returns:
+            List of Event objects
+        """
+        data_dir = Path(__file__).parent / "data" / "test_otel_spans"
+        events = []
+
+        for file_name in event_files:
+            with open(data_dir / file_name, "r") as f:
+                event_data = json.load(f)
+                event = Event.model_validate(event_data)
+                events.append(event)
+
+        return events
+
+    def _create_event_from_template(
+        self,
+        event_id: str,
+        record_id: str,
+        app_name: str,
+        app_version: str,
+        app_id: str,
+        start_timestamp: str,
+        timestamp: str,
+        span_type: str = "record_root",
+        query: str = "What is the best coffee?",
+        return_value: List[str] = None,
+    ) -> Event:
+        """Create an event by filling in a template span file.
+
+        Args:
+            event_id: Unique identifier for the event
+            record_id: Record ID associated with the event
+            app_name: Name of the app
+            app_version: Version of the app
+            app_id: ID of the app
+            start_timestamp: Start timestamp of the event
+            timestamp: End timestamp of the event
+            span_type: Type of span (default: "record_root")
+            query: Query text (default: "What is the best coffee?")
+            return_value: List of return values (default: None)
+
+        Returns:
+            An Event object with the specified attributes
+        """
+        if return_value is None:
+            return_value = ["Sample response"]
+
+        # Load template file
+        template_path = (
+            Path(__file__).parent
+            / "data"
+            / "test_otel_spans"
+            / "template_record_root_span.json"
+        )
+        with open(template_path, "r") as f:
+            template = f.read()
+
+        # Fill in template values
+        event_data = (
+            template.replace("{{event_id}}", event_id)
+            .replace("{{app_name}}", app_name)
+            .replace("{{app_version}}", app_version)
+            .replace("{{app_id}}", app_id)
+            .replace("{{query}}", query)
+            .replace("{{return_value}}", json.dumps(return_value))
+            .replace("{{record_id}}", record_id)
+            .replace("{{span_type}}", span_type)
+            .replace("{{start_timestamp}}", start_timestamp)
+            .replace("{{timestamp}}", timestamp)
+            .replace("{{span_id}}", f"span_{record_id}")
+        )
+
+        event = Event.model_validate(json.loads(event_data))
+        return event
+
+    # Tests
+    def test_get_records_and_feedback_otel_empty(self):
+        """Test _get_records_and_feedback_otel with an empty database."""
+        records_df, feedback_col_names = (
+            self.db._get_records_and_feedback_otel()
+        )
+
+        self.assertIsInstance(records_df, pd.DataFrame)
+        self.assertEqual(len(records_df), 0)
+        self.assertEqual(feedback_col_names, [])
+
+    def test_get_records_and_feedback_otel_static_rag_spans(self):
+        """Test that _get_records_and_feedback_otel correctly processes example RAG spans.
+
+        This test uses example RAG spans from JSON files in tests/unit/data/test_otel_spans
+        to verify the derived records dataframe and feedback columns are created correctly.
+        """
+        # Load example spans from test_otel_spans
+        event_files = [
+            "record_root_span.json",
+            "generation_span.json",
+            "retrieval_span.json",
+        ]
+        events = self._load_events_from_json(event_files)
+
+        # Insert Events into the database
+        for event in events:
+            self.db.insert_event(event)
+
+        df, feedback_cols = self.db._get_records_and_feedback_otel()
+
+        # Verify there are no feedback columns (this is a non-EVAL RAG scenario)
+        self.assertEqual(len(feedback_cols), 0)
+
+        # Verify dataframe structure
+        row = self._verify_dataframe_structure(df)
+
+        # Verify record information
+        self._verify_record_information(
+            row,
+            self.STATIC_APP_NAME,
+            self.STATIC_APP_VERSION,
+            self.STATIC_QUESTION,
+            self.STATIC_ANSWER,
+            self.STATIC_NUM_EVENTS,
+        )
+
+        # Verify that total_tokens is the sum from all non-eval spans and eval_cost is zero
+        if row is not None:
+            # Find retrieval and generation spans by their span_type
+            retrieval_event = next(
+                event
+                for event in events
+                if event.record_attributes.get(SpanAttributes.SPAN_TYPE)
+                == SpanAttributes.SpanType.RETRIEVAL
+            )
+            generation_event = next(
+                event
+                for event in events
+                if event.record_attributes.get(SpanAttributes.SPAN_TYPE)
+                == SpanAttributes.SpanType.GENERATION
+            )
+
+            retrieval_tokens = retrieval_event.record_attributes[
+                SpanAttributes.COST.NUM_TOKENS
+            ]
+            generation_tokens = generation_event.record_attributes[
+                SpanAttributes.COST.NUM_TOKENS
+            ]
+            expected_total_tokens = retrieval_tokens + generation_tokens
+            self.assertEqual(
+                row["total_tokens"],
+                expected_total_tokens,
+                "Total tokens should be sum of tokens from all spans",
+            )
+
+            retrieval_cost = retrieval_event.record_attributes[
+                SpanAttributes.COST.COST
+            ]
+            generation_cost = generation_event.record_attributes[
+                SpanAttributes.COST.COST
+            ]
+            expected_total_cost = retrieval_cost + generation_cost
+            self.assertEqual(
+                row["total_cost"],
+                expected_total_cost,
+                msg="Total cost should be sum of costs from non-eval spans",
+            )
+
+            # No eval spans in this test, eval_cost should be 0
+            self.assertIn("eval_cost", df.columns)
+            self.assertEqual(row["eval_cost"], 0.0)
+
+            # Verify the timestamp and latency
+            self.assertEqual(
+                row["ts"].strftime("%Y-%m-%d %H:%M:%S.%f"),
+                self.STATIC_START_TIME,
+            )
+
+            # Calculate expected latency in seconds
+            start_time = datetime.fromisoformat(self.STATIC_START_TIME)
+            end_time = datetime.fromisoformat(self.STATIC_END_TIME)
+            expected_latency = (end_time - start_time).total_seconds()
+            self.assertEqual(row["latency"], expected_latency)
+
+            # Verify JSON fields
+            self._verify_json_fields(
+                row,
+                self.STATIC_APP_ID,
+                self.STATIC_QUESTION,
+                self.STATIC_ANSWER,
+                self.STATIC_RECORD_ID,
+            )
+
+            # Verify that the cost_json contains the expected fields
+            cost_json = row["cost_json"]
+            self.assertEqual(cost_json["n_tokens"], expected_total_tokens)
+            self.assertEqual(cost_json["cost"], expected_total_cost)
+
+            # Verify that the perf_json contains the expected fields
+            perf_json = row["perf_json"]
+            self.assertEqual(
+                perf_json["start_time"].strftime("%Y-%m-%d %H:%M:%S.%f"),
+                self.STATIC_START_TIME,
+            )
+            self.assertEqual(
+                perf_json["end_time"].strftime("%Y-%m-%d %H:%M:%S.%f"),
+                self.STATIC_END_TIME,
+            )
+
+    def test_get_records_and_feedback_otel_static_eval_spans(self):
+        """Test that _get_records_and_feedback_otel correctly processes eval spans.
+
+        This test uses example RAG and eval spans from JSON files in tests/unit/data/test_otel_spans
+        to verify the derived records dataframe and feedback columns are created correctly.
+        """
+        # Load example spans from test_otel_spans
+        event_files = [
+            "record_root_span.json",
+            "generation_span.json",
+            "retrieval_span.json",
+            "eval_root_span.json",
+            "eval_span_1.json",
+            "eval_span_2.json",
+        ]
+        events = self._load_events_from_json(event_files)
+
+        # Insert Events into the database
+        for event in events:
+            self.db.insert_event(event)
+
+        df, feedback_cols = self.db._get_records_and_feedback_otel()
+
+        # Verify feedback columns
+        self._verify_feedback_columns(
+            feedback_cols,
+            df,
+            self.STATIC_FEEDBACK_NAME,
+            self.STATIC_NUM_CALLS,
+            self.STATIC_COST_CURRENCY,
+        )
+
+        # Verify eval_cost vs total_cost separation using the loaded events
+        row = df.iloc[0]
+        # Sum costs by span type
+        eval_cost_sum = 0.0
+        non_eval_cost_sum = 0.0
+        for ev in events:
+            span_type = ev.record_attributes.get(SpanAttributes.SPAN_TYPE)
+            cost_val = ev.record_attributes.get(SpanAttributes.COST.COST, 0.0)
+            if span_type in [
+                SpanAttributes.SpanType.EVAL,
+                SpanAttributes.SpanType.EVAL_ROOT,
+            ]:
+                eval_cost_sum += cost_val
+            else:
+                non_eval_cost_sum += cost_val
+
+        self.assertIn("eval_cost", df.columns)
+        self.assertAlmostEqual(row["eval_cost"], eval_cost_sum)
+        self.assertAlmostEqual(row["total_cost"], non_eval_cost_sum)
+
+    def test_get_records_and_feedback_otel_gen_rag_spans(self):
+        """Test that _get_records_and_feedback_otel correctly processes RAG spans generated by an app.
+
+        This test creates a simple app with record root, retrieval, and generation spans,
+        invokes it, and then verifies that the method correctly processes the spans.
+        """
+        # Create app
+        app = _TestApp()
+        tru_app = TruApp(
+            app,
+            app_name=self.app_name,
+            app_version=self.app_version,
+            app_id=self.app_id,
+            main_method=app.query,
+        )
+
+        # Record and invoke
+        tru_app.instrumented_invoke_main_method(
+            run_name="test run",
+            input_id="42",
+            main_method_kwargs={"question": self.GEN_QUESTION},
+        )
+
+        # Force flush to ensure all spans are written to the database
+        self.session.force_flush()
+
+        # Get records and feedback
+        df, feedback_cols = self.db._get_records_and_feedback_otel()
+
+        # Verify there are no feedback columns (this is a non-EVAL RAG scenario)
+        self.assertEqual(len(feedback_cols), 0)
+
+        # Verify dataframe structure
+        row = self._verify_dataframe_structure(df)
+
+        # Verify record information
+        self._verify_record_information(
+            row,
+            self.app_name,
+            self.app_version,
+            self.GEN_QUESTION,
+            self.GEN_ANSWER,
+            self.STATIC_NUM_EVENTS,
+        )
+
+        # Verify that the app_id is correctly computed
+        if row is not None:
+            self.assertEqual(row["app_id"], self.app_id)
+
+            # Verify JSON fields
+            self._verify_json_fields(
+                row, self.app_id, self.GEN_QUESTION, self.GEN_ANSWER
+            )
+
+            # Verify eval_cost is present and zero in non-eval flow
+            self.assertIn("eval_cost", df.columns)
+            self.assertEqual(row["eval_cost"], 0.0)
+
+    def test_get_records_and_feedback_otel_gen_eval_spans(self):
+        """Test that _get_records_and_feedback_otel correctly processes eval spans generated by an app.
+
+        This test creates a simple app with record root, retrieval, generation, and eval spans,
+        invokes it, and then verifies that the method correctly processes the spans.
+        """
+        # Create app
+        app = _TestApp()
+        tru_app = TruApp(
+            app,
+            app_name=self.app_name,
+            app_version=self.app_version,
+            app_id=self.app_id,
+            main_method=app.query,
+        )
+
+        # Record and invoke the query method
+        tru_app.instrumented_invoke_main_method(
+            run_name="test run",
+            input_id="42",
+            main_method_kwargs={"question": self.GEN_QUESTION},
+        )
+        self.session.force_flush()
+
+        events = self._get_events()
+        spans = tests.unit.test_otel_feedback_computation._convert_events_to_MinimalSpanInfos(
+            events
+        )
+        record_root = RecordGraphNode.build_graph(spans)
+        from trulens.core.feedback import Feedback
+
+        f_gen = Feedback(
+            feedback_function,
+            name=self.GEN_FEEDBACK_NAME,
+            higher_is_better=True,
+        )
+        _compute_feedback(
+            record_root,
+            self.GEN_FEEDBACK_NAME,
+            f_gen,
+            True,
+            all_retrieval_span_attributes,
+        )
+        self.session.force_flush()
+
+        # Get records and feedback
+        df, feedback_cols = self.db._get_records_and_feedback_otel()
+
+        # Verify dataframe structure
+        row = self._verify_dataframe_structure(df)
+
+        # Verify record information
+        self._verify_record_information(
+            row,
+            self.app_name,
+            self.app_version,
+            self.GEN_QUESTION,
+            self.GEN_ANSWER,
+        )
+
+        # Verify that the app_id is correctly computed
+        if row is not None:
+            self.assertEqual(row["app_id"], self.app_id)
+
+            # Verify JSON fields
+            self._verify_json_fields(
+                row, self.app_id, self.GEN_QUESTION, self.GEN_ANSWER
+            )
+
+            # Verify feedback columns
+            self._verify_feedback_columns(
+                feedback_cols,
+                df,
+                self.GEN_FEEDBACK_NAME,
+                self.GEN_NUM_CALLS,
+                self.GEN_COST_CURRENCY,
+            )
+
+            # Verify eval_cost vs total_cost separation using emitted events
+            events_after = self._get_events()
+            eval_cost_sum = 0.0
+            non_eval_cost_sum = 0.0
+            for ev in events_after.itertuples(index=False):
+                attrs = ev.record_attributes
+                span_type = attrs.get(SpanAttributes.SPAN_TYPE)
+                cost_val = attrs.get(SpanAttributes.COST.COST, 0.0)
+                if span_type in [
+                    SpanAttributes.SpanType.EVAL,
+                    SpanAttributes.SpanType.EVAL_ROOT,
+                ]:
+                    eval_cost_sum += cost_val
+                else:
+                    non_eval_cost_sum += cost_val
+
+            self.assertIn("eval_cost", df.columns)
+            # eval_cost may be zero if feedbacks do not call providers
+            self.assertAlmostEqual(row["eval_cost"], eval_cost_sum)
+            self.assertAlmostEqual(row["total_cost"], non_eval_cost_sum)
+
+    def test_eval_cost_tracked_via_tally(self):
+        """Ensure eval_cost is actually tracked from cost tally during feedback execution."""
+        # Create app and record one run
+        app = _TestApp()
+        tru_app = TruApp(
+            app,
+            app_name=self.app_name,
+            app_version=self.app_version,
+            app_id=self.app_id,
+            main_method=app.query,
+        )
+
+        tru_app.instrumented_invoke_main_method(
+            run_name="test run",
+            input_id="42",
+            main_method_kwargs={"question": self.GEN_QUESTION},
+        )
+        self.session.force_flush()
+
+        # Monkeypatch Endpoint.track_all_costs_tally to return a non-zero cost
+        original = core_endpoint.Endpoint.track_all_costs_tally
+
+        def fake_track_all_costs_tally(__func, *args, **kwargs):
+            # Call through to get actual result
+            result = __func(*args, **kwargs)
+
+            def thunk():
+                return base_schema.Cost(
+                    cost=1.23,
+                    cost_currency="USD",
+                    n_tokens=42,
+                    n_prompt_tokens=20,
+                    n_completion_tokens=22,
+                )
+
+            return result, thunk
+
+        try:
+            core_endpoint.Endpoint.track_all_costs_tally = staticmethod(
+                fake_track_all_costs_tally
+            )
+
+            # Compute feedback which should record cost attributes on EVAL_ROOT
+            from trulens.core.feedback import Feedback
+
+            f_gen = Feedback(
+                feedback_function,
+                name=self.GEN_FEEDBACK_NAME,
+                higher_is_better=True,
+            )
+
+            events = self._get_events()
+            spans = tests.unit.test_otel_feedback_computation._convert_events_to_MinimalSpanInfos(
+                events
+            )
+            record_root = RecordGraphNode.build_graph(spans)
+
+            _compute_feedback(
+                record_root,
+                self.GEN_FEEDBACK_NAME,
+                f_gen,
+                True,
+                all_retrieval_span_attributes,
+            )
+            self.session.force_flush()
+
+            # Validate that eval_cost is tracked and equals our fake cost
+            df, _ = self.db._get_records_and_feedback_otel()
+            row = self._verify_dataframe_structure(df)
+            self.assertIn("eval_cost", df.columns)
+            self.assertAlmostEqual(row["eval_cost"], 1.23)
+
+            # Also ensure total_cost excludes eval cost (remains from non-eval spans only)
+            # and that EVAL_ROOT span contains token/cost attributes
+            events_after = self._get_events()
+            has_eval_root_cost_attrs = False
+            for ev in events_after.itertuples(index=False):
+                attrs = ev.record_attributes
+                if (
+                    attrs.get(SpanAttributes.SPAN_TYPE)
+                    == SpanAttributes.SpanType.EVAL_ROOT
+                ):
+                    # Confirm cost attributes were recorded
+                    self.assertEqual(
+                        attrs.get(SpanAttributes.COST.CURRENCY), "USD"
+                    )
+                    self.assertEqual(attrs.get(SpanAttributes.COST.COST), 1.23)
+                    self.assertEqual(
+                        attrs.get(SpanAttributes.COST.NUM_TOKENS), 42
+                    )
+                    has_eval_root_cost_attrs = True
+                    break
+            self.assertTrue(
+                has_eval_root_cost_attrs,
+                msg="EVAL_ROOT span missing cost attributes",
+            )
+        finally:
+            # Restore original method
+            core_endpoint.Endpoint.track_all_costs_tally = original
+
+    def test_get_paginated_record_ids_otel(self):
+        """Test that _get_paginated_record_ids_otel correctly paginates and filters record IDs."""
+        # Load example spans from test_otel_spans
+        event_files = [
+            "record_root_span.json",
+            "generation_span.json",
+            "retrieval_span.json",
+        ]
+        events = self._load_events_from_json(event_files)
+
+        # Create a second app with multiple records
+        second_app_name = "second_app"
+        second_app_version = "1.0.0"
+        second_record_ids = [
+            "second_record_1",
+            "second_record_2",
+            "second_record_3",
+        ]
+
+        # Create events for the second app using the template
+        for i in range(len(second_record_ids)):
+            event = self._create_event_from_template(
+                event_id=f"event_{second_record_ids[i]}",
+                record_id=second_record_ids[i],
+                app_name=second_app_name,
+                app_version=second_app_version,
+                app_id=AppDefinition._compute_app_id(
+                    second_app_name, second_app_version
+                ),
+                start_timestamp=f"2025-04-11 10:19:5{i}.993997",
+                timestamp="2025-04-11 10:20:30.50",
+            )
+            events.append(event)
+
+        # Insert all Events into the database
+        for event in events:
+            self.db.insert_event(event)
+
+        with self.db.session.begin() as session:
+            # Test without pagination or filtering - should get all record IDs
+            stmt = self.db._get_paginated_record_ids_otel()
+            results = session.execute(stmt).all()
+            self.assertEqual(
+                len(results), 4
+            )  # 1 from first app + 3 from second app
+            # Verify all record IDs are present
+            record_ids = {r.record_id for r in results}
+            self.assertEqual(
+                record_ids, {self.STATIC_RECORD_ID, *second_record_ids}
+            )
+
+            # Test with first app_name filtering
+            stmt = self.db._get_paginated_record_ids_otel(
+                app_name=self.STATIC_APP_NAME
+            )
+            results = session.execute(stmt).all()
+            self.assertEqual(
+                len(results), 1
+            )  # Should get only first app's record
+            self.assertEqual(results[0].record_id, self.STATIC_RECORD_ID)
+
+            # Test with second app_name filtering
+            stmt = self.db._get_paginated_record_ids_otel(
+                app_name=second_app_name
+            )
+            results = session.execute(stmt).all()
+            self.assertEqual(
+                len(results), 3
+            )  # Should get all second app's records
+            record_ids = {r.record_id for r in results}
+            self.assertEqual(record_ids, set(second_record_ids))
+
+            # Test with non-matching app_name
+            stmt = self.db._get_paginated_record_ids_otel(
+                app_name="non_existent_app"
+            )
+            results = session.execute(stmt).all()
+            self.assertEqual(len(results), 0)  # Should get no results
+
+            # Test with limit
+            stmt = self.db._get_paginated_record_ids_otel(limit=2)
+            results = session.execute(stmt).all()
+            self.assertEqual(len(results), 2)  # Should respect limit
+
+            # Test with offset
+            stmt = self.db._get_paginated_record_ids_otel(offset=2)
+            results = session.execute(stmt).all()
+            self.assertEqual(len(results), 2)  # Should skip first 2 records
+
+            # Test with both limit and offset
+            stmt = self.db._get_paginated_record_ids_otel(limit=2, offset=1)
+            results = session.execute(stmt).all()
+            self.assertEqual(
+                len(results), 2
+            )  # Should get 2 records after skipping 1
+
+            # Test ordering by timestamp
+            stmt = self.db._get_paginated_record_ids_otel()
+            results = session.execute(stmt).all()
+            # Verify that results are ordered by start_timestamp in ascending order
+            timestamps = [r.min_start_timestamp for r in results]
+            self.assertEqual(timestamps, sorted(timestamps))
+
+    def test_get_paginated_record_ids_otel_without_record_id(self):
+        """Test that _get_paginated_record_ids_otel handles events without record IDs correctly."""
+        # Create an event without a record_id
+        empty_record_id_event = self._create_event_from_template(
+            event_id="event_without_record_id",
+            record_id="",  # Empty record_id
+            app_name=self.app_name,
+            app_version=self.app_version,
+            app_id=self.app_id,
+            start_timestamp="2025-04-11 10:19:55.993997",
+            timestamp="2025-04-11 10:19:56.356310",
+        )
+        self.db.insert_event(empty_record_id_event)
+
+        # Create a normal event with a record_id
+        normal_event = self._create_event_from_template(
+            event_id="normal_event",
+            record_id="normal_record_id",
+            app_name=self.app_name,
+            app_version=self.app_version,
+            app_id=self.app_id,
+            start_timestamp="2025-04-11 10:19:55.993997",
+            timestamp="2025-04-11 10:19:56.356310",
+        )
+        self.db.insert_event(normal_event)
+
+        with self.db.session.begin() as session:
+            stmt = self.db._get_paginated_record_ids_otel()
+            results = session.execute(stmt).all()
+
+            # Should only return the event with a valid record_id
+            self.assertEqual(len(results), 1)
+            self.assertEqual(results[0].record_id, "normal_record_id")
+
+    def test_get_records_and_feedback_otel_pagination_with_app_ids(self):
+        """Test that _get_records_and_feedback_otel correctly handles pagination with app_id filtering.
+
+        This test verifies that when filtering by app_ids after retrieving records,
+        we may get fewer records than requested by the limit parameter.
+        """
+        # Create multiple apps with different app_ids and versions
+        app1_name = "app1"
+        app1_version = "1.0.0"
+        app2_name = "app2"
+        app2_version = "1.0.0"
+        app3_name = "app1"  # Same name as app1 but different version
+        app3_version = "2.0.0"
+
+        # Create events for app1
+        app1_events = []
+        for i in range(3):  # Create 3 records for app1
+            event = self._create_event_from_template(
+                event_id=f"app1_event_{i}",
+                record_id=f"app1_record_{i}",
+                app_name=app1_name,
+                app_version=app1_version,
+                app_id=AppDefinition._compute_app_id(app1_name, app1_version),
+                start_timestamp=f"2025-04-11 10:19:5{i}.993997",
+                timestamp="2025-04-11 10:20:30.50",
+            )
+            # Ensure app name and version are correctly set in record_attributes
+            event.record_attributes["ai.observability.app_name"] = app1_name
+            event.record_attributes["ai.observability.app_version"] = (
+                app1_version
+            )
+            app1_events.append(event)
+
+        # Create events for app2
+        app2_events = []
+        for i in range(3):  # Create 3 records for app2
+            event = self._create_event_from_template(
+                event_id=f"app2_event_{i}",
+                record_id=f"app2_record_{i}",
+                app_name=app2_name,
+                app_version=app2_version,
+                app_id=AppDefinition._compute_app_id(app2_name, app2_version),
+                start_timestamp=f"2025-04-11 10:19:5{i + 3}.993997",
+                timestamp="2025-04-11 10:20:30.50",
+            )
+            # Ensure app name and version are correctly set in record_attributes
+            event.record_attributes["ai.observability.app_name"] = app2_name
+            event.record_attributes["ai.observability.app_version"] = (
+                app2_version
+            )
+            app2_events.append(event)
+
+        # Create events for app3 (same name as app1, different version)
+        app3_events = []
+        for i in range(2):  # Create 2 records for app3
+            event = self._create_event_from_template(
+                event_id=f"app3_event_{i}",
+                record_id=f"app3_record_{i}",
+                app_name=app3_name,
+                app_version=app3_version,
+                app_id=AppDefinition._compute_app_id(app3_name, app3_version),
+                start_timestamp=f"2025-04-11 10:19:5{i + 6}.993997",
+                timestamp="2025-04-11 10:20:30.50",
+            )
+            # Ensure app name and version are correctly set in record_attributes
+            event.record_attributes["ai.observability.app_name"] = app3_name
+            event.record_attributes["ai.observability.app_version"] = (
+                app3_version
+            )
+            app3_events.append(event)
+
+        # Insert all events
+        for event in app1_events + app2_events + app3_events:
+            self.db.insert_event(event)
+
+        # Compute app_ids
+        app1_id = AppDefinition._compute_app_id(app1_name, app1_version)
+        app2_id = AppDefinition._compute_app_id(app2_name, app2_version)
+        app3_id = AppDefinition._compute_app_id(app3_name, app3_version)
+
+        # Test 1: Get all records without filtering
+        df, _ = self.db._get_records_and_feedback_otel(limit=10)
+        self.assertEqual(len(df), 8)  # Should get all 8 records
+
+        # Test 2: Filter by app1_id with limit=4
+        df, _ = self.db._get_records_and_feedback_otel(
+            app_ids=[app1_id], limit=4
+        )
+        self.assertEqual(
+            len(df), 3
+        )  # Should get only 3 records (all from app1)
+
+        # Test 3: Filter by app2_id with limit=4
+        df, _ = self.db._get_records_and_feedback_otel(
+            app_ids=[app2_id], limit=4
+        )
+        self.assertEqual(
+            len(df), 3
+        )  # Should get only 3 records (all from app2)
+
+        # Test 4: Filter by both app1_id and app2_id with limit=4
+        df, _ = self.db._get_records_and_feedback_otel(
+            app_ids=[app1_id, app2_id], limit=4
+        )
+        self.assertEqual(
+            len(df), 4
+        )  # Should get 4 records (3 from app1, 1 from app2)
+
+        # Test 5: Filter by non-existent app_id
+        df, _ = self.db._get_records_and_feedback_otel(
+            app_ids=["non_existent_app_id"], limit=4
+        )
+        self.assertEqual(len(df), 0)  # Should get 0 records
+
+        # Test 6: Verify ordering is maintained
+        df, _ = self.db._get_records_and_feedback_otel(limit=8)
+        timestamps = df["ts"].tolist()
+        self.assertEqual(
+            timestamps, sorted(timestamps)
+        )  # Should be ordered by timestamp
+
+        # Test 7: Verify offset works correctly with app_id filtering
+        df, _ = self.db._get_records_and_feedback_otel(
+            app_ids=[app1_id], limit=2, offset=1
+        )
+        self.assertEqual(len(df), 2)  # Should get 2 records from app1
+        self.assertEqual(
+            df.iloc[0]["record_id"], "app1_record_1"
+        )  # Should skip first record
+        self.assertEqual(
+            df.iloc[1]["record_id"], "app1_record_2"
+        )  # Should get second and third records
+
+        # Test 8: Combine app_name and app_version filtering
+        df, _ = self.db._get_records_and_feedback_otel(
+            app_name=app1_name, app_version=app1_version
+        )
+        self.assertEqual(len(df), 3)
+        self.assertTrue(
+            all(row["app_id"] == app1_id for _, row in df.iterrows())
+        )
+
+        df, _ = self.db._get_records_and_feedback_otel(
+            app_name=app3_name, app_version=app3_version
+        )
+        self.assertEqual(len(df), 2)
+        self.assertTrue(
+            all(row["app_id"] == app3_id for _, row in df.iterrows())
+        )
+
+    def test_get_records_and_feedback_otel_kwargs_extraction(self):
+        """Test that _get_records_and_feedback_otel correctly extracts kwargs from span attributes.
+
+        This test verifies that the kwargs prefix logic correctly extracts individual
+        kwargs parameters from span attributes that use the SpanAttributes.CALL.KWARGS prefix.
+        """
+        # Create a test event with multiple kwargs attributes
+        event_id = "test_kwargs_event"
+        record_id = "test_kwargs_record"
+        start_time = "2025-04-11 10:19:55.993955"
+        end_time = "2025-04-11 10:19:58.166175"
+
+        # Create a custom event with multiple kwargs attributes
+        event_data = {
+            "event_id": event_id,
+            "record": {
+                "kind": 1,
+                "name": "__main__.TestApp.query",
+                "parent_span_id": "",
+                "status": "STATUS_CODE_UNSET",
+            },
+            "record_attributes": {
+                "ai.observability.app_name": self.app_name,
+                "ai.observability.app_version": self.app_version,
+                "ai.observability.app_id": self.app_id,
+                "ai.observability.record_id": record_id,
+                "ai.observability.span_type": SpanAttributes.SpanType.RECORD_ROOT.value,
+                "ai.observability.record_root.input": "What is the weather?",
+                "ai.observability.record_root.output": "It's sunny today",
+                # Multiple kwargs attributes with the prefix
+                "ai.observability.call.kwargs.temperature": 0.7,
+                "ai.observability.call.kwargs.max_tokens": 100,
+                "ai.observability.call.kwargs.model": "gpt-4",
+                "ai.observability.call.kwargs.top_p": 0.9,
+                "ai.observability.call.kwargs.frequency_penalty": 0.0,
+                "ai.observability.call.return": "It's sunny today",
+            },
+            "record_type": "SPAN",
+            "resource_attributes": {
+                "service.name": "trulens",
+                "telemetry.sdk.language": "python",
+                "telemetry.sdk.name": "opentelemetry",
+                "telemetry.sdk.version": "1.31.0",
+                "ai.observability.app_name": self.app_name,
+                "ai.observability.app_version": self.app_version,
+                "ai.observability.app_id": self.app_id,
+            },
+            "start_timestamp": start_time,
+            "timestamp": end_time,
+            "trace": {
+                "parent_id": "",
+                "span_id": f"span_{record_id}",
+                "trace_id": "random_trace_id",
+            },
+        }
+
+        event = Event.model_validate(event_data)
+
+        # Insert the event into the database
+        self.db.insert_event(event)
+
+        # Get records and feedback
+        df, feedback_cols = self.db._get_records_and_feedback_otel()
+
+        # Verify dataframe structure
+        row = self._verify_dataframe_structure(df)
+
+        # Verify basic record information
+        self._verify_record_information(
+            row,
+            self.app_name,
+            self.app_version,
+            "What is the weather?",
+            "It's sunny today",
+            expected_num_events=1,
+        )
+
+        # This is the main test - verify that kwargs are properly extracted
+        # Since this is a record_root span, there should be no feedback calls,
+        # but if there were eval spans, the kwargs would be in the feedback calls
+        # For now, we can verify the functionality by checking the call_data structure
+        # by looking at the internal data structures used during processing
+
+        # We'll test this by creating a mock eval span and verifying its call data
+        eval_event_data = {
+            "event_id": "eval_event_id",
+            "record": {
+                "kind": 1,
+                "name": "feedback_function",
+                "parent_span_id": f"span_{record_id}",
+                "status": "STATUS_CODE_UNSET",
+            },
+            "record_attributes": {
+                "ai.observability.app_name": self.app_name,
+                "ai.observability.app_version": self.app_version,
+                "ai.observability.app_id": self.app_id,
+                "ai.observability.record_id": record_id,
+                "ai.observability.span_type": SpanAttributes.SpanType.EVAL.value,
+                "ai.observability.eval.metric_name": "test_metric",
+                "ai.observability.eval.score": 0.8,
+                # Multiple kwargs attributes for the feedback function
+                "ai.observability.call.kwargs.question": "What is the weather?",
+                "ai.observability.call.kwargs.answer": "It's sunny today",
+                "ai.observability.call.kwargs.context": "Weather information",
+                "ai.observability.call.kwargs.criteria": "relevance",
+                "ai.observability.call.return": 0.8,
+            },
+            "record_type": "SPAN",
+            "resource_attributes": {
+                "service.name": "trulens",
+                "telemetry.sdk.language": "python",
+                "telemetry.sdk.name": "opentelemetry",
+                "telemetry.sdk.version": "1.31.0",
+            },
+            "start_timestamp": start_time,
+            "timestamp": end_time,
+            "trace": {
+                "parent_id": f"span_{record_id}",
+                "span_id": "eval_span_id",
+                "trace_id": "random_trace_id",
+            },
+        }
+
+        eval_event = Event.model_validate(eval_event_data)
+        self.db.insert_event(eval_event)
+
+        # Get records and feedback again with the eval span
+        df, feedback_cols = self.db._get_records_and_feedback_otel()
+
+        # Verify feedback columns exist
+        self.assertEqual(len(feedback_cols), 1)
+        self.assertEqual(feedback_cols[0], "test_metric")
+
+        # Verify the feedback calls contain properly extracted kwargs
+        row = df.iloc[0]
+        feedback_calls = row["test_metric_calls"]
+
+        self.assertEqual(len(feedback_calls), 1)
+        call_data = feedback_calls[0]
+
+        # Verify the call data structure
+        self.assertIn("args", call_data)
+
+        # This is the key test - verify that kwargs were properly extracted
+        extracted_kwargs = call_data["args"]
+
+        # Verify that all expected kwargs are present and have correct values
+        expected_kwargs = {
+            "question": "What is the weather?",
+            "answer": "It's sunny today",
+            "context": "Weather information",
+            "criteria": "relevance",
+        }
+
+        for key, expected_value in expected_kwargs.items():
+            self.assertIn(
+                key, extracted_kwargs, f"Expected kwargs key '{key}' not found"
+            )
+            self.assertEqual(
+                extracted_kwargs[key],
+                expected_value,
+                f"Expected kwargs['{key}'] to be '{expected_value}', got '{extracted_kwargs[key]}'",
+            )
+
+        # Verify that no unexpected keys are present (should only have the expected kwargs)
+        self.assertEqual(
+            set(extracted_kwargs.keys()),
+            set(expected_kwargs.keys()),
+            "Extracted kwargs contains unexpected keys",
+        )
+
+    def test_get_records_and_feedback_otel_app_version_filtering(self):
+        """Test app_version filtering in both pagination and records retrieval methods."""
+        # Create apps with different versions
+        app_name = "test_app"
+        versions = ["1.0.0", "2.0.0"]
+
+        for i, version in enumerate(versions):
+            for j in range(2):  # 2 records per version
+                event = self._create_event_from_template(
+                    event_id=f"event_{version}_{j}",
+                    record_id=f"record_{version}_{j}",
+                    app_name=app_name,
+                    app_version=version,
+                    app_id=AppDefinition._compute_app_id(app_name, version),
+                    start_timestamp=f"2025-04-11 10:19:5{i * 2 + j}.993997",
+                    timestamp="2025-04-11 10:20:30.50",
+                    query=f"Question for {version}",
+                    return_value=[f"Answer for {version}"],
+                )
+                self.db.insert_event(event)
+
+        # Test pagination method filtering
+        with self.db.session.begin() as session:
+            stmt = self.db._get_paginated_record_ids_otel(app_version="1.0.0")
+            results = session.execute(stmt).all()
+            self.assertEqual(len(results), 2)
+
+            stmt = self.db._get_paginated_record_ids_otel(
+                app_version="nonexistent"
+            )
+            results = session.execute(stmt).all()
+            self.assertEqual(len(results), 0)
+
+        # Test records retrieval method filtering
+        df, _ = self.db._get_records_and_feedback_otel(app_version="1.0.0")
+        self.assertEqual(len(df), 2)
+        self.assertTrue(
+            all(row["app_version"] == "1.0.0" for _, row in df.iterrows())
+        )
+
+        df, _ = self.db._get_records_and_feedback_otel(
+            app_version="2.0.0", limit=1
+        )
+        self.assertEqual(len(df), 1)
+        self.assertEqual(df.iloc[0]["app_version"], "2.0.0")
+
+        # Test combined filtering
+        df, _ = self.db._get_records_and_feedback_otel(
+            app_name=app_name, app_version="1.0.0"
+        )
+        self.assertEqual(len(df), 2)
+        self.assertTrue(
+            all(
+                row["app_name"] == app_name and row["app_version"] == "1.0.0"
+                for _, row in df.iterrows()
+            )
+        )

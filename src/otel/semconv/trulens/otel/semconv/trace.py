@@ -17,13 +17,18 @@ Relevant links:
 
 from enum import Enum
 
+BASE_SCOPE = "ai.observability"
+
 
 class ResourceAttributes:
-    # TODO: Some Span attributes should be moved here.
-    pass
+    APP_ID = BASE_SCOPE + ".app_id"
+    """ID of the app that the span belongs to."""
 
+    APP_NAME = BASE_SCOPE + ".app_name"
+    """Fully qualified name of the app that the span belongs to."""
 
-BASE_SCOPE = "ai.observability"
+    APP_VERSION = BASE_SCOPE + ".app_version"
+    """Name of the version that the span belongs to."""
 
 
 class SpanAttributes:
@@ -37,32 +42,20 @@ class SpanAttributes:
     Span type attribute.
     """
 
-    SELECTOR_NAME_KEY = "selector_name"
-    """
-    Key for the user-defined selector name for the current span.
-    Here to help us check both trulens.selector_name and selector_name
-    to verify the user attributes and make corrections if necessary.
-    """
-
-    SELECTOR_NAME = BASE_SCOPE + "." + SELECTOR_NAME_KEY
-    """
-    User-defined selector name for the current span.
-    """
-
     RECORD_ID = BASE_SCOPE + ".record_id"
     """ID of the record that the span belongs to."""
-
-    APP_NAME = BASE_SCOPE + ".app_name"
-    """Fully qualified name of the app that the span belongs to."""
-
-    APP_VERSION = BASE_SCOPE + ".app_version"
-    """Name of the version that the span belongs to."""
 
     RUN_NAME = BASE_SCOPE + ".run.name"
     """Name of the run that the span belongs to."""
 
     INPUT_ID = BASE_SCOPE + ".input_id"
     """ID of the input that the span belongs to."""
+
+    INPUT_RECORDS_COUNT = BASE_SCOPE + ".input_records_count"
+    """To track the number of records processed in a run."""
+
+    SPAN_GROUPS = BASE_SCOPE + ".span_groups"
+    """List of groups that the span belongs to."""
 
     class SpanType(str, Enum):
         """Span type attribute values.
@@ -98,6 +91,27 @@ class SpanAttributes:
         GENERATION = "generation"
         """A generation call to an LLM."""
 
+        GRAPH_TASK = "graph_task"
+        """A graph task function execution."""
+
+        GRAPH_NODE = "graph_node"
+        """A graph node execution."""
+
+        WORKFLOW_STEP = "workflow_step"
+        """A workflow step execution."""
+
+        AGENT = "agent"
+        """An agent execution."""
+
+        TOOL = "tool"
+        """A tool/function call execution."""
+
+        RERANKER = "reranking"
+        """A reranking operation."""
+
+        MCP = "MCP"
+        """A Model Context Protocol (MCP) tool call."""
+
     class UNKNOWN:
         """Attributes relevant for spans that could not be categorized otherwise."""
 
@@ -111,9 +125,6 @@ class SpanAttributes:
         """
 
         base = BASE_SCOPE + ".record_root"
-
-        SPAN_NAME_PREFIX = base + "."
-        """Span name will end with app name."""
 
         INPUT = base + ".input"
         """Main input to the app."""
@@ -139,11 +150,44 @@ class SpanAttributes:
 
         base = BASE_SCOPE + ".eval_root"
 
+        METRIC_NAME = base + ".metric_name"
+        """Name of the feedback definition being evaluated."""
+
+        SPAN_GROUP = base + ".span_group"
+        """The span group of the inputs to this metric."""
+
+        ARGS_SPAN_ID = base + ".args_metadata.span_id"
+        """
+        Mapping of argument name to the ID of the span that provided it. Note
+        that this is a scope, and not an attribute by itself.
+
+        E.g. If the function has an argument `x` that came from a span with ID
+        "abc", then we would have `ARGS_SPAN_ID + ".x"` with value "abc".
+        """
+
+        ARGS_SPAN_ATTRIBUTE = base + ".args_metadata.span_attribute"
+        """
+        Mapping of argument name to the full span attribute name of the span
+        that provided it. Note that this is a scope, and not an attribute by
+        itself.
+
+        E.g. If the function has an argument `x` that came directly from the
+        span attribute "xyz", then we would have `ARGS_SPAN_ATTRIBUTE + ".x"`
+        with value "xyz". If a span attribute was not used directly, then this
+        is not set.
+        """
+
         ERROR = base + ".error"
         """Error raised during evaluation."""
 
-        RESULT = base + ".result"
-        """Result of the evaluation."""
+        SCORE = base + ".score"
+        """Score of the evaluation."""
+
+        HIGHER_IS_BETTER = base + ".higher_is_better"
+        """Whether higher is better for this feedback function."""
+
+        EXPLANATION = base + ".explanation"
+        """Explanation for the score of the evaluation."""
 
         METADATA = base + ".metadata"
         """Any metadata of the evaluation."""
@@ -168,8 +212,14 @@ class SpanAttributes:
         EXPLANATION = base + ".explanation"
         """Explanation for the score for this sub-step."""
 
+        METADATA = base + ".metadata"
+        """Any metadata for this sub-step."""
+
         SCORE = base + ".score"
         """Score for this sub-step."""
+
+        ERROR = base + ".error"
+        """Error raised during this sub-step."""
 
     class COST:
         """Attributes for spans with a cost."""
@@ -194,39 +244,27 @@ class SpanAttributes:
         NUM_COMPLETION_TOKENS = base + ".num_completion_tokens"
         """Number of completion tokens generated."""
 
+        NUM_REASONING_TOKENS = base + ".num_reasoning_tokens"
+        """Number of reasoning tokens generated (for reasoning models)."""
+
     class CALL:
         """Instrumented method call attributes."""
 
         base = BASE_SCOPE + ".call"
 
-        SPAN_NAME_PREFIX = base + "."
-        """Span name will end with the function name."""
-
         FUNCTION = base + ".function"
-        """Function being tracked.
-
-        Serialized from
-        [trulens.core.utils.pyschema.FunctionOrMethod][trulens.core.utils.pyschema.FunctionOrMethod]."""
-
-        ARGS = base + ".args"
-        """Arguments of the function.
-
-        Serialized using
-        [trulens.core.utils.json.jsonify][trulens.core.utils.json.jsonify]. If
-        the function was a method, self will NOT be included in this list.
-        """
+        """Name of function being tracked."""
 
         KWARGS = base + ".kwargs"
-        """Keyword arguments of the function.
-
-        Serialized using [trulens.core.utils.json.jsonify][trulens.core.utils.json.jsonify].
+        """
+        Keyword arguments of the function. This is a scope, and not an
+        attribute by itself. E.g. If the function has an argument `x` that had
+        a value `1`, then we should have an attribute with key `KWARGS + ".x"`
+        with value `1`.
         """
 
         RETURN = base + ".return"
-        """Return value of the function if it executed without error.
-
-        Serialized using [trulens.core.utils.json.jsonify][trulens.core.utils.json.jsonify].
-        """
+        """Return value of the function if it executed without error."""
 
         ERROR = base + ".error"
         """Error raised by the function if it executed with an error.
@@ -249,4 +287,132 @@ class SpanAttributes:
         """The retrieved contexts."""
 
     class GENERATION:
+        """A generation call to an LLM."""
+
         base = BASE_SCOPE + ".generation"
+
+    class GRAPH_TASK:
+        """A graph task function execution."""
+
+        base = BASE_SCOPE + ".graph_task"
+
+        TASK_NAME = base + ".task_name"
+        """Name of the task function."""
+
+        INPUT_STATE = base + ".input_state"
+        """Input state to the task."""
+
+        OUTPUT_STATE = base + ".output_state"
+        """Output state from the task."""
+
+        ERROR = base + ".error"
+        """Error raised during task execution."""
+
+    class GRAPH_NODE:
+        """A graph node execution."""
+
+        base = BASE_SCOPE + ".graph_node"
+
+        NODE_NAME = base + ".node_name"
+        """Name of the node."""
+
+        INPUT_STATE = base + ".input_state"
+        """Input state to the graph."""
+
+        OUTPUT_STATE = base + ".output_state"
+        """Output state from the graph."""
+
+        LATEST_MESSAGE = base + ".latest_message"
+        """Latest message flowing between nodes."""
+
+        NODES_EXECUTED = base + ".nodes_executed"
+        """List of nodes executed in the graph."""
+
+        ERROR = base + ".error"
+        """Error raised during graph execution."""
+
+    class WORKFLOW:
+        """A workflow execution."""
+
+        base = BASE_SCOPE + ".workflow"
+
+        INPUT_EVENT = base + ".input_event"
+        """Input event to the workflow."""
+
+        OUTPUT_EVENT = base + ".output_event"
+        """Output event from the workflow."""
+
+        ERROR = base + ".error"
+        """Error raised during workflow execution."""
+
+        AGENT_NAME = base + ".agent_name"
+        """Name of the agent executing in the workflow."""
+
+    class RERANKER:
+        """A reranking operation."""
+
+        base = BASE_SCOPE + ".reranking"
+
+        QUERY_TEXT = base + ".query_text"
+        """Query text used for reranking."""
+
+        MODEL_NAME = base + ".model_name"
+        """Name of the reranking model."""
+
+        TOP_N = base + ".top_n"
+        """Number of top results to return after reranking."""
+
+        INPUT_CONTEXT_TEXTS = base + ".input_context_texts"
+        """Input contexts before reranking."""
+
+        INPUT_CONTEXT_SCORES = base + ".input_context_scores"
+        """Input scores before reranking."""
+
+        INPUT_RANKS = base + ".input_ranks"
+        """Input ranking order before reranking."""
+
+        OUTPUT_RANKS = base + ".output_ranks"
+        """Output ranking order after reranking."""
+
+        OUTPUT_CONTEXT_TEXTS = base + ".output_context_texts"
+        """Output contexts after reranking."""
+
+        OUTPUT_CONTEXT_SCORES = base + ".output_context_scores"
+        """Output scores after reranking."""
+
+    class MCP:
+        """Attributes relevant for Model Context Protocol (MCP) tool calls."""
+
+        base = BASE_SCOPE + ".mcp"
+
+        TOOL_NAME = base + ".tool_name"
+        """Name of the MCP tool being called."""
+
+        TOOL_DESCRIPTION = base + ".tool_description"
+        """Description of the MCP tool."""
+
+        SERVER_NAME = base + ".server_name"
+        """Name of the MCP server providing the tool."""
+
+        INPUT_SCHEMA = base + ".input_schema"
+        """Schema of the input parameters for the MCP tool."""
+
+        INPUT_ARGUMENTS = base + ".input_arguments"
+        """Arguments passed to the MCP tool."""
+
+        OUTPUT_CONTENT = base + ".output_content"
+        """Content returned by the MCP tool."""
+
+        OUTPUT_IS_ERROR = base + ".output_is_error"
+        """Whether the MCP tool call resulted in an error."""
+
+        EXECUTION_TIME_MS = base + ".execution_time_ms"
+        """Time taken to execute the MCP tool call in milliseconds."""
+
+    class INLINE_EVAL:
+        """Attributes specific to inline evaluation instrumentation."""
+
+        base = BASE_SCOPE + ".inline_eval"
+
+        EMIT_SPAN = base + ".emit_span"
+        """Boolean flag indicating whether a span should be exported."""

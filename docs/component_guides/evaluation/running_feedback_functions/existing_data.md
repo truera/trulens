@@ -17,7 +17,7 @@ In the case that you have already logged a run of your application with TruLens 
 !!! example
 
     ```python
-    tru_rag = TruCustomApp(rag, app_name="RAG", app_version="v1")
+    tru_rag = TruApp(rag, app_name="RAG", app_version="v1")
 
     result, record = tru_rag.with_record(rag.query, "How many professors are at UW in Seattle?")
     feedback_results = tru.run_feedback_functions(record, feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance])
@@ -46,7 +46,7 @@ The first step to loading your app logs into TruLens is creating a virtual app. 
     virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
     ```
 
-When setting up the virtual app, you should also include any components that you would like to evaluate in the virtual app. This can be done using the `Select` class. Using selectors here lets use reuse the setup you use to define feedback functions. Below you can see how to set up a virtual app with a retriever component, which will be used later in the example for feedback evaluation.
+When setting up the virtual app, you should also include any components that you would like to evaluate in the virtual app. This can be done using the `Select` class. Using selectors here lets you reuse the setup you use to define feedback functions. Below you can see how to set up a virtual app with a retriever component, which will be used later in the example for feedback evaluation.
 
 !!! example
 
@@ -58,7 +58,7 @@ When setting up the virtual app, you should also include any components that you
 
 Now that you've set up your virtual app, you can use it to store your logged data.
 
-To incorporate your data into TruLens, you have two options. You can either create a `Record` directly, or you can use the `VirtualRecord` class, which is designed to help you build records so they can be ingested to TruLens.
+To incorporate your data into TruLens, you have two options. You can either create a `Record` directly, or you can use the `VirtualRecord` class, which is designed to help you build records so they can be ingested into TruLens.
 
 The parameters you'll use with `VirtualRecord` are the same as those for `Record`, with one key difference: calls are specified using selectors.
 
@@ -140,7 +140,7 @@ To ingest the data in this form, we can iterate through the dataframe to ingest 
         data.append(rec)
     ```
 
-Now that we've ingested constructed the virtual records, we can build our feedback functions. This is done just the same as normal, except the context selector will instead refer to the new `context_call` we added to the virtual record.
+Now that we've ingested and constructed the virtual records, we can build our feedback functions. This is done just the same as normal, except the context selector will instead refer to the new `context_call` we added to the virtual record.
 
 !!! example
 

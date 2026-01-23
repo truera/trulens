@@ -1,8 +1,7 @@
 # 🧭 Design Goals and Principles
 
-***Minimal time/effort-to-value*** If a user already has an llm app coded in one of the
-   supported libraries, give them some value with the minimal effort beyond that
-   app.
+***Minimal time/effort-to-value*** If a user already has an LLM app coded in one of the
+   supported libraries, provide immediate value with minimal additional effort required.
 
 Currently to get going, a user needs to add 4 lines of Python:
 
@@ -17,8 +16,8 @@ run_dashboard() # 4
 
 3 of these lines are fixed so only #3 would vary in typical cases. From here
 they can open the dashboard and inspect the recording of their app's invocation
-including performance and cost statistics. This means trulens must do quite a
-bit of haggling under the hood to get that data. This is outlined primarily in
+including performance and cost statistics. This means TruLens must perform significant
+processing under the hood to get that data. This is outlined primarily in
 the [Instrumentation](#instrumentation) section below.
 
 ## OpenTelemetry-Based Instrumentation
@@ -44,19 +43,19 @@ some legacy approaches that are being phased out.
 ### App Data
 
 We collect app components and parameters by walking over its structure and
-producing a json representation with everything we deem relevant to track. The
+producing a JSON representation with everything we deem relevant to track. The
 function [jsonify][trulens.core.utils.json.jsonify] is the root of this process.
 
-#### class/system specific
+#### Class/system specific
 
-##### pydantic (LangChain)
+##### Pydantic (LangChain)
 
 Classes inheriting [BaseModel][pydantic.BaseModel] come with serialization
-to/from json in the form of [model_dump][pydantic.BaseModel.model_dump] and
+to/from JSON in the form of [model_dump][pydantic.BaseModel.model_dump] and
 [model_validate][pydantic.BaseModel.model_validate]. We do not use the
-serialization to json part of this capability as a lot of *LangChain* components
-are tripped to fail it with a "will not serialize" message. However, we use make
-use of pydantic `fields` to enumerate components of an object ourselves saving
+serialization to JSON part of this capability as many *LangChain* components
+fail serialization with a "will not serialize" message. However, we make
+use of Pydantic `fields` to enumerate components of an object ourselves saving
 us from having to filter out irrelevant internals that are not declared as
 fields.
 
@@ -65,14 +64,14 @@ structures (see `schema.py` for example).
 
 ##### dataclasses (no present users)
 
-The built-in dataclasses package has similar functionality to pydantic. We
+The built-in dataclasses package has similar functionality to Pydantic. We
 use/serialize them using their field information.
 
-##### dataclasses_json (llama_index)
+##### dataclasses_json (LlamaIndex)
 
-Placeholder. No present special handling.
+Placeholder. Currently no special handling is implemented.
 
-##### generic Python (portions of llama_index and all else)
+##### Generic Python (portions of LlamaIndex and all else)
 
 #### TruLens-specific Data
 
@@ -91,9 +90,9 @@ In addition to collecting app parameters, we also collect:
 Methods and functions are instrumented by overwriting choice attributes in
 various classes.
 
-#### class/system specific
+#### Class/system specific
 
-##### pydantic (LangChain)
+##### Pydantic (LangChain)
 
 Most if not all *LangChain* components use pydantic which imposes some
 restrictions but also provides some utilities. Classes inheriting
@@ -115,16 +114,16 @@ instrumented versions.
     Might incur much overhead and all calls and other event types get
     intercepted and result in a callback.
 
-- LangChain/llama_index callbacks. Each of these packages come with some
+- LangChain/LlamaIndex callbacks. Each of these packages come with some
   callback system that lets one get various intermediate app results. The
   drawbacks is the need to handle different callback systems for each system and
   potentially missing information not exposed by them.
 
 - `wrapt` package (see <https://pypi.org/project/wrapt/>)
 
-    This is only for wrapping functions or classes to resemble their original
-    but does not help us with wrapping existing methods in LangChain, for
-    example. We might be able to use it as part of our own wrapping scheme though.
+    This package only wraps functions or classes to resemble their originals.
+    However, it doesn't help with wrapping existing methods in LangChain.
+     We might be able to use it as part of our own wrapping scheme though.
 
 ### Calls
 
@@ -141,7 +140,7 @@ This class also holds information about the instrumented method.
 
 #### Call Data (Arguments/Returns)
 
-The arguments to a call and its return are converted to json using the same
+The arguments to a call and its return are converted to JSON using the same
 tools as App Data (see above).
 
 #### Tricky
@@ -195,15 +194,15 @@ Legacy instrumentation used custom task factory instrumentation:
 
 - If the same wrapped sub-app is called multiple times within a single call to
   the root app, the record of this execution will not be exact with regards to
-  the path to the call information. All call paths will address the last subapp
-  (by order in which it is instrumented). For example, in a sequential app
+  the path to the call information. All call paths will reference the last instrumented subapp
+  (based on instrumentation order). For example, in a sequential app
   containing two of the same app, call records will be addressed to the second
   of the (same) apps and contain a list describing calls of both the first and
   second.
 
   TODO(piotrm): This might have been fixed. Check.
 
-- Some apps cannot be serialized/jsonized. Sequential app is an example. This is
+- Some apps cannot be serialized/JSONized. Sequential app is an example. This is
   a limitation of *LangChain* itself.
 
 - Instrumentation relies on CPython specifics, making heavy use of the

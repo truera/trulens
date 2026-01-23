@@ -6,12 +6,6 @@ This is done through the instrumentation of key LlamaIndex classes and methods.
 To see all classes and methods instrumented, see *Appendix: LlamaIndex
 Instrumented Classes and Methods*.
 
-In addition to the default instrumentation, TruLlama exposes the
-*select_context* and *select_source_nodes* methods for evaluations that require
-access to retrieved context or source nodes. Exposing these methods bypasses the
-need to know the json structure of your app ahead of time, and makes your
-evaluations reusable across different apps.
-
 ## Example usage
 
 Below is a quick example of usage. First, we'll create a standard LlamaIndex query engine from Paul Graham's Essay, *What I Worked On*:
@@ -30,7 +24,7 @@ Below is a quick example of usage. First, we'll create a standard LlamaIndex que
     query_engine = index.as_query_engine()
     ```
 
-To instrument an LlamaIndex query engine, all that's required is to wrap it using TruLlama.
+To instrument a LlamaIndex query engine, all that's required is to wrap it using TruLlama.
 
 !!! example "Instrument a LlamaIndex Query Engine"
 
@@ -43,12 +37,13 @@ To instrument an LlamaIndex query engine, all that's required is to wrap it usin
         print(query_engine.query("What did the author do growing up?"))
     ```
 
-To properly evaluate LLM apps we often need to point our evaluation at an
+To properly evaluate LLM apps, we often need to point our evaluation at an
 internal step of our application, such as the retrieved context. Doing so allows
 us to evaluate for metrics including context relevance and groundedness.
 
-For LlamaIndex applications where the source nodes are used, `select_context`
-can be used to access the retrieved text for evaluation.
+`TruLlama` supports `on_input`, `on_output`, and `on_context`, allowing you to easily evaluate the RAG triad.
+
+Using `on_context` allows to access the retrieved text for evaluation via the source nodes of the LlamaIndex app.
 
 !!! example "Evaluating retrieved context for LlamaIndex query engines"
 
@@ -64,14 +59,15 @@ can be used to access the retrieved text for evaluation.
     f_context_relevance = (
         Feedback(provider.context_relevance)
         .on_input()
-        .on(context)
+        .on_context(collect_list=False)
         .aggregate(np.mean)
     )
     ```
 
-You can find the full quickstart available here: [LlamaIndex Quickstart](../../getting_started/quickstarts/llama_index_quickstart.ipynb)
+You can find the full quickstart available here: [LlamaIndex Quickstart](../../cookbook/frameworks/llamaindex/llama_index_quickstart.ipynb)
 
 ## Async Support
+
 TruLlama also provides async support for LlamaIndex through the `aquery`,
 `achat`, and `astream_chat` methods. This allows you to track and evaluate async
 applications.
@@ -122,7 +118,7 @@ As an example, below is an LlamaIndex query engine with streaming.
     chat_engine = index.as_chat_engine(streaming=True)
     ```
 
-Just like with other methods, just wrap your streaming query engine with TruLlama and operate like before.
+As with other methods, simply wrap your streaming query engine with TruLlama and operate like before.
 
 You can also print the response tokens as they are generated using the `response_gen` attribute.
 
@@ -140,9 +136,116 @@ You can also print the response tokens as they are generated using the `response
 
 For examples of using `TruLlama`, check out the [_TruLens_ Cookbook](../../cookbook/index.md)
 
+## LlamaIndex Workflows Support
+
+TruLens provides comprehensive support for LlamaIndex Workflows through `TruLlamaWorkflow`. This allows you to track, evaluate, and monitor complex multi-step workflows built with LlamaIndex's event-driven architecture.
+
+### What are LlamaIndex Workflows?
+
+[LlamaIndex Workflows](https://docs.llamaindex.ai/en/stable/module_guides/workflow/) provide an event-driven, declarative way to build complex agentic applications. They allow you to define steps that process events and emit new events, creating sophisticated data processing pipelines.
+
+### Basic Workflow Instrumentation
+
+To instrument a LlamaIndex workflow, wrap it with `TruLlamaWorkflow`:
+
+!!! example "Create and instrument a basic workflow"
+
+    ```python
+    from llama_index.core.workflow import Workflow, StartEvent, StopEvent, step
+    from llama_index.llms.openai import OpenAI
+    from trulens.apps.llamaindex import TruLlamaWorkflow
+
+    class SimpleWorkflow(Workflow):
+        """A simple workflow that generates a response."""
+
+        @step
+        async def generate_response(self, ev: StartEvent) -> StopEvent:
+            query = ev.get("query")
+            llm = OpenAI(model="gpt-3.5-turbo")
+            response = await llm.acomplete(query)
+            return StopEvent(result=str(response))
+
+    # Create and instrument the workflow
+    workflow = SimpleWorkflow()
+    tru_workflow = TruLlamaWorkflow(
+        workflow,
+        app_name="simple_workflow",
+        app_version="1.0"
+    )
+
+    # Run the workflow with tracking
+    with tru_workflow as recording:
+        result = await workflow.run(query="What is the capital of France?")
+        print(result)
+    ```
+
+### Multi-Step Workflows
+
+TruLlamaWorkflow automatically tracks all steps in your workflow, maintaining proper associations between them:
+
+!!! example "Track a multi-step workflow"
+
+    ```python
+    from dataclasses import dataclass
+    from llama_index.core.workflow import Event, Workflow, StartEvent, StopEvent, step
+    from llama_index.llms.openai import OpenAI
+    from trulens.apps.llamaindex import TruLlamaWorkflow
+
+    @dataclass
+    class TopicEvent(Event):
+        """Event containing a topic."""
+        topic: str
+
+    @dataclass
+    class JokeEvent(Event):
+        """Event containing a generated joke."""
+        joke: str
+
+    class JokeWorkflow(Workflow):
+        """A workflow that generates and critiques jokes."""
+
+        @step
+        async def generate_joke(self, ev: StartEvent) -> JokeEvent:
+            topic = ev.get("topic", "general")
+            llm = OpenAI(model="gpt-3.5-turbo")
+
+            prompt = f"Write a funny joke about {topic}"
+            response = await llm.acomplete(prompt)
+
+            return JokeEvent(joke=str(response))
+
+        @step
+        async def critique_joke(self, ev: JokeEvent) -> StopEvent:
+            llm = OpenAI(model="gpt-3.5-turbo")
+
+            prompt = f"Critique this joke: {ev.joke}"
+            response = await llm.acomplete(prompt)
+
+            return StopEvent(result={
+                "joke": ev.joke,
+                "critique": str(response)
+            })
+
+    # Create and instrument the workflow
+    workflow = JokeWorkflow()
+    tru_workflow = TruLlamaWorkflow(
+        workflow,
+        app_name="joke_workflow",
+        metadata={"category": "humor"}
+    )
+
+    # Run with tracking - all steps are automatically tracked
+    with tru_workflow as recording:
+        result = await workflow.run(topic="programming")
+        print(f"Joke: {result['joke']}")
+        print(f"Critique: {result['critique']}")
+    ```
+
+For more examples of using `TruLlamaWorkflow`, check out the [_TruLens_ Cookbook](../../cookbook/index.md)
+
 ## Appendix: LlamaIndex Instrumented Classes and Methods
 
-The modules, classes, and methods that trulens instruments can be retrieved from
+The modules, classes, and methods that TruLens instruments can be retrieved from
 the appropriate Instrument subclass.
 
 !!! example
@@ -153,23 +256,20 @@ the appropriate Instrument subclass.
     LlamaInstrument().print_instrumentation()
     ```
 
-### Instrumenting other classes/methods.
-Additional classes and methods can be instrumented by use of the
-`trulens.core.instruments.Instrument` methods and decorators. Examples of
-such usage can be found in the custom app used in the `custom_example.ipynb`
-notebook which can be found in
-`examples/expositional/end2end_apps/custom_app/custom_app.py`. More
-information about these decorators can be found in the
-`docs/trulens/tracking/instrumentation/index.ipynb` notebook.
-
 ### Inspecting instrumentation
+
 The specific objects (of the above classes) and methods instrumented for a
 particular app can be inspected using the `App.print_instrumented` as
 exemplified in the next cell. Unlike `Instrument.print_instrumentation`, this
-function only shows what in an app was actually instrumented.
+function only shows specific objects and methods within an app that are actually instrumented.
 
 !!! example
 
     ```python
     tru_chat_engine_recorder.print_instrumented()
     ```
+
+### Instrumenting other classes/methods
+
+Additional classes and methods can be instrumented by use of the
+`trulens.core.otel.instrument` methods and decorators.

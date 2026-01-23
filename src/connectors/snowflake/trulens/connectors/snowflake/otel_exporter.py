@@ -9,6 +9,7 @@ from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExporter
 from opentelemetry.sdk.trace.export import SpanExportResult
 from trulens.connectors.snowflake import SnowflakeConnector
+from trulens.connectors.snowflake.dao.run import EvaluationPhase
 from trulens.connectors.snowflake.dao.sql_utils import (
     clean_up_snowflake_identifier,
 )
@@ -19,6 +20,7 @@ from trulens.experimental.otel_tracing.core.exporter.utils import (
 from trulens.experimental.otel_tracing.core.exporter.utils import (
     convert_readable_span_to_proto,
 )
+from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 from snowflake.snowpark import Session
@@ -31,6 +33,11 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
     Implementation of `SpanExporter` that flushes the spans in the TruLens session to a Snowflake Stage.
     """
 
+    enabled: bool
+    """
+    Whether the exporter is enabled.
+    """
+
     connector: SnowflakeConnector
     """
     The database connector used to export the spans.
@@ -41,6 +48,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         connector: core_connector.DBConnector,
         verify_via_dry_run: bool = True,
     ):
+        self.enabled = True
         if not isinstance(connector, SnowflakeConnector):
             raise ValueError("Provided connector is not a SnowflakeConnector")
         self.connector = connector  # type: ignore
@@ -49,13 +57,20 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         # it fails.
         self.connector.snowpark_session.sql("SELECT 20240131").collect()
         if verify_via_dry_run:
-            test_span = ReadableSpan(name="test_span")
+            test_span = ReadableSpan(
+                name="test_span",
+                attributes={ResourceAttributes.APP_NAME: "test_app"},
+            )
+
             res = self.export([test_span], dry_run=True)
             if res != SpanExportResult.SUCCESS:
                 # This shouldn't happen since we should have been thrown errors.
                 raise ValueError(
                     "OTEL Exporter failed dry run during initialization!"
                 )
+
+    def disable(self) -> None:
+        self.enabled = False
 
     def _export_to_snowflake(
         self, spans: Sequence[ReadableSpan], dry_run: bool
@@ -83,9 +98,11 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         app_and_run_info_to_spans = defaultdict(list)
         for span in spans:
             key = (
-                span.attributes.get(SpanAttributes.APP_NAME),
-                span.attributes.get(SpanAttributes.APP_VERSION),
+                # TODO(otel, semconv, SNOW-2130988): Should have this in `span.resource.attributes`!
+                span.attributes.get(ResourceAttributes.APP_NAME),
+                span.attributes.get(ResourceAttributes.APP_VERSION),
                 span.attributes.get(SpanAttributes.RUN_NAME),
+                span.attributes.get(SpanAttributes.INPUT_RECORDS_COUNT),
             )
             app_and_run_info_to_spans[key].append(span)
 
@@ -93,12 +110,19 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
             app_name,
             app_version,
             run_name,
+            input_records_count,
         ), spans in app_and_run_info_to_spans.items():
             logger.debug(
                 f"Logging {len(spans)} for app:{app_name} version:{app_version} run:{run_name}"
             )
+
             res = self._export_to_snowflake_stage_for_app_and_run(
-                app_name, app_version, run_name, spans, dry_run
+                app_name,
+                app_version,
+                run_name,
+                input_records_count,
+                spans,
+                dry_run,
             )
             if res == SpanExportResult.FAILURE:
                 return res
@@ -140,6 +164,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         app_name: str,
         app_version: str,
         run_name: str,
+        input_records_count: int,
         dry_run: bool,
     ):
         database = clean_up_snowflake_identifier(
@@ -148,39 +173,44 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         schema = clean_up_snowflake_identifier(
             snowpark_session.get_current_schema()
         )
+
         sql_cmd = snowpark_session.sql(
             f"""
-            CALL SYSTEM$INGEST_AI_OBSERVABILITY_SPANS(
-                BUILD_SCOPED_FILE_URL(
-                    @{database}.{schema}.trulens_spans,
-                    ?
+            CALL SYSTEM$EXECUTE_AI_OBSERVABILITY_RUN(
+                OBJECT_CONSTRUCT(
+                    'object_name', ?,
+                    'object_type', 'External Agent',
+                    'object_version', ?
                 ),
-                ?,
-                ?,
-                ?,
-                ?,
-                ?
+                OBJECT_CONSTRUCT(
+                    'run_name', ?
+                ),
+                OBJECT_CONSTRUCT(
+                    'type', 'stage_file',
+                    'stage_file_path', ?,
+                    'input_record_count', ?
+                ),
+                ARRAY_CONSTRUCT(),
+                ARRAY_CONSTRUCT('{EvaluationPhase.INGESTION_MULTIPLE_BATCHES.value}')
             )
             """,
             params=[
-                tmp_file_basename + ".gz",
-                database,  # TODO(otel, dhuang): This should be the database of the object entity!
-                schema,  # TODO(otel, dhuang): This should the schema of the object entity!
-                (
-                    app_name or ""
-                ).upper(),  # object name is converted to uppercase
-                app_version or "",
-                run_name or "",
+                f"{database}.{schema}.{app_name.upper()}",
+                app_version,
+                run_name,
+                f"@{database}.{schema}.trulens_spans/{tmp_file_basename}.gz",
+                input_records_count,
             ],
         )
         if not dry_run:
-            logger.debug(sql_cmd.collect()[0][0])
+            sql_cmd.collect()  # Blocking call: ensures spans are ingested before process exit; may delay if ingestion hangs and force_flush is called
 
     def _export_to_snowflake_stage_for_app_and_run(
         self,
         app_name: str,
         app_version: str,
         run_name: str,
+        input_records_count: int,
         spans: Sequence[ReadableSpan],
         dry_run: bool,
     ) -> SpanExportResult:
@@ -211,6 +241,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                 app_name,
                 app_version,
                 run_name,
+                input_records_count,
                 dry_run,
             )
         except Exception as e:
@@ -233,6 +264,8 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
     def export(
         self, spans: Sequence[ReadableSpan], dry_run: bool = False
     ) -> SpanExportResult:
+        if not self.enabled:
+            return SpanExportResult.SUCCESS
         if dry_run:
             trulens_spans = spans
         else:

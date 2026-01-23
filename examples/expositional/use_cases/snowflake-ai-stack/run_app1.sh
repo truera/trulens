@@ -1,3 +1,4 @@
+export TRULENS_OTEL_TRACING="1"
 export OPENAI_API_KEY="sk-proj-..."
 export STREAMLIT_SERVER_PORT=9001
 export GENERATION_MODEL_NAME="gpt-4o-mini-2024-07-18"

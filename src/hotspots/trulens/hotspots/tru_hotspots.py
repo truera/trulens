@@ -29,7 +29,7 @@ def get_hotspots(
     Returns:
         Data frame with hotspots
     """
-    df, feedback_names = session.get_records_and_feedback(app_ids)
+    df, feedback_names = session.get_records_and_feedback(app_ids=app_ids)
 
     if hotspots_config is None:
         if feedback is None:

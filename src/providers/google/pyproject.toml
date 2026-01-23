@@ -1,0 +1,38 @@
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = [
+  "poetry-core",
+]
+
+[tool.poetry]
+name = "trulens-providers-google"
+version = "2.5.3"
+description = "Library to systematically track and evaluate LLM based applications."
+authors = [
+  "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
+]
+license = "MIT"
+readme = "README.md"
+packages = [
+  { include = "trulens" },
+]
+homepage = "https://trulens.org/"
+documentation = "https://trulens.org/getting_started/"
+repository = "https://github.com/truera/trulens"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+trulens-core = { version = "^2.0.0" }
+trulens-feedback = { version = "^2.0.0" }
+google-genai = ">=1.27.0"
+google-auth = ">=2.20.0"
+
+[tool.poetry.group.dev.dependencies]
+trulens-core = { path = "../../core" }
+trulens-feedback = { path = "../../feedback" }

@@ -3,14 +3,15 @@ from __future__ import annotations
 from abc import ABC
 from abc import ABCMeta
 from abc import abstractmethod
+from contextlib import contextmanager
 import contextvars
 import datetime
+import functools
 import inspect
 from inspect import BoundArguments
 from inspect import Signature
 import json
 import logging
-import os
 import threading
 from typing import (
     Any,
@@ -20,6 +21,7 @@ from typing import (
     Dict,
     Hashable,
     Iterable,
+    Iterator,
     List,
     Optional,
     Sequence,
@@ -42,6 +44,7 @@ from trulens.core.database import base as core_db
 from trulens.core.database import connector as core_connector
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback import feedback as core_feedback
+from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.run import Run
 from trulens.core.run import RunConfig
 from trulens.core.run import validate_dataset_spec
@@ -55,6 +58,7 @@ from trulens.core.utils import asynchro as asynchro_utils
 from trulens.core.utils import constants as constant_utils
 from trulens.core.utils import containers as container_utils
 from trulens.core.utils import deprecation as deprecation_utils
+from trulens.core.utils import evaluator as evaluator_utils
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
@@ -63,9 +67,12 @@ from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import signature as signature_utils
 from trulens.core.utils import threading as threading_utils
 from trulens.otel.semconv.constants import (
+    TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG,
+)
+from trulens.otel.semconv.constants import TRULENS_INSTRUMENT_WRAPPER_FLAG
+from trulens.otel.semconv.constants import (
     TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
 )
-from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
@@ -308,7 +315,7 @@ def instrumented_component_views(
     for q, o in serial_utils.all_objects(obj):
         if (
             isinstance(o, pydantic.BaseModel)
-            and constant_utils.CLASS_INFO in o.model_fields
+            and constant_utils.CLASS_INFO in type(o).model_fields
         ):
             yield q, ComponentView.of_json(json=o)
 
@@ -322,6 +329,30 @@ def _can_import(to_import: str) -> bool:
         return True
     except ImportError:
         return False
+
+
+class LiveRunContext:
+    """Helper class to track state during a live run."""
+
+    def __init__(self, tru_app: "App", run: "Run"):
+        self.tru_app = tru_app
+        self.run = run
+        self.input_count = 0
+
+    def count_input(self) -> None:
+        """Increment the input record count."""
+        self.input_count += 1
+
+    @contextmanager
+    def input(self, input_id: str) -> Iterator[None]:
+        """Context manager for processing a single input with automatic counting."""
+        with self.tru_app.input(input_id):
+            try:
+                yield
+                self.count_input()
+            except Exception as e:
+                logger.exception(f"Error in input context manager: {e}")
+                raise
 
 
 class App(
@@ -492,7 +523,8 @@ class App(
         main_method = None
 
         if otel_enabled:
-            if app is None:
+            # Allow app=None for virtual runs, but still require it for regular runs with main_method
+            if app is None and "main_method" in kwargs:
                 raise ValueError(
                     "A valid app instance must be provided when specifying 'main_method'."
                 )
@@ -500,30 +532,43 @@ class App(
             if "main_method" in kwargs:
                 main_method = kwargs["main_method"]
 
-                # Instead of always checking for binding,  enforce it except when app is an instance of TruWrapperApp (tru basic app).
-                try:
-                    from trulens.apps.basic import TruWrapperApp
-                except ImportError:
-                    TruWrapperApp = None
+                # Only do binding checks if app is not None (i.e., not a virtual run)
+                if app is not None:
+                    # Instead of always checking for binding,  enforce it except when app is an instance of TruWrapperApp (tru basic app).
+                    try:
+                        from trulens.apps.basic import TruWrapperApp
+                    except ImportError:
+                        TruWrapperApp = None
 
-                if TruWrapperApp is None or not isinstance(app, TruWrapperApp):
-                    if (
-                        not hasattr(main_method, "__self__")
-                        or main_method.__self__ != app
+                    if TruWrapperApp is None or not isinstance(
+                        app, TruWrapperApp
                     ):
-                        raise ValueError(
-                            f"main_method `{main_method.__name__}` must be bound to the provided `app` instance."
-                        )
-
-                self._wrap_main_function(app, main_method.__name__)
+                        if (
+                            not hasattr(main_method, "__self__")
+                            or main_method.__self__ != app
+                        ):
+                            raise ValueError(
+                                f"main_method `{main_method.__name__}` must be bound to the provided `app` instance."
+                            )
 
         super().__init__(**kwargs)
+
+        if (
+            is_otel_tracing_enabled()
+            and self.feedback_mode
+            != feedback_schema.FeedbackMode.WITH_APP_THREAD
+        ):
+            raise ValueError(
+                "Cannot use `feedback_mode` other than `WITH_APP_THREAD` with OTel tracing!"
+            )
 
         if main_method:
             self.main_method_name = main_method.__name__  # for serialization
 
         self._current_context_manager_lock = threading.Lock()
         self._current_context_manager = None
+
+        self._evaluator = evaluator_utils.Evaluator(self)
 
         if connector and _can_import("trulens.connectors.snowflake"):
             from trulens.connectors.snowflake import SnowflakeConnector
@@ -558,12 +603,20 @@ class App(
             pass
 
         if self.feedback_mode == feedback_schema.FeedbackMode.WITH_APP_THREAD:
-            self._start_manage_pending_feedback_results()
+            if is_otel_tracing_enabled():
+                if kwargs.get("start_evaluator", True):
+                    self.start_evaluator()
+            else:
+                self._start_manage_pending_feedback_results()
+
+        if otel_enabled and main_method is not None:
+            self._wrap_main_function(app, main_method.__name__)
 
         self._tru_post_init()
 
     def __del__(self):
         """Shut down anything associated with this app that might persist otherwise."""
+        self.stop_evaluator()
         try:
             # Use object.__getattribute__ to avoid triggering __getattr__
             m_thread = object.__getattribute__(
@@ -589,6 +642,16 @@ class App(
                 pass
 
     @staticmethod
+    def _has_instrumentation(func: Callable) -> bool:
+        while hasattr(func, "__wrapped__"):
+            if hasattr(func, TRULENS_INSTRUMENT_WRAPPER_FLAG) or hasattr(
+                func, TRULENS_APP_SPECIFIC_INSTRUMENT_WRAPPER_FLAG
+            ):
+                return True
+            func = func.__wrapped__
+        return False
+
+    @staticmethod
     def _has_record_root_instrumentation(func: Callable) -> bool:
         while hasattr(func, "__wrapped__"):
             if hasattr(func, TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG):
@@ -605,22 +668,9 @@ class App(
             if not hasattr(app, method_name):
                 raise ValueError(f"App must have an `{method_name}` method!")
             func = getattr(app, method_name)
-            if self._has_record_root_instrumentation(func):
+            if self._has_instrumentation(func):
                 return
-            sig = inspect.signature(func)
-            wrapper = instrument(
-                span_type=SpanAttributes.SpanType.RECORD_ROOT,
-                attributes=lambda ret, exception, *args, **kwargs: {
-                    # langchain has specific main input/output logic.
-                    SpanAttributes.RECORD_ROOT.INPUT: self.main_input(
-                        func, sig, sig.bind_partial(**kwargs)
-                    ),
-                    SpanAttributes.RECORD_ROOT.OUTPUT: self.main_output(
-                        func, sig, sig.bind_partial(**kwargs), ret
-                    ),
-                },
-                is_app_specific_record_root=True,
-            )
+            wrapper = instrument(is_app_specific_instrumentation=True)
             # HACK!: This is a major hack to get around the fact that we can't
             # set the desired method on the app object due to Pydantic only
             # allowing fields to be set on the class, not on the instance for
@@ -694,7 +744,10 @@ class App(
         call will block until finished and if new records are produced while
         this is running, it will include them.
         """
-
+        if is_otel_tracing_enabled():
+            raise RuntimeError(
+                "`wait_for_feedback_results` is not supported with OTel tracing enabled, and is deprecated in favor of `retrieve_feedback_results`."
+            )
         while (
             record := self.records_with_pending_feedback_results.pop(
                 blocking=False
@@ -702,6 +755,31 @@ class App(
         ) is not None:
             record.wait_for_feedback_results(feedback_timeout=feedback_timeout)
             yield record
+
+    def retrieve_feedback_results(
+        self, record_ids: Optional[List[str]] = None, timeout: float = 180
+    ) -> pd.DataFrame:
+        """Retrieve feedback results for all records in the app.
+
+        Args:
+            record_ids: List of record ids to retrieve feedback results for. If
+                None, retrieves whatever results are available now.
+            timeout: Timeout in seconds to wait.
+
+        Returns:
+            A dataframe with records as rows and feedbacks as columns.
+        """
+        TruSession().force_flush()
+        if record_ids is not None:
+            TruSession().wait_for_records(
+                record_ids=record_ids, timeout=timeout
+            )
+            self._evaluator.compute_now(record_ids)
+        records_df, feedback_cols = TruSession().get_records_and_feedback(
+            record_ids=record_ids
+        )
+        records_df.set_index("record_id", inplace=True)
+        return records_df[feedback_cols]
 
     @classmethod
     def select_context(cls, app: Optional[Any] = None) -> serial_utils.Lens:
@@ -747,6 +825,22 @@ class App(
     def __hash__(self):
         return hash(id(self))
 
+    @staticmethod
+    def _is_account_level_event_table_snowflake_connector(
+        connector: Optional[core_connector.DBConnector],
+    ) -> bool:
+        if connector is None:
+            return False
+        try:
+            from trulens.connectors.snowflake import SnowflakeConnector
+
+            if not isinstance(connector, SnowflakeConnector):
+                return False
+            return connector.use_account_event_table
+        except Exception:
+            pass
+        return False
+
     def _tru_post_init(self):
         """
         Database-related initialization and additional data checks.
@@ -774,11 +868,12 @@ class App(
                     "No feedback evaluation and logging will occur."
                 )
 
-        otel_tracing_enabled = os.getenv(
-            "TRULENS_OTEL_TRACING", ""
-        ).lower() in ["1", "true"]
-
-        if self.connector is not None and not otel_tracing_enabled:
+        if self.connector is not None and not (
+            self._is_account_level_event_table_snowflake_connector(
+                self.connector
+            )
+            and is_otel_tracing_enabled()
+        ):
             self.connector.add_app(app=self)
 
             if self.feedback_mode != feedback_schema.FeedbackMode.NONE:
@@ -816,7 +911,10 @@ class App(
                         f"Feedback function {f} is not loadable. Cannot use DEFERRED feedback mode. {e}"
                     ) from e
 
-        if not self.selector_nocheck:
+        if is_otel_tracing_enabled():
+            for feedback in self.feedbacks:
+                feedback.check_otel_selectors()
+        elif not self.selector_nocheck and not is_otel_tracing_enabled():
             dummy = self.dummy_record()
 
             for feedback in self.feedbacks:
@@ -900,7 +998,8 @@ class App(
     ):
         """Called by instrumentation system for every function requested to be
         instrumented by this app."""
-
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         if id(obj) in self.instrumented_methods:
             funcs = self.instrumented_methods[id(obj)]
 
@@ -1047,6 +1146,7 @@ class App(
                         "Already recording with a context manager, cannot nest!"
                     )
                 self._current_context_manager = OtelRecordingContext(
+                    tru_app=self,
                     app_name=self.app_name,
                     app_version=self.app_version,
                     run_name="",
@@ -1074,6 +1174,7 @@ class App(
                 if self._current_context_manager is None:
                     raise RuntimeError("Unknown recording context manager!")
                 context_manager = self._current_context_manager
+                self._current_context_manager = None
             return context_manager.__exit__(exc_type, exc_value, exc_tb)
 
         self._prevent_invalid_otel_syntax()
@@ -1148,6 +1249,8 @@ class App(
         See
         [WithInstrumentCallbacks.on_new_record][trulens.core.instruments.WithInstrumentCallbacks.on_new_record].
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
         ctx = self.recording_contexts.get(contextvars.Token.MISSING)
 
         while ctx is not contextvars.Token.MISSING:
@@ -1174,6 +1277,8 @@ class App(
         See
         [WithInstrumentCallbacks.on_add_record][trulens.core.instruments.WithInstrumentCallbacks.on_add_record].
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         def build_record(
             calls: Iterable[record_schema.RecordAppCall],
@@ -1265,6 +1370,8 @@ class App(
         Issue a warning and some instructions if a function that has not been
         instrumented is being used in a `with_` call.
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         if not isinstance(func, Callable):
             raise TypeError(
@@ -1341,6 +1448,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         Call the given `func` with the given `*args` and `**kwargs`, producing
         its results as well as a record of the execution.
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         if not isinstance(func, Callable):
             if hasattr(func, "__call__"):
@@ -1370,6 +1479,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         Call the given `func` with the given `*args` and `**kwargs`, producing
         its results as well as a record of the execution.
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         if not isinstance(func, Callable):
             if hasattr(func, "__call__"):
@@ -1440,6 +1551,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
         See [_handle_record][trulens.core.app.App._handle_record].
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         if isinstance(future_or_result, Future):
             res = future_or_result.result()
@@ -1538,9 +1651,10 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         except AttributeError:
             pass
 
-        app = self.app
+        if __name == "app":
+            return None
 
-        if python_utils.safe_hasattr(app, __name):
+        if python_utils.safe_hasattr(self.app, __name):
             msg = ATTRIBUTE_ERROR_MESSAGE.format(
                 attribute_name=__name,
                 class_name=type(self).__name__,
@@ -1576,6 +1690,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             - `app_id` is taken from this recorder.
             - `calls` field is constructed based on instrumented methods.
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         calls = []
 
@@ -1631,6 +1747,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         """
         Iteration over instrumented components and their categories.
         """
+        if is_otel_tracing_enabled():
+            raise RuntimeError("Not supported with OTel tracing enabled!")
 
         for q, c in instrumented_component_views(self.model_dump()):
             # Add the chain indicator so the resulting paths can be specified
@@ -1721,6 +1839,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 description=run_config.description,
                 label=run_config.label,
                 llm_judge_name=run_config.llm_judge_name,
+                mode=run_config.mode,
             )
 
             return Run.from_metadata_df(
@@ -1817,17 +1936,25 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         self._check_snowflake_dao()
         self.snowflake_app_dao.drop_current_version(self.snowflake_object_name)
 
-    def run(self, run_name: str):
+    def run(
+        self,
+        run_name: str,
+        input_selector: Optional[
+            Callable[[Tuple[Any, ...], Dict[str, Any]], Any]
+        ] = None,
+    ):
         if self.session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING
         ):
             from trulens.core.otel.instrument import OtelRecordingContext
 
             return OtelRecordingContext(
+                tru_app=self,
                 app_name=self.app_name,
                 app_version=self.app_version,
                 run_name=run_name,
-                input_id=None,
+                input_id="",
+                input_selector=input_selector,
             )
         raise NotImplementedError(
             "This feature is not yet implemented for non-OTEL TruLens!"
@@ -1840,19 +1967,102 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             from trulens.core.otel.instrument import OtelRecordingContext
 
             return OtelRecordingContext(
+                tru_app=self,
                 app_name=self.app_name,
                 app_version=self.app_version,
-                run_name=None,
+                run_name="",
                 input_id=input_id,
             )
         raise NotImplementedError(
             "This feature is not yet implemented for non-OTEL TruLens!"
         )
 
+    @contextmanager
+    def live_run(
+        self,
+        run_name: str,
+        dataset_name: Optional[str] = None,
+        description: Optional[str] = None,
+        label: Optional[str] = None,
+    ) -> Iterator[LiveRunContext]:
+        """
+        Context manager for live tracing runs with automatic setup and teardown.
+
+        Args:
+            run_name: Name of the run (unique identifier)
+            dataset_name: Name of the dataset being processed (auto-generated if not provided)
+            description: Optional description for the run
+            label: Optional label for the run
+
+        Example:
+            ```python
+            # Option 1: Manual counting
+            with tru_app.live_run(
+                run_name="customer_queries_run_1"
+            ) as live_run:
+                for input_entry in test_data_entries:
+                    test_app.query(input_entry["query"])
+                    live_run.count_input()
+
+            # Option 2: Automatic counting with input context
+            with tru_app.live_run(
+                run_name="customer_queries_run_1"
+            ) as live_run:
+                for input_entry in test_data_entries:
+                    with live_run.input(input_entry["id"]):
+                        test_app.query(input_entry["query"])
+            ```
+        """
+        # set up run configuration for live tracing
+        if dataset_name is None:
+            dataset_name = (
+                f"live_tracing_run_{datetime.datetime.now().strftime('%H%M%S')}"
+            )
+
+        run_config = RunConfig(
+            run_name=run_name,
+            dataset_name=dataset_name,
+            source_type="DATAFRAME",  # TODO: use LIVE_TRACING once run DPO side is updated
+            dataset_spec={},
+            description=description,
+            label=label,
+        )
+
+        run: Run = self.add_run(run_config=run_config)
+
+        live_run_context = LiveRunContext(self, run)
+
+        logger.debug(f"Starting live run with run_name: {run.run_name}")
+
+        try:
+            with self.run(run_name=run.run_name):
+                yield live_run_context
+        finally:
+            logger.debug(
+                f"Finishing live run with run_name: {run.run_name} for {live_run_context.input_count} input records"
+            )
+
+            try:
+                self.session.force_flush()
+                run.run_dao.start_ingestion_query(
+                    object_name=run.object_name,
+                    object_type=run.object_type,
+                    object_version=run.object_version,
+                    run_name=run.run_name,
+                    input_records_count=live_run_context.input_count,
+                )
+            except Exception as e:
+                logger.exception(
+                    f"Failed to flush remaining OTEL spans and/or start Snowflake query to wait for ingested batches: {e}"
+                )
+
     def instrumented_invoke_main_method(
         self,
         run_name: str,
         input_id: str,
+        input_records_count: Optional[
+            int
+        ] = None,  # total expected number of input records for the run
         ground_truth_output: Optional[str] = None,
         main_method_args: Optional[Sequence[Any]] = None,
         main_method_kwargs: Optional[Dict[str, Any]] = None,
@@ -1863,10 +2073,12 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             from trulens.core.otel.instrument import OtelRecordingContext
 
             with OtelRecordingContext(
+                tru_app=self,
                 app_name=self.app_name,
                 app_version=self.app_version,
                 run_name=run_name,
                 input_id=input_id,
+                input_records_count=input_records_count,
                 ground_truth_output=ground_truth_output,
             ):
                 f = getattr(self.app, self.main_method_name)
@@ -1878,6 +2090,181 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         raise NotImplementedError(
             "This feature is not yet implemented for non-OTEL TruLens!"
         )
+
+    def compute_feedbacks(
+        self,
+        raise_error_on_no_feedbacks_computed: bool = True,
+        events: Optional[pd.DataFrame] = None,
+    ) -> None:
+        """Compute feedbacks for the app.
+
+        Args:
+            raise_error_on_no_feedbacks_computed:
+                Raise an error if no feedbacks were computed. Default is True.
+            events:
+                The events to compute feedbacks from. If None, uses all
+                events from the app.
+        """
+        if not is_otel_tracing_enabled():
+            raise ValueError(
+                "This method is only supported for OTEL Tracing. Please enable OTEL tracing in the environment!"
+            )
+
+        try:
+            from trulens.feedback.computer import compute_feedback_by_span_group
+        except ImportError:
+            logger.error(
+                "trulens.feedback package is not installed. Please install it to use feedback computation functionality."
+            )
+            raise
+
+        if events is None:
+            # Get all events associated with this app name and version.
+            # TODO(otel): Should probably handle the case where there are a lot of events with pagination.
+            events = self.connector.get_events(
+                app_name=self.app_name, app_version=self.app_version
+            )
+
+        for feedback in self.feedbacks:
+            compute_feedback_by_span_group(
+                events,
+                feedback,
+                raise_error_on_no_feedbacks_computed,
+            )
+
+    def start_evaluator(self) -> None:
+        """Start the evaluator for the app."""
+        self._evaluator.start_evaluator()
+
+    def stop_evaluator(self) -> None:
+        """Stop the evaluator for the app."""
+        if hasattr(self, "_evaluator") and self._evaluator is not None:
+            self._evaluator.stop_evaluator()
+
+
+def trace_with_run(
+    app: Optional["App"],
+    run_name: Optional[str] = None,
+    description: Optional[str] = None,
+    label: Optional[str] = None,
+    input_count: Optional[int] = None,
+    input_selector: Optional[
+        Callable[[Tuple[Any, ...], Dict[str, Any]], Any]
+    ] = None,
+):
+    """
+    Decorator for live tracing with a run with automatic setup and teardown.
+
+    Args:
+        app: The TruLens App instance to use for tracing. If None, no tracing is performed.
+        run_name: Run name that uniquely identifies the run. Required when app is not None.
+        description: Optional description for the run
+        label: Optional label for the run
+        input_count: Optional input count (auto-detected from main method calls if not provided)
+        input_selector: Optional function to extract input from function arguments.
+            Signature: (args: Tuple[Any, ...], kwargs: Dict[str, Any]) -> Any
+            If not provided, uses the default main_input logic.
+            User is responsible for validating or enforcing the logic to ensure that the returned value is compatible with currently supported types of OTEL attribute values, i.e. (str, int, float, bool, dict, and sequence of these types).
+
+    Example:
+        ```python
+        @trace_with_run(app=tru_app, run_name="customer_queries_run_1")
+        def run_queries(test_data):
+            for input_entry in test_data:
+                test_app.query(input_entry["query"])
+
+        # Custom input selector for complex objects
+        def extract_query_text(args, kwargs):
+            test_data = args[0]  # First argument
+            return [item["query"] for item in test_data]
+
+        @trace_with_run(
+            app=tru_app,
+            run_name="custom_queries_run_1",
+            input_selector=extract_query_text
+        )
+        def run_queries_with_custom_input(test_data):
+            for input_entry in test_data:
+                test_app.query(input_entry["query"])
+        ```
+    """
+
+    def decorator(func):
+        # If app is None, just return the original function without any wrapping
+        if app is None:
+            return func
+
+        # If app is provided but run_name is None, raise an error
+        if run_name is None:
+            raise ValueError("run_name is required when app is not None")
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            # Set up run configuration for live tracing
+            run_config = RunConfig(
+                run_name=run_name,
+                dataset_name=f"live_tracing_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f')}",
+                source_type="DATAFRAME",  # TODO: use LIVE_TRACING once run DPO side is updated
+                dataset_spec={},
+                description=description,
+                label=label,
+            )
+
+            run: Run = app.add_run(run_config=run_config)
+            detected_count = None
+
+            try:
+                with app.run(
+                    run_name=run_name, input_selector=input_selector
+                ) as recording:
+                    # Call the original function without any modifications
+                    result = func(*args, **kwargs)
+
+                    # Determine the actual input count based on method calls or user input
+                    if input_count is not None:
+                        detected_count = input_count
+                    else:
+                        # Count the actual number of records created (main method calls)
+                        detected_count = len(recording.records)
+
+                        # Fallback: try to detect from first argument if no records were created
+                        if detected_count is None and args:
+                            first_arg = args[0]
+                            if hasattr(first_arg, "__len__") and not isinstance(
+                                first_arg, str
+                            ):
+                                detected_count = len(first_arg)
+                            else:
+                                detected_count = (
+                                    1  # Default to 1 if can't detect
+                                )
+                        elif detected_count is None:
+                            detected_count = (
+                                1  # Default to 1 if no args and no records
+                            )
+                    return result
+            finally:
+                logger.debug(
+                    f"Finishing live run with run_name: {run.run_name} for {detected_count} input records"
+                )
+
+                try:
+                    app.session.force_flush()
+                    run.run_dao.start_ingestion_query(
+                        object_name=run.object_name,
+                        object_type=run.object_type,
+                        object_version=run.object_version,
+                        run_name=run.run_name,
+                        input_records_count=detected_count,
+                    )
+                except Exception as e:
+                    logger.exception(
+                        f"Failed to flush remaining OTEL spans and/or start Snowflake query to wait for ingested batches: {e}"
+                    )
+
+        return wrapper
+
+    return decorator
 
 
 # NOTE: Cannot App.model_rebuild here due to circular imports involving mod_session.TruSession
