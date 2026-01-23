@@ -8,6 +8,15 @@ TruLens is a framework designed to help you instrument and evaluate LLM applicat
 
 This instrumentation capability allows you to track the entire execution flow of your app, including inputs, outputs, internal operations, and performance metrics.
 
+## Why Instrument?
+
+Instrumentation serves two key purposes:
+
+1. **Observability**: Track the execution flow of your application
+2. **Evaluation**: Select instrumented attributes for evaluation with feedback functions
+
+The attributes you capture during instrumentation become available for evaluation. For example, if you instrument the retrieved contexts in a RAG application, you can then evaluate those contexts for relevance or groundedness. See [Feedback Selectors](../evaluation/feedback_selectors/index.md) to learn how to evaluate instrumented attributes.
+
 ## Instrumenting Applications with `@instrument`
 
 For applications that you can edit the source code, TruLens provides a framework-agnostic `instrument` decorator to capture the information from decorated functions. More specifically, adding the `instrument()` decorator will allow TruLens to log the function signature as span attributes.
@@ -54,6 +63,10 @@ Adding custom attributes in this way does not capture any additional information
     ) -> List[str]:
         return ["context 3", "context 4"]
     ```
+
+!!! tip "Evaluating Custom Attributes"
+
+    Custom attributes you instrument can be selected for evaluation using feedback functions. See [Selecting Spans for Evaluation](../evaluation/feedback_selectors/selecting_components.md) to learn how to evaluate these instrumented attributes.
 
 ## Instrumenting custom attributes with _TruLens_ semantic conventions
 
@@ -144,6 +157,10 @@ The lambda function dynamically processes both the function's return value and i
                 {"text": "context 6", "source": "doc2.pdf"}
             ]
     ```
+
+!!! tip "Evaluating Manipulated Attributes"
+
+    Attributes you transform using lambda functions are fully available for evaluation. This is particularly useful when your data requires preprocessing before evaluation. See [Selecting Spans for Evaluation](../evaluation/feedback_selectors/selecting_components.md) to learn how to evaluate these instrumented attributes.
 
 ## Instrumenting Common App Frameworks
 
