@@ -6,14 +6,13 @@ Step 1: Join the [community](https://snowflake.discourse.group/c/ai-research-and
 
 ## What can you work on?
 
-1. 💪 Add new [feedback
-   functions][trulens.core.feedback.provider.Provider]
-2. 🤝 Add new feedback function providers.
-3. 🐛 Fix bugs
-4. 🎉 Add usage examples
-5. 🧪 Add experimental features
-6. 📄 Improve code quality & documentation
-7. ⛅ Address open issues.
+1. [💪 Add new feedback functions](#add-new-feedback-functions)
+2. [🤝 Add new feedback function providers](#add-new-feedback-function-providers)
+3. [🐛 Fix bugs](#fix-bugs)
+4. [🎉 Add usage examples](#add-usage-examples)
+5. [🧪 Add experimental features](#add-experimental-features)
+6. [📄 Improve code quality & documentation](#improve-code-quality--documentation)
+7. [⛅ Address open issues](#address-open-issues)
 
 ## 💪 Add new [feedback functions][trulens.core.feedback.provider.Provider]
 
@@ -116,10 +115,10 @@ problematic designs. See [Tech debt index](techdebt.md).
 
 ### ⛅ Optional Packages
 
-Limit the packages installed by default when installing _TruLens_. For
-optional functionality, additional packages can be requested for the user to
-install and their usage is aided by an optional imports scheme. See [Optional
-Packages](optional.md) for details.
+Since TruLens 1.0, the package has been modularized into separate installable
+packages (`trulens-apps-*`, `trulens-providers-*`, `trulens-connectors-*`).
+Users install only the packages they need. See [Optional Packages](optional.md)
+for details on the package architecture.
 
 ### ✨ Database Migration
 
