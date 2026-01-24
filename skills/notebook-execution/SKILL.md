@@ -194,41 +194,63 @@ OPENAI_API_KEY="sk-..." TAVILY_API_KEY="tvly-..." \
 
 **Critical: The notebook execution process ends, killing any dashboard started within it.**
 
-After notebook execution completes, launch the dashboard separately in background mode:
+After notebook execution completes, launch the dashboard separately using TruLens's `run_dashboard()` function.
+
+### Important: Database Location
+
+The notebook writes its database to `./default.sqlite` **relative to the notebook's directory**. The `run_dashboard()` function reads from `./default.sqlite` relative to the **current working directory**.
+
+**This means you MUST `cd` to the notebook's directory before launching the dashboard.**
+
+### Correct Pattern for Dashboard Persistence
 
 ```bash
-streamlit run /path/to/trulens/src/dashboard/trulens/dashboard/main.py \
-  --server.headless=True \
-  --server.port=8501 \
-  --theme.base=dark
+cd /path/to/notebook/directory && \
+python3 << 'EOF'
+from trulens.core import TruSession
+from trulens.dashboard import run_dashboard
+
+session = TruSession()
+run_dashboard(session)
+EOF
 ```
 
 Use `run_in_background=true` with the bash tool so the dashboard stays alive.
 
-### Finding the Dashboard Script Path
+### Why NOT to Use Native Streamlit Commands
 
-The dashboard main script is located at:
+**DO NOT** try to launch the dashboard with native streamlit commands like:
+```bash
+# WRONG - will connect to wrong/empty database!
+streamlit run /path/to/trulens/src/dashboard/trulens/dashboard/main.py
 ```
-<trulens_repo>/src/dashboard/trulens/dashboard/main.py
-```
 
-### Full Pattern for Dashboard Persistence
+This fails because:
+1. Streamlit runs from the current working directory (likely repo root)
+2. It looks for `./default.sqlite` relative to that directory
+3. The actual database is in the notebook's directory
+4. Result: "No apps found" in the dashboard
 
-```python
-# After notebook execution completes:
-# 1. Run the notebook (which may start and stop a dashboard)
-# 2. Launch dashboard separately in background mode
+### Full Example Workflow
 
+```bash
 # Step 1: Execute notebook
-jupyter nbconvert --execute --inplace notebook.ipynb
+OPENAI_API_KEY="sk-..." jupyter nbconvert --execute --inplace \
+  /path/to/examples/notebook.ipynb
 
-# Step 2: Launch persistent dashboard (in background)
-streamlit run /path/to/trulens/src/dashboard/trulens/dashboard/main.py \
-  --server.headless=True --server.port=8501 --theme.base=dark
+# Step 2: Launch persistent dashboard FROM THE NOTEBOOK'S DIRECTORY
+cd /path/to/examples && \
+python3 << 'EOF'
+from trulens.core import TruSession
+from trulens.dashboard import run_dashboard
+
+session = TruSession()
+run_dashboard(session)
+EOF
 # Use run_in_background=true for this command
 ```
 
-The dashboard will remain running at **http://localhost:8501** until explicitly stopped.
+The dashboard will output its URL (e.g., `http://localhost:55872`) and remain running until explicitly stopped.
 
 ## Post-Execution
 
@@ -309,8 +331,13 @@ User: "Run the deep agents quickstart notebook"
    Waiting for evaluation results...
    ✓ Complete
 
-5. Launch dashboard in background (so it stays alive):
-   streamlit run .../main.py --server.headless=True --server.port=8501
+5. Launch dashboard in background FROM THE NOTEBOOK'S DIRECTORY:
+   cd /path/to/notebook/directory && python3 -c "
+   from trulens.core import TruSession
+   from trulens.dashboard import run_dashboard
+   session = TruSession()
+   run_dashboard(session)
+   "
    [run_in_background=true]
 
 6. Display results summary:
