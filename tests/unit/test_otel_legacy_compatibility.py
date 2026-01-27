@@ -71,12 +71,12 @@ class TestOtelLegacyCompatibility(OtelTestCase):
         from trulens.apps.app import instrument
 
         class TestApp:
-            @instrument()
+            @instrument
             def respond_to_query(self, query: str) -> str:
                 self.square(7)
                 return f"response to {query}"
 
-            @instrument()
+            @instrument
             def square(self, n: int) -> int:
                 return n * n
 
