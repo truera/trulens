@@ -36,7 +36,7 @@ class DummyReranker(Dummy):
 
         return sorted(chunks_and_scores, key=lambda cs: cs[1])[: self.top_n]
 
-    @instrument()
+    @instrument
     async def arerank(
         self,
         query_text: str,
