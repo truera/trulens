@@ -16,7 +16,7 @@ class DummyRetriever(Dummy):
 
         self.num_contexts = num_contexts
 
-    @instrument()
+    @instrument
     def retrieve_chunks(self, data):
         """Fake chunk retrieval."""
 
@@ -35,7 +35,7 @@ class DummyRetriever(Dummy):
             * 3
         )[: self.num_contexts]
 
-    @instrument()
+    @instrument
     async def aretrieve_chunks(self, data):
         """Fake chunk retrieval."""
 
