@@ -14,7 +14,7 @@ class DummyReranker(Dummy):
         self.top_n = top_n
         self.model_name = "herpderp-v1-reranker"
 
-    @instrument()
+    @instrument
     def rerank(
         self,
         query_text: str,
