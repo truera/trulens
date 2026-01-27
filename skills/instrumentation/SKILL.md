@@ -192,18 +192,35 @@ with tru_recorder as recording:
     result = graph.invoke({"messages": [HumanMessage(content="your query")]})
 ```
 
-**LangChain example:**
+ ## Deep Agents / LangGraph Instrumentation
+
+LangChain's **Deep Agents** framework is built on LangGraph. Use `TruGraph` for full instrumentation:
 
 ```python
-from trulens.apps.langchain import TruChain
+from deepagents import create_deep_agent
+from trulens.apps.langgraph import TruGraph
+from trulens.core import TruSession
 
-tru_recorder = TruChain(chain, app_name="MyChain", app_version="v1")
+# Create the Deep Agent
+agent = create_deep_agent(
+    model=model,
+    tools=[your_tools],
+    system_prompt="Your prompt"
+)
 
-with tru_recorder as recording:
-    result = chain.invoke("your query")
+# Wrap with TruGraph - captures all internal nodes, tool calls, planning steps
+tru_agent = TruGraph(
+    agent,
+    app_name="DeepAgent",
+    app_version="v1",
+    feedbacks=[f_answer_relevance]
+)
+
+with tru_agent as recording:
+    result = agent.invoke({"messages": [{"role": "user", "content": query}]})
 ```
 
-**LlamaIndex example:**
+**For LlamaIndex apps**
 
 ```python
 from trulens.apps.llamaindex import TruLlama
@@ -242,25 +259,6 @@ tru_recorder = TruLlamaWorkflow(
 
 with tru_recorder as recording:
     result = await workflow.run(query="your query")
-```
-
-**For simple input/output apps:**
-
-```python
-from trulens.apps.basic import TruBasicApp
-
-def my_llm_app(prompt):
-    # Your LLM logic here
-    return response
-
-tru_recorder = TruBasicApp(
-    my_llm_app,
-    app_name="MyBasicApp",
-    app_version="v1"
-)
-
-with tru_recorder as recording:
-    result = my_llm_app("your prompt")
 ```
 
 #### Option B: Custom Instrumentation with @instrument()
@@ -401,34 +399,6 @@ def call_tool(self, tool_name, args): ...
 def execute_workflow(self, steps): ...
 ```
 
-## Deep Agents / LangGraph Instrumentation
-
-LangChain's **Deep Agents** framework is built on LangGraph. Use `TruGraph` for full instrumentation:
-
-```python
-from deepagents import create_deep_agent
-from trulens.apps.langgraph import TruGraph
-from trulens.core import TruSession
-
-# Create the Deep Agent
-agent = create_deep_agent(
-    model=model,
-    tools=[your_tools],
-    system_prompt="Your prompt"
-)
-
-# Wrap with TruGraph - captures all internal nodes, tool calls, planning steps
-tru_agent = TruGraph(
-    agent,
-    app_name="DeepAgent",
-    app_version="v1",
-    feedbacks=[f_answer_relevance]
-)
-
-with tru_agent as recording:
-    result = agent.invoke({"messages": [{"role": "user", "content": query}]})
-```
-
 **Why TruGraph instead of TruApp + @instrument?**
 
 - TruGraph automatically captures all LangGraph nodes and transitions
@@ -468,4 +438,3 @@ def run_agent(self, task):
 - **Missing context in evaluations**: Add semantic attributes to map function args/returns
 - **Framework not detected**: Verify the correct wrapper is imported (TruChain vs TruGraph vs TruLlama)
 - **Feedback columns empty/evaluations not running**: Your root span must use `SpanType.RECORD_ROOT` for `.on_input()/.on_output()` shortcuts to work. Use framework wrappers (TruGraph, TruChain) which handle this automatically.
-- **Pydantic errors with Deep Agents**: Deep Agents uses `NotRequired` type annotations that can cause Pydantic schema errors. If you see `PydanticForbiddenQualifier` errors, update to the latest TruLens version which handles this gracefully.
