@@ -201,6 +201,7 @@ class instrument:
     def __init__(
         self,
         *,
+        name: Optional[str] = None,
         span_type: SpanAttributes.SpanType = SpanAttributes.SpanType.UNKNOWN,
         attributes: Attributes = None,
         **kwargs,
@@ -209,11 +210,15 @@ class instrument:
         Decorator for marking functions to be instrumented with OpenTelemetry
         tracing.
 
+        name: Optional custom span name. If not provided, derives from function's
+            __module__.__qualname__. Use this for clean span names without
+            module prefixes (e.g., name="call_llm" instead of "__main__.call_llm").
         span_type: Span type to be used for the span.
         attributes:
             A dictionary or a callable that returns a dictionary of attributes
             (i.e. a `typing.Dict[str, typing.Any]`) to be set on the span.
         """
+        self.name = name
         self.user_specified_span_type = span_type
         self.span_type = span_type
         if span_type == SpanAttributes.SpanType.RECORD_ROOT:
@@ -234,9 +239,13 @@ class instrument:
         self.must_be_first_wrapper = kwargs.get("must_be_first_wrapper", False)
 
     def __call__(self, func: Callable) -> Callable:
-        func_name = get_func_name(func)
+        func_name = self.name if self.name else get_func_name(func)
+        custom_name_provided = self.name is not None
 
         def _func_name_for_instance(instance) -> str:
+            # If a custom name was explicitly provided, always use it
+            if custom_name_provided:
+                return func_name
             target = None
             if instance is None:
                 target = None
@@ -637,3 +646,188 @@ class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
         self.attach_to_context("__trulens_recording__", True)
 
         return root_span
+
+
+# === Trace Beautification Utilities ===
+
+
+def extract_input_content(messages) -> str:
+    """Extract the text content from the input messages.
+
+    Looks for the last HumanMessage's content, or falls back to the first
+    message's content if no HumanMessage is found.
+
+    Args:
+        messages: List of message objects (e.g., LangChain messages)
+
+    Returns:
+        The extracted text content as a string
+    """
+    if not messages:
+        return ""
+
+    # Try to find the last human message
+    for msg in reversed(messages):
+        # Check for LangChain HumanMessage
+        if hasattr(msg, "content"):
+            msg_type = type(msg).__name__
+            if msg_type == "HumanMessage":
+                return msg.content
+
+    # Fall back to first message content
+    if hasattr(messages[0], "content"):
+        return messages[0].content
+
+    return str(messages[0])
+
+
+def extract_output_content(ret) -> str:
+    """Extract the text content from an LLM response.
+
+    Args:
+        ret: The LLM response object
+
+    Returns:
+        The extracted text content as a string
+    """
+    if ret is None:
+        return ""
+    if hasattr(ret, "content"):
+        return ret.content
+    return str(ret)
+
+
+def extract_tool_calls(ret) -> Optional[str]:
+    """Extract and format tool calls from an LLM response.
+
+    Formats tool calls as: "tool_name(arg1=val1, arg2=val2), other_tool(...)"
+
+    Args:
+        ret: The LLM response object
+
+    Returns:
+        Formatted string of tool calls, or None if no tool calls
+    """
+    if ret is None:
+        return None
+    if not hasattr(ret, "tool_calls") or not ret.tool_calls:
+        return None
+
+    formatted = []
+    for tc in ret.tool_calls:
+        name = (
+            tc.get("name", "unknown")
+            if isinstance(tc, dict)
+            else getattr(tc, "name", "unknown")
+        )
+        args = (
+            tc.get("args", {})
+            if isinstance(tc, dict)
+            else getattr(tc, "args", {})
+        )
+
+        if isinstance(args, dict):
+            args_str = ", ".join(f"{k}={v}" for k, v in args.items())
+        else:
+            args_str = str(args)
+
+        formatted.append(f"{name}({args_str})")
+
+    return ", ".join(formatted)
+
+
+def generation_attributes() -> Callable:
+    """Create an attributes lambda for GENERATION spans.
+
+    Extracts input_content, output_content, and tool_calls from the function
+    call and return value.
+
+    Returns:
+        A callable suitable for the @instrument(attributes=...) parameter
+
+    Example:
+        @instrument(
+            name="call_llm",
+            span_type=SpanAttributes.SpanType.GENERATION,
+            attributes=generation_attributes()
+        )
+        def call_llm(messages):
+            return model.invoke(messages)
+    """
+
+    def _extract(ret, exception, *args, **kwargs) -> Dict[str, Any]:
+        result = {}
+
+        # Extract input content from first positional arg (usually messages)
+        if args:
+            input_content = extract_input_content(args[0])
+            if input_content:
+                result["input_content"] = input_content
+
+        # Extract output content and tool calls from return value
+        if ret is not None:
+            output_content = extract_output_content(ret)
+            if output_content:
+                result["output_content"] = output_content
+
+            tool_calls = extract_tool_calls(ret)
+            if tool_calls:
+                result["tool_calls"] = tool_calls
+
+        return result
+
+    return _extract
+
+
+def instrument_tools(
+    tools_by_name: Dict[str, Any],
+    *,
+    invoke_method: str = "invoke",
+) -> None:
+    """Instrument a tools dictionary in place for clean tool span names.
+
+    Replaces each tool in the dictionary with a wrapper that produces spans
+    named after the tool (e.g., "add", "multiply") when invoke() is called.
+
+    This is the least invasive way to get clean tool spans - no changes
+    to app code required beyond this one setup call.
+
+    Args:
+        tools_by_name: Dictionary mapping tool names to tool objects
+        invoke_method: Name of the method to wrap (default: "invoke")
+
+    Example:
+        tools_by_name = {"add": add_tool, "multiply": multiply_tool}
+
+        # One line setup - wraps tools in place
+        instrument_tools(tools_by_name)
+
+        # App code unchanged - just call tool.invoke() as normal
+        def call_tool(tool_call):
+            tool = tools_by_name[tool_call["name"]]
+            result = tool.invoke(tool_call["args"])  # Now creates "add" span
+            return ToolMessage(content=result, ...)
+    """
+    for name, tool in list(tools_by_name.items()):
+        original_invoke = getattr(tool, invoke_method)
+
+        # Create instrumented invoke with clean span name
+        instrumented_invoke = instrument(
+            name=name,
+            span_type=SpanAttributes.SpanType.TOOL,
+        )(original_invoke)
+
+        # Create a wrapper that delegates to the original tool
+        # but uses the instrumented invoke
+        class ToolWrapper:
+            def __init__(self, original_tool, instrumented_invoke):
+                self._tool = original_tool
+                self._instrumented_invoke = instrumented_invoke
+
+            def invoke(self, *args, **kwargs):
+                return self._instrumented_invoke(*args, **kwargs)
+
+            def __getattr__(self, name):
+                return getattr(self._tool, name)
+
+        tools_by_name[name] = ToolWrapper(tool, instrumented_invoke)
