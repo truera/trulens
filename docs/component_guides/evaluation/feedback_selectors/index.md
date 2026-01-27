@@ -9,6 +9,7 @@ synthesis, and more, each component can be a source of error.
 
 This also makes the instrumentation and evaluation of LLM applications inseparable.
 To evaluate the inner components of an application, we first need access to them.
+This access is provided through instrumentation. See the [Instrumentation Guide](../../instrumentation/index.md) to learn how to instrument your application and capture the attributes you want to evaluate.
 
 As a reminder, a typical feedback definition looks like this:
 
