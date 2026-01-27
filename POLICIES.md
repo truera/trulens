@@ -30,56 +30,105 @@ Changes that result in non-backwards compatible functionality are also reflected
 in the version numbering. In such cases, the appropriate level version change
 will occur at the introduction of the warning period.
 
-## Currently deprecating features
+## Currently Deprecated Features
 
-- Starting 1.0, the `trulens_eval` package is being deprecated in favor of
-  `trulens` and several associated required and optional packages. See
-  [trulens_eval migration](/component_guides/other/trulens_eval_migration) for details.
+### Legacy Instrumentation
 
-    - Warning period: 2024-09-01 (`trulens-eval==1.0.1`) to 2024-10-14.
-    Backwards compatibility during the warning period is provided by the new
-    content of the `trulens_eval` package which provides aliases to the features
-    in their new locations. See
-    [trulens_eval](/reference/trulens_eval).
+The legacy stack-based instrumentation system is deprecated in favor of
+OpenTelemetry (OTEL). This includes:
 
-    - Deprecated period: 2024-10-14 to 2025-12-01. Usage of `trulens_eval` will
-  	produce errors indicating deprecation.
+- `_RecordingContext` class → Use OTEL-based `OtelRecordingContext`
+- `Instrument` class-based method wrapping → Use `@instrument` decorator from
+  `trulens.core.otel.instrument`
+- Custom thread/async context tracking (`TP`, `ThreadPoolExecutor`,
+  `tru_new_event_loop`) → OTEL handles context propagation automatically
 
-    - Removed expected 2024-12-01 Installation of the latest version of
-  	`trulens_eval` will be an error itself with a message that `trulens_eval` is
-    no longer maintained.
+Some newer features like `App.run()`, `App.input()`, and
+`App.instrumented_invoke_main_method()` only work with OTEL instrumentation.
+
+### Core/Session
+
+| Deprecated | Replacement |
+|------------|-------------|
+| `Tru()` | `TruSession()` |
+| `TruCustomApp` | `TruApp` |
+| `from trulens.apps.custom import instrument` | `from trulens.apps.app import instrument` |
+| Custom `app_id` parameter | Use `app_name` and `app_version` |
+| `TruSession.update_record()` | `connector.db.insert_record()` |
+
+### TruSession App Factory Methods
+
+Use `TruSession.App()` instead of these deprecated methods:
+
+- `TruSession.Basic()`
+- `TruSession.Custom()`
+- `TruSession.Virtual()`
+- `TruSession.Chain()`
+- `TruSession.Llama()`
+- `TruSession.Rails()`
+
+### TruSession Dashboard Methods
+
+| Deprecated | Replacement |
+|------------|-------------|
+| `TruSession.run_dashboard()` | `trulens.dashboard.run.run_dashboard()` |
+| `TruSession.start_dashboard()` | `trulens.dashboard.run.run_dashboard()` |
+| `TruSession.stop_dashboard()` | `trulens.dashboard.run.stop_dashboard()` |
+| `TruSession.find_unused_port()` | `trulens.dashboard.run.find_unused_port()` |
+
+### Feedback Functions
+
+| Deprecated | Replacement |
+|------------|-------------|
+| `model_agreement()` | `GroundTruthAgreement(ground_truth, provider)` |
+| `qs_relevance()` | `relevance()` |
+| `qs_relevance_with_cot_reasons()` | `relevance_with_cot_reasons()` |
+| `summarization_with_cot_reasons()` | `comprehensiveness_with_cot_reasons()` |
+| Default provider in `GroundTruthAgreement` | Specify provider explicitly |
+| `validate_rating()` | Use try/catch with `re_0_10_rating` |
+| `Select.context()` | - |
+
+### Endpoint
+
+| Deprecated | Replacement |
+|------------|-------------|
+| `Endpoint.run_me()` | `Endpoint.run_in_pace()` |
+
+### LangChain App
+
+| Deprecated | Replacement |
+|------------|-------------|
+| `TruChain.call_with_record()` | - |
+| `TruChain.acall_with_record()` | - |
+
+## Previously Deprecated Features
+
+- **`trulens_eval` (removed)**: As of TruLens 1.0, the `trulens_eval` package
+  was deprecated in favor of `trulens` and its modular packages. The
+  `trulens_eval` package is no longer maintained. See
+  [trulens_eval migration](/component_guides/other/trulens_eval_migration) for
+  migration details.
+
+- **`QS_RELEVANCE_*` prompts (removed)**: Use `ANSWER_RELEVANCE` or
+  `CONTEXT_RELEVANCE` instead.
 
 ## Experimental Features
 
-Major new features are introduced to _TruLens_ first in the form of experimental
-previews. Such features are indicated by the prefix `experimental_`. For
-example, the OTEL exporter for `TruSession` is specified with the
-`experimental_otel_exporter` parameter. Some features require additionally
-setting a flag before they are enabled. This is controlled by the
-`TruSession.experimental_{enable,disable}_feature` method:
+Major new features may be introduced to _TruLens_ first in the form of
+experimental previews. Such features are indicated by the prefix `experimental_`
+on parameters or the `TruSession.experimental_{enable,disable}_feature` method:
 
 ```python
 from trulens.core.session import TruSession
-session = TruSession()
-session.experimental_enable_feature("otel_tracing")
-
-# or
 from trulens.core.experimental import Feature
-session.experimental_disable_feature(Feature.OTEL_TRACING)
+
+session = TruSession()
+session.experimental_enable_feature(Feature.SOME_FEATURE)
 ```
-
-If an experimental parameter like `experimental_otel_exporter` is used, some
-experimental flags may be set. For the OTEL exporter, the `OTEL_EXPORTER` flag
-is required and will be set.
-
-Some features cannot be changed after some stages in the typical _TruLens_
-use-cases. OTEL tracing, for example, cannot be disabled once an app has been
-instrumented. An error will result in an attempt to change the feature after it
-has been "locked" by irreversible steps like instrumentation.
 
 ### Experimental Features Pipeline
 
-While in development, the experimental features may change in significant ways.
+While in development, experimental features may change in significant ways.
 Eventually experimental features get adopted or removed.
 
 For removal, experimental features do not have a deprecation period and will

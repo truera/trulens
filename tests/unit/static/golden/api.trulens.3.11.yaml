@@ -4,7 +4,7 @@ trulens:
   lows: {}
 trulens.benchmark:
   __class__: builtins.module
-  __version__: 2.5.2
+  __version__: 2.5.3
   highs: {}
   lows:
     __version__: builtins.str
@@ -60,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 2.5.2
+  __version__: 2.5.3
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -1958,15 +1958,52 @@ trulens.core.utils.trace_compression:
   __class__: builtins.module
   highs: {}
   lows:
+    DEFAULT_TOKEN_LIMIT: builtins.int
+    MAX_TRACE_SIZE: builtins.int
+    MAX_TRACE_SIZE_TOKEN_LIMIT: builtins.int
     TraceCompressor: builtins.type
-    compress_multiple_traces: builtins.function
     compress_trace_for_feedback: builtins.function
+    safe_truncate: builtins.function
 trulens.core.utils.trace_compression.TraceCompressor:
   __bases__:
   - builtins.object
   __class__: builtins.type
   attributes:
     compress_trace: builtins.function
+    compress_trace_with_plan_priority: builtins.function
+trulens.core.utils.trace_provider:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    DEFAULT_TOKEN_LIMIT: builtins.int
+    GenericTraceProvider: abc.ABCMeta
+    TraceProvider: abc.ABCMeta
+    TraceProviderRegistry: builtins.type
+    get_trace_provider: builtins.function
+    register_trace_provider: builtins.function
+trulens.core.utils.trace_provider.GenericTraceProvider:
+  __bases__:
+  - trulens.core.utils.trace_provider.TraceProvider
+  __class__: abc.ABCMeta
+  attributes: {}
+trulens.core.utils.trace_provider.TraceProvider:
+  __bases__:
+  - abc.ABC
+  __class__: abc.ABCMeta
+  attributes:
+    can_handle: builtins.function
+    compress_trace: builtins.function
+    compress_with_plan_priority: builtins.function
+    extract_agent_interactions: builtins.function
+    extract_execution_flow: builtins.function
+    extract_plan: builtins.function
+trulens.core.utils.trace_provider.TraceProviderRegistry:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    get_provider: builtins.function
+    register_provider: builtins.function
 trulens.core.utils.trulens:
   __class__: builtins.module
   highs: {}
@@ -1983,7 +2020,7 @@ trulens.core.utils.trulens.Other:
   attributes: {}
 trulens.dashboard:
   __class__: builtins.module
-  __version__: 2.5.2
+  __version__: 2.5.3
   highs:
     run_dashboard: builtins.function
     run_dashboard_sis: builtins.function
@@ -2286,7 +2323,7 @@ trulens.dashboard.ux.styles.ResultCategoryType:
     value: enum.property
 trulens.feedback:
   __class__: builtins.module
-  __version__: 2.5.2
+  __version__: 2.5.3
   highs:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
@@ -3339,7 +3376,7 @@ trulens.feedback.v2.provider.base.Provider:
     tru_class_info: trulens.core.utils.pyschema.Class
 trulens.hotspots:
   __class__: builtins.module
-  __version__: 2.5.2
+  __version__: 2.5.3
   highs:
     HotspotsConfig: builtins.type
     get_skipped_columns: builtins.function

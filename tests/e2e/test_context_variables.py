@@ -13,15 +13,15 @@ class TestContextVariables(SnowflakeTestCase):
     @pytest.mark.optional
     def test_endpoint_contextvar_always_cleaned(self):
         class FailingRAG:
-            @instrument
+            @instrument()
             def retrieve(self, query: str) -> list:
                 return ["A", "B", "C"]
 
-            @instrument
+            @instrument()
             def generate_completion(self, query: str, context_str: list) -> str:
                 raise ValueError()
 
-            @instrument
+            @instrument()
             def query(self, query: str) -> str:
                 context_str = self.retrieve(query=query)
                 completion = self.generate_completion(

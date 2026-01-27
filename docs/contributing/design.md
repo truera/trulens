@@ -20,6 +20,24 @@ including performance and cost statistics. This means TruLens must perform signi
 processing under the hood to get that data. This is outlined primarily in
 the [Instrumentation](#instrumentation) section below.
 
+## OpenTelemetry-Based Instrumentation
+
+As of TruLens 1.x, instrumentation is built on OpenTelemetry (OTEL). The OTEL
+integration provides:
+
+- **Standardized tracing**: Spans and traces follow OTEL conventions
+- **Context propagation**: OTEL handles context across threads and async code
+- **Flexible export**: Data can be exported to various backends via OTEL exporters
+
+The OTEL-based instrumentation is in:
+
+- `trulens.core.otel.instrument` - The `@instrument` decorator for marking methods
+- `trulens.experimental.otel_tracing` - Session and exporter configuration
+- `trulens.otel.semconv` - Semantic conventions for TruLens spans
+
+The sections below describe the instrumentation implementation details, including
+some legacy approaches that are being phased out.
+
 ## Instrumentation
 
 ### App Data
@@ -134,11 +152,10 @@ tools as App Data (see above).
   [RecordAppCallMethod][trulens.core.schema.record.RecordAppCallMethod] will
   distinguish the different versions of the method.
 
-- Thread-safety -- it is tricky to use global data to keep track of instrumented
-  method calls in presence of multiple threads. For this reason we do not use
-  global data and instead hide instrumenting data in the call stack frames of
-  the instrumentation methods. See
-  [get_all_local_in_call_stack][trulens.core.utils.python.get_all_local_in_call_stack].
+- Thread-safety -- With OTEL, context propagation across threads is handled by
+  OpenTelemetry's context API. Legacy code used call stack inspection (see
+  [get_all_local_in_call_stack][trulens.core.utils.python.get_all_local_in_call_stack])
+  but this is being phased out in favor of OTEL context.
 
 - Generators and Awaitables -- If an instrumented call produces a generator or
   awaitable, we cannot produce the full record right away. We instead create a
@@ -149,36 +166,27 @@ tools as App Data (see above).
 
 #### Threads
 
-Threads do not inherit call stacks from their creator. This is a problem due to
-our reliance on info stored on the stack. Therefore we have a limitation:
+With OTEL-based instrumentation, context propagation across threads is handled
+by OpenTelemetry's context API, which properly propagates trace context.
 
-- **Limitation**: Threads need to be started using the utility class
+Legacy instrumentation had this limitation:
+
+- **Legacy Limitation**: Threads needed to be started using the utility class
   [TP][trulens.core.utils.threading.TP] or
-  [ThreadPoolExecutor][trulens.core.utils.threading.ThreadPoolExecutor] also
-  defined in `utils/threading.py` in order for instrumented methods called in a
-  thread to be tracked. As we rely on call stack for call instrumentation we
-  need to preserve the stack before a thread start which Python does not do.
+  [ThreadPoolExecutor][trulens.core.utils.threading.ThreadPoolExecutor] in
+  `utils/threading.py` for proper tracking. This is less critical with OTEL.
 
 #### Async
 
-Similar to threads, code run as part of a [asyncio.Task][] does not inherit
-the stack of the creator. Our current solution instruments
-[asyncio.new_event_loop][] to make sure all tasks that get created
-in `async` track the stack of their creator. This is done in
-[tru_new_event_loop][trulens.core.utils.python.tru_new_event_loop] . The
-function [stack_with_tasks][trulens.core.utils.python.stack_with_tasks] is then
-used to integrate this information with the normal caller stack when needed.
-This may cause incompatibility issues when other tools use their own event loops
-or interfere with this instrumentation in other ways. Note that some async
-functions that appear not to involve [Task][asyncio.Task] do use tasks, such as
-[gather][asyncio.gather].
+With OTEL-based instrumentation, async context is handled by OpenTelemetry's
+context API which integrates with Python's contextvars.
 
-- **Limitation**: [Task][asyncio.Task]s must be created via our `task_factory`
-  as per
-  [task_factory_with_stack][trulens.core.utils.python.task_factory_with_stack].
-  This includes tasks created by function such as [asyncio.gather][]. This
-  limitation is not expected to be a problem given our instrumentation except if
-  other tools are used that modify `async` in some ways.
+Legacy instrumentation used custom task factory instrumentation:
+
+- **Legacy approach**: Instrumented [asyncio.new_event_loop][] via
+  [tru_new_event_loop][trulens.core.utils.python.tru_new_event_loop] and used
+  [task_factory_with_stack][trulens.core.utils.python.task_factory_with_stack]
+  to track async task stacks. This is less critical with OTEL context propagation.
 
 #### Limitations
 
@@ -209,38 +217,21 @@ functions that appear not to involve [Task][asyncio.Task] do use tasks, such as
 
 ### Calls: Implementation Details
 
-Our tracking of calls uses instrumentated versions of methods to manage the
-recording of inputs/outputs. The instrumented methods must distinguish
-themselves from invocations of apps that are being tracked from those not being
-tracked, and of those that are tracked, where in the call stack a instrumented
-method invocation is. To achieve this, we rely on inspecting the Python call
-stack for specific frames:
+#### Current Approach (OTEL)
 
-- Prior frame -- Each instrumented call searches for the topmost instrumented
-  call (except itself) in the stack to check its immediate caller (by immediate
-  we mean only among instrumented methods) which forms the basis of the stack
-  information recorded alongside the inputs/outputs.
+With OTEL-based instrumentation, call tracking uses OpenTelemetry spans:
 
-#### Drawbacks
+- Each instrumented method creates a span with input/output attributes
+- Parent-child relationships are managed by OTEL's context API
+- Context propagates automatically across threads and async boundaries
+- The `@instrument` decorator in `trulens.core.otel.instrument` handles span creation
 
-- Python call stacks are implementation dependent and we do not expect to
-  operate on anything other than CPython.
+#### Legacy Approach (Stack Inspection)
 
-- Python creates a fresh empty stack for each thread. Because of this, we need
-  special handling of each thread created to make sure it keeps a hold of the
-  stack prior to thread creation. Right now we do this in our threading utility
-  class TP but a more complete solution may be the instrumentation of
-  [threading.Thread][] class.
+The legacy implementation relied on Python call stack inspection:
 
-#### Alternatives
+- Instrumented methods searched for the topmost instrumented call in the stack
+- This required custom thread/async handling to preserve stack information
+- Stack inspection is CPython-specific
 
-- [contextvars][] -- *LangChain* uses these to manage contexts such as those used
-  for instrumenting/tracking LLM usage. These can be used to manage call stack
-  information like we do. The drawback is that these are not threadsafe or at
-  least need instrumenting thread creation. We have to do a similar thing by
-  requiring threads created by our utility package which does stack management
-  instead of contextvar management.
-
-    NOTE(piotrm): it seems to be standard thing to do to copy the contextvars into
-    new threads so it might be a better idea to use contextvars instead of stack
-    inspection.
+This approach is phased out in favor of OTEL context propagation.
