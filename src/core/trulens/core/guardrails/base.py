@@ -121,7 +121,7 @@ class block_input:
         feedback = Feedback(provider.criminality, higher_is_better = False)
 
         class safe_input_chat_app:
-            @instrument
+            @instrument()
             @block_input(feedback=feedback,
                 threshold=0.9,
                 keyword_for_prompt="question",
@@ -211,7 +211,7 @@ class block_output:
         feedback = Feedback(provider.criminality, higher_is_better = False)
 
         class safe_output_chat_app:
-            @instrument
+            @instrument()
             @block_output(feedback = feedback,
                 threshold = 0.5,
                 return_value = "Sorry, I couldn't find an answer to your question.")
