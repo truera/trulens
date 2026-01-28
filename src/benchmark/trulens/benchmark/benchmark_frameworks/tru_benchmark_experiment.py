@@ -7,6 +7,7 @@ import pandas as pd
 from pydantic import BaseModel
 from trulens.apps import app
 from trulens.core.feedback import feedback as core_feedback
+from trulens.core.metric import metric as core_metric
 from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import select as select_schema
 
@@ -97,7 +98,7 @@ class TruBenchmarkExperiment:
         else:
             on_selector = select_schema.Select.RecordCalls.run_score_generation_on_single_row.rets
 
-        self.f_benchmark_metrics: List[core_feedback.Feedback] = [
+        self.f_benchmark_metrics: List[core_metric.Metric] = [
             core_feedback.Feedback(
                 lambda x: x,
                 name=f"metric_{agg_func.__name__}",
