@@ -151,7 +151,7 @@ def compute_feedback_by_span_group(
     kwarg_to_selector = (
         selectors if selectors is not None else feedback.selectors
     )
-    feedback_aggregator = feedback.aggregator
+    feedback_aggregator = feedback.agg
 
     kwarg_groups = _group_kwargs_by_selectors(kwarg_to_selector)
     unflattened_inputs = _collect_inputs_from_events(

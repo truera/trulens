@@ -64,7 +64,7 @@ class inline_evaluation:
                         self._feedback.name,
                         self._feedback,
                         self._feedback.higher_is_better,
-                        self._feedback.aggregator,
+                        self._feedback.agg,
                         feedback_function_inputs,
                         app_name,
                         app_version,
