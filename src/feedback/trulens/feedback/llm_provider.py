@@ -679,7 +679,7 @@ class LLMProvider(core_provider.Provider):
             context=context,
         )
         user_prompt = user_prompt.replace(
-            "RELEVANCE:", feedback_prompts.COT_REASONS_TEMPLATE_with
+            "RELEVANCE:", feedback_prompts.COT_REASONS_TEMPLATE
         )
         # Use default COT prompt only if no criteria AND no additional_instructions
         if criteria is None and additional_instructions is None:
