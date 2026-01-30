@@ -26,7 +26,7 @@ Simply adding the `block_output` decorator with a feedback function and threshol
     feedback = Feedback(provider.criminality, higher_is_better = False)
 
     class safe_output_chat_app:
-        @instrument
+        @instrument()
         @block_output(feedback=feedback,
             threshold = 0.9,
             return_value="I couldn't find an answer to your question.")
@@ -53,7 +53,7 @@ This mechanism for guardrails is supported via the `block_input` guardrail. If t
     feedback = Feedback(provider.criminality, higher_is_better = False)
 
     class safe_input_chat_app:
-        @instrument
+        @instrument()
         @block_input(feedback=feedback,
             threshold=0.9,
             keyword_for_prompt="question",

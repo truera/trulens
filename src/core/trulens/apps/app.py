@@ -20,11 +20,11 @@ Example: Instrumenting a custom class
         def __init__(self):
             self.retriever = CustomRetriever()
 
-        @instrument
+        @instrument()
         def retrieve_chunks(self, data):
             return self.retriever.retrieve_chunks(data)
 
-        @instrument
+        @instrument()
         def respond_to_query(self, input):
             chunks = self.retrieve_chunks(input) output = f"The answer to {input} is
             probably {chunks[0]} or something ..." return output
@@ -38,7 +38,7 @@ Example: Instrumenting a custom class
     class CustomRetriever:
         # NOTE: No restriction on this class either.
 
-        @instrument
+        @instrument()
         def retrieve_chunks(self, data):
             return [
                 f"Relevant chunk: {data.upper()}", f"Relevant chunk: {data[::-1]}"
@@ -236,11 +236,11 @@ class TruApp(core_app.App):
                     "The answer to {question} is probably {answer} or something ..."
                 )
 
-            @instrument
+            @instrument()
             def retrieve_chunks(self, data):
                 return self.retriever.retrieve_chunks(data)
 
-            @instrument
+            @instrument()
             def respond_to_query(self, input):
                 chunks = self.retrieve_chunks(input)
                 answer = self.llm.generate(",".join(chunks))
