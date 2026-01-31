@@ -3,7 +3,7 @@ from typing import Any, Callable
 
 from langchain_core.messages import SystemMessage
 from opentelemetry.trace.span import Span
-from trulens.core.feedback import Feedback
+from trulens.core.metric import Metric
 from trulens.feedback.computer import _call_feedback_function
 from trulens.otel.semconv.constants import TRULENS_SPAN_END_CALLBACKS
 from trulens.otel.semconv.trace import SpanAttributes
@@ -11,7 +11,7 @@ import wrapt
 
 
 class inline_evaluation:
-    def __init__(self, feedback: Feedback, emit_spans: bool = True) -> None:
+    def __init__(self, feedback: Metric, emit_spans: bool = True) -> None:
         self._feedback = feedback
         self._emit_spans = emit_spans
 

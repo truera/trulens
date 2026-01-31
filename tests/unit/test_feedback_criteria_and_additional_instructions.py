@@ -440,16 +440,22 @@ class TestFeedbackIntegrationWithFeedbackClass(TestCase):
                 name="Helpfulness",
                 custom_instructions=custom_instructions,
             )
-            # Verify deprecation warning was issued
+            # Verify deprecation warnings were issued
+            # We expect 2 warnings: one for Feedback class deprecation, one for custom_instructions
             deprecation_warnings = [
                 x for x in w if issubclass(x.category, DeprecationWarning)
             ]
-            self.assertEqual(len(deprecation_warnings), 1)
+            self.assertEqual(len(deprecation_warnings), 2)
+            # Find the custom_instructions warning
+            custom_instructions_warnings = [
+                x
+                for x in deprecation_warnings
+                if "custom_instructions" in str(x.message)
+            ]
+            self.assertEqual(len(custom_instructions_warnings), 1)
             self.assertIn(
-                "custom_instructions", str(deprecation_warnings[0].message)
-            )
-            self.assertIn(
-                "additional_instructions", str(deprecation_warnings[0].message)
+                "additional_instructions",
+                str(custom_instructions_warnings[0].message),
             )
 
         # Check that value is stored (under additional_instructions now)
