@@ -96,11 +96,16 @@ class Evaluator:
             A dict from record id to a pandas DataFrame of all events from that
             record. Only records that aren't fully processed will be included.
         """
+        # When specific record_ids are provided, don't apply start_time filter.
+        # We want ALL events for those specific records regardless of when they
+        # were created. The start_time filter is only useful when scanning for
+        # new records (record_ids=None) to avoid re-processing old events.
+        effective_start_time = None if record_ids is not None else start_time
         events = self._app_ref().connector.get_events(
             app_name=self._app_ref().app_name,
             app_version=self._app_ref().app_version,
             record_ids=record_ids,
-            start_time=start_time,
+            start_time=effective_start_time,
         )
         if events is None or len(events) == 0:
             return {}
