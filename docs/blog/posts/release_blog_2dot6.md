@@ -46,40 +46,33 @@ With the new skills system, your AI coding assistant can now:
 - Compare app versions on the leaderboard
 - Run the TruLens dashboard
 
-## AGENTS.md: TruLens is ready for AI contributors
+## AGENTS.md: Contribute to TruLens with AI Assistance
 
-We've added a comprehensive `AGENTS.md` file to the TruLens repository. This file provides AI coding assistants with essential context about the TruLens codebase, including:
+While Skills help you *use* TruLens, `AGENTS.md` helps you *contribute* to TruLens. We've added this file alongside an updated contribution guide to make it easier than ever to contribute to the project with AI coding assistants.
 
-- **Setup commands** for installation and development
-- **Code style guidelines** including import conventions and docstring formats
-- **Testing instructions** with markers and golden file regeneration
-- **Project structure** explaining the modular package organization
-- **Key patterns** for TruSession, app wrappers, and OTEL instrumentation
-- **Troubleshooting tips** for common issues
+When you use your favorite coding assistant to work on TruLens, your assistant automatically understands:
 
-### Why This Matters
+- **Code style conventions** — 80-character lines, Google-style docstrings, and our module import patterns (e.g., `from trulens.schema import record as record_schema`)
+- **How to run tests** — Unit test commands, test markers like `@pytest.mark.optional`, and how to regenerate golden files
+- **Project structure** — Where to find core abstractions, providers, app integrations, and connectors
+- **Development workflow** — `poetry install`, `make format`, `make lint`, and pre-commit hooks
 
-When AI assistants understand your codebase structure, they:
+This means your AI assistant can help you write code that passes CI on the first try, follows our conventions, and fits naturally into the codebase architecture.
 
-- Generate code that follows your conventions
-- Suggest appropriate import patterns
-- Know where to find relevant files
-- Understand how components interact
-
-Whether you're contributing to TruLens or building on top of it, `AGENTS.md` helps your AI assistant be a more effective collaborator.
+**Want to contribute?** Check out our updated [contribution guide](https://www.trulens.org/contributing/) and let your AI assistant handle the style details.
 
 ---
 
-## PostgreSQL Support: Your Most Requested Feature
+## PostgreSQL Support
 
-**PostgreSQL is the world's most popular open-source relational database**, and now TruLens fully supports it. This was one of our most requested features, and we're excited to deliver it.
+**PostgreSQL is the world's most popular open-source relational database**—trusted by millions of developers and powering everything from startups to Fortune 500 companies. Now TruLens fully supports it.
 
-### Why PostgreSQL?
+### Why This Matters
 
-- **Enterprise-ready**: PostgreSQL powers production workloads at companies of all sizes
-- **Familiar infrastructure**: Many teams already run Postgres—now TruLens fits right in
-- **Scalability**: Handle larger volumes of traces and evaluations
-- **Rich ecosystem**: Leverage existing backup, monitoring, and management tools
+- **You're probably already using it**: PostgreSQL dominates the database landscape, consistently ranking #1 in developer surveys. Chances are your team already has Postgres infrastructure in place.
+- **Enterprise-grade reliability**: Battle-tested at scale with ACID compliance, robust replication, and decades of production hardening
+- **Rich ecosystem**: Leverage your existing backup, monitoring, and management tools—no new operational overhead
+- **SQL queryability**: Analyze your traces and evaluations with standard SQL alongside your other application data
 
 ### Simple Setup
 
@@ -96,9 +89,9 @@ TruLens automatically creates the required schema on first connection. Your trac
 
 ---
 
-## Reliable Feedback Result Retrieval
+## Reliable Feedback Result Retrieval: Your Most Requested Feature
 
-As TruLens adoption grows, we're seeing more teams run evaluations in automated scripts and CI/CD pipelines—not just interactive notebooks. This shift means you need a reliable way to wait for evaluation results before making pass/fail decisions or moving to the next pipeline stage.
+As TruLens adoption grows, more teams are running evaluations in automated scripts and CI/CD pipelines—not just interactive notebooks. This was our most requested feature: a reliable way to wait for evaluation results before making pass/fail decisions or moving to the next pipeline stage.
 
 The new `retrieve_feedback_results()` method properly waits for all feedback evaluations to complete:
 
