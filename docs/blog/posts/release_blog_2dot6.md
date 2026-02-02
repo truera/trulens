@@ -48,6 +48,8 @@ With the new skills system, your AI coding assistant can now:
 
 **Explore the skills:** [TruLens Skills on GitHub](https://github.com/truera/trulens/tree/main/skills)
 
+**Using with Claude Code:** Copy the `skills/` directory into your project and run `/add-skill skills/SKILL.md` to enable TruLens evaluation workflows.
+
 ## AGENTS.md: Contribute to TruLens with AI Assistance
 
 While Skills help you *use* TruLens, `AGENTS.md` helps you *contribute* to TruLens. We've added this file alongside an updated contribution guide to make it easier than ever to contribute to the project with AI coding assistants.
