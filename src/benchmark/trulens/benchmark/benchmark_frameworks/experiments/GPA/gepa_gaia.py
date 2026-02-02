@@ -74,9 +74,9 @@ VALIDATION_RESULTS_FILE = DATA_DIR / "meta_judge_validation_results.txt"
 TRACE_DIR = DATA_DIR / "GAIA"
 
 # Optimization settings
-RUN_OPTIMIZATION = True
+RUN_OPTIMIZATION = False
 OPTIMIZATION_CATEGORIES: list[str] = [
-    "PA"
+    "PQ"
 ]  # Empty list = all categories, non-empty = only these
 MAX_PARALLEL_WORKERS = 2
 GEPA_NUM_THREADS = 2
