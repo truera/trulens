@@ -1,18 +1,18 @@
 # MLflow Integration
 
-TruLens feedback functions are available as first-class scorers in MLflow's GenAI evaluation framework starting with MLflow 3.10.0. This integration was contributed by [Debu Sinha](https://github.com/debu-sinha) in [MLflow PR #19492](https://github.com/mlflow/mlflow/pull/19492).
+TruLens feedback functions are available as first-class scorers in MLflow's GenAI evaluation framework starting with MLflow 3.10.0.
 
 ## Installation
 
 Install MLflow with TruLens support:
 
 ```bash
-pip install 'mlflow>=3.10.0' trulens
+pip install 'mlflow>=3.10.0' trulens trulens-providers-litellm
 ```
 
 ## Available Scorers
 
-TruLens provides two categories of scorers in MLflow:
+TruLens provides three categories of scorers in MLflow:
 
 ### RAG Evaluation Scorers
 
@@ -21,7 +21,12 @@ TruLens provides two categories of scorers in MLflow:
 | `Groundedness` | Evaluates whether the response is grounded in the provided context |
 | `ContextRelevance` | Evaluates whether the retrieved context is relevant to the query |
 | `AnswerRelevance` | Evaluates whether the response is relevant to the input query |
-| `Coherence` | Evaluates the coherence and logical flow of the response |
+
+### Output Scorers
+
+| Scorer | Description |
+|--------|-------------|
+| `Coherence` | Evaluates the coherence and logical flow of any LLM output |
 
 ### Agent Trace Scorers
 
@@ -84,7 +89,7 @@ print(results.tables["eval_results"])
 
 ## Model Configuration
 
-TruLens scorers in MLflow support multiple LLM providers:
+TruLens scorers in MLflow support multiple LLM providers through LiteLLM:
 
 ### OpenAI
 
@@ -134,17 +139,19 @@ print(feedback.metadata["threshold"])  # 0.7
 
 ## Dynamic Scorer Creation
 
-Use `get_scorer` to create scorers dynamically:
+Use `get_scorer` to create scorers dynamically by name. This is useful when you need to configure scorers from external configuration files, environment variables, or user input rather than hardcoding scorer classes in your code:
 
 ```python
 from mlflow.genai.scorers.trulens import get_scorer
 
-groundedness = get_scorer("Groundedness", model="openai:/gpt-4o")
-context_relevance = get_scorer("ContextRelevance", model="openai:/gpt-4o")
+# Load scorer names from config or user input
+scorer_names = ["Groundedness", "ContextRelevance"]
+
+scorers = [get_scorer(name, model="openai:/gpt-4o") for name in scorer_names]
 
 results = mlflow.genai.evaluate(
     data=eval_dataset,
-    scorers=[groundedness, context_relevance],
+    scorers=scorers,
 )
 ```
 
@@ -215,10 +222,10 @@ For RAG evaluation scorers, always provide context:
 ModuleNotFoundError: No module named 'trulens'
 ```
 
-Install the TruLens package:
+Install the TruLens packages:
 
 ```bash
-pip install trulens
+pip install trulens trulens-providers-litellm
 ```
 
 ### API Key Issues
@@ -234,5 +241,4 @@ export ANTHROPIC_API_KEY="your-key"
 ## Related Resources
 
 - [MLflow GenAI Evaluation Docs](https://mlflow.org/docs/latest/llms/llm-evaluate/index.html)
-- [TruLens Feedback Functions](../evaluation/index.md)
-- [MLflow PR #19492](https://github.com/mlflow/mlflow/pull/19492) - Original integration PR
+- [TruLens Feedback Functions](./index.md)
