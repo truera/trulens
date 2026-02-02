@@ -74,16 +74,16 @@ This means your AI assistant can help you write code that passes CI on the first
 - **Rich ecosystem**: Leverage your existing backup, monitoring, and management tools—no new operational overhead
 - **SQL queryability**: Analyze your traces and evaluations with standard SQL alongside your other application data
 
-### Simple Setup
+!!! example "Connect to PostgreSQL"
 
-```python
-from trulens.core import TruSession
+    ```python
+    from trulens.core import TruSession
 
-POSTGRES_URL = "postgresql://user:password@localhost:5432/trulens_db"
+    POSTGRES_URL = "postgresql://user:password@localhost:5432/trulens_db"
 
-# That's it! TruLens now logs to your PostgreSQL database
-session = TruSession(database_url=POSTGRES_URL)
-```
+    # That's it! TruLens now logs to your PostgreSQL database
+    session = TruSession(database_url=POSTGRES_URL)
+    ```
 
 TruLens automatically creates the required schema on first connection. Your traces, evaluations, and ground truth datasets are all stored in Postgres and queryable with standard SQL tools and the TruLens dashboard will read from Postgres seamlessly.
 
@@ -93,19 +93,19 @@ TruLens automatically creates the required schema on first connection. Your trac
 
 As TruLens adoption grows, more teams are running evaluations in automated scripts and CI/CD pipelines—not just interactive notebooks. This was our most requested feature: a reliable way to wait for evaluation results before making pass/fail decisions or moving to the next pipeline stage.
 
-The new `retrieve_feedback_results()` method properly waits for all feedback evaluations to complete:
+!!! example "Wait for Feedback Results"
 
-```python
-with tru_rag as recording:
-    for q in queries:
-        rag.query(q)
+    ```python
+    with tru_rag as recording:
+        for q in queries:
+            rag.query(q)
 
-# This will reliably wait for ALL feedback results
-feedback_results = recording.retrieve_feedback_results(timeout=300)
-print(feedback_results)
-```
+    # This will reliably wait for ALL feedback results
+    feedback_results = recording.retrieve_feedback_results(timeout=300)
+    print(feedback_results)
+    ```
 
-* This method handles:
+This method handles:
 - Records being written to the database
 - Feedback evaluations completing
 - Results becoming available
@@ -116,9 +116,11 @@ print(feedback_results)
 
 Ready to try TruLens 2.6?
 
-```bash
-pip install trulens --upgrade
-```
+!!! example "Install TruLens"
+
+    ```bash
+    pip install trulens --upgrade
+    ```
 
 ### Quick Links
 
