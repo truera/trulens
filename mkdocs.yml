@@ -260,11 +260,11 @@ nav:
         - Feedback Aggregation:
             - component_guides/evaluation/feedback_aggregation.md
         - Running Feedback Functions:
-            # PLACEHOLDER: - evaluation/running_feedback_functions/index.md
             - Running with your app: component_guides/evaluation/running_feedback_functions/with_app.md
             - Running on existing data: component_guides/evaluation/running_feedback_functions/existing_data.md
         - Generating Test Cases:
             - component_guides/evaluation/generate_test_cases.md
+        - Evaluate MLFlow Traces: component_guides/evaluation/mlflow.md
     - 🏃 Runtime Evaluation:
         - component_guides/runtime_evaluation/index.md
         - component_guides/runtime_evaluation/inline_evals.md
