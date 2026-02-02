@@ -46,6 +46,8 @@ With the new skills system, your AI coding assistant can now:
 - Compare app versions on the leaderboard
 - Run the TruLens dashboard
 
+**Explore the skills:** [TruLens Skills on GitHub](https://github.com/truera/trulens/tree/main/skills)
+
 ## AGENTS.md: Contribute to TruLens with AI Assistance
 
 While Skills help you *use* TruLens, `AGENTS.md` helps you *contribute* to TruLens. We've added this file alongside an updated contribution guide to make it easier than ever to contribute to the project with AI coding assistants.
@@ -87,25 +89,44 @@ This means your AI assistant can help you write code that passes CI on the first
 
 TruLens automatically creates the required schema on first connection. Your traces, evaluations, and ground truth datasets are all stored in Postgres and queryable with standard SQL tools and the TruLens dashboard will read from Postgres seamlessly.
 
+**Learn more:** [PostgreSQL Documentation](https://www.trulens.org/component_guides/logging/where_to_log/log_in_postgres/) | [Example Notebook](https://github.com/truera/trulens/tree/main/examples/expositional/logging/log_in_postgres.ipynb)
+
 ---
 
 ## Reliable Feedback Result Retrieval: Your Most Requested Feature
 
 As TruLens adoption grows, more teams are running evaluations in automated scripts and CI/CD pipelines—not just interactive notebooks. This was our most requested feature: a reliable way to wait for evaluation results before making pass/fail decisions or moving to the next pipeline stage.
 
-!!! example "Wait for Feedback Results"
+We've added two methods to support this workflow:
+
+- **`recording.retrieve_feedback_results()`** — Wait for evaluations to complete and return the results as a DataFrame
+- **`session.wait_for_feedback_results()`** — Wait for specific feedback evaluations by record ID and feedback name
+
+!!! example "Retrieve Feedback Results"
 
     ```python
     with tru_rag as recording:
         for q in queries:
             rag.query(q)
 
-    # This will reliably wait for ALL feedback results
+    # Wait and retrieve results as a DataFrame
     feedback_results = recording.retrieve_feedback_results(timeout=300)
     print(feedback_results)
     ```
 
-This method handles:
+!!! example "Wait for Specific Feedbacks"
+
+    ```python
+    # Wait for specific feedbacks on specific records
+    session.wait_for_feedback_results(
+        record_ids=record_ids,
+        feedback_names=["Answer Relevance", "Groundedness"],
+        timeout=300
+    )
+    ```
+
+These methods handle:
+
 - Records being written to the database
 - Feedback evaluations completing
 - Results becoming available
