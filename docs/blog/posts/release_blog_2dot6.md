@@ -1,7 +1,7 @@
 ---
 categories:
   - General
-date: 2026-02-05
+date: 2026-02-03
 ---
 
 # TruLens 2.6: Skills for AI Coding Assistants, PostgreSQL Support, and More
