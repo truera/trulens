@@ -40,7 +40,7 @@ from pydantic.v1 import BaseModel as v1BaseModel
 from trulens.core import experimental as core_experimental
 from trulens.core._utils.pycompat import WeakSet
 from trulens.core.feedback import endpoint as core_endpoint
-from trulens.core.feedback import feedback as core_feedback
+from trulens.core.metric import metric as core_metric
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
@@ -450,10 +450,10 @@ class Instrument:
         MODULES = {"trulens."}
         """Modules (by full name prefix) to instrument."""
 
-        CLASSES = set([core_feedback.Feedback])
+        CLASSES = set([core_metric.Metric])
         """Classes to instrument."""
 
-        METHODS = [InstrumentedMethod("__call__", core_feedback.Feedback)]
+        METHODS = [InstrumentedMethod("__call__", core_metric.Metric)]
         """Methods to instrument.
 
         Methods matching name have to pass the filter to be instrumented.

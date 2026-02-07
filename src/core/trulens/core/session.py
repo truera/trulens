@@ -32,6 +32,7 @@ from trulens.core._utils import optional as optional_utils
 from trulens.core._utils.pycompat import Future  # code style exception
 from trulens.core.database import connector as core_connector
 from trulens.core.feedback import feedback as core_feedback
+from trulens.core.metric import metric as core_metric
 from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import dataset as dataset_schema
@@ -53,7 +54,6 @@ if TYPE_CHECKING:
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import SpanExporter
     from trulens.core import app as base_app
-    from trulens.core.feedback import Feedback
     from trulens.core.otel.recording import Record
 
 tqdm = None
@@ -588,7 +588,7 @@ class TruSession(
     def run_feedback_functions(
         self,
         record: record_schema.Record,
-        feedback_functions: Sequence[core_feedback.Feedback],
+        feedback_functions: Sequence[core_metric.Metric],
         app: Optional[app_schema.AppDefinition] = None,
         wait: bool = True,
     ) -> Union[
@@ -1450,7 +1450,7 @@ class TruSession(
     def compute_feedbacks_on_events(
         self,
         events: pandas.DataFrame,
-        feedbacks: List[Feedback],
+        feedbacks: List[core_metric.Metric],
         raise_error_on_no_feedbacks_computed: bool = False,
     ) -> None:
         """Compute feedbacks/metrics on events.

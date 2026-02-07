@@ -1,117 +1,140 @@
-# Using Shortcuts to Evaluate Pre-defined Span Attributes
+# Using Selector Shortcuts
 
-Span attributes can be pre-defined to refer to particular parts of an execution flow via the [TruLens semantic conventions](../../../otel/semantic_conventions.md). To ease the evaluation of particular span attributes, TruLens creates shortcuts to evaluate commonly used semantic conventions. These shortcuts are supported via `TruApp`, as well as `TruChain` and `TruLlama` when using `LangChain` and `LlamaIndex` frameworks, respectively.
-
-!!! note
-
-    Use of selector shortcuts respects the order of arguments passed to the feedback function, rather than requiring the use of named arguments.
+The `Selector` class provides static methods that serve as shortcuts for commonly used span selections. These shortcuts are supported via `TruApp`, as well as `TruChain` and `TruLlama` when using `LangChain` and `LlamaIndex` frameworks, respectively.
 
 ## Evaluating App Input
 
-To evaluate the application input, you can use the selector shortcut `on_input()` to refer to the span attribute `RECORD_ROOT.INPUT`.
-
-This means that the following feedback function using the `Selector`:
+To evaluate the application input, use `Selector.select_record_input()`:
 
 ```python
-from trulens.core import Feedback
-from trulens.core.feedback.selector import Selector
+from trulens.core import Metric, Selector
+
+f_coherence = Metric(
+    implementation=provider.coherence,
+    name="Coherence",
+    selectors={
+        "text": Selector.select_record_input(),
+    },
+)
+```
+
+This is equivalent to the explicit selector:
+
+```python
+from trulens.core import Metric, Selector
 from trulens.otel.semconv.trace import SpanAttributes
 
-f_answer_relevance = (
-    Feedback(provider.coherence, name="Coherence")
-    .on({
+f_coherence = Metric(
+    implementation=provider.coherence,
+    name="Coherence",
+    selectors={
         "text": Selector(
             span_type=SpanAttributes.SpanType.RECORD_ROOT,
             span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
         ),
-    })
-)
-```
-
-...is equivalent to using the shortcut `on_input()`.
-
-```python
-from trulens.core import Feedback
-
-f_answer_relevance = (
-    Feedback(provider.coherence, name="Coherence")
-    .on_input()
+    },
 )
 ```
 
 ## Evaluating App Output
 
-Likewise, to evaluate the application output, you can use the selector shortcut `on_output()` to refer to the span attribute `RECORD_ROOT.OUTPUT`.
-
-This means that the following feedback function using the `Selector`:
+To evaluate the application output, use `Selector.select_record_output()`:
 
 ```python
-from trulens.core import Feedback
-from trulens.core.feedback.selector import Selector
+from trulens.core import Metric, Selector
+
+f_coherence = Metric(
+    implementation=provider.coherence,
+    name="Coherence",
+    selectors={
+        "text": Selector.select_record_output(),
+    },
+)
+```
+
+This is equivalent to the explicit selector:
+
+```python
+from trulens.core import Metric, Selector
 from trulens.otel.semconv.trace import SpanAttributes
 
-f_coherence = (
-    Feedback(provider.coherence, name="Coherence")
-    .on({
+f_coherence = Metric(
+    implementation=provider.coherence,
+    name="Coherence",
+    selectors={
         "text": Selector(
             span_type=SpanAttributes.SpanType.RECORD_ROOT,
             span_attribute=SpanAttributes.RECORD_ROOT.OUTPUT,
         ),
-    })
-)
-```
-
-...is equivalent to using the shortcut `on_output()`.
-
-```python
-from trulens.core import Feedback
-
-f_coherence = (
-    Feedback(provider.coherence, name="Coherence")
-    .on_output()
+    },
 )
 ```
 
 ## Evaluating Retrieved Context
 
-To evaluate the retrieved context, you can use the selector shortcut `on_context()` to refer to the span attribute `RETRIEVAL.RETRIEVED_CONTEXTS`.
-
-This means that the following feedback function using the `Selector`:
+To evaluate retrieved context, use `Selector.select_context()`:
 
 ```python
-from trulens.core import Feedback
-from trulens.core.feedback.selector import Selector
+from trulens.core import Metric, Selector
+
+f_groundedness = Metric(
+    implementation=provider.groundedness_measure_with_cot_reasons,
+    name="Groundedness",
+    selectors={
+        "source": Selector.select_context(collect_list=True),
+        "statement": Selector.select_record_output(),
+    },
+)
+```
+
+This is equivalent to the explicit selector:
+
+```python
+from trulens.core import Metric, Selector
 from trulens.otel.semconv.trace import SpanAttributes
 
-f_groundedness = (
-    Feedback(
-        provider.groundedness_measure_with_cot_reasons, name="Groundedness"
-    )
-    .on({
-        "context": Selector(
+f_groundedness = Metric(
+    implementation=provider.groundedness_measure_with_cot_reasons,
+    name="Groundedness",
+    selectors={
+        "source": Selector(
             span_type=SpanAttributes.SpanType.RETRIEVAL,
             span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
-            collect_list=True
+            collect_list=True,
         ),
-    })
-    .on_output()
+        "statement": Selector.select_record_output(),
+    },
 )
 ```
 
-...is equivalent to using the shortcut `on_context()`.
+## Using `collect_list`
+
+The `collect_list` parameter controls how multiple matching spans are handled:
+
+- `collect_list=True`: Concatenates all matching span attributes into a single value for evaluation
+- `collect_list=False`: Evaluates each span attribute individually and aggregates results
+
+This is particularly useful for context relevance where you want to evaluate each context chunk separately:
 
 ```python
-from trulens.core import Feedback
+from trulens.core import Metric, Selector
+import numpy as np
 
-f_groundedness = (
-    Feedback(
-        provider.groundedness_measure_with_cot_reasons, name="Groundedness"
-    )
-    .on_context(collect_list=True)
-    .on_output()
+f_context_relevance = Metric(
+    implementation=provider.context_relevance_with_cot_reasons,
+    name="Context Relevance",
+    selectors={
+        "question": Selector.select_record_input(),
+        "context": Selector.select_context(collect_list=False),
+    },
+    agg=np.mean,
 )
 ```
 
-!!! note
+## Summary of Selector Shortcuts
 
-    `collect_list` can also be passed as an argument to `on_context` to achieve the same effect as when passed to `Selector`.
+| Shortcut | Span Type | Span Attribute |
+|----------|-----------|----------------|
+| `Selector.select_record_input()` | `RECORD_ROOT` | `RECORD_ROOT.INPUT` |
+| `Selector.select_record_output()` | `RECORD_ROOT` | `RECORD_ROOT.OUTPUT` |
+| `Selector.select_context(collect_list=...)` | `RETRIEVAL` | `RETRIEVAL.RETRIEVED_CONTEXTS` |
