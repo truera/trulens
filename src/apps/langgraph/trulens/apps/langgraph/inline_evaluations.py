@@ -3,7 +3,12 @@ from typing import Any, Callable
 
 from langchain_core.messages import SystemMessage
 from opentelemetry.trace.span import Span
-from trulens.core.metric import Metric
+
+try:
+    from trulens.core.metric import Metric
+except ImportError:
+    # Backwards compatibility with trulens-core < 2.5.0
+    from trulens.core.feedback.feedback import Feedback as Metric
 from trulens.feedback.computer import _call_feedback_function
 from trulens.otel.semconv.constants import TRULENS_SPAN_END_CALLBACKS
 from trulens.otel.semconv.trace import SpanAttributes

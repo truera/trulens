@@ -25,7 +25,12 @@ from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
 from trulens.core.feedback.selector import ProcessedContentNode
 from trulens.core.feedback.selector import Selector
 from trulens.core.feedback.selector import Trace
-from trulens.core.metric.metric import Metric
+
+try:
+    from trulens.core.metric.metric import Metric
+except ImportError:
+    # Backwards compatibility with trulens-core < 2.5.0
+    from trulens.core.feedback.feedback import Feedback as Metric
 from trulens.core.otel.instrument import OtelFeedbackComputationRecordingContext
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
 from trulens.experimental.otel_tracing.core.span import (
