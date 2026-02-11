@@ -1,224 +1,215 @@
-In many cases, developers have already logged runs of an LLM app they wish to evaluate or wish to log their app using another system. Feedback functions can also be run on existing data, independent of the `recorder`.
+# Running Metrics on Existing Data
 
-At the most basic level, feedback implementations are simple callables that can be run on any arguments
-matching their signatures.
+In many cases, developers have already logged runs of an LLM app they wish to evaluate, or have existing datasets of questions, contexts, and answers. Metrics can be run on this existing data using a few different approaches.
 
-!!! example
+## Direct Provider Calls
 
-    ```python
-    feedback_result = provider.relevance("<some prompt>", "<some response>")
-    ```
-
-!!! note
-    Running the feedback implementation in isolation will not log the evaluation results in TruLens.
-
-In the case that you have already logged a run of your application with TruLens and have the record available, the process for running an (additional) evaluation on that record is by using `tru.run_feedback_functions`:
-
-!!! example
-
-    ```python
-    tru_rag = TruApp(rag, app_name="RAG", app_version="v1")
-
-    result, record = tru_rag.with_record(rag.query, "How many professors are at UW in Seattle?")
-    feedback_results = tru.run_feedback_functions(record, feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance])
-    tru.add_feedbacks(feedback_results)
-    ```
-
-### TruVirtual
-
-If your application was run (and logged) outside of TruLens, `TruVirtual` can be used to ingest and evaluate the logs.
-
-The first step to loading your app logs into TruLens is creating a virtual app. This virtual app can be a plain dictionary or use our `VirtualApp` class to store any information you would like. You can refer to these values for evaluating feedback.
-
-!!! example
-
-    ```python
-    virtual_app = dict(
-        llm=dict(
-            modelname="some llm component model name"
-        ),
-        template="information about the template I used in my app",
-        debug="all of these fields are completely optional"
-    )
-    from trulens.core import Select, VirtualApp
-
-    virtual_app = VirtualApp(virtual_app) # can start with the prior dictionary
-    virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
-    ```
-
-When setting up the virtual app, you should also include any components that you would like to evaluate in the virtual app. This can be done using the `Select` class. Using selectors here lets you reuse the setup you use to define feedback functions. Below you can see how to set up a virtual app with a retriever component, which will be used later in the example for feedback evaluation.
-
-!!! example
-
-    ```python
-    from trulens.core import Select
-    retriever_component = Select.RecordCalls.retriever
-    virtual_app[retriever_component] = "this is the retriever component"
-    ```
-
-Now that you've set up your virtual app, you can use it to store your logged data.
-
-To incorporate your data into TruLens, you have two options. You can either create a `Record` directly, or you can use the `VirtualRecord` class, which is designed to help you build records so they can be ingested into TruLens.
-
-The parameters you'll use with `VirtualRecord` are the same as those for `Record`, with one key difference: calls are specified using selectors.
-
-In the example below, we add two records. Each record includes the inputs and outputs for a context retrieval component. Remember, you only need to provide the information that you want to track or evaluate. The selectors are references to methods that can be selected for feedback, as we'll demonstrate below.
-
-!!! example
-
-    ```python
-    from trulens.apps.virtual import VirtualRecord
-
-    # The selector for a presumed context retrieval component's call to
-    # `get_context`. The names are arbitrary but may be useful for readability on
-    # your end.
-    context_call = retriever_component.get_context
-
-    rec1 = VirtualRecord(
-        main_input="Where is Germany?",
-        main_output="Germany is in Europe",
-        calls=
-            {
-                context_call: dict(
-                    args=["Where is Germany?"],
-                    rets=["Germany is a country located in Europe."]
-                )
-            }
-        )
-    rec2 = VirtualRecord(
-        main_input="Where is Germany?",
-        main_output="Poland is in Europe",
-        calls=
-            {
-                context_call: dict(
-                    args=["Where is Germany?"],
-                    rets=["Poland is a country located in Europe."]
-                )
-            }
-        )
-
-    data = [rec1, rec2]
-    ```
-
-Alternatively, suppose we have an existing dataframe of prompts, contexts and responses we wish to ingest.
-
-!!! example
-
-    ```python
-    import pandas as pd
-
-    data = {
-        'prompt': ['Where is Germany?', 'What is the capital of France?'],
-        'response': ['Germany is in Europe', 'The capital of France is Paris'],
-        'context': ['Germany is a country located in Europe.', 'France is a country in Europe and its capital is Paris.']
-    }
-    df = pd.DataFrame(data)
-    df.head()
-    ```
-
-To ingest the data in this form, we can iterate through the dataframe to ingest each prompt, context and response into virtual records.
-
-!!! example
-
-    ```python
-    data_dict = df.to_dict('records')
-
-    data = []
-
-    for record in data_dict:
-        rec = VirtualRecord(
-            main_input=record['prompt'],
-            main_output=record['response'],
-            calls=
-                {
-                    context_call: dict(
-                        args=[record['prompt']],
-                        rets=[record['context']]
-                    )
-                }
-            )
-        data.append(rec)
-    ```
-
-Now that we've ingested and constructed the virtual records, we can build our feedback functions. This is done just the same as normal, except the context selector will instead refer to the new `context_call` we added to the virtual record.
+At the most basic level, metric implementations are simple callables that can be run on any arguments matching their signatures.
 
 !!! example
 
     ```python
     from trulens.providers.openai import OpenAI
-    from trulens.core import Feedback
 
-    # Initialize provider class
-    openai = OpenAI()
+    provider = OpenAI()
+    score = provider.relevance("What is the capital of France?", "The capital of France is Paris.")
+    print(score)  # Returns a float between 0 and 1
+    ```
 
-    # Select context to be used in feedback. We select the return values of the
-    # virtual `get_context` call in the virtual `retriever` component. Names are
-    # arbitrary except for `rets`.
-    context = context_call.rets[:]
+!!! note
+    Running the metric implementation in isolation will not log the evaluation results in TruLens.
 
-    # Question/statement relevance between question and each context chunk.
-    f_context_relevance = (
-        Feedback(openai.context_relevance)
-        .on_input()
-        .on(context)
+## Evaluating DataFrames with Data Replay
+
+To evaluate existing data (e.g., from a CSV or DataFrame) while logging results to TruLens, you can create a simple "replay" app that passes your data through instrumented functions. This creates the proper spans that metrics can evaluate.
+
+### Step 1: Prepare Your Data
+
+```python
+import pandas as pd
+
+# Your existing data - could come from CSV, database, etc.
+df = pd.DataFrame({
+    'question': [
+        'Where is Germany?',
+        'What is the capital of France?'
+    ],
+    'context': [
+        'Germany is a country located in Europe.',
+        'France is a country in Europe and its capital is Paris.'
+    ],
+    'answer': [
+        'Germany is in Europe',
+        'The capital of France is Paris'
+    ],
+})
+```
+
+### Step 2: Create a Replay App
+
+Create a simple class with instrumented methods that pass through your existing data:
+
+```python
+from trulens.core.otel.instrument import instrument
+from trulens.otel.semconv.trace import SpanAttributes
+
+
+class DataReplay:
+    """A simple app that replays existing data through instrumented functions."""
+
+    @instrument(
+        span_type=SpanAttributes.SpanType.RETRIEVAL,
+        attributes={
+            SpanAttributes.RETRIEVAL.QUERY_TEXT: "query",
+            SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: "return",
+        },
     )
-    ```
+    def retrieve(self, query: str, contexts: list) -> list:
+        """Pass through existing contexts."""
+        return contexts if isinstance(contexts, list) else [contexts]
 
-Then, the feedback functions can be passed to `TruVirtual` to construct the `recorder`. Most of the fields that other non-virtual apps take can also be specified here.
+    @instrument()
+    def query(self, question: str, context: list, answer: str) -> str:
+        """Replay a single record through the instrumented pipeline."""
+        # Create the retrieval span with the existing context
+        self.retrieve(query=question, contexts=context)
+        # Return the existing answer
+        return answer
+```
 
-!!! example
+### Step 3: Define Your Metrics
 
-    ```python
-    from trulens.apps.virtual import TruVirtual
+```python
+import numpy as np
+from trulens.core import Metric, Selector
+from trulens.providers.openai import OpenAI
 
-    virtual_recorder = TruVirtual(
-        app_name="a virtual app",
-        app=virtual_app,
-        feedbacks=[f_context_relevance]
+provider = OpenAI()
+
+f_groundedness = Metric(
+    implementation=provider.groundedness_measure_with_cot_reasons,
+    name="Groundedness",
+    selectors={
+        "source": Selector.select_context(collect_list=True),
+        "statement": Selector.select_record_output(),
+    },
+)
+
+f_answer_relevance = Metric(
+    implementation=provider.relevance_with_cot_reasons,
+    name="Answer Relevance",
+    selectors={
+        "prompt": Selector.select_record_input(),
+        "response": Selector.select_record_output(),
+    },
+)
+
+f_context_relevance = Metric(
+    implementation=provider.context_relevance_with_cot_reasons,
+    name="Context Relevance",
+    selectors={
+        "question": Selector.select_record_input(),
+        "context": Selector.select_context(collect_list=False),
+    },
+    agg=np.mean,
+)
+```
+
+### Step 4: Replay Data and Evaluate
+
+```python
+from trulens.core import TruSession
+from trulens.apps.app import TruApp
+
+session = TruSession()
+
+# Create and wrap the replay app
+replay = DataReplay()
+tru_replay = TruApp(
+    replay,
+    app_name="ExistingDataEval",
+    app_version="v1",
+    feedbacks=[f_groundedness, f_answer_relevance, f_context_relevance],
+)
+
+# Replay each row of existing data
+with tru_replay:
+    for _, row in df.iterrows():
+        replay.query(
+            question=row['question'],
+            context=[row['context']],  # Wrap in list if single context
+            answer=row['answer']
+        )
+```
+
+### Step 5: View Results
+
+```python
+# View results in the leaderboard
+session.get_leaderboard()
+
+# Or launch the dashboard
+from trulens.dashboard import run_dashboard
+run_dashboard(session)
+```
+
+## Handling Multiple Contexts
+
+If your data has multiple contexts per question, you can pass them as a list:
+
+```python
+df = pd.DataFrame({
+    'question': ['What is coffee culture?'],
+    'contexts': [['Coffee has three waves...', 'Seattle is the birthplace...']],
+    'answer': ['Coffee culture evolved through three waves...'],
+})
+
+with tru_replay:
+    for _, row in df.iterrows():
+        replay.query(
+            question=row['question'],
+            context=row['contexts'],  # Already a list
+            answer=row['answer']
+        )
+```
+
+## Including Ground Truth
+
+If you have ground truth answers for comparison, you can include them in your replay app:
+
+```python
+class DataReplayWithGroundTruth:
+    @instrument(
+        span_type=SpanAttributes.SpanType.RETRIEVAL,
+        attributes={
+            SpanAttributes.RETRIEVAL.QUERY_TEXT: "query",
+            SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: "return",
+        },
     )
-    ```
+    def retrieve(self, query: str, contexts: list) -> list:
+        return contexts if isinstance(contexts, list) else [contexts]
 
-To finally ingest the record and run feedbacks, we can use `add_record`.
-
-!!! example
-
-    ```python
-    for record in data:
-        virtual_recorder.add_record(rec)
-    ```
-
-To optionally store metadata about your application, you can also pass an arbitrary `dict` to `VirtualApp`. This information can also be used in evaluation.
-
-!!! example
-
-    ```python
-    virtual_app = dict(
-        llm=dict(
-            modelname="some llm component model name"
-        ),
-        template="information about the template I used in my app",
-        debug="all of these fields are completely optional"
+    @instrument(
+        attributes={
+            SpanAttributes.RECORD_ROOT.GROUND_TRUTH_OUTPUT: "expected_answer",
+        }
     )
+    def query(self, question: str, context: list, answer: str, expected_answer: str = None) -> str:
+        self.retrieve(query=question, contexts=context)
+        return answer
+```
 
-    from trulens.core.schema import Select
-    from trulens.apps.virtual import VirtualApp
+Then use ground truth metrics:
 
-    virtual_app = VirtualApp(virtual_app)
-    ```
+```python
+from trulens.feedback import GroundTruthAgreement
 
-The `VirtualApp` metadata can also be appended.
-
-!!! example
-
-    ```python
-    virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
-    ```
-
-This can be particularly useful for storing the components of an LLM app to be later used for evaluation.
-
-!!! example
-
-    ```python
-    retriever_component = Select.RecordCalls.retriever
-    virtual_app[retriever_component] = "this is the retriever component"
-    ```
+ground_truth_metric = Metric(
+    implementation=GroundTruthAgreement(...).agreement_measure,
+    name="Ground Truth Agreement",
+    selectors={
+        "prompt": Selector.select_record_input(),
+        "response": Selector.select_record_output(),
+    },
+)
+```

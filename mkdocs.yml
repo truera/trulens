@@ -155,11 +155,11 @@ plugins:
         trulens/core_concepts_rag_triad.md: getting_started/core_concepts/rag_triad.md
         trulens/core_concepts_honest_harmless_helpful_evals.md: getting_started/core_concepts/honest_harmless_helpful_evals.md
         trulens/quickstart.md: getting_started/quickstarts/quickstart.ipynb
-        trulens/langchain_quickstart.md: getting_started/quickstarts/langchain_quickstart.ipynb
-        trulens/llama_index_quickstart.md: getting_started/quickstarts/llama_index_quickstart.ipynb
+        trulens/langchain_quickstart.md: examples/expositional/frameworks/langchain/langchain_quickstart.ipynb
+        trulens/llama_index_quickstart.md: examples/expositional/frameworks/llamaindex/llama_index_quickstart.ipynb
         trulens/text2text_quickstart.md: getting_started/quickstarts/text2text_quickstart.ipynb
         trulens/groundtruth_evals.md: getting_started/quickstarts/groundtruth_evals.ipynb
-        trulens/human_feedback.md: getting_started/quickstarts/human_feedback.ipynb
+        trulens/human_feedback.md: getting_started/quickstarts/adding_human_feedback.ipynb
         trulens/release_blog_1dot.md: blog/posts/release_blog_1dot.md
         blog/otel_for_the_agentic_world.md: blog/posts/trulens_otel.md
 
@@ -229,7 +229,7 @@ nav:
           - getting_started/quickstarts/web-search-agent-evaluation.ipynb
       - ⭐ Core Concepts:
           - getting_started/core_concepts/index.md
-          - ☔ Feedback Functions: getting_started/core_concepts/feedback_functions.md
+          - ☔ Metrics: getting_started/core_concepts/feedback_functions.md
           - ⟁ RAG Triad: getting_started/core_concepts/rag_triad.md
           - 🏆 Honest, Harmless, Helpful Evals: getting_started/core_concepts/honest_harmless_helpful_evals.md
       - 🎈Viewing Results:
@@ -249,18 +249,19 @@ nav:
         # - Exporting Spans: component_guides/logging/exporting_spans.md
     - 🎯 Evaluation:
         - component_guides/evaluation/index.md
-        - Anatomy of a Feedback Function: component_guides/evaluation/feedback_anatomy.md
-        - Feedback Implementations:
+        - Anatomy of a Metric: component_guides/evaluation/feedback_anatomy.md
+        - Migrating to Metric API: component_guides/evaluation/metric_migration.md
+        - Metric Implementations:
             - component_guides/evaluation/feedback_implementations/index.md
-            - Stock Feedback Functions: component_guides/evaluation/feedback_implementations/stock.md
-            - component_guides/evaluation/feedback_implementations/custom_feedback_functions.ipynb
-        - Feedback Selectors:
+            - Stock Metrics: component_guides/evaluation/feedback_implementations/stock.md
+            - Custom Metrics: component_guides/evaluation/feedback_implementations/custom_feedback_functions.ipynb
+        - Selectors:
             - component_guides/evaluation/feedback_selectors/index.md
             - Selecting Components: component_guides/evaluation/feedback_selectors/selecting_components.md
             - Selector Shortcuts: component_guides/evaluation/feedback_selectors/selector_shortcuts.md
-        - Feedback Aggregation:
+        - Aggregation:
             - component_guides/evaluation/feedback_aggregation.md
-        - Running Feedback Functions:
+        - Running Metrics:
             # PLACEHOLDER: - evaluation/running_feedback_functions/index.md
             - Running with your app: component_guides/evaluation/running_feedback_functions/with_app.md
             - Running on existing data: component_guides/evaluation/running_feedback_functions/existing_data.md

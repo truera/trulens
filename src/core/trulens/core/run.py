@@ -14,6 +14,7 @@ from pydantic import Field
 from pydantic import field_serializer
 from trulens.core.enums import Mode
 from trulens.core.feedback.custom_metric import MetricConfig
+from trulens.core.metric import metric as metric_module
 from trulens.core.utils.json import obj_id_of_obj
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -1176,7 +1177,7 @@ class Run(BaseModel):
                     client_metric_configs.append(metric)
 
         logger.info(
-            f"Client-side metrics to compute: {[m.metric_name for m in client_metric_configs]}"
+            f"Client-side metrics to compute: {[m.name for m in client_metric_configs]}"
         )
         logger.info(f"Server-side metrics to compute: {server_metric_names}")
 
@@ -1217,9 +1218,10 @@ class Run(BaseModel):
         return "Metrics computation in progress."
 
     def _compute_client_side_metrics_from_configs(
-        self, metric_configs: List[MetricConfig]
+        self,
+        metric_configs: List[Union[MetricConfig, "metric_module.Metric"]],
     ) -> None:
-        """Compute client-side custom metrics from MetricConfig objects."""
+        """Compute client-side custom metrics from Metric or MetricConfig objects."""
         try:
             from trulens.feedback.computer import compute_feedback_by_span_group
         except ImportError:
@@ -1247,11 +1249,20 @@ class Run(BaseModel):
         for metric_config in metric_configs:
             try:
                 logger.info(
-                    f"Computing client-side metric: {metric_config.metric_name}"
+                    f"Computing client-side metric: {metric_config.name}"
                 )
 
-                # Create feedback definition from the metric config
-                feedback = metric_config.create_feedback_definition()
+                # Handle both Metric objects (new API) and MetricConfig (deprecated)
+                if isinstance(metric_config, metric_module.Metric):
+                    # Metric objects are already feedback definitions
+                    feedback = metric_config
+                elif hasattr(metric_config, "create_feedback_definition"):
+                    # MetricConfig (deprecated) needs conversion
+                    feedback = metric_config.create_feedback_definition()
+                else:
+                    raise TypeError(
+                        f"Expected Metric or MetricConfig, got {type(metric_config)}"
+                    )
 
                 compute_feedback_by_span_group(
                     events=events,
@@ -1260,11 +1271,11 @@ class Run(BaseModel):
                     selectors=feedback.selectors,
                 )
                 logger.info(
-                    f"Successfully computed client-side metric: {metric_config.metric_name}"
+                    f"Successfully computed client-side metric: {metric_config.name}"
                 )
             except Exception as e:
                 logger.error(
-                    f"Error computing client-side metric {metric_config.metric_name}: {e}"
+                    f"Error computing client-side metric {metric_config.name}: {e}"
                 )
                 raise
 

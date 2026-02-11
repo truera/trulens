@@ -113,13 +113,13 @@ def _render_all_app_feedback_plot(
 
     df = df.melt(
         id_vars="App Version",
-        var_name="Feedback Function Name",
-        value_name="Feedback Function Values",
+        var_name="Metric Name",
+        value_name="Metric Values",
     )
     fig = px.histogram(
         data_frame=df,
-        x="Feedback Function Name",
-        y="Feedback Function Values",
+        x="Metric Name",
+        y="Metric Values",
         color="App Version",
         barmode="group",
         histfunc="avg",
@@ -171,7 +171,7 @@ def _render_advanced_filters(
 
     def render_clause(st_cols: List[DeltaGenerator], idx: int = 0):
         feedback_col = st_cols[0].selectbox(
-            "Feedback Function",
+            "Metric",
             feedback_cols,
             label_visibility="collapsed",
             key=f"{page_name}.record_filter.clause_{idx}.sort_by",
@@ -241,7 +241,7 @@ def _render_advanced_filters(
         if n_clauses:
             st_cols = st_columns(5, vertical_alignment="center")
             for i, header in enumerate([
-                "Feedback Function",
+                "Metric",
                 "App Version 0",
                 "Operator",
                 "App Version 1",
@@ -766,7 +766,7 @@ def render_app_comparison(app_name: str):
     trace_viewer_container = st.container()
 
     with app_feedback_container:
-        app_feedback_container.header("App Feedback Comparison")
+        app_feedback_container.header("App Metric Comparison")
         _render_all_app_feedback_plot(col_data, feedback_col_names)
 
     with record_selector_container:
@@ -797,7 +797,7 @@ def render_app_comparison(app_name: str):
     with record_feedback_graph_container:
         _render_all_app_feedback_plot(record_data, feedback_col_names)
 
-    record_feedback_selector_container.subheader("Feedback Results")
+    record_feedback_selector_container.subheader("Metric Results")
     with record_feedback_selector_container:
         if selected_ff := _render_feedback_pills(
             feedback_col_names=feedback_col_names,

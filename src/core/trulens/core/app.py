@@ -44,6 +44,7 @@ from trulens.core.database import base as core_db
 from trulens.core.database import connector as core_connector
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback import feedback as core_feedback
+from trulens.core.metric import metric as core_metric
 from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.run import Run
 from trulens.core.run import RunConfig
@@ -385,10 +386,10 @@ class App(
         arbitrary_types_allowed=True
     )
 
-    feedbacks: List[core_feedback.Feedback] = pydantic.Field(
+    feedbacks: List[core_metric.Metric] = pydantic.Field(
         exclude=True, default_factory=list
     )
-    """Feedback functions to evaluate on each record."""
+    """Metrics to evaluate on each record. Accepts both Metric and legacy Feedback instances."""
 
     session: core_session.TruSession = pydantic.Field(
         default_factory=core_session.TruSession, exclude=True

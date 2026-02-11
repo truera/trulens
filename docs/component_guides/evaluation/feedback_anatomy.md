@@ -1,40 +1,43 @@
-# 🦴 Anatomy of Feedback Functions
+# 🦴 Anatomy of Metrics
 
-The [Feedback][trulens.core.Feedback] class contains the
-starting point for feedback function specification and evaluation.
+The [Metric][trulens.core.Metric] class is the
+starting point for metric specification and evaluation.
 
 !!! example
 
     ```python
+    from trulens.core import Metric, Selector
+    import numpy as np
+
     # Context relevance between question and each context chunk.
-    f_context_relevance = (
-        Feedback(
-            provider.context_relevance_with_cot_reasons,
-            name="Context Relevance"
-        )
-        .on(Select.RecordCalls.retrieve.args.query)
-        .on(Select.RecordCalls.retrieve.rets)
-        .aggregate(numpy.mean)
+    f_context_relevance = Metric(
+        implementation=provider.context_relevance_with_cot_reasons,
+        name="Context Relevance",
+        selectors={
+            "question": Selector.select_record_input(),
+            "context": Selector.select_context(collect_list=False),
+        },
+        agg=np.mean,
     )
     ```
 
-The components of this specifications are:
+The components of this specification are:
 
-## Feedback Providers
+## Providers
 
-The provider is the back-end on which a given feedback function is run.
+The provider is the back-end on which a given metric is run.
 Multiple underlying models are available through each provider, such as GPT-4 or
-Llama-2. In many, but not all cases, the feedback implementation is shared
+Llama-2. In many, but not all cases, the metric implementation is shared
 across providers (such as with LLM-based evaluations).
 
-Read more about [feedback providers][trulens.core.feedback.provider.Provider].
+Read more about [providers][trulens.core.feedback.provider.Provider].
 
-## Feedback implementations
+## Metric Implementations
 
 [OpenAI.context_relevance][trulens.providers.openai.provider.OpenAI.context_relevance]
-is an example of a feedback function implementation.
+is an example of a metric implementation.
 
-Feedback implementations are simple callables that can be run
+Metric implementations are simple callables that can be run
 on any arguments matching their signatures. In the example, the implementation
 has the following signature:
 
@@ -49,43 +52,34 @@ That is,
 is a plain Python method that accepts the prompt and context, both strings, and
 produces a float (assumed to be between 0.0 and 1.0).
 
-Read more about [feedback implementations](./feedback_implementations/index.md)
+Read more about [metric implementations](./feedback_implementations/index.md)
 
-## Feedback constructor
+## Metric Constructor
 
-The line `Feedback(openai.relevance)` constructs a
-Feedback object with a feedback implementation.
+The `Metric(implementation=provider.relevance)` constructs a
+Metric object with a metric implementation.
 
-## Argument specification
+## Selectors
 
-The next line,
-[on_input_output][trulens.core.Feedback.on_input_output],
-specifies how the
-[context_relevance][trulens.providers.openai.OpenAI.context_relevance]
-arguments are to be determined from an app record or app definition. The general
-form of this specification is done using
-[on][trulens.core.Feedback.on] but several shorthands are
-provided. For example,
-[on_input_output][trulens.core.Feedback.on_input_output]
-states that the first two arguments to
-[context_relevance][trulens.providers.openai.OpenAI.context_relevance]
-(`prompt` and `context`) are to be the main app input and the main app output,
-respectively.
+The `selectors` parameter specifies how the metric implementation's
+arguments are determined from an app record or app definition. Selectors
+map parameter names to span data using the `Selector` class.
 
-Read more about [argument
-specification](./feedback_selectors/selecting_components.md) and [selector
-shortcuts](./feedback_selectors/selector_shortcuts.md).
+Common selector methods:
 
-## Aggregation specification
+- `Selector.select_record_input()` - The main app input
+- `Selector.select_record_output()` - The main app output
+- `Selector.select_context(collect_list=True/False)` - Retrieved contexts
 
-The last line `aggregate(numpy.mean)` specifies how feedback outputs are to be
-aggregated. This only applies to cases where the argument specification names
-more than one value for an input. The second specification, for `statement`, was
-of this type. The input to
-[aggregate][trulens.core.Feedback.aggregate] must be a method
-which can be imported globally. This requirement is further elaborated in the
-next section. This function is called on the `float` results of feedback
-function evaluations to produce a single float. The default is
+Read more about [selectors](./feedback_selectors/selecting_components.md).
+
+## Aggregation Specification
+
+The `agg=np.mean` parameter specifies how metric outputs are to be
+aggregated. This only applies to cases where the selector names
+more than one value for an input (e.g., when `collect_list=False` returns
+multiple context chunks). The function is called on the `float` results of
+metric evaluations to produce a single float. The default is
 [numpy.mean][numpy.mean].
 
-Read more about [feedback aggregation](feedback_aggregation.md).
+Read more about [aggregation](feedback_aggregation.md).

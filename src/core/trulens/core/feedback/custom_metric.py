@@ -1,29 +1,47 @@
-"""Client-side custom metrics functionality."""
+"""
+DEPRECATED: Client-side custom metrics functionality.
+
+This module is deprecated. Use trulens.core.metric.Metric instead.
+
+The MetricConfig class is maintained for backward compatibility but will be
+removed in a future version.
+"""
 
 from __future__ import annotations
 
 import inspect
 from typing import Any, Callable, Dict, Optional
+import warnings
 
-from trulens.core.feedback.feedback import Feedback
 from trulens.core.feedback.selector import Selector
+from trulens.core.metric.metric import Metric
 
 
 class MetricConfig:
     """
-    Configuration for a custom metric including implementation and span mapping.
+    DEPRECATED: Use Metric instead.
 
-    This class defines a complete metric configuration that includes the metric
-    function implementation and how its arguments should be extracted from OTEL spans.
+    This class is maintained for backward compatibility. All functionality
+    has been merged into the Metric class.
 
-    Key Concepts:
-    - metric_name: Unique semantic identifier for this specific usage of the metric
-                   (e.g., "text2sql_accuracy_v1", "relevance_for_qa_task")
-    - metric_type: Implementation identifier of the underlying metric function
-                   (e.g., "text2sql", "accuracy", "relevance")
+    Example of migrating to Metric:
+        ```python
+        # Old way (deprecated):
+        from trulens.core.feedback import MetricConfig
+        config = MetricConfig(
+            metric_name="my_metric",
+            metric_implementation=my_fn,
+            selectors={"arg": Selector.select_record_input()},
+        )
+        feedback = config.create_feedback_definition()
 
-    This distinction allows the same metric implementation to be used multiple times
-    with different configurations and names within the same application.
+        # New way (recommended):
+        from trulens.core import Metric, Selector
+        metric = Metric(
+            name="my_metric",
+            implementation=my_fn,
+        ).on({"arg": Selector.select_record_input()})
+        ```
     """
 
     def __init__(
@@ -37,7 +55,7 @@ class MetricConfig:
         description: Optional[str] = None,
     ):
         """
-        Initialize a metric configuration.
+        Initialize a metric configuration (deprecated, use Metric instead).
 
         Args:
             metric_name: Unique semantic identifier for this specific metric usage
@@ -51,6 +69,18 @@ class MetricConfig:
             higher_is_better: Whether higher scores are better
             description: Optional description of the metric
         """
+        warnings.warn(
+            "MetricConfig is deprecated and will be removed in a future version. "
+            "Use Metric instead:\n"
+            "  from trulens.core import Metric, Selector\n"
+            "  metric = Metric(\n"
+            "      name='...',\n"
+            "      implementation=fn,\n"
+            "  ).on({'arg': Selector.select_record_input()})",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
         self.metric_name = metric_name
         self.metric_implementation = metric_implementation
         self.metric_type = metric_type or (
@@ -133,12 +163,14 @@ class MetricConfig:
         if error_msg:
             raise ValueError(error_msg)
 
-    def create_feedback_definition(self) -> Feedback:
+    def create_feedback_definition(self) -> Metric:
         """
-        Create a Feedback instance from this metric configuration.
+        Create a Metric instance from this metric configuration.
+
+        DEPRECATED: This method returns a Metric instance (formerly Feedback).
 
         Returns:
-            A Feedback instance configured for this metric
+            A Metric instance configured for this metric
 
         Raises:
             ValueError: If selectors don't match function parameters
@@ -161,11 +193,13 @@ class MetricConfig:
                 self.metric_implementation, loadable=False
             )
 
-        return Feedback(
+        return Metric(
             imp=self.metric_implementation,
             implementation=implementation,  # Pre-provide serialized version
             name=self.metric_name,
             higher_is_better=self.higher_is_better,
+            metric_type=self.metric_type,
+            description=self.description,
         ).on(self.selectors)
 
     def to_dict(self) -> Dict[str, Any]:

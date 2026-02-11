@@ -155,7 +155,7 @@ def display_feedback_call(
         feedback_directions (Dict[str, bool]): A dictionary mapping feedback names to their directions. True if higher is better, False otherwise.
     """
     if not call:
-        st.warning("No feedback details found.")
+        st.warning("No metric details found.")
         return
 
     # First, identify and separate EVAL_ROOT and feedback calls (EVAL spans)
@@ -165,7 +165,7 @@ def display_feedback_call(
     eval_calls = _filter_eval_calls_by_root(eval_root_calls, eval_calls)
 
     if not eval_calls:
-        st.warning("No feedback details found.")
+        st.warning("No metric details found.")
         return
 
     # Process feedback calls (EVAL spans) for display
@@ -185,7 +185,7 @@ def display_feedback_call(
             return
 
     if df.empty:
-        st.warning("No feedback details found.")
+        st.warning("No metric details found.")
         return
 
     # Format only numeric columns
@@ -308,11 +308,11 @@ def _render_feedback_pills(
         format_func = None
 
     if len(feedback_with_valid_results) == 0:
-        st.warning("No feedback functions found.")
+        st.warning("No metrics found.")
         return
 
     kwargs = {
-        "label": "Feedback Functions (click to learn more)",
+        "label": "Metrics (click to learn more)",
         "options": feedback_with_valid_results,
     }
     if format_func:
