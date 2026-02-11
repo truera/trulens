@@ -52,8 +52,8 @@ def _requirements_of_trulens_core_file(
             mapping = {}
 
             for line in fh:
-                line = line.strip()
-                if not line or line.startswith("#"):
+                line = line.split("#")[0].strip()
+                if not line:
                     continue
                 req = requirements.Requirement(line)
                 mapping[req.name] = req

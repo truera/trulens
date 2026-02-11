@@ -775,6 +775,14 @@ class App(
                 record_ids=record_ids, timeout=timeout
             )
             self._evaluator.compute_now(record_ids)
+            # Wait for feedback results to be persisted to the database
+            feedback_names = [f.name for f in self.feedbacks]
+            if feedback_names:
+                TruSession().wait_for_feedback_results(
+                    record_ids=record_ids,
+                    feedback_names=feedback_names,
+                    timeout=timeout,
+                )
         records_df, feedback_cols = TruSession().get_records_and_feedback(
             record_ids=record_ids
         )
@@ -2142,7 +2150,6 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             self._evaluator.stop_evaluator()
 
 
-@staticmethod
 def trace_with_run(
     app: Optional["App"],
     run_name: Optional[str] = None,

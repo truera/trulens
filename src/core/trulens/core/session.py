@@ -4,6 +4,7 @@ from collections import defaultdict
 from concurrent import futures
 from datetime import datetime
 import inspect
+import json
 import logging
 from multiprocessing import Process
 import threading
@@ -1235,10 +1236,67 @@ class TruSession(
         """
         if is_otel_tracing_enabled():
             self.force_flush()
+            self._wait_for_records_otel(record_ids, timeout, poll_interval)
+        else:
+            self._wait_for_records_legacy(record_ids, timeout, poll_interval)
+
+    def _wait_for_records_otel(
+        self,
+        record_ids: List[str],
+        timeout: float,
+        poll_interval: float,
+    ) -> None:
+        """OTEL-specific implementation to wait for records.
+
+        This is more efficient than the legacy implementation as it only checks
+        for the existence of RECORD_ROOT spans rather than fetching all record
+        data and feedback results.
+        """
         start_time = time()
         while time() - start_time < timeout:
-            # TODO: There's really no need to fetch everything, we should just
-            #       check the existence of the record_ids.
+            # Get events for the specific record_ids without any start_time filter
+            events = self.connector.get_events(
+                app_name=None,
+                app_version=None,
+                record_ids=record_ids,
+                start_time=None,
+            )
+
+            if events is not None and not events.empty:
+                # Check for RECORD_ROOT spans to confirm complete records
+                found_record_ids = set()
+                for _, event in events.iterrows():
+                    record_attrs = event.get("record_attributes", {})
+                    if isinstance(record_attrs, str):
+                        record_attrs = json.loads(record_attrs)
+                    span_type = record_attrs.get(SpanAttributes.SPAN_TYPE)
+                    record_id = record_attrs.get(SpanAttributes.RECORD_ID)
+                    if (
+                        span_type == SpanAttributes.SpanType.RECORD_ROOT
+                        and record_id is not None
+                    ):
+                        found_record_ids.add(record_id)
+
+                if all(
+                    record_id in found_record_ids for record_id in record_ids
+                ):
+                    return
+
+            sleep(poll_interval)
+
+        raise RuntimeError(
+            f"Could not find all record IDs: {record_ids} in database!"
+        )
+
+    def _wait_for_records_legacy(
+        self,
+        record_ids: List[str],
+        timeout: float,
+        poll_interval: float,
+    ) -> None:
+        """Legacy (pre-OTEL) implementation to wait for records."""
+        start_time = time()
+        while time() - start_time < timeout:
             records_df, _ = self.get_records_and_feedback(
                 record_ids=record_ids,
             )
@@ -1250,6 +1308,86 @@ class TruSession(
             sleep(poll_interval)
         raise RuntimeError(
             f"Could not find all record IDs: {record_ids} in database!"
+        )
+
+    def wait_for_feedback_results(
+        self,
+        record_ids: List[str],
+        feedback_names: List[str],
+        timeout: float = 60,
+        poll_interval: float = 0.5,
+    ) -> None:
+        """
+        Wait for feedback evaluation results to appear in the database.
+
+        This method waits for EVAL_ROOT spans to appear for all combinations of
+        the given record_ids and feedback_names. It should be called after
+        feedback computation has been triggered (e.g., after compute_now).
+
+        Args:
+            record_ids: The record IDs to wait for feedback results for.
+            feedback_names: The names of the feedback functions to wait for.
+            timeout: Maximum time to wait in seconds.
+            poll_interval: How often to poll in seconds.
+
+        Raises:
+            RuntimeError: If not all feedback results are found within the timeout.
+        """
+        if not is_otel_tracing_enabled():
+            # In legacy mode, feedback results are written synchronously
+            # so no waiting is needed
+            return
+
+        self.force_flush()
+
+        # Build the set of expected (record_id, feedback_name) pairs
+        expected_pairs = {
+            (record_id, feedback_name)
+            for record_id in record_ids
+            for feedback_name in feedback_names
+        }
+
+        found_pairs = set()
+        start_time = time()
+        while time() - start_time < timeout:
+            # Get events for the specific record_ids without any start_time filter
+            events = self.connector.get_events(
+                app_name=None,
+                app_version=None,
+                record_ids=record_ids,
+                start_time=None,
+            )
+
+            if events is not None and not events.empty:
+                # Check for EVAL_ROOT spans and collect found (record_id, metric_name) pairs
+                found_pairs = set()
+                for _, event in events.iterrows():
+                    record_attrs = event.get("record_attributes", {})
+                    if isinstance(record_attrs, str):
+                        record_attrs = json.loads(record_attrs)
+
+                    span_type = record_attrs.get(SpanAttributes.SPAN_TYPE)
+                    if span_type != SpanAttributes.SpanType.EVAL_ROOT:
+                        continue
+
+                    record_id = record_attrs.get(SpanAttributes.RECORD_ID)
+                    metric_name = record_attrs.get(
+                        SpanAttributes.EVAL_ROOT.METRIC_NAME
+                    )
+
+                    if record_id is not None and metric_name is not None:
+                        found_pairs.add((record_id, metric_name))
+
+                # Check if all expected pairs have been found
+                if expected_pairs.issubset(found_pairs):
+                    return
+
+            sleep(poll_interval)
+
+        # Build a helpful error message showing what's missing
+        missing_pairs = expected_pairs - found_pairs
+        raise RuntimeError(
+            f"Timeout waiting for feedback results. Missing: {missing_pairs}"
         )
 
     def add_feedback_result(

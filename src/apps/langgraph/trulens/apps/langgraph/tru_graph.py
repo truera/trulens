@@ -10,8 +10,10 @@ from typing import (
     Any,
     Callable,
     ClassVar,
+    Dict,
     List,
     Optional,
+    Union,
 )
 
 from opentelemetry.trace import get_current_span
@@ -1587,6 +1589,13 @@ class TruGraph(TruChain):
         main_method: Optional[Callable] = None,
         **kwargs: Any,
     ):
+        """Initialize TruGraph.
+
+        Args:
+            app: A LangGraph application (Pregel, StateGraph, or custom class).
+            main_method: Optional callable to use as the main entry point.
+            **kwargs: Additional arguments passed to App.
+        """
         # Ensure instrumentation is set up before initializing
         self._ensure_instrumentation()
 
@@ -1600,6 +1609,7 @@ class TruGraph(TruChain):
 
         if main_method is not None:
             kwargs["main_method"] = main_method
+
         kwargs["root_class"] = pyschema_utils.Class.of_object(app)
         from trulens.apps.langchain.tru_chain import LangChainInstrument
 
@@ -1674,14 +1684,23 @@ class TruGraph(TruChain):
                 elif "query" in temp:
                     return temp["query"]
                 else:
+                    # Try to find a string value in the dict
                     for _, value in temp.items():
                         if isinstance(value, str):
                             return value
-                    return str(temp)
+                    # Fallback: JSON serialize the dict for consistent OTEL span attributes
+                    try:
+                        return json.dumps(temp)
+                    except (TypeError, ValueError):
+                        return str(temp)
             elif isinstance(temp, str):
                 return temp
             else:
-                return str(temp)
+                # For non-dict, non-string inputs, try JSON serialization first
+                try:
+                    return json.dumps(temp)
+                except (TypeError, ValueError):
+                    return str(temp)
 
         return super().main_input(func, sig, bindings)
 
@@ -1726,20 +1745,48 @@ class TruGraph(TruChain):
                 f"App must be an instance of Pregel, got {type(self.app)}"
             )
 
-    def main_call(self, human: str):
-        """A single text to a single text invocation of this app."""
+    def main_call(self, input: Union[str, Dict[str, Any]]):
+        """Invoke the LangGraph workflow.
+
+        Args:
+            input: Either a string (wrapped in default messages format) or
+                   a dict representing the full LangGraph state.
+
+        Returns:
+            The output from the workflow, extracted as a string if possible.
+        """
         self._validate_pregel_app()
         try:
-            result = self.app.invoke({"messages": [("user", human)]})
+            if isinstance(input, dict):
+                # Direct state dict - use as-is
+                state = input
+            else:
+                # String input - wrap in default messages format
+                state = {"messages": [("user", str(input))]}
+            result = self.app.invoke(state)
             return self._extract_output_from_result(result)
         except Exception as e:
-            raise Exception(f"Error invoking Langgraph workflow: {str(e)}")
+            raise Exception(f"Error invoking LangGraph workflow: {str(e)}")
 
-    async def main_acall(self, human: str):
-        """A single text to a single text async invocation of this app."""
+    async def main_acall(self, input: Union[str, Dict[str, Any]]):
+        """Async invoke the LangGraph workflow.
+
+        Args:
+            input: Either a string (wrapped in default messages format) or
+                   a dict representing the full LangGraph state.
+
+        Returns:
+            The output from the workflow, extracted as a string if possible.
+        """
         self._validate_pregel_app()
         try:
-            result = await self.app.ainvoke({"messages": [("user", human)]})
+            if isinstance(input, dict):
+                # Direct state dict - use as-is
+                state = input
+            else:
+                # String input - wrap in default messages format
+                state = {"messages": [("user", str(input))]}
+            result = await self.app.ainvoke(state)
             return self._extract_output_from_result(result)
         except Exception as e:
             raise Exception(f"Error invoking Langgraph workflow: {str(e)}")

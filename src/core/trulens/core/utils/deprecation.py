@@ -115,6 +115,53 @@ def deprecated_property(message: str):
     return wrapper
 
 
+def handle_deprecated_kwarg(
+    kwargs: Dict[str, Any],
+    old_name: str,
+    new_name: str,
+    new_value: Optional[str],
+    stacklevel: int = 3,
+) -> Optional[str]:
+    """Handle deprecated keyword argument that has been renamed.
+
+    This helper checks if an old parameter name is in kwargs, emits a
+    deprecation warning, and returns the appropriate value to use.
+
+    Args:
+        kwargs: The kwargs dictionary to check and modify. The old key will
+            be removed from this dictionary if present.
+        old_name: The deprecated parameter name.
+        new_name: The new parameter name.
+        new_value: The current value of the new parameter.
+        stacklevel: Stack level for the warning. Defaults to 3 (caller's caller).
+
+    Returns:
+        The value to use for the new parameter. If new_value is None and the
+        old parameter was provided, returns the old parameter's value.
+        Otherwise returns new_value unchanged.
+
+    Example:
+        ```python
+        def my_function(new_param: Optional[str] = None, **kwargs):
+            new_param = handle_deprecated_kwarg(
+                kwargs, "old_param", "new_param", new_param
+            )
+        ```
+    """
+    if old_name in kwargs:
+        warnings.warn(
+            f"Parameter `{old_name}` has been renamed to `{new_name}`. "
+            f"Please update your code to use `{new_name}` instead.",
+            DeprecationWarning,
+            stacklevel=stacklevel,
+        )
+        if new_value is None:
+            new_value = kwargs.pop(old_name)
+        else:
+            kwargs.pop(old_name)
+    return new_value
+
+
 def packages_dep_warn(
     module: Optional[str] = None, message: Optional[str] = None
 ):

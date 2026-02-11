@@ -621,8 +621,20 @@ class Run(BaseModel):
                         elif "record_root.input" in dataset_spec:
                             input_col = dataset_spec["record_root.input"]
                         if input_col:
-                            input_id = obj_id_of_obj(row[input_col])
-                            main_method_args.append(row[input_col])
+                            input_value = row[input_col]
+                            # Parse JSON string to dict if the input is a JSON blob
+                            # This supports LangGraph state dicts from Snowflake VARIANT columns
+                            if isinstance(input_value, str):
+                                try:
+                                    import json
+
+                                    parsed = json.loads(input_value)
+                                    if isinstance(parsed, dict):
+                                        input_value = parsed
+                                except (json.JSONDecodeError, TypeError):
+                                    pass  # Keep as string if not valid JSON
+                            input_id = obj_id_of_obj(input_value)
+                            main_method_args.append(input_value)
 
                     # Extract additional method arguments from dataset_spec
                     # Skip fields that are already handled or are special metadata fields

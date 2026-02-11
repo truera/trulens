@@ -239,6 +239,16 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+# Handle optional MCP client import for MCP-specific instrumentation
+try:
+    from langchain_mcp_adapters.client import MultiServerMCPClient
+except Exception as e:
+    MultiServerMCPClient = None  # type: ignore[assignment]
+    logger.debug(
+        "langchain_mcp_adapters not available, MCP instrumentation disabled: %s",
+        e,
+    )
+
 pp = PrettyPrinter()
 
 
@@ -442,13 +452,19 @@ class LangChainInstrument(core_instruments.Instrument):
                         "query"
                     ),
                 ),
-                # MCP client methods
-                InstrumentedMethod(
-                    "get_tools",
-                    object,  # Will be filtered by module name
-                    *core_instruments.Instrument.Default.mcp_span(
-                        "server_name"
-                    ),
+                # MCP client methods - only instrument if MultiServerMCPClient is available
+                *(
+                    [
+                        InstrumentedMethod(
+                            "get_tools",
+                            MultiServerMCPClient,  # Only match actual MCP client classes
+                            *core_instruments.Instrument.Default.mcp_span(
+                                "server_name"
+                            ),
+                        ),
+                    ]
+                    if MultiServerMCPClient is not None
+                    else []
                 ),
             ]
 

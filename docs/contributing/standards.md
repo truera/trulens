@@ -329,11 +329,9 @@ See `tests/unit`.
 
 See `tests/unit/static`.
 
-Static tests run on multiple versions of Python: `3.8`, `3.9`, `3.10`, `3.11`,
-and being a subset of unit tests, are also run on latest supported Python,
-`3.12` . Some tests that require all optional packages to be installed run only
-on `3.11` as the latter Python version (`3.12`) does not support some of those optional
-packages. Note: this is in the process of being updated.
+Static tests run on multiple versions of Python: `3.9`, `3.10`, `3.11`, `3.12`.
+Some tests that require all optional packages to be installed run only on
+`3.11` as some optional packages may not support newer Python versions yet.
 
 ### Test pipelines
 
