@@ -243,7 +243,8 @@ nav:
         - component_guides/instrumentation/llama_index.md
     - Logging:
         - component_guides/logging/where_to_log/index.md
-        - ❄️ Logging in Snowflake: component_guides/logging/where_to_log/log_in_snowflake.md
+        - Postgres: component_guides/logging/where_to_log/log_in_postgres.md
+        - Snowflake: component_guides/logging/where_to_log/log_in_snowflake.md
         - Logging Methods: component_guides/logging/logging.ipynb
         # - Exporting Spans: component_guides/logging/exporting_spans.md
     - 🎯 Evaluation:

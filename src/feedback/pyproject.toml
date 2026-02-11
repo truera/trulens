@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-feedback"
-version = "2.5.3"
+version = "2.6.0"
 description = "A TruLens extension package implementing feedback functions for LLM App evaluation."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",

@@ -25,7 +25,6 @@ from typing import (
 import importlib_resources
 from packaging import requirements
 from packaging import version
-import pkg_resources
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -50,11 +49,13 @@ def _requirements_of_trulens_core_file(
     _trulens_resources = importlib_resources.files("trulens.core")
     with importlib_resources.as_file(_trulens_resources / path) as _path:
         with open(_path) as fh:
-            reqs = pkg_resources.parse_requirements(fh)
-
             mapping = {}
 
-            for req in reqs:
+            for line in fh:
+                line = line.split("#")[0].strip()
+                if not line:
+                    continue
+                req = requirements.Requirement(line)
                 mapping[req.name] = req
 
             return mapping

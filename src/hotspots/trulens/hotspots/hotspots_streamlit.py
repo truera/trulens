@@ -92,7 +92,7 @@ def hotspots_in_streamlit_with_config(
     column_config = {
         "#": st.column_config.NumberColumn(
             "#",
-            help="number of occurences",
+            help="number of occurrences",
         ),
         "avg. score": st.column_config.NumberColumn(
             "avg. score",

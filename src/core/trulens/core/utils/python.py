@@ -205,6 +205,23 @@ def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
             # Optional dependency properties (e.g., BaseChatModel.profile) may
             # raise ImportError to hint at extra packages; skip gracefully.
             return None
+        except (TypeError, RuntimeError) as e:
+            # Some properties (like LangGraph's output_schema) may fail due to
+            # Pydantic/typing issues with complex type annotations (e.g.,
+            # NotRequired, OmitFromSchema). Skip these gracefully.
+            if any(
+                msg in str(e)
+                for msg in [
+                    "unhashable type",
+                    "ForbiddenQualifier",
+                    "NotRequired",
+                    "OmitFromSchema",
+                ]
+            ):
+                return None
+            raise RuntimeError(
+                f"Failed to get property {k} due to {str(e)}"
+            ) from e
         except Exception as e:
             raise RuntimeError(
                 f"Failed to get property {k} due to {str(e)}"
