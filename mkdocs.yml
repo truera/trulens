@@ -155,8 +155,8 @@ plugins:
         trulens/core_concepts_rag_triad.md: getting_started/core_concepts/rag_triad.md
         trulens/core_concepts_honest_harmless_helpful_evals.md: getting_started/core_concepts/honest_harmless_helpful_evals.md
         trulens/quickstart.md: getting_started/quickstarts/quickstart.ipynb
-        trulens/langchain_quickstart.md: getting_started/quickstarts/langchain_quickstart.ipynb
-        trulens/llama_index_quickstart.md: getting_started/quickstarts/llama_index_quickstart.ipynb
+        trulens/langchain_quickstart.md: examples/expositional/frameworks/langchain/langchain_quickstart.ipynb
+        trulens/llama_index_quickstart.md: examples/expositional/frameworks/llamaindex/llama_index_quickstart.ipynb
         trulens/text2text_quickstart.md: getting_started/quickstarts/text2text_quickstart.ipynb
         trulens/groundtruth_evals.md: getting_started/quickstarts/groundtruth_evals.ipynb
         trulens/human_feedback.md: getting_started/quickstarts/adding_human_feedback.ipynb
