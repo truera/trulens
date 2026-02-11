@@ -32,7 +32,7 @@ requirements:
     - opentelemetry-sdk >=1.23.0
     - opentelemetry-proto >=1.23.0
     - numpy >=1.23.0
-    - munch >=2.5.0,<3.0.0
+    - munch >=2.5.0,<5.0.0
     - dill >=0.3.8,<0.4.0
     - typing_extensions >=4.9.0,<5.0.0
     - pydantic >=2.4.2,<3.0.0
