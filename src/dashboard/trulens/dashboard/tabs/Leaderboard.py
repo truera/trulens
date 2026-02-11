@@ -752,7 +752,7 @@ def _render_list_tab(
 @streamlit_compat.st_fragment
 def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
     if len(feedback_col_names) == 0:
-        st.warning("No feedback functions found.")
+        st.warning("No metrics found.")
         return
     if dashboard_constants.HIDE_RECORD_COL_NAME in df.columns:
         df = df[~df[dashboard_constants.HIDE_RECORD_COL_NAME]]
@@ -872,7 +872,7 @@ def render_leaderboard(app_name: str):
         list_tab,
     ) = st.tabs([
         "App Versions",
-        "Feedback Histograms",
+        "Metric Histograms",
         "List View",
     ])
     with versions_tab:
