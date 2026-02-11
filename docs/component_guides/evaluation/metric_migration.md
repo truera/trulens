@@ -184,9 +184,41 @@ f = Feedback(provider.relevance).on_input().on_output()
 
 The chained `.on_*()` methods also work on `Metric` for gradual migration, but the `selectors={}` style is recommended for new code.
 
+### Type Checking Notes
+
+The `Feedback` class is implemented as a subclass of `Metric`:
+
+```python
+class Feedback(Metric):
+    ...
+```
+
+This means:
+
+| Check | Result |
+|-------|--------|
+| `isinstance(metric_obj, Metric)` | `True` |
+| `isinstance(feedback_obj, Metric)` | `True` |
+| `isinstance(feedback_obj, Feedback)` | `True` |
+| `isinstance(metric_obj, Feedback)` | `False` |
+
+**For downstream integrators**: If your code performs type checks with `isinstance(obj, Feedback)`, you should migrate to `isinstance(obj, Metric)` before the `Feedback` alias is removed. After removal:
+
+- `isinstance(obj, Metric)` will continue to work ✅
+- `isinstance(obj, Feedback)` will raise `NameError` ❌
+
+```python
+# Before (will break when Feedback is removed)
+if isinstance(obj, Feedback):
+    ...
+
+# After (recommended)
+if isinstance(obj, Metric):
+    ...
+```
+
 ## Timeline
 
-- **Now**: `Feedback` and `MetricConfig` work with deprecation warnings
 - **Future release**: `Feedback` and `MetricConfig` will be removed
 
 We recommend migrating to `Metric` for all new code.
