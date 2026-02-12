@@ -30,6 +30,8 @@
   from trulens.apps.X import Y as Y_app
   from trulens.core import X as core_X
   from trulens.core.database import base as core_db
+  from trulens.feedback.templates import rag as templates_rag
+  from trulens.feedback.templates import base as templates_base
   ```
 - Use `TYPE_CHECKING` blocks for type-only imports
 - Use `from __future__ import annotations` for forward references
@@ -66,6 +68,15 @@ Enable optional tests: `TEST_OPTIONAL=true`
 src/
 ├── core/           # trulens-core: Core abstractions, session, database
 ├── feedback/       # trulens-feedback: Feedback function implementations
+│   ├── templates/  # Prompt template classes organized by domain:
+│   │   ├── base.py     # FeedbackTemplate base class, shared scaffolding
+│   │   ├── rag.py      # RAG evals (Groundedness, ContextRelevance, …)
+│   │   ├── safety.py   # Moderation (Harmfulness, Toxicity, …)
+│   │   ├── quality.py  # Text quality (Coherence, Sentiment, …)
+│   │   └── agent.py    # Agentic evals (ToolSelection, PlanAdherence, …)
+│   ├── llm_provider.py # LLMProvider base — orchestrates template → LLM calls
+│   ├── v2/             # Backward-compat shim (re-exports from templates/)
+│   └── prompts.py      # Backward-compat shim (re-exports from templates/)
 ├── dashboard/      # trulens-dashboard: Streamlit UI + React components
 ├── apps/           # App integrations (langchain, langgraph, llamaindex)
 ├── providers/      # LLM providers (openai, bedrock, cortex, huggingface, litellm)
@@ -275,10 +286,14 @@ session = TruSession(experimental_feature_flags=[Feature.OTEL_TRACING])
 4. Implement `main_input()` and `main_output()` methods
 
 ### New feedback function
-1. Add method to provider class or `LLMProvider`
-2. Return float [0, 1] or dict of floats
-3. Add Google-style docstring with example
-4. Add tests
+1. Add a prompt template class to the appropriate `templates/` domain file (e.g. `rag.py`, `safety.py`)
+   - Extend the relevant base (e.g. `Semantics`, `WithPrompt`, `CriteriaOutputSpaceMixin`)
+   - Define `system_prompt`, `user_prompt`, `criteria_template`, and `output_space`
+2. Add the evaluation method to the provider class or `LLMProvider`
+3. Return float [0, 1] or dict of floats
+4. Add Google-style docstring with example
+5. Add re-exports to `templates/__init__.py`, and to `prompts.py` / `v2/feedback.py` shims if needed for backward compat
+6. Add tests
 
 ## Troubleshooting
 
