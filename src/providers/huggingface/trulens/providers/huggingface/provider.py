@@ -27,8 +27,8 @@ from trulens.core.feedback import provider as core_provider
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import threading as threading_utils
-from trulens.feedback import prompts as feedback_prompts
 from trulens.feedback.dummy import endpoint as dummy_endpoint
+from trulens.feedback.templates import rag as templates_rag
 from trulens.providers.huggingface import endpoint as huggingface_endpoint
 
 logger = logging.getLogger(__name__)
@@ -229,7 +229,7 @@ class HuggingfaceBase(core_provider.Provider):
                 premise=source, hypothesis=hypothesis
             )
             reasons_str = reasons_str + str.format(
-                feedback_prompts.GROUNDEDNESS_REASON_TEMPLATE,
+                templates_rag.GROUNDEDNESS_NLI_REASON_FORMAT,
                 statement_sentence=hypothesis,
                 supporting_evidence="[Doc NLI Used full source]",
                 score=score * 10,

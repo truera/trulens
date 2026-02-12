@@ -3,6 +3,7 @@ Tests for OTEL app.
 """
 
 import os
+import tempfile
 from typing import Dict, List, Optional, Tuple
 
 from opentelemetry.util.types import AttributeValue
@@ -18,11 +19,10 @@ from tests.util.df_comparison import (
     compare_dfs_accounting_for_ids_and_timestamps,
 )
 
-# Removed autouse fixture - it was initializing TruSession too early
-
 
 class OtelTestCase(TruTestCase):
     _orig_TRULENS_OTEL_TRACING: Optional[str] = None
+    _db_path: Optional[str] = None
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -43,20 +43,30 @@ class OtelTestCase(TruTestCase):
         return super().tearDownClass()
 
     def setUp(self) -> None:
-        super().setUp()
-        # Delete database file before creating TruSession to avoid migration issues
-        import os
-
-        if os.path.exists("default.sqlite"):
-            os.remove("default.sqlite")
-        tru_session = TruSession()
+        super().setUp()  # clears any previous TruSession singleton
+        # Use a unique temp file per test to avoid SQLite file
+        # contention when pytest-xdist runs multiple workers in
+        # parallel (each worker shares the same working directory).
+        fd, self._db_path = tempfile.mkstemp(
+            suffix=".sqlite", prefix="trulens_test_"
+        )
+        os.close(fd)
+        os.unlink(self._db_path)  # TruSession will create it
+        tru_session = TruSession(database_url=f"sqlite:///{self._db_path}")
         tru_session.reset_database()
-        self.clear_TruSession_singleton()
+        # Do NOT clear the singleton here — the test must reuse this
+        # TruSession (and its temp DB) when it calls TruSession().
 
     def tearDown(self) -> None:
         tru_session = TruSession()
         tru_session.force_flush()
-        return super().tearDown()
+        super().tearDown()  # clears the singleton
+        # Clean up the temp database file.
+        if self._db_path and os.path.exists(self._db_path):
+            try:
+                os.unlink(self._db_path)
+            except OSError:
+                pass
 
     @staticmethod
     def _get_events() -> pd.DataFrame:

@@ -82,12 +82,9 @@ from trulens.feedback import generated as feedback_generated
 from trulens.feedback import groundtruth as feedback_groundtruth
 from trulens.feedback import llm_provider
 from trulens.feedback import prompts as feedback_prompts
+from trulens.feedback import templates as feedback_templates
 from trulens.feedback.dummy import endpoint as dummy_endpoint
 from trulens.feedback.dummy import provider as dummy_provider
-from trulens.feedback.v2 import feedback as mod_feedback_v2  # not a good name
-from trulens.feedback.v2.provider import (
-    base as core_v2_provider,  # not a good name
-)
 from trulens.providers.bedrock import endpoint as bedrock_endpoint
 from trulens.providers.bedrock import provider as bedrock_provider
 from trulens.providers.cortext import endpoint as cortex_endpoint
