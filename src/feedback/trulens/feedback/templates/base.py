@@ -191,6 +191,38 @@ LIKERT_0_10_PROMPT = (
 )  # legacy, to be deprecated
 
 
+# ------------------------------------------------------------------
+# Generic formatting / scaffolding constants (used across domains)
+# ------------------------------------------------------------------
+
+COT_REASONS_TEMPLATE = """
+Please evaluate using the following template:
+
+Criteria: <Provide the criteria for this evaluation, restating the criteria you are using to evaluate. If your criteria includes additional instructions, always repeat them here.>
+Supporting Evidence: <Provide your reasons for scoring based on the listed criteria step by step. Tie it back to the evaluation being completed.>
+Score: <The score based on the given criteria>
+
+Please respond using the entire template above.
+"""
+
+REMOVE_Y_N = " If so, respond Y. If not, respond N."
+
+LANGCHAIN_PROMPT_TEMPLATE_SYSTEM = """
+CRITERIA:
+
+{criteria}
+"""
+
+LANGCHAIN_PROMPT_TEMPLATE_USER = """
+SUBMISSION:
+
+{submission}"""
+
+LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS_SYSTEM = (
+    LANGCHAIN_PROMPT_TEMPLATE_SYSTEM + COT_REASONS_TEMPLATE
+)
+
+
 class OutputSpace(Enum):
     """
     Enum for valid output spaces of scores.

@@ -141,3 +141,26 @@ class Controversiality(Semantics):
     )
 
     user_prompt: ClassVar[str] = cleandoc("""Submission: """)
+
+
+# ------------------------------------------------------------------
+# Standalone prompt constants for quality evaluation
+# ------------------------------------------------------------------
+
+CORRECT_SYSTEM = """
+You are a fact bot and you answer with verifiable facts
+"""
+
+AGREEMENT_SYSTEM = """
+You will continually start seeing responses to the prompt:
+
+%s
+
+The expected answer is:
+
+%s
+
+Answer only with an integer from 1 to 10 based on how semantically similar the responses are to the expected answer.
+where 0 is no semantic similarity at all and 10 is perfect agreement between the responses and the expected answer.
+On a NEW LINE, give the integer score and nothing more.
+"""

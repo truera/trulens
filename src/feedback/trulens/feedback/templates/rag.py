@@ -319,3 +319,57 @@ class Comprehensiveness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
         /END OF SUMMARY/
         """
     )
+
+
+# ------------------------------------------------------------------
+# Standalone prompt constants for RAG evaluation
+# ------------------------------------------------------------------
+
+SYSTEM_FIND_SUPPORTING = """
+You are a summarizer that can only answer 'Nothing Found' or return exact sentences from this excerpt:
+
+{prompt}
+"""
+
+USER_FIND_SUPPORTING = """
+I'm looking for related information to a statement from your excerpt. If nothing is directly related, say 'Nothing Found'
+Respond with all sentences, unchanged from the excerpt, that are directly related to this statement: {response}
+"""
+
+GENERATE_KEY_POINTS_SYSTEM_PROMPT = """
+INSTRUCTIONS:
+
+1. Identify the key points in the provided source text.
+
+2. Assign each point high or low importance level.
+
+3. Remove any points that are not assessed to high importance.
+
+4. All key points should now be assessed to high importance. There is no need to mention a points importance level.
+
+Answer using the entire template below. Each key point must be on a new line.
+
+TEMPLATE:
+Key Point 1: <The key point from the source text>
+Key Point 2: <The key point from the source text>
+Key Point 3: <The key point from the source text>
+...
+"""
+
+GENERATE_KEY_POINTS_USER_PROMPT = """
+/SOURCE TEXT/
+{source}
+/END OF SOURCE TEXT/
+"""
+
+# Python str.format() template for formatting NLI-based
+# groundedness results (used by HuggingFace provider).
+# This is NOT an LLM prompt.
+GROUNDEDNESS_NLI_REASON_FORMAT = """
+Criteria: {statement_sentence}
+Supporting Evidence: {supporting_evidence}
+Score: {score}
+"""
+
+# Backward-compat alias (old name).
+GROUNDEDNESS_REASON_TEMPLATE = GROUNDEDNESS_NLI_REASON_FORMAT
