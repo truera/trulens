@@ -65,16 +65,17 @@ class Groundedness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     user_prompt: ClassVar[str] = cleandoc(
         """SOURCE: {premise}
 
-        Statement: {hypothesis}
+        STATEMENT: {hypothesis}
 
-        For EACH sentence in STATEMENTS output one block EXACTLY in the following template *and nothing else*:
+        Respond ONLY with a single-line JSON object having exactly these keys:
+          "criteria"             – copy of the STATEMENT verbatim
+          "supporting_evidence"  – sentence(s) from SOURCE that support the STATEMENT, or the string NOTHING FOUND or ABSTENTION
+          "score"                – an integer 0, 1, 2, or 3
 
-        Criteria: <Statement>
-        Supporting Evidence: <Identify and describe the location in the source where the information matches the statement. Provide a detailed, human-readable summary indicating the path or key details. if nothing matches, say NOTHING FOUND. For the case where the statement is an abstention, say ABSTENTION>
-        Score: <Only the numeric score inside of the specified scoring range>
+        Example (format only – you must replace the values):
+        {{"criteria": "...", "supporting_evidence": "...", "score": 2}}
 
-        Return the blocks one after another with a single blank line between blocks. Do NOT output any text before the first block or after the last block. Do NOT include explanations outside the template.
-        """
+        Return the JSON and nothing else (no markdown, no additional text)."""
     )
 
     sentences_splitter_prompt: ClassVar[str] = cleandoc(
