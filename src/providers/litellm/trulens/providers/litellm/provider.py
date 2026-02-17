@@ -38,6 +38,16 @@ class LiteLLM(llm_provider.LLMProvider):
 
     endpoint: core_endpoint.Endpoint
 
+    # litellm routing parameters that should be forwarded from
+    # **kwargs into completion_args and preserved during param
+    # filtering (they are NOT OpenAI model params).
+    _LITELLM_ROUTING_PARAMS: ClassVar[frozenset] = frozenset({
+        "api_base",
+        "api_key",
+        "api_version",
+        "base_url",
+    })
+
     def __init__(
         self,
         model_engine: Optional[str] = None,
@@ -58,6 +68,16 @@ class LiteLLM(llm_provider.LLMProvider):
 
         if completion_kwargs is None:
             completion_kwargs = {}
+
+        # Forward any litellm routing params (e.g. api_base, api_key)
+        # passed as direct keyword arguments into completion_kwargs so
+        # they are included in every litellm.completion() call.
+        for routing_param in self._LITELLM_ROUTING_PARAMS:
+            if (
+                routing_param in kwargs
+                and routing_param not in completion_kwargs
+            ):
+                completion_kwargs[routing_param] = kwargs.pop(routing_param)
 
         if model_engine.startswith("azure/") and (
             "api_base" not in completion_kwargs
@@ -137,7 +157,9 @@ class LiteLLM(llm_provider.LLMProvider):
             )
             params = required_params + (supported_params or [])
             completion_args = {
-                k: v for k, v in completion_args.items() if k in params
+                k: v
+                for k, v in completion_args.items()
+                if k in params or k in self._LITELLM_ROUTING_PARAMS
             }
 
         # Handle reasoning models vs non-reasoning defaults
