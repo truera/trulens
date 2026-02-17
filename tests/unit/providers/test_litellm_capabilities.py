@@ -1,4 +1,5 @@
 # pyright: reportMissingImports=false, reportMissingModuleSource=false
+import os
 from typing import Any, Dict
 
 import pytest
@@ -287,3 +288,68 @@ def test_completion_kwargs_takes_precedence_over_direct_kwarg(
     assert len(dummy.calls) >= 1
     # completion_kwargs value should take precedence
     assert dummy.calls[-1].get("api_base") == "http://from-kwargs:1111"
+
+
+@pytest.mark.optional
+def test_env_var_api_base_not_interfered_with(monkeypatch):
+    """When api_base is set via env var (e.g. OLLAMA_API_BASE), TruLens
+    must not interfere.  litellm reads the env var internally, so our
+    code should simply not inject an api_base kwarg."""
+    from trulens.providers.litellm import (
+        LiteLLM,  # type: ignore[import-not-found]
+    )
+
+    dummy = _DummyLiteLLM()
+    import trulens.providers.litellm.provider as provider_mod  # type: ignore[import-not-found]
+
+    monkeypatch.setattr(
+        provider_mod,
+        "completion",
+        lambda **kw: dummy.completion(**kw),
+    )
+
+    # Set the env var that litellm checks for Ollama
+    monkeypatch.setenv("OLLAMA_API_BASE", "http://remote-ollama:11434")
+
+    provider = LiteLLM(model_engine="ollama/llama3.1:8b")
+    provider._create_chat_completion(
+        messages=[{"role": "user", "content": "hi"}]
+    )
+    assert len(dummy.calls) >= 1
+    # No api_base kwarg should be injected by TruLens — litellm will
+    # read OLLAMA_API_BASE internally from the environment.
+    assert "api_base" not in dummy.calls[-1]
+    # Verify the env var is actually set (litellm would read it)
+    assert os.environ.get("OLLAMA_API_BASE") == "http://remote-ollama:11434"
+
+
+@pytest.mark.optional
+def test_explicit_api_base_overrides_env_var(monkeypatch):
+    """When api_base is passed explicitly AND env var is set, the
+    explicit param should be forwarded (litellm gives precedence to
+    the param over the env var)."""
+    from trulens.providers.litellm import (
+        LiteLLM,  # type: ignore[import-not-found]
+    )
+
+    dummy = _DummyLiteLLM()
+    import trulens.providers.litellm.provider as provider_mod  # type: ignore[import-not-found]
+
+    monkeypatch.setattr(
+        provider_mod,
+        "completion",
+        lambda **kw: dummy.completion(**kw),
+    )
+
+    monkeypatch.setenv("OLLAMA_API_BASE", "http://env-host:11434")
+
+    provider = LiteLLM(
+        model_engine="ollama/llama3.1:8b",
+        api_base="http://explicit-host:8080",
+    )
+    provider._create_chat_completion(
+        messages=[{"role": "user", "content": "hi"}]
+    )
+    assert len(dummy.calls) >= 1
+    # Explicit param should be forwarded, taking priority over env var
+    assert dummy.calls[-1].get("api_base") == "http://explicit-host:8080"
