@@ -1,17 +1,34 @@
-import json
+# Suppress third-party library warnings before importing anything else
 import logging
-import os
-import re
-from typing import ClassVar, Dict, Optional, Sequence, Type
+import warnings
 
-import pydantic
-from pydantic import BaseModel
-from trulens.core.feedback import endpoint as core_endpoint
-from trulens.feedback import llm_provider as llm_provider
-from trulens.providers.litellm import endpoint as litellm_endpoint
+warnings.filterwarnings(
+    "ignore",
+    message="pkg_resources is deprecated as an API",
+    category=UserWarning,
+)
+warnings.filterwarnings(
+    "ignore",
+    message="python-dotenv could not parse statement",
+    category=UserWarning,
+)
 
-from litellm import completion
-from litellm import get_supported_openai_params
+# Suppress python-dotenv logger warnings for malformed .env files
+logging.getLogger("dotenv.main").setLevel(logging.ERROR)
+
+import json  # noqa: E402
+import os  # noqa: E402
+import re  # noqa: E402
+from typing import ClassVar, Dict, Optional, Sequence, Type  # noqa: E402
+
+import pydantic  # noqa: E402
+from pydantic import BaseModel  # noqa: E402
+from trulens.core.feedback import endpoint as core_endpoint  # noqa: E402
+from trulens.feedback import llm_provider as llm_provider  # noqa: E402
+from trulens.providers.litellm import endpoint as litellm_endpoint  # noqa: E402
+
+from litellm import completion  # noqa: E402
+from litellm import get_supported_openai_params  # noqa: E402
 
 logger = logging.getLogger(__name__)
 

@@ -2,19 +2,40 @@
 
 # WARNING: This file does not follow the no-init aliases import standard.
 
-from importlib.metadata import version
-import os
+# Suppress third-party library warnings before importing anything else
+import logging
+import warnings
 
-from trulens.core.feedback.feedback import Feedback
-from trulens.core.feedback.feedback import SnowflakeFeedback
-from trulens.core.feedback.provider import Provider
-from trulens.core.metric import Metric
-from trulens.core.metric import Selector
-from trulens.core.schema.feedback import FeedbackMode
-from trulens.core.schema.select import Select
-from trulens.core.session import Tru
-from trulens.core.session import TruSession
-from trulens.core.utils import imports as import_utils
+# Suppress pkg_resources deprecation warning from munch and other libraries
+warnings.filterwarnings(
+    "ignore",
+    message="pkg_resources is deprecated as an API",
+    category=UserWarning,
+)
+
+# Suppress python-dotenv parsing warnings for malformed .env files
+warnings.filterwarnings(
+    "ignore",
+    message="python-dotenv could not parse statement",
+    category=UserWarning,
+)
+
+# Suppress python-dotenv logger warnings for malformed .env files
+logging.getLogger("dotenv.main").setLevel(logging.ERROR)
+
+from importlib.metadata import version  # noqa: E402
+import os  # noqa: E402
+
+from trulens.core.feedback.feedback import Feedback  # noqa: E402
+from trulens.core.feedback.feedback import SnowflakeFeedback  # noqa: E402
+from trulens.core.feedback.provider import Provider  # noqa: E402
+from trulens.core.metric import Metric  # noqa: E402
+from trulens.core.metric import Selector  # noqa: E402
+from trulens.core.schema.feedback import FeedbackMode  # noqa: E402
+from trulens.core.schema.select import Select  # noqa: E402
+from trulens.core.session import Tru  # noqa: E402
+from trulens.core.session import TruSession  # noqa: E402
+from trulens.core.utils import imports as import_utils  # noqa: E402
 
 # NOTE: workaround for MKL and multiprocessing
 # https://github.com/pytorch/csprng/issues/115
