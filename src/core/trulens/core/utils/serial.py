@@ -550,12 +550,18 @@ class SerialModel(pydantic.BaseModel):
         "formatted_objects", default=set()
     )
 
-    def __rich_repr__(self) -> rich.repr.Result:
-        """Requirement for pretty printing using the rich package."""
+    def _enter_formatting(self) -> Tuple[Optional[Any], bool]:
+        """Begin formatting this object, tracking circular refs.
 
-        # yield python_utils.class_name(type(self))
+        Returns:
+            A tuple of ``(token, is_circular)``.  When
+            *is_circular* is ``True`` this object has already been
+            seen in the current formatting chain and should be
+            represented with a short placeholder.  *token* must be
+            passed to :meth:`_exit_formatting` by the **root**
+            formatter when it finishes.
+        """
 
-        # If this is a root repr, create a new set for already-formatted objects.
         tok = None
         if SerialModel.formatted_objects.get(None) is None:
             tok = SerialModel.formatted_objects.set(set())
@@ -566,21 +572,68 @@ class SerialModel(pydantic.BaseModel):
             formatted_objects = set()
 
         if id(self) in formatted_objects:
-            yield f"{python_utils.class_name(type(self))}@0x{id(self):x}"
-
-            if tok is not None:
-                SerialModel.formatted_objects.reset(tok)
-
-            return
+            return tok, True
 
         formatted_objects.add(id(self))
+        return tok, False
 
-        for k, v in self.__dict__.items():
-            # This might result in recursive calls to __rich_repr__ of v.
-            yield k, v
+    @staticmethod
+    def _exit_formatting(tok: Optional[Any]) -> None:
+        """Clean up after the root formatting call."""
 
         if tok is not None:
             SerialModel.formatted_objects.reset(tok)
+
+    def __repr__(self) -> str:
+        """Safe ``repr`` that handles circular references.
+
+        Pydantic's default ``__repr__`` does not guard against
+        circular references among model instances, which leads to
+        ``RecursionError`` (see GitHub issue #1862).  This override
+        uses the same ``formatted_objects`` context-variable that
+        ``__rich_repr__`` uses so that already-visited objects are
+        replaced with a short placeholder instead of recursing
+        infinitely.
+        """
+
+        tok, is_circular = self._enter_formatting()
+
+        if is_circular:
+            SerialModel._exit_formatting(tok)
+            return f"{python_utils.class_name(type(self))}" f"@0x{id(self):x}"
+
+        try:
+            fields = []
+            for k, v in self.__repr_args__():
+                try:
+                    if k is None:
+                        fields.append(repr(v))
+                    else:
+                        fields.append(f"{k}={v!r}")
+                except RecursionError:
+                    fields.append(f"{k}=..." if k is not None else "...")
+            return f"{type(self).__name__}" f"({', '.join(fields)})"
+        except RecursionError:
+            return f"{type(self).__name__}(...)"
+        finally:
+            SerialModel._exit_formatting(tok)
+
+    def __rich_repr__(self) -> rich.repr.Result:
+        """Requirement for pretty printing using the rich package."""
+
+        tok, is_circular = self._enter_formatting()
+
+        if is_circular:
+            yield (f"{python_utils.class_name(type(self))}" f"@0x{id(self):x}")
+            SerialModel._exit_formatting(tok)
+            return
+
+        for k, v in self.__dict__.items():
+            # This might result in recursive calls to
+            # __rich_repr__ of v.
+            yield k, v
+
+        SerialModel._exit_formatting(tok)
 
     def model_dump_json(self, **kwargs):
         # TODO: Import at top-level and resolve circular import.
