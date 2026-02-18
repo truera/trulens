@@ -118,6 +118,9 @@ class Record(serial_utils.SerialModel, Hashable):
 
         return ret
 
+    def __repr__(self):
+        return str(self)
+
     model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         arbitrary_types_allowed=True
     )
