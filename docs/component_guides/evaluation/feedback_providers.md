@@ -37,6 +37,66 @@ Providers which use large language models for feedback evaluation:
 Feedback functions common to these providers are found in the abstract class
 [LLMProvider][trulens.feedback.LLMProvider].
 
+### Using LiteLLM with a Custom Endpoint
+
+The [LiteLLM provider][trulens.providers.litellm.LiteLLM] supports
+[100+ models](https://docs.litellm.ai/docs/providers) through
+[LiteLLM](https://github.com/BerriAI/litellm), including local models
+served by Ollama.
+
+When connecting to a model served at a custom URL (e.g. a remote Ollama
+instance), there are three options:
+
+!!! example "Specifying a custom base URL"
+
+    === "Direct keyword argument"
+
+        Pass `api_base` directly to the provider constructor:
+
+        ```python
+        from trulens.providers.litellm import LiteLLM
+
+        provider = LiteLLM(
+            model_engine="ollama/llama3.1:8b",
+            api_base="http://my-ollama-host:11434",
+        )
+        ```
+
+    === "Environment variable"
+
+        Set the provider-specific environment variable and litellm
+        will read it automatically. For Ollama, this is
+        `OLLAMA_API_BASE`:
+
+        ```python
+        import os
+        os.environ["OLLAMA_API_BASE"] = "http://my-ollama-host:11434"
+
+        from trulens.providers.litellm import LiteLLM
+
+        provider = LiteLLM(model_engine="ollama/llama3.1:8b")
+        ```
+
+        See the
+        [litellm docs](https://docs.litellm.ai/docs/providers)
+        for the environment variable names for each provider.
+
+    === "Via completion_kwargs"
+
+        Use `completion_kwargs` to pass any extra arguments to
+        `litellm.completion()`:
+
+        ```python
+        from trulens.providers.litellm import LiteLLM
+
+        provider = LiteLLM(
+            model_engine="ollama/llama3.1:8b",
+            completion_kwargs={
+                "api_base": "http://my-ollama-host:11434",
+            },
+        )
+        ```
+
 ## Embedding-based Providers
 
 - [Embeddings][trulens.feedback.embeddings.Embeddings]
