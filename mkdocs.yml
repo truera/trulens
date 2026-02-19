@@ -261,7 +261,7 @@ nav:
             - Selector Shortcuts: component_guides/evaluation/feedback_selectors/selector_shortcuts.md
         - Aggregation:
             - component_guides/evaluation/feedback_aggregation.md
-        - Running Feedback Functions:
+        - Running Metrics:
             - Running with your app: component_guides/evaluation/running_feedback_functions/with_app.md
             - Running on existing data: component_guides/evaluation/running_feedback_functions/existing_data.md
         - Generating Test Cases:
