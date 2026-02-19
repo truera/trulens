@@ -381,13 +381,24 @@ class Endpoint(
             return
 
         if python_utils.safe_hasattr(cls, method_name):
+            func = getattr(cls, method_name)
+
+            # Only instrument if it's actually callable (not an enum value or other attribute)
+            if not callable(func):
+                logger.debug(
+                    "Skipping instrumentation of %s.%s for %s: not callable",
+                    python_utils.class_name(cls),
+                    method_name,
+                    self.name,
+                )
+                return
+
             logger.debug(
                 "Instrumenting %s.%s for %s",
                 python_utils.class_name(cls),
                 method_name,
                 self.name,
             )
-            func = getattr(cls, method_name)
             w = self.wrap_function(func)
 
             setattr(cls, method_name, w)
