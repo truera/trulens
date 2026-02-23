@@ -1,17 +1,34 @@
-import json
+# Suppress third-party library warnings before importing anything else
 import logging
-import os
-import re
-from typing import ClassVar, Dict, Optional, Sequence, Type
+import warnings
 
-import pydantic
-from pydantic import BaseModel
-from trulens.core.feedback import endpoint as core_endpoint
-from trulens.feedback import llm_provider as llm_provider
-from trulens.providers.litellm import endpoint as litellm_endpoint
+warnings.filterwarnings(
+    "ignore",
+    message="pkg_resources is deprecated as an API",
+    category=UserWarning,
+)
+warnings.filterwarnings(
+    "ignore",
+    message="python-dotenv could not parse statement",
+    category=UserWarning,
+)
 
-from litellm import completion
-from litellm import get_supported_openai_params
+# Suppress python-dotenv logger warnings for malformed .env files
+logging.getLogger("dotenv.main").setLevel(logging.ERROR)
+
+import json  # noqa: E402
+import os  # noqa: E402
+import re  # noqa: E402
+from typing import ClassVar, Dict, Optional, Sequence, Type  # noqa: E402
+
+import pydantic  # noqa: E402
+from pydantic import BaseModel  # noqa: E402
+from trulens.core.feedback import endpoint as core_endpoint  # noqa: E402
+from trulens.feedback import llm_provider as llm_provider  # noqa: E402
+from trulens.providers.litellm import endpoint as litellm_endpoint  # noqa: E402
+
+from litellm import completion  # noqa: E402
+from litellm import get_supported_openai_params  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -19,13 +36,69 @@ logger = logging.getLogger(__name__)
 class LiteLLM(llm_provider.LLMProvider):
     """Out of the box feedback functions calling LiteLLM API.
 
-    Create an LiteLLM Provider with out of the box feedback functions.
+    Create a LiteLLM Provider with out of the box feedback functions.
+    Supports any model available through
+    [LiteLLM](https://github.com/BerriAI/litellm), including
+    OpenAI, Anthropic, Ollama, and
+    [100+ other providers](https://docs.litellm.ai/docs/providers).
 
-    Example:
+    Examples:
+        Default usage with OpenAI:
+
         ```python
         from trulens.providers.litellm import LiteLLM
-        litellm_provider = LiteLLM()
+
+        provider = LiteLLM()
         ```
+
+        Using a remote Ollama instance with ``api_base``:
+
+        ```python
+        from trulens.providers.litellm import LiteLLM
+
+        provider = LiteLLM(
+            model_engine="ollama/llama3.1:8b",
+            api_base="http://my-ollama-host:11434",
+        )
+        ```
+
+        Alternatively, set the ``OLLAMA_API_BASE`` environment
+        variable and litellm will pick it up automatically:
+
+        ```python
+        import os
+        os.environ["OLLAMA_API_BASE"] = "http://my-ollama-host:11434"
+
+        from trulens.providers.litellm import LiteLLM
+
+        provider = LiteLLM(model_engine="ollama/llama3.1:8b")
+        ```
+
+        Using ``completion_kwargs`` for additional litellm
+        parameters:
+
+        ```python
+        from trulens.providers.litellm import LiteLLM
+
+        provider = LiteLLM(
+            model_engine="ollama/llama3.1:8b",
+            completion_kwargs={
+                "api_base": "http://my-ollama-host:11434",
+            },
+        )
+        ```
+
+    Args:
+        model_engine: The LiteLLM model identifier (e.g.
+            ``"gpt-4o-mini"``, ``"ollama/llama3.1:8b"``,
+            ``"anthropic/claude-3-5-sonnet"``).
+        completion_kwargs: Extra keyword arguments forwarded to
+            every ``litellm.completion()`` call. Useful for
+            ``api_base``, ``api_key``, ``api_version``, etc.
+        **kwargs: Additional keyword arguments. LiteLLM routing
+            parameters (``api_base``, ``api_key``,
+            ``api_version``, ``base_url``) are automatically
+            forwarded to ``completion_kwargs``.
     """
 
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "gpt-3.5-turbo"
@@ -37,6 +110,16 @@ class LiteLLM(llm_provider.LLMProvider):
     """Additional arguments to pass to the `litellm.completion` as needed for chosen api."""
 
     endpoint: core_endpoint.Endpoint
+
+    # litellm routing parameters that should be forwarded from
+    # **kwargs into completion_args and preserved during param
+    # filtering (they are NOT OpenAI model params).
+    _LITELLM_ROUTING_PARAMS: ClassVar[frozenset] = frozenset({
+        "api_base",
+        "api_key",
+        "api_version",
+        "base_url",
+    })
 
     def __init__(
         self,
@@ -58,6 +141,16 @@ class LiteLLM(llm_provider.LLMProvider):
 
         if completion_kwargs is None:
             completion_kwargs = {}
+
+        # Forward any litellm routing params (e.g. api_base, api_key)
+        # passed as direct keyword arguments into completion_kwargs so
+        # they are included in every litellm.completion() call.
+        for routing_param in self._LITELLM_ROUTING_PARAMS:
+            if (
+                routing_param in kwargs
+                and routing_param not in completion_kwargs
+            ):
+                completion_kwargs[routing_param] = kwargs.pop(routing_param)
 
         if model_engine.startswith("azure/") and (
             "api_base" not in completion_kwargs
@@ -137,7 +230,9 @@ class LiteLLM(llm_provider.LLMProvider):
             )
             params = required_params + (supported_params or [])
             completion_args = {
-                k: v for k, v in completion_args.items() if k in params
+                k: v
+                for k, v in completion_args.items()
+                if k in params or k in self._LITELLM_ROUTING_PARAMS
             }
 
         # Handle reasoning models vs non-reasoning defaults

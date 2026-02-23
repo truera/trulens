@@ -31,6 +31,7 @@ from typing import (
     TypeVar,
     Union,
 )
+import warnings
 import weakref
 
 import pandas as pd
@@ -893,8 +894,14 @@ class App(
 
         else:
             if len(self.feedbacks) > 0:
-                raise ValueError(
-                    "Feedback logging requires `App.connector` to be specified."
+                warnings.warn(
+                    "Metrics passed to TruApp are not pre-registered when "
+                    "using a Snowflake account-level event table with OTEL "
+                    "tracing. They will not be automatically evaluated. Pass "
+                    "them explicitly to `run.compute_metrics(metrics=[...])` "
+                    "after `run.start()` completes.",
+                    UserWarning,
+                    stacklevel=2,
                 )
 
         for f in self.feedbacks:

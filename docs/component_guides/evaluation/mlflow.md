@@ -176,6 +176,86 @@ scorer = Groundedness(model="openai:/gpt-4o")
 feedback = scorer(trace=trace)
 ```
 
+## Agent Evaluation
+
+Agent GPA scorers evaluate tool selection and execution in agentic workflows. These scorers require traces since they inspect tool call spans.
+
+### Batch Agent Evaluation
+
+Use `predict_fn` with `mlflow.genai.evaluate` to trace and evaluate agent runs:
+
+```python
+import mlflow
+from mlflow.genai.scorers.trulens import (
+    Groundedness,
+    ToolSelection,
+    ToolCalling,
+    Coherence,
+)
+
+mlflow.openai.autolog()
+
+
+def run_agent(inputs: dict) -> str:
+    response = openai.chat.completions.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": inputs["user_query"]}],
+        tools=[...],  # your tool definitions
+    )
+    # ... handle tool calls and return result
+
+
+agent_queries = [
+    "What's the weather in Paris?",
+    "Book a flight to Tokyo for next Monday",
+    "Send an email to my team about the meeting",
+]
+
+agent_eval_results = mlflow.genai.evaluate(
+    data=[{"inputs": {"user_query": q}} for q in agent_queries],
+    predict_fn=run_agent,
+    scorers=[
+        Groundedness(model="openai:/gpt-4o-mini"),
+        ToolSelection(model="openai:/gpt-4o-mini"),
+        ToolCalling(model="openai:/gpt-4o-mini"),
+        Coherence(model="openai:/gpt-4o-mini"),
+    ],
+)
+
+print(agent_eval_results.tables["eval_results"])
+```
+
+### Evaluating Individual Agent Traces
+
+You can also evaluate agent traces individually:
+
+```python
+import mlflow
+from mlflow.genai.scorers.trulens import ToolSelection, ToolCalling
+
+mlflow.openai.autolog()
+
+# Run your agent
+result = run_agent({"user_query": "What's the weather in Paris?"})
+
+# Get the trace
+trace = mlflow.get_last_active_trace()
+
+# Evaluate tool usage
+tool_selection = ToolSelection(model="openai:/gpt-4o-mini")
+tool_calling = ToolCalling(model="openai:/gpt-4o-mini")
+
+selection_feedback = tool_selection(trace=trace)
+calling_feedback = tool_calling(trace=trace)
+
+print(f"Tool Selection: {selection_feedback.value}")
+print(f"Tool Calling: {calling_feedback.value}")
+print(f"Rationale: {selection_feedback.rationale}")
+```
+
+!!! note "Agent vs RAG Scorers"
+    RAG and output scorers (`Groundedness`, `Coherence`, etc.) can be called directly with data or on traces. Agent GPA scorers (`ToolSelection`, `ToolCalling`, etc.) require a `trace` parameter since they evaluate tool usage patterns within trace spans.
+
 ## Viewing Results
 
 Results are automatically logged to MLflow:

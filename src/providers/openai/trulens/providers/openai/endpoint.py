@@ -129,7 +129,7 @@ class OpenAICostComputer:
         if hasattr(response, "__iter__") and not hasattr(response, "model"):
             try:
                 first_chunk = next(response)
-                model_name = first_chunk.model
+                model_name = first_chunk.model or ""
                 response = prepend_first_chunk(response, first_chunk)
             except Exception:
                 logger.exception(
@@ -331,7 +331,8 @@ class OpenAICallback(core_endpoint.EndpointCallback):
                     if choice.finish_reason == "stop":
                         llm_result = LLMResult(
                             llm_output=dict(
-                                token_usage={}, model_name=response.model
+                                token_usage={},
+                                model_name=response.model or "",
                             ),
                             generations=[self.chunks],
                         )
@@ -455,6 +456,15 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
         model_name = ""
         if "model" in bindings.kwargs:
             model_name = bindings.kwargs["model"]
+        elif "model" in bindings.arguments:
+            model_name = bindings.arguments["model"]
+
+        # Guard against None model_name (e.g. Azure OpenAI
+        # deployments may not set a model parameter). Fall back to
+        # response.model if available, otherwise default to "".
+        if model_name is None:
+            model_name = getattr(response, "model", None) or ""
+
         callbacks = [self.global_callback]
         if callback is not None:
             callbacks.append(callback)
@@ -473,6 +483,11 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
         # instrumented call made by an openai client. As there are multiple
         # types of calls being handled here, we need to make various checks to
         # see what sort of data to process based on the call made.
+
+        # Ensure model_name is always a string to prevent
+        # downstream crashes in langchain's standardize_model_name.
+        if model_name is None:
+            model_name = ""
 
         # Generic lazy value should have already been taken care of by base Endpoint class.
         assert not python_utils.is_lazy(response)
