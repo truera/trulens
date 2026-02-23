@@ -2150,6 +2150,80 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         if hasattr(self, "_evaluator") and self._evaluator is not None:
             self._evaluator.stop_evaluator()
 
+    def wait_for_completion(self, timeout: float = 60.0) -> bool:
+        """
+        Wait for all app operations from the current recording context to complete.
+
+        This method waits for all record IDs generated during the current
+        recording context to appear in the database, ensuring all spans have
+        been exported and processed.
+
+        Args:
+            timeout: Maximum time to wait in seconds.
+
+        Returns:
+            True if all operations completed within timeout, False otherwise.
+        """
+        if not self.session.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
+        ):
+            raise RuntimeError(
+                "wait_for_completion is only supported with OTEL tracing enabled!"
+            )
+
+        with self._current_context_manager_lock:
+            current_context = self._current_context_manager
+
+        if current_context is None:
+            # No active recording context, nothing to wait for
+            return True
+
+        # For OtelRecordingContext, we need to get the Recording from baggage
+        from opentelemetry.baggage import get_baggage
+
+        recording = get_baggage("__trulens_recording__")
+
+        if recording is None or len(recording.records) == 0:
+            # No records to wait for
+            return True
+
+        # Extract record IDs from the recording
+        record_ids = [record.record_id for record in recording.records]
+
+        try:
+            self.session.wait_for_records(
+                record_ids=record_ids, timeout=timeout
+            )
+            return True
+        except RuntimeError:
+            # Timeout occurred
+            return False
+
+    def wait_for_all_records(
+        self, record_ids: List[str], timeout: float = 60.0
+    ) -> bool:
+        """
+        Wait for specific record IDs to complete export and be available in the database.
+
+        Args:
+            record_ids: List of record IDs to wait for.
+            timeout: Maximum time to wait in seconds.
+
+        Returns:
+            True if all records completed within timeout, False otherwise.
+        """
+        if not record_ids:
+            return True
+
+        try:
+            self.session.wait_for_records(
+                record_ids=record_ids, timeout=timeout
+            )
+            return True
+        except RuntimeError:
+            # Timeout occurred
+            return False
+
 
 def trace_with_run(
     app: Optional["App"],
