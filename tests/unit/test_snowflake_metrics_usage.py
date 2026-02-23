@@ -75,58 +75,44 @@ def _make_metric(name: str = "my_metric") -> "Metric":
 
 
 # ---------------------------------------------------------------------------
-# Bug 1: warning instead of raise in TruApp._tru_post_init
+# Bug 1: warning instead of raise in App._tru_post_init
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.optional
-class TestTruAppSnowflakeOtelWarning(unittest.TestCase):
+@pytest.mark.snowflake
+class TestTruPostInitSnowflakeOtelWarning(unittest.TestCase):
     """
-    Verify that passing feedbacks= to TruApp when using a Snowflake
-    account-level event table with OTEL emits a UserWarning instead of
-    raising ValueError.
+    Verify that App._tru_post_init emits a UserWarning (not ValueError)
+    when feedbacks are present and the Snowflake account-level event table
+    + OTEL path is active.
+
+    We call _tru_post_init directly on a mock self to avoid the full TruApp
+    constructor chain.
     """
 
-    def _make_tru_app_with_metrics(self, feedbacks):
-        """Construct TruApp with Snowflake+OTEL path mocked."""
-        from trulens.apps.app import TruApp
+    def _call_tru_post_init(self, feedbacks):
+        """Call App._tru_post_init with Snowflake+OTEL path active."""
+        from trulens.core.app import App
+        from trulens.core.schema import feedback as feedback_schema
 
-        class SimpleApp:
-            def run(self, query: str) -> str:
-                return query
+        mock_self = MagicMock()
+        mock_self.connector = MagicMock()
+        mock_self.feedbacks = feedbacks
+        mock_self.feedback_mode = feedback_schema.FeedbackMode.WITH_APP
+        mock_self.selector_nocheck = True
+        # Trigger the Snowflake+OTEL else-branch
+        mock_self._is_account_level_event_table_snowflake_connector.return_value = True
 
-        simple_app = SimpleApp()
-
-        mock_connector = MagicMock()
-        mock_connector.use_account_event_table = True
-
-        with (
-            patch(
-                "trulens.core.app.App._is_account_level_event_table_snowflake_connector",
-                return_value=True,
-            ),
-            patch(
-                "trulens.core.app.is_otel_tracing_enabled",
-                return_value=True,
-            ),
-            patch(
-                "trulens.core.app.App._add_otel_instrumentation",
-                return_value=None,
-            ),
+        with patch(
+            "trulens.core.app.is_otel_tracing_enabled", return_value=True
         ):
-            return TruApp(
-                simple_app,
-                app_name="test_app",
-                app_version="v1",
-                connector=mock_connector,
-                feedbacks=feedbacks,
-            )
+            App._tru_post_init(mock_self)
 
     def test_no_warning_without_feedbacks(self):
-        """No warning when feedbacks list is empty."""
+        """No warning emitted when feedbacks list is empty."""
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
-            self._make_tru_app_with_metrics([])
+            self._call_tru_post_init([])
 
         user_warnings = [
             w for w in caught if issubclass(w.category, UserWarning)
@@ -134,7 +120,7 @@ class TestTruAppSnowflakeOtelWarning(unittest.TestCase):
         self.assertEqual(len(user_warnings), 0)
 
     def test_warning_emitted_with_feedbacks(self):
-        """UserWarning is emitted (not ValueError) when feedbacks are passed."""
+        """UserWarning is emitted when metrics are present in Snowflake+OTEL mode."""
         if Metric is None or Selector is None:
             self.skipTest("Metric/Selector not available.")
 
@@ -142,7 +128,7 @@ class TestTruAppSnowflakeOtelWarning(unittest.TestCase):
 
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
-            self._make_tru_app_with_metrics([metric])
+            self._call_tru_post_init([metric])
 
         user_warnings = [
             w for w in caught if issubclass(w.category, UserWarning)
@@ -157,7 +143,7 @@ class TestTruAppSnowflakeOtelWarning(unittest.TestCase):
         self.assertIn("compute_metrics", warning_text)
 
     def test_no_value_error_raised(self):
-        """Construction must not raise ValueError."""
+        """_tru_post_init must not raise ValueError when feedbacks are present."""
         if Metric is None or Selector is None:
             self.skipTest("Metric/Selector not available.")
 
@@ -166,11 +152,23 @@ class TestTruAppSnowflakeOtelWarning(unittest.TestCase):
         try:
             with warnings.catch_warnings(record=True):
                 warnings.simplefilter("always")
-                self._make_tru_app_with_metrics([metric])
+                self._call_tru_post_init([metric])
         except ValueError as exc:
-            self.fail(
-                f"TruApp construction raised ValueError unexpectedly: {exc}"
-            )
+            self.fail(f"_tru_post_init raised ValueError unexpectedly: {exc}")
+
+    def test_check_otel_selectors_called(self):
+        """check_otel_selectors() is invoked on each feedback after the warning."""
+        if Metric is None or Selector is None:
+            self.skipTest("Metric/Selector not available.")
+
+        mock_metric = MagicMock()
+        mock_metric.run_location = None
+
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter("always")
+            self._call_tru_post_init([mock_metric])
+
+        mock_metric.check_otel_selectors.assert_called_once()
 
 
 # ---------------------------------------------------------------------------
