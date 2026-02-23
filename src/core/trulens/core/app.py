@@ -1892,7 +1892,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             run_metadata_df,
             {
                 "app": self,
-                "main_method_name": self.main_method_name,
+                "main_method_name": self.main_method_name or "",
                 "run_dao": self.snowflake_run_dao,
                 "tru_session": self.session,
             },
