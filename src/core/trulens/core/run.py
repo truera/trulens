@@ -1078,7 +1078,13 @@ class Run(BaseModel):
 
             return self._compute_latest_invocation_status(run)
 
-    def _should_skip_computation(self, metric_name: str, run: Run) -> bool:
+    def _should_skip_computation(
+        self,
+        metric_name: Union[str, "metric_module.Metric"],
+        run: Run,
+    ) -> bool:
+        if not isinstance(metric_name, str):
+            metric_name = metric_name.name
         metrics_metadata = (
             run.describe().get("run_metadata", {}).get("metrics", {})
         )
@@ -1122,16 +1128,23 @@ class Run(BaseModel):
         )
         return True
 
-    def compute_metrics(self, metrics: List[Union[str, MetricConfig]]) -> str:
+    def compute_metrics(
+        self,
+        metrics: List[Union[str, "metric_module.Metric", MetricConfig]],
+    ) -> str:
         """
         Compute metrics for the run.
 
         Args:
-            metrics: List of metric identifiers (strings) for server-side metrics,
-                    or MetricConfig objects for client-side metrics
+            metrics: List of metrics to compute. Each entry can be:
+                - A ``str`` — name of a server-side (Snowflake-hosted) metric.
+                - A :class:`~trulens.core.metric.metric.Metric` — a
+                  client-side custom metric defined with the current API.
+                - A :class:`~trulens.core.feedback.custom_metric.MetricConfig`
+                  — deprecated; use ``Metric`` instead.
 
         Returns:
-            Status message indicating computation progress
+            Status message indicating computation progress.
         """
         if not metrics:
             raise ValueError(
