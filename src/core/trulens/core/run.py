@@ -568,10 +568,28 @@ class Run(BaseModel):
 
     def start(self, input_df: Optional[pd.DataFrame] = None):
         """
-        Start the run by invoking the main method of the user's app with the input data
+        Start the run by invoking the main method of the user's app with the
+        input data.
 
         Args:
-            input_df (Optional[pd.DataFrame], optional): user provided input dataframe.
+            input_df: Optional input dataframe. If not provided, data is
+                fetched from the source configured in the run's
+                ``RunConfig``.
+
+        Note:
+            After the app finishes executing, this method kicks off a
+            Snowflake server-side ingestion stored procedure
+            (``start_ingestion_query``) **asynchronously**. The method
+            returns before that ingestion is complete. Calling
+            ``compute_metrics()`` immediately after ``start()`` may
+            therefore find zero events and silently compute nothing.
+
+            Wait until ``run.get_status()`` returns
+            ``RunStatus.INVOCATION_COMPLETED`` (or another terminal
+            invocation state) before calling ``compute_metrics()``.
+            ``RecordIngestMode.IMMEDIATE`` only controls the client-side
+            OTEL span exporter flush and does **not** guarantee that the
+            server-side ingestion sproc has finished.
         """
         current_status = self.get_status()
         logger.info(f"Current run status: {current_status}")
@@ -1145,6 +1163,14 @@ class Run(BaseModel):
 
         Returns:
             Status message indicating computation progress.
+
+        Note:
+            Snowflake record ingestion triggered by ``run.start()`` is
+            asynchronous. Call this method only after
+            ``run.get_status()`` indicates ingestion has completed (e.g.
+            ``RunStatus.INVOCATION_COMPLETED``). Calling it too soon
+            after ``start()`` may result in 0 events being found and no
+            metrics being computed.
         """
         if not metrics:
             raise ValueError(
