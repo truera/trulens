@@ -9,7 +9,7 @@ import uuid
 import pandas as pd
 import pytest
 from trulens.apps.app import TruApp
-from trulens.core.feedback.custom_metric import MetricConfig
+from trulens.core import Metric
 from trulens.core.feedback.selector import Selector
 from trulens.core.otel.instrument import instrument
 from trulens.core.run import RunConfig
@@ -80,11 +80,10 @@ class TestSnowflakeClientSideCustomMetrics(SnowflakeTestCase):
 
     def _create_metric_configs(self) -> list:
         """Create test metric configurations."""
-        text2sql_config = MetricConfig(
-            metric_name="text2sql_evaluation_v1",
-            metric_implementation=text2sql_quality,
+        text2sql_metric = Metric(
+            name="text2sql_evaluation_v1",
+            implementation=text2sql_quality,
             metric_type="text2sql",
-            computation_type="client",
             selectors={
                 "query": Selector(
                     span_type=SpanAttributes.SpanType.RECORD_ROOT,
@@ -97,11 +96,10 @@ class TestSnowflakeClientSideCustomMetrics(SnowflakeTestCase):
             },
         )
 
-        accuracy_config = MetricConfig(
-            metric_name="query_length_accuracy_v1",
-            metric_implementation=custom_accuracy,
+        accuracy_metric = Metric(
+            name="query_length_accuracy_v1",
+            implementation=custom_accuracy,
             metric_type="accuracy",
-            computation_type="client",
             selectors={
                 "query": Selector(
                     span_type=SpanAttributes.SpanType.RECORD_ROOT,
@@ -110,7 +108,7 @@ class TestSnowflakeClientSideCustomMetrics(SnowflakeTestCase):
             },
         )
 
-        return [text2sql_config, accuracy_config]
+        return [text2sql_metric, accuracy_metric]
 
     @pytest.mark.optional
     def test_client_side_custom_metrics_e2e(self) -> None:
@@ -178,10 +176,10 @@ class TestSnowflakeClientSideCustomMetrics(SnowflakeTestCase):
     def test_client_side_metric_validation(self) -> None:
         """Test that metric configs are properly validated."""
 
-        # Test valid config
-        valid_config = MetricConfig(
-            metric_name="valid_test",
-            metric_implementation=custom_accuracy,
+        # Test valid metric
+        valid_metric = Metric(
+            name="valid_test",
+            implementation=custom_accuracy,
             metric_type="accuracy",
             selectors={
                 "query": Selector(
@@ -191,10 +189,6 @@ class TestSnowflakeClientSideCustomMetrics(SnowflakeTestCase):
             },
         )
 
-        # Should not raise
-        valid_config.validate_selectors()
-
-        # Test feedback creation
-        feedback = valid_config.create_feedback_definition()
-        self.assertEqual(feedback.name, "valid_test")
-        self.assertIsNotNone(feedback.imp)
+        # Should have correct name and implementation
+        self.assertEqual(valid_metric.name, "valid_test")
+        self.assertIsNotNone(valid_metric.imp)
