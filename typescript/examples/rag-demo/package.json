@@ -1,0 +1,21 @@
+{
+  "name": "@trulens/rag-demo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Demo RAG app showing TruLens TypeScript instrumentation end-to-end",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/app.ts",
+    "build": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@opentelemetry/exporter-trace-otlp-http": "^0.57.0",
+    "@trulens/core": "workspace:*",
+    "@trulens/semconv": "workspace:*",
+    "openai": "^4.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "typescript": "^5.5.0"
+  }
+}

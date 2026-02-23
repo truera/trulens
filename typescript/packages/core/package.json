@@ -1,0 +1,43 @@
+{
+  "name": "@trulens/core",
+  "version": "0.1.0",
+  "description": "TruLens core instrumentation SDK for TypeScript",
+  "keywords": [
+    "trulens",
+    "opentelemetry",
+    "otel",
+    "observability",
+    "instrumentation",
+    "llm",
+    "evaluation"
+  ],
+  "license": "MIT",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "lint": "eslint src",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.57.0",
+    "@opentelemetry/resources": "^1.29.0",
+    "@opentelemetry/sdk-trace-node": "^1.29.0",
+    "@trulens/semconv": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "vitest": "^2.0.0"
+  }
+}
