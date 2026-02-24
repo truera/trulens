@@ -1,5 +1,8 @@
 export { TruSession } from "./session.js";
-export type { TruSessionOptions } from "./session.js";
+export type { TruSessionOptions, OtelInstrumentation } from "./session.js";
+export { computeAppId } from "./app-id.js";
+export { createTruApp } from "./app.js";
+export type { TruAppOptions } from "./app.js";
 
 export {
   instrument,

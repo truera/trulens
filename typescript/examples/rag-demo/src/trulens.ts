@@ -8,11 +8,12 @@
 
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { TruSession } from "@trulens/core";
+import { OpenAIInstrumentation } from "@trulens/instrumentation-openai";
 
 const OTLP_ENDPOINT =
   process.env["TRULENS_OTLP_ENDPOINT"] ?? "http://localhost:4318";
 
-export function initSession(): TruSession {
+export async function initSession(): Promise<TruSession> {
   const exporter = new OTLPTraceExporter({
     url: `${OTLP_ENDPOINT}/v1/traces`,
   });
@@ -21,5 +22,7 @@ export function initSession(): TruSession {
     appName: process.env["APP_NAME"] ?? "trulens-rag-demo",
     appVersion: process.env["APP_VERSION"] ?? "v1",
     exporter,
+    endpoint: OTLP_ENDPOINT,
+    instrumentations: [new OpenAIInstrumentation()],
   });
 }

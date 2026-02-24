@@ -227,6 +227,7 @@ nav:
           - getting_started/quickstarts/adding_human_feedback.ipynb
           - getting_started/quickstarts/groundtruth_evals_for_retrieval_systems.ipynb
           - getting_started/quickstarts/web-search-agent-evaluation.ipynb
+          - TypeScript Quickstart: getting_started/quickstarts/typescript_quickstart.md
       - ⭐ Core Concepts:
           - getting_started/core_concepts/index.md
           - ☔ Metrics: getting_started/core_concepts/feedback_functions.md
@@ -241,6 +242,7 @@ nav:
         - component_guides/instrumentation/langchain.md
         - component_guides/instrumentation/langgraph.md
         - component_guides/instrumentation/llama_index.md
+        - TypeScript: component_guides/instrumentation/typescript.md
     - Logging:
         - component_guides/logging/where_to_log/index.md
         - Postgres: component_guides/logging/where_to_log/log_in_postgres.md

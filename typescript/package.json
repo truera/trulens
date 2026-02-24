@@ -14,5 +14,11 @@
     "eslint": "^9.0.0",
     "prettier": "^3.0.0",
     "typescript": "^5.5.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "protobufjs"
+    ]
   }
 }

@@ -5,18 +5,27 @@
  * Mirrors the Python @instrument decorator from trulens.core.otel.instrument.
  */
 
-import { context, SpanStatusCode, trace } from "@opentelemetry/api";
+import {
+  context,
+  propagation,
+  SpanStatusCode,
+  trace,
+} from "@opentelemetry/api";
+import { randomUUID } from "node:crypto";
 import { SpanAttributes, SpanType } from "@trulens/semconv";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-/** A plain attribute map, or a lazy resolver that receives call context. */
+/**
+ * A plain attribute map, or a lazy resolver that receives call context.
+ * For async functions, `ret` is the unwrapped (awaited) return value.
+ */
 export type AttributeResolver<TArgs extends unknown[], TReturn> =
   | Record<string, string>
   | ((
-      ret: TReturn | undefined,
+      ret: Awaited<TReturn> | undefined,
       error: unknown,
       ...args: TArgs
     ) => Record<string, unknown>);
@@ -81,13 +90,19 @@ export function instrument<TArgs extends unknown[], TReturn>(
     span.setAttribute(SpanAttributes.SPAN_TYPE, spanType);
     span.setAttribute(SpanAttributes.CALL.FUNCTION, wrappedName);
 
+    // Propagate RECORD_ID from baggage (set by withRecord) to every span.
+    const recordId = propagation.getBaggage(context.active())
+      ?.getEntry(SpanAttributes.RECORD_ID)?.value;
+    if (recordId) {
+      span.setAttribute(SpanAttributes.RECORD_ID, recordId);
+    }
+
     const ctx = trace.setSpan(context.active(), span);
 
     const finalize = (
-      ret: TReturn | undefined,
+      ret: Awaited<TReturn> | undefined,
       error: unknown
     ): void => {
-      // Resolve user-defined attributes
       if (attributes) {
         const resolved = resolveAttributes(attributes, args, ret, error);
         for (const [k, v] of Object.entries(resolved)) {
@@ -117,11 +132,10 @@ export function instrument<TArgs extends unknown[], TReturn>(
       throw err;
     }
 
-    // Handle async (Promise) return
     if (result instanceof Promise) {
       return result.then(
         (ret) => {
-          finalize(ret as TReturn, undefined);
+          finalize(ret as Awaited<TReturn>, undefined);
           return ret;
         },
         (err: unknown) => {
@@ -131,7 +145,7 @@ export function instrument<TArgs extends unknown[], TReturn>(
       ) as TReturn;
     }
 
-    finalize(result, undefined);
+    finalize(result as Awaited<TReturn>, undefined);
     return result;
   };
 }
@@ -143,10 +157,13 @@ export function instrument<TArgs extends unknown[], TReturn>(
 /**
  * Method decorator equivalent of `instrument()`.
  *
+ * Automatically infers the span name from the method name when no
+ * explicit `spanName` is provided.
+ *
  * @example
  * ```ts
  * class MyRAG {
- *   @instrument({ spanType: SpanType.RETRIEVAL })
+ *   @instrumentDecorator({ spanType: SpanType.RETRIEVAL })
  *   async retrieve(query: string) { ... }
  * }
  * ```
@@ -158,9 +175,15 @@ export function instrumentDecorator<TArgs extends unknown[], TReturn>(
     _target: unknown,
     _context: ClassMethodDecoratorContext
   ) {
+    const inferredName =
+      options.spanName ?? String(_context.name);
+
     return function (this: unknown, ...args: TArgs): TReturn {
       const fn = _target as (...args: TArgs) => TReturn;
-      return instrument(fn.bind(this), options)(...args);
+      return instrument(fn.bind(this), {
+        ...options,
+        spanName: inferredName,
+      })(...args);
     };
   };
 }
@@ -198,7 +221,11 @@ export async function withRecord<T>(
   const tracer = trace.getTracer("@trulens/core");
   const span = tracer.startSpan("record_root");
 
+  // Generate a unique RECORD_ID and propagate it via baggage so that
+  // all child spans (created by instrument()) share the same record ID.
+  const recordId = randomUUID();
   span.setAttribute(SpanAttributes.SPAN_TYPE, SpanType.RECORD_ROOT);
+  span.setAttribute(SpanAttributes.RECORD_ID, recordId);
 
   if (input !== undefined) {
     span.setAttribute(
@@ -216,7 +243,13 @@ export async function withRecord<T>(
     span.setAttribute(SpanAttributes.RUN_NAME, runName);
   }
 
-  const ctx = trace.setSpan(context.active(), span);
+  // Attach RECORD_ID to baggage so children can read it.
+  let baggage =
+    propagation.getBaggage(context.active()) ??
+    propagation.createBaggage();
+  baggage = baggage.setEntry(SpanAttributes.RECORD_ID, { value: recordId });
+  let ctx = propagation.setBaggage(context.active(), baggage);
+  ctx = trace.setSpan(ctx, span);
 
   try {
     const result = await context.with(ctx, () => fn());
@@ -242,7 +275,7 @@ export async function withRecord<T>(
 function resolveAttributes<TArgs extends unknown[], TReturn>(
   attributes: AttributeResolver<TArgs, TReturn>,
   args: TArgs,
-  ret: TReturn | undefined,
+  ret: Awaited<TReturn> | undefined,
   error: unknown
 ): Record<string, unknown> {
   if (typeof attributes === "function") {

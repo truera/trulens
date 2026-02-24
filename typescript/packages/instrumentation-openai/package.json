@@ -1,13 +1,14 @@
 {
-  "name": "@trulens/connectors-snowflake",
+  "name": "@trulens/instrumentation-openai",
   "version": "0.1.0",
-  "description": "TruLens Snowflake connector — direct span export to Snowflake AI Observability",
+  "description": "Auto-instrumentation for the OpenAI Node.js SDK — emits TruLens GENERATION spans with token/cost attributes",
   "keywords": [
     "trulens",
-    "snowflake",
     "opentelemetry",
-    "otel",
-    "observability"
+    "openai",
+    "instrumentation",
+    "llm",
+    "auto-instrumentation"
   ],
   "license": "MIT",
   "main": "./dist/index.js",
@@ -24,17 +25,23 @@
   "scripts": {
     "build": "tsup",
     "test": "vitest run",
-    "lint": "eslint src",
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@opentelemetry/core": "^1.29.0",
-    "@opentelemetry/otlp-transformer": "^0.57.0",
-    "@opentelemetry/sdk-trace-node": "^1.29.0",
-    "@trulens/semconv": "workspace:*",
-    "snowflake-sdk": "^1.15.0"
+    "@opentelemetry/api": "^1.9.0",
+    "@trulens/semconv": "workspace:*"
+  },
+  "peerDependencies": {
+    "openai": ">=4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "openai": {
+      "optional": false
+    }
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
+    "openai": "^4.0.0",
     "tsup": "^8.0.0",
     "vitest": "^2.0.0"
   }
