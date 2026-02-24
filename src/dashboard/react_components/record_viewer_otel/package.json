@@ -13,7 +13,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "@playwright/test": "^1.52.0",
+    "@playwright/test": "^1.58.2",
     "@storybook/addon-essentials": "^8.6.12",
     "@storybook/addon-onboarding": "^8.6.12",
     "@storybook/addon-themes": "^8.6.12",
@@ -46,12 +46,12 @@
     "eslint-plugin-storybook": "^0.12.0",
     "http-server": "^14.1.1",
     "jsdom": "^26.1.0",
-    "playwright": "^1.52.0",
+    "playwright": "^1.58.2",
     "prettier": "^3.0.0",
-    "storybook": "^8.6.12",
+    "storybook": "^8.6.17",
     "typescript": "^5.8.2",
-    "vite": "^6.3.3",
-    "vitest": "^3.1.2",
+    "vite": "^6.4.1",
+    "vitest": "^4.0.18",
     "wait-on": "^7.0.1"
   },
   "name": "recordviewer",
