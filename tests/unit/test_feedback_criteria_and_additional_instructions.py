@@ -7,7 +7,8 @@ import warnings
 
 from trulens.core import Feedback
 from trulens.feedback import llm_provider
-from trulens.feedback.v2 import feedback as feedback_v2
+from trulens.feedback.templates import agent as templates_agent
+from trulens.feedback.templates import quality as templates_quality
 
 
 class MockLLMProvider(llm_provider.LLMProvider):
@@ -94,7 +95,7 @@ class TestFeedbackCriteria(TestCase):
         # Check that default helpfulness criteria is in the prompt
         self.assertIsNotNone(self.provider.last_system_prompt)
         self.assertIn(
-            feedback_v2.Helpfulness.system_prompt,
+            templates_quality.Helpfulness.system_prompt,
             self.provider.last_system_prompt,
         )
 
@@ -185,7 +186,7 @@ class TestFeedbackAdditionalInstructions(TestCase):
         # Check that prompt doesn't have additional instructions
         self.assertIsNotNone(self.provider.last_system_prompt)
         self.assertEqual(
-            feedback_v2.ExecutionEfficiency.system_prompt,
+            templates_agent.ExecutionEfficiency.system_prompt,
             self.provider.last_system_prompt,
         )
 
@@ -272,7 +273,7 @@ class TestFeedbackAdditionalInstructions(TestCase):
         # Check that both criteria and additional instructions are in the prompt
         self.assertIsNotNone(self.provider.last_system_prompt)
         self.assertNotIn(
-            feedback_v2.ExecutionEfficiency.system_prompt,
+            templates_agent.ExecutionEfficiency.system_prompt,
             self.provider.last_system_prompt,
         )
         self.assertIn(custom_criteria, self.provider.last_system_prompt)

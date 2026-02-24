@@ -61,9 +61,12 @@ class CapitalizeHandler(BaseHTTPRequestHandler):
         return name.upper()
 
 
-def run_server():
+def run_server(database_url=None):
     os.environ["TRULENS_OTEL_TRACING"] = "1"
-    TruSession()  # This starts an exporter.
+    kwargs = {}
+    if database_url is not None:
+        kwargs["database_url"] = database_url
+    TruSession(**kwargs)  # This starts an exporter.
     server = HTTPServer(("localhost", 8000), CapitalizeHandler)
     server.serve_forever()
 
@@ -88,7 +91,12 @@ class TestOtelDistributed(OtelTestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self.server_process = multiprocessing.Process(target=run_server)
+        # Pass the temp DB URL so the child process writes to the
+        # same database as the parent (see OtelTestCase.setUp).
+        db_url = f"sqlite:///{self._db_path}" if self._db_path else None
+        self.server_process = multiprocessing.Process(
+            target=run_server, kwargs={"database_url": db_url}
+        )
         self.server_process.start()
         self._wait_for_server()
 
