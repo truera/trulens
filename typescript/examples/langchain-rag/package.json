@@ -1,0 +1,22 @@
+{
+  "name": "langchain-rag-demo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/main.ts"
+  },
+  "dependencies": {
+    "@langchain/core": "^0.3.0",
+    "@langchain/openai": "^0.4.0",
+    "langchain": "^0.3.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.57.0",
+    "@trulens/core": "workspace:*",
+    "@trulens/instrumentation-langchain": "workspace:*",
+    "@trulens/semconv": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "typescript": "^5.5.0"
+  }
+}
