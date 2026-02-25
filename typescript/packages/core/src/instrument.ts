@@ -90,11 +90,15 @@ export function instrument<TArgs extends unknown[], TReturn>(
     span.setAttribute(SpanAttributes.SPAN_TYPE, spanType);
     span.setAttribute(SpanAttributes.CALL.FUNCTION, wrappedName);
 
-    // Propagate RECORD_ID from baggage (set by withRecord) to every span.
-    const recordId = propagation.getBaggage(context.active())
-      ?.getEntry(SpanAttributes.RECORD_ID)?.value;
+    // Propagate RECORD_ID and RUN_NAME from baggage (set by withRecord).
+    const bag = propagation.getBaggage(context.active());
+    const recordId = bag?.getEntry(SpanAttributes.RECORD_ID)?.value;
     if (recordId) {
       span.setAttribute(SpanAttributes.RECORD_ID, recordId);
+    }
+    const baggageRunName = bag?.getEntry(SpanAttributes.RUN_NAME)?.value;
+    if (baggageRunName) {
+      span.setAttribute(SpanAttributes.RUN_NAME, baggageRunName);
     }
 
     const ctx = trace.setSpan(context.active(), span);
@@ -217,7 +221,7 @@ export async function withRecord<T>(
   fn: () => T | Promise<T>,
   options: WithRecordOptions = {}
 ): Promise<T> {
-  const { input, groundTruthOutput, runName } = options;
+  const { input, groundTruthOutput } = options;
   const tracer = trace.getTracer("@trulens/core");
   const span = tracer.startSpan("record_root");
 
@@ -240,15 +244,23 @@ export async function withRecord<T>(
       serializeAttrValue(groundTruthOutput)
     );
   }
+
+  // Resolve runName: explicit option > session-level > undefined
+  const runName = options.runName ?? _getSessionRunName();
   if (runName !== undefined) {
     span.setAttribute(SpanAttributes.RUN_NAME, runName);
   }
 
-  // Attach RECORD_ID to baggage so children can read it.
+  _incrementSessionRecordCount();
+
+  // Attach RECORD_ID and RUN_NAME to baggage so children can read them.
   let baggage =
     propagation.getBaggage(context.active()) ??
     propagation.createBaggage();
   baggage = baggage.setEntry(SpanAttributes.RECORD_ID, { value: recordId });
+  if (runName !== undefined) {
+    baggage = baggage.setEntry(SpanAttributes.RUN_NAME, { value: runName });
+  }
   let ctx = propagation.setBaggage(context.active(), baggage);
   ctx = trace.setSpan(ctx, span);
 
@@ -272,6 +284,37 @@ export async function withRecord<T>(
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Safely read the runName from the active TruSession (if initialised).
+ * Returns undefined if no session exists or no runName is set.
+ */
+function _getSessionRunName(): string | undefined {
+  try {
+    // Lazy import to avoid circular dependency at module-load time.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { TruSession } = require("./session.js") as {
+      TruSession: { getInstance(): { runName?: string } };
+    };
+    return TruSession.getInstance().runName;
+  } catch {
+    return undefined;
+  }
+}
+
+function _incrementSessionRecordCount(): void {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { TruSession } = require("./session.js") as {
+      TruSession: {
+        getInstance(): { inputRecordsCount: number };
+      };
+    };
+    TruSession.getInstance().inputRecordsCount += 1;
+  } catch {
+    // Session not initialised — nothing to increment.
+  }
+}
 
 function resolveAttributes<TArgs extends unknown[], TReturn>(
   attributes: AttributeResolver<TArgs, TReturn>,

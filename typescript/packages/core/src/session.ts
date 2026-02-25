@@ -64,6 +64,23 @@ export interface TruSessionOptions {
    * ```
    */
   instrumentations?: OtelInstrumentation[];
+  /**
+   * Name of the Snowflake Run associated with this session.
+   * When set, every RECORD_ROOT span is stamped with
+   * `ai.observability.run.name`.
+   */
+  runName?: string;
+  /**
+   * Called after the TracerProvider is created but before instrumentations
+   * are enabled. Use this to set up external resources (e.g. create a
+   * Snowflake External Agent + Run).
+   */
+  onInit?: () => Promise<void>;
+  /**
+   * Called at the beginning of `shutdown()`, after flushing spans.
+   * Receives the number of records traced during this session.
+   */
+  onShutdown?: (inputRecordsCount: number) => Promise<void>;
 }
 
 let _instance: TruSession | null = null;
@@ -72,9 +89,15 @@ export class TruSession {
   readonly appName: string;
   readonly appVersion: string;
   readonly appId: string;
+  readonly runName: string | undefined;
   private readonly provider: NodeTracerProvider;
-
   private readonly instrumentations: OtelInstrumentation[];
+  private readonly _onShutdown:
+    | ((inputRecordsCount: number) => Promise<void>)
+    | undefined;
+
+  /** Number of RECORD_ROOT spans created during this session. */
+  inputRecordsCount = 0;
 
   private constructor(
     options: TruSessionOptions & { resolvedAppId: string }
@@ -82,7 +105,9 @@ export class TruSession {
     this.appName = options.appName;
     this.appVersion = options.appVersion;
     this.appId = options.resolvedAppId;
+    this.runName = options.runName;
     this.instrumentations = options.instrumentations ?? [];
+    this._onShutdown = options.onShutdown;
 
     this.provider = new NodeTracerProvider({
       resource: new Resource({
@@ -126,6 +151,10 @@ export class TruSession {
 
     _instance = new TruSession({ ...options, resolvedAppId });
 
+    if (options.onInit) {
+      await options.onInit();
+    }
+
     for (const instr of _instance.instrumentations) {
       instr.setTracerProvider(_instance.provider);
       await instr.enable();
@@ -149,11 +178,17 @@ export class TruSession {
     return trace.getTracer(name);
   }
 
-  /** Flush pending spans and shut down the provider. */
+  /** Flush pending spans, invoke onShutdown hook, and shut down the provider. */
   async shutdown(): Promise<void> {
     for (const instr of this.instrumentations) {
       instr.disable();
     }
+    await this.provider.forceFlush();
+
+    if (this._onShutdown) {
+      await this._onShutdown(this.inputRecordsCount);
+    }
+
     await this.provider.shutdown();
     if (_instance === this) {
       _instance = null;

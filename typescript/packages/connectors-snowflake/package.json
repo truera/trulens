@@ -32,7 +32,7 @@
     "@opentelemetry/otlp-transformer": "^0.57.0",
     "@opentelemetry/sdk-trace-node": "^1.29.0",
     "@trulens/semconv": "workspace:*",
-    "snowflake-sdk": "^1.15.0"
+    "snowflake-sdk": "^2.3.4"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

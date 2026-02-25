@@ -137,6 +137,8 @@ export class TruLensLangChainTracer extends BaseTracer {
   name = "TruLensLangChainTracer";
 
   private runs: Record<string, RunWithSpan> = {};
+  private runRecordIds: Record<string, string> = {};
+  private runRunNames: Record<string, string> = {};
 
   protected persistRun(_run: Run): Promise<void> {
     return Promise.resolve();
@@ -189,12 +191,25 @@ export class TruLensLangChainTracer extends BaseTracer {
       activeCtx
     );
 
-    // Propagate RECORD_ID from baggage (set by withRecord / createTruApp)
-    const recordId = propagation
-      .getBaggage(context.active())
-      ?.getEntry(SpanAttributes.RECORD_ID)?.value;
+    // Propagate RECORD_ID: try baggage first, then parent run's cached ID
+    const bag = propagation.getBaggage(context.active());
+    let recordId = bag?.getEntry(SpanAttributes.RECORD_ID)?.value;
+    if (!recordId && run.parent_run_id) {
+      recordId = this.runRecordIds[run.parent_run_id];
+    }
     if (recordId) {
       span.setAttribute(SpanAttributes.RECORD_ID, recordId);
+      this.runRecordIds[run.id] = recordId;
+    }
+
+    // Propagate RUN_NAME: try baggage first, then parent run's cached name
+    let runName = bag?.getEntry(SpanAttributes.RUN_NAME)?.value;
+    if (!runName && run.parent_run_id) {
+      runName = this.runRunNames[run.parent_run_id];
+    }
+    if (runName) {
+      span.setAttribute(SpanAttributes.RUN_NAME, runName);
+      this.runRunNames[run.id] = runName;
     }
 
     span.setAttribute(SpanAttributes.CALL.FUNCTION, run.name);
@@ -284,7 +299,7 @@ export class TruLensLangChainTracer extends BaseTracer {
       if (docs) {
         span.setAttribute(
           SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
-          safeStringify(docs)
+          docs
         );
         span.setAttribute(
           SpanAttributes.RETRIEVAL.NUM_CONTEXTS,
@@ -309,6 +324,8 @@ export class TruLensLangChainTracer extends BaseTracer {
 
     span.end();
     delete this.runs[run.id];
+    delete this.runRecordIds[run.id];
+    delete this.runRunNames[run.id];
   }
 
   // -----------------------------------------------------------------

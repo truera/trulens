@@ -21,7 +21,6 @@ import { ResourceAttributes, SpanAttributes } from "@trulens/semconv";
 
 import type { SnowflakeConnector } from "./connector.js";
 
-// Snowflake stage used for span uploads (temp, auto-cleaned by Snowflake).
 const STAGE_NAME = "trulens_spans";
 
 export interface SnowflakeSpanExporterOptions {
@@ -37,6 +36,11 @@ export class TruLensSnowflakeSpanExporter implements SpanExporter {
   private readonly connector: SnowflakeConnector;
   private readonly dryRun: boolean;
   private enabled = true;
+  /** Persistent cache so RECORD_ID / RUN_NAME propagate across batches. */
+  private readonly _traceAttrCache = new Map<
+    string,
+    { recordId?: string; runName?: string }
+  >();
 
   constructor(options: SnowflakeSpanExporterOptions) {
     this.connector = options.connector;
@@ -57,9 +61,10 @@ export class TruLensSnowflakeSpanExporter implements SpanExporter {
     }
 
     const trulensSpans = this.dryRun ? spans : spans.filter(isTruLensSpan);
+    const enriched = propagateTraceAttrs(trulensSpans, this._traceAttrCache);
 
     try {
-      await this._exportToSnowflake(trulensSpans);
+      await this._exportToSnowflake(enriched);
       resultCallback({ code: ExportResultCode.SUCCESS });
     } catch (err) {
       resultCallback({
@@ -71,7 +76,6 @@ export class TruLensSnowflakeSpanExporter implements SpanExporter {
 
   async shutdown(): Promise<void> {
     this.enabled = false;
-    await this.connector.close();
   }
 
   // ---------------------------------------------------------------------------
@@ -137,7 +141,7 @@ export class TruLensSnowflakeSpanExporter implements SpanExporter {
     inputRecordsCount: number | undefined;
     spans: ReadableSpan[];
   }): Promise<void> {
-    const tmpPath = this._writeSpansToTempFile(group.spans);
+    const tmpPath = await this._writeSpansToTempFile(group.spans);
     const tmpBasename = path.basename(tmpPath);
 
     try {
@@ -161,35 +165,53 @@ export class TruLensSnowflakeSpanExporter implements SpanExporter {
     }
   }
 
-  private _writeSpansToTempFile(spans: ReadableSpan[]): string {
+  private async _writeSpansToTempFile(
+    spans: ReadableSpan[]
+  ): Promise<string> {
     const tmpPath = path.join(os.tmpdir(), `trulens_spans_${Date.now()}.pb`);
 
-    // Serialise using the standard OTLP protobuf format.
-    // ProtobufTraceSerializer is the stable API in @opentelemetry/otlp-transformer.
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { ProtobufTraceSerializer } = require("@opentelemetry/otlp-transformer") as typeof import("@opentelemetry/otlp-transformer");
-    const serialised = ProtobufTraceSerializer.serializeRequest(spans);
+    // Mirrors the Python serialisation: each span is individually
+    // encoded as a protobuf `opentelemetry.proto.trace.v1.Span` message
+    // preceded by a varint length delimiter.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const traceInternal: any = await import(
+      "@opentelemetry/otlp-transformer/build/esm/trace/internal.js"
+    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const commonUtils: any = await import(
+      "@opentelemetry/otlp-transformer/build/esm/common/utils.js"
+    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rootMod: any = await import(
+      "@opentelemetry/otlp-transformer/build/esm/generated/root.js"
+    );
+
+    const sdkSpanToOtlpSpan = traceInternal.sdkSpanToOtlpSpan;
+    const getOtlpEncoder = commonUtils.getOtlpEncoder;
+    const rootObj = rootMod.default ?? rootMod;
+    const SpanProto = rootObj.opentelemetry.proto.trace.v1.Span;
+    const encoder = getOtlpEncoder();
 
     const buffers: Buffer[] = [];
-    if (serialised) {
-      // Length-delimited: write varint(len) then bytes (mirrors Python).
-      buffers.push(encodeVarint(serialised.byteLength));
-      buffers.push(Buffer.from(serialised));
+    for (const span of spans) {
+      const otlpSpan = sdkSpanToOtlpSpan(span, encoder);
+      const encoded = SpanProto.encode(
+        SpanProto.fromObject(otlpSpan)
+      ).finish();
+      buffers.push(encodeVarint(encoded.byteLength));
+      buffers.push(Buffer.from(encoded));
     }
+
     fs.writeFileSync(tmpPath, Buffer.concat(buffers));
     return tmpPath;
   }
 
   private async _uploadToStage(tmpPath: string): Promise<void> {
-    // Create the stage if needed, then PUT the file.
     await this.connector.execute(
       `CREATE TEMP STAGE IF NOT EXISTS ${STAGE_NAME}`
     );
-
-    const tmpBasename = path.basename(tmpPath);
-    // Snowflake's PUT command uploads local files to a stage.
     await this.connector.execute(
-      `PUT file://${tmpPath} @${STAGE_NAME}/${tmpBasename}`
+      `PUT file://${tmpPath} @${STAGE_NAME}`
     );
   }
 
@@ -203,10 +225,10 @@ export class TruLensSnowflakeSpanExporter implements SpanExporter {
     // Mirrors the Python SYSTEM$EXECUTE_AI_OBSERVABILITY_RUN call.
     const rows = await this.connector.execute(
       `SELECT CURRENT_DATABASE(), CURRENT_SCHEMA()`
-    ) as Array<{ CURRENT_DATABASE: string; CURRENT_SCHEMA: string }>;
+    ) as Array<Record<string, string>>;
 
-    const database = rows[0]?.CURRENT_DATABASE ?? "";
-    const schema = rows[0]?.CURRENT_SCHEMA ?? "";
+    const database = rows[0]?.["CURRENT_DATABASE()"] ?? "";
+    const schema = rows[0]?.["CURRENT_SCHEMA()"] ?? "";
 
     await this.connector.execute(
       `
@@ -225,7 +247,7 @@ export class TruLensSnowflakeSpanExporter implements SpanExporter {
           'input_record_count', ?
         ),
         ARRAY_CONSTRUCT(),
-        ARRAY_CONSTRUCT('ingestion_multiple_batches')
+        ARRAY_CONSTRUCT('INGESTION_MULTIPLE_BATCHES')
       )
       `,
       [
@@ -242,6 +264,51 @@ export class TruLensSnowflakeSpanExporter implements SpanExporter {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Propagate RECORD_ID and RUN_NAME from the RECORD_ROOT span to all other
+ * spans in the same trace. LangChain callbacks may run outside the OTEL
+ * async context, so child spans can lose baggage-propagated values.
+ *
+ * The persistent `cache` maps traceId → {recordId, runName} across export
+ * batches so child spans arriving after the RECORD_ROOT still get the
+ * correct values.
+ */
+function propagateTraceAttrs(
+  spans: ReadableSpan[],
+  cache: Map<string, { recordId?: string; runName?: string }>
+): ReadableSpan[] {
+  for (const span of spans) {
+    const traceId = span.spanContext().traceId;
+    const rid = span.attributes[SpanAttributes.RECORD_ID];
+    const rn = span.attributes[SpanAttributes.RUN_NAME];
+    if (rid || rn) {
+      const existing = cache.get(traceId) ?? {};
+      if (rid) existing.recordId = String(rid);
+      if (rn) existing.runName = String(rn);
+      cache.set(traceId, existing);
+    }
+  }
+
+  return spans.map((span) => {
+    const cached = cache.get(span.spanContext().traceId);
+    if (!cached) return span;
+    const needsRecordId =
+      !span.attributes[SpanAttributes.RECORD_ID] && cached.recordId;
+    const needsRunName =
+      !span.attributes[SpanAttributes.RUN_NAME] && cached.runName;
+    if (!needsRecordId && !needsRunName) return span;
+    const extra: Record<string, string> = {};
+    if (needsRecordId) extra[SpanAttributes.RECORD_ID] = cached.recordId!;
+    if (needsRunName) extra[SpanAttributes.RUN_NAME] = cached.runName!;
+    return Object.create(span, {
+      attributes: {
+        value: { ...span.attributes, ...extra },
+        enumerable: true,
+      },
+    }) as ReadableSpan;
+  });
+}
 
 function isTruLensSpan(span: ReadableSpan): boolean {
   return (
