@@ -226,6 +226,7 @@ export async function withRecord<T>(
   const recordId = randomUUID();
   span.setAttribute(SpanAttributes.SPAN_TYPE, SpanType.RECORD_ROOT);
   span.setAttribute(SpanAttributes.RECORD_ID, recordId);
+  span.setAttribute(SpanAttributes.INPUT_ID, "");
 
   if (input !== undefined) {
     span.setAttribute(

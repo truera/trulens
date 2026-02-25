@@ -15,6 +15,12 @@ and shows the results in the TruLens dashboard.
 - **Python 3.9+** and **Poetry** (`pip install poetry`)
 - An **OpenAI API key**
 
+Set your API key once so both TypeScript and Python steps can use it:
+
+```bash
+export OPENAI_API_KEY=sk-...
+```
+
 ## Step 1 — Set up the Python environment and start the OTLP receiver
 
 The TypeScript SDK sends OpenTelemetry spans to a lightweight receiver built
@@ -51,6 +57,7 @@ poetry run python -c "
 from trulens.core import TruSession
 
 session = TruSession()
+session.reset_database()
 session.start_otlp_receiver(port=4318)
 print('OTLP receiver listening on http://localhost:4318')
 input('Press Enter to stop...')
@@ -93,10 +100,10 @@ You can skip straight to it:
 
 ```bash
 cd examples/rag-demo
-OPENAI_API_KEY=sk-... pnpm start
+pnpm start
 ```
 
-If this works, skip to [Step 6](#step-6--view-in-the-dashboard). The rest of
+If this works, skip to [Step 6](#step-6--run-evaluations-on-your-traces). The rest of
 the steps below walk through building the same thing from scratch.
 
 ### 2d. Create your own project (from scratch)
@@ -304,7 +311,7 @@ TSEOF
 Run with:
 
 ```bash
-OPENAI_API_KEY=sk-... pnpm start
+pnpm start
 ```
 
 You'll see an interactive prompt — try a few questions:
@@ -321,7 +328,108 @@ Flushing spans…
 Done.
 ```
 
-## Step 6 — View in the dashboard
+## Step 6 — Run evaluations on your traces
+
+Traces are in the database — now evaluate them. Evaluations run in Python using
+the same `TruSession` that stores the spans. Open a new terminal (with the
+Poetry virtualenv active) and run:
+
+```bash
+cd /path/to/trulens                     # <-- adjust to your repo location
+poetry run python << 'PYEOF'
+from trulens.core import TruSession, Metric
+from trulens.core.feedback.selector import Selector
+from trulens.providers.openai import OpenAI
+from trulens.otel.semconv.trace import SpanAttributes
+
+session = TruSession()
+provider = OpenAI()
+
+# --- Answer Relevance ---
+f_answer_relevance = Metric(
+    implementation=provider.relevance_with_cot_reasons,
+    name="Answer Relevance",
+    selectors={
+        "prompt": Selector(
+            span_type=SpanAttributes.SpanType.RECORD_ROOT,
+            span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
+        ),
+        "response": Selector(
+            span_type=SpanAttributes.SpanType.RECORD_ROOT,
+            span_attribute=SpanAttributes.RECORD_ROOT.OUTPUT,
+        ),
+    },
+)
+
+# --- Context Relevance ---
+# Evaluates each retrieved context individually (collect_list=False).
+f_context_relevance = Metric(
+    implementation=provider.context_relevance_with_cot_reasons,
+    name="Context Relevance",
+    selectors={
+        "question": Selector(
+            span_type=SpanAttributes.SpanType.RECORD_ROOT,
+            span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
+        ),
+        "context": Selector(
+            span_type=SpanAttributes.SpanType.RETRIEVAL,
+            span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
+            collect_list=False,
+        ),
+    },
+)
+
+# --- Groundedness ---
+# Concatenates all contexts into one string (collect_list=True).
+f_groundedness = Metric(
+    implementation=provider.groundedness_measure_with_cot_reasons,
+    name="Groundedness",
+    selectors={
+        "source": Selector(
+            span_type=SpanAttributes.SpanType.RETRIEVAL,
+            span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
+            collect_list=True,
+        ),
+        "statement": Selector(
+            span_type=SpanAttributes.SpanType.RECORD_ROOT,
+            span_attribute=SpanAttributes.RECORD_ROOT.OUTPUT,
+        ),
+    },
+)
+
+# Fetch the events produced by the TypeScript app
+events = session.get_events(
+    app_name="my-rag-app",    # must match appName in trulens.ts
+    app_version="v1",
+)
+print(f"Found {len(events)} events")
+
+# Run all three feedback functions
+session.compute_feedbacks_on_events(
+    events,
+    [f_answer_relevance, f_context_relevance, f_groundedness],
+)
+print("Evaluations complete.")
+PYEOF
+```
+
+This defines the RAG triad — answer relevance, context relevance, and
+groundedness — and runs them against the traces your TypeScript app produced.
+Results are written back to the same database.
+
+- **Answer Relevance** — how well the response addresses the question
+- **Context Relevance** — how relevant each retrieved context is to the question
+- **Groundedness** — how well the response is supported by the retrieved contexts
+
+!!! tip "Matching app name and version"
+
+```
+The `app_name` and `app_version` in `get_events()` must match the values
+you passed to `TruSession.init()` in your TypeScript code (Step 3). If you
+used the included demo, these are `"trulens-rag-demo"` and `"v1"`.
+```
+
+## Step 7 — View in the dashboard
 
 In another terminal, start the dashboard from the repo root using Poetry:
 
@@ -335,13 +443,15 @@ run_dashboard(port=8501)
 
 Open [http://localhost:8501](http://localhost:8501). You should see:
 
-- **Leaderboard**: your app with total tokens and cost
+- **Leaderboard**: your app with total tokens, cost, and evaluation scores
 - **Records**: one record per question you asked, each containing `retrieve` and
-`openai.chat.completions.create` child spans with their captured attributes
+`openai.chat.completions.create` child spans with their captured attributes,
+plus scores for answer relevance, context relevance, and groundedness
 
 ## What's next
 
 - Read the full [TypeScript SDK documentation](../../component_guides/instrumentation/typescript.md)
 for architecture details and the complete API surface.
-- Add [feedback functions](../../component_guides/evaluation/index.md)
-(Python-side) to evaluate the traced spans automatically.
+- Explore [feedback functions](../../component_guides/evaluation/index.md)
+to add custom evaluations beyond the RAG triad.
+- Compare different app versions using the dashboard leaderboard.
