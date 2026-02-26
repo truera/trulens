@@ -5,7 +5,11 @@ import {
   NodeTracerProvider,
 } from "@opentelemetry/sdk-trace-node";
 
-import { instrument, withRecord } from "../instrument.js";
+import {
+  instrument,
+  instrumentDecorator,
+  withRecord,
+} from "../instrument.js";
 import { SpanAttributes, SpanType } from "@trulens/semconv";
 
 // ---------------------------------------------------------------------------
@@ -129,6 +133,163 @@ describe("instrument()", () => {
 });
 
 // ---------------------------------------------------------------------------
+// serializeAttrValue (tested indirectly via instrument / withRecord)
+// ---------------------------------------------------------------------------
+
+describe("serializeAttrValue (via instrument)", () => {
+  it("passes string[] arrays natively", async () => {
+    const fn = instrument(
+      async (): Promise<string[]> => ["a", "b", "c"],
+      {
+        spanType: SpanType.RETRIEVAL,
+        attributes: (ret) => ({
+          [SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS]: ret,
+        }),
+      }
+    );
+
+    await fn();
+
+    const spans = exporter.getFinishedSpans();
+    expect(spans).toHaveLength(1);
+    const val = spans[0]!.attributes[SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS];
+    expect(val).toEqual(["a", "b", "c"]);
+  });
+
+  it("passes number[] arrays natively", () => {
+    const fn = instrument(
+      () => [1, 2, 3],
+      {
+        spanType: SpanType.UNKNOWN,
+        attributes: { "my.nums": "return" },
+      }
+    );
+
+    fn();
+
+    const spans = exporter.getFinishedSpans();
+    expect(spans).toHaveLength(1);
+    expect(spans[0]!.attributes["my.nums"]).toEqual([1, 2, 3]);
+  });
+
+  it("passes boolean[] arrays natively", () => {
+    const fn = instrument(
+      () => [true, false, true],
+      {
+        spanType: SpanType.UNKNOWN,
+        attributes: { "my.bools": "return" },
+      }
+    );
+
+    fn();
+
+    const spans = exporter.getFinishedSpans();
+    expect(spans).toHaveLength(1);
+    expect(spans[0]!.attributes["my.bools"]).toEqual([true, false, true]);
+  });
+
+  it("serialises mixed-type arrays as string[]", () => {
+    const fn = instrument(
+      () => [1, "two", { n: 3 }],
+      {
+        spanType: SpanType.UNKNOWN,
+        attributes: (ret) => ({ "my.mixed": ret }),
+      }
+    );
+
+    fn();
+
+    const spans = exporter.getFinishedSpans();
+    expect(spans).toHaveLength(1);
+    const val = spans[0]!.attributes["my.mixed"];
+    // Mixed arrays fall through to the map() branch that stringifies non-strings
+    expect(val).toEqual(["1", "two", '{"n":3}']);
+  });
+
+  it("JSON-stringifies plain objects", () => {
+    const fn = instrument(
+      () => ({ key: "value", nested: { a: 1 } }),
+      {
+        spanType: SpanType.UNKNOWN,
+        attributes: (ret) => ({ "my.obj": ret }),
+      }
+    );
+
+    fn();
+
+    const spans = exporter.getFinishedSpans();
+    expect(spans).toHaveLength(1);
+    const val = spans[0]!.attributes["my.obj"];
+    expect(val).toBe('{"key":"value","nested":{"a":1}}');
+  });
+
+  it("passes primitive string through unchanged", () => {
+    const fn = instrument(
+      () => "hello",
+      {
+        spanType: SpanType.UNKNOWN,
+        attributes: { "my.str": "return" },
+      }
+    );
+
+    fn();
+
+    const spans = exporter.getFinishedSpans();
+    expect(spans).toHaveLength(1);
+    expect(spans[0]!.attributes["my.str"]).toBe("hello");
+  });
+
+  it("passes primitive number through unchanged", () => {
+    const fn = instrument(
+      () => 42,
+      {
+        spanType: SpanType.UNKNOWN,
+        attributes: { "my.num": "return" },
+      }
+    );
+
+    fn();
+
+    const spans = exporter.getFinishedSpans();
+    expect(spans).toHaveLength(1);
+    expect(spans[0]!.attributes["my.num"]).toBe(42);
+  });
+
+  it("passes primitive boolean through unchanged", () => {
+    const fn = instrument(
+      () => true,
+      {
+        spanType: SpanType.UNKNOWN,
+        attributes: { "my.bool": "return" },
+      }
+    );
+
+    fn();
+
+    const spans = exporter.getFinishedSpans();
+    expect(spans).toHaveLength(1);
+    expect(spans[0]!.attributes["my.bool"]).toBe(true);
+  });
+
+  it("skips null and undefined attribute values", () => {
+    const fn = instrument(
+      () => null,
+      {
+        spanType: SpanType.UNKNOWN,
+        attributes: (ret) => ({ "my.null": ret, "my.undef": undefined }),
+      }
+    );
+
+    fn();
+
+    const spans = exporter.getFinishedSpans();
+    expect(spans).toHaveLength(1);
+    expect(spans[0]!.attributes).not.toHaveProperty("my.null");
+    expect(spans[0]!.attributes).not.toHaveProperty("my.undef");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // withRecord()
 // ---------------------------------------------------------------------------
 
@@ -192,6 +353,146 @@ describe("withRecord()", () => {
     expect(retrieveSpan).toBeDefined();
     expect(retrieveSpan.parentSpanId).toBe(
       rootSpan.spanContext().spanId
+    );
+  });
+
+  it("propagates RECORD_ID via baggage to child instrument() spans", async () => {
+    const child = instrument(async () => "ok", {
+      spanType: SpanType.TOOL,
+    });
+
+    await withRecord(async () => {
+      await child();
+      return "done";
+    });
+
+    const spans = exporter.getFinishedSpans();
+    const rootSpan = spans.find(
+      (s) => s.attributes[SpanAttributes.SPAN_TYPE] === SpanType.RECORD_ROOT
+    )!;
+    const childSpan = spans.find(
+      (s) => s.attributes[SpanAttributes.SPAN_TYPE] === SpanType.TOOL
+    )!;
+
+    expect(rootSpan.attributes[SpanAttributes.RECORD_ID]).toBeDefined();
+    expect(childSpan.attributes[SpanAttributes.RECORD_ID]).toBe(
+      rootSpan.attributes[SpanAttributes.RECORD_ID]
+    );
+  });
+
+  it("propagates RUN_NAME via baggage to child instrument() spans", async () => {
+    const child = instrument(async () => "ok", {
+      spanType: SpanType.TOOL,
+    });
+
+    await withRecord(
+      async () => {
+        await child();
+        return "done";
+      },
+      { runName: "test-run-42" }
+    );
+
+    const spans = exporter.getFinishedSpans();
+    const rootSpan = spans.find(
+      (s) => s.attributes[SpanAttributes.SPAN_TYPE] === SpanType.RECORD_ROOT
+    )!;
+    const childSpan = spans.find(
+      (s) => s.attributes[SpanAttributes.SPAN_TYPE] === SpanType.TOOL
+    )!;
+
+    expect(rootSpan.attributes[SpanAttributes.RUN_NAME]).toBe("test-run-42");
+    expect(childSpan.attributes[SpanAttributes.RUN_NAME]).toBe("test-run-42");
+  });
+
+  it("generates a unique RECORD_ID per withRecord call", async () => {
+    const out1 = await withRecord(async () => "a");
+    const id1 = exporter.getFinishedSpans()[0]!.attributes[SpanAttributes.RECORD_ID];
+    exporter.reset();
+
+    const out2 = await withRecord(async () => "b");
+    const id2 = exporter.getFinishedSpans()[0]!.attributes[SpanAttributes.RECORD_ID];
+
+    expect(out1).toBe("a");
+    expect(out2).toBe("b");
+    expect(id1).not.toBe(id2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// instrumentDecorator()
+// ---------------------------------------------------------------------------
+
+describe("instrumentDecorator()", () => {
+  it("creates a span with the method name as span name", async () => {
+    class MyRAG {
+      @instrumentDecorator({ spanType: SpanType.RETRIEVAL })
+      async retrieve(query: string): Promise<string[]> {
+        return [`result for ${query}`];
+      }
+    }
+
+    const rag = new MyRAG();
+    const result = await rag.retrieve("test");
+    expect(result).toEqual(["result for test"]);
+
+    const spans = exporter.getFinishedSpans();
+    expect(spans).toHaveLength(1);
+    expect(spans[0]!.name).toBe("retrieve");
+    expect(spans[0]!.attributes[SpanAttributes.SPAN_TYPE]).toBe(
+      SpanType.RETRIEVAL
+    );
+  });
+
+  it("uses explicit spanName when provided", () => {
+    class Svc {
+      @instrumentDecorator({
+        spanType: SpanType.TOOL,
+        spanName: "custom-name",
+      })
+      doWork(): string {
+        return "done";
+      }
+    }
+
+    const svc = new Svc();
+    svc.doWork();
+
+    const spans = exporter.getFinishedSpans();
+    expect(spans[0]!.name).toBe("custom-name");
+  });
+
+  it("preserves 'this' context", () => {
+    class Counter {
+      count = 0;
+
+      @instrumentDecorator({ spanType: SpanType.TOOL })
+      increment(): number {
+        this.count += 1;
+        return this.count;
+      }
+    }
+
+    const c = new Counter();
+    expect(c.increment()).toBe(1);
+    expect(c.increment()).toBe(2);
+    expect(c.count).toBe(2);
+  });
+
+  it("records errors and re-throws", () => {
+    class Faulty {
+      @instrumentDecorator({ spanType: SpanType.TOOL })
+      explode(): void {
+        throw new Error("decorator-boom");
+      }
+    }
+
+    const f = new Faulty();
+    expect(() => f.explode()).toThrow("decorator-boom");
+
+    const spans = exporter.getFinishedSpans();
+    expect(spans[0]!.attributes[SpanAttributes.CALL.ERROR]).toContain(
+      "decorator-boom"
     );
   });
 });

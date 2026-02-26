@@ -3,3 +3,4 @@
 **/*.tsbuildinfo
 .pnpm-store/
 pnpm-lock.yaml
+test-results/

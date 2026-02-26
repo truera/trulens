@@ -274,7 +274,8 @@ export class TruLensSnowflakeSpanExporter implements SpanExporter {
  * batches so child spans arriving after the RECORD_ROOT still get the
  * correct values.
  */
-function propagateTraceAttrs(
+/** @internal Exported for testing. */
+export function propagateTraceAttrs(
   spans: ReadableSpan[],
   cache: Map<string, { recordId?: string; runName?: string }>
 ): ReadableSpan[] {
@@ -310,15 +311,19 @@ function propagateTraceAttrs(
   });
 }
 
-function isTruLensSpan(span: ReadableSpan): boolean {
+/** @internal Exported for testing. */
+export function isTruLensSpan(span: ReadableSpan): boolean {
   return (
     ResourceAttributes.APP_NAME in span.resource.attributes ||
     SpanAttributes.SPAN_TYPE in span.attributes
   );
 }
 
-/** Encode a non-negative integer as a protobuf base-128 varint. */
-function encodeVarint(value: number): Buffer {
+/**
+ * Encode a non-negative integer as a protobuf base-128 varint.
+ * @internal Exported for testing.
+ */
+export function encodeVarint(value: number): Buffer {
   const bytes: number[] = [];
   while (value > 0x7f) {
     bytes.push((value & 0x7f) | 0x80);

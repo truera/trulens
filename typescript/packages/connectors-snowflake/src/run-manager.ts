@@ -392,7 +392,8 @@ export class SnowflakeRunManager {
     return rows.map((r) => String(r.name ?? r.NAME ?? ""));
   }
 
-  private _parseRunStatus(meta: Record<string, unknown>): RunStatus {
+  /** @internal Exported for testing via public access. */
+  _parseRunStatus(meta: Record<string, unknown>): RunStatus {
     const runStatus = meta.run_status as string | undefined;
     if (runStatus === "CANCELLED") return RunStatus.CANCELLED;
 
@@ -421,7 +422,8 @@ export class SnowflakeRunManager {
     return this._latestInvocationStatus(invocations!);
   }
 
-  private _latestInvocationStatus(
+  /** @internal Exported for testing via public access. */
+  _latestInvocationStatus(
     invocations: Record<string, Record<string, unknown>>
   ): RunStatus {
     const entries = Object.values(invocations);
@@ -450,7 +452,8 @@ export class SnowflakeRunManager {
     }
   }
 
-  private _overallComputationStatus(
+  /** @internal Exported for testing via public access. */
+  _overallComputationStatus(
     invocations: Record<string, Record<string, unknown>>,
     metrics: Record<string, Record<string, unknown>>
   ): RunStatus {

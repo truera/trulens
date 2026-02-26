@@ -41,6 +41,7 @@
   },
   "devDependencies": {
     "@langchain/core": "^0.3.0",
+    "@opentelemetry/sdk-trace-node": "^1.29.0",
     "@types/node": "^22.0.0",
     "tsup": "^8.0.0",
     "vitest": "^2.0.0"
