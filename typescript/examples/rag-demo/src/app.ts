@@ -17,13 +17,10 @@ import { SimpleRAG } from "./rag.js";
 async function main() {
   const session = await initSession();
   console.log(
-    `TruSession initialised — app="${session.appName}" version="${session.appVersion}"`
+    `TruSession initialised — app="${session.appName}" version="${session.appVersion}"`,
   );
-  console.log(
-    "Spans exported to",
-    process.env["TRULENS_OTLP_ENDPOINT"] ?? "http://localhost:4318"
-  );
-  console.log('Type a question and press Enter. Ctrl+C or empty line to quit.\n');
+  console.log("Spans written to", process.env["TRULENS_DB_PATH"] ?? "default.sqlite");
+  console.log("Type a question and press Enter. Ctrl+C or empty line to quit.\n");
 
   const rag = new SimpleRAG();
   const app = createTruApp(rag, {
@@ -53,7 +50,9 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+main()
+  .catch((err) => {
+    console.error(err);
+    process.exit(1);
+  })
+  .finally(() => process.exit(0));

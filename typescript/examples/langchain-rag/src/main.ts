@@ -7,6 +7,7 @@ import { createTruApp } from "@trulens/core";
 async function main() {
   const session = await initSession();
   console.log(`TruSession ready — app="${session.appName}"`);
+  console.log("Spans written to", process.env["TRULENS_DB_PATH"] ?? "default.sqlite");
 
   const chain = await buildChain();
   console.log("LangChain RAG chain built.\n");
@@ -33,4 +34,6 @@ async function main() {
   }
 }
 
-main().catch(console.error);
+main()
+  .catch(console.error)
+  .finally(() => process.exit(0));

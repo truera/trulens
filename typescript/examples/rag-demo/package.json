@@ -9,7 +9,6 @@
     "build": "tsc --noEmit"
   },
   "dependencies": {
-    "@opentelemetry/exporter-trace-otlp-http": "^0.57.0",
     "@trulens/core": "workspace:*",
     "@trulens/instrumentation-openai": "workspace:*",
     "@trulens/semconv": "workspace:*",

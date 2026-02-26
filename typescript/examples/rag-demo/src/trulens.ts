@@ -1,28 +1,21 @@
 /**
  * TruLens session setup for the demo.
  *
- * Sends spans to a Python TruSession OTLP receiver running on localhost:4318.
- * Swap the exporter for TruLensSnowflakeSpanExporter to use the direct
- * Snowflake path instead (see README.md).
+ * Uses the built-in SQLiteConnector so tracing works without a
+ * separate Python receiver process.  The dashboard and evaluations
+ * can read from the same `default.sqlite` file.
  */
 
-import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
-import { TruSession } from "@trulens/core";
+import { TruSession, SQLiteConnector } from "@trulens/core";
 import { OpenAIInstrumentation } from "@trulens/instrumentation-openai";
 
-const OTLP_ENDPOINT =
-  process.env["TRULENS_OTLP_ENDPOINT"] ?? "http://localhost:4318";
-
 export async function initSession(): Promise<TruSession> {
-  const exporter = new OTLPTraceExporter({
-    url: `${OTLP_ENDPOINT}/v1/traces`,
-  });
-
   return TruSession.init({
     appName: process.env["APP_NAME"] ?? "trulens-rag-demo",
     appVersion: process.env["APP_VERSION"] ?? "v1",
-    exporter,
-    endpoint: OTLP_ENDPOINT,
+    connector: new SQLiteConnector({
+      dbPath: process.env["TRULENS_DB_PATH"] ?? "default.sqlite",
+    }),
     instrumentations: [new OpenAIInstrumentation()],
   });
 }

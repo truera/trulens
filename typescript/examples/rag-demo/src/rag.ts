@@ -46,7 +46,7 @@ export class SimpleRAG {
     spanType: SpanType.RETRIEVAL,
     attributes: (ret, _err, query) => ({
       [SpanAttributes.RETRIEVAL.QUERY_TEXT]: query as string,
-      [SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS]: JSON.stringify(ret),
+      [SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS]: ret as string[],
       [SpanAttributes.RETRIEVAL.NUM_CONTEXTS]:
         (ret as string[] | undefined)?.length ?? 0,
     }),

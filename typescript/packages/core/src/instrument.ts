@@ -342,9 +342,17 @@ function resolveAttributes<TArgs extends unknown[], TReturn>(
   return resolved;
 }
 
-function serializeAttrValue(v: unknown): string | number | boolean {
+function serializeAttrValue(
+  v: unknown,
+): string | number | boolean | string[] | number[] | boolean[] {
   if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") {
     return v;
+  }
+  if (Array.isArray(v)) {
+    if (v.every((el) => typeof el === "string")) return v as string[];
+    if (v.every((el) => typeof el === "number")) return v as number[];
+    if (v.every((el) => typeof el === "boolean")) return v as boolean[];
+    return v.map((el) => (typeof el === "string" ? el : JSON.stringify(el)));
   }
   try {
     return JSON.stringify(v);

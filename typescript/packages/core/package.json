@@ -34,9 +34,11 @@
     "@opentelemetry/exporter-trace-otlp-http": "^0.57.0",
     "@opentelemetry/resources": "^1.29.0",
     "@opentelemetry/sdk-trace-node": "^1.29.0",
-    "@trulens/semconv": "workspace:*"
+    "@trulens/semconv": "workspace:*",
+    "better-sqlite3": "^11.0.0"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0",
     "tsup": "^8.0.0",
     "vitest": "^2.0.0"
   }

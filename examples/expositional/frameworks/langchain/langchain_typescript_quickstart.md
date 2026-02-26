@@ -13,61 +13,33 @@ By the end you will have:
 - Evaluation scores (answer relevance, context relevance, groundedness)
 - Everything visible in the TruLens dashboard
 
+**All steps run in a single terminal from the repo root.**
+
 ## Prerequisites
 
-- **Node.js 18+** and **pnpm** (or npm/yarn)
+- **Node.js 18+** and **pnpm** (`npm install -g pnpm`)
 - **Python 3.9+** and **Poetry** (`pip install poetry`)
 - An **OpenAI API key**
 
-Set your API key once so both TypeScript and Python steps can use it:
+## Step 1 — Set up the environment
+
+All commands assume you start from the root of the TruLens repository.
 
 ```bash
 export OPENAI_API_KEY=sk-...
-```
 
-## Step 1 — Set up the Python environment and start the OTLP receiver
-
-The TypeScript SDK sends OpenTelemetry spans to a lightweight receiver built
-into the Python `TruSession`. The OTLP receiver is part of the TruLens
-development branch, so you need to install from source.
-
-### 1a. Create a fresh virtual environment and install TruLens
-
-From the root of the TruLens repository:
-
-```bash
+# Python environment (needed for evaluations and dashboard)
 python -m venv .venv
-source .venv/bin/activate    # on Windows: .venv\Scripts\activate
-
+source .venv/bin/activate               # on Windows: .venv\Scripts\activate
 poetry install --with dev
+
+# pnpm (if not already installed)
+npm install -g pnpm
 ```
-
-### 1b. Start the OTLP receiver
-
-In the same terminal (with the virtualenv active):
-
-```bash
-poetry run python -c "
-from trulens.core import TruSession
-
-session = TruSession()
-session.reset_database()
-session.start_otlp_receiver(port=4318)
-print('OTLP receiver listening on http://localhost:4318')
-input('Press Enter to stop...')
-"
-```
-
-Leave this terminal running — the TypeScript app will send spans to it.
 
 ## Step 2 — Build the TypeScript SDK packages
 
-Open a **new terminal**. The TypeScript packages live in the `typescript/`
-directory of the repo and are managed with pnpm workspaces.
-
 ```bash
-npm install -g pnpm    # if not already installed
-
 cd typescript
 pnpm install --no-frozen-lockfile
 pnpm --filter @trulens/semconv build
@@ -75,226 +47,50 @@ pnpm --filter @trulens/core build
 pnpm --filter @trulens/instrumentation-langchain build
 ```
 
-## Step 3 — Create a project
+## Step 3 — Run the LangChain RAG demo
 
-Create a project inside the monorepo's `typescript/examples/` directory so
-pnpm workspace resolution can find the local `@trulens/*` packages:
+The repo includes a ready-to-run demo at `typescript/examples/langchain-rag/`.
 
 ```bash
-cd /path/to/trulens/typescript
-mkdir -p examples/langchain-rag
 cd examples/langchain-rag
-
-cat > package.json << 'EOF'
-{
-  "name": "langchain-rag-demo",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "start": "tsx src/main.ts"
-  },
-  "dependencies": {
-    "@langchain/core": "^0.3.0",
-    "@langchain/openai": "^0.4.0",
-    "langchain": "^0.3.0",
-    "@opentelemetry/exporter-trace-otlp-http": "^0.57.0",
-    "@trulens/core": "workspace:*",
-    "@trulens/instrumentation-langchain": "workspace:*",
-    "@trulens/semconv": "workspace:*"
-  },
-  "devDependencies": {
-    "tsx": "^4.0.0",
-    "typescript": "^5.5.0"
-  }
-}
-EOF
-
-cat > tsconfig.json << 'EOF'
-{
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "strict": true,
-    "esModuleInterop": true,
-    "outDir": "dist"
-  }
-}
-EOF
-
-mkdir -p src
-
-cd ../..
-pnpm install --no-frozen-lockfile
-cd examples/langchain-rag
-```
-
-## Step 4 — Initialise TruSession with LangChain auto-instrumentation
-
-```bash
-cat > src/trulens.ts << 'TSEOF'
-import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
-import { TruSession } from "@trulens/core";
-import { LangChainInstrumentation } from "@trulens/instrumentation-langchain";
-
-const ENDPOINT = process.env.TRULENS_ENDPOINT ?? "http://localhost:4318";
-
-export async function initSession(): Promise<TruSession> {
-  return TruSession.init({
-    appName: "langchain-rag",
-    appVersion: "v1",
-    exporter: new OTLPTraceExporter({ url: `${ENDPOINT}/v1/traces` }),
-    endpoint: ENDPOINT,
-    instrumentations: [new LangChainInstrumentation()],
-  });
-}
-TSEOF
-```
-
-`TruSession.init()` registers the app with the Python receiver (via `endpoint`)
-and activates the `LangChainInstrumentation`, which hooks into LangChain's
-`CallbackManager` so every chain, retriever, and LLM call is traced
-automatically — no decorators needed on your app code.
-
-## Step 5 — Build a LangChain LCEL RAG chain
-
-```bash
-cat > src/rag.ts << 'TSEOF'
-import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai";
-import { MemoryVectorStore } from "langchain/vectorstores/memory";
-import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { RunnablePassthrough, RunnableSequence } from "@langchain/core/runnables";
-import { StringOutputParser } from "@langchain/core/output_parsers";
-import type { Document } from "@langchain/core/documents";
-
-const DOCS = [
-  "TruLens is an open-source library for evaluating and tracking LLM apps.",
-  "RAG combines retrieval with LLM generation for grounded answers.",
-  "OpenTelemetry is a vendor-neutral observability framework.",
-  "LangChain Expression Language (LCEL) lets you compose chains declaratively.",
-];
-
-function formatDocs(docs: Document[]): string {
-  return docs.map((d, i) => `[${i + 1}] ${d.pageContent}`).join("\n\n");
-}
-
-export async function buildChain() {
-  const embeddings = new OpenAIEmbeddings();
-  const vectorStore = await MemoryVectorStore.fromTexts(
-    DOCS,
-    DOCS.map((_, i) => ({ id: i })),
-    embeddings,
-  );
-  const retriever = vectorStore.asRetriever({ k: 2 });
-
-  const prompt = ChatPromptTemplate.fromTemplate(
-    `Answer the question using only the following context:
-
-{context}
-
-Question: {question}`,
-  );
-
-  const llm = new ChatOpenAI({ model: "gpt-4o-mini", temperature: 0 });
-
-  const chain = RunnableSequence.from([
-    {
-      context: retriever.pipe(formatDocs),
-      question: new RunnablePassthrough(),
-    },
-    prompt,
-    llm,
-    new StringOutputParser(),
-  ]);
-
-  return chain;
-}
-TSEOF
-```
-
-Notice: **zero TruLens imports** in the app logic above. The chain is pure
-LangChain LCEL — retriever, prompt, LLM, and output parser piped together.
-The entry point (`main.ts`) still uses `createTruApp` to produce the top-level
-`RECORD_ROOT` span, but TruLens observes all inner steps (retriever, LLM,
-chain) entirely through LangChain's callback system.
-
-## Step 6 — Run it
-
-```bash
-cat > src/main.ts << 'TSEOF'
-import * as readline from "node:readline/promises";
-import { stdin, stdout } from "node:process";
-import { initSession } from "./trulens.js";
-import { buildChain } from "./rag.js";
-import { createTruApp } from "@trulens/core";
-
-async function main() {
-  const session = await initSession();
-  console.log(`TruSession ready — app="${session.appName}"`);
-
-  const chain = await buildChain();
-  console.log("LangChain RAG chain built.\n");
-
-  const app = createTruApp(
-    { query: (q: string) => chain.invoke(q) },
-    { mainMethod: "query", mainInput: (q: string) => q },
-  );
-
-  console.log("Type a question and press Enter. Empty line or Ctrl+C to quit.\n");
-  const rl = readline.createInterface({ input: stdin, output: stdout });
-
-  try {
-    while (true) {
-      const question = await rl.question("Q: ");
-      if (!question.trim()) break;
-      console.log(`A: ${await app.query(question)}\n`);
-    }
-  } finally {
-    rl.close();
-    console.log("\nFlushing spans…");
-    await session.shutdown();
-    console.log("Done.");
-  }
-}
-
-main().catch(console.error);
-TSEOF
-```
-
-Run with:
-
-```bash
 pnpm start
 ```
 
 Try a few questions:
 
 ```
+TruSession ready — app="langchain-rag"
+LangChain RAG chain built.
+
+Type a question and press Enter. Empty line or Ctrl+C to quit.
+
 Q: What is TruLens?
 A: TruLens is an open-source library for evaluating and tracking LLM apps...
 
 Q: How does RAG work?
 A: RAG combines retrieval with LLM generation...
 
-Q:
+Q:                          <-- press Enter on an empty line to quit
 Flushing spans…
 Done.
 ```
 
-## Step 7 — Run evaluations on your traces
+Spans are now saved to `default.sqlite` in the current directory.
 
-Evaluations run in Python using the same `TruSession` that stores the spans.
-Open a new terminal (with the Poetry virtualenv active) and run:
+## Step 4 — Run evaluations on your traces
+
+The TypeScript app has exited and you're still in `typescript/examples/langchain-rag/`.
+The Python virtualenv is already active from Step 1. Run the evaluations
+directly:
 
 ```bash
-cd /path/to/trulens
-poetry run python << 'PYEOF'
+python << 'PYEOF'
 from trulens.core import TruSession, Metric
 from trulens.core.feedback.selector import Selector
 from trulens.providers.openai import OpenAI
 from trulens.otel.semconv.trace import SpanAttributes
 
+# Reads default.sqlite from CWD — the same file the TypeScript app wrote to
 session = TruSession()
 provider = OpenAI()
 
@@ -359,11 +155,12 @@ print("Evaluations complete.")
 PYEOF
 ```
 
-## Step 8 — View in the dashboard
+## Step 5 — View in the dashboard
+
+Still in the same terminal and directory:
 
 ```bash
-cd /path/to/trulens
-poetry run python -c "
+python -c "
 from trulens.dashboard import run_dashboard
 run_dashboard(port=8501)
 "
@@ -376,9 +173,203 @@ Open [http://localhost:8501](http://localhost:8501). You should see:
 - **Records**: one record per question, each containing child spans for the
   retriever and LLM with their captured attributes
 
+---
+
+## Appendix — Build the LangChain RAG demo from scratch
+
+The steps above use the pre-built `langchain-rag` example. This section walks
+through creating the same app from scratch so you can understand every piece.
+
+!!! note "Local workspace vs. npm"
+
+```
+The `@trulens/*` packages are not yet published to npm. Until they are,
+new projects must live inside the `typescript/examples/` directory so pnpm
+workspace resolution can find them.
+```
+
+### A1 — Create the project
+
+Starting from the repo root (after completing Steps 1 and 2):
+
+```bash
+cd typescript
+mkdir -p examples/my-langchain-rag
+cd examples/my-langchain-rag
+
+cat > package.json << 'EOF'
+{
+  "name": "my-langchain-rag-demo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/main.ts"
+  },
+  "dependencies": {
+    "@langchain/core": "^0.3.0",
+    "@langchain/openai": "^0.4.0",
+    "langchain": "^0.3.0",
+    "@trulens/core": "workspace:*",
+    "@trulens/instrumentation-langchain": "workspace:*",
+    "@trulens/semconv": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "typescript": "^5.5.0"
+  }
+}
+EOF
+
+cat > tsconfig.json << 'EOF'
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "esModuleInterop": true,
+    "outDir": "dist"
+  }
+}
+EOF
+
+mkdir -p src
+cd ../..
+pnpm install --no-frozen-lockfile
+cd examples/my-langchain-rag
+```
+
+### A2 — `src/trulens.ts` — session setup
+
+```typescript
+import { TruSession, SQLiteConnector } from "@trulens/core";
+import { LangChainInstrumentation } from "@trulens/instrumentation-langchain";
+
+export async function initSession(): Promise<TruSession> {
+  return TruSession.init({
+    appName: "langchain-rag",
+    appVersion: "v1",
+    connector: new SQLiteConnector(),
+    instrumentations: [new LangChainInstrumentation()],
+  });
+}
+```
+
+`TruSession.init()` with a `connector` starts an embedded OTLP receiver that
+writes spans directly to SQLite — no separate Python process needed for tracing.
+The `LangChainInstrumentation` hooks into LangChain's `CallbackManager` so
+every chain, retriever, and LLM call is traced automatically — no decorators
+needed on your app code.
+
+### A3 — `src/rag.ts` — LangChain LCEL chain
+
+```typescript
+import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai";
+import { MemoryVectorStore } from "langchain/vectorstores/memory";
+import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { RunnablePassthrough, RunnableSequence } from "@langchain/core/runnables";
+import { StringOutputParser } from "@langchain/core/output_parsers";
+import type { Document } from "@langchain/core/documents";
+
+const DOCS = [
+  "TruLens is an open-source library for evaluating and tracking LLM apps.",
+  "RAG combines retrieval with LLM generation for grounded answers.",
+  "OpenTelemetry is a vendor-neutral observability framework.",
+  "LangChain Expression Language (LCEL) lets you compose chains declaratively.",
+];
+
+function formatDocs(docs: Document[]): string {
+  return docs.map((d, i) => `[${i + 1}] ${d.pageContent}`).join("\n\n");
+}
+
+export async function buildChain() {
+  const embeddings = new OpenAIEmbeddings();
+  const vectorStore = await MemoryVectorStore.fromTexts(
+    DOCS,
+    DOCS.map((_, i) => ({ id: i })),
+    embeddings,
+  );
+  const retriever = vectorStore.asRetriever({ k: 2 });
+
+  const prompt = ChatPromptTemplate.fromTemplate(
+    `Answer the question using only the following context:
+
+{context}
+
+Question: {question}`,
+  );
+
+  const llm = new ChatOpenAI({ model: "gpt-4o-mini", temperature: 0 });
+
+  const chain = RunnableSequence.from([
+    {
+      context: retriever.pipe(formatDocs),
+      question: new RunnablePassthrough(),
+    },
+    prompt,
+    llm,
+    new StringOutputParser(),
+  ]);
+
+  return chain;
+}
+```
+
+Notice: **zero TruLens imports** in the app logic above. The chain is pure
+LangChain LCEL — retriever, prompt, LLM, and output parser piped together.
+The entry point (`main.ts`) still uses `createTruApp` to produce the top-level
+`RECORD_ROOT` span, but TruLens observes all inner steps (retriever, LLM,
+chain) entirely through LangChain's callback system.
+
+### A4 — `src/main.ts` — entry point
+
+```typescript
+import * as readline from "node:readline/promises";
+import { stdin, stdout } from "node:process";
+import { initSession } from "./trulens.js";
+import { buildChain } from "./rag.js";
+import { createTruApp } from "@trulens/core";
+
+async function main() {
+  const session = await initSession();
+  console.log(`TruSession ready — app="${session.appName}"`);
+
+  const chain = await buildChain();
+  console.log("LangChain RAG chain built.\n");
+
+  const app = createTruApp(
+    { query: (q: string) => chain.invoke(q) },
+    { mainMethod: "query", mainInput: (q: string) => q },
+  );
+
+  console.log("Type a question and press Enter. Empty line or Ctrl+C to quit.\n");
+  const rl = readline.createInterface({ input: stdin, output: stdout });
+
+  try {
+    while (true) {
+      const question = await rl.question("Q: ");
+      if (!question.trim()) break;
+      console.log(`A: ${await app.query(question)}\n`);
+    }
+  } finally {
+    rl.close();
+    console.log("\nFlushing spans…");
+    await session.shutdown();
+    console.log("Done.");
+  }
+}
+
+main()
+  .catch(console.error)
+  .finally(() => process.exit(0));
+```
+
+Run with `pnpm start`, then continue with Steps 4 and 5 above.
+
 ## Comparison with the raw TypeScript quickstart
 
-Both quickstarts use the same `TruSession.init()` for app registration and
+Both quickstarts use the same `TruSession.init()` with a `connector` and
 `createTruApp()` for the top-level `RECORD_ROOT` span. The difference is how
 the inner pipeline steps (retrieval, generation) get traced:
 
