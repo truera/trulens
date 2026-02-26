@@ -88,3 +88,9 @@ src/**/poetry.lock
 
 # cursor files
 **/.cursor
+
+# TypeScript / Node.js
+node_modules/
+typescript/node_modules/
+typescript/**/node_modules/
+typescript/**/.pnpm-store/

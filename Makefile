@@ -378,6 +378,56 @@ upload-testpypi-all: clean build
 		&& poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl \
 		&& poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.tar.gz
 
+# ── TypeScript SDK ─────────────────────────────────────────────────────
+# These targets install, build, and test the TypeScript SDK packages
+# under typescript/. They produce JUnit XML so Azure Pipelines can
+# display results under a clear "TypeScript SDK Tests" heading.
+
+env-typescript:
+	cd typescript && pnpm install --no-frozen-lockfile
+
+build-typescript: env-typescript
+	cd typescript && pnpm run build
+
+test-typescript: build-typescript
+	@echo "════════════════════════════════════════════════════════"
+	@echo "  TypeScript SDK Tests"
+	@echo "════════════════════════════════════════════════════════"
+	cd typescript && pnpm run test -- --reporter=default --reporter=junit --outputFile=test-results/junit.xml
+
+test-typescript-core: build-typescript
+	@echo "── TypeScript SDK Tests: @trulens/core ──"
+	cd typescript/packages/core && pnpm run test -- --reporter=default --reporter=junit --outputFile=../../test-results/core-junit.xml
+
+test-typescript-semconv: build-typescript
+	@echo "── TypeScript SDK Tests: @trulens/semconv ──"
+	cd typescript/packages/semconv && pnpm run test -- --reporter=default --reporter=junit --outputFile=../../test-results/semconv-junit.xml
+
+test-typescript-openai: build-typescript
+	@echo "── TypeScript SDK Tests: @trulens/instrumentation-openai ──"
+	cd typescript/packages/instrumentation-openai && pnpm run test -- --reporter=default --reporter=junit --outputFile=../../test-results/openai-junit.xml
+
+test-typescript-langchain: build-typescript
+	@echo "── TypeScript SDK Tests: @trulens/instrumentation-langchain ──"
+	cd typescript/packages/instrumentation-langchain && pnpm run test -- --reporter=default --reporter=junit --outputFile=../../test-results/langchain-junit.xml
+
+test-typescript-snowflake: build-typescript
+	@echo "── TypeScript SDK Tests: @trulens/connectors-snowflake ──"
+	cd typescript/packages/connectors-snowflake && pnpm run test -- --reporter=default --reporter=junit --outputFile=../../test-results/snowflake-junit.xml
+
+# Usage: make bump-typescript-patch  (or minor, major, prepatch, etc.)
+bump-typescript-%: env-typescript
+	cd typescript && pnpm -r exec npm version $* --no-git-tag-version
+
+publish-typescript-dry: build-typescript
+	cd typescript && pnpm publish -r --dry-run --no-git-checks
+
+# Usage: NPM_TOKEN=npm_xxxx make publish-typescript
+publish-typescript: build-typescript
+	cd typescript && pnpm publish -r --no-git-checks
+
+# ── React components ──────────────────────────────────────────────────
+
 build-record-viewer-otel:
 	cd src/dashboard/react_components/record_viewer_otel \
 		&& npm install \

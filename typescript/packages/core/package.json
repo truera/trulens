@@ -1,0 +1,54 @@
+{
+  "name": "@trulens/core",
+  "version": "0.1.0",
+  "description": "TruLens core instrumentation SDK for TypeScript",
+  "keywords": [
+    "trulens",
+    "opentelemetry",
+    "otel",
+    "observability",
+    "instrumentation",
+    "llm",
+    "evaluation"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/truera/trulens.git",
+    "directory": "typescript/packages/core"
+  },
+  "homepage": "https://www.trulens.com",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "lint": "eslint src",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.57.0",
+    "@opentelemetry/resources": "^1.29.0",
+    "@opentelemetry/sdk-trace-node": "^1.29.0",
+    "@trulens/semconv": "workspace:*",
+    "better-sqlite3": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0",
+    "tsup": "^8.0.0",
+    "vitest": "^2.0.0"
+  }
+}

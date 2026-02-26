@@ -25,21 +25,36 @@ Consider the following instrumented class method, `retrieve_contexts`:
 
 !!! example
 
-    ```python
-    from typing import List
+    === "Python"
 
-    from opentelemetry import trace
-    from trulens.core.otel.instrument import instrument
+        ```python
+        from typing import List
+
+        from opentelemetry import trace
+        from trulens.core.otel.instrument import instrument
 
 
-    class MyRAG:
-        @instrument()
-        def retrieve_contexts(
-            self, query: str
-        ) -> List[str]:
-            """This function has no custom attributes."""
-            return ["context 1", "context 2"]
-    ```
+        class MyRAG:
+            @instrument()
+            def retrieve_contexts(
+                self, query: str
+            ) -> List[str]:
+                """This function has no custom attributes."""
+                return ["context 1", "context 2"]
+        ```
+
+    === "TypeScript"
+
+        ```typescript
+        import { instrumentDecorator as instrument } from "@trulens/core";
+
+        class MyRAG {
+          @instrument()
+          async retrieveContexts(query: string): Promise<string[]> {
+            return ["context 1", "context 2"];
+          }
+        }
+        ```
 
 In the example above, the `query` argument is logged as `ai.observability.call.kwargs.query` and the function return value is logged as `ai.observability.call.return`.
 
@@ -51,18 +66,39 @@ Adding custom attributes in this way does not capture any additional information
 
 !!! example
 
-    ```python
-        @instrument(
-        attributes={
-            "custom_attr__query": "query",
-            "custom_attr__results": "return",
-        }
-    )
-    def retrieve_contexts_with_function_signature_attributes(
-        self, query: str
-    ) -> List[str]:
-        return ["context 3", "context 4"]
-    ```
+    === "Python"
+
+        ```python
+            @instrument(
+            attributes={
+                "custom_attr__query": "query",
+                "custom_attr__results": "return",
+            }
+        )
+        def retrieve_contexts_with_function_signature_attributes(
+            self, query: str
+        ) -> List[str]:
+            return ["context 3", "context 4"]
+        ```
+
+    === "TypeScript"
+
+        ```typescript
+        import { instrument } from "@trulens/core";
+
+        const retrieveContexts = instrument(
+          async (query: string): Promise<string[]> => {
+            return ["context 3", "context 4"];
+          },
+          {
+            spanName: "retrieveContexts",
+            attributes: {
+              "custom_attr__query": "query",
+              "custom_attr__results": "return",
+            },
+          }
+        );
+        ```
 
 !!! tip "Evaluating Custom Attributes"
 
@@ -80,42 +116,75 @@ In addition to using the `attributes` arg to pass in a dictionary of span attrib
 
 !!! example
 
-    ```python
-    from trulens.core.otel.instrument import instrument
-    from trulens.otel.semconv.trace import SpanAttributes
+    === "Python"
 
-    class RAG:
-        @instrument(
-            span_type=SpanAttributes.SpanType.RETRIEVAL,
-            attributes={
-                SpanAttributes.RETRIEVAL.QUERY_TEXT: "query",
-                SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: "return",
-            },
-        )
-        def retrieve(self, query: str) -> list:
-            """
-            Retrieve relevant text from vector store.
-            """
+        ```python
+        from trulens.core.otel.instrument import instrument
+        from trulens.otel.semconv.trace import SpanAttributes
 
-        @instrument(span_type=SpanAttributes.SpanType.GENERATION)
-        def generate_completion(self, query: str, context_str: list) -> str:
-            """
-            Generate answer from context.
-            """
+        class RAG:
+            @instrument(
+                span_type=SpanAttributes.SpanType.RETRIEVAL,
+                attributes={
+                    SpanAttributes.RETRIEVAL.QUERY_TEXT: "query",
+                    SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: "return",
+                },
+            )
+            def retrieve(self, query: str) -> list:
+                """
+                Retrieve relevant text from vector store.
+                """
 
-        @instrument(
-            span_type=SpanAttributes.SpanType.RECORD_ROOT,
-            attributes={
-                SpanAttributes.RECORD_ROOT.INPUT: "query",
-                SpanAttributes.RECORD_ROOT.OUTPUT: "return",
-            },
-        )
-        def query(self, query: str) -> str:
-            """
-            Retrieve relevant text given a query, and then generate an answer from the context.
-            """
+            @instrument(span_type=SpanAttributes.SpanType.GENERATION)
+            def generate_completion(self, query: str, context_str: list) -> str:
+                """
+                Generate answer from context.
+                """
 
-    ```
+            @instrument(
+                span_type=SpanAttributes.SpanType.RECORD_ROOT,
+                attributes={
+                    SpanAttributes.RECORD_ROOT.INPUT: "query",
+                    SpanAttributes.RECORD_ROOT.OUTPUT: "return",
+                },
+            )
+            def query(self, query: str) -> str:
+                """
+                Retrieve relevant text given a query, and then generate an answer from the context.
+                """
+        ```
+
+    === "TypeScript"
+
+        ```typescript
+        import { instrumentDecorator as instrument } from "@trulens/core";
+        import { SpanAttributes, SpanType } from "@trulens/core";
+
+        class RAG {
+          @instrument({
+            spanType: SpanType.RETRIEVAL,
+            attributes: (ret, _err, query) => ({
+              [SpanAttributes.RETRIEVAL.QUERY_TEXT]: query as string,
+              [SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS]: ret as string[],
+            }),
+          })
+          async retrieve(query: string): Promise<string[]> {
+            // Retrieve relevant text from vector store.
+          }
+
+          @instrument({ spanType: SpanType.GENERATION })
+          async generateCompletion(query: string, contextStr: string[]): Promise<string> {
+            // Generate answer from context.
+          }
+        }
+
+        // Wrap with createTruApp for automatic RECORD_ROOT spans:
+        import { createTruApp } from "@trulens/core";
+        const app = createTruApp(new RAG(), {
+          mainMethod: "query",
+          mainInput: (query: string) => query,
+        });
+        ```
 
 ## Manipulating custom attributes
 
@@ -139,24 +208,51 @@ The lambda function dynamically processes both the function's return value and i
 
 !!! example
 
-    ```python
-    from trulens.core.otel.instrument import instrument
-    from trulens.otel.semconv.trace import SpanAttributes
+    === "Python"
 
-        @instrument(
-            attributes=lambda ret, exception, *args, **kwargs: {
-                SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: [doc["text"] for doc in ret],
-                SpanAttributes.RETRIEVAL.QUERY_TEXT: kwargs["query"].upper()
-            }
-        )
-        def retrieve_contexts(
-            self, query: str
-        ) -> List[Dict[str, str]]:
+        ```python
+        from trulens.core.otel.instrument import instrument
+        from trulens.otel.semconv.trace import SpanAttributes
+
+            @instrument(
+                attributes=lambda ret, exception, *args, **kwargs: {
+                    SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: [doc["text"] for doc in ret],
+                    SpanAttributes.RETRIEVAL.QUERY_TEXT: kwargs["query"].upper()
+                }
+            )
+            def retrieve_contexts(
+                self, query: str
+            ) -> List[Dict[str, str]]:
+                return [
+                    {"text": "context 5", "source": "doc1.pdf"},
+                    {"text": "context 6", "source": "doc2.pdf"}
+                ]
+        ```
+
+    === "TypeScript"
+
+        ```typescript
+        import { instrumentDecorator as instrument } from "@trulens/core";
+        import { SpanAttributes, SpanType } from "@trulens/core";
+
+        class MyRAG {
+          @instrument<[string], Promise<{ text: string; source: string }[]>>({
+            spanType: SpanType.RETRIEVAL,
+            attributes: (ret, _err, query) => ({
+              [SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS]:
+                (ret as { text: string }[]).map((doc) => doc.text),
+              [SpanAttributes.RETRIEVAL.QUERY_TEXT]:
+                (query as string).toUpperCase(),
+            }),
+          })
+          async retrieveContexts(query: string) {
             return [
-                {"text": "context 5", "source": "doc1.pdf"},
-                {"text": "context 6", "source": "doc2.pdf"}
-            ]
-    ```
+              { text: "context 5", source: "doc1.pdf" },
+              { text: "context 6", source: "doc2.pdf" },
+            ];
+          }
+        }
+        ```
 
 !!! tip "Evaluating Manipulated Attributes"
 
@@ -166,9 +262,11 @@ The lambda function dynamically processes both the function's return value and i
 
 In cases where you are leveraging frameworks like `LangChain`, `LangGraph` and `LlamaIndex`, TruLens instruments the framework for you. To take advantage of this instrumentation, you can simply use `TruChain` ([Read more](langchain.md)) for `LangChain`, `TruGraph` ([Read more](langgraph.md)) for `LangGraph`, or `TruLlama` ([Read more](llama_index.md)) for `LlamaIndex` to wrap your application.
 
+For TypeScript, `@trulens/instrumentation-langchain` auto-instruments LangChain.js via its callback system — no decorators needed on app code.
+
 !!! example
 
-    === "_LangChain_"
+    === "_LangChain_ (Python)"
 
         ```python
         from trulens.apps.langchain import TruChain
@@ -186,6 +284,26 @@ In cases where you are leveraging frameworks like `LangChain`, `LangGraph` and `
             app_name="ChatApplication",
             app_version="Base"
         )
+        ```
+
+    === "_LangChain.js_ (TypeScript)"
+
+        ```typescript
+        import { TruSession, SQLiteConnector, createTruApp } from "@trulens/core";
+        import { LangChainInstrumentation } from "@trulens/instrumentation-langchain";
+
+        const session = await TruSession.init({
+          appName: "langchain-rag",
+          appVersion: "v1",
+          connector: new SQLiteConnector(),
+          instrumentations: [new LangChainInstrumentation()],
+        });
+
+        const chain = await buildChain(); // pure LangChain LCEL chain
+        const app = createTruApp(
+          { query: (q: string) => chain.invoke(q) },
+          { mainMethod: "query", mainInput: (q: string) => q },
+        );
         ```
 
     === "_LangGraph_"
