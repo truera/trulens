@@ -4,6 +4,15 @@
   "description": "TruLens OpenTelemetry semantic conventions",
   "keywords": ["trulens", "opentelemetry", "otel", "semconv", "observability"],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/truera/trulens.git",
+    "directory": "typescript/packages/semconv"
+  },
+  "homepage": "https://www.trulens.com",
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",

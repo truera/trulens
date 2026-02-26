@@ -415,6 +415,17 @@ test-typescript-snowflake: build-typescript
 	@echo "── TypeScript SDK Tests: @trulens/connectors-snowflake ──"
 	cd typescript/packages/connectors-snowflake && pnpm run test -- --reporter=default --reporter=junit --outputFile=../../test-results/snowflake-junit.xml
 
+# Usage: make bump-typescript-patch  (or minor, major, prepatch, etc.)
+bump-typescript-%: env-typescript
+	cd typescript && pnpm -r exec npm version $* --no-git-tag-version
+
+publish-typescript-dry: build-typescript
+	cd typescript && pnpm publish -r --dry-run --no-git-checks
+
+# Usage: NPM_TOKEN=npm_xxxx make publish-typescript
+publish-typescript: build-typescript
+	cd typescript && pnpm publish -r --no-git-checks
+
 # ── React components ──────────────────────────────────────────────────
 
 build-record-viewer-otel:
