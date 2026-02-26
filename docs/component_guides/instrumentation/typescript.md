@@ -6,140 +6,98 @@ OpenTelemetry spans that follow TruLens
 any TruLens-connected database and rendered in the same dashboard used by Python
 apps.
 
-!!! info "Scope (v1)"
+!!! info "Scope"
 
-    The TypeScript SDK covers **instrumentation only**: decorating functions,
-    emitting OTEL spans, and exporting them. Evaluation (feedback functions),
-    the dashboard, and database connectors remain in Python. This means you
-    instrument in TypeScript and evaluate/view in Python.
+    The TypeScript SDK covers **instrumentation and local tracing**: decorating
+    functions, emitting OTEL spans, and persisting them to SQLite via an
+    embedded receiver. Evaluation (feedback / metrics) and the dashboard remain
+    in Python. This means you instrument and trace in TypeScript, then evaluate
+    and view in Python.
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    subgraph tsApp [TypeScript App]
-        inst["instrument() / createTruApp()"]
-        autoInst["Auto-instrumentation (OpenAI)"]
-        exp[OTLP Exporter]
-    end
+The recommended path for local development uses **connector mode**, where
+`TruSession` starts an embedded OTLP receiver that writes directly to SQLite
+-- no Python process needed for tracing:
 
-    subgraph pyReceiver [Python TruSession]
-        recv[OTLP Receiver]
-        enrich[Cost Enrichment]
-        db[(SQLite / Postgres)]
-    end
-
-    dashboard[TruLens Dashboard]
-
-    inst --> exp
-    autoInst --> exp
-    exp -->|"OTLP/HTTP"| recv
-    recv --> enrich
-    enrich --> db
-    db --> dashboard
+``` mermaid
+graph LR
+  A["instrument() / createTruApp()"] --> B["OTLP Exporter"]
+  C["Auto-instrumentation"] --> B
+  B -- localhost --> D["TruLensReceiver"]
+  D --> E[("SQLite")]
+  E --> F["Python Evals + Dashboard"]
 ```
 
-Alternatively, for Snowflake AI Observability, spans can be exported directly
-without a Python receiver:
-
-```mermaid
-flowchart LR
-    subgraph tsApp [TypeScript App]
-        inst["instrument() / createTruApp()"]
-        sfExp[Snowflake Exporter]
-    end
-
-    sf[(Snowflake)]
-    dashboard[TruLens Dashboard]
-
-    inst --> sfExp
-    sfExp -->|direct| sf
-    sf --> dashboard
-```
+For Snowflake AI Observability, spans can be exported directly. See
+[Logging in Snowflake](../../component_guides/logging/where_to_log/log_in_snowflake.md#typescript-sdk)
+for setup details.
 
 ## Packages
 
 | Package | Description |
 |---|---|
-| `@trulens/core` | Core SDK: `TruSession`, `instrument()`, `instrumentDecorator()`, `withRecord()`, `createTruApp()` |
+| `@trulens/core` | Core SDK: `TruSession`, `instrument()`, `instrumentDecorator()`, `withRecord()`, `createTruApp()`, `SQLiteConnector`, `TruLensReceiver`, `DBConnector` |
 | `@trulens/semconv` | Semantic conventions (pure port of Python `trace.py`) |
 | `@trulens/instrumentation-openai` | Auto-instrumentation for the OpenAI Node.js SDK |
-| `@trulens/connectors-snowflake` | Direct Snowflake span exporter |
+| `@trulens/instrumentation-langchain` | Auto-instrumentation for LangChain.js via callbacks |
+| `@trulens/connectors-snowflake` | Direct Snowflake span exporter and run manager (see [Logging in Snowflake](../../component_guides/logging/where_to_log/log_in_snowflake.md#typescript-sdk)) |
 
 `@trulens/core` re-exports everything from `@trulens/semconv`, so most apps
 only need a single import.
 
 ## Installation
 
-```bash
-npm install @trulens/core @trulens/instrumentation-openai \
-            @opentelemetry/exporter-trace-otlp-http
-# or
-pnpm add @trulens/core @trulens/instrumentation-openai \
-         @opentelemetry/exporter-trace-otlp-http
-```
-
-For the direct Snowflake path:
+The packages are not yet published to npm. Build from the monorepo:
 
 ```bash
-npm install @trulens/connectors-snowflake
+cd typescript
+pnpm install --no-frozen-lockfile
+pnpm --filter @trulens/semconv build
+pnpm --filter @trulens/core build
+pnpm --filter @trulens/instrumentation-openai build   # if using OpenAI
+pnpm --filter @trulens/instrumentation-langchain build # if using LangChain.js
 ```
 
 ## Session initialisation
 
-`TruSession.init()` is the entry point. It registers the app with the Python
-receiver (so it appears in the dashboard), sets up the OTEL tracer provider,
-and enables any auto-instrumentations.
+`TruSession.init()` is the entry point. It sets up the OTEL tracer provider,
+registers the app, and enables any auto-instrumentations.
 
-=== "OTLP path (SQLite / Postgres)"
+=== "Connector mode (SQLite) -- recommended"
 
     ```typescript
-    import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
-    import { TruSession } from "@trulens/core";
+    import { TruSession, SQLiteConnector } from "@trulens/core";
     import { OpenAIInstrumentation } from "@trulens/instrumentation-openai";
 
     const session = await TruSession.init({
       appName: "my-app",
       appVersion: "v1",
-      exporter: new OTLPTraceExporter({
-        url: "http://localhost:4318/v1/traces",
-      }),
-      endpoint: "http://localhost:4318",
+      connector: new SQLiteConnector(),
       instrumentations: [new OpenAIInstrumentation()],
     });
     ```
 
-=== "Direct Snowflake"
+    This starts an embedded `TruLensReceiver` and writes spans to
+    `default.sqlite` in the current directory. No Python process needed for
+    tracing.
+
+=== "LangChain.js auto-instrumentation"
 
     ```typescript
-    import {
-      SnowflakeConnector,
-      TruLensSnowflakeSpanExporter,
-    } from "@trulens/connectors-snowflake";
-    import { TruSession } from "@trulens/core";
-    import { OpenAIInstrumentation } from "@trulens/instrumentation-openai";
-
-    const connector = new SnowflakeConnector({
-      account: "myorg-myaccount",
-      username: "myuser",
-      password: "mypassword",
-      database: "MY_DB",
-      schema: "MY_SCHEMA",
-    });
+    import { TruSession, SQLiteConnector } from "@trulens/core";
+    import { LangChainInstrumentation } from "@trulens/instrumentation-langchain";
 
     const session = await TruSession.init({
-      appName: "my-app",
+      appName: "langchain-rag",
       appVersion: "v1",
-      exporter: new TruLensSnowflakeSpanExporter({ connector }),
-      instrumentations: [new OpenAIInstrumentation()],
+      connector: new SQLiteConnector(),
+      instrumentations: [new LangChainInstrumentation()],
     });
     ```
 
-!!! note
-
-    `TruSession.init()` is async because it makes an HTTP call to register the
-    app before tracing begins. Omit `endpoint` to skip registration (useful in
-    tests or the Snowflake path).
+    `LangChainInstrumentation` hooks into LangChain's `CallbackManager` so
+    every chain, retriever, and LLM call is traced automatically.
 
 ### Auto-instrumentation
 
@@ -150,10 +108,10 @@ automatically.
 `@trulens/instrumentation-openai` patches `openai.chat.completions.create()`
 so every call produces a `GENERATION` span with:
 
-- `SpanAttributes.COST.MODEL` — the model name
-- `SpanAttributes.COST.NUM_PROMPT_TOKENS` — prompt tokens
-- `SpanAttributes.COST.NUM_COMPLETION_TOKENS` — completion tokens
-- `SpanAttributes.COST.NUM_TOKENS` — total tokens
+- `SpanAttributes.COST.MODEL` -- the model name
+- `SpanAttributes.COST.NUM_PROMPT_TOKENS` -- prompt tokens
+- `SpanAttributes.COST.NUM_COMPLETION_TOKENS` -- completion tokens
+- `SpanAttributes.COST.NUM_TOKENS` -- total tokens
 
 This means you **don't need to manually instrument LLM calls** or change
 return types to expose token counts.
@@ -178,7 +136,7 @@ const retrieve = instrument(
     spanType: SpanType.RETRIEVAL,
     attributes: (ret, _err, query) => ({
       [SpanAttributes.RETRIEVAL.QUERY_TEXT]: query as string,
-      [SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS]: JSON.stringify(ret),
+      [SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS]: ret as string[],
     }),
   }
 );
@@ -190,7 +148,7 @@ const retrieve = instrument(
 |---|---|---|---|
 | `spanName` | `string` | `fn.name` | Name shown in the dashboard trace tree |
 | `spanType` | `SpanType` | `UNKNOWN` | Semantic span type (`RETRIEVAL`, `GENERATION`, etc.) |
-| `attributes` | object or function | — | Static map or `(ret, err, ...args) => Record<string, unknown>` |
+| `attributes` | object or function | -- | Static map or `(ret, err, ...args) => Record<string, unknown>` |
 
 !!! tip "Always set `spanName` for arrow functions"
 
@@ -201,7 +159,7 @@ const retrieve = instrument(
 ### `instrumentDecorator(options)`
 
 Method decorator for TypeScript 5+ (Stage 3 decorators). Automatically infers
-the span name from the method name — no `spanName` needed:
+the span name from the method name -- no `spanName` needed:
 
 ```typescript
 import { instrumentDecorator as instrument } from "@trulens/core";
@@ -216,7 +174,7 @@ class MyRAG {
 
 ### `withRecord(fn, options)`
 
-Creates a `RECORD_ROOT` span — the top-level span the dashboard uses as the
+Creates a `RECORD_ROOT` span -- the top-level span the dashboard uses as the
 entry point for a complete app execution:
 
 ```typescript
@@ -242,7 +200,7 @@ share the same `RECORD_ID`.
 ### `createTruApp(target, options)`
 
 Wraps an app object so its "main" method is automatically traced with a
-`RECORD_ROOT` span — no per-call `withRecord()` needed:
+`RECORD_ROOT` span -- no per-call `withRecord()` needed:
 
 ```typescript
 import { createTruApp } from "@trulens/core";
@@ -253,7 +211,6 @@ const app = createTruApp(rag, {
   mainInput: (question: string) => question,
 });
 
-// Calling app.query("What is RAG?") automatically creates a RECORD_ROOT span
 const answer = await app.query("What is RAG?");
 ```
 
@@ -276,10 +233,9 @@ There are two approaches for capturing token/cost data:
 
 Register `OpenAIInstrumentation` in `TruSession.init()`. Every
 `openai.chat.completions.create()` call is automatically traced with model
-name and token counts. The Python receiver computes USD cost server-side.
+name and token counts.
 
 ```typescript
-// No manual instrumentation needed for LLM calls
 async generate(query: string, contexts: string[]): Promise<string> {
   const response = await this.openai.chat.completions.create({ ... });
   return response.choices[0]?.message.content ?? "";
@@ -329,6 +285,13 @@ Commonly used attributes:
 | `SpanAttributes.RECORD_ROOT` | `INPUT`, `OUTPUT`, `ERROR` |
 | `SpanAttributes.CALL` | `FUNCTION`, `KWARGS`, `RETURN`, `ERROR` |
 
+!!! note "Array attributes"
+
+    The TypeScript SDK passes arrays (e.g. `RETRIEVED_CONTEXTS`) as native
+    OTEL array attributes (`string[]`), not as JSON strings. This means
+    Python-side `Selector` with `collect_list=False` correctly iterates over
+    individual elements.
+
 ## Flushing spans
 
 Before the process exits, flush pending spans:
@@ -340,70 +303,88 @@ await session.shutdown();
 The `BatchSpanProcessor` buffers spans for efficiency. If you skip this call,
 recent spans may be lost.
 
-## Starting the Python OTLP receiver
+## Pluggable database connectors
 
-The receiver is built into `TruSession`:
+The `DBConnector` interface allows swapping the storage backend. The built-in
+`SQLiteConnector` writes to a local `.sqlite` file compatible with Python's
+`TruSession` and dashboard. Custom connectors (e.g. PostgreSQL) can implement
+the same interface:
 
-```bash
-python -c "
-from trulens.core import TruSession
-
-session = TruSession()
-session.start_otlp_receiver(port=4318)
-print('Listening on :4318')
-input()
-"
-```
-
-For PostgreSQL, pass `database_url`:
-
-```python
-session = TruSession(database_url="postgresql://user:pass@host/db")
+```typescript
+interface DBConnector {
+  addApp(app: AppDefinition): string;
+  addEvents(events: EventRecord[]): string[];
+  close(): void;
+}
 ```
 
 ## Dashboard compatibility
 
 TypeScript-emitted spans are structurally identical to Python-emitted spans.
-The TruLens dashboard requires **no changes** to display them — the same
+The TruLens dashboard requires **no changes** to display them -- the same
 Leaderboard, Records, and Trace Details views work out of the box.
 
-## Evaluating TypeScript traces with Python feedback functions
+The `SQLiteConnector` creates all tables the dashboard expects (`trulens_apps`,
+`trulens_events`, `trulens_records`, `trulens_feedback_defs`,
+`trulens_feedbacks`) and stamps the alembic version, so Python's `TruSession`
+can open the same file without migration.
 
-Although feedback functions are defined in Python, they can evaluate spans
-produced by the TypeScript SDK. The workflow is:
+## Evaluating TypeScript traces with Python
 
-1. Run your TypeScript app (spans are stored in the database).
-2. Define feedback functions in Python using `Selector` to pick span attributes.
-3. Run evaluation — TruLens reads the stored spans and computes scores.
+Although metrics are defined in Python, they can evaluate spans produced by
+the TypeScript SDK. The workflow is:
+
+1. Run your TypeScript app (spans are stored in `default.sqlite`).
+2. Define metrics in Python using `Selector` to pick span attributes.
+3. Run evaluation -- TruLens reads the stored spans and computes scores.
 
 ```python
-from trulens.core import Feedback
+from trulens.core import TruSession, Metric
 from trulens.core.feedback.selector import Selector
 from trulens.providers.openai import OpenAI
 from trulens.otel.semconv.trace import SpanAttributes
 
+session = TruSession()
 provider = OpenAI()
 
-f_relevance = (
-    Feedback(provider.relevance_with_cot_reasons, name="Answer Relevance")
-    .on_input()
-    .on_output()
+f_relevance = Metric(
+    implementation=provider.relevance_with_cot_reasons,
+    name="Answer Relevance",
+    selectors={
+        "prompt": Selector(
+            span_type=SpanAttributes.SpanType.RECORD_ROOT,
+            span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
+        ),
+        "response": Selector(
+            span_type=SpanAttributes.SpanType.RECORD_ROOT,
+            span_attribute=SpanAttributes.RECORD_ROOT.OUTPUT,
+        ),
+    },
 )
 
-f_groundedness = (
-    Feedback(provider.groundedness_measure_with_cot_reasons, name="Groundedness")
-    .on({
-        "context": Selector(
+f_groundedness = Metric(
+    implementation=provider.groundedness_measure_with_cot_reasons,
+    name="Groundedness",
+    selectors={
+        "source": Selector(
             span_type=SpanAttributes.SpanType.RETRIEVAL,
             span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
             collect_list=True,
         ),
-    })
-    .on_output()
+        "statement": Selector(
+            span_type=SpanAttributes.SpanType.RECORD_ROOT,
+            span_attribute=SpanAttributes.RECORD_ROOT.OUTPUT,
+        ),
+    },
 )
+
+events = session.get_events(app_name="my-app", app_version="v1")
+session.compute_feedbacks_on_events(events, [f_relevance, f_groundedness])
 ```
 
-## Quickstart
+## Quickstarts
 
-See the [TypeScript Quickstart](../../getting_started/quickstarts/typescript_quickstart.md)
-for a complete, copy-pasteable example.
+- [TypeScript Quickstart](../../getting_started/quickstarts/typescript_quickstart.md) --
+  instrument a RAG app with OpenAI, evaluate with the RAG triad, view in the dashboard
+- [LangChain.js Quickstart](../../getting_started/quickstarts/langchain_typescript_quickstart.md) --
+  auto-instrument a LangChain LCEL chain with zero TruLens imports in app code

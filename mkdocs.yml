@@ -28,7 +28,11 @@ markdown_extensions:
   - pymdownx.magiclink
   # - pymdownx.mark
   # - pymdownx.smartsymbols
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.details
@@ -228,6 +232,7 @@ nav:
           - getting_started/quickstarts/groundtruth_evals_for_retrieval_systems.ipynb
           - getting_started/quickstarts/web-search-agent-evaluation.ipynb
           - TypeScript Quickstart: getting_started/quickstarts/typescript_quickstart.md
+          - TypeScript + LangChain.js Quickstart: getting_started/quickstarts/langchain_typescript_quickstart.md
       - ⭐ Core Concepts:
           - getting_started/core_concepts/index.md
           - ☔ Metrics: getting_started/core_concepts/feedback_functions.md

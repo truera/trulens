@@ -60,6 +60,80 @@ Connecting TruLens to a Snowflake database for logging traces and evaluations on
 
 Once you've instantiated the `TruSession` object with your Snowflake connection, all _TruLens_ traces and evaluations will be logged to Snowflake.
 
+## TypeScript SDK
+
+The `@trulens/connectors-snowflake` package lets TypeScript applications export
+OTEL spans directly to Snowflake AI Observability -- no local database or Python
+process required for tracing.
+
+``` mermaid
+graph LR
+  A["TypeScript App"] --> B["Snowflake Exporter"]
+  B -- direct --> C[("Snowflake AI Observability")]
+```
+
+### Install and build
+
+```bash
+cd typescript
+pnpm install --no-frozen-lockfile
+pnpm --filter @trulens/semconv build
+pnpm --filter @trulens/core build
+pnpm --filter @trulens/instrumentation-langchain build  # if using LangChain.js
+pnpm --filter @trulens/connectors-snowflake build
+```
+
+### Connect to Snowflake
+
+```typescript
+import {
+  SnowflakeConnector,
+  TruLensSnowflakeSpanExporter,
+  SnowflakeRunManager,
+} from "@trulens/connectors-snowflake";
+import { TruSession } from "@trulens/core";
+import { LangChainInstrumentation } from "@trulens/instrumentation-langchain";
+
+const connector = new SnowflakeConnector({
+  account: process.env.SNOWFLAKE_ACCOUNT!,
+  username: process.env.SNOWFLAKE_USER!,
+  password: process.env.SNOWFLAKE_PASSWORD!,
+  database: "MY_DB",
+  schema: "MY_SCHEMA",
+  warehouse: "MY_WH",
+});
+
+const runManager = new SnowflakeRunManager({ connector });
+await runManager.ensureExternalAgent();
+
+const session = await TruSession.init({
+  appName: "my-ts-app",
+  appVersion: "v1",
+  exporter: new TruLensSnowflakeSpanExporter({ runManager }),
+  instrumentations: [new LangChainInstrumentation()],
+  runName: runManager.runId,
+});
+```
+
+### Compute metrics
+
+After your app has run and spans have been flushed, request server-side metric
+computation and wait for it to complete:
+
+```typescript
+await runManager.computeMetrics({
+  metrics: ["answer_relevance", "context_relevance", "groundedness"],
+});
+
+await runManager.waitForMetrics();
+await session.shutdown();
+```
+
+Results are visible in the Snowflake AI Observability UI.
+
+For a complete walkthrough, see the
+[LangChain.js + Snowflake Quickstart](../../../examples/expositional/frameworks/langchain/langchain_typescript_snowflake_quickstart.md).
+
 ## Connect TruLens to the Snowflake database using an engine
 
 In some cases such as when using [key-pair authentication](https://docs.snowflake.com/en/developer-guide/python-connector/sqlalchemy#key-pair-authentication-support), the SQLAlchemy URL does not support the credentials required. In this case, you can instead create and pass a database engine.
