@@ -5,3 +5,4 @@ src/benchmark/trulens/benchmark/benchmark_frameworks/experiments/**/*.csv filter
 src/benchmark/trulens/benchmark/benchmark_frameworks/experiments/GPA/*.csv filter=lfs diff=lfs merge=lfs -text
 src/benchmark/trulens/benchmark/benchmark_frameworks/experiments/GPA/GAIA/* filter=lfs diff=lfs merge=lfs -text
 src/benchmark/trulens/benchmark/benchmark_frameworks/experiments/GPA/SWE_Bench/* filter=lfs diff=lfs merge=lfs -text
+src/benchmark/trulens/benchmark/benchmark_frameworks/experiments/GPA/GEPA_prompts_logs/**/*.log filter=lfs diff=lfs merge=lfs -text
