@@ -47,8 +47,8 @@ SNOWFLAKE_ACCOUNT = os.environ.get(
 JWT_TOKEN = os.environ.get("SNOWFLAKE_JWT", "")
 
 # LM Configuration
-STUDENT_LM_MODEL = "openai/claude-sonnet-4-5"
-META_LM_MODEL = "openai/claude-sonnet-4-5"
+STUDENT_LM_MODEL = "openai/claude-4-sonnet"
+META_LM_MODEL = "openai/claude-4-sonnet"
 REFLECTION_LM_MODEL = "openai/claude-sonnet-4-5"
 LM_TEMPERATURE_DEFAULT = 1.0
 LM_TEMPERATURE_EVAL = 0.0
@@ -63,16 +63,17 @@ TEST_CSV = DATA_DIR / "SWE-Bench_Test.csv"
 TRACE_DIR = DATA_DIR / "SWE_Bench"
 
 # Optimization settings
-RUN_OPTIMIZATION = False
+RUN_OPTIMIZATION = True
+AUTO_SETTING = "medium"  # "light", "medium", "heavy"
 OPTIMIZATION_CATEGORIES: list[str] = [
     "LC",
     "EE",
     "TC",
 ]  # Empty list = all categories, non-empty = only these
-MAX_PARALLEL_WORKERS = 2
+MAX_PARALLEL_WORKERS = 3
 GEPA_NUM_THREADS = 2
 INPUT_PROMPT_FILE = (
-    "auto_light_swebench_optimized_judge_prompts_20251129_221543.json"
+    "improved_metajudge_auto_light_swebench_judge_prompts_20260203_144734.json"
 )
 
 # Retry settings
@@ -80,12 +81,10 @@ MAX_RETRIES = 5
 INITIAL_RETRY_DELAY = 2
 
 # Output file names (timestamp will be appended)
-LOG_FILE_PREFIX = "auto_light_swebench_metajudge_temp0_eval"
-OUTPUT_PROMPT_FILE = (
-    "fixed_metajudge_auto_light_swebench_optimized_judge_prompts_run2"
-)
+LOG_FILE_PREFIX = "improved-auto-medium_swebench"
+OUTPUT_PROMPT_FILE = "improved_metajudge_auto_medium_swebench_judge_prompts"
 ITERATION_FILE_PREFIX = (
-    "fixed_metajudge_auto_light_swebench_prompt_iterations_run2"
+    "improved_metajudge_auto_medium_swebench_judge_prompt_iteration"
 )
 
 # Debug settings
@@ -191,7 +190,7 @@ def parse_score_string(score_str: str) -> tuple[int, int]:
     """
     score_line = score_str.strip().split("\n")[0].strip()
     parts = score_line.split("/")
-    return int(parts[0]), int(parts[1])
+    return round(float(parts[0])), round(float(parts[1]))
 
 
 def format_golden_errors(errors: list[str]) -> str:
@@ -338,10 +337,27 @@ For each golden error, state:
 1. Whether it was CAUGHT or MISSED
 2. If CAUGHT: Quote the relevant portion of the critique that mentions it
 3. If MISSED: Explain what the critique missed and provide specific guidance for improvement (e.g., "Should have identified the repeated failed tool calls with invalid arguments" or "Missed the inefficient search pattern - look for unnecessary repeated operations")
+
+CRITICAL FRAMING - You are a mentor coaching a REFERENCE-FREE evaluator that always outputs a score and critique:
+- The student judge ONLY sees the trace - it has no access to ground truth errors
+- Never mention "golden errors", "ground truth", or that you're comparing against a reference
+- Never use "CAUGHT" or "MISSED" terminology
+- Never reveal your own evaluation process or scoring
+
+For each error pattern the student overlooked, provide:
+1. What to look for in traces (e.g., "Look for cases where the agent makes assertions without first verifying them against available data")
+2. Specific signals that indicate this error type (e.g., "When you see X happening without Y preceding it, this is a red flag")
+3. How to deepen critique coverage in this area
+
+IMPORTANT - Provide GENERALIZABLE advice:
+- Focus on transferable patterns and heuristics that apply across many traces, not just this specific trace
+- Describe error categories and general signals rather than pointing to specific step numbers or exact quotes from this trace
+- The goal is to help the student judge improve on ALL future traces, not just recognize this particular example
 """
     )
     overall_score: str = dspy.OutputField(
-        desc="Recall score showing fraction of golden errors successfully caught. Return ONLY a simple fraction string in the format: <integer caught>/<integer total> (e.g., '3/5' or '0/4'). Each error is either fully caught or fully missed - no partial credit. Count conservatively but fairly based on your analysis above."
+        desc="""Recall score showing fraction of golden errors successfully caught. Return EXACTLY one fraction: caught/total (e.g., '3/5', '0/4'). No other text, no decimals, INTEGERS ONLY.
+        The denominator MUST equal the exact count of items in the golden_errors list. Count each error INDIVIDUALLY - never merge or group similar errors. Each error is fully caught (1) or fully missed (0). No partial credit, no 0.5 values."""
     )
 
 
@@ -447,7 +463,7 @@ def evaluate_prediction(
 
     try:
         pred = student(trace=example.trace)
-        logger.log(f"pred: {pred}")
+        logger.log(f"pred: {pred.critique}")
 
         golden_errors_str = format_golden_errors(example.errors)
 
@@ -466,6 +482,9 @@ def evaluate_prediction(
         logger.log(
             f"  ✓ Test score: {score_decimal:.2f} ({caught}/{total} errors caught)"
         )
+        # logger.log(
+        #     f"  Error caught summary: {evaluation.error_caught_summary}"
+        # )
         logger.log(f"  Feedback: {evaluation.feedback_analysis}")
 
         return caught, total, True
@@ -564,7 +583,7 @@ def optimize_category(
             reflection_lm=create_lm(
                 model=REFLECTION_LM_MODEL, temperature=LM_TEMPERATURE_DEFAULT
             ),
-            auto="light",
+            auto=AUTO_SETTING,
             num_threads=GEPA_NUM_THREADS,
         )
 
