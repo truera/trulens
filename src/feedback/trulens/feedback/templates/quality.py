@@ -164,3 +164,14 @@ Answer only with an integer from 1 to 10 based on how semantically similar the r
 where 0 is no semantic similarity at all and 10 is perfect agreement between the responses and the expected answer.
 On a NEW LINE, give the integer score and nothing more.
 """
+
+__all__ = [
+    "Conciseness",
+    "Correctness",
+    "Coherence",
+    "Sentiment",
+    "Helpfulness",
+    "Controversiality",
+    "CORRECT_SYSTEM",
+    "AGREEMENT_SYSTEM",
+]

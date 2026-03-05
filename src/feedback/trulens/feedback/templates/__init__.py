@@ -9,13 +9,26 @@ Domain files:
     safety.py – Moderation / safety templates
     quality.py – Text quality templates (coherence, sentiment, …)
     agent.py  – Agentic evaluation templates
+Only symbols explicitly listed in each domain module's ``__all__``
+are re-exported from this package.
 """
 
-# Re-export everything so `from trulens.feedback.templates import X`
-# works for any public symbol.
-
+# Re-export public symbols declared by each domain module.
+from trulens.feedback.templates import agent as _agent
+from trulens.feedback.templates import base as _base
+from trulens.feedback.templates import quality as _quality
+from trulens.feedback.templates import rag as _rag
+from trulens.feedback.templates import safety as _safety
 from trulens.feedback.templates.agent import *  # noqa: F401, F403
 from trulens.feedback.templates.base import *  # noqa: F401, F403
 from trulens.feedback.templates.quality import *  # noqa: F401, F403
 from trulens.feedback.templates.rag import *  # noqa: F401, F403
 from trulens.feedback.templates.safety import *  # noqa: F401, F403
+
+__all__ = (
+    _base.__all__
+    + _rag.__all__
+    + _quality.__all__
+    + _safety.__all__
+    + _agent.__all__
+)
