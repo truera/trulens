@@ -2,6 +2,7 @@
 Tests for OTEL app.
 """
 
+import logging
 import os
 import tempfile
 from typing import Dict, List, Optional, Tuple
@@ -18,7 +19,6 @@ from tests.test import TruTestCase
 from tests.util.df_comparison import (
     compare_dfs_accounting_for_ids_and_timestamps,
 )
-
 
 class OtelTestCase(TruTestCase):
     _orig_TRULENS_OTEL_TRACING: Optional[str] = None
@@ -66,7 +66,11 @@ class OtelTestCase(TruTestCase):
             try:
                 os.unlink(self._db_path)
             except OSError:
-                pass
+                logger.debug(
+                    "Failed to remove temp OTEL test database: %s",
+                    self._db_path,
+                    exc_info=True,
+                )
 
     @staticmethod
     def _get_events() -> pd.DataFrame:
