@@ -12,7 +12,7 @@ from snowflake.snowpark import context
 from snowflake.snowpark.exceptions import SnowparkSessionException
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.feedback import llm_provider
-from trulens.feedback import prompts as feedback_prompts
+from trulens.feedback.templates import quality as templates_quality
 from trulens.providers.cortex import endpoint as cortex_endpoint
 
 logger = logging.getLogger(__name__)
@@ -235,7 +235,7 @@ class Cortex(
         assert self.endpoint is not None, "Endpoint is not set."
 
         messages = [
-            {"role": "system", "content": feedback_prompts.AGREEMENT_SYSTEM},
+            {"role": "system", "content": templates_quality.AGREEMENT_SYSTEM},
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": response},
             {"role": "user", "content": check_response},
