@@ -9,6 +9,7 @@ import sys
 import threading
 from threading import Thread
 from typing import Optional
+import warnings
 
 from trulens.core import session as core_session
 from trulens.core.database.connector.base import DBConnector
@@ -20,6 +21,12 @@ from typing_extensions import Doc
 DASHBOARD_START_TIMEOUT: Annotated[
     int, Doc("Seconds to wait for dashboard to start")
 ] = 30
+
+_SIS_DEPRECATION_MESSAGE = (
+    "`run_dashboard_sis` and `sis_compatibility_mode` are deprecated and will "
+    "be removed in a future release. For Snowflake, use the AI Observability "
+    "Evaluations page in Snowsight."
+)
 
 
 def find_unused_port() -> int:
@@ -57,7 +64,9 @@ def run_dashboard(
 
         force (bool): Stop existing dashboard(s) first. Defaults to `False`.
 
-        sis_compatibility_mode (bool): Flag to enable compatibility with Streamlit in Snowflake (SiS). SiS runs on Python 3.8, Streamlit 1.35.0, and does not support bidirectional custom components. As a result, enabling this flag will replace custom components in the dashboard with native Streamlit components. Defaults to `False`.
+        sis_compatibility_mode (bool): Deprecated. This compatibility mode
+            will be removed in a future release. For Snowflake, use the AI
+            Observability Evaluations page in Snowsight.
 
         spcs_mode (bool): Flag to enable compatibility with Snowpark Container Services (SPCS).
 
@@ -182,6 +191,11 @@ def run_dashboard(
             connector.db.engine.url.render_as_string(hide_password=False),
         ]
     if sis_compatibility_mode:
+        warnings.warn(
+            _SIS_DEPRECATION_MESSAGE,
+            DeprecationWarning,
+            stacklevel=2,
+        )
         args += ["--sis-compatibility"]
 
     proc = subprocess.Popen(
@@ -370,6 +384,18 @@ def run_dashboard_sis(
     warehouse: Optional[str] = None,
     init_server_side_with_staged_packages: bool = False,
 ):
+    """Set up the legacy Streamlit in Snowflake dashboard.
+
+    Deprecated:
+        This function is deprecated and will be removed in a future release.
+        For Snowflake, use the AI Observability Evaluations page in Snowsight.
+    """
+    warnings.warn(
+        _SIS_DEPRECATION_MESSAGE,
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
     with import_utils.OptionalImports(
         messages=import_utils.format_import_errors(
             "trulens-connectors-snowflake",

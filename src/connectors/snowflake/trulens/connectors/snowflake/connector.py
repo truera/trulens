@@ -12,6 +12,7 @@ from typing import (
     Tuple,
     Union,
 )
+import warnings
 
 from trulens.connectors.snowflake.dao.enums import ObjectType
 from trulens.connectors.snowflake.dao.external_agent import ExternalAgentDao
@@ -37,6 +38,12 @@ from snowflake.snowpark import Session
 from snowflake.sqlalchemy import URL
 
 logger = logging.getLogger(__name__)
+
+_SIS_DASHBOARD_DEPRECATION_MESSAGE = (
+    "The Streamlit in Snowflake dashboard setup path is deprecated and will be "
+    "removed in a future release. Use the AI Observability Evaluations page "
+    "in Snowsight instead."
+)
 
 # [HACK!] To have sqlalchemy.JSON work with Snowflake, we need to monkey patch
 # the SnowflakeDialect to have the JSON serializer and deserializer set to None.
@@ -291,6 +298,11 @@ class SnowflakeConnector(DBConnector):
                 init_server_side_with_staged_packages,
             ).set_up_all()
         if init_sis_dashboard:
+            warnings.warn(
+                _SIS_DASHBOARD_DEPRECATION_MESSAGE,
+                DeprecationWarning,
+                stacklevel=2,
+            )
             self._set_up_sis_dashboard(
                 session=snowpark_session,
                 warehouse=connection_parameters["warehouse"],
@@ -384,6 +396,11 @@ class SnowflakeConnector(DBConnector):
         warehouse: Optional[str] = None,
         init_server_side_with_staged_packages: bool = False,
     ) -> None:
+        warnings.warn(
+            _SIS_DASHBOARD_DEPRECATION_MESSAGE,
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return SiSDashboardArtifacts(
             streamlit_name,
             session or self.snowpark_session,

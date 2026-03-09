@@ -45,6 +45,9 @@ As a result of these changes, the package structure for TruLens differs from Tru
 | `trulens_eval.guardrails.llama` | [trulens.apps.llamaindex.guardrails][trulens.apps.llamaindex.guardrails] | `trulens-apps-llamaindex` |
 | `Tru().run_dashboard()` | [`trulens.dashboard.run_dashboard()`][trulens.dashboard.run_dashboard] | `trulens-dashboard` |
 
+For Snowflake-based workflows, use the AI Observability **Evaluations** page
+in Snowsight instead of launching a local dashboard.
+
 To find a specific definition, use the search functionality or go directly to the [API Reference](../../reference/index.md).
 
 

@@ -8,6 +8,12 @@ TruLens provides a broad set of capabilities for evaluating and tracking applica
 
 To view and examine application logs and feedback results, TruLens provides a built-in Streamlit dashboard. That app has two pages, the Leaderboard which displays aggregate feedback results and metadata for each application version, and the Evaluations page where you can more closely examine individual traces and feedback results. This dashboard is launched by [run_dashboard][trulens.dashboard.run_dashboard], and will run from a database url you specify with  [TruSession()][trulens.core.TruSession].
 
+!!! note
+
+    If you are using Snowflake, do not launch the local Streamlit dashboard
+    with `run_dashboard`. Instead, use the AI Observability **Evaluations**
+    page in Snowsight.
+
 !!! example "Launch the TruLens dashboard"
 
     ```python

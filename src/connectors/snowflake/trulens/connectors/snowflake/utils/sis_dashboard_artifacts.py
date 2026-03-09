@@ -22,7 +22,12 @@ _TRULENS_DEPENDENCIES = [
 
 
 class SiSDashboardArtifacts:
-    """This class is used to set up Snowflake artifacts for launching the dashboard on SiS."""
+    """Set up Snowflake artifacts for launching the dashboard on SiS.
+
+    Deprecated:
+        This setup flow is deprecated. For Snowflake, use the AI
+        Observability Evaluations page in Snowsight.
+    """
 
     def __init__(
         self,
