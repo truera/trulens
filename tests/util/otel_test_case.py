@@ -22,6 +22,7 @@ from tests.util.df_comparison import (
 
 logger = logging.getLogger(__name__)
 
+
 class OtelTestCase(TruTestCase):
     _orig_TRULENS_OTEL_TRACING: Optional[str] = None
     _db_path: Optional[str] = None
