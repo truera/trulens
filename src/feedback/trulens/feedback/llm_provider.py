@@ -28,8 +28,11 @@ from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils.threading import ThreadPoolExecutor
 from trulens.feedback import generated as feedback_generated
 from trulens.feedback import output_schemas as feedback_output_schemas
-from trulens.feedback import prompts as feedback_prompts
-from trulens.feedback.v2 import feedback as feedback_v2
+from trulens.feedback.templates import agent as templates_agent
+from trulens.feedback.templates import base as templates_base
+from trulens.feedback.templates import quality as templates_quality
+from trulens.feedback.templates import rag as templates_rag
+from trulens.feedback.templates import safety as templates_safety
 
 logger = logging.getLogger(__name__)
 
@@ -536,7 +539,7 @@ class LLMProvider(core_provider.Provider):
         Returns:
             str: The corresponding output space.
         """
-        for output in feedback_v2.OutputSpace:
+        for output in templates_base.OutputSpace:
             if output.value == (min_score_val, max_score_val):
                 return output.name
         raise ValueError(
@@ -599,7 +602,7 @@ class LLMProvider(core_provider.Provider):
             min_score_val, max_score_val
         )
 
-        system_prompt = feedback_v2.ContextRelevance.generate_system_prompt(
+        system_prompt = templates_rag.ContextRelevance.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
@@ -611,7 +614,7 @@ class LLMProvider(core_provider.Provider):
         return self.generate_score(
             system_prompt=system_prompt,
             user_prompt=str.format(
-                feedback_prompts.CONTEXT_RELEVANCE_USER,
+                templates_rag.ContextRelevance.user_prompt,
                 question=question,
                 context=context,
             ),
@@ -674,28 +677,30 @@ class LLMProvider(core_provider.Provider):
         )
 
         user_prompt = str.format(
-            feedback_prompts.CONTEXT_RELEVANCE_USER,
+            templates_rag.ContextRelevance.user_prompt,
             question=question,
             context=context,
         )
         user_prompt = user_prompt.replace(
-            "RELEVANCE:", feedback_prompts.COT_REASONS_TEMPLATE
+            "RELEVANCE:", templates_base.COT_REASONS_TEMPLATE
         )
         # Use default COT prompt only if no criteria AND no additional_instructions
         if criteria is None and additional_instructions is None:
-            system_prompt = feedback_v2.ContextRelevance.default_cot_prompt
+            system_prompt = templates_rag.ContextRelevance.default_cot_prompt
         else:
             output_space = self._determine_output_space(
                 min_score_val, max_score_val
             )
 
-            system_prompt = feedback_v2.ContextRelevance.generate_system_prompt(
-                min_score=min_score_val,
-                max_score=max_score_val,
-                criteria=criteria,
-                additional_instructions=additional_instructions,
-                examples=examples,
-                output_space=output_space,
+            system_prompt = (
+                templates_rag.ContextRelevance.generate_system_prompt(
+                    min_score=min_score_val,
+                    max_score=max_score_val,
+                    criteria=criteria,
+                    additional_instructions=additional_instructions,
+                    examples=examples,
+                    output_space=output_space,
+                )
             )
 
         return self.generate_score_and_reasons(
@@ -772,7 +777,7 @@ class LLMProvider(core_provider.Provider):
         )
 
         system_prompt = (
-            feedback_v2.PromptResponseRelevance.generate_system_prompt(
+            templates_rag.PromptResponseRelevance.generate_system_prompt(
                 min_score=min_score_val,
                 max_score=max_score_val,
                 criteria=criteria,
@@ -785,7 +790,7 @@ class LLMProvider(core_provider.Provider):
         return self.generate_score(
             system_prompt=system_prompt,
             user_prompt=str.format(
-                feedback_prompts.ANSWER_RELEVANCE_USER,
+                templates_rag.PromptResponseRelevance.user_prompt,
                 prompt=prompt,
                 response=response,
             ),
@@ -850,7 +855,7 @@ class LLMProvider(core_provider.Provider):
         )
 
         system_prompt = (
-            feedback_v2.PromptResponseRelevance.generate_system_prompt(
+            templates_rag.PromptResponseRelevance.generate_system_prompt(
                 min_score=min_score_val,
                 max_score=max_score_val,
                 criteria=criteria,
@@ -861,12 +866,12 @@ class LLMProvider(core_provider.Provider):
         )
 
         user_prompt = str.format(
-            feedback_prompts.ANSWER_RELEVANCE_USER,
+            templates_rag.PromptResponseRelevance.user_prompt,
             prompt=prompt,
             response=response,
         )
         user_prompt = user_prompt.replace(
-            "RELEVANCE:", feedback_prompts.COT_REASONS_TEMPLATE
+            "RELEVANCE:", templates_base.COT_REASONS_TEMPLATE
         )
 
         return self.generate_score_and_reasons(
@@ -928,7 +933,7 @@ class LLMProvider(core_provider.Provider):
             min_score_val=min_score_val, max_score_val=max_score_val
         )
 
-        system_prompt = feedback_v2.Sentiment.generate_system_prompt(
+        system_prompt = templates_quality.Sentiment.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
@@ -937,7 +942,7 @@ class LLMProvider(core_provider.Provider):
             output_space=output_space,
         )
 
-        user_prompt = feedback_prompts.SENTIMENT_USER + text
+        user_prompt = templates_quality.Sentiment.user_prompt + text
         return self.generate_score(
             system_prompt,
             user_prompt,
@@ -997,7 +1002,7 @@ class LLMProvider(core_provider.Provider):
             min_score_val=min_score_val, max_score_val=max_score_val
         )
 
-        system_prompt = feedback_v2.Sentiment.generate_system_prompt(
+        system_prompt = templates_quality.Sentiment.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
@@ -1006,9 +1011,9 @@ class LLMProvider(core_provider.Provider):
             output_space=output_space,
         )
         user_prompt = (
-            feedback_prompts.SENTIMENT_USER
+            templates_quality.Sentiment.user_prompt
             + text
-            + feedback_prompts.COT_REASONS_TEMPLATE
+            + templates_base.COT_REASONS_TEMPLATE
         )
         return self.generate_score_and_reasons(
             system_prompt,
@@ -1044,7 +1049,7 @@ class LLMProvider(core_provider.Provider):
             DeprecationWarning,
         )
         chat_response = self._create_chat_completion(
-            prompt=feedback_prompts.CORRECT_SYSTEM
+            prompt=templates_quality.CORRECT_SYSTEM
         )
         agreement_txt = self._get_answer_agreement(
             prompt, response, chat_response
@@ -1121,7 +1126,7 @@ class LLMProvider(core_provider.Provider):
             min_score=min_score_val, max_score=max_score_val
         )
 
-        validated = feedback_v2.CriteriaOutputSpaceMixin.validate_criteria_and_output_space(
+        validated = templates_base.CriteriaOutputSpaceMixin.validate_criteria_and_output_space(
             criteria=criteria, output_space=output_space
         )
 
@@ -1132,11 +1137,11 @@ class LLMProvider(core_provider.Provider):
         )
 
         system_prompt = output_space_prompt + str.format(
-            feedback_prompts.LANGCHAIN_PROMPT_TEMPLATE_SYSTEM,
+            templates_base.LANGCHAIN_PROMPT_TEMPLATE_SYSTEM,
             criteria=validated.criteria,
         )
         user_prompt = str.format(
-            feedback_prompts.LANGCHAIN_PROMPT_TEMPLATE_USER, submission=text
+            templates_base.LANGCHAIN_PROMPT_TEMPLATE_USER, submission=text
         )
 
         return self.generate_score(
@@ -1178,7 +1183,7 @@ class LLMProvider(core_provider.Provider):
             min_score=min_score_val, max_score=max_score_val
         )
 
-        validated = feedback_v2.CriteriaOutputSpaceMixin.validate_criteria_and_output_space(
+        validated = templates_base.CriteriaOutputSpaceMixin.validate_criteria_and_output_space(
             criteria=criteria, output_space=output_space
         )
 
@@ -1189,12 +1194,12 @@ class LLMProvider(core_provider.Provider):
         )
 
         system_prompt = output_space_prompt + str.format(
-            feedback_prompts.LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS_SYSTEM,
+            templates_base.LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS_SYSTEM,
             criteria=validated.criteria,
         )
 
         user_prompt = str.format(
-            feedback_prompts.LANGCHAIN_PROMPT_TEMPLATE_USER, submission=text
+            templates_base.LANGCHAIN_PROMPT_TEMPLATE_USER, submission=text
         )
         return self.generate_score_and_reasons(
             system_prompt,
@@ -1249,7 +1254,7 @@ class LLMProvider(core_provider.Provider):
 
         criteria = self._build_criteria_with_instructions(
             criteria,
-            feedback_prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT,
+            templates_quality.Conciseness.system_prompt,
             additional_instructions,
         )
 
@@ -1304,7 +1309,7 @@ class LLMProvider(core_provider.Provider):
 
         criteria = self._build_criteria_with_instructions(
             criteria,
-            feedback_prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT,
+            templates_quality.Conciseness.system_prompt,
             additional_instructions,
         )
 
@@ -1360,7 +1365,7 @@ class LLMProvider(core_provider.Provider):
 
         criteria = self._build_criteria_with_instructions(
             criteria,
-            feedback_prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT,
+            templates_quality.Correctness.system_prompt,
             additional_instructions,
         )
 
@@ -1417,7 +1422,7 @@ class LLMProvider(core_provider.Provider):
 
         criteria = self._build_criteria_with_instructions(
             criteria,
-            feedback_prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT,
+            templates_quality.Correctness.system_prompt,
             additional_instructions,
         )
 
@@ -1473,7 +1478,7 @@ class LLMProvider(core_provider.Provider):
 
         criteria = self._build_criteria_with_instructions(
             criteria,
-            feedback_prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT,
+            templates_quality.Coherence.system_prompt,
             additional_instructions,
         )
 
@@ -1530,7 +1535,7 @@ class LLMProvider(core_provider.Provider):
 
         criteria = self._build_criteria_with_instructions(
             criteria,
-            feedback_prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT,
+            templates_quality.Coherence.system_prompt,
             additional_instructions,
         )
 
@@ -1586,7 +1591,7 @@ class LLMProvider(core_provider.Provider):
 
         criteria = self._build_criteria_with_instructions(
             criteria,
-            feedback_prompts.LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT,
+            templates_safety.Harmfulness.system_prompt,
             additional_instructions,
         )
 
@@ -1643,7 +1648,7 @@ class LLMProvider(core_provider.Provider):
 
         criteria = self._build_criteria_with_instructions(
             criteria,
-            feedback_prompts.LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT,
+            templates_safety.Harmfulness.system_prompt,
             additional_instructions,
         )
 
@@ -1699,7 +1704,7 @@ class LLMProvider(core_provider.Provider):
 
         criteria = self._build_criteria_with_instructions(
             criteria,
-            feedback_prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT,
+            templates_safety.Maliciousness.system_prompt,
             additional_instructions,
         )
 
@@ -1756,7 +1761,7 @@ class LLMProvider(core_provider.Provider):
 
         criteria = self._build_criteria_with_instructions(
             criteria,
-            feedback_prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT,
+            templates_safety.Maliciousness.system_prompt,
             additional_instructions,
         )
 
@@ -1812,7 +1817,7 @@ class LLMProvider(core_provider.Provider):
 
         criteria = self._build_criteria_with_instructions(
             criteria,
-            feedback_prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT,
+            templates_quality.Helpfulness.system_prompt,
             additional_instructions,
         )
 
@@ -1869,7 +1874,7 @@ class LLMProvider(core_provider.Provider):
 
         criteria = self._build_criteria_with_instructions(
             criteria,
-            feedback_prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT,
+            templates_quality.Helpfulness.system_prompt,
             additional_instructions,
         )
 
@@ -1927,7 +1932,7 @@ class LLMProvider(core_provider.Provider):
 
         criteria = self._build_criteria_with_instructions(
             criteria,
-            feedback_prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT,
+            templates_quality.Controversiality.system_prompt,
             additional_instructions,
         )
 
@@ -1984,7 +1989,7 @@ class LLMProvider(core_provider.Provider):
 
         criteria = self._build_criteria_with_instructions(
             criteria,
-            feedback_prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT,
+            templates_quality.Controversiality.system_prompt,
             additional_instructions,
         )
 
@@ -2040,7 +2045,7 @@ class LLMProvider(core_provider.Provider):
 
         criteria = self._build_criteria_with_instructions(
             criteria,
-            feedback_prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT,
+            templates_safety.Misogyny.system_prompt,
             additional_instructions,
         )
 
@@ -2097,7 +2102,7 @@ class LLMProvider(core_provider.Provider):
 
         criteria = self._build_criteria_with_instructions(
             criteria,
-            feedback_prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT,
+            templates_safety.Misogyny.system_prompt,
             additional_instructions,
         )
 
@@ -2154,7 +2159,7 @@ class LLMProvider(core_provider.Provider):
 
         criteria = self._build_criteria_with_instructions(
             criteria,
-            feedback_prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT,
+            templates_safety.Criminality.system_prompt,
             additional_instructions,
         )
 
@@ -2211,7 +2216,7 @@ class LLMProvider(core_provider.Provider):
 
         criteria = self._build_criteria_with_instructions(
             criteria,
-            feedback_prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT,
+            templates_safety.Criminality.system_prompt,
             additional_instructions,
         )
 
@@ -2267,7 +2272,7 @@ class LLMProvider(core_provider.Provider):
 
         criteria = self._build_criteria_with_instructions(
             criteria,
-            feedback_prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT,
+            templates_safety.Insensitivity.system_prompt,
             additional_instructions,
         )
 
@@ -2324,7 +2329,7 @@ class LLMProvider(core_provider.Provider):
 
         criteria = self._build_criteria_with_instructions(
             criteria,
-            feedback_prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT,
+            templates_safety.Insensitivity.system_prompt,
             additional_instructions,
         )
 
@@ -2357,7 +2362,7 @@ class LLMProvider(core_provider.Provider):
         return self.endpoint.run_in_pace(
             func=self._create_chat_completion,
             prompt=(
-                feedback_prompts.AGREEMENT_SYSTEM % (prompt, check_response)
+                templates_quality.AGREEMENT_SYSTEM % (prompt, check_response)
             )
             + response,
         )
@@ -2380,12 +2385,12 @@ class LLMProvider(core_provider.Provider):
         llm_messages = [
             {
                 "role": "system",
-                "content": feedback_prompts.GENERATE_KEY_POINTS_SYSTEM_PROMPT,
+                "content": templates_rag.GENERATE_KEY_POINTS_SYSTEM_PROMPT,
             },
             {
                 "role": "user",
                 "content": str.format(
-                    feedback_prompts.GENERATE_KEY_POINTS_USER_PROMPT,
+                    templates_rag.GENERATE_KEY_POINTS_USER_PROMPT,
                     source=source,
                 ),
             },
@@ -2440,7 +2445,7 @@ class LLMProvider(core_provider.Provider):
             min_score_val, max_score_val
         )
 
-        system_prompt = feedback_v2.Comprehensiveness.generate_system_prompt(
+        system_prompt = templates_rag.Comprehensiveness.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
@@ -2451,7 +2456,7 @@ class LLMProvider(core_provider.Provider):
         inclusion_assessments = []
         for key_point in key_points_list:
             user_prompt = str.format(
-                feedback_prompts.COMPREHENSIVENESS_USER_PROMPT,
+                templates_rag.Comprehensiveness.user_prompt,
                 key_point=key_point,
                 summary=summary,
             )
@@ -2594,7 +2599,7 @@ class LLMProvider(core_provider.Provider):
             min_score_val, max_score_val
         )
 
-        system_prompt = feedback_v2.Stereotypes.generate_system_prompt(
+        system_prompt = templates_safety.Stereotypes.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
@@ -2602,7 +2607,7 @@ class LLMProvider(core_provider.Provider):
             output_space=output_space,
         )
         user_prompt = str.format(
-            feedback_prompts.STEREOTYPES_USER_PROMPT,
+            templates_safety.Stereotypes.user_prompt,
             prompt=prompt,
             response=response,
         )
@@ -2659,7 +2664,7 @@ class LLMProvider(core_provider.Provider):
             min_score_val, max_score_val
         )
 
-        system_prompt = feedback_v2.Stereotypes.generate_system_prompt(
+        system_prompt = templates_safety.Stereotypes.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
@@ -2668,13 +2673,13 @@ class LLMProvider(core_provider.Provider):
         )
 
         user_prompt = str.format(
-            feedback_prompts.STEREOTYPES_USER_PROMPT,
+            templates_safety.Stereotypes.user_prompt,
             prompt=prompt,
             response=response,
         )
 
         user_prompt = user_prompt.replace(
-            "SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
+            "SCORE:", templates_base.COT_REASONS_TEMPLATE
         )
 
         return self.generate_score_and_reasons(
@@ -2696,9 +2701,9 @@ class LLMProvider(core_provider.Provider):
             List[str]: A list of statements with trivial statements removed.
         """
         assert self.endpoint is not None, "Endpoint is not set."
-        system_prompt = feedback_prompts.LLM_TRIVIAL_SYSTEM
+        system_prompt = templates_rag.Trivial.system_prompt
 
-        user_prompt = feedback_prompts.LLM_TRIVIAL_USER.format(
+        user_prompt = templates_rag.Trivial.user_prompt.format(
             statements=str(statements)
         )
 
@@ -2828,7 +2833,7 @@ class LLMProvider(core_provider.Provider):
             llm_messages = [
                 {
                     "role": "system",
-                    "content": feedback_prompts.LLM_GROUNDEDNESS_SENTENCES_SPLITTER,
+                    "content": templates_rag.Groundedness.sentences_splitter_prompt,
                 },
                 {"role": "user", "content": statement},
             ]
@@ -2854,7 +2859,7 @@ class LLMProvider(core_provider.Provider):
             min_score_val, max_score_val
         )
 
-        system_prompt = feedback_v2.Groundedness.generate_system_prompt(
+        system_prompt = templates_rag.Groundedness.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
@@ -2864,7 +2869,7 @@ class LLMProvider(core_provider.Provider):
         )
 
         def evaluate_hypothesis(index, hypothesis):
-            user_prompt = feedback_prompts.LLM_GROUNDEDNESS_USER.format(
+            user_prompt = templates_rag.Groundedness.user_prompt.format(
                 premise=f"{source}", hypothesis=f"{hypothesis}"
             )
             score, reason = self.generate_score_and_reasons(
@@ -3007,7 +3012,7 @@ class LLMProvider(core_provider.Provider):
             llm_messages = [
                 {
                     "role": "system",
-                    "content": feedback_prompts.LLM_GROUNDEDNESS_SENTENCES_SPLITTER,
+                    "content": templates_rag.Groundedness.sentences_splitter_prompt,
                 },
                 {"role": "user", "content": statement},
             ]
@@ -3027,12 +3032,12 @@ class LLMProvider(core_provider.Provider):
         reasons_list = []
 
         def evaluate_abstention(statement):
-            user_prompt = feedback_prompts.LLM_ABSTENTION_USER.format(
+            user_prompt = templates_rag.Abstention.user_prompt.format(
                 statement=statement
             )
             try:
                 score = self.generate_score(
-                    feedback_prompts.LLM_ABSTENTION_SYSTEM.format(
+                    templates_rag.Abstention.system_prompt.format(
                         min_score=0, max_score=1
                     ),
                     user_prompt,
@@ -3044,11 +3049,11 @@ class LLMProvider(core_provider.Provider):
             return score
 
         def evaluate_answerability(question, source):
-            user_prompt = feedback_prompts.LLM_ANSWERABILITY_USER.format(
+            user_prompt = templates_rag.Answerability.user_prompt.format(
                 question=question, source=source
             )
             score = self.generate_score(
-                feedback_prompts.LLM_ANSWERABILITY_SYSTEM.format(
+                templates_rag.Answerability.system_prompt.format(
                     min_score=0, max_score=1
                 ),
                 user_prompt,
@@ -3067,7 +3072,7 @@ class LLMProvider(core_provider.Provider):
             min_score_val, max_score_val
         )
 
-        system_prompt = feedback_v2.Groundedness.generate_system_prompt(
+        system_prompt = templates_rag.Groundedness.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
@@ -3085,7 +3090,7 @@ class LLMProvider(core_provider.Provider):
                 else:
                     return index, 1.0, {"reason": "Unanswerable abstention"}
             else:
-                user_prompt = feedback_prompts.LLM_GROUNDEDNESS_USER.format(
+                user_prompt = templates_rag.Groundedness.user_prompt.format(
                     premise=f"{source}", hypothesis=f"{hypothesis}"
                 )
                 score, reason = self.generate_score_and_reasons(
@@ -3185,13 +3190,15 @@ class LLMProvider(core_provider.Provider):
             min_score_val, max_score_val
         )
 
-        system_prompt = feedback_v2.LogicalConsistency.generate_system_prompt(
-            min_score=min_score_val,
-            max_score=max_score_val,
-            criteria=criteria,
-            additional_instructions=additional_instructions,
-            output_space=output_space,
-            examples=examples,
+        system_prompt = (
+            templates_agent.LogicalConsistency.generate_system_prompt(
+                min_score=min_score_val,
+                max_score=max_score_val,
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                output_space=output_space,
+                examples=examples,
+            )
         )
 
         if isinstance(trace, Trace):
@@ -3211,12 +3218,12 @@ class LLMProvider(core_provider.Provider):
                 f"Invalid trace type: {type(trace)}. Must be a Trace or a string."
             )
 
-        user_prompt = feedback_v2.LogicalConsistency.user_prompt.format(
+        user_prompt = templates_agent.LogicalConsistency.user_prompt.format(
             trace=trace
         )
 
         user_prompt = user_prompt.replace(
-            "LOGICAL CONSISTENCY SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
+            "LOGICAL CONSISTENCY SCORE:", templates_base.COT_REASONS_TEMPLATE
         )
 
         return self.generate_score_and_reasons(
@@ -3284,13 +3291,15 @@ class LLMProvider(core_provider.Provider):
             min_score_val, max_score_val
         )
 
-        system_prompt = feedback_v2.ExecutionEfficiency.generate_system_prompt(
-            min_score=min_score_val,
-            max_score=max_score_val,
-            criteria=criteria,
-            additional_instructions=additional_instructions,
-            output_space=output_space,
-            examples=examples,
+        system_prompt = (
+            templates_agent.ExecutionEfficiency.generate_system_prompt(
+                min_score=min_score_val,
+                max_score=max_score_val,
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                output_space=output_space,
+                examples=examples,
+            )
         )
 
         if isinstance(trace, Trace):
@@ -3310,12 +3319,12 @@ class LLMProvider(core_provider.Provider):
                 f"Invalid trace type: {type(trace)}. Must be a Trace or a string."
             )
 
-        user_prompt = feedback_v2.ExecutionEfficiency.user_prompt.format(
+        user_prompt = templates_agent.ExecutionEfficiency.user_prompt.format(
             trace=trace
         )
 
         user_prompt = user_prompt.replace(
-            "EXECUTION EFFICIENCY SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
+            "EXECUTION EFFICIENCY SCORE:", templates_base.COT_REASONS_TEMPLATE
         )
 
         return self.generate_score_and_reasons(
@@ -3383,7 +3392,7 @@ class LLMProvider(core_provider.Provider):
             min_score_val, max_score_val
         )
 
-        system_prompt = feedback_v2.PlanAdherence.generate_system_prompt(
+        system_prompt = templates_agent.PlanAdherence.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
@@ -3409,10 +3418,12 @@ class LLMProvider(core_provider.Provider):
                 f"Invalid trace type: {type(trace)}. Must be a Trace or a string."
             )
 
-        user_prompt = feedback_v2.PlanAdherence.user_prompt.format(trace=trace)
+        user_prompt = templates_agent.PlanAdherence.user_prompt.format(
+            trace=trace
+        )
 
         user_prompt = user_prompt.replace(
-            "PLAN ADHERENCE SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
+            "PLAN ADHERENCE SCORE:", templates_base.COT_REASONS_TEMPLATE
         )
 
         return self.generate_score_and_reasons(
@@ -3480,7 +3491,7 @@ class LLMProvider(core_provider.Provider):
             min_score_val, max_score_val
         )
 
-        system_prompt = feedback_v2.PlanQuality.generate_system_prompt(
+        system_prompt = templates_agent.PlanQuality.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
@@ -3506,10 +3517,12 @@ class LLMProvider(core_provider.Provider):
                 f"Invalid trace type: {type(trace)}. Must be a Trace or a string."
             )
 
-        user_prompt = feedback_v2.PlanQuality.user_prompt.format(trace=trace)
+        user_prompt = templates_agent.PlanQuality.user_prompt.format(
+            trace=trace
+        )
 
         user_prompt = user_prompt.replace(
-            "PLAN QUALITY SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
+            "PLAN QUALITY SCORE:", templates_base.COT_REASONS_TEMPLATE
         )
 
         return self.generate_score_and_reasons(
@@ -3575,7 +3588,7 @@ class LLMProvider(core_provider.Provider):
             min_score_val, max_score_val
         )
 
-        system_prompt = feedback_v2.ToolSelection.generate_system_prompt(
+        system_prompt = templates_agent.ToolSelection.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
@@ -3601,10 +3614,12 @@ class LLMProvider(core_provider.Provider):
                 f"Invalid trace type: {type(trace)}. Must be a Trace or a string."
             )
 
-        user_prompt = feedback_v2.ToolSelection.user_prompt.format(trace=trace)
+        user_prompt = templates_agent.ToolSelection.user_prompt.format(
+            trace=trace
+        )
 
         user_prompt = user_prompt.replace(
-            "TOOL SELECTION SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
+            "TOOL SELECTION SCORE:", templates_base.COT_REASONS_TEMPLATE
         )
 
         return self.generate_score_and_reasons(
@@ -3670,7 +3685,7 @@ class LLMProvider(core_provider.Provider):
             min_score_val, max_score_val
         )
 
-        system_prompt = feedback_v2.ToolCalling.generate_system_prompt(
+        system_prompt = templates_agent.ToolCalling.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
@@ -3696,10 +3711,12 @@ class LLMProvider(core_provider.Provider):
                 f"Invalid trace type: {type(trace)}. Must be a Trace or a string."
             )
 
-        user_prompt = feedback_v2.ToolCalling.user_prompt.format(trace=trace)
+        user_prompt = templates_agent.ToolCalling.user_prompt.format(
+            trace=trace
+        )
 
         user_prompt = user_prompt.replace(
-            "TOOL CALLING SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
+            "TOOL CALLING SCORE:", templates_base.COT_REASONS_TEMPLATE
         )
 
         return self.generate_score_and_reasons(
@@ -3765,7 +3782,7 @@ class LLMProvider(core_provider.Provider):
             min_score_val, max_score_val
         )
 
-        system_prompt = feedback_v2.ToolQuality.generate_system_prompt(
+        system_prompt = templates_agent.ToolQuality.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
@@ -3791,10 +3808,12 @@ class LLMProvider(core_provider.Provider):
                 f"Invalid trace type: {type(trace)}. Must be a Trace or a string."
             )
 
-        user_prompt = feedback_v2.ToolQuality.user_prompt.format(trace=trace)
+        user_prompt = templates_agent.ToolQuality.user_prompt.format(
+            trace=trace
+        )
 
         user_prompt = user_prompt.replace(
-            "TOOL QUALITY SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
+            "TOOL QUALITY SCORE:", templates_base.COT_REASONS_TEMPLATE
         )
 
         return self.generate_score_and_reasons(
