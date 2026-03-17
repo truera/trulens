@@ -2023,7 +2023,6 @@ trulens.dashboard:
   __version__: 2.5.3
   highs:
     run_dashboard: builtins.function
-    run_dashboard_sis: builtins.function
     stop_dashboard: builtins.function
   lows:
     __all__: builtins.list
