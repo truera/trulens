@@ -108,7 +108,7 @@ def _render_all_app_feedback_plot(
         _df.sort_values(diff_col, ascending=False)
         .style.apply(_highlight_variance, axis=1)
         .format("{:.3f}"),
-        use_container_width=True,
+        width='stretch',
     )
 
     df = df.melt(
@@ -128,7 +128,7 @@ def _render_all_app_feedback_plot(
     fig.update_yaxes(fixedrange=True, showgrid=False, range=[0, 1])
     fig.update_xaxes(fixedrange=True, showgrid=False)
 
-    chart_tab.plotly_chart(fig, use_container_width=True)
+    chart_tab.plotly_chart(fig, width='stretch')
 
 
 def _highlight_variance(row: pd.Series):
@@ -271,22 +271,22 @@ def _render_advanced_filters(
         submit_button = c1.form_submit_button(
             "Apply Filter",
             type="primary",
-            use_container_width=True,
+            width='stretch',
         )
         c2.form_submit_button(
             "Add Clause",
-            use_container_width=True,
+            width='stretch',
             on_click=handle_add_clause,
         )
         c3.form_submit_button(
             "Remove Clause",
-            use_container_width=True,
+            width='stretch',
             on_click=handle_clear_clauses,
             kwargs={"remove_all": False},
         )
         c4.form_submit_button(
             "Remove All",
-            use_container_width=True,
+            width='stretch',
             on_click=handle_clear_clauses,
             kwargs={"remove_all": True},
         )
@@ -451,7 +451,7 @@ def _render_grid(
         selection_mode="single-row",
         on_select="rerun",
         hide_index=True,
-        use_container_width=True,
+        width='stretch',
     )
     return df.iloc[event.selection["rows"]]
 
@@ -596,7 +596,7 @@ def _render_version_selectors(
         "➕ Add App Version",
         disabled=len(current_app_ids) >= MAX_COMPARATORS,
         key="add_comparator",
-        use_container_width=True,
+        width='stretch',
         on_click=_increment_comparators,
         args=(current_app_ids,),
     )
@@ -605,7 +605,7 @@ def _render_version_selectors(
         "➖ Remove App Version",
         disabled=len(current_app_ids) <= MIN_COMPARATORS,
         key="remove_comparator",
-        use_container_width=True,
+        width='stretch',
         on_click=_decrement_comparators,
         args=(current_app_ids,),
     )

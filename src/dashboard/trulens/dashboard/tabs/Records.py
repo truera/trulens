@@ -592,7 +592,7 @@ def _render_grid(
         selection_mode="single-row",
         on_select="rerun",
         hide_index=True,
-        use_container_width=True,
+        width='stretch',
     )
     return df.iloc[event.selection["rows"]]
 
@@ -656,7 +656,7 @@ def _render_app_id_args_filter(versions_df: pd.DataFrame):
         versions_df = versions_df[versions_df["app_id"].isin(app_ids)]
 
         show_all_col.button(
-            "Show All", use_container_width=True, on_click=_reset_app_ids
+            "Show All", width='stretch', on_click=_reset_app_ids
         )
         if not st.query_params.get("app_ids", None):
             st.query_params["app_ids"] = ",".join(app_ids)
@@ -743,7 +743,7 @@ def render_records(app_name: str):
 
         cols[1].button(
             "Show all",
-            use_container_width=True,
+            width='stretch',
             on_click=handle_show_all,
             help="Show all records. This may take a while.",
         )
