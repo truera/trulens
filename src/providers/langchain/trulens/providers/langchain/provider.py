@@ -25,19 +25,19 @@ def _convert_message(message: Union[Dict, BaseMessage]) -> BaseMessage:
 class Langchain(llm_provider.LLMProvider):
     """Out of the box feedback functions using LangChain LLMs and ChatModels
 
-    Create a LangChain Provider with out of the box feedback functions.
+    Create a Langchain Provider with out of the box feedback functions.
 
     Example:
         ```python
-        from trulens.providers.langchain import LangChain
+        from trulens.providers.langchain import Langchain
         from langchain_community.llms import OpenAI
 
-        gpt3_llm = OpenAI(model="gpt-3.5-turbo-instruct")
-        langchain_provider = LangChain(chain = gpt3_llm)
+        llm = OpenAI(model="gpt-4o-mini")
+        langchain_provider = Langchain(chain = llm)
         ```
 
     Args:
-        chain: LangChain LLM.
+        chain: Langchain LLM.
     """
 
     endpoint: langchain_endpoint.LangchainEndpoint
