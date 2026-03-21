@@ -1,0 +1,50 @@
+{
+  "name": "@trulens/connectors-snowflake",
+  "version": "0.1.0",
+  "description": "TruLens Snowflake connector — direct span export to Snowflake AI Observability",
+  "keywords": [
+    "trulens",
+    "snowflake",
+    "opentelemetry",
+    "otel",
+    "observability"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/truera/trulens.git",
+    "directory": "typescript/packages/connectors-snowflake"
+  },
+  "homepage": "https://www.trulens.com",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "lint": "eslint src",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@opentelemetry/core": "^1.29.0",
+    "@opentelemetry/otlp-transformer": "^0.57.0",
+    "@opentelemetry/sdk-trace-node": "^1.29.0",
+    "@trulens/semconv": "workspace:*",
+    "snowflake-sdk": "^2.3.4"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "vitest": "^2.0.0"
+  }
+}

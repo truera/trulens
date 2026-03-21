@@ -174,6 +174,12 @@ class TruSession(
         pydantic.PrivateAttr(None)
     )
 
+    _otlp_receiver: Optional[Any] = pydantic.PrivateAttr(None)
+    """The running OTLPReceiver instance, if started."""
+
+    _otlp_receiver_thread: Optional[Thread] = pydantic.PrivateAttr(None)
+    """Background thread running the OTLP receiver, if started."""
+
     @property
     def experimental_otel_exporter(
         self,
@@ -1508,6 +1514,80 @@ class TruSession(
             record_ids=record_ids,
             start_time=start_time,
         )
+
+    def start_otlp_receiver(
+        self,
+        host: str = "0.0.0.0",
+        port: int = 4318,
+        run_in_thread: bool = True,
+    ) -> None:
+        """Start a lightweight OTLP/HTTP receiver so that TypeScript (or any
+        OTLP-capable) apps can send spans to this TruSession and have them
+        stored in the configured database.
+
+        The receiver listens on ``http://<host>:<port>/v1/traces`` and accepts
+        the standard OTLP protobuf or JSON payload.
+
+        Requires the optional dependency ``opentelemetry-exporter-otlp-proto-http``
+        (for the protobuf codec) and ``grpcio`` or the built-in ``http.server``
+        is used for the HTTP transport.
+
+        Args:
+            host: The hostname to bind to. Defaults to ``"0.0.0.0"`` (all
+                interfaces).
+            port: The port to listen on. Defaults to ``4318``, the standard
+                OTLP/HTTP port.
+            run_in_thread: If ``True`` (default), the receiver runs in a
+                background daemon thread so it does not block the caller.
+
+        Example::
+
+            from trulens.core import TruSession
+
+            session = TruSession()
+            session.start_otlp_receiver(port=4318)
+            # TypeScript app can now send spans to http://localhost:4318/v1/traces
+        """
+        from trulens.core.otel import otlp_receiver as otlp_receiver_mod
+
+        if hasattr(self, "_otlp_receiver") and self._otlp_receiver is not None:
+            logger.warning(
+                "OTLP receiver is already running. "
+                "Call stop_otlp_receiver() first to restart it."
+            )
+            return
+
+        self._otlp_receiver = otlp_receiver_mod.OTLPReceiver(
+            session=self, host=host, port=port
+        )
+
+        if run_in_thread:
+            t = Thread(
+                target=self._otlp_receiver.serve_forever,
+                daemon=True,
+                name="trulens-otlp-receiver",
+            )
+            t.start()
+            self._otlp_receiver_thread = t
+            logger.info(
+                "TruLens OTLP receiver started on http://%s:%d/v1/traces",
+                host,
+                port,
+            )
+        else:
+            self._otlp_receiver.serve_forever()
+
+    def stop_otlp_receiver(self) -> None:
+        """Stop the OTLP/HTTP receiver started by :meth:`start_otlp_receiver`.
+
+        No-op if the receiver is not running.
+        """
+        if not hasattr(self, "_otlp_receiver") or self._otlp_receiver is None:
+            return
+        self._otlp_receiver.shutdown()
+        self._otlp_receiver = None
+        self._otlp_receiver_thread = None  # type: ignore[assignment]
+        logger.info("TruLens OTLP receiver stopped.")
 
 
 def Tru(*args, **kwargs) -> TruSession:

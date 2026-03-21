@@ -10,6 +10,17 @@ pr:
 
 jobs:
   - template: templates/build-conda-packages.yaml
+
+  - job: TypeScriptSDKTests
+    displayName: "TypeScript SDK Tests"
+    pool:
+      vmImage: ubuntu-latest
+    timeoutInMinutes: 15
+    steps:
+      - checkout: self
+        clean: true
+      - template: templates/run-typescript-tests.yaml
+
   - job: PRBranchProtect # name seems to be important but cannot figure out why
     pool:
       vmImage: ubuntu-latest

@@ -1,0 +1,58 @@
+{
+  "name": "@trulens/instrumentation-openai",
+  "version": "0.1.0",
+  "description": "Auto-instrumentation for the OpenAI Node.js SDK — emits TruLens GENERATION spans with token/cost attributes",
+  "keywords": [
+    "trulens",
+    "opentelemetry",
+    "openai",
+    "instrumentation",
+    "llm",
+    "auto-instrumentation"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/truera/trulens.git",
+    "directory": "typescript/packages/instrumentation-openai"
+  },
+  "homepage": "https://www.trulens.com",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "@trulens/semconv": "workspace:*"
+  },
+  "peerDependencies": {
+    "openai": ">=4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "openai": {
+      "optional": false
+    }
+  },
+  "devDependencies": {
+    "@opentelemetry/sdk-trace-node": "^1.29.0",
+    "@types/node": "^22.0.0",
+    "openai": "^4.0.0",
+    "tsup": "^8.0.0",
+    "vitest": "^2.0.0"
+  }
+}

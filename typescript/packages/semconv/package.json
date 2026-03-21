@@ -1,0 +1,37 @@
+{
+  "name": "@trulens/semconv",
+  "version": "0.1.0",
+  "description": "TruLens OpenTelemetry semantic conventions",
+  "keywords": ["trulens", "opentelemetry", "otel", "semconv", "observability"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/truera/trulens.git",
+    "directory": "typescript/packages/semconv"
+  },
+  "homepage": "https://www.trulens.com",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "lint": "eslint src",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "vitest": "^2.0.0"
+  }
+}

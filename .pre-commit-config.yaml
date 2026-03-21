@@ -12,6 +12,7 @@ repos:
             src/dashboard/react_components/.*/package-lock.json
           )$
       - id: check-yaml
+        args: ['--unsafe']
         exclude: meta.yaml
       - id: destroyed-symlinks
       - id: detect-private-key
