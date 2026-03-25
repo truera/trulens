@@ -84,6 +84,14 @@ def run_dashboard(
     session = session or core_session.TruSession()
 
     connector = session.connector
+
+    if _is_snowflake_connector(connector):
+        raise RuntimeError(
+            "The TruLens dashboard is not supported with SnowflakeConnector. "
+            "Use the Evaluations UI in Snowsight instead: "
+            "https://docs.snowflake.com/en/user-guide/ui-snowsight/ai-ml#evaluations-ui"
+        )
+
     connector.db.check_db_revision()
 
     IN_COLAB = "google.colab" in sys.modules

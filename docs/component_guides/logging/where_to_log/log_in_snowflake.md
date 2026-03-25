@@ -1,12 +1,12 @@
 # ![Snowflake](../../../assets/images/logos/snowflake_logo.svg){ width="30" } Logging in Snowflake
 
-Snowflake's fully managed [data warehouse](https://www.snowflake.com/en/data-cloud/workloads/data-warehouse/?utm_cta=website-homepage-workload-card-data-warehouse) provides automatic provisioning, availability, tuning, data protection and more—across clouds and regions—for an unlimited number of users and jobs.
+TruLens can log traces and evaluations to a Snowflake database. This page covers every supported authentication method.
 
-TruLens can write and read from a Snowflake database using a SQLAlchemy connection. This allows you to read, write, persist and share _TruLens_ logs in a _Snowflake_ database.
+!!! tip "You don't need a password"
 
-Here is a guide to logging in _Snowflake_.
+    `SnowflakeConnector` supports SSO, key-pair auth, OAuth tokens, and existing Snowpark sessions -- **no password required**. Password-based auth is just one option.
 
-## Install the TruLens Snowflake Connector
+## Install
 
 !!! example "Install using pip"
 
@@ -14,38 +14,133 @@ Here is a guide to logging in _Snowflake_.
     pip install trulens-connectors-snowflake
     ```
 
-## Connect TruLens to the Snowflake database
+## Auth Methods at a Glance
 
-Connecting TruLens to a Snowflake database for logging traces and evaluations only requires passing in an existing [Snowpark session](https://docs.snowflake.com/en/developer-guide/snowpark/reference/python/latest/snowpark/api/snowflake.snowpark.Session#snowflake.snowpark.Session) or Snowflake [connection parameters](https://docs.snowflake.com/developer-guide/python-connector/python-connector-api#connect).
+| Method | Key Parameter | Password Required? |
+|---|---|---|
+| [Browser-based SSO](#browser-based-sso) (recommended) | `authenticator="externalbrowser"` | No |
+| [Key-pair authentication](#key-pair-authentication) | `private_key_file="rsa_key.p8"` | No |
+| [OAuth access token](#oauth-access-token) | `authenticator="oauth", token=...` | No |
+| [Existing Snowpark Session](#existing-snowpark-session) | `snowpark_session=` | No |
+| [Username / password](#username-and-password) | `password="..."` | Yes |
 
-!!! example "Connect TruLens to your Snowflake database via Snowpark Session"
+Every method below results in a `TruSession` connected to Snowflake. Once connected, all traces and evaluations are logged automatically.
+
+---
+
+## Browser-Based SSO
+
+The easiest way to get started. Pass your connection details directly to `SnowflakeConnector` -- it creates the Snowpark session for you. Your browser opens for SSO via your identity provider (Okta, Azure AD, etc.), and you're done.
+
+!!! example "Connect with browser-based SSO"
 
     ```python
-    from snowflake.snowpark import Session
     from trulens.connectors.snowflake import SnowflakeConnector
     from trulens.core import TruSession
-    connection_parameters = {
-        "account": "<account>",
-        "user": "<user>",
-        "password": "<password>",
-        "database": "<database>",
-        "schema": "<schema>",
-        "warehouse": "<warehouse>",
-        "role": "<role>",
-    }
-    # Here we create a new Snowpark session, but if we already have one we can use that instead.
-    snowpark_session = Session.builder.configs(connection_parameters).create()
+
     conn = SnowflakeConnector(
-        snowpark_session=snowpark_session
+        account="<account>",
+        user="<user>",
+        database="<database>",
+        schema="<schema>",
+        warehouse="<warehouse>",
+        role="<role>",
+        authenticator="externalbrowser",
     )
     session = TruSession(connector=conn)
     ```
 
-!!! example "Connect TruLens to your Snowflake database via connection parameters"
+---
+
+## Key-Pair Authentication
+
+Uses an RSA private key instead of a password. See the [Snowflake key-pair auth docs](https://docs.snowflake.com/en/user-guide/key-pair-auth) for setup instructions.
+
+!!! example "Connect with key-pair auth"
 
     ```python
-    from trulens.core import TruSession
     from trulens.connectors.snowflake import SnowflakeConnector
+    from trulens.core import TruSession
+
+    conn = SnowflakeConnector(
+        account="<account>",
+        user="<user>",
+        database="<database>",
+        schema="<schema>",
+        warehouse="<warehouse>",
+        role="<role>",
+        private_key_file="/path/to/rsa_key.p8",
+    )
+    session = TruSession(connector=conn)
+    ```
+
+??? example "Generating a key pair"
+
+    ```bash
+    # Generate an encrypted private key
+    openssl genrsa 2048 | openssl pkcs8 -topk8 -inform PEM -out rsa_key.p8 -nocrypt
+
+    # Generate the public key
+    openssl rsa -in rsa_key.p8 -pubout -out rsa_key.pub
+
+    # Assign the public key to your Snowflake user
+    # In Snowflake:
+    # ALTER USER <user> SET RSA_PUBLIC_KEY='<contents of rsa_key.pub without header/footer>';
+    ```
+
+---
+
+## OAuth Access Token
+
+Use an existing OAuth token from a token endpoint, service account flow, or Snowpark Container Services (SPCS).
+
+!!! example "Connect with an OAuth token"
+
+    ```python
+    from trulens.connectors.snowflake import SnowflakeConnector
+    from trulens.core import TruSession
+
+    conn = SnowflakeConnector(
+        account="<account>",
+        user="<user>",
+        database="<database>",
+        schema="<schema>",
+        warehouse="<warehouse>",
+        role="<role>",
+        authenticator="oauth",
+        token="<your-oauth-token>",
+    )
+    session = TruSession(connector=conn)
+    ```
+
+---
+
+## Existing Snowpark Session
+
+If your app already has a [Snowpark session](https://docs.snowflake.com/en/developer-guide/snowpark/reference/python/latest/snowpark/api/snowflake.snowpark.Session), pass it directly. Works with **any** auth method that Snowpark supports.
+
+!!! example "Pass an existing Snowpark session"
+
+    ```python
+    from trulens.connectors.snowflake import SnowflakeConnector
+    from trulens.core import TruSession
+
+    conn = SnowflakeConnector(snowpark_session=snowpark_session)
+    session = TruSession(connector=conn)
+    ```
+
+---
+
+## Username and Password
+
+The traditional approach. Works but consider SSO or key-pair auth for better security.
+
+!!! example "Connect with username and password"
+
+    ```python
+    from trulens.connectors.snowflake import SnowflakeConnector
+    from trulens.core import TruSession
+
     conn = SnowflakeConnector(
         account="<account>",
         user="<user>",
@@ -58,54 +153,14 @@ Connecting TruLens to a Snowflake database for logging traces and evaluations on
     session = TruSession(connector=conn)
     ```
 
-Once you've instantiated the `TruSession` object with your Snowflake connection, all _TruLens_ traces and evaluations will be logged to Snowflake.
+---
 
-## Connect TruLens to the Snowflake database using an engine
+## Troubleshooting
 
-In some cases such as when using [key-pair authentication](https://docs.snowflake.com/en/developer-guide/python-connector/sqlalchemy#key-pair-authentication-support), the SQLAlchemy URL does not support the credentials required. In this case, you can instead create and pass a database engine.
+??? question "I see a warning about `password` being required"
 
-When the database engine is created, the private key is then passed through the `connection_args`.
+    If you're using non-password auth (SSO, key-pair, OAuth), you can safely ignore this warning. Use the **Snowsight AI Observability** page for dashboards.
 
-!!! example "Connect TruLens to Snowflake with a database engine"
+??? question "`paramstyle` error: pyformat vs qmark"
 
-    ```python
-    from trulens.core import TruSession
-    from sqlalchemy import create_engine
-    from snowflake.sqlalchemy import URL
-    from cryptography.hazmat.backends import default_backend
-    from cryptography.hazmat.primitives import serialization
-    from dotenv import load_dotenv
-
-    load_dotenv()
-
-    # Before using key-pair authentication, ensure you have generated a private key and configured it in your Snowflake account.
-    # See https://docs.snowflake.com/en/user-guide/key-pair-auth for details.
-    with open("rsa_key.p8", "rb") as key:
-        p_key= serialization.load_pem_private_key(
-            key.read(),
-            password=None,
-            backend=default_backend()
-        )
-
-    pkb = p_key.private_bytes(
-        encoding=serialization.Encoding.DER,
-        format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption())
-
-    engine = create_engine(
-        URL(
-            account=os.environ["SNOWFLAKE_ACCOUNT"],
-            warehouse=os.environ["SNOWFLAKE_WAREHOUSE"],
-            database=os.environ["SNOWFLAKE_DATABASE"],
-            schema=os.environ["SNOWFLAKE_SCHEMA"],
-            user=os.environ["SNOWFLAKE_USER"],
-        ),
-        connect_args={
-            'private_key': pkb,
-        },
-    )
-
-    session = TruSession(
-        database_engine = engine
-    )
-    ```
+    The Snowpark session must use `paramstyle='qmark'`. If you created the Snowflake connection manually, pass `paramstyle='qmark'` to `snowflake.connector.connect()`.
