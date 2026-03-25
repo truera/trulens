@@ -74,6 +74,9 @@ class SnowflakeConnector(DBConnector):
         protocol: Optional[str] = "https",
         port: Optional[int] = 443,
         host: Optional[str] = None,
+        authenticator: Optional[str] = None,
+        private_key_file: Optional[str] = None,
+        token: Optional[str] = None,
         snowpark_session: Optional[Session] = None,
         snowpark_session_creator: Optional[Callable[[], Session]] = None,
         init_server_side: bool = False,
@@ -98,6 +101,12 @@ class SnowflakeConnector(DBConnector):
         }
         if host is not None:
             connection_parameters["host"] = host
+        if authenticator is not None:
+            connection_parameters["authenticator"] = authenticator
+        if private_key_file is not None:
+            connection_parameters["private_key_file"] = private_key_file
+        if token is not None:
+            connection_parameters["token"] = token
         if snowpark_session_creator is None and snowpark_session is None:
             snowpark_session_creator = lambda: self._create_snowpark_session(
                 connection_parameters
@@ -159,16 +168,23 @@ class SnowflakeConnector(DBConnector):
         self, connection_parameters: Dict[str, Optional[str]]
     ):
         connection_parameters = connection_parameters.copy()
-        # Validate.
+        uses_non_password_auth = (
+            connection_parameters.get("authenticator") is not None
+            or connection_parameters.get("private_key_file") is not None
+        )
+        skip_keys = set()
+        if uses_non_password_auth:
+            skip_keys.add("password")
+            connection_parameters.pop("password", None)
         connection_parameters_to_set = []
         for k, v in connection_parameters.items():
-            if v is None:
+            if v is None and k not in skip_keys:
                 connection_parameters_to_set.append(k)
         if connection_parameters_to_set:
             raise ValueError(
                 f"If not supplying `snowpark_session` then must set `{connection_parameters_to_set}`!"
             )
-        self.password_known = True
+        self.password_known = not uses_non_password_auth
         # Create snowpark session making sure to create schema if it doesn't
         # already exist.
         schema = connection_parameters["schema"]
