@@ -117,8 +117,8 @@ class SnowflakeConnector(DBConnector):
             database_args["engine_params"] = database_args.get(
                 "engine_params", {}
             )
-            database_args["engine_params"]["creator"] = (
-                lambda: self._refresh_snowpark_session(
+            database_args["engine_params"]["creator"] = lambda: (
+                self._refresh_snowpark_session(
                     snowpark_session_creator
                 ).connection
             )
@@ -239,21 +239,11 @@ class SnowflakeConnector(DBConnector):
             raise ValueError(
                 f"Connection parameters mismatch between provided `snowpark_session` and args passed to `SnowflakeConnector`: {mismatched_parameters}"
             )
-        # Check if password is also supplied as it's used in `run_dashboard`:
-        # Passwords are inaccessible from the `snowpark_session` object and we
-        # use another process to launch streamlit so must have the password on
-        # hand.
-        if connection_parameters["password"] is None:
-            logger.warning(
-                "Running the TruLens dashboard requires providing a `password` to the `SnowflakeConnector`."
-            )
-            snowpark_session_connection_parameters["password"] = "password"
-            self.password_known = False
-        else:
-            snowpark_session_connection_parameters["password"] = (
-                connection_parameters["password"]
-            )
-            self.password_known = True
+        logger.info(
+            "Use the Snowflake Evaluations UI in Snowsight to view evaluation results: "
+            "https://docs.snowflake.com/en/user-guide/ui-snowsight/ai-ml#evaluations-ui"
+        )
+        self.password_known = False
         snowpark_session_connection_parameters = {
             k: v for k, v in snowpark_session_connection_parameters.items() if v
         }
