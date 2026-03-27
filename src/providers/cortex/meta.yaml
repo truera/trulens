@@ -43,6 +43,8 @@ test:
   requires:
     - python >=3.9,<3.13
     - pip
+    - llvmlite
+    - numba
 
 about:
   home: https://trulens.org/
