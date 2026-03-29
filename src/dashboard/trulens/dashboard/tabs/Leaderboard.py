@@ -289,7 +289,7 @@ def _render_grid(
         selection_mode="multi-row",
         on_select="rerun",
         hide_index=True,
-        width='stretch',
+        width="stretch",
     )
     return df.iloc[event.selection["rows"]]
 
@@ -559,7 +559,7 @@ def _render_grid_tab(
         key=f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.pin_button",
         disabled=selected_rows.empty,
         on_click=handle_pin_toggle,
-        width='stretch',
+        width="stretch",
         args=(selected_app_ids, on_leaderboard),
     ):
         st.rerun()
@@ -567,7 +567,7 @@ def _render_grid_tab(
     if c3.button(
         "Examine Records",
         disabled=selected_rows.empty,
-        width='stretch',
+        width="stretch",
         key=f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.records_button",
     ):
         st.session_state[f"{dashboard_constants.RECORDS_PAGE_NAME}.app_ids"] = (
@@ -591,7 +591,7 @@ def _render_grid_tab(
         _compare_button_label,
         help=help_msg,
         disabled=_compare_button_disabled,
-        width='stretch',
+        width="stretch",
         key=f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.compare_button",
     ):
         st.session_state[f"{dashboard_constants.COMPARE_PAGE_NAME}.app_ids"] = (
@@ -603,7 +603,7 @@ def _render_grid_tab(
     if c5.button(
         "Add/Edit Metadata",
         disabled=selected_rows.empty,
-        width='stretch',
+        width="stretch",
         key=f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.modify_metadata_button",
     ):
         handle_add_metadata(selected_rows, version_metadata_col_names)
@@ -613,7 +613,7 @@ def _render_grid_tab(
         # Add Virtual App
         if c6.button(
             "Add Virtual App",
-            width='stretch',
+            width="stretch",
             key=f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.add_virtual_app_button",
         ):
             handle_add_virtual_app(
@@ -803,7 +803,7 @@ def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
     fig.update_xaxes(
         fixedrange=True, showgrid=False, autorangeoptions={"include": [0, 1]}
     )
-    st.plotly_chart(fig, width='stretch')
+    st.plotly_chart(fig, width="stretch")
 
 
 def render_leaderboard(app_name: str):
@@ -851,7 +851,7 @@ def render_leaderboard(app_name: str):
 
         cols[1].button(
             "Show all",
-            width='stretch',
+            width="stretch",
             on_click=handle_show_all,
             help="Show all records. This may take a while.",
         )

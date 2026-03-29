@@ -305,7 +305,7 @@ def _handle_app_selection(app_names: List[str]):
 
 
 def render_refresh_button():
-    if st.sidebar.button("↻ Refresh Data", width='stretch'):
+    if st.sidebar.button("↻ Refresh Data", width="stretch"):
         st.cache_data.clear()
         st.query_params.clear()
         st.session_state.clear()
@@ -352,7 +352,7 @@ def render_sidebar():
             "Report a Bug 🐞",
             BUG_REPORT_URL,
             help="Help us fix bugs! (Emoji: Ladybug)",
-            width='stretch',
+            width="stretch",
         )
     if app_name is None:
         st.error("No apps found in the database.")
@@ -493,7 +493,7 @@ def render_app_version_filters(
             )
         ]
 
-    with col1.popover("Advanced Filters", width='stretch'):
+    with col1.popover("Advanced Filters", width="stretch"):
         # get tag options
         st.header("Advanced Filters")
         tags = set()
@@ -553,7 +553,7 @@ def render_app_version_filters(
     if len(active_adv_filters):
         col2.button(
             "Reset Filters",
-            width='stretch',
+            width="stretch",
             type="primary",
             on_click=_handle_reset_filters,
             args=(active_adv_filters, tags, metadata_options, page_name_keys),
