@@ -26,7 +26,7 @@ Note: Since we will using a LLM provider to generate the access, pick your provi
 
     os.environ["OPENAI_API_KEY"] = "<replace-with-your-api-key>"
 
-    # considering your have your Langchain rag_chain in place
+    # Considering you have your LangChain rag_chain in place.
 
     test = GenerateTestSet(app_callable = rag_chain.invoke)
     test_set = test.generate_test_set(
