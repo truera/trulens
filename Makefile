@@ -156,9 +156,25 @@ docs-upload: clean env-docs $(shell find docs -type f) mkdocs.yml
 	poetry run ggshield secret scan repo ./docs
 	poetry run mkdocs gh-deploy
 
-# Check that links in the documentation are valid. Requires the lychee tool.
+# Check that links in the documentation are valid.
+# Requires the lychee tool (https://github.com/lycheeverse/lychee).
+# Use --offline to check only internal links without making network requests.
 docs-linkcheck: site
-	lychee "site/**/*.html"
+	lychee --offline --no-progress "site/**/*.html"
+
+# Check documentation for broken internal links using mkdocs --strict.
+# Does not require lychee; fails if any warnings beyond the pre-existing
+# README.md/index.md conflict are found.
+docs-linkcheck-strict: env-docs
+	@OUTPUT=$$(poetry run mkdocs build --clean --strict 2>&1); \
+	echo "$$OUTPUT"; \
+	BROKEN=$$(echo "$$OUTPUT" | grep "WARNING" | grep -v "README.md"); \
+	if [ -n "$$BROKEN" ]; then \
+	  echo ""; \
+	  echo "Broken links / documentation warnings found:"; \
+	  echo "$$BROKEN"; \
+	  exit 1; \
+	fi
 
 # Start the trubot slack app.
 trubot:

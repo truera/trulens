@@ -5,13 +5,16 @@ trigger: none
 
 pr:
   # Run this pipeline for any PR that wishes to push to main that changes code
-  # inside docs folder.
+  # inside docs folder, notebooks, or this pipeline definition itself.
   branches:
     include:
       - main
   paths:
     include:
       - docs
+      - examples
+      - mkdocs.yml
+      - .azure_pipelines/ci-docs-pr.yaml
 
 jobs:
   - job: DocsCheck
@@ -33,3 +36,8 @@ jobs:
           poetry install --only dev --sync
           make run-precommit
         displayName: "Run pre-commit hooks (format + nb-clean)"
+
+      - bash: |
+          poetry install --with docs --sync
+          make docs-linkcheck-strict
+        displayName: "Build docs and check for broken links"
