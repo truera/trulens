@@ -1,5 +1,7 @@
 from __future__ import annotations  # defers evaluation of annotations
 
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import as_completed
 from enum import Enum
 import inspect
 import json
@@ -186,6 +188,14 @@ class RunConfig(BaseModel):
         default=Mode.APP_INVOCATION,
         description="Mode of operation: LOG_INGESTION for creating spans from existing data, APP_INVOCATION for instrumenting spans from a new app execution.",
     )
+    invocation_max_workers: Optional[int] = Field(
+        default=None,
+        description="Max threads for parallel app invocation in run.start(). Defaults to min(len(input_df), 4). Set to 1 for sequential execution.",
+    )
+    metric_max_workers: Optional[int] = Field(
+        default=None,
+        description="Max threads for parallel client-side metric computation in run.compute_metrics(). Defaults to len(metrics). Server-side string metrics are parallelized by Snowflake automatically.",
+    )
 
 
 class Run(BaseModel):
@@ -244,6 +254,17 @@ class Run(BaseModel):
 
     description: Optional[str] = Field(
         default=None, description="A description for the run."
+    )
+
+    invocation_max_workers: Optional[int] = Field(
+        default=None,
+        description="Max threads for parallel app invocation in run.start(). Defaults to min(len(input_df), 4).",
+        exclude=True,
+    )
+    metric_max_workers: Optional[int] = Field(
+        default=None,
+        description="Max threads for parallel client-side metric computation. Defaults to len(metrics).",
+        exclude=True,
     )
 
     class RunMetadata(BaseModel):
@@ -420,6 +441,72 @@ class Run(BaseModel):
             RunStatus.FAILED,
             RunStatus.UNKNOWN,
         ]
+
+    def _warn_if_snowflake_parallel(self, value: int):
+        if value > 1:
+            connector_type = type(self.tru_session.connector).__name__
+            if "Snowflake" in connector_type:
+                logger.warning(
+                    f"metric_max_workers={value} only affects client-side Metric objects. "
+                    "Server-side string metrics are parallelized by Snowflake automatically."
+                )
+
+    def _invoke_single_row(
+        self,
+        row: pd.Series,
+        dataset_spec: Dict[str, str],
+        input_records_count: int,
+    ):
+        main_method_args = []
+
+        input_id = (
+            row[dataset_spec["input_id"]]
+            if "input_id" in dataset_spec
+            else None
+        )
+        input_col = None
+        if input_id is None:
+            if "input" in dataset_spec:
+                input_col = dataset_spec["input"]
+            elif "record_root.input" in dataset_spec:
+                input_col = dataset_spec["record_root.input"]
+            if input_col:
+                input_value = row[input_col]
+                if isinstance(input_value, str):
+                    try:
+                        parsed = json.loads(input_value)
+                        if isinstance(parsed, dict):
+                            input_value = parsed
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+                input_id = obj_id_of_obj(input_value)
+                main_method_args.append(input_value)
+
+        special_fields = {
+            "input_id",
+            "input",
+            "record_root.input",
+            "ground_truth_output",
+            "record_root.ground_truth_output",
+        }
+
+        for spec_key, column_name in dataset_spec.items():
+            if spec_key not in special_fields and column_name in row:
+                main_method_args.append(row[column_name])
+
+        ground_truth_output = row.get(
+            dataset_spec.get("ground_truth_output")
+            or dataset_spec.get("record_root.ground_truth_output")
+        )
+
+        self.app.instrumented_invoke_main_method(
+            run_name=self.run_name,
+            input_id=input_id,
+            input_records_count=input_records_count,
+            ground_truth_output=ground_truth_output,
+            main_method_args=tuple(main_method_args),
+            main_method_kwargs=None,
+        )
 
     def _can_start_new_metric_computation(
         self, current_run_status: RunStatus
@@ -620,71 +707,24 @@ class Run(BaseModel):
                     input_df, dataset_spec, input_records_count
                 )
             else:
-                # user app invocation - will block until the app completes
-                for _, row in input_df.iterrows():
-                    main_method_args = []
-
-                    # Call the instrumented main method with the arguments
-                    # TODO (dhuang) better way to check span attributes, also is this all we need to support?
-                    input_id = (
-                        row[dataset_spec["input_id"]]
-                        if "input_id" in dataset_spec
-                        else None
-                    )
-                    input_col = None
-                    if input_id is None:
-                        if "input" in dataset_spec:
-                            input_col = dataset_spec["input"]
-                        elif "record_root.input" in dataset_spec:
-                            input_col = dataset_spec["record_root.input"]
-                        if input_col:
-                            input_value = row[input_col]
-                            # Parse JSON string to dict if the input is a JSON blob
-                            # This supports LangGraph state dicts from Snowflake VARIANT columns
-                            if isinstance(input_value, str):
-                                try:
-                                    import json
-
-                                    parsed = json.loads(input_value)
-                                    if isinstance(parsed, dict):
-                                        input_value = parsed
-                                except (json.JSONDecodeError, TypeError):
-                                    pass  # Keep as string if not valid JSON
-                            input_id = obj_id_of_obj(input_value)
-                            main_method_args.append(input_value)
-
-                    # Extract additional method arguments from dataset_spec
-                    # Skip fields that are already handled or are special metadata fields
-                    special_fields = {
-                        "input_id",
-                        "input",
-                        "record_root.input",
-                        "ground_truth_output",
-                        "record_root.ground_truth_output",
+                max_workers = self.invocation_max_workers or min(
+                    len(input_df), 4
+                )
+                logger.info(
+                    f"Invoking app with {max_workers} parallel worker(s) on {input_records_count} rows."
+                )
+                with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                    futures = {
+                        executor.submit(
+                            self._invoke_single_row,
+                            row,
+                            dataset_spec,
+                            input_records_count,
+                        ): idx
+                        for idx, row in input_df.iterrows()
                     }
-
-                    for spec_key, column_name in dataset_spec.items():
-                        if (
-                            spec_key not in special_fields
-                            and column_name in row
-                        ):
-                            main_method_args.append(row[column_name])
-
-                    ground_truth_output = row.get(
-                        dataset_spec.get("ground_truth_output")
-                        or dataset_spec.get("record_root.ground_truth_output")
-                    )
-
-                    self.app.instrumented_invoke_main_method(
-                        run_name=self.run_name,
-                        input_id=input_id,
-                        input_records_count=input_records_count,
-                        ground_truth_output=ground_truth_output,
-                        main_method_args=tuple(
-                            main_method_args
-                        ),  # Ensure correct order
-                        main_method_kwargs=None,  # don't take any kwargs for now so we don't break TruChain / TruLlama where input argument name cannot be defined by users.
-                    )
+                    for future in as_completed(futures):
+                        future.result()
         except Exception as e:
             logger.exception(
                 f"Error encountered during invoking app main method: {e}."
@@ -1283,38 +1323,46 @@ class Run(BaseModel):
 
         # Compute each client-side metric
 
-        for metric_config in metric_configs:
-            try:
-                logger.info(
-                    f"Computing client-side metric: {metric_config.name}"
+        max_workers = self.metric_max_workers or len(metric_configs)
+        if self.metric_max_workers is not None:
+            self._warn_if_snowflake_parallel(max_workers)
+
+        def _compute_single_metric(metric_config):
+            logger.info(f"Computing client-side metric: {metric_config.name}")
+
+            if isinstance(metric_config, metric_module.Metric):
+                feedback = metric_config
+            elif hasattr(metric_config, "create_feedback_definition"):
+                feedback = metric_config.create_feedback_definition()
+            else:
+                raise TypeError(
+                    f"Expected Metric or MetricConfig, got {type(metric_config)}"
                 )
 
-                # Handle both Metric objects (new API) and MetricConfig (deprecated)
-                if isinstance(metric_config, metric_module.Metric):
-                    # Metric objects are already feedback definitions
-                    feedback = metric_config
-                elif hasattr(metric_config, "create_feedback_definition"):
-                    # MetricConfig (deprecated) needs conversion
-                    feedback = metric_config.create_feedback_definition()
-                else:
-                    raise TypeError(
-                        f"Expected Metric or MetricConfig, got {type(metric_config)}"
+            compute_feedback_by_span_group(
+                events=events,
+                feedback=feedback,
+                raise_error_on_no_feedbacks_computed=False,
+                selectors=feedback.selectors,
+            )
+            logger.info(
+                f"Successfully computed client-side metric: {metric_config.name}"
+            )
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {
+                executor.submit(_compute_single_metric, mc): mc
+                for mc in metric_configs
+            }
+            for future in as_completed(futures):
+                mc = futures[future]
+                try:
+                    future.result()
+                except Exception as e:
+                    logger.error(
+                        f"Error computing client-side metric {mc.name}: {e}"
                     )
-
-                compute_feedback_by_span_group(
-                    events=events,
-                    feedback=feedback,
-                    raise_error_on_no_feedbacks_computed=False,
-                    selectors=feedback.selectors,
-                )
-                logger.info(
-                    f"Successfully computed client-side metric: {metric_config.name}"
-                )
-            except Exception as e:
-                logger.error(
-                    f"Error computing client-side metric {metric_config.name}: {e}"
-                )
-                raise
+                    raise
 
     def _get_events_for_client_metrics(self) -> pd.DataFrame:
         """Get events for client-side metric computation using the connector."""

@@ -41,12 +41,12 @@ from trulens.core import instruments as core_instruments
 from trulens.core import session as core_session
 from trulens.core._utils import optional as optional_utils
 from trulens.core._utils.pycompat import Future  # import standard exception
+from trulens.core.dao.run import RunDaoBase
 from trulens.core.database import base as core_db
 from trulens.core.database import connector as core_connector
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback import feedback as core_feedback
 from trulens.core.metric import metric as core_metric
-from trulens.core.dao.run import RunDaoBase
 from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.run import Run
 from trulens.core.run import RunConfig
@@ -609,12 +609,15 @@ class App(
 
         if self.run_dao is None and connector is not None:
             from trulens.core.dao.default_run import DefaultRunDao
+
             if hasattr(connector, "db"):
                 try:
                     db = connector.db
                     if hasattr(db, "orm") and hasattr(db.orm, "Run"):
                         self.run_dao = DefaultRunDao(db=db)
-                        self._object_name = kwargs.get("app_name", "default_app")
+                        self._object_name = kwargs.get(
+                            "app_name", "default_app"
+                        )
                         self._object_type = "APP"
                         self._object_version = kwargs.get("app_version", "base")
                 except Exception:
@@ -1898,6 +1901,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                     "main_method_name": self.main_method_name,
                     "run_dao": self.run_dao,
                     "tru_session": self.session,
+                    "invocation_max_workers": run_config.invocation_max_workers,
+                    "metric_max_workers": run_config.metric_max_workers,
                 },
             )
 
