@@ -1356,6 +1356,10 @@ class Run(BaseModel):
 
                     events_df = events_df.rename(columns=column_mapping)
 
+                    for col in ["trace", "record", "record_attributes"]:
+                        if col in events_df.columns:
+                            events_df[col] = events_df[col].astype(object)
+
                     for idx, row in events_df.iterrows():
                         trace = events_df.at[idx, "trace"]
                         record = events_df.at[idx, "record"]
