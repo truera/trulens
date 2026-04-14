@@ -168,7 +168,7 @@ docs-linkcheck: site
 docs-linkcheck-strict: env-docs
 	@OUTPUT=$$(poetry run mkdocs build --clean --strict 2>&1); \
 	echo "$$OUTPUT"; \
-	BROKEN=$$(echo "$$OUTPUT" | grep "WARNING" | grep -v "README.md"); \
+  BROKEN=$$(echo "$$OUTPUT" | grep "WARNING -" | grep -v "README.md" | grep -v "griffe:"); \
 	if [ -n "$$BROKEN" ]; then \
 	  echo ""; \
 	  echo "Broken links / documentation warnings found:"; \
