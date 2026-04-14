@@ -73,7 +73,17 @@ def static_resource(namespace: str, filepath: Union[Path, str]) -> Path:
     if not isinstance(filepath, Path):
         filepath = Path(filepath)
 
-    if sys.version_info >= (3, 9):
+    if sys.version_info >= (3, 14):
+        from importlib.resources.abc import Traversable
+
+        _trulens_resources: Traversable = importlib_resources.files(
+            f"trulens.{namespace}"
+        )
+        with importlib_resources.as_file(
+            _trulens_resources / filepath
+        ) as _path:
+            return _path
+    elif sys.version_info >= (3, 9):
         # This does not exist in 3.8
         from importlib.abc import Traversable
 

@@ -2,7 +2,6 @@
 """Creates grit patterns to de-alias imports in trulens_eval and submodules."""
 
 import ast
-import importlib
 import importlib.util
 import inspect
 from pathlib import Path
