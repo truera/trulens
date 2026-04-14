@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 from typing import (
+    Any,
     Callable,
     List,
     Optional,
@@ -65,7 +66,7 @@ class Feedback(Metric):
         temperature: Optional[float] = 0.0,
         groundedness_configs: Optional[GroundednessConfigs] = None,
         enable_trace_compression: Optional[bool] = None,
-        **kwargs,
+        **kwargs: Any,
     ):
         """Initialize a Feedback (deprecated, use Metric instead).
 

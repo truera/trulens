@@ -234,7 +234,7 @@ def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
 def safe_hasattr(obj: Any, k: str) -> bool:
     """Check if the given object has the given attribute.
 
-    Attempts to use static checks (see [inspect.getattr_static][]) to avoid any
+    Attempts to use static checks (see `inspect.getattr_static`) to avoid any
     side effects of attribute access (i.e. for properties).
     """
     try:
@@ -508,7 +508,7 @@ original_new_event_loop = asyncio.new_event_loop
 
 
 def tru_new_event_loop():
-    """Replacement for [new_event_loop][asyncio.new_event_loop] that sets
+    """Replacement for `asyncio.new_event_loop` that sets
     the task factory to make tasks that copy the stack from their creators."""
 
     loop = original_new_event_loop()
@@ -884,7 +884,7 @@ def wrap_awaitable(
     and after the given awaitable finishes.
 
     !!! Important
-        This method captures a [Context][contextvars.Context] at the time this
+        This method captures a `contextvars.Context` at the time this
         method is called and copies it over to the wrapped awaitable.
 
     Note that the resulting awaitable needs to be awaited for the callback to

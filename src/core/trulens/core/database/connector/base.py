@@ -78,7 +78,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
         self.db.migrate_database(**kwargs)
 
     def add_record(
-        self, record: Optional[record_schema.Record] = None, **kwargs
+        self, record: Optional[record_schema.Record] = None, **kwargs: Any
     ) -> types_schema.RecordID:
         """Add a record to the database.
 
@@ -89,7 +89,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
                 given record or a new record if no `record` provided.
 
         Returns:
-            Unique record identifier [str][] .
+            Unique record identifier `str`.
 
         """
         if is_otel_tracing_enabled():
@@ -165,7 +165,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
             app: The app to add to the database.
 
         Returns:
-            A unique app identifier [str][].
+            A unique app identifier `str`.
 
         """
 
@@ -191,7 +191,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
             feedback_definition: The feedback definition to add to the database.
 
         Returns:
-            A unique feedback definition identifier [str][].
+            A unique feedback definition identifier `str`.
         """
 
         return self.db.insert_feedback_definition(
@@ -211,7 +211,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
         """Add a single feedback result or future to the database and return its unique id.
 
         Args:
-            feedback_result_or_future: If a [Future][concurrent.futures.Future]
+            feedback_result_or_future: If a `concurrent.futures.Future`
                 is given, call will wait for the result before adding it to the
                 database. If `kwargs` are given and a
                 [FeedbackResult][trulens.core.schema.feedback.FeedbackResult] is also
@@ -272,10 +272,10 @@ class DBConnector(ABC, text_utils.WithIdentString):
 
         Args:
             feedback_results: An iterable with each iteration being a [FeedbackResult][trulens.core.schema.feedback.FeedbackResult] or
-                [Future][concurrent.futures.Future] of the same. Each given future will be waited.
+                `concurrent.futures.Future` of the same. Each given future will be waited.
 
         Returns:
-            List of unique result identifiers [str][] in the same order as input
+            List of unique result identifiers `str` in the same order as input
                 `feedback_results`.
         """
         if is_otel_tracing_enabled():
@@ -292,7 +292,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
     ) -> Optional[serial_utils.JSONized[app_schema.AppDefinition]]:
         """Look up an app from the database.
 
-        This method produces the JSON-ized version of the app. It can be deserialized back into an [AppDefinition][trulens.core.schema.app.AppDefinition] with [model_validate][pydantic.BaseModel.model_validate]:
+        This method produces the JSON-ized version of the app. It can be deserialized back into an [AppDefinition][trulens.core.schema.app.AppDefinition] with `model_validate`:
 
         Example:
             ```python
@@ -306,7 +306,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
             its implementations feature attributes not meant to be deserialized.
 
         Args:
-            app_id: The unique identifier [str][] of the app to look up.
+            app_id: The unique identifier `str` of the app to look up.
 
         Returns:
             JSON-ized version of the app.

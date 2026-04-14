@@ -61,7 +61,7 @@ class Google(llm_provider.LLMProvider):
     Args:
         model_engine: Model engine to use. Defaults to `"gemini-2.5-flash"`.
         api_key: API key for authenticating with the Gemini Developer API. If not provided,
-        the key will be read from the environment variable `GOOGLE_API_KEY` or `GEMINI_API_KEY`, if available.
+            the key will be read from the environment variable `GOOGLE_API_KEY` or `GEMINI_API_KEY`, if available.
         vertexai: Whether to use Vertex AI endpoints. Set to `True` to use Vertex AI instead of the Gemini Developer API. Defaults to `False`.
         credentials: Credentials to authenticate with Vertex AI. If not provided, default application credentials are used.
         project: Google Cloud project ID used for billing and quota when using Vertex AI. Can be set via environment variables.

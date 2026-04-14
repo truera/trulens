@@ -85,7 +85,7 @@ def read_query_params_into_session_state(
             st.session_state[param] = value
 
 
-def is_sis_compatibility_enabled():
+def is_sis_compatibility_enabled() -> bool:
     """This method returns whether the SIS compatibility feature is enabled.
     The SiS compatibility feature adapts dashboard components to support Streamlit in Snowflake (SiS).
     As of 11/13/2024, SiS runs on Python 3.8, Streamlit 1.35.0, and does not support bidirectional custom components.

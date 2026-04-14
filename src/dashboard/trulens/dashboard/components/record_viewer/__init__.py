@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 import streamlit.components.v1 as components
 
@@ -26,7 +27,7 @@ _record_viewer = None
 # `declare_component` and call it done. The wrapper allows us to customize
 # our component's API: we can pre-process its input args, post-process its
 # output value, and add a docstring for users.
-def record_viewer(record_json, app_json, key=None) -> str:
+def record_viewer(record_json: Any, app_json: Any, key=None) -> str:
     """Create a new instance of "record_viewer", which produces a timeline
 
     Args:

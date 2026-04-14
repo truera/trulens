@@ -50,9 +50,9 @@ function [jsonify][trulens.core.utils.json.jsonify] is the root of this process.
 
 ##### Pydantic (LangChain)
 
-Classes inheriting [BaseModel][pydantic.BaseModel] come with serialization
-to/from JSON in the form of [model_dump][pydantic.BaseModel.model_dump] and
-[model_validate][pydantic.BaseModel.model_validate]. We do not use the
+Classes inheriting `pydantic.BaseModel` come with serialization
+to/from JSON in the form of `model_dump` and
+`model_validate`. We do not use the
 serialization to JSON part of this capability as many *LangChain* components
 fail serialization with a "will not serialize" message. However, we make
 use of Pydantic `fields` to enumerate components of an object ourselves saving
@@ -96,7 +96,7 @@ various classes.
 
 Most if not all *LangChain* components use pydantic which imposes some
 restrictions but also provides some utilities. Classes inheriting
-[BaseModel][pydantic.BaseModel] do not allow defining new attributes but
+`pydantic.BaseModel` do not allow defining new attributes but
 existing attributes including those provided by pydantic itself can be
 overwritten (like dict, for example). Presently, we override methods with
 instrumented versions.
@@ -183,7 +183,7 @@ context API which integrates with Python's contextvars.
 
 Legacy instrumentation used custom task factory instrumentation:
 
-- **Legacy approach**: Instrumented [asyncio.new_event_loop][] via
+- **Legacy approach**: Instrumented `asyncio.new_event_loop` via
   [tru_new_event_loop][trulens.core.utils.python.tru_new_event_loop] and used
   [task_factory_with_stack][trulens.core.utils.python.task_factory_with_stack]
   to track async task stacks. This is less critical with OTEL context propagation.
@@ -206,7 +206,7 @@ Legacy instrumentation used custom task factory instrumentation:
   a limitation of *LangChain* itself.
 
 - Instrumentation relies on CPython specifics, making heavy use of the
-  [inspect][] module which is not expected to work with other Python
+  `inspect` module which is not expected to work with other Python
   implementations.
 
 #### Alternatives

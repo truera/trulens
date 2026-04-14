@@ -13,7 +13,7 @@ def get_icon(fdef: feedback_schema.FeedbackDefinition, result: float) -> str:
     Get the icon for a given feedback definition and result.
 
     Args:
-        fdefThe feedback definition.
+        fdef: The feedback definition.
 
         result: The result of the feedback.
 

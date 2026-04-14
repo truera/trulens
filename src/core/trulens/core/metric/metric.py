@@ -226,7 +226,7 @@ class Metric(feedback_schema.FeedbackDefinition):
         description: Optional[str] = None,
         # Legacy parameter name support
         imp: Optional[Callable] = None,
-        **kwargs,
+        **kwargs: Any,
     ):
         """Initialize a metric.
 
