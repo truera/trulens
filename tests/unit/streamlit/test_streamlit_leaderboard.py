@@ -92,9 +92,7 @@ class TestLeaderboardUI:
             _render_plot_tab(df, feedback_col_names)
 
         app = AppTestHelper.create_and_run_app(test_app)
-        AppTestHelper.assert_has_warning_with_message(
-            app, "No feedback functions found"
-        )
+        AppTestHelper.assert_has_warning_with_message(app, "No metrics found")
 
     def test_render_plot_tab_with_feedback(self):
         """Test plot tab rendering with feedback data."""
