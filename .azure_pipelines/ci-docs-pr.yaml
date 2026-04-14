@@ -27,10 +27,9 @@ jobs:
           python-version: "3.11"
 
     steps:
-      - checkout: self
-        clean: true
+      - template: templates/env-setup.yaml
 
       - bash: |
-          echo "There are no doc checks at the moment."
-
-        displayName: "Dummy check"
+          poetry install --only dev --sync
+          make run-precommit
+        displayName: "Run pre-commit hooks (format + nb-clean)"
