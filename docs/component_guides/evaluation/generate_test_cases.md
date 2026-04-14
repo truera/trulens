@@ -15,7 +15,7 @@ be made up of `breadth` X `depth` prompts organized by prompt category.
     pip install trulens-providers-openai
     ```
 
-Note: Since we will using a LLM provider to generate the access, pick your provider and setup the environment variable, say OpenAI. 
+Note: Since we will using a LLM provider to generate the access, pick your provider and setup the environment variable, say OpenAI.
 
 !!! example
 
