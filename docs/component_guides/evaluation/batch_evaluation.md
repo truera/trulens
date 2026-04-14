@@ -190,6 +190,60 @@ while True:
     time.sleep(10)
 ```
 
+## Example: Local Batch Evaluation with a DataFrame
+
+You don't need a Snowflake connection to use Runs. With a local `TruSession()`, TruLens auto-wires a SQLite-backed `DefaultRunDao` so the same Run API works out of the box.
+
+### 1. Wrap your app and define the dataset
+
+```python
+import pandas as pd
+from trulens.apps.app import TruApp
+from trulens.core import TruSession
+from trulens.core.run import RunConfig
+
+session = TruSession()
+
+app = MyApp()
+tru_app = TruApp(
+    app,
+    app_name="my_app",
+    app_version="v1",
+    main_method=app.respond,
+    feedbacks=[...],  # Metric objects
+)
+
+test_dataset = pd.DataFrame({"input": [
+    "What is machine learning?",
+    "Explain gradient descent",
+    "What is overfitting?",
+]})
+```
+
+### 2. Create and start a run
+
+```python
+run = tru_app.add_run(
+    run_config=RunConfig(
+        run_name="local_eval",
+        dataset_name="test_questions",
+        source_type="DATAFRAME",
+        dataset_spec={"input": "input"},
+    )
+)
+
+run.start(input_df=test_dataset)
+```
+
+### 3. Compute metrics and inspect results
+
+```python
+run.compute_metrics([my_groundedness_metric, my_relevance_metric])
+run.get_records()
+```
+
+For a complete walkthrough, see the [Batch Evaluation quickstart notebook](../../examples/quickstart/batch_evaluation.ipynb).
+
 ## Comparing App Versions
 
 Runs are scoped to an app version. To compare versions, create separate `TruApp` instances with different `app_version` values and run the same dataset through each:
