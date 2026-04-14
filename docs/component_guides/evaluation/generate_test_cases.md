@@ -8,10 +8,25 @@ tailored to your app and data. The resulting test set will be a list of test pro
 of length `depth`, for `breadth` categories of prompts. This test set will
 be made up of `breadth` X `depth` prompts organized by prompt category.
 
+!!! Initial Setup
+
+    ```bash
+    pip install "trulens-benchmark"
+    pip install trulens-providers-openai
+    ```
+
+Note: Since we will using a LLM provider to generate the access, pick your provider and setup the environment variable, say OpenAI. 
+
 !!! example
 
-    ```python
+    ```
+    import os
     from trulens.benchmark.generate.generate_test_set import GenerateTestSet
+    from trulens.providers.openai import OpenAI
+
+    os.environ["OPENAI_API_KEY"] = "<replace-with-your-api-key>"
+
+    # Considering you have your LangChain rag_chain in place.
 
     test = GenerateTestSet(app_callable = rag_chain.invoke)
     test_set = test.generate_test_set(
