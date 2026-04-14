@@ -601,9 +601,7 @@ class Run(BaseModel):
             logger.info(
                 "No input dataframe provided. Fetching input data from source."
             )
-            input_df = self.run_dao.fetch_source_data(
-                self.source_info.name
-            )
+            input_df = self.run_dao.fetch_source_data(self.source_info.name)
 
         dataset_spec = self.source_info.column_spec
 
@@ -1385,9 +1383,7 @@ class Run(BaseModel):
                         idx,
                         critical=False,
                     )
-                    events_df.at[idx, "record_attributes"] = (
-                        record_attributes
-                    )
+                    events_df.at[idx, "record_attributes"] = record_attributes
 
                     if isinstance(trace, dict) and isinstance(record, dict):
                         if "parent_span_id" in record:
@@ -1411,8 +1407,7 @@ class Run(BaseModel):
                         )
                         if (
                             isinstance(record_attributes, str)
-                            and record_attributes
-                            == original_record_attributes
+                            and record_attributes == original_record_attributes
                         ):
                             continue
 
