@@ -45,7 +45,7 @@ B = TypeVar("B")
 MaybeAwaitable = Union[T, Awaitable[T]]
 """Awaitable or not.
 
-May be checked with [isawaitable][inspect.isawaitable].
+May be checked with `inspect.isawaitable`.
 """
 
 CallableMaybeAwaitable = Union[Callable[[A], B], Callable[[A], Awaitable[B]]]

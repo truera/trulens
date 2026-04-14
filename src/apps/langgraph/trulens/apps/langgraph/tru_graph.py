@@ -1745,7 +1745,7 @@ class TruGraph(TruChain):
                 f"App must be an instance of Pregel, got {type(self.app)}"
             )
 
-    def main_call(self, input: Union[str, Dict[str, Any]]):
+    def main_call(self, input: Union[str, Dict[str, Any]]) -> str:
         """Invoke the LangGraph workflow.
 
         Args:
@@ -1768,7 +1768,7 @@ class TruGraph(TruChain):
         except Exception as e:
             raise Exception(f"Error invoking LangGraph workflow: {str(e)}")
 
-    async def main_acall(self, input: Union[str, Dict[str, Any]]):
+    async def main_acall(self, input: Union[str, Dict[str, Any]]) -> str:
         """Async invoke the LangGraph workflow.
 
         Args:

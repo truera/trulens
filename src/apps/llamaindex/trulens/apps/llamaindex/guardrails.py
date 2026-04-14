@@ -1,5 +1,5 @@
 from concurrent.futures import as_completed
-from typing import List
+from typing import Any, List
 
 from llama_index.core.indices.query.schema import QueryBundle
 from llama_index.core.query_engine.retriever_query_engine import (
@@ -11,8 +11,6 @@ from trulens.core.utils.threading import ThreadPoolExecutor
 
 
 class WithFeedbackFilterNodes(RetrieverQueryEngine):
-    feedback: core_feedback.Feedback
-    threshold: float
     """
     A BaseQueryEngine that filters documents using a minimum threshold
     on a feedback function before returning them.
@@ -45,6 +43,9 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
         ```
     """
 
+    feedback: core_feedback.Feedback
+    threshold: float
+
     def __init__(
         self,
         query_engine: RetrieverQueryEngine,
@@ -63,7 +64,7 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
         self.feedback = feedback
         self.threshold = threshold
 
-    def query(self, query: QueryBundle, **kwargs) -> List[NodeWithScore]:
+    def query(self, query: QueryBundle, **kwargs: Any) -> List[NodeWithScore]:
         """
         An extended query method that will:
 

@@ -9,8 +9,6 @@ from trulens.core.utils import threading as threading_utils
 
 
 class WithFeedbackFilterDocuments(VectorStoreRetriever):
-    feedback: core_feedback.Feedback
-    threshold: float
     """A VectorStoreRetriever that filters documents using a minimum threshold
     on a feedback function before returning them.
 
@@ -45,6 +43,9 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
             llm_response = rag_chain.invoke("What is Task Decomposition?")
         ```
     """
+
+    feedback: core_feedback.Feedback
+    threshold: float
 
     def __init__(
         self,
