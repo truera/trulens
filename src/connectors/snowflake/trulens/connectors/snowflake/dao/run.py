@@ -10,6 +10,7 @@ from trulens.connectors.snowflake.dao.sql_utils import (
     clean_up_snowflake_identifier,
 )
 from trulens.connectors.snowflake.dao.sql_utils import execute_query
+from trulens.core.dao.run import RunDaoBase
 from trulens.core.enums import Mode
 from trulens.core.run import SUPPORTED_ENTRY_TYPES
 from trulens.core.run import SupportedEntryType
@@ -49,7 +50,7 @@ class EvaluationPhase(str, Enum):
     COMPUTE_METRICS = "COMPUTE_METRICS"
 
 
-class RunDao:
+class RunDao(RunDaoBase):
     """Data Access Object for managing AIML RunMetadata entities in Snowflake."""
 
     def __init__(self, snowpark_session: Session) -> None:
@@ -591,6 +592,12 @@ class RunDao:
                 f"Error encountered during calling start ingestion query: {e}."
             )
             raise
+
+    def fetch_source_data(self, source_name: str) -> pd.DataFrame:
+        rows = self.session.sql(
+            f"SELECT * FROM {source_name}"
+        ).collect()
+        return pd.DataFrame([row.as_dict() for row in rows])
 
     def call_compute_metrics_query(
         self,

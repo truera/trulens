@@ -12,6 +12,7 @@ import pydantic
 from pydantic import BaseModel
 from pydantic import Field
 from pydantic import field_serializer
+from trulens.core.dao.run import RunDaoBase
 from trulens.core.enums import Mode
 from trulens.core.feedback.custom_metric import MetricConfig
 from trulens.core.metric import metric as metric_module
@@ -201,7 +202,7 @@ class Run(BaseModel):
     methods like describe() (which uses the underlying RunDao) to obtain the run metadata.
     """
 
-    run_dao: Any = Field(
+    run_dao: RunDaoBase = Field(
         ..., description="DAO instance for run operations.", exclude=True
     )
 
@@ -600,10 +601,9 @@ class Run(BaseModel):
             logger.info(
                 "No input dataframe provided. Fetching input data from source."
             )
-            rows = self.run_dao.session.sql(
-                f"SELECT * FROM {self.source_info.name}"
-            ).collect()
-            input_df = pd.DataFrame([row.as_dict() for row in rows])
+            input_df = self.run_dao.fetch_source_data(
+                self.source_info.name
+            )
 
         dataset_spec = self.source_info.column_spec
 
@@ -1319,144 +1319,131 @@ class Run(BaseModel):
                 raise
 
     def _get_events_for_client_metrics(self) -> pd.DataFrame:
-        """Get events for client-side metric computation using the appropriate method."""
-        try:
-            from trulens.connectors.snowflake import SnowflakeConnector
+        """Get events for client-side metric computation using the connector."""
+        connector = self.tru_session.connector
 
-            if (
-                isinstance(self.tru_session.connector, SnowflakeConnector)
-                and self.tru_session.connector.use_account_event_table
-            ):
-                events_df = self.tru_session.connector.db.get_events(
-                    app_name=self.app.app_name,
-                    app_version=self.app.app_version,
-                    run_name=self.run_name,
-                )
+        use_account_event_table = getattr(
+            connector, "use_account_event_table", False
+        )
 
-                if not events_df.empty:
-                    for json_col in [
-                        "TRACE",
-                        "RESOURCE_ATTRIBUTES",
-                        "RECORD",
-                        "RECORD_ATTRIBUTES",
-                    ]:
-                        if json_col in events_df.columns:
-                            events_df[json_col] = events_df[json_col].apply(
-                                json.loads
-                            )
+        if use_account_event_table:
+            events_df = connector.db.get_events(
+                app_name=self.app.app_name,
+                app_version=self.app.app_version,
+                run_name=self.run_name,
+            )
 
-                    # Rename columns to match expected format (lowercase) in downstream feedback computation
-                    # TODO: remove this once we have a more robust/general way to handle the column names
-                    column_mapping = {
-                        "TRACE": "trace",
-                        "RESOURCE_ATTRIBUTES": "resource_attributes",
-                        "RECORD": "record",
-                        "RECORD_ATTRIBUTES": "record_attributes",
-                    }
-
-                    events_df = events_df.rename(columns=column_mapping)
-
-                    for idx, row in events_df.iterrows():
-                        trace = events_df.at[idx, "trace"]
-                        record = events_df.at[idx, "record"]
-                        record_attributes = (
-                            events_df.at[idx, "record_attributes"]
-                            if "record_attributes" in events_df.columns
-                            else {}
+            if not events_df.empty:
+                for json_col in [
+                    "TRACE",
+                    "RESOURCE_ATTRIBUTES",
+                    "RECORD",
+                    "RECORD_ATTRIBUTES",
+                ]:
+                    if json_col in events_df.columns:
+                        events_df[json_col] = events_df[json_col].apply(
+                            json.loads
                         )
 
-                        # Parse JSON fields using helper function
-                        try:
-                            trace = _parse_json_field(
-                                trace, "trace", idx, critical=True
-                            )
-                            events_df.at[idx, "trace"] = trace
-                        except json.JSONDecodeError:
-                            continue
+                column_mapping = {
+                    "TRACE": "trace",
+                    "RESOURCE_ATTRIBUTES": "resource_attributes",
+                    "RECORD": "record",
+                    "RECORD_ATTRIBUTES": "record_attributes",
+                }
 
-                        try:
-                            record = _parse_json_field(
-                                record, "record", idx, critical=True
-                            )
-                            events_df.at[idx, "record"] = record
-                        except json.JSONDecodeError:
-                            continue
+                events_df = events_df.rename(columns=column_mapping)
 
-                        # record_attributes parsing is not critical for parent_id assignment
+                for idx, row in events_df.iterrows():
+                    trace = events_df.at[idx, "trace"]
+                    record = events_df.at[idx, "record"]
+                    record_attributes = (
+                        events_df.at[idx, "record_attributes"]
+                        if "record_attributes" in events_df.columns
+                        else {}
+                    )
+
+                    try:
+                        trace = _parse_json_field(
+                            trace, "trace", idx, critical=True
+                        )
+                        events_df.at[idx, "trace"] = trace
+                    except json.JSONDecodeError:
+                        continue
+
+                    try:
+                        record = _parse_json_field(
+                            record, "record", idx, critical=True
+                        )
+                        events_df.at[idx, "record"] = record
+                    except json.JSONDecodeError:
+                        continue
+
+                    record_attributes = _parse_json_field(
+                        record_attributes,
+                        "record_attributes",
+                        idx,
+                        critical=False,
+                    )
+                    events_df.at[idx, "record_attributes"] = (
+                        record_attributes
+                    )
+
+                    if isinstance(trace, dict) and isinstance(record, dict):
+                        if "parent_span_id" in record:
+                            trace["parent_id"] = record["parent_span_id"]
+                        else:
+                            trace["parent_id"] = None
+
+                        events_df.at[idx, "trace"] = trace
+
+            if not events_df.empty and self.run_name:
+                filtered_events = []
+                for _, row in events_df.iterrows():
+                    try:
+                        record_attributes = row.get("record_attributes", {})
+
+                        original_record_attributes = record_attributes
                         record_attributes = _parse_json_field(
                             record_attributes,
                             "record_attributes",
-                            idx,
                             critical=False,
                         )
-                        events_df.at[idx, "record_attributes"] = (
-                            record_attributes
-                        )
-
-                        # Now modify the dictionary
-                        if isinstance(trace, dict) and isinstance(record, dict):
-                            if "parent_span_id" in record:
-                                trace["parent_id"] = record["parent_span_id"]
-                            else:
-                                trace["parent_id"] = None
-
-                            # Set the modified dict back into the DataFrame
-                            events_df.at[idx, "trace"] = trace
-
-                if not events_df.empty and self.run_name:
-                    filtered_events = []
-                    for _, row in events_df.iterrows():
-                        try:
-                            record_attributes = row.get("record_attributes", {})
-
-                            # Parse record_attributes using helper function
-                            original_record_attributes = record_attributes
-                            record_attributes = _parse_json_field(
-                                record_attributes,
-                                "record_attributes",
-                                critical=False,
-                            )
-                            # If parsing failed and we still have a string, skip this record
-                            if (
-                                isinstance(record_attributes, str)
-                                and record_attributes
-                                == original_record_attributes
-                            ):
-                                continue
-
-                            event_run_name = record_attributes.get(
-                                SpanAttributes.RUN_NAME
-                            )
-                            if event_run_name == self.run_name:
-                                filtered_events.append(row)
-
-                        except Exception as e:
-                            logger.debug(
-                                f"Skipping event due to parsing error: {e}"
-                            )
+                        if (
+                            isinstance(record_attributes, str)
+                            and record_attributes
+                            == original_record_attributes
+                        ):
                             continue
 
-                    if filtered_events:
-                        events_df = pd.DataFrame(filtered_events)
-                        logger.info(
-                            f"Filtered {len(filtered_events)} events for run {self.run_name}"
+                        event_run_name = record_attributes.get(
+                            SpanAttributes.RUN_NAME
                         )
-                    else:
-                        logger.warning(
-                            f"No events found for run {self.run_name} after filtering"
-                        )
-                        events_df = pd.DataFrame()
+                        if event_run_name == self.run_name:
+                            filtered_events.append(row)
 
-                return events_df
-            else:
-                return self.tru_session.connector.get_events(
-                    app_name=self.app.app_name,
-                    app_version=self.app.app_version,
-                    run_name=self.run_name,
-                )
-        except ImportError:
-            raise ValueError(
-                "Snowflake connector is not installed. Please install it to use feedback computation functionality."
+                    except Exception as e:
+                        logger.debug(
+                            f"Skipping event due to parsing error: {e}"
+                        )
+                        continue
+
+                if filtered_events:
+                    events_df = pd.DataFrame(filtered_events)
+                    logger.info(
+                        f"Filtered {len(filtered_events)} events for run {self.run_name}"
+                    )
+                else:
+                    logger.warning(
+                        f"No events found for run {self.run_name} after filtering"
+                    )
+                    events_df = pd.DataFrame()
+
+            return events_df
+        else:
+            return connector.get_events(
+                app_name=self.app.app_name,
+                app_version=self.app.app_version,
             )
 
     def get_records(
