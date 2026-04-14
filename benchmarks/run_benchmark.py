@@ -1,11 +1,11 @@
 """
-Benchmark: Parallel vs Sequential Run APIs with Snowflake connection.
+Benchmark: Parallel vs Sequential Run APIs with Snowflake Cortex + Snowflake connector.
 
-Uses the batch_evaluation quickstart RAG app (ChromaDB + OpenAI).
+Uses the batch_evaluation quickstart RAG app (ChromaDB + Cortex LLM via OpenAI compat).
 Connects to Snowflake via the DEVREL_ENTERPRISE connection.
 
 Usage:
-  OPENAI_API_KEY=... SNOWFLAKE_CONNECTION_NAME=DEVREL_ENTERPRISE \
+  SNOWFLAKE_CONNECTION_NAME=DEVREL_ENTERPRISE \
     python benchmarks/run_benchmark.py
 """
 
@@ -14,11 +14,11 @@ import time
 import uuid
 
 import chromadb
-from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 import numpy as np
 from openai import OpenAI
 import pandas as pd
 from snowflake.snowpark import Session
+import toml
 from trulens.apps.app import TruApp
 from trulens.connectors.snowflake import SnowflakeConnector
 from trulens.core import Metric
@@ -28,6 +28,22 @@ from trulens.core.otel.instrument import instrument
 from trulens.core.run import RunConfig
 from trulens.otel.semconv.trace import SpanAttributes
 from trulens.providers.openai import OpenAI as fOpenAI
+from trulens.providers.openai.endpoint import OpenAIEndpoint
+
+CONN_NAME = os.environ.get("SNOWFLAKE_CONNECTION_NAME", "DEVREL_ENTERPRISE")
+CORTEX_MODEL = "llama3.1-70b"
+
+# --- Snowflake PAT + Cortex base_url ---
+
+connections_path = os.path.expanduser("~/.snowflake/connections.toml")
+conn_cfg = toml.load(connections_path)[CONN_NAME]
+SF_ACCOUNT = conn_cfg["account"]
+SF_PAT = conn_cfg["password"]
+CORTEX_BASE_URL = (
+    f"https://{SF_ACCOUNT}.snowflakecomputing.com/api/v2/cortex/v1"
+)
+
+cortex_client = OpenAI(api_key=SF_PAT, base_url=CORTEX_BASE_URL)
 
 # --- Knowledge Base ---
 
@@ -64,16 +80,11 @@ of the highest rocky headlands along the Atlantic coastline. The park includes w
 rocky beaches, and glacier-scoured granite peaks such as Cadillac Mountain.
 """
 
-# --- ChromaDB ---
-
-embedding_function = OpenAIEmbeddingFunction(
-    api_key=os.environ["OPENAI_API_KEY"],
-    model_name="text-embedding-3-small",
-)
+# --- ChromaDB (default embedding function, no OpenAI needed) ---
 
 chroma_client = chromadb.Client()
 vector_store = chroma_client.get_or_create_collection(
-    name="national_parks_bench", embedding_function=embedding_function
+    name="national_parks_bench"
 )
 vector_store.add("yellowstone", documents=yellowstone_info)
 vector_store.add("yosemite", documents=yosemite_info)
@@ -82,14 +93,12 @@ vector_store.add("zion", documents=zion_info)
 vector_store.add("glacier", documents=glacier_info)
 vector_store.add("acadia", documents=acadia_info)
 
-oai_client = OpenAI()
 
-
-# --- RAG App ---
+# --- RAG App (uses Cortex LLM via OpenAI compat) ---
 
 
 class RAG:
-    def __init__(self, model_name="gpt-4o-mini"):
+    def __init__(self, model_name=CORTEX_MODEL):
         self.model_name = model_name
 
     @instrument(
@@ -109,7 +118,7 @@ class RAG:
             return "I don't have enough information to answer this question."
         context = "\n---\n".join(context_list)
         completion = (
-            oai_client.chat.completions.create(
+            cortex_client.chat.completions.create(
                 model=self.model_name,
                 messages=[
                     {
@@ -154,9 +163,13 @@ test_dataset = pd.DataFrame({
     ]
 })
 
-# --- Metrics ---
+# --- Metrics (using Cortex LLM as evaluation provider) ---
 
-provider = fOpenAI(model_engine="gpt-4o-mini")
+cortex_eval_client = OpenAI(api_key=SF_PAT, base_url=CORTEX_BASE_URL)
+provider = fOpenAI(
+    model_engine=CORTEX_MODEL,
+    endpoint=OpenAIEndpoint(client=cortex_eval_client),
+)
 
 f_groundedness = Metric(
     implementation=provider.groundedness_measure_with_cot_reasons_consider_answerability,
@@ -189,31 +202,30 @@ METRICS = [f_groundedness, f_answer_relevance, f_context_relevance]
 
 
 def get_snowflake_connector():
-    conn_name = os.environ.get("SNOWFLAKE_CONNECTION_NAME", "DEVREL_ENTERPRISE")
     snowpark_session = (
-        Session.builder.config("connection_name", conn_name)
+        Session.builder.config("connection_name", CONN_NAME)
         .config("database", "TRULENS_TEST")
         .config("schema", "PUBLIC")
         .config("warehouse", "COMPUTE")
         .create()
     )
-    return SnowflakeConnector(
-        snowpark_session=snowpark_session,
-    )
+    return SnowflakeConnector(snowpark_session=snowpark_session)
 
 
-def make_run(label, invocation_workers=None, metric_workers=None):
+def make_run(
+    connector, session, label, invocation_workers=None, metric_workers=None
+):
     uid = uuid.uuid4().hex[:6]
-    connector = get_snowflake_connector()
-    session = TruSession(connector=connector)
 
-    rag = RAG(model_name="gpt-4o-mini")
+    rag = RAG()
     tru_rag = TruApp(
         rag,
-        app_name="Parallel Benchmark",
+        connector=connector,
+        app_name="Parallel Benchmark Cortex",
         app_version=label,
         main_method=rag.query,
         feedbacks=METRICS,
+        start_evaluator=False,
     )
 
     run = tru_rag.add_run(
@@ -226,7 +238,7 @@ def make_run(label, invocation_workers=None, metric_workers=None):
             metric_max_workers=metric_workers,
         )
     )
-    return run, session
+    return run
 
 
 def bench_start(run):
@@ -242,19 +254,26 @@ def bench_metrics(run):
 
 
 if __name__ == "__main__":
+    connector = get_snowflake_connector()
+    session = TruSession(connector=connector)
+
     print("=" * 60)
-    print("BENCHMARK: Parallel vs Sequential (Snowflake)")
+    print(
+        f"BENCHMARK: Parallel vs Sequential (Cortex {CORTEX_MODEL} + Snowflake)"
+    )
     print(f"Dataset: {len(test_dataset)} rows, Metrics: {len(METRICS)}")
     print("=" * 60)
 
     # --- run.start() benchmark ---
     print("\n--- run.start() benchmark ---")
 
-    run_seq, _ = make_run("seq_invoke", invocation_workers=1)
+    run_seq = make_run(connector, session, "seq_invoke", invocation_workers=1)
     t_seq = bench_start(run_seq)
     print(f"  Sequential (workers=1): {t_seq:.2f}s")
 
-    run_par, _ = make_run("par_invoke", invocation_workers=None)
+    run_par = make_run(
+        connector, session, "par_invoke", invocation_workers=None
+    )
     t_par = bench_start(run_par)
     print(f"  Parallel   (default) : {t_par:.2f}s")
 
@@ -264,12 +283,12 @@ if __name__ == "__main__":
     # --- run.compute_metrics() benchmark ---
     print("\n--- run.compute_metrics() benchmark ---")
 
-    run_mseq, _ = make_run("seq_metric", metric_workers=1)
+    run_mseq = make_run(connector, session, "seq_metric", metric_workers=1)
     bench_start(run_mseq)
     t_met_seq = bench_metrics(run_mseq)
     print(f"  Sequential (workers=1): {t_met_seq:.2f}s")
 
-    run_mpar, _ = make_run("par_metric", metric_workers=None)
+    run_mpar = make_run(connector, session, "par_metric", metric_workers=None)
     bench_start(run_mpar)
     t_met_par = bench_metrics(run_mpar)
     print(f"  Parallel   (default) : {t_met_par:.2f}s")
