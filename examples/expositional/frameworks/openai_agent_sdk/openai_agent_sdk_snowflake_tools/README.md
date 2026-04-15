@@ -85,7 +85,7 @@ RECORD_ROOT span (AgentApp.ask)
 ├── GENERATION span (SnowflakeAsyncOpenAI.create)
 │       input_messages | model | tool_calls | token usage
 │
-├── TOOL span (query_ticket_metrics)
+├── TOOL span (ask_database)
 │       kwargs: question  |  return: SQL + results
 │
 ├── RETRIEVAL span (search_knowledge_base)

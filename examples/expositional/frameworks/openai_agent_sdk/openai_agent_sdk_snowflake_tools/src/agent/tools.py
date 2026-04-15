@@ -36,15 +36,14 @@ def _analyst_attributes(ret, exception, *args, **kwargs):
 
 @function_tool
 @instrument(
-    name="query_ticket_metrics",
+    name="ask_database",
     span_type=SpanAttributes.SpanType.TOOL,
     attributes=_analyst_attributes,
 )
-def query_ticket_metrics(question: str) -> str:
-    """Query structured support ticket metrics using natural language.
-    Use this tool when users ask about ticket counts, resolution times,
-    CSAT scores, agent performance, priorities, or any quantitative
-    ticket data."""
+def ask_database(question: str) -> str:
+    """Query structured data using natural language via Cortex Analyst.
+    Use this tool when users ask quantitative questions that can be
+    answered with SQL against the semantic model."""
     resp = requests.post(
         f"{SNOWFLAKE_ACCOUNT_URL}/api/v2/cortex/analyst/message",
         headers={
@@ -108,10 +107,9 @@ def query_ticket_metrics(question: str) -> str:
     },
 )
 def search_knowledge_base(query: str) -> str:
-    """Search the support knowledge base for articles and documentation.
+    """Search the knowledge base for relevant articles and documentation.
     Use this tool when users ask how-to questions, need troubleshooting
-    guidance, or want information about features, billing, or account
-    management."""
+    guidance, or want information from unstructured content."""
     db, schema, service = CORTEX_SEARCH_SERVICE.split(".")
     search_service = (
         _search_root.databases[db]

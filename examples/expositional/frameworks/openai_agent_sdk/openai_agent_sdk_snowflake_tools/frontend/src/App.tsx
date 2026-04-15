@@ -12,7 +12,7 @@ interface ThinkingStep {
 }
 
 const TOOL_LABELS: Record<string, string> = {
-  query_ticket_metrics: "Cortex Analyst",
+  ask_database: "Cortex Analyst",
   search_knowledge_base: "Cortex Search",
 };
 

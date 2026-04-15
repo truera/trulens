@@ -4,12 +4,27 @@ Ground truth is loaded from Snowflake tables:
 - GROUND_TRUTH_SEARCH: expected retrieval chunks per query
 - GROUND_TRUTH_ANALYST: golden SQL per query
 
-Test query lists remain as constants (they are inputs, not ground truth).
+Test queries are loaded from test_queries.json. To add more test cases,
+edit that file directly — no code changes needed.
 """
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from snowflake.snowpark import Session
+
+_QUERIES_PATH = Path(__file__).parent / "test_queries.json"
+
+
+def load_test_queries() -> dict[str, list[str]]:
+    """Load test queries from test_queries.json.
+
+    Returns dict with keys 'analyst', 'search', 'mixed'.
+    """
+    with open(_QUERIES_PATH) as f:
+        return json.load(f)
 
 
 def load_search_ground_truth(session: Session) -> list[dict]:
@@ -46,34 +61,7 @@ def load_analyst_golden_sql(session: Session) -> dict[str, str]:
     return {row["QUERY"]: row["GOLDEN_SQL"] for row in rows}
 
 
-TEST_QUERIES_ANALYST = [
-    "How many tickets are there by priority?",
-    "What is the average resolution time for technical tickets?",
-    "Which agent has the highest CSAT score?",
-    "How many tickets are currently open or pending?",
-    "What is the average first response time for urgent tickets?",
-    "Which agents resolve tickets the fastest on average, and what is their average CSAT score?",
-    "What is the month-over-month trend in ticket volume?",
-    "Show me the resolution rate and average CSAT for each ticket category.",
-    "Which tickets took longer to resolve than the average for their category?",
-    "What percentage of tickets by priority had a first response within one hour?",
-    "Who are the top 3 customers by ticket volume and what is their average satisfaction?",
-    "Show each agent's total workload, unresolved ticket count, and how many high or urgent tickets they handle.",
-    "What is the average days to resolution by month and priority for resolved tickets?",
-]
-
-TEST_QUERIES_SEARCH = [
-    "How do I reset my password?",
-    "What are the API rate limits?",
-    "How do I set up SSO?",
-    "I can't log in to my account",
-    "What is the pricing model?",
-]
-
-TEST_QUERIES_MIXED = [
-    "How many high priority tickets do we have and what's our SLA?",
-    "What is the average CSAT score and how do customers reset passwords?",
-    "How do I export my data?",
-    "What is the resolution rate for billing tickets?",
-    "How do I configure webhooks?",
-]
+_queries = load_test_queries()
+TEST_QUERIES_ANALYST: list[str] = _queries["analyst"]
+TEST_QUERIES_SEARCH: list[str] = _queries["search"]
+TEST_QUERIES_MIXED: list[str] = _queries["mixed"]

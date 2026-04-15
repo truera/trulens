@@ -13,7 +13,7 @@ from trulens.core.otel.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
 
 from src.services.config import SNOWFLAKE_ACCOUNT_URL, SNOWFLAKE_PAT
-from src.agent.tools import query_ticket_metrics, search_knowledge_base
+from src.agent.tools import ask_database, search_knowledge_base
 
 set_tracing_disabled(True)
 set_default_openai_api("chat_completions")
@@ -123,9 +123,9 @@ support_agent = Agent(
         "You are a support intelligence assistant. You help answer questions "
         "about support ticket metrics and knowledge base articles.\n\n"
         "TOOL SELECTION:\n"
-        "- Use query_ticket_metrics for questions about ticket counts, "
+        "- Use ask_database for questions about ticket counts, "
         "resolution times, CSAT scores, agent performance, priorities, "
-        "or any quantitative ticket data.\n"
+        "or any quantitative data that can be answered with SQL.\n"
         "- Use search_knowledge_base for how-to questions, "
         "troubleshooting guidance, or information about features, billing, "
         "or account management.\n\n"
@@ -138,7 +138,7 @@ support_agent = Agent(
         "to the user's specific question.\n"
         "- If a tool returns an error, explain the issue and suggest alternatives."
     ),
-    tools=[query_ticket_metrics, search_knowledge_base],
+    tools=[ask_database, search_knowledge_base],
     model=_model,
 )
 
