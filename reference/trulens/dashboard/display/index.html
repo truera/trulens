@@ -13856,7 +13856,7 @@
 
 
 
-<div class="doc doc-children">
+  <div class="doc doc-children">
 
 
 
@@ -13875,7 +13875,7 @@
 
 
 <a href="#trulens.dashboard.display.get_icon" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_icon</span><span class="p">(</span><span class="n">fdef</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            FeedbackDefinition (trulens.core.schema.feedback.FeedbackDefinition)" href="../../core/schema/feedback/#trulens.core.schema.feedback.FeedbackDefinition">FeedbackDefinition</a></span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="str">str</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_icon</span><span class="p">(</span><span class="n">fdef</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            FeedbackDefinition (trulens.core.schema.feedback.FeedbackDefinition)" href="../../core/schema/feedback/#trulens.core.schema.feedback.FeedbackDefinition">FeedbackDefinition</a></span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -13902,7 +13902,7 @@
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="float">float</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                   </span>
               </p>
             </td>
@@ -13930,7 +13930,7 @@
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
                 </p>
             </td>
@@ -13953,9 +13953,9 @@
 <a href="#trulens.dashboard.display.get_feedback_result" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_feedback_result</span><span class="p">(</span>
     <span class="n">tru_record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            Record (trulens.core.schema.record.Record)" href="../../core/schema/record/#trulens.core.schema.record.Record">Record</a></span><span class="p">,</span>
-    <span class="n">feedback_name</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span>
-    <span class="n">timeout</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">60</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="pandas.DataFrame">DataFrame</span></span>
+    <span class="n">feedback_name</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span>
+    <span class="n">timeout</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span> <span class="o">=</span> <span class="mi">60</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="pandas.DataFrame" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame">DataFrame</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -13998,7 +13998,7 @@
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -14018,7 +14018,7 @@
           <tr class="doc-section-item">
             <td>
                 <span class="doc-returns-annotation">
-                    <code><span title="pandas.DataFrame">DataFrame</span></code>
+                    <code><a class="autorefs autorefs-external" title="pandas.DataFrame" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame">DataFrame</a></code>
                 </span>
             </td>
             <td class="doc-returns-details">
@@ -14045,11 +14045,11 @@ results are found, an empty DataFrame is returned.</p>
 
 <a href="#trulens.dashboard.display.highlight" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">highlight</span><span class="p">(</span>
-    <span class="n">row</span><span class="p">:</span> <span class="n"><span title="pandas.Series">Series</span></span><span class="p">,</span>
-    <span class="n">selected_feedback</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span>
-    <span class="n">feedback_directions</span><span class="p">:</span> <span class="n"><span title="typing.Dict">Dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="bool">bool</span></span><span class="p">],</span>
-    <span class="n">default_direction</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.List">List</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span>
+    <span class="n">row</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="pandas.Series" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.html#pandas.Series">Series</a></span><span class="p">,</span>
+    <span class="n">selected_feedback</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span>
+    <span class="n">feedback_directions</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span><span class="p">],</span>
+    <span class="n">default_direction</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -14076,7 +14076,7 @@ results are found, an empty DataFrame is returned.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="pandas.Series">Series</span></code>
+                      <code><a class="autorefs autorefs-external" title="pandas.Series" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.html#pandas.Series">Series</a></code>
                   </span>
               </p>
             </td>
@@ -14092,7 +14092,7 @@ results are found, an empty DataFrame is returned.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -14108,7 +14108,7 @@ results are found, an empty DataFrame is returned.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="dict">dict</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></code>
                   </span>
               </p>
             </td>
@@ -14124,7 +14124,7 @@ results are found, an empty DataFrame is returned.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -14152,7 +14152,7 @@ results are found, an empty DataFrame is returned.</p>
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="typing.List">List</span>[<span title="str">str</span>]</code>
+                      <code><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a>]</code>
                   </span>
                 </p>
             </td>
@@ -14173,7 +14173,7 @@ results are found, an empty DataFrame is returned.</p>
 
 
 <a href="#trulens.dashboard.display.expand_groundedness_df" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">expand_groundedness_df</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n"><span title="pandas.DataFrame">DataFrame</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="pandas.DataFrame">DataFrame</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">expand_groundedness_df</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="pandas.DataFrame" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame">DataFrame</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="pandas.DataFrame" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame">DataFrame</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -14200,7 +14200,7 @@ results are found, an empty DataFrame is returned.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="pandas.DataFrame">DataFrame</span></code>
+                      <code><a class="autorefs autorefs-external" title="pandas.DataFrame" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame">DataFrame</a></code>
                   </span>
               </p>
             </td>
@@ -14220,7 +14220,7 @@ results are found, an empty DataFrame is returned.</p>
           <tr class="doc-section-item">
             <td>
                 <span class="doc-returns-annotation">
-                    <code><span title="pandas.DataFrame">DataFrame</span></code>
+                    <code><a class="autorefs autorefs-external" title="pandas.DataFrame" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame">DataFrame</a></code>
                 </span>
             </td>
             <td class="doc-returns-details">

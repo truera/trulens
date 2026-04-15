@@ -15384,7 +15384,7 @@
 
 
 
-<div class="doc doc-children">
+  <div class="doc doc-children">
 
 
 
@@ -15423,7 +15423,7 @@
 
 
 
-<div class="doc doc-children">
+  <div class="doc doc-children">
 
 
 
@@ -15471,7 +15471,7 @@ this into. Should be the same as CLASS_INFO.</p>
   </span>
 
 <a href="#trulens.providers.huggingface.provider.HuggingfaceBase.endpoint" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">endpoint</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Endpoint (trulens.core.feedback.endpoint.Endpoint)" href="../../../core/feedback/endpoint/#trulens.core.feedback.endpoint.Endpoint">Endpoint</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">endpoint</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Endpoint (trulens.core.feedback.endpoint.Endpoint)" href="../../../core/feedback/endpoint/#trulens.core.feedback.endpoint.Endpoint">Endpoint</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -15495,8 +15495,8 @@ this into. Should be the same as CLASS_INFO.</p>
 
 <a href="#trulens.providers.huggingface.provider.HuggingfaceBase.language_match" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">language_match</span><span class="p">(</span>
-    <span class="n">text1</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n">text2</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Tuple">Tuple</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="typing.Dict">Dict</span></span><span class="p">]</span>
+    <span class="n">text1</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">text2</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -15537,7 +15537,7 @@ probit_language_text1(text2))</code></p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -15553,7 +15553,7 @@ probit_language_text1(text2))</code></p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -15582,7 +15582,7 @@ being "same languages".</p>
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="typing.Tuple">Tuple</span>[<span title="float">float</span>, <span title="typing.Dict">Dict</span>]</code>
+                      <code><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a>, <a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a>]</code>
                   </span>
                 </p>
             </td>
@@ -15604,8 +15604,8 @@ being "same languages".</p>
 
 <a href="#trulens.providers.huggingface.provider.HuggingfaceBase.groundedness_measure_with_nli" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">groundedness_measure_with_nli</span><span class="p">(</span>
-    <span class="n">source</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Tuple">Tuple</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="dict">dict</span></span><span class="p">]</span>
+    <span class="n">source</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -15647,7 +15647,7 @@ f_groundedness = (
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -15663,7 +15663,7 @@ f_groundedness = (
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -15683,7 +15683,7 @@ f_groundedness = (
           <tr class="doc-section-item">
             <td>
                 <span class="doc-returns-annotation">
-                    <code><span title="typing.Tuple">Tuple</span>[<span title="float">float</span>, <span title="dict">dict</span>]</code>
+                    <code><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a>, <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a>]</code>
                 </span>
             </td>
             <td class="doc-returns-details">
@@ -15708,7 +15708,7 @@ f_groundedness = (
 
 
 <a href="#trulens.providers.huggingface.provider.HuggingfaceBase.context_relevance" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">context_relevance</span><span class="p">(</span><span class="n">prompt</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">context_relevance</span><span class="p">(</span><span class="n">prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -15752,7 +15752,7 @@ The model can be found at <a href="https://huggingface.co/truera/context_relevan
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -15768,7 +15768,7 @@ The model can be found at <a href="https://huggingface.co/truera/context_relevan
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -15796,7 +15796,7 @@ The model can be found at <a href="https://huggingface.co/truera/context_relevan
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="float">float</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                   </span>
                 </p>
             </td>
@@ -15817,7 +15817,7 @@ The model can be found at <a href="https://huggingface.co/truera/context_relevan
 
 
 <a href="#trulens.providers.huggingface.provider.HuggingfaceBase.positive_sentiment" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">positive_sentiment</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">positive_sentiment</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -15855,7 +15855,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -15883,7 +15883,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="float">float</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                   </span>
                 </p>
             </td>
@@ -15904,7 +15904,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 
 
 <a href="#trulens.providers.huggingface.provider.HuggingfaceBase.toxic" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">toxic</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">toxic</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -15942,7 +15942,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -15970,7 +15970,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="float">float</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                   </span>
                 </p>
             </td>
@@ -15991,7 +15991,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 
 
 <a href="#trulens.providers.huggingface.provider.HuggingfaceBase.pii_detection" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">pii_detection</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">pii_detection</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -16027,7 +16027,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -16055,7 +16055,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="float">float</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                   </span>
                 </p>
             </td>
@@ -16076,7 +16076,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 
 
 <a href="#trulens.providers.huggingface.provider.HuggingfaceBase.pii_detection_with_cot_reasons" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">pii_detection_with_cot_reasons</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">pii_detection_with_cot_reasons</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -16110,8 +16110,8 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 
 <a href="#trulens.providers.huggingface.provider.HuggingfaceBase.hallucination_evaluator" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">hallucination_evaluator</span><span class="p">(</span>
-    <span class="n">model_output</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n">retrieved_text_chunks</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+    <span class="n">model_output</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">retrieved_text_chunks</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -16149,7 +16149,7 @@ less than 0.5 the statement is evaluated as a hallucination.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -16165,7 +16165,7 @@ less than 0.5 the statement is evaluated as a hallucination.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -16193,7 +16193,7 @@ less than 0.5 the statement is evaluated as a hallucination.</p>
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="float">float</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                   </span>
                 </p>
             </td>
@@ -16214,7 +16214,7 @@ less than 0.5 the statement is evaluated as a hallucination.</p>
 
 
 <a href="#trulens.providers.huggingface.provider.HuggingfaceBase.__repr__" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__repr__</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="str">str</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__repr__</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -16290,7 +16290,7 @@ tru_class_info to lookup the actual class that will do the deserialization.</p>
   </span>
 
 <a href="#trulens.providers.huggingface.provider.HuggingfaceBase.model_validate" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">model_validate</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Any">Any</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">model_validate</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -16346,7 +16346,7 @@ and handled by <a class="autorefs autorefs-internal" title="            WithClas
 
 
 
-<div class="doc doc-children">
+  <div class="doc doc-children">
 
 
 
@@ -16392,8 +16392,8 @@ this into. Should be the same as CLASS_INFO.</p>
 
 <a href="#trulens.providers.huggingface.provider.Huggingface.__init__" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">__init__</span><span class="p">(</span>
-    <span class="n">name</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="s2">&quot;huggingface&quot;</span><span class="p">,</span>
-    <span class="n">endpoint</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Endpoint (trulens.core.feedback.endpoint.Endpoint)" href="../../../core/feedback/endpoint/#trulens.core.feedback.endpoint.Endpoint">Endpoint</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="s2">&quot;huggingface&quot;</span><span class="p">,</span>
+    <span class="n">endpoint</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Endpoint (trulens.core.feedback.endpoint.Endpoint)" href="../../../core/feedback/endpoint/#trulens.core.feedback.endpoint.Endpoint">Endpoint</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span>
 <span class="p">)</span>
 </code></pre></div>
@@ -16422,7 +16422,7 @@ this into. Should be the same as CLASS_INFO.</p>
 
 
 <a href="#trulens.providers.huggingface.provider.Huggingface.__repr__" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__repr__</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="str">str</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__repr__</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -16498,7 +16498,7 @@ tru_class_info to lookup the actual class that will do the deserialization.</p>
   </span>
 
 <a href="#trulens.providers.huggingface.provider.Huggingface.model_validate" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">model_validate</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Any">Any</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">model_validate</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -16526,8 +16526,8 @@ and handled by <a class="autorefs autorefs-internal" title="            WithClas
 
 <a href="#trulens.providers.huggingface.provider.Huggingface.language_match" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">language_match</span><span class="p">(</span>
-    <span class="n">text1</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n">text2</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Tuple">Tuple</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="typing.Dict">Dict</span></span><span class="p">]</span>
+    <span class="n">text1</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">text2</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -16568,7 +16568,7 @@ probit_language_text1(text2))</code></p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -16584,7 +16584,7 @@ probit_language_text1(text2))</code></p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -16613,7 +16613,7 @@ being "same languages".</p>
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="typing.Tuple">Tuple</span>[<span title="float">float</span>, <span title="typing.Dict">Dict</span>]</code>
+                      <code><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a>, <a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a>]</code>
                   </span>
                 </p>
             </td>
@@ -16635,8 +16635,8 @@ being "same languages".</p>
 
 <a href="#trulens.providers.huggingface.provider.Huggingface.groundedness_measure_with_nli" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">groundedness_measure_with_nli</span><span class="p">(</span>
-    <span class="n">source</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Tuple">Tuple</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="dict">dict</span></span><span class="p">]</span>
+    <span class="n">source</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -16678,7 +16678,7 @@ f_groundedness = (
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -16694,7 +16694,7 @@ f_groundedness = (
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -16714,7 +16714,7 @@ f_groundedness = (
           <tr class="doc-section-item">
             <td>
                 <span class="doc-returns-annotation">
-                    <code><span title="typing.Tuple">Tuple</span>[<span title="float">float</span>, <span title="dict">dict</span>]</code>
+                    <code><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a>, <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a>]</code>
                 </span>
             </td>
             <td class="doc-returns-details">
@@ -16739,7 +16739,7 @@ f_groundedness = (
 
 
 <a href="#trulens.providers.huggingface.provider.Huggingface.context_relevance" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">context_relevance</span><span class="p">(</span><span class="n">prompt</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">context_relevance</span><span class="p">(</span><span class="n">prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -16783,7 +16783,7 @@ The model can be found at <a href="https://huggingface.co/truera/context_relevan
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -16799,7 +16799,7 @@ The model can be found at <a href="https://huggingface.co/truera/context_relevan
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -16827,7 +16827,7 @@ The model can be found at <a href="https://huggingface.co/truera/context_relevan
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="float">float</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                   </span>
                 </p>
             </td>
@@ -16848,7 +16848,7 @@ The model can be found at <a href="https://huggingface.co/truera/context_relevan
 
 
 <a href="#trulens.providers.huggingface.provider.Huggingface.positive_sentiment" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">positive_sentiment</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">positive_sentiment</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -16886,7 +16886,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -16914,7 +16914,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="float">float</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                   </span>
                 </p>
             </td>
@@ -16935,7 +16935,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 
 
 <a href="#trulens.providers.huggingface.provider.Huggingface.toxic" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">toxic</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">toxic</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -16973,7 +16973,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -17001,7 +17001,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="float">float</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                   </span>
                 </p>
             </td>
@@ -17022,7 +17022,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 
 
 <a href="#trulens.providers.huggingface.provider.Huggingface.pii_detection" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">pii_detection</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">pii_detection</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -17058,7 +17058,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -17086,7 +17086,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="float">float</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                   </span>
                 </p>
             </td>
@@ -17107,7 +17107,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 
 
 <a href="#trulens.providers.huggingface.provider.Huggingface.pii_detection_with_cot_reasons" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">pii_detection_with_cot_reasons</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">pii_detection_with_cot_reasons</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -17141,8 +17141,8 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 
 <a href="#trulens.providers.huggingface.provider.Huggingface.hallucination_evaluator" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">hallucination_evaluator</span><span class="p">(</span>
-    <span class="n">model_output</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n">retrieved_text_chunks</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+    <span class="n">model_output</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">retrieved_text_chunks</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -17180,7 +17180,7 @@ less than 0.5 the statement is evaluated as a hallucination.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -17196,7 +17196,7 @@ less than 0.5 the statement is evaluated as a hallucination.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -17224,7 +17224,7 @@ less than 0.5 the statement is evaluated as a hallucination.</p>
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="float">float</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                   </span>
                 </p>
             </td>
@@ -17274,7 +17274,7 @@ less than 0.5 the statement is evaluated as a hallucination.</p>
 
 
 
-<div class="doc doc-children">
+  <div class="doc doc-children">
 
 
 
@@ -17322,7 +17322,7 @@ this into. Should be the same as CLASS_INFO.</p>
   </span>
 
 <a href="#trulens.providers.huggingface.provider.HuggingfaceLocal.endpoint" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">endpoint</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Endpoint (trulens.core.feedback.endpoint.Endpoint)" href="../../../core/feedback/endpoint/#trulens.core.feedback.endpoint.Endpoint">Endpoint</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">endpoint</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Endpoint (trulens.core.feedback.endpoint.Endpoint)" href="../../../core/feedback/endpoint/#trulens.core.feedback.endpoint.Endpoint">Endpoint</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -17345,7 +17345,7 @@ this into. Should be the same as CLASS_INFO.</p>
 
 
 <a href="#trulens.providers.huggingface.provider.HuggingfaceLocal.__repr__" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__repr__</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="str">str</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__repr__</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -17421,7 +17421,7 @@ tru_class_info to lookup the actual class that will do the deserialization.</p>
   </span>
 
 <a href="#trulens.providers.huggingface.provider.HuggingfaceLocal.model_validate" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">model_validate</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Any">Any</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">model_validate</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -17449,8 +17449,8 @@ and handled by <a class="autorefs autorefs-internal" title="            WithClas
 
 <a href="#trulens.providers.huggingface.provider.HuggingfaceLocal.language_match" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">language_match</span><span class="p">(</span>
-    <span class="n">text1</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n">text2</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Tuple">Tuple</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="typing.Dict">Dict</span></span><span class="p">]</span>
+    <span class="n">text1</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">text2</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -17491,7 +17491,7 @@ probit_language_text1(text2))</code></p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -17507,7 +17507,7 @@ probit_language_text1(text2))</code></p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -17536,7 +17536,7 @@ being "same languages".</p>
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="typing.Tuple">Tuple</span>[<span title="float">float</span>, <span title="typing.Dict">Dict</span>]</code>
+                      <code><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a>, <a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a>]</code>
                   </span>
                 </p>
             </td>
@@ -17558,8 +17558,8 @@ being "same languages".</p>
 
 <a href="#trulens.providers.huggingface.provider.HuggingfaceLocal.groundedness_measure_with_nli" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">groundedness_measure_with_nli</span><span class="p">(</span>
-    <span class="n">source</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Tuple">Tuple</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="dict">dict</span></span><span class="p">]</span>
+    <span class="n">source</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -17601,7 +17601,7 @@ f_groundedness = (
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -17617,7 +17617,7 @@ f_groundedness = (
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -17637,7 +17637,7 @@ f_groundedness = (
           <tr class="doc-section-item">
             <td>
                 <span class="doc-returns-annotation">
-                    <code><span title="typing.Tuple">Tuple</span>[<span title="float">float</span>, <span title="dict">dict</span>]</code>
+                    <code><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a>, <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a>]</code>
                 </span>
             </td>
             <td class="doc-returns-details">
@@ -17662,7 +17662,7 @@ f_groundedness = (
 
 
 <a href="#trulens.providers.huggingface.provider.HuggingfaceLocal.context_relevance" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">context_relevance</span><span class="p">(</span><span class="n">prompt</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">context_relevance</span><span class="p">(</span><span class="n">prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -17706,7 +17706,7 @@ The model can be found at <a href="https://huggingface.co/truera/context_relevan
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -17722,7 +17722,7 @@ The model can be found at <a href="https://huggingface.co/truera/context_relevan
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -17750,7 +17750,7 @@ The model can be found at <a href="https://huggingface.co/truera/context_relevan
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="float">float</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                   </span>
                 </p>
             </td>
@@ -17771,7 +17771,7 @@ The model can be found at <a href="https://huggingface.co/truera/context_relevan
 
 
 <a href="#trulens.providers.huggingface.provider.HuggingfaceLocal.positive_sentiment" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">positive_sentiment</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">positive_sentiment</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -17809,7 +17809,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -17837,7 +17837,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="float">float</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                   </span>
                 </p>
             </td>
@@ -17858,7 +17858,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 
 
 <a href="#trulens.providers.huggingface.provider.HuggingfaceLocal.toxic" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">toxic</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">toxic</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -17896,7 +17896,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -17924,7 +17924,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="float">float</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                   </span>
                 </p>
             </td>
@@ -17945,7 +17945,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 
 
 <a href="#trulens.providers.huggingface.provider.HuggingfaceLocal.pii_detection" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">pii_detection</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">pii_detection</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -17981,7 +17981,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -18009,7 +18009,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="float">float</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                   </span>
                 </p>
             </td>
@@ -18030,7 +18030,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 
 
 <a href="#trulens.providers.huggingface.provider.HuggingfaceLocal.pii_detection_with_cot_reasons" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">pii_detection_with_cot_reasons</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">pii_detection_with_cot_reasons</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -18064,8 +18064,8 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 
 <a href="#trulens.providers.huggingface.provider.HuggingfaceLocal.hallucination_evaluator" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">hallucination_evaluator</span><span class="p">(</span>
-    <span class="n">model_output</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n">retrieved_text_chunks</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+    <span class="n">model_output</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">retrieved_text_chunks</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -18103,7 +18103,7 @@ less than 0.5 the statement is evaluated as a hallucination.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -18119,7 +18119,7 @@ less than 0.5 the statement is evaluated as a hallucination.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -18147,7 +18147,7 @@ less than 0.5 the statement is evaluated as a hallucination.</p>
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="float">float</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                   </span>
                 </p>
             </td>
@@ -18198,7 +18198,7 @@ produces fake results without making any networked calls to HuggingFace.</p>
 
 
 
-<div class="doc doc-children">
+  <div class="doc doc-children">
 
 
 
@@ -18243,7 +18243,7 @@ this into. Should be the same as CLASS_INFO.</p>
 
 
 <a href="#trulens.providers.huggingface.provider.Dummy.__repr__" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__repr__</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="str">str</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__repr__</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -18319,7 +18319,7 @@ tru_class_info to lookup the actual class that will do the deserialization.</p>
   </span>
 
 <a href="#trulens.providers.huggingface.provider.Dummy.model_validate" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">model_validate</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Any">Any</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">model_validate</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -18347,8 +18347,8 @@ and handled by <a class="autorefs autorefs-internal" title="            WithClas
 
 <a href="#trulens.providers.huggingface.provider.Dummy.language_match" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">language_match</span><span class="p">(</span>
-    <span class="n">text1</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n">text2</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Tuple">Tuple</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="typing.Dict">Dict</span></span><span class="p">]</span>
+    <span class="n">text1</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">text2</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -18389,7 +18389,7 @@ probit_language_text1(text2))</code></p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -18405,7 +18405,7 @@ probit_language_text1(text2))</code></p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -18434,7 +18434,7 @@ being "same languages".</p>
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="typing.Tuple">Tuple</span>[<span title="float">float</span>, <span title="typing.Dict">Dict</span>]</code>
+                      <code><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a>, <a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a>]</code>
                   </span>
                 </p>
             </td>
@@ -18456,8 +18456,8 @@ being "same languages".</p>
 
 <a href="#trulens.providers.huggingface.provider.Dummy.groundedness_measure_with_nli" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">groundedness_measure_with_nli</span><span class="p">(</span>
-    <span class="n">source</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Tuple">Tuple</span></span><span class="p">[</span><span class="n"><span title="float">float</span></span><span class="p">,</span> <span class="n"><span title="dict">dict</span></span><span class="p">]</span>
+    <span class="n">source</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">statement</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -18499,7 +18499,7 @@ f_groundedness = (
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -18515,7 +18515,7 @@ f_groundedness = (
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -18535,7 +18535,7 @@ f_groundedness = (
           <tr class="doc-section-item">
             <td>
                 <span class="doc-returns-annotation">
-                    <code><span title="typing.Tuple">Tuple</span>[<span title="float">float</span>, <span title="dict">dict</span>]</code>
+                    <code><a class="autorefs autorefs-external" title="typing.Tuple" href="https://docs.python.org/3/library/typing.html#typing.Tuple">Tuple</a>[<a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a>, <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a>]</code>
                 </span>
             </td>
             <td class="doc-returns-details">
@@ -18560,7 +18560,7 @@ f_groundedness = (
 
 
 <a href="#trulens.providers.huggingface.provider.Dummy.context_relevance" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">context_relevance</span><span class="p">(</span><span class="n">prompt</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">context_relevance</span><span class="p">(</span><span class="n">prompt</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -18604,7 +18604,7 @@ The model can be found at <a href="https://huggingface.co/truera/context_relevan
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -18620,7 +18620,7 @@ The model can be found at <a href="https://huggingface.co/truera/context_relevan
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -18648,7 +18648,7 @@ The model can be found at <a href="https://huggingface.co/truera/context_relevan
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="float">float</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                   </span>
                 </p>
             </td>
@@ -18669,7 +18669,7 @@ The model can be found at <a href="https://huggingface.co/truera/context_relevan
 
 
 <a href="#trulens.providers.huggingface.provider.Dummy.positive_sentiment" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">positive_sentiment</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">positive_sentiment</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -18707,7 +18707,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -18735,7 +18735,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="float">float</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                   </span>
                 </p>
             </td>
@@ -18756,7 +18756,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 
 
 <a href="#trulens.providers.huggingface.provider.Dummy.toxic" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">toxic</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">toxic</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -18794,7 +18794,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -18822,7 +18822,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="float">float</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                   </span>
                 </p>
             </td>
@@ -18843,7 +18843,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 
 
 <a href="#trulens.providers.huggingface.provider.Dummy.pii_detection" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">pii_detection</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">pii_detection</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -18879,7 +18879,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -18907,7 +18907,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="float">float</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                   </span>
                 </p>
             </td>
@@ -18928,7 +18928,7 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 
 
 <a href="#trulens.providers.huggingface.provider.Dummy.pii_detection_with_cot_reasons" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">pii_detection_with_cot_reasons</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">pii_detection_with_cot_reasons</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -18962,8 +18962,8 @@ function that uses a sentiment classifier on <code>text</code>.</p>
 
 <a href="#trulens.providers.huggingface.provider.Dummy.hallucination_evaluator" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">hallucination_evaluator</span><span class="p">(</span>
-    <span class="n">model_output</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n">retrieved_text_chunks</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+    <span class="n">model_output</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n">retrieved_text_chunks</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -19001,7 +19001,7 @@ less than 0.5 the statement is evaluated as a hallucination.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -19017,7 +19017,7 @@ less than 0.5 the statement is evaluated as a hallucination.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
               </p>
             </td>
@@ -19045,7 +19045,7 @@ less than 0.5 the statement is evaluated as a hallucination.</p>
                 <p>
                   <span class="doc-returns-annotation">
                     <b>TYPE:</b>
-                      <code><span title="float">float</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
                   </span>
                 </p>
             </td>

@@ -14245,9 +14245,9 @@ producing a JSON representation with everything we deem relevant to track. The
 function <a class="autorefs autorefs-internal" title="            jsonify" href="../../reference/trulens/core/utils/json/#trulens.core.utils.json.jsonify">jsonify</a> is the root of this process.</p>
 <h4 id="classsystem-specific">Class/system specific<a class="headerlink" href="#classsystem-specific" title="Permanent link">&para;</a></h4>
 <h5 id="pydantic-langchain">Pydantic (LangChain)<a class="headerlink" href="#pydantic-langchain" title="Permanent link">&para;</a></h5>
-<p>Classes inheriting [BaseModel][pydantic.BaseModel] come with serialization
-to/from JSON in the form of [model_dump][pydantic.BaseModel.model_dump] and
-[model_validate][pydantic.BaseModel.model_validate]. We do not use the
+<p>Classes inheriting <a class="autorefs autorefs-external" href="https://docs.pydantic.dev/latest/api/pydantic/base_model/#pydantic.BaseModel">BaseModel</a> come with serialization
+to/from JSON in the form of <a class="autorefs autorefs-external" href="https://docs.pydantic.dev/latest/api/pydantic/base_model/#pydantic.BaseModel.model_dump">model_dump</a> and
+<a class="autorefs autorefs-external" href="https://docs.pydantic.dev/latest/api/pydantic/base_model/#pydantic.BaseModel.model_validate">model_validate</a>. We do not use the
 serialization to JSON part of this capability as many <em>LangChain</em> components
 fail serialization with a "will not serialize" message. However, we make
 use of Pydantic <code>fields</code> to enumerate components of an object ourselves saving
@@ -14284,7 +14284,7 @@ various classes.</p>
 <h5 id="pydantic-langchain_1">Pydantic (LangChain)<a class="headerlink" href="#pydantic-langchain_1" title="Permanent link">&para;</a></h5>
 <p>Most if not all <em>LangChain</em> components use pydantic which imposes some
 restrictions but also provides some utilities. Classes inheriting
-[BaseModel][pydantic.BaseModel] do not allow defining new attributes but
+<a class="autorefs autorefs-external" href="https://docs.pydantic.dev/latest/api/pydantic/base_model/#pydantic.BaseModel">BaseModel</a> do not allow defining new attributes but
 existing attributes including those provided by pydantic itself can be
 overwritten (like dict, for example). Presently, we override methods with
 instrumented versions.</p>
@@ -14367,7 +14367,7 @@ by OpenTelemetry's context API, which properly propagates trace context.</p>
 context API which integrates with Python's contextvars.</p>
 <p>Legacy instrumentation used custom task factory instrumentation:</p>
 <ul>
-<li><strong>Legacy approach</strong>: Instrumented [asyncio.new_event_loop][] via
+<li><strong>Legacy approach</strong>: Instrumented <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.new_event_loop">asyncio.new_event_loop</a> via
   <a class="autorefs autorefs-internal" title="            tru_new_event_loop" href="../../reference/trulens/core/utils/python/#trulens.core.utils.python.tru_new_event_loop">tru_new_event_loop</a> and used
   <a class="autorefs autorefs-internal" title="            task_factory_with_stack" href="../../reference/trulens/core/utils/python/#trulens.core.utils.python.task_factory_with_stack">task_factory_with_stack</a>
   to track async task stacks. This is less critical with OTEL context propagation.</li>
@@ -14395,7 +14395,7 @@ context API which integrates with Python's contextvars.</p>
 </li>
 <li>
 <p>Instrumentation relies on CPython specifics, making heavy use of the
-  [inspect][] module which is not expected to work with other Python
+  <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/inspect.html#module-inspect">inspect</a> module which is not expected to work with other Python
   implementations.</p>
 </li>
 </ul>

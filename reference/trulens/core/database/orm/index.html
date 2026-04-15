@@ -14054,7 +14054,7 @@
 
 
 
-<div class="doc doc-children">
+  <div class="doc doc-children">
 
 
 
@@ -14192,7 +14192,7 @@ setting <code>_table_prefix</code> as in <code>make_orm_for_prefix</code>.</p>
 
 
 
-<div class="doc doc-children">
+  <div class="doc doc-children">
 
 
 
@@ -14224,7 +14224,7 @@ setting <code>_table_prefix</code> as in <code>make_orm_for_prefix</code>.</p>
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><span title="abc.ABC">ABC</span></code>, <code><span title="typing.Generic">Generic</span>[<span title="trulens.core.database.orm.T">T</span>]</code></p>
+              Bases: <code><a class="autorefs autorefs-external" title="abc.ABC" href="https://docs.python.org/3/library/abc.html#abc.ABC">ABC</a></code>, <code><a class="autorefs autorefs-external" title="typing.Generic" href="https://docs.python.org/3/library/typing.html#typing.Generic">Generic</a>[<span title="trulens.core.database.orm.T">T</span>]</code></p>
 
 
 
@@ -14240,7 +14240,7 @@ setting <code>_table_prefix</code> as in <code>make_orm_for_prefix</code>.</p>
 
 
 
-<div class="doc doc-children">
+  <div class="doc doc-children">
 
 
 
@@ -14272,7 +14272,7 @@ setting <code>_table_prefix</code> as in <code>make_orm_for_prefix</code>.</p>
   </span>
 
 <a href="#trulens.core.database.orm.new_base" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">new_base</span><span class="p">(</span><span class="n">prefix</span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Type">Type</span></span><span class="p">[</span><span class="n"><span title="trulens.core.database.orm.T">T</span></span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">new_base</span><span class="p">(</span><span class="n">prefix</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Type" href="https://docs.python.org/3/library/typing.html#typing.Type">Type</a></span><span class="p">[</span><span class="n"><span title="trulens.core.database.orm.T">T</span></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -14300,8 +14300,8 @@ configuration to another.</p>
 
 <a href="#trulens.core.database.orm.new_orm" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">new_orm</span><span class="p">(</span>
-    <span class="n">base</span><span class="p">:</span> <span class="n"><span title="typing.Type">Type</span></span><span class="p">[</span><span class="n"><span title="trulens.core.database.orm.T">T</span></span><span class="p">],</span> <span class="n">prefix</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="s2">&quot;trulens_&quot;</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Type">Type</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            ORM (trulens.core.database.orm.ORM)" href="#trulens.core.database.orm.ORM">ORM</a></span><span class="p">[</span><span class="n"><span title="trulens.core.database.orm.T">T</span></span><span class="p">]]</span>
+    <span class="n">base</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Type" href="https://docs.python.org/3/library/typing.html#typing.Type">Type</a></span><span class="p">[</span><span class="n"><span title="trulens.core.database.orm.T">T</span></span><span class="p">],</span> <span class="n">prefix</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="s2">&quot;trulens_&quot;</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Type" href="https://docs.python.org/3/library/typing.html#typing.Type">Type</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            ORM (trulens.core.database.orm.ORM)" href="#trulens.core.database.orm.ORM">ORM</a></span><span class="p">[</span><span class="n"><span title="trulens.core.database.orm.T">T</span></span><span class="p">]]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -14326,14 +14326,14 @@ configuration to another.</p>
 
 <a href="#trulens.core.database.orm.make_base_for_prefix" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_base_for_prefix</span><span class="p">(</span>
-    <span class="n">base</span><span class="p">:</span> <span class="n"><span title="typing.Type">Type</span></span><span class="p">[</span><span class="n"><span title="trulens.core.database.orm.T">T</span></span><span class="p">],</span>
-    <span class="n">table_prefix</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            DEFAULT_DATABASE_PREFIX
+    <span class="n">base</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Type" href="https://docs.python.org/3/library/typing.html#typing.Type">Type</a></span><span class="p">[</span><span class="n"><span title="trulens.core.database.orm.T">T</span></span><span class="p">],</span>
+    <span class="n">table_prefix</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            DEFAULT_DATABASE_PREFIX
 
 
   
       module-attribute
    (trulens.core.database.base.DEFAULT_DATABASE_PREFIX)" href="../base/#trulens.core.database.base.DEFAULT_DATABASE_PREFIX">DEFAULT_DATABASE_PREFIX</a></span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Type">Type</span></span><span class="p">[</span><span class="n"><span title="trulens.core.database.orm.T">T</span></span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Type" href="https://docs.python.org/3/library/typing.html#typing.Type">Type</a></span><span class="p">[</span><span class="n"><span title="trulens.core.database.orm.T">T</span></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -14361,7 +14361,7 @@ configuration to another.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="typing.Type">Type</span>[<span title="trulens.core.database.orm.T">T</span>]</code>
+                      <code><a class="autorefs autorefs-external" title="typing.Type" href="https://docs.python.org/3/library/typing.html#typing.Type">Type</a>[<span title="trulens.core.database.orm.T">T</span>]</code>
                   </span>
               </p>
             </td>
@@ -14377,7 +14377,7 @@ configuration to another.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
                   <span class="doc-param-default">
                     <b>DEFAULT:</b>
@@ -14406,7 +14406,7 @@ configuration to another.</p>
           <tr class="doc-section-item">
             <td>
                 <span class="doc-returns-annotation">
-                    <code><span title="typing.Type">Type</span>[<span title="trulens.core.database.orm.T">T</span>]</code>
+                    <code><a class="autorefs autorefs-external" title="typing.Type" href="https://docs.python.org/3/library/typing.html#typing.Type">Type</a>[<span title="trulens.core.database.orm.T">T</span>]</code>
                 </span>
             </td>
             <td class="doc-returns-details">
@@ -14436,13 +14436,13 @@ configuration to another.</p>
 
 <a href="#trulens.core.database.orm.make_orm_for_prefix" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_orm_for_prefix</span><span class="p">(</span>
-    <span class="n">table_prefix</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            DEFAULT_DATABASE_PREFIX
+    <span class="n">table_prefix</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            DEFAULT_DATABASE_PREFIX
 
 
   
       module-attribute
    (trulens.core.database.base.DEFAULT_DATABASE_PREFIX)" href="../base/#trulens.core.database.base.DEFAULT_DATABASE_PREFIX">DEFAULT_DATABASE_PREFIX</a></span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Type">Type</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            ORM (trulens.core.database.orm.ORM)" href="#trulens.core.database.orm.ORM">ORM</a></span><span class="p">[</span><span class="n"><span title="trulens.core.database.orm.T">T</span></span><span class="p">]]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Type" href="https://docs.python.org/3/library/typing.html#typing.Type">Type</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            ORM (trulens.core.database.orm.ORM)" href="#trulens.core.database.orm.ORM">ORM</a></span><span class="p">[</span><span class="n"><span title="trulens.core.database.orm.T">T</span></span><span class="p">]]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -14471,7 +14471,7 @@ classes based on that.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><span title="str">str</span></code>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
                   </span>
                   <span class="doc-param-default">
                     <b>DEFAULT:</b>

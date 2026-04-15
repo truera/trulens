@@ -13567,19 +13567,19 @@ that stand in place of Python classes:</p>
 <ul>
 <li>
 <p><a class="autorefs autorefs-internal" title="            Thread" href="../../../reference/trulens/core/utils/threading/#trulens.core.utils.threading.Thread">trulens.core.utils.threading.Thread</a>
-  instead of [threading.Thread][].</p>
+  instead of <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/threading.html#threading.Thread">threading.Thread</a>.</p>
 </li>
 <li>
 <p><a class="autorefs autorefs-internal" title="            ThreadPoolExecutor" href="../../../reference/trulens/core/utils/threading/#trulens.core.utils.threading.ThreadPoolExecutor">trulens.core.utils.threading.ThreadPoolExecutor</a>
   instead of
-  [concurrent.futures.ThreadPoolExecutor][].</p>
+  <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ThreadPoolExecutor">concurrent.futures.ThreadPoolExecutor</a>.</p>
 </li>
 </ul>
 <p>You can also import either from their builtin locations as long as you import
 <em>TruLens</em> first.</p>
 <p>Alternatively, use the utility methods in the <a class="autorefs autorefs-internal" title="            TP" href="../../../reference/trulens/core/utils/threading/#trulens.core.utils.threading.TP">TP class</a> such as
 <a class="autorefs autorefs-internal" title="            submit" href="../../../reference/trulens/core/utils/threading/#trulens.core.utils.threading.TP.submit">submit</a>.</p>
-<p>Alternatively, use [Context.run][contextvars.Context.run] in your threads,
+<p>Alternatively, use <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/contextvars.html#contextvars.Context.run">Context.run</a> in your threads,
 with the original target being the first argument to <code>run</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">contextvars</span><span class="w"> </span><span class="kn">import</span> <span class="n">copy_context</span>
 

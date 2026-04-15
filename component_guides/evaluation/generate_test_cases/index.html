@@ -13643,16 +13643,29 @@ development cycle.</p>
 tailored to your app and data. The resulting test set will be a list of test prompts
 of length <code>depth</code>, for <code>breadth</code> categories of prompts. This test set will
 be made up of <code>breadth</code> X <code>depth</code> prompts organized by prompt category.</p>
+<div class="admonition initial setup">
+<p class="admonition-title">Initial</p>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;trulens-benchmark&quot;</span>
+pip<span class="w"> </span>install<span class="w"> </span>trulens-providers-openai
+</code></pre></div>
+</div>
+<p>Note: Since we will using a LLM provider to generate the access, pick your provider and setup the environment variable, say OpenAI.</p>
 <div class="admonition example">
 <p class="admonition-title">Example</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">trulens.benchmark.generate.generate_test_set</span><span class="w"> </span><span class="kn">import</span> <span class="n">GenerateTestSet</span>
+<div class="highlight"><pre><span></span><code>import os
+from trulens.benchmark.generate.generate_test_set import GenerateTestSet
+from trulens.providers.openai import OpenAI
 
-<span class="n">test</span> <span class="o">=</span> <span class="n">GenerateTestSet</span><span class="p">(</span><span class="n">app_callable</span> <span class="o">=</span> <span class="n">rag_chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">)</span>
-<span class="n">test_set</span> <span class="o">=</span> <span class="n">test</span><span class="o">.</span><span class="n">generate_test_set</span><span class="p">(</span>
-  <span class="n">test_breadth</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
-  <span class="n">test_depth</span> <span class="o">=</span> <span class="mi">2</span>
-<span class="p">)</span>
-<span class="n">test_set</span>
+os.environ[&quot;OPENAI_API_KEY&quot;] = &quot;&lt;replace-with-your-api-key&gt;&quot;
+
+# Considering you have your LangChain rag_chain in place.
+
+test = GenerateTestSet(app_callable = rag_chain.invoke)
+test_set = test.generate_test_set(
+  test_breadth = 3,
+  test_depth = 2
+)
+test_set
 </code></pre></div>
 </div>
 <p>Returns:</p>
