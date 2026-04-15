@@ -25,7 +25,7 @@ Additional complexity:
 
 The **only reliable solution** is to run each test class in a separate process using `pytest-xdist`.
 
-### For CI/CD (Azure Pipelines / Jenkins)
+### For CI/CD (Azure Pipelines)
 
 Ensure `pytest-xdist` is installed and use this command pattern:
 
