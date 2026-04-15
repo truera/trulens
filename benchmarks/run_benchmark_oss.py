@@ -1,15 +1,11 @@
 """
-Benchmark: Parallel vs Sequential Run APIs with Snowflake Cortex + Snowflake connector.
+Benchmark: Parallel vs Sequential Run APIs — TruLens OSS only (no Snowflake).
 
-Benchmarks three things:
-  1. run.start() parallelization (invocation_max_workers)
-  2. run.compute_metrics() with client-side trace-level metrics (execution_efficiency, logical_consistency)
-  3. run.compute_metrics() with server-side string metrics (groundedness, context_relevance)
-
-Waits for OTEL spans to be ingested into the Snowflake event table before computing metrics.
+Uses Cortex LLM via OpenAI compat for both RAG app and metric evaluation.
+No Snowflake connector — uses default TruSession (SQLite) so events are in-memory.
 
 Usage:
-  SNOWFLAKE_CONNECTION_NAME=DEVREL_ENTERPRISE python -u benchmarks/run_benchmark.py
+  SNOWFLAKE_CONNECTION_NAME=DEVREL_ENTERPRISE python benchmarks/run_benchmark_oss.py
 """
 
 import os
@@ -17,18 +13,16 @@ import time
 import uuid
 
 import chromadb
+import numpy as np
 from openai import OpenAI
 import pandas as pd
-from snowflake.snowpark import Session
 import toml
 from trulens.apps.app import TruApp
-from trulens.connectors.snowflake import SnowflakeConnector
 from trulens.core import Metric
 from trulens.core import Selector
 from trulens.core import TruSession
 from trulens.core.otel.instrument import instrument
 from trulens.core.run import RunConfig
-from trulens.core.run import RunStatus
 from trulens.otel.semconv.trace import SpanAttributes
 from trulens.providers.openai import OpenAI as fOpenAI
 
@@ -83,9 +77,7 @@ rocky beaches, and glacier-scoured granite peaks such as Cadillac Mountain.
 }
 
 chroma_client = chromadb.Client()
-vector_store = chroma_client.get_or_create_collection(
-    name="national_parks_bench_sf"
-)
+vector_store = chroma_client.get_or_create_collection(name="national_parks_oss")
 for doc_id, doc_text in KNOWLEDGE.items():
     vector_store.add(doc_id, documents=doc_text)
 
@@ -164,83 +156,54 @@ provider._set_capabilities({
     "cfg": False,
 })
 
-CLIENT_METRICS = [
-    Metric(
-        implementation=provider.execution_efficiency_with_cot_reasons,
-        name="Execution Efficiency",
-        selectors={"trace": Selector(trace_level=True)},
-    ),
-    Metric(
-        implementation=provider.logical_consistency_with_cot_reasons,
-        name="Logical Consistency",
-        selectors={"trace": Selector(trace_level=True)},
-    ),
-    Metric(
-        implementation=provider.tool_selection_with_cot_reasons,
-        name="Tool Selection",
-        selectors={"trace": Selector(trace_level=True)},
-    ),
-    Metric(
-        implementation=provider.plan_quality_with_cot_reasons,
-        name="Plan Quality",
-        selectors={"trace": Selector(trace_level=True)},
-    ),
-]
+f_groundedness = Metric(
+    implementation=provider.groundedness_measure_with_cot_reasons_consider_answerability,
+    name="Groundedness",
+    selectors={
+        "source": Selector.select_context(collect_list=True),
+        "statement": Selector.select_record_output(),
+        "question": Selector.select_record_input(),
+    },
+)
+f_answer_relevance = Metric(
+    implementation=provider.relevance_with_cot_reasons,
+    name="Answer Relevance",
+    selectors={
+        "prompt": Selector.select_record_input(),
+        "response": Selector.select_record_output(),
+    },
+)
+f_context_relevance = Metric(
+    implementation=provider.context_relevance_with_cot_reasons,
+    name="Context Relevance",
+    selectors={
+        "question": Selector.select_record_input(),
+        "context": Selector.select_context(collect_list=False),
+    },
+    agg=np.mean,
+)
+f_coherence = Metric(
+    implementation=provider.coherence_with_cot_reasons,
+    name="Coherence",
+    selectors={
+        "text": Selector.select_record_output(),
+    },
+)
 
-SERVER_METRICS = ["groundedness", "context_relevance"]
-
-
-def get_snowflake_connector():
-    snowpark_session = (
-        Session.builder.config("connection_name", CONN_NAME)
-        .config("database", "TRULENS_TEST")
-        .config("schema", "PUBLIC")
-        .config("warehouse", "COMPUTE")
-        .create()
-    )
-    return SnowflakeConnector(snowpark_session=snowpark_session)
-
-
-def wait_for_ingestion(run, timeout=120, poll_interval=5):
-    ready_statuses = {
-        RunStatus.INVOCATION_COMPLETED,
-        RunStatus.INVOCATION_PARTIALLY_COMPLETED,
-        RunStatus.COMPUTATION_IN_PROGRESS,
-        RunStatus.COMPLETED,
-        RunStatus.PARTIALLY_COMPLETED,
-    }
-    start = time.time()
-    while time.time() - start < timeout:
-        status = run.get_status()
-        print(f"    Waiting for ingestion... status={status}")
-        if status in ready_statuses:
-            return status
-        time.sleep(poll_interval)
-    print(
-        f"    WARNING: Timed out after {timeout}s, proceeding anyway (status={status})"
-    )
-    return status
+METRICS = [f_groundedness, f_answer_relevance, f_context_relevance, f_coherence]
 
 
-def make_run(
-    connector,
-    session,
-    label,
-    metrics_list,
-    invocation_workers=None,
-    metric_workers=None,
-):
+def make_run(session, label, invocation_workers=None, metric_workers=None):
     uid = uuid.uuid4().hex[:6]
 
     rag = RAG()
     tru_rag = TruApp(
         rag,
-        connector=connector,
-        app_name="Parallel Benchmark SF",
+        connector=session.connector,
+        app_name="Parallel Benchmark OSS",
         app_version=label,
         main_method=rag.query,
-        feedbacks=CLIENT_METRICS,
-        start_evaluator=False,
+        feedbacks=METRICS,
     )
 
     run = tru_rag.add_run(
@@ -253,7 +216,7 @@ def make_run(
             metric_max_workers=metric_workers,
         )
     )
-    return run, metrics_list
+    return run
 
 
 def bench_start(run):
@@ -262,118 +225,60 @@ def bench_start(run):
     return time.perf_counter() - t0
 
 
-def bench_metrics(run, metrics):
+def bench_metrics(run):
     t0 = time.perf_counter()
-    run.compute_metrics(metrics)
+    run.compute_metrics(METRICS)
     return time.perf_counter() - t0
 
 
 if __name__ == "__main__":
-    connector = get_snowflake_connector()
-    session = TruSession(connector=connector)
+    session = TruSession()
+    session.reset_database()
 
-    print("=" * 70)
-    print(f"BENCHMARK: Snowflake Cortex {CORTEX_MODEL} + Snowflake connector")
-    print(f"Dataset: {len(test_dataset)} rows")
-    print(f"Client-side metrics: {[m.name for m in CLIENT_METRICS]}")
-    print(f"Server-side metrics: {SERVER_METRICS}")
-    print("=" * 70)
+    print("=" * 60)
+    print(
+        f"BENCHMARK: Parallel vs Sequential — OSS (Cortex {CORTEX_MODEL}, no SF connector)"
+    )
+    print(f"Dataset: {len(test_dataset)} rows, Metrics: {len(METRICS)}")
+    print("=" * 60)
 
-    # ================================================================
-    # 1. run.start() benchmark
-    # ================================================================
+    # --- run.start() benchmark ---
     print("\n--- run.start() benchmark ---")
 
-    run_seq, _ = make_run(
-        connector, session, "seq_invoke", CLIENT_METRICS, invocation_workers=1
-    )
+    run_seq = make_run(session, "seq_invoke", invocation_workers=1)
     t_seq = bench_start(run_seq)
     print(f"  Sequential (workers=1): {t_seq:.2f}s")
 
-    run_par, _ = make_run(
-        connector,
-        session,
-        "par_invoke",
-        CLIENT_METRICS,
-        invocation_workers=None,
-    )
+    run_par = make_run(session, "par_invoke", invocation_workers=None)
     t_par = bench_start(run_par)
     print(f"  Parallel   (default) : {t_par:.2f}s")
 
     speedup_start = t_seq / t_par if t_par > 0 else float("inf")
     print(f"  Speedup: {speedup_start:.2f}x")
 
-    # ================================================================
-    # 2. Client-side metrics benchmark (execution_efficiency, logical_consistency)
-    # ================================================================
-    print("\n--- run.compute_metrics() — client-side (trace-level) ---")
-    print(f"  Metrics: {[m.name for m in CLIENT_METRICS]}")
-    print(
-        "  (waiting for event table ingestion before each compute_metrics call)"
-    )
+    # --- run.compute_metrics() benchmark ---
+    print("\n--- run.compute_metrics() benchmark ---")
 
-    run_cm_seq, _ = make_run(
-        connector, session, "seq_client_met", CLIENT_METRICS, metric_workers=1
-    )
-    bench_start(run_cm_seq)
-    wait_for_ingestion(run_cm_seq)
-    t_cm_seq = bench_metrics(run_cm_seq, CLIENT_METRICS)
-    print(f"  Sequential (workers=1): {t_cm_seq:.2f}s")
+    run_mseq = make_run(session, "seq_metric", metric_workers=1)
+    bench_start(run_mseq)
+    t_met_seq = bench_metrics(run_mseq)
+    print(f"  Sequential (workers=1): {t_met_seq:.2f}s")
 
-    run_cm_par, _ = make_run(
-        connector,
-        session,
-        "par_client_met",
-        CLIENT_METRICS,
-        metric_workers=None,
-    )
-    bench_start(run_cm_par)
-    wait_for_ingestion(run_cm_par)
-    t_cm_par = bench_metrics(run_cm_par, CLIENT_METRICS)
-    print(f"  Parallel   (default) : {t_cm_par:.2f}s")
+    run_mpar = make_run(session, "par_metric", metric_workers=None)
+    bench_start(run_mpar)
+    t_met_par = bench_metrics(run_mpar)
+    print(f"  Parallel   (default) : {t_met_par:.2f}s")
 
-    speedup_client = t_cm_seq / t_cm_par if t_cm_par > 0 else float("inf")
-    print(f"  Speedup: {speedup_client:.2f}x")
+    speedup_metrics = t_met_seq / t_met_par if t_met_par > 0 else float("inf")
+    print(f"  Speedup: {speedup_metrics:.2f}x")
 
-    # ================================================================
-    # 3. Server-side metrics (parallelized by Snowflake, poll until done)
-    # ================================================================
-    print("\n--- run.compute_metrics() — server-side (Snowflake-managed) ---")
-    print(f"  Metrics: {SERVER_METRICS}")
-    print(
-        "  (waiting for event table ingestion, then polling until results available)"
-    )
-
-    run_srv, _ = make_run(connector, session, "server_met", SERVER_METRICS)
-    bench_start(run_srv)
-    wait_for_ingestion(run_srv)
-
-    t0_srv = time.perf_counter()
-    run_srv.compute_metrics(SERVER_METRICS)
-    done_statuses = {RunStatus.COMPLETED, RunStatus.PARTIALLY_COMPLETED}
-    poll_timeout = 600
-    poll_start = time.time()
-    while time.time() - poll_start < poll_timeout:
-        srv_status = run_srv.get_status()
-        print(f"    Polling server-side metrics... status={srv_status}")
-        if srv_status in done_statuses:
-            break
-        time.sleep(10)
-    t_srv = time.perf_counter() - t0_srv
-    print(f"  Server-side (dispatch + completion): {t_srv:.2f}s")
-
-    # ================================================================
-    # Summary
-    # ================================================================
-    print("\n" + "=" * 70)
+    # --- Summary ---
+    print("\n" + "=" * 60)
     print("SUMMARY")
     print(
-        f"  run.start()                    : {t_seq:.2f}s -> {t_par:.2f}s  ({speedup_start:.2f}x)"
+        f"  run.start()          : {t_seq:.2f}s -> {t_par:.2f}s  ({speedup_start:.2f}x)"
     )
     print(
-        f"  compute_metrics() client-side  : {t_cm_seq:.2f}s -> {t_cm_par:.2f}s  ({speedup_client:.2f}x)"
+        f"  run.compute_metrics(): {t_met_seq:.2f}s -> {t_met_par:.2f}s  ({speedup_metrics:.2f}x)"
     )
-    print(
-        f"  compute_metrics() server-side  : {t_srv:.2f}s (Snowflake-managed, end-to-end)"
-    )
-    print("=" * 70)
+    print("=" * 60)

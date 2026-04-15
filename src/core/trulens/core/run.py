@@ -1344,6 +1344,7 @@ class Run(BaseModel):
                 feedback=feedback,
                 raise_error_on_no_feedbacks_computed=False,
                 selectors=feedback.selectors,
+                max_workers=max_workers,
             )
             logger.info(
                 f"Successfully computed client-side metric: {metric_config.name}"
