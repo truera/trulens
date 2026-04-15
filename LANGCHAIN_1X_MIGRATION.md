@@ -62,11 +62,6 @@ pip install trulens[langchain,nemo]  # Will use langchain<1.0
 
 ### CI/CD Impact
 
-**Jenkinsfile** ✅ Already updated
-- Uses `make test-e2e-stable` and `make test-notebook-stable`
-- These call `env-tests-optional` which now excludes nemo
-- No changes needed to Jenkinsfile
-
 **Local Development** ✅ Documented
 - Developers working on langchain 1.x: `poetry install --without nemo`
 - Developers working on nemo: work on a pre-1.x branch
