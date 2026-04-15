@@ -289,6 +289,8 @@ class TruSession(
                 self, connector, _experimental_otel_exporter
             )
 
+            _TruSession._start_track_costs_background()
+
     def App(self, *args, app: Optional[Any] = None, **kwargs) -> base_app.App:
         """Create an App from the given App constructor arguments by guessing
         which app type they refer to.

@@ -1,4 +1,5 @@
 import logging
+import threading
 from typing import Any, Callable, Dict, Optional
 
 from opentelemetry import trace
@@ -47,7 +48,7 @@ class TrulensOtelSpanProcessor(otel_export_sdk.BatchSpanProcessor):
     def on_start(
         self, span: Span, parent_context: Optional[Context] = None
     ) -> None:
-        _TruSession._track_costs()
+        _TruSession._ensure_costs_tracked()
         set_general_span_attributes(
             span,
             span_type=SpanAttributes.SpanType.UNKNOWN,
@@ -151,14 +152,24 @@ class _TruSession(core_session.TruSession):
                     attributes=cost_attributes,
                 )
 
-    _costs_tracked: bool = False
+    _costs_thread: Optional[threading.Thread] = None
+
+    @classmethod
+    def _start_track_costs_background(cls):
+        if cls._costs_thread is not None:
+            return
+        cls._costs_thread = threading.Thread(
+            target=cls._track_costs, daemon=True
+        )
+        cls._costs_thread.start()
+
+    @classmethod
+    def _ensure_costs_tracked(cls):
+        if cls._costs_thread is not None:
+            cls._costs_thread.join()
 
     @staticmethod
     def _track_costs():
-        if _TruSession._costs_tracked:
-            return
-        _TruSession._costs_tracked = True
-
         if _can_import("trulens.providers.cortex.endpoint"):
             from snowflake.cortex._sse_client import SSEClient
             from trulens.core.otel.instrument import instrument_cost_computer
