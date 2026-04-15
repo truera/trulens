@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pandas as pd
+from trulens.core.dao.run import RunDaoBase
 from trulens.core.run import Run
 from trulens.core.run import RunConfig
 
@@ -13,7 +14,7 @@ def _make_run(**overrides):
     mock_app.app_version = "1.0"
 
     defaults = dict(
-        run_dao=MagicMock(),
+        run_dao=MagicMock(spec=RunDaoBase),
         app=mock_app,
         main_method_name="invoke",
         tru_session=MagicMock(),

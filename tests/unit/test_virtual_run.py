@@ -8,6 +8,7 @@ from unittest.mock import patch
 import pandas as pd
 
 try:
+    from trulens.core.dao.run import RunDaoBase
     from trulens.core.run import Run
     from trulens.otel.semconv.trace import SpanAttributes
 
@@ -34,7 +35,7 @@ class TestVirtualRunMethods(OtelTestCase):
         mock_app.app_version = "1.0"
 
         run = Run(
-            run_dao=MagicMock(),
+            run_dao=MagicMock(spec=RunDaoBase),
             app=mock_app,
             main_method_name="test",
             tru_session=MagicMock(),
@@ -70,7 +71,7 @@ class TestVirtualRunMethods(OtelTestCase):
         mock_app.app_version = "1.0"
 
         run = Run(
-            run_dao=MagicMock(),
+            run_dao=MagicMock(spec=RunDaoBase),
             app=mock_app,
             main_method_name="test",
             tru_session=MagicMock(),
@@ -108,7 +109,7 @@ class TestVirtualRunMethods(OtelTestCase):
         mock_app.app_version = "1.0"
 
         run = Run(
-            run_dao=MagicMock(),
+            run_dao=MagicMock(spec=RunDaoBase),
             app=mock_app,
             main_method_name="virtual_main",
             tru_session=MagicMock(),
@@ -150,7 +151,7 @@ class TestVirtualRunMethods(OtelTestCase):
         """Test array attribute detection by constant"""
         mock_app = MagicMock()
         run = Run(
-            run_dao=MagicMock(),
+            run_dao=MagicMock(spec=RunDaoBase),
             app=mock_app,
             main_method_name="test",
             tru_session=MagicMock(),
@@ -193,7 +194,7 @@ class TestVirtualRunMethods(OtelTestCase):
         """Test array attribute detection by name"""
         mock_app = MagicMock()
         run = Run(
-            run_dao=MagicMock(),
+            run_dao=MagicMock(spec=RunDaoBase),
             app=mock_app,
             main_method_name="test",
             tru_session=MagicMock(),
@@ -225,7 +226,7 @@ class TestVirtualRunMethods(OtelTestCase):
         """Test array attribute processing with various inputs"""
         mock_app = MagicMock()
         run = Run(
-            run_dao=MagicMock(),
+            run_dao=MagicMock(spec=RunDaoBase),
             app=mock_app,
             main_method_name="test",
             tru_session=MagicMock(),
