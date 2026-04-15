@@ -13,6 +13,7 @@ from sqlalchemy import Engine
 from sqlalchemy import Enum
 from sqlalchemy import Float
 from sqlalchemy import ForeignKey
+from sqlalchemy import Index
 from sqlalchemy import Text
 from sqlalchemy import UniqueConstraint
 from sqlalchemy import event
@@ -414,6 +415,14 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
             """
 
             _table_base_name = "events"
+
+            @declared_attr
+            def __table_args__(cls):
+                tname = cls.__tablename__
+                return (
+                    Index(f"ix_{tname}_start_timestamp", "start_timestamp"),
+                    Index(f"ix_{tname}_timestamp", "timestamp"),
+                )
 
             record = Column(JSON, nullable=False)
             """
