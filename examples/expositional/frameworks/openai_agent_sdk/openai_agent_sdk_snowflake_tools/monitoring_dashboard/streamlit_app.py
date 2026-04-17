@@ -539,23 +539,43 @@ with tab_evals:
 
             click = alt.selection_point(name="eval_select", fields=["TRACE_ID"])
             pan_zoom = alt.selection_interval(bind="scales")
-            points = alt.Chart(filtered).mark_circle(size=60).encode(
+
+            points = alt.Chart(filtered).mark_circle(size=30, opacity=0.25).encode(
                 x=alt.X("TIMESTAMP:T", title="Time"),
                 y=alt.Y("SCORE:Q", title="Score", scale=alt.Scale(domain=[0, 1])),
                 color=alt.Color("METRIC_NAME:N", title="Metric"),
-                shape=alt.Shape("SOURCE:N", title="Source"),
-                tooltip=["RUN_NAME", "METRIC_NAME", "SCORE", "SOURCE", alt.Tooltip("TIMESTAMP:T", format="%Y-%m-%d %H:%M:%S"), "TRACE_ID"],
+                tooltip=[
+                    "RUN_NAME", "METRIC_NAME", "SCORE", "SOURCE",
+                    alt.Tooltip("TIMESTAMP:T", format="%Y-%m-%d %H:%M:%S"),
+                    "TRACE_ID",
+                ],
             ).add_params(click, pan_zoom)
-            lines = alt.Chart(filtered).mark_line(
-                opacity=0.5, strokeWidth=2,
-            ).transform_loess(
-                "TIMESTAMP", "SCORE", groupby=["METRIC_NAME"], bandwidth=0.4,
-            ).encode(
+
+            rolling = filtered.sort_values("TIMESTAMP").copy()
+            rolling["ROLLING_MEAN"] = rolling.groupby("METRIC_NAME")["SCORE"].transform(
+                lambda s: s.rolling(5, min_periods=1, center=True).mean()
+            )
+            rolling["ROLLING_MIN"] = rolling.groupby("METRIC_NAME")["SCORE"].transform(
+                lambda s: s.rolling(5, min_periods=1, center=True).min()
+            )
+            rolling["ROLLING_MAX"] = rolling.groupby("METRIC_NAME")["SCORE"].transform(
+                lambda s: s.rolling(5, min_periods=1, center=True).max()
+            )
+
+            band = alt.Chart(rolling).mark_area(opacity=0.15).encode(
                 x=alt.X("TIMESTAMP:T"),
-                y=alt.Y("SCORE:Q"),
+                y=alt.Y("ROLLING_MIN:Q", title="Score", scale=alt.Scale(domain=[0, 1])),
+                y2=alt.Y2("ROLLING_MAX:Q"),
                 color=alt.Color("METRIC_NAME:N"),
             )
-            chart = (lines + points).properties(height=400)
+
+            trend = alt.Chart(rolling).mark_line(strokeWidth=2.5).encode(
+                x=alt.X("TIMESTAMP:T"),
+                y=alt.Y("ROLLING_MEAN:Q"),
+                color=alt.Color("METRIC_NAME:N"),
+            )
+
+            chart = (band + trend + points).properties(height=400)
             eval_event = st.altair_chart(chart, key="eval_chart", on_select="rerun")
             st.caption("Click a dot to inspect trace · Drag to pan, scroll to zoom")
 
