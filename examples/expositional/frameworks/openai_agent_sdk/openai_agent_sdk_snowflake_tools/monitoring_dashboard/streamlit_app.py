@@ -13,16 +13,25 @@ st.set_page_config(
 
 conn = st.connection("snowflake")
 
+TIME_RANGE_OPTIONS = {
+    "Last 1 hour": 1 / 24,
+    "Last 6 hours": 6 / 24,
+    "Last 24 hours": 1,
+    "Last 7 days": 7,
+    "Last 30 days": 30,
+    "Last 90 days": 90,
+}
+
 
 @st.cache_data(ttl=timedelta(minutes=2))
-def load_agents():
-    return conn.query("""
+def load_agents(lookback_days: float):
+    return conn.query(f"""
         SELECT
             RECORD_ATTRIBUTES:"snow.ai.observability.object.name"::STRING AS agent_name,
             COUNT(*) AS total_spans
         FROM SNOWFLAKE.LOCAL.AI_OBSERVABILITY_EVENTS
         WHERE RECORD_TYPE = 'SPAN'
-          AND TIMESTAMP > DATEADD('day', -1, CURRENT_TIMESTAMP())
+          AND TIMESTAMP > DATEADD('hour', -{int(lookback_days * 24)}, CURRENT_TIMESTAMP())
           AND RECORD_ATTRIBUTES:"snow.ai.observability.object.name"::STRING IS NOT NULL
         GROUP BY 1
         ORDER BY total_spans DESC
@@ -30,7 +39,7 @@ def load_agents():
 
 
 @st.cache_data(ttl=timedelta(minutes=2))
-def load_runs(agent_name: str):
+def load_runs(agent_name: str, lookback_days: float):
     return conn.query(f"""
         SELECT
             RECORD_ATTRIBUTES:"ai.observability.run.name"::STRING AS run_name,
@@ -39,7 +48,7 @@ def load_runs(agent_name: str):
             COUNT(*) AS total_spans
         FROM SNOWFLAKE.LOCAL.AI_OBSERVABILITY_EVENTS
         WHERE RECORD_TYPE = 'SPAN'
-          AND TIMESTAMP > DATEADD('day', -1, CURRENT_TIMESTAMP())
+          AND TIMESTAMP > DATEADD('hour', -{int(lookback_days * 24)}, CURRENT_TIMESTAMP())
           AND RECORD_ATTRIBUTES:"ai.observability.run.name"::STRING IS NOT NULL
           AND RECORD_ATTRIBUTES:"ai.observability.run.name"::STRING != ''
           AND RECORD_ATTRIBUTES:"snow.ai.observability.object.name"::STRING = '{agent_name}'
@@ -49,7 +58,7 @@ def load_runs(agent_name: str):
 
 
 @st.cache_data(ttl=timedelta(minutes=2))
-def load_spans(run_names: tuple):
+def load_spans(run_names: tuple, lookback_days: float):
     run_list = ",".join(f"'{r}'" for r in run_names)
     return conn.query(f"""
         SELECT
@@ -69,21 +78,21 @@ def load_spans(run_names: tuple):
             RECORD_ATTRIBUTES:"ai.observability.record_id"::STRING AS record_id
         FROM SNOWFLAKE.LOCAL.AI_OBSERVABILITY_EVENTS
         WHERE RECORD_TYPE = 'SPAN'
-          AND TIMESTAMP > DATEADD('day', -1, CURRENT_TIMESTAMP())
+          AND TIMESTAMP > DATEADD('hour', -{int(lookback_days * 24)}, CURRENT_TIMESTAMP())
           AND RECORD_ATTRIBUTES:"ai.observability.run.name"::STRING IN ({run_list})
         ORDER BY TIMESTAMP ASC
     """)
 
 
 @st.cache_data(ttl=timedelta(minutes=2))
-def load_eval_roots(run_names: tuple):
+def load_eval_roots(run_names: tuple, lookback_days: float):
     run_list = ",".join(f"'{r}'" for r in run_names)
     return conn.query(f"""
         WITH run_record_ids AS (
             SELECT DISTINCT RECORD_ATTRIBUTES:"ai.observability.record_id"::STRING AS record_id
             FROM SNOWFLAKE.LOCAL.AI_OBSERVABILITY_EVENTS
             WHERE RECORD_TYPE = 'SPAN'
-              AND TIMESTAMP > DATEADD('day', -1, CURRENT_TIMESTAMP())
+              AND TIMESTAMP > DATEADD('hour', -{int(lookback_days * 24)}, CURRENT_TIMESTAMP())
               AND RECORD_ATTRIBUTES:"ai.observability.span_type"::STRING = 'record_root'
               AND RECORD_ATTRIBUTES:"ai.observability.run.name"::STRING IN ({run_list})
         )
@@ -96,7 +105,7 @@ def load_eval_roots(run_names: tuple):
             e.RECORD_ATTRIBUTES:"ai.observability.eval.target_record_id"::STRING AS target_record_id
         FROM SNOWFLAKE.LOCAL.AI_OBSERVABILITY_EVENTS e
         WHERE e.RECORD_TYPE = 'SPAN'
-          AND e.TIMESTAMP > DATEADD('day', -1, CURRENT_TIMESTAMP())
+          AND e.TIMESTAMP > DATEADD('hour', -{int(lookback_days * 24)}, CURRENT_TIMESTAMP())
           AND e.RECORD_ATTRIBUTES:"ai.observability.span_type"::STRING = 'eval_root'
           AND (
               e.RECORD_ATTRIBUTES:"ai.observability.run.name"::STRING IN ({run_list})
@@ -107,7 +116,7 @@ def load_eval_roots(run_names: tuple):
 
 
 @st.cache_data(ttl=timedelta(minutes=2))
-def load_tool_details(run_names: tuple):
+def load_tool_details(run_names: tuple, lookback_days: float):
     run_list = ",".join(f"'{r}'" for r in run_names)
     return conn.query(f"""
         SELECT
@@ -127,7 +136,7 @@ def load_tool_details(run_names: tuple):
             TRACE:"trace_id"::STRING AS trace_id
         FROM SNOWFLAKE.LOCAL.AI_OBSERVABILITY_EVENTS
         WHERE RECORD_TYPE = 'SPAN'
-          AND TIMESTAMP > DATEADD('day', -1, CURRENT_TIMESTAMP())
+          AND TIMESTAMP > DATEADD('hour', -{int(lookback_days * 24)}, CURRENT_TIMESTAMP())
           AND RECORD_ATTRIBUTES:"ai.observability.span_type"::STRING IN ('tool', 'retrieval')
           AND RECORD_ATTRIBUTES:"ai.observability.run.name"::STRING IN ({run_list})
         ORDER BY TIMESTAMP ASC
@@ -135,14 +144,14 @@ def load_tool_details(run_names: tuple):
 
 
 @st.cache_data(ttl=timedelta(minutes=2))
-def load_server_evals(run_names: tuple):
+def load_server_evals(run_names: tuple, lookback_days: float):
     run_list = ",".join(f"'{r}'" for r in run_names)
     return conn.query(f"""
         WITH run_record_ids AS (
             SELECT DISTINCT RECORD_ATTRIBUTES:"ai.observability.record_id"::STRING AS record_id
             FROM SNOWFLAKE.LOCAL.AI_OBSERVABILITY_EVENTS
             WHERE RECORD_TYPE = 'SPAN'
-              AND TIMESTAMP > DATEADD('day', -1, CURRENT_TIMESTAMP())
+              AND TIMESTAMP > DATEADD('hour', -{int(lookback_days * 24)}, CURRENT_TIMESTAMP())
               AND RECORD_ATTRIBUTES:"ai.observability.span_type"::STRING = 'record_root'
               AND RECORD_ATTRIBUTES:"ai.observability.run.name"::STRING IN ({run_list})
         )
@@ -157,7 +166,7 @@ def load_server_evals(run_names: tuple):
             e.RECORD_ATTRIBUTES:"ai.observability.eval.target_record_id"::STRING AS target_record_id
         FROM SNOWFLAKE.LOCAL.AI_OBSERVABILITY_EVENTS e
         WHERE e.RECORD_TYPE = 'SPAN'
-          AND e.TIMESTAMP > DATEADD('day', -1, CURRENT_TIMESTAMP())
+          AND e.TIMESTAMP > DATEADD('hour', -{int(lookback_days * 24)}, CURRENT_TIMESTAMP())
           AND e.RECORD_ATTRIBUTES:"ai.observability.span_type"::STRING = 'eval'
           AND e.RECORD_ATTRIBUTES:"ai.observability.eval.metric_name"::STRING IS NOT NULL
           AND (
@@ -263,24 +272,35 @@ def render_trace_detail(trace_id: str, tool_details: pd.DataFrame, spans: pd.Dat
                         st.markdown(ctx_str[:2000])
             else:
                 st.info("No retrieved contexts found.")
+
+
 st.caption("Timeseries views of trace data, tool calls, eval scores, and latency from Snowflake AI Observability")
-
-agents_df = load_agents()
-
-if agents_df.empty:
-    st.warning("No observability data found.")
-    st.stop()
 
 with st.sidebar:
     st.header("Filters")
     if st.button("Refresh Data", type="primary", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
+
+    time_range_label = st.selectbox(
+        "Time Range",
+        list(TIME_RANGE_OPTIONS.keys()),
+        index=4,
+    )
+    lookback_days = TIME_RANGE_OPTIONS[time_range_label]
+
+agents_df = load_agents(lookback_days)
+
+if agents_df.empty:
+    st.warning("No observability data found in the selected time range.")
+    st.stop()
+
+with st.sidebar:
     agent_names = agents_df["AGENT_NAME"].tolist()
     default_agent = "SUPPORT CLOUD AGENT" if "SUPPORT CLOUD AGENT" in agent_names else agent_names[0]
     selected_agent = st.selectbox("Agent", agent_names, index=agent_names.index(default_agent))
 
-runs_df = load_runs(selected_agent)
+runs_df = load_runs(selected_agent, lookback_days)
 
 if runs_df.empty:
     st.warning(f"No runs found for {selected_agent}.")
@@ -288,12 +308,11 @@ if runs_df.empty:
 
 all_runs = runs_df["RUN_NAME"].tolist()
 run_names_tuple = tuple(all_runs)
-spans_df = load_spans(run_names_tuple)
-tool_details_df = load_tool_details(run_names_tuple)
-eval_roots_df = load_eval_roots(run_names_tuple)
-server_evals_df = load_server_evals(run_names_tuple)
+spans_df = load_spans(run_names_tuple, lookback_days)
+tool_details_df = load_tool_details(run_names_tuple, lookback_days)
+eval_roots_df = load_eval_roots(run_names_tuple, lookback_days)
+server_evals_df = load_server_evals(run_names_tuple, lookback_days)
 
-# --- KPI row ---
 st.markdown("---")
 
 record_roots = spans_df[spans_df["SPAN_TYPE"] == "record_root"] if not spans_df.empty else pd.DataFrame()
@@ -327,7 +346,6 @@ with st.container(horizontal=True):
     st.metric("LLM Generations", f"{total_gen_calls}", border=True)
     st.metric("Avg Eval Score", f"{avg_eval_score:.2f}" if avg_eval_score else "N/A", border=True)
 
-# --- Tabs ---
 tab_latency, tab_tools, tab_evals, tab_traces = st.tabs([
     "Latency Over Time",
     "Tool Calls",
@@ -335,7 +353,6 @@ tab_latency, tab_tools, tab_evals, tab_traces = st.tabs([
     "Trace Explorer",
 ])
 
-# --- Latency Tab ---
 with tab_latency:
     if record_roots.empty:
         st.info("No record_root spans found for selected runs.")
@@ -409,7 +426,6 @@ with tab_latency:
             ).properties(height=300)
             st.altair_chart(bar)
 
-# --- Tool Calls Tab ---
 with tab_tools:
     tool_spans = spans_df[spans_df["SPAN_TYPE"].isin(["tool", "retrieval"])].copy() if not spans_df.empty else pd.DataFrame()
     if not tool_spans.empty:
@@ -472,7 +488,6 @@ with tab_tools:
 
 
 
-# --- Eval Scores Tab ---
 with tab_evals:
     has_client = not eval_roots_df.empty
     has_server = not server_evals_df.empty
@@ -550,7 +565,6 @@ with tab_evals:
             ).properties(height=300)
             st.altair_chart(box)
 
-# --- Trace Explorer Tab ---
 with tab_traces:
     if tool_details_df.empty:
         st.info("No tool/retrieval trace details found.")
