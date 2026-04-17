@@ -65,25 +65,12 @@ After starting a run, poll `run.get_status()` to track progress:
 
 ## Example: Batch Evaluation with a Snowflake Connector
 
-```python
-import os
-import time
-from trulens.core.otel.instrument import instrument
-from trulens.otel.semconv.trace import SpanAttributes
-
-instrument.enable_all_instrumentation()
-os.environ["TRULENS_OTEL_TRACING"] = "1"
-
-from trulens.apps.app import TruApp
-from trulens.connectors.snowflake import SnowflakeConnector
-from trulens.core.run import RunConfig, RunStatus
-from trulens.core.session import TruSession
-from snowflake.snowpark import Session
-```
-
 ### 1. Define your instrumented app
 
 ```python
+from trulens.core.otel.instrument import instrument
+from trulens.otel.semconv.trace import SpanAttributes
+
 class MyApp:
     @instrument(
         span_type=SpanAttributes.SpanType.RECORD_ROOT,
@@ -100,6 +87,11 @@ class MyApp:
 ### 2. Connect and create the dataset
 
 ```python
+from trulens.connectors.snowflake import SnowflakeConnector
+from trulens.core.run import RunConfig, RunStatus
+from trulens.core.session import TruSession
+from snowflake.snowpark import Session
+
 snowpark_session = Session.builder.configs({...}).create()
 connector = SnowflakeConnector(snowpark_session=snowpark_session)
 session = TruSession(connector)
@@ -120,6 +112,8 @@ snowpark_session.sql("""
 ### 3. Wrap the app and add a run
 
 ```python
+from trulens.apps.app import TruApp
+
 app = MyApp()
 tru_app = TruApp(
     app,
