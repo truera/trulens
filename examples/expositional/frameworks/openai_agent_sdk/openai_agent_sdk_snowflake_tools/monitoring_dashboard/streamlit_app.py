@@ -313,6 +313,14 @@ tool_details_df = load_tool_details(run_names_tuple, lookback_days)
 eval_roots_df = load_eval_roots(run_names_tuple, lookback_days)
 server_evals_df = load_server_evals(run_names_tuple, lookback_days)
 
+if not server_evals_df.empty and "SCORE" in server_evals_df.columns:
+    server_evals_df["SCORE"] = pd.to_numeric(server_evals_df["SCORE"], errors="coerce")
+    mask = server_evals_df["SCORE"] > 1
+    if mask.any():
+        max_val = server_evals_df.loc[mask, "SCORE"].max()
+        server_evals_df.loc[mask, "SCORE"] = server_evals_df.loc[mask, "SCORE"] / max_val
+    server_evals_df["SCORE"] = server_evals_df["SCORE"].clip(0, 1)
+
 st.markdown("---")
 
 record_roots = spans_df[spans_df["SPAN_TYPE"] == "record_root"] if not spans_df.empty else pd.DataFrame()
