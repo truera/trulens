@@ -2,6 +2,8 @@ import argparse
 import json
 import os
 import sys
+import threading
+import time
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import pandas as pd
@@ -210,7 +212,22 @@ def get_session() -> core_session.TruSession:
     if args.otel_tracing:
         os.environ["TRULENS_OTEL_TRACING"] = "1"
 
+    if args.snowflake_spcs_mode:
+        ping_thread = threading.Thread(
+            target=_ping_session, args=(session,), daemon=True
+        )
+        ping_thread.start()
+
     return session
+
+
+def _ping_session(tru_session: core_session.TruSession):
+    time.sleep(30)
+    while True:
+        print("--------------------------------")
+        print("SELECT ABC:")
+        print("--------------------------------ABC (NOTHING)")
+        time.sleep(60)
 
 
 @st.cache_data(
