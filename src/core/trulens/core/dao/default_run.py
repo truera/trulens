@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import pandas as pd
 from trulens.core.dao.run import RunDaoBase
@@ -80,9 +80,7 @@ class DefaultRunDao(RunDaoBase):
                 .first()
             )
             if existing is not None:
-                raise ValueError(
-                    f"Run '{run_name}' already exists."
-                )
+                raise ValueError(f"Run '{run_name}' already exists.")
 
             new_run = orm.Run(
                 run_name=run_name,
@@ -224,9 +222,7 @@ class DefaultRunDao(RunDaoBase):
             if update_run_status:
                 row.run_status = run_status_val
 
-    def _apply_field_masks(
-        self, existing: dict, updates: dict
-    ) -> dict:
+    def _apply_field_masks(self, existing: dict, updates: dict) -> dict:
         for key, value in updates.items():
             parts = key.split(".")
 

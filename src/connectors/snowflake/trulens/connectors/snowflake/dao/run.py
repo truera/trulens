@@ -594,9 +594,7 @@ class RunDao(RunDaoBase):
             raise
 
     def fetch_source_data(self, source_name: str) -> pd.DataFrame:
-        rows = self.session.sql(
-            f"SELECT * FROM {source_name}"
-        ).collect()
+        rows = self.session.sql(f"SELECT * FROM {source_name}").collect()
         return pd.DataFrame([row.as_dict() for row in rows])
 
     def call_compute_metrics_query(

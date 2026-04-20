@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import abc
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import pandas as pd
 from trulens.core.enums import Mode
@@ -32,8 +32,7 @@ class RunDaoBase(abc.ABC):
         label: Optional[str] = "",
         llm_judge_name: Optional[str] = "",
         mode: Optional[Mode] = Mode.APP_INVOCATION,
-    ) -> pd.DataFrame:
-        ...
+    ) -> pd.DataFrame: ...
 
     @abc.abstractmethod
     def get_run(
@@ -42,16 +41,14 @@ class RunDaoBase(abc.ABC):
         object_name: str,
         object_type: str,
         object_version: Optional[str] = None,
-    ) -> pd.DataFrame:
-        ...
+    ) -> pd.DataFrame: ...
 
     @abc.abstractmethod
     def list_all_runs(
         self,
         object_name: str,
         object_type: str,
-    ) -> pd.DataFrame:
-        ...
+    ) -> pd.DataFrame: ...
 
     @abc.abstractmethod
     def delete_run(
@@ -60,8 +57,7 @@ class RunDaoBase(abc.ABC):
         object_name: str,
         object_type: str,
         object_version: Optional[str] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @abc.abstractmethod
     def upsert_run_metadata_fields(
@@ -73,8 +69,7 @@ class RunDaoBase(abc.ABC):
         entry_id: Optional[str] = None,
         entry_type: Optional[str] = None,
         **field_updates: Any,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @abc.abstractmethod
     def start_ingestion_query(
@@ -84,8 +79,7 @@ class RunDaoBase(abc.ABC):
         object_type: str,
         run_name: str,
         input_records_count: int,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @abc.abstractmethod
     def call_compute_metrics_query(
@@ -95,8 +89,7 @@ class RunDaoBase(abc.ABC):
         object_version: Optional[str],
         object_type: str,
         run_name: str,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     def fetch_source_data(self, source_name: str) -> pd.DataFrame:
         raise NotImplementedError(

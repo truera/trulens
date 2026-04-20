@@ -412,9 +412,7 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
 
             _table_base_name: ClassVar[str] = "runs"
 
-            run_name = Column(
-                VARCHAR(256), nullable=False, primary_key=True
-            )
+            run_name = Column(VARCHAR(256), nullable=False, primary_key=True)
             object_name = Column(VARCHAR(256), nullable=False)
             object_type = Column(VARCHAR(128), nullable=False)
             object_version = Column(VARCHAR(128), nullable=True)
