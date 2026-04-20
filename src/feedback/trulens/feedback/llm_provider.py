@@ -47,6 +47,7 @@ class CapabilityCacheEntry(TypedDict, total=False):
     temperature: bool
     reasoning_effort: bool
     cfg: bool
+    responses_api: bool
 
 
 _model_capabilities_cache: Dict[str, CapabilityCacheEntry] = {}
@@ -129,6 +130,16 @@ class LLMProvider(core_provider.Provider):
             or ("is not allowed" in lowered)
             or ("unknown" in lowered)
         ) and (parameter in lowered)
+
+    @staticmethod
+    def _is_responses_api_unavailable(exc: Exception) -> bool:
+        message = str(getattr(exc, "message", "")) or str(exc)
+        lowered = message.lower()
+        return (
+            "not enabled" in lowered
+            or "not supported" in lowered
+            or "not available" in lowered
+        ) and "response" in lowered
 
     def _is_reasoning_model(self) -> bool:
         """Detect reasoning models robustly across providers.

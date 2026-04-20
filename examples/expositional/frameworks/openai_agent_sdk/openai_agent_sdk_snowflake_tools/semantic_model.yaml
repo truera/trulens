@@ -1,0 +1,121 @@
+name: support_ticket_metrics
+description: Semantic model for support ticket metrics. Answers questions about ticket
+  volume, resolution times, CSAT scores, agent performance, and ticket categorization.
+tables:
+  - name: TICKET_METRICS
+    description: Support ticket metrics including priority, category, status, agent assignment, timing, and satisfaction scores.
+    base_table:
+      database: SUPPORT_INTELLIGENCE
+      schema: DATA
+      table: TICKET_METRICS
+    dimensions:
+      - name: TICKET_ID
+        synonyms: ["ticket number", "ticket"]
+        description: Unique ticket identifier
+        expr: TICKET_ID
+        data_type: VARCHAR
+      - name: CUSTOMER_NAME
+        synonyms: ["customer", "company", "client"]
+        description: Name of the customer company
+        expr: CUSTOMER_NAME
+        data_type: VARCHAR
+      - name: PRIORITY
+        synonyms: ["urgency", "severity"]
+        description: "Ticket priority level: low, medium, high, or urgent"
+        expr: PRIORITY
+        data_type: VARCHAR
+      - name: CATEGORY
+        synonyms: ["type", "issue type", "ticket type"]
+        description: "Ticket category: billing, technical, feature_request, or account"
+        expr: CATEGORY
+        data_type: VARCHAR
+      - name: STATUS
+        synonyms: ["state", "ticket status"]
+        description: "Current ticket status: open, pending, resolved, or closed"
+        expr: STATUS
+        data_type: VARCHAR
+      - name: ASSIGNED_AGENT
+        synonyms: ["agent", "support agent", "rep", "representative"]
+        description: Name of the assigned support agent
+        expr: ASSIGNED_AGENT
+        data_type: VARCHAR
+    time_dimensions:
+      - name: CREATED_DATE
+        synonyms: ["creation date", "opened date", "date created"]
+        description: Date the ticket was created
+        expr: CREATED_DATE
+        data_type: DATE
+      - name: RESOLVED_DATE
+        synonyms: ["resolution date", "date resolved", "closed date"]
+        description: Date the ticket was resolved (null if unresolved)
+        expr: RESOLVED_DATE
+        data_type: DATE
+    facts:
+      - name: FIRST_RESPONSE_HOURS
+        synonyms: ["time to first response", "first reply time", "response time"]
+        description: Hours until first agent response
+        expr: FIRST_RESPONSE_HOURS
+        data_type: FLOAT
+      - name: RESOLUTION_HOURS
+        synonyms: ["time to resolution", "resolution time", "handle time"]
+        description: Hours until ticket resolution (null if unresolved)
+        expr: RESOLUTION_HOURS
+        data_type: FLOAT
+      - name: CSAT_SCORE
+        synonyms: ["customer satisfaction", "satisfaction score", "CSAT"]
+        description: Customer satisfaction score from 1.0 to 5.0 (null if not rated)
+        expr: CSAT_SCORE
+        data_type: FLOAT
+    metrics:
+      - name: ticket_count
+        synonyms: ["number of tickets", "total tickets", "volume"]
+        description: Total number of tickets
+        expr: COUNT(TICKET_ID)
+      - name: avg_resolution_hours
+        synonyms: ["average resolution time", "mean resolution time"]
+        description: Average hours to resolve tickets
+        expr: AVG(RESOLUTION_HOURS)
+      - name: avg_first_response_hours
+        synonyms: ["average response time", "mean first response time"]
+        description: Average hours to first agent response
+        expr: AVG(FIRST_RESPONSE_HOURS)
+      - name: avg_csat
+        synonyms: ["average satisfaction", "mean CSAT", "average CSAT score"]
+        description: Average customer satisfaction score
+        expr: AVG(CSAT_SCORE)
+      - name: resolution_rate
+        synonyms: ["resolve rate", "completion rate"]
+        description: Percentage of tickets that have been resolved or closed
+        expr: "COUNT(CASE WHEN STATUS IN ('resolved', 'closed') THEN 1 END) * 100.0 / COUNT(TICKET_ID)"
+verified_queries:
+  - name: tickets_by_priority
+    question: How many tickets are there by priority?
+    sql: SELECT PRIORITY, COUNT(TICKET_ID) AS TICKET_COUNT FROM ticket_metrics GROUP
+      BY PRIORITY ORDER BY TICKET_COUNT DESC
+    verified_at: 1775612532
+    verified_by: Semantic Model Generator
+  - name: avg_resolution_by_agent
+    question: What is the average resolution time by agent?
+    sql: SELECT ASSIGNED_AGENT, AVG(RESOLUTION_HOURS) AS AVG_RESOLUTION_HOURS FROM
+      ticket_metrics WHERE NOT RESOLUTION_HOURS IS NULL GROUP BY ASSIGNED_AGENT ORDER
+      BY AVG_RESOLUTION_HOURS
+    verified_at: 1775612532
+    verified_by: Semantic Model Generator
+  - name: avg_csat_score
+    question: What is the average CSAT score?
+    sql: SELECT AVG(CSAT_SCORE) AS AVG_CSAT FROM ticket_metrics WHERE NOT CSAT_SCORE
+      IS NULL
+    verified_at: 1775612532
+    verified_by: Semantic Model Generator
+  - name: open_ticket_count
+    question: How many open tickets are there?
+    sql: SELECT COUNT(TICKET_ID) AS OPEN_TICKETS FROM ticket_metrics WHERE STATUS
+      = 'open'
+    verified_at: 1775612532
+    verified_by: Semantic Model Generator
+  - name: billing_resolution_rate
+    question: What is the resolution rate for billing issues?
+    sql: SELECT COUNT(CASE WHEN STATUS IN ('resolved', 'closed') THEN 1 END) * 100.0
+      / COUNT(TICKET_ID) AS RESOLUTION_RATE FROM ticket_metrics WHERE CATEGORY = 'billing'
+    verified_at: 1775612532
+    verified_by: Semantic Model Generator
