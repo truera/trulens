@@ -933,8 +933,8 @@ class SQLAlchemyDB(core_db.DB):
         # Group by record_id to get unique records
         stmt = stmt.group_by("record_id")
 
-        # Order by timestamp ascending (oldest first)
-        stmt = stmt.order_by(sa.asc("min_start_timestamp"))
+        # Order by timestamp descending (newest first)
+        stmt = stmt.order_by(sa.desc("min_start_timestamp"))
 
         # Apply pagination
         if limit is not None:
@@ -1003,6 +1003,360 @@ class SQLAlchemyDB(core_db.DB):
                 app_ids=app_ids,
                 app_name=app_name,
             )
+
+    def _build_otel_conditions(
+        self,
+        span_type: str,
+        app_name: Optional[types_schema.AppName] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
+    ) -> list:
+        conditions = [
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.SPAN_TYPE
+            )
+            == span_type,
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.RECORD_ID
+            ).isnot(None),
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.RECORD_ID
+            )
+            != "",
+        ]
+        if app_name:
+            conditions.append(
+                self._json_extract_otel(
+                    "resource_attributes", ResourceAttributes.APP_NAME
+                )
+                == app_name
+            )
+        if app_versions:
+            conditions.append(
+                self._json_extract_otel(
+                    "resource_attributes", ResourceAttributes.APP_VERSION
+                ).in_(app_versions)
+            )
+        return conditions
+
+    def _get_leaderboard_aggregates_otel(
+        self,
+        app_name: Optional[types_schema.AppName] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
+    ) -> Tuple[pd.DataFrame, List[str]]:
+        app_name_col = self._json_extract_otel(
+            "resource_attributes", ResourceAttributes.APP_NAME
+        ).label("app_name")
+        app_version_col = self._json_extract_otel(
+            "resource_attributes", ResourceAttributes.APP_VERSION
+        ).label("app_version")
+        app_id_col = self._json_extract_otel(
+            "resource_attributes", ResourceAttributes.APP_ID
+        ).label("app_id")
+        record_id_col = self._json_extract_otel(
+            "record_attributes", SpanAttributes.RECORD_ID
+        )
+        cost_col = self._json_extract_otel(
+            "record_attributes", SpanAttributes.COST.COST
+        )
+        currency_col = self._json_extract_otel(
+            "record_attributes", SpanAttributes.COST.CURRENCY
+        )
+        tokens_col = self._json_extract_otel(
+            "record_attributes", SpanAttributes.COST.NUM_TOKENS
+        )
+
+        record_root_conditions = self._build_otel_conditions(
+            SpanAttributes.SpanType.RECORD_ROOT.value,
+            app_name=app_name,
+            app_versions=app_versions,
+        )
+        latency_expr = sa.func.avg(
+            sa.func.julianday(self.orm.Event.timestamp) * 86400
+            - sa.func.julianday(self.orm.Event.start_timestamp) * 86400
+        )
+        dialect = self.engine.dialect.name
+        if dialect == "postgresql":
+            latency_expr = sa.func.avg(
+                sa.extract(
+                    "epoch",
+                    sa.cast(self.orm.Event.timestamp, sa.DateTime)
+                    - sa.cast(self.orm.Event.start_timestamp, sa.DateTime),
+                )
+            )
+        elif dialect == "snowflake":
+            latency_expr = sa.func.avg(
+                sa.func.timestampdiff(
+                    sa.text("SECOND"),
+                    self.orm.Event.start_timestamp,
+                    self.orm.Event.timestamp,
+                )
+            )
+
+        base_stmt = (
+            sa.select(
+                app_name_col,
+                app_version_col,
+                app_id_col,
+                sa.func.count(sa.distinct(record_id_col)).label("Records"),
+                latency_expr.label("Average Latency (s)"),
+                sa.func.sum(sa.cast(cost_col, sa.Float)).label("total_cost"),
+                sa.func.coalesce(
+                    sa.func.max(currency_col), sa.literal("USD")
+                ).label("cost_currency"),
+                sa.func.sum(
+                    sa.cast(
+                        sa.func.coalesce(tokens_col, sa.literal("0")),
+                        sa.Float,
+                    )
+                ).label("Total Tokens"),
+            )
+            .where(sa.and_(*record_root_conditions))
+            .group_by(
+                sa.text("app_name"),
+                sa.text("app_version"),
+                sa.text("app_id"),
+            )
+        )
+
+        metric_name_col = self._json_extract_otel(
+            "record_attributes", SpanAttributes.EVAL_ROOT.METRIC_NAME
+        ).label("metric_name")
+        score_col = self._json_extract_otel(
+            "record_attributes", SpanAttributes.EVAL_ROOT.SCORE
+        )
+
+        eval_conditions = self._build_otel_conditions(
+            SpanAttributes.SpanType.EVAL_ROOT.value,
+            app_name=app_name,
+            app_versions=app_versions,
+        )
+        eval_stmt = (
+            sa.select(
+                self._json_extract_otel(
+                    "resource_attributes", ResourceAttributes.APP_NAME
+                ).label("app_name"),
+                self._json_extract_otel(
+                    "resource_attributes", ResourceAttributes.APP_VERSION
+                ).label("app_version"),
+                self._json_extract_otel(
+                    "resource_attributes", ResourceAttributes.APP_ID
+                ).label("app_id"),
+                metric_name_col,
+                sa.func.avg(sa.cast(score_col, sa.Float)).label("avg_score"),
+            )
+            .where(sa.and_(*eval_conditions))
+            .group_by(
+                sa.text("app_name"),
+                sa.text("app_version"),
+                sa.text("app_id"),
+                sa.text("metric_name"),
+            )
+        )
+
+        with self.session.begin() as session:
+            base_rows = session.execute(base_stmt).all()
+            eval_rows = session.execute(eval_stmt).all()
+
+        base_df = pd.DataFrame(
+            base_rows,
+            columns=[
+                "app_name",
+                "app_version",
+                "app_id",
+                "Records",
+                "Average Latency (s)",
+                "total_cost",
+                "cost_currency",
+                "Total Tokens",
+            ],
+        )
+
+        if base_df.empty:
+            return base_df, []
+
+        base_df["Total Cost (USD)"] = base_df.apply(
+            lambda r: float(r["total_cost"] or 0)
+            if r["cost_currency"] == "USD"
+            else 0.0,
+            axis=1,
+        )
+        base_df["Total Cost (Snowflake Credits)"] = base_df.apply(
+            lambda r: float(r["total_cost"] or 0)
+            if r["cost_currency"] == "Snowflake credits"
+            else 0.0,
+            axis=1,
+        )
+        base_df.drop(columns=["total_cost", "cost_currency"], inplace=True)
+
+        feedback_col_names = []
+        if eval_rows:
+            eval_df = pd.DataFrame(
+                eval_rows,
+                columns=[
+                    "app_name",
+                    "app_version",
+                    "app_id",
+                    "metric_name",
+                    "avg_score",
+                ],
+            )
+            pivot = eval_df.pivot_table(
+                index=["app_name", "app_version", "app_id"],
+                columns="metric_name",
+                values="avg_score",
+                aggfunc="mean",
+            ).reset_index()
+            feedback_col_names = [
+                c
+                for c in pivot.columns
+                if c not in ("app_name", "app_version", "app_id")
+            ]
+            base_df = base_df.merge(
+                pivot,
+                on=["app_name", "app_version", "app_id"],
+                how="left",
+            )
+
+        base_df = base_df.round(3)
+        base_df["tags"] = ""
+        return base_df, feedback_col_names
+
+    def _get_leaderboard_aggregates_pre_otel(
+        self,
+        app_name: Optional[types_schema.AppName] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
+    ) -> Tuple[pd.DataFrame, List[str]]:
+        with self.session.begin() as session:
+            record_stmt = sa.select(
+                self.orm.AppDefinition.app_name.label("app_name"),
+                self.orm.AppDefinition.app_version.label("app_version"),
+                self.orm.AppDefinition.app_id.label("app_id"),
+                sa.func.count(sa.distinct(self.orm.Record.record_id)).label(
+                    "Records"
+                ),
+                sa.func.avg(
+                    self.orm.Record.cost_json["n_tokens"].as_float()
+                ).label("Total Tokens"),
+                sa.func.avg(self.orm.Record.latency).label(
+                    "Average Latency (s)"
+                ),
+                sa.func.sum(self.orm.Record.cost_json["cost"].as_float()).label(
+                    "Total Cost (USD)"
+                ),
+            ).join(self.orm.Record.app)
+            if app_name:
+                record_stmt = record_stmt.where(
+                    self.orm.AppDefinition.app_name == app_name
+                )
+            if app_versions:
+                record_stmt = record_stmt.where(
+                    self.orm.AppDefinition.app_version.in_(app_versions)
+                )
+            record_stmt = record_stmt.group_by(
+                self.orm.AppDefinition.app_name,
+                self.orm.AppDefinition.app_version,
+                self.orm.AppDefinition.app_id,
+            )
+            base_rows = session.execute(record_stmt).all()
+
+            fb_stmt = (
+                sa.select(
+                    self.orm.AppDefinition.app_name.label("app_name"),
+                    self.orm.AppDefinition.app_version.label("app_version"),
+                    self.orm.AppDefinition.app_id.label("app_id"),
+                    self.orm.FeedbackResult.name.label("metric_name"),
+                    sa.func.avg(self.orm.FeedbackResult.result).label(
+                        "avg_score"
+                    ),
+                )
+                .join(
+                    self.orm.Record,
+                    self.orm.FeedbackResult.record_id
+                    == self.orm.Record.record_id,
+                )
+                .join(self.orm.Record.app)
+            )
+            if app_name:
+                fb_stmt = fb_stmt.where(
+                    self.orm.AppDefinition.app_name == app_name
+                )
+            if app_versions:
+                fb_stmt = fb_stmt.where(
+                    self.orm.AppDefinition.app_version.in_(app_versions)
+                )
+            fb_stmt = fb_stmt.group_by(
+                self.orm.AppDefinition.app_name,
+                self.orm.AppDefinition.app_version,
+                self.orm.AppDefinition.app_id,
+                self.orm.FeedbackResult.name,
+            )
+            fb_rows = session.execute(fb_stmt).all()
+
+        base_df = pd.DataFrame(
+            base_rows,
+            columns=[
+                "app_name",
+                "app_version",
+                "app_id",
+                "Records",
+                "Total Tokens",
+                "Average Latency (s)",
+                "Total Cost (USD)",
+            ],
+        )
+        if base_df.empty:
+            return base_df, []
+
+        base_df["Total Cost (Snowflake Credits)"] = 0.0
+        base_df["tags"] = ""
+
+        feedback_col_names = []
+        if fb_rows:
+            fb_df = pd.DataFrame(
+                fb_rows,
+                columns=[
+                    "app_name",
+                    "app_version",
+                    "app_id",
+                    "metric_name",
+                    "avg_score",
+                ],
+            )
+            pivot = fb_df.pivot_table(
+                index=["app_name", "app_version", "app_id"],
+                columns="metric_name",
+                values="avg_score",
+                aggfunc="mean",
+            ).reset_index()
+            feedback_col_names = [
+                c
+                for c in pivot.columns
+                if c not in ("app_name", "app_version", "app_id")
+            ]
+            base_df = base_df.merge(
+                pivot,
+                on=["app_name", "app_version", "app_id"],
+                how="left",
+            )
+
+        base_df = base_df.round(3)
+        return base_df, feedback_col_names
+
+    def get_leaderboard_aggregates(
+        self,
+        app_name: Optional[types_schema.AppName] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
+    ) -> Tuple[pd.DataFrame, List[str]]:
+        """See [DB.get_leaderboard_aggregates][trulens.core.database.base.DB.get_leaderboard_aggregates]."""
+        if is_otel_tracing_enabled():
+            return self._get_leaderboard_aggregates_otel(
+                app_name=app_name,
+                app_versions=app_versions,
+            )
+        return self._get_leaderboard_aggregates_pre_otel(
+            app_name=app_name,
+            app_versions=app_versions,
+        )
 
     def get_records_and_feedback(
         self,
