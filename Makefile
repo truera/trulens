@@ -70,7 +70,7 @@ env-tests-optional: env env-tests
 	# nemoguardrails requires langchain<0.4.0, but langgraph requires langchain>=1.0.0
 	# Install nemo separately with: poetry install --with nemo (requires langchain<1.0)
 	poetry install --with apps,providers --without nemo
-	poetry run pip install --no-cache-dir \
+	poetry run pip install \
 		chromadb \
 	 	faiss-cpu \
 		"langchain-openai>=0.2.0" \
@@ -81,16 +81,16 @@ env-tests-optional: env env-tests
 
 env-tests-snowflake: env-tests-optional
 	poetry install --with snowflake
-	poetry run pip install --no-cache-dir certifi==2025.1.31
+	poetry run pip install certifi==2025.1.31
 
 env-tests-db: env-tests
-	poetry run pip install --no-cache-dir \
+	poetry run pip install \
 		cryptography \
 		psycopg2-binary \
 		pymysql
 
 env-tests-notebook: env-tests env-tests-optional
-	poetry run pip install --no-cache-dir \
+	poetry run pip install \
 		faiss-cpu \
 		ipytree \
 		llama-index-readers-web \
