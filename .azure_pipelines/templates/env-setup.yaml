@@ -10,25 +10,27 @@ steps:
       echo "=== Disk space before cleanup ==="
       df -h
       echo ""
-      echo "=== Clearing package caches ==="
-      pip cache purge || true
-      rm -rf ~/.cache/pip || true
-      rm -rf ~/.cache/pypoetry || true
-      rm -rf ~/.local/share/pypoetry || true
-      echo ""
-      echo "=== Clearing apt cache ==="
-      sudo apt-get clean || true
-      sudo rm -rf /var/lib/apt/lists/* || true
-      echo ""
       echo "=== Removing large pre-installed packages ==="
       sudo rm -rf /usr/share/dotnet || true
       sudo rm -rf /usr/local/lib/android || true
       sudo rm -rf /opt/ghc || true
       sudo rm -rf /opt/hostedtoolcache/CodeQL || true
       echo ""
+      echo "=== Clearing apt cache ==="
+      sudo apt-get clean || true
+      sudo rm -rf /var/lib/apt/lists/* || true
+      echo ""
       echo "=== Disk space after cleanup ==="
       df -h
     displayName: Free disk space
+
+  - task: Cache@2
+    inputs:
+      key: 'pip | "$(python-version)" | poetry.lock'
+      restoreKeys: |
+        pip | "$(python-version)"
+      path: $(Pipeline.Workspace)/.pip
+    displayName: Cache pip packages
 
   - bash: |
       # Install poetry
@@ -40,7 +42,7 @@ steps:
 
       # NOTE: workaround for langchain typecheck error
       # https://github.com/truera/trulens/issues/1308
-      poetry run pip install pip==24.1.2
+      PIP_CACHE_DIR=$(Pipeline.Workspace)/.pip poetry run pip install pip==24.1.2
 
       poetry run python --version
       poetry run pip --version

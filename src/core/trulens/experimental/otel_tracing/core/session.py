@@ -24,6 +24,8 @@ TRULENS_SERVICE_NAME = "trulens"
 
 logger = logging.getLogger(__name__)
 
+_costs_thread: Optional[threading.Thread] = None
+
 
 def _set_up_tracer_provider() -> TracerProvider:
     resource = Resource.create({"service.name": TRULENS_SERVICE_NAME})
@@ -152,21 +154,19 @@ class _TruSession(core_session.TruSession):
                     attributes=cost_attributes,
                 )
 
-    _costs_thread: Optional[threading.Thread] = None
-
     @classmethod
     def _start_track_costs_background(cls):
-        if cls._costs_thread is not None:
+        global _costs_thread
+        if _costs_thread is not None:
             return
-        cls._costs_thread = threading.Thread(
-            target=cls._track_costs, daemon=True
-        )
-        cls._costs_thread.start()
+        _costs_thread = threading.Thread(target=cls._track_costs, daemon=True)
+        _costs_thread.start()
 
     @classmethod
     def _ensure_costs_tracked(cls):
-        if cls._costs_thread is not None:
-            cls._costs_thread.join()
+        global _costs_thread
+        if _costs_thread is not None:
+            _costs_thread.join()
 
     @staticmethod
     def _track_costs():
