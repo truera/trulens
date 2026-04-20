@@ -50,7 +50,7 @@
     "prettier": "^3.0.0",
     "storybook": "^8.6.17",
     "typescript": "^5.8.2",
-    "vite": "^6.4.1",
+    "vite": "^6.4.2",
     "vitest": "^4.0.18",
     "wait-on": "^7.0.1"
   },
