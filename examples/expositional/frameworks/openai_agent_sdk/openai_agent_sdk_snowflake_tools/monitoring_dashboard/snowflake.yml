@@ -1,0 +1,17 @@
+definition_version: 2
+entities:
+  ai_observability_dashboard:
+    type: streamlit
+    identifier:
+      name: AI_OBSERVABILITY_DASHBOARD
+      database: SUPPORT_INTELLIGENCE
+      schema: DATA
+    query_warehouse: SUPPORT_INTELLIGENCE_WH
+    runtime_name: SYSTEM$ST_CONTAINER_RUNTIME_PY3_11
+    compute_pool: SYSTEM_COMPUTE_POOL_CPU
+    external_access_integrations:
+      - PYPI_ACCESS_INTEGRATION
+    main_file: streamlit_app.py
+    artifacts:
+      - streamlit_app.py
+      - pyproject.toml
