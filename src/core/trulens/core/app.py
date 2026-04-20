@@ -41,6 +41,7 @@ from trulens.core import instruments as core_instruments
 from trulens.core import session as core_session
 from trulens.core._utils import optional as optional_utils
 from trulens.core._utils.pycompat import Future  # import standard exception
+from trulens.core.dao.run import RunDaoBase
 from trulens.core.database import base as core_db
 from trulens.core.database import connector as core_connector
 from trulens.core.feedback import endpoint as core_endpoint
@@ -493,6 +494,12 @@ class App(
 
     snowflake_app_dao: Optional[Any] = pydantic.Field(None, exclude=True)
 
+    run_dao: Optional[RunDaoBase] = pydantic.Field(None, exclude=True)
+
+    _object_name: Optional[str] = pydantic.PrivateAttr(default=None)
+    _object_type: Optional[str] = pydantic.PrivateAttr(default=None)
+    _object_version: Optional[str] = pydantic.PrivateAttr(default=None)
+
     def __init__(
         self,
         connector: Optional[core_connector.DBConnector] = None,
@@ -594,6 +601,27 @@ class App(
                     app_name=kwargs["app_name"],
                     app_version=kwargs["app_version"],
                 )
+
+                self.run_dao = self.snowflake_run_dao
+                self._object_name = self.snowflake_object_name
+                self._object_type = self.snowflake_object_type
+                self._object_version = self.snowflake_object_version
+
+        if self.run_dao is None and connector is not None:
+            from trulens.core.dao.default_run import DefaultRunDao
+
+            if hasattr(connector, "db"):
+                try:
+                    db = connector.db
+                    if hasattr(db, "orm") and hasattr(db.orm, "Run"):
+                        self.run_dao = DefaultRunDao(db=db)
+                        self._object_name = kwargs.get(
+                            "app_name", "default_app"
+                        )
+                        self._object_type = "APP"
+                        self._object_version = kwargs.get("app_version", "base")
+                except Exception:
+                    pass
 
         self.app = app
 
@@ -1830,24 +1858,32 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             logger.error(msg)
             raise ValueError(msg)
 
+    def _check_run_dao(self):
+        if self.run_dao is None:
+            msg = (
+                "Run DAO not initialized. Ensure a valid connector is provided "
+                "when initializing the App."
+            )
+            logger.error(msg)
+            raise ValueError(msg)
+
     def add_run(self, run_config: RunConfig) -> Union[Run, None]:
-        """add a new run to the snowflake App (if not already exists)
+        """Add a new run (if not already exists).
 
         Args:
             run_config (RunConfig):  Run config
-            input_df (Optional[pd.DataFrame]): optional input dataset
 
         Returns:
             Run: Run instance
         """
 
-        self._check_snowflake_dao()
+        self._check_run_dao()
 
         try:
-            run_metadata_df = self.snowflake_run_dao.create_new_run(
-                object_name=self.snowflake_object_name,
-                object_type=self.snowflake_object_type,
-                object_version=self.snowflake_object_version,
+            run_metadata_df = self.run_dao.create_new_run(
+                object_name=self._object_name,
+                object_type=self._object_type,
+                object_version=self._object_version,
                 run_name=run_config.run_name,
                 dataset_name=run_config.dataset_name,
                 source_type=run_config.source_type,
@@ -1863,8 +1899,10 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 {
                     "app": self,
                     "main_method_name": self.main_method_name,
-                    "run_dao": self.snowflake_run_dao,
+                    "run_dao": self.run_dao,
                     "tru_session": self.session,
+                    "invocation_max_workers": run_config.invocation_max_workers,
+                    "metric_max_workers": run_config.metric_max_workers,
                 },
             )
 
@@ -1885,12 +1923,12 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         Returns:
             Run: Run instance
         """
-        self._check_snowflake_dao()
-        run_metadata_df = self.snowflake_run_dao.get_run(
+        self._check_run_dao()
+        run_metadata_df = self.run_dao.get_run(
             run_name=run_name,
-            object_name=self.snowflake_object_name,
-            object_type=self.snowflake_object_type,
-            object_version=self.snowflake_object_version,
+            object_name=self._object_name,
+            object_type=self._object_type,
+            object_version=self._object_version,
         )
         if run_metadata_df.empty:
             raise ValueError(f"Run {run_name} not found.")
@@ -1900,21 +1938,21 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             {
                 "app": self,
                 "main_method_name": self.main_method_name,
-                "run_dao": self.snowflake_run_dao,
+                "run_dao": self.run_dao,
                 "tru_session": self.session,
             },
         )
 
     def list_runs(self) -> List[Run]:
-        """Retrieve all runs belong to the snowflake App.
+        """Retrieve all runs belonging to the App.
 
         Returns:
             List[Run]: List of Run instances
         """
-        self._check_snowflake_dao()
-        run_metadata_df = self.snowflake_run_dao.list_all_runs(
-            object_name=self.snowflake_object_name,
-            object_type=self.snowflake_object_type,
+        self._check_run_dao()
+        run_metadata_df = self.run_dao.list_all_runs(
+            object_name=self._object_name,
+            object_type=self._object_type,
         )
         runs = []
 
@@ -1923,7 +1961,6 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
         all_runs_lst = json.loads(run_metadata_df.iloc[0].iloc[-1])
 
-        # return all_runs_lst
         for run_dict in all_runs_lst:
             runs.append(
                 Run.from_metadata_df(
@@ -1931,10 +1968,10 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                     {
                         "app": self.app,
                         "main_method_name": self.main_method_name,
-                        "run_dao": self.snowflake_run_dao,
+                        "run_dao": self.run_dao,
                         "tru_session": self.session,
-                        "object_name": self.snowflake_object_name,
-                        "object_type": self.snowflake_object_type,
+                        "object_name": self._object_name,
+                        "object_type": self._object_type,
                     },
                 )
             )
@@ -2069,7 +2106,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 )
             except Exception as e:
                 logger.exception(
-                    f"Failed to flush remaining OTEL spans and/or start Snowflake query to wait for ingested batches: {e}"
+                    f"Failed to flush remaining OTEL spans and/or complete run ingestion: {e}"
                 )
 
     def instrumented_invoke_main_method(
