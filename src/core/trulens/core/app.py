@@ -374,7 +374,7 @@ class App(
         apps.
     - [TruVirtual][trulens.apps.virtual.TruVirtual] for recording
         information about invocations of apps without access to those apps.
-    - [TruCustomApp][trulens.apps.custom.TruCustomApp] (To be deprecated in favor of TruApp) for custom
+    - `TruCustomApp` (To be deprecated in favor of TruApp) for custom
         apps. These need to be decorated to have appropriate data recorded.
     - [TruApp][trulens.apps.app.TruApp] for custom
         apps allowing maximized flexibility. These need to be decorated to have appropriate data recorded.
@@ -1834,11 +1834,10 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         """add a new run to the snowflake App (if not already exists)
 
         Args:
-            run_config (RunConfig):  Run config
-            input_df (Optional[pd.DataFrame]): optional input dataset
+            run_config (RunConfig): Run config.
 
         Returns:
-            Run: Run instance
+            Run: Run instance.
         """
 
         self._check_snowflake_dao()

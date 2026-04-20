@@ -1326,7 +1326,7 @@ class SQLAlchemyDB(core_db.DB):
         return self.insert_events([event])[0]
 
     def insert_events(self, events: List[Event]) -> List[types_schema.EventID]:
-        """See [DB.insert_events][trulens.core.database.base.DB.insert_events]."""
+        """Insert a batch of events into the database."""
         with self.session.begin() as session:
             events_to_insert = [
                 self.orm.Event.parse(event, redact_keys=self.redact_keys)

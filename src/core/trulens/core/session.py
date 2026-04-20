@@ -229,7 +229,7 @@ class TruSession(
             ]
         ] = None,
         _experimental_otel_exporter: Optional[SpanExporter] = None,
-        **kwargs,
+        **kwargs: Any,
     ):
         if python_utils.safe_hasattr(self, "connector"):
             # Already initialized by SingletonByName mechanism. Give warning if
@@ -569,7 +569,7 @@ class TruSession(
                 given record or a new record if no `record` provided.
 
         Returns:
-            Unique record identifier [str][] .
+            Unique record identifier `str`.
 
         """
         if is_otel_tracing_enabled():
@@ -613,7 +613,7 @@ class TruSession(
         Yields:
             One result for each element of `feedback_functions` of
                 [FeedbackResult][trulens.core.schema.feedback.FeedbackResult] if `wait`
-                is enabled (default) or [Future][concurrent.futures.Future] of
+                is enabled (default) or `concurrent.futures.Future` of
                 [FeedbackResult][trulens.core.schema.feedback.FeedbackResult] if `wait`
                 is disabled.
         """
@@ -683,7 +683,7 @@ class TruSession(
             app: The app to add to the database.
 
         Returns:
-            A unique app identifier [str][].
+            A unique app identifier `str`.
 
         """
         return self.connector.add_app(app=app)
@@ -710,7 +710,7 @@ class TruSession(
         """Add a single feedback result or future to the database and return its unique id.
 
         Args:
-            feedback_result_or_future: If a [Future][concurrent.futures.Future]
+            feedback_result_or_future: If a `concurrent.futures.Future`
                 is given, call will wait for the result before adding it to the
                 database. If `kwargs` are given and a
                 [FeedbackResult][trulens.core.schema.feedback.FeedbackResult] is also
@@ -723,7 +723,7 @@ class TruSession(
                 new [FeedbackResult][trulens.core.schema.feedback.FeedbackResult] with.
 
         Returns:
-            A unique result identifier [str][].
+            A unique result identifier `str`.
 
         """
         if is_otel_tracing_enabled():
@@ -745,10 +745,10 @@ class TruSession(
 
         Args:
             feedback_results: An iterable with each iteration being a [FeedbackResult][trulens.core.schema.feedback.FeedbackResult] or
-                [Future][concurrent.futures.Future] of the same. Each given future will be waited.
+                `concurrent.futures.Future` of the same. Each given future will be waited.
 
         Returns:
-            List of unique result identifiers [str][] in the same order as input
+            List of unique result identifiers `str` in the same order as input
                 `feedback_results`.
         """
         if is_otel_tracing_enabled():
@@ -760,7 +760,7 @@ class TruSession(
     ) -> Optional[serial_utils.JSONized[app_schema.AppDefinition]]:
         """Look up an app from the database.
 
-        This method produces the JSON-ized version of the app. It can be deserialized back into an [AppDefinition][trulens.core.schema.app.AppDefinition] with [model_validate][pydantic.BaseModel.model_validate]:
+        This method produces the JSON-ized version of the app. It can be deserialized back into an [AppDefinition][trulens.core.schema.app.AppDefinition] with `model_validate`:
 
         Example:
             ```python
@@ -774,7 +774,7 @@ class TruSession(
             its implementations feature attributes not meant to be deserialized.
 
         Args:
-            app_id: The unique identifier [str][] of the app to look up.
+            app_id: The unique identifier `str` of the app to look up.
 
         Returns:
             JSON-ized version of the app.

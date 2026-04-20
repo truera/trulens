@@ -80,6 +80,6 @@ aggregated. This only applies to cases where the selector names
 more than one value for an input (e.g., when `collect_list=False` returns
 multiple context chunks). The function is called on the `float` results of
 metric evaluations to produce a single float. The default is
-[numpy.mean][numpy.mean].
+`numpy.mean`.
 
 Read more about [aggregation](feedback_aggregation.md).

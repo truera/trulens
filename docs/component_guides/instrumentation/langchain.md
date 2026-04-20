@@ -96,7 +96,7 @@ internal step of our application, such as the retrieved context.
     )
     ```
 
-You can find the full quickstart available here: [LangChain Quickstart](../../getting_started/quickstarts/langchain_quickstart.ipynb)
+You can find the full quickstart available here: [LangChain Quickstart](../../cookbook/frameworks/langchain/langchain_quickstart.ipynb)
 
 
 ## Async Support

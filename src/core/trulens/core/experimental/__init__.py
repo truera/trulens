@@ -440,8 +440,7 @@ class _WithExperimentalSettings(
         If `freeze` is set, the flags will be frozen to the values given.
 
         Raises:
-            ValueError: If any flag is already frozen to a different value than
-            provided.
+            ValueError: If any flag is already frozen to a different value than provided.
         """
         if is_otel_tracing_enabled():
             self._experimental_feature(
