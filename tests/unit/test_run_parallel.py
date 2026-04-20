@@ -67,38 +67,41 @@ class TestRunWorkerKnobs(unittest.TestCase):
 
 
 class TestSnowflakeWarning(unittest.TestCase):
-    def test_warning_emitted_for_snowflake_connector(self):
+    @patch("trulens.core.run.logger")
+    def test_warning_emitted_for_snowflake_connector(self, mock_logger):
         mock_session = MagicMock()
         mock_connector = MagicMock()
         type(mock_connector).__name__ = "SnowflakeConnector"
         mock_session.connector = mock_connector
 
         run = _make_run(tru_session=mock_session, metric_max_workers=3)
-        with self.assertLogs("trulens.core.run", level="WARNING") as cm:
-            run._warn_if_snowflake_parallel(3)
-        self.assertTrue(any("metric_max_workers=3" in m for m in cm.output))
+        run._warn_if_snowflake_parallel(3)
+        mock_logger.warning.assert_called_once()
+        self.assertIn(
+            "metric_max_workers=3", mock_logger.warning.call_args[0][0]
+        )
 
-    def test_no_warning_for_non_snowflake(self):
+    @patch("trulens.core.run.logger")
+    def test_no_warning_for_non_snowflake(self, mock_logger):
         mock_session = MagicMock()
         mock_connector = MagicMock()
         type(mock_connector).__name__ = "DefaultConnector"
         mock_session.connector = mock_connector
 
         run = _make_run(tru_session=mock_session, metric_max_workers=3)
-        with self.assertRaises(AssertionError):
-            with self.assertLogs("trulens.core.run", level="WARNING"):
-                run._warn_if_snowflake_parallel(3)
+        run._warn_if_snowflake_parallel(3)
+        mock_logger.warning.assert_not_called()
 
-    def test_no_warning_when_single_worker(self):
+    @patch("trulens.core.run.logger")
+    def test_no_warning_when_single_worker(self, mock_logger):
         mock_session = MagicMock()
         mock_connector = MagicMock()
         type(mock_connector).__name__ = "SnowflakeConnector"
         mock_session.connector = mock_connector
 
         run = _make_run(tru_session=mock_session, metric_max_workers=1)
-        with self.assertRaises(AssertionError):
-            with self.assertLogs("trulens.core.run", level="WARNING"):
-                run._warn_if_snowflake_parallel(1)
+        run._warn_if_snowflake_parallel(1)
+        mock_logger.warning.assert_not_called()
 
 
 class TestInvokeSingleRow(unittest.TestCase):
@@ -127,11 +130,12 @@ class TestInvokeSingleRow(unittest.TestCase):
 
 
 class TestStartParallelism(unittest.TestCase):
+    @patch("trulens.core.run.as_completed", side_effect=lambda fs: iter(fs))
     @patch("trulens.core.run.ThreadPoolExecutor")
     @patch.object(Run, "_can_start_new_invocation", return_value=True)
     @patch.object(Run, "get_status", return_value="CREATED")
     def test_start_uses_invocation_max_workers(
-        self, mock_status, mock_can_start, mock_pool_cls
+        self, mock_status, mock_can_start, mock_pool_cls, mock_as_completed
     ):
         run = _make_run(invocation_max_workers=2)
 
@@ -149,11 +153,12 @@ class TestStartParallelism(unittest.TestCase):
 
         mock_pool_cls.assert_called_once_with(max_workers=2)
 
+    @patch("trulens.core.run.as_completed", side_effect=lambda fs: iter(fs))
     @patch("trulens.core.run.ThreadPoolExecutor")
     @patch.object(Run, "_can_start_new_invocation", return_value=True)
     @patch.object(Run, "get_status", return_value="CREATED")
     def test_start_default_workers_capped_at_4(
-        self, mock_status, mock_can_start, mock_pool_cls
+        self, mock_status, mock_can_start, mock_pool_cls, mock_as_completed
     ):
         run = _make_run()
 

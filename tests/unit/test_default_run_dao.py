@@ -1,7 +1,6 @@
 import json
 import unittest
 
-import pandas as pd
 from trulens.core.dao.default_run import DefaultRunDao
 from trulens.core.dao.run import RunDaoBase
 from trulens.core.database.orm import make_orm_for_prefix
@@ -12,13 +11,17 @@ from trulens.core.run import Run
 class FakeDB:
     """Minimal DB stand-in that provides an ORM and sessionmaker for testing."""
 
+    _counter = 0
+
     def __init__(self):
         import sqlalchemy as sa
         from sqlalchemy.orm import sessionmaker
 
+        FakeDB._counter += 1
         self.engine = sa.create_engine("sqlite:///:memory:")
-        prefix = "trulens_"
-        self.orm = make_orm_for_prefix(prefix)
+        self.orm = make_orm_for_prefix(
+            table_prefix=f"test_dao_{FakeDB._counter}_"
+        )
         self.orm.metadata.create_all(self.engine)
         self.session = sessionmaker(self.engine)
 
@@ -224,9 +227,9 @@ class TestDefaultRunDao(unittest.TestCase):
             dataset_spec={},
         )
 
-        import logging
+        from unittest.mock import patch
 
-        with self.assertLogs("trulens.core.dao.default_run", level="WARNING"):
+        with patch("trulens.core.dao.default_run.logger") as mock_logger:
             self.dao.call_compute_metrics_query(
                 metrics=["accuracy"],
                 object_name=self.object_name,
@@ -234,6 +237,7 @@ class TestDefaultRunDao(unittest.TestCase):
                 object_type=self.object_type,
                 run_name="metrics_run",
             )
+            mock_logger.warning.assert_called_once()
 
     def test_from_metadata_df_round_trip(self):
         df = self.dao.create_new_run(
