@@ -151,6 +151,7 @@ class OpenAI(llm_provider.LLMProvider):
         kwargs: Dict[str, Any],
     ) -> Optional[Union[str, pydantic.BaseModel]]:
         capabilities = self._get_capabilities()
+        responses_api = capabilities.get("responses_api")
 
         # 0) Grammar-constrained generation (CFG) via Responses.create if provided
         grammar_syntax: Optional[str] = kwargs.pop("grammar_syntax", None)
@@ -167,9 +168,9 @@ class OpenAI(llm_provider.LLMProvider):
             grammar_syntax
             and grammar_definition
             and (cfg_capability is None or cfg_capability is True)
+            and responses_api is not False
         ):
             try:
-                # Filter params not supported by responses.create (e.g., reasoning_effort)
                 _responses_kwargs = {
                     k: v
                     for k, v in kwargs.items()
@@ -195,7 +196,6 @@ class OpenAI(llm_provider.LLMProvider):
                     **_responses_kwargs,
                 )
 
-                # Mark CFG as supported for this model
                 self._set_capabilities({"cfg": True})
 
                 if hasattr(response, "output"):
@@ -220,21 +220,34 @@ class OpenAI(llm_provider.LLMProvider):
                 except Exception:
                     return str(response)
             except Exception as exc:
-                # Mark CFG as unsupported to avoid re-trying on subsequent calls
-                self._set_capabilities({"cfg": False})
-                logger.debug(
-                    f"[TruLens] CFG grammar invocation failed for model '{self.model_engine}': {exc}. Falling back."
-                )
+                if self._is_responses_api_unavailable(exc):
+                    self._set_capabilities({
+                        "responses_api": False,
+                        "cfg": False,
+                    })
+                    logger.debug(
+                        "[TruLens] Responses API not available for "
+                        f"model '{self.model_engine}': {exc}. "
+                        "Falling back to Chat Completions API."
+                    )
+                else:
+                    self._set_capabilities({"cfg": False})
+                    logger.debug(
+                        f"[TruLens] CFG grammar invocation failed for model '{self.model_engine}': {exc}. Falling back."
+                    )
 
         # 1) Try structured outputs via Responses API if requested/unknown
         wants_structured_outputs = response_format is not None
+        responses_api = capabilities.get("responses_api")
         structured_outputs = (
             capabilities.get("structured_outputs")
             if "structured_outputs" in capabilities
             else None
         )
-        if wants_structured_outputs and (
-            structured_outputs is None or structured_outputs is True
+        if (
+            wants_structured_outputs
+            and (structured_outputs is None or structured_outputs is True)
+            and responses_api is not False
         ):
             try:
                 response = self.endpoint.client.responses.parse(
@@ -243,36 +256,74 @@ class OpenAI(llm_provider.LLMProvider):
                 self._set_capabilities({"structured_outputs": True})
                 return response.output_parsed
             except Exception as exc:
-                # Targeted retry: remove only offending params and retry once
-                offending_params = []
-                for p in ("seed", "temperature", "reasoning_effort"):
-                    try:
-                        if (
-                            self._is_unsupported_parameter_error(exc, p)
-                            and p in kwargs
-                        ):
-                            offending_params.append(p)
-                    except Exception:
-                        pass
+                if self._is_responses_api_unavailable(exc):
+                    self._set_capabilities({
+                        "responses_api": False,
+                        "structured_outputs": False,
+                    })
+                    logger.debug(
+                        "[TruLens] Responses API not available for "
+                        f"model '{self.model_engine}': {exc}. "
+                        "Falling back to Chat Completions API."
+                    )
+                else:
+                    offending_params = []
+                    for p in ("seed", "temperature", "reasoning_effort"):
+                        try:
+                            if (
+                                self._is_unsupported_parameter_error(exc, p)
+                                and p in kwargs
+                            ):
+                                offending_params.append(p)
+                        except Exception:
+                            pass
 
-                if offending_params:
-                    for p in offending_params:
-                        kwargs.pop(p, None)
-                    try:
-                        response = self.endpoint.client.responses.parse(
-                            input=input_messages,
-                            text_format=response_format,
-                            **kwargs,
-                        )
-                        self._set_capabilities({"structured_outputs": True})
-                        return response.output_parsed
-                    except Exception as exc2:
+                    if offending_params:
+                        for p in offending_params:
+                            kwargs.pop(p, None)
+                        try:
+                            response = self.endpoint.client.responses.parse(
+                                input=input_messages,
+                                text_format=response_format,
+                                **kwargs,
+                            )
+                            self._set_capabilities({"structured_outputs": True})
+                            return response.output_parsed
+                        except Exception as exc2:
+                            if self._is_responses_api_unavailable(exc2):
+                                self._set_capabilities({
+                                    "responses_api": False,
+                                    "structured_outputs": False,
+                                })
+                                logger.debug(
+                                    "[TruLens] Responses API not "
+                                    "available for model "
+                                    f"'{self.model_engine}': "
+                                    f"{exc2}. Falling back to "
+                                    "Chat Completions API."
+                                )
+                            elif (
+                                self._is_unsupported_parameter_error(
+                                    exc2, "response_format"
+                                )
+                                or "structured" in str(exc2).lower()
+                                or "responses.parse" in str(exc2).lower()
+                            ):
+                                self._set_capabilities({
+                                    "structured_outputs": False
+                                })
+                                logger.debug(
+                                    f"[TruLens] Structured outputs unsupported for model '{self.model_engine}'. Falling back to text outputs."
+                                )
+                            else:
+                                raise
+                    else:
                         if (
                             self._is_unsupported_parameter_error(
-                                exc2, "response_format"
+                                exc, "response_format"
                             )
-                            or "structured" in str(exc2).lower()
-                            or "responses.parse" in str(exc2).lower()
+                            or "structured" in str(exc).lower()
+                            or "responses.parse" in str(exc).lower()
                         ):
                             self._set_capabilities({
                                 "structured_outputs": False
@@ -282,20 +333,6 @@ class OpenAI(llm_provider.LLMProvider):
                             )
                         else:
                             raise
-                else:
-                    if (
-                        self._is_unsupported_parameter_error(
-                            exc, "response_format"
-                        )
-                        or "structured" in str(exc).lower()
-                        or "responses.parse" in str(exc).lower()
-                    ):
-                        self._set_capabilities({"structured_outputs": False})
-                        logger.debug(
-                            f"[TruLens] Structured outputs unsupported for model '{self.model_engine}'. Falling back to text outputs."
-                        )
-                    else:
-                        raise
 
         # 2) Fall back to Chat Completions with parameter probes
         # Probe temperature support

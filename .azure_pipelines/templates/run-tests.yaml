@@ -16,14 +16,8 @@ steps:
   - bash: |
       set -e
       echo "=== Freeing disk space before tests ==="
-      # Clear pip/poetry caches that accumulated during installs
-      pip cache purge || true
-      rm -rf ~/.cache/pip || true
-      rm -rf ~/.cache/pypoetry || true
-      # Clear pytest cache
       rm -rf .pytest_cache || true
       find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-      # Show disk space
       df -h /
     displayName: Free disk space before ${{ parameters.pytestMarker }} tests
 
@@ -37,6 +31,7 @@ steps:
       make test-${{ parameters.testSuite }}-${{ parameters.pytestMarker }}
     condition: or(ne(variables['python-version'], 3.12), ne('${{ parameters.pytestMarker }}', 'snowflake'))
     env:
+      PIP_CACHE_DIR: $(Pipeline.Workspace)/.pip
       # tests make use of various APIs:
       OPENAI_API_KEY: $(OPENAI_API_KEY)
       HUGGINGFACE_API_KEY: $(HUGGINGFACE_API_KEY)

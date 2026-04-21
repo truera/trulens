@@ -13,7 +13,7 @@ jobs:
   - job: PRBranchProtect # name seems to be important but cannot figure out why
     pool:
       vmImage: ubuntu-latest
-    timeoutInMinutes: 30
+    timeoutInMinutes: 45
 
     strategy:
       matrix:
