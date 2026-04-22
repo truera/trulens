@@ -198,19 +198,10 @@ class SQLAlchemyDB(core_db.DB):
                 database_url, **kwargs
             )
 
-        print(
+        logger.info(
             "%s Initialized with db url %s ."
             % (text_utils.UNICODE_SQUID, new_db.engine.url)
         )
-        if database_redact_keys:
-            print(
-                f"{text_utils.UNICODE_LOCK} Secret keys will not be included in the database."
-            )
-        else:
-            print(
-                f"{text_utils.UNICODE_STOP} Secret keys may be written to the database. "
-                "See the `database_redact_keys` option of `TruSession` to prevent this."
-            )
 
         return new_db
 

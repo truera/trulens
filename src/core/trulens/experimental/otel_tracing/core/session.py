@@ -1,4 +1,5 @@
 import logging
+import threading
 from typing import Any, Callable, Dict, Optional
 
 from opentelemetry import trace
@@ -22,6 +23,8 @@ from trulens.otel.semconv.trace import SpanAttributes
 TRULENS_SERVICE_NAME = "trulens"
 
 logger = logging.getLogger(__name__)
+
+_costs_thread: Optional[threading.Thread] = None
 
 
 def _set_up_tracer_provider() -> TracerProvider:
@@ -47,6 +50,7 @@ class TrulensOtelSpanProcessor(otel_export_sdk.BatchSpanProcessor):
     def on_start(
         self, span: Span, parent_context: Optional[Context] = None
     ) -> None:
+        _TruSession._ensure_costs_tracked()
         set_general_span_attributes(
             span,
             span_type=SpanAttributes.SpanType.UNKNOWN,
@@ -149,6 +153,20 @@ class _TruSession(core_session.TruSession):
                     method,
                     attributes=cost_attributes,
                 )
+
+    @classmethod
+    def _start_track_costs_background(cls):
+        global _costs_thread
+        if _costs_thread is not None:
+            return
+        _costs_thread = threading.Thread(target=cls._track_costs, daemon=True)
+        _costs_thread.start()
+
+    @classmethod
+    def _ensure_costs_tracked(cls):
+        global _costs_thread
+        if _costs_thread is not None:
+            _costs_thread.join()
 
     @staticmethod
     def _track_costs():

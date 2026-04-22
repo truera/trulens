@@ -34,7 +34,7 @@ def upgrade(config) -> None:
         orm = make_orm_for_prefix(table_prefix=prefix)
 
         apps = session.query(orm.AppDefinition).all()
-        if tqdm is not None:
+        if tqdm is not None and apps:
             apps = tqdm(apps, desc="Updating app_json in apps table")
         for app in apps:
             if app.app_json is None:
