@@ -2328,6 +2328,7 @@ trulens.feedback:
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAgreement: pydantic._internal._model_construction.ModelMetaclass
     LLMProvider: pydantic._internal._model_construction.ModelMetaclass
+    SchemaValidator: pydantic._internal._model_construction.ModelMetaclass
   lows:
     __all__: builtins.list
     __version__: builtins.str
@@ -2664,6 +2665,20 @@ trulens.feedback.prompts:
     STEREOTYPES_USER_PROMPT: builtins.str
     SYSTEM_FIND_SUPPORTING: builtins.str
     USER_FIND_SUPPORTING: builtins.str
+trulens.feedback.schema_validator:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    SchemaValidator: pydantic._internal._model_construction.ModelMetaclass
+trulens.feedback.schema_validator.SchemaValidator:
+  __bases__:
+  - trulens.core.utils.pyschema.WithClassInfo
+  - trulens.core.utils.serial.SerialModel
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    tru_class_info: trulens.core.utils.pyschema.Class
+    validate_json: builtins.function
+    validate_json_partial: builtins.function
 trulens.feedback.v2:
   __class__: builtins.module
   highs: {}
