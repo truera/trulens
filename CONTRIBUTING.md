@@ -18,6 +18,12 @@ Issues tagged [`good first issue`](https://github.com/truera/trulens/issues?q=is
 are curated for new contributors. They're well-scoped and often include guidance
 on where to start.
 
+### Help Wanted
+
+Issues tagged [`help wanted`](https://github.com/truera/trulens/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22)
+are meatier tasks where we'd love community help. These may require more context
+but have significant impact.
+
 ### Add Usage Examples
 
 Applied TruLens to an interesting use case? Share it as a cookbook example
@@ -63,7 +69,7 @@ with new evaluation methods:
 Need a model provider we don't support? Add a new `trulens-providers-*` package:
 
 - Browse existing providers in [`src/providers/`](https://github.com/truera/trulens/tree/main/src/providers/)
-- Each provider is a separate installable package (see [Package Architecture](optional.md))
+- Each provider is a separate installable package (see [Package Architecture](docs/contributing/optional.md))
 
 Or [open an issue](https://github.com/truera/trulens/issues/new) requesting a provider—we track demand.
 
@@ -109,7 +115,7 @@ TruLens uses OpenTelemetry for tracing. Work in this area includes:
 - New exporters and integrations
 - Performance and reliability enhancements
 
-See [Design Principles](design.md) for architecture context.
+See [Design Principles](docs/contributing/design.md) for architecture context.
 
 ### Experimental Features
 
@@ -126,26 +132,26 @@ Before contributing, familiarize yourself with:
 
 | Guide | Description |
 | ----- | ----------- |
-| [Development Setup](development.md) | Environment setup, running tests, local development |
-| [Standards](standards.md) | Code style, testing, and documentation conventions |
-| [Design Principles](design.md) | Architecture goals and API design rationale |
-| [Package Architecture](optional.md) | Modular package structure since TruLens 1.0 |
-| [Release Policies](policies.md) | Versioning, deprecation, and experimental features |
-| [Tech Debt](techdebt.md) | Known issues and areas needing refactoring |
-| [Database Schema](database.md) | OTEL events table, legacy schema, and migrations |
+| [Development Setup](docs/contributing/development.md) | Environment setup, running tests, local development |
+| [Standards](docs/contributing/standards.md) | Code style, testing, and documentation conventions |
+| [Design Principles](docs/contributing/design.md) | Architecture goals and API design rationale |
+| [Package Architecture](docs/contributing/optional.md) | Modular package structure since TruLens 1.0 |
+| [Release Policies](docs/contributing/policies.md) | Versioning, deprecation, and experimental features |
+| [Tech Debt](docs/contributing/techdebt.md) | Known issues and areas needing refactoring |
+| [Database Schema](docs/contributing/database.md) | OTEL events table, legacy schema, and migrations |
 
 ---
 
 ## Contributors
 
 {%
-   include-markdown "../../CONTRIBUTORS.md"
+   include-markdown "CONTRIBUTORS.md"
    heading-offset=2
 %}
 
 ## Maintainers
 
 {%
-   include-markdown "../../MAINTAINERS.md"
+   include-markdown "MAINTAINERS.md"
    heading-offset=2
 %}

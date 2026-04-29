@@ -5,6 +5,7 @@ from collections import defaultdict
 from enum import Enum
 import functools
 import importlib
+import logging
 from typing import (
     Callable,
     ClassVar,
@@ -26,6 +27,8 @@ from trulens.core.utils import python as python_utils
 from trulens.core.utils import text as text_utils
 
 T = TypeVar("T")
+
+logger = logging.getLogger(__name__)
 
 
 class Feature(str, Enum):
@@ -377,18 +380,12 @@ class _WithExperimentalSettings(
 
         if value is not None and changed:
             if val:
-                print(
-                    f"{text_utils.UNICODE_CHECK} experimental {flag} enabled."
-                )
+                logger.debug(f"{flag} enabled.")
             else:
-                print(
-                    f"{text_utils.UNICODE_STOP} experimental {flag} disabled."
-                )
+                logger.debug(f"{flag} disabled.")
 
         if val and freeze and not was_frozen:
-            print(
-                f"{text_utils.UNICODE_LOCK} experimental {flag} is enabled and cannot be changed."
-            )
+            logger.debug(f"{flag} is enabled and cannot be changed.")
 
         return val
 
