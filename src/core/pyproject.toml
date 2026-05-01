@@ -16,6 +16,9 @@ readme = "README.md"
 packages = [
   { include = "trulens" },
 ]
+include = [
+  "trulens/.agents/**/*",
+]
 homepage = "https://trulens.org/"
 documentation = "https://trulens.org/getting_started/"
 repository = "https://github.com/truera/trulens"
