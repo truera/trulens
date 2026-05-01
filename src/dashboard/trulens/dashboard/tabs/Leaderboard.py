@@ -826,44 +826,29 @@ def render_leaderboard(app_name: str):
         return
     app_versions = versions_df["app_version"].tolist()
 
-    # Get records and feedback data
-    records_limit = st.session_state.get(dashboard_utils.ST_RECORDS_LIMIT, None)
-    records_df, feedback_col_names = dashboard_utils.get_records_and_feedback(
+    agg_df, feedback_col_names = dashboard_utils.get_leaderboard_aggregates(
         app_name=app_name,
         app_versions=app_versions,
-        limit=records_limit,
     )
-    if records_df.empty:
-        # Check for cross-format records before showing generic error
+    if agg_df.empty:
         _show_no_records_error(app_name=app_name, app_versions=app_versions)
         return
-    elif records_limit is not None and len(records_df) >= records_limit:
-        cols = st_columns([0.9, 0.1], vertical_alignment="center")
-        cols[0].info(
-            f"Computed from the last {records_limit} records.",
-            icon="ℹ️",
-        )
-
-        def handle_show_all():
-            st.session_state[dashboard_utils.ST_RECORDS_LIMIT] = None
-            if dashboard_utils.ST_RECORDS_LIMIT in st.query_params:
-                del st.query_params[dashboard_utils.ST_RECORDS_LIMIT]
-
-        cols[1].button(
-            "Show all",
-            width="stretch",
-            on_click=handle_show_all,
-            help="Show all records. This may take a while.",
-        )
 
     feedback_col_names = list(feedback_col_names)
-    # Preprocess data
-    df = _preprocess_df(
-        records_df,
-        versions_df,
-        list(feedback_col_names),
-        version_metadata_col_names,
-    )
+
+    df = agg_df.join(
+        versions_df.set_index(["app_id", "app_name", "app_version"])[
+            version_metadata_col_names
+        ],
+        how="left",
+        validate="many_to_one",
+        on=["app_id", "app_name", "app_version"],
+    ).round(3)
+    if dashboard_constants.PINNED_COL_NAME in df.columns:
+        df[dashboard_constants.PINNED_COL_NAME] = (
+            df[dashboard_constants.PINNED_COL_NAME].fillna(False).astype(bool)
+        )
+
     feedback_defs, feedback_directions = dashboard_utils.get_feedback_defs()
 
     (
@@ -886,7 +871,20 @@ def render_leaderboard(app_name: str):
             version_metadata_col_names=version_metadata_col_names,
         )
     with plot_tab:
-        _render_plot_tab(records_df, feedback_col_names)
+        records_limit = st.session_state.get(
+            dashboard_utils.ST_RECORDS_LIMIT, None
+        )
+        records_df, plot_feedback_cols = (
+            dashboard_utils.get_records_and_feedback(
+                app_name=app_name,
+                app_versions=app_versions,
+                limit=records_limit,
+            )
+        )
+        if not records_df.empty:
+            _render_plot_tab(records_df, list(plot_feedback_cols))
+        else:
+            st.info("No individual records available for histograms.")
     with list_tab:
         _render_list_tab(
             df,

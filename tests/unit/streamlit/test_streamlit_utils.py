@@ -24,6 +24,8 @@ class TestDataFactory:
             "app_id": app_ids,
             "app_version": versions,
             "app_name": names,
+            "metadata_1": [f"meta1_value_{i + 1}" for i in range(size)],
+            "metadata_2": [f"meta2_value_{i + 1}" for i in range(size)],
         })
 
     @staticmethod
@@ -71,6 +73,31 @@ class TestDataFactory:
                 base_data[feedback_name] = [0.8 + 0.1 * i for i in range(size)]
 
         return pd.DataFrame(base_data)
+
+    @staticmethod
+    def create_agg_df(app_ids=None, feedback_names=None):
+        """Create a mock aggregated leaderboard dataframe."""
+        app_ids = app_ids or ["app_1", "app_2"]
+        feedback_names = feedback_names or ["feedback_score", "relevance"]
+        size = len(app_ids)
+
+        data = {
+            "app_id": app_ids,
+            "app_name": ["Test App"] * size,
+            "app_version": [f"v{i + 1}.0" for i in range(size)],
+            "Records": [10 + i for i in range(size)],
+            "Average Latency (s)": [0.5 + 0.1 * i for i in range(size)],
+            "Total Cost (USD)": [0.01 * (i + 1) for i in range(size)],
+            "Total Cost (Snowflake Credits)": [0.0] * size,
+            "Total Tokens": [100 + 50 * i for i in range(size)],
+        }
+
+        for feedback_name in feedback_names:
+            data[feedback_name] = [0.8 + 0.1 * i for i in range(size)]
+
+        df = pd.DataFrame(data)
+        df = df.set_index(["app_id", "app_name", "app_version"])
+        return df
 
     @staticmethod
     def create_processed_df(
@@ -337,6 +364,20 @@ class MockManager:
             ),
             get_records_and_feedback=Mock(
                 return_value=(records_df, mock_data["feedback_col_names"])
+            ),
+            get_leaderboard_aggregates=Mock(
+                return_value=(
+                    pd.DataFrame()
+                    if empty_records
+                    else TestDataFactory.create_agg_df(
+                        app_ids=mock_data.get(
+                            "app_ids",
+                            mock_data["versions_df"]["app_id"].tolist(),
+                        ),
+                        feedback_names=mock_data["feedback_col_names"],
+                    ),
+                    mock_data["feedback_col_names"],
+                )
             ),
             get_feedback_defs=Mock(return_value=({}, {})),
             get_session=Mock(),

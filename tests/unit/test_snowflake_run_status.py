@@ -5,11 +5,13 @@ from unittest.mock import patch
 import pytest
 
 try:
+    from trulens.core.dao.run import RunDaoBase
     from trulens.core.run import Run
     from trulens.core.run import RunStatus
 
 except Exception:
     Run = None
+    RunDaoBase = None
     RunStatus = None
 
 
@@ -32,7 +34,7 @@ def create_dummy_run(run_metadata_dict: dict, run_status: str = None) -> Run:
     extra = {
         "app": MagicMock(),
         "main_method_name": "dummy_method",
-        "run_dao": MagicMock(),
+        "run_dao": MagicMock(spec=RunDaoBase),
         "tru_session": MagicMock(),
     }
 
@@ -263,7 +265,7 @@ class TestRunStatusOrchestration(unittest.TestCase):
             },
             "app": MagicMock(),
             "main_method_name": "dummy_method",
-            "run_dao": MagicMock(),
+            "run_dao": MagicMock(spec=RunDaoBase),
             "tru_session": MagicMock(),
         })
 

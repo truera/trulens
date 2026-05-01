@@ -15,9 +15,11 @@ import warnings
 import pytest
 
 try:
+    from trulens.core.dao.run import RunDaoBase
     from trulens.core.run import Run
 except Exception:
     Run = None
+    RunDaoBase = None
 
 try:
     from trulens.core.feedback.selector import Selector
@@ -49,7 +51,7 @@ def _make_run(**overrides) -> "Run":
         },
         "app": MagicMock(),
         "main_method_name": "dummy_method",
-        "run_dao": MagicMock(),
+        "run_dao": MagicMock(spec=RunDaoBase),
         "tru_session": MagicMock(),
     }
     base.update(overrides)

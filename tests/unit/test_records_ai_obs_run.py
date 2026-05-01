@@ -4,9 +4,11 @@ from unittest.mock import MagicMock
 import pandas as pd
 
 try:
+    from trulens.core.dao.run import RunDaoBase
     from trulens.core.run import Run
 except Exception:
     Run = None
+    RunDaoBase = None
 
 
 def create_dummy_run() -> Run:
@@ -25,7 +27,7 @@ def create_dummy_run() -> Run:
     extra = {
         "app": MagicMock(),
         "main_method_name": "dummy_method",
-        "run_dao": MagicMock(),
+        "run_dao": MagicMock(spec=RunDaoBase),
         "tru_session": MagicMock(),
     }
     return Run.model_validate({**base, **extra})

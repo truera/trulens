@@ -259,6 +259,24 @@ def get_records_and_feedback(
 
 
 @st.cache_data(
+    ttl=dashboard_constants.CACHE_TTL,
+    show_spinner="Aggregating leaderboard data",
+)
+def get_leaderboard_aggregates(
+    app_name: Optional[str] = None,
+    app_versions: Optional[List[str]] = None,
+):
+    session = get_session()
+    lms = session.connector.db
+    assert lms
+
+    return lms.get_leaderboard_aggregates(
+        app_name=app_name,
+        app_versions=app_versions,
+    )
+
+
+@st.cache_data(
     ttl=dashboard_constants.CACHE_TTL, show_spinner="Getting app data"
 )
 def get_apps(app_name: Optional[str] = None):

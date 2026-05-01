@@ -13,6 +13,7 @@ from sqlalchemy import Engine
 from sqlalchemy import Enum
 from sqlalchemy import Float
 from sqlalchemy import ForeignKey
+from sqlalchemy import Index
 from sqlalchemy import Text
 from sqlalchemy import UniqueConstraint
 from sqlalchemy import event
@@ -121,6 +122,7 @@ class ORM(abc.ABC, Generic[T]):
     GroundTruth: Type[T]
     Dataset: Type[T]
     Event: Type[T]
+    Run: Type[T]
 
 
 def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
@@ -406,6 +408,22 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
                     dataset_json=obj.model_dump_json(redact_keys=redact_keys),
                 )
 
+        class Run(base):
+            """ORM class for batch evaluation runs."""
+
+            _table_base_name: ClassVar[str] = "runs"
+
+            run_name = Column(VARCHAR(256), nullable=False, primary_key=True)
+            object_name = Column(VARCHAR(256), nullable=False)
+            object_type = Column(VARCHAR(128), nullable=False)
+            object_version = Column(VARCHAR(128), nullable=True)
+            run_status = Column(VARCHAR(64), nullable=True)
+            description = Column(Text, nullable=True)
+            run_metadata_json = Column(TYPE_JSON, nullable=False)
+            source_info_json = Column(TYPE_JSON, nullable=False)
+            created_at = Column(Float, nullable=False)
+            updated_at = Column(Float, nullable=False)
+
         class Event(base):
             """
             ORM class for OTEL traces/spans. This should be kept in line with the event table
@@ -414,6 +432,14 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
             """
 
             _table_base_name = "events"
+
+            @declared_attr
+            def __table_args__(cls):
+                tname = cls.__tablename__
+                return (
+                    Index(f"ix_{tname}_start_timestamp", "start_timestamp"),
+                    Index(f"ix_{tname}_timestamp", "timestamp"),
+                )
 
             record = Column(JSON, nullable=False)
             """

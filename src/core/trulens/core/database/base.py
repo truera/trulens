@@ -420,6 +420,25 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
         """
         raise NotImplementedError()
 
+    def get_leaderboard_aggregates(
+        self,
+        app_name: Optional[types_schema.AppName] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
+    ) -> Tuple[pd.DataFrame, List[str]]:
+        """Get pre-aggregated leaderboard data via SQL GROUP BY.
+
+        Returns per-app-version aggregates (record count, avg latency, total
+        cost, avg feedback scores) without fetching individual records.
+
+        Args:
+            app_name: App name to filter by.
+            app_versions: List of app versions to filter by.
+
+        Returns:
+            A tuple of (aggregated dataframe, feedback column names).
+        """
+        raise NotImplementedError()
+
     @abc.abstractmethod
     def insert_ground_truth(
         self, ground_truth: groundtruth_schema.GroundTruth
@@ -662,6 +681,8 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                 ]:
                     metric_name = record_attributes.get(
                         SpanAttributes.EVAL.METRIC_NAME
+                    ) or record_attributes.get(
+                        SpanAttributes.EVAL_ROOT.METRIC_NAME
                     )
                     if not metric_name:
                         logger.warning(

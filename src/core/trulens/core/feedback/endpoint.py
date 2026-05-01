@@ -55,7 +55,16 @@ https://www.trulens.org/component_guides/other/no_context_warning for more infor
 
 _RE_NO_RETRY = re.compile(
     "("
-    + ("|".join(["authentication", "unauthorized", "expired", "quota"]))
+    + (
+        "|".join([
+            "authentication",
+            "unauthorized",
+            "expired",
+            "quota",
+            "not enabled",
+            "permission.?denied",
+        ])
+    )
     + ")",
     re.IGNORECASE,
 )

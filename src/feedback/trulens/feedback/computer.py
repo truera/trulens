@@ -137,6 +137,7 @@ def compute_feedback_by_span_group(
     feedback: Metric,
     raise_error_on_no_feedbacks_computed: bool = True,
     selectors: Optional[Dict[str, Selector]] = None,
+    max_workers: Optional[int] = None,
 ) -> None:
     """
     Compute feedback based on span groups in events.
@@ -149,6 +150,8 @@ def compute_feedback_by_span_group(
             Raise an error if no feedbacks were computed. Default is True.
         selectors: Optional dict of selectors for OTEL mode. If not provided,
             will use feedback.selectors.
+        max_workers: Max threads for parallel per-record evaluation.
+            Defaults to the number of inputs.
     """
     feedback_name = feedback.name
     feedback_function = feedback
@@ -180,6 +183,7 @@ def compute_feedback_by_span_group(
         higher_is_better,
         feedback_aggregator,
         record_id_to_record_root,
+        max_workers=max_workers,
     )
     if raise_error_on_no_feedbacks_computed and num_feedbacks_computed == 0:
         raise ValueError("No feedbacks were computed!")
@@ -640,6 +644,7 @@ def _run_feedback_on_inputs(
     higher_is_better: bool,
     feedback_aggregator: Optional[Callable[[List[float]], float]],
     record_id_to_record_root: Dict[str, pd.Series],
+    max_workers: Optional[int] = None,
 ) -> int:
     """Run feedback function on all inputs.
 
@@ -650,28 +655,45 @@ def _run_feedback_on_inputs(
         higher_is_better: Whether higher values are better.
         feedback_aggregator: Aggregator function to combine feedback scores.
         record_id_to_record_root: Mapping from record_id to record root.
+        max_workers: Max threads for parallel per-record evaluation.
+            Defaults to the number of inputs.
 
     Returns:
         Number of feedbacks computed.
     """
+    from concurrent.futures import ThreadPoolExecutor
+    from concurrent.futures import as_completed
+
+    def _process_single(record_id, span_group, inputs):
+        _call_feedback_function_with_record_root_info(
+            feedback_name,
+            feedback_function,
+            higher_is_better,
+            feedback_aggregator,
+            inputs,
+            record_id_to_record_root[record_id]["record_attributes"],
+            record_id_to_record_root[record_id]["resource_attributes"],
+            span_group,
+        )
+
+    workers = max_workers if max_workers is not None else len(flattened_inputs)
+    workers = max(workers, 1)
     ret = 0
-    for record_id, span_group, inputs in flattened_inputs:
-        try:
-            _call_feedback_function_with_record_root_info(
-                feedback_name,
-                feedback_function,
-                higher_is_better,
-                feedback_aggregator,
-                inputs,
-                record_id_to_record_root[record_id]["record_attributes"],
-                record_id_to_record_root[record_id]["resource_attributes"],
-                span_group,
-            )
-            ret += 1
-        except Exception as e:
-            _logger.warning(
-                f"feedback_name={feedback_name}, record={record_id}, span_group={span_group} had an error during computation:\n{str(e)}"
-            )
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        futures = {
+            executor.submit(_process_single, rid, sg, inp): (rid, sg)
+            for rid, sg, inp in flattened_inputs
+        }
+        for future in as_completed(futures):
+            rid, sg = futures[future]
+            try:
+                future.result()
+                ret += 1
+            except Exception as e:
+                _logger.warning(
+                    f"feedback_name={feedback_name}, record={rid}, span_group={sg} had an error during computation:\n{str(e)}"
+                )
     return ret
 
 
