@@ -6,13 +6,13 @@ date: 2026-04-30
 
 # TruLens 2.8: Parallel Batch Evals, Schema Validation, and a Faster Dashboard
 
-TruLens 2.8 brings parallel batch evals to every backend (up to 5.4x speedup), a zero-cost schema validator for structured output, and a dashboard that no longer chokes at 10k+ records. TruSession init is 73% faster and no longer prints to stdout.
+TruLens 2.8 adds parallel batch evals on every backend (up to 5.4x speedup), programmatic schema validation for structured output, and SQL-level dashboard aggregation that keeps things responsive at 10k+ records. TruSession init is 73% faster and silent by default.
 
 <!-- more -->
 
 ---
 
-## Parallel Batch Evaluation — Now on Any Backend
+## Parallel Batch Evaluation, Now on Any Backend
 
 The Run API was Snowflake-only. Now `run.start()`, `run.compute_metrics()`, and `run.get_records()` work with any connector (SQLite, PostgreSQL, Snowflake) and run in parallel.
 
@@ -20,8 +20,8 @@ The Run API was Snowflake-only. Now `run.start()`, `run.compute_metrics()`, and 
 
 Two knobs for concurrency control:
 
-- `invocation_max_workers` — threads for `run.start()` (default: `min(len(input_df), 4)`)
-- `metric_max_workers` — threads for `run.compute_metrics()` (default: `len(metrics)`)
+- `invocation_max_workers`: threads for `run.start()` (default: `min(len(input_df), 4)`)
+- `metric_max_workers`: threads for `run.compute_metrics()` (default: `len(metrics)`)
 
 ```python
 from trulens.core.run import RunConfig
@@ -59,9 +59,9 @@ This resolves 6+ long-standing issues: nested recording errors ([#2325](https://
 
 ---
 
-## SchemaValidator: Validate Structured Output Without an LLM
+## SchemaValidator: Programmatic Output Validation
 
-Agents and tool-calling apps produce structured JSON. The new `SchemaValidator` checks output against a Pydantic model or JSON schema dict — no LLM call, no tokens, instant.
+The new `SchemaValidator` checks output against a Pydantic model or JSON schema dict. It's a pure programmatic check that plugs into the Metric API like any other feedback function.
 
 ### Pydantic model
 
@@ -130,11 +130,11 @@ Also:
 
 ## Fast and Quiet TruSession Startup
 
-`TruSession()` took ~1.6s to init (eager provider imports in `_track_costs()`) and printed 6 lines to stdout. Fixed on both fronts.
+`TruSession()` took ~1.6s to init (eager provider imports in `_track_costs()`) and printed 6 lines to stdout. Both fixed.
 
 ### Background cost tracking
 
-`_track_costs()` now runs in a daemon thread. On first span, `on_start` joins it — but it's usually done by then.
+`_track_costs()` now runs in a daemon thread. On first span, `on_start` joins it, but it's usually done by then.
 
 | Metric | Before | After | Improvement |
 |--------|--------|-------|-------------|
