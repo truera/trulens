@@ -46,9 +46,9 @@ With the new skills system, your AI coding assistant can now:
 - Compare app versions on the leaderboard
 - Run the TruLens dashboard
 
-**Explore the skills:** [TruLens Skills on GitHub](https://github.com/truera/trulens/tree/main/skills)
+**Explore the skills:** [TruLens Skills on GitHub](https://github.com/truera/trulens/tree/main/.agents/skills)
 
-**Using with Claude Code:** Copy the `skills/` directory into your project and run `/add-skill skills/SKILL.md` to enable TruLens evaluation workflows.
+**Using with Claude Code:** Add the skills to your project with `/add-skill .agents/skills/trulens-evaluation-workflow/SKILL.md` to enable TruLens evaluation workflows.
 
 ## AGENTS.md: Contribute to TruLens with AI Assistance
 

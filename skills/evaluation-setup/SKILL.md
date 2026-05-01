@@ -1,1 +1,0 @@
-../../src/core/trulens/.agents/skills/trulens-evaluation-setup/SKILL.md
