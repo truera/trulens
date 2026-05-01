@@ -6,7 +6,7 @@ date: 2026-04-30
 
 # TruLens 2.8: Parallel Batch Evals, Schema Validation, and a Faster Dashboard
 
-TruLens 2.8 adds parallel batch evals on every backend (up to 5.4x speedup), programmatic schema validation for structured output, and SQL-level dashboard aggregation that keeps things responsive at 10k+ records. TruSession init is 73% faster and silent by default.
+TruLens 2.8: the Run API now works on any backend with parallel execution (up to 5.4x speedup), there's a new `SchemaValidator` for programmatic output checks, and the dashboard leaderboard is 2-5x faster via SQL aggregation. TruSession init drops from 1.6s to 0.4s.
 
 <!-- more -->
 
@@ -53,7 +53,7 @@ run.compute_metrics(["groundedness", my_custom_metric])
 |------|-----------|---------------------|---------|
 | `run.compute_metrics()` | 417.85s | 77.83s | **5.37x** |
 
-This resolves 6+ long-standing issues: nested recording errors ([#2325](https://github.com/truera/trulens/discussions/2325)), background feedback polling ([#2335](https://github.com/truera/trulens/discussions/2335)), and rate-limit control ([#687](https://github.com/truera/trulens/issues/687)).
+This fixes nested recording errors ([#2325](https://github.com/truera/trulens/discussions/2325)), the "how do I wait for feedbacks" problem ([#2335](https://github.com/truera/trulens/discussions/2335)), and gives explicit rate-limit control ([#687](https://github.com/truera/trulens/issues/687)).
 
 **Docs:** [Batch Evaluation](https://www.trulens.org/component_guides/evaluation/batch_evaluation/)
 
@@ -61,7 +61,7 @@ This resolves 6+ long-standing issues: nested recording errors ([#2325](https://
 
 ## SchemaValidator: Programmatic Output Validation
 
-The new `SchemaValidator` checks output against a Pydantic model or JSON schema dict. It's a pure programmatic check that plugs into the Metric API like any other feedback function.
+The new `SchemaValidator` validates output against a Pydantic model or JSON schema dict. It works like any other metric in the Metric API.
 
 ### Pydantic model
 
@@ -98,7 +98,7 @@ validator = SchemaValidator(schema=schema)
 f_schema = Metric(validator.validate_json).on_output()
 ```
 
-Returns `1.0` (valid) or `0.0` (invalid) with an `"explanation"` in metadata. Also ships `validate_json_partial` for streaming/partial output.
+Returns `1.0` (valid) or `0.0` (invalid) with an `"explanation"` in metadata. There's also a `validate_json_partial` method for streaming/partial output.
 
 Pydantic validation needs no extra deps. JSON schema dict mode requires the optional `jsonschema` package.
 
@@ -108,7 +108,7 @@ Pydantic validation needs no extra deps. JSON schema dict mode requires the opti
 
 The leaderboard used to fetch every record with full JSON payloads, deserialize in Python, then `groupby` in pandas. At 10k+ records that meant 20-30s loads.
 
-Now aggregation is pushed into SQL via SQLAlchemy's cross-dialect query builder. The leaderboard fetches only pre-aggregated rows.
+We moved the aggregation into SQL (SQLAlchemy, works across SQLite/Postgres). The leaderboard now fetches only grouped results instead of raw records.
 
 ### Benchmark (10k records, SQLite, 5 runs each)
 
@@ -158,7 +158,7 @@ All prints converted to `logger.info`/`logger.debug` or suppressed. Use `logging
 
 ## New Example: OpenAI Agent SDK + Snowflake Tools
 
-A production reference for building an observable agentic app:
+End-to-end example showing TruLens + OpenAI Agent SDK + Snowflake Cortex:
 
 - OpenAI Agent SDK with Cortex Analyst + Cortex Search tools
 - Batch eval runner using the Run API
