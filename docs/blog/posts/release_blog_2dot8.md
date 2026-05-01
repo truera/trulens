@@ -6,7 +6,7 @@ date: 2026-04-30
 
 # TruLens 2.8: Parallel Batch Evals, Schema Validation, and a Faster Dashboard
 
-TruLens 2.8: the Run API now works on any backend with parallel execution (up to 5.4x speedup), there's a new `SchemaValidator` for programmatic output checks, and the dashboard leaderboard is 2-5x faster via SQL aggregation. TruSession init drops from 1.6s to 0.4s.
+TruLens 2.8: the Run API now works on any backend with parallel execution (up to 5.4x speedup), there's a new `SchemaValidator` for programmatic output checks, and the dashboard leaderboard is 2-5x faster via SQL aggregation. Database session initialization drops from 1.6s to 0.4s without uninformative output.
 
 <!-- more -->
 
