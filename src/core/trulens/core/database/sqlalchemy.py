@@ -135,7 +135,8 @@ class SQLAlchemyDB(core_db.DB):
                 UserWarning(
                     "SQLite in-memory may not be threadsafe. "
                     "See https://www.sqlite.org/threadsafe.html"
-                )
+                ),
+                stacklevel=2,
             )
 
     def _reload_engine(self):

@@ -527,6 +527,7 @@ class LLMProvider(core_provider.Provider):
                 warnings.warn(
                     "No supporting evidence provided. Returning score only.",
                     UserWarning,
+                    stacklevel=2,
                 )
         else:
             raise ValueError(
@@ -1058,6 +1059,7 @@ class LLMProvider(core_provider.Provider):
             "`model_agreement` has been deprecated. "
             "Use `GroundTruthAgreement(ground_truth, provider)` instead.",
             DeprecationWarning,
+            stacklevel=2,
         )
         chat_response = self._create_chat_completion(
             prompt=templates_quality.CORRECT_SYSTEM
@@ -2731,7 +2733,8 @@ class LLMProvider(core_provider.Provider):
                 return result
         except Exception:
             warnings.warn(
-                "Failed to process and remove trivial statements. Proceeding with all statements."
+                "Failed to process and remove trivial statements. Proceeding with all statements.",
+                stacklevel=2,
             )
             pass
 

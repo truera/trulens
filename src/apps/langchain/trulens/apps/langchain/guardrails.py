@@ -96,7 +96,7 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
                 doc = future_to_doc[future]
                 result = future.result()
                 if not isinstance(result, float):
-                    raise ValueError(
+                    raise TypeError(
                         "Guardrails can only be used with feedback functions that return a float."
                     )
                 if (
