@@ -153,6 +153,7 @@ plugins:
         trulens/core_concepts_feedback_functions.md: getting_started/core_concepts/feedback_functions.md
         trulens/core_concepts_rag_triad.md: getting_started/core_concepts/rag_triad.md
         trulens/core_concepts_honest_harmless_helpful_evals.md: getting_started/core_concepts/honest_harmless_helpful_evals.md
+        trulens/core_concepts_agent_gpa.md: getting_started/core_concepts/agent_gpa.md
         trulens/quickstart.md: getting_started/quickstarts/quickstart.ipynb
         trulens/langchain_quickstart.md: cookbook/frameworks/langchain/langchain_quickstart.ipynb
         trulens/llama_index_quickstart.md: cookbook/frameworks/llamaindex/llama_index_quickstart.ipynb
@@ -231,6 +232,7 @@ nav:
           - ☔ Metrics: getting_started/core_concepts/feedback_functions.md
           - ⟁ RAG Triad: getting_started/core_concepts/rag_triad.md
           - 🏆 Honest, Harmless, Helpful Evals: getting_started/core_concepts/honest_harmless_helpful_evals.md
+          - 🎓 Agent GPA: getting_started/core_concepts/agent_gpa.md
       - 🎈Viewing Results:
           - getting_started/dashboard/index.md
   - 🗺️ Component Guides:
