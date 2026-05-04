@@ -111,4 +111,4 @@ TruLens supports various PostgreSQL connection URL formats:
 
 ## Full Example
 
-For a complete working example, see the [Log in PostgreSQL notebook](../../../../examples/expositional/logging/log_in_postgres.ipynb).
+For a complete working example, see the [Log in PostgreSQL notebook](../../../cookbook/logging/log_in_postgres.ipynb).
