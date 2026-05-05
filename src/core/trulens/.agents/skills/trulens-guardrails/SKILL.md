@@ -53,7 +53,7 @@ from trulens.otel.semconv.trace import SpanAttributes
 
 # 1. Define feedback functions
 f_criminality_input = Metric(provider.criminality, higher_is_better=False).on_input()
-f_criminality_output = Feedback(provider.criminality, higher_is_better=False).on_output()
+f_criminality_output = Metric(provider.criminality, higher_is_better=False).on_output()
 
 class SafeChatApp:
     @instrument(span_type=SpanAttributes.SpanType.GENERATION)
