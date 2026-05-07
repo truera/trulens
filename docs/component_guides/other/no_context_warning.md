@@ -18,19 +18,19 @@ If using threads, use the replacement threading classes included in _TruLens_
 that stand in place of Python classes:
 
 - [trulens.core.utils.threading.Thread][trulens.core.utils.threading.Thread]
-  instead of [threading.Thread][threading.Thread].
+  instead of `threading.Thread`.
 
 - [trulens.core.utils.threading.ThreadPoolExecutor][trulens.core.utils.threading.ThreadPoolExecutor]
   instead of
-  [concurrent.futures.ThreadPoolExecutor][concurrent.futures.ThreadPoolExecutor].
+  `concurrent.futures.ThreadPoolExecutor`.
 
 You can also import either from their builtin locations as long as you import
 _TruLens_ first.
 
 Alternatively, use the utility methods in the [TP class][trulens.core.utils.threading.TP] such as
-[submit][trulens.core.utils.threading.TP.submit].
+`submit`.
 
-Alternatively, use [Context.run][contextvars.Context.run] in your threads,
+Alternatively, use `contextvars.Context.run` in your threads,
 with the original target being the first argument to `run`:
 
 ```python

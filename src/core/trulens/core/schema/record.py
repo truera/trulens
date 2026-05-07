@@ -196,7 +196,7 @@ class Record(serial_utils.SerialModel, Hashable):
 
         Wraps
         [feedback_results][trulens.core.schema.record.Record.feedback_results]
-        in [as_completed][concurrent.futures.as_completed].
+        in `concurrent.futures.as_completed`.
         """
 
         if self.feedback_results is None:

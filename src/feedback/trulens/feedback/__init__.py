@@ -6,6 +6,7 @@ from trulens.core.utils import imports as import_utils
 from trulens.feedback.groundtruth import GroundTruthAggregator
 from trulens.feedback.groundtruth import GroundTruthAgreement
 from trulens.feedback.llm_provider import LLMProvider
+from trulens.feedback.schema_validator import SchemaValidator
 
 with import_utils.OptionalImports(
     messages=import_utils.format_import_errors(
@@ -24,4 +25,5 @@ __all__ = [
     "GroundTruthAggregator",
     "LLMProvider",
     "Embeddings",
+    "SchemaValidator",
 ]

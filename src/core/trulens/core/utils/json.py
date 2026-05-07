@@ -177,7 +177,7 @@ def jsonify(
                 "non-serialized object" as per `noserio`. Note that this may happen
                 for some data layouts like linked lists. This value should be no
                 larger than half the value set by
-                [sys.setrecursionlimit][sys.setrecursionlimit].
+                `sys.setrecursionlimit`.
 
         Returns:
             The jsonified version of the given object. Jsonified means that the the

@@ -4,13 +4,12 @@ from __future__ import annotations
 
 from concurrent import futures
 from concurrent.futures import ThreadPoolExecutor as fThreadPoolExecutor
-from concurrent.futures import TimeoutError
 import contextvars
 import inspect
 import logging
 import threading
 from threading import Thread as fThread
-from typing import Callable, Optional, TypeVar
+from typing import Any, Callable, Optional, TypeVar
 
 from trulens.core._utils.pycompat import Future  # import style exception
 from trulens.core.utils import python as python_utils
@@ -131,46 +130,9 @@ class TP(metaclass=python_utils.SingletonPerNameMeta):  # "thread processing"
     def _run_with_timeout(
         self,
         func: Callable[[A], T],
-        *args,
+        *args: Any,
         timeout: Optional[float] = None,
-        **kwargs,
-    ) -> T:
-        if timeout is None:
-            timeout = TP.DEBUG_TIMEOUT
-
-        fut: Future[T] = self.thread_pool.submit(func, *args, **kwargs)
-
-        try:
-            res: T = fut.result(timeout=timeout)
-            return res
-
-        except TimeoutError as e:
-            logger.error(
-                "Run of %s in %s timed out after %s second(s).\n%s",
-                func.__name__,
-                threading.current_thread(),
-                TP.DEBUG_TIMEOUT,
-                python_utils.code_line(func),
-            )
-
-            raise e
-
-        except Exception as e:
-            logger.warning(
-                "Run of %s in %s failed with: %s",
-                {func.__name__},
-                threading.current_thread(),
-                e,
-            )
-
-            raise e
-
-    def submit(
-        self,
-        func: Callable[[A], T],
-        *args,
-        timeout: Optional[float] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> Future[T]:
         """Submit a task to run.
 

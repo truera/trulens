@@ -370,7 +370,7 @@ def moved(
     deprecate all exposed module members.
 
     Args:
-        globals_dict: The dictionary to update. See [globals][globals].
+        globals_dict: The dictionary to update. See `globals()`.
 
         old: The old location of the classes.
 

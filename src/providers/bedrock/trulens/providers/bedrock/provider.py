@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import ClassVar, Dict, Optional, Sequence, Tuple, Type, Union
+from typing import Any, ClassVar, Dict, Optional, Sequence, Tuple, Type, Union
 
 import pydantic
 from trulens.feedback import llm_provider
@@ -33,9 +33,9 @@ class Bedrock(llm_provider.LLMProvider):
 
     def __init__(
         self,
-        *args,
+        *args: Any,
         model_id: Optional[str] = None,
-        **kwargs,
+        **kwargs: Any,
         # self, *args, model_id: str = "amazon.titan-text-express-v1", **kwargs
     ):
         if model_id is None:

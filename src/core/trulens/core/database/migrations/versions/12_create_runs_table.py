@@ -1,15 +1,15 @@
 """create runs table
 
-Revision ID: 11
-Revises: 10
+Revision ID: 12
+Revises: 11
 Create Date: 2025-06-01 00:00:00.000000
 """
 
 from alembic import op
 import sqlalchemy as sa
 
-revision = "11"
-down_revision = "10"
+revision = "12"
+down_revision = "11"
 branch_labels = None
 depends_on = None
 

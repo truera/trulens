@@ -327,8 +327,8 @@ class VirtualRecord(record_schema.Record):
     | `args` | [JSON][trulens.core.utils.serial.JSON] | `[]` |
     | `rets` | [JSON][trulens.core.utils.serial.JSON] | `[]` |
     | `perf` | [Perf][trulens.core.schema.base.Perf] | Time spanning the processing of this virtual call. |
-    | `pid` | [int][] | `0` |
-    | `tid` | [int][] | `0` |
+    | `pid` | `int` | `0` |
+    | `tid` | `int` | `0` |
     """
 
     def __init__(

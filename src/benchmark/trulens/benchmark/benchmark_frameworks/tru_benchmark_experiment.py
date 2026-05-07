@@ -117,8 +117,8 @@ class TruBenchmarkExperiment:
         """Generate a score with the feedback_fn
 
         Args:
-            row: A single row from the dataset.
             feedback_fn: The function used to generate feedback scores.
+            feedback_args: The arguments for the feedback function.
 
         Returns:
             Union[float, Tuple[float, float]]: Feedback score (with metadata) after running the benchmark on a single entry in ground truth data.
@@ -239,20 +239,14 @@ def create_benchmark_experiment_app(
     """Create an app for special use case: benchmarking feedback
     functions.
 
-    Args:
-        app_name: user-defined name of the experiment run.
+        Args:
+            app_name: user-defined name of the experiment run.
 
-        app_version: user-defined version of the experiment run.
+            app_version: user-defined version of the experiment run.
 
-        feedback_fn: feedback function of interest to perform meta-evaluation
-        on.
+            benchmark_experiment: the benchmarking experiment instance.
 
-        agg_funcs: list of aggregation functions to compute metrics for the
-            benchmark.
-
-        benchmark_params: parameters for the benchmarking experiment.
-
-    Returns:
+        Returns:
         Custom app wrapper for benchmarking
             feedback functions.
     """

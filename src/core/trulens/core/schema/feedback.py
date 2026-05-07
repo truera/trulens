@@ -39,7 +39,7 @@ class FeedbackMode(str, Enum):
     constructors.
 
     !!! Note
-        This class extends [str][str] to allow users to compare its values with
+        This class extends `str` to allow users to compare its values with
         their string representations, i.e. in `if mode == "none": ...`. Internal
         uses should use the enum instances.
     """
@@ -75,7 +75,7 @@ class FeedbackResultStatus(str, Enum):
     evaluation.
 
     !!! Note
-        This class extends [str][str] to allow users to compare its values with
+        This class extends `str` to allow users to compare its values with
         their string representations, i.e. in `if status == "done": ...`. Internal
         uses should use the enum instances.
     """
@@ -108,7 +108,7 @@ class FeedbackOnMissingParameters(str, Enum):
     that selects something that does not exist in a record/app.
 
     !!! Note
-        This class extends [str][str] to allow users to compare its values with
+        This class extends `str` to allow users to compare its values with
         their string representations, i.e. in `if onmissing == "error": ...`.
         Internal uses should use the enum instances.
     """
@@ -287,7 +287,7 @@ class FeedbackCombinations(str, Enum):
 
     If the quantities of items in the various generators do not match, the
     result will have only as many combinations as the generator with the
-    fewest items as per Python [zip][zip] (strict mode is not used).
+    fewest items as per Python `zip` (strict mode is not used).
 
     Note that selectors can use
     [Lens][trulens.core.utils.serial.Lens] `collect()` to name a single (list)
@@ -307,7 +307,7 @@ class FeedbackCombinations(str, Enum):
         - `{'arg1': 1, arg2: "a"}`,
         - `{'arg1': 1, arg2: "b"}`
 
-    See [itertools.product][itertools.product] for more.
+    See `itertools.product` for more.
 
     Note that selectors can use
     [Lens][trulens.core.utils.serial.Lens] `collect()` to name a single (list)
