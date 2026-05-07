@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import datetime
+import json
 import logging
 import threading
 import time
 import traceback
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 import weakref
 
 import pandas as pd
@@ -17,6 +18,26 @@ if TYPE_CHECKING:
     from trulens.core.app import App
 
 logger = logging.getLogger(__name__)
+
+
+def _coerce_attribute_dict(value: Any) -> Dict[str, Any]:
+    """Coerce a row's attribute column to a dict.
+
+    Some connectors (notably the Snowflake account-event-table path via
+    ``Session.sql(...).to_pandas()``) return VARIANT/OBJECT columns as JSON
+    strings rather than dicts. Normalize defensively here so consumers can
+    always treat the value as a dict.
+    """
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, str) and value:
+        try:
+            parsed = json.loads(value)
+        except (json.JSONDecodeError, ValueError):
+            return {}
+        return parsed if isinstance(parsed, dict) else {}
+    return {}
+
 
 # When computing feedbacks, we only consider events that ended after a certain
 # time so that we don't have to routinely scan all the events. Unfortunately,
@@ -38,6 +59,7 @@ class Evaluator:
         self._compute_feedbacks_lock = threading.Lock()
         self._record_id_to_event_count = pd.Series(dtype=int)
         self._processed_time = None
+        self._last_error: Optional[BaseException] = None
 
     def _events_under_record_root(self, events: pd.DataFrame) -> pd.DataFrame:
         """
@@ -109,6 +131,14 @@ class Evaluator:
         )
         if events is None or len(events) == 0:
             return {}
+        # Defensively coerce VARIANT/JSON-string attribute columns to dicts.
+        # Some connectors (e.g. the Snowflake account event table path) return
+        # these columns as serialized JSON.
+        events["record_attributes"] = events["record_attributes"].apply(
+            _coerce_attribute_dict
+        )
+        if "trace" in events.columns:
+            events["trace"] = events["trace"].apply(_coerce_attribute_dict)
         record_ids = events["record_attributes"].apply(
             lambda curr: curr.get(SpanAttributes.RECORD_ID)
         )
@@ -169,16 +199,31 @@ class Evaluator:
             self._processed_time = new_processed_time - _PROCESSED_TIME_DELTA
 
     def _run_evaluator(self) -> None:
-        """Background thread that periodically computes feedback for events."""
-        try:
-            while not self._stop_event.is_set():
+        """Background thread that periodically computes feedback for events.
+
+        Per-iteration errors are logged but the loop continues so the
+        evaluator does not silently die on transient failures (e.g. a
+        malformed row from the event table). The most recent failure is
+        retained on ``self._last_error`` so callers can detect it via
+        :meth:`get_last_error`.
+        """
+        while not self._stop_event.is_set():
+            try:
                 self._compute_feedbacks()
-                for _ in range(100):
-                    if self._stop_event.is_set():
-                        break
-                    time.sleep(0.1)
-        except Exception as e:
-            logger.error(f"Evaluator thread encountered an error: {e}")
+            except Exception as e:
+                self._last_error = e
+                logger.error(
+                    f"Evaluator thread encountered an error: {e}\n{traceback.format_exc()}"
+                )
+            for _ in range(100):
+                if self._stop_event.is_set():
+                    break
+                time.sleep(0.1)
+
+    def get_last_error(self) -> Optional[BaseException]:
+        """Return the most recent exception observed by the evaluator
+        thread, or ``None`` if no error has occurred."""
+        return getattr(self, "_last_error", None)
 
     def start_evaluator(self) -> None:
         """Start the evaluator for the app."""

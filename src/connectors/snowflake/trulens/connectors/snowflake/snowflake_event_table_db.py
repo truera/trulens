@@ -17,6 +17,27 @@ from trulens.otel.semconv.trace import SpanAttributes
 from snowflake.snowpark import Session
 
 
+def _parse_variant_value(value):
+    """Best-effort parse a Snowflake VARIANT/OBJECT value into a Python
+    object.
+
+    Snowpark's ``to_pandas`` returns VARIANT/OBJECT columns as JSON strings.
+    Downstream callers in TruLens expect dict/list values, so this helper
+    parses strings via ``json.loads`` and returns the original value
+    unchanged when parsing is not applicable.
+    """
+    if isinstance(value, (dict, list)):
+        return value
+    if isinstance(value, str):
+        if not value:
+            return value
+        try:
+            return json.loads(value)
+        except (json.JSONDecodeError, ValueError):
+            return value
+    return value
+
+
 class SnowflakeEventTableDB(core_db.DB):
     """Connector to the account level event table in Snowflake."""
 
@@ -179,6 +200,21 @@ class SnowflakeEventTableDB(core_db.DB):
                 # in a hacky way right now for the time being.
                 pass
         df.columns = df.columns.str.lower()
+        # Snowpark's ``to_pandas`` serializes VARIANT/OBJECT columns as JSON
+        # strings. Downstream consumers (e.g. the evaluator thread, client-side
+        # metric computation) expect dicts on these columns, so normalize at
+        # the data-access boundary.
+        _VARIANT_COLUMNS = (
+            "record",
+            "record_attributes",
+            "resource_attributes",
+            "trace",
+            "value",
+            "scope",
+        )
+        for _col in _VARIANT_COLUMNS:
+            if _col in df.columns:
+                df[_col] = df[_col].apply(_parse_variant_value)
         return df
 
     def check_db_revision(*args, **kwargs):
