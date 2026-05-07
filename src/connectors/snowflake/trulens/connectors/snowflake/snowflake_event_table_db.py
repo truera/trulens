@@ -38,6 +38,29 @@ def _parse_variant_value(value):
     return value
 
 
+def _attach_parent_id_to_trace(row):
+    """Ensure ``trace["parent_id"]`` is set on each event row.
+
+    ``SNOWFLAKE.LOCAL.GET_AI_OBSERVABILITY_EVENTS`` returns ``TRACE`` objects
+    that contain only ``span_id`` and ``trace_id``; the parent linkage lives
+    on ``RECORD.parent_span_id`` for non-root spans. Callers downstream
+    (e.g. ``Evaluator._events_under_record_root``) reconstruct the span
+    tree from ``trace["parent_id"]``, so populate it here as the canonical
+    location.
+    """
+    trace = row.get("trace")
+    if not isinstance(trace, dict):
+        return trace
+    if "parent_id" in trace and trace["parent_id"] is not None:
+        return trace
+    record = row.get("record")
+    parent_span_id = None
+    if isinstance(record, dict):
+        parent_span_id = record.get("parent_span_id")
+    trace["parent_id"] = parent_span_id
+    return trace
+
+
 class SnowflakeEventTableDB(core_db.DB):
     """Connector to the account level event table in Snowflake."""
 
@@ -215,6 +238,12 @@ class SnowflakeEventTableDB(core_db.DB):
         for _col in _VARIANT_COLUMNS:
             if _col in df.columns:
                 df[_col] = df[_col].apply(_parse_variant_value)
+        # ``GET_AI_OBSERVABILITY_EVENTS`` does not currently expose
+        # ``parent_id`` on the ``TRACE`` object. The parent linkage is on
+        # ``RECORD.parent_span_id`` for non-root spans. Normalize so every
+        # consumer can rely on ``trace["parent_id"]``.
+        if "trace" in df.columns:
+            df["trace"] = df.apply(_attach_parent_id_to_trace, axis=1)
         return df
 
     def check_db_revision(*args, **kwargs):

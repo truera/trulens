@@ -74,14 +74,28 @@ class Evaluator:
         # Construct a tree of events.
         record_roots = []
         span_id_to_children = {
-            event["trace"]["span_id"]: [] for _, event in events.iterrows()
+            event["trace"].get("span_id"): []
+            for _, event in events.iterrows()
+            if isinstance(event.get("trace"), dict)
         }
         for i, event in events.iterrows():
-            parent_id = event["trace"]["parent_id"]
+            trace = event.get("trace")
+            if not isinstance(trace, dict):
+                continue
+            # ``GET_AI_OBSERVABILITY_EVENTS`` returns ``TRACE`` objects with
+            # only ``span_id``/``trace_id``; the parent linkage lives on
+            # ``RECORD.parent_span_id``. Look it up there as a fallback.
+            parent_id = trace.get("parent_id")
+            if parent_id is None:
+                record = event.get("record")
+                if isinstance(record, dict):
+                    parent_id = record.get("parent_span_id")
             if parent_id and parent_id in span_id_to_children:
                 span_id_to_children[parent_id].append(event)
+            record_attrs = event.get("record_attributes")
             if (
-                event["record_attributes"].get(SpanAttributes.SPAN_TYPE)
+                isinstance(record_attrs, dict)
+                and record_attrs.get(SpanAttributes.SPAN_TYPE)
                 == SpanAttributes.SpanType.RECORD_ROOT
             ):
                 record_roots.append(event)
@@ -93,12 +107,8 @@ class Evaluator:
         while q:
             curr_event = q.pop(0)
             ret.append(curr_event)
-            q.extend([
-                child_event
-                for child_event in span_id_to_children[
-                    curr_event["trace"]["span_id"]
-                ]
-            ])
+            span_id = curr_event["trace"].get("span_id")
+            q.extend(span_id_to_children.get(span_id, []))
         return pd.DataFrame(ret)
 
     def _get_record_id_to_unprocessed_events(
