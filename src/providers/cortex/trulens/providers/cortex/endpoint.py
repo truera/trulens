@@ -202,3 +202,21 @@ class CortexEndpoint(core_endpoint.Endpoint):
             )
 
         return response
+
+
+def register_otel_cost_tracking() -> None:
+    """Register OTel-tracing cost instrumentation for the Cortex provider.
+
+    Replaces the previous in-core wiring in
+    ``trulens.experimental.otel_tracing.core.session._track_costs`` so the
+    core package no longer imports from ``snowflake.cortex`` directly.
+    """
+    from trulens.core.otel.instrument import instrument_cost_computer
+
+    instrument_cost_computer(
+        SSEClient,
+        "events",
+        attributes=lambda ret, exception, *args, **kwargs: (
+            CortexCostComputer.handle_response(ret)
+        ),
+    )
