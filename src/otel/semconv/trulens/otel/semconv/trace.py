@@ -19,6 +19,70 @@ from enum import Enum
 
 BASE_SCOPE = "ai.observability"
 
+GEN_AI_SCOPE = "gen_ai"
+
+
+class GenAIAttributes:
+    """OTEL GenAI semantic convention attributes.
+
+    These are emitted alongside ``ai.observability.*`` attributes for
+    interoperability with the official OpenTelemetry Generative AI
+    semantic conventions.
+
+    See: https://opentelemetry.io/docs/specs/semconv/gen-ai/
+    """
+
+    class OPERATION:
+        """Attributes for a GenAI operation."""
+
+        NAME = GEN_AI_SCOPE + ".operation.name"
+        """Name of the GenAI operation (e.g. ``chat``, ``text_completion``)."""
+
+    class REQUEST:
+        """Attributes describing the GenAI request."""
+
+        MODEL = GEN_AI_SCOPE + ".request.model"
+        """Model name requested by the caller."""
+
+        TEMPERATURE = GEN_AI_SCOPE + ".request.temperature"
+        """Sampling temperature requested."""
+
+    class USAGE:
+        """Token usage reported by the GenAI provider."""
+
+        INPUT_TOKENS = GEN_AI_SCOPE + ".usage.input_tokens"
+        """Number of prompt/input tokens consumed."""
+
+        OUTPUT_TOKENS = GEN_AI_SCOPE + ".usage.output_tokens"
+        """Number of completion/output tokens generated."""
+
+    class SYSTEM:
+        """Attributes identifying the GenAI provider/system."""
+
+        NAME = GEN_AI_SCOPE + ".system"
+        """Name of the GenAI provider (e.g. ``openai``, ``anthropic``)."""
+
+    class RETRIEVAL:
+        """Attributes for a retrieval operation."""
+
+        QUERY_TEXT = GEN_AI_SCOPE + ".retrieval.query"
+        """Query text used for retrieval."""
+
+        DOCUMENTS = GEN_AI_SCOPE + ".retrieval.documents"
+        """Retrieved documents / contexts."""
+
+    class TOOL:
+        """Attributes for a tool/function call."""
+
+        NAME = GEN_AI_SCOPE + ".tool.name"
+        """Name of the tool being called."""
+
+        CALL_ARGUMENTS = GEN_AI_SCOPE + ".tool.call.arguments"
+        """Arguments passed to the tool (JSON-serialised)."""
+
+        CALL_RESULT = GEN_AI_SCOPE + ".tool.call.result"
+        """Result returned by the tool (JSON-serialised)."""
+
 
 class ResourceAttributes:
     APP_ID = BASE_SCOPE + ".app_id"
