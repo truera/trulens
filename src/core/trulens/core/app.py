@@ -1177,12 +1177,38 @@ class App(
         ):
             raise RuntimeError("Invalid TruLens OTEL Tracing syntax.")
 
+    def __call__(self, *, conversation_id: Optional[str] = None) -> "App":
+        """Configure context-manager options such as ``conversation_id``.
+
+        Usage::
+
+            with tru_app(conversation_id="conv-abc-123") as recording:
+                response = app.query("Hello")
+
+        All spans recorded within the context will carry
+        ``ai.observability.conversation_id`` set to the provided value.
+
+        Args:
+            conversation_id: An optional string identifier that groups multiple
+                records (app invocations) into the same conversation / thread.
+
+        Returns:
+            Self, with the conversation_id stored for use in ``__enter__``.
+        """
+        self._pending_conversation_id = conversation_id
+        return self
+
     # For use as a context manager.
     def __enter__(self):
         if self.session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING
         ):
             from trulens.core.otel.instrument import OtelRecordingContext
+
+            conversation_id = getattr(
+                self, "_pending_conversation_id", None
+            )
+            self._pending_conversation_id = None
 
             with self._current_context_manager_lock:
                 if self._current_context_manager is not None:
@@ -1195,6 +1221,7 @@ class App(
                     app_version=self.app_version,
                     run_name="",
                     input_id="",
+                    conversation_id=conversation_id,
                 )
             return self._current_context_manager.__enter__()
 
