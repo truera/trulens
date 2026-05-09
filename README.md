@@ -39,7 +39,26 @@ Diagram](https://www.trulens.org/assets/images/TruLens_Architecture.png)
 Install the trulens pip package from PyPI.
 
 ```bash
-    pip install trulens
+pip install trulens
+```
+
+Install with a specific LLM provider for feedback evaluation:
+
+```bash
+pip install trulens trulens-providers-openai   # OpenAI / Azure OpenAI
+pip install trulens trulens-providers-litellm  # LiteLLM (Anthropic, Cohere, Mistral, …)
+pip install trulens trulens-providers-google   # Google Gemini
+pip install trulens trulens-providers-bedrock  # AWS Bedrock
+pip install trulens trulens-providers-cortex   # Snowflake Cortex
+pip install trulens trulens-providers-huggingface  # HuggingFace
+pip install trulens trulens-providers-langchain    # LangChain models
+```
+
+Install with a specific app framework integration:
+
+```bash
+pip install trulens trulens-apps-langchain    # LangChain / LangGraph
+pip install trulens trulens-apps-llamaindex  # LlamaIndex
 ```
 
 ## Quick Usage
@@ -50,7 +69,98 @@ TruLens.
 [![Open In
 Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/examples/quickstart/quickstart.ipynb)
 
-### 💡 Contributing & Community
+## Key Features
+
+### 🔭 OpenTelemetry-based tracing
+
+TruLens instrumentation is built on [OpenTelemetry](https://opentelemetry.io/).
+Every function call, LLM generation, retrieval, and tool invocation is captured
+as a structured OTEL span. This makes TruLens interoperable with existing
+observability infrastructure — export traces to Jaeger, Grafana Tempo, Datadog,
+or any OTLP-compatible backend.
+
+```python
+from trulens.core.otel.instrument import instrument
+from trulens.otel.semconv.trace import SpanAttributes
+
+class MyRAG:
+    @instrument(
+        span_type=SpanAttributes.SpanType.RETRIEVAL,
+        attributes={
+            SpanAttributes.RETRIEVAL.QUERY_TEXT: "query",
+            SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: "return",
+        },
+    )
+    def retrieve(self, query: str) -> list:
+        ...
+```
+
+### 🤖 Agentic evaluations
+
+Seven purpose-built evaluators for agentic systems — each measuring a distinct
+aspect of agent behavior:
+
+| Evaluator | What it measures |
+|-----------|-----------------|
+| LogicalConsistency | Reasoning coherence; flags hallucinations and unsupported assertions |
+| ExecutionEfficiency | Redundant steps, unnecessary retries, wasted computation |
+| PlanAdherence | Whether execution followed the stated plan |
+| PlanQuality | Intrinsic plan quality — strategy, not outcome |
+| ToolSelection | Right tool chosen for each subtask |
+| ToolCalling | Argument validity and output interpretation |
+| ToolQuality | External tool/service reliability |
+
+### 📊 Batch and inline evaluation
+
+Run evaluations alongside your app, on existing data, or in offline batch mode:
+
+```python
+# Inline — evaluate as the app runs
+with tru_recorder as recording:
+    response = my_app.query("What is TruLens?")
+
+# Batch — evaluate a pre-collected dataset without a live app
+results = session.evaluate(dataset=df, metrics=[relevance, groundedness])
+```
+
+### 🔌 MCP support
+
+Instrument [Model Context Protocol](https://modelcontextprotocol.io/) tool calls
+with the `MCP` span type to capture tool name, arguments, output, and latency:
+
+```python
+@instrument(span_type=SpanAttributes.SpanType.MCP)
+def call_mcp_tool(self, tool_name: str, arguments: dict) -> str:
+    ...
+```
+
+### 🎯 Selector API
+
+Target any span attribute for evaluation using the flexible Selector API:
+
+```python
+from trulens.core.schema.select import Select
+
+f_context_relevance = (
+    Feedback(provider.context_relevance)
+    .on_input()
+    .on(Select.RecordCalls.retrieve.rets[:])
+)
+```
+
+## Supported LLM Providers
+
+| Provider | Package |
+|----------|---------|
+| OpenAI / Azure OpenAI | `trulens-providers-openai` |
+| LiteLLM (Anthropic, Cohere, Mistral, and more) | `trulens-providers-litellm` |
+| Google Gemini | `trulens-providers-google` |
+| AWS Bedrock | `trulens-providers-bedrock` |
+| Snowflake Cortex | `trulens-providers-cortex` |
+| HuggingFace | `trulens-providers-huggingface` |
+| LangChain models | `trulens-providers-langchain` |
+
+## 💡 Contributing & Community
 
 Interested in contributing? See our [contributing
 guide](https://www.trulens.org/contributing/) for more details.
