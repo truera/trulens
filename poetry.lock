@@ -10573,7 +10573,7 @@ version = "2.8.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
-groups = ["apps"]
+groups = ["required"]
 files = []
 develop = true
 
@@ -12197,4 +12197,4 @@ reference = "pypi-public"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "f791690a77bfb64f6aa28c6eb3df40cdd58a63b936ad983e4948f084583c8a70"
+content-hash = "bfb44e4ea8071ee43ba5ca1789966d3feec857224e06f48826004751afe00d30"
