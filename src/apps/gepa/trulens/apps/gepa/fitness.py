@@ -17,11 +17,7 @@ from __future__ import annotations
 
 import logging
 import random
-from typing import Any
-from typing import Callable
-from typing import List
-from typing import Optional
-from typing import Tuple
+from typing import Any, Callable, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -107,9 +103,7 @@ class TruLensFitness:
             )
             self._recorder.add_record(record)
         except Exception as exc:
-            logger.warning(
-                "Failed to log GEPA evaluation to TruLens: %s", exc
-            )
+            logger.warning("Failed to log GEPA evaluation to TruLens: %s", exc)
 
 
 def run_evolution(

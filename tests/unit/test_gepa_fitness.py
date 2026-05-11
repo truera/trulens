@@ -192,7 +192,7 @@ class TestRunEvolution(TestCase):
 
     def test_plain_callable_works_as_fitness(self):
         """run_evolution should accept any plain callable, not just TruLensFitness."""
-        best, score, history = run_evolution(
+        best, score, _ = run_evolution(
             base_prompt="prompt",
             fitness_fn=lambda p: 0.5,
             mutate_fn=lambda p: p + "!",
