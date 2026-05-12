@@ -1,10 +1,10 @@
-"""Unit tests for trulens-apps-gepa (TruLensFitness and run_evolution)."""
+"""Unit tests for trulens-apps-gepa (TruGEPA and run_evolution)."""
 
 from unittest import TestCase
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
-from trulens.apps.gepa.fitness import TruLensFitness
+from trulens.apps.gepa.fitness import TruGEPA
 from trulens.apps.gepa.fitness import run_evolution
 
 
@@ -24,15 +24,15 @@ def _mutate(prompt: str) -> str:
     return prompt + " (improved)"
 
 
-class TestTruLensFitness(TestCase):
+class TestTruGEPA(TestCase):
     def test_basic_call_returns_float(self):
-        fitness = TruLensFitness(_fixed_score, input_key="prompt")
+        fitness = TruGEPA(_fixed_score, input_key="prompt")
         score = fitness("some prompt")
         self.assertIsInstance(score, float)
         self.assertAlmostEqual(score, 0.7)
 
     def test_tuple_result_extracts_first_element(self):
-        fitness = TruLensFitness(_tuple_score, input_key="prompt")
+        fitness = TruGEPA(_tuple_score, input_key="prompt")
         score = fitness("some prompt")
         self.assertAlmostEqual(score, 0.6)
 
@@ -43,7 +43,7 @@ class TestTruLensFitness(TestCase):
             received.update(kwargs)
             return 0.5
 
-        fitness = TruLensFitness(capture, input_key="question")
+        fitness = TruGEPA(capture, input_key="question")
         fitness("hello")
         self.assertIn("question", received)
         self.assertEqual(received["question"], "hello")
@@ -55,7 +55,7 @@ class TestTruLensFitness(TestCase):
             received.update(kwargs)
             return 0.5
 
-        fitness = TruLensFitness(
+        fitness = TruGEPA(
             capture,
             input_key="prompt",
             context_key="context",
@@ -71,7 +71,7 @@ class TestTruLensFitness(TestCase):
             received.update(kwargs)
             return 0.5
 
-        fitness = TruLensFitness(capture, input_key="prompt")
+        fitness = TruGEPA(capture, input_key="prompt")
         fitness("hello")
         self.assertNotIn("context", received)
 
@@ -82,42 +82,82 @@ class TestTruLensFitness(TestCase):
             received.update(kwargs)
             return 0.5
 
-        fitness = TruLensFitness(capture, input_key="prompt")
+        fitness = TruGEPA(capture, input_key="prompt")
         fitness("hello", temperature=0.0)
         self.assertEqual(received.get("temperature"), 0.0)
 
-    def test_no_recorder_logs_nothing(self):
-        fitness = TruLensFitness(_fixed_score)
+    # --- logging behaviour ---
+
+    def test_no_logging_when_neither_app_name_nor_version_supplied(self):
+        fitness = TruGEPA(_fixed_score)
+        self.assertIsNone(fitness._recorder)
         score = fitness("prompt")
         self.assertAlmostEqual(score, 0.7)
 
-    def test_recorder_add_record_called(self):
-        mock_recorder = MagicMock()
-        fitness = TruLensFitness(_fixed_score, recorder=mock_recorder)
+    def test_raises_when_only_app_name_supplied(self):
+        with self.assertRaises(ValueError) as ctx:
+            TruGEPA(_fixed_score, app_name="optimizer")
+        self.assertIn("app_name", str(ctx.exception))
+        self.assertIn("app_version", str(ctx.exception))
 
-        with patch("trulens.apps.virtual.VirtualRecord") as MockVR:
-            with patch("trulens.core.Select"):
-                MockVR.return_value = MagicMock()
-                fitness("test prompt")
+    def test_raises_when_only_app_version_supplied(self):
+        with self.assertRaises(ValueError) as ctx:
+            TruGEPA(_fixed_score, app_version="v1")
+        self.assertIn("app_name", str(ctx.exception))
+        self.assertIn("app_version", str(ctx.exception))
 
-        mock_recorder.add_record.assert_called_once()
+    def test_recorder_created_eagerly_with_both_params(self):
+        with patch("trulens.apps.virtual.TruVirtual") as MockTV:
+            fitness = TruGEPA(
+                _fixed_score, app_name="my_optimizer", app_version="v2"
+            )
+        MockTV.assert_called_once_with(
+            app_name="my_optimizer", app_version="v2"
+        )
+        self.assertIsNotNone(fitness._recorder)
 
-    def test_recorder_failure_does_not_raise(self):
-        mock_recorder = MagicMock()
-        mock_recorder.add_record.side_effect = RuntimeError("db error")
-        fitness = TruLensFitness(_fixed_score, recorder=mock_recorder)
+    def test_add_record_called_on_every_evaluation_when_logging_enabled(self):
+        with patch("trulens.apps.virtual.TruVirtual") as MockTV, patch(
+            "trulens.apps.virtual.VirtualRecord"
+        ), patch("trulens.core.Select"):
+            mock_recorder = MockTV.return_value
+            fitness = TruGEPA(_fixed_score, app_name="opt", app_version="v1")
+            fitness("a")
+            fitness("b")
 
-        with patch("trulens.apps.virtual.VirtualRecord") as MockVR:
-            with patch("trulens.core.Select"):
-                MockVR.return_value = MagicMock()
-                score = fitness("prompt")
+        self.assertEqual(mock_recorder.add_record.call_count, 2)
 
+    def test_no_add_record_when_logging_disabled(self):
+        with patch("trulens.apps.virtual.TruVirtual") as MockTV:
+            fitness = TruGEPA(_fixed_score)
+            fitness("prompt")
+        MockTV.assert_not_called()
+
+    def test_logging_failure_does_not_raise(self):
+        with patch("trulens.apps.virtual.TruVirtual"), patch(
+            "trulens.apps.virtual.VirtualRecord"
+        ), patch("trulens.core.Select") as MockSelect:
+            MockSelect.RecordCalls.fitness_fn.evaluate = MagicMock()
+            fitness = TruGEPA(_fixed_score, app_name="opt", app_version="v1")
+            fitness._recorder.add_record.side_effect = RuntimeError("db error")
+            score = fitness("prompt")
         self.assertAlmostEqual(score, 0.7)
 
 
 class TestRunEvolution(TestCase):
+    def _make_fitness(self, fn):
+        """Wrap a score fn in TruGEPA with logging suppressed."""
+        fitness = TruGEPA(fn)
+        with patch("trulens.apps.virtual.TruVirtual"), patch(
+            "trulens.apps.virtual.VirtualRecord"
+        ), patch("trulens.core.Select"):
+            pass
+        # Pre-set a mock recorder so _log_record never hits real TruVirtual.
+        fitness._recorder = MagicMock()
+        return fitness
+
     def test_returns_correct_structure(self):
-        fitness = TruLensFitness(_fixed_score)
+        fitness = self._make_fitness(_fixed_score)
         best_prompt, best_score, history = run_evolution(
             base_prompt="base",
             fitness_fn=fitness,
@@ -137,7 +177,7 @@ class TestRunEvolution(TestCase):
             self.assertIsInstance(entry[1], float)
 
     def test_best_score_is_max_of_history(self):
-        fitness = TruLensFitness(_length_score)
+        fitness = self._make_fitness(_length_score)
         _, best_score, history = run_evolution(
             base_prompt="hi",
             fitness_fn=fitness,
@@ -150,7 +190,7 @@ class TestRunEvolution(TestCase):
         self.assertAlmostEqual(best_score, max(s for _, s in history))
 
     def test_seed_produces_deterministic_results(self):
-        fitness = TruLensFitness(_length_score)
+        fitness = self._make_fitness(_length_score)
         kwargs = dict(
             base_prompt="start",
             fitness_fn=fitness,
@@ -166,7 +206,7 @@ class TestRunEvolution(TestCase):
         self.assertEqual(history1, history2)
 
     def test_top_k_must_be_less_than_population_size(self):
-        fitness = TruLensFitness(_fixed_score)
+        fitness = self._make_fitness(_fixed_score)
         with self.assertRaises(ValueError):
             run_evolution(
                 base_prompt="x",
@@ -178,7 +218,7 @@ class TestRunEvolution(TestCase):
 
     def test_evolution_improves_with_length_fitness(self):
         """Longer prompts score higher; mutating by appending should trend up."""
-        fitness = TruLensFitness(_length_score)
+        fitness = self._make_fitness(_length_score)
         _, _, history = run_evolution(
             base_prompt="short",
             fitness_fn=fitness,
@@ -191,7 +231,7 @@ class TestRunEvolution(TestCase):
         self.assertGreaterEqual(history[-1][1], history[0][1])
 
     def test_plain_callable_works_as_fitness(self):
-        """run_evolution should accept any plain callable, not just TruLensFitness."""
+        """run_evolution should accept any plain callable, not just TruGEPA."""
         best, score, _ = run_evolution(
             base_prompt="prompt",
             fitness_fn=lambda p: 0.5,

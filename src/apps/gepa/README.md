@@ -3,9 +3,10 @@
 TruLens adapter for GEPA (Genetic/Evolutionary Prompt Adaptation).
 
 GEPA optimizes prompts using evolutionary algorithms. This package provides
-`TruLensFitness`, a thin adapter that wraps any TruLens feedback callable as a
-GEPA-compatible fitness function, plus a simple `run_evolution` helper that
-implements the evolutionary loop.
+`TruGEPA`, a thin adapter that wraps any TruLens feedback callable as a
+GEPA-compatible fitness function and automatically logs every evaluation as a
+`TruVirtual` record for dashboard visibility, plus a simple `run_evolution`
+helper that implements the evolutionary loop.
 
 ## Installation
 
@@ -16,12 +17,25 @@ pip install trulens-apps-gepa
 ## Quick start
 
 ```python
-from trulens.apps.gepa import TruLensFitness, run_evolution
+from trulens.apps.gepa import TruGEPA, run_evolution
 
 def my_relevance(prompt: str) -> float:
-    return len(prompt) / 200
+    return len(prompt) / 200  # replace with a real TruLens provider method
 
-fitness = TruLensFitness(my_relevance, input_key="prompt")
+# Without logging:
+fitness = TruGEPA(my_relevance, input_key="prompt")
+
+# With logging — supply both app_name and app_version (omit both to disable;
+# supplying only one raises a ValueError immediately):
+from trulens.core import TruSession
+session = TruSession()
+
+fitness = TruGEPA(
+    my_relevance,
+    input_key="prompt",
+    app_name="my_optimizer",
+    app_version="v1",
+)
 
 best_prompt, best_score, history = run_evolution(
     base_prompt="Summarize the document.",
@@ -33,27 +47,6 @@ best_prompt, best_score, history = run_evolution(
 print(f"Best prompt ({best_score:.3f}): {best_prompt}")
 ```
 
-## Logging to TruLens
-
-Pass a `TruVirtual` recorder to log every evaluation to the TruLens dashboard:
-
-```python
-from trulens.apps.virtual import TruVirtual
-from trulens.core import TruSession
-
-session = TruSession()
-
-recorder = TruVirtual(
-    app_name="gepa_optimizer",
-    app_version="v1",
-)
-
-fitness = TruLensFitness(
-    my_relevance,
-    input_key="prompt",
-    recorder=recorder,
-)
-```
-
-Each evaluation call is recorded as a virtual TruLens record, giving you a
-full audit trail and generation-over-generation trend in the dashboard.
+When both `app_name` and `app_version` are provided, a `TruVirtual` recorder
+is created automatically and every evaluation is logged. Omit both to run
+without any logging.

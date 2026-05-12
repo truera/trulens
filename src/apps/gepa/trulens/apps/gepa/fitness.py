@@ -6,9 +6,10 @@ candidate prompt as a float in [0, 1].
 
 This module provides:
 
-- :class:`TruLensFitness` — wraps any TruLens feedback callable into the GEPA
+- :class:`TruGEPA` — wraps any TruLens feedback callable into the GEPA
   fitness-function interface and optionally logs each evaluation as a
-  ``TruVirtual`` record for dashboard visibility.
+  ``TruVirtual`` record for dashboard visibility when both ``app_name`` and
+  ``app_version`` are supplied.
 - :func:`run_evolution` — a simple (μ+λ) evolutionary loop that uses a
   fitness function to iteratively improve a base prompt.
 """
@@ -22,14 +23,22 @@ from typing import Any, Callable, List, Optional, Tuple
 logger = logging.getLogger(__name__)
 
 
-class TruLensFitness:
+class TruGEPA:
     """Adapts a TruLens feedback callable as a GEPA-compatible fitness function.
 
     A GEPA fitness function is any callable ``(prompt: str, **kwargs) -> float``.
-    ``TruLensFitness`` forwards the call to a TruLens feedback function
-    implementation and, when a ``TruVirtual`` recorder is supplied, logs each
-    evaluation as a virtual TruLens record so the full optimization trajectory
+    ``TruGEPA`` forwards each call to a TruLens feedback function implementation
+    and, when both *app_name* and *app_version* are supplied, logs every
+    evaluation as a ``TruVirtual`` record so the full optimization trajectory
     is visible in the TruLens dashboard.
+
+    Logging behaviour:
+
+    - **Both** ``app_name`` and ``app_version`` supplied → a ``TruVirtual``
+      recorder is created eagerly and every evaluation is logged.  A
+      ``TruSession`` must be active at construction time.
+    - **Neither** supplied → logging is disabled; evaluations run silently.
+    - **Only one** supplied → raises ``ValueError`` immediately.
 
     Args:
         feedback_fn: A TruLens feedback function implementation — any callable
@@ -41,8 +50,10 @@ class TruLensFitness:
             Provide alongside ``context`` to evaluate context-dependent metrics
             such as ``context_relevance``.
         context: Fixed context string forwarded to every evaluation call.
-        recorder: Optional ``TruVirtual`` recorder instance. When provided,
-            each call is logged as a virtual record for audit and visualization.
+        app_name: Name of the virtual app used for TruLens logging. Must be
+            supplied together with ``app_version``; omit both to disable logging.
+        app_version: Version string of the virtual app. Must be supplied
+            together with ``app_name``; omit both to disable logging.
     """
 
     def __init__(
@@ -52,13 +63,27 @@ class TruLensFitness:
         input_key: str = "prompt",
         context_key: Optional[str] = None,
         context: Optional[str] = None,
-        recorder: Optional[Any] = None,
+        app_name: Optional[str] = None,
+        app_version: Optional[str] = None,
     ) -> None:
+        if (app_name is None) != (app_version is None):
+            raise ValueError(
+                "For logging to be enabled, you must supply both app_name and "
+                "app_version; to disable logging, supply neither."
+            )
+
         self._feedback_fn = feedback_fn
         self._input_key = input_key
         self._context_key = context_key
         self._context = context
-        self._recorder = recorder
+        self._recorder: Optional[Any] = None
+
+        if app_name is not None and app_version is not None:
+            from trulens.apps.virtual import TruVirtual
+
+            self._recorder = TruVirtual(
+                app_name=app_name, app_version=app_version
+            )
 
     def __call__(self, prompt: str, **kwargs: Any) -> float:
         """Evaluate *prompt* and return a fitness score.
@@ -77,6 +102,7 @@ class TruLensFitness:
 
         result = self._feedback_fn(**call_kwargs)
 
+        # TruLens feedback functions may return (score, metadata) tuples.
         score = float(result[0]) if isinstance(result, tuple) else float(result)
 
         if self._recorder is not None:
@@ -124,15 +150,14 @@ def run_evolution(
     2. Keep the top-``top_k`` candidates (elitist selection).
     3. Fill the next population by mutating survivors at random.
 
-    When *fitness_fn* is a :class:`TruLensFitness` with a recorder attached,
-    every prompt evaluation is logged as a TruLens virtual record, giving a
-    generation-by-generation audit trail in the dashboard.
+    When *fitness_fn* is a :class:`TruGEPA`, every prompt evaluation is logged
+    as a TruLens virtual record, giving a generation-by-generation audit trail
+    in the dashboard.
 
     Args:
         base_prompt: The starting prompt for the evolutionary search.
         fitness_fn: Any callable ``(prompt: str) -> float`` that scores a
-            prompt. Use :class:`TruLensFitness` to wrap a TruLens feedback
-            function.
+            prompt. Use :class:`TruGEPA` to wrap a TruLens feedback function.
         mutate_fn: Callable that takes a prompt string and returns a mutated
             variant (e.g. rephrasing, adding instructions, changing tone).
         n_generations: Number of evolutionary generations to run.
