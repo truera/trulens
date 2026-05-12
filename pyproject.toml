@@ -98,6 +98,7 @@ trulens-hotspots = { path = "src/hotspots", develop = true }
 [tool.poetry.group.required.dependencies]
 trulens-core = { path = "src/core", develop = true }
 trulens-feedback = { path = "src/feedback", develop = true }
+trulens-apps-gepa = { path = "src/apps/gepa", develop = true }
 trulens-dashboard = { path = "src/dashboard", develop = true }
 trulens-otel-semconv = { path = "src/otel/semconv", develop = true }
 # Remove after deprecation period.
