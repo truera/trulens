@@ -23,7 +23,7 @@ def my_relevance(prompt: str) -> float:
     return len(prompt) / 200  # replace with a real TruLens provider method
 
 # Without logging:
-fitness = TruGEPA(my_relevance, input_key="prompt")
+fitness = TruGEPA(my_relevance, optimize_key="prompt")
 
 # With logging — supply both app_name and app_version (omit both to disable;
 # supplying only one raises a ValueError immediately):
@@ -32,10 +32,17 @@ session = TruSession()
 
 fitness = TruGEPA(
     my_relevance,
-    input_key="prompt",
+    optimize_key="prompt",
     app_name="my_optimizer",
     app_version="v1",
 )
+
+# Works with any feedback signature — e.g. context_relevance(question, context):
+# fitness = TruGEPA(
+#     provider.context_relevance,
+#     optimize_key="question",
+#     feedback_args={"context": REFERENCE_CONTEXT},
+# )
 
 best_prompt, best_score, history = run_evolution(
     base_prompt="Summarize the document.",

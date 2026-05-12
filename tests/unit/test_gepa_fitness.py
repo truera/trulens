@@ -26,29 +26,29 @@ def _mutate(prompt: str) -> str:
 
 class TestTruGEPA(TestCase):
     def test_basic_call_returns_float(self):
-        fitness = TruGEPA(_fixed_score, input_key="prompt")
+        fitness = TruGEPA(_fixed_score, optimize_key="prompt")
         score = fitness("some prompt")
         self.assertIsInstance(score, float)
         self.assertAlmostEqual(score, 0.7)
 
     def test_tuple_result_extracts_first_element(self):
-        fitness = TruGEPA(_tuple_score, input_key="prompt")
+        fitness = TruGEPA(_tuple_score, optimize_key="prompt")
         score = fitness("some prompt")
         self.assertAlmostEqual(score, 0.6)
 
-    def test_input_key_forwarded_correctly(self):
+    def test_optimize_key_forwarded_correctly(self):
         received = {}
 
         def capture(**kwargs):
             received.update(kwargs)
             return 0.5
 
-        fitness = TruGEPA(capture, input_key="question")
+        fitness = TruGEPA(capture, optimize_key="question")
         fitness("hello")
         self.assertIn("question", received)
         self.assertEqual(received["question"], "hello")
 
-    def test_context_forwarded_when_set(self):
+    def test_feedback_args_forwarded(self):
         received = {}
 
         def capture(**kwargs):
@@ -57,23 +57,23 @@ class TestTruGEPA(TestCase):
 
         fitness = TruGEPA(
             capture,
-            input_key="prompt",
-            context_key="context",
-            context="some background",
+            optimize_key="prompt",
+            feedback_args={"context": "some background", "extra": 42},
         )
         fitness("hello")
         self.assertEqual(received.get("context"), "some background")
+        self.assertEqual(received.get("extra"), 42)
 
-    def test_context_not_forwarded_when_absent(self):
+    def test_no_feedback_args_by_default(self):
         received = {}
 
         def capture(**kwargs):
             received.update(kwargs)
             return 0.5
 
-        fitness = TruGEPA(capture, input_key="prompt")
+        fitness = TruGEPA(capture, optimize_key="prompt")
         fitness("hello")
-        self.assertNotIn("context", received)
+        self.assertEqual(set(received.keys()), {"prompt"})
 
     def test_extra_kwargs_forwarded(self):
         received = {}
@@ -82,7 +82,7 @@ class TestTruGEPA(TestCase):
             received.update(kwargs)
             return 0.5
 
-        fitness = TruGEPA(capture, input_key="prompt")
+        fitness = TruGEPA(capture, optimize_key="prompt")
         fitness("hello", temperature=0.0)
         self.assertEqual(received.get("temperature"), 0.0)
 
@@ -146,15 +146,8 @@ class TestTruGEPA(TestCase):
 
 class TestRunEvolution(TestCase):
     def _make_fitness(self, fn):
-        """Wrap a score fn in TruGEPA with logging suppressed."""
-        fitness = TruGEPA(fn)
-        with patch("trulens.apps.virtual.TruVirtual"), patch(
-            "trulens.apps.virtual.VirtualRecord"
-        ), patch("trulens.core.Select"):
-            pass
-        # Pre-set a mock recorder so _log_record never hits real TruVirtual.
-        fitness._recorder = MagicMock()
-        return fitness
+        """Wrap a score fn in TruGEPA with logging disabled."""
+        return TruGEPA(fn)
 
     def test_returns_correct_structure(self):
         fitness = self._make_fitness(_fixed_score)

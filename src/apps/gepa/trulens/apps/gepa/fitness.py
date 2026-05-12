@@ -44,12 +44,12 @@ class TruGEPA:
         feedback_fn: A TruLens feedback function implementation — any callable
             that accepts text keyword arguments and returns a ``float`` or a
             ``(float, dict)`` tuple (the standard TruLens return format).
-        input_key: Keyword argument name the feedback function expects for the
-            prompt text. Defaults to ``"prompt"``.
-        context_key: Optional keyword argument name for a fixed context string.
-            Provide alongside ``context`` to evaluate context-dependent metrics
-            such as ``context_relevance``.
-        context: Fixed context string forwarded to every evaluation call.
+        optimize_key: The keyword argument name in *feedback_fn* that receives
+            the evolving candidate prompt string. Defaults to ``"prompt"``.
+        feedback_args: All other keyword arguments forwarded unchanged to
+            *feedback_fn* on every call (e.g. ``{"context": "..."}`` for
+            ``context_relevance``, or ``{"source": "..."}`` for
+            ``groundedness``).
         app_name: Name of the virtual app used for TruLens logging. Must be
             supplied together with ``app_version``; omit both to disable logging.
         app_version: Version string of the virtual app. Must be supplied
@@ -60,9 +60,8 @@ class TruGEPA:
         self,
         feedback_fn: Callable,
         *,
-        input_key: str = "prompt",
-        context_key: Optional[str] = None,
-        context: Optional[str] = None,
+        optimize_key: str = "prompt",
+        feedback_args: Optional[dict] = None,
         app_name: Optional[str] = None,
         app_version: Optional[str] = None,
     ) -> None:
@@ -73,9 +72,8 @@ class TruGEPA:
             )
 
         self._feedback_fn = feedback_fn
-        self._input_key = input_key
-        self._context_key = context_key
-        self._context = context
+        self._optimize_key = optimize_key
+        self._feedback_args = feedback_args or {}
         self._recorder: Optional[Any] = None
 
         if app_name is not None and app_version is not None:
@@ -96,10 +94,11 @@ class TruGEPA:
         Returns:
             Float fitness score, typically in [0, 1].
         """
-        call_kwargs: dict = {self._input_key: prompt, **kwargs}
-        if self._context_key is not None and self._context is not None:
-            call_kwargs[self._context_key] = self._context
-
+        call_kwargs: dict = {
+            self._optimize_key: prompt,
+            **self._feedback_args,
+            **kwargs,
+        }
         result = self._feedback_fn(**call_kwargs)
 
         # TruLens feedback functions may return (score, metadata) tuples.
