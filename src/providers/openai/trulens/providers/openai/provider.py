@@ -494,13 +494,18 @@ class OpenAI(llm_provider.LLMProvider):
 
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.providers.openai import OpenAI
             openai_provider = OpenAI()
 
-            feedback = Feedback(
-                openai_provider.moderation_hate, higher_is_better=False
-            ).on_output()
+            feedback = Metric(
+                implementation=openai_provider.moderation_hate,
+                name="Moderation Hate",
+                higher_is_better=False,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -518,13 +523,18 @@ class OpenAI(llm_provider.LLMProvider):
 
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.providers.openai import OpenAI
             openai_provider = OpenAI()
 
-            feedback = Feedback(
-                openai_provider.moderation_hatethreatening, higher_is_better=False
-            ).on_output()
+            feedback = Metric(
+                implementation=openai_provider.moderation_hatethreatening,
+                name="Moderation Hate Threatening",
+                higher_is_better=False,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -543,13 +553,18 @@ class OpenAI(llm_provider.LLMProvider):
 
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.providers.openai import OpenAI
             openai_provider = OpenAI()
 
-            feedback = Feedback(
-                openai_provider.moderation_selfharm, higher_is_better=False
-            ).on_output()
+            feedback = Metric(
+                implementation=openai_provider.moderation_selfharm,
+                name="Moderation Self Harm",
+                higher_is_better=False,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -568,13 +583,18 @@ class OpenAI(llm_provider.LLMProvider):
 
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.providers.openai import OpenAI
             openai_provider = OpenAI()
 
-            feedback = Feedback(
-                openai_provider.moderation_sexual, higher_is_better=False
-            ).on_output()
+            feedback = Metric(
+                implementation=openai_provider.moderation_sexual,
+                name="Moderation Sexual",
+                higher_is_better=False,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -593,13 +613,18 @@ class OpenAI(llm_provider.LLMProvider):
 
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.providers.openai import OpenAI
             openai_provider = OpenAI()
 
-            feedback = Feedback(
-                openai_provider.moderation_sexualminors, higher_is_better=False
-            ).on_output()
+            feedback = Metric(
+                implementation=openai_provider.moderation_sexualminors,
+                name="Moderation Sexual Minors",
+                higher_is_better=False,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -619,13 +644,18 @@ class OpenAI(llm_provider.LLMProvider):
 
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.providers.openai import OpenAI
             openai_provider = OpenAI()
 
-            feedback = Feedback(
-                openai_provider.moderation_violence, higher_is_better=False
-            ).on_output()
+            feedback = Metric(
+                implementation=openai_provider.moderation_violence,
+                name="Moderation Violence",
+                higher_is_better=False,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -644,13 +674,18 @@ class OpenAI(llm_provider.LLMProvider):
 
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.providers.openai import OpenAI
             openai_provider = OpenAI()
 
-            feedback = Feedback(
-                openai_provider.moderation_violencegraphic, higher_is_better=False
-            ).on_output()
+            feedback = Metric(
+                implementation=openai_provider.moderation_violencegraphic,
+                name="Moderation Violence Graphic",
+                higher_is_better=False,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -669,13 +704,18 @@ class OpenAI(llm_provider.LLMProvider):
 
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.providers.openai import OpenAI
             openai_provider = OpenAI()
 
-            feedback = Feedback(
-                openai_provider.moderation_harassment, higher_is_better=False
-            ).on_output()
+            feedback = Metric(
+                implementation=openai_provider.moderation_harassment,
+                name="Moderation Harassment",
+                higher_is_better=False,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -693,13 +733,18 @@ class OpenAI(llm_provider.LLMProvider):
 
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.providers.openai import OpenAI
             openai_provider = OpenAI()
 
-            feedback = Feedback(
-                openai_provider.moderation_harassment_threatening, higher_is_better=False
-            ).on_output()
+            feedback = Metric(
+                implementation=openai_provider.moderation_harassment_threatening,
+                name="Moderation Harassment Threatening",
+                higher_is_better=False,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:

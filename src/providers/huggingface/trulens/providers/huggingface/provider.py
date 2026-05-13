@@ -150,11 +150,18 @@ class HuggingfaceBase(core_provider.Provider):
 
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.providers.huggingface import Huggingface
             huggingface_provider = Huggingface()
 
-            feedback = Feedback(huggingface_provider.language_match).on_input_output()
+            feedback = Metric(
+                implementation=huggingface_provider.language_match,
+                name="Language Match",
+                selectors={
+                    "text1": Selector.select_record_input(),
+                    "text2": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -198,16 +205,22 @@ class HuggingfaceBase(core_provider.Provider):
         First the response will be split into statements using a sentence tokenizer.The NLI model will process each statement using a natural language inference model, and will use the entire source.
 
         Example:
-            ```
-            from trulens.core import Feedback
+            ```python
+            from trulens.core import Metric, Selector
             from trulens.providers.huggingface import Huggingface
 
             huggingface_provider = Huggingface()
 
-            f_groundedness = (
-                Feedback(huggingface_provider.groundedness_measure_with_nli)
-                .on(context)
-                .on_output()
+            f_groundedness = Metric(
+                implementation=huggingface_provider.groundedness_measure_with_nli,
+                name="Groundedness",
+                selectors={
+                    "source": Selector.select_context(
+                        collect_list=True
+                    ),
+                    "statement": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -249,16 +262,21 @@ class HuggingfaceBase(core_provider.Provider):
 
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.providers.huggingface import Huggingface
             huggingface_provider = Huggingface()
 
-            feedback = (
-                Feedback(huggingface_provider.context_relevance)
-                .on_input()
-                .on(context)
-                .aggregate(np.mean)
-                )
+            feedback = Metric(
+                implementation=huggingface_provider.context_relevance,
+                name="Context Relevance",
+                selectors={
+                    "prompt": Selector.select_record_input(),
+                    "context": Selector.select_context(
+                        collect_list=False
+                    ),
+                },
+                agg=np.mean,
+            )
             ```
 
         Args:
@@ -283,11 +301,17 @@ class HuggingfaceBase(core_provider.Provider):
 
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.providers.huggingface import Huggingface
             huggingface_provider = Huggingface()
 
-            feedback = Feedback(huggingface_provider.positive_sentiment).on_output()
+            feedback = Metric(
+                implementation=huggingface_provider.positive_sentiment,
+                name="Positive Sentiment",
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -309,11 +333,17 @@ class HuggingfaceBase(core_provider.Provider):
 
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.providers.huggingface import Huggingface
 
             huggingface_provider = Huggingface()
-            feedback = Feedback(huggingface_provider.toxic).on_output()
+            feedback = Metric(
+                implementation=huggingface_provider.toxic,
+                name="Toxic",
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -357,7 +387,13 @@ class HuggingfaceBase(core_provider.Provider):
             hugs = Huggingface()
 
             # Define a pii_detection feedback function using HuggingFace.
-            f_pii_detection = Feedback(hugs.pii_detection).on_input()
+            f_pii_detection = Metric(
+                implementation=hugs.pii_detection,
+                name="PII Detection",
+                selectors={
+                    "text": Selector.select_record_input(),
+                },
+            )
             ```
 
         Args:
@@ -396,7 +432,13 @@ class HuggingfaceBase(core_provider.Provider):
             hugs = Huggingface()
 
             # Define a pii_detection feedback function using HuggingFace.
-            f_pii_detection = Feedback(hugs.pii_detection).on_input()
+            f_pii_detection = Metric(
+                implementation=hugs.pii_detection,
+                name="PII Detection",
+                selectors={
+                    "text": Selector.select_record_input(),
+                },
+            )
             ```
 
             Args:
