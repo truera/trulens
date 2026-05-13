@@ -15,15 +15,17 @@ logger = logging.getLogger(__name__)
 
 
 @contextmanager
-def _guardrail_span(name: str, threshold: float, score: float, passed: bool):
-    """Context manager that emits a GUARDRAIL span with standard attributes."""
+def _guardrail_span(name: str, threshold: float):
+    """Context manager that emits a GUARDRAIL span with standard attributes.
+
+    Yields the span so callers can set SCORE and PASSED after computing them,
+    ensuring the span duration covers the actual feedback evaluation work.
+    """
     tracer = otel_trace.get_tracer_provider().get_tracer(TRULENS_SERVICE_NAME)
     with tracer.start_as_current_span(name) as span:
         set_general_span_attributes(span, SpanAttributes.SpanType.GUARDRAIL)
         span.set_attribute(SpanAttributes.GUARDRAIL.NAME, name)
         span.set_attribute(SpanAttributes.GUARDRAIL.THRESHOLD, threshold)
-        span.set_attribute(SpanAttributes.GUARDRAIL.SCORE, score)
-        span.set_attribute(SpanAttributes.GUARDRAIL.PASSED, passed)
         yield span
 
 
@@ -115,8 +117,9 @@ class context_filter:
                 for future in as_completed(future_to_context):
                     context = future_to_context[future]
                     result, passed = future.result()
-                    with _guardrail_span(guardrail_name, self.threshold, result, passed):
-                        pass
+                    with _guardrail_span(guardrail_name, self.threshold) as span:
+                        span.set_attribute(SpanAttributes.GUARDRAIL.SCORE, result)
+                        span.set_attribute(SpanAttributes.GUARDRAIL.PASSED, passed)
                     if passed:
                         filtered.append(context)
                 return filtered
@@ -202,17 +205,17 @@ class block_input:
             keyword_value = bindings.arguments[self.keyword_for_prompt]
             guardrail_name = getattr(self.feedback, "name", func.__name__)
 
-            result = self.feedback(keyword_value)
-            if not isinstance(result, float):
-                raise ValueError(
-                    "`block_input` can only be used with feedback functions that return a float."
-                )
-            blocked = (
-                self.feedback.higher_is_better and result < self.threshold
-            ) or (not self.feedback.higher_is_better and result > self.threshold)
-
-            with _guardrail_span(guardrail_name, self.threshold, result, not blocked):
-                pass
+            with _guardrail_span(guardrail_name, self.threshold) as span:
+                result = self.feedback(keyword_value)
+                if not isinstance(result, float):
+                    raise ValueError(
+                        "`block_input` can only be used with feedback functions that return a float."
+                    )
+                blocked = (
+                    self.feedback.higher_is_better and result < self.threshold
+                ) or (not self.feedback.higher_is_better and result > self.threshold)
+                span.set_attribute(SpanAttributes.GUARDRAIL.SCORE, result)
+                span.set_attribute(SpanAttributes.GUARDRAIL.PASSED, not blocked)
 
             if blocked:
                 return self.return_value
@@ -284,17 +287,17 @@ class block_output:
             # the feedback evaluation so its duration reflects the check, not
             # the application logic.
             output = func(*args, **kwargs)
-            result = self.feedback(output)
-            if not isinstance(result, float):
-                raise ValueError(
-                    "`block_output` can only be used with feedback functions that return a float."
-                )
-            blocked = (
-                self.feedback.higher_is_better and result < self.threshold
-            ) or (not self.feedback.higher_is_better and result > self.threshold)
-
-            with _guardrail_span(guardrail_name, self.threshold, result, not blocked):
-                pass
+            with _guardrail_span(guardrail_name, self.threshold) as span:
+                result = self.feedback(output)
+                if not isinstance(result, float):
+                    raise ValueError(
+                        "`block_output` can only be used with feedback functions that return a float."
+                    )
+                blocked = (
+                    self.feedback.higher_is_better and result < self.threshold
+                ) or (not self.feedback.higher_is_better and result > self.threshold)
+                span.set_attribute(SpanAttributes.GUARDRAIL.SCORE, result)
+                span.set_attribute(SpanAttributes.GUARDRAIL.PASSED, not blocked)
 
             if blocked:
                 return self.return_value
