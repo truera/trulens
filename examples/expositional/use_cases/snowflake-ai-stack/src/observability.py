@@ -1,6 +1,5 @@
 from trulens.core import TruSession
-from trulens.core import Feedback
-from trulens.core.feedback.selector import Selector
+from trulens.core import Metric, Selector
 from trulens.feedback.llm_provider import LLMProvider
 from trulens.providers.openai import OpenAI
 from trulens.otel.semconv.trace import SpanAttributes
@@ -22,10 +21,10 @@ def create_evals(provider: LLMProvider = None):
 
     # Define a groundedness feedback function
     f_groundedness = (
-        Feedback(
-            provider.groundedness_measure_with_cot_reasons, name="Groundedness"
-        )
-        .on({
+        Metric(
+    implementation=provider.groundedness_measure_with_cot_reasons,
+    name="Groundedness",
+).on({
             "source": Selector(
                 span_type=SpanAttributes.SpanType.RETRIEVAL,
                 span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
@@ -35,10 +34,14 @@ def create_evals(provider: LLMProvider = None):
     )
     # Question/answer relevance between overall question and answer.
     f_answer_relevance = (
-        Feedback(provider.relevance_with_cot_reasons, name="Answer Relevance")
-        .on_input()
-        .on_output()
-    )
+        Metric(
+    implementation=provider.relevance_with_cot_reasons,
+    name="Answer Relevance",
+    selectors={
+        "prompt": Selector.select_record_input(),
+        "response": Selector.select_record_output(),
+    },
+))
 
     context_relevance_custom_criteria = """
     When the question plausibly requires multiple different sources to answer, score context relevance based on the following criteria:
@@ -50,11 +53,11 @@ def create_evals(provider: LLMProvider = None):
 
     # Context relevance between question and each context chunk.
     f_context_relevance = (
-        Feedback(
-            provider.context_relevance, name="Context Relevance",
-            criteria = context_relevance_custom_criteria,
-        )
-        .on({
+        Metric(
+    implementation=provider.context_relevance,
+    name="Context Relevance",
+            criteria = context_relevance_custom_criteria,,
+).on({
             "question": Selector(
                 span_type=SpanAttributes.SpanType.RETRIEVAL,
                 span_attribute=SpanAttributes.RETRIEVAL.QUERY_TEXT,

@@ -71,16 +71,16 @@ hugs = huggingface_provider.Huggingface()
 openai = openai_provider.OpenAI(client=openai.OpenAI())
 
 # Language match between question/answer.
-f_lang_match = core_feedback.Feedback(hugs.language_match).on_input_output()
+f_lang_match = core_feedback.Metric(hugs.language_match).on_input_output()
 # By default this will evaluate feedback on main app input and main app output.
 
 # Question/answer relevance between overall question and answer.
-f_qa_relevance = core_feedback.Feedback(openai.relevance).on_input_output()
+f_qa_relevance = core_feedback.Metric(openai.relevance).on_input_output()
 # By default this will evaluate feedback on main app input and main app output.
 
 # Question/statement relevance between question and each context chunk.
 f_context_relevance = (
-    core_feedback.Feedback(openai.context_relevance)
+    core_feedback.Metric(openai.context_relevance)
     .on_input()
     .on(
         select_schema.Select.Record.app.combine_docs_chain._call.args.inputs.input_documents[
