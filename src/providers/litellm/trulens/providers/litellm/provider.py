@@ -101,10 +101,10 @@ class LiteLLM(llm_provider.LLMProvider):
             forwarded to ``completion_kwargs``.
     """
 
-    DEFAULT_MODEL_ENGINE: ClassVar[str] = "gpt-3.5-turbo"
+    DEFAULT_MODEL_ENGINE: ClassVar[str] = "gpt-4o-mini"
 
     model_engine: str
-    """The LiteLLM completion model. Defaults to `gpt-3.5-turbo`."""
+    """The LiteLLM completion model. Defaults to `gpt-4o-mini`."""
 
     completion_args: Dict[str, str] = pydantic.Field(default_factory=dict)
     """Additional arguments to pass to the `litellm.completion` as needed for chosen api."""

@@ -591,7 +591,7 @@ class GroundTruthAgreement(
             ]
 
             bedrock = Bedrock(
-                model_id="amazon.titan-text-express-v1", region_name="us-east-1"
+                model_id="amazon.nova-lite-v1:0", region_name="us-east-1"
             )
             ground_truth_collection = GroundTruthAgreement(golden_set, provider=bedrock)
 

@@ -14,7 +14,7 @@ class Bedrock(llm_provider.LLMProvider):
 
     Args:
         model_id: The specific model id. Defaults to
-            "amazon.titan-text-express-v1".
+            "amazon.nova-lite-v1:0".
 
         *args: args passed to BedrockEndpoint and subsequently to boto3 client
             constructor.
@@ -23,7 +23,7 @@ class Bedrock(llm_provider.LLMProvider):
             client constructor.
     """
 
-    DEFAULT_MODEL_ID: ClassVar[str] = "amazon.titan-text-express-v1"
+    DEFAULT_MODEL_ID: ClassVar[str] = "amazon.nova-lite-v1:0"
 
     # LLMProvider requirement which we do not use:
     model_engine: str = "Bedrock"
@@ -36,7 +36,6 @@ class Bedrock(llm_provider.LLMProvider):
         *args: Any,
         model_id: Optional[str] = None,
         **kwargs: Any,
-        # self, *args, model_id: str = "amazon.titan-text-express-v1", **kwargs
     ):
         if model_id is None:
             model_id = self.DEFAULT_MODEL_ID
