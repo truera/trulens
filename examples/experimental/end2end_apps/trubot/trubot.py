@@ -1,7 +1,6 @@
 import logging
 import os
 from pprint import PrettyPrinter
-from typing import Dict, Set, Tuple
 
 from langchain.chains import ConversationalRetrievalChain
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -47,11 +46,11 @@ pinecone.init(
 
 # Cache of conversations. Keys are SlackAPI conversation ids (channel ids or
 # otherwise) and values are TruChain to handle that conversation.
-convos: Dict[str, mod_tru_chain.TruChain] = dict()
+convos: dict[str, mod_tru_chain.TruChain] = dict()
 
 # Keep track of timestamps of messages already handled. Sometimes the same
 # message gets received more than once if there is a network hickup.
-handled_ts: Set[Tuple[str, str]] = set()
+handled_ts: set[tuple[str, str]] = set()
 
 # DB to save models and records.
 session = core_session.TruSession()
@@ -71,23 +70,35 @@ hugs = huggingface_provider.Huggingface()
 openai = openai_provider.OpenAI(client=openai.OpenAI())
 
 # Language match between question/answer.
-f_lang_match = core_feedback.Metric(hugs.language_match).on_input_output()
+f_lang_match = core_feedback.Metric(
+    implementation=hugs.language_match,
+    selectors={
+        "text1": select_schema.Select.RecordInput,
+        "text2": select_schema.Select.RecordOutput,
+    },
+)
 # By default this will evaluate feedback on main app input and main app output.
 
 # Question/answer relevance between overall question and answer.
-f_qa_relevance = core_feedback.Metric(openai.relevance).on_input_output()
+f_qa_relevance = core_feedback.Metric(
+    implementation=openai.relevance,
+    selectors={
+        "prompt": select_schema.Select.RecordInput,
+        "response": select_schema.Select.RecordOutput,
+    },
+)
 # By default this will evaluate feedback on main app input and main app output.
 
 # Question/statement relevance between question and each context chunk.
-f_context_relevance = (
-    core_feedback.Metric(openai.context_relevance)
-    .on_input()
-    .on(
-        select_schema.Select.Record.app.combine_docs_chain._call.args.inputs.input_documents[
+f_context_relevance = core_feedback.Metric(
+    implementation=openai.context_relevance,
+    selectors={
+        "question": select_schema.Select.RecordInput,
+        "statement": select_schema.Select.Record.app.combine_docs_chain._call.args.inputs.input_documents[
             :
-        ].page_content
-    )
-    .aggregate(np.min)
+        ].page_content,
+    },
+    agg=np.min,
 )
 # First feedback argument is set to main app input, and the second is taken from
 # the context sources as passed to an internal `combine_docs_chain._call`.
@@ -209,7 +220,7 @@ def get_or_make_app(
     return tc
 
 
-def get_answer(app: mod_tru_chain.TruChain, question: str) -> Tuple[str, str]:
+def get_answer(app: mod_tru_chain.TruChain, question: str) -> tuple[str, str]:
     """
     Use the given `app` to respond to `question`. Return the answer text and
     sources elaboration text.
