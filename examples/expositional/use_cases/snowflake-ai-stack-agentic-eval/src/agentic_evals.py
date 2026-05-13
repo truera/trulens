@@ -213,14 +213,15 @@ class CustomTrajEval(OpenAI):
         return self.generate_score_and_reasons(system_prompt=system_prompt, user_prompt=user_prompt, min_score_val = 0, max_score_val = 3)
 
 def create_traj_eval(provider) -> Metric:
-    return Metric(
-        implementation=provider.traj_execution_with_cot_reasons,
-        name="Trajectory Evaluation",
-        selectors={
+    return (
+        Metric(
+    implementation=provider.traj_execution_with_cot_reasons,
+    name="Trajectory Evaluation",
+).on({
             "trace": Selector(
                 span_type="ORCHESTRATOR_NODE",
                 span_attribute=f"{BASE_SCOPE}.execution_trace",
                 collect_list=True,
             ),
-        },
+        })
     )

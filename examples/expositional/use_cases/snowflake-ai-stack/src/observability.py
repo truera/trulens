@@ -20,26 +20,28 @@ def create_evals(provider: LLMProvider = None):
         provider = OpenAI(model_engine="gpt-4.1", api_key=os.environ.get("OPENAI_API_KEY"))
 
     # Define a groundedness feedback function
-    f_groundedness = Metric(
-        implementation=provider.groundedness_measure_with_cot_reasons,
-        name="Groundedness",
-        selectors={
+    f_groundedness = (
+        Metric(
+    implementation=provider.groundedness_measure_with_cot_reasons,
+    name="Groundedness",
+).on({
             "source": Selector(
                 span_type=SpanAttributes.SpanType.RETRIEVAL,
                 span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
             ),
-            "response": Selector.select_record_output(),
-        },
+        })
+        .on_output()
     )
     # Question/answer relevance between overall question and answer.
-    f_answer_relevance = Metric(
-        implementation=provider.relevance_with_cot_reasons,
-        name="Answer Relevance",
-        selectors={
-            "prompt": Selector.select_record_input(),
-            "response": Selector.select_record_output(),
-        },
-    )
+    f_answer_relevance = (
+        Metric(
+    implementation=provider.relevance_with_cot_reasons,
+    name="Answer Relevance",
+    selectors={
+        "prompt": Selector.select_record_input(),
+        "response": Selector.select_record_output(),
+    },
+))
 
     context_relevance_custom_criteria = """
     When the question plausibly requires multiple different sources to answer, score context relevance based on the following criteria:
@@ -50,21 +52,24 @@ def create_evals(provider: LLMProvider = None):
     """
 
     # Context relevance between question and each context chunk.
-    f_context_relevance = Metric(
-        implementation=provider.context_relevance,
-        name="Context Relevance",
-        criteria=context_relevance_custom_criteria,
-        selectors={
+    f_context_relevance = (
+        Metric(
+    implementation=provider.context_relevance,
+    name="Context Relevance",
+            criteria = context_relevance_custom_criteria,,
+).on({
             "question": Selector(
                 span_type=SpanAttributes.SpanType.RETRIEVAL,
                 span_attribute=SpanAttributes.RETRIEVAL.QUERY_TEXT,
             ),
+        })
+        .on({
             "context": Selector(
                 span_type=SpanAttributes.SpanType.RETRIEVAL,
                 span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
             ),
-        },
-        agg=np.mean,
+        })
+        .aggregate(np.mean)  # choose a different aggregation method if you wish
     )
 
     return [f_context_relevance, f_groundedness, f_answer_relevance]
