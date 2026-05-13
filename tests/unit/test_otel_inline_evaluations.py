@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 from trulens.apps.app import TruApp
-from trulens.core.feedback import Feedback
+from trulens.core import Metric
 from trulens.core.feedback.selector import Selector
 from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
@@ -38,9 +38,10 @@ class TestOtelInlineEvaluations(OtelTestCase):
                 return 0.42
             return 0.0
 
-        feedback_func = Feedback(simple_feedback).on({
-            "text": Selector(span_attribute="test_output")
-        })
+        feedback_func = Metric(
+            implementation=simple_feedback,
+            selectors={"text": Selector(span_attribute="test_output")},
+        )
 
         # Create a simple langgraph app.
         @inline_evaluation(feedback_func, emit_spans=emit_spans)
@@ -137,9 +138,11 @@ class TestOtelInlineEvaluations(OtelTestCase):
         def simple_feedback(text: str) -> float:
             return 0.25
 
-        feedback_func = Feedback(simple_feedback, higher_is_better=False).on({
-            "text": Selector(span_attribute="test_output")
-        })
+        feedback_func = Metric(
+            implementation=simple_feedback,
+            higher_is_better=False,
+            selectors={"text": Selector(span_attribute="test_output")},
+        )
 
         @inline_evaluation(feedback_func, emit_spans=False)
         @instrument(
@@ -178,9 +181,10 @@ class TestOtelInlineEvaluations(OtelTestCase):
         def simple_feedback(text: str) -> float:
             return 0.5
 
-        feedback_func = Feedback(simple_feedback).on({
-            "text": Selector(span_attribute="test_output")
-        })
+        feedback_func = Metric(
+            implementation=simple_feedback,
+            selectors={"text": Selector(span_attribute="test_output")},
+        )
 
         @inline_evaluation(feedback_func, emit_spans=False)
         @instrument(

@@ -81,7 +81,9 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
     def test_local_deferred_mode(self) -> None:
         session = core_session.TruSession()
         session.reset_database()
-        f = core_feedback.Feedback(silly_feedback_function).on_default()
+        f = core_feedback.Metric(
+            implementation=silly_feedback_function
+        ).on_default()
         tru_app = TruBasicApp(
             text_to_text=lambda t: f"returning {t}",
             feedbacks=[f],
@@ -110,7 +112,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
     def test_snowflake_deferred_mode(self) -> None:
         session = self.get_session("test_snowflake_deferred_mode")
         self._suspend_task()
-        f_local = core_feedback.Feedback(silly_feedback_function).on_default()
+        f_local = core_feedback.Metric(silly_feedback_function).on_default()
         f_snowflake = self._get_cortex_relevance_feedback_function()
         tru_app = TruBasicApp(
             text_to_text=lambda _: "Tokyo is the capital of Japan.",
@@ -152,7 +154,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
     def test_snowflake_feedback_is_always_deferred(self) -> None:
         session = self.get_session("test_snowflake_feedback_is_always_deferred")
         self._suspend_task()
-        f_local = core_feedback.Feedback(silly_feedback_function).on_default()
+        f_local = core_feedback.Metric(silly_feedback_function).on_default()
         f_snowflake = self._get_cortex_relevance_feedback_function()
         tru_app = TruBasicApp(
             text_to_text=lambda _: "Tokyo is the capital of Japan.",

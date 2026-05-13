@@ -15,6 +15,7 @@ from trulens.apps import custom as custom_app
 from trulens.apps import virtual as virtual_app
 from trulens.core import session as core_session
 from trulens.core.feedback import feedback as core_feedback
+from trulens.core.metric import metric as core_metric
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.utils import keys as key_utils
 from trulens.providers.huggingface import provider as huggingface_provider
@@ -111,16 +112,16 @@ class TestTru(TestCase):
             alloc=1024,  # how much fake data to allocate during requests
         )
 
-        f_dummy1 = core_feedback.Feedback(
-            provider.language_match, name="language match"
+        f_dummy1 = core_metric.Metric(
+            implementation=provider.language_match, name="language match"
         ).on_input_output()
 
-        f_dummy2 = core_feedback.Feedback(
-            provider.positive_sentiment, name="output sentiment"
+        f_dummy2 = core_metric.Metric(
+            implementation=provider.positive_sentiment, name="output sentiment"
         ).on_output()
 
-        f_dummy3 = core_feedback.Feedback(
-            provider.positive_sentiment, name="input sentiment"
+        f_dummy3 = core_metric.Metric(
+            implementation=provider.positive_sentiment, name="input sentiment"
         ).on_input()
 
         return [f_dummy1, f_dummy2, f_dummy3]
@@ -455,8 +456,8 @@ class TestTru(TestCase):
 
     def test_start_evaluator_with_blocking(self):
         session = core_session.TruSession()
-        f = core_feedback.Feedback(
-            feedback_tests.custom_feedback_function
+        f = core_metric.Metric(
+            implementation=feedback_tests.custom_feedback_function
         ).on_default()
         app_name = f"test_start_evaluator_with_blocking_{str(uuid.uuid4())}"
         tru_app = basic_app.TruBasicApp(
