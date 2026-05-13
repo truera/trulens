@@ -117,7 +117,6 @@ from trulens.apps.llamaindex.guardrails import WithFeedbackFilterNodes
 # Use context_relevance to filter nodes
 feedback = Metric(implementation=provider.context_relevance)
 
-filtered_retriever = WithFeedbackFilterNodes(
 filtered_query_engine = WithFeedbackFilterNodes(
     query_engine=base_query_engine,
     feedback=feedback,
