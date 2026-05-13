@@ -1,6 +1,5 @@
 from trulens.core import TruSession
-from trulens.core import Feedback
-from trulens.core.feedback.selector import Selector
+from trulens.core import Metric, Selector
 from trulens.feedback.llm_provider import LLMProvider
 from trulens.providers.openai import OpenAI
 from trulens.otel.semconv.trace import SpanAttributes
@@ -21,23 +20,25 @@ def create_evals(provider: LLMProvider = None):
         provider = OpenAI(model_engine="gpt-4.1", api_key=os.environ.get("OPENAI_API_KEY"))
 
     # Define a groundedness feedback function
-    f_groundedness = (
-        Feedback(
-            provider.groundedness_measure_with_cot_reasons, name="Groundedness"
-        )
-        .on({
+    f_groundedness = Metric(
+        implementation=provider.groundedness_measure_with_cot_reasons,
+        name="Groundedness",
+        selectors={
             "source": Selector(
                 span_type=SpanAttributes.SpanType.RETRIEVAL,
                 span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
             ),
-        })
-        .on_output()
+            "response": Selector.select_record_output(),
+        },
     )
     # Question/answer relevance between overall question and answer.
-    f_answer_relevance = (
-        Feedback(provider.relevance_with_cot_reasons, name="Answer Relevance")
-        .on_input()
-        .on_output()
+    f_answer_relevance = Metric(
+        implementation=provider.relevance_with_cot_reasons,
+        name="Answer Relevance",
+        selectors={
+            "prompt": Selector.select_record_input(),
+            "response": Selector.select_record_output(),
+        },
     )
 
     context_relevance_custom_criteria = """
@@ -49,24 +50,21 @@ def create_evals(provider: LLMProvider = None):
     """
 
     # Context relevance between question and each context chunk.
-    f_context_relevance = (
-        Feedback(
-            provider.context_relevance, name="Context Relevance",
-            criteria = context_relevance_custom_criteria,
-        )
-        .on({
+    f_context_relevance = Metric(
+        implementation=provider.context_relevance,
+        name="Context Relevance",
+        criteria=context_relevance_custom_criteria,
+        selectors={
             "question": Selector(
                 span_type=SpanAttributes.SpanType.RETRIEVAL,
                 span_attribute=SpanAttributes.RETRIEVAL.QUERY_TEXT,
             ),
-        })
-        .on({
             "context": Selector(
                 span_type=SpanAttributes.SpanType.RETRIEVAL,
                 span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
             ),
-        })
-        .aggregate(np.mean)  # choose a different aggregation method if you wish
+        },
+        agg=np.mean,
     )
 
     return [f_context_relevance, f_groundedness, f_answer_relevance]
