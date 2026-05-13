@@ -27,8 +27,11 @@ context_relevance_custom_criteria = """
 f_context_relevance_score = Metric(
     implementation=provider.context_relevance,
     name="Context Relevance",
-    criteria = context_relevance_custom_criteria,,
-)class Rag:
+    criteria=context_relevance_custom_criteria,
+)
+
+
+class Rag:
     def __init__(self, chat_model: ChatModel, vector_store: VectorStore, use_context_filter: int):
         self.chat_model = chat_model
         self.vector_store = vector_store
