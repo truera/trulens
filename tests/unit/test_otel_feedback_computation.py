@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from trulens.apps.app import TruApp
-from trulens.core.feedback import Feedback
+from trulens.core import Metric
 from trulens.core.feedback.feedback_function_input import FeedbackFunctionInput
 from trulens.core.feedback.selector import Selector
 from trulens.core.feedback.selector import Trace
@@ -136,8 +136,10 @@ class TestOtelFeedbackComputation(OtelTestCase):
         events = self._get_events()
         spans = _convert_events_to_MinimalSpanInfos(events)
         record_root = RecordGraphNode.build_graph(spans)
-        f_baby = Feedback(
-            feedback_function, name="baby_grader", higher_is_better=True
+        f_baby = Metric(
+            implementation=feedback_function,
+            name="baby_grader",
+            higher_is_better=True,
         )
         _compute_feedback(
             record_root,
@@ -175,8 +177,8 @@ class TestOtelFeedbackComputation(OtelTestCase):
         )
         # Case 1. Two attributes from one function that has multiple (three)
         #         invocations.
-        f1 = Feedback(
-            lambda a1, b1: 0.9 if a1 == b1 else 0.1,
+        f1 = Metric(
+            implementation=lambda a1, b1: 0.9 if a1 == b1 else 0.1,
             name="blah1",
             higher_is_better=True,
         )
@@ -186,8 +188,8 @@ class TestOtelFeedbackComputation(OtelTestCase):
             selectors={"a1": get_selector("a1"), "b1": get_selector("b1")},
         )
         # Case 2. Attributes across functions with span groups.
-        f2 = Feedback(
-            lambda a2, a0: 0.9 if 2 * a2 == a0 else 0.1,
+        f2 = Metric(
+            implementation=lambda a2, a0: 0.9 if 2 * a2 == a0 else 0.1,
             name="blah2",
             higher_is_better=True,
         )
@@ -199,8 +201,8 @@ class TestOtelFeedbackComputation(OtelTestCase):
         # Case 3. Attributes across functions with span groups where one
         #         function is invoked once and the other multiple (three)
         #         times.
-        f3 = Feedback(
-            lambda a3, a0: 0.9 if 3 * a3 == a0 else 0.1,
+        f3 = Metric(
+            implementation=lambda a3, a0: 0.9 if 3 * a3 == a0 else 0.1,
             name="blah3",
             higher_is_better=True,
         )
@@ -215,8 +217,8 @@ class TestOtelFeedbackComputation(OtelTestCase):
             ValueError,
             "^No feedbacks were computed!$",
         ):
-            f4 = Feedback(
-                lambda a4, a0: 0.9 if 4 * a4 == a0 else 0.1,
+            f4 = Metric(
+                implementation=lambda a4, a0: 0.9 if 4 * a4 == a0 else 0.1,
                 name="blah4",
                 higher_is_better=True,
             )
@@ -432,18 +434,21 @@ class TestOtelFeedbackComputation(OtelTestCase):
                 return 0.42
             return 0.0
 
-        f_custom = Feedback(
-            custom, name="custom", higher_is_better=higher_is_better
-        ).on({
-            "input": Selector(
-                span_type=SpanAttributes.SpanType.RECORD_ROOT,
-                span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
-            ),
-            "output": Selector(
-                span_type=SpanAttributes.SpanType.RECORD_ROOT,
-                span_attribute=SpanAttributes.RECORD_ROOT.OUTPUT,
-            ),
-        })
+        f_custom = Metric(
+            implementation=custom,
+            name="custom",
+            higher_is_better=higher_is_better,
+            selectors={
+                "input": Selector(
+                    span_type=SpanAttributes.SpanType.RECORD_ROOT,
+                    span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
+                ),
+                "output": Selector(
+                    span_type=SpanAttributes.SpanType.RECORD_ROOT,
+                    span_attribute=SpanAttributes.RECORD_ROOT.OUTPUT,
+                ),
+            },
+        )
 
         # Create app.
         rag_chain = (
@@ -576,17 +581,21 @@ class TestOtelFeedbackComputation(OtelTestCase):
                     return -7
             return 0.21
 
-        f_custom = Feedback(custom, name="custom").on({
-            "trace": Selector(
-                trace_level=True,
-                span_type=SpanAttributes.SpanType.RETRIEVAL,
-                span_attributes_processor=lambda attr: attr[
-                    SpanAttributes.CALL.FUNCTION
-                ]
-                .split(".")[-1]
-                .upper(),
-            )
-        })
+        f_custom = Metric(
+            implementation=custom,
+            name="custom",
+            selectors={
+                "trace": Selector(
+                    trace_level=True,
+                    span_type=SpanAttributes.SpanType.RETRIEVAL,
+                    span_attributes_processor=lambda attr: attr[
+                        SpanAttributes.CALL.FUNCTION
+                    ]
+                    .split(".")[-1]
+                    .upper(),
+                ),
+            },
+        )
 
         # Create app.
         class _App:
@@ -672,18 +681,22 @@ class TestOtelFeedbackComputation(OtelTestCase):
         def custom_with_explanations(a: float, b: float) -> Tuple[float, dict]:
             return a * b, {"explanation": f"{a} * {b}"}
 
-        f_custom = Feedback(custom_with_explanations, name="custom").on({
-            "a": Selector(
-                span_type=SpanAttributes.SpanType.RECORD_ROOT,
-                function_attribute="xs",
-                collect_list=False,
-            ),
-            "b": Selector(
-                span_type=SpanAttributes.SpanType.RECORD_ROOT,
-                function_attribute="ys",
-                collect_list=False,
-            ),
-        })
+        f_custom = Metric(
+            implementation=custom_with_explanations,
+            name="custom",
+            selectors={
+                "a": Selector(
+                    span_type=SpanAttributes.SpanType.RECORD_ROOT,
+                    function_attribute="xs",
+                    collect_list=False,
+                ),
+                "b": Selector(
+                    span_type=SpanAttributes.SpanType.RECORD_ROOT,
+                    function_attribute="ys",
+                    collect_list=False,
+                ),
+            },
+        )
 
         # Create app.
         class _App:
@@ -768,14 +781,17 @@ class TestOtelFeedbackComputation(OtelTestCase):
                 return 1.0
             return 0.0
 
-        f_best_baby_checker = Feedback(
-            best_baby_checker, name="best_baby_checker", higher_is_better=True
-        ).on({
-            "input": Selector(
-                span_type=SpanAttributes.SpanType.RECORD_ROOT,
-                span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
-            )
-        })
+        f_best_baby_checker = Metric(
+            implementation=best_baby_checker,
+            name="best_baby_checker",
+            higher_is_better=True,
+            selectors={
+                "input": Selector(
+                    span_type=SpanAttributes.SpanType.RECORD_ROOT,
+                    span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
+                ),
+            },
+        )
         # Compute feedbacks on events.
         events = TruSession().get_events(app_name=None, app_version=None)
         self.assertEqual(2, len(events))

@@ -574,10 +574,10 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             events
         )
         record_root = RecordGraphNode.build_graph(spans)
-        from trulens.core.feedback import Feedback
+        from trulens.core import Metric
 
-        f_gen = Feedback(
-            feedback_function,
+        f_gen = Metric(
+            implementation=feedback_function,
             name=self.GEN_FEEDBACK_NAME,
             higher_is_better=True,
         )
@@ -687,10 +687,10 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             )
 
             # Compute feedback which should record cost attributes on EVAL_ROOT
-            from trulens.core.feedback import Feedback
+            from trulens.core import Metric
 
-            f_gen = Feedback(
-                feedback_function,
+            f_gen = Metric(
+                implementation=feedback_function,
                 name=self.GEN_FEEDBACK_NAME,
                 higher_is_better=True,
             )

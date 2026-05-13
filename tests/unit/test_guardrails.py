@@ -1,7 +1,7 @@
 import unittest
 
+from trulens.core import Metric
 from trulens.core import Provider
-from trulens.core.feedback import Feedback
 from trulens.core.guardrails.base import block_input
 from trulens.core.guardrails.base import block_output
 from trulens.core.guardrails.base import context_filter
@@ -35,13 +35,15 @@ class DummyProvider(Provider):
 
 dummy_provider = DummyProvider()
 
-f_dummy_feedback_low = Feedback(dummy_provider.dummy_feedback_low)
-f_dummy_feedback_high = Feedback(dummy_provider.dummy_feedback_high)
-f_dummy_context_relevance_low = Feedback(
-    dummy_provider.dummy_context_relevance_low
+f_dummy_feedback_low = Metric(implementation=dummy_provider.dummy_feedback_low)
+f_dummy_feedback_high = Metric(
+    implementation=dummy_provider.dummy_feedback_high
 )
-f_dummy_context_relevance_high = Feedback(
-    dummy_provider.dummy_context_relevance_high
+f_dummy_context_relevance_low = Metric(
+    implementation=dummy_provider.dummy_context_relevance_low
+)
+f_dummy_context_relevance_high = Metric(
+    implementation=dummy_provider.dummy_context_relevance_high
 )
 
 

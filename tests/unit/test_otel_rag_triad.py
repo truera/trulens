@@ -3,7 +3,8 @@ from typing import List
 import numpy as np
 import pytest
 from trulens.apps.app import TruApp
-from trulens.core.feedback import Feedback
+from trulens.core import Metric
+from trulens.core.feedback.selector import Selector
 from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
 from trulens.otel.semconv.trace import SpanAttributes
@@ -56,21 +57,30 @@ class TestOtelRagTriad(OtelTestCase):
             return mock_context_relevance_results.pop(0)
 
         # Create Feedbacks.
-        f_groundedness = (
-            Feedback(mock_groundedness, name="Groundedness")
-            .on_context(collect_list=True)
-            .on_output()
+        f_groundedness = Metric(
+            implementation=mock_groundedness,
+            name="Groundedness",
+            selectors={
+                "source": Selector.select_context(collect_list=True),
+                "statement": Selector.select_record_output(),
+            },
         )
-        f_answer_relevance = (
-            Feedback(mock_answer_relevance, name="Answer Relevance")
-            .on_input()
-            .on_output()
+        f_answer_relevance = Metric(
+            implementation=mock_answer_relevance,
+            name="Answer Relevance",
+            selectors={
+                "prompt": Selector.select_record_input(),
+                "response": Selector.select_record_output(),
+            },
         )
-        f_context_relevance = (
-            Feedback(mock_context_relevance, name="Context Relevance")
-            .on_input()
-            .on_context(collect_list=False)
-            .aggregate(np.mean)
+        f_context_relevance = Metric(
+            implementation=mock_context_relevance,
+            name="Context Relevance",
+            agg=np.mean,
+            selectors={
+                "question": Selector.select_record_input(),
+                "context": Selector.select_context(collect_list=False),
+            },
         )
         # Create app.
         app = _RAGApp()
