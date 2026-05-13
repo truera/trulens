@@ -37,9 +37,8 @@ from trulens.core.database import exceptions as db_exceptions
 from trulens.core.database import migrations as db_migrations
 from trulens.core.database import sqlalchemy as sqlalchemy_db
 from trulens.core.database import utils as db_utils
-from trulens.core.feedback import feedback as core_feedback
-from trulens.core.metric import metric as core_metric
 from trulens.core.feedback import provider as core_provider
+from trulens.core.metric import metric as core_metric
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import select as select_schema
 

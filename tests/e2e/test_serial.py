@@ -16,7 +16,6 @@ are expected.
 from pathlib import Path
 
 from trulens.apps import custom as custom_app
-from trulens.core.feedback import feedback as core_feedback
 from trulens.core.metric import metric as core_metric
 from trulens.feedback.dummy import provider as dummy_provider
 from trulens.providers.huggingface import provider as huggingface_provider

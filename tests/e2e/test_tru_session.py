@@ -14,7 +14,6 @@ from trulens.apps import basic as basic_app
 from trulens.apps import custom as custom_app
 from trulens.apps import virtual as virtual_app
 from trulens.core import session as core_session
-from trulens.core.feedback import feedback as core_feedback
 from trulens.core.metric import metric as core_metric
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.utils import keys as key_utils
