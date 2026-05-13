@@ -24,14 +24,14 @@ class Cortex(
     # https://docs.snowflake.com/en/user-guide/snowflake-cortex/llm-functions#availability
 
     DEFAULT_SNOWPARK_SESSION: Optional[Session] = None
-    DEFAULT_MODEL_ENGINE: ClassVar[str] = "llama3.1-8b"
+    DEFAULT_MODEL_ENGINE: ClassVar[str] = "llama3.3-70b"
 
     model_engine: str
     endpoint: cortex_endpoint.CortexEndpoint
     snowpark_session: Session
     retry_timeout: Optional[float]
 
-    """Snowflake's Cortex COMPLETE endpoint. Defaults to `llama3.1-8b`.
+    """Snowflake's Cortex COMPLETE endpoint. Defaults to `llama3.3-70b`.
 
     Reference: https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex
 
