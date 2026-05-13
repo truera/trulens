@@ -57,26 +57,21 @@ In this example, we can define a feedback function that accepts the `research_no
 !!! example
 
     ```python
-    f_context_relevance = (
-        Feedback(
-            provider.context_relevance_with_cot_reasons, name="Inline Context Relevance"
-        )
-        .on({
-                "question": Selector(
-                    span_type=SpanAttributes.SpanType.RETRIEVAL,
-                    span_attribute=SpanAttributes.RETRIEVAL.QUERY_TEXT,
-                )
-            }
-        )
-        .on({
-                "context": Selector(
-                    span_type=SpanAttributes.SpanType.RETRIEVAL,
-                    span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
-                    collect_list=False
-                )
-            }
-        )
-        .aggregate(np.mean)
+    f_context_relevance = Metric(
+        implementation=provider.context_relevance_with_cot_reasons,
+        name="Inline Context Relevance",
+        selectors={
+            "question": Selector(
+                span_type=SpanAttributes.SpanType.RETRIEVAL,
+                span_attribute=SpanAttributes.RETRIEVAL.QUERY_TEXT,
+            ),
+            "context": Selector(
+                span_type=SpanAttributes.SpanType.RETRIEVAL,
+                span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
+                collect_list=False,
+            ),
+        },
+        agg=np.mean,
     )
     ```
 

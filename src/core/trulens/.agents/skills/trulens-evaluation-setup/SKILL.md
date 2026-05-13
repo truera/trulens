@@ -113,10 +113,13 @@ def my_custom_metric(input_text: str, output_text: str) -> float:
 
     return score
 
-f_custom = (
-    Feedback(my_custom_metric, name="My Custom Metric")
-    .on_input()
-    .on_output()
+f_custom = Metric(
+    implementation=my_custom_metric,
+    name="My Custom Metric",
+    selectors={
+        "input_text": Selector.select_record_input(),
+        "output_text": Selector.select_record_output(),
+    },
 )
 ```
 
@@ -128,11 +131,14 @@ def custom_with_context(query: str, context: str, response: str) -> float:
     # Your evaluation logic
     return score
 
-f_custom_context = (
-    Feedback(custom_with_context, name="Custom Context Metric")
-    .on_input()
-    .on_context(collect_list=True)
-    .on_output()
+f_custom_context = Metric(
+    implementation=custom_with_context,
+    name="Custom Context Metric",
+    selectors={
+        "query": Selector.select_record_input(),
+        "context": Selector.select_context(collect_list=True),
+        "response": Selector.select_record_output(),
+    },
 )
 ```
 
@@ -169,27 +175,36 @@ provider = OpenAI(model_engine="gpt-4o")
 TruLens provides shortcuts for common selection patterns:
 
 ```python
-from trulens.core import Feedback
+from trulens.core import Metric, Selector
 
 # Answer relevance: input → output
-f_answer_relevance = (
-    Feedback(provider.relevance_with_cot_reasons, name="Answer Relevance")
-    .on_input()
-    .on_output()
+f_answer_relevance = Metric(
+    implementation=provider.relevance_with_cot_reasons,
+    name="Answer Relevance",
+    selectors={
+        "prompt": Selector.select_record_input(),
+        "response": Selector.select_record_output(),
+    },
 )
 
 # Context relevance: input → each context chunk
-f_context_relevance = (
-    Feedback(provider.context_relevance_with_cot_reasons, name="Context Relevance")
-    .on_input()
-    .on_context(collect_list=False)  # Evaluates each context individually
+f_context_relevance = Metric(
+    implementation=provider.context_relevance_with_cot_reasons,
+    name="Context Relevance",
+    selectors={
+        "question": Selector.select_record_input(),
+        "context": Selector.select_context(collect_list=False),
+    },
 )
 
 # Groundedness: all contexts → output
-f_groundedness = (
-    Feedback(provider.groundedness_measure_with_cot_reasons, name="Groundedness")
-    .on_context(collect_list=True)  # Concatenates all contexts
-    .on_output()
+f_groundedness = Metric(
+    implementation=provider.groundedness_measure_with_cot_reasons,
+    name="Groundedness",
+    selectors={
+        "source": Selector.select_context(collect_list=True),
+        "statement": Selector.select_record_output(),
+    },
 )
 ```
 
@@ -215,24 +230,23 @@ These shortcuts look for spans with `span_type=SpanAttributes.SpanType.RECORD_RO
 For more control, use `Selector` to target specific span attributes:
 
 ```python
-from trulens.core import Feedback
+from trulens.core import Metric
 from trulens.core.feedback.selector import Selector
 from trulens.otel.semconv.trace import SpanAttributes
 
-f_answer_relevance = (
-    Feedback(provider.relevance_with_cot_reasons, name="Answer Relevance")
-    .on({
+f_answer_relevance = Metric(
+    implementation=provider.relevance_with_cot_reasons,
+    name="Answer Relevance",
+    selectors={
         "prompt": Selector(
             span_type=SpanAttributes.SpanType.RECORD_ROOT,
             span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
         ),
-    })
-    .on({
         "response": Selector(
             span_type=SpanAttributes.SpanType.RECORD_ROOT,
             span_attribute=SpanAttributes.RECORD_ROOT.OUTPUT,
         ),
-    })
+    },
 )
 ```
 
@@ -247,29 +261,31 @@ The `collect_list` parameter controls how multiple values are handled:
 
 ```python
 # Evaluate each retrieved context individually (returns multiple scores)
-f_context_relevance = (
-    Feedback(provider.context_relevance_with_cot_reasons, name="Context Relevance")
-    .on_input()
-    .on({
+f_context_relevance = Metric(
+    implementation=provider.context_relevance_with_cot_reasons,
+    name="Context Relevance",
+    selectors={
+        "question": Selector.select_record_input(),
         "context": Selector(
             span_type=SpanAttributes.SpanType.RETRIEVAL,
             span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
-            collect_list=False  # Each context evaluated separately
+            collect_list=False,
         ),
-    })
+    },
 )
 
 # Evaluate against all contexts combined (returns single score)
-f_groundedness = (
-    Feedback(provider.groundedness_measure_with_cot_reasons, name="Groundedness")
-    .on({
-        "context": Selector(
+f_groundedness = Metric(
+    implementation=provider.groundedness_measure_with_cot_reasons,
+    name="Groundedness",
+    selectors={
+        "source": Selector(
             span_type=SpanAttributes.SpanType.RETRIEVAL,
             span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
-            collect_list=True  # All contexts concatenated
+            collect_list=True,
         ),
-    })
-    .on_output()
+        "statement": Selector.select_record_output(),
+    },
 )
 ```
 
@@ -280,11 +296,14 @@ When `collect_list=False` produces multiple scores, aggregate them:
 ```python
 import numpy as np
 
-f_context_relevance = (
-    Feedback(provider.context_relevance_with_cot_reasons, name="Context Relevance")
-    .on_input()
-    .on_context(collect_list=False)
-    .aggregate(np.mean)  # Average all context relevance scores
+f_context_relevance = Metric(
+    implementation=provider.context_relevance_with_cot_reasons,
+    name="Context Relevance",
+    selectors={
+        "question": Selector.select_record_input(),
+        "context": Selector.select_context(collect_list=False),
+    },
+    agg=np.mean,
 )
 ```
 
@@ -299,31 +318,40 @@ Common aggregation functions:
 
 ```python
 import numpy as np
-from trulens.core import Feedback
+from trulens.core import Metric, Selector
 from trulens.providers.openai import OpenAI
 
 provider = OpenAI()
 
 # Context Relevance: Is each retrieved chunk relevant to the query?
-f_context_relevance = (
-    Feedback(provider.context_relevance_with_cot_reasons, name="Context Relevance")
-    .on_input()
-    .on_context(collect_list=False)
-    .aggregate(np.mean)
+f_context_relevance = Metric(
+    implementation=provider.context_relevance_with_cot_reasons,
+    name="Context Relevance",
+    selectors={
+        "question": Selector.select_record_input(),
+        "context": Selector.select_context(collect_list=False),
+    },
+    agg=np.mean,
 )
 
 # Groundedness: Is the response grounded in the retrieved context?
-f_groundedness = (
-    Feedback(provider.groundedness_measure_with_cot_reasons, name="Groundedness")
-    .on_context(collect_list=True)
-    .on_output()
+f_groundedness = Metric(
+    implementation=provider.groundedness_measure_with_cot_reasons,
+    name="Groundedness",
+    selectors={
+        "source": Selector.select_context(collect_list=True),
+        "statement": Selector.select_record_output(),
+    },
 )
 
 # Answer Relevance: Does the response answer the original question?
-f_answer_relevance = (
-    Feedback(provider.relevance_with_cot_reasons, name="Answer Relevance")
-    .on_input()
-    .on_output()
+f_answer_relevance = Metric(
+    implementation=provider.relevance_with_cot_reasons,
+    name="Answer Relevance",
+    selectors={
+        "prompt": Selector.select_record_input(),
+        "response": Selector.select_record_output(),
+    },
 )
 
 rag_feedbacks = [f_context_relevance, f_groundedness, f_answer_relevance]
@@ -332,55 +360,58 @@ rag_feedbacks = [f_context_relevance, f_groundedness, f_answer_relevance]
 ### Agent GPA Setup
 
 ```python
-from trulens.core import Feedback
-from trulens.core.feedback.selector import Selector
+from trulens.core import Metric, Selector
 from trulens.providers.openai import OpenAI
 
 provider = OpenAI()
 
-# All Agent GPA metrics use trace-level selection
-trace_selector = {"trace": Selector(trace_level=True)}
-
 # Logical Consistency
-f_logical_consistency = (
-    Feedback(provider.logical_consistency_with_cot_reasons, name="Logical Consistency")
-    .on(trace_selector)
+f_logical_consistency = Metric(
+    implementation=provider.logical_consistency_with_cot_reasons,
+    name="Logical Consistency",
+    selectors={"trace": Selector(trace_level=True)},
 )
 
 # Plan Quality (exclude if agent doesn't do explicit planning)
-f_plan_quality = (
-    Feedback(provider.plan_quality_with_cot_reasons, name="Plan Quality")
-    .on(trace_selector)
+f_plan_quality = Metric(
+    implementation=provider.plan_quality_with_cot_reasons,
+    name="Plan Quality",
+    selectors={"trace": Selector(trace_level=True)},
 )
 
 # Plan Adherence (exclude if agent doesn't do explicit planning)
-f_plan_adherence = (
-    Feedback(provider.plan_adherence_with_cot_reasons, name="Plan Adherence")
-    .on(trace_selector)
+f_plan_adherence = Metric(
+    implementation=provider.plan_adherence_with_cot_reasons,
+    name="Plan Adherence",
+    selectors={"trace": Selector(trace_level=True)},
 )
 
 # Execution Efficiency
-f_execution_efficiency = (
-    Feedback(provider.execution_efficiency_with_cot_reasons, name="Execution Efficiency")
-    .on(trace_selector)
+f_execution_efficiency = Metric(
+    implementation=provider.execution_efficiency_with_cot_reasons,
+    name="Execution Efficiency",
+    selectors={"trace": Selector(trace_level=True)},
 )
 
 # Tool Selection
-f_tool_selection = (
-    Feedback(provider.tool_selection_with_cot_reasons, name="Tool Selection")
-    .on(trace_selector)
+f_tool_selection = Metric(
+    implementation=provider.tool_selection_with_cot_reasons,
+    name="Tool Selection",
+    selectors={"trace": Selector(trace_level=True)},
 )
 
 # Tool Calling
-f_tool_calling = (
-    Feedback(provider.tool_calling_with_cot_reasons, name="Tool Calling")
-    .on(trace_selector)
+f_tool_calling = Metric(
+    implementation=provider.tool_calling_with_cot_reasons,
+    name="Tool Calling",
+    selectors={"trace": Selector(trace_level=True)},
 )
 
 # Tool Quality
-f_tool_quality = (
-    Feedback(provider.tool_quality_with_cot_reasons, name="Tool Quality")
-    .on(trace_selector)
+f_tool_quality = Metric(
+    implementation=provider.tool_quality_with_cot_reasons,
+    name="Tool Quality",
+    selectors={"trace": Selector(trace_level=True)},
 )
 
 # Use all for agents with planning
@@ -413,10 +444,13 @@ def my_custom_metric(input_text: str, output_text: str) -> float:
     score = len(output_text) / (len(input_text) + len(output_text))
     return min(max(score, 0.0), 1.0)
 
-f_custom = (
-    Feedback(my_custom_metric, name="Custom Metric")
-    .on_input()
-    .on_output()
+f_custom = Metric(
+    implementation=my_custom_metric,
+    name="Custom Metric",
+    selectors={
+        "input_text": Selector.select_record_input(),
+        "output_text": Selector.select_record_output(),
+    },
 )
 ```
 

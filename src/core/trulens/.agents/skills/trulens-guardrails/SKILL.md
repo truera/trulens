@@ -87,9 +87,8 @@ Wrap your LangChain `VectorStoreRetriever` with `WithFeedbackFilterDocuments` to
 from trulens.apps.langchain import WithFeedbackFilterDocuments
 
 # Use context_relevance to filter documents
-feedback = Feedback(provider.context_relevance).on_input().on(context)
+feedback = Metric(implementation=provider.context_relevance)
 
-# Wrap your existing retriever
 filtered_retriever = WithFeedbackFilterDocuments.of_retriever(
     retriever=base_retriever,
     feedback=feedback,
@@ -116,9 +115,9 @@ Wrap your LlamaIndex `RetrieverQueryEngine` with `WithFeedbackFilterNodes` to dr
 from trulens.apps.llamaindex.guardrails import WithFeedbackFilterNodes
 
 # Use context_relevance to filter nodes
-feedback = Metric(provider.context_relevance).on_input().on(context)
+feedback = Metric(implementation=provider.context_relevance)
 
-# Wrap your existing query engine
+filtered_retriever = WithFeedbackFilterNodes(
 filtered_query_engine = WithFeedbackFilterNodes(
     query_engine=base_query_engine,
     feedback=feedback,
