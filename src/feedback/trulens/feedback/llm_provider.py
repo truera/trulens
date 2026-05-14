@@ -575,17 +575,21 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            from trulens.apps.langchain import TruChain
-            context = TruChain.select_context(rag_app)
-            feedback = (
-                Feedback(provider.context_relevance,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions,
-                    examples=examples)
-                .on_input()
-                .on(context)
-                .aggregate(np.mean)
-                )
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.context_relevance,
+                name="Context Relevance",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                examples=examples,
+                selectors={
+                    "question": Selector.select_record_input(),
+                    "context": Selector.select_context(
+                        collect_list=False
+                    ),
+                },
+                agg=np.mean,
+            )
             ```
 
         Args:
@@ -653,17 +657,21 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            from trulens.apps.langchain import TruChain
-            context = TruChain.select_context(rag_app)
-            feedback = (
-                Feedback(provider.context_relevance_with_cot_reasons,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions,
-                    examples=examples)
-                .on_input()
-                .on(context)
-                .aggregate(np.mean)
-                )
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.context_relevance_with_cot_reasons,
+                name="Context Relevance",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                examples=examples,
+                selectors={
+                    "question": Selector.select_record_input(),
+                    "context": Selector.select_context(
+                        collect_list=False
+                    ),
+                },
+                agg=np.mean,
+            )
             ```
 
         Args:
@@ -740,26 +748,18 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = (
-            Feedback(provider.relevance,
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.relevance,
+                name="Answer Relevance",
                 criteria=criteria,
                 additional_instructions=additional_instructions,
-                examples=examples)
-                .on_input_output()
-                )
-            ```
-
-        Usage on RAG Contexts:
-            ```python
-            feedback = (
-                Feedback(provider.relevance,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions,
-                    examples=examples)
-                .on_input()
-                .on(TruLlama.select_source_nodes().node.text) # See note below
-                .aggregate(np.mean)
-                )
+                examples=examples,
+                selectors={
+                    "prompt": Selector.select_record_input(),
+                    "response": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -829,14 +829,18 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = (
-                Feedback(provider.relevance_with_cot_reasons,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions,
-                    examples=examples)
-                .on_input()
-                .on_output()
-                )
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.relevance_with_cot_reasons,
+                name="Answer Relevance",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                examples=examples,
+                selectors={
+                    "prompt": Selector.select_record_input(),
+                    "response": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -910,13 +914,17 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = (
-                Feedback(provider.sentiment,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions,
-                    examples=examples)
-                .on_output()
-                )
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.sentiment,
+                name="Sentiment",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                examples=examples,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -980,13 +988,17 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = (
-                Feedback(provider.sentiment_with_cot_reasons,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions,
-                    examples=examples)
-                .on_output()
-                )
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.sentiment_with_cot_reasons,
+                name="Sentiment",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                examples=examples,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -1043,7 +1055,15 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = Feedback(provider.model_agreement).on_input_output()
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.model_agreement,
+                name="Model Agreement",
+                selectors={
+                    "prompt": Selector.select_record_input(),
+                    "response": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -1236,12 +1256,16 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = (
-                Feedback(provider.conciseness,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions)
-                .on_output()
-                )
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.conciseness,
+                name="Conciseness",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -1293,12 +1317,16 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = (
-                Feedback(provider.conciseness_with_cot_reasons,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions)
-                .on_output()
-                )
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.conciseness_with_cot_reasons,
+                name="Conciseness",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
         Args:
             text (str): The text to evaluate the conciseness of.
@@ -1348,12 +1376,16 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = (
-                Feedback(provider.correctness,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions)
-                .on_output()
-                )
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.correctness,
+                name="Correctness",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -1405,12 +1437,16 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = (
-                Feedback(provider.correctness_with_cot_reasons,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions)
-                .on_output()
-                )
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.correctness_with_cot_reasons,
+                name="Correctness",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -1461,12 +1497,16 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = (
-                Feedback(provider.coherence,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions)
-                .on_output()
-                )
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.coherence,
+                name="Coherence",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -1518,12 +1558,16 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = (
-                Feedback(provider.coherence_with_cot_reasons,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions)
-                .on_output()
-                )
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.coherence_with_cot_reasons,
+                name="Coherence",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -1574,12 +1618,16 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = (
-                Feedback(provider.harmfulness,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions)
-                .on_output()
-                )
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.harmfulness,
+                name="Harmfulness",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -1631,12 +1679,16 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = (
-                Feedback(provider.harmfulness_with_cot_reasons,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions)
-                .on_output()
-                )
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.harmfulness_with_cot_reasons,
+                name="Harmfulness",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -1687,12 +1739,16 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = (
-                Feedback(provider.maliciousness,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions)
-                .on_output()
-                )
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.maliciousness,
+                name="Maliciousness",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -1744,12 +1800,16 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = (
-                Feedback(provider.maliciousness_with_cot_reasons,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions)
-                .on_output()
-                )
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.maliciousness_with_cot_reasons,
+                name="Maliciousness",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -1800,12 +1860,16 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = (
-                Feedback(provider.helpfulness,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions)
-                .on_output()
-                )
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.helpfulness,
+                name="Helpfulness",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -1857,12 +1921,16 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = (
-                Feedback(provider.helpfulness_with_cot_reasons,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions)
-                .on_output()
-                )
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.helpfulness_with_cot_reasons,
+                name="Helpfulness",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -1914,12 +1982,16 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = (
-                Feedback(provider.controversiality,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions)
-                .on_output()
-                )
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.controversiality,
+                name="Controversiality",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -1972,12 +2044,16 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = (
-                Feedback(provider.controversiality_with_cot_reasons,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions)
-                .on_output()
-                )
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.controversiality_with_cot_reasons,
+                name="Controversiality",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -2028,12 +2104,16 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = (
-                Feedback(provider.misogyny,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions)
-                .on_output()
-                )
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.misogyny,
+                name="Misogyny",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -2085,12 +2165,16 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = (
-                Feedback(provider.misogyny_with_cot_reasons,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions)
-                .on_output()
-                )
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.misogyny_with_cot_reasons,
+                name="Misogyny",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -2141,12 +2225,16 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = (
-                Feedback(provider.criminality,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions)
-                .on_output()
-                )
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.criminality,
+                name="Criminality",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -2199,12 +2287,16 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = (
-                Feedback(provider.criminality_with_cot_reasons,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions)
-                .on_output()
-                )
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.criminality_with_cot_reasons,
+                name="Criminality",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -2255,12 +2347,16 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = (
-                Feedback(provider.insensitivity,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions)
-                .on_output()
-                )
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.insensitivity,
+                name="Insensitivity",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -2312,12 +2408,16 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = (
-                Feedback(provider.insensitivity_with_cot_reasons,
-                    criteria=criteria,
-                    additional_instructions=additional_instructions)
-                .on_output()
-                )
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.insensitivity_with_cot_reasons,
+                name="Insensitivity",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                selectors={
+                    "text": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -2505,7 +2605,15 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = Feedback(provider.comprehensiveness_with_cot_reasons).on_input_output()
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.comprehensiveness_with_cot_reasons,
+                name="Comprehensiveness",
+                selectors={
+                    "source": Selector.select_record_input(),
+                    "summary": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -2583,7 +2691,15 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = Feedback(provider.stereotypes).on_input_output()
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.stereotypes,
+                name="Stereotypes",
+                selectors={
+                    "prompt": Selector.select_record_input(),
+                    "response": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -2648,7 +2764,15 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            feedback = Feedback(provider.stereotypes_with_cot_reasons).on_input_output()
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.stereotypes_with_cot_reasons,
+                name="Stereotypes",
+                selectors={
+                    "prompt": Selector.select_record_input(),
+                    "response": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -2765,16 +2889,21 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.providers.openai import OpenAI
 
             provider = OpenAI()
 
-            f_groundedness = (
-                Feedback(provider.groundedness_measure_with_cot_reasons)
-                .on(context.collect())
-                .on_output()
-                )
+            f_groundedness = Metric(
+                implementation=provider.groundedness_measure_with_cot_reasons,
+                name="Groundedness",
+                selectors={
+                    "source": Selector.select_context(
+                        collect_list=True
+                    ),
+                    "statement": Selector.select_record_output(),
+                },
+            )
             ```
 
         To further explain how the function works under the hood, consider the statement:
@@ -2968,17 +3097,22 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.providers.openai import OpenAI
 
             provider = OpenAI()
 
-            f_groundedness = (
-                Feedback(provider.groundedness_measure_with_cot_reasons_consider_answerability)
-                .on(context.collect())
-                .on_output()
-                .on_input()
-                )
+            f_groundedness = Metric(
+                implementation=provider.groundedness_measure_with_cot_reasons_consider_answerability,
+                name="Groundedness",
+                selectors={
+                    "source": Selector.select_context(
+                        collect_list=True
+                    ),
+                    "statement": Selector.select_record_output(),
+                    "question": Selector.select_record_input(),
+                },
+            )
             ```
 
         Args:
@@ -3162,16 +3296,18 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.providers.openai import OpenAI
 
             provider = OpenAI()
 
-            f_logical_consistency = (
-                Feedback(provider.logical_consistency_with_cot_reasons)
-                .on({
+            f_logical_consistency = Metric(
+                implementation=provider.logical_consistency_with_cot_reasons,
+                name="Logical Consistency",
+                selectors={
                     "trace": Selector(trace_level=True),
-                })
+                },
+            )
             ```
 
         Args:
@@ -3263,16 +3399,18 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.providers.openai import OpenAI
 
             provider = OpenAI()
 
-            f_execution_efficiency = (
-                Feedback(provider.execution_efficiency_with_cot_reasons)
-                .on({
+            f_execution_efficiency = Metric(
+                implementation=provider.execution_efficiency_with_cot_reasons,
+                name="Execution Efficiency",
+                selectors={
                     "trace": Selector(trace_level=True),
-                })
+                },
+            )
             ```
 
         Args:
@@ -3364,16 +3502,18 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.providers.openai import OpenAI
 
             provider = OpenAI()
 
-            f_plan_adherence = (
-                Feedback(provider.plan_adherence_with_cot_reasons)
-                .on({
+            f_plan_adherence = Metric(
+                implementation=provider.plan_adherence_with_cot_reasons,
+                name="Plan Adherence",
+                selectors={
                     "trace": Selector(trace_level=True),
-                })
+                },
+            )
             ```
 
         Args:
@@ -3463,16 +3603,18 @@ class LLMProvider(core_provider.Provider):
 
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.providers.openai import OpenAI
 
             provider = OpenAI()
 
-            f_plan_quality = (
-                Feedback(provider.plan_quality_with_cot_reasons)
-                .on({
+            f_plan_quality = Metric(
+                implementation=provider.plan_quality_with_cot_reasons,
+                name="Plan Quality",
+                selectors={
                     "trace": Selector(trace_level=True),
-                })
+                },
+            )
             ```
 
         Args:
@@ -3560,16 +3702,18 @@ class LLMProvider(core_provider.Provider):
         Evaluate the quality of an agentic trace using a rubric focused on tool selection.
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.providers.openai import OpenAI
 
             provider = OpenAI()
 
-            f_tool_selection = (
-                Feedback(provider.tool_selection_with_cot_reasons)
-                .on({
+            f_tool_selection = Metric(
+                implementation=provider.tool_selection_with_cot_reasons,
+                name="Tool Selection",
+                selectors={
                     "trace": Selector(trace_level=True),
-                })
+                },
+            )
             ```
 
         Args:
@@ -3657,16 +3801,18 @@ class LLMProvider(core_provider.Provider):
         Evaluate the quality of an agentic trace using a rubric focused on tool calling.
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.providers.openai import OpenAI
 
             provider = OpenAI()
 
-            f_tool_calling = (
-                Feedback(provider.tool_calling_with_cot_reasons)
-                .on({
+            f_tool_calling = Metric(
+                implementation=provider.tool_calling_with_cot_reasons,
+                name="Tool Calling",
+                selectors={
                     "trace": Selector(trace_level=True),
-                })
+                },
+            )
             ```
 
         Args:
@@ -3754,16 +3900,18 @@ class LLMProvider(core_provider.Provider):
         Evaluate the quality of an agentic trace using a rubric focused on tool quality.
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.providers.openai import OpenAI
 
             provider = OpenAI()
 
-            f_tool_quality = (
-                Feedback(provider.tool_quality_with_cot_reasons)
-                .on({
+            f_tool_quality = Metric(
+                implementation=provider.tool_quality_with_cot_reasons,
+                name="Tool Quality",
+                selectors={
                     "trace": Selector(trace_level=True),
-                })
+                },
+            )
             ```
 
         Args:

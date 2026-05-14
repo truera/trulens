@@ -68,9 +68,16 @@ class Embeddings(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
             embed_model = OpenAIEmbedding()
 
             # Create the feedback function
+            from trulens.core import Metric, Selector
             f_embed = feedback.Embeddings(embed_model=embed_model)
-            f_embed_dist = feedback.Feedback(f_embed.cosine_distance)\
-                .on_input_output()
+            f_embed_dist = Metric(
+                implementation=f_embed.cosine_distance,
+                name="Cosine Distance",
+                selectors={
+                    "query": Selector.select_record_input(),
+                    "document": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -114,9 +121,16 @@ class Embeddings(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
             embed_model = OpenAIEmbedding()
 
             # Create the feedback function
+            from trulens.core import Metric, Selector
             f_embed = feedback.Embeddings(embed_model=embed_model)
-            f_embed_dist = feedback.Feedback(f_embed.manhattan_distance)\
-                .on_input_output()
+            f_embed_dist = Metric(
+                implementation=f_embed.manhattan_distance,
+                name="Manhattan Distance",
+                selectors={
+                    "query": Selector.select_record_input(),
+                    "document": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:
@@ -160,9 +174,16 @@ class Embeddings(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
             embed_model = OpenAIEmbedding()
 
             # Create the feedback function
+            from trulens.core import Metric, Selector
             f_embed = feedback.Embeddings(embed_model=embed_model)
-            f_embed_dist = feedback.Feedback(f_embed.euclidean_distance)\
-                .on_input_output()
+            f_embed_dist = Metric(
+                implementation=f_embed.euclidean_distance,
+                name="Euclidean Distance",
+                selectors={
+                    "query": Selector.select_record_input(),
+                    "document": Selector.select_record_output(),
+                },
+            )
             ```
 
         Args:

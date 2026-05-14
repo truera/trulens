@@ -252,7 +252,7 @@ class GroundTruthAgreement(
 
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.feedback import GroundTruthAgreement
             from trulens.providers.openai import OpenAI
 
@@ -262,9 +262,15 @@ class GroundTruthAgreement(
             ]
             ground_truth_collection = GroundTruthAgreement(golden_set, provider=OpenAI())
 
-            feedback = Feedback(ground_truth_collection.agreement_measure).on_input_output()
+            feedback = Metric(
+                implementation=ground_truth_collection.agreement_measure,
+                name="Agreement Measure",
+                selectors={
+                    "prompt": Selector.select_record_input(),
+                    "response": Selector.select_record_output(),
+                },
+            )
             ```
-            The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens/feedback_function_guide/)
 
         Args:
             prompt (str): A text prompt to an agent.
@@ -581,11 +587,11 @@ class GroundTruthAgreement(
 
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.feedback import GroundTruthAgreement
             from trulens.providers.bedrock import Bedrock
 
-            golden_set =
+            golden_set = [
             {"query": "How many stomachs does a cow have?", "expected_response": "Cows' diet relies primarily on grazing.", "expected_score": 0.4},
             {"query": "Name some top dental floss brands", "expected_response": "I don't know", "expected_score": 0.8}
             ]
@@ -595,7 +601,14 @@ class GroundTruthAgreement(
             )
             ground_truth_collection = GroundTruthAgreement(golden_set, provider=bedrock)
 
-            f_groundtruth = Feedback(ground_truth.absolute_error.on(Select.Record.calls[0].args.args[0]).on(Select.Record.calls[0].args.args[1]).on_output()
+            f_groundtruth = Metric(
+                implementation=ground_truth_collection.absolute_error,
+                name="Absolute Error",
+                selectors={
+                    "prompt": Selector.select_record_input(),
+                    "response": Selector.select_record_output(),
+                },
+            )
             ```
 
         """
@@ -619,7 +632,7 @@ class GroundTruthAgreement(
 
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.feedback import GroundTruthAgreement
             from trulens.providers.openai import OpenAI
             golden_set = [
@@ -628,9 +641,15 @@ class GroundTruthAgreement(
             ]
             ground_truth_collection = GroundTruthAgreement(golden_set, provider=OpenAI())
 
-            feedback = Feedback(ground_truth_collection.bert_score).on_input_output()
+            feedback = Metric(
+                implementation=ground_truth_collection.bert_score,
+                name="BERT Score",
+                selectors={
+                    "prompt": Selector.select_record_input(),
+                    "response": Selector.select_record_output(),
+                },
+            )
             ```
-            The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens/feedback_function_guide/)
 
 
         Args:
@@ -667,7 +686,7 @@ class GroundTruthAgreement(
 
         Example:
             ```python
-            from trulens.core import Feedback
+            from trulens.core import Metric, Selector
             from trulens.feedback import GroundTruthAgreement
             from trulens.providers.openai import OpenAI
             golden_set = [
@@ -676,9 +695,15 @@ class GroundTruthAgreement(
             ]
             ground_truth_collection = GroundTruthAgreement(golden_set, provider=OpenAI())
 
-            feedback = Feedback(ground_truth_collection.bleu).on_input_output()
+            feedback = Metric(
+                implementation=ground_truth_collection.bleu,
+                name="BLEU",
+                selectors={
+                    "prompt": Selector.select_record_input(),
+                    "response": Selector.select_record_output(),
+                },
+            )
             ```
-            The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens/feedback_function_guide/)
 
         Args:
             prompt: A text prompt to an agent.

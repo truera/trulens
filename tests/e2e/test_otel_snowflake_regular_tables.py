@@ -2,7 +2,7 @@ import gc
 import weakref
 
 from trulens.apps.app import TruApp
-from trulens.core.feedback import Feedback
+from trulens.core import Metric
 from trulens.core.feedback.selector import Selector
 from trulens.core.feedback.selector import Trace
 from trulens.otel.semconv.trace import SpanAttributes
@@ -18,11 +18,15 @@ class TestOtelSnowflakeRegularTables(OtelTestCase, SnowflakeTestCase):
         def simple(trace: Trace) -> float:
             return 1.0
 
-        f_simple = Feedback(simple, name="simple").on({
-            "trace": Selector(
-                trace_level=True, span_attribute=SpanAttributes.SPAN_TYPE
-            )
-        })
+        f_simple = Metric(
+            implementation=simple,
+            name="simple",
+            selectors={
+                "trace": Selector(
+                    trace_level=True, span_attribute=SpanAttributes.SPAN_TYPE
+                ),
+            },
+        )
 
         # Create session.
         tru_session = self.get_session(

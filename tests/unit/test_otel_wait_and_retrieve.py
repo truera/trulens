@@ -8,7 +8,8 @@ from unittest.mock import patch
 import pandas as pd
 import pytest
 from trulens.apps.app import TruApp
-from trulens.core import Feedback
+from trulens.core import Metric
+from trulens.core.feedback.selector import Selector
 from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
 from trulens.core.utils.evaluator import Evaluator
@@ -140,9 +141,11 @@ class TestOtelWaitForFeedbackResults(OtelTestCase):
         mock_provider = MagicMock()
         mock_provider.mock_feedback = mock_feedback_fn
 
-        f_mock = Feedback(
-            mock_provider.mock_feedback, name="MockFeedback"
-        ).on_input()
+        f_mock = Metric(
+            implementation=mock_provider.mock_feedback,
+            name="MockFeedback",
+            selectors={"text": Selector.select_record_input()},
+        )
 
         class _TestApp:
             @instrument()
@@ -260,9 +263,11 @@ class TestOtelRetrieveFeedbackResults(OtelTestCase):
         mock_provider = MagicMock()
         mock_provider.mock_feedback = mock_feedback_fn
 
-        f_mock = Feedback(
-            mock_provider.mock_feedback, name="TestFeedback"
-        ).on_input()
+        f_mock = Metric(
+            implementation=mock_provider.mock_feedback,
+            name="TestFeedback",
+            selectors={"text": Selector.select_record_input()},
+        )
 
         class _TestApp:
             @instrument()
@@ -297,9 +302,11 @@ class TestOtelRetrieveFeedbackResults(OtelTestCase):
         mock_provider = MagicMock()
         mock_provider.mock_feedback = mock_feedback_fn
 
-        f_mock = Feedback(
-            mock_provider.mock_feedback, name="MultiFeedback"
-        ).on_input()
+        f_mock = Metric(
+            implementation=mock_provider.mock_feedback,
+            name="MultiFeedback",
+            selectors={"text": Selector.select_record_input()},
+        )
 
         class _TestApp:
             @instrument()

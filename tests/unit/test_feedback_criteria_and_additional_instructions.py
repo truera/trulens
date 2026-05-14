@@ -5,7 +5,7 @@ import unittest
 from unittest import TestCase
 import warnings
 
-from trulens.core import Feedback
+from trulens.core import Metric
 from trulens.feedback import llm_provider
 from trulens.feedback.templates import agent as templates_agent
 from trulens.feedback.templates import quality as templates_quality
@@ -353,8 +353,8 @@ class TestFeedbackIntegrationWithFeedbackClass(TestCase):
         """Test that Feedback class passes criteria to the implementation."""
         custom_criteria = "Custom Criteria Test"
 
-        feedback = Feedback(
-            self.provider.helpfulness_with_cot_reasons,
+        feedback = Metric(
+            implementation=self.provider.helpfulness_with_cot_reasons,
             name="Helpfulness",
             criteria=custom_criteria,
         )
@@ -377,8 +377,8 @@ class TestFeedbackIntegrationWithFeedbackClass(TestCase):
         """Test that Feedback class passes additional_instructions to the implementation."""
         additional_instructions = "UNIQUE_ADDITIONAL_INSTRUCTIONS_E2E_TEST"
 
-        feedback = Feedback(
-            self.provider.helpfulness_with_cot_reasons,
+        feedback = Metric(
+            implementation=self.provider.helpfulness_with_cot_reasons,
             name="Helpfulness",
             additional_instructions=additional_instructions,
         )
@@ -404,8 +404,8 @@ class TestFeedbackIntegrationWithFeedbackClass(TestCase):
         custom_criteria = "UNIQUE_CRITERIA_COMBO_E2E_TEST"
         additional_instructions = "UNIQUE_INSTRUCTIONS_COMBO_E2E_TEST"
 
-        feedback = Feedback(
-            self.provider.helpfulness_with_cot_reasons,
+        feedback = Metric(
+            implementation=self.provider.helpfulness_with_cot_reasons,
             name="Helpfulness",
             criteria=custom_criteria,
             additional_instructions=additional_instructions,
@@ -436,18 +436,14 @@ class TestFeedbackIntegrationWithFeedbackClass(TestCase):
         # Using deprecated custom_instructions should emit a warning but still work
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            feedback = Feedback(
-                self.provider.helpfulness_with_cot_reasons,
+            feedback = Metric(
+                implementation=self.provider.helpfulness_with_cot_reasons,
                 name="Helpfulness",
                 custom_instructions=custom_instructions,
             )
-            # Verify deprecation warnings were issued
-            # We expect 2 warnings: one for Feedback class deprecation, one for custom_instructions
             deprecation_warnings = [
                 x for x in w if issubclass(x.category, DeprecationWarning)
             ]
-            self.assertEqual(len(deprecation_warnings), 2)
-            # Find the custom_instructions warning
             custom_instructions_warnings = [
                 x
                 for x in deprecation_warnings
@@ -480,8 +476,8 @@ class TestFeedbackIntegrationWithFeedbackClass(TestCase):
         criteria = "Custom Criteria Test"
         additional_instructions = "Additional Instructions Test"
 
-        feedback = Feedback(
-            self.provider.conciseness_with_cot_reasons,
+        feedback = Metric(
+            implementation=self.provider.conciseness_with_cot_reasons,
             name="Conciseness",
             criteria=criteria,
             additional_instructions=additional_instructions,

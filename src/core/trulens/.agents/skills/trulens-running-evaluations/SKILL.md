@@ -138,7 +138,14 @@ ground_truth_df = session.get_ground_truth("my_dataset")
 
 # Add ground truth feedback
 ground_truth = GroundTruthAgreement(ground_truth_df, provider=provider)
-f_agreement = Feedback(ground_truth.agreement_measure, name="Ground Truth Agreement").on_input_output()
+f_agreement = Metric(
+    implementation=ground_truth.agreement_measure,
+    name="Ground Truth Agreement",
+    selectors={
+        "prompt": Selector.select_record_input(),
+        "response": Selector.select_record_output(),
+    },
+)
 
 # Include with other feedbacks
 all_feedbacks = your_feedbacks + [f_agreement]
