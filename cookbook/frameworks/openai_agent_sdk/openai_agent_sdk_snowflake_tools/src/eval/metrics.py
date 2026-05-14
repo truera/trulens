@@ -228,16 +228,17 @@ def build_metrics(snowpark_session: Session) -> list[Metric]:
         model_engine="openai-gpt-5.1",
     )
 
-    m_sql_agreement = (
-        Metric(implementation=sql_agreement_golden, name="SQL Agreement (Golden)")
-        .on_input()
-        .on({
+    m_sql_agreement = Metric(
+        implementation=sql_agreement_golden,
+        name="SQL Agreement (Golden)",
+        selectors={
+            "question": Selector.select_record_input(),
             "sql_output": Selector(
                 span_type=SpanAttributes.SpanType.TOOL,
                 span_attribute=SpanAttributes.CALL.RETURN,
                 collect_list=False,
             ),
-        })
+        },
     )
 
     search_gt_data = load_search_ground_truth(snowpark_session)
@@ -252,28 +253,30 @@ def build_metrics(snowpark_session: Session) -> list[Metric]:
     def recall_with_reason(query: str, retrieved_context_chunks: List[str]):
         return _recall_at_k_with_reason(gt_agreement, query, retrieved_context_chunks)
 
-    m_precision = (
-        Metric(implementation=precision_with_reason, name="Precision@k")
-        .on_input()
-        .on({
+    m_precision = Metric(
+        implementation=precision_with_reason,
+        name="Precision@k",
+        selectors={
+            "query": Selector.select_record_input(),
             "retrieved_context_chunks": Selector(
                 span_type=SpanAttributes.SpanType.RETRIEVAL,
                 span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
                 collect_list=True,
             ),
-        })
+        },
     )
 
-    m_recall = (
-        Metric(implementation=recall_with_reason, name="Recall@k")
-        .on_input()
-        .on({
+    m_recall = Metric(
+        implementation=recall_with_reason,
+        name="Recall@k",
+        selectors={
+            "query": Selector.select_record_input(),
             "retrieved_context_chunks": Selector(
                 span_type=SpanAttributes.SpanType.RETRIEVAL,
                 span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
                 collect_list=True,
             ),
-        })
+        },
     )
 
     return [m_sql_agreement, m_precision, m_recall]
