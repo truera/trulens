@@ -20,6 +20,7 @@ from trulens.connectors.snowflake.dao.run import RunDao
 from trulens.connectors.snowflake.snowflake_event_table_db import (
     SnowflakeEventTableDB,
 )
+from trulens.connectors.snowflake.sqlalchemy_db import SnowflakeSQLAlchemyDB
 from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import (
     ServerSideEvaluationArtifacts,
 )
@@ -284,7 +285,7 @@ class SnowflakeConnector(DBConnector):
             database_prefix,
         )
         self._db: Union[SQLAlchemyDB, python_utils.OpaqueWrapper] = (
-            SQLAlchemyDB.from_tru_args(**database_args)
+            SnowflakeSQLAlchemyDB.from_tru_args(**database_args)
         )
 
         if database_check_revision:
@@ -491,3 +492,174 @@ class SnowflakeConnector(DBConnector):
             )
 
         raise ValueError(f"Object type {object_type} not supported.")
+
+    def augment_app(self, app: Any, **kwargs: Any) -> None:
+        """Populate Snowflake-specific fields on the App after it is
+        constructed. Replaces the previous ``isinstance(connector,
+        SnowflakeConnector)`` branch in
+        [App.__init__][trulens.core.app.App.__init__]."""
+        app_name = kwargs.get("app_name")
+        app_version = kwargs.get("app_version")
+        if app_name is None:
+            return
+        object_type = (
+            kwargs.get("object_type") or ObjectType.EXTERNAL_AGENT.value
+        )
+        app.snowflake_object_type = object_type
+
+        (
+            app.snowflake_app_dao,
+            app.snowflake_run_dao,
+            app.snowflake_object_name,
+            app.snowflake_object_version,
+        ) = self.initialize_snowflake_dao_fields(
+            object_type=object_type,
+            app_name=app_name,
+            app_version=app_version,
+        )
+
+        app.run_dao = app.snowflake_run_dao
+        app._object_name = app.snowflake_object_name
+        app._object_type = app.snowflake_object_type
+        app._object_version = app.snowflake_object_version
+
+    def warn_if_metric_parallel(self, value: int) -> None:
+        """Emit a Snowflake-specific warning when metric_max_workers > 1."""
+        logger.warning(
+            f"metric_max_workers={value} only affects client-side Metric objects. "
+            "Server-side string metrics are parallelized by Snowflake automatically."
+        )
+
+    def get_events_for_client_metrics(
+        self,
+        app_name: Optional[str] = None,
+        app_version: Optional[str] = None,
+        run_name: Optional[str] = None,
+    ):
+        """Snowflake-aware events retrieval for client-side metric
+        computation. When ``use_account_event_table`` is enabled, fetches and
+        normalizes raw events from the account event table; otherwise
+        delegates to the standard ``get_events`` path."""
+        import json as _json
+
+        import pandas as pd
+        from trulens.core.run import _parse_json_field
+        from trulens.otel.semconv.trace import SpanAttributes
+
+        if not getattr(self, "use_account_event_table", False):
+            return self.get_events(
+                app_name=app_name,
+                app_version=app_version,
+                run_name=run_name,
+            )
+
+        events_df = self.db.get_events(
+            app_name=app_name,
+            app_version=app_version,
+            run_name=run_name,
+        )
+
+        if not events_df.empty:
+            for json_col in [
+                "TRACE",
+                "RESOURCE_ATTRIBUTES",
+                "RECORD",
+                "RECORD_ATTRIBUTES",
+            ]:
+                if json_col in events_df.columns:
+                    events_df[json_col] = events_df[json_col].apply(_json.loads)
+
+            column_mapping = {
+                "TRACE": "trace",
+                "RESOURCE_ATTRIBUTES": "resource_attributes",
+                "RECORD": "record",
+                "RECORD_ATTRIBUTES": "record_attributes",
+            }
+
+            events_df = events_df.rename(columns=column_mapping)
+
+            for col in ["trace", "record", "record_attributes"]:
+                if col in events_df.columns:
+                    events_df[col] = events_df[col].astype(object)
+
+            for idx, row in events_df.iterrows():
+                trace = events_df.at[idx, "trace"]
+                record = events_df.at[idx, "record"]
+                record_attributes = (
+                    events_df.at[idx, "record_attributes"]
+                    if "record_attributes" in events_df.columns
+                    else {}
+                )
+
+                try:
+                    trace = _parse_json_field(
+                        trace, "trace", idx, critical=True
+                    )
+                    events_df.at[idx, "trace"] = trace
+                except _json.JSONDecodeError:
+                    continue
+
+                try:
+                    record = _parse_json_field(
+                        record, "record", idx, critical=True
+                    )
+                    events_df.at[idx, "record"] = record
+                except _json.JSONDecodeError:
+                    continue
+
+                record_attributes = _parse_json_field(
+                    record_attributes,
+                    "record_attributes",
+                    idx,
+                    critical=False,
+                )
+                events_df.at[idx, "record_attributes"] = record_attributes
+
+                if isinstance(trace, dict) and isinstance(record, dict):
+                    if "parent_span_id" in record:
+                        trace["parent_id"] = record["parent_span_id"]
+                    else:
+                        trace["parent_id"] = None
+
+                    events_df.at[idx, "trace"] = trace
+
+        if not events_df.empty and run_name:
+            filtered_events = []
+            for _, row in events_df.iterrows():
+                try:
+                    record_attributes = row.get("record_attributes", {})
+
+                    original_record_attributes = record_attributes
+                    record_attributes = _parse_json_field(
+                        record_attributes,
+                        "record_attributes",
+                        critical=False,
+                    )
+                    if (
+                        isinstance(record_attributes, str)
+                        and record_attributes == original_record_attributes
+                    ):
+                        continue
+
+                    event_run_name = record_attributes.get(
+                        SpanAttributes.RUN_NAME
+                    )
+                    if event_run_name == run_name:
+                        filtered_events.append(row)
+
+                except Exception as e:
+                    logger.debug(f"Skipping event due to parsing error: {e}")
+                    continue
+
+            if filtered_events:
+                events_df = pd.DataFrame(filtered_events)
+                logger.info(
+                    f"Filtered {len(filtered_events)} events for run {run_name}"
+                )
+            else:
+                logger.warning(
+                    f"No events found for run {run_name} after filtering"
+                )
+                events_df = pd.DataFrame()
+
+        return events_df

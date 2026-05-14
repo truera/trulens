@@ -13,6 +13,8 @@
 from importlib.metadata import version
 
 from trulens.connectors.snowflake.connector import SnowflakeConnector
+from trulens.connectors.snowflake.sqlalchemy_db import SnowflakeImpl
+from trulens.connectors.snowflake.sqlalchemy_db import SnowflakeSQLAlchemyDB
 from trulens.core.utils import imports as import_utils
 
 __version__ = version(
@@ -21,4 +23,6 @@ __version__ = version(
 
 __all__ = [
     "SnowflakeConnector",
+    "SnowflakeImpl",
+    "SnowflakeSQLAlchemyDB",
 ]
