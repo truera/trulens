@@ -99,5 +99,4 @@ are available for evaluation.
 
 - [Semantic Conventions](./semantic_conventions.md) — full attribute reference
 - [Instrumentation Overview](../component_guides/instrumentation/index.md) — how to use `@instrument`
-- [MCP Instrumentation](../component_guides/instrumentation/mcp.md) — instrumenting MCP tool calls
 - [Feedback Selectors](../component_guides/evaluation/feedback_selectors/index.md) — selecting span attributes for evaluation

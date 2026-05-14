@@ -277,7 +277,6 @@ nav:
   - 🧑‍🍳 Cookbook: cookbook/
   - 🔭 OpenTelemetry: otel/
   - 🤝 Contributing:
-      - contributing/index.md
       - 🛠️ Development Setup: contributing/development.md
       - 🧭 Design: contributing/design.md
       - 📦 Release Policies: contributing/policies.md
