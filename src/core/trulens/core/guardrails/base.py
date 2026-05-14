@@ -8,7 +8,9 @@ from opentelemetry import trace as otel_trace
 from trulens.core.metric import metric as core_metric
 from trulens.core.utils import threading as threading_utils
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
-from trulens.experimental.otel_tracing.core.span import set_general_span_attributes
+from trulens.experimental.otel_tracing.core.span import (
+    set_general_span_attributes,
+)
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
@@ -102,7 +104,8 @@ class context_filter:
                 passed = (
                     self.feedback.higher_is_better and result > self.threshold
                 ) or (
-                    not self.feedback.higher_is_better and result < self.threshold
+                    not self.feedback.higher_is_better
+                    and result < self.threshold
                 )
                 return result, passed
 
@@ -117,9 +120,15 @@ class context_filter:
                 for future in as_completed(future_to_context):
                     context = future_to_context[future]
                     result, passed = future.result()
-                    with _guardrail_span(guardrail_name, self.threshold) as span:
-                        span.set_attribute(SpanAttributes.GUARDRAIL.SCORE, result)
-                        span.set_attribute(SpanAttributes.GUARDRAIL.PASSED, passed)
+                    with _guardrail_span(
+                        guardrail_name, self.threshold
+                    ) as span:
+                        span.set_attribute(
+                            SpanAttributes.GUARDRAIL.SCORE, result
+                        )
+                        span.set_attribute(
+                            SpanAttributes.GUARDRAIL.PASSED, passed
+                        )
                     if passed:
                         filtered.append(context)
                 return filtered
@@ -213,7 +222,10 @@ class block_input:
                     )
                 blocked = (
                     self.feedback.higher_is_better and result < self.threshold
-                ) or (not self.feedback.higher_is_better and result > self.threshold)
+                ) or (
+                    not self.feedback.higher_is_better
+                    and result > self.threshold
+                )
                 span.set_attribute(SpanAttributes.GUARDRAIL.SCORE, result)
                 span.set_attribute(SpanAttributes.GUARDRAIL.PASSED, not blocked)
 
@@ -295,7 +307,10 @@ class block_output:
                     )
                 blocked = (
                     self.feedback.higher_is_better and result < self.threshold
-                ) or (not self.feedback.higher_is_better and result > self.threshold)
+                ) or (
+                    not self.feedback.higher_is_better
+                    and result > self.threshold
+                )
                 span.set_attribute(SpanAttributes.GUARDRAIL.SCORE, result)
                 span.set_attribute(SpanAttributes.GUARDRAIL.PASSED, not blocked)
 

@@ -1,4 +1,5 @@
 """Tests for OTEL guardrail span instrumentation."""
+
 from typing import List
 
 from trulens.apps.app import TruApp
@@ -29,7 +30,10 @@ def _collect_guardrail_spans(events):
     spans = []
     for _, row in events.iterrows():
         attrs = row["record_attributes"]
-        if attrs.get(SpanAttributes.SPAN_TYPE) == SpanAttributes.SpanType.GUARDRAIL:
+        if (
+            attrs.get(SpanAttributes.SPAN_TYPE)
+            == SpanAttributes.SpanType.GUARDRAIL
+        ):
             spans.append(attrs)
     return spans
 
@@ -101,19 +105,33 @@ class TestGuardrailSpans(OtelTestCase):
         app = _ContextFilterApp()
         result = self._run_app(app, "retrieve", "test query")
         # Only relevant contexts pass
-        self.assertEqual(sorted(result), ["2. This is a relevant comment.", "4. This is a relevant comment."])
+        self.assertEqual(
+            sorted(result),
+            [
+                "2. This is a relevant comment.",
+                "4. This is a relevant comment.",
+            ],
+        )
 
         spans = _collect_guardrail_spans(self._get_events())
-        self.assertEqual(len(spans), 4, "Expected one guardrail span per context")
+        self.assertEqual(
+            len(spans), 4, "Expected one guardrail span per context"
+        )
 
         for span in spans:
-            self.assertEqual(span[SpanAttributes.GUARDRAIL.NAME], "context relevance")
+            self.assertEqual(
+                span[SpanAttributes.GUARDRAIL.NAME], "context relevance"
+            )
             self.assertIn(SpanAttributes.GUARDRAIL.SCORE, span)
             self.assertIn(SpanAttributes.GUARDRAIL.PASSED, span)
-            self.assertAlmostEqual(span[SpanAttributes.GUARDRAIL.THRESHOLD], 0.75)
+            self.assertAlmostEqual(
+                span[SpanAttributes.GUARDRAIL.THRESHOLD], 0.75
+            )
 
         passed_spans = [s for s in spans if s[SpanAttributes.GUARDRAIL.PASSED]]
-        failed_spans = [s for s in spans if not s[SpanAttributes.GUARDRAIL.PASSED]]
+        failed_spans = [
+            s for s in spans if not s[SpanAttributes.GUARDRAIL.PASSED]
+        ]
         self.assertEqual(len(passed_spans), 2)
         self.assertEqual(len(failed_spans), 2)
 
