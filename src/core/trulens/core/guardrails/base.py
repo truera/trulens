@@ -1,12 +1,34 @@
 from concurrent.futures import as_completed
+from contextlib import contextmanager
 import inspect
 import logging
 from typing import Optional
 
+from opentelemetry import trace as otel_trace
 from trulens.core.metric import metric as core_metric
 from trulens.core.utils import threading as threading_utils
+from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
+from trulens.experimental.otel_tracing.core.span import (
+    set_general_span_attributes,
+)
+from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
+
+
+@contextmanager
+def _guardrail_span(name: str, threshold: float):
+    """Context manager that emits a GUARDRAIL span with standard attributes.
+
+    Yields the span so callers can set SCORE and PASSED after computing them,
+    ensuring the span duration covers the actual feedback evaluation work.
+    """
+    tracer = otel_trace.get_tracer_provider().get_tracer(TRULENS_SERVICE_NAME)
+    with tracer.start_as_current_span(name) as span:
+        set_general_span_attributes(span, SpanAttributes.SpanType.GUARDRAIL)
+        span.set_attribute(SpanAttributes.GUARDRAIL.NAME, name)
+        span.set_attribute(SpanAttributes.GUARDRAIL.THRESHOLD, threshold)
+        yield span
 
 
 class context_filter:
@@ -67,34 +89,47 @@ class context_filter:
 
         def wrapper(*args, **kwargs):
             bindings = sig.bind(*args, **kwargs)
-
             contexts = func(*args, **kwargs)
+            guardrail_name = getattr(self.feedback, "name", func.__name__)
+
+            def _evaluate_context(context) -> tuple:
+                """Evaluate feedback for one context; returns (result, passed)."""
+                result = self.feedback(
+                    bindings.arguments[self.keyword_for_prompt], context
+                )
+                if not isinstance(result, float):
+                    raise ValueError(
+                        "`context_filter` can only be used with feedback functions that return a float."
+                    )
+                passed = (
+                    self.feedback.higher_is_better and result > self.threshold
+                ) or (
+                    not self.feedback.higher_is_better
+                    and result < self.threshold
+                )
+                return result, passed
+
             with threading_utils.ThreadPoolExecutor(
                 max_workers=max(1, len(contexts))
             ) as ex:
                 future_to_context = {
-                    ex.submit(
-                        lambda context=context: self.feedback(
-                            bindings.arguments[self.keyword_for_prompt], context
-                        )
-                    ): context
+                    ex.submit(_evaluate_context, context): context
                     for context in contexts
                 }
                 filtered = []
                 for future in as_completed(future_to_context):
                     context = future_to_context[future]
-                    result = future.result()
-                    if not isinstance(result, float):
-                        raise ValueError(
-                            "`context_filter` can only be used with feedback functions that return a float."
+                    result, passed = future.result()
+                    with _guardrail_span(
+                        guardrail_name, self.threshold
+                    ) as span:
+                        span.set_attribute(
+                            SpanAttributes.GUARDRAIL.SCORE, result
                         )
-                    if (
-                        self.feedback.higher_is_better
-                        and result > self.threshold
-                    ) or (
-                        not self.feedback.higher_is_better
-                        and result < self.threshold
-                    ):
+                        span.set_attribute(
+                            SpanAttributes.GUARDRAIL.PASSED, passed
+                        )
+                    if passed:
                         filtered.append(context)
                 return filtered
 
@@ -177,14 +212,24 @@ class block_input:
         def wrapper(*args, **kwargs):
             bindings = sig.bind(*args, **kwargs)
             keyword_value = bindings.arguments[self.keyword_for_prompt]
-            result = self.feedback(keyword_value)
-            if not isinstance(result, float):
-                raise ValueError(
-                    "`block_input` can only be used with feedback functions that return a float."
+            guardrail_name = getattr(self.feedback, "name", func.__name__)
+
+            with _guardrail_span(guardrail_name, self.threshold) as span:
+                result = self.feedback(keyword_value)
+                if not isinstance(result, float):
+                    raise ValueError(
+                        "`block_input` can only be used with feedback functions that return a float."
+                    )
+                blocked = (
+                    self.feedback.higher_is_better and result < self.threshold
+                ) or (
+                    not self.feedback.higher_is_better
+                    and result > self.threshold
                 )
-            if (self.feedback.higher_is_better and result < self.threshold) or (
-                not self.feedback.higher_is_better and result > self.threshold
-            ):
+                span.set_attribute(SpanAttributes.GUARDRAIL.SCORE, result)
+                span.set_attribute(SpanAttributes.GUARDRAIL.PASSED, not blocked)
+
+            if blocked:
                 return self.return_value
 
             return func(*args, **kwargs)
@@ -248,15 +293,28 @@ class block_output:
         sig = inspect.signature(func)
 
         def wrapper(*args, **kwargs):
+            guardrail_name = getattr(self.feedback, "name", func.__name__)
+
+            # Run the decorated function first; the guardrail span wraps only
+            # the feedback evaluation so its duration reflects the check, not
+            # the application logic.
             output = func(*args, **kwargs)
-            result = self.feedback(output)
-            if not isinstance(result, float):
-                raise ValueError(
-                    "`block_output` can only be used with feedback functions that return a float."
+            with _guardrail_span(guardrail_name, self.threshold) as span:
+                result = self.feedback(output)
+                if not isinstance(result, float):
+                    raise ValueError(
+                        "`block_output` can only be used with feedback functions that return a float."
+                    )
+                blocked = (
+                    self.feedback.higher_is_better and result < self.threshold
+                ) or (
+                    not self.feedback.higher_is_better
+                    and result > self.threshold
                 )
-            if (self.feedback.higher_is_better and result < self.threshold) or (
-                not self.feedback.higher_is_better and result > self.threshold
-            ):
+                span.set_attribute(SpanAttributes.GUARDRAIL.SCORE, result)
+                span.set_attribute(SpanAttributes.GUARDRAIL.PASSED, not blocked)
+
+            if blocked:
                 return self.return_value
             else:
                 return output
