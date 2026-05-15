@@ -265,6 +265,7 @@ nav:
             - Running on existing data: component_guides/evaluation/running_feedback_functions/existing_data.md
         - Generating Test Cases:
             - component_guides/evaluation/generate_test_cases.md
+        - LLM Jury (Ensemble Judges): component_guides/evaluation/llm_jury.md
         - Evaluate MLFlow Traces: component_guides/evaluation/mlflow.md
     - 🏃 Runtime Evaluation:
         - component_guides/runtime_evaluation/index.md
