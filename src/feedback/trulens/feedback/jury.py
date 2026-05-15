@@ -8,12 +8,13 @@ can be cheaper when smaller models are used.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
 import inspect
 import logging
 import statistics
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,11 @@ class Jury:
     ``Metric(implementation=jury)`` — no changes to Metric, Selector, or
     the evaluation pipeline are needed.
 
+    ``__call__`` always returns ``(score, {"reason": ...})``, matching the
+    ``_with_cot_reasons`` convention so per-juror breakdowns flow into
+    ``FeedbackCall.meta["reason"]`` and are visible in OTEL spans and the
+    dashboard without any UI changes.
+
     Args:
         jurors: Non-empty list of ``LLMProvider`` instances.
         method: Name of the feedback method to call on each juror, e.g.
@@ -43,16 +49,13 @@ class Jury:
         aggregation: How to combine individual juror scores. Accepts a
             strategy name (``"mean"``, ``"median"``, ``"trimmed_mean"``,
             ``"majority_vote"``, ``"weighted_mean"``) or any
-            ``Callable[[List[float]], float]``. Defaults to ``"mean"``.
+            ``Callable[[list[float]], float]``. Defaults to ``"mean"``.
         weights: Per-juror weights for ``"weighted_mean"``. Must have the
             same length as *jurors*. When a juror fails its weight is
             redistributed proportionally among the successful ones.
         threshold: Binarisation threshold for ``"majority_vote"``.
             Scores >= *threshold* count as a positive vote. Defaults to
-            ``0.5``.
-        return_details: When ``True``, ``__call__`` returns a
-            ``(score, details)`` tuple where *details* maps each juror's
-            model name to its individual score.
+            ``0.5``. On an exact tie falls back to median.
         max_workers: Maximum parallel threads. Defaults to
             ``len(jurors)``.
 
@@ -77,14 +80,13 @@ class Jury:
 
     def __init__(
         self,
-        jurors: List[Any],
+        jurors: list[Any],
         method: str,
-        aggregation: Union[str, Callable[[List[float]], float]] = "mean",
+        aggregation: str | Callable[[list[float]], float] = "mean",
         *,
-        weights: Optional[List[float]] = None,
+        weights: list[float] | None = None,
         threshold: float = 0.5,
-        return_details: bool = False,
-        max_workers: Optional[int] = None,
+        max_workers: int | None = None,
     ) -> None:
         if not jurors:
             raise ValueError("jurors must be a non-empty list.")
@@ -108,46 +110,40 @@ class Jury:
                     f"len(weights)={len(weights)} must equal len(jurors)={len(jurors)}."
                 )
 
-        # Validate method exists and capture its signature for Metric introspection.
-        bound_method = getattr(jurors[0], method, None)
-        if bound_method is None or not callable(bound_method):
-            raise AttributeError(
-                f"Juror {type(jurors[0]).__name__!r} has no callable method {method!r}."
-            )
+        # Validate ALL jurors have the method.
+        for i, juror in enumerate(jurors):
+            bound = getattr(juror, method, None)
+            if bound is None or not callable(bound):
+                raise AttributeError(
+                    f"Juror {type(juror).__name__!r} at index {i} has no callable method {method!r}."
+                )
 
         self._jurors = jurors
         self._method = method
         self._aggregation = aggregation
         self._weights = weights
         self._threshold = threshold
-        self._return_details = return_details
         self._max_workers = max_workers or len(jurors)
 
-        # Expose the provider method's signature so Metric's selector validation
-        # works correctly (inspect.signature checks __signature__ first).
-        self.__signature__ = inspect.signature(bound_method)
+        # Precompute once in __init__ (O(n)) instead of rebuilding per __call__ (O(n²)).
+        self._juror_names: list[str] = self._build_juror_names()
+
+        self.__signature__ = inspect.signature(getattr(jurors[0], method))
         self.__name__ = f"jury_{method}"
 
     # ------------------------------------------------------------------
     # Public interface
     # ------------------------------------------------------------------
 
-    def __call__(
-        self, **kwargs: Any
-    ) -> Union[float, Tuple[float, Dict[str, float]]]:
-        """Evaluate *kwargs* in parallel across all jurors and return an aggregated score.
+    def __call__(self, **kwargs: Any) -> tuple[float, dict[str, Any]]:
+        """Evaluate *kwargs* in parallel across all jurors.
 
-        Args:
-            **kwargs: The same keyword arguments accepted by the underlying
-                provider method (e.g. ``prompt`` and ``response`` for
-                ``relevance``).
-
-        Returns:
-            A float score, or a ``(float, dict)`` tuple when
-            *return_details* is ``True``.
+        Always returns ``(score, {"reason": ...})``, matching the
+        ``_with_cot_reasons`` convention. Per-juror scores and any CoT
+        explanations are embedded in the reason string so they appear in
+        OTEL spans and the dashboard automatically.
         """
-        # idx -> score; preserves juror order for weighted_mean.
-        results: Dict[int, float] = {}
+        results: dict[int, tuple[float, str | None]] = {}
 
         with ThreadPoolExecutor(max_workers=self._max_workers) as executor:
             future_to_idx = {
@@ -159,14 +155,22 @@ class Jury:
                 idx = future_to_idx[future]
                 try:
                     raw = future.result()
-                    score = (
-                        float(raw[0]) if isinstance(raw, tuple) else float(raw)
-                    )
-                    results[idx] = score
-                except Exception as exc:
+                    if isinstance(raw, tuple):
+                        score = float(raw[0])
+                        meta = (
+                            raw[1]
+                            if len(raw) > 1 and isinstance(raw[1], dict)
+                            else {}
+                        )
+                        reason: str | None = meta.get("reason")
+                    else:
+                        score = float(raw)
+                        reason = None
+                    results[idx] = (score, reason)
+                except Exception as exc:  # noqa: BLE001
                     logger.warning(
                         "Juror %r (index %d) failed: %s",
-                        self._juror_name(idx),
+                        self._juror_names[idx],
                         idx,
                         exc,
                     )
@@ -176,13 +180,19 @@ class Jury:
                 f"All {len(self._jurors)} jurors failed to produce a score."
             )
 
-        ordered = sorted(results.items())  # [(idx, score), ...]
-        agg_score = self._aggregate(ordered)
+        ordered_idxs = sorted(results.keys())
+        scores_by_idx = {idx: results[idx][0] for idx in ordered_idxs}
+        agg_score = self._aggregate(scores_by_idx)
 
-        if self._return_details:
-            details = {self._juror_name(idx): score for idx, score in ordered}
-            return agg_score, details
-        return agg_score
+        lines = [f"Aggregation: {self._aggregation} → {agg_score:.3f}"]
+        for idx in ordered_idxs:
+            score, reason = results[idx]
+            lines.append(f"  {self._juror_names[idx]}: {score:.3f}")
+            if reason:
+                for line in reason.splitlines():
+                    lines.append(f"    {line}")
+
+        return agg_score, {"reason": "\n".join(lines)}
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -191,18 +201,18 @@ class Jury:
     def _call_juror(self, juror: Any, kwargs: dict) -> Any:
         return getattr(juror, self._method)(**kwargs)
 
-    def _juror_name(self, idx: int) -> str:
-        juror = self._jurors[idx]
-        engine = getattr(juror, "model_engine", None)
-        base = str(engine) if engine else type(juror).__name__
-        # Append index only when the same base name appears more than once.
-        all_bases = [
+    def _build_juror_names(self) -> list[str]:
+        bases = [
             str(getattr(j, "model_engine", None) or type(j).__name__)
             for j in self._jurors
         ]
-        return f"{base}[{idx}]" if all_bases.count(base) > 1 else base
+        return [
+            f"{base}[{i}]" if bases.count(base) > 1 else base
+            for i, base in enumerate(bases)
+        ]
 
-    def _aggregate(self, ordered: List[Tuple[int, float]]) -> float:
+    def _aggregate(self, scores_by_idx: dict[int, float]) -> float:
+        ordered = sorted(scores_by_idx.items())
         scores = [s for _, s in ordered]
 
         if callable(self._aggregation) and not isinstance(
@@ -223,11 +233,21 @@ class Jury:
 
         if self._aggregation == "majority_vote":
             votes = sum(1 for s in scores if s >= self._threshold)
+            if votes * 2 == len(scores):
+                logger.warning(
+                    "Jury majority_vote tie (%d/%d). Falling back to median.",
+                    votes,
+                    len(scores),
+                )
+                return float(statistics.median(scores))
             return float(int(votes > len(scores) / 2))
 
         if self._aggregation == "weighted_mean":
-            idxs = [idx for idx, _ in ordered]
-            total = sum(self._weights[i] for i in idxs)
-            return sum(self._weights[i] * s for i, s in ordered) / total
+            total = sum(self._weights[idx] for idx in scores_by_idx)
+            if total == 0.0:
+                raise ValueError(
+                    "weighted_mean: total weight of surviving jurors is 0.0."
+                )
+            return sum(self._weights[idx] * s for idx, s in ordered) / total
 
         raise ValueError(f"Unknown aggregation: {self._aggregation!r}")

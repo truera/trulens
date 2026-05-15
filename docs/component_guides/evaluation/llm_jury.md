@@ -15,6 +15,12 @@ Because `Jury.__call__` has the same parameter names as the underlying provider
 method, it is a drop-in `implementation` for `Metric` — **no changes to
 `Metric`, `Selector`, or the evaluation pipeline are needed**.
 
+`Jury` always returns `(score, {"reason": ...})`, matching the
+`_with_cot_reasons` convention. Per-juror scores and any chain-of-thought
+explanations are embedded in the reason string, so they flow into
+`FeedbackCall.meta["reason"]` → `ai.observability.eval.metadata.reason` in
+OTEL spans and appear in the dashboard automatically — no UI changes needed.
+
 ```python
 from trulens.feedback.jury import Jury
 ```
@@ -23,14 +29,13 @@ from trulens.feedback.jury import Jury
 
 ```python
 Jury(
-    jurors,          # List[LLMProvider] — the panel of judges
-    method,          # str — method name, e.g. "relevance"
-    aggregation,     # str | Callable — how to combine scores (default "mean")
+    jurors,       # list[LLMProvider] — the panel of judges
+    method,       # str — method name, e.g. "relevance"
+    aggregation,  # str | Callable — how to combine scores (default "mean")
     *,
-    weights,         # List[float] — per-juror weights (weighted_mean only)
-    threshold,       # float — binarisation threshold (majority_vote, default 0.5)
-    return_details,  # bool — include per-juror scores in metadata (default False)
-    max_workers,     # int — parallel threads (default len(jurors))
+    weights,      # list[float] — per-juror weights (weighted_mean only)
+    threshold,    # float — binarisation threshold (majority_vote, default 0.5)
+    max_workers,  # int — parallel threads (default len(jurors))
 )
 ```
 
@@ -41,13 +46,13 @@ Jury(
 | `"mean"` *(default)* | Simple average | General purpose |
 | `"median"` | Middle value — robust to outlier judges | When one judge may be erratic |
 | `"trimmed_mean"` | Drop highest and lowest, average the rest | 3+ judges; outlier resistance with less bias than median |
-| `"majority_vote"` | Binarise at `threshold`, majority wins | Pass/fail guardrails |
+| `"majority_vote"` | Binarise at `threshold`, majority wins; ties fall back to median | Pass/fail guardrails |
 | `"weighted_mean"` | Weight each judge by alignment quality | When you have benchmark-derived judge quality scores |
-| `Callable[[List[float]], float]` | Any custom function | Specialist use cases |
+| `Callable[[list[float]], float]` | Any custom function | Specialist use cases |
 
 ## Usage examples
 
-### Basic jury with mean aggregation
+### Basic jury with median aggregation
 
 ```python
 from trulens.core import Metric
@@ -62,7 +67,7 @@ jury = Jury(
         LiteLLM(model_engine="anthropic/claude-3-haiku-20240307"),
     ],
     method="relevance",
-    aggregation="mean",
+    aggregation="median",
 )
 
 m_relevance = (
@@ -72,14 +77,28 @@ m_relevance = (
 )
 ```
 
-### Median jury (robust to outliers)
+### Per-juror score breakdown
+
+`Jury` always returns `(score, meta)`. The `meta["reason"]` string contains
+the aggregated score, each juror's individual score, and any chain-of-thought
+explanations from `_with_cot_reasons` methods — all visible in the dashboard.
 
 ```python
 jury = Jury(
-    jurors=[openai_provider, litellm_provider, cortex_provider],
-    method="context_relevance",
+    jurors=[openai_provider, litellm_provider],
+    method="relevance_with_cot_reasons",
     aggregation="median",
 )
+
+score, meta = jury(prompt="What is TruLens?", response="An eval library.")
+print(meta["reason"])
+# Aggregation: median → 0.825
+#   gpt-4o-mini: 0.750
+#     Criteria: relevance
+#     Supporting Evidence: the response directly addresses...
+#   claude-3-haiku: 0.900
+#     Criteria: relevance
+#     Supporting Evidence: mostly relevant but...
 ```
 
 ### Weighted jury from benchmark results
@@ -104,24 +123,15 @@ jury = Jury(
 )
 ```
 
-### Per-juror score breakdown
-
-```python
-jury = Jury(
-    jurors=[openai_provider, litellm_provider],
-    method="relevance",
-    aggregation="median",
-    return_details=True,
-)
-
-# Returns: (0.82, {"gpt-4o-mini": 0.75, "claude-3-haiku": 0.90})
-score, per_juror = jury(prompt="What is TruLens?", response="An eval library.")
-```
+On an exact tie, `majority_vote` falls back to the median of scores rather
+than returning 0.0.
 
 ### Error handling
 
-If one juror fails, `Jury` logs a warning and aggregates the rest. Only when
-*all* jurors fail does `Jury` raise a `RuntimeError`.
+If one juror fails, `Jury` logs a warning and aggregates the rest. For
+`weighted_mean`, the failed juror's weight is redistributed proportionally
+among the survivors. Only when *all* jurors fail does `Jury` raise a
+`RuntimeError`.
 
 ## Choosing juror models
 
@@ -134,7 +144,7 @@ Practical starting point:
 
 - 3 judges from different families
 - `"median"` or `"trimmed_mean"` aggregation
-- `return_details=True` during development to inspect per-juror scores
+- Use `_with_cot_reasons` methods to capture per-juror explanations in the dashboard
 
 ## Cost and latency
 
