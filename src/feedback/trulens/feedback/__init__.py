@@ -5,6 +5,7 @@ from importlib.metadata import version
 from trulens.core.utils import imports as import_utils
 from trulens.feedback.groundtruth import GroundTruthAggregator
 from trulens.feedback.groundtruth import GroundTruthAgreement
+from trulens.feedback.jury import Jury
 from trulens.feedback.llm_provider import LLMProvider
 from trulens.feedback.schema_validator import SchemaValidator
 
@@ -23,6 +24,7 @@ __version__ = version(
 __all__ = [
     "GroundTruthAgreement",
     "GroundTruthAggregator",
+    "Jury",
     "LLMProvider",
     "Embeddings",
     "SchemaValidator",
