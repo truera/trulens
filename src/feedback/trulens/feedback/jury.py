@@ -4,26 +4,26 @@ A single LLM judge is noisy and subject to intra-model bias. Ensembling a
 *panel* of diverse judges (a "jury") improves reliability, reduces bias, and
 can be cheaper when smaller models are used.
 
-References:
-    Verga et al. 2024 — PoLL: Panel of LLM evaluators.
-    Zhou et al. 2025 — SE-Jury: LLM-as-Ensemble-Judge.
-    Zhao et al. 2025 — Statistically principled aggregation of LLM judges.
 """
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import as_completed
 import inspect
 import logging
 import statistics
-from concurrent.futures import ThreadPoolExecutor
-from concurrent.futures import as_completed
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
-_BUILTIN_STRATEGIES = frozenset(
-    {"mean", "median", "trimmed_mean", "majority_vote", "weighted_mean"}
-)
+_BUILTIN_STRATEGIES = frozenset({
+    "mean",
+    "median",
+    "trimmed_mean",
+    "majority_vote",
+    "weighted_mean",
+})
 
 
 class Jury:
@@ -89,7 +89,10 @@ class Jury:
         if not jurors:
             raise ValueError("jurors must be a non-empty list.")
 
-        if isinstance(aggregation, str) and aggregation not in _BUILTIN_STRATEGIES:
+        if (
+            isinstance(aggregation, str)
+            and aggregation not in _BUILTIN_STRATEGIES
+        ):
             raise ValueError(
                 f"Unknown aggregation strategy {aggregation!r}. "
                 f"Choose one of {sorted(_BUILTIN_STRATEGIES)} or pass a callable."
@@ -129,7 +132,9 @@ class Jury:
     # Public interface
     # ------------------------------------------------------------------
 
-    def __call__(self, **kwargs: Any) -> Union[float, Tuple[float, Dict[str, float]]]:
+    def __call__(
+        self, **kwargs: Any
+    ) -> Union[float, Tuple[float, Dict[str, float]]]:
         """Evaluate *kwargs* in parallel across all jurors and return an aggregated score.
 
         Args:
@@ -154,7 +159,9 @@ class Jury:
                 idx = future_to_idx[future]
                 try:
                     raw = future.result()
-                    score = float(raw[0]) if isinstance(raw, tuple) else float(raw)
+                    score = (
+                        float(raw[0]) if isinstance(raw, tuple) else float(raw)
+                    )
                     results[idx] = score
                 except Exception as exc:
                     logger.warning(
@@ -198,7 +205,9 @@ class Jury:
     def _aggregate(self, ordered: List[Tuple[int, float]]) -> float:
         scores = [s for _, s in ordered]
 
-        if callable(self._aggregation) and not isinstance(self._aggregation, str):
+        if callable(self._aggregation) and not isinstance(
+            self._aggregation, str
+        ):
             return float(self._aggregation(scores))
 
         if self._aggregation == "mean":

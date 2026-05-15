@@ -3,11 +3,9 @@
 import inspect
 import statistics
 import unittest
-from typing import Dict, List, Optional, Tuple
 from unittest.mock import MagicMock
 
 from trulens.feedback.jury import Jury
-
 
 # ---------------------------------------------------------------------------
 # Mock helpers
@@ -47,8 +45,7 @@ def _make_tuple_provider(model_engine: str, score: float):
 # ---------------------------------------------------------------------------
 
 
-def _mock_relevance(prompt: str, response: str) -> float:
-    ...
+def _mock_relevance(prompt: str, response: str) -> float: ...
 
 
 # ---------------------------------------------------------------------------
@@ -135,7 +132,11 @@ class TestJuryConstruction(unittest.TestCase):
 
     def test_weighted_mean_without_weights_raises(self):
         with self.assertRaises(ValueError):
-            Jury([self._provider()], method="relevance", aggregation="weighted_mean")
+            Jury(
+                [self._provider()],
+                method="relevance",
+                aggregation="weighted_mean",
+            )
 
     def test_weighted_mean_wrong_length_raises(self):
         with self.assertRaises(ValueError):

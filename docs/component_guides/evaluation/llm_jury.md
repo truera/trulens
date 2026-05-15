@@ -7,13 +7,6 @@ systematically favours its own style, vocabulary, and reasoning patterns.
 Research shows that ensembling a **panel of diverse judges** (a "jury")
 substantially improves evaluation reliability:
 
-| Paper | Key finding |
-|---|---|
-| [Verga et al. 2024 — PoLL](https://arxiv.org/abs/2404.18796) | A panel of diverse smaller models outperforms a single large judge and is 7× cheaper. |
-| [Zhou et al. 2025 — SE-Jury](https://arxiv.org/abs/2501.16676) | Ensemble judges narrow the gap with human evaluation on software engineering tasks. |
-| [Zhao et al. 2025 — Statistically Principled Aggregation](https://arxiv.org/abs/2503.07977) | PoLL-style juries with 3 diverse small models achieve higher human-correlation than a single large judge. |
-| [Li et al. 2025 — Auto-Prompt Ensemble](https://arxiv.org/abs/2502.07853) | Treating each evaluation dimension as an independent juror with auto-generated prompts further improves reliability. |
-
 ## The `Jury` class
 
 `Jury` wraps N `LLMProvider` instances, calls the same named feedback method on
