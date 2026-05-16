@@ -21,6 +21,9 @@ from trulens.dashboard.utils.streamlit_compat import st_columns
 from trulens.dashboard.ux import components as dashboard_components
 from trulens.dashboard.ux import styles as dashboard_styles
 
+SCORE_PASS_THRESHOLD = 0.7
+SCORE_FAIL_THRESHOLD = 0.3
+
 APP_COLS = ["app_version", "app_id", "app_name"]
 APP_AGG_COLS = [
     "Records",
@@ -784,7 +787,15 @@ def _render_plot_tab(
             continue
 
         higher_is_better = feedback_directions.get(feedback_col_name, True)
-        pass_threshold = 0.7 if higher_is_better else 0.3
+        pass_threshold = (
+            SCORE_PASS_THRESHOLD if higher_is_better else SCORE_FAIL_THRESHOLD
+        )
+
+        if chart_type == "Violin" and _df.nunique() <= 1:
+            st.info(
+                f"Not enough variation in scores for '{feedback_col_name}' to render a violin plot."
+            )
+            continue
 
         if chart_type == "Histogram":
             mean_score = float(_df.mean())
@@ -810,13 +821,17 @@ def _render_plot_tab(
                 col=col_num,
             )
         else:
+            mean_score = float(_df.mean())
+            violin_color = dashboard_styles.CATEGORY.of_score(
+                mean_score, higher_is_better=higher_is_better
+            ).color
             plot = go.Violin(
                 y=_df,
                 box_visible=True,
                 meanline_visible=True,
                 name="",
-                fillcolor="lightblue",
-                line_color="steelblue",
+                fillcolor=violin_color,
+                line_color=violin_color,
                 points="all",
                 jitter=0.3,
                 pointpos=0,
