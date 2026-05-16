@@ -39,7 +39,7 @@ Diagram](https://www.trulens.org/assets/images/TruLens_Architecture.png)
 Install the trulens pip package from PyPI.
 
 ```bash
-pip install trulens
+pip install trulens-core
 ```
 
 Install with a specific LLM provider for feedback evaluation:
@@ -119,8 +119,20 @@ Run evaluations alongside your app, on existing data, or in offline batch mode:
 with tru_recorder as recording:
     response = my_app.query("What is TruLens?")
 
-# Batch — evaluate a pre-collected dataset without a live app
-results = session.evaluate(dataset=df, metrics=[relevance, groundedness])
+# Batch — evaluate a pre-collected dataset using the TruLens 2.8 Run API
+from trulens.core.run import RunConfig
+
+run_config = RunConfig(
+    run_name="batch_eval_v1",
+    dataset_name="eval_questions",
+    source_type="TABLE",
+    dataset_spec={"input": "QUESTION"},
+    invocation_max_workers=8,
+    metric_max_workers=4,
+)
+run = tru_app.add_run(run_config=run_config)
+run.start()
+run.compute_metrics([relevance, groundedness])
 ```
 
 ### 🔌 MCP support
@@ -139,12 +151,15 @@ def call_mcp_tool(self, tool_name: str, arguments: dict) -> str:
 Target any span attribute for evaluation using the flexible Selector API:
 
 ```python
-from trulens.core.schema.select import Select
+from trulens.core import Metric, Selector
 
-f_context_relevance = (
-    Feedback(provider.context_relevance)
-    .on_input()
-    .on(Select.RecordCalls.retrieve.rets[:])
+f_context_relevance = Metric(
+    name="Context Relevance",
+    implementation=provider.context_relevance,
+    selectors={
+        "input": Selector.select_record_input(),
+        "context": Selector.select_context(),
+    },
 )
 ```
 
