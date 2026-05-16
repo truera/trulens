@@ -135,8 +135,10 @@ class Jury:
     # Public interface
     # ------------------------------------------------------------------
 
-    def __call__(self, **kwargs: Any) -> tuple[float, dict[str, Any]]:
-        """Evaluate *kwargs* in parallel across all jurors.
+    def __call__(
+        self, *args: Any, **kwargs: Any
+    ) -> tuple[float, dict[str, Any]]:
+        """Evaluate the same arguments in parallel across all jurors.
 
         Always returns ``(score, {"reason": ...})``, matching the
         ``_with_cot_reasons`` convention. Per-juror scores and any CoT
@@ -147,7 +149,7 @@ class Jury:
 
         with ThreadPoolExecutor(max_workers=self._max_workers) as executor:
             future_to_idx = {
-                executor.submit(self._call_juror, juror, kwargs): idx
+                executor.submit(self._call_juror, juror, args, kwargs): idx
                 for idx, juror in enumerate(self._jurors)
             }
 
@@ -198,8 +200,10 @@ class Jury:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _call_juror(self, juror: Any, kwargs: dict) -> Any:
-        return getattr(juror, self._method)(**kwargs)
+    def _call_juror(
+        self, juror: Any, args: tuple[Any, ...], kwargs: dict[str, Any]
+    ) -> Any:
+        return getattr(juror, self._method)(*args, **kwargs)
 
     def _build_juror_names(self) -> list[str]:
         bases = [
