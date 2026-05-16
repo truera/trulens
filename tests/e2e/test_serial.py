@@ -16,7 +16,7 @@ are expected.
 from pathlib import Path
 
 from trulens.apps import custom as custom_app
-from trulens.core.feedback import feedback as core_feedback
+from trulens.core.metric import metric as core_metric
 from trulens.feedback.dummy import provider as dummy_provider
 from trulens.providers.huggingface import provider as huggingface_provider
 
@@ -57,11 +57,11 @@ class TestSerial(mod_test.TruTestCase):
             delay=0.0,
         )
 
-        feedback_language_match = core_feedback.Feedback(
-            d_hugs.language_match
+        feedback_language_match = core_metric.Metric(
+            implementation=d_hugs.language_match
         ).on_input_output()
-        feedback_context_relevance = core_feedback.Feedback(
-            d.context_relevance
+        feedback_context_relevance = core_metric.Metric(
+            implementation=d.context_relevance
         ).on_input_output()
 
         ta = custom_app.TruCustomApp(

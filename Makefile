@@ -136,25 +136,25 @@ lab: env
 
 # Build the documentation website.
 docs: env-docs $(shell find docs -type f) mkdocs.yml
-	poetry run mkdocs build --clean
+	poetry run properdocs build --clean
 	rm -Rf site/overrides
 
 # Serve the documentation website.
 docs-serve: env-docs
-	poetry run mkdocs serve -a 127.0.0.1:8000
+	poetry run properdocs serve -a 127.0.0.1:8000
 
 # Serve the documentation website.
 docs-serve-debug: env-docs
-	poetry run mkdocs serve -a 127.0.0.1:8000 --verbose
+	poetry run properdocs serve -a 127.0.0.1:8000 --verbose
 
-# The --dirty flag makes mkdocs not regenerate everything when change is
+# The --dirty flag makes properdocs not regenerate everything when change is
 # detected but also seems to break references.
 docs-serve-dirty: env-docs
-	poetry run mkdocs serve --dirty -a 127.0.0.1:8000
+	poetry run properdocs serve --dirty -a 127.0.0.1:8000
 
 docs-upload: clean env-docs $(shell find docs -type f) mkdocs.yml
 	poetry run ggshield secret scan repo ./docs
-	poetry run mkdocs gh-deploy
+	poetry run properdocs gh-deploy
 
 # Check that links in the documentation are valid.
 # Requires the lychee tool (https://github.com/lycheeverse/lychee).
@@ -162,11 +162,11 @@ docs-upload: clean env-docs $(shell find docs -type f) mkdocs.yml
 docs-linkcheck: site
 	lychee --offline --no-progress "site/**/*.html"
 
-# Check documentation for broken internal links using mkdocs --strict.
+# Check documentation for broken internal links using properdocs --strict.
 # Does not require lychee; fails if any warnings beyond the pre-existing
 # README.md/index.md conflict are found.
 docs-linkcheck-strict: env-docs
-	@OUTPUT=$$(poetry run mkdocs build --clean --strict 2>&1); \
+	@OUTPUT=$$(poetry run properdocs build --clean --strict 2>&1); \
 	echo "$$OUTPUT"; \
   BROKEN=$$(echo "$$OUTPUT" | grep "WARNING -" | grep -v "README.md" | grep -v "griffe:"); \
 	if [ -n "$$BROKEN" ]; then \

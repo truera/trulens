@@ -2,8 +2,7 @@ import os
 from typing import Literal, Dict, Tuple
 from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.core.otel.instrument import instrument
-from trulens.core import Feedback
-from trulens.core.feedback.selector import Selector
+from trulens.core import Metric, Selector
 from trulens.providers.openai import OpenAI
 from trulens.feedback import prompts
 
@@ -213,14 +212,15 @@ class CustomTrajEval(OpenAI):
         """
         return self.generate_score_and_reasons(system_prompt=system_prompt, user_prompt=user_prompt, min_score_val = 0, max_score_val = 3)
 
-def create_traj_eval(provider) -> Feedback:
-    return (
-        Feedback(provider.traj_execution_with_cot_reasons, name="Trajectory Evaluation")
-        .on({
+def create_traj_eval(provider) -> Metric:
+    return Metric(
+        implementation=provider.traj_execution_with_cot_reasons,
+        name="Trajectory Evaluation",
+        selectors={
             "trace": Selector(
                 span_type="ORCHESTRATOR_NODE",
                 span_attribute=f"{BASE_SCOPE}.execution_trace",
                 collect_list=True,
             ),
-        })
+        },
     )

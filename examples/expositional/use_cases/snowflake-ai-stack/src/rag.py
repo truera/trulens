@@ -2,7 +2,7 @@ from src.generation import ChatModel
 from langchain_core.vectorstores import VectorStore
 from trulens.core.otel.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
-from trulens.core import Feedback
+from trulens.core import Metric, Selector
 from trulens.core.guardrails.base import context_filter
 from trulens.providers.openai import OpenAI
 import os
@@ -24,10 +24,12 @@ context_relevance_custom_criteria = """
     """
 
 # note: feedback function used for guardrail must only return a score, not also reasons
-f_context_relevance_score = Feedback(
-    provider.context_relevance, name="Context Relevance",
-    criteria = context_relevance_custom_criteria,
+f_context_relevance_score = Metric(
+    implementation=provider.context_relevance,
+    name="Context Relevance",
+    criteria=context_relevance_custom_criteria,
 )
+
 
 class Rag:
     def __init__(self, chat_model: ChatModel, vector_store: VectorStore, use_context_filter: int):

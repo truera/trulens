@@ -171,18 +171,11 @@ class _TruSession(core_session.TruSession):
     @staticmethod
     def _track_costs():
         if _can_import("trulens.providers.cortex.endpoint"):
-            from snowflake.cortex._sse_client import SSEClient
-            from trulens.core.otel.instrument import instrument_cost_computer
-            from trulens.providers.cortex.endpoint import CortexCostComputer
-
-            instrument_cost_computer(
-                SSEClient,
-                "events",
-                attributes=lambda ret,
-                exception,
-                *args,
-                **kwargs: CortexCostComputer.handle_response(ret),
+            from trulens.providers.cortex.endpoint import (
+                register_otel_cost_tracking,
             )
+
+            register_otel_cost_tracking()
         if _can_import("trulens.providers.openai.endpoint"):
             import openai
             from openai import resources
@@ -398,10 +391,9 @@ class _TruSession(core_session.TruSession):
                 litellm,
                 "completion",
                 span_type=SpanAttributes.SpanType.GENERATION,
-                attributes=lambda ret,
-                exception,
-                *args,
-                **kwargs: LiteLLMCostComputer.handle_response(ret),
+                attributes=lambda ret, exception, *args, **kwargs: (
+                    LiteLLMCostComputer.handle_response(ret)
+                ),
                 must_be_first_wrapper=True,
             )
 
@@ -414,8 +406,7 @@ class _TruSession(core_session.TruSession):
             instrument_cost_computer(
                 Models,
                 "generate_content",
-                attributes=lambda ret,
-                exception,
-                *args,
-                **kwargs: GoogleCostComputer.handle_response(ret),
+                attributes=lambda ret, exception, *args, **kwargs: (
+                    GoogleCostComputer.handle_response(ret)
+                ),
             )

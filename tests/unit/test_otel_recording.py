@@ -1,6 +1,6 @@
 import pandas as pd
 from trulens.apps.app import TruApp
-from trulens.core.feedback import Feedback
+from trulens.core import Metric
 from trulens.core.feedback.selector import Selector
 from trulens.core.otel.instrument import instrument
 
@@ -16,12 +16,16 @@ class TestOtelRecording(OtelTestCase):
         def char_counter(text: str) -> float:
             return float(len(text))
 
-        f_baby_grader = Feedback(baby_grader, name="Baby Grader").on({
-            "baby": Selector.select_record_input()
-        })
-        f_char_counter = Feedback(char_counter, name="Char Counter").on({
-            "text": Selector.select_record_output()
-        })
+        f_baby_grader = Metric(
+            implementation=baby_grader,
+            name="Baby Grader",
+            selectors={"baby": Selector.select_record_input()},
+        )
+        f_char_counter = Metric(
+            implementation=char_counter,
+            name="Char Counter",
+            selectors={"text": Selector.select_record_output()},
+        )
 
         # Create app.
         class SimpleApp:

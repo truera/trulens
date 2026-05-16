@@ -1,7 +1,7 @@
 from typing import List
 
 from trulens.apps.app import TruApp
-from trulens.core import Feedback
+from trulens.core import Metric
 from trulens.core.guardrails.base import context_filter
 from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
@@ -9,8 +9,10 @@ from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.otel_test_case import OtelTestCase
 
-_context_relevance = Feedback(
-    lambda query, context: 0.0 if "irrelevant" in context else 1.0,
+_context_relevance = Metric(
+    implementation=lambda query, context: 0.0
+    if "irrelevant" in context
+    else 1.0,
     name="context relevance",
 )
 

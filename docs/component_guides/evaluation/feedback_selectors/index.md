@@ -16,8 +16,13 @@ As a reminder, a typical feedback definition looks like this:
 !!! example
 
     ```python
-    f_lang_match = Feedback(hugs.language_match)
-        .on_input_output()
+    f_lang_match = Metric(
+        implementation=hugs.language_match,
+        selectors={
+            "text1": Selector.select_record_input(),
+            "text2": Selector.select_record_output(),
+        },
+    )
     ```
 
 `on_input_output` is one of many available shortcuts to simplify the selection

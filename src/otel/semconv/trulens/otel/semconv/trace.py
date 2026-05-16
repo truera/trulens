@@ -112,6 +112,9 @@ class SpanAttributes:
         MCP = "MCP"
         """A Model Context Protocol (MCP) tool call."""
 
+        GUARDRAIL = "guardrail"
+        """A guardrail check execution."""
+
     class UNKNOWN:
         """Attributes relevant for spans that could not be categorized otherwise."""
 
@@ -408,6 +411,23 @@ class SpanAttributes:
 
         EXECUTION_TIME_MS = base + ".execution_time_ms"
         """Time taken to execute the MCP tool call in milliseconds."""
+
+    class GUARDRAIL:
+        """Attributes relevant for guardrail check spans."""
+
+        base = BASE_SCOPE + ".guardrail"
+
+        NAME = base + ".name"
+        """Name of the guardrail."""
+
+        SCORE = base + ".score"
+        """Numeric feedback score returned by the guardrail evaluation."""
+
+        PASSED = base + ".passed"
+        """Boolean indicating whether the guardrail check passed."""
+
+        THRESHOLD = base + ".threshold"
+        """Configured threshold for the guardrail check."""
 
     class INLINE_EVAL:
         """Attributes specific to inline evaluation instrumentation."""

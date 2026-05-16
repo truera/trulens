@@ -81,18 +81,19 @@ internal step of our application, such as the retrieved context.
 
     ```python
     import numpy as np
-    from trulens.core import Feedback
+    from trulens.core import Metric, Selector
     from trulens.providers.openai import OpenAI
 
     provider = OpenAI()
 
-    context = TruChain.select_context(rag_chain)
-
-    f_context_relevance = (
-        Feedback(provider.context_relevance)
-        .on_input()
-        .on_context(collect_list=False)
-        .aggregate(np.mean)
+    f_context_relevance = Metric(
+        implementation=provider.context_relevance,
+        name="Context Relevance",
+        selectors={
+            "question": Selector.select_record_input(),
+            "context": Selector.select_context(collect_list=False),
+        },
+        agg=np.mean,
     )
     ```
 

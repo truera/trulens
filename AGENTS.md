@@ -128,7 +128,7 @@ def generate(self, prompt: str) -> str:
     pass
 ```
 
-Available span types: `RETRIEVAL`, `GENERATION`, `RERANKING`, `TOOL`, `AGENT`, `WORKFLOW`, `GRAPH_NODE`, `GRAPH_TASK`, `MCP`, `RECORD_ROOT`, `EVAL_ROOT`, `UNKNOWN`
+Available span types: `RETRIEVAL`, `GENERATION`, `RERANKING`, `TOOL`, `AGENT`, `WORKFLOW`, `GRAPH_NODE`, `GRAPH_TASK`, `MCP`, `GUARDRAIL`, `RECORD_ROOT`, `EVAL_ROOT`, `UNKNOWN`
 
 #### Custom span attributes
 

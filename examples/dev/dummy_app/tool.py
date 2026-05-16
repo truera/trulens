@@ -97,9 +97,7 @@ class DummyStackTool(DummyTool):
             else:
                 fmod = fmod.__name__
             ffunc = frame.f_code.co_name
-            if not fmod.startswith("examples.") or fmod.startswith(
-                "trulens_eval"
-            ):
+            if not fmod.startswith("examples.") or fmod.startswith("trulens."):
                 continue
 
             ret += f"""

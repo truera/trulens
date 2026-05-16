@@ -23,7 +23,7 @@ Simply adding the `block_output` decorator with a feedback function and threshol
     ```python
     from trulens.core.guardrails.base import block_output
 
-    feedback = Feedback(provider.criminality, higher_is_better = False)
+    feedback = Metric(implementation=provider.criminality, higher_is_better=False)
 
     class safe_output_chat_app:
         @instrument()
@@ -50,7 +50,7 @@ This mechanism for guardrails is supported via the `block_input` guardrail. If t
     ```python
     from trulens.core.guardrails.base import block_input
 
-    feedback = Feedback(provider.criminality, higher_is_better = False)
+    feedback = Metric(implementation=provider.criminality, higher_is_better=False)
 
     class safe_input_chat_app:
         @instrument()
@@ -98,7 +98,7 @@ If we consider a RAG, context filter guardrails can be used to evaluate the *con
         ```python
         from trulens.core.guardrails.base import context_filter
 
-        feedback = Feedback(provider.context_relevance)
+        feedback = Metric(implementation=provider.context_relevance)
 
         class RAG_from_scratch:
         @context_filter(feedback, 0.5, keyword_for_prompt="query")
@@ -116,7 +116,7 @@ If we consider a RAG, context filter guardrails can be used to evaluate the *con
         ```python
         from trulens.apps.langchain.guardrails import WithFeedbackFilterDocuments
 
-        feedback = Feedback(provider.context_relevance)
+        feedback = Metric(implementation=provider.context_relevance)
 
         filtered_retriever = WithFeedbackFilterDocuments.of_retriever(
             retriever=retriever,
@@ -138,7 +138,7 @@ If we consider a RAG, context filter guardrails can be used to evaluate the *con
         ```python
         from trulens.apps.llamaindex.guardrails import WithFeedbackFilterNodes
 
-        feedback = Feedback(provider.context_relevance)
+        feedback = Metric(implementation=provider.context_relevance)
 
         filtered_query_engine = WithFeedbackFilterNodes(query_engine,
             feedback=feedback,
