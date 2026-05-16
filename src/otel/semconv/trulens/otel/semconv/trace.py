@@ -57,7 +57,15 @@ class GenAIAttributes:
         """Number of completion/output tokens generated."""
 
     class SYSTEM:
-        """Attributes identifying the GenAI provider/system."""
+        """Attributes identifying the GenAI provider/system.
+
+        Note: We use ``gen_ai.system`` (OTEL GenAI spec v1.36.0) rather than
+        the newer ``gen_ai.provider.name`` because the OTEL spec transition plan
+        states that implementations SHOULD NOT change away from v1.36.0 by
+        default. The attribute is accessed as ``GenAIAttributes.SYSTEM.NAME``
+        (not ``gen_ai.system.name`` — the inner class name ``SYSTEM`` is just
+        a grouping convenience; the actual key is ``gen_ai.system``).
+        """
 
         NAME = GEN_AI_SCOPE + ".system"
         """Name of the GenAI provider (e.g. ``openai``, ``anthropic``)."""
@@ -65,7 +73,7 @@ class GenAIAttributes:
     class RETRIEVAL:
         """Attributes for a retrieval operation."""
 
-        QUERY_TEXT = GEN_AI_SCOPE + ".retrieval.query"
+        QUERY_TEXT = GEN_AI_SCOPE + ".retrieval.query.text"
         """Query text used for retrieval."""
 
         DOCUMENTS = GEN_AI_SCOPE + ".retrieval.documents"

@@ -311,7 +311,7 @@ def set_genai_generation_attributes(
     output_tokens: Optional[int] = None,
     temperature: Optional[float] = None,
     provider_name: Optional[str] = None,
-    operation_name: str = "chat",
+    operation_name: Optional[str] = None,
 ) -> None:
     """Emit ``gen_ai.*`` attributes for a GENERATION span.
 
@@ -328,11 +328,13 @@ def set_genai_generation_attributes(
         provider_name: GenAI provider name, e.g. ``"openai"`` (maps to
             ``gen_ai.system``).
         operation_name: GenAI operation name (maps to
-            ``gen_ai.operation.name``). Defaults to ``"chat"``.
+            ``gen_ai.operation.name``). When ``None`` the attribute is
+            not emitted.
     """
-    set_span_attribute_safely(
-        span, GenAIAttributes.OPERATION.NAME, operation_name
-    )
+    if operation_name is not None:
+        set_span_attribute_safely(
+            span, GenAIAttributes.OPERATION.NAME, operation_name
+        )
     if model is not None:
         set_span_attribute_safely(
             span, GenAIAttributes.REQUEST.MODEL, model
@@ -366,7 +368,7 @@ def set_genai_retrieval_attributes(
     Args:
         span: The OTEL span to annotate.
         query_text: Query used for retrieval (maps to
-            ``gen_ai.retrieval.query``).
+            ``gen_ai.retrieval.query.text``).
         documents: Retrieved documents or contexts (maps to
             ``gen_ai.retrieval.documents``).
     """
