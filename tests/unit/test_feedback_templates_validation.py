@@ -1,30 +1,29 @@
 """Validation tests for exported feedback template definitions."""
 
+import ast
 from collections.abc import Iterable
+import inspect
 from string import Formatter
 import unittest
 
+from trulens.feedback import llm_provider
 from trulens.feedback import templates
 from trulens.feedback.templates import base as templates_base
 
 _PROMPT_ATTRIBUTES = ("system_prompt", "user_prompt", "prompt")
-_ALLOWED_PROMPT_FIELDS = {
-    "context",
-    "hypothesis",
-    "key_point",
-    "max_score",
-    "min_score",
-    "premise",
-    "prompt",
-    "question",
-    "response",
-    "source",
-    "statement",
-    "statements",
-    "submission",
-    "summary",
-    "text",
-    "trace",
+_IGNORED_SIGNATURE_PARAMETERS = {
+    "self",
+    "args",
+    "kwargs",
+    "criteria",
+    "additional_instructions",
+    "custom_instructions",
+    "examples",
+    "groundedness_configs",
+    "min_score_val",
+    "max_score_val",
+    "temperature",
+    "enable_trace_compression",
 }
 
 
@@ -43,12 +42,63 @@ def _exported_prompt_template_classes() -> (
             yield value
 
 
+def _provider_signature_fields() -> set[str]:
+    """Return prompt input names from feedback method signatures."""
+    fields = set()
+
+    for _, member in inspect.getmembers(
+        llm_provider.LLMProvider, predicate=callable
+    ):
+        try:
+            signature = inspect.signature(member)
+        except (TypeError, ValueError):
+            continue
+
+        for parameter in signature.parameters.values():
+            if (
+                parameter.name not in _IGNORED_SIGNATURE_PARAMETERS
+                and parameter.kind
+                in {
+                    inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                    inspect.Parameter.KEYWORD_ONLY,
+                }
+            ):
+                fields.add(parameter.name)
+
+    return fields
+
+
+def _provider_format_keyword_fields() -> set[str]:
+    """Return prompt field names used when provider methods format templates."""
+    fields = set()
+    provider_tree = ast.parse(inspect.getsource(llm_provider.LLMProvider))
+
+    for node in ast.walk(provider_tree):
+        if not isinstance(node, ast.Call):
+            continue
+
+        if isinstance(node.func, ast.Attribute) and node.func.attr == "format":
+            fields.update(
+                keyword.arg
+                for keyword in node.keywords
+                if keyword.arg is not None
+            )
+
+    return fields
+
+
+def _allowed_prompt_fields() -> set[str]:
+    """Build allowed template fields from the provider implementation."""
+    return _provider_signature_fields() | _provider_format_keyword_fields()
+
+
 class TestFeedbackTemplateValidation(unittest.TestCase):
     """Validate prompt template definitions exported by the package."""
 
     @classmethod
     def setUpClass(cls) -> None:
         cls.template_classes = tuple(_exported_prompt_template_classes())
+        cls.allowed_prompt_fields = _allowed_prompt_fields()
 
     def test_finds_expected_template_classes(self) -> None:
         template_names = {
@@ -127,7 +177,7 @@ class TestFeedbackTemplateValidation(unittest.TestCase):
                         if field_name is not None
                     }
 
-                    self.assertLessEqual(fields, _ALLOWED_PROMPT_FIELDS)
+                    self.assertLessEqual(fields, self.allowed_prompt_fields)
 
 
 if __name__ == "__main__":
