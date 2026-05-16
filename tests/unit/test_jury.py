@@ -322,6 +322,42 @@ class TestJuryReturnFormat(unittest.TestCase):
             custom_instructions="be strict",
         )
 
+    def test_each_juror_receives_independent_kwargs(self):
+        class MutatingKwargsJury(Jury):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.seen_custom_instructions = []
+
+            def _call_juror(self, juror, args, kwargs):
+                self.seen_custom_instructions.append(
+                    kwargs.get("custom_instructions")
+                )
+                kwargs.pop("custom_instructions", None)
+                return super()._call_juror(juror, args, kwargs)
+
+        p1 = _make_provider("gpt-4o-mini", 0.6)
+        p1.relevance.__signature__ = inspect.signature(
+            _mock_relevance_with_kwargs
+        )
+        p2 = _make_provider("claude-haiku", 0.8)
+        p2.relevance.__signature__ = inspect.signature(
+            _mock_relevance_with_kwargs
+        )
+        j = MutatingKwargsJury(
+            [p1, p2],
+            method="relevance",
+            max_workers=1,
+        )
+        j.__signature__ = inspect.signature(_mock_relevance_with_kwargs)
+
+        score, _ = j("x", "y", custom_instructions="be strict")
+
+        self.assertAlmostEqual(score, 0.7)
+        self.assertEqual(
+            j.seen_custom_instructions,
+            ["be strict", "be strict"],
+        )
+
 
 class TestJuryMetricIntegration(unittest.TestCase):
     """Verify Jury integrates with Metric without changes to Metric."""

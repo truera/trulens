@@ -149,7 +149,9 @@ class Jury:
 
         with ThreadPoolExecutor(max_workers=self._max_workers) as executor:
             future_to_idx = {
-                executor.submit(self._call_juror, juror, args, kwargs): idx
+                executor.submit(
+                    self._call_juror, juror, args, dict(kwargs)
+                ): idx
                 for idx, juror in enumerate(self._jurors)
             }
 
