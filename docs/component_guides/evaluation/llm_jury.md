@@ -7,6 +7,16 @@ systematically favours its own style, vocabulary, and reasoning patterns.
 Research shows that ensembling a **panel of diverse judges** (a "jury")
 substantially improves evaluation reliability:
 
+- [Replacing Judges with Juries: Evaluating LLM Generations with a Panel of Diverse Models](https://arxiv.org/abs/2404.18796)
+- [SE-Jury: An LLM-as-Ensemble-Judge Metric](https://arxiv.org/abs/2512.01786)
+- [From Many Voices to One: A Statistically Principled Aggregation of LLM Judges](https://openreview.net/forum?id=Ou53DNvjx7)
+- [Auto-Prompt Ensemble for LLM Judge](https://arxiv.org/abs/2510.06538)
+- [Debate, Deliberate, Decide (D3)](https://aclanthology.org/2026.eacl-long.392/)
+
+`Jury` is not tied to one paper's algorithm. It provides the common
+infrastructure for running several LLM judges through the existing Metric API
+and combining their scores.
+
 ## The `Jury` class
 
 `Jury` wraps N `LLMProvider` instances, calls the same named feedback method on
@@ -152,3 +162,9 @@ Practical starting point:
 latency is approximately that of the *slowest* juror. Cost scales linearly with
 the number of jurors. Using 3 small models (e.g. GPT-4o-mini, Claude Haiku,
 Gemini Flash) is typically cheaper than a single GPT-4o call.
+
+## Configuration note
+
+`Jury` stores provider instances, including their model configuration. Build the
+jury in the same environment where those providers and credentials are
+available, especially when using deferred or remote evaluation workflows.

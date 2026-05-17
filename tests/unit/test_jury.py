@@ -50,6 +50,11 @@ def _make_cot_provider(model_engine: str, score: float, reason: str):
 def _mock_relevance(prompt: str, response: str) -> float: ...
 
 
+def _mock_relevance_with_kwargs(
+    prompt: str, response: str, **kwargs
+) -> float: ...
+
+
 # ---------------------------------------------------------------------------
 # Test cases
 # ---------------------------------------------------------------------------
@@ -287,6 +292,71 @@ class TestJuryReturnFormat(unittest.TestCase):
         j.__signature__ = inspect.signature(_mock_relevance)
         score, _ = j(prompt="x", response="y")
         self.assertAlmostEqual(score, 0.7)
+
+    def test_accepts_positional_arguments_matching_provider_signature(self):
+        p = self._provider_with_sig("gpt-4o", 0.75)
+        j = Jury([p], method="relevance")
+        j.__signature__ = inspect.signature(_mock_relevance)
+
+        score, _ = j("What is TruLens?", "An eval library.")
+
+        self.assertAlmostEqual(score, 0.75)
+        p.relevance.assert_called_once_with(
+            "What is TruLens?", "An eval library."
+        )
+
+    def test_preserves_extra_keyword_arguments(self):
+        p = _make_provider("gpt-4o", 0.8)
+        p.relevance.__signature__ = inspect.signature(
+            _mock_relevance_with_kwargs
+        )
+        j = Jury([p], method="relevance")
+        j.__signature__ = inspect.signature(_mock_relevance_with_kwargs)
+
+        score, _ = j("x", "y", custom_instructions="be strict")
+
+        self.assertAlmostEqual(score, 0.8)
+        p.relevance.assert_called_once_with(
+            "x",
+            "y",
+            custom_instructions="be strict",
+        )
+
+    def test_each_juror_receives_independent_kwargs(self):
+        class MutatingKwargsJury(Jury):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.seen_custom_instructions = []
+
+            def _call_juror(self, juror, args, kwargs):
+                self.seen_custom_instructions.append(
+                    kwargs.get("custom_instructions")
+                )
+                kwargs.pop("custom_instructions", None)
+                return super()._call_juror(juror, args, kwargs)
+
+        p1 = _make_provider("gpt-4o-mini", 0.6)
+        p1.relevance.__signature__ = inspect.signature(
+            _mock_relevance_with_kwargs
+        )
+        p2 = _make_provider("claude-haiku", 0.8)
+        p2.relevance.__signature__ = inspect.signature(
+            _mock_relevance_with_kwargs
+        )
+        j = MutatingKwargsJury(
+            [p1, p2],
+            method="relevance",
+            max_workers=1,
+        )
+        j.__signature__ = inspect.signature(_mock_relevance_with_kwargs)
+
+        score, _ = j("x", "y", custom_instructions="be strict")
+
+        self.assertAlmostEqual(score, 0.7)
+        self.assertEqual(
+            j.seen_custom_instructions,
+            ["be strict", "be strict"],
+        )
 
 
 class TestJuryMetricIntegration(unittest.TestCase):
