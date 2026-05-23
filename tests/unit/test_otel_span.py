@@ -3,7 +3,7 @@ Tests for OTEL instrument decorator.
 """
 
 from unittest import TestCase
-from unittest.mock import Mock, call
+from unittest.mock import Mock
 
 from trulens.core.otel.instrument import _resolve_attributes
 from trulens.experimental.otel_tracing.core.span import (
@@ -178,8 +178,7 @@ class TestGenAIHelpers(TestCase):
             operation_name="chat",
         )
         set_attribute_calls = {
-            c.args[0]: c.args[1]
-            for c in span.set_attribute.call_args_list
+            c.args[0]: c.args[1] for c in span.set_attribute.call_args_list
         }
         self.assertEqual(
             set_attribute_calls[GenAIAttributes.REQUEST.MODEL], "gpt-4o"
@@ -210,7 +209,9 @@ class TestGenAIHelpers(TestCase):
         self,
     ) -> None:
         span = self._make_span()
-        set_genai_generation_attributes(span, model="claude-3", operation_name=None)
+        set_genai_generation_attributes(
+            span, model="claude-3", operation_name=None
+        )
         set_attribute_calls = {
             c.args[0] for c in span.set_attribute.call_args_list
         }
@@ -231,8 +232,7 @@ class TestGenAIHelpers(TestCase):
             documents=["doc1", "doc2"],
         )
         set_attribute_calls = {
-            c.args[0]: c.args[1]
-            for c in span.set_attribute.call_args_list
+            c.args[0]: c.args[1] for c in span.set_attribute.call_args_list
         }
         self.assertEqual(
             set_attribute_calls[GenAIAttributes.RETRIEVAL.QUERY_TEXT],
@@ -266,8 +266,7 @@ class TestGenAIHelpers(TestCase):
             call_result="result text",
         )
         set_attribute_calls = {
-            c.args[0]: c.args[1]
-            for c in span.set_attribute.call_args_list
+            c.args[0]: c.args[1] for c in span.set_attribute.call_args_list
         }
         self.assertEqual(
             set_attribute_calls[GenAIAttributes.TOOL.NAME], "search"

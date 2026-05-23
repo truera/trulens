@@ -336,9 +336,7 @@ def set_genai_generation_attributes(
             span, GenAIAttributes.OPERATION.NAME, operation_name
         )
     if model is not None:
-        set_span_attribute_safely(
-            span, GenAIAttributes.REQUEST.MODEL, model
-        )
+        set_span_attribute_safely(span, GenAIAttributes.REQUEST.MODEL, model)
     if input_tokens is not None:
         set_span_attribute_safely(
             span, GenAIAttributes.USAGE.INPUT_TOKENS, input_tokens
@@ -400,9 +398,7 @@ def set_genai_tool_attributes(
             ``gen_ai.tool.call.result``).
     """
     if tool_name is not None:
-        set_span_attribute_safely(
-            span, GenAIAttributes.TOOL.NAME, tool_name
-        )
+        set_span_attribute_safely(span, GenAIAttributes.TOOL.NAME, tool_name)
     if call_arguments is not None:
         set_span_attribute_safely(
             span, GenAIAttributes.TOOL.CALL_ARGUMENTS, call_arguments

@@ -32,12 +32,6 @@ from trulens.experimental.otel_tracing.core.span import (
     set_function_call_attributes,
 )
 from trulens.experimental.otel_tracing.core.span import (
-    set_general_span_attributes,
-)
-from trulens.experimental.otel_tracing.core.span import (
-    set_record_root_span_attributes,
-)
-from trulens.experimental.otel_tracing.core.span import (
     set_genai_generation_attributes,
 )
 from trulens.experimental.otel_tracing.core.span import (
@@ -45,6 +39,12 @@ from trulens.experimental.otel_tracing.core.span import (
 )
 from trulens.experimental.otel_tracing.core.span import (
     set_genai_tool_attributes,
+)
+from trulens.experimental.otel_tracing.core.span import (
+    set_general_span_attributes,
+)
+from trulens.experimental.otel_tracing.core.span import (
+    set_record_root_span_attributes,
 )
 from trulens.experimental.otel_tracing.core.span import (
     set_user_defined_attributes,
