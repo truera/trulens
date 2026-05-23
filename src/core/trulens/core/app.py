@@ -1205,9 +1205,7 @@ class App(
         ):
             from trulens.core.otel.instrument import OtelRecordingContext
 
-            conversation_id = getattr(
-                self, "_pending_conversation_id", None
-            )
+            conversation_id = getattr(self, "_pending_conversation_id", None)
             self._pending_conversation_id = None
 
             with self._current_context_manager_lock:

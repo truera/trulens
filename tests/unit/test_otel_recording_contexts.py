@@ -91,7 +91,7 @@ class TestOtelRecordingContexts(OtelTestCase):
 
     def test_conversation_id_is_set_on_spans(self):
         """conversation_id propagates to all spans when provided."""
-        with self._tru_recorder(conversation_id="conv-123") as recording:
+        with self._tru_recorder(conversation_id="conv-123"):
             self._app.greet(name="Kojikun")
         TruSession().force_flush()
         events = self._get_events()
@@ -104,7 +104,7 @@ class TestOtelRecordingContexts(OtelTestCase):
 
     def test_conversation_id_none_does_not_set_attribute(self):
         """Omitting conversation_id leaves the attribute absent from spans."""
-        with self._tru_recorder(conversation_id=None) as recording:
+        with self._tru_recorder(conversation_id=None):
             self._app.greet(name="Kojikun")
         TruSession().force_flush()
         events = self._get_events()
@@ -116,7 +116,7 @@ class TestOtelRecordingContexts(OtelTestCase):
 
     def test_legacy_context_manager_no_conversation_id(self):
         """Plain `with tru_app as recording:` works and has no conversation_id."""
-        with self._tru_recorder as recording:
+        with self._tru_recorder:
             self._app.greet(name="Kojikun")
         TruSession().force_flush()
         events = self._get_events()
