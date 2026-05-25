@@ -174,6 +174,9 @@ def set_general_span_attributes(
     set_string_span_attribute_from_baggage(
         span, SpanAttributes.INPUT_RECORDS_COUNT, context
     )
+    set_string_span_attribute_from_baggage(
+        span, SpanAttributes.CONVERSATION_ID, context
+    )
 
 
 def set_function_call_attributes(

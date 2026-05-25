@@ -129,6 +129,14 @@ class SpanAttributes:
     SPAN_GROUPS = BASE_SCOPE + ".span_groups"
     """List of groups that the span belongs to."""
 
+    CONVERSATION_ID = BASE_SCOPE + ".conversation_id"
+    """ID of the conversation that the span belongs to.
+
+    A conversation groups multiple records (app invocations) that belong to
+    the same multi-turn interaction. All spans recorded within a context
+    manager that has a ``conversation_id`` set will carry this attribute.
+    """
+
     class SpanType(str, Enum):
         """Span type attribute values.
 
