@@ -22,6 +22,7 @@ from opentelemetry.baggage import get_baggage
 from opentelemetry.context import Context
 from opentelemetry.trace.span import Span
 from opentelemetry.util.types import AttributeValue
+from trulens.otel.semconv.trace import GenAIAttributes
 from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -289,4 +290,120 @@ def set_record_root_span_attributes(
             tru_app.main_output(
                 func, sig, sig.bind_partial(*args, **kwargs), ret
             ),
+        )
+
+
+"""
+GenAI semantic convention dual-emit helpers.
+
+Each helper emits the official ``gen_ai.*`` OTEL attributes alongside
+the existing ``ai.observability.*`` attributes so that downstream
+collectors that understand the OTEL GenAI spec can consume TruLens data
+without requiring TruLens-specific attribute knowledge.
+"""
+
+
+def set_genai_generation_attributes(
+    span: Span,
+    *,
+    model: Optional[str] = None,
+    input_tokens: Optional[int] = None,
+    output_tokens: Optional[int] = None,
+    temperature: Optional[float] = None,
+    provider_name: Optional[str] = None,
+    operation_name: Optional[str] = None,
+) -> None:
+    """Emit ``gen_ai.*`` attributes for a GENERATION span.
+
+    Args:
+        span: The OTEL span to annotate.
+        model: Name of the model used (maps to
+            ``gen_ai.request.model``).
+        input_tokens: Number of prompt tokens consumed (maps to
+            ``gen_ai.usage.input_tokens``).
+        output_tokens: Number of completion tokens generated (maps to
+            ``gen_ai.usage.output_tokens``).
+        temperature: Sampling temperature (maps to
+            ``gen_ai.request.temperature``).
+        provider_name: GenAI provider name, e.g. ``"openai"`` (maps to
+            ``gen_ai.system``).
+        operation_name: GenAI operation name (maps to
+            ``gen_ai.operation.name``). When ``None`` the attribute is
+            not emitted.
+    """
+    if operation_name is not None:
+        set_span_attribute_safely(
+            span, GenAIAttributes.OPERATION.NAME, operation_name
+        )
+    if model is not None:
+        set_span_attribute_safely(span, GenAIAttributes.REQUEST.MODEL, model)
+    if input_tokens is not None:
+        set_span_attribute_safely(
+            span, GenAIAttributes.USAGE.INPUT_TOKENS, input_tokens
+        )
+    if output_tokens is not None:
+        set_span_attribute_safely(
+            span, GenAIAttributes.USAGE.OUTPUT_TOKENS, output_tokens
+        )
+    if temperature is not None:
+        set_span_attribute_safely(
+            span, GenAIAttributes.REQUEST.TEMPERATURE, temperature
+        )
+    if provider_name is not None:
+        set_span_attribute_safely(
+            span, GenAIAttributes.SYSTEM.NAME, provider_name
+        )
+
+
+def set_genai_retrieval_attributes(
+    span: Span,
+    *,
+    query_text: Optional[str] = None,
+    documents: Optional[Any] = None,
+) -> None:
+    """Emit ``gen_ai.*`` attributes for a RETRIEVAL span.
+
+    Args:
+        span: The OTEL span to annotate.
+        query_text: Query used for retrieval (maps to
+            ``gen_ai.retrieval.query.text``).
+        documents: Retrieved documents or contexts (maps to
+            ``gen_ai.retrieval.documents``).
+    """
+    if query_text is not None:
+        set_span_attribute_safely(
+            span, GenAIAttributes.RETRIEVAL.QUERY_TEXT, query_text
+        )
+    if documents is not None:
+        set_span_attribute_safely(
+            span, GenAIAttributes.RETRIEVAL.DOCUMENTS, documents
+        )
+
+
+def set_genai_tool_attributes(
+    span: Span,
+    *,
+    tool_name: Optional[str] = None,
+    call_arguments: Optional[Any] = None,
+    call_result: Optional[Any] = None,
+) -> None:
+    """Emit ``gen_ai.*`` attributes for a TOOL or MCP span.
+
+    Args:
+        span: The OTEL span to annotate.
+        tool_name: Name of the tool (maps to ``gen_ai.tool.name``).
+        call_arguments: Arguments passed to the tool (maps to
+            ``gen_ai.tool.call.arguments``).
+        call_result: Result returned by the tool (maps to
+            ``gen_ai.tool.call.result``).
+    """
+    if tool_name is not None:
+        set_span_attribute_safely(span, GenAIAttributes.TOOL.NAME, tool_name)
+    if call_arguments is not None:
+        set_span_attribute_safely(
+            span, GenAIAttributes.TOOL.CALL_ARGUMENTS, call_arguments
+        )
+    if call_result is not None:
+        set_span_attribute_safely(
+            span, GenAIAttributes.TOOL.CALL_RESULT, call_result
         )
