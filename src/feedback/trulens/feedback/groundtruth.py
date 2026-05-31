@@ -858,22 +858,31 @@ class GroundTruthAgreement(
             float: Recall score between 0.0 and 1.0, or np.nan if no
                 ground truth found for the given query.
         """
+        if not 0.0 < similarity_threshold <= 1.0:
+            raise ValueError(
+                f"similarity_threshold must be in (0.0, 1.0], "
+                f"got {similarity_threshold}"
+            )
         expected = self._find_expected_memories(prompt)
         if expected is None:
             return np.nan
         if not expected:
             return 0.0
+        if retrieved_memories is None:
+            raise TypeError("retrieved_memories must be a list, not None")
         if not retrieved_memories:
             return 0.0
 
+        # Deduplicate expected memories to avoid double-counting
+        unique_expected = list(dict.fromkeys(expected))
         matched = 0
-        for exp_mem in expected:
+        for exp_mem in unique_expected:
             for ret_mem in retrieved_memories:
                 if self._is_similar(exp_mem, ret_mem, similarity_threshold):
                     matched += 1
                     break
 
-        return matched / len(expected)
+        return matched / len(unique_expected)
 
     def memory_mrr(
         self,
@@ -898,10 +907,19 @@ class GroundTruthAgreement(
             float: MRR score between 0.0 and 1.0, or np.nan if no
                 ground truth found for the given query.
         """
+        if not 0.0 < similarity_threshold <= 1.0:
+            raise ValueError(
+                f"similarity_threshold must be in (0.0, 1.0], "
+                f"got {similarity_threshold}"
+            )
         expected = self._find_expected_memories(prompt)
         if expected is None:
             return np.nan
-        if not expected or not retrieved_memories:
+        if not expected:
+            return 0.0
+        if retrieved_memories is None:
+            raise TypeError("retrieved_memories must be a list, not None")
+        if not retrieved_memories:
             return 0.0
 
         expected_set = set(expected)

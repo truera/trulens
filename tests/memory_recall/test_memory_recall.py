@@ -102,12 +102,18 @@ class TestMemoryRecall:
         )
         assert result == 0.0
 
+    def test_none_retrieved_raises(self, gta):
+        with pytest.raises(TypeError, match="retrieved_memories"):
+            gta.memory_recall(
+                prompt="What are the user's preferences?",
+                retrieved_memories=None,
+            )
+
     def test_no_ground_truth_wrong_conv(self, gta):
         result = gta.memory_recall(
             prompt="What decisions were made?",
             retrieved_memories=["Team agreed to use React"],
         )
-        # conv_456 doesn't match gta's conversation_id="conv_123"
         assert np.isnan(result)
 
     def test_no_ground_truth_no_conv_filter(self, gta_no_conv):
@@ -115,7 +121,6 @@ class TestMemoryRecall:
             prompt="What decisions were made?",
             retrieved_memories=["Team agreed to use React"],
         )
-        # Without conversation_id filter, should find conv_456's entry
         assert result == 0.5
 
     def test_unknown_query(self, gta):
@@ -124,6 +129,32 @@ class TestMemoryRecall:
             retrieved_memories=["It is sunny"],
         )
         assert np.isnan(result)
+
+    def test_duplicate_expected_memories_deduped(self, provider):
+        """Duplicate expected memories should not inflate denominator."""
+        golden = [
+            {
+                "query": "q1",
+                "expected_memories": ["m1", "m1", "m2"],
+                "conversation_id": "c1",
+            }
+        ]
+        gta = GroundTruthAgreement(golden, provider=provider, conversation_id="c1")
+        result = gta.memory_recall("q1", ["m1"])
+        # After dedup: expected = ["m1", "m2"], matched = 1 -> 0.5
+        assert result == 0.5
+
+    def test_invalid_similarity_threshold_zero(self, gta):
+        with pytest.raises(ValueError, match="similarity_threshold"):
+            gta.memory_recall("q", ["m"], similarity_threshold=0.0)
+
+    def test_invalid_similarity_threshold_negative(self, gta):
+        with pytest.raises(ValueError, match="similarity_threshold"):
+            gta.memory_recall("q", ["m"], similarity_threshold=-0.5)
+
+    def test_invalid_similarity_threshold_above_one(self, gta):
+        with pytest.raises(ValueError, match="similarity_threshold"):
+            gta.memory_recall("q", ["m"], similarity_threshold=1.5)
 
 
 # ---- memory_mrr ----
@@ -168,12 +199,23 @@ class TestMemoryMRR:
         )
         assert result == 0.0
 
+    def test_none_retrieved_raises(self, gta):
+        with pytest.raises(TypeError, match="retrieved_memories"):
+            gta.memory_mrr(
+                prompt="What are the user's preferences?",
+                retrieved_memories=None,
+            )
+
     def test_no_ground_truth(self, gta):
         result = gta.memory_mrr(
             prompt="Unknown query",
             retrieved_memories=["Some memory"],
         )
         assert np.isnan(result)
+
+    def test_invalid_similarity_threshold(self, gta):
+        with pytest.raises(ValueError, match="similarity_threshold"):
+            gta.memory_mrr("q", ["m"], similarity_threshold=0.0)
 
 
 # ---- _is_similar ----
@@ -196,6 +238,12 @@ class TestIsSimilar:
             "User prefers dark mode", "Team agreed to use React", 0.5
         )
 
+    def test_empty_strings(self):
+        assert GroundTruthAgreement._is_similar("", "", 1.0)
+
+    def test_one_empty_string(self):
+        assert not GroundTruthAgreement._is_similar("hello", "", 1.0)
+
 
 # ---- fuzzy matching integration ----
 
@@ -211,7 +259,6 @@ class TestFuzzyMatching:
             ],
             similarity_threshold=0.7,
         )
-        # All should fuzzy match with threshold 0.7
         assert result > 0.5
 
     def test_fuzzy_mrr(self, gta):
@@ -263,3 +310,24 @@ class TestConversationId:
             retrieved_memories=["Team agreed to use React"],
         )
         assert result == 0.5
+
+    def test_duplicate_query_different_convs(self, provider):
+        """Same query in different conversations returns correct expected_memories."""
+        golden = [
+            {
+                "query": "What happened?",
+                "expected_memories": ["Memory from conv A"],
+                "conversation_id": "conv_a",
+            },
+            {
+                "query": "What happened?",
+                "expected_memories": ["Memory from conv B"],
+                "conversation_id": "conv_b",
+            },
+        ]
+        gta_a = GroundTruthAgreement(golden, provider=provider, conversation_id="conv_a")
+        gta_b = GroundTruthAgreement(golden, provider=provider, conversation_id="conv_b")
+
+        assert gta_a.memory_recall("What happened?", ["Memory from conv A"]) == 1.0
+        assert gta_b.memory_recall("What happened?", ["Memory from conv B"]) == 1.0
+        assert gta_a.memory_recall("What happened?", ["Memory from conv B"]) == 0.0
