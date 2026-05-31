@@ -777,20 +777,20 @@ class GroundTruthAgreement(
         raise NotImplementedError("`mae` has moved to `GroundTruthAggregator`")
 
 
-    def _find_expected_memories(self, prompt: str) -> Optional[List[str]]:
+    def _find_expected_memories(self, query: str) -> Optional[List[str]]:
         """Find expected memory texts for a given query.
 
         If conversation_id is set on this instance, only returns entries
         whose conversation_id matches.
         """
         if self.ground_truth_imp is not None:
-            result = self.ground_truth_imp(prompt)
+            result = self.ground_truth_imp(query)
             if isinstance(result, list) and result and isinstance(result[0], str):
                 return result
             return None
 
         for qr in self.ground_truth:
-            if qr.get("query") == prompt:
+            if qr.get("query") == query:
                 if self.conversation_id is not None:
                     if qr.get("conversation_id") != self.conversation_id:
                         continue
@@ -800,7 +800,7 @@ class GroundTruthAgreement(
 
     def memory_recall(
         self,
-        prompt: str,
+        query: str,
         retrieved_memories: List[str],
         similarity_threshold: float = 1.0,
     ) -> float:
@@ -840,14 +840,14 @@ class GroundTruthAgreement(
                 implementation=gta.memory_recall,
                 name="Memory Recall",
                 selectors={
-                    "prompt": Selector.select_record_input(),
+                    "query": Selector.select_record_input(),
                     "retrieved_memories": Selector.select_record_output(),
                 },
             )
             ```
 
         Args:
-            prompt: The query string used to retrieve memories.
+            query: The query string used to retrieve memories.
             retrieved_memories: List of memory texts returned by the
                 memory store.
             similarity_threshold: Threshold for text matching (0.0-1.0).
@@ -863,7 +863,7 @@ class GroundTruthAgreement(
                 f"similarity_threshold must be in (0.0, 1.0], "
                 f"got {similarity_threshold}"
             )
-        expected = self._find_expected_memories(prompt)
+        expected = self._find_expected_memories(query)
         if expected is None:
             return np.nan
         if not expected:
@@ -886,7 +886,7 @@ class GroundTruthAgreement(
 
     def memory_mrr(
         self,
-        prompt: str,
+        query: str,
         retrieved_memories: List[str],
         similarity_threshold: float = 1.0,
     ) -> float:
@@ -897,7 +897,7 @@ class GroundTruthAgreement(
         quality — whether relevant memories appear early in results.
 
         Args:
-            prompt: The query string used to retrieve memories.
+            query: The query string used to retrieve memories.
             retrieved_memories: List of memory texts returned by the
                 memory store.
             similarity_threshold: Threshold for text matching (0.0-1.0).
@@ -912,7 +912,7 @@ class GroundTruthAgreement(
                 f"similarity_threshold must be in (0.0, 1.0], "
                 f"got {similarity_threshold}"
             )
-        expected = self._find_expected_memories(prompt)
+        expected = self._find_expected_memories(query)
         if expected is None:
             return np.nan
         if not expected:

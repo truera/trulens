@@ -66,7 +66,7 @@ def gta_no_conv(golden_set, provider):
 class TestMemoryRecall:
     def test_perfect_recall(self, gta):
         result = gta.memory_recall(
-            prompt="What are the user's preferences?",
+            query="What are the user's preferences?",
             retrieved_memories=[
                 "User prefers dark mode",
                 "User likes Python",
@@ -77,7 +77,7 @@ class TestMemoryRecall:
 
     def test_partial_recall(self, gta):
         result = gta.memory_recall(
-            prompt="What are the user's preferences?",
+            query="What are the user's preferences?",
             retrieved_memories=[
                 "User prefers dark mode",
                 "User works remotely",
@@ -87,7 +87,7 @@ class TestMemoryRecall:
 
     def test_zero_recall(self, gta):
         result = gta.memory_recall(
-            prompt="What are the user's preferences?",
+            query="What are the user's preferences?",
             retrieved_memories=[
                 "Team agreed to use React",
                 "Deadline extended by two weeks",
@@ -97,7 +97,7 @@ class TestMemoryRecall:
 
     def test_empty_retrieved(self, gta):
         result = gta.memory_recall(
-            prompt="What are the user's preferences?",
+            query="What are the user's preferences?",
             retrieved_memories=[],
         )
         assert result == 0.0
@@ -105,27 +105,27 @@ class TestMemoryRecall:
     def test_none_retrieved_raises(self, gta):
         with pytest.raises(TypeError, match="retrieved_memories"):
             gta.memory_recall(
-                prompt="What are the user's preferences?",
+                query="What are the user's preferences?",
                 retrieved_memories=None,
             )
 
     def test_no_ground_truth_wrong_conv(self, gta):
         result = gta.memory_recall(
-            prompt="What decisions were made?",
+            query="What decisions were made?",
             retrieved_memories=["Team agreed to use React"],
         )
         assert np.isnan(result)
 
     def test_no_ground_truth_no_conv_filter(self, gta_no_conv):
         result = gta_no_conv.memory_recall(
-            prompt="What decisions were made?",
+            query="What decisions were made?",
             retrieved_memories=["Team agreed to use React"],
         )
         assert result == 0.5
 
     def test_unknown_query(self, gta):
         result = gta.memory_recall(
-            prompt="What is the weather?",
+            query="What is the weather?",
             retrieved_memories=["It is sunny"],
         )
         assert np.isnan(result)
@@ -163,7 +163,7 @@ class TestMemoryRecall:
 class TestMemoryMRR:
     def test_relevant_at_rank_1(self, gta):
         result = gta.memory_mrr(
-            prompt="What are the user's preferences?",
+            query="What are the user's preferences?",
             retrieved_memories=[
                 "User prefers dark mode",
                 "Irrelevant memory",
@@ -173,7 +173,7 @@ class TestMemoryMRR:
 
     def test_relevant_at_rank_3(self, gta):
         result = gta.memory_mrr(
-            prompt="What are the user's preferences?",
+            query="What are the user's preferences?",
             retrieved_memories=[
                 "Irrelevant 1",
                 "Irrelevant 2",
@@ -184,7 +184,7 @@ class TestMemoryMRR:
 
     def test_no_relevant(self, gta):
         result = gta.memory_mrr(
-            prompt="What are the user's preferences?",
+            query="What are the user's preferences?",
             retrieved_memories=[
                 "Irrelevant 1",
                 "Irrelevant 2",
@@ -194,7 +194,7 @@ class TestMemoryMRR:
 
     def test_empty_retrieved(self, gta):
         result = gta.memory_mrr(
-            prompt="What are the user's preferences?",
+            query="What are the user's preferences?",
             retrieved_memories=[],
         )
         assert result == 0.0
@@ -202,13 +202,13 @@ class TestMemoryMRR:
     def test_none_retrieved_raises(self, gta):
         with pytest.raises(TypeError, match="retrieved_memories"):
             gta.memory_mrr(
-                prompt="What are the user's preferences?",
+                query="What are the user's preferences?",
                 retrieved_memories=None,
             )
 
     def test_no_ground_truth(self, gta):
         result = gta.memory_mrr(
-            prompt="Unknown query",
+            query="Unknown query",
             retrieved_memories=["Some memory"],
         )
         assert np.isnan(result)
@@ -251,7 +251,7 @@ class TestIsSimilar:
 class TestFuzzyMatching:
     def test_fuzzy_recall(self, gta):
         result = gta.memory_recall(
-            prompt="What are the user's preferences?",
+            query="What are the user's preferences?",
             retrieved_memories=[
                 "User prefers dark mode.",  # trailing period
                 "User likes Python programming",  # extra word
@@ -263,7 +263,7 @@ class TestFuzzyMatching:
 
     def test_fuzzy_mrr(self, gta):
         result = gta.memory_mrr(
-            prompt="What are the user's preferences?",
+            query="What are the user's preferences?",
             retrieved_memories=[
                 "User prefers dark mode.",
             ],
@@ -283,7 +283,7 @@ class TestConversationId:
             conversation_id="conv_123",
         )
         result = gta.memory_recall(
-            prompt="What decisions were made?",
+            query="What decisions were made?",
             retrieved_memories=["Team agreed to use React"],
         )
         assert np.isnan(result)
@@ -295,7 +295,7 @@ class TestConversationId:
             conversation_id="conv_456",
         )
         result = gta.memory_recall(
-            prompt="What decisions were made?",
+            query="What decisions were made?",
             retrieved_memories=["Team agreed to use React"],
         )
         assert result == 0.5
@@ -306,7 +306,7 @@ class TestConversationId:
             provider=provider,
         )
         result = gta.memory_recall(
-            prompt="What decisions were made?",
+            query="What decisions were made?",
             retrieved_memories=["Team agreed to use React"],
         )
         assert result == 0.5

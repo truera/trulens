@@ -72,7 +72,7 @@ print("=== Memory Recall Evaluation ===\n")
 
 # Good retrieval: finds most relevant memories
 recall_good = gta.memory_recall(
-    prompt="What issues has the customer reported before?",
+    query="What issues has the customer reported before?",
     retrieved_memories=[
         "Customer reported slow loading on mobile app",
         "Customer complained about missing order #4521",
@@ -83,7 +83,7 @@ print(f"Good retrieval recall: {recall_good:.3f}")
 
 # Bad retrieval: returns irrelevant memories
 recall_bad = gta.memory_recall(
-    prompt="What issues has the customer reported before?",
+    query="What issues has the customer reported before?",
     retrieved_memories=[
         "Team agreed to extend deadline by two weeks",
         "Customer asked about loyalty program",
@@ -93,7 +93,7 @@ print(f"Bad retrieval recall:  {recall_bad:.3f}")
 
 # No ground truth for this query in this conversation
 recall_missing = gta.memory_recall(
-    prompt="What decisions were made about the deadline?",
+    query="What decisions were made about the deadline?",
     retrieved_memories=["Team agreed to extend deadline by two weeks"],
 )
 print(f"Missing from conv:     {recall_missing}")  # np.nan
@@ -107,7 +107,7 @@ print("\n=== Memory MRR Evaluation ===\n")
 
 # Relevant memory at rank 1
 mrr_top = gta.memory_mrr(
-    prompt="What issues has the customer reported before?",
+    query="What issues has the customer reported before?",
     retrieved_memories=[
         "Customer reported slow loading on mobile app",
         "Customer asked about loyalty program",
@@ -117,7 +117,7 @@ print(f"Relevant at rank 1: {mrr_top:.3f}")
 
 # Relevant memory at rank 3
 mrr_low = gta.memory_mrr(
-    prompt="What issues has the customer reported before?",
+    query="What issues has the customer reported before?",
     retrieved_memories=[
         "Customer asked about loyalty program",
         "Team agreed to extend deadline by two weeks",
@@ -135,7 +135,7 @@ print("\n=== Fuzzy Matching ===\n")
 
 # Exact match fails when text is slightly different
 recall_exact = gta.memory_recall(
-    prompt="Why was the order delayed?",
+    query="Why was the order delayed?",
     retrieved_memories=[
         "Warehouse relocation caused shipping delays",  # truncated
         "Order #4521 was flagged for address verification",
@@ -146,7 +146,7 @@ print(f"Exact match recall:    {recall_exact:.3f}")
 
 # Fuzzy match catches near-matches
 recall_fuzzy = gta.memory_recall(
-    prompt="Why was the order delayed?",
+    query="Why was the order delayed?",
     retrieved_memories=[
         "Warehouse relocation caused shipping delays",
         "Order #4521 was flagged for address verification",
@@ -168,7 +168,7 @@ feedback = Metric(
     implementation=gta.memory_recall,
     name="Memory Recall",
     selectors={
-        "prompt": Selector.select_record_input(),
+        "query": Selector.select_record_input(),
         "retrieved_memories": Selector.select_record_output(),
     },
 )
