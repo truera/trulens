@@ -573,10 +573,10 @@ class LangChainInstrument(core_instruments.Instrument):
 
     def __init__(self, *args, **kwargs):
         super().__init__(
+            *args,
             include_modules=LangChainInstrument.Default.MODULES,
             include_classes=LangChainInstrument.Default.CLASSES(),
             include_methods=LangChainInstrument.Default.METHODS(),
-            *args,
             **kwargs,
         )
 
