@@ -730,6 +730,7 @@ class WithClassInfo(pydantic.BaseModel):
             warnings.warn(
                 "`obj` does not need to be provided to WithClassInfo any more",
                 DeprecationWarning,
+                stacklevel=2,
             )
 
         if obj is None:
