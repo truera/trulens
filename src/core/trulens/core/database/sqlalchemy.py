@@ -148,7 +148,8 @@ class SQLAlchemyDB(core_db.DB):
                 UserWarning(
                     "SQLite in-memory may not be threadsafe. "
                     "See https://www.sqlite.org/threadsafe.html"
-                )
+                ),
+                stacklevel=2,
             )
 
     def _reload_engine(self):
@@ -2037,7 +2038,7 @@ class AppsExtractor(core_db.BaseAppsExtractor):
                     row[col] = (
                         datetime.fromtimestamp(_rec.ts).isoformat()
                         if col == "ts"
-                        else getattr(_rec, col)
+                        else getattr(_rec, col, None)
                     )
 
                 yield row

@@ -151,6 +151,7 @@ class GroundTruthAgreement(
             warnings.warn(
                 "Default provider is being deprecated. Defaulting to OpenAI.",
                 DeprecationWarning,
+                stacklevel=2,
             )
             if not import_utils.is_package_installed(
                 "trulens-providers-openai"
