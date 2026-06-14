@@ -45,14 +45,10 @@ class TestOtelInstrument(unittest.TestCase):
         # root.
         self.tokens = []
         self.tokens.append(
-            context_api.attach(
-                set_baggage("__trulens_recording__", Recording(None))
-            )
+            context_api.attach(set_baggage("__trulens_recording__", Recording(None)))
         )
         self.tokens.append(
-            context_api.attach(
-                set_baggage(SpanAttributes.RECORD_ID, "test_record_id")
-            )
+            context_api.attach(set_baggage(SpanAttributes.RECORD_ID, "test_record_id"))
         )
         return super().setUp()
 
@@ -153,9 +149,7 @@ class TestOtelInstrument(unittest.TestCase):
             yield "Nolan"
             yield "Sachiboy"
 
-        self._test_sync_generator_function(
-            my_function, "test_sync_generator_function"
-        )
+        self._test_sync_generator_function(my_function, "test_sync_generator_function")
 
     def test_sync_generator_passed_through_function(self) -> None:
         # Set up instrumented function.
@@ -278,7 +272,6 @@ class TestOtelInstrument(unittest.TestCase):
         my_function()
         self.assertEqual(instrument_info["cnt"], 2)
         self.assertEqual(instrument_info["ret"], "Kojikun is the best baby!")
-
 
     def test_instrument_method_basic_third_party_class(self) -> None:
         class ThirdPartyRetriever:
