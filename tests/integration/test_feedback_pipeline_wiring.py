@@ -72,7 +72,10 @@ class TestFeedbackPipelineWiring(unittest.TestCase):
 
         self.assert_pipeline_result(
             metric,
-            expected_system_substrings=("RELEVANCE", "RESPONSE must be relevant"),
+            expected_system_substrings=(
+                "RELEVANCE",
+                "RESPONSE must be relevant",
+            ),
             expected_user_substrings=(
                 "What is TruLens?",
                 "TruLens evaluates LLM applications.",
@@ -82,7 +85,9 @@ class TestFeedbackPipelineWiring(unittest.TestCase):
         )
 
     def test_context_relevance_pipeline_wiring(self) -> None:
-        metric = Metric(self.provider.context_relevance, name="Context Relevance")
+        metric = Metric(
+            self.provider.context_relevance, name="Context Relevance"
+        )
 
         self.assert_pipeline_result(
             metric,
@@ -103,7 +108,10 @@ class TestFeedbackPipelineWiring(unittest.TestCase):
 
         self.assert_pipeline_result(
             metric,
-            expected_system_substrings=("directly supported by the source", "grounded"),
+            expected_system_substrings=(
+                "directly supported by the source",
+                "grounded",
+            ),
             expected_user_substrings=(
                 "TruLens evaluates LLM application quality.",
                 "TruLens is used for LLM evaluation.",
