@@ -1,0 +1,39 @@
+version: 2.1
+
+jobs:
+  trulens-eval-gate:
+    docker:
+      - image: cimg/python:3.11
+    environment:
+      TRULENS_MIN_SCORE: "0.7"
+      TRULENS_JUNIT_XML: "test-results/trulens/trulens-eval-gate.xml"
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - pip-cache-{{ checksum "requirements.txt" }}
+            - pip-cache-
+      - run:
+          name: Install dependencies
+          command: |
+            python -m pip install --upgrade pip
+            pip install trulens trulens-providers-openai
+      - save_cache:
+          key: pip-cache-{{ checksum "requirements.txt" }}
+          paths:
+            - ~/.cache/pip
+      - run:
+          name: Run TruLens eval gate
+          command: python examples/cicd/circleci/eval_gate.py
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: test-results
+          destination: trulens-eval-results
+
+workflows:
+  trulens-eval-gate:
+    jobs:
+      - trulens-eval-gate:
+          context:
+            - trulens-eval-secrets
