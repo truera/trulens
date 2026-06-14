@@ -70,7 +70,10 @@ class TestMethodTemplateWiring(unittest.TestCase):
 
         self.assert_prompt_wiring(
             system_substrings=("RELEVANCE", "RESPONSE must be relevant"),
-            user_substrings=("What is TruLens?", "TruLens evaluates LLM applications."),
+            user_substrings=(
+                "What is TruLens?",
+                "TruLens evaluates LLM applications.",
+            ),
         )
 
     def test_context_relevance_uses_context_relevance_template(self) -> None:
@@ -105,7 +108,10 @@ class TestMethodTemplateWiring(unittest.TestCase):
         self.provider.sentiment(text="This response is helpful and clear.")
 
         self.assert_prompt_wiring(
-            system_substrings=("SENTIMENT grader", "Criteria for evaluating sentiment"),
+            system_substrings=(
+                "SENTIMENT grader",
+                "Criteria for evaluating sentiment",
+            ),
             user_substrings=("This response is helpful and clear.",),
         )
 
