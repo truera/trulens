@@ -45,10 +45,14 @@ class TestOtelInstrument(unittest.TestCase):
         # root.
         self.tokens = []
         self.tokens.append(
-            context_api.attach(set_baggage("__trulens_recording__", Recording(None)))
+            context_api.attach(
+                set_baggage("__trulens_recording__", Recording(None))
+            )
         )
         self.tokens.append(
-            context_api.attach(set_baggage(SpanAttributes.RECORD_ID, "test_record_id"))
+            context_api.attach(
+                set_baggage(SpanAttributes.RECORD_ID, "test_record_id")
+            )
         )
         return super().setUp()
 
@@ -149,7 +153,9 @@ class TestOtelInstrument(unittest.TestCase):
             yield "Nolan"
             yield "Sachiboy"
 
-        self._test_sync_generator_function(my_function, "test_sync_generator_function")
+        self._test_sync_generator_function(
+            my_function, "test_sync_generator_function"
+        )
 
     def test_sync_generator_passed_through_function(self) -> None:
         # Set up instrumented function.
