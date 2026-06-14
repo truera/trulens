@@ -81,7 +81,10 @@ class TestMethodTemplateWiring(unittest.TestCase):
 
         self.assert_prompt_wiring(
             system_substrings=("SEARCH RESULT", "USER QUERY"),
-            user_substrings=("What is TruLens?", "TruLens evaluates LLM application quality."),
+            user_substrings=(
+                "What is TruLens?",
+                "TruLens evaluates LLM application quality.",
+            ),
         )
 
     def test_groundedness_uses_groundedness_template(self) -> None:
@@ -92,7 +95,10 @@ class TestMethodTemplateWiring(unittest.TestCase):
 
         self.assert_prompt_wiring(
             system_substrings=("directly supported by the source", "grounded"),
-            user_substrings=("TruLens evaluates LLM application quality.", "TruLens is used for LLM evaluation."),
+            user_substrings=(
+                "TruLens evaluates LLM application quality.",
+                "TruLens is used for LLM evaluation.",
+            ),
         )
 
     def test_sentiment_uses_sentiment_template(self) -> None:
@@ -111,7 +117,10 @@ class TestMethodTemplateWiring(unittest.TestCase):
 
         self.assert_prompt_wiring(
             system_substrings=("gender or race", "PROMPT", "RESPONSE"),
-            user_substrings=("Describe the engineer.", "The engineer solved the problem carefully."),
+            user_substrings=(
+                "Describe the engineer.",
+                "The engineer solved the problem carefully.",
+            ),
         )
 
 
