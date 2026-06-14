@@ -144,7 +144,9 @@ def _set_span_attributes(
                 func_exception,
             )
         # Set function call attributes.
-        set_function_call_attributes(span, ret, func_name, func_exception, all_kwargs)
+        set_function_call_attributes(
+            span, ret, func_name, func_exception, all_kwargs
+        )
     # Resolve the attributes.
     if instance is not None:
         args_with_self_possibly = (instance,) + args
@@ -167,7 +169,9 @@ def _set_span_attributes(
         set_genai_generation_attributes(
             span,
             model=resolved_attributes.get(SpanAttributes.COST.MODEL),
-            input_tokens=resolved_attributes.get(SpanAttributes.COST.NUM_PROMPT_TOKENS),
+            input_tokens=resolved_attributes.get(
+                SpanAttributes.COST.NUM_PROMPT_TOKENS
+            ),
             output_tokens=resolved_attributes.get(
                 SpanAttributes.COST.NUM_COMPLETION_TOKENS
             ),
@@ -178,7 +182,9 @@ def _set_span_attributes(
     elif span_type == SpanAttributes.SpanType.RETRIEVAL:
         set_genai_retrieval_attributes(
             span,
-            query_text=resolved_attributes.get(SpanAttributes.RETRIEVAL.QUERY_TEXT),
+            query_text=resolved_attributes.get(
+                SpanAttributes.RETRIEVAL.QUERY_TEXT
+            ),
             documents=resolved_attributes.get(
                 SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS
             ),
@@ -297,7 +303,9 @@ class instrument:
             if target is None:
                 return func_name
             module = getattr(target, "__module__", "")
-            qualname = getattr(target, "__qualname__", getattr(target, "__name__", ""))
+            qualname = getattr(
+                target, "__qualname__", getattr(target, "__name__", "")
+            )
             base = ".".join([p for p in [module, qualname] if p])
             if not base:
                 return func_name
@@ -635,9 +643,13 @@ class OtelRecordingContext(OtelBaseRecordingContext):
             SpanAttributes.RECORD_ROOT.GROUND_TRUTH_OUTPUT,
             self.ground_truth_output,
         )
-        self.attach_to_context("__trulens_input_selector__", self.input_selector)
+        self.attach_to_context(
+            "__trulens_input_selector__", self.input_selector
+        )
         if self.conversation_id is not None:
-            self.attach_to_context(SpanAttributes.CONVERSATION_ID, self.conversation_id)
+            self.attach_to_context(
+                SpanAttributes.CONVERSATION_ID, self.conversation_id
+            )
 
         ret = Recording(self.tru_app)
         self.attach_to_context("__trulens_recording__", ret)
@@ -666,7 +678,9 @@ class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
             SpanAttributes.EVAL.TARGET_RECORD_ID, self.target_record_id
         )
         self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
-        self.attach_to_context(SpanAttributes.EVAL.METRIC_NAME, self.feedback_name)
+        self.attach_to_context(
+            SpanAttributes.EVAL.METRIC_NAME, self.feedback_name
+        )
 
         # Use start_as_current_span as a context manager
         self.span_context = tracer.start_as_current_span("eval_root")
@@ -679,7 +693,9 @@ class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
         )
 
         # Set general span attributes
-        set_general_span_attributes(root_span, SpanAttributes.SpanType.EVAL_ROOT)
+        set_general_span_attributes(
+            root_span, SpanAttributes.SpanType.EVAL_ROOT
+        )
         root_span.set_attribute(
             SpanAttributes.EVAL_ROOT.METRIC_NAME, self.feedback_name
         )
@@ -761,7 +777,11 @@ def extract_tool_calls(ret) -> Optional[str]:
             if isinstance(tc, dict)
             else getattr(tc, "name", "unknown")
         )
-        args = tc.get("args", {}) if isinstance(tc, dict) else getattr(tc, "args", {})
+        args = (
+            tc.get("args", {})
+            if isinstance(tc, dict)
+            else getattr(tc, "args", {})
+        )
 
         if isinstance(args, dict):
             args_str = ", ".join(f"{k}={v}" for k, v in args.items())
