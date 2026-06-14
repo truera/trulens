@@ -301,7 +301,6 @@ extra_css:
   - stylesheets/extra.css
 
 # https://squidfunk.github.io/mkdocs-material/reference/mathjax/
-# importing MathJax.
 extra_javascript:
   - javascript/config.js
   - javascript/tex-mml-chtml-3.0.0.js
