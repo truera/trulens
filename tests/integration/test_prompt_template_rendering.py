@@ -62,9 +62,9 @@ _TEMPLATE_CASES = _collect_template_strings()
 
 def test_templates_were_discovered():
     """Guard so the parametrization below can't pass vacuously."""
-    assert len(_TEMPLATE_CASES) > 10, (
-        f"expected to discover many templates, found {len(_TEMPLATE_CASES)}"
-    )
+    assert (
+        len(_TEMPLATE_CASES) > 10
+    ), f"expected to discover many templates, found {len(_TEMPLATE_CASES)}"
 
 
 @pytest.mark.parametrize(
@@ -86,6 +86,6 @@ def test_template_renders_without_unresolved_placeholders(template):
 
     assert rendered.strip(), "template rendered to an empty string"
     leftover = _UNRESOLVED_PLACEHOLDER.findall(rendered)
-    assert not leftover, (
-        f"unresolved placeholders remain after render: {leftover}"
-    )
+    assert (
+        not leftover
+    ), f"unresolved placeholders remain after render: {leftover}"
