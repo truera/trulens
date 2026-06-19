@@ -12,23 +12,9 @@ malformed/non-scored JSON.
 from typing import ClassVar, Optional
 
 import pytest
+from trulens.core.feedback import endpoint as core_endpoint
 from trulens.feedback import generated as feedback_generated
 from trulens.feedback import llm_provider
-
-
-class _StubEndpoint:
-    """Minimal real endpoint stub. Only implements what run_in_pace needs:
-    pace_me() and retries. No network, no rate limiting.
-    """
-
-    def __init__(self):
-        self.retries = 0
-
-    def pace_me(self):
-        return None
-
-    def run_in_pace(self, func, *args, **kwargs):
-        return func(*args, **kwargs)
 
 
 class MockLLMProvider(llm_provider.LLMProvider):
@@ -44,7 +30,7 @@ class MockLLMProvider(llm_provider.LLMProvider):
 
     def __init__(self, **kwargs):
         super().__init__(
-            endpoint=_StubEndpoint(),
+            endpoint=core_endpoint.Endpoint(name="mock-endpoint"),
             model_engine="mock-model",
             **kwargs,
         )
