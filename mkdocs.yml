@@ -252,6 +252,7 @@ nav:
         - Anatomy of a Metric: component_guides/evaluation/feedback_anatomy.md
         - Migrating to Metric API: component_guides/evaluation/metric_migration.md
         - Score Distribution Analysis: component_guides/evaluation/score_distribution.md
+        - Criteria A/B Testing: component_guides/evaluation/criteria_ab_test.md
         - Metric Implementations:
             - component_guides/evaluation/feedback_implementations/index.md
             - Stock Metrics: component_guides/evaluation/feedback_implementations/stock.md
