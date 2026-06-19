@@ -9,7 +9,7 @@ control flow, including JSON-parse-first behavior and fallthrough on
 malformed/non-scored JSON.
 """
 
-from typing import ClassVar, Optional
+from typing import ClassVar
 
 import pytest
 from trulens.core.feedback import endpoint as core_endpoint
@@ -26,7 +26,7 @@ class MockLLMProvider(llm_provider.LLMProvider):
 
     model_config: ClassVar[dict] = {"extra": "allow"}
 
-    canned_response: Optional[object] = None
+    canned_response: object | None = None
 
     def __init__(self, **kwargs):
         super().__init__(
@@ -37,8 +37,8 @@ class MockLLMProvider(llm_provider.LLMProvider):
 
     def _create_chat_completion(
         self,
-        prompt: Optional[str] = None,
-        messages: Optional[list] = None,
+        prompt: str | None = None,
+        messages: list | None = None,
         response_format=None,
         **kwargs,
     ):
