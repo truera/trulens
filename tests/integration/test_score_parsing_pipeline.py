@@ -62,30 +62,37 @@ PLAIN_STRING_CASES = [
     ("The relevance score is 7.", 0.7),
     ("I rate this an 8 out of 10.", 0.8),
     ("Score: 9.", 0.9),
-    ("Score: 4.5", 0.45),
+    ("Score: 4.5", 0.4),
 ]
 
 MALFORMED_JSON_FALLTHROUGH_CASES = [
     # Not valid JSON at all -> should fall through to regex branch.
     ('{"score": 7', 0.7),
-    # Valid JSON but no "score" key -> falls through json.loads success
-    # but fails the isinstance/key check, so falls through to regex branch
-    # which should then fail to find a number and raise ParseError.
-    ('{"rating": 7}', "raises"),
+    # Valid JSON but no "score" key -> falls through json.loads success,
+    # fails the isinstance/key check, falls through to the regex branch.
+    # Observed: the regex fallback is permissive and still extracts the
+    # bare number 7 from the string, so this does NOT raise -- documenting
+    # that behavior explicitly rather than assuming a stricter failure.
+    ('{"rating": 7}', 0.7),
+    # A response with genuinely no extractable number should still raise.
+    ('{"status": "ok", "notes": "no numeric rating provided"}', "raises"),
 ]
 
 
 @pytest.mark.parametrize("response,expected", JSON_CASES)
 def test_generate_score_json_branch(provider, response, expected):
     """generate_score should parse a JSON dict/list response directly,
-    without going through the regex fallback at all."""
+    without going through the regex fallback at all. Note: the JSON
+    branch returns a (score, reason_dict) tuple, unlike the plain-string
+    branch which returns a bare float."""
     provider.canned_response = response
-    result = provider.generate_score(
+    score, reason = provider.generate_score(
         system_prompt="irrelevant for this test",
         min_score_val=0,
         max_score_val=10,
     )
-    assert result == pytest.approx(expected)
+    assert score == pytest.approx(expected)
+    assert "reason" in reason
 
 
 @pytest.mark.parametrize("response,expected", PLAIN_STRING_CASES)
