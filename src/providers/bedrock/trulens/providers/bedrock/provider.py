@@ -74,7 +74,27 @@ class Bedrock(llm_provider.LLMProvider):
         else:
             raise ValueError("Either 'messages' or 'prompt' must be supplied.")
 
-        if self.model_id.startswith("amazon"):
+        if self.model_id.startswith("amazon.nova"):
+            # Amazon Nova uses the Messages API schema
+            nova_messages = []
+            if messages:
+                for msg in messages:
+                    nova_messages.append({
+                        "role": msg["role"],
+                        "content": [{"text": msg["content"]}],
+                    })
+            else:
+                nova_messages = [{"role": "user", "content": [{"text": messages_str}]}]
+            body = json.dumps({
+                "schemaVersion": "messages-v1",
+                "messages": nova_messages,
+                "inferenceConfig": {
+                    "maxTokens": 4095,
+                    "temperature": 0,
+                    "topP": 1,
+                },
+            })
+        elif self.model_id.startswith("amazon"):
             body = json.dumps({
                 "inputText": messages_str,
                 "textGenerationConfig": {
@@ -147,7 +167,15 @@ class Bedrock(llm_provider.LLMProvider):
             body=body, modelId=modelId, accept=accept, contentType=content_type
         )
 
-        if self.model_id.startswith("amazon"):
+        if self.model_id.startswith("amazon.nova"):
+            response_body = (
+                json.loads(response.get("body").read())
+                .get("output", {})
+                .get("message", {})
+                .get("content", [{}])[0]
+                .get("text", "")
+            )
+        elif self.model_id.startswith("amazon"):
             response_body = json.loads(response.get("body").read()).get(
                 "results"
             )[0]["outputText"]
