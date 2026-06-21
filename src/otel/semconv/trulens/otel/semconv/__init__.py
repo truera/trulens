@@ -1,6 +1,14 @@
 from importlib.metadata import version
 import sys
 
+from trulens.otel.semconv.trace import ResourceAttributes
+from trulens.otel.semconv.trace import SpanAttributes
+
+__all__ = [
+    "ResourceAttributes",
+    "SpanAttributes",
+]
+
 
 def safe_importlib_package_name(package_name: str) -> str:
     """Convert a package name that may have periods in it to one that uses
