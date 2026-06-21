@@ -291,6 +291,7 @@ nav:
 
 #  - Resources:
 #    - NeurIPS Demo: https://truera.github.io/neurips-demo-2021/
+copyright: "© 2026 The TruLens Authors | Documentation Distributed under CC BY 4.0 © 2026 | Code Distributed under Apache 2.0 2026"
 extra:
   analytics:
       provider: google
