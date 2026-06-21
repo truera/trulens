@@ -14,10 +14,10 @@ class MockEndpoint(Endpoint):
 
 class MockLLMProvider(LLMProvider):
     model_config: ClassVar[dict] = {"extra": "allow"}
-    
+
     model_engine: str = "mock-model"
     mock_response: str = ""
-    
+
     def __init__(self, mock_response: str, **kwargs):
         super().__init__(endpoint=MockEndpoint(name="mock_endpoint"), mock_response=mock_response, **kwargs)
 
@@ -42,10 +42,10 @@ test_cases = [
 @pytest.mark.parametrize("name, response_text, expected_normalized_score", test_cases)
 def test_score_parsing_pipeline(name, response_text, expected_normalized_score):
     provider = MockLLMProvider(mock_response=response_text)
-    
+
     # Run through the relevance feedback method
     result = provider.relevance(prompt="What is the question?", response="This is the answer")
-    
+
     assert isinstance(result, float)
     assert 0.0 <= result <= 1.0
     assert result == expected_normalized_score
