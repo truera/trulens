@@ -34,7 +34,7 @@ test_cases = [
     ("plain_number", "2", 0.2),
     ("with_explanation", "The relevance is moderate. Score: 2", 0.2),
     ("json_format", '{"criteria": "...", "supporting_evidence": "...", "score": 2}', 0.2),
-    ("with_markdown", "```json\n{\\"score\\": 2}\n```", 0.2),
+    ("with_markdown", '```json\n{"score": 2}\n```', 0.2),
     ("whitespace_variations", "\n  Score: 2  \n", 0.2),
     ("float_format", "2.5", 0.25),
 ]
