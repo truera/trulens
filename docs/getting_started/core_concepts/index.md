@@ -2,9 +2,11 @@
 
 - ☔ [Feedback Functions](feedback_functions.md).
 
-- ⟁ [Rag Triad](rag_triad.md).
+- ⟁ [RAG Triad](rag_triad.md).
 
 - 🏆 [Honest, Harmless, Helpful Evals](honest_harmless_helpful_evals.md).
+
+- 🎓 [Agent GPA Framework](agent_gpa.md).
 
 ## Glossary
 
