@@ -250,6 +250,7 @@ nav:
         - component_guides/evaluation/index.md
         - Anatomy of a Metric: component_guides/evaluation/feedback_anatomy.md
         - Migrating to Metric API: component_guides/evaluation/metric_migration.md
+        - Cross-Model Alignment: component_guides/evaluation/cross_model_alignment.md
         - Metric Implementations:
             - component_guides/evaluation/feedback_implementations/index.md
             - Stock Metrics: component_guides/evaluation/feedback_implementations/stock.md
