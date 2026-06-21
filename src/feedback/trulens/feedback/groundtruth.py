@@ -61,6 +61,9 @@ class GroundTruthAgreement(
 
     ground_truth_imp: Optional[Callable] = pydantic.Field(None, exclude=True)
 
+    conversation_id: Optional[str] = None
+    """Optional conversation ID to scope ground truth lookups for memory recall."""
+
     model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         arbitrary_types_allowed=True
     )
@@ -72,6 +75,7 @@ class GroundTruthAgreement(
         ],
         provider: Optional[llm_provider.LLMProvider] = None,
         bert_scorer: Optional["BERTScorer"] = None,
+        conversation_id: Optional[str] = None,
         **kwargs,
     ):
         """Measures Agreement against a Ground Truth.
@@ -138,6 +142,10 @@ class GroundTruthAgreement(
             bert_scorer: Internal Usage for
                 DB serialization.
 
+            conversation_id: Optional conversation ID to scope ground truth
+                lookups. When set, only ground truth entries matching this
+                conversation_id will be considered for memory recall methods.
+
         """
         if provider is None:
             warnings.warn(
@@ -188,6 +196,7 @@ class GroundTruthAgreement(
             ground_truth_imp=ground_truth_imp,
             provider=provider,
             bert_scorer=bert_scorer,
+            conversation_id=conversation_id,
             **kwargs,
         )
 
@@ -767,6 +776,179 @@ class GroundTruthAgreement(
     @property
     def mae(self):
         raise NotImplementedError("`mae` has moved to `GroundTruthAggregator`")
+
+
+    def _find_expected_memories(self, query: str) -> Optional[List[str]]:
+        """Find expected memory texts for a given query.
+
+        If conversation_id is set on this instance, only returns entries
+        whose conversation_id matches.
+        """
+        if self.ground_truth_imp is not None:
+            result = self.ground_truth_imp(query)
+            if isinstance(result, list) and result and isinstance(result[0], str):
+                return result
+            return None
+
+        for qr in self.ground_truth:
+            if qr.get("query") == query:
+                if self.conversation_id is not None:
+                    if qr.get("conversation_id") != self.conversation_id:
+                        continue
+                if "expected_memories" in qr:
+                    return qr["expected_memories"]
+        return None
+
+    def memory_recall(
+        self,
+        query: str,
+        retrieved_memories: List[str],
+        similarity_threshold: float = 1.0,
+    ) -> float:
+        """Compute recall of expected memories against retrieved memories.
+
+        Evaluates how well a memory system retrieves relevant memories by
+        comparing retrieved memory texts against ground truth expected
+        memories. Unlike context retrieval metrics (precision_at_k,
+        recall_at_k) which evaluate RAG chunk retrieval, this metric
+        evaluates agent memory store recall — whether the right stored
+        memories surface when needed.
+
+        Example:
+            ```python
+            from trulens.core import Metric, Selector
+            from trulens.feedback import GroundTruthAgreement
+            from trulens.providers.openai import OpenAI
+
+            golden_set = [
+                {
+                    "query": "What are the user's preferences?",
+                    "expected_memories": [
+                        "User prefers dark mode",
+                        "User likes Python",
+                    ],
+                    "conversation_id": "conv_123",
+                }
+            ]
+
+            gta = GroundTruthAgreement(
+                golden_set,
+                provider=OpenAI(),
+                conversation_id="conv_123",
+            )
+
+            feedback = Metric(
+                implementation=gta.memory_recall,
+                name="Memory Recall",
+                selectors={
+                    "query": Selector.select_record_input(),
+                    "retrieved_memories": Selector.select_record_output(),
+                },
+            )
+            ```
+
+        Args:
+            query: The query string used to retrieve memories.
+            retrieved_memories: List of memory texts returned by the
+                memory store.
+            similarity_threshold: Threshold for text matching (0.0-1.0).
+                Default 1.0 = exact match. Values < 1.0 enable fuzzy
+                matching using SequenceMatcher ratio.
+
+        Returns:
+            float: Recall score between 0.0 and 1.0, or np.nan if no
+                ground truth found for the given query.
+        """
+        if not 0.0 < similarity_threshold <= 1.0:
+            raise ValueError(
+                f"similarity_threshold must be in (0.0, 1.0], "
+                f"got {similarity_threshold}"
+            )
+        expected = self._find_expected_memories(query)
+        if expected is None:
+            return np.nan
+        if not expected:
+            return 0.0
+        if retrieved_memories is None:
+            raise TypeError("retrieved_memories must be a list, not None")
+        if not retrieved_memories:
+            return 0.0
+
+        # Deduplicate expected memories to avoid double-counting
+        unique_expected = list(dict.fromkeys(expected))
+        matched = 0
+        for exp_mem in unique_expected:
+            for ret_mem in retrieved_memories:
+                if self._is_similar(exp_mem, ret_mem, similarity_threshold):
+                    matched += 1
+                    break
+
+        return matched / len(unique_expected)
+
+    def memory_mrr(
+        self,
+        query: str,
+        retrieved_memories: List[str],
+        similarity_threshold: float = 1.0,
+    ) -> float:
+        """Compute Mean Reciprocal Rank for memory retrieval.
+
+        Returns the reciprocal rank of the first relevant memory found
+        in the retrieved results. This is useful for evaluating ranking
+        quality — whether relevant memories appear early in results.
+
+        Args:
+            query: The query string used to retrieve memories.
+            retrieved_memories: List of memory texts returned by the
+                memory store.
+            similarity_threshold: Threshold for text matching (0.0-1.0).
+                Default 1.0 = exact match.
+
+        Returns:
+            float: MRR score between 0.0 and 1.0, or np.nan if no
+                ground truth found for the given query.
+        """
+        if not 0.0 < similarity_threshold <= 1.0:
+            raise ValueError(
+                f"similarity_threshold must be in (0.0, 1.0], "
+                f"got {similarity_threshold}"
+            )
+        expected = self._find_expected_memories(query)
+        if expected is None:
+            return np.nan
+        if not expected:
+            return 0.0
+        if retrieved_memories is None:
+            raise TypeError("retrieved_memories must be a list, not None")
+        if not retrieved_memories:
+            return 0.0
+
+        expected_set = set(expected)
+        for i, ret_mem in enumerate(retrieved_memories):
+            for exp_mem in expected_set:
+                if self._is_similar(ret_mem, exp_mem, similarity_threshold):
+                    return 1.0 / (i + 1)
+
+        return 0.0
+
+    @staticmethod
+    def _is_similar(text1: str, text2: str, threshold: float = 1.0) -> bool:
+        """Check if two texts are similar above a threshold.
+
+        Args:
+            text1: First text.
+            text2: Second text.
+            threshold: Similarity threshold (0.0-1.0).
+                1.0 = exact match, lower values allow fuzzy matching.
+
+        Returns:
+            bool: True if texts are similar enough.
+        """
+        if threshold >= 1.0:
+            return text1 == text2
+        from difflib import SequenceMatcher
+
+        return SequenceMatcher(None, text1, text2).ratio() >= threshold
 
 
 class GroundTruthAggregator(
