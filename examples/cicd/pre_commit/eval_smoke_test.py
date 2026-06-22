@@ -72,9 +72,8 @@ def main() -> int:
     with tru_app as recording:
         app.answer("What is TruLens used for?")
 
-    recording.retrieve_feedback_results(timeout=120)
-    leaderboard = session.get_leaderboard()
-    score = float(leaderboard["Answer Relevance"].mean())
+    results = recording.retrieve_feedback_results(timeout=120)
+    score = float(results["Answer Relevance"].mean())
 
     print(f"Answer Relevance: {score:.3f} (min {min_score})")
     if score < min_score:
