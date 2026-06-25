@@ -170,8 +170,45 @@ class FewShotOptimizer:
             If *feedback_fn* raises an exception for every candidate on the
             first eval sample (likely a misconfigured provider).
         """
-        raise NotImplementedError(
-            "optimize() will be implemented in the next commit."
+        selected: List[LabeledExample] = []
+        remaining = list(enumerate(self.candidates))
+        candidate_scores: dict[int, float] = {}
+
+        for round_num in range(min(self.n_examples, len(self.candidates))):
+            best_idx: Optional[int] = None
+            best_corr: Optional[float] = None
+
+            for orig_idx, candidate in remaining:
+                trial_set = selected + [candidate]
+                corr = self._score_candidate_set(trial_set)
+                candidate_scores[orig_idx] = corr if corr is not None else -1.0
+
+                if corr is not None and (best_corr is None or corr > best_corr):
+                    best_corr = corr
+                    best_idx = orig_idx
+
+            if best_idx is None:
+                logger.warning(
+                    "Round %d: no candidate improved correlation — stopping early.",
+                    round_num + 1,
+                )
+                break
+
+            chosen = self.candidates[best_idx]
+            selected.append(chosen)
+            remaining = [(i, c) for i, c in remaining if i != best_idx]
+            logger.info(
+                "Round %d: selected candidate %d (correlation=%.4f).",
+                round_num + 1,
+                best_idx,
+                best_corr,
+            )
+
+        final_corr = self._score_candidate_set(selected) if selected else None
+        return OptimizeResult(
+            best_examples=selected,
+            correlation=final_corr,
+            candidate_scores=candidate_scores,
         )
 
     def format_examples(self, examples: List[LabeledExample]) -> str:
