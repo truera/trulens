@@ -234,4 +234,20 @@ class FewShotOptimizer:
         Returns ``None`` when the lists have fewer than two elements or when
         one of the lists has zero variance (correlation is undefined).
         """
-        raise NotImplementedError
+        n = len(predicted)
+        if n < 2 or len(ground_truth) != n:
+            return None
+
+        mean_p = sum(predicted) / n
+        mean_g = sum(ground_truth) / n
+
+        numerator = sum(
+            (p - mean_p) * (g - mean_g) for p, g in zip(predicted, ground_truth)
+        )
+        denom_p = sum((p - mean_p) ** 2 for p in predicted) ** 0.5
+        denom_g = sum((g - mean_g) ** 2 for g in ground_truth) ** 0.5
+
+        if denom_p == 0 or denom_g == 0:
+            return None  # zero variance — correlation undefined
+
+        return numerator / (denom_p * denom_g)
