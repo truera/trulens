@@ -226,7 +226,24 @@ class FewShotOptimizer:
             Pearson correlation, or ``None`` if fewer than two eval samples
             produced valid predictions.
         """
-        raise NotImplementedError
+        examples_str = self.format_examples(candidate_set)
+        predicted: List[float] = []
+        ground_truth: List[float] = []
+
+        for kwargs, gt_score in self.eval_dataset:
+            try:
+                score = self.feedback_fn(**kwargs, examples=examples_str)
+                if score is not None:
+                    predicted.append(float(score))
+                    ground_truth.append(gt_score)
+            except Exception:
+                logger.warning(
+                    "feedback_fn raised an exception for kwargs=%r — skipping.",
+                    kwargs,
+                    exc_info=True,
+                )
+
+        return self._pearson_correlation(predicted, ground_truth)
 
     def _pearson_correlation(
         self,
