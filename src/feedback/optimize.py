@@ -193,9 +193,13 @@ class FewShotOptimizer:
             A human-readable string ready to be passed as
             ``feedback_fn(..., examples=<return_value>)``.
         """
-        raise NotImplementedError(
-            "format_examples() will be implemented in the next commit."
-        )
+        parts = []
+        for i, (kwargs, score) in enumerate(examples, start=1):
+            kwargs_str = "\n".join(f"  {k}: {v}" for k, v in kwargs.items())
+            parts.append(
+                f"Example {i}:\n{kwargs_str}\n  expected_score: {score:.2f}"
+            )
+        return self.format_sep.join(parts)
 
     # ------------------------------------------------------------------
     # Private helpers (stubs — implementations in next commit)
