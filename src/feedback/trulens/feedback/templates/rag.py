@@ -375,6 +375,41 @@ Score: {score}
 # Backward-compat alias (old name).
 GROUNDEDNESS_REASON_TEMPLATE = GROUNDEDNESS_NLI_REASON_FORMAT
 
+
+class CitationAttribution(Semantics, WithPrompt):
+    """Citation-attribution faithfulness.
+
+    Unlike groundedness (does the source support the statement *somewhere*),
+    this checks attribution: does each ``[N]`` citation marker point to the
+    SOURCE passage that supports the specific claim it is attached to. It
+    catches misattribution: a claim cited to passage ``[A]`` that does not
+    support it, even though some other passage ``[B]`` would.
+    """
+
+    system_prompt: ClassVar[str] = cleandoc(
+        """You are a CITATION-ATTRIBUTION classifier for a retrieval-augmented ANSWER whose claims carry [N] citation markers, where N is the numbered SOURCE passage being cited.
+        Provide a score of {max_score} if every [N] marker points to a SOURCE passage that actually supports the specific claim it is attached to.
+        Provide a score of {min_score} if at least one claim carries a citation [N] where SOURCE passage N does NOT support that claim, even if some other SOURCE passage would support it (this is citation misattribution).
+        Judge attribution only, relative to the SOURCE passages, not world knowledge. Never elaborate."""
+    )
+    cot_system_prompt: ClassVar[str] = cleandoc(
+        """You are a CITATION-ATTRIBUTION classifier for a retrieval-augmented ANSWER whose claims carry [N] citation markers, where N is the numbered SOURCE passage being cited.
+        Provide a score of {max_score} if every [N] marker points to a SOURCE passage that actually supports the specific claim it is attached to.
+        Provide a score of {min_score} if at least one claim carries a citation [N] where SOURCE passage N does NOT support that claim, even if some other SOURCE passage would support it (this is citation misattribution).
+        Check each [N] marker against the SOURCE passage it names. Judge relative to the SOURCE passages only, not world knowledge. Think step by step, then give your reasoning and score."""
+    )
+    user_prompt: ClassVar[str] = cleandoc(
+        """QUESTION: {question}
+
+        SOURCES:
+        {source}
+
+        ANSWER WITH CITATIONS: {statement}
+
+        CITATION ATTRIBUTION:"""
+    )
+
+
 __all__ = [
     "Groundedness",
     "Answerability",
@@ -383,6 +418,7 @@ __all__ = [
     "ContextRelevance",
     "PromptResponseRelevance",
     "Comprehensiveness",
+    "CitationAttribution",
     "SYSTEM_FIND_SUPPORTING",
     "USER_FIND_SUPPORTING",
     "GENERATE_KEY_POINTS_SYSTEM_PROMPT",
