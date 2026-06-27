@@ -475,8 +475,7 @@ class AlignmentReport:
             base_df = pd.concat([base_df, examples_df], axis=1)
 
         return (
-            base_df
-            .sort_values(
+            base_df.sort_values(
                 ["absolute_error", "index"],
                 ascending=[False, True],
                 kind="mergesort",

@@ -3,7 +3,11 @@
 import numpy as np
 import pandas as pd
 import pytest
-from trulens.benchmark import AlignmentReport
+
+pytestmark = pytest.mark.optional
+
+benchmark = pytest.importorskip("trulens.benchmark")
+AlignmentReport = benchmark.AlignmentReport
 
 
 def _report() -> AlignmentReport:
