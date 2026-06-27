@@ -2864,6 +2864,111 @@ class LLMProvider(core_provider.Provider):
 
         return statements
 
+    @staticmethod
+    def _number_citation_sources(source: Union[str, List[str]]) -> str:
+        """Render sources as ``[1] ...``, ``[2] ...`` so ``[N]`` markers resolve."""
+        if isinstance(source, (list, tuple)):
+            return "\n\n".join(
+                f"[{i + 1}] {passage}" for i, passage in enumerate(source)
+            )
+        return source
+
+    def citation_attribution(
+        self,
+        question: str,
+        source: Union[str, List[str]],
+        statement: str,
+        temperature: float = 0.0,
+    ) -> float:
+        """Check citation-attribution faithfulness of a cited answer.
+
+        Unlike groundedness (does the source support the statement *somewhere*),
+        this checks attribution: whether each ``[N]`` citation marker in the
+        statement points to the SOURCE passage that supports the specific claim
+        it is attached to. It catches misattribution: a claim cited to passage
+        ``[A]`` that does not support it, even though some other passage ``[B]``
+        in the source would.
+
+        Example:
+            ```python
+            from trulens.core import Metric, Selector
+
+            f_citation = Metric(
+                implementation=provider.citation_attribution,
+                name="Citation Attribution",
+                selectors={
+                    "question": Selector.select_record_input(),
+                    "source": Selector.select_context(collect_list=True),
+                    "statement": Selector.select_record_output(),
+                },
+            )
+            ```
+
+        Args:
+            question (str): The question being answered.
+            source (Union[str, List[str]]): The retrieved passages. A list is
+                numbered ``[1] ...``, ``[2] ...`` so the statement's ``[N]``
+                markers resolve; a pre-numbered string is used as-is.
+            statement (str): The answer, containing ``[N]`` citation markers.
+            temperature (float): The temperature for the LLM response. Defaults to 0.0.
+
+        Returns:
+            float: 0.0 (a claim is misattributed) to 1.0 (every claim's citation
+                points to a passage that supports it).
+        """
+        user_prompt = templates_rag.CitationAttribution.user_prompt.format(
+            question=question,
+            source=self._number_citation_sources(source),
+            statement=statement,
+        )
+        return self.generate_score(
+            templates_rag.CitationAttribution.system_prompt.format(
+                min_score=0, max_score=1
+            ),
+            user_prompt,
+            min_score_val=0,
+            max_score_val=1,
+            temperature=temperature,
+        )
+
+    def citation_attribution_with_cot_reasons(
+        self,
+        question: str,
+        source: Union[str, List[str]],
+        statement: str,
+        temperature: float = 0.0,
+    ) -> Tuple[float, Dict]:
+        """Citation-attribution faithfulness with chain-of-thought reasons.
+
+        Same check as `citation_attribution`, but also returns the reasoning for
+        the verdict (which ``[N]`` marker, if any, is misattributed).
+
+        Args:
+            question (str): The question being answered.
+            source (Union[str, List[str]]): The retrieved passages (a list is
+                numbered for ``[N]`` resolution).
+            statement (str): The answer, containing ``[N]`` citation markers.
+            temperature (float): The temperature for the LLM response. Defaults to 0.0.
+
+        Returns:
+            Tuple[float, Dict]: A score between 0.0 and 1.0 and a dictionary with
+                the reasons for the evaluation.
+        """
+        user_prompt = templates_rag.CitationAttribution.user_prompt.format(
+            question=question,
+            source=self._number_citation_sources(source),
+            statement=statement,
+        )
+        return self.generate_score_and_reasons(
+            templates_rag.CitationAttribution.cot_system_prompt.format(
+                min_score=0, max_score=1
+            ),
+            user_prompt,
+            min_score_val=0,
+            max_score_val=1,
+            temperature=temperature,
+        )
+
     def groundedness_measure_with_cot_reasons(
         self,
         source: str,
