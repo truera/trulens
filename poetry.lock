@@ -10176,6 +10176,7 @@ develop = true
 [package.dependencies]
 poetry = "<2.0.0"
 trulens-core = "^2.0.0"
+trulens-feedback = "^2.0.0"
 
 [package.source]
 type = "directory"
