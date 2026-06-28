@@ -5,6 +5,8 @@ import unittest
 from unittest import TestCase
 
 from trulens.feedback import llm_provider
+from trulens.feedback.templates import quality as templates_quality
+from trulens.feedback.templates import rag as templates_rag
 
 
 class MockLLMProvider(llm_provider.LLMProvider):
@@ -162,6 +164,40 @@ class TestMethodTemplateWiring(TestCase):
         self.provider.conciseness(text="x")
         con_prompt = self.provider.last_system_prompt
         self.assertNotEqual(coh_prompt, con_prompt)
+
+    # ------------------------------------------------------------------
+    # Additional assertions that pin the *exact* template content (rather
+    # than a distinguishing substring), catching copy-paste bugs where a
+    # method wires up the wrong template class outright.
+    # ------------------------------------------------------------------
+
+    def test_relevance_matches_PromptResponseRelevance_system_prompt(self):
+        self.provider.relevance(
+            prompt="What is TruLens?",
+            response="TruLens is an evaluation framework.",
+        )
+        sys = self.provider.last_system_prompt
+        self.assertIn(
+            templates_rag.PromptResponseRelevance.system_prompt, sys
+        )
+        self.assertNotIn(templates_rag.ContextRelevance.system_prompt, sys)
+
+    def test_context_relevance_matches_ContextRelevance_system_prompt(self):
+        self.provider.context_relevance(
+            question="What is TruLens?",
+            context="TruLens evaluates LLM applications.",
+        )
+        sys = self.provider.last_system_prompt
+        self.assertIn(templates_rag.ContextRelevance.system_prompt, sys)
+        self.assertNotIn(
+            templates_rag.PromptResponseRelevance.system_prompt, sys
+        )
+
+    def test_sentiment_matches_Sentiment_system_prompt(self):
+        self.provider.sentiment(text="This is excellent!")
+        sys = self.provider.last_system_prompt
+        self.assertIn(templates_quality.Sentiment.system_prompt, sys)
+        self.assertNotIn(templates_rag.ContextRelevance.system_prompt, sys)
 
 
 if __name__ == "__main__":
