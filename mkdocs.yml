@@ -240,6 +240,7 @@ nav:
         - component_guides/instrumentation/langchain.md
         - component_guides/instrumentation/langgraph.md
         - component_guides/instrumentation/llama_index.md
+        - MCP: component_guides/instrumentation/mcp.md
     - Logging:
         - component_guides/logging/where_to_log/index.md
         - Postgres: component_guides/logging/where_to_log/log_in_postgres.md
