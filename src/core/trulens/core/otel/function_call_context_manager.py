@@ -36,19 +36,14 @@ class CreateSpanFunctionCallContextManager:
         parent_record_id = get_baggage(
             "__trulens_nested_record_parent_record_id__"
         )
-        parent_span_id = get_baggage(
-            "__trulens_nested_record_parent_span_id__"
-        )
-        parent_app_id = get_baggage(
-            "__trulens_nested_record_parent_app_id__"
-        )
+        parent_span_id = get_baggage("__trulens_nested_record_parent_span_id__")
+        parent_app_id = get_baggage("__trulens_nested_record_parent_app_id__")
 
         unjoinable_parent_record_id = get_baggage(
             "__trulens_nested_record_unjoinable_parent_record_id__"
         )
         fallback_record_root = (
-            record_id is not None
-            and unjoinable_parent_record_id == record_id
+            record_id is not None and unjoinable_parent_record_id == record_id
         )
 
         if (

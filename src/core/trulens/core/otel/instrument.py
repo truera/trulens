@@ -642,7 +642,10 @@ class OtelRecordingContext(OtelBaseRecordingContext):
         ):
             current_span = trace.get_current_span()
             current_span_context = current_span.get_span_context()
-            if current_span_context is not None and current_span_context.is_valid:
+            if (
+                current_span_context is not None
+                and current_span_context.is_valid
+            ):
                 self.attach_to_context(
                     "__trulens_nested_record_parent_record_id__",
                     parent_record_id,

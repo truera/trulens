@@ -67,12 +67,14 @@ class TestOtelNestedRecordRoot(OtelTestCase):
 
         outer_roots = root_events[
             root_events["resource_attributes"].apply(
-                lambda attrs: attrs.get(ResourceAttributes.APP_NAME) == "outer_app"
+                lambda attrs: attrs.get(ResourceAttributes.APP_NAME)
+                == "outer_app"
             )
         ]
         inner_roots = root_events[
             root_events["resource_attributes"].apply(
-                lambda attrs: attrs.get(ResourceAttributes.APP_NAME) == "inner_app"
+                lambda attrs: attrs.get(ResourceAttributes.APP_NAME)
+                == "inner_app"
             )
         ]
 
@@ -91,12 +93,20 @@ class TestOtelNestedRecordRoot(OtelTestCase):
             inner_root["record_attributes"][SpanAttributes.SPAN_TYPE],
         )
 
-        outer_record_id = outer_root["record_attributes"][SpanAttributes.RECORD_ID]
-        inner_record_id = inner_root["record_attributes"][SpanAttributes.RECORD_ID]
+        outer_record_id = outer_root["record_attributes"][
+            SpanAttributes.RECORD_ID
+        ]
+        inner_record_id = inner_root["record_attributes"][
+            SpanAttributes.RECORD_ID
+        ]
         self.assertNotEqual(outer_record_id, inner_record_id)
 
-        outer_app_id = outer_root["resource_attributes"][ResourceAttributes.APP_ID]
-        inner_app_id = inner_root["resource_attributes"][ResourceAttributes.APP_ID]
+        outer_app_id = outer_root["resource_attributes"][
+            ResourceAttributes.APP_ID
+        ]
+        inner_app_id = inner_root["resource_attributes"][
+            ResourceAttributes.APP_ID
+        ]
         self.assertNotEqual(outer_app_id, inner_app_id)
 
         self.assertEqual(
@@ -147,10 +157,9 @@ class TestOtelNestedRecordRoot(OtelTestCase):
             root_events.iloc[0]["record_attributes"][SpanAttributes.SPAN_TYPE],
         )
 
-
     def test_unresolvable_parent_span_falls_back_to_record_root(self):
-        import uuid
         from unittest.mock import Mock
+        import uuid
 
         from opentelemetry.baggage import set_baggage
         import opentelemetry.context as context_api
@@ -174,10 +183,16 @@ class TestOtelNestedRecordRoot(OtelTestCase):
         mock_recording.add_record_id = Mock()
 
         tokens = [
-            context_api.attach(set_baggage(SpanAttributes.RECORD_ID, parent_record_id)),
-            context_api.attach(set_baggage(ResourceAttributes.APP_ID, parent_app_id)),
+            context_api.attach(
+                set_baggage(SpanAttributes.RECORD_ID, parent_record_id)
+            ),
+            context_api.attach(
+                set_baggage(ResourceAttributes.APP_ID, parent_app_id)
+            ),
             context_api.attach(set_baggage("__trulens_otel_ctx__", object())),
-            context_api.attach(set_baggage("__trulens_recording__", mock_recording)),
+            context_api.attach(
+                set_baggage("__trulens_recording__", mock_recording)
+            ),
         ]
 
         try:
@@ -241,8 +256,12 @@ class TestOtelNestedRecordRoot(OtelTestCase):
         parent_app_id = "outer_app_id"
 
         tokens = [
-            context_api.attach(set_baggage(SpanAttributes.RECORD_ID, parent_record_id)),
-            context_api.attach(set_baggage(ResourceAttributes.APP_ID, parent_app_id)),
+            context_api.attach(
+                set_baggage(SpanAttributes.RECORD_ID, parent_record_id)
+            ),
+            context_api.attach(
+                set_baggage(ResourceAttributes.APP_ID, parent_app_id)
+            ),
         ]
 
         try:
