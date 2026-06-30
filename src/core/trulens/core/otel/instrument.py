@@ -631,8 +631,15 @@ class OtelRecordingContext(OtelBaseRecordingContext):
     def __enter__(self) -> Recording:
         parent_record_id = get_baggage(SpanAttributes.RECORD_ID)
         parent_app_id = get_baggage(ResourceAttributes.APP_ID)
+        parent_otel_ctx = get_baggage("__trulens_otel_ctx__")
+        parent_recording = get_baggage("__trulens_recording__")
 
-        if parent_record_id is not None and parent_app_id is not None:
+        if (
+            parent_record_id is not None
+            and parent_app_id is not None
+            and parent_otel_ctx is not None
+            and parent_recording is not None
+        ):
             current_span = trace.get_current_span()
             current_span_context = current_span.get_span_context()
             if current_span_context is not None and current_span_context.is_valid:
@@ -649,6 +656,12 @@ class OtelRecordingContext(OtelBaseRecordingContext):
                 self.attach_to_context(
                     "__trulens_nested_record_parent_app_id__",
                     parent_app_id,
+                    override=True,
+                )
+            else:
+                self.attach_to_context(
+                    "__trulens_nested_record_unjoinable_parent_record_id__",
+                    parent_record_id,
                     override=True,
                 )
 

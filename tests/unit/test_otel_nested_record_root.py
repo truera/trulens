@@ -146,3 +146,122 @@ class TestOtelNestedRecordRoot(OtelTestCase):
             SpanAttributes.SpanType.RECORD_ROOT,
             root_events.iloc[0]["record_attributes"][SpanAttributes.SPAN_TYPE],
         )
+
+
+    def test_unresolvable_parent_span_falls_back_to_record_root(self):
+        import uuid
+        from unittest.mock import Mock
+
+        from opentelemetry.baggage import set_baggage
+        import opentelemetry.context as context_api
+
+        class InnerApp:
+            def query(self, question: str) -> str:
+                return f"inner: {question}"
+
+        inner_app = InnerApp()
+        inner_tru_app = TruApp(
+            app=inner_app,
+            app_name="inner_app",
+            app_version="v1",
+            main_method=inner_app.query,
+        )
+
+        parent_record_id = str(uuid.uuid4())
+        parent_app_id = "outer_app_id"
+
+        mock_recording = Mock()
+        mock_recording.add_record_id = Mock()
+
+        tokens = [
+            context_api.attach(set_baggage(SpanAttributes.RECORD_ID, parent_record_id)),
+            context_api.attach(set_baggage(ResourceAttributes.APP_ID, parent_app_id)),
+            context_api.attach(set_baggage("__trulens_otel_ctx__", object())),
+            context_api.attach(set_baggage("__trulens_recording__", mock_recording)),
+        ]
+
+        try:
+            inner_tru_app.instrumented_invoke_main_method(
+                run_name="inner run",
+                input_id="inner input",
+                main_method_args=("hello",),
+            )
+        finally:
+            while tokens:
+                context_api.detach(tokens.pop())
+
+        TruSession().force_flush()
+        events = self._get_events()
+
+        nested_roots = events[
+            events["record_attributes"].apply(
+                lambda attrs: attrs.get(SpanAttributes.SPAN_TYPE)
+                == SpanAttributes.SpanType.NESTED_RECORD_ROOT
+            )
+        ]
+        self.assertEqual(0, len(nested_roots))
+
+        record_roots = events[
+            events["record_attributes"].apply(
+                lambda attrs: attrs.get(SpanAttributes.SPAN_TYPE)
+                == SpanAttributes.SpanType.RECORD_ROOT
+            )
+        ]
+        self.assertEqual(1, len(record_roots))
+
+        fallback_root = record_roots.iloc[0]
+        self.assertEqual(
+            "inner_app",
+            fallback_root["resource_attributes"][ResourceAttributes.APP_NAME],
+        )
+        self.assertNotEqual(
+            parent_record_id,
+            fallback_root["record_attributes"][SpanAttributes.RECORD_ID],
+        )
+
+    def test_baggage_only_parent_linkage_is_not_authoritative(self):
+        import uuid
+
+        from opentelemetry.baggage import set_baggage
+        import opentelemetry.context as context_api
+
+        class InnerApp:
+            def query(self, question: str) -> str:
+                return f"inner: {question}"
+
+        inner_app = InnerApp()
+        inner_tru_app = TruApp(
+            app=inner_app,
+            app_name="inner_app",
+            app_version="v1",
+            main_method=inner_app.query,
+        )
+
+        parent_record_id = str(uuid.uuid4())
+        parent_app_id = "outer_app_id"
+
+        tokens = [
+            context_api.attach(set_baggage(SpanAttributes.RECORD_ID, parent_record_id)),
+            context_api.attach(set_baggage(ResourceAttributes.APP_ID, parent_app_id)),
+        ]
+
+        try:
+            inner_tru_app.instrumented_invoke_main_method(
+                run_name="inner run",
+                input_id="inner input",
+                main_method_args=("hello",),
+            )
+        finally:
+            while tokens:
+                context_api.detach(tokens.pop())
+
+        TruSession().force_flush()
+        events = self._get_events()
+
+        nested_roots = events[
+            events["record_attributes"].apply(
+                lambda attrs: attrs.get(SpanAttributes.SPAN_TYPE)
+                == SpanAttributes.SpanType.NESTED_RECORD_ROOT
+            )
+        ]
+        self.assertEqual(0, len(nested_roots))

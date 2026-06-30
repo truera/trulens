@@ -43,6 +43,14 @@ class CreateSpanFunctionCallContextManager:
             "__trulens_nested_record_parent_app_id__"
         )
 
+        unjoinable_parent_record_id = get_baggage(
+            "__trulens_nested_record_unjoinable_parent_record_id__"
+        )
+        fallback_record_root = (
+            record_id is not None
+            and unjoinable_parent_record_id == record_id
+        )
+
         if (
             record_id is not None
             and parent_record_id == record_id
@@ -51,7 +59,7 @@ class CreateSpanFunctionCallContextManager:
         ):
             nested_record_root = True
 
-        if not record_id or nested_record_root:
+        if not record_id or nested_record_root or fallback_record_root:
             started_record = True
             record_id = str(uuid.uuid4())
             self.token = context_api.attach(
