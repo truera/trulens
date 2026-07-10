@@ -67,41 +67,34 @@ class TestRunWorkerKnobs(unittest.TestCase):
 
 
 class TestSnowflakeWarning(unittest.TestCase):
-    @patch("trulens.core.run.logger")
-    def test_warning_emitted_for_snowflake_connector(self, mock_logger):
+    def test_warning_emitted_for_snowflake_connector(self):
         mock_session = MagicMock()
-        mock_connector = MagicMock()
-        type(mock_connector).__name__ = "SnowflakeConnector"
+        mock_connector = MagicMock(spec=["warn_if_metric_parallel"])
         mock_session.connector = mock_connector
 
         run = _make_run(tru_session=mock_session, metric_max_workers=3)
         run._warn_if_snowflake_parallel(3)
-        mock_logger.warning.assert_called_once()
-        self.assertIn(
-            "metric_max_workers=3", mock_logger.warning.call_args[0][0]
-        )
+        mock_connector.warn_if_metric_parallel.assert_called_once_with(3)
 
-    @patch("trulens.core.run.logger")
-    def test_no_warning_for_non_snowflake(self, mock_logger):
+    def test_no_warning_for_non_snowflake(self):
         mock_session = MagicMock()
-        mock_connector = MagicMock()
-        type(mock_connector).__name__ = "DefaultConnector"
+        # A connector without ``warn_if_metric_parallel`` (the default
+        # ``DBConnector`` no-op behavior).
+        mock_connector = MagicMock(spec=[])
         mock_session.connector = mock_connector
 
         run = _make_run(tru_session=mock_session, metric_max_workers=3)
+        # Should not raise even though the hook is absent.
         run._warn_if_snowflake_parallel(3)
-        mock_logger.warning.assert_not_called()
 
-    @patch("trulens.core.run.logger")
-    def test_no_warning_when_single_worker(self, mock_logger):
+    def test_no_warning_when_single_worker(self):
         mock_session = MagicMock()
-        mock_connector = MagicMock()
-        type(mock_connector).__name__ = "SnowflakeConnector"
+        mock_connector = MagicMock(spec=["warn_if_metric_parallel"])
         mock_session.connector = mock_connector
 
         run = _make_run(tru_session=mock_session, metric_max_workers=1)
         run._warn_if_snowflake_parallel(1)
-        mock_logger.warning.assert_not_called()
+        mock_connector.warn_if_metric_parallel.assert_not_called()
 
 
 class TestInvokeSingleRow(unittest.TestCase):

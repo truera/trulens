@@ -14,7 +14,7 @@ class Bedrock(llm_provider.LLMProvider):
 
     Args:
         model_id: The specific model id. Defaults to
-            "amazon.titan-text-express-v1".
+            "amazon.nova-lite-v1:0".
 
         *args: args passed to BedrockEndpoint and subsequently to boto3 client
             constructor.
@@ -23,7 +23,7 @@ class Bedrock(llm_provider.LLMProvider):
             client constructor.
     """
 
-    DEFAULT_MODEL_ID: ClassVar[str] = "amazon.titan-text-express-v1"
+    DEFAULT_MODEL_ID: ClassVar[str] = "amazon.nova-lite-v1:0"
 
     # LLMProvider requirement which we do not use:
     model_engine: str = "Bedrock"
@@ -36,7 +36,6 @@ class Bedrock(llm_provider.LLMProvider):
         *args: Any,
         model_id: Optional[str] = None,
         **kwargs: Any,
-        # self, *args, model_id: str = "amazon.titan-text-express-v1", **kwargs
     ):
         if model_id is None:
             model_id = self.DEFAULT_MODEL_ID
@@ -75,7 +74,31 @@ class Bedrock(llm_provider.LLMProvider):
         else:
             raise ValueError("Either 'messages' or 'prompt' must be supplied.")
 
-        if self.model_id.startswith("amazon"):
+        # Cross-region inference profile ids are the provider id prefixed with a
+        # region (e.g. "us.amazon.nova-lite-v1:0"). Strip the prefix so the
+        # family routing below matches the same way it does for on-demand ids.
+        base_model_id = self.model_id
+        for region_prefix in ("us.", "eu.", "apac.", "us-gov."):
+            if base_model_id.startswith(region_prefix):
+                base_model_id = base_model_id[len(region_prefix) :]
+                break
+
+        if "nova" in base_model_id:
+            # Amazon Nova uses the Messages API schema, not the legacy Titan
+            # text-generation schema used by other amazon.* models.
+            # https://docs.aws.amazon.com/nova/latest/userguide/using-invoke-api.html
+            body = json.dumps({
+                "schemaVersion": "messages-v1",
+                "messages": [
+                    {"role": "user", "content": [{"text": messages_str}]}
+                ],
+                "inferenceConfig": {
+                    "maxTokens": 4095,
+                    "temperature": 0,
+                    "topP": 1,
+                },
+            })
+        elif base_model_id.startswith("amazon"):
             body = json.dumps({
                 "inputText": messages_str,
                 "textGenerationConfig": {
@@ -85,7 +108,7 @@ class Bedrock(llm_provider.LLMProvider):
                     "topP": 1,
                 },
             })
-        elif self.model_id.startswith("anthropic"):
+        elif base_model_id.startswith("anthropic"):
             if not messages:
                 raise ValueError(
                     "`messages` argument must be supplied for Anthropic Bedrock models."
@@ -102,14 +125,14 @@ class Bedrock(llm_provider.LLMProvider):
                 "max_tokens": 4095,
                 "anthropic_version": "bedrock-2023-05-31",
             })
-        elif self.model_id.startswith("cohere"):
+        elif base_model_id.startswith("cohere"):
             body = json.dumps({
                 "prompt": messages_str,
                 "temperature": 0,
                 "p": 1,
                 "max_tokens": 4095,
             })
-        elif self.model_id.startswith("ai21"):
+        elif base_model_id.startswith("ai21"):
             body = json.dumps({
                 "prompt": messages_str,
                 "temperature": 0,
@@ -117,7 +140,7 @@ class Bedrock(llm_provider.LLMProvider):
                 "maxTokens": 8191,
             })
 
-        elif self.model_id.startswith("mistral"):
+        elif base_model_id.startswith("mistral"):
             body = json.dumps({
                 "prompt": messages_str,
                 "temperature": 0,
@@ -125,7 +148,7 @@ class Bedrock(llm_provider.LLMProvider):
                 "max_tokens": 4095,
             })
 
-        elif self.model_id.startswith("meta"):
+        elif base_model_id.startswith("meta"):
             body = json.dumps({
                 "prompt": messages_str,
                 "temperature": 0,
@@ -148,30 +171,37 @@ class Bedrock(llm_provider.LLMProvider):
             body=body, modelId=modelId, accept=accept, contentType=content_type
         )
 
-        if self.model_id.startswith("amazon"):
+        if "nova" in base_model_id:
+            # Nova returns the Messages API response shape.
+            # https://docs.aws.amazon.com/nova/latest/userguide/using-invoke-api.html
+            response_body = json.loads(response.get("body").read())["output"][
+                "message"
+            ]["content"][0]["text"]
+
+        elif base_model_id.startswith("amazon"):
             response_body = json.loads(response.get("body").read()).get(
                 "results"
             )[0]["outputText"]
 
-        elif self.model_id.startswith("anthropic"):
+        elif base_model_id.startswith("anthropic"):
             response_body = json.loads(response.get("body").read()).get(
                 "content"
             )[0]["text"]
 
-        elif self.model_id.startswith("cohere"):
+        elif base_model_id.startswith("cohere"):
             response_body = json.loads(response.get("body").read()).get(
                 "generations"
             )[0]["text"]
 
-        elif self.model_id.startswith("mistral"):
+        elif base_model_id.startswith("mistral"):
             response_body = json.loads(response.get("body").read()).get(
                 "output"
             )[0]["text"]
-        elif self.model_id.startswith("meta"):
+        elif base_model_id.startswith("meta"):
             response_body = json.loads(response.get("body").read()).get(
                 "generation"
             )
-        elif self.model_id.startswith("ai21"):
+        elif base_model_id.startswith("ai21"):
             response_body = (
                 json.loads(response.get("body").read())
                 .get("completions")[0]

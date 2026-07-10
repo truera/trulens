@@ -15,7 +15,7 @@ st.title("🦑 Using TruLens Components in Streamlit")
 
 provider = openai_provider.OpenAI()
 
-f_coherence = core_feedback.Feedback(
+f_coherence = core_feedback.Metric(
     provider.coherence_with_cot_reasons
 ).on_output()
 

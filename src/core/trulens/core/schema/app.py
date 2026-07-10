@@ -157,6 +157,7 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
             warnings.warn(
                 "Custom `app_id` values are deprecated. Use `app_name` and/or `app_version` instead.",
                 DeprecationWarning,
+                stacklevel=2,
             )
             # After dep period, change to this:
             # raise ValueError(

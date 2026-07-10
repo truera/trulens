@@ -579,33 +579,13 @@ class App(
 
         self._evaluator = evaluator_utils.Evaluator(self)
 
-        if connector and _can_import("trulens.connectors.snowflake"):
-            from trulens.connectors.snowflake import SnowflakeConnector
-            from trulens.connectors.snowflake.dao.enums import ObjectType
-
-            if isinstance(connector, SnowflakeConnector):
-                self.snowflake_object_type = (
-                    ObjectType.EXTERNAL_AGENT.value
-                    if "object_type" not in kwargs
-                    or kwargs["object_type"] is None
-                    else kwargs["object_type"]
-                )
-
-                (
-                    self.snowflake_app_dao,
-                    self.snowflake_run_dao,
-                    self.snowflake_object_name,
-                    self.snowflake_object_version,
-                ) = connector.initialize_snowflake_dao_fields(
-                    object_type=self.snowflake_object_type,
-                    app_name=kwargs["app_name"],
-                    app_version=kwargs["app_version"],
-                )
-
-                self.run_dao = self.snowflake_run_dao
-                self._object_name = self.snowflake_object_name
-                self._object_type = self.snowflake_object_type
-                self._object_version = self.snowflake_object_version
+        if connector is not None:
+            connector.augment_app(
+                self,
+                app_name=kwargs.get("app_name"),
+                app_version=kwargs.get("app_version"),
+                object_type=kwargs.get("object_type"),
+            )
 
         if self.run_dao is None and connector is not None:
             from trulens.core.dao.default_run import DefaultRunDao
@@ -1177,12 +1157,36 @@ class App(
         ):
             raise RuntimeError("Invalid TruLens OTEL Tracing syntax.")
 
+    def __call__(self, *, conversation_id: Optional[str] = None) -> "App":
+        """Configure context-manager options such as ``conversation_id``.
+
+        Usage::
+
+            with tru_app(conversation_id="conv-abc-123") as recording:
+                response = app.query("Hello")
+
+        All spans recorded within the context will carry
+        ``ai.observability.conversation_id`` set to the provided value.
+
+        Args:
+            conversation_id: An optional string identifier that groups multiple
+                records (app invocations) into the same conversation / thread.
+
+        Returns:
+            Self, with the conversation_id stored for use in ``__enter__``.
+        """
+        self._pending_conversation_id = conversation_id
+        return self
+
     # For use as a context manager.
     def __enter__(self):
         if self.session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING
         ):
             from trulens.core.otel.instrument import OtelRecordingContext
+
+            conversation_id = getattr(self, "_pending_conversation_id", None)
+            self._pending_conversation_id = None
 
             with self._current_context_manager_lock:
                 if self._current_context_manager is not None:
@@ -1195,6 +1199,7 @@ class App(
                     app_version=self.app_version,
                     run_name="",
                     input_id="",
+                    conversation_id=conversation_id,
                 )
             return self._current_context_manager.__enter__()
 

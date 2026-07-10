@@ -10,9 +10,19 @@ from trulens.experimental.otel_tracing.core.span import (
     _convert_to_valid_span_attribute_type,
 )
 from trulens.experimental.otel_tracing.core.span import (
+    set_genai_generation_attributes,
+)
+from trulens.experimental.otel_tracing.core.span import (
+    set_genai_retrieval_attributes,
+)
+from trulens.experimental.otel_tracing.core.span import (
+    set_genai_tool_attributes,
+)
+from trulens.experimental.otel_tracing.core.span import (
     set_user_defined_attributes,
 )
 from trulens.experimental.otel_tracing.core.span import validate_attributes
+from trulens.otel.semconv.trace import GenAIAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 
@@ -140,3 +150,136 @@ class TestOtelSpan(TestCase):
             self.assertEqual(
                 _convert_to_valid_span_attribute_type(obj), "non-jsonifiable"
             )
+
+
+class TestGenAIHelpers(TestCase):
+    """Unit tests for GenAI semantic convention dual-emit helpers."""
+
+    def _make_span(self) -> Mock:
+        span = Mock()
+        span.set_attribute = Mock()
+        return span
+
+    # ------------------------------------------------------------------ #
+    # set_genai_generation_attributes                                      #
+    # ------------------------------------------------------------------ #
+
+    def test_set_genai_generation_attributes_sets_expected_attributes(
+        self,
+    ) -> None:
+        span = self._make_span()
+        set_genai_generation_attributes(
+            span,
+            model="gpt-4o",
+            input_tokens=10,
+            output_tokens=20,
+            temperature=0.7,
+            provider_name="openai",
+            operation_name="chat",
+        )
+        set_attribute_calls = {
+            c.args[0]: c.args[1] for c in span.set_attribute.call_args_list
+        }
+        self.assertEqual(
+            set_attribute_calls[GenAIAttributes.REQUEST.MODEL], "gpt-4o"
+        )
+        self.assertEqual(
+            set_attribute_calls[GenAIAttributes.USAGE.INPUT_TOKENS], 10
+        )
+        self.assertEqual(
+            set_attribute_calls[GenAIAttributes.USAGE.OUTPUT_TOKENS], 20
+        )
+        self.assertEqual(
+            set_attribute_calls[GenAIAttributes.REQUEST.TEMPERATURE], 0.7
+        )
+        self.assertEqual(
+            set_attribute_calls[GenAIAttributes.SYSTEM.NAME], "openai"
+        )
+        self.assertEqual(
+            set_attribute_calls[GenAIAttributes.OPERATION.NAME], "chat"
+        )
+
+    def test_set_genai_generation_attributes_skips_none_values(self) -> None:
+        span = self._make_span()
+        set_genai_generation_attributes(span)
+        # Nothing should be set when all params are None.
+        span.set_attribute.assert_not_called()
+
+    def test_set_genai_generation_attributes_operation_name_none_not_emitted(
+        self,
+    ) -> None:
+        span = self._make_span()
+        set_genai_generation_attributes(
+            span, model="claude-3", operation_name=None
+        )
+        set_attribute_calls = {
+            c.args[0] for c in span.set_attribute.call_args_list
+        }
+        self.assertNotIn(GenAIAttributes.OPERATION.NAME, set_attribute_calls)
+        self.assertIn(GenAIAttributes.REQUEST.MODEL, set_attribute_calls)
+
+    # ------------------------------------------------------------------ #
+    # set_genai_retrieval_attributes                                       #
+    # ------------------------------------------------------------------ #
+
+    def test_set_genai_retrieval_attributes_sets_expected_attributes(
+        self,
+    ) -> None:
+        span = self._make_span()
+        set_genai_retrieval_attributes(
+            span,
+            query_text="what is RAG?",
+            documents=["doc1", "doc2"],
+        )
+        set_attribute_calls = {
+            c.args[0]: c.args[1] for c in span.set_attribute.call_args_list
+        }
+        self.assertEqual(
+            set_attribute_calls[GenAIAttributes.RETRIEVAL.QUERY_TEXT],
+            "what is RAG?",
+        )
+        self.assertIn(GenAIAttributes.RETRIEVAL.DOCUMENTS, set_attribute_calls)
+
+    def test_set_genai_retrieval_attributes_skips_none_values(self) -> None:
+        span = self._make_span()
+        set_genai_retrieval_attributes(span)
+        span.set_attribute.assert_not_called()
+
+    def test_genai_retrieval_query_text_attribute_key(self) -> None:
+        """Verify the attribute key matches the OTEL GenAI spec v1.36.0."""
+        self.assertEqual(
+            GenAIAttributes.RETRIEVAL.QUERY_TEXT, "gen_ai.retrieval.query.text"
+        )
+
+    # ------------------------------------------------------------------ #
+    # set_genai_tool_attributes                                            #
+    # ------------------------------------------------------------------ #
+
+    def test_set_genai_tool_attributes_sets_expected_attributes(
+        self,
+    ) -> None:
+        span = self._make_span()
+        set_genai_tool_attributes(
+            span,
+            tool_name="search",
+            call_arguments='{"query": "hello"}',
+            call_result="result text",
+        )
+        set_attribute_calls = {
+            c.args[0]: c.args[1] for c in span.set_attribute.call_args_list
+        }
+        self.assertEqual(
+            set_attribute_calls[GenAIAttributes.TOOL.NAME], "search"
+        )
+        self.assertEqual(
+            set_attribute_calls[GenAIAttributes.TOOL.CALL_ARGUMENTS],
+            '{"query": "hello"}',
+        )
+        self.assertEqual(
+            set_attribute_calls[GenAIAttributes.TOOL.CALL_RESULT], "result text"
+        )
+
+    def test_set_genai_tool_attributes_skips_none_values(self) -> None:
+        span = self._make_span()
+        set_genai_tool_attributes(span)
+        span.set_attribute.assert_not_called()

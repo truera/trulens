@@ -20,9 +20,7 @@ from typing import (
 )
 import warnings
 
-from alembic.ddl.impl import DefaultImpl
 import numpy as np
-from packaging.version import Version
 import pandas as pd
 import pydantic
 from pydantic import Field
@@ -58,8 +56,23 @@ from trulens.otel.semconv.trace import SpanAttributes
 logger = logging.getLogger(__name__)
 
 
-class SnowflakeImpl(DefaultImpl):
-    __dialect__ = "snowflake"
+# Imported for backward compatibility. The Snowflake-specific Alembic impl is
+# now registered by the ``trulens-connectors-snowflake`` package; importing
+# ``SnowflakeImpl`` from here is preserved as a deprecated alias.
+def __getattr__(name):  # pragma: no cover - lightweight back-compat shim
+    if name == "SnowflakeImpl":
+        try:
+            from trulens.connectors.snowflake.sqlalchemy_db import (
+                SnowflakeImpl as _SnowflakeImpl,
+            )
+        except Exception:
+            from alembic.ddl.impl import DefaultImpl as _DefaultImpl
+
+            class _SnowflakeImpl(_DefaultImpl):
+                __dialect__ = "snowflake"
+
+        return _SnowflakeImpl
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 class SQLAlchemyDB(core_db.DB):
@@ -135,34 +148,53 @@ class SQLAlchemyDB(core_db.DB):
                 UserWarning(
                     "SQLite in-memory may not be threadsafe. "
                     "See https://www.sqlite.org/threadsafe.html"
-                )
+                ),
+                stacklevel=2,
             )
 
     def _reload_engine(self):
         if self.engine is None:
-            # Check if the dialect is snowflake and set isolation_level
-            snowflake_sqlalchemy_version = None
-            try:
-                import snowflake.sqlalchemy
-
-                snowflake_sqlalchemy_version = snowflake.sqlalchemy.__version__
-            except Exception:
-                pass
-            if (
-                snowflake_sqlalchemy_version
-                and Version(snowflake_sqlalchemy_version) >= Version("1.7.2")
-                and "url" in self.engine_params
-                and "snowflake" in self.engine_params["url"]
-            ):
-                temp_engine = sa.create_engine(**self.engine_params)
-                if temp_engine.dialect.name == "snowflake":
-                    self.engine_params.setdefault(
-                        "isolation_level", "AUTOCOMMIT"
-                    )
-                # Dispose of the temporary engine
-                temp_engine.dispose()
+            self._apply_engine_param_overrides()
             self.engine = sa.create_engine(**self.engine_params)
         self.session = sessionmaker(self.engine, **self.session_params)
+
+    def _apply_engine_param_overrides(self) -> None:
+        """Hook for subclasses to mutate ``self.engine_params`` before an
+        engine is constructed. Default is a no-op."""
+        return None
+
+    def _needs_null_feedback_hack(self, feedback_result: Any) -> bool:
+        """Hook for subclasses that cannot bind a None qmark to nullable
+        numeric columns on INSERT/UPDATE. Default: never use the workaround."""
+        return False
+
+    def _latency_expr(self) -> Any:
+        """Hook for subclasses to provide a dialect-specific latency
+        expression (averaged record latency in seconds). The default covers
+        SQLite via ``julianday`` and Postgres via ``epoch``."""
+        dialect = self.engine.dialect.name
+        if dialect == "postgresql":
+            return sa.func.avg(
+                sa.extract(
+                    "epoch",
+                    sa.cast(self.orm.Event.timestamp, sa.DateTime)
+                    - sa.cast(self.orm.Event.start_timestamp, sa.DateTime),
+                )
+            )
+        return sa.func.avg(
+            sa.func.julianday(self.orm.Event.timestamp) * 86400
+            - sa.func.julianday(self.orm.Event.start_timestamp) * 86400
+        )
+
+    def _json_path_expr(self, column_obj: Any, path: str) -> Any:
+        """Build a SQL expression that extracts ``path`` from a JSON column.
+        Default covers SQLite/MySQL/Postgres. Subclasses override for other
+        dialects (e.g. Snowflake)."""
+        dialect = self.engine.dialect.name
+        if dialect == "postgresql":
+            return sa.func.json_extract_path_text(column_obj, path)
+        # SQLite and MySQL use json_extract with JSONPath syntax.
+        return sa.func.json_extract(column_obj, f'$."{path}"')
 
     @classmethod
     def from_tru_args(
@@ -577,14 +609,12 @@ class SQLAlchemyDB(core_db.DB):
             feedback_result, redact_keys=self.redact_keys
         )
         with self.session.begin() as session:
-            # The Snowflake stored procedure connector isn't currently capable
-            # of handling None qmark-bound to an `INSERT INTO` or `UPDATE`
-            # statement for nullable numeric columns. Thus, as a hack, we get
-            # around this by first inserting a non-null value then updating it
-            # to a null value.
-            use_snowflake_hack = (
-                self.engine.dialect.name == "snowflake"
-                and _feedback_result.result is None
+            # Some dialects (e.g. the Snowflake stored-procedure connector)
+            # cannot bind a None qmark to nullable numeric columns on
+            # INSERT/UPDATE. Subclasses override
+            # ``_needs_null_feedback_hack`` to enable a two-step workaround.
+            use_snowflake_hack = self._needs_null_feedback_hack(
+                _feedback_result
             )
             if not use_snowflake_hack:
                 session.merge(_feedback_result)
@@ -636,13 +666,11 @@ class SQLAlchemyDB(core_db.DB):
         """See [DB.batch_insert_feedback][trulens.core.database.base.DB.batch_insert_feedback]."""
         if is_otel_tracing_enabled():
             raise RuntimeError("Not supported with OTel tracing enabled!")
-        # The Snowflake stored procedure connector isn't currently capable of
-        # handling None qmark-bound to an `INSERT INTO` or `UPDATE` statement
-        # for nullable numeric columns. Thus, as a hack, we get around this by
-        # first inserting a non-null value then updating it to a null value.
-        if self.engine.dialect == "snowflake" and any([
-            curr.result is None for curr in feedback_results
-        ]):
+        # Some dialects need each NULL-result row to take the slow per-row path
+        # (see ``_needs_null_feedback_hack``).
+        if any(
+            self._needs_null_feedback_hack(curr) for curr in feedback_results
+        ):
             ret = []
             for curr in feedback_results:
                 ret.append(self.insert_feedback(curr))
@@ -820,14 +848,7 @@ class SQLAlchemyDB(core_db.DB):
         if not isinstance(column_obj.type, sa.JSON):
             raise ValueError(f"Column {column} is not a JSON column")
 
-        dialect = self.engine.dialect.name
-        if dialect == "snowflake":
-            return sa.func.json_extract_path_text(column_obj, f'"{path}"')
-        elif dialect == "postgresql":
-            return sa.func.json_extract_path_text(column_obj, path)
-        else:
-            # SQLite and MySQL use json_extract with JSONPath syntax
-            return sa.func.json_extract(column_obj, f'$."{path}"')
+        return self._json_path_expr(column_obj, path)
 
     def _get_paginated_record_ids_otel(
         self,
@@ -1061,27 +1082,7 @@ class SQLAlchemyDB(core_db.DB):
             app_name=app_name,
             app_versions=app_versions,
         )
-        latency_expr = sa.func.avg(
-            sa.func.julianday(self.orm.Event.timestamp) * 86400
-            - sa.func.julianday(self.orm.Event.start_timestamp) * 86400
-        )
-        dialect = self.engine.dialect.name
-        if dialect == "postgresql":
-            latency_expr = sa.func.avg(
-                sa.extract(
-                    "epoch",
-                    sa.cast(self.orm.Event.timestamp, sa.DateTime)
-                    - sa.cast(self.orm.Event.start_timestamp, sa.DateTime),
-                )
-            )
-        elif dialect == "snowflake":
-            latency_expr = sa.func.avg(
-                sa.func.timestampdiff(
-                    sa.text("SECOND"),
-                    self.orm.Event.start_timestamp,
-                    self.orm.Event.timestamp,
-                )
-            )
+        latency_expr = self._latency_expr()
 
         base_stmt = (
             sa.select(
@@ -1166,15 +1167,19 @@ class SQLAlchemyDB(core_db.DB):
             return base_df, []
 
         base_df["Total Cost (USD)"] = base_df.apply(
-            lambda r: float(r["total_cost"] or 0)
-            if r["cost_currency"] == "USD"
-            else 0.0,
+            lambda r: (
+                float(r["total_cost"] or 0)
+                if r["cost_currency"] == "USD"
+                else 0.0
+            ),
             axis=1,
         )
         base_df["Total Cost (Snowflake Credits)"] = base_df.apply(
-            lambda r: float(r["total_cost"] or 0)
-            if r["cost_currency"] == "Snowflake credits"
-            else 0.0,
+            lambda r: (
+                float(r["total_cost"] or 0)
+                if r["cost_currency"] == "Snowflake credits"
+                else 0.0
+            ),
             axis=1,
         )
         base_df.drop(columns=["total_cost", "cost_currency"], inplace=True)
@@ -2033,7 +2038,7 @@ class AppsExtractor(core_db.BaseAppsExtractor):
                     row[col] = (
                         datetime.fromtimestamp(_rec.ts).isoformat()
                         if col == "ts"
-                        else getattr(_rec, col)
+                        else getattr(_rec, col, None)
                     )
 
                 yield row

@@ -84,3 +84,75 @@ class TestOtelRecordingContexts(OtelTestCase):
             "test_run", "42", main_method_kwargs={"name": "Kojikun"}
         )
         self._validate("test_run", "42")
+
+    # ------------------------------------------------------------------
+    # conversation_id tests
+    # ------------------------------------------------------------------
+
+    def test_conversation_id_is_set_on_spans(self):
+        """conversation_id propagates to all spans when provided."""
+        with self._tru_recorder(conversation_id="conv-123"):
+            self._app.greet(name="Kojikun")
+        TruSession().force_flush()
+        events = self._get_events()
+        self.assertEqual(len(events), 2)
+        for _, event in events.iterrows():
+            self.assertEqual(
+                event["record_attributes"][SpanAttributes.CONVERSATION_ID],
+                "conv-123",
+            )
+
+    def test_conversation_id_none_does_not_set_attribute(self):
+        """Omitting conversation_id leaves the attribute absent from spans."""
+        with self._tru_recorder(conversation_id=None):
+            self._app.greet(name="Kojikun")
+        TruSession().force_flush()
+        events = self._get_events()
+        self.assertEqual(len(events), 2)
+        for _, event in events.iterrows():
+            self.assertNotIn(
+                SpanAttributes.CONVERSATION_ID, event["record_attributes"]
+            )
+
+    def test_legacy_context_manager_no_conversation_id(self):
+        """Plain `with tru_app as recording:` works and has no conversation_id."""
+        with self._tru_recorder:
+            self._app.greet(name="Kojikun")
+        TruSession().force_flush()
+        events = self._get_events()
+        self.assertEqual(len(events), 2)
+        for _, event in events.iterrows():
+            self.assertNotIn(
+                SpanAttributes.CONVERSATION_ID, event["record_attributes"]
+            )
+
+    def test_multiple_invocations_same_conversation_id(self):
+        """Two separate context managers with the same conversation_id both carry it."""
+        conv_id = "multi-turn-conv"
+
+        with self._tru_recorder(conversation_id=conv_id):
+            self._app.greet(name="Turn1")
+
+        TruSession().force_flush()
+        first_events = self._get_events()
+
+        with self._tru_recorder(conversation_id=conv_id):
+            self._app.greet(name="Turn2")
+
+        TruSession().force_flush()
+        all_events = self._get_events()
+
+        # First batch carries the conversation_id.
+        for _, event in first_events.iterrows():
+            self.assertEqual(
+                event["record_attributes"][SpanAttributes.CONVERSATION_ID],
+                conv_id,
+            )
+
+        # Second batch (new rows) also carries it.
+        second_events = all_events.iloc[len(first_events) :]
+        for _, event in second_events.iterrows():
+            self.assertEqual(
+                event["record_attributes"][SpanAttributes.CONVERSATION_ID],
+                conv_id,
+            )

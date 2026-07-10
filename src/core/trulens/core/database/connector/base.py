@@ -486,3 +486,16 @@ class DBConnector(ABC, text_utils.WithIdentString):
             record_ids=record_ids,
             start_time=start_time,
         )
+
+    def augment_app(self, app: Any, **kwargs: Any) -> None:
+        """Hook called from [App.__init__][trulens.core.app.App.__init__]
+        after the App is constructed. Connectors may override this to
+        contribute connector-specific state (e.g. DAOs or external object
+        identifiers) to the App. Default is a no-op."""
+        return None
+
+    def warn_if_parallel(self, run: Any) -> None:
+        """Hook called from
+        [Run][trulens.core.run.Run] before parallel invocation. Connectors
+        may emit warnings here. Default is a no-op."""
+        return None

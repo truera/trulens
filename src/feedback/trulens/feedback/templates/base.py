@@ -37,8 +37,7 @@ class FeedbackTemplate(pydantic.BaseModel):
     LLM evaluation prompts.
     """
 
-    def __init__(self, examples):
-        self.examples = examples
+    examples: Optional[List[Tuple[Dict[str, str], int]]] = None
 
     @classmethod
     def help(cls) -> None:

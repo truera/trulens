@@ -97,11 +97,14 @@ def retrieve(self, query: str) -> list:
 ```
 
 ```python
-f_context_relevance = (
-    Feedback(provider.context_relevance_with_cot_reasons, name="Context Relevance")
-    .on_input()
-    .on_context(call_feedback_function_per_entry_in_list=True)
-    .aggregate(np.mean)
+f_context_relevance = Metric(
+    implementation=provider.context_relevance_with_cot_reasons,
+    name="Context Relevance",
+    selectors={
+        "question": Selector.select_record_input(),
+        "context": Selector.select_context(collect_list=False),
+    },
+    agg=np.mean,
 )
 ```
 
@@ -193,10 +196,13 @@ def query(self, query: str) -> str:
 4. **Add Evaluations**:
 
 ```python
-f_answer_relevance = (
-    Feedback(provider.relevance_with_cot_reasons, name="Answer Relevance")
-    .on_input()
-    .on_output()
+f_answer_relevance = Metric(
+    implementation=provider.relevance_with_cot_reasons,
+    name="Answer Relevance",
+    selectors={
+        "prompt": Selector.select_record_input(),
+        "response": Selector.select_record_output(),
+    },
 )
 ```
 
@@ -205,20 +211,19 @@ Using selectors:
 ```python
 from trulens.core.feedback.selector import Selector
 
-f_answer_relevance = (
-    Feedback(provider.relevance_with_cot_reasons, name="Answer Relevance")
-    .on({
+f_answer_relevance = Metric(
+    implementation=provider.relevance_with_cot_reasons,
+    name="Answer Relevance",
+    selectors={
         "prompt": Selector(
             span_type=SpanAttributes.SpanType.RECORD_ROOT,
             span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
         ),
-    })
-    .on({
         "response": Selector(
             span_type=SpanAttributes.SpanType.RECORD_ROOT,
             span_attribute=SpanAttributes.RECORD_ROOT.OUTPUT,
         ),
-    })
+    },
 )
 ```
 

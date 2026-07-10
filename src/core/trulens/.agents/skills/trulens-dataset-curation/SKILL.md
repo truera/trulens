@@ -93,22 +93,25 @@ print(f"Loaded {len(ground_truth_df)} ground truth examples")
 ### Step 5: Use Ground Truth in Evaluations
 
 ```python
-from trulens.core import Feedback
+from trulens.core import Metric, Selector
 from trulens.feedback import GroundTruthAgreement
 from trulens.providers.openai import OpenAI
 
 provider = OpenAI()
 
-# Create ground truth agreement feedback
 ground_truth_agreement = GroundTruthAgreement(
     ground_truth_df,
     provider=provider
 )
 
-f_groundtruth = Feedback(
-    ground_truth_agreement.agreement_measure,
+f_groundtruth = Metric(
+    implementation=ground_truth_agreement.agreement_measure,
     name="Ground Truth Agreement",
-).on_input_output()
+    selectors={
+        "prompt": Selector.select_record_input(),
+        "response": Selector.select_record_output(),
+    },
+)
 ```
 
 ## Common Patterns

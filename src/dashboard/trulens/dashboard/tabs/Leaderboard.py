@@ -21,6 +21,9 @@ from trulens.dashboard.utils.streamlit_compat import st_columns
 from trulens.dashboard.ux import components as dashboard_components
 from trulens.dashboard.ux import styles as dashboard_styles
 
+SCORE_PASS_THRESHOLD = 0.7
+SCORE_FAIL_THRESHOLD = 0.3
+
 APP_COLS = ["app_version", "app_id", "app_name"]
 APP_AGG_COLS = [
     "Records",
@@ -750,12 +753,27 @@ def _render_list_tab(
 
 
 @streamlit_compat.st_fragment
-def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
+def _render_plot_tab(
+    df: pd.DataFrame,
+    feedback_col_names: List[str],
+    feedback_directions: Optional[Dict[str, bool]] = None,
+):
     if len(feedback_col_names) == 0:
         st.warning("No metrics found.")
         return
     if dashboard_constants.HIDE_RECORD_COL_NAME in df.columns:
         df = df[~df[dashboard_constants.HIDE_RECORD_COL_NAME]]
+
+    if feedback_directions is None:
+        feedback_directions = {}
+
+    chart_type = st.radio(
+        "Chart type",
+        options=["Histogram", "Violin"],
+        horizontal=True,
+        key=f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.plot_chart_type",
+    )
+
     cols = 4
     rows = len(feedback_col_names) // cols + 1
     fig = make_subplots(rows=rows, cols=cols, subplot_titles=feedback_col_names)
@@ -765,19 +783,72 @@ def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
         col_num = i % cols + 1
         _df = df[feedback_col_name].dropna()
 
-        plot = go.Histogram(
-            x=_df,
-            xbins={
-                "size": 0.1,
-            },
-            texttemplate="%{y}",
-            name="",  # Stops trace {i} from showing up in popup annotation.
+        if _df.empty:
+            continue
+
+        higher_is_better = feedback_directions.get(feedback_col_name, True)
+        pass_threshold = (
+            SCORE_PASS_THRESHOLD if higher_is_better else SCORE_FAIL_THRESHOLD
         )
-        fig.add_trace(
-            plot,
-            row=row_num,
-            col=col_num,
-        )
+
+        if chart_type == "Violin" and _df.nunique() <= 1:
+            st.info(
+                f"Not enough variation in scores for '{feedback_col_name}' to render a violin plot."
+            )
+            continue
+
+        if chart_type == "Histogram":
+            mean_score = float(_df.mean())
+            bar_color = dashboard_styles.CATEGORY.of_score(
+                mean_score, higher_is_better=higher_is_better
+            ).color
+            plot = go.Histogram(
+                x=_df,
+                xbins={"size": 0.1},
+                texttemplate="%{y}",
+                name="",
+                marker_color=bar_color,
+            )
+            fig.add_trace(plot, row=row_num, col=col_num)
+
+            # Pass/fail threshold line
+            fig.add_vline(
+                x=pass_threshold,
+                line_dash="dash",
+                line_color="gray",
+                line_width=1,
+                row=row_num,
+                col=col_num,
+            )
+        else:
+            mean_score = float(_df.mean())
+            violin_color = dashboard_styles.CATEGORY.of_score(
+                mean_score, higher_is_better=higher_is_better
+            ).color
+            plot = go.Violin(
+                y=_df,
+                box_visible=True,
+                meanline_visible=True,
+                name="",
+                fillcolor=violin_color,
+                line_color=violin_color,
+                points="all",
+                jitter=0.3,
+                pointpos=0,
+                marker={"size": 4, "opacity": 0.5},
+            )
+            fig.add_trace(plot, row=row_num, col=col_num)
+
+            # Pass/fail threshold line
+            fig.add_hline(
+                y=pass_threshold,
+                line_dash="dash",
+                line_color="gray",
+                line_width=1,
+                row=row_num,
+                col=col_num,
+            )
+
         if i == 0:
             xaxis = fig["layout"]["xaxis"]
             yaxis = fig["layout"]["yaxis"]
@@ -785,9 +856,13 @@ def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
             xaxis = fig["layout"][f"xaxis{i + 1}"]
             yaxis = fig["layout"][f"yaxis{i + 1}"]
 
-        xaxis["title"] = "Score"
-        if col_num == 1:
-            yaxis["title"] = "# Records"
+        if chart_type == "Histogram":
+            xaxis["title"] = "Score"
+            if col_num == 1:
+                yaxis["title"] = "# Records"
+        else:
+            yaxis["title"] = "Score"
+            yaxis["range"] = [0, 1]
 
     fig.update_layout(
         height=300 * rows,
@@ -798,11 +873,14 @@ def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
         bargap=0.05,
     )
     fig.update_yaxes(fixedrange=True, showgrid=False)
-    # Histogram bins are [start_inclusive, end_exclusive), so extend the range
-    # by the step to the right.
-    fig.update_xaxes(
-        fixedrange=True, showgrid=False, autorangeoptions={"include": [0, 1]}
-    )
+    if chart_type == "Histogram":
+        fig.update_xaxes(
+            fixedrange=True,
+            showgrid=False,
+            autorangeoptions={"include": [0, 1]},
+        )
+    else:
+        fig.update_xaxes(fixedrange=True, showgrid=False, showticklabels=False)
     st.plotly_chart(fig, width="stretch")
 
 
@@ -882,7 +960,11 @@ def render_leaderboard(app_name: str):
             )
         )
         if not records_df.empty:
-            _render_plot_tab(records_df, list(plot_feedback_cols))
+            _render_plot_tab(
+                records_df,
+                list(plot_feedback_cols),
+                feedback_directions=feedback_directions,
+            )
         else:
             st.info("No individual records available for histograms.")
     with list_tab:
