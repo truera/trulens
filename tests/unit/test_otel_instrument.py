@@ -15,6 +15,7 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
 import pandas as pd
 from trulens.core.otel.instrument import get_func_name
 from trulens.core.otel.instrument import instrument
+from trulens.core.otel.instrument import instrument_method
 from trulens.core.otel.recording import Recording
 from trulens.experimental.otel_tracing.core.session import (
     _set_up_tracer_provider,
@@ -277,3 +278,143 @@ class TestOtelInstrument(unittest.TestCase):
         my_function()
         self.assertEqual(instrument_info["cnt"], 2)
         self.assertEqual(instrument_info["ret"], "Kojikun is the best baby!")
+
+
+class TestInstrumentMethod(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        instrument.enable_all_instrumentation()
+        return super().setUpClass()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        instrument.disable_all_instrumentation()
+        return super().tearDownClass()
+
+    def setUp(self) -> None:
+        self.exporter = InMemorySpanExporter()
+        _set_up_tracer_provider()
+        self.span_processor = SimpleSpanProcessor(self.exporter)
+        trace.get_tracer_provider().add_span_processor(self.span_processor)
+        self.tokens = []
+        self.tokens.append(
+            context_api.attach(
+                set_baggage("__trulens_recording__", Recording(None))
+            )
+        )
+        self.tokens.append(
+            context_api.attach(
+                set_baggage(SpanAttributes.RECORD_ID, "test_record_id")
+            )
+        )
+        return super().setUp()
+
+    def tearDown(self) -> None:
+        self.span_processor.shutdown()
+        remove_baggage("__trulens_recording__")
+        remove_baggage(SpanAttributes.RECORD_ID)
+        for token in self.tokens[::-1]:
+            context_api.detach(token)
+        return super().tearDown()
+
+    def test_instrument_method_emits_span(self) -> None:
+        class ThirdPartyClass:
+            def retrieve(self, query: str) -> str:
+                return f"result for {query}"
+
+        instrument_method(ThirdPartyClass, "retrieve")
+        obj = ThirdPartyClass()
+        obj.retrieve("hello")
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertIn("retrieve", spans[0].name)
+
+    def test_instrument_method_span_type(self) -> None:
+        class ThirdPartyClass:
+            def retrieve(self, query: str) -> list:
+                return [query]
+
+        instrument_method(
+            ThirdPartyClass,
+            "retrieve",
+            span_type=SpanAttributes.SpanType.RETRIEVAL,
+        )
+        obj = ThirdPartyClass()
+        obj.retrieve("hello")
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(
+            spans[0].attributes[SpanAttributes.SPAN_TYPE],
+            SpanAttributes.SpanType.RETRIEVAL,
+        )
+
+    def test_instrument_method_attributes_dict(self) -> None:
+        class ThirdPartyClass:
+            def generate(self, prompt: str) -> str:
+                return "answer"
+
+        instrument_method(
+            ThirdPartyClass,
+            "generate",
+            attributes={
+                f"{SpanAttributes.UNKNOWN.base}.prompt": "prompt",
+                f"{SpanAttributes.UNKNOWN.base}.output": "return",
+            },
+        )
+        obj = ThirdPartyClass()
+        obj.generate("what is trulens?")
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(
+            spans[0].attributes[f"{SpanAttributes.UNKNOWN.base}.prompt"],
+            "what is trulens?",
+        )
+        self.assertEqual(
+            spans[0].attributes[f"{SpanAttributes.UNKNOWN.base}.output"],
+            "answer",
+        )
+
+    def test_instrument_method_attributes_lambda(self) -> None:
+        class ThirdPartyClass:
+            def retrieve(self, query: str) -> list:
+                return ["doc1", "doc2"]
+
+        instrument_method(
+            ThirdPartyClass,
+            "retrieve",
+            attributes=lambda ret, exception, *args, **kwargs: {
+                f"{SpanAttributes.UNKNOWN.base}.result_count": len(ret)
+                if ret
+                else 0
+            },
+        )
+        obj = ThirdPartyClass()
+        obj.retrieve("query")
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(
+            spans[0].attributes[f"{SpanAttributes.UNKNOWN.base}.result_count"],
+            2,
+        )
+
+    def test_instrument_method_return_value_unchanged(self) -> None:
+        class ThirdPartyClass:
+            def retrieve(self, query: str) -> list:
+                return ["doc1", "doc2", "doc3"]
+
+        instrument_method(ThirdPartyClass, "retrieve")
+        obj = ThirdPartyClass()
+        result = obj.retrieve("query")
+        self.assertEqual(result, ["doc1", "doc2", "doc3"])
+
+    def test_instrument_method_idempotent(self) -> None:
+        class ThirdPartyClass:
+            def retrieve(self, query: str) -> str:
+                return "result"
+
+        instrument_method(ThirdPartyClass, "retrieve", must_be_first_wrapper=True)
+        instrument_method(ThirdPartyClass, "retrieve", must_be_first_wrapper=True)
+        obj = ThirdPartyClass()
+        obj.retrieve("query")
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
