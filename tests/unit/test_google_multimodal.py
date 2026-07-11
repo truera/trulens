@@ -3,7 +3,6 @@ from unittest.mock import MagicMock
 
 import pydantic
 import pytest
-
 from trulens.providers.google import provider as google_provider
 from trulens.providers.google.provider import Google
 
