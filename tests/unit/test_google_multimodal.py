@@ -1,8 +1,15 @@
+# ruff: noqa: E402
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pydantic
 import pytest
+
+pytest.importorskip(
+    "trulens.providers.google", reason="trulens-providers-google not installed"
+)
+pytest.importorskip("google.genai", reason="google-genai not installed")
+
 from trulens.providers.google import provider as google_provider
 from trulens.providers.google.provider import Google
 
