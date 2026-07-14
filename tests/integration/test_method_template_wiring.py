@@ -1,7 +1,6 @@
 """Integration test verifying that each LLMProvider feedback method routes
 to its expected template class. Closes #2495."""
 
-from typing import ClassVar, Dict, Optional, Tuple
 import unittest
 from unittest import TestCase
 
@@ -9,9 +8,8 @@ from trulens.feedback import llm_provider
 
 
 class MockLLMProvider(llm_provider.LLMProvider):
-    model_config: ClassVar[dict] = {"extra": "allow"}
-    last_system_prompt: Optional[str] = None
-    last_user_prompt: Optional[str] = None
+    last_system_prompt: str | None = None
+    last_user_prompt: str | None = None
 
     def __init__(self, **kwargs):
         super().__init__(endpoint=None, model_engine="mock-model", **kwargs)
@@ -19,14 +17,26 @@ class MockLLMProvider(llm_provider.LLMProvider):
     def _create_chat_completion(self, prompt=None, messages=None, **kwargs):
         return "Score: 2\nReason: test"
 
-    def generate_score(self, system_prompt, user_prompt=None,
-                       min_score_val=0, max_score_val=3, temperature=0.0):
+    def generate_score(
+        self,
+        system_prompt,
+        user_prompt=None,
+        min_score_val=0,
+        max_score_val=3,
+        temperature=0.0,
+    ):
         self.last_system_prompt = system_prompt
         self.last_user_prompt = user_prompt
         return 0.67
 
-    def generate_score_and_reasons(self, system_prompt, user_prompt=None,
-                                   min_score_val=0, max_score_val=3, temperature=0.0):
+    def generate_score_and_reasons(
+        self,
+        system_prompt,
+        user_prompt=None,
+        min_score_val=0,
+        max_score_val=3,
+        temperature=0.0,
+    ):
         self.last_system_prompt = system_prompt
         self.last_user_prompt = user_prompt
         return 0.67, {"reason": "test reason"}
