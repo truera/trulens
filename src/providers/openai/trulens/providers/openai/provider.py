@@ -61,6 +61,22 @@ class OpenAI(llm_provider.LLMProvider):
         openai_provider = OpenAI()
         ```
 
+        OpenAI-compatible gateways (for example DaoXE) work by forwarding
+        client kwargs such as `base_url` and `api_key`:
+
+        ```python
+        import os
+        from trulens.providers.openai import OpenAI
+
+        # DaoXE multi-protocol gateway Chat Completions path:
+        # base_url=https://daoxe.com/v1 ; model IDs are account-scoped.
+        provider = OpenAI(
+            model_engine=os.environ["DAOXE_MODEL"],
+            api_key=os.environ["DAOXE_API_KEY"],
+            base_url="https://daoxe.com/v1",
+        )
+        ```
+
     Args:
         model_engine: The OpenAI completion model. Defaults to
             `gpt-4o-mini`
@@ -69,7 +85,8 @@ class OpenAI(llm_provider.LLMProvider):
             [OpenAIEndpoint][trulens.providers.openai.endpoint.OpenAIEndpoint]
             which are then passed to
             [OpenAIClient][trulens.providers.openai.endpoint.OpenAIClient]
-            and finally to the OpenAI client.
+            and finally to the OpenAI client (for example `api_key`,
+            `base_url` for OpenAI-compatible endpoints).
     """
 
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "gpt-4o-mini"
