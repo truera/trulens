@@ -5,6 +5,7 @@ import unittest
 
 from trulens.core import Metric
 from trulens.feedback import llm_provider
+from trulens.feedback.dummy.endpoint import DummyEndpoint
 
 
 class MockLLMProvider(llm_provider.LLMProvider):
@@ -16,7 +17,15 @@ class MockLLMProvider(llm_provider.LLMProvider):
     last_user_prompt: Optional[str] = None
 
     def __init__(self, **kwargs):
-        super().__init__(endpoint=None, model_engine="mock-model", **kwargs)
+        # groundedness_measure_with_cot_reasons() asserts self.endpoint is
+        # not None before reaching the overridden scoring methods below —
+        # same issue fixed in #2547/test_method_template_wiring.py. Use
+        # trulens' own DummyEndpoint test double instead of None.
+        super().__init__(
+            endpoint=DummyEndpoint(name="dummyendpoint"),
+            model_engine="mock-model",
+            **kwargs,
+        )
 
     def generate_score(
         self,
