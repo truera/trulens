@@ -184,7 +184,7 @@ class LLMProvider(core_provider.Provider):
         min_score_val: int = 0,
         max_score_val: int = 10,
         temperature: float = 0.0,
-    ) -> float:
+    ) -> Union[float, Tuple[float, Dict]]:
         """
         Base method to generate a score normalized to 0 to 1, used for evaluation.
 
@@ -196,7 +196,15 @@ class LLMProvider(core_provider.Provider):
             temperature (float): The temperature for the LLM response.
 
         Returns:
-            The normalized score on a 0-1 scale.
+            Union[float, Tuple[float, Dict]]: The normalized score on a 0-1 scale.
+            When the LLM returns a structured JSON response containing a ``score``
+            key, returns a ``(score, reason_dict)`` tuple where ``reason_dict``
+            contains the raw parsed JSON under a ``"reason"`` key. When the
+            response is a plain string, returns a bare ``float``. Callers should
+            handle both forms, e.g.::
+
+                result = provider.generate_score(system_prompt="...")
+                score = result[0] if isinstance(result, tuple) else result
         """
 
         assert self.endpoint is not None, "Endpoint is not set."
