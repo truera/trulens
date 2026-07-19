@@ -32,6 +32,15 @@ from trulens.experimental.otel_tracing.core.span import (
     set_function_call_attributes,
 )
 from trulens.experimental.otel_tracing.core.span import (
+    set_genai_generation_attributes,
+)
+from trulens.experimental.otel_tracing.core.span import (
+    set_genai_retrieval_attributes,
+)
+from trulens.experimental.otel_tracing.core.span import (
+    set_genai_tool_attributes,
+)
+from trulens.experimental.otel_tracing.core.span import (
     set_general_span_attributes,
 )
 from trulens.experimental.otel_tracing.core.span import (
@@ -153,6 +162,44 @@ def _set_span_attributes(
     if resolved_attributes:
         # Set the user-provided attributes.
         set_user_defined_attributes(span, attributes=resolved_attributes)
+    # Emit GenAI semantic convention attributes alongside TruLens-specific
+    # ones so that OTEL-native collectors can consume spans without
+    # needing TruLens-specific attribute knowledge.
+    if span_type == SpanAttributes.SpanType.GENERATION:
+        set_genai_generation_attributes(
+            span,
+            model=resolved_attributes.get(SpanAttributes.COST.MODEL),
+            input_tokens=resolved_attributes.get(
+                SpanAttributes.COST.NUM_PROMPT_TOKENS
+            ),
+            output_tokens=resolved_attributes.get(
+                SpanAttributes.COST.NUM_COMPLETION_TOKENS
+            ),
+            temperature=resolved_attributes.get("temperature"),
+            provider_name=resolved_attributes.get("provider_name"),
+            operation_name=resolved_attributes.get("operation_name"),
+        )
+    elif span_type == SpanAttributes.SpanType.RETRIEVAL:
+        set_genai_retrieval_attributes(
+            span,
+            query_text=resolved_attributes.get(
+                SpanAttributes.RETRIEVAL.QUERY_TEXT
+            ),
+            documents=resolved_attributes.get(
+                SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS
+            ),
+        )
+    elif span_type in (
+        SpanAttributes.SpanType.TOOL,
+        SpanAttributes.SpanType.MCP,
+    ):
+        set_genai_tool_attributes(
+            span,
+            # func_name is the instrumented function / tool name.
+            tool_name=func_name,
+            call_arguments=resolved_attributes.get("call_arguments"),
+            call_result=resolved_attributes.get("call_result"),
+        )
 
 
 def _finalize_span(
@@ -557,6 +604,7 @@ class OtelRecordingContext(OtelBaseRecordingContext):
         input_selector: Optional[
             Callable[[Tuple[Any, ...], Dict[str, Any]], Any]
         ] = None,
+        conversation_id: Optional[str] = None,
     ) -> None:
         app_id = AppDefinition._compute_app_id(app_name, app_version)
         super().__init__(
@@ -570,6 +618,7 @@ class OtelRecordingContext(OtelBaseRecordingContext):
         self.input_records_count = input_records_count
         self.ground_truth_output = ground_truth_output
         self.input_selector = input_selector
+        self.conversation_id = conversation_id
 
     # For use as a context manager.
     def __enter__(self) -> Recording:
@@ -593,6 +642,10 @@ class OtelRecordingContext(OtelBaseRecordingContext):
         self.attach_to_context(
             "__trulens_input_selector__", self.input_selector
         )
+        if self.conversation_id is not None:
+            self.attach_to_context(
+                SpanAttributes.CONVERSATION_ID, self.conversation_id
+            )
 
         ret = Recording(self.tru_app)
         self.attach_to_context("__trulens_recording__", ret)

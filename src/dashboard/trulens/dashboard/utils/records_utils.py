@@ -273,6 +273,7 @@ def _render_feedback_pills(
     feedback_col_names: Sequence[str],
     feedback_directions: Dict[str, bool],
     selected_row: Optional[pd.Series] = None,
+    key: Optional[str] = None,
 ):
     """Render each feedback as pills.
 
@@ -280,6 +281,7 @@ def _render_feedback_pills(
         feedback_col_names (Sequence[str]): The name of the feedback function columns.
         feedback_directions (Dict[str, bool]): A dictionary mapping feedback names to their directions. True if higher is better, False otherwise.
         selected_row (Optional[pd.Series], optional): The selected row (if any). If provided, renders the feedback values. Defaults to None.
+        key (Optional[str], optional): An optional unique key for the widget. Required when rendering multiple pill groups on the same page (e.g. one per message in a thread) to avoid duplicate widget IDs. Defaults to None.
 
     Returns:
         Any: The feedback pills streamlit component.
@@ -300,8 +302,8 @@ def _render_feedback_pills(
             if fcol in selected_row and selected_row[fcol] is not None
         ])
 
-        format_func = (
-            lambda fcol: f"{get_icon(fcol)} {fcol} {selected_row[fcol]:.2f}"
+        format_func = lambda fcol: (
+            f"{get_icon(fcol)} {fcol} {selected_row[fcol]:.2f}"
         )
     else:
         feedback_with_valid_results = feedback_col_names
@@ -317,6 +319,8 @@ def _render_feedback_pills(
     }
     if format_func:
         kwargs["format_func"] = format_func
+    if key is not None:
+        kwargs["key"] = key
 
     if hasattr(st, "pills"):
         # Use native streamlit pills, released in 1.40.0

@@ -59,6 +59,7 @@ class BaseAppsExtractor:
     app_cols = ["app_name", "app_version", "app_id", "app_json", "type"]
     rec_cols = [
         "record_id",
+        "conversation_id",
         "input",
         "output",
         "tags",
@@ -606,6 +607,7 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                     "app_name": app_name,
                     "app_version": app_version,
                     "app_id": app_id,
+                    "conversation_id": None,  # Initialize to None, filled below
                     "input": "",  # Initialize to empty string, filled below
                     "output": "",  # Initialize to empty string, filled below
                     "tags": "",  # Not present in OTEL, use empty string
@@ -628,6 +630,9 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
             ):
                 record_events[record_id]["input_id"] = record_attributes.get(
                     SpanAttributes.INPUT_ID, ""
+                )
+                record_events[record_id]["conversation_id"] = (
+                    record_attributes.get(SpanAttributes.CONVERSATION_ID)
                 )
                 record_events[record_id]["input"] = record_attributes.get(
                     SpanAttributes.RECORD_ROOT.INPUT, ""
@@ -834,6 +839,7 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                 # TODO(nit): consider using a constant here
                 "type": "SPAN",  # Default type as per orm.py
                 "record_id": record_id,
+                "conversation_id": record_data.get("conversation_id"),
                 "input_id": record_data.get("input_id"),
                 "input": record_data["input"],
                 "output": record_data["output"],

@@ -132,6 +132,7 @@ def validate_rating(rating: str) -> bool:
         "  # validated\n"
         "```",
         DeprecationWarning,
+        stacklevel=2,
     )
     try:
         re_0_10_rating(rating)

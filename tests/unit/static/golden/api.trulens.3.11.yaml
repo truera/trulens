@@ -2170,6 +2170,7 @@ trulens.dashboard.utils.dashboard_utils:
     add_query_param: builtins.function
     get_app_versions: streamlit.runtime.caching.cache_utils.CachedFunc
     get_apps: streamlit.runtime.caching.cache_utils.CachedFunc
+    get_events_for_records: streamlit.runtime.caching.cache_utils.CachedFunc
     get_feedback_defs: streamlit.runtime.caching.cache_utils.CachedFunc
     get_records_and_feedback: streamlit.runtime.caching.cache_utils.CachedFunc
     get_session: streamlit.runtime.caching.cache_utils.CachedFunc

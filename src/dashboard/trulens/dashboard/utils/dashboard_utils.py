@@ -238,9 +238,11 @@ def get_records_and_feedback(
     )
 
     records_df["record_metadata"] = records_df["record_json"].apply(
-        lambda x: metadata_utils.flatten_metadata(x["meta"])
-        if isinstance(x["meta"], dict)
-        else {}
+        lambda x: (
+            metadata_utils.flatten_metadata(x["meta"])
+            if isinstance(x["meta"], dict)
+            else {}
+        )
     )
 
     records_df, _ = _factor_out_metadata(records_df, "record_metadata")
@@ -256,6 +258,31 @@ def get_records_and_feedback(
     ]
 
     return records_df, feedback_col_names
+
+
+@st.cache_data(
+    ttl=dashboard_constants.CACHE_TTL,
+    show_spinner="Getting conversation trace data",
+)
+def get_events_for_records(
+    app_name: Optional[str] = None,
+    record_ids: Optional[List[str]] = None,
+):
+    """Fetch all OTEL span events for the given record ids.
+
+    Used to build a combined conversation timeline across the turns
+    (records) that make up a thread.
+    """
+    session = get_session()
+    lms = session.connector.db
+    assert lms
+
+    return lms.get_events(
+        app_name=app_name,
+        app_version=None,
+        record_ids=list(record_ids) if record_ids else None,
+        start_time=None,
+    )
 
 
 @st.cache_data(
@@ -398,9 +425,9 @@ def get_app_versions(app_name: str):
 
     # Flatten metadata
     app_versions_df["metadata"] = app_versions_df["metadata"].apply(
-        lambda x: metadata_utils.flatten_metadata(x)
-        if isinstance(x, dict)
-        else {}
+        lambda x: (
+            metadata_utils.flatten_metadata(x) if isinstance(x, dict) else {}
+        )
     )
 
     # Factor out metadata

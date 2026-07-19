@@ -16,6 +16,7 @@ def main():
     warnings.warn(
         "This main method is deprecated. Use `trulens.dashboard.run.run_dashboard` instead.",
         DeprecationWarning,
+        stacklevel=2,
     )
     from trulens.dashboard.run import run_dashboard
 
