@@ -1,10 +1,14 @@
 from importlib.metadata import version
 import sys
 
+# Re-export key symbols so callers don't need to know the internal trace module.
+from trulens.otel.semconv.trace import GenAIAttributes
 from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
+# Explicit public API surface for this package.
 __all__ = [
+    "GenAIAttributes",
     "ResourceAttributes",
     "SpanAttributes",
 ]
