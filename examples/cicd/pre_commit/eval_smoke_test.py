@@ -15,7 +15,9 @@ import os
 import sys
 
 from trulens.apps.app import TruApp
-from trulens.core import Metric, Selector, TruSession
+from trulens.core import Metric
+from trulens.core import Selector
+from trulens.core import TruSession
 from trulens.core.otel.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -47,7 +49,9 @@ def main() -> int:
     from trulens.providers.openai import OpenAI
 
     min_score = float(os.environ.get("TRULENS_MIN_SCORE", "0.7"))
-    provider = OpenAI(model_engine=os.environ.get("TRULENS_EVAL_MODEL", "gpt-4o-mini"))
+    provider = OpenAI(
+        model_engine=os.environ.get("TRULENS_EVAL_MODEL", "gpt-4o-mini")
+    )
 
     f_relevance = Metric(
         implementation=provider.relevance,
