@@ -1,5 +1,20 @@
+parameters:
+# Jobs this one should wait on. Defaults to none to preserve prior behavior.
+- name: dependsOn
+  type: object
+  default: []
+# Optional job-level condition. Empty string means "no condition" (always run
+# when reached), matching the previous unconditional behavior.
+- name: condition
+  type: string
+  default: ""
+
 jobs:
 - job: BuildCondaPackages
+  ${{ if parameters.dependsOn }}:
+    dependsOn: ${{ parameters.dependsOn }}
+  ${{ if parameters.condition }}:
+    condition: ${{ parameters.condition }}
   variables:
     python-version: 3.11
   pool:
