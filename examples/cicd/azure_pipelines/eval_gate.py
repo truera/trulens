@@ -14,12 +14,14 @@ Environment variables:
 from __future__ import annotations
 
 import os
+from pathlib import Path
 import sys
 import xml.etree.ElementTree as ET
-from pathlib import Path
 
 from trulens.apps.app import TruApp
-from trulens.core import Metric, Selector, TruSession
+from trulens.core import Metric
+from trulens.core import Selector
+from trulens.core import TruSession
 from trulens.core.otel.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -78,7 +80,9 @@ def build_feedbacks():
     """Configure RAG triad feedback functions using the OpenAI provider."""
     from trulens.providers.openai import OpenAI
 
-    provider = OpenAI(model_engine=os.environ.get("TRULENS_EVAL_MODEL", "gpt-4o-mini"))
+    provider = OpenAI(
+        model_engine=os.environ.get("TRULENS_EVAL_MODEL", "gpt-4o-mini")
+    )
 
     return [
         Metric(
@@ -108,7 +112,12 @@ def build_feedbacks():
     ]
 
 
-def write_junit(path: str, failures: list[tuple[str, float]], scores: dict[str, float], min_score: float) -> None:
+def write_junit(
+    path: str,
+    failures: list[tuple[str, float]],
+    scores: dict[str, float],
+    min_score: float,
+) -> None:
     suite = ET.Element(
         "testsuite",
         name="trulens-eval-gate",
@@ -117,9 +126,13 @@ def write_junit(path: str, failures: list[tuple[str, float]], scores: dict[str, 
     )
     failed = {name: score for name, score in failures}
     for name, score in scores.items():
-        case = ET.SubElement(suite, "testcase", classname="TruLensEvalGate", name=name)
+        case = ET.SubElement(
+            suite, "testcase", classname="TruLensEvalGate", name=name
+        )
         if name in failed:
-            failure = ET.SubElement(case, "failure", message=f"{name} below threshold")
+            failure = ET.SubElement(
+                case, "failure", message=f"{name} below threshold"
+            )
             failure.text = f"{name}: {score:.3f} < {min_score:.3f}"
 
     output = Path(path)
@@ -156,7 +169,8 @@ def main() -> int:
 
     ignore = {"latency", "total_cost", "total_tokens", "Latency", "Cost (USD)"}
     feedback_cols = [
-        col for col in leaderboard.columns
+        col
+        for col in leaderboard.columns
         if col not in ignore and leaderboard[col].dtype.kind in "fi"
     ]
 
@@ -175,7 +189,10 @@ def main() -> int:
         print(f"\nWrote JUnit report to {junit_path}")
 
     if failures:
-        print(f"\nEval gate FAILED: {len(failures)} metric(s) below {min_score}.", file=sys.stderr)
+        print(
+            f"\nEval gate FAILED: {len(failures)} metric(s) below {min_score}.",
+            file=sys.stderr,
+        )
         return 1
 
     print(f"\nEval gate PASSED: all metrics >= {min_score}.")

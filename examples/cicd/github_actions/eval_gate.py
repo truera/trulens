@@ -19,7 +19,9 @@ import os
 import sys
 
 from trulens.apps.app import TruApp
-from trulens.core import Metric, Selector, TruSession
+from trulens.core import Metric
+from trulens.core import Selector
+from trulens.core import TruSession
 from trulens.core.otel.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -81,7 +83,9 @@ def build_feedbacks():
     """Configure the RAG triad feedback functions using the OpenAI provider."""
     from trulens.providers.openai import OpenAI
 
-    provider = OpenAI(model_engine=os.environ.get("TRULENS_EVAL_MODEL", "gpt-4o-mini"))
+    provider = OpenAI(
+        model_engine=os.environ.get("TRULENS_EVAL_MODEL", "gpt-4o-mini")
+    )
 
     f_answer_relevance = Metric(
         implementation=provider.relevance_with_cot_reasons,
@@ -142,7 +146,8 @@ def main() -> int:
     # (latency, cost) are ignored.
     ignore = {"latency", "total_cost", "total_tokens", "Latency", "Cost (USD)"}
     feedback_cols = [
-        c for c in leaderboard.columns
+        c
+        for c in leaderboard.columns
         if c not in ignore and leaderboard[c].dtype.kind in "fi"
     ]
 
