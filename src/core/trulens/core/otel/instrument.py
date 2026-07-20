@@ -493,12 +493,16 @@ def instrument_method(
     attributes: Attributes = None,
     must_be_first_wrapper: bool = False,
 ) -> None:
+    method = getattr(cls, method_name)
+    if hasattr(method, TRULENS_INSTRUMENT_WRAPPER_FLAG):
+        return
+
     wrapper = instrument(
         span_type=span_type,
         attributes=attributes,
         must_be_first_wrapper=must_be_first_wrapper,
     )
-    setattr(cls, method_name, wrapper(getattr(cls, method_name)))
+    setattr(cls, method_name, wrapper(method))
 
 
 def instrument_cost_computer(
