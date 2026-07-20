@@ -22,11 +22,11 @@ build:
 
 requirements:
   host:
-    - python >=3.9,<3.14
+    - python >=3.9
     - poetry-core <2.0.0
     - pip
   run:
-    - python >=3.9,<3.14
+    - python >=3.9
     - opentelemetry-semantic-conventions >=0.36b0
 
 test:
@@ -36,7 +36,7 @@ test:
     - pip check
     - python -c 'import {{ pyname }}; assert {{ pyname }}.__version__ == "{{ version }}", "Installed version does not match expected version"'
   requires:
-    - python >=3.9,<3.14
+    - python >=3.9
     - pip
 
 about:

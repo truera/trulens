@@ -22,11 +22,11 @@ build:
 
 requirements:
   host:
-    - python >=3.9,<3.14
+    - python >=3.9
     - poetry-core <2.0.0
     - pip
   run:
-    - python >=3.9,<3.14
+    - python >=3.9
     - trulens-core >=1.0.0,<3.0.0
     - nltk >=3.9.1,<4.0.0
     - pydantic >=2.4.2,<3.0.0
@@ -41,7 +41,7 @@ test:
     - pip check
     - python -c 'import {{ pyname }}; assert {{ pyname }}.__version__ == "{{ version }}", "Installed version does not match expected version"'
   requires:
-    - python >=3.9,<3.14
+    - python >=3.9
     - pip
 
 about:
