@@ -240,6 +240,7 @@ nav:
         - component_guides/instrumentation/langchain.md
         - component_guides/instrumentation/langgraph.md
         - component_guides/instrumentation/llama_index.md
+        - MCP: component_guides/instrumentation/mcp.md
     - Logging:
         - component_guides/logging/where_to_log/index.md
         - Postgres: component_guides/logging/where_to_log/log_in_postgres.md
@@ -250,9 +251,11 @@ nav:
         - component_guides/evaluation/index.md
         - Anatomy of a Metric: component_guides/evaluation/feedback_anatomy.md
         - Migrating to Metric API: component_guides/evaluation/metric_migration.md
+        - Score Distribution Analysis: component_guides/evaluation/score_distribution.md
         - Metric Implementations:
             - component_guides/evaluation/feedback_implementations/index.md
             - Stock Metrics: component_guides/evaluation/feedback_implementations/stock.md
+            - Template Reference: component_guides/evaluation/feedback_implementations/template_reference.md
             - Custom Metrics: component_guides/evaluation/feedback_implementations/custom_feedback_functions.ipynb
         - Selectors:
             - component_guides/evaluation/feedback_selectors/index.md
