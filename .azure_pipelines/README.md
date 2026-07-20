@@ -6,10 +6,15 @@ github pipelines. There are differences between these systems.
 - `ci-eval-pr.yaml` is run for all PRs to _TruLens_. Success is needed for
   merging into `main`. It is the single required status check ("PR Validation
   Eval") for branch protection, so it must **always run and report success**.
-  A `DetectChanges` gate job inspects the changed paths: code-affecting PRs run
-  the full conda build + test matrix, while docs/examples-only PRs skip those
-  heavy jobs and the pipeline still succeeds. This lets docs/examples PRs merge
-  normally instead of getting stuck on a "skipped" required check.
+  It has two tiers of validation:
+    - **Lightweight (every PR):** the `PreCommit` job runs `make run-precommit`
+      (ruff, ruff-format, yaml/whitespace, nb-clean, ...) on all PRs — including
+      docs/examples-only ones — so formatting/lint issues are always caught.
+    - **Expensive (code PRs only):** the conda build + full unit test matrix run
+      only when the `DetectChanges` gate finds code-affecting changes.
+  Docs/examples-only PRs skip the expensive jobs but still run `PreCommit`, and
+  the pipeline succeeds when lint passes — so they merge normally instead of
+  getting stuck on a "skipped" required check, while still being lint-gated.
 
   > Do **not** add a `paths:` filter to this pipeline (in the YAML `pr:` trigger
   > or via the Azure DevOps UI "Override the YAML trigger from here" option).
