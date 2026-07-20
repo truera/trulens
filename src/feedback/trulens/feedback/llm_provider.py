@@ -2878,7 +2878,13 @@ class LLMProvider(core_provider.Provider):
         question: str,
         source: Union[str, List[str]],
         statement: str,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
+        examples: Optional[List[str]] = None,
+        min_score_val: int = 0,
+        max_score_val: int = 1,
         temperature: float = 0.0,
+        **kwargs,
     ) -> float:
         """Check citation-attribution faithfulness of a cited answer.
 
@@ -2896,6 +2902,9 @@ class LLMProvider(core_provider.Provider):
             f_citation = Metric(
                 implementation=provider.citation_attribution,
                 name="Citation Attribution",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                examples=examples,
                 selectors={
                     "question": Selector.select_record_input(),
                     "source": Selector.select_context(collect_list=True),
@@ -2910,24 +2919,44 @@ class LLMProvider(core_provider.Provider):
                 numbered ``[1] ...``, ``[2] ...`` so the statement's ``[N]``
                 markers resolve; a pre-numbered string is used as-is.
             statement (str): The answer, containing ``[N]`` citation markers.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
+            examples (Optional[List[str]]): Optional few-shot examples to guide the evaluation. Defaults to None.
+            min_score_val (int): The minimum score value. Defaults to 0.
+            max_score_val (int): The maximum score value. Defaults to 1.
             temperature (float): The temperature for the LLM response. Defaults to 0.0.
 
         Returns:
-            float: 0.0 (a claim is misattributed) to 1.0 (every claim's citation
+            float: A value between min_score_val and max_score_val, normalized to
+                0.0 (a claim is misattributed) to 1.0 (every claim's citation
                 points to a passage that supports it).
         """
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        system_prompt = (
+            templates_rag.CitationAttribution.generate_system_prompt(
+                min_score=min_score_val,
+                max_score=max_score_val,
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                examples=examples,
+                output_space=output_space,
+            )
+        )
+
         user_prompt = templates_rag.CitationAttribution.user_prompt.format(
             question=question,
             source=self._number_citation_sources(source),
             statement=statement,
         )
+
         return self.generate_score(
-            templates_rag.CitationAttribution.system_prompt.format(
-                min_score=0, max_score=1
-            ),
-            user_prompt,
-            min_score_val=0,
-            max_score_val=1,
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
             temperature=temperature,
         )
 
@@ -2936,7 +2965,13 @@ class LLMProvider(core_provider.Provider):
         question: str,
         source: Union[str, List[str]],
         statement: str,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
+        examples: Optional[List[str]] = None,
+        min_score_val: int = 0,
+        max_score_val: int = 1,
         temperature: float = 0.0,
+        **kwargs,
     ) -> Tuple[float, Dict]:
         """Citation-attribution faithfulness with chain-of-thought reasons.
 
@@ -2948,24 +2983,46 @@ class LLMProvider(core_provider.Provider):
             source (Union[str, List[str]]): The retrieved passages (a list is
                 numbered for ``[N]`` resolution).
             statement (str): The answer, containing ``[N]`` citation markers.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
+            examples (Optional[List[str]]): Optional few-shot examples to guide the evaluation. Defaults to None.
+            min_score_val (int): The minimum score value. Defaults to 0.
+            max_score_val (int): The maximum score value. Defaults to 1.
             temperature (float): The temperature for the LLM response. Defaults to 0.0.
 
         Returns:
             Tuple[float, Dict]: A score between 0.0 and 1.0 and a dictionary with
                 the reasons for the evaluation.
         """
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        system_prompt = (
+            templates_rag.CitationAttribution.generate_system_prompt(
+                min_score=min_score_val,
+                max_score=max_score_val,
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                examples=examples,
+                output_space=output_space,
+            )
+        )
+
         user_prompt = templates_rag.CitationAttribution.user_prompt.format(
             question=question,
             source=self._number_citation_sources(source),
             statement=statement,
         )
+        user_prompt = user_prompt.replace(
+            "CITATION ATTRIBUTION:", templates_base.COT_REASONS_TEMPLATE
+        )
+
         return self.generate_score_and_reasons(
-            templates_rag.CitationAttribution.cot_system_prompt.format(
-                min_score=0, max_score=1
-            ),
-            user_prompt,
-            min_score_val=0,
-            max_score_val=1,
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
             temperature=temperature,
         )
 

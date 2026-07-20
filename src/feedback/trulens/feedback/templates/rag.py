@@ -6,6 +6,7 @@ answer relevance, answerability, comprehensiveness, etc.
 from inspect import cleandoc
 from typing import ClassVar
 
+from trulens.feedback.templates.base import BINARY_0_1_PROMPT
 from trulens.feedback.templates.base import LIKERT_0_3_PROMPT
 from trulens.feedback.templates.base import CriteriaOutputSpaceMixin
 from trulens.feedback.templates.base import OutputSpace
@@ -376,7 +377,7 @@ Score: {score}
 GROUNDEDNESS_REASON_TEMPLATE = GROUNDEDNESS_NLI_REASON_FORMAT
 
 
-class CitationAttribution(Semantics, WithPrompt):
+class CitationAttribution(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     """Citation-attribution faithfulness.
 
     Unlike groundedness (does the source support the statement *somewhere*),
@@ -386,18 +387,28 @@ class CitationAttribution(Semantics, WithPrompt):
     support it, even though some other passage ``[B]`` would.
     """
 
-    system_prompt: ClassVar[str] = cleandoc(
+    output_space_prompt: ClassVar[str] = BINARY_0_1_PROMPT
+    output_space: ClassVar[str] = OutputSpace.BINARY.name
+
+    criteria_template: ClassVar[str] = """
+        - An ANSWER in which every [N] marker points to a SOURCE passage that actually supports the specific claim it is attached to should get a score of {max_score}.
+        - An ANSWER in which at least one claim carries a citation [N] where SOURCE passage N does NOT support that claim should get a score of {min_score}, even if some other SOURCE passage would support it. This is citation misattribution.
+        - Judge attribution only, relative to the SOURCE passages, and not against world knowledge.
+        - A claim that carries no citation marker at all is not a misattribution and should not be penalized under this criterion.
+        """
+
+    system_prompt_template: ClassVar[str] = cleandoc(
         """You are a CITATION-ATTRIBUTION classifier for a retrieval-augmented ANSWER whose claims carry [N] citation markers, where N is the numbered SOURCE passage being cited.
-        Provide a score of {max_score} if every [N] marker points to a SOURCE passage that actually supports the specific claim it is attached to.
-        Provide a score of {min_score} if at least one claim carries a citation [N] where SOURCE passage N does NOT support that claim, even if some other SOURCE passage would support it (this is citation misattribution).
-        Judge attribution only, relative to the SOURCE passages, not world knowledge. Never elaborate."""
+
+        Respond only as a number from {output_space_prompt}.
+
+        You should score the citation attribution of the ANSWER based on the following criteria:
+        {criteria}
+        {additional_instructions}
+
+        Check each [N] marker against the SOURCE passage it names. Never elaborate."""
     )
-    cot_system_prompt: ClassVar[str] = cleandoc(
-        """You are a CITATION-ATTRIBUTION classifier for a retrieval-augmented ANSWER whose claims carry [N] citation markers, where N is the numbered SOURCE passage being cited.
-        Provide a score of {max_score} if every [N] marker points to a SOURCE passage that actually supports the specific claim it is attached to.
-        Provide a score of {min_score} if at least one claim carries a citation [N] where SOURCE passage N does NOT support that claim, even if some other SOURCE passage would support it (this is citation misattribution).
-        Check each [N] marker against the SOURCE passage it names. Judge relative to the SOURCE passages only, not world knowledge. Think step by step, then give your reasoning and score."""
-    )
+
     user_prompt: ClassVar[str] = cleandoc(
         """QUESTION: {question}
 
@@ -407,6 +418,19 @@ class CitationAttribution(Semantics, WithPrompt):
         ANSWER WITH CITATIONS: {statement}
 
         CITATION ATTRIBUTION:"""
+    )
+
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.BINARY.value[0],
+        max_score=OutputSpace.BINARY.value[1],
+    )
+
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            additional_instructions="",
+        )
     )
 
 
