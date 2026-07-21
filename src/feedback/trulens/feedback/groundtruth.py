@@ -1,19 +1,15 @@
+from collections.abc import Callable
 import logging
 from typing import (
-    Callable,
     ClassVar,
-    Dict,
-    List,
     Optional,
-    Tuple,
-    Union,
 )
 import warnings
 
 import numpy as np
 import pandas as pd
 import pydantic
-import scipy.stats as stats
+from scipy import stats
 from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import ndcg_score
@@ -47,21 +43,18 @@ class GroundTruthAgreement(
 ):
     """Measures Agreement against a Ground Truth."""
 
-    ground_truth: Union[
-        List[Dict],
-        Callable,
-        pd.DataFrame,
-        pyschema_utils.FunctionOrMethod,
-    ]
+    ground_truth: (
+        list[dict] | Callable | pd.DataFrame | pyschema_utils.FunctionOrMethod
+    )
     provider: llm_provider.LLMProvider
 
     # Note: the bert scorer object isn't serializable
     # It's a class member because creating it is expensive
     bert_scorer: object
 
-    ground_truth_imp: Optional[Callable] = pydantic.Field(None, exclude=True)
+    ground_truth_imp: Callable | None = pydantic.Field(None, exclude=True)
 
-    conversation_id: Optional[str] = None
+    conversation_id: str | None = None
     """Optional conversation ID to scope ground truth lookups for memory recall."""
 
     model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
@@ -70,12 +63,13 @@ class GroundTruthAgreement(
 
     def __init__(
         self,
-        ground_truth: Union[
-            List[Dict], Callable, pd.DataFrame, pyschema_utils.FunctionOrMethod
-        ],
-        provider: Optional[llm_provider.LLMProvider] = None,
+        ground_truth: list[dict]
+        | Callable
+        | pd.DataFrame
+        | pyschema_utils.FunctionOrMethod,
+        provider: llm_provider.LLMProvider | None = None,
         bert_scorer: Optional["BERTScorer"] = None,
-        conversation_id: Optional[str] = None,
+        conversation_id: str | None = None,
         **kwargs,
     ):
         """Measures Agreement against a Ground Truth.
@@ -164,7 +158,7 @@ class GroundTruthAgreement(
 
                 provider = OpenAI()
 
-        if isinstance(ground_truth, List):
+        if isinstance(ground_truth, list):
             ground_truth_imp = None
         elif isinstance(ground_truth, pyschema_utils.FunctionOrMethod):
             ground_truth_imp = ground_truth.load()
@@ -180,14 +174,14 @@ class GroundTruthAgreement(
                 entry = row.to_dict()
                 ground_truth.append(entry)
             ground_truth_imp = None
-        elif isinstance(ground_truth, Dict):
+        elif isinstance(ground_truth, dict):
             # Serialized pyschema_utils.FunctionOrMethod?
             ground_truth = pyschema_utils.FunctionOrMethod.model_validate(
                 ground_truth
             )
             ground_truth_imp = ground_truth.load()
         else:
-            raise RuntimeError(
+            raise TypeError(
                 f"Unhandled ground_truth type: {type(ground_truth)}."
             )
 
@@ -200,7 +194,7 @@ class GroundTruthAgreement(
             **kwargs,
         )
 
-    def _find_response(self, prompt: str) -> Optional[str]:
+    def _find_response(self, prompt: str) -> str | None:
         if self.ground_truth_imp is not None:
             return self.ground_truth_imp(prompt)
 
@@ -216,14 +210,14 @@ class GroundTruthAgreement(
 
     def _find_golden_context_chunks_and_scores(
         self, prompt: str
-    ) -> Optional[List[Tuple[str, float]]]:
+    ) -> list[tuple[str, float]] | None:
         if self.ground_truth_imp is not None:
             return self.ground_truth_imp(prompt)
 
         golden_context_chunks = [
             (
                 chunk["text"],
-                chunk["expect_score"] if "expect_score" in chunk else 1,
+                chunk.get("expect_score", 1),
             )
             for qr in self.ground_truth
             for chunk in qr["expected_chunks"]
@@ -234,7 +228,7 @@ class GroundTruthAgreement(
         else:
             return None
 
-    def _find_score(self, prompt: str, response: str) -> Optional[float]:
+    def _find_score(self, prompt: str, response: str) -> float | None:
         if self.ground_truth_imp is not None:
             return self.ground_truth_imp(prompt)
 
@@ -253,7 +247,7 @@ class GroundTruthAgreement(
         self,
         prompt: str,
         response: str,
-    ) -> Union[float, Tuple[float, Dict[str, str]]]:
+    ) -> float | tuple[float, dict[str, str]]:
         """
         Uses OpenAI's Chat GPT Model. A function that measures
         similarity to ground truth. A second template is given to Chat GPT
@@ -298,7 +292,7 @@ class GroundTruthAgreement(
             )
             ret = (
                 feedback_generated.re_0_10_rating(agreement_txt) / 10,
-                dict(ground_truth_response=ground_truth_response),
+                {"ground_truth_response": ground_truth_response},
             )
         else:
             ret = np.nan
@@ -308,9 +302,9 @@ class GroundTruthAgreement(
     def ndcg_at_k(
         self,
         query: str,
-        retrieved_context_chunks: List[str],
-        relevance_scores: Optional[List[float]] = None,
-        k: Optional[int] = None,
+        retrieved_context_chunks: list[str],
+        relevance_scores: list[float] | None = None,
+        k: int | None = None,
     ) -> float:
         """
         Compute NDCG@k for a given query and retrieved context chunks.
@@ -381,9 +375,9 @@ class GroundTruthAgreement(
     def precision_at_k(
         self,
         query: str,
-        retrieved_context_chunks: List[str],
-        relevance_scores: Optional[List[float]] = None,
-        k: Optional[int] = None,
+        retrieved_context_chunks: list[str],
+        relevance_scores: list[float] | None = None,
+        k: int | None = None,
     ) -> float:
         """
         Compute Precision@k for a given query and retrieved context chunks, considering tie handling.
@@ -404,9 +398,7 @@ class GroundTruthAgreement(
             k = k or len(retrieved_context_chunks)
 
             # Extract ground truth chunks
-            golden_chunks = set(
-                chunk[0] for chunk in ground_truth_context_chunks
-            )
+            golden_chunks = {chunk[0] for chunk in ground_truth_context_chunks}
 
             # Sort retrieved chunks by relevance scores if scores are provided
             if relevance_scores:
@@ -442,9 +434,9 @@ class GroundTruthAgreement(
     def recall_at_k(
         self,
         query: str,
-        retrieved_context_chunks: List[str],
-        relevance_scores: Optional[List[float]] = None,
-        k: Optional[int] = None,
+        retrieved_context_chunks: list[str],
+        relevance_scores: list[float] | None = None,
+        k: int | None = None,
     ) -> float:
         """
         Compute Recall@k for a given query and retrieved context chunks, considering tie handling.
@@ -465,9 +457,7 @@ class GroundTruthAgreement(
             k = k or len(retrieved_context_chunks)
 
             # Extract ground truth chunks
-            golden_chunks = set(
-                chunk[0] for chunk in ground_truth_context_chunks
-            )
+            golden_chunks = {chunk[0] for chunk in ground_truth_context_chunks}
 
             # Sort retrieved chunks by relevance scores if scores are provided
             if relevance_scores:
@@ -503,8 +493,8 @@ class GroundTruthAgreement(
     def mrr(
         self,
         query: str,
-        retrieved_context_chunks: List[str],
-        relevance_scores: Optional[List[float]] = None,
+        retrieved_context_chunks: list[str],
+        relevance_scores: list[float] | None = None,
     ) -> float:
         """
         Compute Mean Reciprocal Rank (MRR) for a given query and retrieved context chunks.
@@ -521,9 +511,7 @@ class GroundTruthAgreement(
         )
         if ground_truth_context_chunks:
             # Extract ground truth chunks
-            golden_chunks = set(
-                chunk[0] for chunk in ground_truth_context_chunks
-            )
+            golden_chunks = {chunk[0] for chunk in ground_truth_context_chunks}
 
             # Sort the retrieved chunks by relevance scores if provided
             if relevance_scores:
@@ -550,8 +538,8 @@ class GroundTruthAgreement(
     def ir_hit_rate(
         self,
         query: str,
-        retrieved_context_chunks: List[str],
-        k: Optional[int] = None,
+        retrieved_context_chunks: list[str],
+        k: int | None = None,
     ) -> float:
         """
         Compute IR Hit Rate (Hit Rate@k) for a given query and retrieved context chunks.
@@ -571,9 +559,7 @@ class GroundTruthAgreement(
             k = k or len(retrieved_context_chunks)
 
             # Extract ground truth chunks
-            golden_chunks = set(
-                chunk[0] for chunk in ground_truth_context_chunks
-            )
+            golden_chunks = {chunk[0] for chunk in ground_truth_context_chunks}
 
             # Calculate hit rate at k (1 if at least one relevant item is retrieved, 0 otherwise)
             return (
@@ -589,7 +575,7 @@ class GroundTruthAgreement(
 
     def absolute_error(
         self, prompt: str, response: str, score: float
-    ) -> Tuple[float, Dict[str, float]]:
+    ) -> tuple[float, dict[str, float]]:
         """
         Method to look up the numeric expected score from a golden set and take the difference.
 
@@ -626,16 +612,14 @@ class GroundTruthAgreement(
         expected_score = self._find_score(prompt, response)
         if expected_score is not None:
             ret = abs(float(score) - float(expected_score))
-            expected_score = (
-                "{:.2f}".format(expected_score).rstrip("0").rstrip(".")
-            )
+            expected_score = f"{expected_score:.2f}".rstrip("0").rstrip(".")
         else:
             ret = np.nan
         return ret, {"expected score": expected_score}
 
     def bert_score(
         self, prompt: str, response: str
-    ) -> Union[float, Tuple[float, Dict[str, str]]]:
+    ) -> float | tuple[float, dict[str, str]]:
         """
         Uses BERT Score. A function that that measures
         similarity to ground truth using bert embeddings.
@@ -680,7 +664,7 @@ class GroundTruthAgreement(
             )
             ret = (
                 bert_score[0].item(),
-                dict(ground_truth_response=ground_truth_response),
+                {"ground_truth_response": ground_truth_response},
             )
         else:
             ret = np.nan
@@ -690,7 +674,7 @@ class GroundTruthAgreement(
     # TODEP
     def bleu(
         self, prompt: str, response: str
-    ) -> Union[float, Tuple[float, Dict[str, str]]]:
+    ) -> float | tuple[float, dict[str, str]]:
         """Uses BLEU Score. A function that that measures similarity to ground
         truth using token overlap.
 
@@ -734,7 +718,7 @@ class GroundTruthAgreement(
             )
             ret = (
                 bleu_score["bleu"],
-                dict(ground_truth_response=ground_truth_response),
+                {"ground_truth_response": ground_truth_response},
             )
         else:
             ret = np.nan
@@ -744,7 +728,7 @@ class GroundTruthAgreement(
     # TODEP
     def rouge(
         self, prompt: str, response: str
-    ) -> Union[float, Tuple[float, Dict[str, str]]]:
+    ) -> float | tuple[float, dict[str, str]]:
         """
         Uses BLEU Score. A function that that measures
         similarity to ground truth using token overlap.
@@ -766,7 +750,7 @@ class GroundTruthAgreement(
             )
             ret = (
                 rouge_score["rouge1"],
-                dict(ground_truth_response=ground_truth_response),
+                {"ground_truth_response": ground_truth_response},
             )
         else:
             ret = np.nan
@@ -777,8 +761,7 @@ class GroundTruthAgreement(
     def mae(self):
         raise NotImplementedError("`mae` has moved to `GroundTruthAggregator`")
 
-
-    def _find_expected_memories(self, query: str) -> Optional[List[str]]:
+    def _find_expected_memories(self, query: str) -> list[str] | None:
         """Find expected memory texts for a given query.
 
         If conversation_id is set on this instance, only returns entries
@@ -786,15 +769,21 @@ class GroundTruthAgreement(
         """
         if self.ground_truth_imp is not None:
             result = self.ground_truth_imp(query)
-            if isinstance(result, list) and result and isinstance(result[0], str):
+            if (
+                isinstance(result, list)
+                and result
+                and isinstance(result[0], str)
+            ):
                 return result
             return None
 
         for qr in self.ground_truth:
             if qr.get("query") == query:
-                if self.conversation_id is not None:
-                    if qr.get("conversation_id") != self.conversation_id:
-                        continue
+                if (
+                    self.conversation_id is not None
+                    and qr.get("conversation_id") != self.conversation_id
+                ):
+                    continue
                 if "expected_memories" in qr:
                     return qr["expected_memories"]
         return None
@@ -802,7 +791,7 @@ class GroundTruthAgreement(
     def memory_recall(
         self,
         query: str,
-        retrieved_memories: List[str],
+        retrieved_memories: list[str],
         similarity_threshold: float = 1.0,
     ) -> float:
         """Compute recall of expected memories against retrieved memories.
@@ -888,7 +877,7 @@ class GroundTruthAgreement(
     def memory_mrr(
         self,
         query: str,
-        retrieved_memories: List[str],
+        retrieved_memories: list[str],
         similarity_threshold: float = 1.0,
     ) -> float:
         """Compute Mean Reciprocal Rank for memory retrieval.
@@ -959,20 +948,18 @@ class GroundTruthAggregator(
     )
     """Aggregate benchmarking metrics for ground-truth-based evaluation on feedback functions."""
 
-    true_labels: List[
-        Union[int, float]
+    true_labels: list[
+        int | float
     ]  # ground truth labels in [0, 1, 0, ...] format
-    custom_agg_funcs: Dict[str, Callable] = pydantic.Field(default_factory=dict)
+    custom_agg_funcs: dict[str, Callable] = pydantic.Field(default_factory=dict)
 
-    k: Optional[int] = (
+    k: int | None = (
         None  # top k results to consider in NDCG@k, precision@k, recall@k, etc
     )
 
     n_bins: int = 5  # number of bins for ECE
 
-    def __init__(
-        self, true_labels: List[int], k: Optional[int] = None, **kwargs
-    ):
+    def __init__(self, true_labels: list[int], k: int | None = None, **kwargs):
         # TODO: automatically load from IR / benchmarking datasets or just set the DB url for smaller serialization overhead?
         super().__init__(
             true_labels=true_labels, k=k, custom_agg_funcs={}, **kwargs
@@ -981,14 +968,14 @@ class GroundTruthAggregator(
     def register_custom_agg_func(
         self,
         name: str,
-        func: Callable[[List[float], "GroundTruthAggregator"], float],
+        func: Callable[[list[float], "GroundTruthAggregator"], float],
     ) -> None:
         """Register a custom aggregation function."""
         self.custom_agg_funcs[name] = func
 
         setattr(self, name, lambda scores: func(scores, self))
 
-    def auc(self, scores: List[float]) -> float:
+    def auc(self, scores: list[float]) -> float:
         """
         Calculate the area under the ROC curve. Can be used for meta-evaluation.
 
@@ -998,11 +985,11 @@ class GroundTruthAggregator(
         Returns:
             float: Area under the ROC curve
         """
-        if isinstance(scores[0], List):
+        if isinstance(scores[0], list):
             scores = [score for score, _ in scores]
         return roc_auc_score(self.true_labels, scores)
 
-    def kendall_tau(self, scores: Union[List[float], List[List]]) -> float:
+    def kendall_tau(self, scores: list[float] | list[list]) -> float:
         """
         Calculate Kendall's tau. Can be used for meta-evaluation.
         Kendall’s tau is a measure of the correspondence between two rankings. Values close to 1 indicate strong agreement, values close to -1 indicate strong disagreement. This is the tau-b version of Kendall’s tau which accounts for ties.
@@ -1013,16 +1000,14 @@ class GroundTruthAggregator(
         Returns:
             float: Kendall's tau
         """
-        if isinstance(scores[0], List):
+        if isinstance(scores[0], list):
             scores = [score for score, _ in scores]
         tau = stats.kendalltau(scores, self.true_labels).statistic
         # The two-sided p-value for a hypothesis test whose null hypothesis is an absence of association, tau = 0.
         # TODO: p_value is unused here
         return tau
 
-    def spearman_correlation(
-        self, scores: Union[List[float], List[List]]
-    ) -> float:
+    def spearman_correlation(self, scores: list[float] | list[list]) -> float:
         """
         Calculate the Spearman correlation. Can be used for meta-evaluation.
         The Spearman correlation coefficient is a nonparametric measure of rank correlation (statistical dependence between the rankings of two variables).
@@ -1034,16 +1019,14 @@ class GroundTruthAggregator(
             float: Spearman correlation
 
         """
-        if isinstance(scores[0], List):
+        if isinstance(scores[0], list):
             scores = [score for score, _ in scores]
         x = np.array(scores)
         y = np.array(self.true_labels)
 
         return stats.spearmanr(x, y).statistic
 
-    def pearson_correlation(
-        self, scores: Union[List[float], List[List]]
-    ) -> float:
+    def pearson_correlation(self, scores: list[float] | list[list]) -> float:
         """
         Calculate the Pearson correlation. Can be used for meta-evaluation.
         The Pearson correlation coefficient is a measure of the linear relationship between two variables.
@@ -1055,16 +1038,14 @@ class GroundTruthAggregator(
             float: Pearson correlation
 
         """
-        if isinstance(scores[0], List):
+        if isinstance(scores[0], list):
             scores = [score for score, _ in scores]
         x = np.array(scores)
         y = np.array(self.true_labels)
 
         return stats.pearsonr(x, y)[0]
 
-    def matthews_correlation(
-        self, scores: Union[List[float], List[List]]
-    ) -> float:
+    def matthews_correlation(self, scores: list[float] | list[list]) -> float:
         """
         Calculate the Matthews correlation coefficient. Can be used for meta-evaluation.
         The Matthews correlation coefficient is used in machine learning as a measure of the quality of binary and multiclass classifications.
@@ -1076,7 +1057,7 @@ class GroundTruthAggregator(
             float: Matthews correlation coefficient
 
         """
-        if isinstance(scores[0], List):
+        if isinstance(scores[0], list):
             scores = [score for score, _ in scores]
         x = np.array(scores)
         y = np.array(self.true_labels)
@@ -1084,7 +1065,7 @@ class GroundTruthAggregator(
         return matthews_corrcoef(y, x)
 
     def cohens_kappa(
-        self, scores: Union[List[float], List[List]], threshold=0.5
+        self, scores: list[float] | list[list], threshold=0.5
     ) -> float:
         """
         Computes Cohen's Kappa score between true labels and predicted scores.
@@ -1096,7 +1077,7 @@ class GroundTruthAggregator(
         Returns:
         - float: Cohen's Kappa score.
         """
-        if isinstance(scores[0], List):
+        if isinstance(scores[0], list):
             scores = [score for score, _ in scores]
 
         if len(self.true_labels) != len(scores):
@@ -1116,7 +1097,7 @@ class GroundTruthAggregator(
         kappa = cohen_kappa_score(self.true_labels, scores)
         return kappa
 
-    def recall(self, scores: Union[List[float], List[List]], threshold=0.5):
+    def recall(self, scores: list[float] | list[list], threshold=0.5):
         """
         Calculates recall given true labels and model-generated scores.
 
@@ -1129,9 +1110,9 @@ class GroundTruthAggregator(
         """
 
         try:
-            if isinstance(scores[0], List):
+            if isinstance(scores[0], list):
                 scores = [score for score, _ in scores]
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             import traceback
 
             traceback.print_exc()
@@ -1160,7 +1141,7 @@ class GroundTruthAggregator(
         recall = true_positives / (true_positives + false_negatives)
         return recall
 
-    def precision(self, scores: Union[List[float], List[List]], threshold=0.5):
+    def precision(self, scores: list[float] | list[list], threshold=0.5):
         """
         Calculates precision given true labels and model-generated scores.
 
@@ -1171,7 +1152,7 @@ class GroundTruthAggregator(
         Returns:
         - float: The precision score.
         """
-        if isinstance(scores[0], List):
+        if isinstance(scores[0], list):
             scores = [score for score, _ in scores]
 
         # Convert scores to binary predictions based on the threshold
@@ -1197,7 +1178,7 @@ class GroundTruthAggregator(
         precision = true_positives / (true_positives + false_positives)
         return precision
 
-    def f1_score(self, scores: Union[List[float], List[List]], threshold=0.5):
+    def f1_score(self, scores: list[float] | list[list], threshold=0.5):
         """
         Calculates the F1 score given true labels and model-generated scores.
 
@@ -1220,7 +1201,7 @@ class GroundTruthAggregator(
         f1 = 2 * (precision * recall) / (precision + recall)
         return f1
 
-    def brier_score(self, scores: Union[List[float], List[List]]) -> float:
+    def brier_score(self, scores: list[float] | list[list]) -> float:
         """
         assess both calibration and sharpness of the probability estimates
         Args:
@@ -1234,7 +1215,7 @@ class GroundTruthAggregator(
         if not scores:
             return np.nan
 
-        if isinstance(scores[0], List):
+        if isinstance(scores[0], list):
             scores = [score for score, _ in scores]
         assert len(scores) == len(self.true_labels)
 
@@ -1245,7 +1226,7 @@ class GroundTruthAggregator(
 
         return brier_score / len(scores)
 
-    def ece(self, score_confidence_pairs: List[Tuple[float]]) -> float:
+    def ece(self, score_confidence_pairs: list[tuple[float]]) -> float:
         """
         Calculate the expected calibration error. Can be used for meta-evaluation.
 
@@ -1294,7 +1275,7 @@ class GroundTruthAggregator(
                 )
         return round(ece, 4)
 
-    def mae(self, scores: Union[List[float], List[List]]) -> float:
+    def mae(self, scores: list[float] | list[list]) -> float:
         """
         Calculate the mean absolute error. Can be used for meta-evaluation.
 
@@ -1306,7 +1287,7 @@ class GroundTruthAggregator(
         """
 
         # TODO: refactor this, this is to deal with COT type of response from feedback functions
-        if isinstance(scores[0], List):
+        if isinstance(scores[0], list):
             scores = [score for score, _ in scores]
             print(f"flatten scores: {scores}")
 

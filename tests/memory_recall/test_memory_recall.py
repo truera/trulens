@@ -2,7 +2,6 @@
 
 import numpy as np
 import pytest
-
 from trulens.feedback.dummy.provider import DummyProvider
 from trulens.feedback.groundtruth import GroundTruthAgreement
 
@@ -139,7 +138,9 @@ class TestMemoryRecall:
                 "conversation_id": "c1",
             }
         ]
-        gta = GroundTruthAgreement(golden, provider=provider, conversation_id="c1")
+        gta = GroundTruthAgreement(
+            golden, provider=provider, conversation_id="c1"
+        )
         result = gta.memory_recall("q1", ["m1"])
         # After dedup: expected = ["m1", "m2"], matched = 1 -> 0.5
         assert result == 0.5
@@ -223,10 +224,14 @@ class TestMemoryMRR:
 
 class TestIsSimilar:
     def test_exact_match(self):
-        assert GroundTruthAgreement._is_similar("hello world", "hello world", 1.0)
+        assert GroundTruthAgreement._is_similar(
+            "hello world", "hello world", 1.0
+        )
 
     def test_exact_no_match(self):
-        assert not GroundTruthAgreement._is_similar("hello world", "hello earth", 1.0)
+        assert not GroundTruthAgreement._is_similar(
+            "hello world", "hello earth", 1.0
+        )
 
     def test_fuzzy_match_high_similarity(self):
         assert GroundTruthAgreement._is_similar(
@@ -325,9 +330,19 @@ class TestConversationId:
                 "conversation_id": "conv_b",
             },
         ]
-        gta_a = GroundTruthAgreement(golden, provider=provider, conversation_id="conv_a")
-        gta_b = GroundTruthAgreement(golden, provider=provider, conversation_id="conv_b")
+        gta_a = GroundTruthAgreement(
+            golden, provider=provider, conversation_id="conv_a"
+        )
+        gta_b = GroundTruthAgreement(
+            golden, provider=provider, conversation_id="conv_b"
+        )
 
-        assert gta_a.memory_recall("What happened?", ["Memory from conv A"]) == 1.0
-        assert gta_b.memory_recall("What happened?", ["Memory from conv B"]) == 1.0
-        assert gta_a.memory_recall("What happened?", ["Memory from conv B"]) == 0.0
+        assert (
+            gta_a.memory_recall("What happened?", ["Memory from conv A"]) == 1.0
+        )
+        assert (
+            gta_b.memory_recall("What happened?", ["Memory from conv B"]) == 1.0
+        )
+        assert (
+            gta_a.memory_recall("What happened?", ["Memory from conv B"]) == 0.0
+        )
