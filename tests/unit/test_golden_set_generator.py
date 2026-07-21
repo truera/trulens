@@ -7,8 +7,13 @@ from typing import List, Optional, Tuple
 import unittest
 
 import pandas as pd
-from trulens.benchmark.golden_set_generator import GoldenSetGenerator
-from trulens.benchmark.golden_set_generator import GoldenSetSample
+import pytest
+
+try:
+    from trulens.benchmark.golden_set_generator import GoldenSetGenerator
+    from trulens.benchmark.golden_set_generator import GoldenSetSample
+except ImportError:
+    pytest.skip("trulens-benchmark not installed", allow_module_level=True)
 
 
 class _StubSession:
