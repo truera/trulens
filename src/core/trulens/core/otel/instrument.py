@@ -22,6 +22,18 @@ from opentelemetry.baggage import set_baggage
 import opentelemetry.context as context_api
 from opentelemetry.trace.span import Span
 from trulens.core.otel.function_call_context_manager import (
+    NESTED_RECORD_PARENT_APP_ID_BAGGAGE_KEY,
+)
+from trulens.core.otel.function_call_context_manager import (
+    NESTED_RECORD_PARENT_RECORD_ID_BAGGAGE_KEY,
+)
+from trulens.core.otel.function_call_context_manager import (
+    NESTED_RECORD_PARENT_SPAN_ID_BAGGAGE_KEY,
+)
+from trulens.core.otel.function_call_context_manager import (
+    NESTED_RECORD_UNJOINABLE_PARENT_RECORD_ID_BAGGAGE_KEY,
+)
+from trulens.core.otel.function_call_context_manager import (
     create_function_call_context_manager,
 )
 from trulens.core.otel.recording import Recording
@@ -563,6 +575,9 @@ class OtelBaseRecordingContext:
     def attach_to_context(
         self, key: str, value: object, *, override: bool = False
     ):
+        # Skip unset values; only overwrite existing baggage when `override=True`
+        # (used by nested TruApp calls to attach parent-linkage keys onto a
+        # context that may already carry an outer app's baggage).
         if value is None:
             return
         if get_baggage(key) and not override:
@@ -651,23 +666,23 @@ class OtelRecordingContext(OtelBaseRecordingContext):
                 and current_span_context.is_valid
             ):
                 self.attach_to_context(
-                    "__trulens_nested_record_parent_record_id__",
+                    NESTED_RECORD_PARENT_RECORD_ID_BAGGAGE_KEY,
                     parent_record_id,
                     override=True,
                 )
                 self.attach_to_context(
-                    "__trulens_nested_record_parent_span_id__",
+                    NESTED_RECORD_PARENT_SPAN_ID_BAGGAGE_KEY,
                     str(current_span_context.span_id),
                     override=True,
                 )
                 self.attach_to_context(
-                    "__trulens_nested_record_parent_app_id__",
+                    NESTED_RECORD_PARENT_APP_ID_BAGGAGE_KEY,
                     parent_app_id,
                     override=True,
                 )
             else:
                 self.attach_to_context(
-                    "__trulens_nested_record_unjoinable_parent_record_id__",
+                    NESTED_RECORD_UNJOINABLE_PARENT_RECORD_ID_BAGGAGE_KEY,
                     parent_record_id,
                     override=True,
                 )

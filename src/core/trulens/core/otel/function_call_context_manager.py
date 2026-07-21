@@ -11,6 +11,19 @@ from opentelemetry.trace.span import Span
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
 from trulens.otel.semconv.trace import SpanAttributes
 
+NESTED_RECORD_PARENT_RECORD_ID_BAGGAGE_KEY = (
+    "__trulens_nested_record_parent_record_id__"
+)
+NESTED_RECORD_PARENT_SPAN_ID_BAGGAGE_KEY = (
+    "__trulens_nested_record_parent_span_id__"
+)
+NESTED_RECORD_PARENT_APP_ID_BAGGAGE_KEY = (
+    "__trulens_nested_record_parent_app_id__"
+)
+NESTED_RECORD_UNJOINABLE_PARENT_RECORD_ID_BAGGAGE_KEY = (
+    "__trulens_nested_record_unjoinable_parent_record_id__"
+)
+
 
 class UseCurrentSpanFunctionCallContextManager:
     def __enter__(self):
@@ -34,13 +47,13 @@ class CreateSpanFunctionCallContextManager:
 
         record_id = get_baggage(SpanAttributes.RECORD_ID)
         parent_record_id = get_baggage(
-            "__trulens_nested_record_parent_record_id__"
+            NESTED_RECORD_PARENT_RECORD_ID_BAGGAGE_KEY
         )
-        parent_span_id = get_baggage("__trulens_nested_record_parent_span_id__")
-        parent_app_id = get_baggage("__trulens_nested_record_parent_app_id__")
+        parent_span_id = get_baggage(NESTED_RECORD_PARENT_SPAN_ID_BAGGAGE_KEY)
+        parent_app_id = get_baggage(NESTED_RECORD_PARENT_APP_ID_BAGGAGE_KEY)
 
         unjoinable_parent_record_id = get_baggage(
-            "__trulens_nested_record_unjoinable_parent_record_id__"
+            NESTED_RECORD_UNJOINABLE_PARENT_RECORD_ID_BAGGAGE_KEY
         )
         fallback_record_root = (
             record_id is not None and unjoinable_parent_record_id == record_id
