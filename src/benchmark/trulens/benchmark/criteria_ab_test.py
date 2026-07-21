@@ -9,8 +9,11 @@ one aligns better: side-by-side MAE / Spearman / Kendall / Brier against the
 ground truth, the examples where the two disagree most, a paired significance
 test on the score differences, and a winner.
 
-Metrics are computed with numpy (no scipy dependency); significance uses a
-sign-flip permutation test so the utility stays dependency-light.
+Spearman and Kendall reuse
+[GroundTruthAggregator][trulens.feedback.groundtruth.GroundTruthAggregator] so
+there is a single source of truth for those metrics; the paired sign-flip
+permutation significance test lives alongside it in
+[groundtruth][trulens.feedback.groundtruth].
 
 Example:
     ```python
@@ -36,11 +39,10 @@ import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
+from trulens.feedback import groundtruth as feedback_groundtruth
 
 log = logging.getLogger(__name__)
 
-# Number of sign-flip permutations for the significance test.
-PERMUTATIONS = 10000
 # Significance level below which the two variants are called different.
 SIGNIFICANCE_ALPHA = 0.05
 
@@ -54,61 +56,15 @@ def _to_score(result: Any) -> float:
     return float(result)
 
 
-def _rankdata(values: np.ndarray) -> np.ndarray:
-    values = np.asarray(values, dtype=float)
-    order = np.argsort(values, kind="mergesort")
-    ranks = np.empty(len(values), dtype=float)
-    ranks[order] = np.arange(1, len(values) + 1)
-    _, inverse, counts = np.unique(
-        values, return_inverse=True, return_counts=True
-    )
-    rank_sums = np.zeros(len(counts))
-    np.add.at(rank_sums, inverse, ranks)
-    return (rank_sums / counts)[inverse]
-
-
-def _spearman(a: np.ndarray, b: np.ndarray) -> float:
-    ranks_a, ranks_b = _rankdata(a), _rankdata(b)
-    if np.std(ranks_a) == 0 or np.std(ranks_b) == 0:
-        return float("nan")
-    return float(np.corrcoef(ranks_a, ranks_b)[0, 1])
-
-
-def _kendall_tau(a: np.ndarray, b: np.ndarray) -> float:
-    a, b = np.asarray(a, dtype=float), np.asarray(b, dtype=float)
-    n = len(a)
-    if n < 2:
-        return float("nan")
-    concordant = discordant = 0
-    for i in range(n):
-        for j in range(i + 1, n):
-            sign = np.sign(a[i] - a[j]) * np.sign(b[i] - b[j])
-            if sign > 0:
-                concordant += 1
-            elif sign < 0:
-                discordant += 1
-    total = concordant + discordant
-    return float((concordant - discordant) / total) if total else float("nan")
-
-
-def _permutation_pvalue(diffs: np.ndarray, seed: int = 0) -> float:
-    """Two-sided paired sign-flip permutation p-value for ``mean(diffs)==0``."""
-    diffs = np.asarray(diffs, dtype=float)
-    n = len(diffs)
-    if n == 0 or np.allclose(diffs, 0.0):
-        return 1.0
-    observed = abs(float(np.mean(diffs)))
-    rng = np.random.default_rng(seed)
-    signs = rng.choice([-1.0, 1.0], size=(PERMUTATIONS, n))
-    perm_means = np.abs((signs * diffs).mean(axis=1))
-    return float((np.sum(perm_means >= observed) + 1) / (PERMUTATIONS + 1))
-
-
 def _metrics(scores: np.ndarray, expected: np.ndarray) -> Dict[str, float]:
+    aggregator = feedback_groundtruth.GroundTruthAggregator(
+        true_labels=[float(x) for x in expected]
+    )
+    score_list = [float(x) for x in scores]
     return {
         "mae": float(np.mean(np.abs(scores - expected))),
-        "spearman": _spearman(scores, expected),
-        "kendall": _kendall_tau(scores, expected),
+        "spearman": float(aggregator.spearman_correlation(score_list)),
+        "kendall": float(aggregator.kendall_tau(score_list)),
         "brier": float(np.mean((scores - expected) ** 2)),
     }
 
@@ -158,7 +114,9 @@ class CriteriaABTestReport:
         """Mean score difference (A - B) and its permutation p-value."""
         return {
             "mean_difference": float(np.mean(self.diffs)),
-            "p_value": _permutation_pvalue(self.diffs),
+            "p_value": feedback_groundtruth.paired_permutation_pvalue(
+                self.diffs
+            ),
         }
 
     def top_disagreements(self, k: int = 5) -> List[Dict[str, Any]]:
