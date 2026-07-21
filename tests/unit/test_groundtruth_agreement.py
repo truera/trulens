@@ -200,7 +200,7 @@ class TestGroundTruthAgreement(TestCase):
     @pytest.mark.optional
     def test_constructor_invalid_type(self):
         """Test constructor with invalid ground_truth type."""
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(TypeError):
             self._create_agreement("invalid_string")
 
     @pytest.mark.optional
