@@ -41,6 +41,42 @@ with import_utils.OptionalImports(
 logger = logging.getLogger(__name__)
 
 
+def paired_permutation_pvalue(
+    diffs: Union[List[float], np.ndarray],
+    seed: int = 0,
+    permutations: int = 10000,
+) -> float:
+    """Two-sided paired sign-flip permutation p-value for ``mean(diffs) == 0``.
+
+    Tests whether the mean of paired score differences differs significantly
+    from zero without assuming normality, by comparing the observed absolute
+    mean against the distribution obtained from random sign flips. Useful for
+    meta-evaluation, e.g. whether one judge configuration aligns with ground
+    truth better than another.
+
+    Args:
+        diffs: Paired differences, e.g. per-example score deltas between two
+            judge configurations.
+
+        seed: Seed for the permutation random number generator.
+
+        permutations: Number of sign-flip permutations to sample.
+
+    Returns:
+        float: The two-sided p-value in ``(0, 1]``. Returns ``1.0`` when there
+            are no differences or all differences are zero.
+    """
+    diffs = np.asarray(diffs, dtype=float)
+    n = len(diffs)
+    if n == 0 or np.allclose(diffs, 0.0):
+        return 1.0
+    observed = abs(float(np.mean(diffs)))
+    rng = np.random.default_rng(seed)
+    signs = rng.choice([-1.0, 1.0], size=(permutations, n))
+    perm_means = np.abs((signs * diffs).mean(axis=1))
+    return float((np.sum(perm_means >= observed) + 1) / (permutations + 1))
+
+
 # TODEP
 class GroundTruthAgreement(
     pyschema_utils.WithClassInfo, serial_utils.SerialModel
