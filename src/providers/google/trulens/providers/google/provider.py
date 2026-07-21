@@ -7,6 +7,7 @@ from trulens.providers.google import endpoint as google_endpoint
 
 from google.auth.credentials import Credentials
 from google.genai import Client
+from google.genai import types
 from google.genai.types import GenerateContentConfig
 
 logger = logging.getLogger(__name__)
@@ -101,6 +102,36 @@ class Google(llm_provider.LLMProvider):
         self_kwargs["endpoint"] = endpoint
         super().__init__(**self_kwargs)
 
+    def _to_gemini_part(self, part):
+        """Converts a content part to a Gemini 'Part' object.
+        Args:
+            part: the content part to convert. (str, dict)
+            Accepts:
+                - str: text content
+                - dict: {type: "text", "text": str} or {type: "media", "data": <bytes>, "mime_type": str}
+        """
+        if isinstance(part, str):
+            return types.Part.from_text(text=part)
+        elif isinstance(part, dict):
+            ptype = part.get("type")
+            if ptype == "text":
+                return types.Part.from_text(text=part["text"])
+
+            if ptype == "media":
+                if "mime_type" not in part:
+                    raise ValueError(
+                        "Media content parts require an explicit 'mime_type'."
+                    )
+                return types.Part.from_bytes(
+                    data=part["data"], mime_type=part["mime_type"]
+                )
+
+        raise ValueError(
+            f"Unsupported content part: {part!r}. "
+            "Expected a str, {'type': 'text', 'text': ...}, or "
+            "{'type': 'media', 'data': <bytes>, 'mime_type': ...}."
+        )
+
     def _create_chat_completion(
         self,
         prompt: Optional[str] = None,
@@ -115,20 +146,24 @@ class Google(llm_provider.LLMProvider):
                 if message["role"] == "system":
                     system_instruction = message["content"]
                 elif message["role"] == "user":
-                    # TODO: Add multi-modal (text + image) handling here for Google models
-                    contents.append({
-                        "parts": [{"text": message["content"]}],
-                        "role": "user",
-                    })
+                    parts = (
+                        [types.Part.from_text(text=message["content"])]
+                        if isinstance(message["content"], str)
+                        else [
+                            self._to_gemini_part(p) for p in message["content"]
+                        ]
+                    )
+                    contents.append(types.Content(role="user", parts=parts))
                 else:
                     logger.warning(
                         f"Ignoring role '{message['role']}' — only 'system' and 'user' are supported."
                     )
         elif prompt is not None:
-            contents.append({
-                "parts": [{"text": prompt}],
-                "role": "user",
-            })
+            contents.append(
+                types.Content(
+                    role="user", parts=[types.Part.from_text(text=prompt)]
+                )
+            )
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
         config_kwargs = dict(**kwargs)

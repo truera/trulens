@@ -1,0 +1,46 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - main
+
+variables:
+  - group: trulens-eval-secrets
+  - name: TRULENS_MIN_SCORE
+    value: "0.7"
+  - name: TRULENS_JUNIT_XML
+    value: "$(System.DefaultWorkingDirectory)/reports/trulens-eval-gate.xml"
+
+pool:
+  vmImage: "ubuntu-latest"
+
+steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: "3.11"
+    displayName: "Use Python 3.11"
+
+  - script: |
+      python -m pip install --upgrade pip
+      pip install trulens trulens-providers-openai
+    displayName: "Install dependencies"
+
+  - script: |
+      python examples/cicd/azure_pipelines/eval_gate.py
+    displayName: "Run TruLens eval gate"
+    env:
+      OPENAI_API_KEY: $(OPENAI_API_KEY)
+      TRULENS_MIN_SCORE: $(TRULENS_MIN_SCORE)
+      TRULENS_JUNIT_XML: $(TRULENS_JUNIT_XML)
+
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFormat: "JUnit"
+      testResultsFiles: "$(TRULENS_JUNIT_XML)"
+      testRunTitle: "TruLens Eval Gate"
+    displayName: "Publish TruLens eval results"
