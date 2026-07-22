@@ -503,6 +503,14 @@ class Selector:
     # Ignored when `trace_level` is True.
     match_only_if_no_ancestor_matched: bool = False
 
+    # If set, this selector reads its value from a column of a tabular dataset
+    # (a pandas DataFrame or a list of dicts) rather than from spans in a trace.
+    # This is used for batch/offline evaluation where there is no live app or
+    # recording session (see `Selector.from_column` and
+    # `trulens.core.batch.BatchEvaluator`). When `dataset_column` is set, all of
+    # the span-related fields above are ignored.
+    dataset_column: Optional[str] = None
+
     def __init__(
         self,
         trace_level: bool = False,
@@ -517,8 +525,23 @@ class Selector:
         ignore_none_values: bool = False,
         collect_list: bool = True,
         match_only_if_no_ancestor_matched: bool = False,
+        dataset_column: Optional[str] = None,
     ):
-        if (
+        if dataset_column is not None:
+            # A dataset (tabular) selector must not also specify span-based
+            # extraction fields since the two selection modes are mutually
+            # exclusive.
+            if any([
+                span_attributes_processor is not None,
+                span_attribute is not None,
+                function_attribute is not None,
+            ]):
+                raise ValueError(
+                    "`dataset_column` cannot be combined with "
+                    "`span_attributes_processor`, `span_attribute`, or "
+                    "`function_attribute`."
+                )
+        elif (
             not trace_level
             and sum([
                 span_attributes_processor is not None,
@@ -542,6 +565,46 @@ class Selector:
         self.match_only_if_no_ancestor_matched = (
             match_only_if_no_ancestor_matched
         )
+        self.dataset_column = dataset_column
+
+    @staticmethod
+    def from_column(
+        column_name: str,
+        *,
+        collect_list: bool = True,
+        ignore_none_values: bool = False,
+    ) -> Selector:
+        """Returns a `Selector` that reads its value from a dataset column.
+
+        This is used for batch/offline evaluation with
+        [BatchEvaluator][trulens.core.batch.BatchEvaluator], where metrics are
+        run over a pre-collected dataset (a pandas DataFrame or a list of dicts)
+        instead of over spans produced by a live app.
+
+        Args:
+            column_name: The name of the dataset column to read the value from.
+
+            collect_list: Only relevant when the column holds list values. If
+                True (default), the whole list is passed to the metric in a
+                single call. If False, the metric is called once per item in the
+                list and the results are aggregated.
+
+            ignore_none_values: If True, skip evaluation for rows where the
+                selected value is None (or missing).
+
+        Returns:
+            A `Selector` that selects from the given tabular column.
+        """
+        return Selector(
+            dataset_column=column_name,
+            collect_list=collect_list,
+            ignore_none_values=ignore_none_values,
+        )
+
+    @property
+    def is_dataset_selector(self) -> bool:
+        """Whether this selector reads from a tabular dataset column."""
+        return self.dataset_column is not None
 
     def describes_same_spans(self, other: Selector) -> bool:
         return (

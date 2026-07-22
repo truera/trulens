@@ -26,6 +26,7 @@ logging.getLogger("dotenv.main").setLevel(logging.ERROR)
 from importlib.metadata import version  # noqa: E402
 import os  # noqa: E402
 
+from trulens.core.batch import BatchEvaluator  # noqa: E402
 from trulens.core.feedback.feedback import Feedback  # noqa: E402
 from trulens.core.feedback.feedback import SnowflakeFeedback  # noqa: E402
 from trulens.core.feedback.provider import Provider  # noqa: E402
@@ -53,6 +54,8 @@ __all__ = [
     # metric setup (new unified API)
     "Metric",
     "Selector",
+    # batch / offline evaluation
+    "BatchEvaluator",
     # feedback setup (deprecated, use Metric instead)
     "Feedback",
     "SnowflakeFeedback",
