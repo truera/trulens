@@ -10186,7 +10186,7 @@ name = "trulens-connectors-snowflake"
 version = "2.8.1"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
-python-versions = "^3.9,<3.13"
+python-versions = "^3.9,<3.14"
 files = []
 develop = true
 
@@ -10361,7 +10361,7 @@ name = "trulens-providers-cortex"
 version = "2.8.1"
 description = "A TruLens extension package adding Snowflake Cortex support for LLM App evaluation."
 optional = false
-python-versions = "^3.9,<3.13"
+python-versions = "^3.9,<3.14"
 files = []
 develop = true
 
@@ -11758,4 +11758,4 @@ reference = "pypi-public"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "bfb44e4ea8071ee43ba5ca1789966d3feec857224e06f48826004751afe00d30"
+content-hash = "f27b9a18a64220fb5e541267063801ff3db2dfc60c7937d9e7ac1fe51008b090"

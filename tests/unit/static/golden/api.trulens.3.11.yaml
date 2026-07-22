@@ -48,6 +48,35 @@ trulens.benchmark.generate.generate_test_set.GenerateTestSet:
   __class__: builtins.type
   attributes:
     generate_test_set: builtins.function
+trulens.benchmark.golden_set_generator:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    GOLDEN_SET_COLUMNS: builtins.tuple
+    GoldenSetGenerator: builtins.type
+    GoldenSetSample: builtins.type
+    STRATEGIES: builtins.tuple
+    STRATEGY_RANDOM: builtins.str
+    STRATEGY_STRATIFIED: builtins.str
+    STRATEGY_UNCERTAINTY: builtins.str
+    STRATIFIED_BUCKETS: builtins.tuple
+trulens.benchmark.golden_set_generator.GoldenSetGenerator:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    load_annotations: builtins.function
+    sample: builtins.function
+    save_golden_set: builtins.function
+trulens.benchmark.golden_set_generator.GoldenSetSample:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    to_csv: builtins.function
+    to_df: builtins.function
+    to_json: builtins.function
+    to_list: builtins.function
 trulens.benchmark.test_cases:
   __class__: builtins.module
   highs: {}
