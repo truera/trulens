@@ -11,6 +11,19 @@ from opentelemetry.trace.span import Span
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
 from trulens.otel.semconv.trace import SpanAttributes
 
+NESTED_RECORD_PARENT_RECORD_ID_BAGGAGE_KEY = (
+    "__trulens_nested_record_parent_record_id__"
+)
+NESTED_RECORD_PARENT_SPAN_ID_BAGGAGE_KEY = (
+    "__trulens_nested_record_parent_span_id__"
+)
+NESTED_RECORD_PARENT_APP_ID_BAGGAGE_KEY = (
+    "__trulens_nested_record_parent_app_id__"
+)
+NESTED_RECORD_UNJOINABLE_PARENT_RECORD_ID_BAGGAGE_KEY = (
+    "__trulens_nested_record_unjoinable_parent_record_id__"
+)
+
 
 class UseCurrentSpanFunctionCallContextManager:
     def __enter__(self):
@@ -30,8 +43,31 @@ class CreateSpanFunctionCallContextManager:
     def __enter__(self) -> Span:
         # Set record_id into context.
         started_record = False
+        nested_record_root = False
+
         record_id = get_baggage(SpanAttributes.RECORD_ID)
-        if not record_id:
+        parent_record_id = get_baggage(
+            NESTED_RECORD_PARENT_RECORD_ID_BAGGAGE_KEY
+        )
+        parent_span_id = get_baggage(NESTED_RECORD_PARENT_SPAN_ID_BAGGAGE_KEY)
+        parent_app_id = get_baggage(NESTED_RECORD_PARENT_APP_ID_BAGGAGE_KEY)
+
+        unjoinable_parent_record_id = get_baggage(
+            NESTED_RECORD_UNJOINABLE_PARENT_RECORD_ID_BAGGAGE_KEY
+        )
+        fallback_record_root = (
+            record_id is not None and unjoinable_parent_record_id == record_id
+        )
+
+        if (
+            record_id is not None
+            and parent_record_id == record_id
+            and parent_span_id is not None
+            and parent_app_id is not None
+        ):
+            nested_record_root = True
+
+        if not record_id or nested_record_root or fallback_record_root:
             started_record = True
             record_id = str(uuid.uuid4())
             self.token = context_api.attach(
@@ -40,6 +76,7 @@ class CreateSpanFunctionCallContextManager:
             recording = get_baggage("__trulens_recording__")
             if recording is not None:
                 recording.add_record_id(record_id)
+
         self._started_record = started_record
         # Create span.
         self.span_context_manager = (
@@ -49,9 +86,21 @@ class CreateSpanFunctionCallContextManager:
         )
         span = self.span_context_manager.__enter__()
         if started_record:
-            span.set_attribute(
-                SpanAttributes.SPAN_TYPE, SpanAttributes.SpanType.RECORD_ROOT
+            span_type = (
+                SpanAttributes.SpanType.NESTED_RECORD_ROOT
+                if nested_record_root
+                else SpanAttributes.SpanType.RECORD_ROOT
             )
+            span.set_attribute(SpanAttributes.SPAN_TYPE, span_type)
+            if nested_record_root:
+                span.set_attribute(
+                    SpanAttributes.NESTED_RECORD_ROOT.PARENT_SPAN_ID,
+                    parent_span_id,
+                )
+                span.set_attribute(
+                    SpanAttributes.NESTED_RECORD_ROOT.PARENT_APP_ID,
+                    parent_app_id,
+                )
         return span
 
     def __exit__(self, exc_type, exc_val, exc_tb):
