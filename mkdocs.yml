@@ -252,6 +252,7 @@ nav:
         - Anatomy of a Metric: component_guides/evaluation/feedback_anatomy.md
         - Migrating to Metric API: component_guides/evaluation/metric_migration.md
         - Score Distribution Analysis: component_guides/evaluation/score_distribution.md
+        - Criteria A/B Testing: component_guides/evaluation/criteria_ab_test.md
         - Metric Implementations:
             - component_guides/evaluation/feedback_implementations/index.md
             - Stock Metrics: component_guides/evaluation/feedback_implementations/stock.md
@@ -268,6 +269,7 @@ nav:
             - Running on existing data: component_guides/evaluation/running_feedback_functions/existing_data.md
         - Generating Test Cases:
             - component_guides/evaluation/generate_test_cases.md
+        - Golden Set Generation: component_guides/evaluation/golden_set_generator.md
         - LLM Jury (Ensemble Judges): component_guides/evaluation/llm_jury.md
         - Evaluate MLFlow Traces: component_guides/evaluation/mlflow.md
     - 🏃 Runtime Evaluation:
