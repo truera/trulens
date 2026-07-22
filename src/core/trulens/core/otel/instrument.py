@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import inspect
 import logging
 import types
@@ -386,6 +387,27 @@ class instrument:
                 # Run function.
                 try:
                     ret = await func(*args, **kwargs)
+                except asyncio.CancelledError:
+                    try:
+                        _finalize_span(
+                            span,
+                            self.span_type,
+                            func_name_for_call,
+                            func,
+                            None,
+                            self.attributes,
+                            instance,
+                            args,
+                            kwargs,
+                            ret,
+                            self.only_set_user_defined_attributes,
+                            span_end_callbacks,
+                        )
+                    except Exception:
+                        logger.exception(
+                            "Error finalizing span during cancellation."
+                        )
+                    raise
                 except Exception as e:
                     # We want to get into the next clause to allow the users
                     # to still add attributes. It's on the user to deal with
