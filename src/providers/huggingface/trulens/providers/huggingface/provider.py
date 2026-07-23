@@ -20,6 +20,7 @@ import numpy as np
 import requests
 import torch
 from transformers import AutoModelForSequenceClassification
+from transformers import AutoModelForTokenClassification
 from transformers import AutoTokenizer
 from trulens.core._utils.pycompat import Future  # import style exception
 from trulens.core.feedback import endpoint as core_endpoint
@@ -52,6 +53,14 @@ HUGS_CONTEXT_RELEVANCE_API_URL = (
     "https://api-inference.huggingface.co/models/truera/context_relevance"
 )
 HUGS_HALLUCINATION_API_URL = "https://api-inference.huggingface.co/models/vectara/hallucination_evaluation_model"
+
+HUGS_LANGUAGE_MODEL_PATH = "papluca/xlm-roberta-base-language-detection"
+HUGS_CONTEXT_RELEVANCE_MODEL_PATH = "truera/context_relevance"
+HUGS_SENTIMENT_MODEL_PATH = "cardiffnlp/twitter-roberta-base-sentiment"
+HUGS_TOXIC_MODEL_PATH = "martin-ha/toxic-comment-model"
+HUGS_NLI_MODEL_PATH = "ynie/roberta-large-snli_mnli_fever_anli_R1_R2_R3-nli"
+HUGS_PII_DETECTION_MODEL_PATH = "bigcode/starpii"
+HUGS_HALLUCINATION_MODEL_PATH = "vectara/hallucination_evaluation_model"
 
 
 # TODO: move this to a more general place and apply it to other feedbacks that need it.
@@ -716,45 +725,90 @@ class HuggingfaceLocal(HuggingfaceBase):
     _cached_models: Dict[str, Any] = {}
 
     def _retrieve_tokenizer_and_model(
-        self, key: str, tokenizer_kwargs: Optional[Dict[str, Any]] = None
+        self,
+        key: str,
+        tokenizer_kwargs: Optional[Dict[str, Any]] = None,
+        model_class: Optional[Any] = None,
     ) -> Tuple[Any, Any]:
+        if model_class is None:
+            model_class = AutoModelForSequenceClassification
         if key not in self._cached_tokenizers:
             tokenizer_kwargs = tokenizer_kwargs if tokenizer_kwargs else {}
             self._cached_tokenizers[key] = AutoTokenizer.from_pretrained(
                 key, **tokenizer_kwargs
             )
         if key not in self._cached_models:
-            self._cached_models[key] = (
-                AutoModelForSequenceClassification.from_pretrained(key)
-            )
+            self._cached_models[key] = model_class.from_pretrained(key)
         tokenizer = self._cached_tokenizers[key]
         model = self._cached_models[key]
         return tokenizer, model
 
     def _language_scores_endpoint(self, text: str) -> Dict[str, float]:
-        raise NotImplementedError(
-            "Currently not implemented in for local HuggingFace!"
+        tokenizer, model = self._retrieve_tokenizer_and_model(
+            HUGS_LANGUAGE_MODEL_PATH
         )
+        with torch.no_grad():
+            tokens = tokenizer(text, truncation=True, return_tensors="pt")
+            output = model(tokens["input_ids"])
+            probs = torch.softmax(output["logits"][0], -1).tolist()
+        id2label = model.config.id2label
+        return {id2label[i]: float(probs[i]) for i in range(len(probs))}
 
     def _context_relevance_endpoint(self, input: str) -> float:
-        raise NotImplementedError(
-            "Currently not implemented in for local HuggingFace!"
+        tokenizer, model = self._retrieve_tokenizer_and_model(
+            HUGS_CONTEXT_RELEVANCE_MODEL_PATH
         )
+        with torch.no_grad():
+            tokens = tokenizer(input, truncation=True, return_tensors="pt")
+            output = model(tokens["input_ids"])
+            probs = torch.softmax(output["logits"][0], -1).tolist()
+        id2label = model.config.id2label
+        for i, label in id2label.items():
+            if label == "context_relevance":
+                return float(probs[i])
+        raise RuntimeError("'context_relevance' not found in model labels.")
 
     def _positive_sentiment_endpoint(self, input: str) -> float:
-        raise NotImplementedError(
-            "Currently not implemented in for local HuggingFace!"
+        tokenizer, model = self._retrieve_tokenizer_and_model(
+            HUGS_SENTIMENT_MODEL_PATH
         )
+        with torch.no_grad():
+            tokens = tokenizer(input, truncation=True, return_tensors="pt")
+            output = model(tokens["input_ids"])
+            probs = torch.softmax(output["logits"][0], -1).tolist()
+        id2label = model.config.id2label
+        for i, label in id2label.items():
+            if label == "LABEL_2":
+                return float(probs[i])
+        raise RuntimeError("LABEL_2 not found in model labels.")
 
     def _toxic_endpoint(self, input: str) -> float:
-        raise NotImplementedError(
-            "Currently not implemented in for local HuggingFace!"
+        tokenizer, model = self._retrieve_tokenizer_and_model(
+            HUGS_TOXIC_MODEL_PATH
         )
+        with torch.no_grad():
+            tokens = tokenizer(input, truncation=True, return_tensors="pt")
+            output = model(tokens["input_ids"])
+            probs = torch.softmax(output["logits"][0], -1).tolist()
+        id2label = model.config.id2label
+        for i, label in id2label.items():
+            if label == "toxic":
+                return float(probs[i])
+        raise RuntimeError("toxic not found in model labels.")
 
     def _summarized_groundedness_endpoint(self, input: str) -> float:
-        raise NotImplementedError(
-            "Currently not implemented in for local HuggingFace!"
+        tokenizer, model = self._retrieve_tokenizer_and_model(
+            HUGS_NLI_MODEL_PATH
         )
+        with torch.no_grad():
+            tokens = tokenizer(input, truncation=True, return_tensors="pt")
+            output = model(tokens["input_ids"])
+            probs = torch.softmax(output["logits"][0], -1).tolist()
+        id2label = model.config.id2label
+        for i, label in id2label.items():
+            if label == "entailment":
+                return float(probs[i])
+        raise RuntimeError("entailment not found in model labels.")
 
     # TODEP
     @_tci
@@ -771,21 +825,80 @@ class HuggingfaceLocal(HuggingfaceBase):
         return prediction[0]
 
     def _pii_detection_endpoint(self, input: str) -> List[float]:
-        raise NotImplementedError(
-            "Currently not implemented in for local HuggingFace!"
+        tokenizer, model = self._retrieve_tokenizer_and_model(
+            HUGS_PII_DETECTION_MODEL_PATH,
+            model_class=AutoModelForTokenClassification,
         )
+        with torch.no_grad():
+            tokens = tokenizer(input, truncation=True, return_tensors="pt")
+            output = model(**tokens)
+            probs = torch.softmax(output.logits[0], dim=-1)
+            predicted_ids = torch.argmax(probs, dim=-1)
+        id2label = model.config.id2label
+        likelihood_scores = []
+        for i, pred_id in enumerate(predicted_ids):
+            label = id2label[int(pred_id)]
+            if label != "O":
+                likelihood_scores.append(float(probs[i, int(pred_id)]))
+        return likelihood_scores if likelihood_scores else [0.0]
 
     def _pii_detection_with_cot_reasons_endpoint(
         self, input: str
     ) -> Tuple[List[float], Dict[str, str]]:
-        raise NotImplementedError(
-            "Currently not implemented in for local HuggingFace!"
+        tokenizer, model = self._retrieve_tokenizer_and_model(
+            HUGS_PII_DETECTION_MODEL_PATH,
+            model_class=AutoModelForTokenClassification,
         )
+        reasons = {}
+        likelihood_scores = []
+        with torch.no_grad():
+            tokens = tokenizer(input, truncation=True, return_tensors="pt")
+            output = model(**tokens)
+            probs = torch.softmax(output.logits[0], dim=-1)
+            predicted_ids = torch.argmax(probs, dim=-1)
+        id2label = model.config.id2label
+        for i, pred_id in enumerate(predicted_ids):
+            label_id = int(pred_id)
+            label = id2label[label_id]
+            score = float(probs[i, label_id])
+            if label != "O":
+                clean_label = (
+                    label[2:]
+                    if label.startswith("B-") or label.startswith("I-")
+                    else label
+                )
+                token_text = tokenizer.decode([
+                    tokens["input_ids"][0, i].item()
+                ])
+                reasons[f"{clean_label} detected: {token_text}"] = (
+                    f"PII Likelihood: {score}"
+                )
+                likelihood_scores.append(score)
+        return likelihood_scores, reasons
 
     def _hallucination_evaluator_endpoint(self, input: str) -> float:
-        raise NotImplementedError(
-            "Currently not implemented in for local HuggingFace!"
-        )
+        # HHEM-2.1-Open uses google/flan-t5-base tokenizer and requires
+        # trust_remote_code for its custom architecture.
+        tokenizer_key = "google/flan-t5-base"
+        model_key = HUGS_HALLUCINATION_MODEL_PATH
+        if tokenizer_key not in self._cached_tokenizers:
+            self._cached_tokenizers[tokenizer_key] = (
+                AutoTokenizer.from_pretrained(tokenizer_key)
+            )
+        if model_key not in self._cached_models:
+            self._cached_models[model_key] = (
+                AutoModelForSequenceClassification.from_pretrained(
+                    model_key, trust_remote_code=True
+                )
+            )
+        tokenizer = self._cached_tokenizers[tokenizer_key]
+        model = self._cached_models[model_key]
+        with torch.no_grad():
+            tokens = tokenizer(input, truncation=True, return_tensors="pt")
+            output = model(**tokens)
+            probs = torch.softmax(output.logits[0], dim=-1).tolist()
+        # Label 1 is "consistent" (factual/non-hallucinated).
+        return float(probs[1])
 
 
 class Dummy(Huggingface):
