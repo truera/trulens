@@ -2576,6 +2576,8 @@ trulens.feedback.llm_provider.LLMProvider:
   - trulens.core.feedback.provider.Provider
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    citation_attribution: builtins.function
+    citation_attribution_with_cot_reasons: builtins.function
     clear_capabilities_cache: builtins.function
     clear_model_capabilities_cache: builtins.classmethod
     coherence: builtins.function
