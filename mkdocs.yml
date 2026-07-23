@@ -250,6 +250,7 @@ nav:
     - 🎯 Evaluation:
         - component_guides/evaluation/index.md
         - Anatomy of a Metric: component_guides/evaluation/feedback_anatomy.md
+        - Feedback Providers: component_guides/evaluation/feedback_providers.md
         - Migrating to Metric API: component_guides/evaluation/metric_migration.md
         - Score Distribution Analysis: component_guides/evaluation/score_distribution.md
         - Criteria A/B Testing: component_guides/evaluation/criteria_ab_test.md

@@ -97,6 +97,56 @@ instance), there are three options:
         )
         ```
 
+### Using the OpenAI provider with a custom `base_url`
+
+The [OpenAI provider][trulens.providers.openai.OpenAI] forwards constructor
+kwargs to the official OpenAI Python client. That means you can point feedback
+functions at any OpenAI-compatible Chat Completions endpoint by setting
+`base_url` (and usually `api_key`).
+
+!!! example "OpenAI-compatible multi-model gateway (DaoXE)"
+
+    [DaoXE](https://daoxe.com) is a multi-model multi-protocol API gateway
+    (OpenAI Chat Completions / Responses and Anthropic Messages for other
+    clients). TruLens's OpenAI provider uses the Chat Completions path.
+
+    Get an API key from the DaoXE dashboard and pass an **exact model ID from
+    your account catalog** (`GET https://daoxe.com/v1/models`). Do not hardcode
+    a public price list. DaoXE is **not available in mainland China**.
+
+    ```python
+    import os
+
+    from trulens.providers.openai import OpenAI
+
+    provider = OpenAI(
+        model_engine=os.environ["DAOXE_MODEL"],  # exact ID from GET /v1/models
+        api_key=os.environ["DAOXE_API_KEY"],
+        base_url="https://daoxe.com/v1",
+    )
+
+    # Example feedback call
+    score, reasons = provider.relevance_with_cot_reasons(
+        "What is the capital of France?",
+        "Paris is the capital of France.",
+    )
+    ```
+
+    Equivalent LiteLLM route (useful when you already use
+    `trulens-providers-litellm`):
+
+    ```python
+    import os
+
+    from trulens.providers.litellm import LiteLLM
+
+    provider = LiteLLM(
+        model_engine=f"openai/{os.environ['DAOXE_MODEL']}",
+        api_base="https://daoxe.com/v1",
+        api_key=os.environ["DAOXE_API_KEY"],
+    )
+    ```
+
 ## Embedding-based Providers
 
 - [Embeddings][trulens.feedback.embeddings.Embeddings]
