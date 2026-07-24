@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from contextvars import ContextVar
 import inspect
 import logging
 import types
@@ -79,6 +80,49 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+
+# ContextVar holding the current span-group stack as a tuple of strings.
+# Using a tuple (immutable) so that each ContextVar token captures a
+# snapshot — no shared-mutable-state bugs across concurrent contexts.
+_current_span_groups: ContextVar[Tuple[str, ...]] = ContextVar(
+    "_current_span_groups", default=()
+)
+
+
+class span_group:
+    """Context manager that tags every span created inside the block with
+    a group label via ``SpanAttributes.SPAN_GROUPS``.
+
+    Uses a ``contextvars.ContextVar`` — no OTEL baggage, no cross-process
+    propagation.  Span groups are an in-process concept.
+
+    Example::
+
+        with span_group("hop1"):
+            ctx1 = retrieve("query 1")   # span gets SPAN_GROUPS=["hop1"]
+        with span_group("hop2"):
+            ctx2 = retrieve("query 2")   # span gets SPAN_GROUPS=["hop2"]
+
+    Nesting merges groups::
+
+        with span_group("hop1"):
+            with span_group("retry"):
+                retrieve("q")            # SPAN_GROUPS=["hop1", "retry"]
+    """
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+        self._token = None
+
+    def __enter__(self):
+        existing = _current_span_groups.get()
+        self._token = _current_span_groups.set(existing + (self.name,))
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self._token is not None:
+            _current_span_groups.reset(self._token)
+            self._token = None
 
 
 def get_func_name(func: Callable) -> str:
