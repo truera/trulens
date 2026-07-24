@@ -1,6 +1,6 @@
 """Cross-model alignment for feedback functions.
 
-When you switch the model behind a judge (``gpt-4o-mini`` to ``gpt-4.1-nano``,
+When you switch the model behind a judge (``llama-3.3-70b`` to ``llama-3.1-8b``,
 or one provider to another) the scores can shift in ways a single accuracy
 number hides. [CrossModelAlignment][trulens.benchmark.cross_model_alignment.CrossModelAlignment]
 runs the same feedback method with several judges over one golden set and reports
@@ -9,19 +9,21 @@ score-shift bias between every pair, plus each judge's agreement with the ground
 truth, and a plain recommendation of which judges are interchangeable and which
 are outliers.
 
-The pairwise metrics are computed with numpy (no scipy dependency) so the utility
-stays dependency-light; they mirror the meta-evaluation metrics in
-`GroundTruthAggregator`.
+The Spearman, Kendall and MAE metrics reuse
+[GroundTruthAggregator][trulens.feedback.groundtruth.GroundTruthAggregator] so
+there is a single source of truth for them rather than a second implementation.
 
 Example:
     ```python
     from trulens.benchmark.cross_model_alignment import CrossModelAlignment
-    from trulens.providers.openai import OpenAI
+    from trulens.providers.litellm import LiteLLM
 
+    judge_a = LiteLLM(model_engine="groq/llama-3.3-70b-versatile")
+    judge_b = LiteLLM(model_engine="groq/llama-3.1-8b-instant")
     alignment = CrossModelAlignment(
         judges=[
-            {"provider": OpenAI(model_engine="gpt-4o-mini"), "name": "4o-mini"},
-            {"provider": OpenAI(model_engine="gpt-4.1-mini"), "name": "4.1-mini"},
+            {"provider": judge_a, "name": "70b"},
+            {"provider": judge_b, "name": "8b"},
         ],
         feedback_method="relevance",
         golden_set=my_golden_set,
@@ -36,6 +38,7 @@ import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
+from trulens.feedback import groundtruth as feedback_groundtruth
 
 log = logging.getLogger(__name__)
 
@@ -54,44 +57,28 @@ def _to_score(result: Any) -> float:
     return float(result)
 
 
-def _rankdata(values: np.ndarray) -> np.ndarray:
-    """Average ranks of ``values`` (ties share their mean rank)."""
-    values = np.asarray(values, dtype=float)
-    order = np.argsort(values, kind="mergesort")
-    ranks = np.empty(len(values), dtype=float)
-    ranks[order] = np.arange(1, len(values) + 1)
-    _, inverse, counts = np.unique(
-        values, return_inverse=True, return_counts=True
+def _aggregator(
+    reference: np.ndarray,
+) -> "feedback_groundtruth.GroundTruthAggregator":
+    """A GroundTruthAggregator with ``reference`` as the labels to score against."""
+    return feedback_groundtruth.GroundTruthAggregator(
+        true_labels=[float(x) for x in reference]
     )
-    rank_sums = np.zeros(len(counts))
-    np.add.at(rank_sums, inverse, ranks)
-    return (rank_sums / counts)[inverse]
 
 
 def _spearman(a: np.ndarray, b: np.ndarray) -> float:
-    """Spearman rank correlation between two equal-length sequences."""
-    ranks_a, ranks_b = _rankdata(a), _rankdata(b)
-    if np.std(ranks_a) == 0 or np.std(ranks_b) == 0:
-        return float("nan")
-    return float(np.corrcoef(ranks_a, ranks_b)[0, 1])
+    """Spearman correlation between two sequences, via GroundTruthAggregator."""
+    return float(_aggregator(b).spearman_correlation([float(x) for x in a]))
 
 
 def _kendall_tau(a: np.ndarray, b: np.ndarray) -> float:
-    """Kendall's tau (concordant minus discordant pairs, ties excluded)."""
-    a, b = np.asarray(a, dtype=float), np.asarray(b, dtype=float)
-    n = len(a)
-    if n < 2:
-        return float("nan")
-    concordant = discordant = 0
-    for i in range(n):
-        for j in range(i + 1, n):
-            sign = np.sign(a[i] - a[j]) * np.sign(b[i] - b[j])
-            if sign > 0:
-                concordant += 1
-            elif sign < 0:
-                discordant += 1
-    total = concordant + discordant
-    return float((concordant - discordant) / total) if total else float("nan")
+    """Kendall's tau between two sequences, via GroundTruthAggregator."""
+    return float(_aggregator(b).kendall_tau([float(x) for x in a]))
+
+
+def _mae(a: np.ndarray, b: np.ndarray) -> float:
+    """Mean absolute error between two sequences, via GroundTruthAggregator."""
+    return float(_aggregator(b).mae([float(x) for x in a]))
 
 
 class CrossModelAlignmentReport:
@@ -101,6 +88,10 @@ class CrossModelAlignmentReport:
         names: Judge names, one per score sequence.
         scores: Per-judge score sequences, all aligned and equal length.
         expected: Optional ground-truth scores aligned with ``scores``.
+        interchangeable_spearman: Pairs whose Spearman correlation is at least
+            this are reported as interchangeable.
+        outlier_mean_spearman: A judge whose mean correlation with the others is
+            below this is reported as an outlier.
     """
 
     def __init__(
@@ -108,6 +99,8 @@ class CrossModelAlignmentReport:
         names: List[str],
         scores: List[List[float]],
         expected: Optional[List[float]] = None,
+        interchangeable_spearman: float = INTERCHANGEABLE_SPEARMAN,
+        outlier_mean_spearman: float = OUTLIER_MEAN_SPEARMAN,
     ):
         self.names: List[str] = list(names)
         self.scores: List[np.ndarray] = [
@@ -117,6 +110,8 @@ class CrossModelAlignmentReport:
         self.expected: Optional[np.ndarray] = (
             None if expected is None else np.asarray(expected, dtype=float)
         )
+        self.interchangeable_spearman = interchangeable_spearman
+        self.outlier_mean_spearman = outlier_mean_spearman
 
         self.spearman = np.full((self.n, self.n), np.nan)
         self.mean_abs_diff = np.full((self.n, self.n), np.nan)
@@ -124,9 +119,7 @@ class CrossModelAlignmentReport:
         for i in range(self.n):
             for j in range(self.n):
                 self.spearman[i, j] = _spearman(self.scores[i], self.scores[j])
-                self.mean_abs_diff[i, j] = float(
-                    np.mean(np.abs(self.scores[i] - self.scores[j]))
-                )
+                self.mean_abs_diff[i, j] = _mae(self.scores[i], self.scores[j])
                 self.bias[i, j] = float(
                     np.mean(self.scores[i]) - np.mean(self.scores[j])
                 )
@@ -141,7 +134,7 @@ class CrossModelAlignmentReport:
         out: Dict[str, Dict[str, float]] = {}
         for name, judge_scores in zip(self.names, self.scores):
             out[name] = {
-                "mae": float(np.mean(np.abs(judge_scores - self.expected))),
+                "mae": _mae(judge_scores, self.expected),
                 "spearman": _spearman(judge_scores, self.expected),
                 "kendall": _kendall_tau(judge_scores, self.expected),
             }
@@ -152,7 +145,7 @@ class CrossModelAlignmentReport:
         recs: List[str] = []
         for i in range(self.n):
             for j in range(i + 1, self.n):
-                if self.spearman[i, j] >= INTERCHANGEABLE_SPEARMAN:
+                if self.spearman[i, j] >= self.interchangeable_spearman:
                     recs.append(
                         f"{self.names[i]} and {self.names[j]} are "
                         f"interchangeable (Spearman "
@@ -161,7 +154,7 @@ class CrossModelAlignmentReport:
         for i in range(self.n):
             others = [self.spearman[i, j] for j in range(self.n) if j != i]
             others = [o for o in others if not np.isnan(o)]
-            if others and np.mean(others) < OUTLIER_MEAN_SPEARMAN:
+            if others and np.mean(others) < self.outlier_mean_spearman:
                 recs.append(
                     f"{self.names[i]} is an outlier (mean Spearman "
                     f"{np.mean(others):.2f} with the other judges)."
@@ -269,6 +262,12 @@ class CrossModelAlignment:
         args_fn: Optional function mapping a golden row to the positional
             arguments passed to each judge. Defaults to
             ``(row["query"], row["expected_response"])``.
+        interchangeable_spearman: Pairs whose Spearman correlation is at least
+            this are reported as interchangeable.
+        outlier_mean_spearman: A judge whose mean correlation with the others is
+            below this is reported as an outlier.
+        skip_warn_fraction: Warn if more than this fraction of rows are skipped
+            because a judge errored on them.
     """
 
     def __init__(
@@ -277,6 +276,9 @@ class CrossModelAlignment:
         feedback_method: str,
         golden_set: List[Dict[str, Any]],
         args_fn: Optional[Callable[[Dict[str, Any]], Tuple]] = None,
+        interchangeable_spearman: float = INTERCHANGEABLE_SPEARMAN,
+        outlier_mean_spearman: float = OUTLIER_MEAN_SPEARMAN,
+        skip_warn_fraction: float = 0.2,
     ):
         if len(judges) < 2:
             raise ValueError("Provide at least two judges to compare.")
@@ -284,6 +286,9 @@ class CrossModelAlignment:
         self.feedback_method = feedback_method
         self.golden_set = golden_set
         self.args_fn = args_fn or self._default_args
+        self.interchangeable_spearman = interchangeable_spearman
+        self.outlier_mean_spearman = outlier_mean_spearman
+        self.skip_warn_fraction = skip_warn_fraction
 
     @staticmethod
     def _default_args(row: Dict[str, Any]) -> Tuple:
@@ -304,6 +309,7 @@ class CrossModelAlignment:
         names = [judge["name"] for judge in self.judges]
         per_judge: Dict[str, List[float]] = {name: [] for name in names}
         expected: List[float] = []
+        skipped = 0
         for row in self.golden_set:
             args = self.args_fn(row)
             row_scores: Dict[str, float] = {}
@@ -318,10 +324,22 @@ class CrossModelAlignment:
                     )
                     break
             if len(row_scores) != len(self.judges):
+                skipped += 1
                 continue
             for name, score in row_scores.items():
                 per_judge[name].append(score)
             expected.append(row.get("expected_score"))
+
+        total = len(self.golden_set)
+        if total and skipped / total > self.skip_warn_fraction:
+            log.warning(
+                "%d of %d rows (%.0f%%) were skipped because a judge errored; "
+                "the alignment is computed on the remaining %d rows.",
+                skipped,
+                total,
+                100 * skipped / total,
+                total - skipped,
+            )
 
         scores = [per_judge[name] for name in names]
         if not scores[0]:
@@ -331,5 +349,9 @@ class CrossModelAlignment:
             )
         has_expected = all(e is not None for e in expected)
         return CrossModelAlignmentReport(
-            names, scores, expected if has_expected else None
+            names,
+            scores,
+            expected if has_expected else None,
+            interchangeable_spearman=self.interchangeable_spearman,
+            outlier_mean_spearman=self.outlier_mean_spearman,
         )
