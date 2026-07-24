@@ -328,9 +328,18 @@ def test_response_api_usage_field_mapping():
 
 
 class _DummyResponsesWithCreate:
-    def __init__(self, *, should_succeed: bool, tool_input: str = "ok_cfg"):
+    def __init__(
+        self,
+        *,
+        should_succeed: bool,
+        tool_input: str = "ok_cfg",
+        item_type: str = "custom_tool_call",
+    ):
         self.should_succeed = should_succeed
         self.tool_input = tool_input
+        # The real Responses API emits custom tool calls with type
+        # "custom_tool_call" (openai.types.responses.ResponseCustomToolCall).
+        self.item_type = item_type
         self.create_calls = 0
         self.parse_calls = 0
 
@@ -344,16 +353,26 @@ class _DummyResponsesWithCreate:
         if not self.should_succeed:
             raise Exception("cfg unsupported")
 
+        class _ReasoningItem:
+            # Real gpt-5 responses put a reasoning item (no `input`/text
+            # content) before the tool call item.
+            def __init__(self):
+                self.type = "reasoning"
+                self.content = []
+
         class _Item:
-            def __init__(self, text: str):
-                self.type = "tool"
+            def __init__(self, text: str, item_type: str):
+                self.type = item_type
                 self.input = text
 
         class _Response:
             def __init__(self, items):
                 self.output = items
 
-        return _Response([_Item(self.tool_input)])
+        return _Response([
+            _ReasoningItem(),
+            _Item(self.tool_input, self.item_type),
+        ])
 
 
 @pytest.mark.optional
@@ -421,3 +440,58 @@ def test_cfg_failure_then_cached_skip(monkeypatch):
     assert provider.endpoint.client.responses.create_calls == 1
     # And chat.completions used again
     assert len(provider.endpoint.client.chat.completions.create_calls) == 1
+
+
+@pytest.mark.optional
+@pytest.mark.parametrize("item_type", ["custom_tool_call", "tool"])
+def test_cfg_extracts_tool_call_item_types(monkeypatch, item_type):
+    """Regression test for https://github.com/truera/trulens/issues/2631.
+
+    The Responses API emits custom tool calls with type "custom_tool_call";
+    previously only "tool" was matched, so the score fell through to a dump
+    of the entire response object and was regex-parsed from raw JSON.
+    """
+    provider = _make_provider(monkeypatch, model_engine="gpt-5-mini")
+
+    provider.endpoint.client.responses = _DummyResponsesWithCreate(
+        should_succeed=True, tool_input='{"score": 3}', item_type=item_type
+    )
+
+    from trulens.feedback import (
+        output_schemas as feedback_output_schemas,  # type: ignore[import-not-found]
+    )
+
+    out = provider._create_chat_completion(
+        messages=[{"role": "user", "content": "hi"}],
+        response_format=feedback_output_schemas.BaseFeedbackResponse,
+    )
+    # The tool call payload must be returned verbatim, not a dump of the
+    # whole response object.
+    assert out == '{"score": 3}'
+
+
+@pytest.mark.optional
+def test_generate_score_end_to_end_via_cfg_tool_call(monkeypatch):
+    """End-to-end regression for https://github.com/truera/trulens/issues/2631.
+
+    The observable symptom was a wrong feedback score: the model answered
+    {"score": 3} but the score was regex-parsed out of the raw response
+    JSON. Assert generate_score returns the correctly normalized value.
+    """
+    provider = _make_provider(monkeypatch, model_engine="gpt-5-mini")
+
+    provider.endpoint.client.responses = _DummyResponsesWithCreate(
+        should_succeed=True, tool_input='{"score": 3}'
+    )
+
+    result = provider.generate_score(
+        system_prompt="Rate relevance 0-3.",
+        user_prompt="q/ctx",
+        min_score_val=0,
+        max_score_val=3,
+    )
+    # generate_score returns (score, reason) when it parses structured
+    # JSON; the payload {"score": 3} on a 0-3 scale normalizes to 1.0.
+    score, reason = result
+    assert score == 1.0
+    assert reason == {"reason": {"score": 3}}
