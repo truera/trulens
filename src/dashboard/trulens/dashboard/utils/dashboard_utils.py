@@ -508,6 +508,24 @@ def _handle_reset_filters(
             del st.query_params[query_param_key]
 
 
+def get_unique_app_tags(app_versions_df: pd.DataFrame) -> List[str]:
+    """Return the sorted unique app tags for the tag filter multiselect.
+
+    Each app version's ``tags`` value is a single string (see
+    ``trulens.core.schema.types.Tags``), so tags are collected as whole
+    strings. Using ``set(app_version["tags"])`` here would iterate the string
+    into individual characters (e.g. ``"prod"`` -> ``{"p", "r", "o", "d"}``),
+    which is what surfaced the garbled single-character tags in issue #1689.
+    Empty tag strings are skipped so they do not show up as a blank option.
+    """
+    tags: set = set()
+    for _, app_version in app_versions_df.iterrows():
+        tag = app_version["tags"]
+        if tag:
+            tags.add(tag)
+    return sorted(tags)
+
+
 def render_app_version_filters(
     app_name: str,
     other_query_params_kv: Optional[Dict[str, str]] = None,
@@ -541,10 +559,7 @@ def render_app_version_filters(
     with col1.popover("Advanced Filters", width="stretch"):
         # get tag options
         st.header("Advanced Filters")
-        tags = set()
-        for _, app_version in app_versions_df.iterrows():
-            tags |= set(app_version["tags"])
-        tags = sorted(tags)
+        tags = get_unique_app_tags(app_versions_df)
         # select tags
 
         selected_tags = _render_filter_multiselect(
