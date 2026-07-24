@@ -360,6 +360,14 @@ class _DummyResponsesWithCreate:
                 self.type = "reasoning"
                 self.content = []
 
+        class _DecoyItem:
+            # A non-tool item that happens to have an `input` attribute;
+            # extraction must select items by type, not by attribute.
+            def __init__(self):
+                self.type = "message"
+                self.input = "DECOY-MUST-NOT-BE-RETURNED"
+                self.content = []
+
         class _Item:
             def __init__(self, text: str, item_type: str):
                 self.type = item_type
@@ -371,6 +379,7 @@ class _DummyResponsesWithCreate:
 
         return _Response([
             _ReasoningItem(),
+            _DecoyItem(),
             _Item(self.tool_input, self.item_type),
         ])
 
@@ -468,6 +477,9 @@ def test_cfg_extracts_tool_call_item_types(monkeypatch, item_type):
     # The tool call payload must be returned verbatim, not a dump of the
     # whole response object.
     assert out == '{"score": 3}'
+    # Pin the route: the CFG create path produced the value, not a fallback.
+    assert provider.endpoint.client.responses.create_calls == 1
+    assert provider.endpoint.client.responses.parse_calls == 0
 
 
 @pytest.mark.optional
@@ -481,7 +493,7 @@ def test_generate_score_end_to_end_via_cfg_tool_call(monkeypatch):
     provider = _make_provider(monkeypatch, model_engine="gpt-5-mini")
 
     provider.endpoint.client.responses = _DummyResponsesWithCreate(
-        should_succeed=True, tool_input='{"score": 3}'
+        should_succeed=True, tool_input='{"score": 2}'
     )
 
     result = provider.generate_score(
@@ -491,7 +503,13 @@ def test_generate_score_end_to_end_via_cfg_tool_call(monkeypatch):
         max_score_val=3,
     )
     # generate_score returns (score, reason) when it parses structured
-    # JSON; the payload {"score": 3} on a 0-3 scale normalizes to 1.0.
+    # JSON (see tests/integration/test_score_parsing_pipeline.py); the
+    # payload {"score": 2} on a 0-3 scale normalizes to 2/3. A mid-scale
+    # value is used so the assertion cannot pass by coinciding with a
+    # scale endpoint.
+    assert isinstance(result, tuple)
     score, reason = result
-    assert score == 1.0
-    assert reason == {"reason": {"score": 3}}
+    assert score == pytest.approx(2 / 3)
+    assert reason == {"reason": {"score": 2}}
+    # Pin the route: the CFG create path produced the value.
+    assert provider.endpoint.client.responses.create_calls == 1
