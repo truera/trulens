@@ -9,12 +9,22 @@ from opentelemetry.proto.common.v1.common_pb2 import KeyValueList
 from opentelemetry.proto.trace.v1.trace_pb2 import Span as SpanProto
 from opentelemetry.proto.trace.v1.trace_pb2 import Status
 from opentelemetry.sdk.trace import ReadableSpan
+from opentelemetry.trace import SpanKind
 from opentelemetry.trace import StatusCode
 from trulens.core.schema import event as event_schema
 from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
+
+# Mapping from OTel SDK SpanKind to protobuf SpanKind enum values.
+_SPAN_KIND_TO_PROTO = {
+    SpanKind.INTERNAL: SpanProto.SpanKind.SPAN_KIND_INTERNAL,
+    SpanKind.SERVER: SpanProto.SpanKind.SPAN_KIND_SERVER,
+    SpanKind.CLIENT: SpanProto.SpanKind.SPAN_KIND_CLIENT,
+    SpanKind.PRODUCER: SpanProto.SpanKind.SPAN_KIND_PRODUCER,
+    SpanKind.CONSUMER: SpanProto.SpanKind.SPAN_KIND_CONSUMER,
+}
 
 
 def convert_to_any_value(value: Any) -> AnyValue:
@@ -81,7 +91,9 @@ def convert_readable_span_to_proto(span: ReadableSpan) -> SpanProto:
         if span.parent
         else b"",
         name=span.name,
-        kind=SpanProto.SpanKind.SPAN_KIND_INTERNAL,
+        kind=_SPAN_KIND_TO_PROTO.get(
+            span.kind, SpanProto.SpanKind.SPAN_KIND_INTERNAL
+        ),
         start_time_unix_nano=span.start_time if span.start_time else 0,
         end_time_unix_nano=span.end_time if span.end_time else 0,
         attributes=[
@@ -144,7 +156,9 @@ def construct_event(span: ReadableSpan) -> event_schema.Event:
         event_id=str(context.span_id),
         record={
             "name": span.name,
-            "kind": SpanProto.SpanKind.SPAN_KIND_INTERNAL,
+            "kind": _SPAN_KIND_TO_PROTO.get(
+                span.kind, SpanProto.SpanKind.SPAN_KIND_INTERNAL
+            ),
             "parent_span_id": str(parent.span_id if parent else ""),
             "status": "STATUS_CODE_ERROR"
             if span.status.status_code == StatusCode.ERROR

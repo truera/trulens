@@ -6,6 +6,7 @@ from opentelemetry.baggage import get_baggage
 from opentelemetry.baggage import remove_baggage
 from opentelemetry.baggage import set_baggage
 import opentelemetry.context as context_api
+from opentelemetry.trace import SpanKind
 from opentelemetry.trace import get_current_span
 from opentelemetry.trace.span import Span
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
@@ -34,8 +35,13 @@ class UseCurrentSpanFunctionCallContextManager:
 
 
 class CreateSpanFunctionCallContextManager:
-    def __init__(self, span_name: str) -> None:
+    def __init__(
+        self,
+        span_name: str,
+        span_type: str = SpanAttributes.SpanType.UNKNOWN,
+    ) -> None:
         self.span_name = span_name
+        self.span_type = span_type
         self.span_context_manager = None
         self.token = None
         self._started_record = False
@@ -78,11 +84,18 @@ class CreateSpanFunctionCallContextManager:
                 recording.add_record_id(record_id)
 
         self._started_record = started_record
-        # Create span.
+        # Create span.  Use SpanKind.CLIENT for GENERATION spans
+        # (outbound LLM calls) per the OTel GenAI semantic conventions;
+        # all other span types are in-process work → INTERNAL.
+        span_kind = (
+            SpanKind.CLIENT
+            if self.span_type == SpanAttributes.SpanType.GENERATION
+            else SpanKind.INTERNAL
+        )
         self.span_context_manager = (
             trace.get_tracer_provider()
             .get_tracer(TRULENS_SERVICE_NAME)
-            .start_as_current_span(name=self.span_name)
+            .start_as_current_span(name=self.span_name, kind=span_kind)
         )
         span = self.span_context_manager.__enter__()
         if started_record:
@@ -126,11 +139,15 @@ class CreateSpanFunctionCallContextManager:
 
 
 def create_function_call_context_manager(
-    create_new_span: bool, span_name: str
+    create_new_span: bool,
+    span_name: str,
+    span_type: str = SpanAttributes.SpanType.UNKNOWN,
 ) -> Union[
     UseCurrentSpanFunctionCallContextManager,
     CreateSpanFunctionCallContextManager,
 ]:
     if create_new_span:
-        return CreateSpanFunctionCallContextManager(span_name)
+        return CreateSpanFunctionCallContextManager(
+            span_name, span_type=span_type
+        )
     return UseCurrentSpanFunctionCallContextManager()
