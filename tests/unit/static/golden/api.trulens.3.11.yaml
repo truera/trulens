@@ -89,7 +89,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 2.8.1
+  __version__: 2.9.0
   highs:
     BatchEvaluator: builtins.type
     Feedback: pydantic._internal._model_construction.ModelMetaclass
