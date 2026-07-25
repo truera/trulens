@@ -140,3 +140,15 @@ def test_huggingface_local_model_loading_cached(monkeypatch):
     # Same objects returned from cache
     assert tokenizer1 is tokenizer2
     assert model1 is model2
+
+
+@pytest.mark.optional
+def test_feedback_raises_on_empty_scores(monkeypatch):
+    from trulens.providers.huggingface.provider import Dummy
+
+    provider = Dummy()
+
+    monkeypatch.setattr(Dummy, "_post_scores", lambda self, **kwargs: [])
+
+    with pytest.raises(RuntimeError):
+        provider.positive_sentiment(text="some text")
