@@ -159,6 +159,9 @@ class SpanAttributes:
         RECORD_ROOT = "record_root"
         """Spans as collected by tracing system."""
 
+        NESTED_RECORD_ROOT = "nested_record_root"
+        """Root span for a record created by a nested app call."""
+
         EVAL_ROOT = "eval_root"
         """Feedback function evaluation root span."""
 
@@ -516,3 +519,14 @@ class SpanAttributes:
 
         EMIT_SPAN = base + ".emit_span"
         """Boolean flag indicating whether a span should be exported."""
+
+    class NESTED_RECORD_ROOT:
+        """Attributes for the root span of a nested record."""
+
+        base = BASE_SCOPE + ".nested_record_root"
+
+        PARENT_SPAN_ID = base + ".parent_span_id"
+        """Span ID of the active parent span in the outer app trace."""
+
+        PARENT_APP_ID = base + ".parent_app_id"
+        """App ID of the outer app that owns the active parent span."""
