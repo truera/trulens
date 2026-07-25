@@ -89,12 +89,15 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 2.5.3
+  __version__: 2.8.1
   highs:
+    BatchEvaluator: builtins.type
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
+    Metric: pydantic._internal._model_construction.ModelMetaclass
     Provider: pydantic._internal._model_construction.ModelMetaclass
     Select: builtins.type
+    Selector: builtins.type
     SnowflakeFeedback: pydantic._internal._model_construction.ModelMetaclass
     Tru: builtins.function
     TruSession: trulens.core.utils.python.PydanticSingletonMeta
@@ -263,6 +266,17 @@ trulens.core.app.TrulensComponent:
   - trulens.core.app.ComponentView
   __class__: trulens.core.app.ComponentViewMeta
   attributes: {}
+trulens.core.batch:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    BatchEvaluator: builtins.type
+trulens.core.batch.BatchEvaluator:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    evaluate: builtins.function
 trulens.core.database:
   __class__: builtins.module
   highs: {}
@@ -771,10 +785,13 @@ trulens.core.feedback.selector.Selector:
   __class__: builtins.type
   attributes:
     collect_list: builtins.bool
+    dataset_column: builtins.NoneType
     describes_same_spans: builtins.function
+    from_column: builtins.staticmethod
     function_attribute: builtins.NoneType
     function_name: builtins.NoneType
     ignore_none_values: builtins.bool
+    is_dataset_selector: builtins.property
     match_only_if_no_ancestor_matched: builtins.bool
     matches_span: builtins.function
     process_span: builtins.function
@@ -878,6 +895,101 @@ trulens.core.instruments.instrument:
   - trulens.core.instruments.AddInstruments
   __class__: builtins.type
   attributes: {}
+trulens.core.metric:
+  __class__: builtins.module
+  highs:
+    InvalidSelector: builtins.type
+    Metric: pydantic._internal._model_construction.ModelMetaclass
+    Selector: builtins.type
+    SkipEval: builtins.type
+  lows:
+    __all__: builtins.list
+trulens.core.metric.metric:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    GroundednessConfigs: pydantic._internal._model_construction.ModelMetaclass
+    InvalidSelector: builtins.type
+    Metric: pydantic._internal._model_construction.ModelMetaclass
+    SkipEval: builtins.type
+trulens.core.metric.metric.GroundednessConfigs:
+  __bases__:
+  - pydantic.main.BaseModel
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    filter_trivial_statements: builtins.bool
+    use_sent_tokenize: builtins.bool
+trulens.core.metric.metric.InvalidSelector:
+  __bases__:
+  - builtins.Exception
+  __class__: builtins.type
+  attributes: {}
+trulens.core.metric.metric.Metric:
+  __bases__:
+  - trulens.core.schema.feedback.FeedbackDefinition
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    additional_instructions: typing.Optional[builtins.str, builtins.NoneType]
+    agg: typing.Optional[typing.Callable[[typing.Union[typing.Iterable[float], typing.Iterable[typing.Tuple[float,
+      float]]]], builtins.float], builtins.NoneType]
+    aggregate: builtins.function
+    aggregator: typing.Union[trulens.core.utils.pyschema.Function, trulens.core.utils.pyschema.Method,
+      builtins.NoneType]
+    check_otel_selectors: builtins.function
+    check_selectors: builtins.function
+    combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
+      builtins.NoneType]
+    criteria: typing.Optional[builtins.str, builtins.NoneType]
+    description: typing.Optional[builtins.str, builtins.NoneType]
+    enable_trace_compression: typing.Optional[builtins.bool, builtins.NoneType]
+    evaluate_deferred: builtins.staticmethod
+    examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
+    extract_selection: builtins.function
+    feedback_definition_id: builtins.str
+    groundedness_configs: typing.Optional[trulens.core.metric.metric.GroundednessConfigs,
+      builtins.NoneType]
+    higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
+    if_exists: typing.Optional[trulens.core.utils.serial.Lens, builtins.NoneType]
+    if_missing: trulens.core.schema.feedback.FeedbackOnMissingParameters
+    imp: typing.Optional[typing.Callable[[~A], typing.Union[builtins.float, typing.Tuple[builtins.float,
+      typing.Dict[builtins.str, typing.Any]]]], builtins.NoneType]
+    implementation: typing.Union[trulens.core.utils.pyschema.Function, trulens.core.utils.pyschema.Method,
+      builtins.NoneType]
+    max_score_val: typing.Optional[builtins.int, builtins.NoneType]
+    metric_type: typing.Optional[builtins.str, builtins.NoneType]
+    min_score_val: typing.Optional[builtins.int, builtins.NoneType]
+    of_feedback_definition: builtins.staticmethod
+    'on': builtins.function
+    on_context: builtins.function
+    on_default: builtins.function
+    on_input: builtins.function
+    on_input_output: builtins.function
+    on_output: builtins.function
+    on_prompt: builtins.function
+    on_response: builtins.function
+    run: builtins.function
+    run_and_log: builtins.function
+    run_location: typing.Optional[trulens.core.schema.feedback.FeedbackRunLocation,
+      builtins.NoneType]
+    selectors: typing.Dict[builtins.str, typing.Union[trulens.core.utils.serial.Lens,
+      trulens.core.feedback.selector.Selector]]
+    sig: builtins.property
+    supplied_name: typing.Optional[builtins.str, builtins.NoneType]
+    temperature: typing.Optional[builtins.float, builtins.NoneType]
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens.core.metric.metric.SkipEval:
+  __bases__:
+  - builtins.Exception
+  __class__: builtins.type
+  attributes: {}
+trulens.core.metric.selector:
+  __class__: builtins.module
+  highs:
+    ProcessedContentNode: builtins.type
+    Selector: builtins.type
+    Trace: builtins.type
+  lows:
+    __all__: builtins.list
 trulens.core.run:
   __class__: builtins.module
   highs: {}
