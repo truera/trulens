@@ -15,6 +15,7 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
 import pandas as pd
 from trulens.core.otel.instrument import get_func_name
 from trulens.core.otel.instrument import instrument
+from trulens.core.otel.instrument import instrument_method
 from trulens.core.otel.recording import Recording
 from trulens.experimental.otel_tracing.core.session import (
     _set_up_tracer_provider,
@@ -277,3 +278,92 @@ class TestOtelInstrument(unittest.TestCase):
         my_function()
         self.assertEqual(instrument_info["cnt"], 2)
         self.assertEqual(instrument_info["ret"], "Kojikun is the best baby!")
+
+    def test_instrument_method_basic_third_party_class(self) -> None:
+        class ThirdPartyRetriever:
+            def retrieve(self, query: str) -> str:
+                return f"result for {query}"
+
+        instrument_method(ThirdPartyRetriever, "retrieve")
+
+        result = ThirdPartyRetriever().retrieve("TruLens")
+
+        self.assertEqual(result, "result for TruLens")
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertTrue(spans[0].name.endswith("ThirdPartyRetriever.retrieve"))
+
+    def test_instrument_method_span_type_and_attribute_mapping(self) -> None:
+        class ThirdPartyRetriever:
+            def retrieve(self, query: str) -> list[str]:
+                return [f"context for {query}"]
+
+        instrument_method(
+            ThirdPartyRetriever,
+            "retrieve",
+            span_type=SpanAttributes.SpanType.RETRIEVAL,
+            attributes={
+                SpanAttributes.RETRIEVAL.QUERY_TEXT: "query",
+                SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: "return",
+            },
+        )
+
+        result = ThirdPartyRetriever().retrieve("What is TruLens?")
+
+        self.assertEqual(result, ["context for What is TruLens?"])
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(
+            spans[0].attributes[SpanAttributes.SPAN_TYPE],
+            SpanAttributes.SpanType.RETRIEVAL,
+        )
+        self.assertEqual(
+            spans[0].attributes[SpanAttributes.RETRIEVAL.QUERY_TEXT],
+            "What is TruLens?",
+        )
+        self.assertTupleEqual(
+            spans[0].attributes[SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS],
+            ("context for What is TruLens?",),
+        )
+
+    def test_instrument_method_lambda_attributes(self) -> None:
+        class ThirdPartyScorer:
+            def score(self, text: str) -> int:
+                return len(text)
+
+        instrument_method(
+            ThirdPartyScorer,
+            "score",
+            attributes=lambda ret, exception, *args, **kwargs: {
+                f"{SpanAttributes.UNKNOWN.base}.score": ret,
+                f"{SpanAttributes.UNKNOWN.base}.input_text": args[1],
+            },
+        )
+
+        result = ThirdPartyScorer().score("abc")
+
+        self.assertEqual(result, 3)
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(
+            spans[0].attributes[f"{SpanAttributes.UNKNOWN.base}.score"],
+            3,
+        )
+        self.assertEqual(
+            spans[0].attributes[f"{SpanAttributes.UNKNOWN.base}.input_text"],
+            "abc",
+        )
+
+    def test_instrument_method_twice_is_idempotent(self) -> None:
+        class ThirdPartyClient:
+            def call(self, value: str) -> str:
+                return value.upper()
+
+        instrument_method(ThirdPartyClient, "call")
+        instrument_method(ThirdPartyClient, "call")
+
+        result = ThirdPartyClient().call("trulens")
+
+        self.assertEqual(result, "TRULENS")
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)

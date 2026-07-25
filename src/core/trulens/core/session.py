@@ -849,7 +849,8 @@ class TruSession(
         group_by_metadata_key: Optional[str] = None,
         limit: Optional[int] = None,
         offset: Optional[int] = None,
-    ) -> pandas.DataFrame:
+        format: str = "dataframe",
+    ) -> Union[pandas.DataFrame, str, List[Dict[str, Any]]]:
         """Get a leaderboard for the given apps.
 
         Args:
@@ -862,16 +863,33 @@ class TruSession(
 
             offset: Record row offset to select which records to use to aggregate the leaderboard.
 
+            format: Output format for the leaderboard. Supported values are
+                `"dataframe"` for the existing pandas DataFrame behavior,
+                `"dict"` for `DataFrame.to_dict(orient="records")`, and
+                `"json"` for `DataFrame.to_json(orient="records")`.
+
         Returns:
-            Dataframe of apps with their feedback results aggregated.
-            If group_by_metadata_key is provided, the dataframe will be grouped by the specified key.
+            Leaderboard data in the requested format. If `format` is
+            `"dataframe"` and `group_by_metadata_key` is provided, the
+            DataFrame will be grouped by the specified key.
         """
-        return self.connector.get_leaderboard(
+        leaderboard = self.connector.get_leaderboard(
             app_ids=app_ids,
             group_by_metadata_key=group_by_metadata_key,
             limit=limit,
             offset=offset,
         )
+        if format == "dataframe":
+            return leaderboard
+        elif format == "dict":
+            return leaderboard.to_dict(orient="records")
+        elif format == "json":
+            return leaderboard.to_json(orient="records")
+        else:
+            raise ValueError(
+                "Unsupported leaderboard format. Expected one of "
+                "'dataframe', 'dict', or 'json'."
+            )
 
     def add_ground_truth_to_dataset(
         self,
