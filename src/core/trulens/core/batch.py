@@ -83,6 +83,13 @@ class BatchEvaluator:
     [Selector.from_column][trulens.core.feedback.selector.Selector.from_column],
     mapping each metric argument to a column of the dataset.
 
+    Note:
+        Results are returned in-memory only: nothing is persisted to the
+        event table, so batch evaluations do not appear in the dashboard or
+        leaderboard. For persisted, dashboard-visible evaluation of
+        pre-collected data, use [Run][trulens.core.run.Run] with
+        `mode=Mode.LOG_INGESTION` instead.
+
     Args:
         metrics: The metrics to evaluate. Each metric's selectors must all be
             dataset (column) selectors created with `Selector.from_column`.
@@ -137,7 +144,13 @@ class BatchEvaluator:
                 )
 
     def _unique_metric_names(self) -> List[str]:
-        """Return metric names, disambiguating duplicates by suffixing an index."""
+        """Return metric names, disambiguating duplicates by suffixing an index.
+
+        The first occurrence of a name keeps the bare name; subsequent
+        duplicates get `_1`, `_2`, ... suffixes (e.g. two metrics named
+        `overlap` produce columns `overlap` and `overlap_1`). This keeps the
+        common case of unique names free of suffixes.
+        """
         names: List[str] = []
         seen: Dict[str, int] = {}
         for metric in self.metrics:
@@ -251,11 +264,14 @@ class BatchEvaluator:
                 continue
 
             if isinstance(result_and_meta, tuple):
-                assert len(result_and_meta) == 2, (
-                    "Metric functions must return either a single float, a "
-                    "float-valued dict, or these together with a metadata dict "
-                    "as a tuple."
-                )
+                if len(result_and_meta) != 2:
+                    raise TypeError(
+                        f"Metric {metric.name!r} returned a tuple of length "
+                        f"{len(result_and_meta)}; expected a (value, metadata) "
+                        "pair. Metric functions must return either a single "
+                        "float, a float-valued dict, or one of these together "
+                        "with a metadata dict as a 2-tuple."
+                    )
                 score, meta = result_and_meta
             else:
                 score, meta = result_and_meta, {}
@@ -268,25 +284,58 @@ class BatchEvaluator:
         if not scores:
             return None, {"skipped": "all combinations skipped"}, latency
 
-        aggregate = self._aggregate_scores(metric, scores)
+        aggregate, agg_error = self._aggregate_scores(metric, scores)
         explanation = (
             explanations[0] if len(explanations) == 1 else explanations
         )
+        if agg_error is not None:
+            explanation = {
+                "error": agg_error,
+                "scores": scores,
+                "explanations": explanations,
+            }
         return aggregate, explanation, latency
 
     @staticmethod
-    def _aggregate_scores(metric: Metric, scores: List[Any]) -> Any:
-        """Aggregate one or more metric scores using the metric's aggregator."""
+    def _aggregate_scores(
+        metric: Metric, scores: List[Any]
+    ) -> Tuple[Any, Optional[str]]:
+        """Aggregate one or more metric scores using the metric's aggregator.
+
+        Returns:
+            A tuple of (aggregate, error). `error` is `None` on success. If a
+            user-configured aggregator raises, the aggregate is `float("nan")`
+            and `error` holds the exception type and message so the failure is
+            visible in the row's explanation.
+
+        Raises:
+            TypeError: If the metric has no user-configured aggregator and the
+                default (`numpy.mean`) cannot combine the scores. This
+                indicates the metric's return type is incompatible with
+                per-item evaluation and should fail loudly rather than yield
+                a silent `NaN`.
+        """
         if len(scores) == 1:
-            return scores[0]
+            return scores[0], None
         agg = metric.agg if metric.agg is not None else np.mean
+        # `Metric.__init__` defaults `agg` to `np.mean` but only sets the
+        # serialized `aggregator` field when the user passed one explicitly.
+        user_configured = metric.aggregator is not None
         try:
-            return agg(scores)
+            return agg(scores), None
         except Exception as e:  # pylint: disable=broad-except
+            if not user_configured:
+                raise TypeError(
+                    f"Cannot aggregate {len(scores)} scores for metric "
+                    f"{metric.name!r} with the default aggregator "
+                    f"(numpy.mean): {e}. Provide an `agg` on the metric that "
+                    "can combine these scores, or use `collect_list=True` to "
+                    "pass list-valued columns to the metric in a single call."
+                ) from e
             logger.warning(
-                "Failed to aggregate scores for metric %s: %s", metric.name, e
+                "Aggregator for metric %s failed: %s", metric.name, e
             )
-            return float("nan")
+            return float("nan"), f"{type(e).__name__}: {e}"
 
     def evaluate(
         self,
@@ -309,7 +358,15 @@ class BatchEvaluator:
             A pandas DataFrame with one row per input row. The original columns
             are preserved, and for each metric ``M`` three columns are added:
             ``M`` (the score), ``M_explanation`` (metadata/reasons), and
-            ``M_latency`` (evaluation time in seconds).
+            ``M_latency`` (evaluation time in seconds). If multiple metrics
+            share a name, the first keeps the bare name and subsequent ones
+            are suffixed ``_1``, ``_2``, and so on.
+
+        Note:
+            The results exist only in the returned DataFrame; nothing is
+            written to the event table or dashboard. Use
+            [Run][trulens.core.run.Run] with `mode=Mode.LOG_INGESTION` to
+            persist evaluations of pre-collected data.
         """
         rows = self._normalize_rows(data, column_map=column_map)
         metric_names = self._unique_metric_names()

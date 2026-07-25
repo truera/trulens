@@ -71,6 +71,21 @@ def test_dataset_column_rejects_span_fields():
         Selector(dataset_column="q", span_attribute="something")
 
 
+def test_describes_same_spans_compares_dataset_column():
+    # Different columns must not compare as describing the same source.
+    assert not Selector.from_column("query").describes_same_spans(
+        Selector.from_column("answer")
+    )
+    # Same column does.
+    assert Selector.from_column("query").describes_same_spans(
+        Selector.from_column("query")
+    )
+    # A dataset selector never matches a span selector.
+    assert not Selector.from_column("query").describes_same_spans(
+        Selector.select_record_input()
+    )
+
+
 # --- BatchEvaluator construction / validation ---------------------------------
 
 
@@ -280,3 +295,66 @@ def test_empty_dataset_returns_empty_frame():
     res = ev.evaluate([])
     assert len(res) == 0
     assert "overlap" in res.columns
+
+
+# --- metric return contract / aggregation failures ----------------------------
+
+
+def bad_tuple_metric(text: str):
+    """Return a malformed 3-tuple instead of (value, metadata)."""
+    return 1.0, {"reason": "ok"}, "extra"
+
+
+def dict_score_metric(context: str):
+    """Return a dict score; cannot be averaged by the default aggregator."""
+    return {"quality": 1.0}
+
+
+def raising_agg(scores):
+    """Aggregator that always fails."""
+    raise ValueError("boom")
+
+
+def test_malformed_tuple_raises_type_error():
+    metric = Metric(
+        name="bad_tuple",
+        implementation=bad_tuple_metric,
+        selectors={"text": Selector.from_column("t")},
+    )
+    ev = BatchEvaluator(metrics=[metric], max_workers=1)
+    with pytest.raises(TypeError, match="tuple of length 3"):
+        ev.evaluate([{"t": "hello"}])
+
+
+def test_default_agg_failure_raises():
+    # Two dict scores (collect_list=False over a 2-item list) cannot be
+    # combined by numpy.mean -> should fail loudly, not yield a silent NaN.
+    metric = Metric(
+        name="dict_scores",
+        implementation=dict_score_metric,
+        selectors={
+            "context": Selector.from_column("contexts", collect_list=False)
+        },
+    )
+    ev = BatchEvaluator(metrics=[metric], max_workers=1)
+    with pytest.raises(TypeError, match="Cannot aggregate"):
+        ev.evaluate([{"contexts": ["a", "b"]}])
+
+
+def test_custom_agg_failure_yields_nan_with_error_in_explanation():
+    metric = Metric(
+        name="ctx",
+        implementation=contains_answer,
+        selectors={
+            "context": Selector.from_column("contexts", collect_list=False),
+            "answer": Selector.from_column("answer"),
+        },
+        agg=raising_agg,
+    )
+    ev = BatchEvaluator(metrics=[metric], max_workers=1)
+    res = ev.evaluate([{"contexts": ["paris", "berlin"], "answer": "paris"}])
+    assert pd.isna(res["ctx"].iloc[0])
+    explanation = res["ctx_explanation"].iloc[0]
+    assert "ValueError: boom" in explanation["error"]
+    # The raw per-item scores remain inspectable despite the failure.
+    assert explanation["scores"] == [1.0, 0.0]

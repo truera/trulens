@@ -579,7 +579,10 @@ class Selector:
         This is used for batch/offline evaluation with
         [BatchEvaluator][trulens.core.batch.BatchEvaluator], where metrics are
         run over a pre-collected dataset (a pandas DataFrame or a list of dicts)
-        instead of over spans produced by a live app.
+        instead of over spans produced by a live app. Batch results are
+        returned in-memory only and are not persisted to the dashboard; for
+        dashboard-visible evaluation of pre-collected data, use
+        [Run][trulens.core.run.Run] with `mode=Mode.LOG_INGESTION`.
 
         Args:
             column_name: The name of the dataset column to read the value from.
@@ -614,6 +617,7 @@ class Selector:
             and self.span_type == other.span_type
             and self.match_only_if_no_ancestor_matched
             == other.match_only_if_no_ancestor_matched
+            and self.dataset_column == other.dataset_column
         )
 
     @staticmethod
