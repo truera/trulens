@@ -4,6 +4,7 @@ from abc import ABC
 from abc import abstractmethod
 from concurrent import futures
 import datetime
+import json
 import logging
 import queue
 from threading import Thread
@@ -28,6 +29,7 @@ from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
+from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
@@ -486,6 +488,37 @@ class DBConnector(ABC, text_utils.WithIdentString):
             record_ids=record_ids,
             start_time=start_time,
         )
+
+    def get_events_for_client_metrics(
+        self,
+        app_name: Optional[str] = None,
+        app_version: Optional[str] = None,
+        run_name: Optional[str] = None,
+    ) -> pd.DataFrame:
+        """Get events used by Run API client-side metric computation.
+
+        Default OSS connectors store OTel events in the local database. They do
+        not need a connector-specific retrieval path, but Run API metric
+        computation passes a ``run_name`` so it can scope metrics to one run.
+        Fetch by app identity, then filter by the run attribute when present.
+        """
+
+        events = self.get_events(app_name=app_name, app_version=app_version)
+        if events.empty or run_name is None:
+            return events
+
+        def row_matches_run(row: pd.Series) -> bool:
+            record_attributes = row.get("record_attributes", {})
+            if isinstance(record_attributes, str):
+                try:
+                    record_attributes = json.loads(record_attributes)
+                except json.JSONDecodeError:
+                    return False
+            if not isinstance(record_attributes, dict):
+                return False
+            return record_attributes.get(SpanAttributes.RUN_NAME) == run_name
+
+        return events[events.apply(row_matches_run, axis=1)]
 
     def augment_app(self, app: Any, **kwargs: Any) -> None:
         """Hook called from [App.__init__][trulens.core.app.App.__init__]
