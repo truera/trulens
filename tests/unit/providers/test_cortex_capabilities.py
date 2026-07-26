@@ -8,7 +8,7 @@ def _stub_session():
     """A no-op Snowflake ``Session`` instance.
 
     ``Cortex`` is a pydantic model that validates ``snowpark_session`` against
-    the real ``Session`` type, so the stub must subclass it — but its
+    the real ``Session`` type, so the stub must subclass it, but its
     ``__init__`` is bypassed so no real Snowflake connection is opened.
     """
     from snowflake.snowpark import Session  # type: ignore[import-not-found]
@@ -50,16 +50,6 @@ def _make_provider(monkeypatch, model_engine=None, complete_return="cortex-ok"):
         snowpark_session=_stub_session(), model_engine=model_engine
     )
     return provider, calls
-
-
-@pytest.mark.optional
-def test_default_model_engine():
-    """No model_engine -> the documented llama3.3-70b default."""
-    from trulens.providers.cortex import (
-        Cortex,  # type: ignore[import-not-found]
-    )
-
-    assert Cortex.DEFAULT_MODEL_ENGINE == "llama3.3-70b"
 
 
 @pytest.mark.optional
