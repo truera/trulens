@@ -2,7 +2,7 @@ import argparse
 import json
 import os
 import sys
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Set, Union
 
 import pandas as pd
 import sqlalchemy as sa
