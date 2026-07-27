@@ -393,7 +393,9 @@ class instrument:
             span_end_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
             func_name_for_call = _func_name_for_instance(instance)
             with create_function_call_context_manager(
-                self.create_new_span, func_name_for_call
+                self.create_new_span,
+                func_name_for_call,
+                span_type=self.span_type,
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
@@ -439,7 +441,9 @@ class instrument:
             span_end_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
             func_name_for_call = _func_name_for_instance(instance)
             with create_function_call_context_manager(
-                self.create_new_span, func_name_for_call
+                self.create_new_span,
+                func_name_for_call,
+                span_type=self.span_type,
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
@@ -498,7 +502,9 @@ class instrument:
             span_end_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
             func_name_for_call = _func_name_for_instance(instance)
             with create_function_call_context_manager(
-                self.create_new_span, func_name_for_call
+                self.create_new_span,
+                func_name_for_call,
+                span_type=self.span_type,
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
