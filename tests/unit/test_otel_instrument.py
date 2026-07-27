@@ -12,6 +12,7 @@ from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
+from opentelemetry.trace import SpanKind
 import pandas as pd
 from trulens.core.otel.instrument import get_func_name
 from trulens.core.otel.instrument import instrument
@@ -367,3 +368,53 @@ class TestOtelInstrument(unittest.TestCase):
         self.assertEqual(result, "TRULENS")
         spans = self.exporter.get_finished_spans()
         self.assertEqual(len(spans), 1)
+
+    def test_generation_span_has_client_span_kind(self) -> None:
+        """GENERATION spans should have SpanKind.CLIENT (outbound LLM calls)."""
+
+        @instrument(span_type=SpanAttributes.SpanType.GENERATION)
+        def call_llm(prompt: str) -> str:
+            return "response"
+
+        call_llm("hello")
+
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(spans[0].kind, SpanKind.CLIENT)
+
+    def test_non_generation_span_has_internal_span_kind(self) -> None:
+        """Non-GENERATION spans should have SpanKind.INTERNAL."""
+
+        @instrument(span_type=SpanAttributes.SpanType.RETRIEVAL)
+        def retrieve(query: str) -> list:
+            return ["doc1"]
+
+        @instrument()
+        def plain_func() -> str:
+            return "ok"
+
+        retrieve("test")
+        plain_func()
+
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 2)
+        self.assertEqual(spans[0].kind, SpanKind.INTERNAL)
+        self.assertEqual(spans[1].kind, SpanKind.INTERNAL)
+
+    def test_generation_span_exports_as_client_kind_in_proto(self) -> None:
+        """A GENERATION span should convert to SPAN_KIND_CLIENT in proto."""
+        from opentelemetry.proto.trace.v1.trace_pb2 import Span as SpanProto
+        from trulens.experimental.otel_tracing.core.exporter.utils import (
+            convert_readable_span_to_proto,
+        )
+
+        @instrument(span_type=SpanAttributes.SpanType.GENERATION)
+        def call_llm(prompt: str) -> str:
+            return "response"
+
+        call_llm("hello")
+
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        proto = convert_readable_span_to_proto(spans[0])
+        self.assertEqual(proto.kind, SpanProto.SpanKind.SPAN_KIND_CLIENT)

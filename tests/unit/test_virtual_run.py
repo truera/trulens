@@ -147,6 +147,87 @@ class TestVirtualRunMethods(OtelTestCase):
         # Verify OtelRecordingContext was called
         self.assertTrue(mock_otel_context.called)
 
+    def test_virtual_generation_span_has_client_kind(self):
+        """Virtual generation spans should get SpanKind.CLIENT, not INTERNAL."""
+        from opentelemetry.trace import SpanKind
+
+        mock_app = MagicMock()
+        mock_app.app = None
+        mock_app.app_name = "test_gen_kind"
+        mock_app.app_version = "1.0"
+
+        run = Run(
+            run_dao=MagicMock(spec=RunDaoBase),
+            app=mock_app,
+            main_method_name="virtual_main",
+            tru_session=MagicMock(),
+            object_name="TEST_APP",
+            object_type="EXTERNAL AGENT",
+            object_version="1.0",
+            run_name="test_gen_kind_run",
+            run_metadata=Run.RunMetadata(),
+            source_info=Run.SourceInfo(
+                name="TEST_TABLE",
+                column_spec={
+                    "record_root.input": "QUERY",
+                    "record_root.output": "OUTPUT",
+                    "generation.model": "MODEL",
+                },
+                source_type="TABLE",
+            ),
+        )
+
+        # Set up an InMemorySpanExporter to capture the actual spans.
+        from opentelemetry import trace
+        from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+        from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
+            InMemorySpanExporter,
+        )
+
+        exporter = InMemorySpanExporter()
+        provider = trace.get_tracer_provider()
+        processor = SimpleSpanProcessor(exporter)
+        provider.add_span_processor(processor)
+
+        try:
+            row = pd.Series({
+                "QUERY": "What is AI?",
+                "OUTPUT": "AI is...",
+                "MODEL": "gpt-4",
+            })
+            dataset_spec = {
+                "record_root.input": "QUERY",
+                "record_root.output": "OUTPUT",
+                "generation.model": "MODEL",
+            }
+
+            # Create spans within a real recording context so baggage is set.
+            from opentelemetry.baggage import set_baggage
+            import opentelemetry.context as context_api
+            from trulens.core.otel.recording import Recording
+
+            token = context_api.attach(
+                set_baggage("__trulens_recording__", Recording(None))
+            )
+            try:
+                run._create_nested_spans_from_dataset_spec(dataset_spec, row)
+            finally:
+                context_api.detach(token)
+
+            spans = exporter.get_finished_spans()
+            generation_spans = [
+                s for s in spans if "generation_virtual" in s.name
+            ]
+            self.assertEqual(len(generation_spans), 1)
+            self.assertEqual(generation_spans[0].kind, SpanKind.CLIENT)
+
+            # The record root should still be INTERNAL.
+            root_spans = [s for s in spans if "virtual_record" in s.name]
+            self.assertEqual(len(root_spans), 1)
+            self.assertEqual(root_spans[0].kind, SpanKind.INTERNAL)
+        finally:
+            processor.shutdown()
+
     def test_should_process_as_array(self):
         """Test array attribute detection by constant"""
         mock_app = MagicMock()
