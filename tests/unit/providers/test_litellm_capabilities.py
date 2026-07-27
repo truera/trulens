@@ -109,7 +109,10 @@ def test_temperature_success_and_cached(monkeypatch):
 
 @pytest.mark.optional
 def test_reasoning_effort_fallback_and_cached(monkeypatch):
-    provider, dummy = _make_provider(monkeypatch, model_engine="o1-mini")
+    # Use an explicit LiteLLM provider prefix so model routing does not
+    # require a real provider lookup ("o1-mini" alone raises
+    # "LLM Provider NOT provided" in newer litellm versions).
+    provider, dummy = _make_provider(monkeypatch, model_engine="openai/o1-mini")
     dummy.fail_on = {"reasoning_effort": True}
 
     out = provider._create_chat_completion(
@@ -128,7 +131,8 @@ def test_reasoning_effort_fallback_and_cached(monkeypatch):
 
 @pytest.mark.optional
 def test_reasoning_effort_success_and_cached(monkeypatch):
-    provider, dummy = _make_provider(monkeypatch, model_engine="o1-mini")
+    # Explicit provider prefix; see note in the fallback test above.
+    provider, dummy = _make_provider(monkeypatch, model_engine="openai/o1-mini")
 
     out = provider._create_chat_completion(
         messages=[{"role": "user", "content": "hi"}], reasoning_effort="high"

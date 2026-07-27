@@ -298,7 +298,7 @@ test-unit:
 		echo "Attempting to run anyway (expect failures)..."; \
 		$(PYTEST) tests/unit/test_otel*.py; \
 	fi
-	$(PYTEST) $(shell ls tests/unit/test_*.py | grep -v test_otel)
+	$(PYTEST) $(shell ls tests/unit/test_*.py tests/unit/providers/test_*.py | grep -v test_otel)
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
 test-e2e:

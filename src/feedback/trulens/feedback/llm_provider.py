@@ -3362,6 +3362,10 @@ class LLMProvider(core_provider.Provider):
                     min_score_val=0,
                     max_score_val=1,
                 )
+                # generate_score returns (score, reason) when the judge
+                # responds with structured JSON; compare on the score alone.
+                if isinstance(score, tuple):
+                    score = score[0]
             except Exception:
                 score = 0  # assume not abstention if abstention scoring fails
             return score
@@ -3378,6 +3382,10 @@ class LLMProvider(core_provider.Provider):
                 min_score_val=0,
                 max_score_val=1,
             )
+            # generate_score returns (score, reason) when the judge
+            # responds with structured JSON; compare on the score alone.
+            if isinstance(score, tuple):
+                score = score[0]
             return score
 
         if filter_trivial_statements:
