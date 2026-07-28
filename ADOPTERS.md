@@ -1,0 +1,58 @@
+# TruLens adopters
+
+Provenance for the logo wall on [trulens.org](https://www.trulens.org). Every mark
+on that wall has a row here.
+
+The wall links out only for companies that published something worth reading. The
+rest gave us their evidence in a GitHub issue or pull request, which is genuine
+proof of use but is not a testimonial, so it lives here instead of being linked
+from the homepage. Sending a visitor from a logo into somebody's bug report serves
+nobody.
+
+Listed here and would rather not be? Open an issue and we'll remove the mark.
+
+## Published references
+
+Linked from the homepage, with a cue that there is something to read.
+
+| Company | GitHub handle | Evidence | Date | What they said or did |
+|---|---|---|---|---|
+| Thomson Reuters | — | [published](https://www.thomsonreuters.com/en-us/posts/innovation/inside-the-transformation-how-thomson-reuters-is-becoming-a-tech-company-from-the-inside-out/) | undated | Engineering post on becoming a tech company: their Cortex + Claude work is “observable with tools like TruLens”. |
+| Walmart Global Tech | — | [published](https://medium.com/walmartglobaltech/deploying-rags-in-production-part-2-ae36f723c0c7) | 2024-07-04 | “Deploying RAGs in production — Part 2” validates a production store-survey RAG with the TruLens RAG triad. By Chinmay Jain and Osheen Nayak. |
+| phData | — | [published](https://www.phdata.io/blog/ship-snowflake-cortex-agents-faster-a-skills-first-workflow-with-cortex-code-trulens/) | 2026-06-06 | Snowflake Elite Services Partner. Their Cortex Agents accelerator is “powered by TruLens, an OpenTelemetry-native LLM evaluation and tracing framework”, with 17 custom metrics and a golden-set eval loop. By Omar Abid. |
+| SOA Research Institute | — | [published](https://www.soa.org/globalassets/assets/files/resources/research-report/2025/ai-investment-retirement-risks.pdf) | 2025 | Published research report on AI investment and retirement risks; TruLens cited six times. |
+
+## Community-reported usage
+
+Not linked from the homepage. The evidence is the engineer's own account in a
+GitHub issue or pull request.
+
+| Company | GitHub handle | Evidence | Date | What they said or did |
+|---|---|---|---|---|
+| Cisco | @arkacisco | [issue #856](https://github.com/truera/trulens/issues/856) | 2024-02-05 | “We have sucessfully implemented RAG chains” — LangChain feedback functions. |
+| J.P. Morgan Chase | @jordan-carson | [issue #1163](https://github.com/truera/trulens/issues/1163) | 2024-05-28 | Lead NLP/AI engineer; custom AzureOpenAI scorer. |
+| VMware by Broadcom | @vecorro | [issue #821](https://github.com/truera/trulens/issues/821) | 2024-01-24 | “We’d like to include TruLens as the evaluation framework” — LiteLLM proxy, open-source judges. |
+| Hitachi Digital Services | @mahesh-hv-appmod | [issue #1101](https://github.com/truera/trulens/issues/1101) | 2024-04-25 | TruChain groundedness on their own chain, Bedrock judge. |
+| OPCW | @unnieayilliath | [issue #2292](https://github.com/truera/trulens/issues/2292) | 2025-11-18 | Groundedness on a VirtualApp; migrating 2.5.0 to the OTEL tracing path. |
+| HID Global | @jorisrombouts | [issue #2301](https://github.com/truera/trulens/issues/2301) | 2025-12-04 | LLMOps pipeline for Snowflake Cortex Agents via TruApp. |
+| Vaillant | @LOFWagner | [issue #1172](https://github.com/truera/trulens/issues/1172) | 2024-06-04 | Custom Azure AI Search retriever instrumentation. |
+| Soliton Technologies | @Nanthagopal-Eswaran | [PR #1147](https://github.com/truera/trulens/pull/1147) | 2024-05-21 | “We have been internally using this tool” — contributed a dashboard launcher PR. |
+| BGO | @zhongshuai-cao | [issue #1422](https://github.com/truera/trulens/issues/1422) | 2024-08-29 | “I am using Azure OpenAI… and using Llama_index RAG”. |
+| Leap Scholar | @nileshteji | [issue #1987](https://github.com/truera/trulens/issues/1987) | 2025-05-19 | “Eval system for our inhouse rag system”. |
+| Inverso GmbH | @jhrinv | [issue #2366](https://github.com/truera/trulens/issues/2366) | 2026-02-26 | “We want to evaluate the TruLens dashboard on SiS” — Streamlit in Snowflake. |
+| Winjit | @poojatambe | [issue #1300](https://github.com/truera/trulens/issues/1300) | 2024-07-22 | “Implemented a hybrid retriever RAG with feedback functions”. |
+| ONTEC AG | @molntamas | [issue #399](https://github.com/truera/trulens/issues/399) | 2023-08-24 | “Integrate trulens eval in our setup”. |
+
+## Carried over, provenance unverified
+
+These marks predate this ledger and have no evidence link. They need provenance or
+removal -- except Snowflake, which maintains TruLens and needs no citation.
+
+| Company | GitHub handle | Evidence | Date | What they said or did |
+|---|---|---|---|---|
+| Snowflake | — | — | — | Carried over from the existing homepage. TruLens is maintained by Snowflake. |
+| Equinix | — | — | — | Carried over from the existing homepage; provenance not verified. |
+| KBC | — | — | — | Carried over from the existing homepage; provenance not verified. |
+| tribble.ai | — | — | — | Carried over from the existing homepage; provenance not verified. |
+| CubeServ | — | — | — | Carried over from the existing homepage; provenance not verified. |
+| Datec | — | — | — | Carried over from the existing homepage; provenance not verified. |
