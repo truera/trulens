@@ -211,7 +211,9 @@ class CrossModelAlignmentReport:
             lines.append("No interchangeable judges or outliers detected.")
         print("\n".join(lines))
 
-    def plot_heatmap(self):  # pragma: no cover - needs matplotlib and a display
+    def plot_heatmap(
+        self,
+    ) -> Any:  # pragma: no cover - needs matplotlib and a display
         """Plot the pairwise Spearman matrix as a heatmap.
 
         Returns:

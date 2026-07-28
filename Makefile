@@ -162,19 +162,12 @@ docs-upload: clean env-docs $(shell find docs -type f) mkdocs.yml
 docs-linkcheck: site
 	lychee --offline --no-progress "site/**/*.html"
 
-# Check documentation for broken internal links using properdocs --strict.
-# Does not require lychee; fails if any warnings beyond the pre-existing
-# README.md/index.md conflict are found.
+# Check documentation for broken internal links and other build warnings using
+# properdocs --strict. Does not require lychee. The build is warning-clean, so
+# any new warning (broken link, unresolved cross-reference, missing annotation)
+# fails this target.
 docs-linkcheck-strict: env-docs
-	@OUTPUT=$$(poetry run properdocs build --clean --strict 2>&1); \
-	echo "$$OUTPUT"; \
-  BROKEN=$$(echo "$$OUTPUT" | grep "WARNING -" | grep -v "README.md" | grep -v "griffe:"); \
-	if [ -n "$$BROKEN" ]; then \
-	  echo ""; \
-	  echo "Broken links / documentation warnings found:"; \
-	  echo "$$BROKEN"; \
-	  exit 1; \
-	fi
+	poetry run properdocs build --clean --strict
 
 # Start the trubot slack app.
 trubot:
