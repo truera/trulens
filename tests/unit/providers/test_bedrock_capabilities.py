@@ -52,6 +52,12 @@ def _make_provider(model_id: str, response_payload: Dict[str, Any]):
 _FAMILY_CASES = [
     (
         "amazon.nova-lite-v1:0",
+        {"output": {"message": {"content": [{"text": "nova-ok"}]}}},
+        "nova-ok",
+        "messages",
+    ),
+    (
+        "amazon.titan-text-express-v1",
         {"results": [{"outputText": "amazon-ok"}]},
         "amazon-ok",
         "inputText",
@@ -179,7 +185,7 @@ def test_requires_messages_or_prompt():
 def test_messages_are_concatenated_into_input_text():
     """Multiple messages are flattened to a single 'role: content' string."""
     provider = _make_provider(
-        "amazon.nova-lite-v1:0", {"results": [{"outputText": "ok"}]}
+        "amazon.titan-text-express-v1", {"results": [{"outputText": "ok"}]}
     )
     provider._create_chat_completion(
         messages=[
