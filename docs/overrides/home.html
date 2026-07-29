@@ -559,70 +559,9 @@ app = <span class="f">TruLlama</span>(
         <div class="d">AIMultiple &middot; context relevance NDCG@5</div>
         <div class="s">Best of five judges ranked by an independent benchmark, ahead of
           DeepEval (0.923) and Weave (0.910), and the widest golden-vs-clone margin tested.
-          <a href="https://aimultiple.com/rag-evaluation-tools">AIMultiple &#8599;</a></div>
+          <a href="https://aimultiple.com/rag-evaluation-tools">AIMultiple, 23 March 2026 &#8599;</a></div>
       </div>
     </div>
-  </div>
-
-  <!-- The one third-party head-to-head worth showing in full: same judge model,
-       default configs, five tools, run by someone with no stake in the result.
-       All five rows are here on purpose -- WandB wins the Top-1 column, and
-       hiding that would make the other two columns worth less. -->
-  <div class="wrap indent">
-    <span class="eyebrow" style="margin-top:3.5rem;display:block">Independent benchmark &middot; context relevance</span>
-    <p class="lede" style="max-width:60ch;margin-top:.75rem">
-      One judge model for everyone (GPT-4o), default configuration, no custom prompts:
-      1,010 multi-hop and general-knowledge questions, five contexts each, graded from a
-      paraphrased golden passage down to an entity-swapped clone carrying the wrong fact.
-    </p>
-    <div class="btab reveal">
-      <table>
-        <thead>
-          <tr>
-            <th>Context relevance judge</th>
-            <th class="r">Ranking (NDCG@5)</th>
-            <th class="r">Golden vs. clone</th>
-            <th class="r">Top-1 accuracy</th>
-            <th class="r opt">Score on golden context</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr class="me">
-            <td class="name">TruLens</td>
-            <td class="r">0.932</td><td class="r">4.2:1</td><td class="r">91.2%</td>
-            <td class="r opt">0.904</td>
-          </tr>
-          <tr>
-            <td class="name">Ragas</td>
-            <td class="r">&mdash;</td><td class="r">2.9:1</td><td class="r">88.8%</td>
-            <td class="r opt">0.905</td>
-          </tr>
-          <tr>
-            <td class="name">DeepEval</td>
-            <td class="r">0.923</td><td class="r">2.6:1</td><td class="r">78.1%</td>
-            <td class="r opt">0.457</td>
-          </tr>
-          <tr>
-            <td class="name">Weights &amp; Biases Weave</td>
-            <td class="r">0.910</td><td class="r">3.3:1</td><td class="r">94.5%</td>
-            <td class="r opt">0.893</td>
-          </tr>
-          <tr>
-            <td class="name">UpTrain</td>
-            <td class="r">&mdash;</td><td class="r">1.4:1</td><td class="r">83.8%</td>
-            <td class="r opt">0.820</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="bnote">
-      TruLens also led on Spearman &rho; (0.750). DeepEval ranks competitively but scores the
-      golden context at 0.46, which makes it unreliable for picking the single best passage.
-      Weave leads Top-1 on a binary scale that ties 80% of the time; AIMultiple's own
-      recommendation for ranking contexts by relevance is TruLens or Ragas. Ragas and UpTrain
-      NDCG@5 were not published as figures.
-      <a href="https://aimultiple.com/rag-evaluation-tools">AIMultiple, 23 March 2026 &#8599;</a>
-    </p>
   </div>
 </section>
 

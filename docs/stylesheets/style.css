@@ -353,7 +353,7 @@ h4{font-size:1.125rem;font-weight:600;margin-bottom:.35rem}
   .intg-grid img{height:26px}
 }
 
-/* benchmarked judges: three stat cards over one independent comparison */
+/* benchmarked judges: three stat cards */
 .bstats{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:2.5rem}
 .bstat{background:rgba(3,74,97,.07);padding:1.5rem;transition:border-radius .2s ease}
 .bstat:hover{border-radius:18px}
@@ -362,24 +362,8 @@ h4{font-size:1.125rem;font-weight:600;margin-bottom:.35rem}
   letter-spacing:.1em;opacity:.65;margin-top:.7rem}
 .bstat .s{margin-top:.6rem;font-size:.875rem;line-height:1.45;color:var(--text);opacity:.8}
 .bstat .s a{color:var(--ink);font-weight:600;white-space:nowrap}
-/* the independent benchmark sits on a light band, so it can't borrow the dark
-   dashboard table styles */
-.btab{margin-top:1.5rem}
-.btab table{width:100%;border-collapse:collapse}
-.btab th{font-family:var(--mono);font-size:.625rem;text-transform:uppercase;
-  letter-spacing:.1em;font-weight:400;text-align:left;opacity:.6;padding:.6rem .8rem;
-  border-bottom:1px solid rgba(3,74,97,.2)}
-.btab td{padding:.65rem .8rem;font-family:var(--mono);font-size:.875rem;
-  border-bottom:1px solid rgba(3,74,97,.1)}
-.btab .name{font-family:var(--body);font-size:.9375rem}
-.btab .r{text-align:right;font-variant-numeric:tabular-nums}
-.btab tr.me td{background:rgba(3,74,97,.07);font-weight:600}
-.bnote{font-family:var(--mono);font-size:.6875rem;line-height:1.7;opacity:.6;margin-top:1rem}
-.bnote a{color:var(--ink)}
 @media(max-width:1100px){.bstats{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:860px){.bstats{grid-template-columns:1fr}}
-/* the mean-score column is the least load-bearing, so it goes first when narrow */
-@media(max-width:700px){.btab .opt{display:none}}
 
 /* nav */
 .nav{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 2rem;max-width:var(--maxw);margin:0 auto}
