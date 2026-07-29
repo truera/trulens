@@ -46,22 +46,17 @@ GitHub issue or pull request.
 | Winjit | @poojatambe | [issue #1300](https://github.com/truera/trulens/issues/1300) | 2024-07-22 | “Implemented a hybrid retriever RAG with feedback functions”. |
 | ONTEC AG | @molntamas | [issue #399](https://github.com/truera/trulens/issues/399) | 2023-08-24 | “Integrate trulens eval in our setup”. |
 
-## Carried over, provenance unverified
-
-Snowflake maintains TruLens and needs no citation.
-
-| Company | GitHub handle | Evidence | Date | What they said or did |
-|---|---|---|---|---|
-| Snowflake | — | — | — | Carried over from the existing homepage. TruLens is maintained by Snowflake. |
-
 ## Removed from the wall
 
-These marks were on the previous homepage with no evidence link. Nobody could find
-provenance for them, so they were dropped rather than left unsourced. If evidence
-turns up, they can go back.
+Three marks were on the previous homepage with no evidence link and no provenance
+anyone could find, so they were dropped rather than left unsourced. If evidence
+turns up, they can go back. Snowflake came off for a different reason: it
+maintains TruLens, so it belongs in the stewardship note on the homepage rather
+than in a list of third parties who chose the project.
 
 | Company | Removed | Reason |
 |---|---|---|
 | tribble.ai | 2026-07-29 | No evidence of TruLens use found. |
 | CubeServ | 2026-07-29 | No evidence of TruLens use found. |
 | Datec | 2026-07-29 | No evidence of TruLens use found. |
+| Snowflake | 2026-07-29 | Maintains TruLens; not an independent adopter. |
