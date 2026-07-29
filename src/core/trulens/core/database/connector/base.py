@@ -521,7 +521,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
         return events[events.apply(row_matches_run, axis=1)]
 
     def augment_app(self, app: Any, **kwargs: Any) -> None:
-        """Hook called from [App.__init__][trulens.core.app.App.__init__]
+        """Hook called from [App][trulens.core.app.App] construction
         after the App is constructed. Connectors may override this to
         contribute connector-specific state (e.g. DAOs or external object
         identifiers) to the App. Default is a no-op."""
