@@ -112,6 +112,37 @@
         </svg>
       </div>
     </div>
+
+    <!-- Live project stats. The old homepage carried shields.io badges here; the
+         information was worth keeping but the imagery is somebody else's design
+         system. So the values are still live -- every shields badge exposes a
+         .json sibling that sends Access-Control-Allow-Origin:*, and shields
+         already does the work of authenticating against Azure DevOps and
+         aggregating pypistats, neither of which serves CORS headers directly --
+         but they are fetched and drawn in our own chrome. The values baked into
+         the HTML below are the fallback when the fetch is blocked or slow. -->
+    <div class="statstrip">
+      <a class="stat" href="https://pypi.org/project/trulens/">
+        <span class="k">Version</span>
+        <span class="v" data-badge="pypi/v/trulens" data-ok="^v[0-9]+(\.[0-9]+)+$">v2.10.0</span>
+      </a>
+      <a class="stat" href="https://dev.azure.com/truera/trulens/_build/latest?definitionId=8&amp;branchName=main">
+        <span class="k">E2E tests</span>
+        <span class="v" data-badge="azure-devops/build/truera/trulens/8/main" data-dot="passing" data-ok="^(passing|failing)$">passing<i class="dot"></i></span>
+      </a>
+      <a class="stat" href="https://github.com/truera/trulens/stargazers">
+        <span class="k">Stars</span>
+        <span class="v" data-badge="github/stars/truera/trulens" data-ok="^[0-9.]+[kM]?$">3.5k</span>
+      </a>
+      <a class="stat" href="https://pypi.org/project/trulens-core/">
+        <span class="k">Downloads</span>
+        <span class="v" data-badge="pypi/dm/trulens-core" data-ok="^[0-9.]+[kM]?/month$">104k/month</span>
+      </a>
+      <a class="stat" href="https://github.com/truera/trulens/blob/main/LICENSE">
+        <span class="k">License</span>
+        <span class="v" data-badge="github/license/truera/trulens" data-ok="^[A-Za-z0-9.+-]{1,14}$">MIT</span>
+      </a>
+    </div>
   </div>
 </section>
 
@@ -697,6 +728,28 @@ app = <span class="f">TruLlama</span>(
 </footer>
 
 <script>
+// live project stats. Each value is read from the shields.io .json sibling of
+// the badge the old homepage rendered, so the number is current without the
+// page carrying anybody else's badge art. shields answers 200 with prose in the
+// value when its own upstream fails -- "rate limited by upstream service" turned
+// up on the first run -- so each value has to match the shape it is supposed to
+// be before it is allowed on the page. Anything else leaves the number baked
+// into the markup, which is why nothing here clears text first.
+document.querySelectorAll('.statstrip .v[data-badge]').forEach(function(el){
+  fetch('https://img.shields.io/' + el.dataset.badge + '.json', {cache:'no-store'})
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(j){
+      if(!j || !j.value || !new RegExp(el.dataset.ok).test(j.value)) return;
+      var dot = el.querySelector('.dot');
+      el.textContent = j.value;
+      if(dot){
+        dot.className = 'dot' + (j.value === el.dataset.dot ? '' : ' dot--bad');
+        el.appendChild(dot);
+      }
+    })
+    .catch(function(){ /* keep the baked-in fallback */ });
+});
+
 // scroll reveal
 var io = new IntersectionObserver(function(es){
   es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });

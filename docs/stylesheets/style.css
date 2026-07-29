@@ -100,6 +100,32 @@ h4{font-size:1.125rem;font-weight:600;margin-bottom:.35rem}
   border-bottom:1px solid rgba(3,74,97,.3)}
 .tlink:hover{border-bottom-color:var(--ink)}
 
+/* ---------- live project stats, foot of the hero ---------- */
+/* An instrument panel, not five more buttons: mono label over mono value,
+   divided by the same hairline the page uses for card rules, so the strip
+   settles under the CTA row instead of competing with it. */
+.statstrip{display:flex;flex-wrap:wrap;margin-top:3.25rem;padding-top:1.15rem;
+  border-top:1px solid rgba(3,74,97,.14)}
+.statstrip .stat{display:block;text-decoration:none;color:inherit;
+  padding:0 1.75rem;border-left:1px solid rgba(3,74,97,.14)}
+.statstrip .stat:first-child{padding-left:0;border-left:0}
+.statstrip .k{display:block;font-family:var(--mono);font-size:.5625rem;
+  text-transform:uppercase;letter-spacing:.14em;color:var(--text);opacity:.78}
+.statstrip .v{display:block;font-family:var(--mono);font-size:.9375rem;
+  margin-top:.35rem;color:var(--ink);white-space:nowrap;
+  border-bottom:1px solid transparent}
+.statstrip .stat:hover .v{border-bottom-color:rgba(3,74,97,.35)}
+/* build state reads as a signal light: aqua for green, rose for anything else */
+.statstrip .dot{display:inline-block;width:7px;height:7px;border-radius:50%;
+  margin-left:.5rem;vertical-align:.09em;background:var(--aqua);
+  box-shadow:0 0 0 3px rgba(132,220,215,.3)}
+.statstrip .dot--bad{background:var(--rose);box-shadow:0 0 0 3px rgba(101,29,49,.16)}
+@media(max-width:700px){
+  /* borders can't divide a wrapped row cleanly, so below tablet it becomes a grid */
+  .statstrip{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.15rem 1rem}
+  .statstrip .stat,.statstrip .stat:first-child{padding:0;border-left:0}
+}
+
 /* ---------- layout helpers ---------- */
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:3rem}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem}
