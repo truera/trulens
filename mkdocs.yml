@@ -272,6 +272,7 @@ nav:
         - Running Metrics:
             - Running with your app: component_guides/evaluation/running_feedback_functions/with_app.md
             - Running on existing data: component_guides/evaluation/running_feedback_functions/existing_data.md
+            - Batch evaluation with runs: component_guides/evaluation/batch_evaluation.md
         - Generating Test Cases:
             - component_guides/evaluation/generate_test_cases.md
         - Golden Set Generation: component_guides/evaluation/golden_set_generator.md

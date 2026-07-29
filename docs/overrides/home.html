@@ -246,7 +246,7 @@
 </section>
 
 <!-- 4. SEE IT: trace waterfall -->
-<section class="band band--pale" style="padding:4rem 0">
+<section class="band band--pale" id="trace" style="padding:4rem 0">
   <div class="wrap indent" style="margin-bottom:2.5rem">
     <span class="eyebrow">See what actually happened</span>
     <h2 class="reveal">Every Span. Understood.</h2>
@@ -290,7 +290,7 @@
 
 <!-- 5. SCORE IT: feedback results -- promoted out of How it works so the three
      dashboard widgets read as one tour: see it, score it, ship it. -->
-<section class="band band--ink" style="padding:4rem 0">
+<section class="band band--ink" id="scores" style="padding:4rem 0">
   <div class="wrap indent">
     <span class="eyebrow" style="color:var(--aqua)">Scores on every step</span>
     <h2 class="reveal">Every score, explained.</h2>
@@ -363,7 +363,7 @@
 </section>
 
 <!-- 7. SHIP IT: compare / leaderboard -->
-<section class="band band--ink" style="position:relative;overflow:hidden">
+<section class="band band--ink" id="compare" style="position:relative;overflow:hidden">
   <!-- something is watching the leaderboard -->
   <svg class="eye-peek" style="right:-140px;top:8%;width:420px" viewBox="0 0 400 400" aria-hidden="true">
     <circle cx="200" cy="200" r="196" fill="rgba(255,255,255,.05)"/>
@@ -508,6 +508,64 @@ app = <span class="f">TruLlama</span>(
 
 <span class="k">with</span> app <span class="k">as</span> recording:
     query_engine.<span class="f">query</span>(<span class="s">"What changed in 2.8?"</span>)</code></pre>
+    </div>
+
+    <!-- 5 - When evals run. Continues the numbered flow above rather than opening
+         a band of its own, because it is the same explanation: the reader has just
+         seen how a metric is defined, and this is the only remaining question --
+         what triggers it. The f_* names are deliberately identical in both tabs;
+         that one metric definition serves live traffic and a dataset replay is the
+         entire point of the pane, so nothing here should imply two setups. -->
+    <div class="reveal" style="margin-top:4rem;padding-top:2.25rem;
+      border-top:1px solid rgba(132,220,215,.2)">
+      <span class="eyebrow" style="color:var(--aqua)">5 &middot; When evals run</span>
+      <h3 style="color:#fff;margin-top:.5rem">Live, or over a dataset.</h3>
+    </div>
+
+    <div class="code reveal" style="margin-top:1.75rem">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" aria-selected="true" data-tab="live">As traces land</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="dataset">Over a dataset</button>
+      </div>
+      <pre data-panel="live"><code><span class="k">from</span> trulens.apps.app <span class="k">import</span> TruApp
+
+tru_rag = <span class="f">TruApp</span>(
+    rag,
+    app_name=<span class="s">"SupportAgent"</span>,
+    app_version=<span class="s">"v3"</span>,
+    feedbacks=[f_groundedness, f_answer_relevance, f_context_relevance],
+)
+
+<span class="c"># metrics are attached once; recording a trace scores it</span>
+<span class="k">with</span> tru_rag <span class="k">as</span> recording:
+    rag.<span class="f">query</span>(<span class="s">"Which policy covers this claim?"</span>)</code></pre>
+      <pre data-panel="dataset" hidden><code><span class="k">from</span> trulens.core.run <span class="k">import</span> RunConfig
+
+run = tru_rag.<span class="f">add_run</span>(<span class="f">RunConfig</span>(
+    run_name=<span class="s">"nightly-v3"</span>,
+    dataset_name=<span class="s">"support_questions"</span>,
+    source_type=<span class="s">"DATAFRAME"</span>,
+    dataset_spec={<span class="s">"input"</span>: <span class="s">"question"</span>},
+))
+
+run.<span class="f">start</span>(input_df=questions)
+run.<span class="f">compute_metrics</span>([f_groundedness, f_answer_relevance, f_context_relevance])
+run.<span class="f">get_status</span>()  <span class="c"># RunStatus.COMPLETED</span></code></pre>
+    </div>
+
+    <p class="lede" style="color:#E9F2F1;margin-top:1.75rem">
+      Same metrics either way. Recording a trace scores it as it happens; a run
+      replays a dataset through those same metrics. Both write eval spans, and both
+      land in the <a href="#trace" style="color:var(--aqua)">trace</a>,
+      <a href="#scores" style="color:var(--aqua)">scores</a> and
+      <a href="#compare" style="color:var(--aqua)">leaderboard</a> views above.
+    </p>
+
+    <div class="btn-row" style="margin-top:2rem;align-items:center">
+      <a href="/getting_started/quickstarts/quickstart/" class="btn btn--onink">Run the quickstart</a>
+      <a href="/component_guides/evaluation/batch_evaluation/"
+        style="color:var(--aqua);font-size:.875rem;font-weight:600;text-decoration:none;
+        border-bottom:1px solid rgba(132,220,215,.4);margin-left:.5rem">Batch evaluation with runs &#8599;</a>
     </div>
   </div>
 </section>
