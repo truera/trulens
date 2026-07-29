@@ -358,7 +358,7 @@ h4{font-size:1.125rem;font-weight:600;margin-bottom:.35rem}
 }
 
 /* benchmarked judges: three stat cards */
-.bstats{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:2.5rem}
+.bstats{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;margin-top:2.5rem}
 .bstat{background:rgba(3,74,97,.07);padding:1.5rem;transition:border-radius .2s ease}
 .bstat:hover{border-radius:18px}
 .bstat .v{font-family:var(--display);font-size:2.75rem;line-height:1;color:var(--ink)}
