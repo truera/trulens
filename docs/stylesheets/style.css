@@ -83,8 +83,7 @@ h4{font-size:1.125rem;font-weight:600;margin-bottom:.35rem}
 .btn--ghost:hover{border-radius:26px;background:rgba(3,74,97,.18)}
 .btn--onink{background:var(--aqua);color:var(--ink)}
 .btn--onink:hover{border-radius:26px}
-/* stretch, not center: the install pill's smaller mono type would otherwise
-   leave it shorter than the buttons and floating off their baseline. */
+/* stretch so every control in a row is the same height regardless of type size */
 .btn-row{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:2rem;align-items:stretch}
 
 /* install pill */
@@ -96,7 +95,6 @@ h4{font-size:1.125rem;font-weight:600;margin-bottom:.35rem}
   transition:border-radius .2s ease;
 }
 .install:hover{border-radius:26px}
-.install .copy{opacity:.5;font-size:.75rem;text-transform:uppercase;letter-spacing:.1em}
 /* inline text link on a light band, for cards that name a destination */
 .tlink{color:var(--ink);font-weight:600;font-size:.875rem;text-decoration:none;
   border-bottom:1px solid rgba(3,74,97,.3)}
