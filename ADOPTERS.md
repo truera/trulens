@@ -47,12 +47,20 @@ GitHub issue or pull request.
 
 ## Carried over, provenance unverified
 
-These marks predate this ledger and have no evidence link. They need provenance or
-removal -- except Snowflake, which maintains TruLens and needs no citation.
+Snowflake maintains TruLens and needs no citation.
 
 | Company | GitHub handle | Evidence | Date | What they said or did |
 |---|---|---|---|---|
 | Snowflake | — | — | — | Carried over from the existing homepage. TruLens is maintained by Snowflake. |
-| tribble.ai | — | — | — | Carried over from the existing homepage; provenance not verified. |
-| CubeServ | — | — | — | Carried over from the existing homepage; provenance not verified. |
-| Datec | — | — | — | Carried over from the existing homepage; provenance not verified. |
+
+## Removed from the wall
+
+These marks were on the previous homepage with no evidence link. Nobody could find
+provenance for them, so they were dropped rather than left unsourced. If evidence
+turns up, they can go back.
+
+| Company | Removed | Reason |
+|---|---|---|
+| tribble.ai | 2026-07-29 | No evidence of TruLens use found. |
+| CubeServ | 2026-07-29 | No evidence of TruLens use found. |
+| Datec | 2026-07-29 | No evidence of TruLens use found. |
