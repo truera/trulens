@@ -13,7 +13,9 @@ Listed here and would rather not be? Open an issue and we'll remove the mark.
 
 ## Published references
 
-Linked from the homepage, with a cue that there is something to read.
+Linked from the homepage, with a cue naming what the source actually claims. These
+seven are spaced every third slot in the marquee so at least one is on screen at
+any scroll position on a desktop viewport.
 
 | Company | GitHub handle | Evidence | Date | What they said or did |
 |---|---|---|---|---|
