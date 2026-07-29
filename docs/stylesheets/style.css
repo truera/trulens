@@ -263,16 +263,6 @@ h4{font-size:1.125rem;font-weight:600;margin-bottom:.35rem}
 .mgroup ul{list-style:none;margin:0;padding:0}
 .mgroup li{padding:.2rem 0;font-size:1.0625rem}
 
-/* provider pills */
-.pills{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:2rem}
-.pill{
-  font-family:var(--mono);font-size:.8125rem;
-  padding:.45rem 1rem;border:1px solid rgba(3,74,97,.3);
-  border-radius:999px;white-space:nowrap;
-  transition:border-radius .2s ease,background-color .2s ease;
-}
-.pill:hover{border-radius:0;background:rgba(3,74,97,.07)}
-
 /* code block + tabs */
 .code{background:var(--ink);color:#E9F2F1;font-family:var(--mono);font-size:.875rem;line-height:1.7}
 .code pre{margin:0;padding:1.5rem 1.75rem;overflow-x:auto}
