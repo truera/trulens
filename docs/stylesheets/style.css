@@ -199,7 +199,9 @@ h4{font-size:1.125rem;font-weight:600;margin-bottom:.35rem}
    truncates cells and hands you a scrollbar; here the judge's reasoning is the
    whole point, so every cell wraps and the table always fits its container. */
 .fdf{margin-top:.85rem;border:1px solid rgba(233,242,241,.14)}
-.fdf table{border-collapse:collapse;table-layout:fixed;width:100%;font-size:.875rem}
+/* tables don't inherit colour in quirks mode, and a stray banner above the
+   doctype has put this page there before, so state it rather than inherit it */
+.fdf table{border-collapse:collapse;table-layout:fixed;width:100%;font-size:.875rem;color:#E9F2F1}
 .fdf th{font-weight:400;text-align:left;padding:.5rem .75rem;color:rgba(233,242,241,.55);
   background:rgba(255,255,255,.05);border-bottom:1px solid rgba(233,242,241,.14);
   border-right:1px solid rgba(233,242,241,.08)}
@@ -234,7 +236,7 @@ h4{font-size:1.125rem;font-weight:600;margin-bottom:.35rem}
 .cmp svg{display:block;width:100%;height:auto}
 
 /* leaderboard */
-.lb{width:100%;border-collapse:collapse;font-size:.875rem}
+.lb{width:100%;border-collapse:collapse;font-size:.875rem;color:#E9F2F1}
 .lb th{padding:0;background:#0A1219;border-bottom:1px solid rgba(132,220,215,.16)}
 .lb th button{display:flex;align-items:center;gap:.35rem;width:100%;
   font-family:var(--display);font-size:.8125rem;font-weight:500;color:inherit;
