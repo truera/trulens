@@ -63,19 +63,25 @@ h4{font-size:1.125rem;font-weight:600;margin-bottom:.35rem}
 .num{font-variant-numeric:tabular-nums}
 
 /* ---------- radius-morph buttons ---------- */
+/* One geometry for the whole row: same radius, same height, same baseline.
+   Colour carries the hierarchy. Hover is the only thing that changes shape,
+   and every control morphs in the same direction -- flat to pill -- so the
+   resting row reads as one set of three choices. */
 .btn{
   display:inline-flex;align-items:center;gap:.55rem;
   font-family:var(--display);font-size:1.0625rem;font-weight:500;
   padding:.7rem 1.4rem;border:0;cursor:pointer;text-decoration:none;
-  border-radius:26px;transition:border-radius .2s ease,background-color .2s ease;
+  border-radius:0;transition:border-radius .2s ease,background-color .2s ease;
 }
 .btn--primary{background:var(--ink);color:#fff}
-.btn--primary:hover{border-radius:0;background:#06202a}
-.btn--ghost{background:rgba(3,74,97,.10);color:var(--text);border-radius:0}
+.btn--primary:hover{border-radius:26px;background:#06202a}
+.btn--ghost{background:rgba(3,74,97,.10);color:var(--text)}
 .btn--ghost:hover{border-radius:26px;background:rgba(3,74,97,.18)}
 .btn--onink{background:var(--aqua);color:var(--ink)}
-.btn--onink:hover{border-radius:0}
-.btn-row{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:2rem;align-items:center}
+.btn--onink:hover{border-radius:26px}
+/* stretch, not center: the install pill's smaller mono type would otherwise
+   leave it shorter than the buttons and floating off their baseline. */
+.btn-row{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:2rem;align-items:stretch}
 
 /* install pill */
 .install{
