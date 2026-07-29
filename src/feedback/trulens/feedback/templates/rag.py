@@ -324,6 +324,29 @@ class Comprehensiveness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
 
 class CitationAccuracy(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
+    """Graded, format-agnostic citation quality.
+
+    Like [CitationAttribution][trulens.feedback.templates.rag.CitationAttribution],
+    this asks whether a response's citations are supported by the retrieved
+    context. It differs in three ways that decide which one you want:
+
+    - **Citation format.** ``CitationAttribution`` requires explicit ``[N]``
+      markers and checks each marker against numbered passage N. This template
+      is format-agnostic: it also covers inline or prose attributions
+      ("according to the 2023 annual report..."), URLs, or footnotes, where
+      there is no ``[N]`` marker to resolve.
+    - **Output space.** ``CitationAttribution`` is binary: any misattribution
+      is a hard fail. This template is a 0-3 Likert, so a response with one bad
+      citation out of ten is distinguishable from one where every citation is
+      bad. Use it when you want a graded signal to track across runs.
+    - **Missing citations.** ``CitationAttribution`` deliberately does not
+      penalize a claim that carries no citation marker. This template *does*:
+      a claim that the context supports but that goes uncited counts against
+      the score. Use it when your pipeline requires that context-derived
+      claims be cited, and use ``CitationAttribution`` when uncited claims are
+      acceptable and only misattribution matters.
+    """
+
     output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
     output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
     criteria_template: ClassVar[str] = """
