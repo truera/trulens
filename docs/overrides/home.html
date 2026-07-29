@@ -545,31 +545,33 @@ app = <span class="f">TruLlama</span>(
     <div class="bstats reveal">
       <div class="bstat">
         <div class="v num">95%</div>
-        <div class="d">Agent GPA &middot; agent errors caught</div>
+        <div class="d">Agent errors caught with Agent GPA on TRAIL/GAIA</div>
         <div class="s">267 of 281 human-annotated errors, against 55% for the baseline
           trace judge, over TRAIL and GAIA agent traces.
           <a href="https://arxiv.org/abs/2510.08847">arXiv:2510.08847 &#8599;</a></div>
       </div>
       <div class="bstat">
         <div class="v num">0.81</div>
-        <div class="d">Snowflake &middot; groundedness F1</div>
-        <div class="s">Ahead of Bespoke-MiniCheck-7B on F1, precision and recall, over an
-          11,000-example LLM-AggreFact holdout.
+        <div class="d">F1 groundedness on LLM-AggreFact</div>
+        <div class="s">Ahead of a fine-tuned, proprietary model, Bespoke-MiniCheck-7B, on
+          F1, precision and recall, over an 11,000-example LLM-AggreFact holdout.
           <a href="https://www.snowflake.com/en/engineering-blog/benchmarking-LLM-as-a-judge-RAG-triad-metrics/">RAG
           triad benchmarks &#8599;</a></div>
       </div>
       <div class="bstat">
         <div class="v num">0.93</div>
-        <div class="d">AIMultiple &middot; context relevance NDCG@5</div>
-        <div class="s">First of five tools on three of four ranking metrics, NDCG@5,
-          Spearman &rho; and MRR. WandB Weave led the fourth, Top-1 accuracy.
+        <div class="d">Context relevance NDCG@5 via AIMultiple</div>
+        <div class="s">First of five tools on three of four ranking metrics benchmarked,
+          NDCG@5, Spearman &rho; and MRR; ahead of WandB Weave, RAGAS, DeepEval and
+          UpTrain.
           <a href="https://aimultiple.com/rag-evaluation-tools">AIMultiple, 23 March 2026 &#8599;</a></div>
       </div>
       <div class="bstat">
         <div class="v num">4.2:1</div>
-        <div class="d">AIMultiple &middot; adversarial win-loss</div>
+        <div class="d">Context relevance adversarial win-loss via AIMultiple</div>
         <div class="s">Scored the correct passage over a near-copy with one fact swapped
-          4.2 times for every reversal, against 3.3:1 for the next best of five tools.
+          4.2 times for every reversal, against 3.3:1 for WandB Weave, the next highest
+          scoring tool.
           <a href="https://aimultiple.com/rag-evaluation-tools">AIMultiple, 23 March 2026 &#8599;</a></div>
       </div>
     </div>
