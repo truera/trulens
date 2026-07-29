@@ -561,10 +561,13 @@ app = <span class="f">TruLlama</span>(
       <div class="bstat">
         <div class="v num">0.93</div>
         <div class="d">AIMultiple &middot; context relevance NDCG@5</div>
-        <div class="s">Top of the five tools tested on three of the benchmark's four
-          metrics (NDCG@5, Spearman &rho;, MRR), and best at telling a correct passage
-          from a near-copy with one fact swapped. WandB Weave led the fourth, Top-1
-          accuracy.
+        <div class="s">Ranking: top of the five tools tested on three of the benchmark's
+          four metrics, NDCG@5, Spearman &rho; and MRR. WandB Weave led the fourth,
+          Top-1 accuracy.</div>
+        <div class="s">Adversarial: when one fact in the correct passage is swapped to
+          make a convincing wrong one, TruLens scored the real passage higher 4.2 times
+          for every time it got it backwards, and opened the widest average gap
+          (+0.145). Next best was 3.3:1.
           <a href="https://aimultiple.com/rag-evaluation-tools">AIMultiple, 23 March 2026 &#8599;</a></div>
       </div>
     </div>
