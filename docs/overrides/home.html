@@ -574,6 +574,13 @@ app = <span class="f">TruLlama</span>(
           <a href="https://www.snowflake.com/en/engineering-blog/benchmarking-LLM-as-a-judge-RAG-triad-metrics/">RAG
           triad benchmarks &#8599;</a></div>
       </div>
+      <div class="bstat">
+        <div class="v num">0.932</div>
+        <div class="d">AIMultiple &middot; context relevance NDCG@5</div>
+        <div class="s">Best of five judges ranked by an independent benchmark, ahead of
+          DeepEval (0.923) and Weave (0.910), and the widest golden-vs-clone margin tested.
+          <a href="https://aimultiple.com/rag-evaluation-tools">AIMultiple &#8599;</a></div>
+      </div>
     </div>
   </div>
 
@@ -582,15 +589,11 @@ app = <span class="f">TruLlama</span>(
        All five rows are here on purpose -- WandB wins the Top-1 column, and
        hiding that would make the other two columns worth less. -->
   <div class="wrap indent">
-    <span class="eyebrow" style="margin-top:3.5rem;display:block">Independent benchmark</span>
-    <h3 class="reveal" style="margin-top:.6rem">AIMultiple put five context relevance
-      judges through the same adversarial set.</h3>
+    <span class="eyebrow" style="margin-top:3.5rem;display:block">Independent benchmark &middot; context relevance</span>
     <p class="lede" style="max-width:60ch;margin-top:.75rem">
       One judge model for everyone (GPT-4o), default configuration, no custom prompts:
       1,010 multi-hop and general-knowledge questions, five contexts each, graded from a
       paraphrased golden passage down to an entity-swapped clone carrying the wrong fact.
-      TruLens ranked them best and told the golden context from its clone more reliably
-      than any other tool tested.
     </p>
     <div class="btab reveal">
       <table>
@@ -640,27 +643,6 @@ app = <span class="f">TruLlama</span>(
       NDCG@5 were not published as figures.
       <a href="https://aimultiple.com/rag-evaluation-tools">AIMultiple, 23 March 2026 &#8599;</a>
     </p>
-
-    <span class="eyebrow" style="margin-top:3rem;display:block">Verified outside Snowflake</span>
-    <div class="bthird reveal">
-      <div>
-        <h4>MLflow</h4>
-        <p>TruLens feedback functions ship as first-class MLflow scorers &mdash; described in
-        MLflow's own docs as &ldquo;benchmarked goal-plan-action alignment evaluations for agent
-        traces.&rdquo;
-        <a href="https://mlflow.org/docs/latest/genai/eval-monitor/scorers/third-party/trulens/">Read the integration &#8599;</a></p>
-      </div>
-      <div>
-        <h4>Cited by researchers</h4>
-        <p>The judges are scored on Patronus AI's TRAIL dataset, not ours, and the Agent GPA
-        framework is cited in follow-on work on plan-following and agent failure diagnosis.
-        <a href="https://arxiv.org/abs/2510.08847">Read the paper &#8599;</a></p>
-      </div>
-    </div>
-    <div class="btn-row">
-      <a href="https://arxiv.org/abs/2510.08847" class="btn btn--primary">Agent GPA paper</a>
-      <a href="https://www.snowflake.com/en/engineering-blog/benchmarking-LLM-as-a-judge-RAG-triad-metrics/" class="btn btn--ghost">RAG triad benchmarks</a>
-    </div>
   </div>
 </section>
 

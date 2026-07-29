@@ -363,8 +363,8 @@ h4{font-size:1.125rem;font-weight:600;margin-bottom:.35rem}
   .intg-grid img{height:26px}
 }
 
-/* benchmarked judges: stat cards, one independent comparison, third-party strip */
-.bstats{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;margin-top:2.5rem}
+/* benchmarked judges: three stat cards over one independent comparison */
+.bstats{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:2.5rem}
 .bstat{background:rgba(3,74,97,.07);padding:1.5rem;transition:border-radius .2s ease}
 .bstat:hover{border-radius:18px}
 .bstat .v{font-family:var(--display);font-size:2.75rem;line-height:1;color:var(--ink)}
@@ -386,12 +386,8 @@ h4{font-size:1.125rem;font-weight:600;margin-bottom:.35rem}
 .btab tr.me td{background:rgba(3,74,97,.07);font-weight:600}
 .bnote{font-family:var(--mono);font-size:.6875rem;line-height:1.7;opacity:.6;margin-top:1rem}
 .bnote a{color:var(--ink)}
-.bthird{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;margin-top:2.5rem}
-.bthird h4{font-family:var(--mono);font-size:.6875rem;text-transform:uppercase;
-  letter-spacing:.12em;opacity:.65;margin-bottom:.6rem}
-.bthird p{font-size:.9375rem;line-height:1.5}
-.bthird a{color:var(--ink);font-weight:600}
-@media(max-width:860px){.bstats,.bthird{grid-template-columns:1fr}}
+@media(max-width:1100px){.bstats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:860px){.bstats{grid-template-columns:1fr}}
 /* the mean-score column is the least load-bearing, so it goes first when narrow */
 @media(max-width:700px){.btab .opt{display:none}}
 
