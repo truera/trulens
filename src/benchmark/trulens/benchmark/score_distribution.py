@@ -228,7 +228,7 @@ class ScoreDistributionReport:
             lines.append("No distribution pathologies detected.")
         print("\n".join(lines))
 
-    def plot(self):  # pragma: no cover - needs matplotlib and a display
+    def plot(self) -> Any:  # pragma: no cover - needs matplotlib and a display
         """Plot the score histogram and calibration curve with matplotlib.
 
         Returns:

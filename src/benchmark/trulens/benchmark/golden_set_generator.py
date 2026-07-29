@@ -149,7 +149,7 @@ class GoldenSetSample:
                 record["expected_score"] = None
         return records
 
-    def to_csv(self, path: str, **kwargs) -> None:
+    def to_csv(self, path: str, **kwargs: Any) -> None:
         """Write the sample to a CSV file for external annotation.
 
         Args:

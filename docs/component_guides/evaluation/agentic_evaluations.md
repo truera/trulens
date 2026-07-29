@@ -246,3 +246,4 @@ chosen but invoked incorrectly.
 
 - [Custom Feedback Functions](./feedback_implementations/custom_feedback_functions.ipynb)
 - [Feedback Selectors](./feedback_selectors/index.md)
+- [Agentic Evaluation Cookbook](../../cookbook/frameworks/openai_agent_sdk/openai_agents.ipynb)
