@@ -519,9 +519,13 @@ app = <span class="f">TruLlama</span>(
 
 <!-- 11. INTEGRATIONS
 
-  Every mark below is backed by code or a guide in this repo, and each link goes
-  to that proof. The inventory, category and evidence path for each mark live in
-  .mockup/ilogos.py so the grid can't drift from what is actually supported.
+  Every mark below links to a runnable notebook in this repo wherever one exists
+  -- 22 of the 26 do. No mark links to provider source code: a reader clicking a
+  logo wants to see it working, not read the adapter. The four that cannot are
+  MCP, Snowflake and SQLite, which have a guide but no non-experimental notebook,
+  and Datadog, which is not ours at all. The inventory, category and evidence path
+  for each mark live in .mockup/ilogos.py so the grid can't drift from what is
+  actually supported.
 
   Deliberately absent, because the evidence doesn't hold up:
     NeMo Guardrails  package is deprecated and excluded from the meta-install
@@ -535,7 +539,9 @@ app = <span class="f">TruLlama</span>(
   sits under models with LiteLLM beside it rather than being claimed first-class.
 
   Every mark is the vendor's own glyph flattened to the page ink and set beside
-  a hand-set name. Glyphs come from Simple Icons (CC0) where the vendor is still
+  a hand-set name, on one line, in a 26-unit box, so a single CSS height puts the
+  whole wall on one baseline. Glyphs come from Simple Icons (CC0) where the vendor
+  is still
   carried there, and otherwise from a CC0 logo collection or the vendor's own
   repo -- Amazon, Microsoft and OpenAI were all pulled from Simple Icons over
   trademark. Weaviate keeps its disc because its W only exists as negative
@@ -560,32 +566,33 @@ app = <span class="f">TruLlama</span>(
     <h2 class="reveal">Bring your own stack.</h2>
     <p class="lede">
       TruLens works with the frameworks, models, vector stores and databases you
-      already use. Each logo below links to its guide or a working example.
+      already use. Most marks link to a runnable notebook; MCP, Snowflake and SQLite
+      link to their guide, and Datadog to Datadog's own docs.
     </p>
 
     <div class="intg">
       <div class="intg-row reveal">
         <h3>Frameworks &amp; agents<span class="sub">Instrumented, span by span</span></h3>
         <div class="intg-grid">
-          <a href="https://www.trulens.org/component_guides/instrumentation/langchain/"><img src="/assets/images/logos/integrations/langchain.svg" alt="LangChain"></a>
-          <a href="https://www.trulens.org/component_guides/instrumentation/langgraph/"><img src="/assets/images/logos/integrations/langgraph.svg" alt="LangGraph"></a>
-          <a href="https://www.trulens.org/component_guides/instrumentation/llama_index/"><img src="/assets/images/logos/integrations/llamaindex.svg" alt="LlamaIndex"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/frameworks/langchain/langchain_quickstart.ipynb"><img src="/assets/images/logos/integrations/langchain.svg" alt="LangChain"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/frameworks/langchain/langgraph_quickstart.ipynb"><img src="/assets/images/logos/integrations/langgraph.svg" alt="LangGraph"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/frameworks/llamaindex/llama_index_quickstart.ipynb"><img src="/assets/images/logos/integrations/llamaindex.svg" alt="LlamaIndex"></a>
           <a href="https://www.trulens.org/component_guides/instrumentation/mcp/"><img src="/assets/images/logos/integrations/mcp.svg" alt="Model Context Protocol"></a>
-          <a href="https://github.com/truera/trulens/tree/main/examples/expositional/frameworks/openai_agent_sdk"><img src="/assets/images/logos/integrations/openai-agents.svg" alt="OpenAI Agents SDK"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/frameworks/openai_agent_sdk/openai_agents.ipynb"><img src="/assets/images/logos/integrations/openai-agents.svg" alt="OpenAI Agents SDK"></a>
         </div>
       </div>
 
       <div class="intg-row reveal">
         <h3>Models &amp; judges<span class="sub">Swap judges without rewriting an eval</span></h3>
         <div class="intg-grid">
-          <a href="https://github.com/truera/trulens/tree/main/src/providers/openai"><img src="/assets/images/logos/integrations/openai.svg" alt="OpenAI"></a>
-          <a href="https://github.com/truera/trulens/tree/main/src/providers/openai"><img src="/assets/images/logos/integrations/azure-openai.svg" alt="Azure OpenAI"></a>
-          <a href="https://github.com/truera/trulens/tree/main/src/providers/cortex"><img src="/assets/images/logos/integrations/cortex.svg" alt="Snowflake Cortex"></a>
-          <a href="https://github.com/truera/trulens/tree/main/src/providers/bedrock"><img src="/assets/images/logos/integrations/bedrock.svg" alt="AWS Bedrock"></a>
-          <a href="https://github.com/truera/trulens/tree/main/src/providers/google"><img src="/assets/images/logos/integrations/gemini.svg" alt="Google Gemini"></a>
-          <a href="https://github.com/truera/trulens/tree/main/src/providers/huggingface"><img src="/assets/images/logos/integrations/huggingface.svg" alt="Hugging Face"></a>
-          <a href="https://github.com/truera/trulens/tree/main/src/providers/litellm"><img src="/assets/images/logos/integrations/litellm.svg" alt="LiteLLM"></a>
-          <a href="https://github.com/truera/trulens/tree/main/examples/expositional/models/anthropic"><img src="/assets/images/logos/integrations/anthropic.svg" alt="Anthropic"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/quickstart/text2text_quickstart.ipynb"><img src="/assets/images/logos/integrations/openai.svg" alt="OpenAI"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/models/anthropic/claude3_quickstart.ipynb"><img src="/assets/images/logos/integrations/anthropic.svg" alt="Anthropic"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/models/google/google_quickstart.ipynb"><img src="/assets/images/logos/integrations/gemini.svg" alt="Google Gemini"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/models/azure/azure_openai_langchain.ipynb"><img src="/assets/images/logos/integrations/azure-openai.svg" alt="Azure OpenAI"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/models/bedrock/bedrock.ipynb"><img src="/assets/images/logos/integrations/bedrock.svg" alt="AWS Bedrock"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/models/snowflake_cortex/cortex_llm_quickstart.ipynb"><img src="/assets/images/logos/integrations/cortex.svg" alt="Snowflake Cortex"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/models/local_and_OSS_models/local_vs_remote_huggingface_feedback_functions.ipynb"><img src="/assets/images/logos/integrations/huggingface.svg" alt="Hugging Face"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/models/local_and_OSS_models/litellm_quickstart.ipynb"><img src="/assets/images/logos/integrations/litellm.svg" alt="LiteLLM"></a>
           <a href="https://github.com/truera/trulens/blob/main/examples/expositional/models/local_and_OSS_models/ollama_quickstart.ipynb"><img src="/assets/images/logos/integrations/ollama.svg" alt="Ollama"></a>
         </div>
       </div>
@@ -594,12 +601,12 @@ app = <span class="f">TruLlama</span>(
         <h3>Retrieval<span class="sub">Traced and scored for relevance</span></h3>
         <div class="intg-grid">
           <a href="https://github.com/truera/trulens/blob/main/examples/quickstart/quickstart.ipynb"><img src="/assets/images/logos/integrations/chroma.svg" alt="Chroma"></a>
-          <a href="https://github.com/truera/trulens/tree/main/examples/expositional/vector_stores/pinecone"><img src="/assets/images/logos/integrations/pinecone.svg" alt="Pinecone"></a>
-          <a href="https://github.com/truera/trulens/tree/main/examples/expositional/vector_stores/milvus"><img src="/assets/images/logos/integrations/milvus.svg" alt="Milvus"></a>
-          <a href="https://github.com/truera/trulens/tree/main/examples/expositional/vector_stores/weaviate"><img src="/assets/images/logos/integrations/weaviate.svg" alt="Weaviate"></a>
-          <a href="https://github.com/truera/trulens/tree/main/examples/expositional/vector_stores/qdrant"><img src="/assets/images/logos/integrations/qdrant.svg" alt="Qdrant"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/vector_stores/pinecone/pinecone_quickstart.ipynb"><img src="/assets/images/logos/integrations/pinecone.svg" alt="Pinecone"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/vector_stores/milvus/milvus_simple.ipynb"><img src="/assets/images/logos/integrations/milvus.svg" alt="Milvus"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/vector_stores/weaviate/weaviate_query_agent.ipynb"><img src="/assets/images/logos/integrations/weaviate.svg" alt="Weaviate"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/vector_stores/qdrant/hybrid_search_rag_langchain_and_qdrant.ipynb"><img src="/assets/images/logos/integrations/qdrant.svg" alt="Qdrant"></a>
           <a href="https://github.com/truera/trulens/blob/main/examples/expositional/vector_stores/mongodb/atlas_quickstart.ipynb"><img src="/assets/images/logos/integrations/mongodb.svg" alt="MongoDB Atlas"></a>
-          <a href="https://github.com/truera/trulens/tree/main/examples/expositional/vector_stores/faiss"><img src="/assets/images/logos/integrations/faiss.svg" alt="FAISS"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/vector_stores/faiss/langchain_faiss_example.ipynb"><img src="/assets/images/logos/integrations/faiss.svg" alt="FAISS"></a>
         </div>
       </div>
 
@@ -607,9 +614,9 @@ app = <span class="f">TruLlama</span>(
         <h3>Logging &amp; platforms<span class="sub">Where the traces land</span></h3>
         <div class="intg-grid">
           <a href="https://www.trulens.org/component_guides/logging/where_to_log/log_in_snowflake/"><img src="/assets/images/logos/integrations/snowflake.svg" alt="Snowflake"></a>
-          <a href="https://www.trulens.org/component_guides/evaluation/mlflow/"><img src="/assets/images/logos/integrations/mlflow.svg" alt="MLflow"></a>
-        <a href="https://docs.datadoghq.com/integrations/crest-data-systems-trulens-eval/"><img src="/assets/images/logos/integrations/datadog.svg" alt="Datadog"></a>
-          <a href="https://www.trulens.org/component_guides/logging/where_to_log/log_in_postgres/"><img src="/assets/images/logos/integrations/postgresql.svg" alt="PostgreSQL"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/frameworks/mlflow/mlflow_trulens_scorers.ipynb"><img src="/assets/images/logos/integrations/mlflow.svg" alt="MLflow"></a>
+          <a href="https://docs.datadoghq.com/integrations/crest-data-systems-trulens-eval/"><img src="/assets/images/logos/integrations/datadog.svg" alt="Datadog"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/logging/log_in_postgres.ipynb"><img src="/assets/images/logos/integrations/postgresql.svg" alt="PostgreSQL"></a>
           <a href="https://www.trulens.org/component_guides/logging/where_to_log/"><img src="/assets/images/logos/integrations/sqlite.svg" alt="SQLite"></a>
         </div>
       </div>

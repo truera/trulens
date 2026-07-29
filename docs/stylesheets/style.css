@@ -345,24 +345,36 @@ h4{font-size:1.125rem;font-weight:600;margin-bottom:.35rem}
    names rather than hunting a centered grid. Marks are a single grey and a
    single 140x56 box (see .mockup/ilogos.py) so the set reads as one family. */
 .intg{margin-top:2.75rem}
-.intg-row{display:grid;grid-template-columns:180px 1fr;gap:1.5rem;align-items:start;
+.intg-row{display:grid;grid-template-columns:180px minmax(0,1fr);gap:1.5rem;align-items:start;
   padding:1.6rem 0;border-top:1px solid rgba(3,74,97,.14)}
 .intg-row h3{font-family:var(--mono);font-size:.6875rem;text-transform:uppercase;
   letter-spacing:.11em;opacity:.65;font-weight:400;margin:.55rem 0 0}
 .intg-row .sub{font-family:var(--body);font-size:.8125rem;text-transform:none;
   letter-spacing:0;opacity:.75;display:block;margin-top:.3rem}
-.intg-grid{display:flex;flex-wrap:wrap;gap:.25rem 1.6rem;align-items:center}
-.intg-grid a{display:block;padding:.5rem .7rem;transition:background .2s ease,border-radius .2s ease}
+/* One line per row, no scrollbar and no overflow. minmax(0,1fr) on the track
+   above lets the column shrink past the row's min-content width; without it a
+   nowrap row drags the whole page wider than the viewport. */
+.intg-grid{display:flex;flex-wrap:nowrap;gap:0 .7rem;align-items:center}
+.intg-grid a{display:block;flex:0 1 auto;min-width:0;padding:.45rem .3rem;transition:background .2s ease,border-radius .2s ease}
 .intg-grid a:hover{background:rgba(255,255,255,.7);border-radius:14px}
-/* Each mark carries its own final width and height (see .mockup/ilogos.py), so
-   the grid leaves sizing alone: a glyph-plus-name tile and a two-line name-only
-   lockup already set their type at the same size. */
-.intg-grid img{display:block;opacity:.82;transition:opacity .2s}
+/* Every mark is a single-line lockup drawn to a 26-unit box (see
+   .mockup/ilogos.py), so one CSS height puts all 26 on the same baseline when a
+   row fits. When it doesn't, flex-basis:auto makes each item's shrink weight its
+   own width, so the row scales down proportionally instead of scrolling --
+   object-fit:contain is what keeps the glyph from squashing as the box narrows. */
+.intg-grid img{display:block;height:20px;width:auto;max-width:100%;object-fit:contain;
+  opacity:.82;transition:opacity .2s}
 .intg-grid a:hover img{opacity:1}
+@media(max-width:1180px){
+  .intg-row{grid-template-columns:150px minmax(0,1fr)}
+  .intg-grid{gap:0 .45rem}
+}
 @media(max-width:860px){
   .intg-row{grid-template-columns:1fr;gap:.6rem}
-  .intg-grid{gap:.15rem 1.1rem}
-  .intg-grid img{height:26px}
+  /* the label stops taking a column here, but nine marks would still have to
+     shrink to about a third to hold one line, which leaves the names
+     unreadable -- so below tablet the row wraps instead */
+  .intg-grid{flex-wrap:wrap;gap:.3rem 1rem}
 }
 
 /* benchmarked judges: three stat cards */
