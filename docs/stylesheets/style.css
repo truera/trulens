@@ -57,7 +57,9 @@ h4{font-size:1.125rem;font-weight:600;margin-bottom:.35rem}
   display:block;margin-bottom:1.5rem;opacity:.75;
 }
 .dim{opacity:.62}
-.lede{font-size:1.25rem;max-width:46ch;line-height:1.5}
+/* 68ch, not 46: at 46 these sat as a narrow ribbon under a full-width heading and
+   broke mid-sentence. 68 fills more of the column and still reads as one measure. */
+.lede{font-size:1.25rem;max-width:68ch;line-height:1.5}
 .num{font-variant-numeric:tabular-nums}
 
 /* ---------- radius-morph buttons ---------- */
