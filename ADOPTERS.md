@@ -21,6 +21,8 @@ Linked from the homepage, with a cue that there is something to read.
 | Walmart Global Tech | — | [published](https://medium.com/walmartglobaltech/deploying-rags-in-production-part-2-ae36f723c0c7) | 2024-07-04 | “Deploying RAGs in production — Part 2” validates a production store-survey RAG with the TruLens RAG triad. By Chinmay Jain and Osheen Nayak. |
 | phData | — | [published](https://www.phdata.io/blog/ship-snowflake-cortex-agents-faster-a-skills-first-workflow-with-cortex-code-trulens/) | 2026-06-06 | Snowflake Elite Services Partner. Their Cortex Agents accelerator is “powered by TruLens, an OpenTelemetry-native LLM evaluation and tracing framework”, with 17 custom metrics and a golden-set eval loop. By Omar Abid. |
 | SOA Research Institute | — | [published](https://www.soa.org/globalassets/assets/files/resources/research-report/2025/ai-investment-retirement-risks.pdf) | 2025 | Published research report on AI investment and retirement risks; TruLens cited six times. |
+| Equinix | — | [published](https://finance.yahoo.com/news/truera-launches-llm-evaluation-observability-130000880.html) | 2024-03-13 | Ravi Pasula, Head of AI: “by leveraging TruLens early in the dev cycle, my team has improved app metrics, such as relevance and groundedness, by up to 50% and reduced iteration time from 2 weeks to 2 hours.” |
+| KBC Group | — | [published](https://finance.yahoo.com/news/truera-launches-llm-evaluation-observability-130000880.html) | 2024-03-13 | Michaël Mariën, Chief Data Scientist: “We have been happy to be an early adopter and contributor of the TruLens open source project. We liked its lightweight nature, and the flexibility to add new evaluation functions to an existing library. We have started integrating TruLens into our Generative AI development pipeline.” |
 
 ## Community-reported usage
 
@@ -51,8 +53,6 @@ removal -- except Snowflake, which maintains TruLens and needs no citation.
 | Company | GitHub handle | Evidence | Date | What they said or did |
 |---|---|---|---|---|
 | Snowflake | — | — | — | Carried over from the existing homepage. TruLens is maintained by Snowflake. |
-| Equinix | — | — | — | Carried over from the existing homepage; provenance not verified. |
-| KBC | — | — | — | Carried over from the existing homepage; provenance not verified. |
 | tribble.ai | — | — | — | Carried over from the existing homepage; provenance not verified. |
 | CubeServ | — | — | — | Carried over from the existing homepage; provenance not verified. |
 | Datec | — | — | — | Carried over from the existing homepage; provenance not verified. |
