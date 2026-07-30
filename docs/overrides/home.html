@@ -362,7 +362,76 @@
   </div>
 </section>
 
-<!-- 7. SHIP IT: compare / leaderboard -->
+<!-- 7. MAKE THEM YOURS: customizing a shipped judge
+
+     Follows the benchmarks band on purpose. That band claims the shipped judges
+     are best in class out of the box, which invites the obvious objection: my
+     domain is not your benchmark. The answer is that tuning a judge is argument
+     passing, not a fork, so the two tabs are the same metric and the diff between
+     them is the whole point.
+
+     Every argument shown is real: criteria replaces the shipped rubric,
+     additional_instructions appends to it, and examples takes a list of
+     (feedback_args, score) tuples -- see tests/unit/test_citation_attribution.py.
+     The 0-3 range is deliberate: min/max are resolved against OutputSpace, which
+     only accepts (0,1), (0,3) and (0,10), so a snippet showing 1-5 would raise. -->
+<section class="band band--sand">
+  <div class="wrap indent">
+    <span class="eyebrow">Customize</span>
+    <h2 class="reveal">Then tune them to your domain.</h2>
+    <p class="lede">
+      Keep the shipped judge and change how it grades. The rubric, the examples and
+      the scale are just arguments.
+    </p>
+
+    <div class="code reveal" style="margin-top:2.5rem">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" aria-selected="true" data-tab="ootb">Out of the box</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="tuned">Tuned to your domain</button>
+      </div>
+      <pre data-panel="ootb"><code><span class="k">from</span> trulens.core <span class="k">import</span> Metric, Selector
+
+f_relevance = <span class="f">Metric</span>(
+    implementation=provider.relevance_with_cot_reasons,
+    name=<span class="s">"Answer Relevance"</span>,
+    selectors={
+        <span class="s">"prompt"</span>: Selector.<span class="f">select_record_input</span>(),
+        <span class="s">"response"</span>: Selector.<span class="f">select_record_output</span>(),
+    },
+)</code></pre>
+      <pre data-panel="tuned" hidden><code>f_relevance = <span class="f">Metric</span>(
+    implementation=provider.relevance_with_cot_reasons,
+    name=<span class="s">"Answer Relevance"</span>,
+    selectors={
+        <span class="s">"prompt"</span>: Selector.<span class="f">select_record_input</span>(),
+        <span class="s">"response"</span>: Selector.<span class="f">select_record_output</span>(),
+    },
+    <span class="c"># your rubric, replacing the shipped one</span>
+    criteria=<span class="s">"Score 3 only if the answer cites the policy section it used."</span>,
+    additional_instructions=<span class="s">"A section number with no quote is partial credit."</span>,
+    <span class="c"># few-shot examples: (arguments, score)</span>
+    examples=[
+        ({<span class="s">"prompt"</span>: <span class="s">"Is water damage covered?"</span>,
+          <span class="s">"response"</span>: <span class="s">"Yes, section 4.2 covers burst pipes."</span>}, 3),
+        ({<span class="s">"prompt"</span>: <span class="s">"Is water damage covered?"</span>,
+          <span class="s">"response"</span>: <span class="s">"Yes, probably."</span>}, 0),
+    ],
+    <span class="c"># and the scale it scores on</span>
+    min_score_val=0,
+    max_score_val=3,
+)</code></pre>
+    </div>
+
+    <div class="btn-row" style="margin-top:2rem;align-items:center">
+      <a href="/component_guides/evaluation/feedback_implementations/custom_feedback_functions/"
+        class="btn btn--primary">Custom metrics</a>
+      <a href="/component_guides/evaluation/criteria_ab_test/" class="tlink"
+        style="margin-left:.5rem">A/B test two rubrics &#8599;</a>
+    </div>
+  </div>
+</section>
+
+<!-- 8. SHIP IT: compare / leaderboard -->
 <section class="band band--ink" id="compare" style="position:relative;overflow:hidden">
   <!-- something is watching the leaderboard -->
   <svg class="eye-peek" style="right:-140px;top:8%;width:420px" viewBox="0 0 400 400" aria-hidden="true">
@@ -412,7 +481,7 @@
   </svg>
 </div>
 
-<!-- 8. USE CASES -->
+<!-- 9. USE CASES -->
 <section class="band band--lilac">
   <div class="wrap indent">
     <span class="eyebrow">Use cases</span>
@@ -442,7 +511,7 @@
   </div>
 </section>
 
-<!-- 9. HOW IT WORKS -->
+<!-- 10. HOW IT WORKS -->
 <section class="band band--ink">
   <div class="wrap indent">
     <span class="eyebrow" style="color:var(--aqua)">How it works</span>
@@ -579,7 +648,7 @@ run.<span class="f">get_status</span>()  <span class="c"># RunStatus.COMPLETED</
   </svg>
 </div>
 
-<!-- 10. METRICS -->
+<!-- 11. METRICS -->
 <section class="band band--sand">
   <div class="wrap indent">
     <span class="eyebrow">Metrics</span>
@@ -608,7 +677,7 @@ run.<span class="f">get_status</span>()  <span class="c"># RunStatus.COMPLETED</
   </div>
 </section>
 
-<!-- 11. INTEGRATIONS
+<!-- 12. INTEGRATIONS
 
   Every mark below links to a runnable notebook in this repo wherever one exists
   -- 22 of the 26 do. No mark links to provider source code: a reader clicking a
@@ -719,7 +788,7 @@ run.<span class="f">get_status</span>()  <span class="c"># RunStatus.COMPLETED</
   </div>
 </section>
 
-<!-- 12. GET STARTED -->
+<!-- 13. GET STARTED -->
 <section class="band band--white">
   <div class="wrap indent">
     <span class="eyebrow">Get started</span>
@@ -739,7 +808,7 @@ run.<span class="f">get_status</span>()  <span class="c"># RunStatus.COMPLETED</
   </div>
 </section>
 
-<!-- 13. WHY A SQUID -- the mascot, told properly rather than as fine print -->
+<!-- 14. WHY A SQUID -- the mascot, told properly rather than as fine print -->
 <section class="band band--ink" style="padding:4rem 0">
   <div class="wrap indent">
     <div class="grid2 reveal" style="align-items:center;gap:3rem">
