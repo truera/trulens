@@ -1220,10 +1220,35 @@ draw();
 var C = document.getElementById('cmp-widget'), L = document.getElementById('lb-widget');
 if(!C || !L) return;
 var NAMES = ['Context Relevance','Correctness','Groundedness','Plan Adherence','Tool Selection'];
-var TINT = ['#84DCD7','#DCB1FD'];
+/* Slate for the baseline so it reads as "before", three brand tints for the
+   versions that improved, and coral for the one that regressed. The coral is
+   rgb(228,115,107), which is exactly heat()'s x=0 endpoint below, so the chart
+   and the table's cell shading speak the same language. */
+var TINT = ['#8CA3AB','#84DCD7','#DCB1FD','#F6D881','#E4736B'];
+/* A real experiment log, not a two-row before/after. The arc is the one a
+   practitioner actually walks: fix the broken tool call, then improve retrieval,
+   then tighten generation, then try to make it cheaper and find out what that
+   costs.
+
+   v2 is named for the tool layer because the lede above credits it with the 0.27
+   to 0.90 correctness jump, and context relevance climbs with it since in this
+   app retrieval happens through that tool call.
+
+   Two things here are deliberate. Groundedness is high on v1 despite correctness
+   of 0.267, because the answer faithfully grounded itself in the wrong policy --
+   a single number would have hidden that, which is the argument for the whole
+   band. And on v5 the retrieval metric does not move at all, because only the
+   generator was swapped; the drop is isolated to the layer that changed.
+
+   Each version moves only the metrics its change actually touches, so plan
+   adherence sits flat until v5, where it is the one place the plan itself
+   degraded. */
 var ROWS = [
-  {v:'v1-passthrough', recs:10, lat:4.106, m:[0.400, 0.267, 0.983, 0.967, 0.400], on:true},
-  {v:'v2-rewrite', recs:10, lat:4.518, m:[0.933, 0.900, 0.975, 0.967, 0.967], on:true}
+  {v:'v1-passthrough',  recs:10, lat:4.106, m:[0.400, 0.267, 0.983, 0.967, 0.400], on:true},
+  {v:'v2-tool-args',    recs:10, lat:4.518, m:[0.933, 0.900, 0.975, 0.967, 0.967], on:true},
+  {v:'v3-rerank',       recs:10, lat:5.402, m:[0.967, 0.933, 0.983, 0.967, 0.967], on:true},
+  {v:'v4-cite-policy',  recs:10, lat:5.688, m:[0.967, 0.967, 0.992, 0.967, 0.967], on:true},
+  {v:'v5-mini',         recs:10, lat:2.184, m:[0.967, 0.733, 0.858, 0.833, 0.900], on:true}
 ];
 var sortKey = 'v', sortDir = 1;
 
