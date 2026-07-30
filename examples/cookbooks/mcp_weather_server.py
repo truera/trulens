@@ -2,7 +2,6 @@
 
 from mcp.server import fastmcp
 
-
 server = fastmcp.FastMCP("local-weather")
 
 

@@ -16,9 +16,7 @@ from mcp.client.stdio import stdio_client  # noqa: E402
 async def test_mcp_weather_server_tools() -> None:
     """Discover and invoke both tools through the official MCP SDK."""
     repository_root = Path(__file__).parents[2]
-    server_path = (
-        repository_root / "examples/cookbooks/mcp_weather_server.py"
-    )
+    server_path = repository_root / "examples/cookbooks/mcp_weather_server.py"
     server_parameters = StdioServerParameters(
         command=sys.executable,
         args=[str(server_path)],
