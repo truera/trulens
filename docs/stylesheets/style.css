@@ -301,7 +301,7 @@ h4{font-size:1.125rem;font-weight:600;margin-bottom:.35rem}
 }
 
 /* metric group list */
-.mgroup h4{font-family:var(--mono);font-size:.6875rem;text-transform:uppercase;letter-spacing:.12em;opacity:.7;margin-bottom:.75rem}
+.mgroup h3{font-family:var(--mono);font-size:.6875rem;text-transform:uppercase;letter-spacing:.12em;opacity:.7;margin-bottom:.75rem}
 .mgroup ul{list-style:none;margin:0;padding:0}
 .mgroup li{padding:.2rem 0;font-size:1.0625rem}
 
@@ -399,6 +399,16 @@ h4{font-size:1.125rem;font-weight:600;margin-bottom:.35rem}
 @media(max-width:860px){.bstats{grid-template-columns:1fr}}
 
 /* nav */
+/* Offscreen rather than display:none, because a skip link that is not in the
+   accessibility tree cannot be focused, which defeats the point. It comes back
+   on :focus-visible as well as :focus so a mouse click on the top-left corner
+   does not pop it open. */
+.skip{position:absolute;left:-9999px;top:0;z-index:100;padding:.7rem 1.1rem;
+  background:var(--ink);color:#fff;font-family:var(--display);font-size:.9375rem;
+  text-decoration:none}
+.skip:focus,.skip:focus-visible{left:0}
+#main:focus{outline:none}
+
 .nav{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 2rem;max-width:var(--maxw);margin:0 auto}
 .nav a:not(.btn){color:var(--text);text-decoration:none;font-family:var(--display)}
 .nav a.btn{text-decoration:none}

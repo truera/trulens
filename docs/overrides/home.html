@@ -111,6 +111,12 @@
 
 <body>
 
+<!-- First focusable element on the page, so keyboard and screen reader users can
+     jump the announce bar and the nav rather than tabbing through them on every
+     visit. Offscreen until focused. tabindex="-1" on the target because some
+     browsers will not move focus to a fragment that is not natively focusable. -->
+<a href="#main" class="skip">Skip to content</a>
+
 <!-- announce -->
 <div style="background:var(--pale);text-align:center;padding:.6rem;font-size:.9375rem">
   <a href="https://github.com/truera/trulens/releases/tag/trulens-2.10.0" class="announce-link" style="color:var(--text)"><span
@@ -126,6 +132,8 @@
     <li><a href="/getting_started/" class="btn btn--primary">Documentation</a></li>
   </ul>
 </nav>
+
+<main id="main" tabindex="-1">
 
 <!-- 1. HERO -->
 <section class="band band--white" style="padding-top:2rem;padding-bottom:4.5rem;overflow:hidden">
@@ -339,22 +347,22 @@
       <div class="trace">
         <div>
           <div class="dtabs" role="tablist" aria-label="Span view">
-            <button class="dtab" type="button" role="tab" aria-selected="false" data-view="tree">Tree</button>
-            <button class="dtab" type="button" role="tab" aria-selected="true" data-view="timeline">Timeline</button>
+            <button class="dtab" type="button" role="tab" id="tab-span-tree" aria-controls="panel-span-tree" aria-selected="false" data-view="tree">Tree</button>
+            <button class="dtab" type="button" role="tab" id="tab-span-timeline" aria-controls="panel-span-timeline" aria-selected="true" data-view="timeline">Timeline</button>
           </div>
-          <div data-view-panel="tree" hidden></div>
-          <div data-view-panel="timeline"></div>
+          <div data-view-panel="tree" hidden id="panel-span-tree" role="tabpanel" aria-labelledby="tab-span-tree" tabindex="0"></div>
+          <div data-view-panel="timeline" id="panel-span-timeline" role="tabpanel" aria-labelledby="tab-span-timeline" tabindex="0"></div>
         </div>
         <div>
           <div class="dtabs" role="tablist" aria-label="Attribute view">
-            <button class="dtab" type="button" role="tab" aria-selected="true" data-det="details">Details</button>
-            <button class="dtab" type="button" role="tab" aria-selected="false" data-det="raw">Raw Attributes</button>
+            <button class="dtab" type="button" role="tab" id="tab-attr-details" aria-controls="panel-attr-details" aria-selected="true" data-det="details">Details</button>
+            <button class="dtab" type="button" role="tab" id="tab-attr-raw" aria-controls="panel-attr-raw" aria-selected="false" data-det="raw">Raw Attributes</button>
           </div>
-          <div data-det-panel="details"></div>
-          <div data-det-panel="raw" hidden></div>
+          <div data-det-panel="details" id="panel-attr-details" role="tabpanel" aria-labelledby="tab-attr-details" tabindex="0"></div>
+          <div data-det-panel="raw" hidden id="panel-attr-raw" role="tabpanel" aria-labelledby="tab-attr-raw" tabindex="0"></div>
         </div>
       </div>
-      <noscript><img class="shot" src="/assets/images/home/trace.png" alt="TruLens trace waterfall showing nested agent, retrieval, tool and generation spans with per-span durations"></noscript>
+      <noscript><img class="shot" src="/assets/images/home/trace.png" alt="TruLens trace waterfall showing nested agent, retrieval, tool and generation spans with per-span durations" loading="lazy"></noscript>
     </div>
   </div>
 </section>
@@ -382,7 +390,7 @@
           <div class="fpills" role="group" aria-label="Metrics"></div>
           <div class="fdf" role="region" aria-live="polite"></div>
         </div>
-        <noscript><img class="shot" src="/assets/images/home/metrics.png" alt="Feedback results showing Context Relevance, Correctness, Groundedness, Plan Adherence and Tool Selection scores"></noscript>
+        <noscript><img class="shot" src="/assets/images/home/metrics.png" alt="Feedback results showing Context Relevance, Correctness, Groundedness, Plan Adherence and Tool Selection scores" loading="lazy"></noscript>
       </div>
     </div>
   </div>
@@ -464,11 +472,11 @@
     </p>
 
     <div class="code reveal" style="margin-top:2.5rem">
-      <div class="tabs" role="tablist">
-        <button class="tab" role="tab" aria-selected="true" data-tab="ootb">Out of the box</button>
-        <button class="tab" role="tab" aria-selected="false" data-tab="tuned">Tuned to your domain</button>
+      <div class="tabs" role="tablist" aria-label="Judge configuration">
+        <button class="tab" role="tab" id="tab-judge-ootb" aria-controls="panel-judge-ootb" aria-selected="true" data-tab="ootb">Out of the box</button>
+        <button class="tab" role="tab" id="tab-judge-tuned" aria-controls="panel-judge-tuned" aria-selected="false" data-tab="tuned">Tuned to your domain</button>
       </div>
-      <pre data-panel="ootb"><code><span class="k">from</span> trulens.core <span class="k">import</span> Metric, Selector
+      <pre data-panel="ootb" id="panel-judge-ootb" role="tabpanel" aria-labelledby="tab-judge-ootb" tabindex="0"><code><span class="k">from</span> trulens.core <span class="k">import</span> Metric, Selector
 
 f_relevance = <span class="f">Metric</span>(
     implementation=provider.relevance_with_cot_reasons,
@@ -478,7 +486,7 @@ f_relevance = <span class="f">Metric</span>(
         <span class="s">"response"</span>: Selector.<span class="f">select_record_output</span>(),
     },
 )</code></pre>
-      <pre data-panel="tuned" hidden><code>f_relevance = <span class="f">Metric</span>(
+      <pre data-panel="tuned" hidden id="panel-judge-tuned" role="tabpanel" aria-labelledby="tab-judge-tuned" tabindex="0"><code>f_relevance = <span class="f">Metric</span>(
     implementation=provider.relevance_with_cot_reasons,
     name=<span class="s">"Answer Relevance"</span>,
     selectors={
@@ -540,7 +548,7 @@ f_relevance = <span class="f">Metric</span>(
     <div class="dash" id="lb-widget">
       <div class="dash-bar"><b>Leaderboard</b><span class="rid">click a column to sort &middot; untick a version to drop it from the chart</span></div>
       <div style="overflow-x:auto"><table class="lb"><thead></thead><tbody></tbody></table></div>
-      <noscript><img class="shot" src="/assets/images/home/leaderboard.png" alt="Leaderboard comparing two app versions across five metrics and latency"></noscript>
+      <noscript><img class="shot" src="/assets/images/home/leaderboard.png" alt="Leaderboard comparing two app versions across five metrics and latency" loading="lazy"></noscript>
     </div>
   </div>
   <div class="bleed reveal" style="margin-top:1.5rem">
@@ -550,7 +558,7 @@ f_relevance = <span class="f">Metric</span>(
         <div class="cmp-legend" role="group" aria-label="App versions"></div>
         <div class="cmp-plot"></div>
       </div>
-      <noscript><img class="shot" src="/assets/images/home/compare.png" alt="Bar chart comparing five metrics across two app versions"></noscript>
+      <noscript><img class="shot" src="/assets/images/home/compare.png" alt="Bar chart comparing five metrics across two app versions" loading="lazy"></noscript>
     </div>
   </div>
 </section>
@@ -603,12 +611,12 @@ f_relevance = <span class="f">Metric</span>(
     </p>
 
     <div class="code reveal" style="margin-top:3rem">
-      <div class="tabs" role="tablist">
-        <button class="tab" role="tab" aria-selected="true" data-tab="custom">Custom</button>
-        <button class="tab" role="tab" aria-selected="false" data-tab="langgraph">LangGraph</button>
-        <button class="tab" role="tab" aria-selected="false" data-tab="llamaindex">LlamaIndex</button>
+      <div class="tabs" role="tablist" aria-label="Framework">
+        <button class="tab" role="tab" id="tab-inst-custom" aria-controls="panel-inst-custom" aria-selected="true" data-tab="custom">Custom</button>
+        <button class="tab" role="tab" id="tab-inst-langgraph" aria-controls="panel-inst-langgraph" aria-selected="false" data-tab="langgraph">LangGraph</button>
+        <button class="tab" role="tab" id="tab-inst-llamaindex" aria-controls="panel-inst-llamaindex" aria-selected="false" data-tab="llamaindex">LlamaIndex</button>
       </div>
-      <pre data-panel="custom"><code><span class="k">from</span> trulens.core.otel.instrument <span class="k">import</span> instrument
+      <pre data-panel="custom" id="panel-inst-custom" role="tabpanel" aria-labelledby="tab-inst-custom" tabindex="0"><code><span class="k">from</span> trulens.core.otel.instrument <span class="k">import</span> instrument
 <span class="k">from</span> trulens.otel.semconv.trace <span class="k">import</span> SpanAttributes
 
 <span class="c">@instrument(</span>
@@ -619,7 +627,7 @@ f_relevance = <span class="f">Metric</span>(
 <span class="c">)</span>
 <span class="k">def</span> <span class="f">retrieve</span>(self, query: str) -&gt; list:
     <span class="k">return</span> self.vector_store.search(query)</code></pre>
-      <pre data-panel="langgraph" hidden><code><span class="k">from</span> trulens.apps.langgraph <span class="k">import</span> TruGraph
+      <pre data-panel="langgraph" hidden id="panel-inst-langgraph" role="tabpanel" aria-labelledby="tab-inst-langgraph" tabindex="0"><code><span class="k">from</span> trulens.apps.langgraph <span class="k">import</span> TruGraph
 
 app = <span class="f">TruGraph</span>(
     graph,
@@ -630,7 +638,7 @@ app = <span class="f">TruGraph</span>(
 
 <span class="k">with</span> app <span class="k">as</span> recording:
     graph.<span class="f">invoke</span>({<span class="s">"messages"</span>: [msg]})</code></pre>
-      <pre data-panel="llamaindex" hidden><code><span class="k">from</span> trulens.apps.llamaindex <span class="k">import</span> TruLlama
+      <pre data-panel="llamaindex" hidden id="panel-inst-llamaindex" role="tabpanel" aria-labelledby="tab-inst-llamaindex" tabindex="0"><code><span class="k">from</span> trulens.apps.llamaindex <span class="k">import</span> TruLlama
 
 app = <span class="f">TruLlama</span>(
     query_engine,
@@ -662,11 +670,11 @@ app = <span class="f">TruLlama</span>(
     <h2 class="reveal">Live, or over a dataset.</h2>
 
     <div class="code reveal" style="margin-top:2.5rem">
-      <div class="tabs" role="tablist">
-        <button class="tab" role="tab" aria-selected="true" data-tab="live">As traces land</button>
-        <button class="tab" role="tab" aria-selected="false" data-tab="dataset">Over a dataset</button>
+      <div class="tabs" role="tablist" aria-label="When evaluations run">
+        <button class="tab" role="tab" id="tab-when-live" aria-controls="panel-when-live" aria-selected="true" data-tab="live">As traces land</button>
+        <button class="tab" role="tab" id="tab-when-dataset" aria-controls="panel-when-dataset" aria-selected="false" data-tab="dataset">Over a dataset</button>
       </div>
-      <pre data-panel="live"><code><span class="k">from</span> trulens.apps.app <span class="k">import</span> TruApp
+      <pre data-panel="live" id="panel-when-live" role="tabpanel" aria-labelledby="tab-when-live" tabindex="0"><code><span class="k">from</span> trulens.apps.app <span class="k">import</span> TruApp
 
 tru_rag = <span class="f">TruApp</span>(
     rag,
@@ -678,7 +686,7 @@ tru_rag = <span class="f">TruApp</span>(
 <span class="c"># recording a trace kicks off evaluation computation</span>
 <span class="k">with</span> tru_rag <span class="k">as</span> recording:
     rag.<span class="f">query</span>(<span class="s">"Which policy covers this claim?"</span>)</code></pre>
-      <pre data-panel="dataset" hidden><code><span class="k">from</span> trulens.core.run <span class="k">import</span> RunConfig
+      <pre data-panel="dataset" hidden id="panel-when-dataset" role="tabpanel" aria-labelledby="tab-when-dataset" tabindex="0"><code><span class="k">from</span> trulens.core.run <span class="k">import</span> RunConfig
 
 run = tru_rag.<span class="f">add_run</span>(<span class="f">RunConfig</span>(
     run_name=<span class="s">"nightly-v3"</span>,
@@ -721,23 +729,23 @@ run.<span class="f">get_status</span>()  <span class="c"># RunStatus.COMPLETED</
     <span class="eyebrow">Metrics</span>
     <h2 class="reveal">The breadth of evals<br>agentic apps actually need.</h2>
     <div class="grid3 reveal" style="margin-top:3rem">
-      <div class="mgroup"><h4>Agentic</h4><ul>
+      <div class="mgroup"><h3>Agentic</h3><ul>
         <li>Tool Selection</li><li>Tool Calling</li><li>Tool Quality</li>
         <li>Plan Adherence</li><li>Plan Quality</li>
         <li>Execution Efficiency</li><li>Logical Consistency</li></ul></div>
-      <div class="mgroup"><h4>Retrieval &amp; RAG</h4><ul>
+      <div class="mgroup"><h3>Retrieval &amp; RAG</h3><ul>
         <li>Context Relevance</li><li>Groundedness</li>
         <li>Answer Relevance</li><li>Comprehensiveness</li></ul></div>
-      <div class="mgroup"><h4>Safety</h4><ul>
+      <div class="mgroup"><h3>Safety</h3><ul>
         <li>Harmfulness</li><li>Toxicity</li>
         <li>Maliciousness</li><li>Stereotyping</li></ul></div>
-      <div class="mgroup"><h4>Quality</h4><ul>
+      <div class="mgroup"><h3>Quality</h3><ul>
         <li>Coherence</li><li>Conciseness</li>
         <li>Sentiment</li><li>Language match</li></ul></div>
-      <div class="mgroup"><h4>Groundtruth</h4><ul>
+      <div class="mgroup"><h3>Groundtruth</h3><ul>
         <li>Agreement</li><li>Ranking (NDCG, MRR)</li>
         <li>Precision / Recall</li></ul></div>
-      <div class="mgroup"><h4>Custom</h4><ul>
+      <div class="mgroup"><h3>Custom</h3><ul>
         <li>Any Python function</li><li>Any LLM-as-judge prompt</li>
         <li>Any span attribute</li></ul></div>
     </div>
@@ -810,50 +818,50 @@ run.<span class="f">get_status</span>()  <span class="c"># RunStatus.COMPLETED</
       <div class="intg-row reveal">
         <h3>Frameworks &amp; agents<span class="sub">Instrumented, span by span</span></h3>
         <div class="intg-grid">
-          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/frameworks/langchain/langchain_quickstart.ipynb"><img src="/assets/images/logos/integrations/langchain.svg" alt="LangChain"></a>
-          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/frameworks/langchain/langgraph_quickstart.ipynb"><img src="/assets/images/logos/integrations/langgraph.svg" alt="LangGraph"></a>
-          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/frameworks/llamaindex/llama_index_quickstart.ipynb"><img src="/assets/images/logos/integrations/llamaindex.svg" alt="LlamaIndex"></a>
-          <a href="https://www.trulens.org/component_guides/instrumentation/mcp/"><img src="/assets/images/logos/integrations/mcp.svg" alt="Model Context Protocol"></a>
-          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/frameworks/openai_agent_sdk/openai_agents.ipynb"><img src="/assets/images/logos/integrations/openai-agents.svg" alt="OpenAI Agents SDK"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/frameworks/langchain/langchain_quickstart.ipynb"><img src="/assets/images/logos/integrations/langchain.svg" alt="LangChain" loading="lazy"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/frameworks/langchain/langgraph_quickstart.ipynb"><img src="/assets/images/logos/integrations/langgraph.svg" alt="LangGraph" loading="lazy"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/frameworks/llamaindex/llama_index_quickstart.ipynb"><img src="/assets/images/logos/integrations/llamaindex.svg" alt="LlamaIndex" loading="lazy"></a>
+          <a href="https://www.trulens.org/component_guides/instrumentation/mcp/"><img src="/assets/images/logos/integrations/mcp.svg" alt="Model Context Protocol" loading="lazy"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/frameworks/openai_agent_sdk/openai_agents.ipynb"><img src="/assets/images/logos/integrations/openai-agents.svg" alt="OpenAI Agents SDK" loading="lazy"></a>
         </div>
       </div>
 
       <div class="intg-row reveal">
         <h3>Models &amp; judges<span class="sub">Swap judges without rewriting an eval</span></h3>
         <div class="intg-grid">
-          <a href="https://github.com/truera/trulens/blob/main/examples/quickstart/text2text_quickstart.ipynb"><img src="/assets/images/logos/integrations/openai.svg" alt="OpenAI"></a>
-          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/models/anthropic/claude3_quickstart.ipynb"><img src="/assets/images/logos/integrations/anthropic.svg" alt="Anthropic"></a>
-          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/models/google/google_quickstart.ipynb"><img src="/assets/images/logos/integrations/gemini.svg" alt="Google Gemini"></a>
-          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/models/azure/azure_openai_langchain.ipynb"><img src="/assets/images/logos/integrations/azure-openai.svg" alt="Azure OpenAI"></a>
-          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/models/bedrock/bedrock.ipynb"><img src="/assets/images/logos/integrations/bedrock.svg" alt="AWS Bedrock"></a>
-          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/models/snowflake_cortex/cortex_llm_quickstart.ipynb"><img src="/assets/images/logos/integrations/cortex.svg" alt="Snowflake Cortex"></a>
-          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/models/local_and_OSS_models/local_vs_remote_huggingface_feedback_functions.ipynb"><img src="/assets/images/logos/integrations/huggingface.svg" alt="Hugging Face"></a>
-          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/models/local_and_OSS_models/litellm_quickstart.ipynb"><img src="/assets/images/logos/integrations/litellm.svg" alt="LiteLLM"></a>
-          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/models/local_and_OSS_models/ollama_quickstart.ipynb"><img src="/assets/images/logos/integrations/ollama.svg" alt="Ollama"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/quickstart/text2text_quickstart.ipynb"><img src="/assets/images/logos/integrations/openai.svg" alt="OpenAI" loading="lazy"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/models/anthropic/claude3_quickstart.ipynb"><img src="/assets/images/logos/integrations/anthropic.svg" alt="Anthropic" loading="lazy"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/models/google/google_quickstart.ipynb"><img src="/assets/images/logos/integrations/gemini.svg" alt="Google Gemini" loading="lazy"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/models/azure/azure_openai_langchain.ipynb"><img src="/assets/images/logos/integrations/azure-openai.svg" alt="Azure OpenAI" loading="lazy"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/models/bedrock/bedrock.ipynb"><img src="/assets/images/logos/integrations/bedrock.svg" alt="AWS Bedrock" loading="lazy"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/models/snowflake_cortex/cortex_llm_quickstart.ipynb"><img src="/assets/images/logos/integrations/cortex.svg" alt="Snowflake Cortex" loading="lazy"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/models/local_and_OSS_models/local_vs_remote_huggingface_feedback_functions.ipynb"><img src="/assets/images/logos/integrations/huggingface.svg" alt="Hugging Face" loading="lazy"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/models/local_and_OSS_models/litellm_quickstart.ipynb"><img src="/assets/images/logos/integrations/litellm.svg" alt="LiteLLM" loading="lazy"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/models/local_and_OSS_models/ollama_quickstart.ipynb"><img src="/assets/images/logos/integrations/ollama.svg" alt="Ollama" loading="lazy"></a>
         </div>
       </div>
 
       <div class="intg-row reveal">
         <h3>Retrieval<span class="sub">Traced and scored for relevance</span></h3>
         <div class="intg-grid">
-          <a href="https://github.com/truera/trulens/blob/main/examples/quickstart/quickstart.ipynb"><img src="/assets/images/logos/integrations/chroma.svg" alt="Chroma"></a>
-          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/vector_stores/pinecone/pinecone_quickstart.ipynb"><img src="/assets/images/logos/integrations/pinecone.svg" alt="Pinecone"></a>
-          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/vector_stores/milvus/milvus_simple.ipynb"><img src="/assets/images/logos/integrations/milvus.svg" alt="Milvus"></a>
-          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/vector_stores/weaviate/weaviate_query_agent.ipynb"><img src="/assets/images/logos/integrations/weaviate.svg" alt="Weaviate"></a>
-          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/vector_stores/qdrant/hybrid_search_rag_langchain_and_qdrant.ipynb"><img src="/assets/images/logos/integrations/qdrant.svg" alt="Qdrant"></a>
-          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/vector_stores/mongodb/atlas_quickstart.ipynb"><img src="/assets/images/logos/integrations/mongodb.svg" alt="MongoDB Atlas"></a>
-          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/vector_stores/faiss/langchain_faiss_example.ipynb"><img src="/assets/images/logos/integrations/faiss.svg" alt="FAISS"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/quickstart/quickstart.ipynb"><img src="/assets/images/logos/integrations/chroma.svg" alt="Chroma" loading="lazy"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/vector_stores/pinecone/pinecone_quickstart.ipynb"><img src="/assets/images/logos/integrations/pinecone.svg" alt="Pinecone" loading="lazy"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/vector_stores/milvus/milvus_simple.ipynb"><img src="/assets/images/logos/integrations/milvus.svg" alt="Milvus" loading="lazy"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/vector_stores/weaviate/weaviate_query_agent.ipynb"><img src="/assets/images/logos/integrations/weaviate.svg" alt="Weaviate" loading="lazy"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/vector_stores/qdrant/hybrid_search_rag_langchain_and_qdrant.ipynb"><img src="/assets/images/logos/integrations/qdrant.svg" alt="Qdrant" loading="lazy"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/vector_stores/mongodb/atlas_quickstart.ipynb"><img src="/assets/images/logos/integrations/mongodb.svg" alt="MongoDB Atlas" loading="lazy"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/vector_stores/faiss/langchain_faiss_example.ipynb"><img src="/assets/images/logos/integrations/faiss.svg" alt="FAISS" loading="lazy"></a>
         </div>
       </div>
 
       <div class="intg-row reveal">
         <h3>Logging &amp; platforms<span class="sub">Where the traces land</span></h3>
         <div class="intg-grid">
-          <a href="https://www.trulens.org/component_guides/logging/where_to_log/log_in_snowflake/"><img src="/assets/images/logos/integrations/snowflake.svg" alt="Snowflake"></a>
-          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/frameworks/mlflow/mlflow_trulens_scorers.ipynb"><img src="/assets/images/logos/integrations/mlflow.svg" alt="MLflow"></a>
-          <a href="https://docs.datadoghq.com/integrations/crest-data-systems-trulens-eval/"><img src="/assets/images/logos/integrations/datadog.svg" alt="Datadog"></a>
-          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/logging/log_in_postgres.ipynb"><img src="/assets/images/logos/integrations/postgresql.svg" alt="PostgreSQL"></a>
-          <a href="https://www.trulens.org/component_guides/logging/where_to_log/"><img src="/assets/images/logos/integrations/sqlite.svg" alt="SQLite"></a>
+          <a href="https://www.trulens.org/component_guides/logging/where_to_log/log_in_snowflake/"><img src="/assets/images/logos/integrations/snowflake.svg" alt="Snowflake" loading="lazy"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/frameworks/mlflow/mlflow_trulens_scorers.ipynb"><img src="/assets/images/logos/integrations/mlflow.svg" alt="MLflow" loading="lazy"></a>
+          <a href="https://docs.datadoghq.com/integrations/crest-data-systems-trulens-eval/"><img src="/assets/images/logos/integrations/datadog.svg" alt="Datadog" loading="lazy"></a>
+          <a href="https://github.com/truera/trulens/blob/main/examples/expositional/logging/log_in_postgres.ipynb"><img src="/assets/images/logos/integrations/postgresql.svg" alt="PostgreSQL" loading="lazy"></a>
+          <a href="https://www.trulens.org/component_guides/logging/where_to_log/"><img src="/assets/images/logos/integrations/sqlite.svg" alt="SQLite" loading="lazy"></a>
         </div>
       </div>
     </div>
@@ -926,8 +934,10 @@ run.<span class="f">get_status</span>()  <span class="c"># RunStatus.COMPLETED</
   </div>
 </section>
 
+</main>
+
 <footer>
-  <img class="squid-wm" src="/img/squid.png" alt="">
+  <img class="squid-wm" src="/img/squid.png" alt="" loading="lazy">
   <div class="wrap indent" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem">
     <span class="brand" style="color:rgba(233,242,241,.5)">trulens</span>
     <span style="font-family:var(--mono);font-size:.75rem;letter-spacing:.08em">&copy; 2026 TruLens</span>
