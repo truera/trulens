@@ -54,10 +54,11 @@ Typical usage
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from dataclasses import field
 import logging
-from typing import Callable, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +67,18 @@ logger = logging.getLogger(__name__)
 FeedbackKwargs = dict[str, str]
 
 # A labeled example: (feedback_kwargs, ground_truth_score ∈ [0, 1]).
-LabeledExample = Tuple[FeedbackKwargs, float]
+LabeledExample = tuple[FeedbackKwargs, float]
+
+VALID_METRICS = {
+    "pearson",
+    "spearman",
+    "precision",
+    "recall",
+    "f1",
+    "cohens_kappa",
+    "accuracy",
+    "mae",
+}
 
 
 @dataclass
@@ -79,18 +91,29 @@ class OptimizeResult:
         The subset of candidates selected by the optimizer, each paired with
         its ground-truth score.
     correlation:
-        Pearson correlation between the feedback function's predicted scores
-        and the ground-truth scores on *eval_dataset* when using
-        ``best_examples``.  Higher is better.  ``None`` if fewer than two
-        eval samples were available.
+        Evaluation score (e.g. Pearson correlation or selected metric score)
+        achieved on *eval_dataset* when using ``best_examples``. Higher is better.
+        ``None`` if fewer than two eval samples were available.
     candidate_scores:
-        Mapping from candidate index → correlation achieved when that
-        candidate was *included* in the prompt.  Useful for debugging.
+        Mapping from candidate index → metric score achieved when that
+        candidate was *included* in the prompt. Useful for debugging.
+    metric_name:
+        Name of the metric used for optimization (e.g. "pearson", "f1").
+    metric_score:
+        The metric score achieved by ``best_examples``.
     """
 
-    best_examples: List[LabeledExample]
-    correlation: Optional[float]
+    best_examples: list[LabeledExample]
+    correlation: float | None
     candidate_scores: dict[int, float] = field(default_factory=dict)
+    metric_name: str = "pearson"
+    metric_score: float | None = None
+
+    def __post_init__(self) -> None:
+        if self.metric_score is None:
+            self.metric_score = self.correlation
+        if self.correlation is None:
+            self.correlation = self.metric_score
 
 
 class FewShotOptimizer:
@@ -98,13 +121,13 @@ class FewShotOptimizer:
 
     The optimizer works by:
 
-    1. Iterating over *candidates* one at a time (or in small batches).
+    1. Iterating over *candidates* one at a time in parallel rounds.
     2. For each candidate, calling *feedback_fn* on every sample in
        *eval_dataset* with that candidate injected as a few-shot example.
-    3. Computing the Pearson correlation between predicted and ground-truth
-       scores.
+    3. Computing the target metric (e.g., Pearson correlation, F1, precision, recall, Cohen's kappa)
+       between predicted and ground-truth scores.
     4. Greedily selecting the *n_examples* candidates with the highest
-       correlation improvement (greedy forward selection).
+       metric improvement (greedy forward selection).
 
     Parameters
     ----------
@@ -128,15 +151,28 @@ class FewShotOptimizer:
     format_sep:
         Separator inserted between formatted examples when building the
         ``examples`` string passed to *feedback_fn*.  Defaults to ``"\\n\\n"``.
+    metric:
+        Evaluation metric to optimize. Supported metrics: ``"pearson"``,
+        ``"spearman"``, ``"precision"``, ``"recall"``, ``"f1"``,
+        ``"cohens_kappa"``, ``"accuracy"``, ``"mae"``. Defaults to ``"pearson"``.
+    metric_threshold:
+        Threshold used for binarizing scores when computing classification
+        metrics (precision, recall, f1, cohens_kappa, accuracy). Defaults to ``0.5``.
+    max_workers:
+        Maximum number of thread workers used to evaluate candidate sets in parallel.
+        Defaults to ``None`` (utilizes ThreadPoolExecutor's default).
     """
 
     def __init__(
         self,
         feedback_fn: Callable[..., float],
-        candidates: List[LabeledExample],
-        eval_dataset: List[LabeledExample],
+        candidates: list[LabeledExample],
+        eval_dataset: list[LabeledExample],
         n_examples: int = 3,
         format_sep: str = "\n\n",
+        metric: str = "pearson",
+        metric_threshold: float = 0.5,
+        max_workers: int | None = None,
     ) -> None:
         if not candidates:
             raise ValueError("`candidates` must not be empty.")
@@ -145,11 +181,20 @@ class FewShotOptimizer:
         if n_examples < 1:
             raise ValueError("`n_examples` must be >= 1.")
 
+        metric_lower = metric.lower()
+        if metric_lower not in VALID_METRICS:
+            raise ValueError(
+                f"Invalid metric '{metric}'. Supported metrics are: {sorted(VALID_METRICS)}"
+            )
+
         self.feedback_fn = feedback_fn
         self.candidates = candidates
         self.eval_dataset = eval_dataset
         self.n_examples = n_examples
         self.format_sep = format_sep
+        self.metric = metric_lower
+        self.metric_threshold = metric_threshold
+        self.max_workers = max_workers
 
     # ------------------------------------------------------------------
     # Public interface
@@ -161,8 +206,8 @@ class FewShotOptimizer:
         Returns
         -------
         OptimizeResult
-            Contains the selected examples, overall correlation, and
-            per-candidate correlation scores.
+            Contains the selected examples, overall evaluation score, and
+            per-candidate scores.
 
         Raises
         ------
@@ -170,27 +215,50 @@ class FewShotOptimizer:
             If *feedback_fn* raises an exception for every candidate on the
             first eval sample (likely a misconfigured provider).
         """
-        selected: List[LabeledExample] = []
+        selected: list[LabeledExample] = []
         remaining = list(enumerate(self.candidates))
         candidate_scores: dict[int, float] = {}
 
         for round_num in range(min(self.n_examples, len(self.candidates))):
-            best_idx: Optional[int] = None
-            best_corr: Optional[float] = None
+            best_idx: int | None = None
+            best_score: float | None = None
 
-            for orig_idx, candidate in remaining:
+            def _evaluate_candidate(
+                item: tuple[int, LabeledExample],
+            ) -> tuple[int, float | None]:
+                orig_idx, candidate = item
                 trial_set = selected + [candidate]
-                corr = self._score_candidate_set(trial_set)
-                candidate_scores[orig_idx] = corr if corr is not None else -1.0
+                score = self._score_candidate_set(trial_set)
+                return orig_idx, score
 
-                if corr is not None and (best_corr is None or corr > best_corr):
-                    best_corr = corr
+            if self.max_workers == 1:
+                round_results = [
+                    _evaluate_candidate(item) for item in remaining
+                ]
+            else:
+                with ThreadPoolExecutor(
+                    max_workers=self.max_workers
+                ) as executor:
+                    round_results = list(
+                        executor.map(_evaluate_candidate, remaining)
+                    )
+
+            for orig_idx, score in round_results:
+                candidate_scores[orig_idx] = (
+                    score if score is not None else -1.0
+                )
+
+                if score is not None and (
+                    best_score is None or score > best_score
+                ):
+                    best_score = score
                     best_idx = orig_idx
 
             if best_idx is None:
                 logger.warning(
-                    "Round %d: no candidate improved correlation — stopping early.",
+                    "Round %d: no candidate improved metric '%s' — stopping early.",
                     round_num + 1,
+                    self.metric,
                 )
                 break
 
@@ -198,20 +266,23 @@ class FewShotOptimizer:
             selected.append(chosen)
             remaining = [(i, c) for i, c in remaining if i != best_idx]
             logger.info(
-                "Round %d: selected candidate %d (correlation=%.4f).",
+                "Round %d: selected candidate %d (%s=%.4f).",
                 round_num + 1,
                 best_idx,
-                best_corr,
+                self.metric,
+                best_score,
             )
 
-        final_corr = self._score_candidate_set(selected) if selected else None
+        final_score = self._score_candidate_set(selected) if selected else None
         return OptimizeResult(
             best_examples=selected,
-            correlation=final_corr,
+            correlation=final_score,
             candidate_scores=candidate_scores,
+            metric_name=self.metric,
+            metric_score=final_score,
         )
 
-    def format_examples(self, examples: List[LabeledExample]) -> str:
+    def format_examples(self, examples: list[LabeledExample]) -> str:
         """Serialise a list of labeled examples into the string format expected
         by *feedback_fn*'s ``examples`` parameter.
 
@@ -239,18 +310,18 @@ class FewShotOptimizer:
         return self.format_sep.join(parts)
 
     # ------------------------------------------------------------------
-    # Private helpers (stubs — implementations in next commit)
+    # Private helpers
     # ------------------------------------------------------------------
 
     def _score_candidate_set(
         self,
-        candidate_set: List[LabeledExample],
-    ) -> Optional[float]:
+        candidate_set: list[LabeledExample],
+    ) -> float | None:
         """Evaluate *candidate_set* against :attr:`eval_dataset`.
 
         Calls :attr:`feedback_fn` on every eval sample with the formatted
         *candidate_set* injected as few-shot examples, then computes the
-        Pearson correlation between predicted and ground-truth scores.
+        selected metric between predicted and ground-truth scores.
 
         Parameters
         ----------
@@ -260,12 +331,12 @@ class FewShotOptimizer:
         Returns
         -------
         float or None
-            Pearson correlation, or ``None`` if fewer than two eval samples
+            Evaluation metric score, or ``None`` if fewer than two eval samples
             produced valid predictions.
         """
         examples_str = self.format_examples(candidate_set)
-        predicted: List[float] = []
-        ground_truth: List[float] = []
+        predicted: list[float] = []
+        ground_truth: list[float] = []
 
         for kwargs, gt_score in self.eval_dataset:
             try:
@@ -280,18 +351,49 @@ class FewShotOptimizer:
                     exc_info=True,
                 )
 
-        return self._pearson_correlation(predicted, ground_truth)
+        return self._compute_metric(predicted, ground_truth)
+
+    def _compute_metric(
+        self,
+        predicted: list[float],
+        ground_truth: list[float],
+    ) -> float | None:
+        """Compute the configured evaluation metric between predicted and ground-truth scores."""
+        if len(predicted) < 1 or len(ground_truth) != len(predicted):
+            return None
+
+        if self.metric == "pearson":
+            return self._pearson_correlation(predicted, ground_truth)
+        elif self.metric == "spearman":
+            return self._spearman_correlation(predicted, ground_truth)
+        elif self.metric == "precision":
+            return self._precision(
+                predicted, ground_truth, self.metric_threshold
+            )
+        elif self.metric == "recall":
+            return self._recall(predicted, ground_truth, self.metric_threshold)
+        elif self.metric == "f1":
+            return self._f1_score(
+                predicted, ground_truth, self.metric_threshold
+            )
+        elif self.metric == "cohens_kappa":
+            return self._cohens_kappa(
+                predicted, ground_truth, self.metric_threshold
+            )
+        elif self.metric == "accuracy":
+            return self._accuracy(
+                predicted, ground_truth, self.metric_threshold
+            )
+        elif self.metric == "mae":
+            return self._mae_score(predicted, ground_truth)
+        return None
 
     def _pearson_correlation(
         self,
-        predicted: List[float],
-        ground_truth: List[float],
-    ) -> Optional[float]:
-        """Compute Pearson *r* between two equal-length lists of floats.
-
-        Returns ``None`` when the lists have fewer than two elements or when
-        one of the lists has zero variance (correlation is undefined).
-        """
+        predicted: list[float],
+        ground_truth: list[float],
+    ) -> float | None:
+        """Compute Pearson *r* between two equal-length lists of floats."""
         n = len(predicted)
         if n < 2 or len(ground_truth) != n:
             return None
@@ -309,3 +411,133 @@ class FewShotOptimizer:
             return None  # zero variance — correlation undefined
 
         return numerator / (denom_p * denom_g)
+
+    def _spearman_correlation(
+        self,
+        predicted: list[float],
+        ground_truth: list[float],
+    ) -> float | None:
+        """Compute Spearman rank correlation coefficient."""
+        if len(predicted) < 2:
+            return None
+
+        def _rank(vals: list[float]) -> list[float]:
+            sorted_indices = sorted(range(len(vals)), key=lambda i: vals[i])
+            ranks = [0.0] * len(vals)
+            i = 0
+            while i < len(vals):
+                j = i
+                while (
+                    j < len(vals)
+                    and vals[sorted_indices[j]] == vals[sorted_indices[i]]
+                ):
+                    j += 1
+                avg_rank = sum(range(i + 1, j + 1)) / (j - i)
+                for k in range(i, j):
+                    ranks[sorted_indices[k]] = avg_rank
+                i = j
+            return ranks
+
+        rank_p = _rank(predicted)
+        rank_g = _rank(ground_truth)
+        return self._pearson_correlation(rank_p, rank_g)
+
+    def _precision(
+        self,
+        predicted: list[float],
+        ground_truth: list[float],
+        threshold: float,
+    ) -> float:
+        """Compute precision score given binary classification threshold."""
+        p_bin = [1 if p >= threshold else 0 for p in predicted]
+        g_bin = [1 if g >= threshold else 0 for g in ground_truth]
+        tp = sum(1 for p, g in zip(p_bin, g_bin) if p == 1 and g == 1)
+        fp = sum(1 for p, g in zip(p_bin, g_bin) if p == 1 and g == 0)
+        if tp + fp == 0:
+            return 0.0
+        return tp / (tp + fp)
+
+    def _recall(
+        self,
+        predicted: list[float],
+        ground_truth: list[float],
+        threshold: float,
+    ) -> float:
+        """Compute recall score given binary classification threshold."""
+        p_bin = [1 if p >= threshold else 0 for p in predicted]
+        g_bin = [1 if g >= threshold else 0 for g in ground_truth]
+        tp = sum(1 for p, g in zip(p_bin, g_bin) if p == 1 and g == 1)
+        fn = sum(1 for p, g in zip(p_bin, g_bin) if p == 0 and g == 1)
+        if tp + fn == 0:
+            return 0.0
+        return tp / (tp + fn)
+
+    def _f1_score(
+        self,
+        predicted: list[float],
+        ground_truth: list[float],
+        threshold: float,
+    ) -> float:
+        """Compute F1 score given binary classification threshold."""
+        prec = self._precision(predicted, ground_truth, threshold)
+        rec = self._recall(predicted, ground_truth, threshold)
+        if prec + rec == 0:
+            return 0.0
+        return 2 * prec * rec / (prec + rec)
+
+    def _cohens_kappa(
+        self,
+        predicted: list[float],
+        ground_truth: list[float],
+        threshold: float,
+    ) -> float | None:
+        """Compute Cohen's kappa agreement coefficient."""
+        n = len(predicted)
+        if n < 1:
+            return None
+        p_bin = [1 if p >= threshold else 0 for p in predicted]
+        g_bin = [1 if g >= threshold else 0 for g in ground_truth]
+        tp = sum(1 for p, g in zip(p_bin, g_bin) if p == 1 and g == 1)
+        tn = sum(1 for p, g in zip(p_bin, g_bin) if p == 0 and g == 0)
+        fp = sum(1 for p, g in zip(p_bin, g_bin) if p == 1 and g == 0)
+        fn = sum(1 for p, g in zip(p_bin, g_bin) if p == 0 and g == 1)
+
+        p_o = (tp + tn) / n
+        p_pred_1 = (tp + fp) / n
+        p_gt_1 = (tp + fn) / n
+        p_pred_0 = (tn + fn) / n
+        p_gt_0 = (tn + fp) / n
+        p_e = (p_pred_1 * p_gt_1) + (p_pred_0 * p_gt_0)
+
+        if 1 - p_e == 0:
+            return 1.0 if p_o == 1.0 else 0.0
+        return (p_o - p_e) / (1 - p_e)
+
+    def _accuracy(
+        self,
+        predicted: list[float],
+        ground_truth: list[float],
+        threshold: float,
+    ) -> float:
+        """Compute classification accuracy."""
+        n = len(predicted)
+        if n < 1:
+            return 0.0
+        correct = sum(
+            1
+            for p, g in zip(predicted, ground_truth)
+            if (p >= threshold) == (g >= threshold)
+        )
+        return correct / n
+
+    def _mae_score(
+        self,
+        predicted: list[float],
+        ground_truth: list[float],
+    ) -> float:
+        """Compute 1.0 - Mean Absolute Error score (higher is better)."""
+        n = len(predicted)
+        if n < 1:
+            return 0.0
+        mae = sum(abs(p - g) for p, g in zip(predicted, ground_truth)) / n
+        return 1.0 - mae

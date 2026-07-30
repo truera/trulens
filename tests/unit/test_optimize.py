@@ -139,6 +139,15 @@ class TestInit:
                 n_examples=0,
             )
 
+    def test_invalid_metric_raises(self):
+        with pytest.raises(ValueError, match="Invalid metric"):
+            FewShotOptimizer(
+                feedback_fn=make_feedback_fn(),
+                candidates=CANDIDATES,
+                eval_dataset=EVAL_DATASET,
+                metric="invalid_metric",
+            )
+
 
 # ---------------------------------------------------------------------------
 # optimize() end-to-end
@@ -193,3 +202,41 @@ class TestOptimize:
         # should not raise even with a flaky feedback_fn
         result = opt.optimize()
         assert isinstance(result, OptimizeResult)
+
+    @pytest.mark.parametrize(
+        "metric",
+        [
+            "pearson",
+            "spearman",
+            "precision",
+            "recall",
+            "f1",
+            "cohens_kappa",
+            "accuracy",
+            "mae",
+        ],
+    )
+    def test_optimize_with_various_metrics(self, metric):
+        opt = FewShotOptimizer(
+            feedback_fn=make_feedback_fn(),
+            candidates=CANDIDATES,
+            eval_dataset=EVAL_DATASET,
+            n_examples=2,
+            metric=metric,
+        )
+        result = opt.optimize()
+        assert isinstance(result, OptimizeResult)
+        assert result.metric_name == metric
+        assert len(result.best_examples) <= 2
+
+    def test_optimize_parallel_workers(self):
+        opt = FewShotOptimizer(
+            feedback_fn=make_feedback_fn(),
+            candidates=CANDIDATES,
+            eval_dataset=EVAL_DATASET,
+            n_examples=2,
+            max_workers=2,
+        )
+        result = opt.optimize()
+        assert isinstance(result, OptimizeResult)
+        assert len(result.best_examples) <= 2
