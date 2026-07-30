@@ -23,10 +23,52 @@
     <meta name="description" content="TruLens instruments your AI agent with OpenTelemetry, scores every step with benchmarked LLM judges, and tells you which version to ship.">
     <meta name="robots" content="index,follow">
 
-    <meta property="og:title" content="TruLens">
-    <meta property="og:description" content="Evals and tracing for AI agents. Move from vibes to metrics.">
-    <meta property="og:image" content="/assets/images/Neural_Network_Explainability.png">
-    <meta property="og:url" content="https://www.trulens.org">
+    <!-- This template is standalone and never extends the theme's base.html, so
+         Material's canonical block never runs for this page. Every other page on
+         the site gets one from site_url; this one has to say it itself. -->
+    <link rel="canonical" href="https://www.trulens.org/">
+
+    <!-- og:image has to be absolute. A root-relative path does not resolve for
+         most consumers, so the card fell back to no image at all. The art itself
+         is still the TruLens-Explain era neural-net diagram, correctly sized at
+         1200x628 but off-topic for a page about agent evals; replacing it is a
+         design task, not a markup one. -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="TruLens">
+    <meta property="og:title" content="TruLens: Evals and Tracing for AI Agents">
+    <meta property="og:description" content="TruLens finds where your agent fails and where you can cut cost without losing quality. Open source, OpenTelemetry-native.">
+    <meta property="og:image" content="https://www.trulens.org/assets/images/Neural_Network_Explainability.png">
+    <meta property="og:image:alt" content="TruLens">
+    <meta property="og:url" content="https://www.trulens.org/">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <!-- Stable facts only: license, repository, language, publisher. Deliberately
+         no scores or counts. Anything numeric here would duplicate a claim
+         rendered further down the page and drift the moment that claim is edited,
+         which has already happened twice to hand-written copy in this file. -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "TruLens",
+      "url": "https://www.trulens.org/",
+      "applicationCategory": "DeveloperApplication",
+      "description": "TruLens is an open source library for evaluating and tracing AI agents. Instrument with OpenTelemetry and score every step with benchmarked LLM judges.",
+      "license": "https://opensource.org/licenses/MIT",
+      "codeRepository": "https://github.com/truera/trulens",
+      "programmingLanguage": "Python",
+      "isAccessibleForFree": true,
+      "publisher": {
+        "@type": "Organization",
+        "name": "Snowflake",
+        "url": "https://www.snowflake.com/"
+      },
+      "sameAs": [
+        "https://github.com/truera/trulens",
+        "https://pypi.org/project/trulens/"
+      ]
+    }
+    </script>
 
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
