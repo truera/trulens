@@ -1128,6 +1128,12 @@ var ANS = 'Yes \u2014 order 10023 can be refunded now. Returns are accepted with
   'of delivery, so no approval is needed.';
 var C_RETURN = 'Items may be returned within 30 days of delivery, including opened items, ' +
   'provided all original packaging is retained. Final-sale items cannot be returned.';
+/* The same three chunks the retrieve span returns, verbatim, so a reader who
+   compares the two widgets finds the same text in both. */
+var C_SHIP = 'Delivery is considered complete when the carrier marks the parcel as ' +
+  'delivered. That date starts the 30-day return window.';
+var C_FEES = 'Opened electronics carry a 15% restocking fee. Gift cards, digital ' +
+  'downloads and final-sale items are excluded from returns.';
 var TRACE = "Trace(events=                                              record  ..." +
   "  processed_content 0  {'name': '__main__.SupportAgent.answer', 'kind'...";
 
@@ -1135,12 +1141,19 @@ var TRACE = "Trace(events=                                              record  
 function icon(v){ return v >= 0.8 ? '\u2705' : v >= 0.6 ? '\u26A0\uFE0F' : '\uD83D\uDED1'; }
 
 var M = [
-  {n:'Context Relevance', v:0.333333,
+  {n:'Context Relevance',
    cols:[['question',340],['context',560],['score',80,1],['explanation',620]],
    rows:[
-     [Q, C_RETURN, 0.333333, 'The search result covers the 30-day return window and the ' +
-       'packaging requirement. It sits next to refunds but says nothing about whether a ' +
-       'refund needs approval, which is what the question turns on.']]},
+     [Q, C_RETURN, 0.666667, 'Covers the 30-day return window and the packaging ' +
+       'requirement, which is most of what the question asks. It says nothing about ' +
+       'whether a refund over a threshold needs approval, which is the part the answer ' +
+       'got wrong.'],
+     [Q, C_SHIP, 0.333333, 'Delivery timing rather than refund eligibility. It matters ' +
+       'only because the delivery date is what starts the return window, so it supports ' +
+       'the answer indirectly and answers nothing directly.'],
+     [Q, C_FEES, 0.333333, 'Return conditions, but restocking fees and excluded product ' +
+       'types. Order 10023 is neither electronics nor a gift card, so none of this bears ' +
+       'on whether the refund can be released.']]},
   {n:'Correctness', v:0,
    cols:[['text',620],['score',80,1],['explanation',700]],
    rows:[[ANS, 0,
@@ -1164,10 +1177,25 @@ var M = [
    rows:[[0.333333,
      'The agent executed plan \u2192 retrieve \u2192 search_policies \u2192 generate. ' +
      'search_policies was called with the customer question verbatim, order id included, ' +
-     'and k=1, which ranks the returns policy above the refunds policy. get_order was ' +
-     'available and never called, so the $780 order total never entered the context. One ' +
-     'call with the wrong arguments, and a second call that was needed and missing.']]}
+     'so all three sections it returned describe return windows, restocking fees and ' +
+     'delivery dates rather than approval. get_order was available and never called, so ' +
+     'the $780 order total never entered the context. One call with the wrong arguments, ' +
+     'and a second call that was needed and missing.']]}
 ];
+
+/* Context relevance is scored once per retrieved chunk, so the pill has to be the
+   mean of its rows rather than a number typed beside them -- which is also what
+   the dashboard shows. Any metric carrying more than one scored row is averaged
+   the same way, so the headline stays honest if a chunk is added or dropped. */
+M.forEach(function(m){
+  if(m.rows.length < 2) return;
+  var j = -1;
+  m.cols.forEach(function(c, i){ if(c[0] === 'score') j = i; });
+  if(j < 0) return;
+  var sum = 0;
+  m.rows.forEach(function(r){ sum += Number(r[j]); });
+  m.v = sum / m.rows.length;
+});
 
 var open = 4;  // Tool Selection -- the root cause of the wrong answer
 var pills = W.querySelector('.fpills'), df = W.querySelector('.fdf');
