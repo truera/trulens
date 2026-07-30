@@ -201,9 +201,13 @@ class OpenAI(llm_provider.LLMProvider):
                 if hasattr(response, "output"):
                     out_items = getattr(response, "output")
                     for item in out_items:
-                        if getattr(item, "type", None) == "tool" and hasattr(
-                            item, "input"
-                        ):
+                        # Responses API emits custom tool calls with type
+                        # "custom_tool_call" (see openai.types.responses.
+                        # ResponseCustomToolCall); "tool" kept for safety.
+                        if getattr(item, "type", None) in (
+                            "tool",
+                            "custom_tool_call",
+                        ) and hasattr(item, "input"):
                             return getattr(item, "input")
                     texts: list[str] = []
                     for item in out_items:
