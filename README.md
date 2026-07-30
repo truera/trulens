@@ -4,42 +4,63 @@
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/trulens-core)
 [![Discourse](https://img.shields.io/discourse/users?server=https://snowflake.discourse.group/)](https://snowflake.discourse.group/c/ai-research-and-development-community/trulens/97)
 [![Docs](https://img.shields.io/badge/docs-trulens.org-blue)](https://www.trulens.org/getting_started/)
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/examples/quickstart/langchain_quickstart.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/examples/quickstart/quickstart.ipynb)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/truera/trulens)
 
-# 🦑 Welcome to TruLens!
+# 🦑 TruLens
 
 ![TruLens](https://www.trulens.org/assets/images/og-card.png)
 
-**Don't just vibe-check your LLM app!** Systematically evaluate and track your
-LLM experiments with TruLens. As you develop your app including prompts, models,
-retrievers, knowledge sources and more, *TruLens* is the tool you need to
-understand its performance.
+**TruLens finds where your agent fails and where you can cut cost without losing
+quality.** Open source, OpenTelemetry-native.
 
-Fine-grained, stack-agnostic instrumentation and comprehensive evaluations help
-you to identify failure modes & systematically iterate to improve your
-application.
+Instrument any app with a decorator, score every step with LLM judges that explain
+themselves, then compare versions and ship the one that earns it. Tracing is
+OpenTelemetry-native, so a trace is portable to any OTLP backend, and evaluations
+run either as traces land or over a dataset after the fact.
 
-Read more about the core concepts behind TruLens including [Feedback Functions](https://www.trulens.org/getting_started/core_concepts/feedback_functions/),
-[The RAG Triad](https://www.trulens.org/getting_started/core_concepts/rag_triad/),
+Read more about the core concepts behind TruLens including
+[Metrics](https://www.trulens.org/getting_started/core_concepts/feedback_functions/),
+[the RAG Triad](https://www.trulens.org/getting_started/core_concepts/rag_triad/),
 and [Honest, Harmless and Helpful Evals](https://www.trulens.org/getting_started/core_concepts/honest_harmless_helpful_evals/).
 
-## TruLens in the development workflow
+## Trace every step
 
-Build your first prototype then connect instrumentation and logging with
-TruLens. Decide what feedbacks you need, and specify them with TruLens to run
-alongside your app. Then iterate and compare versions of your app in an
-easy-to-use user interface 👇
+Latency, inputs, outputs, tokens and cost, recorded per step, so a bad answer has
+a traceable cause rather than a vibe.
 
-![Architecture
-Diagram](https://www.trulens.org/assets/images/TruLens_Architecture.png)
+![TruLens trace waterfall](https://www.trulens.org/assets/images/home/trace.png)
+
+## Compare versions, ship the frontier
+
+Scores, latency and cost per app version, so the tradeoff is visible instead of
+guessed. The cheapest version is often not the worst one.
+
+![TruLens leaderboard](https://www.trulens.org/assets/images/home/leaderboard.png)
+
+## Don't take our word for it
+
+TruLens judges are graded against human annotations, out of the box.
+
+| Result | Metric | Detail |
+|--------|--------|--------|
+| **95%** | Agent errors caught with Agent GPA on TRAIL/GAIA | 267 of 281 human-annotated errors, against 55% for the baseline trace judge ([arXiv:2510.08847](https://arxiv.org/abs/2510.08847)) |
+| **0.81** | Groundedness F1 on LLM-AggreFact | Ahead of a fine-tuned proprietary model, Bespoke-MiniCheck-7B, on F1, precision and recall over an 11,000-example holdout ([RAG triad benchmarks](https://www.snowflake.com/en/engineering-blog/benchmarking-LLM-as-a-judge-RAG-triad-metrics/)) |
+| **0.93** | Context relevance NDCG@5 | First of five tools on three of four ranking metrics, ahead of WandB Weave, RAGAS, DeepEval and UpTrain ([AIMultiple, 23 March 2026](https://aimultiple.com/rag-evaluation-tools)) |
+| **4.2:1** | Context relevance adversarial win-loss | Scored the correct passage over a near-copy with one fact swapped 4.2 times for every reversal, against 3.3:1 for the next best tool ([AIMultiple](https://aimultiple.com/rag-evaluation-tools)) |
+
+## Adopted by AI teams at
+
+Walmart Global Tech, Cisco, J.P. Morgan Chase, Equinix, VMware by Broadcom,
+Hitachi Digital Services, Thomson Reuters, phData, HID Global and others. See
+[ADOPTERS.md](https://github.com/truera/trulens/blob/main/ADOPTERS.md).
 
 ## Installation and Setup
 
 Install the trulens pip package from PyPI.
 
 ```bash
-pip install trulens-core
+pip install trulens
 ```
 
 Install with a specific LLM provider for feedback evaluation:
@@ -119,7 +140,7 @@ Run evaluations alongside your app, on existing data, or in offline batch mode:
 with tru_recorder as recording:
     response = my_app.query("What is TruLens?")
 
-# Batch — evaluate a pre-collected dataset using the TruLens 2.8 Run API
+# Batch — evaluate a pre-collected dataset using the Run API
 from trulens.core.run import RunConfig
 
 run_config = RunConfig(
@@ -178,7 +199,7 @@ f_context_relevance = Metric(
 ## 💡 Contributing & Community
 
 Interested in contributing? See our [contributing
-guide](https://www.trulens.org/contributing/) for more details.
+guide](https://www.trulens.org/contributing/development/) for more details.
 
 The best way to support TruLens is to give us a ⭐ on
 [GitHub](https://www.github.com/truera/trulens) and join our [discourse
