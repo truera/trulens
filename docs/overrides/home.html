@@ -41,6 +41,30 @@
     <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;600;700&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="stylesheets/style.css">
+
+    <!-- Scroll reveal starts at opacity:0 and JS adds .in as each element enters
+         the viewport. With scripting off nothing ever adds it, so every band
+         headline, code block, widget and integrations row stays invisible and the
+         page reads as an empty hero. style.css has the same rescue for
+         prefers-reduced-motion; this is the one for no JS. It has to sit after the
+         stylesheet, because it wins on source order at equal specificity.
+
+         Revealing the widgets exposes their empty chrome: each .dash keeps a static
+         header and a container that JS hydrates, and the fallback screenshots start
+         just below that header. Left alone you get two tab rows, one dead and one
+         painted into the PNG. So hide the containers JS was going to fill and let
+         the image stand in, and drop the leaderboard's "click a column to sort"
+         hint, which promises an interaction that cannot happen here. -->
+    <noscript>
+      <style>
+        .reveal{opacity:1;transform:none;transition:none}
+        #trace-widget .trace,
+        #fb-widget .fb,
+        #lb-widget table.lb,
+        #cmp-widget .cmp,
+        #lb-widget .dash-bar .rid{display:none}
+      </style>
+    </noscript>
 </head>
 
 <body>
