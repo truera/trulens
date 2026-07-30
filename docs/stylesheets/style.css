@@ -99,6 +99,10 @@ h4{font-size:1.125rem;font-weight:600;margin-bottom:.35rem}
 .tlink{color:var(--ink);font-weight:600;font-size:.875rem;text-decoration:none;
   border-bottom:1px solid rgba(3,74,97,.3)}
 .tlink:hover{border-bottom-color:var(--ink)}
+/* .tlink is sized for standalone use next to a button. Inline in running prose it
+   has to take the paragraph's size, or the linked words render visibly smaller
+   than the sentence around them. */
+.lede .tlink{font-size:inherit}
 
 /* ---------- live project stats, foot of the hero ---------- */
 /* An instrument panel, not five more buttons: mono label over mono value,
