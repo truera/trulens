@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+import contextvars
 from dataclasses import dataclass
 import itertools
 import logging
@@ -681,8 +682,18 @@ def _run_feedback_on_inputs(
     ret = 0
 
     with ThreadPoolExecutor(max_workers=workers) as executor:
+        # Each worker gets its own context copy so context vars
+        # (e.g. ingest_eval_active for cost-budget tracking) propagate
+        # from the dispatching thread.  Context.run is not reentrant,
+        # so every submit needs a fresh copy_context().
         futures = {
-            executor.submit(_process_single, rid, sg, inp): (rid, sg)
+            executor.submit(
+                contextvars.copy_context().run,
+                _process_single,
+                rid,
+                sg,
+                inp,
+            ): (rid, sg)
             for rid, sg, inp in flattened_inputs
         }
         for future in as_completed(futures):
@@ -938,6 +949,25 @@ def _call_feedback_function_under_eval_span(
                             SpanAttributes.COST.NUM_REASONING_TOKENS,
                             int(cost.n_reasoning_tokens),
                         )
+                    # Feed cost back to the sampling controller for
+                    # daily budget tracking.  Only on the ingest path —
+                    # a batch backfill must not burn the daily budget.
+                    from trulens.core.sampling import ingest_eval_active
+
+                    cost_amount = float(cost.cost or 0.0)
+                    if cost_amount > 0 and ingest_eval_active.get(False):
+                        try:
+                            from trulens.core.session import TruSession
+
+                            ctrl = TruSession()._sampling_controller
+                            if ctrl is not None:
+                                ctrl.record_cost(cost_amount)
+                        except Exception as cost_err:
+                            _logger.warning(
+                                "Failed to record eval cost for "
+                                "sampling budget: %s",
+                                cost_err,
+                            )
             except Exception as e:
                 # Do not fail feedback evaluation if cost aggregation fails, but log for debugging
                 _logger.warning(

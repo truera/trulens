@@ -160,6 +160,9 @@ class TruSession(
 
     _dashboard_listener_stderr: Optional[Thread] = pydantic.PrivateAttr(None)
 
+    _sampling_controller: Optional[Any] = pydantic.PrivateAttr(None)
+    """Active :class:`SamplingController`, set via :meth:`configure_online_eval`."""
+
     connector: Optional[core_connector.DBConnector] = pydantic.Field(
         None, exclude=True
     )
@@ -290,6 +293,98 @@ class TruSession(
             )
 
             _TruSession._start_track_costs_background()
+
+    # -- Sampling / online-eval configuration --------------------------------
+
+    @property
+    def sampling_controller(self):
+        """The active :class:`SamplingController`, or ``None``."""
+        return self._sampling_controller
+
+    @sampling_controller.setter
+    def sampling_controller(self, controller) -> None:
+        """Set or replace the sampling controller directly.
+
+        Primarily useful for testing — allows injecting a controller
+        with forced decisions without going through
+        :meth:`configure_online_eval`.
+        """
+        self._sampling_controller = controller
+
+    def configure_online_eval(
+        self,
+        sample_rate: Union[float, Dict[str, float]] = 1.0,
+        throttle: Optional[int] = None,
+        cost_budget: Optional[float] = None,
+        feedbacks: Optional[Sequence[core_metric.Metric]] = None,
+    ) -> None:
+        """Configure sampling for automatic post-ingest evaluation.
+
+        A second call **replaces** the previous configuration entirely.
+
+        This does **not** affect explicit ``compute_metrics()`` /
+        ``compute_now()`` calls -- those always evaluate everything.
+
+        Args:
+            sample_rate: Probability (0--1) that a record is evaluated,
+                or a ``{app_name: rate}`` dict for per-app rates.
+            throttle: Max evaluations per minute (``None`` = unlimited).
+            cost_budget: Daily USD cap (``None`` = unlimited).
+                Only enforceable for providers whose ``reports_costs``
+                property is ``True``.
+            feedbacks: Optional list of metrics/feedbacks whose providers
+                should be checked for cost-tracking support when
+                ``cost_budget`` is set.  If omitted, the warning is
+                generic.
+        """
+        from trulens.core.sampling import SamplingConfig
+        from trulens.core.sampling import SamplingController
+
+        config = SamplingConfig(
+            sample_rate=sample_rate,
+            throttle=throttle,
+            cost_budget=cost_budget,
+        )
+        self._sampling_controller = SamplingController(config)
+
+        logger.info("Online evaluation sampling configured: %s", config)
+
+        if cost_budget is not None:
+            self._warn_cost_tracking(feedbacks)
+
+    def _warn_cost_tracking(
+        self,
+        feedbacks: Optional[Sequence[core_metric.Metric]],
+    ) -> None:
+        """Emit warnings for metrics whose providers cannot report costs."""
+        if feedbacks is None or len(feedbacks) == 0:
+            logger.warning(
+                "cost_budget is set but no feedbacks were passed to "
+                "configure_online_eval(), so the cost-tracking check "
+                "could not run.  Call configure_online_eval(feedbacks=...) "
+                "after constructing your TruApp with its feedback list, "
+                "or budget enforcement will silently fail for providers "
+                "that do not report costs."
+            )
+            return
+
+        for fb in feedbacks:
+            impl = getattr(fb, "imp", None) or getattr(fb, "_imp", None)
+            if impl is None:
+                continue
+            provider = getattr(impl, "__self__", None)
+            if provider is None:
+                continue
+            from trulens.core.feedback.provider import Provider
+
+            if isinstance(provider, Provider) and not provider.reports_costs:
+                logger.warning(
+                    "cost_budget set but metric '%s' uses provider '%s' "
+                    "which does not report costs; budget will not be "
+                    "enforced for this metric.",
+                    fb.name,
+                    type(provider).__name__,
+                )
 
     def App(self, *args, app: Optional[Any] = None, **kwargs) -> base_app.App:
         """Create an App from the given App constructor arguments by guessing
