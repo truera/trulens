@@ -1,5 +1,18 @@
 site_name: 🦑 TruLens
-site_description: Evaluate and track LLM applications. Explain Deep Neural Nets.
+site_description: TruLens is an open source library for evaluating and tracing AI agents. Instrument with OpenTelemetry and score every step with benchmarked LLM judges.
+
+# MkDocs derives both the sitemap's <loc> entries and Material's rel="canonical"
+# from site_url. Without it the built sitemap.xml is an empty <urlset>, so no
+# page on the site is discoverable that way, and no page carries a canonical.
+site_url: https://www.trulens.org/
+
+# docs/overrides/ is the theme's custom_dir, but it also sits inside docs_dir, so
+# MkDocs copied the raw template out as a static file and the deployed site served
+# a second, near-identical copy of the home page at /overrides/home.html. The
+# theme loader reads custom_dir directly, so excluding the directory from the file
+# collector stops the duplicate without affecting the template.
+exclude_docs: |
+  overrides/
 
 repo_name: truera/trulens
 repo_url: https://github.com/truera/trulens
