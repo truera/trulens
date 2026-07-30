@@ -314,6 +314,12 @@ h4{font-size:1.125rem;font-weight:600;margin-bottom:.35rem}
   padding:.8rem 1.2rem;background:none;border:0;color:rgba(233,242,241,.55);cursor:pointer;
 }
 .tab[aria-selected="true"]{color:var(--aqua);box-shadow:inset 0 -2px 0 var(--aqua)}
+/* .code paints itself --ink, which on a light band reads as a defined dark panel
+   but on an ink band is the band's own colour, so the edge vanishes and the
+   snippet floats. .dash already had to solve dark-panel-on-a-dark-band; reuse its
+   two values rather than invent a third, so the code block and the widgets read
+   as the same family. */
+.band--ink .code{background:#0B1620;border:1px solid rgba(132,220,215,.18)}
 .k{color:var(--aqua)}.f{color:var(--sand)}.s{color:var(--lilac)}.c{color:rgba(233,242,241,.42)}
 
 /* logos: an edge-to-edge marquee. The track holds the list twice, so a -50%
