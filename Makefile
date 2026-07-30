@@ -169,6 +169,14 @@ docs-linkcheck: site
 docs-linkcheck-strict: env-docs
 	poetry run properdocs build --clean --strict
 
+# Validate docs/llms.txt: the shape the llmstxt.org spec requires, plus every
+# internal link it lists being present in the built sitemap. Neither lychee nor
+# the strict build looks inside static files, so without this a page can be
+# renamed and llms.txt silently keeps pointing at the old URL. Needs a build
+# first; CI runs it straight after docs-linkcheck-strict.
+check-llms-txt:
+	poetry run python tools/check_llms_txt.py
+
 # Start the trubot slack app.
 trubot:
 	poetry run python -u examples/trubot/trubot.py
