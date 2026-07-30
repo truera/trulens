@@ -538,7 +538,7 @@ tru_rag = <span class="f">TruApp</span>(
     feedbacks=[f_groundedness, f_answer_relevance, f_context_relevance],
 )
 
-<span class="c"># metrics are attached once; recording a trace scores it</span>
+<span class="c"># recording a trace kicks off evaluation computation</span>
 <span class="k">with</span> tru_rag <span class="k">as</span> recording:
     rag.<span class="f">query</span>(<span class="s">"Which policy covers this claim?"</span>)</code></pre>
       <pre data-panel="dataset" hidden><code><span class="k">from</span> trulens.core.run <span class="k">import</span> RunConfig
@@ -556,9 +556,9 @@ run.<span class="f">get_status</span>()  <span class="c"># RunStatus.COMPLETED</
     </div>
 
     <p class="lede" style="color:#E9F2F1;margin-top:1.75rem">
-      Same metrics either way. Recording a trace scores it as it happens; a run
-      replays a dataset through those same metrics. Both write eval spans, and both
-      land in the <a href="#trace" style="color:var(--aqua)">trace</a>,
+      Same metrics either way. Recording a trace kicks off evaluation computation; a
+      run replays a dataset through those same metrics. Both write eval spans, and
+      both land in the <a href="#trace" style="color:var(--aqua)">trace</a>,
       <a href="#scores" style="color:var(--aqua)">scores</a> and
       <a href="#compare" style="color:var(--aqua)">leaderboard</a> views above.
     </p>
