@@ -480,7 +480,9 @@ f_relevance = <span class="f">Metric</span>(
     <h2 class="reveal">Compare versions.<br><span style="color:var(--aqua)">Ship the one that scored best.</span></h2>
     <p class="lede" style="color:#E9F2F1">
       One tool call with the wrong arguments put the wrong policy in context and a wrong
-      answer in front of a customer. Fixing the tool layer moved correctness 0.27 to 0.90.
+      answer in front of a customer. Fixing it moved correctness 0.27 to 0.90. Additional
+      experimentation unlocks further improvement and helps you find the quality/cost
+      frontier.
     </p>
   </div>
   <div class="bleed reveal" style="margin-top:3rem">
@@ -1238,13 +1240,26 @@ var TINT = ['#8CA3AB','#84DCD7','#DCB1FD','#F6D881','#E4736B'];
 
    Each version moves only the metrics its change actually touches, so plan
    adherence sits flat until v5, where it is the one place the plan itself
-   degraded. */
+   degraded.
+
+   Cost is a sum over the ten records, which is what the dashboard's Total Cost
+   (USD) column reports. v1 is anchored to the trace above rather than invented:
+   that record's three billed spans come to $0.02148, so ten of them is $0.215,
+   and the two widgets agree if a reader adds them up. From there each version
+   pays for what it changed -- a reranker call on v3, longer prompts and cited
+   output on v4 -- and v5 swaps the generator for a small model, which is where
+   most of the money was.
+
+   The frontier the lede promises is real here: v5, v2, v3 and v4 are each the
+   best score available at their price, and v1 is dominated by all of them. It
+   costs three times what v5 costs and scores worse, which is worth seeing --
+   the baseline was never the cheap option, it was just the untuned one. */
 var ROWS = [
-  {v:'v1-passthrough',  recs:10, lat:4.106, m:[0.400, 0.267, 0.983, 0.967, 0.400], on:true},
-  {v:'v2-tool-args',    recs:10, lat:4.518, m:[0.933, 0.900, 0.975, 0.967, 0.967], on:true},
-  {v:'v3-rerank',       recs:10, lat:5.402, m:[0.967, 0.933, 0.983, 0.967, 0.967], on:true},
-  {v:'v4-cite-policy',  recs:10, lat:5.688, m:[0.967, 0.967, 0.992, 0.967, 0.967], on:true},
-  {v:'v5-mini',         recs:10, lat:2.184, m:[0.967, 0.733, 0.858, 0.833, 0.900], on:true}
+  {v:'v1-passthrough',  recs:10, lat:4.106, cost:0.215, m:[0.400, 0.267, 0.983, 0.967, 0.400], on:true},
+  {v:'v2-tool-args',    recs:10, lat:4.518, cost:0.231, m:[0.933, 0.900, 0.975, 0.967, 0.967], on:true},
+  {v:'v3-rerank',       recs:10, lat:5.402, cost:0.271, m:[0.967, 0.933, 0.983, 0.967, 0.967], on:true},
+  {v:'v4-cite-policy',  recs:10, lat:5.688, cost:0.331, m:[0.967, 0.967, 0.992, 0.967, 0.967], on:true},
+  {v:'v5-mini',         recs:10, lat:2.184, cost:0.074, m:[0.967, 0.733, 0.858, 0.833, 0.900], on:true}
 ];
 var sortKey = 'v', sortDir = 1;
 
@@ -1253,7 +1268,10 @@ function heat(x){
   return 'rgba(' + Math.round(228 - 133 * x) + ',' + Math.round(115 + 76 * x) + ',' +
     Math.round(107 + 36 * x) + ',.32)';
 }
-function val(r, k){ return k === 'v' ? r.v : k === 'recs' ? r.recs : k === 'lat' ? r.lat : r.m[+k]; }
+function val(r, k){
+  return k === 'v' ? r.v : k === 'recs' ? r.recs : k === 'lat' ? r.lat :
+    k === 'cost' ? r.cost : r.m[+k];
+}
 function sorted(){
   return ROWS.slice().sort(function(a, b){
     var x = val(a, sortKey), y = val(b, sortKey);
@@ -1300,7 +1318,8 @@ function legend(){
 }
 
 function head(){
-  var cols = [['v','App Version',''],['recs','Records','r'],['lat','Average Latency (s)','r']]
+  var cols = [['v','App Version',''],['recs','Records','r'],['lat','Average Latency (s)','r'],
+    ['cost','Total Cost (USD)','r']]
     .concat(NAMES.map(function(n, i){ return [String(i), n, 'r']; }));
   return '<tr><th class="sel"></th>' + cols.map(function(c){
     var on = sortKey === c[0];
@@ -1317,6 +1336,7 @@ function body(){
       ' in the chart"></td>' +
       '<td class="vname">' + esc(r.v) + '</td>' +
       '<td class="r">' + r.recs + '</td><td class="r">' + r.lat.toFixed(3) + '</td>' +
+      '<td class="r">' + r.cost.toFixed(3) + '</td>' +
       r.m.map(function(x){
         return '<td class="r" style="background:' + heat(x) + '">' +
           (x === 1 ? '1' : x.toFixed(3)) + '</td>';
