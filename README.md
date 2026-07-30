@@ -9,7 +9,7 @@
 
 # 🦑 Welcome to TruLens!
 
-![TruLens](https://www.trulens.org/assets/images/Neural_Network_Explainability.png)
+![TruLens](https://www.trulens.org/assets/images/og-card.png)
 
 **Don't just vibe-check your LLM app!** Systematically evaluate and track your
 LLM experiments with TruLens. As you develop your app including prompts, models,
