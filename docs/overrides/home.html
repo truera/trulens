@@ -91,12 +91,13 @@
          prefers-reduced-motion; this is the one for no JS. It has to sit after the
          stylesheet, because it wins on source order at equal specificity.
 
-         Revealing the widgets exposes their empty chrome: each .dash keeps a static
-         header and a container that JS hydrates, and the fallback screenshots start
-         just below that header. Left alone you get two tab rows, one dead and one
-         painted into the PNG. So hide the containers JS was going to fill and let
-         the image stand in, and drop the leaderboard's "click a column to sort"
-         hint, which promises an interaction that cannot happen here. -->
+         Revealing the widgets exposes their empty chrome: each .dash keeps the
+         static header that JS does not build, and each fallback screenshot is a
+         capture of precisely the element hidden here, so nothing appears twice.
+         The leaderboard keeps its .dash-bar, so its shot is the table alone; band
+         5 has no .dash-bar and hides all of .fb, so that shot carries its own
+         heading. Also drops the leaderboard's "click a column to sort" hint,
+         which promises an interaction that cannot happen here. -->
     <noscript>
       <style>
         .reveal{opacity:1;transform:none;transition:none}
@@ -362,7 +363,7 @@
           <div data-det-panel="raw" hidden id="panel-attr-raw" role="tabpanel" aria-labelledby="tab-attr-raw" tabindex="0"></div>
         </div>
       </div>
-      <noscript><img class="shot" src="/assets/images/home/trace.png" alt="TruLens trace waterfall showing nested agent, retrieval, tool and generation spans with per-span durations" loading="lazy"></noscript>
+      <noscript><img class="shot" src="/assets/images/home/trace.png" alt="TruLens trace waterfall showing nested agent, retrieval, tool and generation spans with per-span durations, and the selected span's attributes below" loading="lazy"></noscript>
     </div>
   </div>
 </section>
@@ -548,7 +549,7 @@ f_relevance = <span class="f">Metric</span>(
     <div class="dash" id="lb-widget">
       <div class="dash-bar"><b>Leaderboard</b><span class="rid">click a column to sort &middot; untick a version to drop it from the chart</span></div>
       <div style="overflow-x:auto"><table class="lb"><thead></thead><tbody></tbody></table></div>
-      <noscript><img class="shot" src="/assets/images/home/leaderboard.png" alt="Leaderboard comparing two app versions across five metrics and latency" loading="lazy"></noscript>
+      <noscript><img class="shot" src="/assets/images/home/leaderboard.png" alt="Leaderboard comparing five app versions across records, average latency, total cost in USD, and Context Relevance, Correctness, Groundedness, Plan Adherence and Tool Selection" loading="lazy"></noscript>
     </div>
   </div>
   <div class="bleed reveal" style="margin-top:1.5rem">
@@ -558,7 +559,7 @@ f_relevance = <span class="f">Metric</span>(
         <div class="cmp-legend" role="group" aria-label="App versions"></div>
         <div class="cmp-plot"></div>
       </div>
-      <noscript><img class="shot" src="/assets/images/home/compare.png" alt="Bar chart comparing five metrics across two app versions" loading="lazy"></noscript>
+      <noscript><img class="shot" src="/assets/images/home/compare.png" alt="Bar chart of average Context Relevance, Correctness, Groundedness, Plan Adherence and Tool Selection across five app versions" loading="lazy"></noscript>
     </div>
   </div>
 </section>
