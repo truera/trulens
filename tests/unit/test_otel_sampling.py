@@ -196,6 +196,98 @@ class TestSkipPathEmitsDecisionSpans(OtelTestCase):
 
 
 @pytest.mark.optional
+class TestSampledOutRecordsReachableViaComputeNow(OtelTestCase):
+    """Records skipped by sampling must remain reachable for explicit backfill.
+
+    This is the regression test for the state-modeling bug where
+    sampled-out records were marked as processed in
+    _record_id_to_event_count, making them invisible to compute_now().
+    """
+
+    def _make_evaluator(self):
+        mock_app = MagicMock()
+        mock_app.app_name = "test_app"
+        mock_app.app_version = "v1"
+        mock_app.app_id = "app_hash_test"
+        mock_app.connector = MagicMock()
+        return Evaluator(mock_app), mock_app
+
+    def test_compute_now_reaches_sampled_out_records(self):
+        evaluator, mock_app = self._make_evaluator()
+
+        session = TruSession()
+        session.configure_online_eval(sample_rate=0.0)
+
+        record_ids = ["record_A", "record_B", "record_C"]
+        events_map = {rid: _make_mock_events(rid) for rid in record_ids}
+
+        # Step 1: automatic evaluator skips all records.
+        evaluator._get_record_id_to_unprocessed_events = MagicMock(
+            return_value=events_map
+        )
+        evaluator._compute_feedbacks(in_evaluator_thread=True)
+        mock_app.compute_feedbacks.assert_not_called()
+
+        # Verify they're tracked as sampled-out, NOT as processed.
+        for rid in record_ids:
+            self.assertIn(rid, evaluator._sampled_out_record_ids)
+            self.assertNotIn(rid, evaluator._record_id_to_event_count)
+
+        # Step 2: explicit backfill via compute_now should reach them.
+        # Reset the mock so we get a fresh return value for the
+        # force-path fetch.
+        evaluator._get_record_id_to_unprocessed_events = MagicMock(
+            return_value=events_map
+        )
+        evaluator.compute_now(record_ids=record_ids)
+
+        # compute_feedbacks should have been called for each record.
+        self.assertEqual(mock_app.compute_feedbacks.call_count, 3)
+
+    def test_automatic_evaluator_does_not_reprocess_sampled_out(self):
+        """The automatic path should not re-consider sampled-out records
+        on every poll cycle."""
+        evaluator, mock_app = self._make_evaluator()
+
+        session = TruSession()
+        session.configure_online_eval(sample_rate=0.0)
+
+        events_map = {"record_X": _make_mock_events("record_X")}
+        evaluator._get_record_id_to_unprocessed_events = MagicMock(
+            return_value=events_map
+        )
+
+        # First automatic pass: record is sampled-out.
+        evaluator._compute_feedbacks(in_evaluator_thread=True)
+        mock_app.compute_feedbacks.assert_not_called()
+
+        # Second automatic pass: _get_record_id_to_unprocessed_events
+        # is called again but the record should be filtered out by the
+        # _sampled_out_record_ids check.  We test this by NOT mocking
+        # the method and letting the real implementation run — it will
+        # return an empty dict because the record is in
+        # _sampled_out_record_ids.
+        evaluator._get_record_id_to_unprocessed_events = (
+            evaluator.__class__._get_record_id_to_unprocessed_events.__get__(
+                evaluator
+            )
+        )
+        # The connector returns the same events.
+        mock_app.connector.get_events.return_value = pd.DataFrame([
+            {
+                "trace": {"span_id": "span1", "parent_id": None},
+                "record_attributes": {
+                    SpanAttributes.SPAN_TYPE: SpanAttributes.SpanType.RECORD_ROOT,
+                    SpanAttributes.RECORD_ID: "record_X",
+                },
+            },
+        ])
+        evaluator._compute_feedbacks(in_evaluator_thread=True)
+        # Still not called — the record was filtered out.
+        mock_app.compute_feedbacks.assert_not_called()
+
+
+@pytest.mark.optional
 class TestOutOfScopeAppStillEvaluatesOtel(OtelTestCase):
     """OTEL integration: per-app sampling must not disable other apps."""
 

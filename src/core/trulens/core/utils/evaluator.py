@@ -62,6 +62,10 @@ class Evaluator:
         self._stop_event = threading.Event()
         self._compute_feedbacks_lock = threading.Lock()
         self._record_id_to_event_count = pd.Series(dtype=int)
+        self._sampled_out_record_ids: set = set()
+        """Record IDs skipped by sampling.  Tracked separately from
+        ``_record_id_to_event_count`` so that explicit ``compute_now``
+        calls can still reach them for backfill."""
         self._processed_time = None
         self._last_error: Optional[BaseException] = None
 
@@ -119,6 +123,7 @@ class Evaluator:
         self,
         record_ids: Optional[List[str]],
         start_time: Optional[datetime.datetime],
+        force: bool = False,
     ) -> Dict[str, pd.DataFrame]:
         """
         Get events for the app that weren't yet used for feedback computation.
@@ -127,6 +132,13 @@ class Evaluator:
             record_ids:
                 Optional list of record IDs to filter events by. If None, all
                 unprocessed events will be returned.
+            force:
+                If True, bypass the internal bookkeeping filters
+                (``_record_id_to_event_count`` and
+                ``_sampled_out_record_ids``) and return events for the
+                requested records regardless of prior processing state.
+                Used by ``compute_now`` so that explicitly requested
+                backfills always run.
 
         Returns:
             A dict from record id to a pandas DataFrame of all events from that
@@ -166,7 +178,17 @@ class Evaluator:
             record_id,
             events_under_record_root,
         ) in record_id_to_events_under_record_root.items():
+            if force:
+                # Force path: return events regardless of bookkeeping.
+                # Duplicate evaluation is prevented downstream by
+                # _remove_already_computed_feedbacks in computer.py.
+                ret[record_id] = events_under_record_root
+                continue
             count = len(events_under_record_root)
+            # On the automatic path, also skip records that were
+            # already declined by sampling.
+            if record_id in self._sampled_out_record_ids:
+                continue
             if (
                 record_id not in self._record_id_to_event_count
                 or count > self._record_id_to_event_count[record_id]
@@ -190,9 +212,15 @@ class Evaluator:
                 logger.info(
                     f"Processing all events from {self._processed_time}"
                 )
+            # When explicit record_ids are provided, this is a force
+            # path: fetch those records regardless of prior
+            # processing/sampling state.  Duplicate evaluation is
+            # prevented downstream by _remove_already_computed_feedbacks.
+            force = record_ids is not None
             record_id_to_events = self._get_record_id_to_unprocessed_events(
                 record_ids,
                 self._processed_time,
+                force=force,
             )
 
             # Sampling is only applied on the automatic ingest path
@@ -230,7 +258,10 @@ class Evaluator:
                             record_id,
                             reason,
                         )
-                        self._record_id_to_event_count[record_id] = len(events)
+                        # Track as sampled-out, NOT as processed.
+                        # This lets compute_now() still reach these
+                        # records for explicit backfill.
+                        self._sampled_out_record_ids.add(record_id)
                         continue
 
                 # Set the ingest flag so record_cost() in computer.py
