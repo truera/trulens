@@ -1116,9 +1116,10 @@ draw();
 
 /* feedback results: st.pills over the metrics of one record, and behind the
    selected pill the eval-call dataframe the dashboard renders -- one row per
-   EVAL span, the judge's arguments, its score and its explanation. Values are
-   the real evals from that record, including the four context chunks that
-   average out to 0.58. */
+   EVAL span, the judge's arguments, its score and its explanation. Context
+   relevance carries one row per retrieved chunk and its pill is the mean of
+   them, computed below rather than typed, so the headline cannot disagree with
+   the rows beneath it. */
 (function(){
 var W = document.getElementById('fb-widget');
 if(!W) return;
@@ -1269,23 +1270,25 @@ var TINT = ['#8CA3AB','#84DCD7','#DCB1FD','#F6D881','#E4736B'];
    degraded.
 
    Cost is a sum over the ten records, which is what the dashboard's Total Cost
-   (USD) column reports. v1 is anchored to the trace above rather than invented:
-   that record's three billed spans come to $0.02148, so ten of them is $0.215,
-   and the two widgets agree if a reader adds them up. From there each version
-   pays for what it changed -- a reranker call on v3, longer prompts and cited
-   output on v4 -- and v5 swaps the generator for a small model, which is where
-   most of the money was.
+   (USD) column reports. v1 is anchored to the trace above rather than invented,
+   and the anchor needs care: the record root aggregates its children, so its
+   pt/ct/cost already equal plan plus generate. One record is $0.01074, not the
+   $0.02148 you get by adding the root as though it were a third billed call, so
+   ten records is $0.107. From there each version pays for what it changed -- a
+   reranker call on v3, longer prompts and cited output on v4 -- and v5 moves both
+   model calls to a small model, which is where most of the money and most of the
+   latency was.
 
    The frontier the lede promises is real here: v5, v2, v3 and v4 are each the
    best score available at their price, and v1 is dominated by all of them. It
-   costs three times what v5 costs and scores worse, which is worth seeing --
-   the baseline was never the cheap option, it was just the untuned one. */
+   costs nearly four times what v5 costs and scores worse, which is worth seeing
+   -- the baseline was never the cheap option, it was just the untuned one. */
 var ROWS = [
-  {v:'v1-passthrough',  recs:10, lat:4.106, cost:0.215, m:[0.400, 0.267, 0.983, 0.967, 0.400], on:true},
-  {v:'v2-tool-args',    recs:10, lat:4.518, cost:0.231, m:[0.933, 0.900, 0.975, 0.967, 0.967], on:true},
-  {v:'v3-rerank',       recs:10, lat:5.402, cost:0.271, m:[0.967, 0.933, 0.983, 0.967, 0.967], on:true},
-  {v:'v4-cite-policy',  recs:10, lat:5.688, cost:0.331, m:[0.967, 0.967, 0.992, 0.967, 0.967], on:true},
-  {v:'v5-mini',         recs:10, lat:2.184, cost:0.074, m:[0.967, 0.733, 0.858, 0.833, 0.900], on:true}
+  {v:'v1-passthrough',  recs:10, lat:4.106, cost:0.107, m:[0.400, 0.267, 0.983, 0.967, 0.400], on:true},
+  {v:'v2-tool-args',    recs:10, lat:4.518, cost:0.116, m:[0.933, 0.900, 0.975, 0.967, 0.967], on:true},
+  {v:'v3-rerank',       recs:10, lat:5.402, cost:0.136, m:[0.967, 0.933, 0.983, 0.967, 0.967], on:true},
+  {v:'v4-cite-policy',  recs:10, lat:5.688, cost:0.166, m:[0.967, 0.967, 0.992, 0.967, 0.967], on:true},
+  {v:'v5-mini',         recs:10, lat:2.184, cost:0.028, m:[0.967, 0.733, 0.858, 0.833, 0.900], on:true}
 ];
 var sortKey = 'v', sortDir = 1;
 
