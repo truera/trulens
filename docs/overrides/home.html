@@ -518,26 +518,9 @@ f_relevance = <span class="f">Metric</span>(
     <span class="eyebrow" style="color:var(--aqua)">How it works</span>
     <h2 class="reveal">OpenTelemetry in.<br><span style="color:var(--aqua)">Evaluations out.</span></h2>
 
-    <div class="flow reveal">
-      <div class="flow-step">
-        <span class="eyebrow" style="color:var(--aqua)">1 &middot; Instrument</span>
-        <code>@instrument(RETRIEVAL)</code>
-        <code>@instrument(TOOL)</code>
-        <code>@instrument(GENERATION)</code>
-      </div>
-      <div class="flow-step">
-        <span class="eyebrow" style="color:var(--aqua)">2 &middot; Emit spans</span>
-        <p style="margin:0;font-size:.9375rem">Standard OTEL spans with typed attributes. Export anywhere.</p>
-      </div>
-      <div class="flow-step">
-        <span class="eyebrow" style="color:var(--aqua)">3 &middot; Evaluate</span>
-        <p style="margin:0;font-size:.9375rem">Judges select spans and score them as new eval spans.</p>
-      </div>
-      <div class="flow-step">
-        <span class="eyebrow" style="color:var(--aqua)">4 &middot; Compare</span>
-        <p style="margin:0;font-size:.9375rem">Leaderboard and per-record diffs across versions.</p>
-      </div>
-    </div>
+    <p class="lede" style="color:#E9F2F1">
+      Instrument any app in plain python, or auto-instrument your favorite framework.
+    </p>
 
     <div class="code reveal" style="margin-top:3rem">
       <div class="tabs" role="tablist">
@@ -583,11 +566,9 @@ app = <span class="f">TruLlama</span>(
     <!-- When evals run. Sits inside How it works rather than opening a band of its
          own, because it is the same explanation: the reader has just seen how a
          metric is defined, and this is the only remaining question -- what triggers
-         it. Deliberately not numbered as a fifth step: the flow row above ends at
-         Compare, this is a property of step 3, and the two are separated by a whole
-         code block. The f_* names are identical in both tabs; that one metric
-         definition serves live traffic and a dataset replay is the entire point of
-         the pane, so nothing here should imply two setups. -->
+         it. The f_* names are identical in both tabs; that one metric definition
+         serves live traffic and a dataset replay is the entire point of the pane,
+         so nothing here should imply two setups. -->
     <div class="reveal" style="margin-top:4rem;padding-top:2.25rem;
       border-top:1px solid rgba(132,220,215,.2)">
       <span class="eyebrow" style="color:var(--aqua)">When evals run</span>

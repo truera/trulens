@@ -312,33 +312,6 @@ h4{font-size:1.125rem;font-weight:600;margin-bottom:.35rem}
 .tab[aria-selected="true"]{color:var(--aqua);box-shadow:inset 0 -2px 0 var(--aqua)}
 .k{color:var(--aqua)}.f{color:var(--sand)}.s{color:var(--lilac)}.c{color:rgba(233,242,241,.42)}
 
-/* flow diagram */
-.flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin-top:2.5rem}
-.flow-step{flex:1;min-width:190px;padding:1.4rem;background:rgba(255,255,255,.06);position:relative}
-.flow-step+.flow-step{margin-left:2.4rem}
-/* connectors are tentacle segments, suckers and all */
-.flow-step+.flow-step::before{
-  content:"";position:absolute;left:-2.4rem;top:50%;transform:translateY(-50%);
-  width:2.4rem;height:13px;border-radius:7px;background:var(--aqua);opacity:.5;
-}
-.flow-step+.flow-step::after{
-  content:"";position:absolute;left:-2.4rem;top:50%;transform:translateY(-50%);
-  width:2.4rem;height:13px;opacity:.55;
-  background-image:radial-gradient(circle at 5px 6.5px,#0A2C37 2.1px,transparent 2.6px);
-  background-size:11px 13px;
-}
-.flow-step .eyebrow{margin-bottom:.6rem}
-.flow-step code{font-family:var(--mono);font-size:.75rem;color:var(--aqua);display:block;margin:.15rem 0}
-@media(max-width:900px){
-  .flow{flex-direction:column}
-  .flow-step+.flow-step{margin-left:0;margin-top:2.2rem}
-  .flow-step+.flow-step::before{left:50%;top:-2.2rem;transform:translateX(-50%);
-    width:13px;height:2.2rem}
-  .flow-step+.flow-step::after{left:50%;top:-2.2rem;transform:translateX(-50%);
-    width:13px;height:2.2rem;background-size:13px 11px;
-    background-image:radial-gradient(circle at 6.5px 5px,#0A2C37 2.1px,transparent 2.6px)}
-}
-
 /* logos: an edge-to-edge marquee. The track holds the list twice, so a -50%
    slide loops seamlessly. Hover parks it so a name can be read and clicked. */
 .marquee{overflow:hidden;margin-top:2rem;position:relative}
