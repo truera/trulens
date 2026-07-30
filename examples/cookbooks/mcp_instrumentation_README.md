@@ -55,8 +55,11 @@ invocation.
 
 Thin LangChain `StructuredTool` wrappers make the discovered MCP tools
 available to LangGraph. The wrappers call an instrumented `call_mcp_tool`
-function, which delegates execution to `ClientSession.call_tool`. This records
-the MCP operation while keeping the protocol integration on the official SDK.
+function, which delegates execution to `ClientSession.call_tool`. The
+instrumented function preserves the SDK result for tracing, including its
+content types, text, and error status. The wrapper returns only the joined text
+to LangGraph. This records the structured MCP response while keeping the
+protocol integration on the official SDK.
 
 For the example question, the agent should:
 
@@ -75,9 +78,9 @@ For the example question, the agent should:
 6. Open the dashboard and select the `mcp-weather-agent` record.
 
 Expand the trace to inspect the MCP spans. Each span includes the tool name,
-server name, input arguments, output content, error status, and execution time.
-The record also displays the Tool Selection and Tool Calling metric results
-after evaluation finishes.
+server name, JSON-serialized input arguments, structured SDK response content,
+error status, and execution time. The record also displays the Tool Selection
+and Tool Calling metric results after evaluation finishes.
 
 ## Local MCP validation
 
