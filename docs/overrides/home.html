@@ -556,9 +556,9 @@ run.<span class="f">get_status</span>()  <span class="c"># RunStatus.COMPLETED</
     </div>
 
     <p class="lede" style="color:#E9F2F1;margin-top:1.75rem">
-      Same metrics either way. Recording a trace kicks off evaluation computation; a
-      run replays a dataset through those same metrics. Both write eval spans, and
-      both land in the <a href="#trace" style="color:var(--aqua)">trace</a>,
+      Recording a trace starts evaluation; a run replays a dataset. Same metrics
+      either way, and the eval spans land in the
+      <a href="#trace" style="color:var(--aqua)">trace</a>,
       <a href="#scores" style="color:var(--aqua)">scores</a> and
       <a href="#compare" style="color:var(--aqua)">leaderboard</a> views above.
     </p>
