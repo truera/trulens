@@ -688,6 +688,16 @@ run.<span class="f">get_status</span>()  <span class="c"># RunStatus.COMPLETED</
         <li>Any Python function</li><li>Any LLM-as-judge prompt</li>
         <li>Any span attribute</li></ul></div>
     </div>
+
+    <!-- Six columns of metric names and, until now, no way to read about any of
+         them. The button goes to the stock reference rather than the custom guide,
+         which the Customize band already links. -->
+    <div class="btn-row reveal" style="align-items:center">
+      <a href="/component_guides/evaluation/feedback_implementations/stock/"
+        class="btn btn--primary">Browse the metric library</a>
+      <a href="/component_guides/evaluation/agentic_evaluations/" class="tlink"
+        style="margin-left:.5rem">Agentic evals in depth &#8599;</a>
+    </div>
   </div>
 </section>
 
@@ -802,22 +812,28 @@ run.<span class="f">get_status</span>()  <span class="c"># RunStatus.COMPLETED</
   </div>
 </section>
 
-<!-- 14. GET STARTED -->
+<!-- 14. GET STARTED
+
+     The terminal ask, so it gets buttons. It previously spent its weight on a
+     two-column grid whose only exits were two 14px .tlinks, which left the
+     closing CTA lighter than the integrations band above it. The grid also
+     jumped h2 -> h4 for the sake of the words "Install" and "Documentation",
+     neither of which said anything the pill and the buttons do not. -->
 <section class="band band--white">
   <div class="wrap indent">
     <span class="eyebrow">Get started</span>
-    <h2 class="reveal">Get started using TruLens today.</h2>
-    <div class="grid2 reveal" style="margin-top:2.5rem">
-      <div>
-        <h4>Install</h4>
-        <p><span class="install" style="font-size:.875rem">pip install trulens</span></p>
-        <p><a class="tlink" href="/getting_started/install/">Installation options &#8599;</a></p>
-      </div>
-      <div>
-        <h4>Documentation</h4>
-        <p>Quickstarts for LangChain, LangGraph, LlamaIndex and custom apps.</p>
-        <p><a class="tlink" href="/getting_started/quickstarts/quickstart/">Run the quickstart &#8599;</a></p>
-      </div>
+    <h2 class="reveal">One pip, then your first trace.</h2>
+    <p class="lede">
+      Quickstarts for LangChain, LangGraph, LlamaIndex and custom apps.
+    </p>
+
+    <p class="reveal" style="margin-top:2.25rem">
+      <span class="install">pip install trulens</span>
+    </p>
+
+    <div class="btn-row reveal">
+      <a href="/getting_started/quickstarts/quickstart/" class="btn btn--primary">Run the quickstart</a>
+      <a href="/getting_started/install/" class="btn btn--ghost">Installation options</a>
     </div>
   </div>
 </section>
