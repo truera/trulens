@@ -149,16 +149,22 @@ def plot_publication_figures(
             0
         ]
         matrix = np.asarray([[row["TN"], row["FP"]], [row["FN"], row["TP"]]])
-        axis.imshow(matrix, cmap="Blues", vmin=0)
+        image = axis.imshow(
+            matrix,
+            cmap="Blues",
+            vmin=0,
+            vmax=matrix.max(),
+        )
         for row_index in range(2):
             for column_index in range(2):
+                value = matrix[row_index, column_index]
                 axis.text(
                     column_index,
                     row_index,
-                    int(matrix[row_index, column_index]),
+                    int(value),
                     ha="center",
                     va="center",
-                    color="#111827",
+                    color="white" if image.norm(value) > 0.5 else "#111827",
                     fontsize=13,
                     fontweight="bold",
                 )

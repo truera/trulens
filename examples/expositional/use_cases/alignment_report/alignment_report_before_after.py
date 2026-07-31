@@ -27,7 +27,7 @@ from trulens.benchmark import AlignmentReport
 
 DATASET_URL = (
     "https://huggingface.co/datasets/mteb/summeval/resolve/"
-    "6d10195ee6ac73970bb63ceaba457e5eca32114a/data/"
+    "bfc121155064afa2d81b5505682ffc0d96f4334c/data/"
     "test-00000-of-00001-35901af5f6649399.parquet"
 )
 DATASET_SHA256 = (

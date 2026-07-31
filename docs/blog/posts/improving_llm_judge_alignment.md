@@ -44,10 +44,19 @@ violent, medical, and other sensitive topics before sampling. With seed
 held-out. Each split contains eight labels from each range `[0, 0.3)`,
 `[0.3, 0.7)`, and `[0.7, 1]`. Articles never cross splits.
 
-The development split was used to diagnose the baseline. One candidate rubric
-was rejected on validation; the final rubric was then frozen before either
-judge saw the held-out split. This extra validation step matters: the first
-candidate improved calibration but made several agreement metrics worse.
+### How the three splits were used
+
+Each split had a separate role:
+
+1. **Development:** I ran the baseline judge, inspected its metrics and worst
+   misses, and used those errors to design candidate rubric improvements.
+2. **Validation:** I evaluated candidate rubrics without touching the held-out
+   examples. One candidate was rejected because it improved calibration while
+   making several agreement metrics worse.
+3. **Held-out:** I froze the final rubric, then ran the baseline and improved
+   judges on the untouched held-out split for the final comparison.
+
+The held-out results did not influence rubric development or selection.
 
 Everything except the rubric stayed constant:
 
@@ -92,7 +101,8 @@ details.
 
 ## Running `AlignmentReport`
 
-The current public API takes aligned score and label sequences directly:
+`AlignmentReport` takes in the predicted scores and ground truth labels directly
+for comparison:
 
 ```python
 from trulens.benchmark import AlignmentReport
@@ -124,14 +134,16 @@ html = report.to_html()
 - `score_distribution`: predicted-score and true-label counts by score bin.
 - `worst_misses`: the largest absolute errors, with the corresponding example
   columns when supplied.
-- `difficulty_breakdown`: counts and metrics for true-label ranges called
-  `easy` (`[0, 0.3)`), `medium` (`[0.3, 0.7)`), and `hard` (`[0.7, 1]`).
+- `difficulty_breakdown`: counts and metrics grouped by true-label range. For
+  this experiment, the three ranges correspond to low (`[0, 0.3)`), medium
+  (`[0.3, 0.7)`), and high (`[0.7, 1]`) relevance scores.
 
-That last naming is easy to misread. These buckets are derived only from
-ground-truth score ranges; they are **not independently human-annotated
-difficulty levels**. `plot()` creates the built-in calibration and score
-distribution figures. The companion script builds the comparison and
-confusion-matrix figures from the exported dataframes.
+Although the dataframe currently names these buckets `easy`, `medium`, and
+`hard`, higher relevance does not mean that a summary is harder to evaluate.
+I therefore treat this output only as a **score-range breakdown** and refer to
+the buckets by their numeric ranges below. `plot()` creates the built-in
+calibration and score-distribution figures. The companion script builds the
+comparison and confusion-matrix figures from the exported dataframes.
 
 No single summary metric covers all of this. Spearman and Kendall measure
 ranking agreement. MAE measures absolute score error. Brier measures squared
@@ -141,8 +153,21 @@ at the report threshold.
 
 ## Turning the diagnosis into a rubric
 
-The final rubric makes content selection additive instead of asking for an
-unanchored overall impression:
+The development-set errors showed that the generic rubric left several
+decisions implicit. The judge had to decide whether a summary captured the
+central event, how much important supporting context it preserved, and whether
+repetition or peripheral details displaced more important content, but the
+baseline criterion provided no guidance for balancing those factors.
+
+I converted these recurring failure modes into separately scored components.
+Central content receives most of the available points because a summary that
+misses the article's main event should not receive a high relevance score.
+Supporting context distinguishes partial coverage from comprehensive coverage.
+The smaller focus component prevents repetition and peripheral details from
+outweighing otherwise strong content selection.
+
+This produces an additive rubric in which the judge must account for where
+each point came from instead of giving an unanchored overall impression:
 
 ```text
 Build the integer score from three components:
@@ -158,6 +183,11 @@ require every detail: a concise summary may score highly when it preserves
 the lead and important supporting context.
 ```
 
+I developed this structure from the development-set misses, not from the
+held-out results. I then evaluated candidate wording on the validation split.
+After rejecting the first candidate, I froze this version before running either
+judge on the held-out split.
+
 The full prompt also tells the judge not to reward fluency, grammaticality,
 factual consistency, or length except when those properties change coverage.
 Those qualities have separate SummEval dimensions; including them here would
@@ -170,12 +200,12 @@ examples.
 
 | Metric | Baseline | Improved rubric | Preferred direction |
 | --- | ---: | ---: | --- |
-| MAE | 0.127 | 0.103 | Lower |
-| Spearman correlation | 0.890 | 0.896 | Higher |
-| Kendall's tau | 0.759 | 0.763 | Higher |
-| Cohen's kappa at 0.5 | 0.830 | 0.655 | Higher |
-| Brier score | 0.0264 | 0.0196 | Lower |
-| AUC | 0.990 | 0.990 | Higher |
+| MAE | 0.127 | **0.103** | Lower |
+| Spearman correlation | 0.890 | **0.896** | Higher |
+| Kendall's tau | 0.759 | **0.763** | Higher |
+| Cohen's kappa at 0.5 | **0.830** | 0.655 | Higher |
+| Brier score | 0.0264 | **0.0196** | Lower |
+| AUC | **0.990** | **0.990** | Higher |
 
 ![Grouped bars comparing all six held-out alignment metrics for the baseline and improved rubric, with the preferred direction labeled for each metric.](../assets/alignment_report_before_after/held_out_metrics.png)
 
