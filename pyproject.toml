@@ -99,6 +99,7 @@ trulens-hotspots = { path = "src/hotspots", develop = true }
 trulens-core = { path = "src/core", develop = true }
 trulens-feedback = { path = "src/feedback", develop = true }
 trulens-apps-gepa = { path = "src/apps/gepa", develop = true }
+trulens-apps-rl = { path = "src/apps/rl", develop = true }
 trulens-dashboard = { path = "src/dashboard", develop = true }
 trulens-otel-semconv = { path = "src/otel/semconv", develop = true }
 # Remove after deprecation period.
