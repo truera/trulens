@@ -11,6 +11,8 @@ import pytest
 
 pytestmark = pytest.mark.optional
 
+pytest.importorskip("trulens.benchmark")
+
 _SCRIPT_PATH = (
     Path(__file__).parents[2]
     / "examples"
