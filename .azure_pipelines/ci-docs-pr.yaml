@@ -14,6 +14,7 @@ pr:
       - docs
       - examples
       - mkdocs.yml
+      - tools/check_llms_txt.py
       - .azure_pipelines/ci-docs-pr.yaml
 
 jobs:
@@ -41,3 +42,10 @@ jobs:
           poetry install --with docs --sync
           make docs-linkcheck-strict
         displayName: "Build docs and check for broken links"
+
+      # Runs after the build above, which leaves the rendered site in site/.
+      # llms.txt is a static file, so neither the strict build nor lychee checks
+      # its links; this pins each one against site/sitemap.xml.
+      - bash: |
+          make check-llms-txt
+        displayName: "Validate llms.txt against the sitemap"

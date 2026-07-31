@@ -26,6 +26,13 @@ some derive from [LLMProvider][trulens.feedback.llm_provider.LLMProvider].
     pip install trulens-providers-bedrock
     ```
 
+- [Google][trulens.providers.google.provider.Google] in package
+  `trulens-providers-google`. Requires Python > 3.9.
+
+    ```bash
+    pip install trulens-providers-google
+    ```
+
 - [HuggingFace][trulens.providers.huggingface.provider.Huggingface],
   [HuggingFaceLocal][trulens.providers.huggingface.provider.HuggingfaceLocal] in
   package `trulens-providers-huggingface`.
