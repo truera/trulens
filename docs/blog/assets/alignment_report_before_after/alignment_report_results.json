@@ -93,7 +93,7 @@
     ],
     "sha256": "7ff6f3f4d044223bd6922c5434d27bf28473950346fcfc2a3b7352c19163690e",
     "source": "mteb/summeval (derived from Yale-LILY/SummEval)",
-    "url": "https://huggingface.co/datasets/mteb/summeval/resolve/6d10195ee6ac73970bb63ceaba457e5eca32114a/data/test-00000-of-00001-35901af5f6649399.parquet"
+    "url": "https://huggingface.co/datasets/mteb/summeval/resolve/bfc121155064afa2d81b5505682ffc0d96f4334c/data/test-00000-of-00001-35901af5f6649399.parquet"
   },
   "rubrics": {
     "baseline": "Score how relevant the summary is to the source article. A better summary\ncaptures more of the article's important information.",
