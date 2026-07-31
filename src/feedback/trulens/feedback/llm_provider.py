@@ -38,6 +38,27 @@ logger = logging.getLogger(__name__)
 
 REASONING_MODEL_PREFIXES = ("o1", "o3", "o4", "gpt-5", "deepseek-r1")
 
+
+def _validate_score_range(
+    rating: float, min_score_val: int, max_score_val: int
+) -> float:
+    """Check that a structured-output rating is within the configured scale.
+
+    Mirrors the range validation that `re_configured_rating` applies to plain
+    string responses, so structured JSON responses cannot silently normalize
+    to values outside [0, 1].
+
+    Raises:
+        ParseError: If the rating falls outside
+            [`min_score_val`, `max_score_val`].
+    """
+    if not (min_score_val <= rating <= max_score_val):
+        raise feedback_generated.ParseError(
+            f"{min_score_val}-{max_score_val} rating", str(rating)
+        )
+    return rating
+
+
 # --- Shared capability cache for LLM providers ---
 _capabilities_lock = threading.Lock()
 
@@ -208,9 +229,9 @@ class LLMProvider(core_provider.Provider):
         """
 
         assert self.endpoint is not None, "Endpoint is not set."
-        assert (
-            max_score_val > min_score_val
-        ), "Max score must be greater than min score."
+        assert max_score_val > min_score_val, (
+            "Max score must be greater than min score."
+        )
 
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
@@ -247,11 +268,13 @@ class LLMProvider(core_provider.Provider):
         if isinstance(parsed_json, dict) and "score" in parsed_json:
             try:
                 raw_score = float(parsed_json["score"])
+            except (TypeError, ValueError):
+                normalized_score = -1.0
+            else:
+                _validate_score_range(raw_score, min_score_val, max_score_val)
                 normalized_score = (raw_score - min_score_val) / (
                     max_score_val - min_score_val
                 )
-            except (TypeError, ValueError):
-                normalized_score = -1.0
 
             return normalized_score, {"reason": parsed_json}
 
@@ -261,9 +284,17 @@ class LLMProvider(core_provider.Provider):
             for item in parsed_json:
                 if isinstance(item, dict) and "score" in item:
                     try:
-                        scores.append(float(item["score"]))
+                        candidate = float(item["score"])
                     except (TypeError, ValueError):
-                        pass
+                        continue
+                    if min_score_val <= candidate <= max_score_val:
+                        scores.append(candidate)
+                    else:
+                        logger.warning(
+                            "Rating must be in [%s, %s].",
+                            min_score_val,
+                            max_score_val,
+                        )
             if scores:
                 avg_raw = sum(scores) / len(scores)
                 normalized_score = (avg_raw - min_score_val) / (
@@ -311,9 +342,9 @@ class LLMProvider(core_provider.Provider):
                 reason metadata dictionary.
         """
         assert self.endpoint is not None, "Endpoint is not set."
-        assert (
-            max_score_val > min_score_val
-        ), "Max score must be greater than min score."
+        assert max_score_val > min_score_val, (
+            "Max score must be greater than min score."
+        )
 
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
@@ -362,15 +393,19 @@ class LLMProvider(core_provider.Provider):
                     score_val = float(json_score)
                 except (TypeError, ValueError):
                     score_val = -1.0
+                else:
+                    _validate_score_range(
+                        score_val, min_score_val, max_score_val
+                    )
+                    score_val = (score_val - min_score_val) / (
+                        max_score_val - min_score_val
+                    )
                 reasons = {
                     "reason": (
                         f"{criteria_field}: {json_criteria}\n"
                         f"{supporting_evidence_field}: {json_evidence}"
                     )
                 }
-                score_val = (score_val - min_score_val) / (
-                    max_score_val - min_score_val
-                )
                 return score_val, reasons
 
         if isinstance(response, feedback_output_schemas.ChainOfThoughtResponse):
