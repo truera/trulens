@@ -4,6 +4,8 @@ from typing import Any
 import pydantic
 import pytest
 
+pytestmark = pytest.mark.optional
+
 
 @pytest.fixture(autouse=True)
 def _reset_model_capabilities_cache():
@@ -463,6 +465,7 @@ class TestAnthropicPricing:
 
     def test_cost_computation(self, monkeypatch):
         """Cost should be computed correctly from usage."""
+        from trulens.otel.semconv.trace import SpanAttributes
         from trulens.providers.anthropic import endpoint
 
         monkeypatch.setattr(
@@ -485,8 +488,8 @@ class TestAnthropicPricing:
 
         result = endpoint.AnthropicCostComputer.handle_response(response)
         expected_cost = 1000 * 3e-6 + 500 * 15e-6
-        assert result["cost"] == pytest.approx(expected_cost)
-        assert result["n_tokens"] == 1500
-        assert result["n_prompt_tokens"] == 1000
-        assert result["n_completion_tokens"] == 500
-        assert result["model"] == "claude-sonnet-4-6"
+        assert result[SpanAttributes.COST.COST] == pytest.approx(expected_cost)
+        assert result[SpanAttributes.COST.NUM_TOKENS] == 1500
+        assert result[SpanAttributes.COST.NUM_PROMPT_TOKENS] == 1000
+        assert result[SpanAttributes.COST.NUM_COMPLETION_TOKENS] == 500
+        assert result[SpanAttributes.COST.MODEL] == "claude-sonnet-4-6"
