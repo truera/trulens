@@ -88,3 +88,6 @@ src/**/poetry.lock
 
 # cursor files
 **/.cursor
+
+# homepage design scratch (mockup, screenshots, port scripts)
+.mockup/

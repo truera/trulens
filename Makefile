@@ -162,19 +162,20 @@ docs-upload: clean env-docs $(shell find docs -type f) mkdocs.yml
 docs-linkcheck: site
 	lychee --offline --no-progress "site/**/*.html"
 
-# Check documentation for broken internal links using properdocs --strict.
-# Does not require lychee; fails if any warnings beyond the pre-existing
-# README.md/index.md conflict are found.
+# Check documentation for broken internal links and other build warnings using
+# properdocs --strict. Does not require lychee. The build is warning-clean, so
+# any new warning (broken link, unresolved cross-reference, missing annotation)
+# fails this target.
 docs-linkcheck-strict: env-docs
-	@OUTPUT=$$(poetry run properdocs build --clean --strict 2>&1); \
-	echo "$$OUTPUT"; \
-  BROKEN=$$(echo "$$OUTPUT" | grep "WARNING -" | grep -v "README.md" | grep -v "griffe:"); \
-	if [ -n "$$BROKEN" ]; then \
-	  echo ""; \
-	  echo "Broken links / documentation warnings found:"; \
-	  echo "$$BROKEN"; \
-	  exit 1; \
-	fi
+	poetry run properdocs build --clean --strict
+
+# Validate docs/llms.txt: the shape the llmstxt.org spec requires, plus every
+# internal link it lists being present in the built sitemap. Neither lychee nor
+# the strict build looks inside static files, so without this a page can be
+# renamed and llms.txt silently keeps pointing at the old URL. Needs a build
+# first; CI runs it straight after docs-linkcheck-strict.
+check-llms-txt:
+	poetry run python tools/check_llms_txt.py
 
 # Start the trubot slack app.
 trubot:
@@ -298,7 +299,7 @@ test-unit:
 		echo "Attempting to run anyway (expect failures)..."; \
 		$(PYTEST) tests/unit/test_otel*.py; \
 	fi
-	$(PYTEST) $(shell ls tests/unit/test_*.py | grep -v test_otel)
+	$(PYTEST) $(shell ls tests/unit/test_*.py tests/unit/providers/test_*.py | grep -v test_otel)
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
 test-e2e:

@@ -877,7 +877,9 @@ class Run(BaseModel):
                             f"Creating child span: {span_type} under parent {root_span_id}"
                         )
                         with create_function_call_context_manager(
-                            True, f"{span_type}_virtual"
+                            True,
+                            f"{span_type}_virtual",
+                            span_type=span_type_enum,
                         ) as child_span:
                             set_general_span_attributes(
                                 child_span, span_type_enum

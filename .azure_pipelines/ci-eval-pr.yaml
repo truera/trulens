@@ -1,5 +1,27 @@
 # This a definition for azure pipelines, not github pipelines. There are
 # differences between these systems.
+#
+# This pipeline is the required status check ("PR Validation Eval") for merging
+# into `main`. It must ALWAYS run and report success so that branch protection
+# is satisfied for every PR.
+#
+# Two tiers of validation:
+#   * Lightweight checks (pre-commit: ruff, ruff-format, yaml/whitespace,
+#     nb-clean) run on EVERY PR via the `PreCommit` job, so docs/examples-only
+#     PRs still get linted and can't merge with formatting/lint issues.
+#   * Expensive checks (conda build + full unit test matrix) run only when the
+#     PR touches code, gated by the `DetectChanges` job below.
+#
+# For docs/examples-only PRs the expensive jobs skip but the pipeline still
+# completes successfully (assuming pre-commit passes), so the required check
+# turns green without an admin override.
+#
+# IMPORTANT: Do not add a `paths:` filter to the `pr` trigger below, and do not
+# configure a path filter on this pipeline in the Azure DevOps UI ("Override the
+# YAML trigger from here"). A path-filtered required check reports "skipped"
+# (not "success") for excluded PRs, which GitHub treats as an unmet requirement
+# and blocks the merge. Keep triggering here in YAML and let `DetectChanges`
+# decide what heavy work to run.
 
 trigger: none
 
@@ -9,8 +31,86 @@ pr:
       - main
 
 jobs:
+  # Fast, always-runs gate. Determines whether the PR touches anything other
+  # than docs/examples so the expensive jobs can be skipped for docs-only
+  # changes while this pipeline still reports success.
+  - job: DetectChanges
+    displayName: "Detect changed paths"
+    pool:
+      vmImage: ubuntu-latest
+    timeoutInMinutes: 5
+    steps:
+      - checkout: self
+        fetchDepth: 0
+      - bash: |
+          set -uo pipefail
+
+          TARGET="$(System.PullRequest.TargetBranch)"
+          TARGET="${TARGET#refs/heads/}"
+          TARGET="${TARGET:-main}"
+
+          # Fail-safe default: run full validation unless we can positively
+          # prove the PR only touches docs/examples.
+          IS_CODE=true
+
+          if git fetch --no-tags --prune origin "+refs/heads/${TARGET}:refs/remotes/origin/${TARGET}"; then
+            CHANGED="$(git diff --name-only "origin/${TARGET}...HEAD")"
+            if [ $? -eq 0 ]; then
+              echo "Changed files vs origin/${TARGET}:"
+              printf '%s\n' "$CHANGED"
+
+              # Anything outside docs/, examples/, top-level *.md, or mkdocs.yml
+              # counts as a code-affecting change.
+              CODE_FILES="$(printf '%s\n' "$CHANGED" \
+                | grep -vE '^(docs/|examples/)' \
+                | grep -vE '(^|/)[^/]*\.md$' \
+                | grep -vE '^mkdocs\.yml$' \
+                || true)"
+
+              if [ -z "$CHANGED" ]; then
+                echo "No changed files detected; running full validation to be safe."
+                IS_CODE=true
+              elif [ -n "$CODE_FILES" ]; then
+                echo "Code-affecting files changed -> running full validation."
+                IS_CODE=true
+              else
+                echo "Docs/examples-only PR -> skipping heavy validation (lint still runs)."
+                IS_CODE=false
+              fi
+            else
+              echo "git diff failed; running full validation to be safe."
+            fi
+          else
+            echo "Could not fetch target branch; running full validation to be safe."
+          fi
+
+          echo "##vso[task.setvariable variable=isCode;isOutput=true]${IS_CODE}"
+        name: detect
+        displayName: "Determine change type"
+
+  # Lightweight lint/format gate. Runs for EVERY PR (including docs/examples)
+  # so formatting/lint issues are always caught, even when the heavy test
+  # matrix is skipped.
+  - job: PreCommit
+    displayName: "Lint & format (pre-commit)"
+    variables:
+      python-version: 3.11
+    pool:
+      vmImage: ubuntu-latest
+    timeoutInMinutes: 20
+    steps:
+      - template: templates/env-setup.yaml
+      - template: templates/run-precommits.yaml
+
   - template: templates/build-conda-packages.yaml
+    parameters:
+      dependsOn:
+        - DetectChanges
+      condition: and(succeeded(), eq(dependencies.DetectChanges.outputs['detect.isCode'], 'true'))
+
   - job: PRBranchProtect # name seems to be important but cannot figure out why
+    dependsOn: DetectChanges
+    condition: and(succeeded(), eq(dependencies.DetectChanges.outputs['detect.isCode'], 'true'))
     pool:
       vmImage: ubuntu-latest
     timeoutInMinutes: 45
@@ -23,12 +123,11 @@ jobs:
           python-version: 3.10
         py311-static:
           python-version: 3.11
-        # py313-static:
-        #   python-version: 3.13
+        py313-static:
+          python-version: 3.13
 
     steps:
       - template: templates/env-setup.yaml
-      - template: templates/run-precommits.yaml
       - template: templates/run-tests.yaml
         parameters:
           pytestMarker: basic
