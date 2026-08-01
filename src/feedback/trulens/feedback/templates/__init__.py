@@ -16,11 +16,13 @@ are re-exported from this package.
 # Re-export public symbols declared by each domain module.
 from trulens.feedback.templates import agent as _agent
 from trulens.feedback.templates import base as _base
+from trulens.feedback.templates import conversation as _conversation
 from trulens.feedback.templates import quality as _quality
 from trulens.feedback.templates import rag as _rag
 from trulens.feedback.templates import safety as _safety
 from trulens.feedback.templates.agent import *  # noqa: F401, F403
 from trulens.feedback.templates.base import *  # noqa: F401, F403
+from trulens.feedback.templates.conversation import *  # noqa: F401, F403
 from trulens.feedback.templates.quality import *  # noqa: F401, F403
 from trulens.feedback.templates.rag import *  # noqa: F401, F403
 from trulens.feedback.templates.safety import *  # noqa: F401, F403
@@ -31,4 +33,5 @@ __all__ = (
     + _quality.__all__
     + _safety.__all__
     + _agent.__all__
+    + _conversation.__all__
 )
