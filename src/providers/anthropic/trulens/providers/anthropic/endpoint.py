@@ -9,9 +9,9 @@ from typing import (
     Dict,
     List,
     Optional,
-    Tuple,
 )
 
+from litellm import model_cost
 import pydantic
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.otel.semconv.trace import SpanAttributes
@@ -23,22 +23,7 @@ logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
 
-# Anthropic model pricing per 1M tokens (input, output), in USD
-# Updated June 2026
-ANTHROPIC_PRICING: Dict[str, Tuple[float, float]] = {
-    "claude-opus-4": (15.0, 75.0),
-    "claude-sonnet-4": (3.0, 15.0),
-    "claude-haiku-4": (0.80, 4.0),
-    "claude-opus-4-8": (15.0, 75.0),
-    "claude-sonnet-4-6": (3.0, 15.0),
-    "claude-haiku-4-5": (0.80, 4.0),
-    "claude-opus-4-7": (15.0, 75.0),
-    "claude-3-5-sonnet": (3.0, 15.0),
-    "claude-3-5-haiku": (0.80, 4.0),
-    "claude-3-opus": (15.0, 75.0),
-}
-DEFAULT_PRICE_PER_1M_INPUT = 3.0
-DEFAULT_PRICE_PER_1M_OUTPUT = 15.0
+LITELLM_MODEL_COSTS_TABLE = model_cost
 
 
 def _get_env_api_key() -> Optional[str]:
@@ -46,17 +31,33 @@ def _get_env_api_key() -> Optional[str]:
     return os.environ.get("ANTHROPIC_API_KEY", None)
 
 
-def _get_model_pricing(model_name: str) -> Tuple[float, float]:
-    """Get (input_price_per_1M, output_price_per_1M) for a model.
+def _get_model_pricing(model_name: str) -> tuple[float, float]:
+    """Get per-token input and output pricing from LiteLLM.
 
-    Performs prefix matching to handle model version suffixes.
+    Reference: https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json
     """
     if not model_name:
-        return (DEFAULT_PRICE_PER_1M_INPUT, DEFAULT_PRICE_PER_1M_OUTPUT)
-    for prefix, prices in ANTHROPIC_PRICING.items():
-        if model_name.startswith(prefix):
-            return prices
-    return (DEFAULT_PRICE_PER_1M_INPUT, DEFAULT_PRICE_PER_1M_OUTPUT)
+        return (0.0, 0.0)
+
+    pricing = LITELLM_MODEL_COSTS_TABLE.get(model_name)
+    if pricing is None:
+        pricing = next(
+            (
+                value
+                for key, value in LITELLM_MODEL_COSTS_TABLE.items()
+                if key.startswith(model_name)
+                and value.get("litellm_provider") == "anthropic"
+            ),
+            None,
+        )
+    if pricing is None:
+        logger.warning("Model %s not found in LiteLLM pricing data", model_name)
+        return (0.0, 0.0)
+
+    return (
+        pricing.get("input_cost_per_token", 0.0),
+        pricing.get("output_cost_per_token", 0.0),
+    )
 
 
 class AnthropicCostComputer:
@@ -80,9 +81,7 @@ class AnthropicCostComputer:
         )
 
         input_price, output_price = _get_model_pricing(model_name)
-        cost = (input_tokens / 1_000_000.0) * input_price + (
-            output_tokens / 1_000_000.0
-        ) * output_price
+        cost = input_tokens * input_price + output_tokens * output_price
 
         return {
             SpanAttributes.COST.COST: round(cost, 8),

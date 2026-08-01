@@ -31,6 +31,7 @@ python = "^3.9"
 trulens-core = { version = "^2.0.0" }
 trulens-feedback = { version = "^2.0.0" }
 anthropic = ">=0.39.0"
+litellm = "^1.25"
 
 [tool.poetry.group.dev.dependencies]
 trulens-core = { path = "../../core" }

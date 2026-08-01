@@ -410,33 +410,71 @@ class TestAnthropicProviderInit:
 class TestAnthropicPricing:
     """Test Anthropic cost computation."""
 
-    def test_known_model_pricing(self):
-        """Known models should have correct pricing."""
-        from trulens.providers.anthropic.endpoint import _get_model_pricing
+    def test_known_model_pricing(self, monkeypatch):
+        """Known models should use LiteLLM's per-token pricing."""
+        from trulens.providers.anthropic import endpoint
+
+        monkeypatch.setattr(
+            endpoint,
+            "LITELLM_MODEL_COSTS_TABLE",
+            {
+                "claude-sonnet-4-6": {
+                    "input_cost_per_token": 3e-6,
+                    "output_cost_per_token": 15e-6,
+                    "litellm_provider": "anthropic",
+                },
+                "claude-opus-4-8": {
+                    "input_cost_per_token": 5e-6,
+                    "output_cost_per_token": 25e-6,
+                    "litellm_provider": "anthropic",
+                },
+                "claude-haiku-4-5-20251001": {
+                    "input_cost_per_token": 1e-6,
+                    "output_cost_per_token": 5e-6,
+                    "litellm_provider": "anthropic",
+                },
+            },
+        )
+
+        _get_model_pricing = endpoint._get_model_pricing
 
         in_p, out_p = _get_model_pricing("claude-sonnet-4-6")
-        assert in_p == 3.0
-        assert out_p == 15.0
+        assert in_p == 3e-6
+        assert out_p == 15e-6
 
         in_p, out_p = _get_model_pricing("claude-opus-4-8")
-        assert in_p == 15.0
-        assert out_p == 75.0
+        assert in_p == 5e-6
+        assert out_p == 25e-6
 
         in_p, out_p = _get_model_pricing("claude-haiku-4-5")
-        assert in_p == 0.80
-        assert out_p == 4.0
+        assert in_p == 1e-6
+        assert out_p == 5e-6
 
-    def test_unknown_model_fallback(self):
-        """Unknown models should use default pricing."""
-        from trulens.providers.anthropic.endpoint import _get_model_pricing
+    def test_unknown_model_fallback(self, monkeypatch):
+        """Unknown models should not guess a price."""
+        from trulens.providers.anthropic import endpoint
 
-        in_p, out_p = _get_model_pricing("some-future-model")
-        assert in_p == 3.0
-        assert out_p == 15.0
+        monkeypatch.setattr(endpoint, "LITELLM_MODEL_COSTS_TABLE", {})
 
-    def test_cost_computation(self):
+        in_p, out_p = endpoint._get_model_pricing("some-future-model")
+        assert in_p == 0.0
+        assert out_p == 0.0
+
+    def test_cost_computation(self, monkeypatch):
         """Cost should be computed correctly from usage."""
-        from trulens.providers.anthropic.endpoint import AnthropicCostComputer
+        from trulens.providers.anthropic import endpoint
+
+        monkeypatch.setattr(
+            endpoint,
+            "LITELLM_MODEL_COSTS_TABLE",
+            {
+                "claude-sonnet-4-6": {
+                    "input_cost_per_token": 3e-6,
+                    "output_cost_per_token": 15e-6,
+                    "litellm_provider": "anthropic",
+                }
+            },
+        )
 
         response = _DummyResponse(
             content=[_DummyContentBlock("text", "Hello")],
@@ -444,9 +482,8 @@ class TestAnthropicPricing:
             usage=_DummyUsage(input_tokens=1000, output_tokens=500),
         )
 
-        result = AnthropicCostComputer.handle_response(response)
-        # 1000/1M * 3.0 + 500/1M * 15.0 = 0.003 + 0.0075 = 0.0105
-        expected_cost = (1000 / 1e6) * 3.0 + (500 / 1e6) * 15.0
+        result = endpoint.AnthropicCostComputer.handle_response(response)
+        expected_cost = 1000 * 3e-6 + 500 * 15e-6
         assert result["cost"] == pytest.approx(expected_cost)
         assert result["n_tokens"] == 1500
         assert result["n_prompt_tokens"] == 1000
