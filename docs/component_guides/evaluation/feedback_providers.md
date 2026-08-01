@@ -104,25 +104,31 @@ kwargs to the official OpenAI Python client. That means you can point feedback
 functions at any OpenAI-compatible Chat Completions endpoint by setting
 `base_url` (and usually `api_key`).
 
-!!! example "OpenAI-compatible multi-model gateway (DaoXE)"
+Common options include self-hosted gateways (vLLM, Ollama with an OpenAI
+shim), cloud gateways (OpenRouter, Together, Fireworks, DaoXE, and others),
+or any reverse-proxy that speaks `/v1/chat/completions`.
 
-    [DaoXE](https://daoxe.com) is a multi-model multi-protocol API gateway
-    (OpenAI Chat Completions / Responses and Anthropic Messages for other
-    clients). TruLens's OpenAI provider uses the Chat Completions path.
+!!! example "OpenAI-compatible custom endpoint"
 
-    Get an API key from the DaoXE dashboard and pass an **exact model ID from
-    your account catalog** (`GET https://daoxe.com/v1/models`). Do not hardcode
-    a public price list. DaoXE is **not available in mainland China**.
+    Pass the gateway's Chat Completions base URL and a model ID that endpoint
+    accepts. Model IDs differ by provider — use a concrete ID from that
+    provider's catalog (examples below are illustrative).
 
     ```python
     import os
 
     from trulens.providers.openai import OpenAI
 
+    # Examples of base_url values (pick one):
+    #   "https://openrouter.ai/api/v1"
+    #   "https://api.together.xyz/v1"
+    #   "https://api.fireworks.ai/inference/v1"
+    #   "https://daoxe.com/v1"
+    #   "http://localhost:8000/v1"  # vLLM / local OpenAI shim
     provider = OpenAI(
-        model_engine=os.environ["DAOXE_MODEL"],  # exact ID from GET /v1/models
-        api_key=os.environ["DAOXE_API_KEY"],
-        base_url="https://daoxe.com/v1",
+        model_engine="gpt-4o-mini",  # or "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo", etc.
+        api_key=os.environ["OPENAI_API_KEY"],  # gateway token / key
+        base_url=os.environ["OPENAI_BASE_URL"],
     )
 
     # Example feedback call
@@ -141,9 +147,9 @@ functions at any OpenAI-compatible Chat Completions endpoint by setting
     from trulens.providers.litellm import LiteLLM
 
     provider = LiteLLM(
-        model_engine=f"openai/{os.environ['DAOXE_MODEL']}",
-        api_base="https://daoxe.com/v1",
-        api_key=os.environ["DAOXE_API_KEY"],
+        model_engine="openai/gpt-4o-mini",
+        api_base=os.environ["OPENAI_BASE_URL"],
+        api_key=os.environ["OPENAI_API_KEY"],
     )
     ```
 

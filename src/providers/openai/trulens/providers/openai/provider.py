@@ -61,19 +61,18 @@ class OpenAI(llm_provider.LLMProvider):
         openai_provider = OpenAI()
         ```
 
-        OpenAI-compatible gateways (for example DaoXE) work by forwarding
-        client kwargs such as `base_url` and `api_key`:
+        OpenAI-compatible endpoints work by forwarding client kwargs such as
+        `base_url` and `api_key` (OpenRouter, Together, Fireworks, DaoXE,
+        vLLM, and similar):
 
         ```python
         import os
         from trulens.providers.openai import OpenAI
 
-        # DaoXE multi-protocol gateway Chat Completions path:
-        # base_url=https://daoxe.com/v1 ; model IDs are account-scoped.
         provider = OpenAI(
-            model_engine=os.environ["DAOXE_MODEL"],
-            api_key=os.environ["DAOXE_API_KEY"],
-            base_url="https://daoxe.com/v1",
+            model_engine="gpt-4o-mini",
+            api_key=os.environ["OPENAI_API_KEY"],
+            base_url=os.environ["OPENAI_BASE_URL"],  # e.g. https://openrouter.ai/api/v1
         )
         ```
 
