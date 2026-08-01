@@ -1,14 +1,9 @@
+from collections.abc import Sequence
 import json
 import logging
 from typing import (
     Any,
     ClassVar,
-    Dict,
-    List,
-    Optional,
-    Sequence,
-    Type,
-    Union,
 )
 
 import pydantic
@@ -52,10 +47,10 @@ class Anthropic(llm_provider.LLMProvider):
         self,
         *args,
         endpoint=None,
-        api_key: Optional[str] = None,
-        pace: Optional[pace_utils.Pace] = None,
-        rpm: Optional[int] = None,
-        model_engine: Optional[str] = None,
+        api_key: str | None = None,
+        pace: pace_utils.Pace | None = None,
+        rpm: int | None = None,
+        model_engine: str | None = None,
         **kwargs: dict,
     ):
         # NOTE: pydantic adds endpoint to the signature of this constructor
@@ -64,7 +59,7 @@ class Anthropic(llm_provider.LLMProvider):
         if model_engine is None:
             model_engine = self.DEFAULT_MODEL_ENGINE
 
-        self_kwargs: Dict[str, Any] = dict()
+        self_kwargs: dict[str, Any] = {}
         self_kwargs.update(**kwargs)
         self_kwargs["model_engine"] = model_engine
 
@@ -80,8 +75,8 @@ class Anthropic(llm_provider.LLMProvider):
 
     @staticmethod
     def _extract_system_from_messages(
-        messages: Sequence[Dict],
-    ) -> tuple[str, List[Dict]]:
+        messages: Sequence[dict],
+    ) -> tuple[str, list[dict]]:
         """Extract system message(s) from OpenAI-format messages.
 
         Anthropic expects ``system`` as a top-level API parameter, not as a
@@ -90,8 +85,8 @@ class Anthropic(llm_provider.LLMProvider):
         Returns:
             (system_prompt, remaining_messages)
         """
-        system_parts: List[str] = []
-        remaining: List[Dict] = []
+        system_parts: list[str] = []
+        remaining: list[dict] = []
         for msg in messages:
             if msg.get("role") == "system":
                 content = msg.get("content", "")
@@ -112,8 +107,8 @@ class Anthropic(llm_provider.LLMProvider):
 
     @staticmethod
     def _convert_messages_to_anthropic(
-        messages: Sequence[Dict],
-    ) -> List[Dict]:
+        messages: Sequence[dict],
+    ) -> list[dict]:
         """Convert OpenAI-format messages to Anthropic Messages API format.
 
         Handles role translation and content structure conversion:
@@ -122,7 +117,7 @@ class Anthropic(llm_provider.LLMProvider):
         - ``tool`` → ``user`` with tool_result content block
         - Merges consecutive same-role messages (Anthropic requires alternating)
         """
-        anthropic_messages: List[Dict] = []
+        anthropic_messages: list[dict] = []
 
         for msg in messages:
             role = msg.get("role", "user")
@@ -152,9 +147,7 @@ class Anthropic(llm_provider.LLMProvider):
                 elif isinstance(content, list):
                     tool_content = content
                 else:
-                    tool_content = [
-                        {"type": "text", "text": str(content)}
-                    ]
+                    tool_content = [{"type": "text", "text": str(content)}]
             else:  # user or any other role → user
                 anthropic_role = "user"
                 if isinstance(content, str):
@@ -162,9 +155,7 @@ class Anthropic(llm_provider.LLMProvider):
                 elif isinstance(content, list):
                     tool_content = content
                 else:
-                    tool_content = [
-                        {"type": "text", "text": str(content)}
-                    ]
+                    tool_content = [{"type": "text", "text": str(content)}]
 
             # Merge with previous message if same role (Anthropic requirement)
             if (
@@ -182,11 +173,11 @@ class Anthropic(llm_provider.LLMProvider):
 
     def _create_chat_completion(
         self,
-        prompt: Optional[str] = None,
-        messages: Optional[Sequence[Dict]] = None,
-        response_format: Optional[Type[pydantic.BaseModel]] = None,
+        prompt: str | None = None,
+        messages: Sequence[dict] | None = None,
+        response_format: type[pydantic.BaseModel] | None = None,
         **kwargs,
-    ) -> Optional[Union[str, pydantic.BaseModel]]:
+    ) -> str | pydantic.BaseModel | None:
         """Create a chat completion using the Anthropic Claude API.
 
         Args:
@@ -219,7 +210,7 @@ class Anthropic(llm_provider.LLMProvider):
         )
 
         # Build API parameters
-        api_kwargs: Dict[str, Any] = {
+        api_kwargs: dict[str, Any] = {
             "model": kwargs.pop("model"),
             "max_tokens": kwargs.pop("max_tokens", 4096),
             "messages": anthropic_messages,
@@ -284,7 +275,7 @@ class Anthropic(llm_provider.LLMProvider):
                         # Fall through to text extraction
 
         # Extract text content
-        text_parts: List[str] = []
+        text_parts: list[str] = []
         for content_block in getattr(response, "content", []) or []:
             if getattr(content_block, "type", None) == "text":
                 text = getattr(content_block, "text", "")

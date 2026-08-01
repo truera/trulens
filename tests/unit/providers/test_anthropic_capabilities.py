@@ -1,6 +1,5 @@
 # Tests for Anthropic provider capabilities
-import types
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pydantic
 import pytest
@@ -23,7 +22,9 @@ class _ParsedModel(pydantic.BaseModel):
 class _DummyContentBlock:
     """Simulates an Anthropic content block."""
 
-    def __init__(self, block_type: str, text: str = "", tool_input: dict = None):
+    def __init__(
+        self, block_type: str, text: str = "", tool_input: dict | None = None
+    ):
         self.type = block_type
         self.text = text
         self.input = tool_input or {}
@@ -48,9 +49,9 @@ class _DummyResponse:
 
     def __init__(
         self,
-        content: List[_DummyContentBlock],
+        content: list[_DummyContentBlock],
         model: str = "claude-sonnet-4-6",
-        usage: Optional[_DummyUsage] = None,
+        usage: _DummyUsage | None = None,
     ):
         self.content = content
         self.model = model
@@ -62,7 +63,7 @@ class _DummyMessages:
 
     def __init__(self, response: _DummyResponse):
         self._response = response
-        self.create_calls: List[Dict[str, Any]] = []
+        self.create_calls: list[dict[str, Any]] = []
 
     def create(self, **kwargs):
         self.create_calls.append(kwargs)

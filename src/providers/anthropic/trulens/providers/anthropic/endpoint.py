@@ -1,14 +1,13 @@
+from __future__ import annotations
+
+from collections.abc import Callable
 import inspect
 import logging
 import os
 import pprint
 from typing import (
     Any,
-    Callable,
     ClassVar,
-    Dict,
-    List,
-    Optional,
 )
 
 from litellm import model_cost
@@ -17,7 +16,6 @@ from trulens.core.feedback import endpoint as core_endpoint
 from trulens.otel.semconv.trace import SpanAttributes
 
 import anthropic
-from anthropic.types import Message as AnthropicMessage
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +24,7 @@ pp = pprint.PrettyPrinter()
 LITELLM_MODEL_COSTS_TABLE = model_cost
 
 
-def _get_env_api_key() -> Optional[str]:
+def _get_env_api_key() -> str | None:
     """Gets the API key from ANTHROPIC_API_KEY environment variable."""
     return os.environ.get("ANTHROPIC_API_KEY", None)
 
@@ -64,21 +62,13 @@ class AnthropicCostComputer:
     """Computes cost and token usage from Anthropic API responses."""
 
     @staticmethod
-    def handle_response(response: Any) -> Dict[str, Any]:
+    def handle_response(response: Any) -> dict[str, Any]:
         usage = getattr(response, "usage", None)
         model_name = getattr(response, "model", "") or ""
 
         input_tokens = getattr(usage, "input_tokens", 0) if usage else 0
         output_tokens = getattr(usage, "output_tokens", 0) if usage else 0
         total_tokens = input_tokens + output_tokens
-
-        # Cache tokens include previously-seen content (not separately billed)
-        cache_read_input_tokens = (
-            getattr(usage, "cache_read_input_tokens", 0) if usage else 0
-        )
-        cache_creation_input_tokens = (
-            getattr(usage, "cache_creation_input_tokens", 0) if usage else 0
-        )
 
         input_price, output_price = _get_model_pricing(model_name)
         cost = input_tokens * input_price + output_tokens * output_price
@@ -135,8 +125,8 @@ class AnthropicClient(pydantic.BaseModel):
 
     def __init__(
         self,
-        client: Optional[anthropic.Anthropic] = None,
-        api_key: Optional[str] = None,
+        client: anthropic.Anthropic | None = None,
+        api_key: str | None = None,
         **kwargs,
     ):
         if client is None:
@@ -163,10 +153,10 @@ class AnthropicEndpoint(core_endpoint.Endpoint):
 
     def __init__(
         self,
-        client: Optional[anthropic.Anthropic] = None,
-        api_key: Optional[str] = None,
-        rpm: Optional[int] = None,
-        pace: Optional[Any] = None,
+        client: anthropic.Anthropic | None = None,
+        api_key: str | None = None,
+        rpm: int | None = None,
+        pace: Any | None = None,
         **kwargs: dict,
     ):
         self_kwargs = {
@@ -192,14 +182,8 @@ class AnthropicEndpoint(core_endpoint.Endpoint):
         func: Callable,
         bindings: inspect.BoundArguments,
         response: Any,
-        callback: Optional[core_endpoint.EndpointCallback],
+        callback: core_endpoint.EndpointCallback | None,
     ) -> Any:
-        model_name = ""
-        if "model" in bindings.kwargs:
-            model_name = bindings.kwargs["model"]
-        elif "model" in bindings.arguments:
-            model_name = bindings.arguments["model"]
-
         callbacks = [self.global_callback]
         if callback is not None:
             callbacks.append(callback)
