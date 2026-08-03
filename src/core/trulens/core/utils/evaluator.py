@@ -11,7 +11,11 @@ import weakref
 
 import pandas as pd
 from trulens.core.otel.utils import is_otel_tracing_enabled
+from trulens.core.sampling import EvalDecisionReason
+from trulens.core.sampling import SamplingController
+from trulens.core.sampling import ingest_eval_active
 from trulens.core.session import TruSession
+from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 if TYPE_CHECKING:
@@ -58,6 +62,10 @@ class Evaluator:
         self._stop_event = threading.Event()
         self._compute_feedbacks_lock = threading.Lock()
         self._record_id_to_event_count = pd.Series(dtype=int)
+        self._sampled_out_record_ids: set = set()
+        """Record IDs skipped by sampling.  Tracked separately from
+        ``_record_id_to_event_count`` so that explicit ``compute_now``
+        calls can still reach them for backfill."""
         self._processed_time = None
         self._last_error: Optional[BaseException] = None
 
@@ -115,6 +123,7 @@ class Evaluator:
         self,
         record_ids: Optional[List[str]],
         start_time: Optional[datetime.datetime],
+        force: bool = False,
     ) -> Dict[str, pd.DataFrame]:
         """
         Get events for the app that weren't yet used for feedback computation.
@@ -123,6 +132,13 @@ class Evaluator:
             record_ids:
                 Optional list of record IDs to filter events by. If None, all
                 unprocessed events will be returned.
+            force:
+                If True, bypass the internal bookkeeping filters
+                (``_record_id_to_event_count`` and
+                ``_sampled_out_record_ids``) and return events for the
+                requested records regardless of prior processing state.
+                Used by ``compute_now`` so that explicitly requested
+                backfills always run.
 
         Returns:
             A dict from record id to a pandas DataFrame of all events from that
@@ -162,7 +178,17 @@ class Evaluator:
             record_id,
             events_under_record_root,
         ) in record_id_to_events_under_record_root.items():
+            if force:
+                # Force path: return events regardless of bookkeeping.
+                # Duplicate evaluation is prevented downstream by
+                # _remove_already_computed_feedbacks in computer.py.
+                ret[record_id] = events_under_record_root
+                continue
             count = len(events_under_record_root)
+            # On the automatic path, also skip records that were
+            # already declined by sampling.
+            if record_id in self._sampled_out_record_ids:
+                continue
             if (
                 record_id not in self._record_id_to_event_count
                 or count > self._record_id_to_event_count[record_id]
@@ -186,11 +212,66 @@ class Evaluator:
                 logger.info(
                     f"Processing all events from {self._processed_time}"
                 )
+            # When explicit record_ids are provided, this is a force
+            # path: fetch those records regardless of prior
+            # processing/sampling state.  Duplicate evaluation is
+            # prevented downstream by _remove_already_computed_feedbacks.
+            force = record_ids is not None
             record_id_to_events = self._get_record_id_to_unprocessed_events(
                 record_ids,
                 self._processed_time,
+                force=force,
             )
+
+            # Sampling is only applied on the automatic ingest path
+            # (in_evaluator_thread=True).  Explicit compute_now() calls
+            # always evaluate everything.
+            controller: Optional[SamplingController] = None
+            if in_evaluator_thread:
+                controller = TruSession()._sampling_controller
+
             for record_id, events in record_id_to_events.items():
+                # --- sampling gate (ingest path only) ---
+                if controller is not None:
+                    should_eval, sampling_meta = controller.should_evaluate(
+                        record_id=record_id,
+                        app_name=self._app_name,
+                    )
+                    reason = sampling_meta.get("eval_decision_reason")
+
+                    # NOT_CONFIGURED means sampling doesn't apply to
+                    # this app — fall through to evaluate with no span
+                    # overhead.  Only emit decision spans for records
+                    # that are actually in scope for sampling.
+                    if reason != EvalDecisionReason.NOT_CONFIGURED.value:
+                        _emit_sampling_decision_span(
+                            record_id=record_id,
+                            app_name=self._app_name,
+                            app_version=self._app_version,
+                            events=events,
+                            sampling_meta=sampling_meta,
+                        )
+
+                    if not should_eval:
+                        logger.debug(
+                            "Skipping evaluation for record_id=%s: %s",
+                            record_id,
+                            reason,
+                        )
+                        # Track as sampled-out, NOT as processed.
+                        # This lets compute_now() still reach these
+                        # records for explicit backfill.
+                        self._sampled_out_record_ids.add(record_id)
+                        continue
+
+                # Set the ingest flag so record_cost() in computer.py
+                # only charges the budget on the ingest path.  A batch
+                # backfill must not burn the daily budget.
+                token = (
+                    ingest_eval_active.set(True)
+                    if controller is not None
+                    else None
+                )
                 try:
                     self._app_ref().compute_feedbacks(
                         raise_error_on_no_feedbacks_computed=False,
@@ -201,6 +282,8 @@ class Evaluator:
                         f"Error computing feedbacks in evaluator thread (record_id={record_id}): {e}\n{traceback.format_exc()}"
                     )
                 finally:
+                    if token is not None:
+                        ingest_eval_active.reset(token)
                     self._record_id_to_event_count[record_id] = len(events)
                     TruSession().force_flush()
                 if in_evaluator_thread and self._stop_event.is_set():
@@ -317,3 +400,72 @@ class Evaluator:
             # unloaded so we can't rely on the logger or other modules being
             # available
             pass
+
+
+def _emit_sampling_decision_span(
+    record_id: str,
+    app_name: str,
+    app_version: str,
+    events: pd.DataFrame,
+    sampling_meta: Dict[str, Any],
+) -> None:
+    """Emit a lightweight span recording the sampling decision for a record.
+
+    One of these spans is created for every record that flows through the
+    evaluator (both evaluated and skipped), so that
+    ``get_records_and_feedback`` can project a ``sampled`` column and the
+    dashboard can show coverage.
+    """
+    try:
+        from opentelemetry import trace as otel_trace
+        from trulens.experimental.otel_tracing.core.session import (
+            TRULENS_SERVICE_NAME,
+        )
+        from trulens.experimental.otel_tracing.core.span import (
+            set_general_span_attributes,
+        )
+
+        tracer = otel_trace.get_tracer_provider().get_tracer(
+            TRULENS_SERVICE_NAME
+        )
+
+        # Extract app_id from record root event if available.
+        app_id = None
+        if events is not None and not events.empty:
+            for _, event in events.iterrows():
+                res_attrs = event.get("resource_attributes")
+                if isinstance(res_attrs, str):
+                    res_attrs = json.loads(res_attrs)
+                if isinstance(res_attrs, dict):
+                    app_id = res_attrs.get(ResourceAttributes.APP_ID)
+                    if app_id:
+                        break
+
+        with tracer.start_as_current_span("eval_decision") as span:
+            set_general_span_attributes(
+                span, SpanAttributes.SpanType.EVAL_DECISION
+            )
+            span.set_attribute(SpanAttributes.RECORD_ID, record_id)
+            span.set_attribute(
+                SpanAttributes.EVAL_DECISION.SAMPLE_RATE,
+                sampling_meta.get("sample_rate", 1.0),
+            )
+            span.set_attribute(
+                SpanAttributes.EVAL_DECISION.EVAL_DECISION_REASON,
+                sampling_meta.get(
+                    "eval_decision_reason",
+                    EvalDecisionReason.EVALUATED.value,
+                ),
+            )
+            # Set resource attributes so the span is associated with
+            # the correct app.
+            span.set_attribute(ResourceAttributes.APP_NAME, app_name)
+            span.set_attribute(ResourceAttributes.APP_VERSION, app_version)
+            if app_id:
+                span.set_attribute(ResourceAttributes.APP_ID, app_id)
+    except Exception as e:
+        logger.debug(
+            "Failed to emit sampling decision span for record_id=%s: %s",
+            record_id,
+            e,
+        )

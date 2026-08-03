@@ -90,6 +90,10 @@ class OpenAI(llm_provider.LLMProvider):
 
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "gpt-4o-mini"
 
+    @property
+    def reports_costs(self) -> bool:
+        return True
+
     # Endpoint cannot presently be serialized but is constructed in __init__
     # below so it is ok.
     endpoint: openai_endpoint.OpenAIEndpoint = pydantic.Field(exclude=True)
