@@ -68,5 +68,17 @@ class Provider(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
     Remote API invocations are handled by the endpoint.
     """
 
+    @property
+    def reports_costs(self) -> bool:
+        """Whether this provider reports tracked costs.
+
+        Providers that instrument their API calls to report token counts
+        and dollar costs should override this to return ``True``.
+        When ``cost_budget`` is set on a :class:`SamplingConfig` and this
+        property is ``False``, a warning is emitted so the user knows the
+        budget cannot be enforced for metrics using this provider.
+        """
+        return False
+
     def __init__(self, name: Optional[str] = None, **kwargs):
         super().__init__(name=name, **kwargs)
