@@ -53,8 +53,17 @@ steps:
     displayName: Cache pip packages
 
   - bash: |
-      # Install poetry
-      curl -sSL https://install.python-poetry.org | python3 - --version 1.8.5
+      # Install poetry. Pinned deliberately, and the major matters: the lockfile
+      # format is tied to it, and 1.8 cannot read the lock-version 2.1 file this
+      # repository now commits, so a floating version here would break the moment
+      # the installer moved on.
+      #
+      # 2.x is also what stops `poetry lock` re-resolving all 377 packages on
+      # every run. Under 1.8 a release lock dragged unrelated upgrades along with
+      # it -- 19 third-party packages in 2.10.0 and 113 in 2.9, none of them
+      # reviewed as part of the release. 2.x preserves existing pins by default
+      # and has no --no-update flag at all; --regenerate is the explicit opt-in.
+      curl -sSL https://install.python-poetry.org | python3 - --version 2.3.2
 
       # Show python version
       echo "Using $(python --version) ($(which python))"

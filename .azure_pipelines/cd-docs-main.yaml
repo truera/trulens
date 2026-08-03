@@ -130,7 +130,7 @@ jobs:
           set -euo pipefail
           git config user.name "azure-pipelines[bot]"
           git config user.email "azure-pipelines[bot]@users.noreply.github.com"
-          poetry install --with docs --sync
+          poetry sync --with docs
           poetry run properdocs gh-deploy \
             --force \
             --message "Deployed {sha} from CI with ProperDocs {version}"
