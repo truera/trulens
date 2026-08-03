@@ -26,6 +26,33 @@ github pipelines. There are differences between these systems.
   tests as well as running notebooks. Success is needed for merging into
   `releases/*`. Also, any branch named `releases/*` needs to pass the pipeline
   tests before merging into `main`.
+- `cd-docs-main.yaml` publishes the documentation site to the `gh-pages` branch.
+  It triggers on every merge to `main` but only publishes when a **release**
+  lands, so trulens.org reflects the latest released version rather than the tip
+  of `main`.
+
+  Release branches are squash-merged, so the commit on `main` records only a PR
+  number and never the branch name, and the release tags sit on the rc branch
+  rather than on `main`. What a release does leave behind is a version bump, so
+  the cheap `Gate` job compares one line of `src/core/pyproject.toml` against the
+  previous commit and the `DocsDeploy` job depends on its output. Ordinary merges
+  stop at the gate, having paid only for a two-commit shallow checkout.
+
+  Two things about this pipeline are easy to break:
+
+  > Its checkout must set `lfs: true` (via the `env-setup.yaml` parameter). Every
+  > image in the repository is LFS-tracked, and a checkout without LFS leaves
+  > them as ~130 byte pointer stubs which the build copies into the site without
+  > any warning. That is not hypothetical: it is how every image on trulens.org
+  > came to be broken at once. `make check-no-lfs-pointers` guards against it,
+  > and the pipeline runs that check both before building and afterwards against
+  > the published branch.
+
+  > Do **not** add it to GitHub branch protection as a required check. It runs on
+  > `main` after merge, so it can never report on a PR.
+
+  A **manual run** bypasses the release gate, which is the intended way to
+  publish a docs-only fix between releases.
 
 ## More information
 
