@@ -152,7 +152,11 @@ docs-serve-debug: env-docs
 docs-serve-dirty: env-docs
 	poetry run properdocs serve --dirty -a 127.0.0.1:8000
 
-docs-upload: clean env-docs $(shell find docs -type f) mkdocs.yml
+# check-no-lfs-pointers runs first, and deliberately ahead of the interactive
+# `clean` prompt, so a deploy from a clone with LFS smudge disabled stops before
+# asking the operator anything. Deploying from CI is the supported path now, but
+# this target still exists, so it gets the same guard.
+docs-upload: check-no-lfs-pointers clean env-docs $(shell find docs -type f) mkdocs.yml
 	poetry run ggshield secret scan repo ./docs
 	poetry run properdocs gh-deploy
 
@@ -176,6 +180,14 @@ docs-linkcheck-strict: env-docs
 # first; CI runs it straight after docs-linkcheck-strict.
 check-llms-txt:
 	poetry run python tools/check_llms_txt.py
+
+# Fail if any LFS-tracked file under docs/ is still a pointer stub. Costs
+# milliseconds and needs no build, because it reads the working tree rather than
+# the rendered site. Guards against publishing 130-byte text stubs in place of
+# images, which is what a clone with lfs.smudge disabled produces and what the
+# docs build will copy into site/ without complaint.
+check-no-lfs-pointers:
+	poetry run python tools/check_no_lfs_pointers.py
 
 # Start the trubot slack app.
 trubot:

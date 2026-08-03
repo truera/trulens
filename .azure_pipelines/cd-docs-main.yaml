@@ -1,0 +1,85 @@
+# This is a definition for azure pipelines, not github pipelines. There are
+# differences between these systems.
+#
+# Publishes the documentation site to the gh-pages branch on every merge to main.
+#
+# It exists because deploying from a developer's laptop put 55 Git LFS pointer
+# files on trulens.org in place of images. Every .png, .jpg and .gif in this
+# repository is LFS-tracked, and a clone whose smudge filter is disabled leaves
+# them on disk as ~130 byte text stubs. Nothing in the pipeline from there on
+# objects: the build copies the stubs into site/, the deploy pushes them, and the
+# server answers with HTTP 200, Content-Type: image/png and 130 bytes of pointer
+# text. The bytes committed to git were correct the entire time.
+#
+# Two things here address that. The checkout is LFS-aware, so the images are real
+# before anything reads them; and the guard step fails the run rather than
+# publishing a stub if the class of problem ever returns by another route.
+
+trigger:
+  branches:
+    include:
+      - main
+  # Same set the docs PR pipeline validates, so anything that can change the
+  # rendered site triggers a publish, and nothing else does.
+  paths:
+    include:
+      - docs
+      - examples
+      - mkdocs.yml
+      - tools/check_no_lfs_pointers.py
+      - .azure_pipelines/cd-docs-main.yaml
+
+# Never run on a pull request. A PR must not be able to publish, and
+# ci-docs-pr.yaml already builds the site in strict mode for review.
+pr: none
+
+jobs:
+  - job: DocsDeploy
+    displayName: "Deploy Documentation"
+    pool:
+      vmImage: "ubuntu-latest"
+    timeoutInMinutes: 30
+
+    variables:
+      # Snowflake libraries are not available on >=3.12. Matches ci-docs-pr.yaml,
+      # which sets the same version through a single-entry matrix.
+      python-version: "3.11"
+
+    steps:
+      - template: templates/env-setup.yaml
+        parameters:
+          lfs: true
+          persistCredentials: true
+
+      # Fails in milliseconds and before the build, so a bad checkout costs
+      # nothing. Reads the working tree rather than the rendered site, which is
+      # what lets it run this early.
+      - bash: |
+          make check-no-lfs-pointers
+        displayName: "Fail if any doc asset is an LFS pointer"
+
+      # gh-deploy builds and pushes in one step, so --strict here is the same
+      # gate ci-docs-pr.yaml applies before merge; it just refuses to publish
+      # rather than refusing to merge. The commit lands on gh-pages, not main.
+      - bash: |
+          set -euo pipefail
+          git config user.name "azure-pipelines[bot]"
+          git config user.email "azure-pipelines[bot]@users.noreply.github.com"
+          poetry install --with docs --sync
+          poetry run properdocs gh-deploy \
+            --strict \
+            --force \
+            --message "Deployed {sha} from CI with ProperDocs {version}"
+        displayName: "Build and publish to gh-pages"
+
+      # The deploy is what makes the site, so verifying the artifact it just
+      # pushed is the only check that speaks to what visitors will get. Reads
+      # from the gh-pages branch rather than over HTTP, because GitHub Pages
+      # takes time to serve a fresh commit and a poll loop here would be flaky.
+      - bash: |
+          set -euo pipefail
+          git fetch origin gh-pages --depth 1
+          rm -rf /tmp/ghp && mkdir -p /tmp/ghp
+          git archive origin/gh-pages | tar -x -C /tmp/ghp
+          python tools/check_no_lfs_pointers.py /tmp/ghp
+        displayName: "Verify the published site carries real images"

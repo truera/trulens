@@ -1,6 +1,26 @@
+parameters:
+  # Off by default. Only the docs deploy reads the LFS-tracked images, and
+  # fetching ~55 MB of them on every test job would spend the repository's LFS
+  # bandwidth on files those jobs never open. Jobs that render or publish docs
+  # must set this to true: without it the checkout leaves every image as a
+  # pointer stub, and a build will copy those stubs into the site without
+  # complaint.
+  - name: lfs
+    type: boolean
+    default: false
+
+  # Off by default. Only a job that pushes back to the repository -- gh-deploy
+  # committing to gh-pages -- needs the checkout's credentials left on disk for
+  # later steps.
+  - name: persistCredentials
+    type: boolean
+    default: false
+
 steps:
   - checkout: self
     clean: true
+    lfs: ${{ parameters.lfs }}
+    persistCredentials: ${{ parameters.persistCredentials }}
 
   - task: UsePythonVersion@0
     inputs:
