@@ -1,0 +1,241 @@
+# This is a definition for azure pipelines, not github pipelines. There are
+# differences between these systems.
+#
+# Publishes a release. Triggered by the release pull request being merged into
+# main, which is the point at which the release is real: nothing can be published
+# that failed to land on main.
+#
+# Four stages, in order, because each one depends on the last having worked:
+#
+#   Gate           did a release actually land, or is this an ordinary merge?
+#   PublishPyPI    build the wheels and upload them, behind a human approval
+#   DeployDocs     publish trulens.org, only once the release is installable
+#   UpdateMetaYaml refresh the conda recipes, which need hashes from PyPI
+#
+# Recognising a release is harder than it looks. Release branches are named
+# releases/rc-trulens-<version>, but they are squash-merged, so the merge commit on
+# main has a single parent and no record of the branch it came from -- only a PR
+# number. The subjects are not a reliable pattern either ("TruLens 2.10.0" against
+# "TruLens 2.9"). Release tags exist but sit on the rc branch rather than on main,
+# and are pushed before the merge lands.
+#
+# What a release does leave on main is a version bump. So the Gate stage compares
+# one line of src/core/pyproject.toml against the previous commit. That needs no
+# token, no API call, and does not care how the branch was merged.
+#
+# Docs are a stage here rather than a separately triggered pipeline for two
+# reasons: they must not publish before the version is installable, and a stage
+# builds from this exact commit, where a pipeline-completion trigger would build
+# whatever main's tip had become in the meantime.
+
+trigger:
+  branches:
+    include:
+      - main
+  # Deliberately no paths filter. A release is recognised by its version bump, not
+  # by which files it happens to touch, and filtering on paths would also miss a
+  # release whose only interesting change is a version. The Gate stage is cheap
+  # enough to run on every merge: it shallow-checks-out, compares one line, stops.
+
+# Never run on a pull request. A PR must not be able to publish.
+pr: none
+
+stages:
+  - stage: Gate
+    displayName: "Decide whether a release landed"
+    jobs:
+      - job: Detect
+        displayName: "Compare the core version against the previous commit"
+        pool:
+          vmImage: "ubuntu-latest"
+        timeoutInMinutes: 10
+
+        steps:
+          - checkout: self
+            clean: true
+            # Two commits is all this stage needs, and LFS would be wasted here: it
+            # reads a single line of TOML and never opens an image.
+            fetchDepth: 2
+            lfs: false
+
+          - bash: |
+              set -euo pipefail
+
+              VERSION_FILE=src/core/pyproject.toml
+
+              # A manual run is the supported way to force a publish, so it skips
+              # the check rather than being blocked by it.
+              if [ "${BUILD_REASON:-}" = "Manual" ]; then
+                echo "Build.Reason is Manual: releasing without looking for a version bump."
+                echo "##vso[task.setvariable variable=shouldRelease;isOutput=true]true"
+                exit 0
+              fi
+
+              # fetchDepth: 2 should provide HEAD~1, but deepen rather than let a
+              # missing object decide a release does not get published.
+              git rev-parse --verify HEAD~1 >/dev/null 2>&1 || git fetch --deepen=1 origin
+
+              curr=$(grep -m1 '^version' "$VERSION_FILE")
+              prev=$(git show "HEAD~1:$VERSION_FILE" 2>/dev/null | grep -m1 '^version' || true)
+
+              echo "previous: ${prev:-<unreadable>}"
+              echo "current:  ${curr}"
+
+              if [ -z "${prev}" ]; then
+                # Stopping is the safer of the two failures now that this gate also
+                # controls publishing to PyPI. A release that needs a manual re-run
+                # is a smaller problem than an unintended upload.
+                echo "Could not read the previous version. Not releasing; re-run manually if this was a release."
+                echo "##vso[task.setvariable variable=shouldRelease;isOutput=true]false"
+              elif [ "${prev}" = "${curr}" ]; then
+                echo "Version unchanged: not a release. Nothing to publish."
+                echo "##vso[task.setvariable variable=shouldRelease;isOutput=true]false"
+              else
+                echo "Version bumped: a release landed."
+                echo "##vso[task.setvariable variable=shouldRelease;isOutput=true]true"
+              fi
+            name: gate
+            displayName: "Look for a version bump"
+
+  - stage: PublishPyPI
+    displayName: "Publish to PyPI"
+    dependsOn: Gate
+    condition: eq(dependencies.Gate.outputs['Detect.gate.shouldRelease'], 'true')
+    jobs:
+      # A deployment job rather than a plain one, so it targets an Azure DevOps
+      # Environment and stops for the approval configured there. Publishing to PyPI
+      # is irreversible -- a version number can never be reused -- so it should
+      # never happen without somebody saying yes.
+      #
+      # The environment must exist and be named exactly pypi-production, with an
+      # Approvals check on it. Deployment jobs do not check out the repository
+      # implicitly; env-setup.yaml does it explicitly.
+      - deployment: Publish
+        displayName: "Build the wheels and upload them"
+        environment: pypi-production
+        pool:
+          vmImage: "ubuntu-latest"
+        timeoutInMinutes: 60
+
+        variables:
+          # Snowflake libraries are not available on >=3.12.
+          python-version: "3.11"
+
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - template: templates/env-setup.yaml
+
+                # twine lives in the dev group, so that is all this needs.
+                - bash: |
+                    set -euo pipefail
+                    poetry sync --only dev
+                  displayName: "Install the dev group for twine"
+
+                - bash: |
+                    set -euo pipefail
+                    make upload-all
+                  displayName: "Build, zip the wheels, and upload to PyPI"
+                  env:
+                    # upload-all depends on clean, which prompts. There is nobody
+                    # here to answer it.
+                    FORCE_CLEAN: 1
+                    # twine reads this from the environment, so the token never
+                    # reaches a command line or make's echoed output.
+                    TWINE_PASSWORD: $(pypiToken)
+
+  - stage: DeployDocs
+    displayName: "Publish the documentation"
+    dependsOn: PublishPyPI
+    jobs:
+      - job: Docs
+        displayName: "Deploy Documentation"
+        pool:
+          vmImage: "ubuntu-latest"
+        timeoutInMinutes: 30
+
+        variables:
+          # Snowflake libraries are not available on >=3.12. Matches ci-docs-pr.yaml,
+          # which sets the same version through a single-entry matrix.
+          python-version: "3.11"
+
+        steps:
+          - template: templates/deploy-docs.yaml
+
+  - stage: UpdateMetaYaml
+    displayName: "Refresh the conda recipes"
+    dependsOn: PublishPyPI
+    jobs:
+      - job: MetaYaml
+        displayName: "Update meta.yaml and open a branch"
+        pool:
+          vmImage: "ubuntu-latest"
+        timeoutInMinutes: 30
+
+        variables:
+          python-version: "3.11"
+
+        steps:
+          - template: templates/env-setup.yaml
+            parameters:
+              # The push at the end needs the checkout's credentials on disk.
+              persistCredentials: true
+
+          # update_meta_yaml.py needs requests, which the dev group provides.
+          - bash: |
+              set -euo pipefail
+              poetry sync --only dev
+            displayName: "Install the dev group"
+
+          # update_meta_yaml.py reads each package's sdist SHA256 from the PyPI
+          # JSON API, so it can only run after the upload -- and PyPI does not
+          # always serve a freshly uploaded file's metadata immediately. The script
+          # exits non-zero if any package could not be fetched and only rewrites a
+          # file when the contents differ, so retrying it is safe.
+          - bash: |
+              set -euo pipefail
+              for attempt in 1 2 3 4 5; do
+                echo "=== Attempt ${attempt} ==="
+                if make update-meta-yaml; then
+                  echo "meta.yaml files updated."
+                  exit 0
+                fi
+                if [ "${attempt}" -lt 5 ]; then
+                  echo "Not all versions were readable from PyPI yet. Waiting 60s."
+                  sleep 60
+                fi
+              done
+              echo "Giving up: PyPI still did not report every version."
+              exit 1
+            displayName: "Update meta.yaml from PyPI, retrying while PyPI catches up"
+
+          # Pushed to a side branch rather than to main. Automating a commit to
+          # main would mean putting a CI identity on main's bypass list, which is a
+          # much larger concession than this step is worth -- opening the PR from
+          # GitHub's banner is one click.
+          - bash: |
+              set -euo pipefail
+
+              VERSION=$(grep -m1 '^version' src/core/pyproject.toml | sed -E 's/^version *= *"(.*)"/\1/')
+              BRANCH="chore/meta-yaml-${VERSION}"
+
+              git config user.name "azure-pipelines[bot]"
+              git config user.email "azure-pipelines[bot]@users.noreply.github.com"
+
+              # -u rather than -A: only ever commit files that were already tracked.
+              git add -u
+
+              if git diff --cached --quiet; then
+                echo "No meta.yaml changes to commit; the recipes were already correct."
+                exit 0
+              fi
+
+              git diff --cached --stat
+              git commit -m "chore: update conda recipes for TruLens ${VERSION}"
+              git push origin "HEAD:refs/heads/${BRANCH}"
+
+              echo ""
+              echo "Pushed ${BRANCH}. Open the PR from the banner on"
+              echo "https://github.com/truera/trulens"
+            displayName: "Commit the recipes to a branch"
