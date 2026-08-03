@@ -63,18 +63,18 @@ github pipelines. There are differences between these systems.
       merge. What a release does leave behind is a version bump, so this compares
       one line of `src/core/pyproject.toml` against the previous commit. Ordinary
       merges stop here, having paid only for a two-commit shallow checkout.
-    - **PublishPyPI** builds the wheels and uploads them. It is a `deployment` job
-      targeting the `pypi-production` environment, so it waits for the approval
-      configured there.
+    - **PublishPyPI** builds the wheels and uploads them. No approval step: the
+      human checkpoint is the review on the release pull request, and once that is
+      merged the release is meant to happen.
     - **DeployDocs** publishes trulens.org, so the site never documents a version
       that is not yet installable.
     - **UpdateMetaYaml** refreshes the conda recipes and pushes them to a
       `chore/meta-yaml-<version>` branch for review.
 
-  > The `pypi-production` [environment](https://dev.azure.com/truera/trulens/_environments)
-  > must exist, with that exact name and an Approvals check on it. Publishing to
-  > PyPI cannot be undone and a version number can never be reused, so this should
-  > not happen without somebody saying yes.
+  > Merging a release PR uploads to PyPI unattended, and that cannot be undone --
+  > a version number can never be reused. The two things standing between a merge
+  > and an upload are the PR review and the `Gate` stage, which will not let an
+  > ordinary merge reach the publish.
 
   > The PyPI token is read from a `pypiToken` secret variable into
   > `TWINE_PASSWORD`, never passed on a command line.

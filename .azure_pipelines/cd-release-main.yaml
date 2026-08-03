@@ -8,7 +8,7 @@
 # Four stages, in order, because each one depends on the last having worked:
 #
 #   Gate           did a release actually land, or is this an ordinary merge?
-#   PublishPyPI    build the wheels and upload them, behind a human approval
+#   PublishPyPI    build the wheels and upload them
 #   DeployDocs     publish trulens.org, only once the release is installable
 #   UpdateMetaYaml refresh the conda recipes, which need hashes from PyPI
 #
@@ -102,17 +102,19 @@ stages:
     dependsOn: Gate
     condition: eq(dependencies.Gate.outputs['Detect.gate.shouldRelease'], 'true')
     jobs:
-      # A deployment job rather than a plain one, so it targets an Azure DevOps
-      # Environment and stops for the approval configured there. Publishing to PyPI
-      # is irreversible -- a version number can never be reused -- so it should
-      # never happen without somebody saying yes.
+      # A plain job, with no Azure DevOps Environment and no approval check. The
+      # human checkpoint for a release is the review on the release pull request:
+      # once that is approved and merged, the release is meant to happen. Asking
+      # for a second approval in a different tool, after the decision has already
+      # been made, adds a place for a release to stall rather than a place to catch
+      # a mistake.
       #
-      # The environment must exist and be named exactly pypi-production, with an
-      # Approvals check on it. Deployment jobs do not check out the repository
-      # implicitly; env-setup.yaml does it explicitly.
-      - deployment: Publish
+      # The consequence is worth being clear about: merging the release PR uploads
+      # to PyPI unattended, and that cannot be undone -- a version number can never
+      # be reused. The gate that matters is therefore the PR review, and the Gate
+      # stage above, which will not let an ordinary merge reach this point.
+      - job: Publish
         displayName: "Build the wheels and upload them"
-        environment: pypi-production
         pool:
           vmImage: "ubuntu-latest"
         timeoutInMinutes: 60
@@ -121,29 +123,26 @@ stages:
           # Snowflake libraries are not available on >=3.12.
           python-version: "3.11"
 
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-                - template: templates/env-setup.yaml
+        steps:
+          - template: templates/env-setup.yaml
 
-                # twine lives in the dev group, so that is all this needs.
-                - bash: |
-                    set -euo pipefail
-                    poetry sync --only dev
-                  displayName: "Install the dev group for twine"
+          # twine lives in the dev group, so that is all this needs.
+          - bash: |
+              set -euo pipefail
+              poetry sync --only dev
+            displayName: "Install the dev group for twine"
 
-                - bash: |
-                    set -euo pipefail
-                    make upload-all
-                  displayName: "Build, zip the wheels, and upload to PyPI"
-                  env:
-                    # upload-all depends on clean, which prompts. There is nobody
-                    # here to answer it.
-                    FORCE_CLEAN: 1
-                    # twine reads this from the environment, so the token never
-                    # reaches a command line or make's echoed output.
-                    TWINE_PASSWORD: $(pypiToken)
+          - bash: |
+              set -euo pipefail
+              make upload-all
+            displayName: "Build, zip the wheels, and upload to PyPI"
+            env:
+              # upload-all depends on clean, which prompts. There is nobody here to
+              # answer it.
+              FORCE_CLEAN: 1
+              # twine reads this from the environment, so the token never reaches a
+              # command line or make's echoed output.
+              TWINE_PASSWORD: $(pypiToken)
 
   - stage: DeployDocs
     displayName: "Publish the documentation"
