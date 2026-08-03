@@ -11092,7 +11092,7 @@ url = "src/otel/semconv"
 
 [[package]]
 name = "trulens-providers-anthropic"
-version = "2.8.1"
+version = "2.10.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
