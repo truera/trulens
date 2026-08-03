@@ -333,16 +333,26 @@ install-wheels:
 
 # Release Steps:
 ## Step: Clean repo:
+#
+# Interactive by design: `git clean -fxd` is destructive and a human should see
+# the dry run before agreeing to it. Set FORCE_CLEAN=1 to skip the prompt, which
+# is what CI does -- there is nobody there to answer it, so the read would block
+# until the job timed out.
 clean:
 	git clean --dry-run -fxd
-	@read -p "Do you wish to remove these files? (y/N)" -n 1 -r; \
-	echo; \
-	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+	@if [ -n "$(FORCE_CLEAN)" ]; then \
+		echo "FORCE_CLEAN is set; removing the files listed above without asking."; \
 		git clean -fxd; \
 	else \
-		echo "Did not clean!"; \
-		exit 1; \
-	fi;
+		read -p "Do you wish to remove these files? (y/N)" -n 1 -r; \
+		echo; \
+		if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+			git clean -fxd; \
+		else \
+			echo "Did not clean!"; \
+			exit 1; \
+		fi; \
+	fi
 
 ## Step: Build wheels
 build: $(POETRY_DIRS)
@@ -392,27 +402,37 @@ update-meta-yaml:
 ## Step: Upload wheels to pypi
 # Usage: TOKEN=... make upload-trulens-instrument-langchain
 # In all cases, we need to clean, build, zip-wheels, then build again. The reason is because we want the final build to have the zipped wheels.
+#
+# twine reads the credentials from the environment rather than from -p on the
+# command line, so the token stays out of the process list and out of the command
+# that make echoes. TOKEN is still honoured, so `TOKEN=... make upload-all` keeps
+# working; CI sets TWINE_PASSWORD directly from a secret variable instead.
+export TWINE_USERNAME = __token__
+ifndef TWINE_PASSWORD
+export TWINE_PASSWORD = $(TOKEN)
+endif
+
 upload-%: clean build
 	make zip-wheels \
 		&& make build \
-		&& poetry run twine upload -u __token__ -p $(TOKEN) dist/$*/*
+		&& poetry run twine upload dist/$*/*
 
 upload-all: clean build
 	make zip-wheels \
 		&& make build \
-		&& poetry run twine upload --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl \
-		&& poetry run twine upload --skip-existing -u __token__ -p $(TOKEN) dist/**/*.tar.gz
+		&& poetry run twine upload --skip-existing dist/**/*.whl \
+		&& poetry run twine upload --skip-existing dist/**/*.tar.gz
 
 upload-testpypi-%: clean build
 	make zip-wheels \
 		&& make build \
-		&& poetry run twine upload -r testpypi -u __token__ -p $(TOKEN) dist/$*/*
+		&& poetry run twine upload -r testpypi dist/$*/*
 
 upload-testpypi-all: clean build
 	make zip-wheels \
 		&& make build \
-		&& poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl \
-		&& poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.tar.gz
+		&& poetry run twine upload -r testpypi --skip-existing dist/**/*.whl \
+		&& poetry run twine upload -r testpypi --skip-existing dist/**/*.tar.gz
 
 build-record-viewer-otel:
 	cd src/dashboard/react_components/record_viewer_otel \
