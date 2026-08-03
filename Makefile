@@ -97,12 +97,19 @@ env-tests-notebook: env-tests env-tests-optional
 		markdown
 
 
-# Lock the poetry dependencies for all the subprojects.
-lock: $(POETRY_DIRS)
-	for dir in $(POETRY_DIRS); do \
-		echo "Creating lockfile for $$dir/pyproject.toml"; \
-		poetry lock -C $$dir; \
-	done
+# Lock the root project's dependencies.
+#
+# Only the root lockfile is committed, so only the root is locked. This used to
+# iterate every POETRY_DIRS entry, which meant 22 resolutions of which 21 were
+# thrown away: .gitignore ignores src/**/poetry.lock, so those files were written
+# and then never tracked.
+#
+# This does not update anything by default. Poetry 2.x keeps the pins already in
+# the lockfile and resolves only what pyproject.toml actually changed, which is
+# what stops a version bump quietly dragging unrelated upgrades into a release.
+# `poetry lock --regenerate` is the explicit way to refresh the whole graph.
+lock:
+	poetry lock
 
 # Install all the subprojects using pip.
 pip-install: $(POETRY_DIRS)
