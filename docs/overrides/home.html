@@ -208,7 +208,14 @@
          already does the work of authenticating against Azure DevOps and
          aggregating pypistats, neither of which serves CORS headers directly --
          but they are fetched and drawn in our own chrome. The values baked into
-         the HTML below are the fallback when the fetch is blocked or slow. -->
+         the HTML below are the fallback when the fetch is blocked or slow.
+
+         The fallbacks drift, and the download count drifts fastest because it is
+         the only one that moves without a release. shields' pypi endpoint is also
+         the slowest of the five -- a cold cache there times out rather than
+         answering, so the fallback is what a fair number of visitors actually
+         see, which makes it worth refreshing rather than treating as a
+         never-rendered safety net. Checked against shields 2026-08-03. -->
     <div class="statstrip">
       <a class="stat" href="https://pypi.org/project/trulens/">
         <span class="k">Version</span>
@@ -224,7 +231,7 @@
       </a>
       <a class="stat" href="https://pypi.org/project/trulens-core/">
         <span class="k">Downloads</span>
-        <span class="v" data-badge="pypi/dm/trulens-core" data-ok="^[0-9.]+[kM]?/month$">104k/month</span>
+        <span class="v" data-badge="pypi/dm/trulens-core" data-ok="^[0-9.]+[kM]?/month$">122k/month</span>
       </a>
       <a class="stat" href="https://github.com/truera/trulens/blob/main/LICENSE">
         <span class="k">License</span>
