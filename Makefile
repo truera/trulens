@@ -398,6 +398,9 @@ bump-version-%: $(POETRY_DIRS)
 update-meta-yaml:
 	poetry run python update_meta_yaml.py
 
+update-meta-yaml-versions:
+	poetry run python update_meta_yaml.py --version-only
+
 
 ## Step: Upload wheels to pypi
 # Usage: TOKEN=... make upload-trulens-instrument-langchain
