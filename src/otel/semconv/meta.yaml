@@ -1,6 +1,6 @@
 {% set name = "trulens-otel-semconv" %}
 {% set pyname = name.replace('-', '.') %}
-{% set version = "2.10.0" %}
+{% set version = "2.11.0" %}
 
 package:
   name: {{ name|lower }}
