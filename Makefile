@@ -384,7 +384,7 @@ zip-wheels:
 	poetry run ./zip_wheels.sh
 
 
-# Usage: make bump-version-patch
+# Usage: make bump-version-X.Y.Z
 bump-version-%: $(POETRY_DIRS)
 	for dir in $(POETRY_DIRS); do \
 		echo "Updating $$dir version"; \
