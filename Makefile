@@ -423,6 +423,7 @@ upload-%: clean build
 upload-all: clean build
 	make zip-wheels \
 		&& make build \
+		&& poetry run twine check dist/**/*.whl dist/**/*.tar.gz \
 		&& poetry run twine upload --skip-existing dist/**/*.whl \
 		&& poetry run twine upload --skip-existing dist/**/*.tar.gz
 
