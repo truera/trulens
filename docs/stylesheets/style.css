@@ -110,9 +110,16 @@ h4{font-size:1.125rem;font-weight:600;margin-bottom:.35rem}
    settles under the CTA row instead of competing with it. */
 .statstrip{display:flex;flex-wrap:wrap;margin-top:3.25rem;padding-top:1.15rem;
   border-top:1px solid rgba(3,74,97,.14)}
+/* The strip and each stat carry `hidden` until a value is known, and the display
+   rules above and in the media query below would otherwise override the attribute.
+   Specificity has to beat them, so these are not plain [hidden] selectors. */
+.statstrip[hidden],.statstrip .stat[hidden]{display:none}
 .statstrip .stat{display:block;text-decoration:none;color:inherit;
   padding:0 1.75rem;border-left:1px solid rgba(3,74,97,.14)}
-.statstrip .stat:first-child{padding-left:0;border-left:0}
+/* Not :first-child: a hidden stat still matches it, which would leave the divider
+   and padding against a stat nobody can see. The script sets this on whichever one
+   is actually first. */
+.statstrip .stat--lead{padding-left:0;border-left:0}
 .statstrip .k{display:block;font-family:var(--mono);font-size:.5625rem;
   text-transform:uppercase;letter-spacing:.14em;color:var(--text);opacity:.78}
 .statstrip .v{display:block;font-family:var(--mono);font-size:.9375rem;
