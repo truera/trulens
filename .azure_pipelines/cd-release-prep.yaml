@@ -76,13 +76,14 @@ jobs:
           fi
 
           make "bump-version-$(targetVersion)"
+          make update-meta-yaml-versions
 
           NEW_VERSION=$(grep -m1 '^version' src/core/pyproject.toml | sed -E 's/^version *= *"(.*)"/\1/')
           if [[ "${NEW_VERSION}" != "$(targetVersion)" ]]; then
             echo "Version mismatch: expected $(targetVersion), got ${NEW_VERSION}."
             exit 1
           fi
-        displayName: "Set the version to $(targetVersion)"
+        displayName: "Set package and conda recipe versions to $(targetVersion)"
 
       # Plain `poetry lock`, which under 2.x keeps the pins already in the file and
       # resolves only what the bump actually changed. That is the point: a release

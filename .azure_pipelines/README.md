@@ -36,9 +36,11 @@ github pipelines. There are differences between these systems.
 - `cd-release-prep.yaml` prepares a release. Run it **manually**, with the
   `releases/rc-trulens-<version>` branch selected. The exact version comes from
   the branch name: selecting `releases/rc-trulens-2.11.0` sets every package to
-  `2.11.0`. It refreshes the lockfile, commits, and pushes to that branch. You
-  then open the release PR from the "Compare & pull request" banner GitHub shows
-  after the push.
+  `2.11.0`. It also updates each conda recipe's version so local-source recipe
+  validation matches the package being built. The existing recipe hashes remain
+  unchanged until the packages exist on PyPI. It refreshes the lockfile, commits,
+  and pushes to that branch. You then open the release PR from the "Compare &
+  pull request" banner GitHub shows after the push.
 
   It exists so nobody has to sit and watch a dependency resolve, which was the
   tedious part of cutting a release. Validation remains on the release PR into
