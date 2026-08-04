@@ -774,6 +774,218 @@ class LLMProvider(core_provider.Provider):
             temperature=temperature,
         )
 
+    @staticmethod
+    def _join_context_passages(context: Union[str, List[str]]) -> str:
+        """Join retrieved passages into one block for a format-agnostic judge.
+
+        `Selector.select_context(collect_list=True)` hands the evaluator a list
+        of chunks. Unlike `_number_citation_sources`, no `[N]` numbering is
+        added: `CitationAccuracy` does not resolve numeric markers, and
+        injecting numbers the response never used would invent a citation
+        format the pipeline is not actually using. A string is passed through.
+        """
+        if isinstance(context, (list, tuple)):
+            return "\n\n".join(str(passage) for passage in context)
+        return context
+
+    def citation_accuracy(
+        self,
+        response: str,
+        context: Union[str, List[str]],
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
+        examples: Optional[List[str]] = None,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+        **kwargs,
+    ) -> float:
+        """
+        Uses chat completion model. A function that completes a template to
+        check whether the citations in a response are supported by the
+        retrieved context, on a graded 0-3 scale.
+
+        Choosing between this and `citation_attribution`:
+
+        - Use `citation_attribution` when your pipeline emits explicit `[N]`
+          markers and you want a binary pass/fail on misattribution: a claim
+          cited to a passage that does not support it.
+        - Use `citation_accuracy` when citations are inline, prose, or
+          otherwise not `[N]`-numbered, or when you want a graded score rather
+          than a hard fail so you can track citation quality across runs.
+
+        Note that unlike `citation_attribution`, this metric **penalizes
+        missing citations**: a claim that the context supports but that the
+        response leaves uncited lowers the score. `citation_attribution`
+        deliberately ignores uncited claims. Prefer that one if under-citation
+        is acceptable in your pipeline and only misattribution matters.
+
+        Example:
+            ```python
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.citation_accuracy,
+                name="Citation Accuracy",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                examples=examples,
+                selectors={
+                    "response": Selector.select_record_output(),
+                    "context": Selector.select_context(
+                        collect_list=True
+                    ),
+                },
+                agg=np.mean,
+            )
+            ```
+
+        Args:
+            response (str): The response containing citations to evaluate.
+            context (Union[str, List[str]]): The retrieved context the citations
+                should map to. A list of passages (as returned by
+                `Selector.select_context(collect_list=True)`) is joined with blank
+                lines into a single block; no `[N]` numbering is added, since this
+                metric does not resolve numeric markers. A string is used as-is.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
+            examples (Optional[List[str]]): Optional few-shot examples to guide the evaluation. Defaults to None.
+            min_score_val (int): The minimum score value. Defaults to 0.
+            max_score_val (int): The maximum score value. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+
+        Returns:
+            float: A value between 0.0 (citations inaccurate) and 1.0 (citations accurate).
+        """
+        # Handle deprecated parameter names
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
+
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        system_prompt = templates_rag.CitationAccuracy.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            additional_instructions=additional_instructions,
+            examples=examples,
+            output_space=output_space,
+        )
+
+        return self.generate_score(
+            system_prompt=system_prompt,
+            user_prompt=str.format(
+                templates_rag.CitationAccuracy.user_prompt,
+                response=response,
+                context=self._join_context_passages(context),
+            ),
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
+
+    def citation_accuracy_with_cot_reasons(
+        self,
+        response: str,
+        context: Union[str, List[str]],
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
+        examples: Optional[List[str]] = None,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+        **kwargs,
+    ) -> Tuple[float, Dict]:
+        """
+        Uses chat completion model. A function that completes a template to
+        check whether the citations in a response are supported by the
+        retrieved context. Also uses chain of thought methodology and emits
+        the reasons.
+
+        Same check as `citation_accuracy`; see that method for how this metric
+        compares to `citation_attribution` (format-agnostic and graded here,
+        `[N]`-marker-based and binary there) and for the note that this metric
+        penalizes missing citations while `citation_attribution` does not.
+
+        Example:
+            ```python
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.citation_accuracy_with_cot_reasons,
+                name="Citation Accuracy",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                examples=examples,
+                selectors={
+                    "response": Selector.select_record_output(),
+                    "context": Selector.select_context(
+                        collect_list=True
+                    ),
+                },
+                agg=np.mean,
+            )
+            ```
+
+        Args:
+            response (str): The response containing citations to evaluate.
+            context (Union[str, List[str]]): The retrieved context the citations
+                should map to. A list of passages (as returned by
+                `Selector.select_context(collect_list=True)`) is joined with blank
+                lines into a single block; no `[N]` numbering is added, since this
+                metric does not resolve numeric markers. A string is used as-is.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
+            examples (Optional[List[str]]): Optional few-shot examples to guide the evaluation. Defaults to None.
+            min_score_val (int): The minimum score value. Defaults to 0.
+            max_score_val (int): The maximum score value. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+
+        Returns:
+            Tuple[float, Dict]: A value between 0.0 (citations inaccurate) and 1.0 (citations accurate), and a dictionary with the reasons for the score.
+        """
+        # Handle deprecated parameter names
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
+
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        system_prompt = templates_rag.CitationAccuracy.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            additional_instructions=additional_instructions,
+            examples=examples,
+            output_space=output_space,
+        )
+
+        user_prompt = str.format(
+            templates_rag.CitationAccuracy.user_prompt,
+            response=response,
+            context=self._join_context_passages(context),
+        )
+        user_prompt = user_prompt.replace(
+            "CITATION ACCURACY:", templates_base.COT_REASONS_TEMPLATE
+        )
+
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
+
     def relevance(
         self,
         prompt: str,
