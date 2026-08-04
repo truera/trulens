@@ -100,6 +100,19 @@ jobs:
     timeoutInMinutes: 20
     steps:
       - template: templates/env-setup.yaml
+
+      # Cheap and early. A lockfile that has drifted from pyproject.toml, or one
+      # written by a different Poetry major, otherwise surfaces much later as a
+      # confusing install failure in a heavier job. Deliberately not --strict:
+      # all 22 shipped packages still declare metadata under [tool.poetry]
+      # rather than PEP 621 [project], so `poetry check` emits deprecation
+      # warnings that have nothing to do with the lock, and --strict would fail
+      # on them.
+      - bash: |
+          set -e
+          poetry check --lock
+        displayName: "Check the lockfile matches pyproject.toml"
+
       - template: templates/run-precommits.yaml
 
   - template: templates/build-conda-packages.yaml

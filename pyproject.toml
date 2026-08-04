@@ -5,6 +5,10 @@ requires = [
 ]
 
 [tool.poetry]
+# Poetry 1.8 cannot read the lock-version 2.1 file committed here, and its
+# `poetry lock` re-resolves the whole graph rather than preserving pins. Fail
+# early with a clear message rather than letting either surprise happen.
+requires-poetry = ">=2.0"
 name = "trulens"
 version = "2.10.0"
 description = "Library to systematically track and evaluate LLM based applications."

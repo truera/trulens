@@ -1,0 +1,119 @@
+# This is a definition for azure pipelines, not github pipelines. There are
+# differences between these systems.
+#
+# Prepares a release: bumps the version across every package, refreshes the
+# lockfile, and pushes the result to the release branch. Run it manually from the
+# Azure DevOps UI with the release branch selected.
+#
+# This exists because the lock was the slow, tedious part of cutting a release and
+# there is no reason a person should sit and watch it. What it deliberately does
+# not do is open the pull request: that needs a GitHub token as a second secret,
+# and it saves exactly one click on the "Compare & pull request" banner GitHub
+# shows after the push.
+#
+# It also does not run the tests. The Snowflake end-to-end suite stays a human
+# gate, because a bad release there costs weeks rather than minutes.
+#
+# Pushing to releases/* requires the Azure Pipelines GitHub App to be on the
+# bypass list for that branch protection rule. Without it the push is rejected and
+# every other step here will have succeeded.
+
+parameters:
+  - name: bumpType
+    displayName: "Version bump"
+    type: string
+    default: patch
+    values:
+      - patch
+      - minor
+      - major
+
+trigger: none
+pr: none
+
+jobs:
+  - job: ReleasePrep
+    displayName: "Bump the version and refresh the lockfile"
+    pool:
+      vmImage: "ubuntu-latest"
+    timeoutInMinutes: 30
+
+    variables:
+      # Snowflake libraries are not available on >=3.12, so the lock is resolved
+      # under the same interpreter the rest of CI uses.
+      python-version: "3.11"
+
+    steps:
+      # First, and before the checkout, because it needs nothing from the
+      # repository and refusing early is the whole point. This job commits and
+      # pushes, so running it against main would push a version bump straight to
+      # main. The branch picker in the UI makes that a plausible mistake.
+      - bash: |
+          set -euo pipefail
+          echo "Selected branch: ${BUILD_SOURCEBRANCH}"
+          case "${BUILD_SOURCEBRANCH}" in
+            refs/heads/releases/*)
+              echo "Release branch, proceeding."
+              ;;
+            *)
+              echo "Refusing to run: this pipeline commits and pushes, so it only"
+              echo "runs on a releases/* branch. Re-run it with the release branch"
+              echo "selected in the Run pipeline dialog."
+              exit 1
+              ;;
+          esac
+        displayName: "Refuse to run outside a release branch"
+
+      - template: templates/env-setup.yaml
+        parameters:
+          # The push at the end needs the checkout's credentials left on disk.
+          # LFS stays off: nothing here reads an image.
+          persistCredentials: true
+
+      - bash: |
+          set -euo pipefail
+          make bump-version-${{ parameters.bumpType }}
+        displayName: "Bump the version (${{ parameters.bumpType }})"
+
+      # Plain `poetry lock`, which under 2.x keeps the pins already in the file and
+      # resolves only what the bump actually changed. That is the point: a release
+      # should move the trulens versions and nothing else. Under 1.8 this step
+      # re-resolved the whole graph and quietly carried unrelated upgrades into the
+      # release -- 19 third-party packages in 2.10.0 and 113 in 2.9.
+      - bash: |
+          set -euo pipefail
+          poetry lock
+          poetry check --lock
+        displayName: "Refresh the lockfile without updating dependencies"
+
+      - bash: |
+          set -euo pipefail
+
+          NEW_VERSION=$(grep -m1 '^version' src/core/pyproject.toml | sed -E 's/^version *= *"(.*)"/\1/')
+          echo "New version: ${NEW_VERSION}"
+
+          git config user.name "azure-pipelines[bot]"
+          git config user.email "azure-pipelines[bot]@users.noreply.github.com"
+
+          # -u rather than -A: this should only ever commit files that were already
+          # tracked, and never pick up whatever else the agent left in the tree.
+          git add -u
+
+          if git diff --cached --quiet; then
+            echo "Nothing to commit. The version was most likely already bumped to"
+            echo "${NEW_VERSION} on this branch, so there is nothing to prepare."
+            exit 1
+          fi
+
+          git diff --cached --stat
+
+          git commit -m "TruLens ${NEW_VERSION}"
+
+          # The full ref, because Build.SourceBranchName would give only the last
+          # path segment and drop the releases/ prefix.
+          git push origin "HEAD:${BUILD_SOURCEBRANCH}"
+
+          echo ""
+          echo "Pushed. Open the release PR from the banner on"
+          echo "https://github.com/truera/trulens"
+        displayName: "Commit and push to the release branch"

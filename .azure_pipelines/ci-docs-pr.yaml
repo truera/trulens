@@ -34,12 +34,12 @@ jobs:
       - template: templates/env-setup.yaml
 
       - bash: |
-          poetry install --only dev --sync
+          poetry sync --only dev
           make run-precommit
         displayName: "Run pre-commit hooks (format + nb-clean)"
 
       - bash: |
-          poetry install --with docs --sync
+          poetry sync --with docs
           make docs-linkcheck-strict
         displayName: "Build docs and check for broken links"
 
