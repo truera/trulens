@@ -2,7 +2,6 @@ import datetime
 
 import pandas as pd
 from trulens.dashboard.tabs.Trends import _filter_summary
-from trulens.dashboard.tabs.Trends import _render_trend_chart
 from trulens.dashboard.tabs.Trends import _version_selector_data
 
 from tests.unit.streamlit.test_streamlit_utils import AppTestHelper
@@ -50,6 +49,9 @@ def test_filter_summary_is_compact():
 def test_combined_chart_renders_every_metric_version_series():
     def test_app():
         import pandas as pd
+        from trulens.dashboard.tabs.Trends import (
+            _render_trend_chart as render_trend_chart,
+        )
 
         trends = pd.DataFrame({
             "app_version": ["v1", "v2", "v1", "v2"],
@@ -65,7 +67,7 @@ def test_combined_chart_renders_every_metric_version_series():
             "ci_lower": [0.5, 0.6, 0.7, 0.8],
             "ci_upper": [0.7, 0.8, 0.9, 1.0],
         })
-        _render_trend_chart(
+        render_trend_chart(
             trends, "day", {"groundedness": True, "relevance": True}
         )
 
