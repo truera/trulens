@@ -2,14 +2,13 @@
 Conversation-aware evaluation templates for multi-turn chat sessions.
 Includes transcript renderer and multi-turn feedback templates:
 - ConversationHelpfulness
-- SimpleCriteriaScore
 - TopicAdherence
 - AgentGoalAccuracy
 - CoherenceAcrossTurns
 """
 
 from inspect import cleandoc
-from typing import Any, ClassVar
+from typing import Any, ClassVar, List, Union
 
 from trulens.feedback.templates.base import LIKERT_0_3_PROMPT
 from trulens.feedback.templates.base import CriteriaOutputSpaceMixin
@@ -20,13 +19,12 @@ __all__ = [
     "AgentGoalAccuracy",
     "CoherenceAcrossTurns",
     "ConversationHelpfulness",
-    "SimpleCriteriaScore",
     "TopicAdherence",
     "conversation_to_prompt",
 ]
 
 
-def conversation_to_prompt(records: list[Any] | str) -> str:
+def conversation_to_prompt(records: Union[List[Any], str]) -> str:
     """Serialize a list of Record objects or turn dictionaries into a human-readable transcript.
 
     Args:
@@ -38,7 +36,7 @@ def conversation_to_prompt(records: list[Any] | str) -> str:
     if isinstance(records, str):
         return records
 
-    transcript_lines: list[str] = []
+    transcript_lines: List[str] = []
 
     for idx, rec in enumerate(records, start=1):
         if hasattr(rec, "main_input") and hasattr(rec, "main_output"):
@@ -87,38 +85,23 @@ class ConversationHelpfulness(Semantics, CriteriaOutputSpaceMixin):
     )
 
 
-class SimpleCriteriaScore(Semantics, CriteriaOutputSpaceMixin):
-    """Evaluates a multi-turn conversation against custom user-provided criteria."""
+class TopicAdherence(Semantics, CriteriaOutputSpaceMixin):
+    """Evaluates topic adherence across conversation turns."""
 
     output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
     output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
 
     system_prompt_template: ClassVar[str] = cleandoc(
         f"""
-        You are evaluating a multi-turn conversation against specific criteria.
-        Respond ONLY with a number from {LIKERT_0_3_PROMPT} where 0 means does not satisfy the criteria at all and 3 fully satisfies the criteria.
+        You are evaluating TOPIC ADHERENCE in a multi-turn conversation.
+        Determine how closely the conversation adheres to the specified reference topics: {{reference_topics}}.
+        Score topic adherence on a scale from 0 to 3:
+        0: Completely off-topic; ignores reference topics.
+        1: Barely touches on reference topics with major deviations.
+        2: Mostly adheres to reference topics with minor tangents.
+        3: Strongly adheres to reference topics throughout the conversation.
 
-        Criteria:
-        {{criteria}}
-        """
-    )
-
-
-class TopicAdherence(Semantics):
-    """Evaluates topic adherence (precision, recall, f1) across conversation turns."""
-
-    system_prompt_template: ClassVar[str] = cleandoc(
-        """
-        You are evaluating TOPIC ADHERENCE across a multi-turn conversation against reference topics.
-        Determine whether the conversation discussed the reference topics: {reference_topics}.
-
-        Return JSON format:
-        {{
-          "precision": <float in 0-1>,
-          "recall": <float in 0-1>,
-          "f1": <float in 0-1>,
-          "reason": "<explanation>"
-        }}
+        Respond ONLY with a single integer score from {LIKERT_0_3_PROMPT}.
         """
     )
 

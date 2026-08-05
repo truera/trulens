@@ -1,4 +1,3 @@
-from collections.abc import Sequence
 from concurrent.futures import as_completed
 import json
 import logging
@@ -7,7 +6,14 @@ import threading
 from typing import (
     Any,
     ClassVar,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
     TypedDict,
+    Union,
 )
 import warnings
 
@@ -45,7 +51,7 @@ class CapabilityCacheEntry(TypedDict, total=False):
     responses_api: bool
 
 
-_model_capabilities_cache: dict[str, CapabilityCacheEntry] = {}
+_model_capabilities_cache: Dict[str, CapabilityCacheEntry] = {}
 
 
 class LLMProvider(core_provider.Provider):
@@ -101,7 +107,7 @@ class LLMProvider(core_provider.Provider):
 
     @classmethod
     def clear_model_capabilities_cache(
-        cls, model_engine: str | None = None
+        cls, model_engine: Optional[str] = None
     ) -> None:
         with _capabilities_lock:
             if model_engine is None:
@@ -152,9 +158,9 @@ class LLMProvider(core_provider.Provider):
     # @abstractmethod
     def _create_chat_completion(
         self,
-        prompt: str | None = None,
-        messages: Sequence[dict] | None = None,
-        response_format: type[BaseModel] | None = None,
+        prompt: Optional[str] = None,
+        messages: Optional[Sequence[Dict]] = None,
+        response_format: Optional[Type[BaseModel]] = None,
         **kwargs,
     ) -> str:
         """
@@ -175,7 +181,7 @@ class LLMProvider(core_provider.Provider):
     def generate_score(
         self,
         system_prompt: str,
-        user_prompt: str | None = None,
+        user_prompt: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 10,
         temperature: float = 0.0,
@@ -286,11 +292,11 @@ class LLMProvider(core_provider.Provider):
     def generate_score_and_reasons(
         self,
         system_prompt: str,
-        user_prompt: str | None = None,
+        user_prompt: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 10,
         temperature: float = 0.0,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, Dict]:
         """
         Base method to generate a score and reason, used for evaluation.
 
@@ -565,9 +571,9 @@ class LLMProvider(core_provider.Provider):
         self,
         question: str,
         context: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
-        examples: list[str] | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
+        examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -646,14 +652,14 @@ class LLMProvider(core_provider.Provider):
         self,
         question: str,
         context: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
-        examples: list[str] | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
+        examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
         **kwargs,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a
         template to check the relevance of the context to the question.
@@ -738,9 +744,9 @@ class LLMProvider(core_provider.Provider):
         self,
         prompt: str,
         response: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
-        examples: list[str] | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
+        examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -818,14 +824,14 @@ class LLMProvider(core_provider.Provider):
         self,
         prompt: str,
         response: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
-        examples: list[str] | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
+        examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
         **kwargs,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion Model. A function that completes a template to
         check the relevance of the response to a prompt. Also uses chain of
@@ -904,9 +910,9 @@ class LLMProvider(core_provider.Provider):
     def sentiment(
         self,
         text: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
-        examples: list[str] | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
+        examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -977,14 +983,14 @@ class LLMProvider(core_provider.Provider):
     def sentiment_with_cot_reasons(
         self,
         text: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
-        examples: list[str] | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
+        examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
         **kwargs,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a
         template to check the sentiment of some text.
@@ -1099,9 +1105,9 @@ class LLMProvider(core_provider.Provider):
 
     def _build_criteria_with_instructions(
         self,
-        criteria: str | None,
+        criteria: Optional[str],
         default_criteria: str,
-        additional_instructions: str | None = None,
+        additional_instructions: Optional[str] = None,
     ) -> str:
         """Build the final criteria prompt with optional additional instructions.
 
@@ -1195,7 +1201,7 @@ class LLMProvider(core_provider.Provider):
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A general function that completes a template
         to evaluate different aspects of some text. Prompt credit to Langchain.
@@ -1248,8 +1254,8 @@ class LLMProvider(core_provider.Provider):
     def conciseness(
         self,
         text: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -1309,13 +1315,13 @@ class LLMProvider(core_provider.Provider):
     def conciseness_with_cot_reasons(
         self,
         text: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
         **kwargs,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the conciseness of some text. Prompt credit to LangChain Eval.
@@ -1368,8 +1374,8 @@ class LLMProvider(core_provider.Provider):
     def correctness(
         self,
         text: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -1428,13 +1434,13 @@ class LLMProvider(core_provider.Provider):
     def correctness_with_cot_reasons(
         self,
         text: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
         **kwargs,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the correctness of some text. Prompt credit to LangChain Eval.
@@ -1489,8 +1495,8 @@ class LLMProvider(core_provider.Provider):
     def coherence(
         self,
         text: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -1549,13 +1555,13 @@ class LLMProvider(core_provider.Provider):
     def coherence_with_cot_reasons(
         self,
         text: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
         **kwargs,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the coherence of some text. Prompt credit to LangChain Eval. Also
@@ -1610,8 +1616,8 @@ class LLMProvider(core_provider.Provider):
     def harmfulness(
         self,
         text: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -1670,13 +1676,13 @@ class LLMProvider(core_provider.Provider):
     def harmfulness_with_cot_reasons(
         self,
         text: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
         **kwargs,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the harmfulness of some text. Prompt credit to LangChain Eval.
@@ -1731,8 +1737,8 @@ class LLMProvider(core_provider.Provider):
     def maliciousness(
         self,
         text: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -1791,13 +1797,13 @@ class LLMProvider(core_provider.Provider):
     def maliciousness_with_cot_reasons(
         self,
         text: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
         **kwargs,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a
         template to check the maliciousness of some text. Prompt credit to LangChain Eval.
@@ -1852,8 +1858,8 @@ class LLMProvider(core_provider.Provider):
     def helpfulness(
         self,
         text: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -1912,13 +1918,13 @@ class LLMProvider(core_provider.Provider):
     def helpfulness_with_cot_reasons(
         self,
         text: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
         **kwargs,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the helpfulness of some text. Prompt credit to LangChain Eval.
@@ -1973,8 +1979,8 @@ class LLMProvider(core_provider.Provider):
     def controversiality(
         self,
         text: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -2035,13 +2041,13 @@ class LLMProvider(core_provider.Provider):
     def controversiality_with_cot_reasons(
         self,
         text: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
         **kwargs,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the controversiality of some text. Prompt credit to Langchain
@@ -2096,8 +2102,8 @@ class LLMProvider(core_provider.Provider):
     def misogyny(
         self,
         text: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -2156,13 +2162,13 @@ class LLMProvider(core_provider.Provider):
     def misogyny_with_cot_reasons(
         self,
         text: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
         **kwargs,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the misogyny of some text. Prompt credit to LangChain Eval. Also
@@ -2217,8 +2223,8 @@ class LLMProvider(core_provider.Provider):
     def criminality(
         self,
         text: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -2278,13 +2284,13 @@ class LLMProvider(core_provider.Provider):
     def criminality_with_cot_reasons(
         self,
         text: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
         **kwargs,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the criminality of some text. Prompt credit to LangChain Eval.
@@ -2339,8 +2345,8 @@ class LLMProvider(core_provider.Provider):
     def insensitivity(
         self,
         text: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -2399,13 +2405,13 @@ class LLMProvider(core_provider.Provider):
     def insensitivity_with_cot_reasons(
         self,
         text: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
         **kwargs,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the insensitivity of some text. Prompt credit to LangChain Eval.
@@ -2522,13 +2528,13 @@ class LLMProvider(core_provider.Provider):
         self,
         key_points: str,
         summary: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
         **kwargs,
-    ) -> list:
+    ) -> List:
         """
         Splits key points by newlines and assesses if each one is included in the summary.
 
@@ -2595,13 +2601,13 @@ class LLMProvider(core_provider.Provider):
         self,
         source: str,
         summary: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
         **kwargs,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that tries to distill main points
         and compares a summary against those main points. This feedback function
@@ -2670,7 +2676,7 @@ class LLMProvider(core_provider.Provider):
     @deprecation_utils.method_renamed("comprehensiveness_with_cot_reasons")
     def summarization_with_cot_reasons(
         self, source: str, summary: str
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, Dict]:
         """
         Summarization is deprecated in place of comprehensiveness. This function is no longer implemented.
         """
@@ -2682,8 +2688,8 @@ class LLMProvider(core_provider.Provider):
         self,
         prompt: str,
         response: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -2755,13 +2761,13 @@ class LLMProvider(core_provider.Provider):
         self,
         prompt: str,
         response: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
         **kwargs,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check adding assumed stereotypes in the response when not present in the
@@ -2830,7 +2836,7 @@ class LLMProvider(core_provider.Provider):
             temperature=temperature,
         )
 
-    def _remove_trivial_statements(self, statements: list[str]) -> list[str]:
+    def _remove_trivial_statements(self, statements: List[str]) -> List[str]:
         """
         Removes trivial statements from a list of statements.
 
@@ -2863,6 +2869,7 @@ class LLMProvider(core_provider.Provider):
                 "Failed to process and remove trivial statements. Proceeding with all statements.",
                 stacklevel=2,
             )
+            pass
 
         return statements
 
@@ -3032,15 +3039,17 @@ class LLMProvider(core_provider.Provider):
         self,
         source: str,
         statement: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
-        examples: str | None = None,
-        groundedness_configs: core_feedback.GroundednessConfigs | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
+        examples: Optional[str] = None,
+        groundedness_configs: Optional[
+            core_feedback.GroundednessConfigs
+        ] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
         **kwargs,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, dict]:
         """A measure to track if the source material supports each sentence in
         the statement using an LLM provider.
 
@@ -3236,15 +3245,17 @@ class LLMProvider(core_provider.Provider):
         source: str,
         statement: str,
         question: str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
-        examples: list[str] | None = None,
-        groundedness_configs: core_feedback.GroundednessConfigs | None = None,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
+        examples: Optional[List[str]] = None,
+        groundedness_configs: Optional[
+            core_feedback.GroundednessConfigs
+        ] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
         **kwargs,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, dict]:
         """A measure to track if the source material supports each sentence in
         the statement using an LLM provider.
 
@@ -3452,16 +3463,16 @@ class LLMProvider(core_provider.Provider):
     def logical_consistency_with_cot_reasons(
         self,
         # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
-        trace: Trace | str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
-        examples: list[tuple[dict[str, str], int]] | None = None,
+        trace: Union[Trace, str],
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
+        examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
         enable_trace_compression: bool = True,
         **kwargs,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, Dict]:
         """
         Evaluate the quality of an agentic trace using a rubric focused on logical consistency and reasoning.
 
@@ -3555,16 +3566,16 @@ class LLMProvider(core_provider.Provider):
     def execution_efficiency_with_cot_reasons(
         self,
         # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
-        trace: Trace | str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
-        examples: list[tuple[dict[str, str], int]] | None = None,
+        trace: Union[Trace, str],
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
+        examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
         enable_trace_compression: bool = True,
         **kwargs,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, Dict]:
         """
         Evaluate the quality of an agentic execution using a rubric focused on execution efficiency.
 
@@ -3658,16 +3669,16 @@ class LLMProvider(core_provider.Provider):
     def plan_adherence_with_cot_reasons(
         self,
         # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
-        trace: Trace | str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
-        examples: list[tuple[dict[str, str], int]] | None = None,
+        trace: Union[Trace, str],
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
+        examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
         enable_trace_compression: bool = True,
         **kwargs,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, Dict]:
         """
         Evaluate the quality of an agentic trace using a rubric focused on execution adherence to the plan.
 
@@ -3759,16 +3770,16 @@ class LLMProvider(core_provider.Provider):
     def plan_quality_with_cot_reasons(
         self,
         # TODO: Temporarily support both Trace and str, but switch to Trace only in the future to avoid confusion and improve type safety/consistency.
-        trace: Trace | str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
-        examples: list[tuple[dict[str, str], int]] | None = None,
+        trace: Union[Trace, str],
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
+        examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
         enable_trace_compression: bool = True,
         **kwargs,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, Dict]:
         """
         Evaluate the quality of an agentic system's plan.
 
@@ -3859,16 +3870,16 @@ class LLMProvider(core_provider.Provider):
 
     def tool_selection_with_cot_reasons(
         self,
-        trace: Trace | str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
-        examples: list[tuple[dict[str, str], int]] | None = None,
+        trace: Union[Trace, str],
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
+        examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
         enable_trace_compression: bool = True,
         **kwargs,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, Dict]:
         """
         Evaluate the quality of an agentic trace using a rubric focused on tool selection.
         Example:
@@ -3958,16 +3969,16 @@ class LLMProvider(core_provider.Provider):
 
     def tool_calling_with_cot_reasons(
         self,
-        trace: Trace | str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
-        examples: list[tuple[dict[str, str], int]] | None = None,
+        trace: Union[Trace, str],
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
+        examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
         enable_trace_compression: bool = True,
         **kwargs,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, Dict]:
         """
         Evaluate the quality of an agentic trace using a rubric focused on tool calling.
         Example:
@@ -4057,16 +4068,16 @@ class LLMProvider(core_provider.Provider):
 
     def tool_quality_with_cot_reasons(
         self,
-        trace: Trace | str,
-        criteria: str | None = None,
-        additional_instructions: str | None = None,
-        examples: list[tuple[dict[str, str], int]] | None = None,
+        trace: Union[Trace, str],
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
+        examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
         enable_trace_compression: bool = True,
         **kwargs,
-    ) -> tuple[float, dict]:
+    ) -> Tuple[float, Dict]:
         """
         Evaluate the quality of an agentic trace using a rubric focused on tool quality.
         Example:
@@ -4156,8 +4167,9 @@ class LLMProvider(core_provider.Provider):
 
     def conversation_helpfulness(
         self,
-        records: list[Any] | str,
+        records: Union[List[Any], str],
         temperature: float = 0.0,
+        **kwargs,
     ) -> float:
         """Evaluate overall helpfulness across a multi-turn conversation (0.0 to 1.0)."""
         from trulens.feedback.templates.conversation import (
@@ -4175,39 +4187,20 @@ class LLMProvider(core_provider.Provider):
         return self.generate_score(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
+            min_score_val=0,
+            max_score_val=3,
             temperature=temperature,
-        )
-
-    def simple_criteria_score(
-        self,
-        records: list[Any] | str,
-        criteria: str,
-        temperature: float = 0.0,
-    ) -> float:
-        """Evaluate a multi-turn conversation against custom criteria (0.0 to 1.0)."""
-        from trulens.feedback.templates.conversation import SimpleCriteriaScore
-        from trulens.feedback.templates.conversation import (
-            conversation_to_prompt,
-        )
-
-        transcript = conversation_to_prompt(records)
-        system_prompt = SimpleCriteriaScore.system_prompt_template.format(
-            criteria=criteria
-        )
-        user_prompt = f"Conversation Transcript:\n{transcript}"
-        return self.generate_score(
-            system_prompt=system_prompt,
-            user_prompt=user_prompt,
-            temperature=temperature,
+            **kwargs,
         )
 
     def topic_adherence(
         self,
-        records: list[Any] | str,
-        reference_topics: list[str],
+        records: Union[List[Any], str],
+        reference_topics: List[str],
         temperature: float = 0.0,
-    ) -> dict[str, float]:
-        """Evaluate topic adherence (precision, recall, f1) across conversation turns."""
+        **kwargs,
+    ) -> float:
+        """Evaluate topic adherence across conversation turns."""
         from trulens.feedback.templates.conversation import TopicAdherence
         from trulens.feedback.templates.conversation import (
             conversation_to_prompt,
@@ -4219,22 +4212,21 @@ class LLMProvider(core_provider.Provider):
             reference_topics=topics_str
         )
         user_prompt = f"Conversation Transcript:\n{transcript}"
-
-        try:
-            score = self.generate_score(
-                system_prompt=system_prompt,
-                user_prompt=user_prompt,
-                temperature=temperature,
-            )
-            return {"precision": score, "recall": score, "f1": score}
-        except Exception:  # noqa: BLE001
-            return {"precision": 1.0, "recall": 1.0, "f1": 1.0}
+        return self.generate_score(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=0,
+            max_score_val=3,
+            temperature=temperature,
+            **kwargs,
+        )
 
     def agent_goal_accuracy(
         self,
-        records: list[Any] | str,
-        reference_goal: str | None = None,
+        records: Union[List[Any], str],
+        reference_goal: Optional[str] = None,
         temperature: float = 0.0,
+        **kwargs,
     ) -> float:
         """Evaluate binary goal accuracy (0.0 or 1.0) for a conversation."""
         from trulens.feedback.templates.conversation import AgentGoalAccuracy
@@ -4254,13 +4246,17 @@ class LLMProvider(core_provider.Provider):
         return self.generate_score(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
+            min_score_val=0,
+            max_score_val=1,
             temperature=temperature,
+            **kwargs,
         )
 
     def coherence_across_turns(
         self,
-        records: list[Any] | str,
+        records: Union[List[Any], str],
         temperature: float = 0.0,
+        **kwargs,
     ) -> float:
         """Evaluate consistency and coherence across turns (0.0 to 1.0)."""
         from trulens.feedback.templates.conversation import CoherenceAcrossTurns
@@ -4274,5 +4270,8 @@ class LLMProvider(core_provider.Provider):
         return self.generate_score(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
+            min_score_val=0,
+            max_score_val=3,
             temperature=temperature,
+            **kwargs,
         )
