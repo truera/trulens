@@ -2,8 +2,8 @@ from __future__ import annotations  # defers evaluation of annotations
 
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
+import dataclasses
 from dataclasses import dataclass
-from dataclasses import field as dataclass_field
 from enum import Enum
 import inspect
 import json
@@ -154,7 +154,7 @@ class MetricDiff:
     p_value: float
     n_regressed: int
     n_items: int
-    items: List[ItemDiff] = dataclass_field(default_factory=list)
+    items: List[ItemDiff] = dataclasses.field(default_factory=list)
 
 
 @dataclass
@@ -176,7 +176,7 @@ class RunDiff:
 
     run_a_name: str
     run_b_name: str
-    metrics: Dict[str, MetricDiff] = dataclass_field(default_factory=dict)
+    metrics: Dict[str, MetricDiff] = dataclasses.field(default_factory=dict)
 
     def summary(self) -> pd.DataFrame:
         """Return a one-row-per-metric summary DataFrame."""
