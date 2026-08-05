@@ -11,6 +11,7 @@ from trulens.dashboard.constants import EXTERNAL_APP_COL_NAME
 from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
 from trulens.dashboard.constants import PINNED_COL_NAME
 from trulens.dashboard.constants import RECORDS_PAGE_NAME as page_name
+from trulens.dashboard.utils import dashboard_utils
 from trulens.dashboard.utils import streamlit_compat
 from trulens.dashboard.utils.dashboard_utils import ST_RECORDS_LIMIT
 from trulens.dashboard.utils.dashboard_utils import _get_event_otel_spans
@@ -42,6 +43,8 @@ def init_page_state():
         page_name=page_name,
         transforms={
             "app_ids": lambda x: x.split(","),
+            "app_versions": lambda x: x.split(","),
+            "metric_name": lambda x: x.split(","),
             "selected_thread": lambda x: x,
         },
     )
@@ -92,6 +95,46 @@ def _clean_text_value(value: Any) -> Any:
             pass
 
     return text
+
+
+def _apply_drilldown_sort(
+    records_df: pd.DataFrame,
+    metric_kind: Optional[str],
+    metric_name: Optional[str],
+    sort_direction: str,
+    feedback_col_names: Sequence[str],
+) -> tuple[pd.DataFrame, Optional[str]]:
+    if not metric_kind:
+        return records_df, None
+    if metric_kind == "feedback":
+        if metric_name not in feedback_col_names:
+            return records_df, None
+        sort_column = metric_name
+    elif metric_kind == "latency":
+        sort_column = "latency"
+    elif metric_kind == "app_cost":
+        sort_column = "total_cost"
+    elif metric_kind == "eval_cost":
+        sort_column = (
+            "eval_cost_snowflake"
+            if (
+                "eval_cost_snowflake" in records_df.columns
+                and (records_df["eval_cost_snowflake"] != 0).any()
+            )
+            else "eval_cost"
+        )
+    else:
+        return records_df, None
+    if sort_column not in records_df.columns:
+        return records_df, None
+    return (
+        records_df.sort_values(
+            sort_column,
+            ascending=sort_direction == "asc",
+            na_position="last",
+        ),
+        sort_column,
+    )
 
 
 def _escape_currency_dollars(text: str) -> str:
@@ -223,6 +266,14 @@ def _render_record_detail(
 
     _render_record_metrics(records_df, selected_row)
 
+    online_eval_status = selected_row.get("online_eval_status")
+    if online_eval_status:
+        sample_rate = selected_row.get("sample_rate_display", "—")
+        st.caption(
+            f"Online evaluation: **{online_eval_status}** · "
+            f"Sample rate: **{sample_rate}**"
+        )
+
     app_json = selected_row["app_json"]
     record_json = selected_row["record_json"]
 
@@ -293,7 +344,9 @@ def _render_trace(
 def _preprocess_df(
     records_df: pd.DataFrame,
     record_query: Optional[str] = None,
+    online_eval_filter: str = "All",
 ):
+    records_df = dashboard_utils.add_online_eval_columns(records_df)
     if HIDE_RECORD_COL_NAME in records_df.columns:
         records_df = records_df[~records_df[HIDE_RECORD_COL_NAME]]
     records_df = records_df.sort_values(by="ts", ascending=False)
@@ -316,6 +369,16 @@ def _preprocess_df(
             records_df["app_version"].str.contains(record_query, case=False)
             | records_df["input"].str.contains(record_query, case=False)
             | records_df["output"].str.contains(record_query, case=False)
+        ]
+    if online_eval_filter == "Selected":
+        records_df = records_df[records_df["online_eval_status"] == "Selected"]
+    elif online_eval_filter == "Skipped":
+        records_df = records_df[
+            records_df["online_eval_status"].str.startswith("Skipped")
+        ]
+    elif online_eval_filter == "Not configured":
+        records_df = records_df[
+            records_df["online_eval_status"] == "Not configured"
         ]
     records_df["ts"] = pd.to_datetime(records_df["ts"])
     return records_df
@@ -368,6 +431,21 @@ def _build_grid_options(
         header_name="Record ID",
         pinned="left",
         hide=True,
+        filter="agSetColumnFilter",
+    )
+    gb.configure_column(
+        "online_eval_status",
+        header_name="Online Eval",
+        filter="agSetColumnFilter",
+    )
+    gb.configure_column(
+        "sample_rate_display",
+        header_name="Sample Rate",
+        filter="agSetColumnFilter",
+    )
+    gb.configure_column(
+        "eval_decision_reason",
+        header_name="Decision",
         filter="agSetColumnFilter",
     )
 
@@ -605,6 +683,9 @@ def _render_grid(
 
     column_order = [
         "app_version",
+        "online_eval_status",
+        "sample_rate_display",
+        "eval_decision_reason",
         "input",
         "output",
         "record_metadata",
@@ -681,8 +762,24 @@ def _thread_membership(df: pd.DataFrame) -> pd.Series:
     return conv.notna() & (conv.astype(str).str.len() > 0)
 
 
+def _thread_keys(df: pd.DataFrame) -> pd.Series:
+    is_thread = _thread_membership(df)
+    keys = df["record_id"].map(lambda value: f"record:{value}")
+    keys.loc[is_thread] = df.loc[is_thread].apply(
+        lambda row: json.dumps(
+            [row["app_name"], row["app_version"], row["conversation_id"]],
+            separators=(",", ":"),
+        ),
+        axis=1,
+    )
+    return keys
+
+
 def _build_thread_summary(
-    df: pd.DataFrame, feedback_col_names: Sequence[str]
+    df: pd.DataFrame,
+    feedback_col_names: Sequence[str],
+    sort_col: Optional[str] = None,
+    sort_direction: str = "desc",
 ) -> pd.DataFrame:
     """Collapse the records dataframe into one row per thread.
 
@@ -693,8 +790,10 @@ def _build_thread_summary(
     """
     df = df.copy()
     is_thread = _thread_membership(df)
-    df["_thread_key"] = df["conversation_id"].where(is_thread, df["record_id"])
+    df["_thread_key"] = _thread_keys(df)
     df["_is_thread"] = is_thread
+    if "is_match" not in df.columns:
+        df["is_match"] = True
 
     rows = []
     for thread_key, group in df.groupby("_thread_key", dropna=False):
@@ -702,6 +801,8 @@ def _build_thread_summary(
         first = group_sorted.iloc[0]
         last = group_sorted.iloc[-1]
         is_conv = bool(first["_is_thread"])
+        matched = group_sorted[group_sorted["is_match"].fillna(False)]
+        ranking_group = matched if not matched.empty else group_sorted
         row: Dict[str, Any] = {
             "thread_key": thread_key,
             "is_thread": is_conv,
@@ -711,6 +812,8 @@ def _build_thread_summary(
             "app_version": first["app_version"],
             "app_id": first["app_id"],
             "num_messages": len(group_sorted),
+            "matched_turn_count": len(matched),
+            "total_turn_count": len(group_sorted),
             "first_input": first["input"],
             "last_output": last["output"],
             "start_ts": first["ts"],
@@ -720,14 +823,35 @@ def _build_thread_summary(
             "cost_currency": first["cost_currency"],
             "latency": group_sorted["latency"].sum(),
         }
+        if sort_col and sort_col in ranking_group.columns:
+            values = pd.to_numeric(
+                ranking_group[sort_col], errors="coerce"
+            ).dropna()
+            if not values.empty:
+                worst_index = (
+                    values.idxmin()
+                    if sort_direction == "asc"
+                    else values.idxmax()
+                )
+                row["thread_sort_value"] = values.loc[worst_index]
+                row["worst_matching_record_id"] = ranking_group.loc[
+                    worst_index, "record_id"
+                ]
         for fcol in feedback_col_names:
-            if fcol in group_sorted.columns:
-                row[fcol] = group_sorted[fcol].mean(skipna=True)
+            if fcol in ranking_group.columns:
+                row[fcol] = ranking_group[fcol].mean(skipna=True)
         rows.append(row)
 
     thread_df = pd.DataFrame(rows)
     if not thread_df.empty:
-        thread_df = thread_df.sort_values(by="ts", ascending=False)
+        if "thread_sort_value" in thread_df.columns:
+            thread_df = thread_df.sort_values(
+                by=["thread_sort_value", "ts"],
+                ascending=[sort_direction == "asc", False],
+                na_position="last",
+            )
+        else:
+            thread_df = thread_df.sort_values(by="ts", ascending=False)
     return thread_df
 
 
@@ -747,6 +871,8 @@ def _build_thread_grid_options(
     gb.configure_column("app_id", hide=True)
     gb.configure_column("start_ts", hide=True)
     gb.configure_column("cost_currency", hide=True)
+    gb.configure_column("thread_sort_value", hide=True)
+    gb.configure_column("worst_matching_record_id", hide=True)
     gb.configure_column(
         "conversation_id",
         header_name="Conversation ID",
@@ -774,6 +900,12 @@ def _build_thread_grid_options(
         header_name="Messages (#)",
         filter="agNumberColumnFilter",
     )
+    gb.configure_column(
+        "matched_turn_count",
+        header_name="Relevant turns (#)",
+        filter="agNumberColumnFilter",
+    )
+    gb.configure_column("total_turn_count", hide=True)
     gb.configure_column(
         "first_input",
         header_name="First Input",
@@ -885,6 +1017,7 @@ def _render_thread_grid(
         "conversation_id",
         "record_id",
         "app_version",
+        "matched_turn_count",
         "num_messages",
         "first_input",
         "last_output",
@@ -914,36 +1047,118 @@ def _clear_selected_thread():
         st.query_params.pop("selected_thread")
 
 
-def _render_conversation_timeline(subset: pd.DataFrame):
-    """Render a chat-style message timeline with left-aligned user and
-    right-aligned assistant messages. Each turn is clickable to scroll
-    to its full trace below.
-    """
-    for turn_index, (_, msg) in enumerate(subset.iterrows()):
+def _conversation_turn_html(
+    *,
+    record_id: str,
+    turn_label: str,
+    border: str,
+    user_text: str,
+    assistant_text: str,
+) -> str:
+    return (
+        f'<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;border-left:3px solid {border};padding-left:8px;">'
+        f'  <span style="color:{border};font-size:0.72em;font-weight:600;">{turn_label}</span>'
+        f'  <div style="display:flex;align-items:flex-start;">'
+        f'    <div style="background:var(--secondary-background-color);color:var(--text-color);border:1px solid color-mix(in srgb, var(--text-color) 12%, transparent);border-radius:12px 12px 12px 2px;padding:8px 12px;max-width:75%;font-size:0.85em;">'
+        f'      <span style="color:color-mix(in srgb, var(--text-color) 65%, transparent);font-size:0.75em;">User</span><br>{user_text}'
+        f"    </div>"
+        f"  </div>"
+        f'  <div style="display:flex;align-items:flex-start;justify-content:flex-end;">'
+        f'    <div style="background:color-mix(in srgb, var(--primary-color) 14%, var(--background-color));color:var(--text-color);border:1px solid color-mix(in srgb, var(--primary-color) 35%, transparent);border-radius:12px 12px 2px 12px;padding:8px 12px;max-width:75%;font-size:0.85em;">'
+        f'      <span style="color:color-mix(in srgb, var(--text-color) 65%, transparent);font-size:0.75em;">Assistant</span><br>{assistant_text}'
+        f"    </div>"
+        f'    <a href="#record-{record_id}" style="margin-left:8px;margin-top:8px;text-decoration:none;font-size:0.75em;color:var(--text-color);opacity:0.65;white-space:nowrap;">trace&nbsp;↓</a>'
+        f"  </div>"
+        f"</div>"
+    )
+
+
+def _partition_feedback_scopes(
+    subset: pd.DataFrame,
+    feedback_col_names: Sequence[str],
+) -> tuple[list[str], list[str]]:
+    conversation_metrics = []
+    turn_metrics = []
+    for metric_name in feedback_col_names:
+        calls_column = f"{metric_name}_calls"
+        is_conversation_metric = False
+        if calls_column in subset.columns:
+            for calls in subset[calls_column].dropna():
+                if not isinstance(calls, list):
+                    continue
+                for call in calls:
+                    if not isinstance(call, dict):
+                        continue
+                    args_span_attribute = call.get("args_span_attribute", {})
+                    if isinstance(args_span_attribute, dict) and (
+                        "conversation.records" in args_span_attribute.values()
+                    ):
+                        is_conversation_metric = True
+                        break
+                if is_conversation_metric:
+                    break
+        if is_conversation_metric:
+            conversation_metrics.append(metric_name)
+        else:
+            turn_metrics.append(metric_name)
+    return conversation_metrics, turn_metrics
+
+
+def _conversation_metric_row(
+    subset: pd.DataFrame, metric_name: str
+) -> Optional[pd.Series]:
+    rows = subset[subset[metric_name].notna()]
+    if rows.empty:
+        return None
+    return rows.sort_values("ts").iloc[-1]
+
+
+def _split_conversation_turns(
+    subset: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    if len(subset) <= 2:
+        return subset, subset.iloc[0:0], subset.iloc[0:0]
+    return subset.iloc[[0]], subset.iloc[1:-1], subset.iloc[[-1]]
+
+
+def _render_conversation_turns(subset: pd.DataFrame) -> None:
+    for _, msg in subset.iterrows():
         record_id = msg["record_id"]
+        is_match = bool(msg.get("is_match", True))
+        turn_label = "Conversation turn"
+        border = (
+            "var(--primary-color)"
+            if is_match
+            else "color-mix(in srgb, var(--text-color) 35%, transparent)"
+        )
         input_text = str(msg["input"])[:200]
         output_text = str(msg["output"])[:200]
         ellipsis_in = "..." if len(str(msg["input"])) > 200 else ""
         ellipsis_out = "..." if len(str(msg["output"])) > 200 else ""
-
-        user_text = _escape_problematic_markdown(input_text) + ellipsis_in
-        asst_text = _escape_problematic_markdown(output_text) + ellipsis_out
-
         st.html(
-            f'<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;">'
-            f'  <div style="display:flex;align-items:flex-start;">'
-            f'    <div style="background:#2a2a3d;border-radius:12px 12px 12px 2px;padding:8px 12px;max-width:75%;font-size:0.85em;">'
-            f'      <span style="color:#aaa;font-size:0.75em;">User</span><br>{user_text}'
-            f"    </div>"
-            f"  </div>"
-            f'  <div style="display:flex;align-items:flex-start;justify-content:flex-end;">'
-            f'    <div style="background:#1a3a2a;border-radius:12px 12px 2px 12px;padding:8px 12px;max-width:75%;font-size:0.85em;">'
-            f'      <span style="color:#aaa;font-size:0.75em;">Assistant</span><br>{asst_text}'
-            f"    </div>"
-            f'    <a href="#record-{record_id}" style="margin-left:8px;margin-top:8px;text-decoration:none;font-size:0.75em;color:#888;white-space:nowrap;">trace&nbsp;↓</a>'
-            f"  </div>"
-            f"</div>"
+            _conversation_turn_html(
+                record_id=record_id,
+                turn_label=turn_label,
+                border=border,
+                user_text=_escape_problematic_markdown(input_text)
+                + ellipsis_in,
+                assistant_text=_escape_problematic_markdown(output_text)
+                + ellipsis_out,
+            )
         )
+
+
+def _render_conversation_timeline(subset: pd.DataFrame):
+    """Render first/last turns with collapsed middle conversation turns."""
+    first_turns, middle_turns, last_turns = _split_conversation_turns(subset)
+    _render_conversation_turns(first_turns)
+    if not middle_turns.empty:
+        with st.expander(
+            f"See {len(middle_turns)} more turns",
+            expanded=False,
+        ):
+            _render_conversation_turns(middle_turns)
+    _render_conversation_turns(last_turns)
 
 
 def _render_thread(
@@ -958,11 +1173,7 @@ def _render_thread(
     standalone record (``_render_record_detail``), so a conversation is just a
     vertical stack of record detail views in turn order.
     """
-    is_thread = _thread_membership(records_df)
-    subset = records_df[
-        (is_thread & (records_df["conversation_id"] == thread_key))
-        | (~is_thread & (records_df["record_id"] == thread_key))
-    ]
+    subset = records_df[_thread_keys(records_df) == thread_key]
     if subset.empty:
         return
 
@@ -983,11 +1194,16 @@ def _render_thread(
         )
         return
 
+    conversation_id = first["conversation_id"]
+    match_flags = subset.get("is_match", pd.Series(True, index=subset.index))
+    matched_count = int(match_flags.fillna(False).sum())
     st.caption(
-        f"{first['app_name']} / {first['app_version']} / Thread: {thread_key}"
+        f"{first['app_name']} / {first['app_version']} / Thread: {conversation_id}"
     )
-    st.markdown(f"#### Thread: {thread_key}")
-    st.caption(f"{len(subset)} message(s) in this conversation")
+    st.markdown(f"#### Thread: {conversation_id}")
+    st.caption(
+        f"{matched_count} relevant turn(s) · {len(subset)} total turn(s) in this conversation"
+    )
 
     # Conversation-level stats
     cost_currency = first["cost_currency"]
@@ -1029,25 +1245,56 @@ def _render_thread(
                 help="Sum of tokens generated across all turns.",
             )
 
-    # Conversation-level average metrics as pills + per-turn drill-down
-    avail_fcols = [
+    available_metrics = [
         f
         for f in feedback_col_names
         if f in subset.columns and subset[f].notna().any()
     ]
-    if avail_fcols:
+    conversation_metrics, turn_metrics = _partition_feedback_scopes(
+        subset, available_metrics
+    )
+
+    if conversation_metrics:
+        st.markdown("#### Conversation metrics")
+        conversation_scores = pd.Series({
+            metric_name: _conversation_metric_row(subset, metric_name)[
+                metric_name
+            ]
+            for metric_name in conversation_metrics
+        })
+        selected_metric = _render_feedback_pills(
+            conversation_metrics,
+            feedback_directions,
+            selected_row=conversation_scores,
+            key=f"{page_name}.conversation_metrics.{thread_key}",
+        )
+        if selected_metric:
+            metric_row = _conversation_metric_row(subset, selected_metric)
+            if metric_row is not None:
+                _render_feedback_call(
+                    selected_metric,
+                    metric_row,
+                    feedback_directions=feedback_directions,
+                )
+
+    if turn_metrics:
+        st.markdown("#### Turn metrics")
+        metric_subset = subset[match_flags.fillna(False)]
+        if metric_subset.empty:
+            metric_subset = subset
         avg_row = pd.Series({
-            fcol: subset[fcol].mean(skipna=True) for fcol in avail_fcols
+            fcol: metric_subset[fcol].mean(skipna=True) for fcol in turn_metrics
         })
         pills_key = f"{page_name}.thread_avg_pills.{thread_key}"
         selected_metric = _render_feedback_pills(
-            avail_fcols,
+            turn_metrics,
             feedback_directions,
             selected_row=avg_row,
             key=pills_key,
         )
         if selected_metric and selected_metric in subset.columns:
-            turn_scores = subset[["record_id", "input", selected_metric]].copy()
+            columns = ["record_id", "input", selected_metric]
+            turn_scores = subset[columns].copy()
             turn_scores.insert(0, "Turn", range(1, len(turn_scores) + 1))
             turn_scores["input"] = turn_scores["input"].astype(str).str[:80]
             turn_scores = turn_scores.rename(
@@ -1067,10 +1314,15 @@ def _render_thread(
         st.html(
             f'<div id="record-{record_id}" style="height:0;margin:0;padding:0;overflow:hidden;"></div>'
         )
+        st.caption(
+            "Conversation turn"
+            if bool(msg.get("is_match", True))
+            else "Conversation context turn"
+        )
         _render_record_detail(
             msg,
             records_df,
-            feedback_col_names,
+            turn_metrics,
             feedback_directions,
             key_suffix=f"{thread_key}.{turn_index}.{msg['record_id']}",
         )
@@ -1080,9 +1332,13 @@ def _render_thread_view(
     df: pd.DataFrame,
     feedback_col_names: List[str],
     feedback_directions: Dict[str, bool],
+    sort_col: Optional[str] = None,
+    sort_direction: str = "desc",
 ):
     """Render the thread-grouped records view with drill-in transcript."""
-    thread_summary = _build_thread_summary(df, feedback_col_names)
+    thread_summary = _build_thread_summary(
+        df, feedback_col_names, sort_col, sort_direction
+    )
     if thread_summary.empty:
         st.info("No threads to display.", icon="ℹ️")
         return
@@ -1154,6 +1410,46 @@ def _handle_record_query_change():
         st.query_params.pop("record_search")
 
 
+def _render_drilldown_summary(sort_column: Optional[str]) -> None:
+    metric_kind = st.session_state.get(f"{page_name}.metric_kind")
+    if not metric_kind:
+        return
+    metric_names = st.session_state.get(
+        f"{page_name}.metric_name", [metric_kind]
+    )
+    if isinstance(metric_names, str):
+        metric_names = metric_names.split(",")
+    app_versions = st.session_state.get(f"{page_name}.app_versions", [])
+    start_time = pd.Timestamp(st.session_state[f"{page_name}.start_time"])
+    end_time = pd.Timestamp(st.session_state[f"{page_name}.end_time"])
+    direction = st.session_state.get(f"{page_name}.sort_direction", "desc")
+    with st.container(border=True):
+        cols = st.columns([5, 1], vertical_alignment="center")
+        cols[0].markdown(
+            f"**Investigating:** {', '.join(metric_names)} · "
+            f"{', '.join(app_versions)} · "
+            f"{start_time:%b %d}–{(end_time - pd.Timedelta(days=1)):%b %d}"
+        )
+        if sort_column:
+            cols[0].caption(
+                f"Sorted by {sort_column}, "
+                + ("lowest first." if direction == "asc" else "highest first.")
+            )
+        if cols[1].button("Clear investigation", width="stretch"):
+            for name in (
+                "app_versions",
+                "metric_kind",
+                "metric_name",
+                "start_time",
+                "end_time",
+                "sort_direction",
+                "currency",
+            ):
+                st.session_state.pop(f"{page_name}.{name}", None)
+                st.query_params.pop(name, None)
+            st.rerun()
+
+
 def render_records(app_name: str):
     """Renders the records page.
 
@@ -1165,10 +1461,16 @@ def render_records(app_name: str):
 
     # Get app versions
     st.session_state.setdefault(f"{page_name}.record_search", "")
-    record_query = st.text_input(
+    controls = st_columns([2, 1], vertical_alignment="bottom")
+    record_query = controls[0].text_input(
         "Search Records",
         key=f"{page_name}.record_search",
         on_change=_handle_record_query_change,
+    )
+    online_eval_filter = controls[1].selectbox(
+        "Evaluation decision",
+        ["All", "Selected", "Skipped", "Not configured"],
+        key=f"{page_name}.online_eval_filter",
     )
     versions_df, _ = render_app_version_filters(
         app_name,
@@ -1184,24 +1486,69 @@ def render_records(app_name: str):
         st.error(f"No app versions found for app `{app_name}`.")
         return
     app_versions = versions_df["app_version"].tolist()
+    drilldown_versions = st.session_state.get(f"{page_name}.app_versions")
+    if drilldown_versions:
+        app_versions = [
+            version for version in app_versions if version in drilldown_versions
+        ]
+
+    start_time_value = st.session_state.get(f"{page_name}.start_time")
+    end_time_value = st.session_state.get(f"{page_name}.end_time")
+    start_time = pd.Timestamp(start_time_value) if start_time_value else None
+    end_time = pd.Timestamp(end_time_value) if end_time_value else None
+    metric_kind = st.session_state.get(f"{page_name}.metric_kind")
+    metric_names = st.session_state.get(f"{page_name}.metric_name", [])
+    if isinstance(metric_names, str):
+        metric_names = metric_names.split(",")
+    drilldown_record_ids = None
+    if metric_kind in ("feedback", "eval_cost") and start_time is not None:
+        drilldown_record_ids = dashboard_utils.get_eval_drilldown_record_ids(
+            app_name=app_name,
+            app_versions=app_versions,
+            metric_kind=metric_kind,
+            metric_name=",".join(metric_names),
+            start_time=start_time,
+            end_time=end_time,
+            currency=st.session_state.get(f"{page_name}.currency"),
+        )
 
     # Get records and feedback data
     records_limit = st.session_state.get(ST_RECORDS_LIMIT, None)
     records_df, feedback_col_names = get_records_and_feedback(
-        app_name=app_name, app_versions=app_versions, limit=records_limit
+        app_name=app_name,
+        app_versions=app_versions,
+        matched_record_ids=drilldown_record_ids,
+        include_conversation_context=drilldown_record_ids is not None,
+        start_time=start_time if drilldown_record_ids is None else None,
+        end_time=end_time if drilldown_record_ids is None else None,
+        limit=records_limit,
     )
 
     feedback_col_names = list(feedback_col_names)
+    records_df, drilldown_sort_col = _apply_drilldown_sort(
+        records_df,
+        st.session_state.get(f"{page_name}.metric_kind"),
+        metric_names[0] if metric_names else None,
+        st.session_state.get(f"{page_name}.sort_direction", "desc"),
+        feedback_col_names,
+    )
 
     # Preprocess data
     df = _preprocess_df(
         records_df,
         record_query=record_query,
+        online_eval_filter=online_eval_filter,
     )
+    _render_drilldown_summary(drilldown_sort_col)
 
     if df.empty:
         if record_query:
             st.error(f"No records found for search query `{record_query}`.")
+        elif online_eval_filter != "All":
+            st.error(
+                "No records found for evaluation decision "
+                f"`{online_eval_filter}`."
+            )
         elif app_ids := st.session_state.get(f"{page_name}.app_ids", None):
             app_versions = versions_df[versions_df["app_id"].isin(app_ids)][
                 "app_version"
@@ -1240,6 +1587,8 @@ def render_records(app_name: str):
         df,
         feedback_col_names,
         feedback_directions,
+        drilldown_sort_col,
+        st.session_state.get(f"{page_name}.sort_direction", "desc"),
     )
 
 
