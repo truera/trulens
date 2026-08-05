@@ -134,7 +134,8 @@ class FewShotOptimizer:
     feedback_fn:
         A callable that accepts the keyword arguments defined in
         *candidates* plus an optional ``examples: str`` keyword argument.
-        It must return a ``float`` in ``[0, 1]``.  Typically a bound method
+        It must return a ``float`` in ``[0, 1]``. Must be thread-safe; called
+        concurrently when max_workers > 1. Typically a bound method
         on a :class:`trulens.feedback.LLMProvider` subclass, e.g.
         ``provider.relevance``.
     candidates:
@@ -184,7 +185,8 @@ class FewShotOptimizer:
         metric_lower = metric.lower()
         if metric_lower not in VALID_METRICS:
             raise ValueError(
-                f"Invalid metric '{metric}'. Supported metrics are: {sorted(VALID_METRICS)}"
+                f"Invalid metric '{metric}'. "
+                f"Supported metrics are: {sorted(VALID_METRICS)}"
             )
 
         self.feedback_fn = feedback_fn
@@ -402,7 +404,8 @@ class FewShotOptimizer:
         mean_g = sum(ground_truth) / n
 
         numerator = sum(
-            (p - mean_p) * (g - mean_g) for p, g in zip(predicted, ground_truth)
+            (p - mean_p) * (g - mean_g)
+            for p, g in zip(predicted, ground_truth, strict=False)
         )
         denom_p = sum((p - mean_p) ** 2 for p in predicted) ** 0.5
         denom_g = sum((g - mean_g) ** 2 for g in ground_truth) ** 0.5
@@ -427,10 +430,12 @@ class FewShotOptimizer:
             i = 0
             while i < len(vals):
                 j = i
-                while (
-                    j < len(vals)
-                    and vals[sorted_indices[j]] == vals[sorted_indices[i]]
-                ):
+                while j < len(vals):
+                    same_val = (
+                        vals[sorted_indices[j]] == vals[sorted_indices[i]]
+                    )
+                    if not same_val:
+                        break
                     j += 1
                 avg_rank = sum(range(i + 1, j + 1)) / (j - i)
                 for k in range(i, j):
@@ -451,8 +456,12 @@ class FewShotOptimizer:
         """Compute precision score given binary classification threshold."""
         p_bin = [1 if p >= threshold else 0 for p in predicted]
         g_bin = [1 if g >= threshold else 0 for g in ground_truth]
-        tp = sum(1 for p, g in zip(p_bin, g_bin) if p == 1 and g == 1)
-        fp = sum(1 for p, g in zip(p_bin, g_bin) if p == 1 and g == 0)
+        tp = sum(
+            1 for p, g in zip(p_bin, g_bin, strict=False) if p == 1 and g == 1
+        )
+        fp = sum(
+            1 for p, g in zip(p_bin, g_bin, strict=False) if p == 1 and g == 0
+        )
         if tp + fp == 0:
             return 0.0
         return tp / (tp + fp)
@@ -466,8 +475,12 @@ class FewShotOptimizer:
         """Compute recall score given binary classification threshold."""
         p_bin = [1 if p >= threshold else 0 for p in predicted]
         g_bin = [1 if g >= threshold else 0 for g in ground_truth]
-        tp = sum(1 for p, g in zip(p_bin, g_bin) if p == 1 and g == 1)
-        fn = sum(1 for p, g in zip(p_bin, g_bin) if p == 0 and g == 1)
+        tp = sum(
+            1 for p, g in zip(p_bin, g_bin, strict=False) if p == 1 and g == 1
+        )
+        fn = sum(
+            1 for p, g in zip(p_bin, g_bin, strict=False) if p == 0 and g == 1
+        )
         if tp + fn == 0:
             return 0.0
         return tp / (tp + fn)
@@ -497,10 +510,18 @@ class FewShotOptimizer:
             return None
         p_bin = [1 if p >= threshold else 0 for p in predicted]
         g_bin = [1 if g >= threshold else 0 for g in ground_truth]
-        tp = sum(1 for p, g in zip(p_bin, g_bin) if p == 1 and g == 1)
-        tn = sum(1 for p, g in zip(p_bin, g_bin) if p == 0 and g == 0)
-        fp = sum(1 for p, g in zip(p_bin, g_bin) if p == 1 and g == 0)
-        fn = sum(1 for p, g in zip(p_bin, g_bin) if p == 0 and g == 1)
+        tp = sum(
+            1 for p, g in zip(p_bin, g_bin, strict=False) if p == 1 and g == 1
+        )
+        tn = sum(
+            1 for p, g in zip(p_bin, g_bin, strict=False) if p == 0 and g == 0
+        )
+        fp = sum(
+            1 for p, g in zip(p_bin, g_bin, strict=False) if p == 1 and g == 0
+        )
+        fn = sum(
+            1 for p, g in zip(p_bin, g_bin, strict=False) if p == 0 and g == 1
+        )
 
         p_o = (tp + tn) / n
         p_pred_1 = (tp + fp) / n
@@ -525,7 +546,7 @@ class FewShotOptimizer:
             return 0.0
         correct = sum(
             1
-            for p, g in zip(predicted, ground_truth)
+            for p, g in zip(predicted, ground_truth, strict=False)
             if (p >= threshold) == (g >= threshold)
         )
         return correct / n
@@ -539,5 +560,11 @@ class FewShotOptimizer:
         n = len(predicted)
         if n < 1:
             return 0.0
-        mae = sum(abs(p - g) for p, g in zip(predicted, ground_truth)) / n
+        mae = (
+            sum(
+                abs(p - g)
+                for p, g in zip(predicted, ground_truth, strict=False)
+            )
+            / n
+        )
         return 1.0 - mae

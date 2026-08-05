@@ -7,6 +7,8 @@ from trulens.feedback.groundtruth import GroundTruthAggregator
 from trulens.feedback.groundtruth import GroundTruthAgreement
 from trulens.feedback.jury import Jury
 from trulens.feedback.llm_provider import LLMProvider
+from trulens.feedback.optimize import FewShotOptimizer
+from trulens.feedback.optimize import OptimizeResult
 from trulens.feedback.schema_validator import SchemaValidator
 
 with import_utils.OptionalImports(
@@ -22,10 +24,12 @@ __version__ = version(
 
 
 __all__ = [
-    "GroundTruthAgreement",
+    "Embeddings",
+    "FewShotOptimizer",
     "GroundTruthAggregator",
+    "GroundTruthAgreement",
     "Jury",
     "LLMProvider",
-    "Embeddings",
+    "OptimizeResult",
     "SchemaValidator",
 ]

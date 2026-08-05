@@ -10,11 +10,13 @@ from trulens.feedback.optimize import OptimizeResult
 
 
 def make_feedback_fn(bias: float = 0.0):
-    """Return a fake feedback_fn that returns ground_truth + bias + noise=0."""
+    """Return a fake feedback_fn that uses the examples parameter to adjust score."""
 
     def feedback_fn(examples: str = "", **kwargs) -> float:
         # returns a deterministic score based on kwargs values length
         score = sum(len(v) for v in kwargs.values()) / 100.0
+        num_examples = examples.count("Example ") if examples else 0
+        score += 0.1 * num_examples
         return min(1.0, max(0.0, score + bias))
 
     return feedback_fn
@@ -227,7 +229,22 @@ class TestOptimize:
         result = opt.optimize()
         assert isinstance(result, OptimizeResult)
         assert result.metric_name == metric
+        assert result.metric_score is not None
+        assert -1.0 <= result.metric_score <= 1.0
         assert len(result.best_examples) <= 2
+
+    def test_optimizer_selects_examples_that_improve_score(self):
+        opt = FewShotOptimizer(
+            feedback_fn=make_feedback_fn(),
+            candidates=CANDIDATES,
+            eval_dataset=EVAL_DATASET,
+            n_examples=2,
+        )
+        result = opt.optimize()
+        baseline = opt._score_candidate_set([])
+        assert result.metric_score is not None
+        assert baseline is not None
+        assert result.metric_score >= baseline
 
     def test_optimize_parallel_workers(self):
         opt = FewShotOptimizer(
