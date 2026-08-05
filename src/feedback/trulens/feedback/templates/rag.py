@@ -66,10 +66,10 @@ class Groundedness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     user_prompt: ClassVar[str] = cleandoc(
         """SOURCE: {premise}
 
-        STATEMENT: {hypothesis}
+        <statement>{hypothesis}</statement>
 
         Respond ONLY with a single-line JSON object having exactly these keys:
-          "criteria"             – copy of the STATEMENT verbatim
+          "criteria"             – a short label for the statement (do NOT copy it)
           "supporting_evidence"  – sentence(s) from SOURCE that support the STATEMENT, or the string NOTHING FOUND or ABSTENTION
           "score"                – an integer 0, 1, 2, or 3
 
