@@ -1,6 +1,7 @@
 from typing import Optional
 
 from trulens.apps.app import TruApp
+from trulens.core import Metric
 from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
 from trulens.otel.semconv.trace import ResourceAttributes
@@ -156,3 +157,63 @@ class TestOtelRecordingContexts(OtelTestCase):
                 event["record_attributes"][SpanAttributes.CONVERSATION_ID],
                 conv_id,
             )
+
+    def test_conversation_feedback(self):
+        received_conversations = []
+
+        def conversation_score(records: list) -> float:
+            received_conversations.append(records)
+            return float(len(records)) / 2.0
+
+        metric = Metric(
+            implementation=conversation_score,
+            name="conversation_score",
+        ).on_conversation()
+        recorder = TruApp(
+            self._app,
+            app_name="Conversation Greeter",
+            app_version="v1",
+            main_method=self._app.greet,
+            feedbacks=[metric],
+        )
+
+        with recorder(conversation_id="conversation-1"):
+            self._app.greet(name="first")
+        with recorder(conversation_id="conversation-1"):
+            self._app.greet(name="second")
+        with recorder(conversation_id="conversation-2"):
+            self._app.greet(name="other")
+        TruSession().force_flush()
+
+        recorder.compute_feedbacks()
+        TruSession().force_flush()
+
+        self.assertEqual(sorted(map(len, received_conversations)), [1, 2])
+        for conversation in received_conversations:
+            for record in conversation:
+                self.assertEqual(set(record), {"input", "output"})
+        events = self._get_events()
+        eval_roots = events[
+            events["record_attributes"].apply(
+                lambda attributes: attributes.get(SpanAttributes.SPAN_TYPE)
+                == SpanAttributes.SpanType.EVAL_ROOT
+            )
+        ]
+        self.assertEqual(len(eval_roots), 2)
+        self.assertEqual(
+            {
+                attributes[SpanAttributes.CONVERSATION_ID]
+                for attributes in eval_roots["record_attributes"]
+            },
+            {"conversation-1", "conversation-2"},
+        )
+        for attributes in eval_roots["record_attributes"]:
+            self.assertIsInstance(
+                attributes[f"{SpanAttributes.EVAL_ROOT.ARGS_SPAN_ID}.records"],
+                list,
+            )
+
+        old_event_count = len(events)
+        recorder.compute_feedbacks(raise_error_on_no_feedbacks_computed=False)
+        TruSession().force_flush()
+        self.assertEqual(len(self._get_events()), old_event_count)

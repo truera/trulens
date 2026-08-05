@@ -374,6 +374,9 @@ class FeedbackDefinition(
     to get arguments for `imp`. In OTEL mode, these are Selector objects; in legacy mode,
     these are Lens objects."""
 
+    implementation_kwargs: Dict[str, Any] = pydantic.Field(default_factory=dict)
+    """Static keyword arguments supplied to every implementation call."""
+
     supplied_name: Optional[str] = None
     """An optional name. Only will affect displayed tables."""
 
@@ -410,6 +413,7 @@ class FeedbackDefinition(
         selectors: Optional[
             Dict[str, Union[serial_utils.Lens, Selector]]
         ] = None,
+        implementation_kwargs: Optional[Dict[str, Any]] = None,
         name: Optional[str] = None,
         higher_is_better: Optional[bool] = None,
         run_location: Optional[FeedbackRunLocation] = None,
@@ -430,6 +434,7 @@ class FeedbackDefinition(
             criteria=criteria,
             additional_instructions=additional_instructions,
             selectors=selectors,
+            implementation_kwargs=implementation_kwargs or {},
             if_exists=if_exists,
             if_missing=if_missing,
             run_location=run_location,

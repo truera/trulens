@@ -18,6 +18,39 @@ class TestOtelFeedback(OtelTestCase):
     def _mock_feedback_function_3(self, x: str, y: str, z: str) -> float:
         return 0.3
 
+    def _mock_conversation_feedback(
+        self, records: list, reference_topics: list
+    ) -> float:
+        return float(bool(records and reference_topics))
+
+    def test_on_conversation_with_arguments(self) -> None:
+        feedback = (
+            Feedback(self._mock_conversation_feedback)
+            .on_conversation()
+            .with_arguments(reference_topics=["billing"])
+        )
+        self.assertEqual(
+            feedback.selectors,
+            {"records": Selector.select_conversation()},
+        )
+        self.assertEqual(
+            feedback.implementation_kwargs,
+            {"reference_topics": ["billing"]},
+        )
+        feedback.check_otel_selectors()
+        self.assertEqual(feedback(records=[{"input": "hello"}]), 1.0)
+
+    def test_conversation_selector_scope_validation(self) -> None:
+        feedback = Feedback(
+            self._mock_feedback_function_2,
+            selectors={
+                "x": Selector.select_conversation_input(),
+                "y": Selector.select_record_output(),
+            },
+        )
+        with self.assertRaisesRegex(ValueError, "cannot be mixed"):
+            feedback.check_otel_selectors()
+
     def test_on_input(self) -> None:
         feedback = Feedback(self._mock_feedback_function_1).on_input()
         self.assertEqual(

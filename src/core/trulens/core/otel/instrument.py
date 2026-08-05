@@ -799,6 +799,7 @@ class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
     def __init__(self, *args, **kwargs):
         self.target_record_id = kwargs.pop("target_record_id")
         self.feedback_name = kwargs.pop("feedback_name")
+        self.conversation_id = kwargs.pop("conversation_id", None)
         super().__init__(*args, **kwargs)
 
     # For use as a context manager.
@@ -817,6 +818,10 @@ class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
             SpanAttributes.EVAL.TARGET_RECORD_ID, self.target_record_id
         )
         self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
+        if self.conversation_id is not None:
+            self.attach_to_context(
+                SpanAttributes.CONVERSATION_ID, self.conversation_id
+            )
         self.attach_to_context(
             SpanAttributes.EVAL.METRIC_NAME, self.feedback_name
         )
