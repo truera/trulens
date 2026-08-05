@@ -884,13 +884,87 @@ trulens.core.run:
   lows:
     DATASET_RESERVED_FIELDS: builtins.set
     EXPECTED_TELEMETRY_LATENCY_IN_MS: builtins.int
+    ItemDiff: builtins.type
+    MetricDiff: builtins.type
     Run: pydantic._internal._model_construction.ModelMetaclass
     RunConfig: pydantic._internal._model_construction.ModelMetaclass
+    RunDiff: builtins.type
     RunStatus: enum.EnumType
     SUPPORTED_ENTRY_TYPES: builtins.list
     SupportedEntryType: enum.EnumType
+    compare_runs: builtins.function
     get_all_span_attribute_key_constants: builtins.function
     validate_dataset_spec: builtins.function
+trulens.core.run.ItemDiff:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    __annotations__: builtins.dict
+    __class__: builtins.getset_descriptor
+    __dataclass_fields__: builtins.dict
+    __delattr__: builtins.wrapper_descriptor
+    __dict__: builtins.getset_descriptor
+    __dir__: builtins.method_descriptor
+    __doc__: builtins.str
+    __eq__: builtins.function
+    __format__: builtins.method_descriptor
+    __ge__: builtins.wrapper_descriptor
+    __getattribute__: builtins.wrapper_descriptor
+    __getstate__: builtins.method_descriptor
+    __gt__: builtins.wrapper_descriptor
+    __hash__: builtins.NoneType
+    __init__: builtins.function
+    __init_subclass__: builtins.classmethod_descriptor
+    __le__: builtins.wrapper_descriptor
+    __lt__: builtins.wrapper_descriptor
+    __match_args__: builtins.tuple
+    __module__: builtins.str
+    __ne__: builtins.wrapper_descriptor
+    __new__: builtins.builtin_function_or_method
+    __reduce__: builtins.method_descriptor
+    __reduce_ex__: builtins.method_descriptor
+    __repr__: builtins.function
+    __setattr__: builtins.wrapper_descriptor
+    __sizeof__: builtins.method_descriptor
+    __str__: builtins.wrapper_descriptor
+    __subclasshook__: builtins.classmethod_descriptor
+    __weakref__: builtins.getset_descriptor
+trulens.core.run.MetricDiff:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    __annotations__: builtins.dict
+    __class__: builtins.getset_descriptor
+    __dataclass_fields__: builtins.dict
+    __delattr__: builtins.wrapper_descriptor
+    __dict__: builtins.getset_descriptor
+    __dir__: builtins.method_descriptor
+    __doc__: builtins.str
+    __eq__: builtins.function
+    __format__: builtins.method_descriptor
+    __ge__: builtins.wrapper_descriptor
+    __getattribute__: builtins.wrapper_descriptor
+    __getstate__: builtins.method_descriptor
+    __gt__: builtins.wrapper_descriptor
+    __hash__: builtins.NoneType
+    __init__: builtins.function
+    __init_subclass__: builtins.classmethod_descriptor
+    __le__: builtins.wrapper_descriptor
+    __lt__: builtins.wrapper_descriptor
+    __match_args__: builtins.tuple
+    __module__: builtins.str
+    __ne__: builtins.wrapper_descriptor
+    __new__: builtins.builtin_function_or_method
+    __reduce__: builtins.method_descriptor
+    __reduce_ex__: builtins.method_descriptor
+    __repr__: builtins.function
+    __setattr__: builtins.wrapper_descriptor
+    __sizeof__: builtins.method_descriptor
+    __str__: builtins.wrapper_descriptor
+    __subclasshook__: builtins.classmethod_descriptor
+    __weakref__: builtins.getset_descriptor
 trulens.core.run.Run:
   __bases__:
   - pydantic.main.BaseModel
@@ -938,6 +1012,43 @@ trulens.core.run.RunConfig:
     mode: trulens.core.enums.Mode
     run_name: builtins.str
     source_type: builtins.str
+trulens.core.run.RunDiff:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    __annotations__: builtins.dict
+    __class__: builtins.getset_descriptor
+    __dataclass_fields__: builtins.dict
+    __delattr__: builtins.wrapper_descriptor
+    __dict__: builtins.getset_descriptor
+    __dir__: builtins.method_descriptor
+    __doc__: builtins.str
+    __eq__: builtins.function
+    __format__: builtins.method_descriptor
+    __ge__: builtins.wrapper_descriptor
+    __getattribute__: builtins.wrapper_descriptor
+    __getstate__: builtins.method_descriptor
+    __gt__: builtins.wrapper_descriptor
+    __hash__: builtins.NoneType
+    __init__: builtins.function
+    __init_subclass__: builtins.classmethod_descriptor
+    __le__: builtins.wrapper_descriptor
+    __lt__: builtins.wrapper_descriptor
+    __match_args__: builtins.tuple
+    __module__: builtins.str
+    __ne__: builtins.wrapper_descriptor
+    __new__: builtins.builtin_function_or_method
+    __reduce__: builtins.method_descriptor
+    __reduce_ex__: builtins.method_descriptor
+    __repr__: builtins.function
+    __setattr__: builtins.wrapper_descriptor
+    __sizeof__: builtins.method_descriptor
+    __str__: builtins.wrapper_descriptor
+    __subclasshook__: builtins.classmethod_descriptor
+    __weakref__: builtins.getset_descriptor
+    items_df: builtins.function
+    summary: builtins.function
 trulens.core.run.RunStatus:
   __bases__:
   - builtins.str
@@ -1934,6 +2045,12 @@ trulens.core.utils.signature:
   lows:
     main_input: builtins.function
     main_output: builtins.function
+trulens.core.utils.stats:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    bootstrap_ci: builtins.function
+    paired_permutation_pvalue: builtins.function
 trulens.core.utils.text:
   __class__: builtins.module
   highs: {}
