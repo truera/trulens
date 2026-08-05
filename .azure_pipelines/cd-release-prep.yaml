@@ -1,9 +1,9 @@
 # This is a definition for azure pipelines, not github pipelines. There are
 # differences between these systems.
 #
-# Prepares a release: bumps the version across every package, refreshes the
-# lockfile, and pushes the result to the release branch. Run it manually from the
-# Azure DevOps UI with the release branch selected.
+# Prepares a release: sets every package to the version encoded in the release
+# branch name, refreshes the lockfile, and pushes the result to that branch. Run
+# it manually from the Azure DevOps UI with the release branch selected.
 #
 # This exists because the lock was the slow, tedious part of cutting a release and
 # there is no reason a person should sit and watch it. What it deliberately does
@@ -11,22 +11,9 @@
 # and it saves exactly one click on the "Compare & pull request" banner GitHub
 # shows after the push.
 #
-# It also does not run the tests. The Snowflake end-to-end suite stays a human
-# gate, because a bad release there costs weeks rather than minutes.
-#
 # Pushing to releases/* requires the Azure Pipelines GitHub App to be on the
-# bypass list for that branch protection rule. Without it the push is rejected and
-# every other step here will have succeeded.
-
-parameters:
-  - name: bumpType
-    displayName: "Version bump"
-    type: string
-    default: patch
-    values:
-      - patch
-      - minor
-      - major
+# pull-request bypass list and required status checks to be disabled for that
+# branch protection rule. The release PR into main remains the validation gate.
 
 trigger: none
 pr: none
@@ -45,24 +32,25 @@ jobs:
 
     steps:
       # First, and before the checkout, because it needs nothing from the
-      # repository and refusing early is the whole point. This job commits and
-      # pushes, so running it against main would push a version bump straight to
-      # main. The branch picker in the UI makes that a plausible mistake.
+      # repository and refusing early is the whole point. The branch name is the
+      # release version's source of truth; there is no separate bump selector that
+      # can disagree with it.
       - bash: |
           set -euo pipefail
           echo "Selected branch: ${BUILD_SOURCEBRANCH}"
-          case "${BUILD_SOURCEBRANCH}" in
-            refs/heads/releases/*)
-              echo "Release branch, proceeding."
-              ;;
-            *)
-              echo "Refusing to run: this pipeline commits and pushes, so it only"
-              echo "runs on a releases/* branch. Re-run it with the release branch"
-              echo "selected in the Run pipeline dialog."
-              exit 1
-              ;;
-          esac
-        displayName: "Refuse to run outside a release branch"
+          PREFIX="refs/heads/releases/rc-trulens-"
+          TARGET_VERSION="${BUILD_SOURCEBRANCH#"${PREFIX}"}"
+
+          if [[ "${TARGET_VERSION}" == "${BUILD_SOURCEBRANCH}" ]] ||
+             ! [[ "${TARGET_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Refusing to run: select a branch named"
+            echo "releases/rc-trulens-X.Y.Z in the Run pipeline dialog."
+            exit 1
+          fi
+
+          echo "Target version: ${TARGET_VERSION}"
+          echo "##vso[task.setvariable variable=targetVersion]${TARGET_VERSION}"
+        displayName: "Read the target version from the release branch"
 
       - template: templates/env-setup.yaml
         parameters:
@@ -72,8 +60,30 @@ jobs:
 
       - bash: |
           set -euo pipefail
-          make bump-version-${{ parameters.bumpType }}
-        displayName: "Bump the version (${{ parameters.bumpType }})"
+          CURRENT_VERSION=$(grep -m1 '^version' src/core/pyproject.toml | sed -E 's/^version *= *"(.*)"/\1/')
+
+          if ! python - "${CURRENT_VERSION}" "$(targetVersion)" <<'PY'
+          import sys
+
+          current = tuple(map(int, sys.argv[1].split(".")))
+          target = tuple(map(int, sys.argv[2].split(".")))
+          raise SystemExit(0 if target > current else 1)
+          PY
+          then
+            echo "Refusing to run: target version $(targetVersion) must be greater"
+            echo "than current version ${CURRENT_VERSION}."
+            exit 1
+          fi
+
+          make "bump-version-$(targetVersion)"
+          make update-meta-yaml-versions
+
+          NEW_VERSION=$(grep -m1 '^version' src/core/pyproject.toml | sed -E 's/^version *= *"(.*)"/\1/')
+          if [[ "${NEW_VERSION}" != "$(targetVersion)" ]]; then
+            echo "Version mismatch: expected $(targetVersion), got ${NEW_VERSION}."
+            exit 1
+          fi
+        displayName: "Set package and conda recipe versions to $(targetVersion)"
 
       # Plain `poetry lock`, which under 2.x keeps the pins already in the file and
       # resolves only what the bump actually changed. That is the point: a release

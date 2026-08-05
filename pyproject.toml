@@ -10,7 +10,7 @@ requires = [
 # early with a clear message rather than letting either surprise happen.
 requires-poetry = ">=2.0"
 name = "trulens"
-version = "2.10.0"
+version = "2.11.0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -49,7 +49,7 @@ pre-commit = "^3.5"
 ruff = ">=0.5"
 mypy = "^1.11"
 build = "^1.2"
-twine = "^5.1"
+twine = "^6.0"
 codespell = "^2.3"
 pytest-asyncio = "^0.21.0"
 pytest-xdist = "^3.6"

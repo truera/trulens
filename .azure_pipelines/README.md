@@ -34,23 +34,28 @@ github pipelines. There are differences between these systems.
   reference while a human can still retry it.
 
 - `cd-release-prep.yaml` prepares a release. Run it **manually**, with the
-  `releases/rc-trulens-<version>` branch selected and a `bumpType` of `patch`,
-  `minor` or `major`. It bumps the version across every package, refreshes the
-  lockfile, commits, and pushes to that branch. You then open the release PR from
-  the "Compare & pull request" banner GitHub shows after the push.
+  `releases/rc-trulens-<version>` branch selected. The exact version comes from
+  the branch name: selecting `releases/rc-trulens-2.11.0` sets every package to
+  `2.11.0`. It also updates each conda recipe's version so local-source recipe
+  validation matches the package being built. The existing recipe hashes remain
+  unchanged until the packages exist on PyPI. It refreshes the lockfile, commits,
+  and pushes to that branch. You then open the release PR from the "Compare &
+  pull request" banner GitHub shows after the push.
 
   It exists so nobody has to sit and watch a dependency resolve, which was the
-  tedious part of cutting a release. It does not run the tests: the Snowflake
-  end-to-end suite stays a human gate, because a bad release there costs weeks.
+  tedious part of cutting a release. Validation remains on the release PR into
+  `main` rather than in this preparation job.
 
-  > Pushing to `releases/*` requires the Azure Pipelines GitHub App to be on the
-  > bypass list for that branch protection rule, configured from the [Branches
-  > settings](https://github.com/truera/trulens/settings/branches) panel. Without
-  > it every step succeeds and only the final push is rejected.
+  > Direct CI pushes to `releases/*` require the Azure Pipelines GitHub App on the
+  > pull-request bypass list and required status checks disabled for that branch
+  > protection rule. Keep pull requests required: the app bypasses that rule only
+  > for release preparation, while the release PR into `main` remains the human
+  > and validation gate.
 
-  > It refuses to run unless the selected branch is under `releases/`. The job
-  > commits and pushes, and the branch picker in the Run dialog makes running it
-  > against `main` an easy mistake.
+  > It refuses to run unless the selected branch matches
+  > `releases/rc-trulens-X.Y.Z`, or if that target is not greater than the current
+  > version. The branch picker in the Run dialog makes running against `main` an
+  > easy mistake, so these checks happen before any files are changed.
 
 - `cd-release-main.yaml` publishes the release. It triggers on every merge to
   `main`, which is the point at which a release is real — nothing can be published

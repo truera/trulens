@@ -956,7 +956,7 @@ files = [
     {file = "cffi-1.17.1-cp39-cp39-win_amd64.whl", hash = "sha256:d016c76bdd850f3c626af19b0542c9677ba156e4ee4fccfdd7848803533ef662"},
     {file = "cffi-1.17.1.tar.gz", hash = "sha256:1c39c6016c32bc48dd54561950ebd6836e1670f2ae46128f67cf49e789c52824"},
 ]
-markers = {main = "python_version < \"3.14\"", connectors = "python_version < \"3.14\"", dev = "sys_platform == \"linux\" and platform_python_implementation != \"PyPy\" and python_version < \"3.14\"", docs = "python_version < \"3.14\"", providers = "python_version < \"3.14\"", required = "python_version < \"3.14\"", snowflake = "python_version < \"3.14\""}
+markers = {main = "python_version < \"3.14\"", connectors = "python_version < \"3.14\"", dev = "sys_platform == \"linux\" and platform_python_implementation != \"PyPy\" and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or platform_machine != \"aarch64\" and platform_machine != \"x86_64\" and platform_machine != \"ppc64le\" and platform_machine != \"s390x\") and python_version < \"3.14\"", docs = "python_version < \"3.14\"", providers = "python_version < \"3.14\"", required = "python_version < \"3.14\"", snowflake = "python_version < \"3.14\""}
 
 [package.dependencies]
 pycparser = "*"
@@ -1075,7 +1075,7 @@ files = [
     {file = "cffi-2.1.0-cp315-cp315t-win_arm64.whl", hash = "sha256:cbb7640ce37159548d2147b5b8c241f962143d4c71231431820783f4dc78f210"},
     {file = "cffi-2.1.0.tar.gz", hash = "sha256:efc1cdd798b1aaf39b4610bba7aad28c9bea9b910f25c784ccf9ec1fa719d1f9"},
 ]
-markers = {main = "python_version >= \"3.14\"", dev = "sys_platform == \"linux\" and platform_python_implementation != \"PyPy\" and python_version >= \"3.14\"", docs = "python_version >= \"3.14\"", providers = "python_version >= \"3.14\" and platform_python_implementation != \"PyPy\"", required = "python_version >= \"3.14\""}
+markers = {main = "python_version >= \"3.14\"", dev = "sys_platform == \"linux\" and platform_python_implementation != \"PyPy\" and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or platform_machine != \"aarch64\" and platform_machine != \"x86_64\" and platform_machine != \"ppc64le\" and platform_machine != \"s390x\") and python_version >= \"3.14\"", docs = "python_version >= \"3.14\"", providers = "python_version >= \"3.14\" and platform_python_implementation != \"PyPy\"", required = "python_version >= \"3.14\""}
 
 [package.dependencies]
 pycparser = {version = "*", markers = "implementation_name != \"PyPy\""}
@@ -1371,7 +1371,7 @@ files = [
     {file = "cryptography-46.0.0-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:bf1961037309ee0bdf874ccba9820b1c2f720c2016895c44d8eb2316226c1ad5"},
     {file = "cryptography-46.0.0.tar.gz", hash = "sha256:99f64a6d15f19f3afd78720ad2978f6d8d4c68cd4eb600fab82ab1a7c2071dca"},
 ]
-markers = {connectors = "python_version < \"3.14\"", dev = "sys_platform == \"linux\"", snowflake = "python_version < \"3.14\""}
+markers = {connectors = "python_version < \"3.14\"", dev = "sys_platform == \"linux\" and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or platform_machine != \"aarch64\" and platform_machine != \"x86_64\" and platform_machine != \"ppc64le\" and platform_machine != \"s390x\")", snowflake = "python_version < \"3.14\""}
 
 [package.dependencies]
 cffi = [
@@ -2723,6 +2723,31 @@ url = "https://pypi.org/simple"
 reference = "pypi-public"
 
 [[package]]
+name = "id"
+version = "1.6.1"
+description = "A tool for generating OIDC identities"
+optional = false
+python-versions = ">=3.9"
+groups = ["dev"]
+files = [
+    {file = "id-1.6.1-py3-none-any.whl", hash = "sha256:f5ec41ed2629a508f5d0988eda142e190c9c6da971100612c4de9ad9f9b237ca"},
+    {file = "id-1.6.1.tar.gz", hash = "sha256:d0732d624fb46fd4e7bc4e5152f00214450953b9e772c182c1c22964def1a069"},
+]
+
+[package.dependencies]
+urllib3 = ">=2,<3"
+
+[package.extras]
+dev = ["build", "bump (>=1.3.2)", "id[lint,test]"]
+lint = ["bandit", "interrogate", "mypy", "ruff (<0.14.15)"]
+test = ["coverage[toml]", "pretend", "pytest", "pytest-cov"]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.org/simple"
+reference = "pypi-public"
+
+[[package]]
 name = "identify"
 version = "2.6.19"
 description = "File identification library for Python"
@@ -2774,6 +2799,7 @@ files = [
     {file = "importlib_metadata-9.0.0-py3-none-any.whl", hash = "sha256:2d21d1cc5a017bd0559e36150c21c830ab1dc304dedd1b7ea85d20f45ef3edd7"},
     {file = "importlib_metadata-9.0.0.tar.gz", hash = "sha256:a4f57ab599e6a2e3016d7595cfd72eb4661a5106e787a95bcc90c7105b831efc"},
 ]
+markers = {dev = "python_version < \"3.12\" and (platform_machine == \"AMD64\" or platform_machine == \"aarch64\" or platform_machine == \"x86_64\") or platform_machine != \"ppc64le\" and platform_machine != \"s390x\" and python_version < \"3.12\" or python_version == \"3.10\" and python_full_version < \"3.10.2\""}
 
 [package.dependencies]
 zipp = ">=3.20"
@@ -2989,6 +3015,7 @@ description = "Utility functions for Python class constructs"
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
+markers = "platform_machine == \"AMD64\" or platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or platform_machine != \"ppc64le\" and platform_machine != \"s390x\""
 files = [
     {file = "jaraco.classes-3.4.0-py3-none-any.whl", hash = "sha256:f662826b6bed8cace05e7ff873ce0f9283b5c924470fe664fff1c2f00f581790"},
     {file = "jaraco.classes-3.4.0.tar.gz", hash = "sha256:47a024b51d0239c0dd8c8540c6c7f484be3b8fcf0b2d85c13825780d3b3f3acd"},
@@ -3037,7 +3064,7 @@ description = "Low-level, pure Python DBus protocol wrapper."
 optional = false
 python-versions = ">=3.7"
 groups = ["dev"]
-markers = "sys_platform == \"linux\""
+markers = "sys_platform == \"linux\" and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or platform_machine != \"aarch64\" and platform_machine != \"x86_64\" and platform_machine != \"ppc64le\" and platform_machine != \"s390x\")"
 files = [
     {file = "jeepney-0.9.0-py3-none-any.whl", hash = "sha256:97e5714520c16fc0a45695e5365a2e11b81ea79bba796e26f9f1d178cb182683"},
     {file = "jeepney-0.9.0.tar.gz", hash = "sha256:cf0e9e845622b81e4a28df94c40345400256ec608d0e55bb8a3feaa9163f5732"},
@@ -3742,6 +3769,7 @@ description = "Store and access your passwords safely."
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
+markers = "platform_machine == \"AMD64\" or platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or platform_machine != \"ppc64le\" and platform_machine != \"s390x\""
 files = [
     {file = "keyring-24.3.1-py3-none-any.whl", hash = "sha256:df38a4d7419a6a60fea5cef1e45a948a3e8430dd12ad88b0f423c5c143906218"},
     {file = "keyring-24.3.1.tar.gz", hash = "sha256:c3327b6ffafc0e8befbdb597cacdb4928ffe5c1212f7645f186e6d9957a898db"},
@@ -5119,6 +5147,7 @@ description = "More routines for operating on iterables, beyond itertools"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
+markers = "platform_machine == \"AMD64\" or platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or platform_machine != \"ppc64le\" and platform_machine != \"s390x\""
 files = [
     {file = "more_itertools-11.1.0-py3-none-any.whl", hash = "sha256:4b65538ae22f6fed0ce4874efd317463a7489796a0939fa66824dd542125a192"},
     {file = "more_itertools-11.1.0.tar.gz", hash = "sha256:48e8f4d9e7e5878571ecf6f2b4e57634f93cd474cc8cfbd2376f2d11b396e30d"},
@@ -6892,26 +6921,6 @@ url = "https://pypi.org/simple"
 reference = "pypi-public"
 
 [[package]]
-name = "pkginfo"
-version = "1.10.0"
-description = "Query metadata from sdists / bdists / installed packages."
-optional = false
-python-versions = ">=3.6"
-groups = ["dev"]
-files = [
-    {file = "pkginfo-1.10.0-py3-none-any.whl", hash = "sha256:889a6da2ed7ffc58ab5b900d888ddce90bce912f2d2de1dc1c26f4cb9fe65097"},
-    {file = "pkginfo-1.10.0.tar.gz", hash = "sha256:5df73835398d10db79f8eecd5cd86b1f6d29317589ea70796994d49399af6297"},
-]
-
-[package.extras]
-testing = ["pytest", "pytest-cov", "wheel"]
-
-[package.source]
-type = "legacy"
-url = "https://pypi.org/simple"
-reference = "pypi-public"
-
-[[package]]
 name = "platformdirs"
 version = "4.11.0"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a `user data dir`."
@@ -7447,7 +7456,7 @@ files = [
     {file = "pycparser-3.0-py3-none-any.whl", hash = "sha256:b727414169a36b7d524c1c3e31839a521725078d7b2ff038656844266160a992"},
     {file = "pycparser-3.0.tar.gz", hash = "sha256:600f49d217304a5902ac3c37e1281c9fe94e4d0489de643a9504c5cdfdfc6b29"},
 ]
-markers = {main = "python_version < \"3.14\" or implementation_name != \"PyPy\"", connectors = "python_version < \"3.14\"", dev = "sys_platform == \"linux\" and platform_python_implementation != \"PyPy\" and (python_version < \"3.14\" or implementation_name != \"PyPy\")", docs = "python_version < \"3.14\" or implementation_name != \"PyPy\"", providers = "python_version < \"3.14\" or platform_python_implementation != \"PyPy\" and implementation_name != \"PyPy\"", required = "python_version < \"3.14\" or implementation_name != \"PyPy\"", snowflake = "python_version < \"3.14\""}
+markers = {main = "python_version < \"3.14\" or implementation_name != \"PyPy\"", connectors = "python_version < \"3.14\"", dev = "sys_platform == \"linux\" and platform_python_implementation != \"PyPy\" and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or platform_machine != \"aarch64\" and platform_machine != \"x86_64\" and platform_machine != \"ppc64le\" and platform_machine != \"s390x\") and (python_version < \"3.14\" or implementation_name != \"PyPy\")", docs = "python_version < \"3.14\" or implementation_name != \"PyPy\"", providers = "python_version < \"3.14\" or platform_python_implementation != \"PyPy\" and implementation_name != \"PyPy\"", required = "python_version < \"3.14\" or implementation_name != \"PyPy\"", snowflake = "python_version < \"3.14\""}
 
 [package.source]
 type = "legacy"
@@ -8085,7 +8094,7 @@ description = "A (partial) reimplementation of pywin32 using ctypes/cffi"
 optional = false
 python-versions = ">=3.6"
 groups = ["dev"]
-markers = "sys_platform == \"win32\""
+markers = "sys_platform == \"win32\" and platform_machine != \"ppc64le\" and platform_machine != \"s390x\""
 files = [
     {file = "pywin32-ctypes-0.2.3.tar.gz", hash = "sha256:d162dc04946d704503b2edc4d55f3dba5c1d539ead017afa00142c38b9885755"},
     {file = "pywin32_ctypes-0.2.3-py3-none-any.whl", hash = "sha256:8a1513379d709975552d202d942d9837758905c8d01eb82b8bcc30918929e7b8"},
@@ -9065,7 +9074,7 @@ description = "Python bindings to FreeDesktop.org Secret Service API"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
-markers = "sys_platform == \"linux\""
+markers = "sys_platform == \"linux\" and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or platform_machine != \"aarch64\" and platform_machine != \"x86_64\" and platform_machine != \"ppc64le\" and platform_machine != \"s390x\")"
 files = [
     {file = "secretstorage-3.5.0-py3-none-any.whl", hash = "sha256:0ce65888c0725fcb2c5bc0fdb8e5438eece02c523557ea40ce0703c266248137"},
     {file = "secretstorage-3.5.0.tar.gz", hash = "sha256:f04b8e4689cbce351744d5537bf6b1329c6fc68f91fa666f60a380edddcd11be"},
@@ -10347,7 +10356,7 @@ reference = "pypi-public"
 
 [[package]]
 name = "trulens-apps-gepa"
-version = "2.10.0"
+version = "2.11.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10364,7 +10373,7 @@ url = "src/apps/gepa"
 
 [[package]]
 name = "trulens-apps-langchain"
-version = "2.10.0"
+version = "2.11.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10385,7 +10394,7 @@ url = "src/apps/langchain"
 
 [[package]]
 name = "trulens-apps-langgraph"
-version = "2.10.0"
+version = "2.11.0"
 description = "Library to systematically track and evaluate LangGraph based applications."
 optional = false
 python-versions = "^3.9"
@@ -10411,7 +10420,7 @@ url = "src/apps/langgraph"
 
 [[package]]
 name = "trulens-apps-llamaindex"
-version = "2.10.0"
+version = "2.11.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10435,7 +10444,7 @@ url = "src/apps/llamaindex"
 
 [[package]]
 name = "trulens-benchmark"
-version = "2.10.0"
+version = "2.11.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10453,7 +10462,7 @@ url = "src/benchmark"
 
 [[package]]
 name = "trulens-connectors-snowflake"
-version = "2.10.0"
+version = "2.11.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9,<3.14"
@@ -10473,7 +10482,7 @@ url = "src/connectors/snowflake"
 
 [[package]]
 name = "trulens-core"
-version = "2.10.0"
+version = "2.11.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10509,7 +10518,7 @@ url = "src/core"
 
 [[package]]
 name = "trulens-dashboard"
-version = "2.10.0"
+version = "2.11.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9,!=3.9.7"
@@ -10539,7 +10548,7 @@ url = "src/dashboard"
 
 [[package]]
 name = "trulens-eval"
-version = "2.10.0"
+version = "2.11.0"
 description = "Backwards-compatibility package for API of trulens_eval<1.0.0 using API of trulens-*>=1.0.0."
 optional = false
 python-versions = "^3.9,!=3.9.7"
@@ -10558,7 +10567,7 @@ url = "src/trulens_eval"
 
 [[package]]
 name = "trulens-feedback"
-version = "2.10.0"
+version = "2.11.0"
 description = "A TruLens extension package implementing feedback functions for LLM App evaluation."
 optional = false
 python-versions = "^3.9"
@@ -10581,7 +10590,7 @@ url = "src/feedback"
 
 [[package]]
 name = "trulens-hotspots"
-version = "2.10.0"
+version = "2.11.0"
 description = "Library and command-line tool to list features lowering your evaluation score."
 optional = false
 python-versions = "^3.9"
@@ -10601,7 +10610,7 @@ url = "src/hotspots"
 
 [[package]]
 name = "trulens-otel-semconv"
-version = "2.10.0"
+version = "2.11.0"
 description = "Semantic conventions for spans produced by TruLens."
 optional = false
 python-versions = "^3.9"
@@ -10619,7 +10628,7 @@ url = "src/otel/semconv"
 
 [[package]]
 name = "trulens-providers-anthropic"
-version = "2.10.0"
+version = "2.11.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10639,7 +10648,7 @@ url = "src/providers/anthropic"
 
 [[package]]
 name = "trulens-providers-bedrock"
-version = "2.10.0"
+version = "2.11.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10659,7 +10668,7 @@ url = "src/providers/bedrock"
 
 [[package]]
 name = "trulens-providers-cortex"
-version = "2.10.0"
+version = "2.11.0"
 description = "A TruLens extension package adding Snowflake Cortex support for LLM App evaluation."
 optional = false
 python-versions = "^3.9,<3.14"
@@ -10682,7 +10691,7 @@ url = "src/providers/cortex"
 
 [[package]]
 name = "trulens-providers-google"
-version = "2.10.0"
+version = "2.11.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10702,7 +10711,7 @@ url = "src/providers/google"
 
 [[package]]
 name = "trulens-providers-huggingface"
-version = "2.10.0"
+version = "2.11.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10725,7 +10734,7 @@ url = "src/providers/huggingface"
 
 [[package]]
 name = "trulens-providers-langchain"
-version = "2.10.0"
+version = "2.11.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10744,7 +10753,7 @@ url = "src/providers/langchain"
 
 [[package]]
 name = "trulens-providers-litellm"
-version = "2.10.0"
+version = "2.11.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10763,7 +10772,7 @@ url = "src/providers/litellm"
 
 [[package]]
 name = "trulens-providers-openai"
-version = "2.10.0"
+version = "2.11.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -10783,26 +10792,29 @@ url = "src/providers/openai"
 
 [[package]]
 name = "twine"
-version = "5.1.1"
+version = "6.2.0"
 description = "Collection of utilities for publishing packages on PyPI"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "twine-5.1.1-py3-none-any.whl", hash = "sha256:215dbe7b4b94c2c50a7315c0275d2258399280fbb7d04182c7e55e24b5f93997"},
-    {file = "twine-5.1.1.tar.gz", hash = "sha256:9aa0825139c02b3434d913545c7b847a21c835e11597f5255842d457da2322db"},
+    {file = "twine-6.2.0-py3-none-any.whl", hash = "sha256:418ebf08ccda9a8caaebe414433b0ba5e25eb5e4a927667122fbe8f829f985d8"},
+    {file = "twine-6.2.0.tar.gz", hash = "sha256:e5ed0d2fd70c9959770dce51c8f39c8945c574e18173a7b81802dab51b4b75cf"},
 ]
 
 [package.dependencies]
-importlib-metadata = ">=3.6"
-keyring = ">=15.1"
-pkginfo = ">=1.8.1,<1.11"
+id = "*"
+keyring = {version = ">=21.2.0", markers = "platform_machine != \"ppc64le\" and platform_machine != \"s390x\""}
+packaging = ">=24.0"
 readme-renderer = ">=35.0"
 requests = ">=2.20"
 requests-toolbelt = ">=0.8.0,<0.9.0 || >0.9.0"
 rfc3986 = ">=1.4.0"
 rich = ">=12.0.0"
 urllib3 = ">=1.26.0"
+
+[package.extras]
+keyring = ["keyring (>=21.2.0)"]
 
 [package.source]
 type = "legacy"
@@ -11857,6 +11869,7 @@ files = [
     {file = "zipp-4.1.0-py3-none-any.whl", hash = "sha256:25ad4e16390cd314347dd8f1de67a2ac538ae658ed4ab9db16029c07c188e97f"},
     {file = "zipp-4.1.0.tar.gz", hash = "sha256:4cb57381f544315db7688e976e922a2b18cdb513d21cc194eb42232ba2a3e602"},
 ]
+markers = {dev = "python_version < \"3.12\" and (platform_machine == \"AMD64\" or platform_machine == \"aarch64\" or platform_machine == \"x86_64\") or platform_machine != \"ppc64le\" and platform_machine != \"s390x\" and python_version < \"3.12\" or python_version == \"3.10\" and python_full_version < \"3.10.2\""}
 
 [package.extras]
 check = ["pytest-checkdocs (>=2.14)", "pytest-ruff (>=0.2.1) ; sys_platform != \"cygwin\""]
@@ -11991,4 +12004,4 @@ reference = "pypi-public"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "ae4825e17aefb5ec23e832f26b2ca7fc23820bbca33ea6cebf374a87762e2e7f"
+content-hash = "c36890efa4fccb4f082502a2e40bbe0f0e58b53cd9a9b9634a3f333472aa01d4"

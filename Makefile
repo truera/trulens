@@ -384,7 +384,7 @@ zip-wheels:
 	poetry run ./zip_wheels.sh
 
 
-# Usage: make bump-version-patch
+# Usage: make bump-version-X.Y.Z
 bump-version-%: $(POETRY_DIRS)
 	for dir in $(POETRY_DIRS); do \
 		echo "Updating $$dir version"; \
@@ -397,6 +397,9 @@ bump-version-%: $(POETRY_DIRS)
 # This should be run AFTER the packages have been released to PyPI
 update-meta-yaml:
 	poetry run python update_meta_yaml.py
+
+update-meta-yaml-versions:
+	poetry run python update_meta_yaml.py --version-only
 
 
 ## Step: Upload wheels to pypi
@@ -420,6 +423,7 @@ upload-%: clean build
 upload-all: clean build
 	make zip-wheels \
 		&& make build \
+		&& poetry run twine check dist/**/*.whl dist/**/*.tar.gz \
 		&& poetry run twine upload --skip-existing dist/**/*.whl \
 		&& poetry run twine upload --skip-existing dist/**/*.tar.gz
 
