@@ -236,7 +236,7 @@ run.compute_metrics([my_groundedness_metric, my_relevance_metric])
 run.get_records()
 ```
 
-For more details on configuring batch evaluation, see the `RunConfig` API reference and the [Run API documentation](../../reference/trulens/core/run.md).
+For the full set of `RunConfig` fields and run methods, see `trulens.core.run`.
 
 ## Comparing App Versions
 

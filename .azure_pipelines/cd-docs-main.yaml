@@ -1,0 +1,37 @@
+# This is a definition for azure pipelines, not github pipelines. There are
+# differences between these systems.
+#
+# Publishes the documentation site to the gh-pages branch, on demand.
+#
+# This pipeline used to trigger on every merge to main and work out for itself
+# whether a release had landed, by comparing the version in src/core/pyproject.toml
+# against the previous commit. That decision now lives in cd-release-main.yaml,
+# which publishes the docs as a stage after the release reaches PyPI. Two things
+# improve by moving it there: trulens.org can no longer document a version that is
+# not yet installable, and the docs build from the exact release commit rather than
+# from whatever main's tip happens to be by the time a separate pipeline starts.
+#
+# What remains here is the escape hatch that gate always allowed via a manual run:
+# publishing a docs-only fix between releases. Run it from the Azure DevOps UI.
+#
+# The publish steps themselves live in templates/deploy-docs.yaml, shared with the
+# release pipeline so the two cannot drift. The traps they guard against, notably
+# the LFS-aware checkout, are documented there.
+
+trigger: none
+pr: none
+
+jobs:
+  - job: DocsDeploy
+    displayName: "Deploy Documentation"
+    pool:
+      vmImage: "ubuntu-latest"
+    timeoutInMinutes: 30
+
+    variables:
+      # Snowflake libraries are not available on >=3.12. Matches ci-docs-pr.yaml,
+      # which sets the same version through a single-entry matrix.
+      python-version: "3.11"
+
+    steps:
+      - template: templates/deploy-docs.yaml
