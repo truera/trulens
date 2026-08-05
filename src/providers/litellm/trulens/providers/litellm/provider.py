@@ -103,6 +103,10 @@ class LiteLLM(llm_provider.LLMProvider):
 
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "gpt-4o-mini"
 
+    @property
+    def reports_costs(self) -> bool:
+        return True
+
     model_engine: str
     """The LiteLLM completion model. Defaults to `gpt-4o-mini`."""
 

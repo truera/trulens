@@ -619,6 +619,10 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                     "eval_cost_snowflake": 0.0,  # Initialize to 0.0, calculated below (Snowflake credits)
                     "cost_currency": "USD",  # Initialize to "USD", calculated below
                     "feedback_results": {},  # Initialize to empty map, calculated below
+                    # Sampling decision (populated from EVAL_DECISION spans)
+                    "sampled": None,  # None until an EVAL_DECISION span is found
+                    "sample_rate": None,
+                    "eval_decision_reason": None,
                 }
 
             record_events[record_id]["events"].append(event)
@@ -663,6 +667,18 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                 else:
                     record_events[record_id]["eval_cost"] += amount
                 # Do not add EVAL costs to total_cost to avoid lumping
+            elif span_type == SpanAttributes.SpanType.EVAL_DECISION.value:
+                # Extract sampling decision metadata.
+                record_events[record_id]["sample_rate"] = record_attributes.get(
+                    SpanAttributes.EVAL_DECISION.SAMPLE_RATE
+                )
+                reason = record_attributes.get(
+                    SpanAttributes.EVAL_DECISION.EVAL_DECISION_REASON
+                )
+                record_events[record_id]["eval_decision_reason"] = reason
+                record_events[record_id]["sampled"] = (
+                    reason == "evaluated" if reason else None
+                )
             else:
                 # For non-eval spans, update total_cost and tokens
                 self._update_cost_info_otel(
@@ -856,6 +872,10 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                 "eval_cost_snowflake": record_data["eval_cost_snowflake"],
                 "cost_currency": record_data["cost_currency"],
                 "num_events": len(record_data["events"]),
+                # Sampling decision metadata
+                "sampled": record_data["sampled"],
+                "sample_rate": record_data["sample_rate"],
+                "eval_decision_reason": record_data["eval_decision_reason"],
             }
 
             # Add feedback results

@@ -38,6 +38,27 @@ logger = logging.getLogger(__name__)
 
 REASONING_MODEL_PREFIXES = ("o1", "o3", "o4", "gpt-5", "deepseek-r1")
 
+
+def _validate_score_range(
+    rating: float, min_score_val: int, max_score_val: int
+) -> float:
+    """Check that a structured-output rating is within the configured scale.
+
+    Mirrors the range validation that `re_configured_rating` applies to plain
+    string responses, so structured JSON responses cannot silently normalize
+    to values outside [0, 1].
+
+    Raises:
+        ParseError: If the rating falls outside
+            [`min_score_val`, `max_score_val`].
+    """
+    if not (min_score_val <= rating <= max_score_val):
+        raise feedback_generated.ParseError(
+            f"{min_score_val}-{max_score_val} rating", str(rating)
+        )
+    return rating
+
+
 # --- Shared capability cache for LLM providers ---
 _capabilities_lock = threading.Lock()
 
@@ -247,11 +268,13 @@ class LLMProvider(core_provider.Provider):
         if isinstance(parsed_json, dict) and "score" in parsed_json:
             try:
                 raw_score = float(parsed_json["score"])
+            except (TypeError, ValueError):
+                normalized_score = -1.0
+            else:
+                _validate_score_range(raw_score, min_score_val, max_score_val)
                 normalized_score = (raw_score - min_score_val) / (
                     max_score_val - min_score_val
                 )
-            except (TypeError, ValueError):
-                normalized_score = -1.0
 
             return normalized_score, {"reason": parsed_json}
 
@@ -261,9 +284,17 @@ class LLMProvider(core_provider.Provider):
             for item in parsed_json:
                 if isinstance(item, dict) and "score" in item:
                     try:
-                        scores.append(float(item["score"]))
+                        candidate = float(item["score"])
                     except (TypeError, ValueError):
-                        pass
+                        continue
+                    if min_score_val <= candidate <= max_score_val:
+                        scores.append(candidate)
+                    else:
+                        logger.warning(
+                            "Rating must be in [%s, %s].",
+                            min_score_val,
+                            max_score_val,
+                        )
             if scores:
                 avg_raw = sum(scores) / len(scores)
                 normalized_score = (avg_raw - min_score_val) / (
@@ -362,15 +393,19 @@ class LLMProvider(core_provider.Provider):
                     score_val = float(json_score)
                 except (TypeError, ValueError):
                     score_val = -1.0
+                else:
+                    _validate_score_range(
+                        score_val, min_score_val, max_score_val
+                    )
+                    score_val = (score_val - min_score_val) / (
+                        max_score_val - min_score_val
+                    )
                 reasons = {
                     "reason": (
                         f"{criteria_field}: {json_criteria}\n"
                         f"{supporting_evidence_field}: {json_evidence}"
                     )
                 }
-                score_val = (score_val - min_score_val) / (
-                    max_score_val - min_score_val
-                )
                 return score_val, reasons
 
         if isinstance(response, feedback_output_schemas.ChainOfThoughtResponse):
@@ -730,6 +765,218 @@ class LLMProvider(core_provider.Provider):
                     output_space=output_space,
                 )
             )
+
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
+
+    @staticmethod
+    def _join_context_passages(context: Union[str, List[str]]) -> str:
+        """Join retrieved passages into one block for a format-agnostic judge.
+
+        `Selector.select_context(collect_list=True)` hands the evaluator a list
+        of chunks. Unlike `_number_citation_sources`, no `[N]` numbering is
+        added: `CitationAccuracy` does not resolve numeric markers, and
+        injecting numbers the response never used would invent a citation
+        format the pipeline is not actually using. A string is passed through.
+        """
+        if isinstance(context, (list, tuple)):
+            return "\n\n".join(str(passage) for passage in context)
+        return context
+
+    def citation_accuracy(
+        self,
+        response: str,
+        context: Union[str, List[str]],
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
+        examples: Optional[List[str]] = None,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+        **kwargs,
+    ) -> float:
+        """
+        Uses chat completion model. A function that completes a template to
+        check whether the citations in a response are supported by the
+        retrieved context, on a graded 0-3 scale.
+
+        Choosing between this and `citation_attribution`:
+
+        - Use `citation_attribution` when your pipeline emits explicit `[N]`
+          markers and you want a binary pass/fail on misattribution: a claim
+          cited to a passage that does not support it.
+        - Use `citation_accuracy` when citations are inline, prose, or
+          otherwise not `[N]`-numbered, or when you want a graded score rather
+          than a hard fail so you can track citation quality across runs.
+
+        Note that unlike `citation_attribution`, this metric **penalizes
+        missing citations**: a claim that the context supports but that the
+        response leaves uncited lowers the score. `citation_attribution`
+        deliberately ignores uncited claims. Prefer that one if under-citation
+        is acceptable in your pipeline and only misattribution matters.
+
+        Example:
+            ```python
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.citation_accuracy,
+                name="Citation Accuracy",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                examples=examples,
+                selectors={
+                    "response": Selector.select_record_output(),
+                    "context": Selector.select_context(
+                        collect_list=True
+                    ),
+                },
+                agg=np.mean,
+            )
+            ```
+
+        Args:
+            response (str): The response containing citations to evaluate.
+            context (Union[str, List[str]]): The retrieved context the citations
+                should map to. A list of passages (as returned by
+                `Selector.select_context(collect_list=True)`) is joined with blank
+                lines into a single block; no `[N]` numbering is added, since this
+                metric does not resolve numeric markers. A string is used as-is.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
+            examples (Optional[List[str]]): Optional few-shot examples to guide the evaluation. Defaults to None.
+            min_score_val (int): The minimum score value. Defaults to 0.
+            max_score_val (int): The maximum score value. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+
+        Returns:
+            float: A value between 0.0 (citations inaccurate) and 1.0 (citations accurate).
+        """
+        # Handle deprecated parameter names
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
+
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        system_prompt = templates_rag.CitationAccuracy.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            additional_instructions=additional_instructions,
+            examples=examples,
+            output_space=output_space,
+        )
+
+        return self.generate_score(
+            system_prompt=system_prompt,
+            user_prompt=str.format(
+                templates_rag.CitationAccuracy.user_prompt,
+                response=response,
+                context=self._join_context_passages(context),
+            ),
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
+
+    def citation_accuracy_with_cot_reasons(
+        self,
+        response: str,
+        context: Union[str, List[str]],
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
+        examples: Optional[List[str]] = None,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+        **kwargs,
+    ) -> Tuple[float, Dict]:
+        """
+        Uses chat completion model. A function that completes a template to
+        check whether the citations in a response are supported by the
+        retrieved context. Also uses chain of thought methodology and emits
+        the reasons.
+
+        Same check as `citation_accuracy`; see that method for how this metric
+        compares to `citation_attribution` (format-agnostic and graded here,
+        `[N]`-marker-based and binary there) and for the note that this metric
+        penalizes missing citations while `citation_attribution` does not.
+
+        Example:
+            ```python
+            from trulens.core import Metric, Selector
+            feedback = Metric(
+                implementation=provider.citation_accuracy_with_cot_reasons,
+                name="Citation Accuracy",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                examples=examples,
+                selectors={
+                    "response": Selector.select_record_output(),
+                    "context": Selector.select_context(
+                        collect_list=True
+                    ),
+                },
+                agg=np.mean,
+            )
+            ```
+
+        Args:
+            response (str): The response containing citations to evaluate.
+            context (Union[str, List[str]]): The retrieved context the citations
+                should map to. A list of passages (as returned by
+                `Selector.select_context(collect_list=True)`) is joined with blank
+                lines into a single block; no `[N]` numbering is added, since this
+                metric does not resolve numeric markers. A string is used as-is.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
+            examples (Optional[List[str]]): Optional few-shot examples to guide the evaluation. Defaults to None.
+            min_score_val (int): The minimum score value. Defaults to 0.
+            max_score_val (int): The maximum score value. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+
+        Returns:
+            Tuple[float, Dict]: A value between 0.0 (citations inaccurate) and 1.0 (citations accurate), and a dictionary with the reasons for the score.
+        """
+        # Handle deprecated parameter names
+        additional_instructions = deprecation_utils.handle_deprecated_kwarg(
+            kwargs,
+            "custom_instructions",
+            "additional_instructions",
+            additional_instructions,
+        )
+
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        system_prompt = templates_rag.CitationAccuracy.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            additional_instructions=additional_instructions,
+            examples=examples,
+            output_space=output_space,
+        )
+
+        user_prompt = str.format(
+            templates_rag.CitationAccuracy.user_prompt,
+            response=response,
+            context=self._join_context_passages(context),
+        )
+        user_prompt = user_prompt.replace(
+            "CITATION ACCURACY:", templates_base.COT_REASONS_TEMPLATE
+        )
 
         return self.generate_score_and_reasons(
             system_prompt=system_prompt,
@@ -2872,6 +3119,168 @@ class LLMProvider(core_provider.Provider):
 
         return statements
 
+    @staticmethod
+    def _number_citation_sources(source: Union[str, List[str]]) -> str:
+        """Render sources as ``[1] ...``, ``[2] ...`` so ``[N]`` markers resolve."""
+        if isinstance(source, (list, tuple)):
+            return "\n\n".join(
+                f"[{i + 1}] {passage}" for i, passage in enumerate(source)
+            )
+        return source
+
+    def citation_attribution(
+        self,
+        question: str,
+        source: Union[str, List[str]],
+        statement: str,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
+        examples: Optional[List[str]] = None,
+        min_score_val: int = 0,
+        max_score_val: int = 1,
+        temperature: float = 0.0,
+        **kwargs,
+    ) -> float:
+        """Check citation-attribution faithfulness of a cited answer.
+
+        Unlike groundedness (does the source support the statement *somewhere*),
+        this checks attribution: whether each ``[N]`` citation marker in the
+        statement points to the SOURCE passage that supports the specific claim
+        it is attached to. It catches misattribution: a claim cited to passage
+        ``[A]`` that does not support it, even though some other passage ``[B]``
+        in the source would.
+
+        Example:
+            ```python
+            from trulens.core import Metric, Selector
+
+            f_citation = Metric(
+                implementation=provider.citation_attribution,
+                name="Citation Attribution",
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                examples=examples,
+                selectors={
+                    "question": Selector.select_record_input(),
+                    "source": Selector.select_context(collect_list=True),
+                    "statement": Selector.select_record_output(),
+                },
+            )
+            ```
+
+        Args:
+            question (str): The question being answered.
+            source (Union[str, List[str]]): The retrieved passages. A list is
+                numbered ``[1] ...``, ``[2] ...`` so the statement's ``[N]``
+                markers resolve; a pre-numbered string is used as-is.
+            statement (str): The answer, containing ``[N]`` citation markers.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
+            examples (Optional[List[str]]): Optional few-shot examples to guide the evaluation. Defaults to None.
+            min_score_val (int): The minimum score value. Defaults to 0.
+            max_score_val (int): The maximum score value. Defaults to 1.
+            temperature (float): The temperature for the LLM response. Defaults to 0.0.
+
+        Returns:
+            float: A value between min_score_val and max_score_val, normalized to
+                0.0 (a claim is misattributed) to 1.0 (every claim's citation
+                points to a passage that supports it).
+        """
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        system_prompt = (
+            templates_rag.CitationAttribution.generate_system_prompt(
+                min_score=min_score_val,
+                max_score=max_score_val,
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                examples=examples,
+                output_space=output_space,
+            )
+        )
+
+        user_prompt = templates_rag.CitationAttribution.user_prompt.format(
+            question=question,
+            source=self._number_citation_sources(source),
+            statement=statement,
+        )
+
+        return self.generate_score(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
+
+    def citation_attribution_with_cot_reasons(
+        self,
+        question: str,
+        source: Union[str, List[str]],
+        statement: str,
+        criteria: Optional[str] = None,
+        additional_instructions: Optional[str] = None,
+        examples: Optional[List[str]] = None,
+        min_score_val: int = 0,
+        max_score_val: int = 1,
+        temperature: float = 0.0,
+        **kwargs,
+    ) -> Tuple[float, Dict]:
+        """Citation-attribution faithfulness with chain-of-thought reasons.
+
+        Same check as `citation_attribution`, but also returns the reasoning for
+        the verdict (which ``[N]`` marker, if any, is misattributed).
+
+        Args:
+            question (str): The question being answered.
+            source (Union[str, List[str]]): The retrieved passages (a list is
+                numbered for ``[N]`` resolution).
+            statement (str): The answer, containing ``[N]`` citation markers.
+            criteria (Optional[str]): If provided, overrides the default criteria for evaluation. Defaults to None.
+            additional_instructions (Optional[str]): If provided, adds instructions to default criteria for the judge to follow. Defaults to None.
+            examples (Optional[List[str]]): Optional few-shot examples to guide the evaluation. Defaults to None.
+            min_score_val (int): The minimum score value. Defaults to 0.
+            max_score_val (int): The maximum score value. Defaults to 1.
+            temperature (float): The temperature for the LLM response. Defaults to 0.0.
+
+        Returns:
+            Tuple[float, Dict]: A score between 0.0 and 1.0 and a dictionary with
+                the reasons for the evaluation.
+        """
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        system_prompt = (
+            templates_rag.CitationAttribution.generate_system_prompt(
+                min_score=min_score_val,
+                max_score=max_score_val,
+                criteria=criteria,
+                additional_instructions=additional_instructions,
+                examples=examples,
+                output_space=output_space,
+            )
+        )
+
+        user_prompt = templates_rag.CitationAttribution.user_prompt.format(
+            question=question,
+            source=self._number_citation_sources(source),
+            statement=statement,
+        )
+        user_prompt = user_prompt.replace(
+            "CITATION ATTRIBUTION:", templates_base.COT_REASONS_TEMPLATE
+        )
+
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
+
     def groundedness_measure_with_cot_reasons(
         self,
         source: str,
@@ -3200,6 +3609,10 @@ class LLMProvider(core_provider.Provider):
                     min_score_val=0,
                     max_score_val=1,
                 )
+                # generate_score returns (score, reason) when the judge
+                # responds with structured JSON; compare on the score alone.
+                if isinstance(score, tuple):
+                    score = score[0]
             except Exception:
                 score = 0  # assume not abstention if abstention scoring fails
             return score
@@ -3216,6 +3629,10 @@ class LLMProvider(core_provider.Provider):
                 min_score_val=0,
                 max_score_val=1,
             )
+            # generate_score returns (score, reason) when the judge
+            # responds with structured JSON; compare on the score alone.
+            if isinstance(score, tuple):
+                score = score[0]
             return score
 
         if filter_trivial_statements:
