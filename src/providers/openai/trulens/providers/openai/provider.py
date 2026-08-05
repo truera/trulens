@@ -61,6 +61,21 @@ class OpenAI(llm_provider.LLMProvider):
         openai_provider = OpenAI()
         ```
 
+        OpenAI-compatible endpoints work by forwarding client kwargs such as
+        `base_url` and `api_key` (OpenRouter, Together, Fireworks, DaoXE,
+        vLLM, and similar):
+
+        ```python
+        import os
+        from trulens.providers.openai import OpenAI
+
+        provider = OpenAI(
+            model_engine="gpt-4o-mini",
+            api_key=os.environ["OPENAI_API_KEY"],
+            base_url=os.environ["OPENAI_BASE_URL"],  # e.g. https://openrouter.ai/api/v1
+        )
+        ```
+
     Args:
         model_engine: The OpenAI completion model. Defaults to
             `gpt-4o-mini`
@@ -69,10 +84,15 @@ class OpenAI(llm_provider.LLMProvider):
             [OpenAIEndpoint][trulens.providers.openai.endpoint.OpenAIEndpoint]
             which are then passed to
             [OpenAIClient][trulens.providers.openai.endpoint.OpenAIClient]
-            and finally to the OpenAI client.
+            and finally to the OpenAI client (for example `api_key`,
+            `base_url` for OpenAI-compatible endpoints).
     """
 
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "gpt-4o-mini"
+
+    @property
+    def reports_costs(self) -> bool:
+        return True
 
     # Endpoint cannot presently be serialized but is constructed in __init__
     # below so it is ok.

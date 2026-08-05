@@ -198,6 +198,9 @@ class SpanAttributes:
         GUARDRAIL = "guardrail"
         """A guardrail check execution."""
 
+        EVAL_DECISION = "eval_decision"
+        """Lightweight span recording whether a record was sampled for evaluation."""
+
     class UNKNOWN:
         """Attributes relevant for spans that could not be categorized otherwise."""
 
@@ -511,6 +514,28 @@ class SpanAttributes:
 
         THRESHOLD = base + ".threshold"
         """Configured threshold for the guardrail check."""
+
+    class EVAL_DECISION:
+        """Lightweight span recording whether a record was sampled for evaluation.
+
+        One ``EVAL_DECISION`` span is emitted per record that flows through
+        the evaluator (both evaluated and skipped), so that
+        ``get_records_and_feedback`` can project ``sampled`` /
+        ``sample_rate`` / ``eval_decision_reason`` columns and the
+        dashboard can show evaluation coverage.
+        """
+
+        base = BASE_SCOPE + ".eval_decision"
+
+        SAMPLE_RATE = base + ".sample_rate"
+        """The sample_rate that was active when this record was processed."""
+
+        EVAL_DECISION_REASON = base + ".eval_decision_reason"
+        """Why this record was or was not evaluated.
+
+        One of: ``evaluated``, ``not_configured``, ``not_sampled``,
+        ``throttled``, ``over_budget``.
+        """
 
     class INLINE_EVAL:
         """Attributes specific to inline evaluation instrumentation."""

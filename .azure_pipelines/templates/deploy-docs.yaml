@@ -1,0 +1,58 @@
+# This is a definition for azure pipelines, not github pipelines. There are
+# differences between these systems.
+#
+# Builds the documentation site and publishes it to the gh-pages branch.
+#
+# Extracted into a template because two pipelines publish docs and they must
+# publish identically: cd-release-main.yaml does it as a stage after a release
+# reaches PyPI, and cd-docs-main.yaml does it on demand for a docs-only fix
+# between releases. Duplicating these steps would let the two drift, and the
+# traps below are not ones to rediscover twice.
+#
+# The including job must define a `python-version` variable, which env-setup.yaml
+# feeds to UsePythonVersion.
+
+steps:
+  - template: env-setup.yaml
+    parameters:
+      # Both are required here specifically. Every image in the repository is
+      # LFS-tracked, so a checkout without lfs leaves them as ~130 byte pointer
+      # stubs that the build copies into the site without complaint -- that is how
+      # every image on trulens.org came to be broken at once. persistCredentials
+      # is needed because gh-deploy commits and pushes to gh-pages.
+      lfs: true
+      persistCredentials: true
+
+  # Fails in milliseconds and before the build, so a bad checkout costs nothing.
+  # Reads the working tree rather than the rendered site, which is what lets it
+  # run this early.
+  - bash: |
+      make check-no-lfs-pointers
+    displayName: "Fail if any doc asset is an LFS pointer"
+
+  # Not --strict, on purpose. mkdocstrings resolves third-party inventories over
+  # the network and answered HTTP 429 for typing-extensions during a real deploy;
+  # under --strict that aborts the publish. Blocking a release's docs on somebody
+  # else's rate limit is the wrong trade, and ci-docs-pr.yaml already enforces
+  # --strict before merge, where a human can retry it.
+  - bash: |
+      set -euo pipefail
+      git config user.name "azure-pipelines[bot]"
+      git config user.email "azure-pipelines[bot]@users.noreply.github.com"
+      poetry sync --with docs
+      poetry run properdocs gh-deploy \
+        --force \
+        --message "Deployed {sha} from CI with ProperDocs {version}"
+    displayName: "Build and publish to gh-pages"
+
+  # The deploy is what makes the site, so verifying the artifact it just pushed is
+  # the only check that speaks to what visitors will get. Reads from the gh-pages
+  # branch rather than over HTTP, because GitHub Pages takes time to serve a fresh
+  # commit and a poll loop here would be flaky.
+  - bash: |
+      set -euo pipefail
+      git fetch origin gh-pages --depth 1
+      rm -rf /tmp/ghp && mkdir -p /tmp/ghp
+      git archive origin/gh-pages | tar -x -C /tmp/ghp
+      python tools/check_no_lfs_pointers.py /tmp/ghp
+    displayName: "Verify the published site carries real images"

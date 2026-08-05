@@ -204,31 +204,35 @@
     <!-- Live project stats. The old homepage carried shields.io badges here; the
          information was worth keeping but the imagery is somebody else's design
          system. So the values are still live -- every shields badge exposes a
-         .json sibling that sends Access-Control-Allow-Origin:*, and shields
-         already does the work of authenticating against Azure DevOps and
-         aggregating pypistats, neither of which serves CORS headers directly --
-         but they are fetched and drawn in our own chrome. The values baked into
-         the HTML below are the fallback when the fetch is blocked or slow. -->
-    <div class="statstrip">
-      <a class="stat" href="https://pypi.org/project/trulens/">
+         .json sibling that sends Access-Control-Allow-Origin:* -- but they are
+         fetched and drawn in our own chrome.
+
+         No value is written into this markup. A number committed here is a number
+         that starts going stale immediately: the download count shipped at 104k
+         and was 122k within weeks, and a stale figure is worse than none, because
+         it still looks live. So the strip starts hidden and appears only once a
+         value is known, either from this page load or from the last successful
+         fetch this browser made. See the script at the end of the file. -->
+    <div class="statstrip" hidden>
+      <a class="stat" href="https://pypi.org/project/trulens/" hidden>
         <span class="k">Version</span>
-        <span class="v" data-badge="pypi/v/trulens" data-ok="^v[0-9]+(\.[0-9]+)+$">v2.10.0</span>
+        <span class="v" data-badge="pypi/v/trulens" data-ok="^v[0-9]+(\.[0-9]+)+$"></span>
       </a>
-      <a class="stat" href="https://dev.azure.com/truera/trulens/_build/latest?definitionId=8&amp;branchName=main">
+      <a class="stat" href="https://dev.azure.com/truera/trulens/_build/latest?definitionId=8&amp;branchName=main" hidden>
         <span class="k">E2E tests</span>
-        <span class="v" data-badge="azure-devops/build/truera/trulens/8/main" data-dot="passing" data-ok="^(passing|failing)$">passing<i class="dot"></i></span>
+        <span class="v" data-badge="azure-devops/build/truera/trulens/8/main" data-dot="passing" data-ok="^(passing|failing)$"><i class="dot"></i></span>
       </a>
-      <a class="stat" href="https://github.com/truera/trulens/stargazers">
+      <a class="stat" href="https://github.com/truera/trulens/stargazers" hidden>
         <span class="k">Stars</span>
-        <span class="v" data-badge="github/stars/truera/trulens" data-ok="^[0-9.]+[kM]?$">3.5k</span>
+        <span class="v" data-badge="github/stars/truera/trulens" data-ok="^[0-9.]+[kM]?$"></span>
       </a>
-      <a class="stat" href="https://pypi.org/project/trulens-core/">
+      <a class="stat" href="https://pypi.org/project/trulens-core/" hidden>
         <span class="k">Downloads</span>
-        <span class="v" data-badge="pypi/dm/trulens-core" data-ok="^[0-9.]+[kM]?/month$">104k/month</span>
+        <span class="v" data-badge="pypi/dm/trulens-core" data-ok="^[0-9.]+[kM]?/month$"></span>
       </a>
-      <a class="stat" href="https://github.com/truera/trulens/blob/main/LICENSE">
+      <a class="stat" href="https://github.com/truera/trulens/blob/main/LICENSE" hidden>
         <span class="k">License</span>
-        <span class="v" data-badge="github/license/truera/trulens" data-ok="^[A-Za-z0-9.+-]{1,14}$">MIT</span>
+        <span class="v" data-badge="github/license/truera/trulens" data-ok="^[A-Za-z0-9.+-]{1,14}$"></span>
       </a>
     </div>
   </div>
@@ -950,27 +954,92 @@ run.<span class="f">get_status</span>()  <span class="c"># RunStatus.COMPLETED</
 </footer>
 
 <script>
-// live project stats. Each value is read from the shields.io .json sibling of
-// the badge the old homepage rendered, so the number is current without the
-// page carrying anybody else's badge art. shields answers 200 with prose in the
-// value when its own upstream fails -- "rate limited by upstream service" turned
-// up on the first run -- so each value has to match the shape it is supposed to
-// be before it is allowed on the page. Anything else leaves the number baked
-// into the markup, which is why nothing here clears text first.
-document.querySelectorAll('.statstrip .v[data-badge]').forEach(function(el){
-  fetch('https://img.shields.io/' + el.dataset.badge + '.json', {cache:'no-store'})
-    .then(function(r){ return r.ok ? r.json() : null; })
-    .then(function(j){
-      if(!j || !j.value || !new RegExp(el.dataset.ok).test(j.value)) return;
-      var dot = el.querySelector('.dot');
-      el.textContent = j.value;
-      if(dot){
-        dot.className = 'dot' + (j.value === el.dataset.dot ? '' : ' dot--bad');
-        el.appendChild(dot);
-      }
-    })
-    .catch(function(){ /* keep the baked-in fallback */ });
-});
+// Live project stats.
+//
+// shields.io is the only usable source here, because it is the only one that
+// serves CORS. pypistats answers 200 with the real figure but sends no
+// Access-Control-Allow-Origin, so a browser cannot read it directly, and the Azure
+// DevOps build API needs credentials shields already holds. shields does that work
+// and exposes a .json sibling of each badge with Access-Control-Allow-Origin:*.
+//
+// Nothing is baked into the markup, and the fallback is this browser's last
+// successful fetch rather than a number somebody committed. A committed number goes
+// stale silently while still looking live -- the download count shipped at 104k and
+// was 122k within weeks. If there is no cached value and the fetch fails, the stat
+// stays hidden; if none of them resolve, the whole strip stays hidden. Showing
+// nothing is honest, showing last quarter's figure is not.
+//
+// Every value is shape-checked against data-ok before it reaches the page, from the
+// network and from the cache alike. shields answers 200 with prose in the value when
+// its own upstream fails -- "rate limited by upstream service" turned up on the
+// first run -- and a cached value could have been written by an older page.
+(function(){
+  var strip = document.querySelector('.statstrip');
+  if(!strip) return;
+
+  var NS = 'trulens.statstrip.';
+  var TIMEOUT_MS = 6000;
+  var RETRY_MS = 1500;
+
+  function remember(k, v){ try{ localStorage.setItem(NS + k, v); }catch(e){} }
+  function recall(k){ try{ return localStorage.getItem(NS + k); }catch(e){ return null; } }
+
+  // A hidden element still matches :first-child, so the divider and padding reset
+  // cannot be left to CSS alone once any stat can be absent.
+  function markLead(){
+    var lead = null;
+    strip.querySelectorAll('.stat').forEach(function(s){
+      s.classList.remove('stat--lead');
+      if(!lead && !s.hidden) lead = s;
+    });
+    if(lead) lead.classList.add('stat--lead');
+  }
+
+  function paint(stat, el, value){
+    var dot = el.querySelector('.dot');
+    el.textContent = value;
+    if(dot){
+      dot.className = 'dot' + (value === el.dataset.dot ? '' : ' dot--bad');
+      el.appendChild(dot);
+    }
+    stat.hidden = false;
+    strip.hidden = false;
+    markLead();
+  }
+
+  // A cold shields cache times out rather than answering, then serves the same
+  // request in well under a second, so one retry converts most of those misses.
+  function read(el, attempt){
+    var ctrl = new AbortController();
+    var timer = setTimeout(function(){ ctrl.abort(); }, TIMEOUT_MS);
+    return fetch('https://img.shields.io/' + el.dataset.badge + '.json',
+                 {cache:'no-store', signal:ctrl.signal})
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(j){ return j && j.value; })
+      .catch(function(){ return null; })
+      .then(function(v){
+        clearTimeout(timer);
+        if(v && new RegExp(el.dataset.ok).test(v)) return v;
+        if(attempt >= 2) return null;
+        return new Promise(function(go){ setTimeout(go, RETRY_MS); })
+          .then(function(){ return read(el, attempt + 1); });
+      });
+  }
+
+  strip.querySelectorAll('.stat').forEach(function(stat){
+    var el = stat.querySelector('.v[data-badge]');
+    if(!el) return;
+
+    var cached = recall(el.dataset.badge);
+    if(cached && new RegExp(el.dataset.ok).test(cached)) paint(stat, el, cached);
+
+    read(el, 1).then(function(v){
+      if(!v) return;
+      remember(el.dataset.badge, v);
+      paint(stat, el, v);
+    });
+  });
+})();
 
 // scroll reveal
 var io = new IntersectionObserver(function(es){

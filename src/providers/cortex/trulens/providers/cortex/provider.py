@@ -26,6 +26,10 @@ class Cortex(
     DEFAULT_SNOWPARK_SESSION: Optional[Session] = None
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "llama3.3-70b"
 
+    @property
+    def reports_costs(self) -> bool:
+        return True
+
     model_engine: str
     endpoint: cortex_endpoint.CortexEndpoint
     snowpark_session: Session
