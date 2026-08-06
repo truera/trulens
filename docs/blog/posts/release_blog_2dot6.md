@@ -63,7 +63,7 @@ When you use your favorite coding assistant to work on TruLens, your assistant a
 
 This means your AI assistant can help you write code that passes CI on the first try, follows our conventions, and fits naturally into the codebase architecture.
 
-**Want to contribute?** Check out our updated [contribution guide](https://www.trulens.org/contributing/) and let your AI assistant handle the style details.
+**Want to contribute?** Check out our updated [contribution guide](https://www.trulens.org/contributing/development/) and let your AI assistant handle the style details.
 
 ---
 
@@ -150,7 +150,7 @@ Ready to try TruLens 2.6?
 - [TruLens Documentation](https://www.trulens.org/)
 - [GitHub Repository](https://github.com/truera/trulens)
 - [Quickstart Notebook](https://github.com/truera/trulens/tree/main/examples/quickstart)
-- [PostgreSQL Setup Guide](https://www.trulens.org/component_guides/logging/where_to_log/postgres/)
+- [PostgreSQL Setup Guide](https://www.trulens.org/component_guides/logging/where_to_log/log_in_postgres/)
 
 ---
 **Have feedback or feature requests?** Open an [issue](https://github.com/truera/trulens/issues) or [discussion](https://github.com/truera/trulens/discussions) on GitHub.
