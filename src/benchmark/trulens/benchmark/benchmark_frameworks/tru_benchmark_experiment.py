@@ -62,7 +62,7 @@ class TruBenchmarkExperiment:
     def __init__(
         self,
         feedback_fn: Callable,
-        agg_funcs: List[core_feedback.AggCallable],
+        agg_funcs: List[core_metric.AggCallable],
         benchmark_params: BenchmarkParams,
     ):
         """Create a benchmark experiment class which defines custom feedback
