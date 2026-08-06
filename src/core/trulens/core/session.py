@@ -35,6 +35,7 @@ from trulens.core.feedback import feedback as core_feedback
 from trulens.core.metric import metric as core_metric
 from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import app as app_schema
+from trulens.core.schema import conversation as conversation_schema
 from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import groundtruth as groundtruth_schema
@@ -888,6 +889,22 @@ class TruSession(
         """
 
         return self.connector.get_apps()
+
+    def get_conversations(
+        self, app_id: Optional[types_schema.AppID] = None
+    ) -> Dict[types_schema.ConversationID, conversation_schema.Conversation]:
+        """Get conversations reconstructed from recorded spans."""
+        return self.connector.get_conversations(app_id=app_id)
+
+    def get_records_by_conversation(
+        self,
+        conversation_id: types_schema.ConversationID,
+        app_id: Optional[types_schema.AppID] = None,
+    ) -> List[record_schema.Record]:
+        """Get a conversation's records ordered chronologically."""
+        return self.connector.get_records_by_conversation(
+            conversation_id=conversation_id, app_id=app_id
+        )
 
     def get_records_and_feedback(
         self,

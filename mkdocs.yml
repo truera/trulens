@@ -234,6 +234,7 @@ nav:
           # Title labels of these notebooks come from within the notebooks
           # themselves and will be overridden if specified here.
           - getting_started/quickstarts/quickstart.ipynb
+          - getting_started/quickstarts/conversation_evaluation.ipynb
           - getting_started/quickstarts/groundtruth_evals.ipynb
           - getting_started/quickstarts/blocking_guardrails.ipynb
           - getting_started/quickstarts/groundtruth_dataset_persistence.ipynb
