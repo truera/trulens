@@ -23,6 +23,7 @@ from typing import (
     Iterable,
     Iterator,
     List,
+    Literal,
     Optional,
     Sequence,
     Set,
@@ -785,12 +786,31 @@ class App(
                 record_ids=record_ids, timeout=timeout
             )
             self._evaluator.compute_now(record_ids)
+            if any(
+                feedback.is_conversation_level for feedback in self.feedbacks
+            ):
+                self._evaluator.compute_conversation_now(record_ids)
             # Wait for feedback results to be persisted to the database
-            feedback_names = [f.name for f in self.feedbacks]
-            if feedback_names:
+            record_feedback_names = [
+                feedback.name
+                for feedback in self.feedbacks
+                if not feedback.is_conversation_level
+            ]
+            if record_feedback_names:
                 TruSession().wait_for_feedback_results(
                     record_ids=record_ids,
-                    feedback_names=feedback_names,
+                    feedback_names=record_feedback_names,
+                    timeout=timeout,
+                )
+            conversation_feedback_names = [
+                feedback.name
+                for feedback in self.feedbacks
+                if feedback.is_conversation_level
+            ]
+            if conversation_feedback_names:
+                TruSession().wait_for_feedback_results(
+                    record_ids=[record_ids[-1]],
+                    feedback_names=conversation_feedback_names,
                     timeout=timeout,
                 )
         records_df, feedback_cols = TruSession().get_records_and_feedback(
@@ -1224,7 +1244,21 @@ class App(
                     raise RuntimeError("Unknown recording context manager!")
                 context_manager = self._current_context_manager
                 self._current_context_manager = None
-            return context_manager.__exit__(exc_type, exc_value, exc_tb)
+            result = context_manager.__exit__(exc_type, exc_value, exc_tb)
+            if (
+                exc_type is None
+                and context_manager.conversation_id is not None
+                and context_manager.record_ids
+                and any(
+                    feedback.is_conversation_level
+                    for feedback in self.feedbacks
+                )
+            ):
+                self._evaluator.enqueue_conversation(
+                    context_manager.conversation_id,
+                    context_manager.record_ids,
+                )
+            return result
 
         self._prevent_invalid_otel_syntax()
 
@@ -2153,6 +2187,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         self,
         raise_error_on_no_feedbacks_computed: bool = True,
         events: Optional[pd.DataFrame] = None,
+        metric_scope: Literal["all", "record", "conversation"] = "all",
     ) -> None:
         """Compute feedbacks for the app.
 
@@ -2162,11 +2197,17 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             events:
                 The events to compute feedbacks from. If None, uses all
                 events from the app.
+            metric_scope:
+                Limit computation to record-scoped or conversation-scoped
+                metrics. By default, compute all configured metrics.
         """
         if not is_otel_tracing_enabled():
             raise ValueError(
                 "This method is only supported for OTEL Tracing. Please enable OTEL tracing in the environment!"
             )
+
+        if metric_scope not in {"all", "record", "conversation"}:
+            raise ValueError(f"Invalid metric scope: {metric_scope}")
 
         try:
             from trulens.feedback.computer import compute_feedback_by_span_group
@@ -2183,12 +2224,25 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 app_name=self.app_name, app_version=self.app_version
             )
 
+        errors = []
         for feedback in self.feedbacks:
-            compute_feedback_by_span_group(
-                events,
-                feedback,
-                raise_error_on_no_feedbacks_computed,
-            )
+            if metric_scope == "record" and feedback.is_conversation_level:
+                continue
+            if (
+                metric_scope == "conversation"
+                and not feedback.is_conversation_level
+            ):
+                continue
+            try:
+                compute_feedback_by_span_group(
+                    events,
+                    feedback,
+                    raise_error_on_no_feedbacks_computed,
+                )
+            except Exception as e:
+                errors.append(e)
+        if errors:
+            raise errors[0]
 
     def start_evaluator(self) -> None:
         """Start the evaluator for the app."""

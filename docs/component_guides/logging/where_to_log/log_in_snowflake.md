@@ -2,6 +2,14 @@
 
 TruLens can log traces and evaluations to a Snowflake database. This page covers every supported authentication method.
 
+!!! warning "Conversations are not supported"
+
+    Conversation features are not currently supported when using
+    `SnowflakeConnector`. This includes grouping records with `conversation_id`,
+    conversation-level metrics, conversation retrieval APIs, and conversation
+    views in the dashboard. Use a local database connector for conversation
+    evaluation workflows.
+
 !!! tip "You don't need a password"
 
     `SnowflakeConnector` supports SSO, key-pair auth, OAuth tokens, and existing Snowpark sessions -- **no password required**. Password-based auth is just one option.

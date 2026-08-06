@@ -4,6 +4,7 @@ import logging
 import re
 import threading
 from typing import (
+    Any,
     ClassVar,
     Dict,
     List,
@@ -4408,5 +4409,95 @@ class LLMProvider(core_provider.Provider):
             user_prompt=user_prompt,
             min_score_val=min_score_val,
             max_score_val=max_score_val,
+            temperature=temperature,
+        )
+
+    def conversation_helpfulness(
+        self,
+        records: Union[List[Any], str],
+        temperature: float = 0.0,
+    ) -> float:
+        """Evaluate helpfulness across a multi-turn conversation."""
+        from trulens.feedback.templates import (
+            conversation as templates_conversation,
+        )
+
+        transcript = templates_conversation.conversation_to_prompt(records)
+        user_prompt = templates_conversation.ConversationHelpfulness.user_prompt_template.format(
+            transcript=transcript
+        )
+        return self.generate_score(
+            system_prompt=templates_conversation.ConversationHelpfulness.system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=0,
+            max_score_val=3,
+            temperature=temperature,
+        )
+
+    def topic_adherence(
+        self,
+        records: Union[List[Any], str],
+        reference_topics: List[str],
+        temperature: float = 0.0,
+    ) -> float:
+        """Evaluate topic adherence across a multi-turn conversation."""
+        from trulens.feedback.templates import (
+            conversation as templates_conversation,
+        )
+
+        transcript = templates_conversation.conversation_to_prompt(records)
+        system_prompt = (
+            templates_conversation.TopicAdherence.system_prompt_template.format(
+                reference_topics=", ".join(reference_topics)
+            )
+        )
+        return self.generate_score(
+            system_prompt=system_prompt,
+            user_prompt=f"Conversation Transcript:\n{transcript}",
+            min_score_val=0,
+            max_score_val=3,
+            temperature=temperature,
+        )
+
+    def agent_goal_accuracy(
+        self,
+        records: Union[List[Any], str],
+        reference_goal: Optional[str] = None,
+        temperature: float = 0.0,
+    ) -> float:
+        """Evaluate whether an agent fulfilled the conversation goal."""
+        from trulens.feedback.templates import (
+            conversation as templates_conversation,
+        )
+
+        transcript = templates_conversation.conversation_to_prompt(records)
+        system_prompt = templates_conversation.AgentGoalAccuracy.system_prompt_template.format(
+            reference_goal=reference_goal
+            or "Infer the user's intended goal from the conversation."
+        )
+        return self.generate_score(
+            system_prompt=system_prompt,
+            user_prompt=f"Conversation Transcript:\n{transcript}",
+            min_score_val=0,
+            max_score_val=1,
+            temperature=temperature,
+        )
+
+    def coherence_across_turns(
+        self,
+        records: Union[List[Any], str],
+        temperature: float = 0.0,
+    ) -> float:
+        """Evaluate logical coherence across conversation turns."""
+        from trulens.feedback.templates import (
+            conversation as templates_conversation,
+        )
+
+        transcript = templates_conversation.conversation_to_prompt(records)
+        return self.generate_score(
+            system_prompt=templates_conversation.CoherenceAcrossTurns.system_prompt,
+            user_prompt=f"Conversation Transcript:\n{transcript}",
+            min_score_val=0,
+            max_score_val=3,
             temperature=temperature,
         )

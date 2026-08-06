@@ -586,6 +586,12 @@ class Metric(feedback_schema.FeedbackDefinition):
         assert (
             self.imp is not None
         ), "Metric definition needs an implementation to call."
+        overlap = self.implementation_kwargs.keys() & kwargs.keys()
+        if overlap:
+            raise ValueError(
+                f"Metric arguments cannot be both selected and bound: {sorted(overlap)}"
+            )
+        kwargs = {**self.implementation_kwargs, **kwargs}
         if self.examples is not None:
             kwargs["examples"] = self.examples
         if self.criteria is not None:
@@ -653,7 +659,10 @@ class Metric(feedback_schema.FeedbackDefinition):
         if self.imp is not None:
             sig = signature(self.imp)
             par_names = list(
-                k for k in sig.parameters.keys() if k not in self.selectors
+                k
+                for k in sig.parameters.keys()
+                if k not in self.selectors
+                and k not in self.implementation_kwargs
             )
             if "self" in par_names:
                 logger.warning(
@@ -735,6 +744,50 @@ class Metric(feedback_schema.FeedbackDefinition):
         new_selectors[arg] = Selector.select_context(collect_list=collect_list)
         ret = self.model_copy()
         ret.selectors = new_selectors
+        return ret
+
+    def on_conversation(self, arg: Optional[str] = None) -> Metric:
+        """Bind an implementation argument to the ordered conversation."""
+        if not is_otel_tracing_enabled():
+            raise RuntimeError(
+                "Conversation metrics are only supported in OTel mode."
+            )
+        new_selectors = self.selectors.copy()
+        if arg is None:
+            arg = self._next_unselected_arg_name()
+        new_selectors[arg] = Selector.select_conversation()
+        ret = self.model_copy()
+        ret.selectors = new_selectors
+        return ret
+
+    @property
+    def is_conversation_level(self) -> bool:
+        """Whether this metric selects conversation-scoped inputs."""
+        return bool(self.selectors) and all(
+            isinstance(selector, Selector) and selector.conversation_level
+            for selector in self.selectors.values()
+        )
+
+    def with_arguments(self, **kwargs: Any) -> Metric:
+        """Bind static keyword arguments to every metric invocation."""
+        if self.imp is None:
+            raise RuntimeError(
+                "Cannot bind arguments without a metric implementation."
+            )
+        function_args = signature(self.imp).parameters
+        unknown = kwargs.keys() - function_args.keys()
+        if unknown:
+            raise ValueError(
+                f"Bound arguments are not in the function signature: {sorted(unknown)}"
+            )
+        overlap = kwargs.keys() & self.selectors.keys()
+        if overlap:
+            raise ValueError(
+                f"Arguments already have selectors: {sorted(overlap)}"
+            )
+        ret = self.model_copy()
+        ret.implementation_kwargs = self.implementation_kwargs.copy()
+        ret.implementation_kwargs.update(kwargs)
         return ret
 
     def on(self, *args, **kwargs) -> Metric:
@@ -831,6 +884,13 @@ class Metric(feedback_schema.FeedbackDefinition):
                 inspect.Parameter.VAR_POSITIONAL,
             )
         ]
+        conversation_levels = {
+            selector.conversation_level for selector in self.selectors.values()
+        }
+        if len(conversation_levels) > 1:
+            raise ValueError(
+                "Conversation selectors cannot be mixed with record or span selectors."
+            )
         error_msg = ""
         # Check for extra selectors. Technically, this shouldn't happen ever
         # since we'd fail before this point, but we check it anyway in case
@@ -846,7 +906,10 @@ class Metric(feedback_schema.FeedbackDefinition):
         # Check for missing selectors.
         missing_selectors = []
         for required_function_arg in required_function_args:
-            if required_function_arg not in self.selectors:
+            if (
+                required_function_arg not in self.selectors
+                and required_function_arg not in self.implementation_kwargs
+            ):
                 missing_selectors.append(required_function_arg)
         if missing_selectors:
             error_msg += (
@@ -1043,6 +1106,16 @@ Metric function signature:
         Returns:
             A FeedbackResult object with the result of the metric.
         """
+
+        if any(
+            isinstance(selector, Selector) and selector.conversation_level
+            for selector in self.selectors.values()
+        ):
+            raise RuntimeError(
+                "Conversation metrics require OTel event-batch computation via "
+                "App.compute_feedbacks, TruSession.compute_feedbacks_on_events, "
+                "or Run.compute_metrics."
+            )
 
         if isinstance(app, app_schema.AppDefinition):
             app_json = json_utils.jsonify(app)

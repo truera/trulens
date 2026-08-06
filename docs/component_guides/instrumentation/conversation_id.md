@@ -56,7 +56,6 @@ All three invocations will share `ai.observability.conversation_id = "session-42
 so you can retrieve all their records together:
 
 ```python
-import pandas as pd
 from trulens.core.session import TruSession
 
 session = TruSession()
@@ -86,8 +85,9 @@ with tru_app as recording:
 
 ## Next steps
 
-Once conversations are tagged, see [Conversation Evaluation](conversation_evaluation.md)
-for a complete guide on wiring per-turn metrics, aggregating scores by conversation,
-and exploring results in the dashboard.  The
+Once conversations are tagged, see
+[Conversation Evaluation](conversation_evaluation.md) for a complete guide to
+combining per-turn metrics with first-class conversation-level metrics and
+exploring both scopes in the dashboard. The
 [Conversation Evaluation Quickstart](../../getting_started/quickstarts/conversation_evaluation.ipynb)
-notebook walks through this end-to-end.
+walks through this workflow end-to-end.

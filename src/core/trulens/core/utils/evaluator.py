@@ -4,9 +4,8 @@ import datetime
 import json
 import logging
 import threading
-import time
 import traceback
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 import weakref
 
 import pandas as pd
@@ -60,7 +59,12 @@ class Evaluator:
         self._app_version = app.app_version
         self._thread = None
         self._stop_event = threading.Event()
+        self._wake_event = threading.Event()
         self._compute_feedbacks_lock = threading.Lock()
+        self._conversation_compute_lock = threading.Lock()
+        self._conversation_jobs_lock = threading.Lock()
+        self._conversation_jobs: List[Tuple[str, Tuple[str, ...]]] = []
+        self._conversation_sampling_decisions = {}
         self._record_id_to_event_count = pd.Series(dtype=int)
         self._sampled_out_record_ids: set = set()
         """Record IDs skipped by sampling.  Tracked separately from
@@ -68,6 +72,129 @@ class Evaluator:
         calls can still reach them for backfill."""
         self._processed_time = None
         self._last_error: Optional[BaseException] = None
+
+    def enqueue_conversation(
+        self, conversation_id: str, record_ids: List[str]
+    ) -> None:
+        """Queue one context-bounded conversation evaluation."""
+        if not record_ids:
+            return
+        job = (conversation_id, tuple(record_ids))
+        with self._conversation_jobs_lock:
+            if job not in self._conversation_jobs:
+                self._conversation_jobs.append(job)
+        self._wake_event.set()
+
+    def _get_exact_batch_events(
+        self, record_ids: Tuple[str, ...]
+    ) -> Optional[pd.DataFrame]:
+        """Get a complete event batch once every requested root is visible."""
+        events = self._app_ref().connector.get_events(
+            app_name=self._app_name,
+            app_version=self._app_version,
+            record_ids=list(record_ids),
+            start_time=None,
+        )
+        if events is None or events.empty:
+            return None
+        events = events.copy()
+        events["record_attributes"] = events["record_attributes"].apply(
+            _coerce_attribute_dict
+        )
+        if "trace" in events.columns:
+            events["trace"] = events["trace"].apply(_coerce_attribute_dict)
+        visible_root_ids = {
+            attributes.get(SpanAttributes.RECORD_ID)
+            for attributes in events["record_attributes"]
+            if attributes.get(SpanAttributes.SPAN_TYPE)
+            == SpanAttributes.SpanType.RECORD_ROOT
+        }
+        if any(record_id not in visible_root_ids for record_id in record_ids):
+            return None
+        return events
+
+    def _compute_queued_conversations(self) -> None:
+        """Compute queued conversations whose complete record batch is visible."""
+        with self._conversation_jobs_lock:
+            jobs = list(self._conversation_jobs)
+
+        for job in jobs:
+            conversation_id, record_ids = job
+            events = self._get_exact_batch_events(record_ids)
+            if events is None:
+                continue
+            controller = TruSession()._sampling_controller
+            should_eval = True
+            sampling_meta = {}
+            reason = EvalDecisionReason.NOT_CONFIGURED.value
+            if job in self._conversation_sampling_decisions:
+                should_eval, sampling_meta, reason = (
+                    self._conversation_sampling_decisions[job]
+                )
+            elif controller is not None:
+                sampling_key = (
+                    f"conversation:{conversation_id}:{','.join(record_ids)}"
+                )
+                should_eval, sampling_meta = controller.should_evaluate(
+                    record_id=sampling_key,
+                    app_name=self._app_name,
+                )
+                reason = sampling_meta.get("eval_decision_reason")
+                self._conversation_sampling_decisions[job] = (
+                    should_eval,
+                    sampling_meta,
+                    reason,
+                )
+            if (
+                controller is not None
+                and reason != EvalDecisionReason.NOT_CONFIGURED.value
+            ):
+                _emit_sampling_decision_span(
+                    record_id=record_ids[-1],
+                    app_name=self._app_name,
+                    app_version=self._app_version,
+                    events=events,
+                    sampling_meta=sampling_meta,
+                )
+            if not should_eval:
+                with self._conversation_jobs_lock:
+                    if job in self._conversation_jobs:
+                        self._conversation_jobs.remove(job)
+                self._conversation_sampling_decisions.pop(job, None)
+                continue
+
+            token = (
+                ingest_eval_active.set(True)
+                if controller is not None
+                and reason != EvalDecisionReason.NOT_CONFIGURED.value
+                else None
+            )
+            with self._conversation_compute_lock:
+                try:
+                    self._app_ref().compute_feedbacks(
+                        raise_error_on_no_feedbacks_computed=True,
+                        events=events,
+                        metric_scope="conversation",
+                    )
+                    TruSession().force_flush()
+                except Exception as e:
+                    logger.warning(
+                        "Error computing conversation feedbacks "
+                        "(conversation_id=%s, record_ids=%s): %s\n%s",
+                        conversation_id,
+                        list(record_ids),
+                        e,
+                        traceback.format_exc(),
+                    )
+                    continue
+                finally:
+                    if token is not None:
+                        ingest_eval_active.reset(token)
+
+            with self._conversation_jobs_lock:
+                if job in self._conversation_jobs:
+                    self._conversation_jobs.remove(job)
+            self._conversation_sampling_decisions.pop(job, None)
 
     def _events_under_record_root(self, events: pd.DataFrame) -> pd.DataFrame:
         """
@@ -276,6 +403,7 @@ class Evaluator:
                     self._app_ref().compute_feedbacks(
                         raise_error_on_no_feedbacks_computed=False,
                         events=events,
+                        metric_scope="record",
                     )
                 except Exception as e:
                     logger.warning(
@@ -302,16 +430,15 @@ class Evaluator:
         """
         while not self._stop_event.is_set():
             try:
+                self._compute_queued_conversations()
                 self._compute_feedbacks()
             except Exception as e:
                 self._last_error = e
                 logger.error(
                     f"Evaluator thread encountered an error: {e}\n{traceback.format_exc()}"
                 )
-            for _ in range(100):
-                if self._stop_event.is_set():
-                    break
-                time.sleep(0.1)
+            self._wake_event.wait(timeout=10)
+            self._wake_event.clear()
 
     def get_last_error(self) -> Optional[BaseException]:
         """Return the most recent exception observed by the evaluator
@@ -348,6 +475,7 @@ class Evaluator:
             return
         # Signal the thread to stop.
         self._stop_event.set()
+        self._wake_event.set()
         # If called from within the evaluator thread, skip join to avoid deadlock.
         if threading.current_thread() is self._thread:
             logger.info(
@@ -387,6 +515,31 @@ class Evaluator:
         self._compute_feedbacks(
             record_ids, in_evaluator_thread=False, lock=lock
         )
+
+    def compute_conversation_now(self, record_ids: List[str]) -> None:
+        """Compute conversation metrics for one exact recording batch."""
+        record_ids_tuple = tuple(record_ids)
+        with self._conversation_compute_lock:
+            events = self._get_exact_batch_events(record_ids_tuple)
+            if events is None:
+                raise RuntimeError(
+                    f"Records are not visible for conversation evaluation: {record_ids}"
+                )
+            self._app_ref().compute_feedbacks(
+                raise_error_on_no_feedbacks_computed=False,
+                events=events,
+                metric_scope="conversation",
+            )
+            TruSession().force_flush()
+        with self._conversation_jobs_lock:
+            matching_jobs = [
+                job
+                for job in self._conversation_jobs
+                if job[1] == record_ids_tuple
+            ]
+            for job in matching_jobs:
+                self._conversation_jobs.remove(job)
+                self._conversation_sampling_decisions.pop(job, None)
 
     def __del__(self):
         try:
