@@ -1,0 +1,492 @@
+/* TruLens homepage. Rendered only by docs/overrides/home.html, which is a
+   standalone template rather than a mkdocs-material page -- so everything
+   the homepage needs lives here and nothing here is shared with the docs.
+
+   Ported from the approved design mockup; see the section comments in
+   home.html for why each band and widget is shaped the way it is. */
+:root{
+  --ink:#0A2C37;        /* deep teal  */
+  --aqua:#84DCD7;
+  --sand:#F6D881;
+  --lilac:#DCB1FD;
+  --pale:#D2EBEA;
+  --text:#034A61;
+  --rose:#651D31;
+  --white:#fff;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --display:'Space Grotesk',system-ui,sans-serif;
+  --body:'Source Sans 3','Source Sans Pro',system-ui,sans-serif;
+  --maxw:1400px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--white);color:var(--text);
+  font-family:var(--body);font-size:1.0625rem;line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ---------- band system ---------- */
+.band{width:100%;padding:5.5rem 0}
+.band--white{background:var(--white)}
+.band--ink{background:var(--ink);color:#E9F2F1}
+.band--aqua{background:var(--aqua);color:var(--ink)}
+.band--sand{background:var(--sand);color:var(--ink)}
+.band--lilac{background:var(--lilac);color:var(--ink)}
+.band--pale{background:var(--pale)}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 2rem}
+/* asymmetric indent: content starts at col 3 on wide screens */
+.indent{padding-left:2rem}
+@media(min-width:1200px){.indent{padding-left:calc(2rem + 8.333%)}}
+
+/* registration-bar divider */
+.reg{display:flex;height:16px;width:100%}
+.reg span{display:block;height:100%}
+.reg .w1{width:8.333%}.reg .w2{width:16.666%}.reg .w3{width:25%}
+.reg .fl{flex:1}
+
+/* ---------- type ---------- */
+h1,h2,h3,h4,h5{font-family:var(--display);font-weight:500;margin:0;text-wrap:balance;letter-spacing:normal}
+h1{font-size:clamp(2.5rem,4.4vw,4rem);line-height:1.02}
+h2{font-size:clamp(2rem,4vw,3.25rem);line-height:1.06;margin-bottom:1.25rem}
+h3{font-size:1.5rem;line-height:1.2;margin-bottom:.5rem}
+h4{font-size:1.125rem;font-weight:600;margin-bottom:.35rem}
+.eyebrow{
+  font-family:var(--mono);font-size:.6875rem;font-weight:500;
+  text-transform:uppercase;letter-spacing:.14em;
+  display:block;margin-bottom:1.5rem;opacity:.75;
+}
+.dim{opacity:.62}
+/* 68ch, not 46: at 46 these sat as a narrow ribbon under a full-width heading and
+   broke mid-sentence. 68 fills more of the column and still reads as one measure. */
+.lede{font-size:1.25rem;max-width:68ch;line-height:1.5}
+.num{font-variant-numeric:tabular-nums}
+
+/* announcement bar link: the default underline spans three lines on a phone */
+.announce-link{text-decoration:none}
+.announce-link:hover{text-decoration:underline}
+
+/* ---------- radius-morph buttons ---------- */
+/* One geometry for the whole row: same radius, same height, same baseline.
+   Colour carries the hierarchy. Hover is the only thing that changes shape,
+   and every control morphs in the same direction -- flat to pill -- so the
+   resting row reads as one set of three choices. */
+.btn{
+  display:inline-flex;align-items:center;gap:.55rem;
+  font-family:var(--display);font-size:1.0625rem;font-weight:500;
+  padding:.7rem 1.4rem;border:0;cursor:pointer;text-decoration:none;
+  border-radius:0;transition:border-radius .2s ease,background-color .2s ease;
+}
+.btn--primary{background:var(--ink);color:#fff}
+.btn--primary:hover{border-radius:26px;background:#06202a}
+.btn--ghost{background:rgba(3,74,97,.10);color:var(--text)}
+.btn--ghost:hover{border-radius:26px;background:rgba(3,74,97,.18)}
+.btn--onink{background:var(--aqua);color:var(--ink)}
+.btn--onink:hover{border-radius:26px}
+/* stretch so every control in a row is the same height regardless of type size */
+.btn-row{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:2rem;align-items:stretch}
+
+/* install pill */
+.install{
+  display:inline-flex;align-items:center;gap:.75rem;
+  font-family:var(--mono);font-size:.9375rem;
+  background:var(--ink);color:var(--aqua);
+  padding:.65rem 1.1rem;border-radius:0;
+  transition:border-radius .2s ease;
+}
+.install:hover{border-radius:26px}
+/* inline text link on a light band, for cards that name a destination */
+.tlink{color:var(--ink);font-weight:600;font-size:.875rem;text-decoration:none;
+  border-bottom:1px solid rgba(3,74,97,.3)}
+.tlink:hover{border-bottom-color:var(--ink)}
+/* .tlink is sized for standalone use next to a button. Inline in running prose it
+   has to take the paragraph's size, or the linked words render visibly smaller
+   than the sentence around them. */
+.lede .tlink{font-size:inherit}
+
+/* ---------- live project stats, foot of the hero ---------- */
+/* An instrument panel, not five more buttons: mono label over mono value,
+   divided by the same hairline the page uses for card rules, so the strip
+   settles under the CTA row instead of competing with it. */
+.statstrip{display:flex;flex-wrap:wrap;margin-top:3.25rem;padding-top:1.15rem;
+  border-top:1px solid rgba(3,74,97,.14)}
+/* The strip and each stat carry `hidden` until a value is known, and the display
+   rules above and in the media query below would otherwise override the attribute.
+   Specificity has to beat them, so these are not plain [hidden] selectors. */
+.statstrip[hidden],.statstrip .stat[hidden]{display:none}
+.statstrip .stat{display:block;text-decoration:none;color:inherit;
+  padding:0 1.75rem;border-left:1px solid rgba(3,74,97,.14)}
+/* Not :first-child: a hidden stat still matches it, which would leave the divider
+   and padding against a stat nobody can see. The script sets this on whichever one
+   is actually first. */
+.statstrip .stat--lead{padding-left:0;border-left:0}
+.statstrip .k{display:block;font-family:var(--mono);font-size:.5625rem;
+  text-transform:uppercase;letter-spacing:.14em;color:var(--text);opacity:.78}
+.statstrip .v{display:block;font-family:var(--mono);font-size:.9375rem;
+  margin-top:.35rem;color:var(--ink);white-space:nowrap;
+  border-bottom:1px solid transparent}
+.statstrip .stat:hover .v{border-bottom-color:rgba(3,74,97,.35)}
+/* build state reads as a signal light: aqua for green, rose for anything else */
+.statstrip .dot{display:inline-block;width:7px;height:7px;border-radius:50%;
+  margin-left:.5rem;vertical-align:.09em;background:var(--aqua);
+  box-shadow:0 0 0 3px rgba(132,220,215,.3)}
+.statstrip .dot--bad{background:var(--rose);box-shadow:0 0 0 3px rgba(101,29,49,.16)}
+@media(max-width:700px){
+  /* borders can't divide a wrapped row cleanly, so below tablet it becomes a grid */
+  .statstrip{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.15rem 1rem}
+  .statstrip .stat,.statstrip .stat:first-child{padding:0;border-left:0}
+}
+
+/* ---------- layout helpers ---------- */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:3rem}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem}
+@media(max-width:900px){.grid2,.grid3,.grid4{grid-template-columns:1fr;gap:2rem}}
+
+/* flat cards, no shadow */
+.card{background:rgba(255,255,255,.55);padding:1.75rem;border-radius:0;transition:border-radius .2s ease}
+.card:hover{border-radius:18px}
+.card--onink{background:rgba(255,255,255,.06)}
+.card--plain{background:transparent;padding:0}
+
+/* screenshot frame, flat */
+.shot{width:100%;display:block;border:1px solid rgba(132,220,215,.22)}
+/* No edge-fade mask here: every bleed on this page holds a product
+   screenshot whose left and right edges carry labels and legends. */
+.bleed{max-width:1600px;margin:0 auto;padding:0 2rem}
+
+/* ---------- dashboard widgets ----------
+   The product sections run the dashboard's components rather than pictures of
+   them, so a reader can expand a span, read a judge's reason and re-sort the
+   leaderboard without installing anything. The numbers are one recorded run of
+   a demo support agent; each widget falls back to its screenshot in <noscript>.
+   Chrome is the dashboard's dark theme, not the page's bands, because that is
+   what the reader will see when they run it. */
+.dash{background:#0B1620;border:1px solid rgba(132,220,215,.18);
+  color:#E9F2F1;font-size:.9375rem;line-height:1.45;text-align:left}
+.dash-bar{display:flex;align-items:baseline;gap:.9rem;flex-wrap:wrap;
+  padding:.6rem 1rem;background:#0A1219;border-bottom:1px solid rgba(132,220,215,.14)}
+.dash-bar b{font-family:var(--display);font-weight:500}
+.dash-bar .rid{font-family:var(--mono);font-size:.6875rem;opacity:.45;margin-left:auto}
+.dtabs{display:flex;border-bottom:1px solid rgba(132,220,215,.14)}
+.dtab{font-family:var(--display);font-size:.8125rem;padding:.55rem 1.05rem;
+  background:none;border:0;color:rgba(233,242,241,.55);cursor:pointer}
+.dtab[aria-selected="true"]{color:var(--aqua);box-shadow:inset 0 -2px 0 var(--aqua)}
+.dash button:focus-visible{outline:2px solid var(--aqua);outline-offset:-2px}
+
+/* trace explorer: span list left, selected span's attributes right */
+.trace{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
+.trace>*+*{border-left:1px solid rgba(132,220,215,.14)}
+.tl-head,.tl-sel{display:grid;align-items:center;gap:.5rem;
+  grid-template-columns:minmax(150px,2.4fr) 96px 96px minmax(90px,1.8fr)}
+.tl-head{padding:.45rem 1rem .45rem 2.4rem;font-family:var(--mono);
+  font-size:.6875rem;letter-spacing:.08em;text-transform:uppercase;
+  color:rgba(233,242,241,.5);border-bottom:1px solid rgba(132,220,215,.14)}
+.tl-row{display:grid;grid-template-columns:1.4rem minmax(0,1fr);align-items:center;
+  padding-left:1rem;border-bottom:1px solid rgba(132,220,215,.07)}
+.tl-row:hover{background:rgba(132,220,215,.05)}
+.tl-row[data-sel="true"]{background:rgba(132,220,215,.1)}
+.tl-sel{background:none;border:0;color:inherit;font:inherit;cursor:pointer;
+  padding:.45rem .9rem .45rem 0;text-align:left;min-width:0}
+.tl-m{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-d{font-family:var(--mono);font-size:.8125rem;text-align:right;opacity:.85}
+.tl-t{font-size:.8125rem;opacity:.65;white-space:nowrap}
+.tl-bar{position:relative;height:13px;background:rgba(255,255,255,.04)}
+.tl-bar i{position:absolute;top:0;bottom:0;min-width:2px;border-radius:2px;opacity:.8}
+.cx{width:1.4rem;height:1.4rem;padding:0;background:none;border:0;cursor:pointer;
+  color:rgba(233,242,241,.6);font-size:.55rem;line-height:1;transition:transform .15s}
+.cx[aria-expanded="false"]{transform:rotate(-90deg)}
+.cx--leaf{visibility:hidden}
+
+/* tree view */
+.tr{padding:.7rem .8rem}
+.tr-kids{margin-left:.9rem;padding-left:.9rem;border-left:1px solid rgba(132,220,215,.18)}
+.tr-node{position:relative;margin:.35rem 0}
+.tr-card{display:block;width:100%;text-align:left;font:inherit;color:inherit;
+  cursor:pointer;background:rgba(255,255,255,.03);padding:.5rem 2rem .5rem .7rem;
+  border:1px solid rgba(132,220,215,.16)}
+.tr-card:hover{border-color:rgba(132,220,215,.4)}
+.tr-node[data-sel="true"]>.tr-card{border-color:var(--aqua);background:rgba(132,220,215,.1)}
+.tr-name{display:block;font-weight:600;margin-bottom:.35rem}
+.tr-cx{position:absolute;right:.35rem;top:.5rem}
+.chip{display:inline-block;font-family:var(--mono);font-size:.6875rem;
+  padding:.08rem .45rem;margin-right:.35rem;border:1px solid rgba(132,220,215,.25);opacity:.9}
+
+/* details pane */
+.det{padding:.8rem}
+.det-meta{display:flex;flex-wrap:wrap;gap:.6rem 2rem;padding:.6rem .8rem;margin-bottom:.6rem;
+  background:rgba(255,255,255,.03);border:1px solid rgba(132,220,215,.16)}
+.det-meta .lab{display:block;font-family:var(--mono);font-size:.625rem;
+  letter-spacing:.08em;text-transform:uppercase;opacity:.55}
+.det-meta .val{font-size:.9375rem}
+.attr{border:1px solid rgba(132,220,215,.16);margin-bottom:.45rem}
+.attr>button{display:flex;align-items:center;gap:.5rem;width:100%;text-align:left;
+  font:inherit;font-weight:600;font-size:.8125rem;color:inherit;cursor:pointer;
+  background:rgba(255,255,255,.02);border:0;padding:.45rem .65rem}
+.attr .body{padding:.55rem .65rem;font-family:var(--mono);font-size:.8125rem;
+  white-space:pre-wrap;overflow-wrap:anywhere;opacity:.88;
+  border-top:1px solid rgba(132,220,215,.12)}
+.raw{margin:0;padding:.8rem;font-family:var(--mono);font-size:.75rem;
+  white-space:pre;overflow-x:auto;opacity:.85}
+
+/* feedback results: st.pills over the metrics, and the eval-call dataframe
+   behind the selected one. Selection colour is Streamlit's primary #ff4b4b,
+   which is what the dashboard actually renders. */
+.fb{padding:1.1rem 1.2rem 1.3rem}
+.fb h3{font-family:var(--display);font-size:1.5rem;font-weight:700;margin:0}
+.fb .hint{font-size:.8125rem;opacity:.75;margin:.5rem 0 .5rem}
+.fpills{display:flex;flex-wrap:wrap;gap:.55rem}
+.fpill{display:inline-flex;align-items:center;gap:.5rem;font:inherit;font-size:.9375rem;
+  color:inherit;cursor:pointer;background:rgba(255,255,255,.04);
+  border:1px solid rgba(233,242,241,.16);border-radius:999px;padding:.32rem 1rem}
+.fpill:hover{border-color:rgba(233,242,241,.4)}
+.fpill .ic{font-size:.9375rem;line-height:1}
+.fpill[aria-pressed="true"]{color:#ff4b4b;border-color:#ff4b4b;background:rgba(255,75,75,.09)}
+/* the eval-call dataframe: st.dataframe(styled_df, hide_index=True). The dashboard
+   truncates cells and hands you a scrollbar; here the judge's reasoning is the
+   whole point, so every cell wraps and the table always fits its container. */
+.fdf{margin-top:.85rem;border:1px solid rgba(233,242,241,.14)}
+/* tables don't inherit colour in quirks mode, and a stray banner above the
+   doctype has put this page there before, so state it rather than inherit it */
+.fdf table{border-collapse:collapse;table-layout:fixed;width:100%;font-size:.875rem;color:#E9F2F1}
+.fdf th{font-weight:400;text-align:left;padding:.5rem .75rem;color:rgba(233,242,241,.55);
+  background:rgba(255,255,255,.05);border-bottom:1px solid rgba(233,242,241,.14);
+  border-right:1px solid rgba(233,242,241,.08)}
+.fdf td{padding:.5rem .75rem;border-bottom:1px solid rgba(233,242,241,.08);
+  border-right:1px solid rgba(233,242,241,.08);
+  white-space:pre-wrap;overflow-wrap:anywhere;vertical-align:top}
+.fdf tr:last-child td{border-bottom:0}
+.fdf th:last-child,.fdf td:last-child{border-right:0}
+.fdf .num{text-align:right;font-variant-numeric:tabular-nums}
+/* narrow screens: four columns of judge text can't share 390px, and there is no
+   scrollbar to fall back on, so each cell becomes its own labelled row */
+@media(max-width:700px){
+  .fdf table,.fdf tbody,.fdf tr,.fdf td{display:block;width:auto}
+  .fdf thead{display:none}
+  .fdf tr+tr{border-top:1px solid rgba(233,242,241,.14)}
+  .fdf td{border-right:0;padding:.6rem .8rem}
+  .fdf td+td{border-top:1px solid rgba(233,242,241,.06)}
+  .fdf td::before{content:attr(data-c);display:block;font-family:var(--mono);
+    font-size:.625rem;text-transform:uppercase;letter-spacing:.08em;
+    color:rgba(233,242,241,.5);margin-bottom:.3rem}
+  .fdf .num{text-align:left}
+}
+
+/* compare chart */
+.cmp{padding:.9rem 1.1rem 1.1rem}
+.cmp-legend{display:flex;justify-content:flex-end;gap:.5rem;margin-bottom:.4rem}
+.cmp-legend button{display:inline-flex;align-items:center;gap:.45rem;font:inherit;
+  font-size:.8125rem;color:inherit;cursor:pointer;background:none;
+  border:1px solid rgba(132,220,215,.2);padding:.25rem .7rem}
+.cmp-legend button[aria-pressed="false"]{opacity:.4}
+.cmp-legend i{width:.7rem;height:.7rem;display:block}
+.cmp svg{display:block;width:100%;height:auto}
+
+/* leaderboard */
+.lb{width:100%;border-collapse:collapse;font-size:.875rem;color:#E9F2F1}
+.lb th{padding:0;background:#0A1219;border-bottom:1px solid rgba(132,220,215,.16)}
+.lb th button{display:flex;align-items:center;gap:.35rem;width:100%;
+  font-family:var(--display);font-size:.8125rem;font-weight:500;color:inherit;
+  background:none;border:0;cursor:pointer;padding:.55rem .7rem;white-space:nowrap}
+.lb th.r button{justify-content:flex-end}
+.lb th button .ar{font-size:.6rem;opacity:.45}
+.lb th button[data-sorted="true"] .ar{opacity:1;color:var(--aqua)}
+.lb td{padding:.5rem .7rem;font-family:var(--mono);
+  border-bottom:1px solid rgba(132,220,215,.08)}
+.lb td.r{text-align:right}
+.lb .vname{font-family:var(--body);font-weight:600}
+.lb .sel{width:2.4rem;text-align:center}
+.lb input{accent-color:var(--aqua);cursor:pointer}
+.lb tr[data-on="false"]{opacity:.45}
+
+@media(max-width:900px){
+  .trace{grid-template-columns:1fr}
+  .trace>*+*{border-left:0;border-top:1px solid rgba(132,220,215,.14)}
+  .tl-head,.tl-sel{grid-template-columns:minmax(0,1fr) 84px minmax(56px,1fr)}
+  .tl-t{display:none}
+  .det-meta{gap:1.2rem}
+}
+
+/* metric group list */
+.mgroup h3{font-family:var(--mono);font-size:.6875rem;text-transform:uppercase;letter-spacing:.12em;opacity:.7;margin-bottom:.75rem}
+.mgroup ul{list-style:none;margin:0;padding:0}
+.mgroup li{padding:.2rem 0;font-size:1.0625rem}
+
+/* code block + tabs */
+.code{background:var(--ink);color:#E9F2F1;font-family:var(--mono);font-size:.875rem;line-height:1.7}
+.code pre{margin:0;padding:1.5rem 1.75rem;overflow-x:auto}
+.tabs{display:flex;gap:0;border-bottom:1px solid rgba(132,220,215,.2)}
+.tab{
+  font-family:var(--mono);font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;
+  padding:.8rem 1.2rem;background:none;border:0;color:rgba(233,242,241,.55);cursor:pointer;
+}
+.tab[aria-selected="true"]{color:var(--aqua);box-shadow:inset 0 -2px 0 var(--aqua)}
+/* .code paints itself --ink, which on a light band reads as a defined dark panel
+   but on an ink band is the band's own colour, so the edge vanishes and the
+   snippet floats. .dash already had to solve dark-panel-on-a-dark-band; reuse its
+   two values rather than invent a third, so the code block and the widgets read
+   as the same family. */
+.band--ink .code{background:#0B1620;border:1px solid rgba(132,220,215,.18)}
+.k{color:var(--aqua)}.f{color:var(--sand)}.s{color:var(--lilac)}.c{color:rgba(233,242,241,.42)}
+
+/* logos: an edge-to-edge marquee. The track holds the list twice, so a -50%
+   slide loops seamlessly. Hover parks it so a name can be read and clicked. */
+.marquee{overflow:hidden;margin-top:2rem;position:relative}
+.marquee-track{display:flex;align-items:center;gap:4.5rem;width:max-content;
+  animation:slide 44s linear infinite}
+.marquee:hover .marquee-track{animation-play-state:paused}
+@keyframes slide{to{transform:translateX(-50%)}}
+.marquee a{flex:0 0 auto;display:block;text-decoration:none}
+/* Two kinds of entry ride the same track: a link with a cue for companies that
+   published something readable, and a plain mark for everyone whose evidence is
+   a GitHub thread (see ADOPTERS.md). Both need the same flex behaviour. */
+.marquee-track>*{flex:0 0 auto;display:block;text-align:center}
+.marquee .cue{display:block;margin-top:.4rem;font-family:var(--mono);font-size:.5625rem;
+  text-transform:uppercase;letter-spacing:.07em;color:var(--text);opacity:.5;
+  transition:opacity .2s,color .2s}
+.marquee a:hover .cue{opacity:1;color:var(--rose)}
+/* Logos come in two shapes -- single-line wordmarks and stacked lockups -- so
+   sizing on width alone lets the bold ones shout. Give every mark the same box
+   and let it scale to fit. (A fixed box, not max-width: these SVGs carry only a
+   viewBox, so with auto sizing they collapse to zero.) */
+.marquee img{width:130px;height:46px;margin:0 auto;object-fit:contain;object-position:center;
+  filter:grayscale(1);opacity:.62;transition:opacity .2s,filter .2s}
+.marquee a:hover img{filter:none;opacity:1}
+@media(prefers-reduced-motion:reduce){
+  .marquee{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .marquee-track{animation:none}
+}
+
+/* integrations: one row per category, marks laid left-aligned so the eye reads
+   names rather than hunting a centered grid. Marks are a single grey and a
+   single 140x56 box (see .mockup/ilogos.py) so the set reads as one family. */
+.intg{margin-top:2.75rem}
+.intg-row{display:grid;grid-template-columns:180px minmax(0,1fr);gap:1.5rem;align-items:start;
+  padding:1.6rem 0;border-top:1px solid rgba(3,74,97,.14)}
+.intg-row h3{font-family:var(--mono);font-size:.6875rem;text-transform:uppercase;
+  letter-spacing:.11em;opacity:.65;font-weight:400;margin:.55rem 0 0}
+.intg-row .sub{font-family:var(--body);font-size:.8125rem;text-transform:none;
+  letter-spacing:0;opacity:.75;display:block;margin-top:.3rem}
+/* One line per row, no scrollbar and no overflow. minmax(0,1fr) on the track
+   above lets the column shrink past the row's min-content width; without it a
+   nowrap row drags the whole page wider than the viewport. */
+.intg-grid{display:flex;flex-wrap:nowrap;gap:0 .7rem;align-items:center}
+.intg-grid a{display:block;flex:0 1 auto;min-width:0;padding:.45rem .3rem;transition:background .2s ease,border-radius .2s ease}
+.intg-grid a:hover{background:rgba(255,255,255,.7);border-radius:14px}
+/* Every mark is a single-line lockup drawn to a 26-unit box (see
+   .mockup/ilogos.py), so one CSS height puts all 26 on the same baseline when a
+   row fits. When it doesn't, flex-basis:auto makes each item's shrink weight its
+   own width, so the row scales down proportionally instead of scrolling --
+   object-fit:contain is what keeps the glyph from squashing as the box narrows. */
+.intg-grid img{display:block;height:20px;width:auto;max-width:100%;object-fit:contain;
+  opacity:.82;transition:opacity .2s}
+.intg-grid a:hover img{opacity:1}
+@media(max-width:1180px){
+  .intg-row{grid-template-columns:150px minmax(0,1fr)}
+  .intg-grid{gap:0 .45rem}
+}
+@media(max-width:860px){
+  .intg-row{grid-template-columns:1fr;gap:.6rem}
+  /* the label stops taking a column here, but nine marks would still have to
+     shrink to about a third to hold one line, which leaves the names
+     unreadable -- so below tablet the row wraps instead */
+  .intg-grid{flex-wrap:wrap;gap:.3rem 1rem}
+}
+
+/* benchmarked judges: three stat cards */
+.bstats{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;margin-top:2.5rem}
+.bstat{background:rgba(3,74,97,.07);padding:1.5rem;transition:border-radius .2s ease}
+.bstat:hover{border-radius:18px}
+.bstat .v{font-family:var(--display);font-size:2.75rem;line-height:1;color:var(--ink)}
+.bstat .d{font-family:var(--mono);font-size:.6875rem;text-transform:uppercase;
+  letter-spacing:.1em;opacity:.65;margin-top:.7rem}
+.bstat .s{margin-top:.6rem;font-size:.875rem;line-height:1.45;color:var(--text);opacity:.8}
+.bstat .s a{color:var(--ink);font-weight:600;white-space:nowrap}
+@media(max-width:1100px){.bstats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:860px){.bstats{grid-template-columns:1fr}}
+
+/* nav */
+/* Offscreen rather than display:none, because a skip link that is not in the
+   accessibility tree cannot be focused, which defeats the point. It comes back
+   on :focus-visible as well as :focus so a mouse click on the top-left corner
+   does not pop it open. */
+.skip{position:absolute;left:-9999px;top:0;z-index:100;padding:.7rem 1.1rem;
+  background:var(--ink);color:#fff;font-family:var(--display);font-size:.9375rem;
+  text-decoration:none}
+.skip:focus,.skip:focus-visible{left:0}
+#main:focus{outline:none}
+
+.nav{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 2rem;max-width:var(--maxw);margin:0 auto}
+.nav a:not(.btn){color:var(--text);text-decoration:none;font-family:var(--display)}
+.nav a.btn{text-decoration:none}
+.nav ul{display:flex;gap:1.75rem;list-style:none;margin:0;padding:0;align-items:center}
+.brand{font-family:var(--display);font-size:1.35rem;font-weight:700;letter-spacing:-.01em}
+/* On narrow screens the four nav items are wider than the viewport, which
+   stretches the whole document. Drop the text links and keep the one CTA. */
+@media(max-width:760px){
+  .nav{padding:1rem 1.25rem}
+  .nav ul li:not(:last-child){display:none}
+}
+
+/* scroll reveal */
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .55s ease,transform .55s ease}
+.reveal.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+
+footer{background:var(--ink);color:rgba(233,242,241,.65);padding:3rem 0 7.5rem;position:relative;overflow:hidden}
+
+/* ---- squid system -------------------------------------------------------
+   TruLens is a lens, and the colossal squid has the largest eye in nature.
+   The eye is the hero mark; tentacles divide the bands; the sucker ring is
+   the list marker. All flat fills -- no gradients, no shadows. */
+
+/* hero: copy left, eye bleeding off the right edge */
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,40%);gap:2.5rem;align-items:center}
+.eye-slot{position:relative;min-height:440px}
+.eye{position:absolute;left:0;top:50%;transform:translateY(-50%);
+  width:118%;max-width:none;height:auto;overflow:visible}
+@media(max-width:1000px){
+  .hero-grid{grid-template-columns:1fr}
+  .eye-slot{min-height:320px;order:-1}
+  .eye{position:relative;top:auto;transform:none;width:100%}
+}
+
+/* the aperture ring turns slowly, like a lens being focused */
+.ticks{transform-box:fill-box;transform-origin:center;animation:spin 90s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* the pupil dilates -- a squid eye adjusting to the dark */
+.pupil{transform-box:fill-box;transform-origin:center;animation:dilate 7s ease-in-out infinite}
+@keyframes dilate{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+@media(prefers-reduced-motion:reduce){
+  .ticks,.pupil{animation:none}
+}
+
+/* an eye watching from inside a band, cropped by the band edge */
+.eye-peek{position:absolute;pointer-events:none}
+
+/* tentacle divider: one sweeping arm with suckers, band to band */
+.tdiv{display:block;width:100%;height:190px;overflow:hidden;line-height:0}
+.tdiv svg{width:100%;height:190px;display:block}
+/* Below the arm's own width the `slice` crop would eat the curled tip and blow
+   the suckers up, so let the whole arm scale down instead. */
+@media(max-width:1100px){
+  .tdiv,.tdiv svg{height:auto}
+}
+
+/* sucker ring as a list marker */
+.mgroup li{position:relative;padding-left:1.35rem;list-style:none}
+.mgroup li::before{
+  content:"";position:absolute;left:0;top:.55em;width:9px;height:9px;
+  border:2px solid currentColor;border-radius:50%;opacity:.42;
+}
+.mgroup ul{padding-left:0}
+
+/* squid line-art watermark, footer only */
+.squid-wm{position:absolute;right:2.5rem;bottom:1rem;width:150px;opacity:.13;pointer-events:none}
+
+/* Dashboard captures are dense. Shrinking them to phone width makes the text
+   unreadable, so let them swipe sideways at their real size instead. */
+@media(max-width:760px){
+  .bleed,.shotbox{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .shot{min-width:680px}
+}
