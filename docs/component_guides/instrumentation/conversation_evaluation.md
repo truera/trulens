@@ -7,7 +7,7 @@ results in the dashboard's conversation view.
 
 !!! tip "Quickstart notebook"
     The concepts on this page are demonstrated end-to-end in the
-    [Conversation Evaluation Quickstart](../../../examples/quickstart/conversation_evaluation.ipynb)
+    [Conversation Evaluation Quickstart](../../getting_started/quickstarts/conversation_evaluation.ipynb)
     notebook.
 
 ## How `conversation_id` flows
@@ -151,4 +151,4 @@ In the dashboard:
   single turn
 - [Feedback Selectors](../evaluation/feedback_selectors/index.md) — choosing what
   to evaluate in each turn
-- [Conversation Evaluation Quickstart notebook](../../../examples/quickstart/conversation_evaluation.ipynb)
+- [Conversation Evaluation Quickstart notebook](../../getting_started/quickstarts/conversation_evaluation.ipynb)

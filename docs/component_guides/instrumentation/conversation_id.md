@@ -89,5 +89,5 @@ with tru_app as recording:
 Once conversations are tagged, see [Conversation Evaluation](conversation_evaluation.md)
 for a complete guide on wiring per-turn metrics, aggregating scores by conversation,
 and exploring results in the dashboard.  The
-[Conversation Evaluation Quickstart](../../../examples/quickstart/conversation_evaluation.ipynb)
+[Conversation Evaluation Quickstart](../../getting_started/quickstarts/conversation_evaluation.ipynb)
 notebook walks through this end-to-end.
