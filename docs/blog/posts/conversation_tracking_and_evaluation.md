@@ -180,26 +180,7 @@ generations, tool calls, or latency.
 The framework-neutral quickstart records a 12-turn conversation and a single-turn
 conversation, waits for their evaluations, and opens the thread-aware dashboard:
 
-[![Open the Conversation Evaluation Quickstart in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/examples/quickstart/conversation_evaluation.ipynb)
-
 - [Conversation Evaluation Quickstart](https://github.com/truera/trulens/blob/main/examples/quickstart/conversation_evaluation.ipynb)
 - [LangChain Conversation Evaluation](https://github.com/truera/trulens/blob/main/examples/expositional/frameworks/langchain/conversation_evaluation.ipynb)
 - [Conversation Evaluation Guide](https://www.trulens.org/component_guides/instrumentation/conversation_evaluation/)
 - [Conversation ID Guide](https://www.trulens.org/component_guides/instrumentation/conversation_id/)
-- [Conversation example PR](https://github.com/truera/trulens/pull/2668)
-- [Conversation evaluation implementation PR](https://github.com/truera/trulens/pull/2670)
-
-Install or upgrade TruLens:
-
-```bash
-pip install --upgrade trulens trulens-providers-openai
-```
-
-Conversation metrics currently require OpenTelemetry tracing and a local database
-connector. They are not yet supported with `SnowflakeConnector`; this includes
-conversation grouping, retrieval APIs, dashboard views, and conversation-level
-metrics. See the [Snowflake logging guide](https://www.trulens.org/component_guides/logging/where_to_log/log_in_snowflake/)
-for the current connector scope.
-
-Questions or feedback? Open an [issue](https://github.com/truera/trulens/issues) or
-[discussion](https://github.com/truera/trulens/discussions).
