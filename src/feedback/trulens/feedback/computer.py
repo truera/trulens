@@ -162,6 +162,21 @@ def compute_feedback_by_span_group(
     )
     feedback_aggregator = feedback.agg
 
+    if _is_conversation_level(kwarg_to_selector):
+        num_feedbacks_computed = _compute_feedback_by_conversation(
+            events,
+            feedback_name,
+            feedback.feedback_definition_id,
+            feedback_function,
+            higher_is_better,
+            feedback_aggregator,
+            kwarg_to_selector,
+            max_workers,
+        )
+        if raise_error_on_no_feedbacks_computed and num_feedbacks_computed == 0:
+            raise ValueError("No feedbacks were computed!")
+        return
+
     kwarg_groups = _group_kwargs_by_selectors(kwarg_to_selector)
     unflattened_inputs = _collect_inputs_from_events(
         events, kwarg_groups, kwarg_to_selector
@@ -188,6 +203,128 @@ def compute_feedback_by_span_group(
     )
     if raise_error_on_no_feedbacks_computed and num_feedbacks_computed == 0:
         raise ValueError("No feedbacks were computed!")
+
+
+def _is_conversation_level(
+    kwarg_to_selector: Dict[str, Selector],
+) -> bool:
+    levels = {
+        selector.conversation_level for selector in kwarg_to_selector.values()
+    }
+    if len(levels) > 1:
+        raise ValueError(
+            "Conversation selectors cannot be mixed with record or span selectors."
+        )
+    return levels == {True}
+
+
+def _compute_feedback_by_conversation(
+    events: pd.DataFrame,
+    feedback_name: str,
+    feedback_definition_id: str,
+    feedback_function: Metric,
+    higher_is_better: bool,
+    feedback_aggregator: Optional[Callable[[List[float]], float]],
+    kwarg_to_selector: Dict[str, Selector],
+    max_workers: Optional[int],
+) -> int:
+    record_roots = [
+        row
+        for _, row in events.iterrows()
+        if row["record_attributes"].get(SpanAttributes.SPAN_TYPE)
+        == SpanAttributes.SpanType.RECORD_ROOT
+    ]
+    conversations = defaultdict(list)
+    for root in record_roots:
+        attributes = root["record_attributes"]
+        conversation_id = attributes.get(SpanAttributes.CONVERSATION_ID)
+        if conversation_id is None:
+            _logger.warning(
+                "Skipping record_id=%s because it has no conversation_id.",
+                attributes.get(SpanAttributes.RECORD_ID),
+            )
+            continue
+        app_name, app_version, app_id, run_name = DB.extract_app_and_run_info(
+            attributes, root["resource_attributes"]
+        )
+        key = (app_name, app_version, app_id, run_name, conversation_id)
+        conversations[key].append(root)
+
+    flattened_inputs = []
+    target_record_id_to_conversation_id = {}
+    record_id_to_record_root = _map_record_id_to_record_roots(events)
+    for key, roots in conversations.items():
+        roots.sort(
+            key=lambda root: (
+                root["start_timestamp"],
+                root["record_attributes"].get(SpanAttributes.RECORD_ID, ""),
+            )
+        )
+        records = []
+        root_span_ids = []
+        root_span_contexts = []
+        for root in roots:
+            attributes = root["record_attributes"]
+            records.append({
+                "input": attributes.get(SpanAttributes.RECORD_ROOT.INPUT),
+                "output": attributes.get(SpanAttributes.RECORD_ROOT.OUTPUT),
+            })
+            root_span_ids.append(root["trace"]["span_id"])
+            trace_id = root["trace"].get("trace_id")
+            if trace_id is not None:
+                root_span_contexts.append((trace_id, root["trace"]["span_id"]))
+
+        inputs = {}
+        for arg, selector in kwarg_to_selector.items():
+            if selector.conversation_attribute == "records":
+                value = records
+                span_attribute = "conversation.records"
+            elif selector.conversation_attribute == "input":
+                value = [
+                    record["input"]
+                    for record in records
+                    if record["input"] is not None
+                ]
+                span_attribute = SpanAttributes.RECORD_ROOT.INPUT
+            else:
+                value = [
+                    record["output"]
+                    for record in records
+                    if record["output"] is not None
+                ]
+                span_attribute = SpanAttributes.RECORD_ROOT.OUTPUT
+            inputs[arg] = FeedbackFunctionInput(
+                value=value,
+                span_id=root_span_ids,
+                span_contexts=root_span_contexts,
+                span_attribute=span_attribute,
+                collect_list=True,
+            )
+
+        target_record_id = roots[-1]["record_attributes"].get(
+            SpanAttributes.RECORD_ID
+        )
+        target_record_id_to_conversation_id[target_record_id] = key[-1]
+        flattened_inputs.append((
+            target_record_id,
+            feedback_definition_id,
+            inputs,
+        ))
+
+    flattened_inputs = _remove_already_computed_feedbacks(
+        events, feedback_name, flattened_inputs
+    )
+    return _run_feedback_on_inputs(
+        flattened_inputs,
+        feedback_name,
+        feedback_function,
+        higher_is_better,
+        feedback_aggregator,
+        record_id_to_record_root,
+        max_workers=max_workers,
+        record_id_to_conversation_id=target_record_id_to_conversation_id,
+        raise_worker_errors=True,
+    )
 
 
 def _group_kwargs_by_selectors(
@@ -620,6 +757,7 @@ def _feedback_already_computed(
         valid = valid and feedback_name == curr.get(
             SpanAttributes.EVAL_ROOT.METRIC_NAME
         )
+        valid = valid and curr.get(SpanAttributes.EVAL_ROOT.SCORE) is not None
         for k, v in kwarg_inputs.items():
             if not valid:
                 break
@@ -646,6 +784,8 @@ def _run_feedback_on_inputs(
     feedback_aggregator: Optional[Callable[[List[float]], float]],
     record_id_to_record_root: Dict[str, pd.Series],
     max_workers: Optional[int] = None,
+    record_id_to_conversation_id: Optional[Dict[str, str]] = None,
+    raise_worker_errors: bool = False,
 ) -> int:
     """Run feedback function on all inputs.
 
@@ -675,11 +815,13 @@ def _run_feedback_on_inputs(
             record_id_to_record_root[record_id]["record_attributes"],
             record_id_to_record_root[record_id]["resource_attributes"],
             span_group,
+            conversation_id=(record_id_to_conversation_id or {}).get(record_id),
         )
 
     workers = max_workers if max_workers is not None else len(flattened_inputs)
     workers = max(workers, 1)
     ret = 0
+    errors = []
 
     with ThreadPoolExecutor(max_workers=workers) as executor:
         # Each worker gets its own context copy so context vars
@@ -702,9 +844,12 @@ def _run_feedback_on_inputs(
                 future.result()
                 ret += 1
             except Exception as e:
+                errors.append(e)
                 _logger.warning(
                     f"feedback_name={feedback_name}, record={rid}, span_group={sg} had an error during computation:\n{str(e)}"
                 )
+    if raise_worker_errors and errors:
+        raise errors[0]
     return ret
 
 
@@ -717,6 +862,7 @@ def _call_feedback_function_with_record_root_info(
     record_root_attributes: Dict[str, Any],
     record_root_resource_attributes: Dict[str, Any],
     span_group: Optional[str] = None,
+    conversation_id: Optional[str] = None,
 ) -> None:
     """Call feedback function.
 
@@ -755,6 +901,7 @@ def _call_feedback_function_with_record_root_info(
         input_id,
         target_record_id,
         span_group,
+        conversation_id=conversation_id,
     )
 
 
@@ -771,6 +918,7 @@ def _call_feedback_function(
     input_id: str,
     target_record_id: str,
     span_group: Optional[str] = None,
+    conversation_id: Optional[str] = None,
 ) -> float:
     """Call feedback function.
 
@@ -791,6 +939,14 @@ def _call_feedback_function(
     Returns:
         The score returned by the feedback function.
     """
+    source_span_contexts = next(
+        (
+            value.span_contexts
+            for value in kwarg_inputs.values()
+            if value.span_contexts
+        ),
+        None,
+    )
     context_manager = OtelFeedbackComputationRecordingContext(
         app_name=app_name,
         app_version=app_version,
@@ -799,6 +955,8 @@ def _call_feedback_function(
         input_id=input_id,
         target_record_id=target_record_id,
         feedback_name=feedback_name,
+        conversation_id=conversation_id,
+        source_span_contexts=source_span_contexts,
     )
     with context_manager as eval_root_span:
         try:
