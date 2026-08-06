@@ -82,10 +82,6 @@ with tru_app as recording:
   creating and managing conversation identifiers in your application.
 * The value is stored in OTEL Baggage during the context-manager lifetime and
   therefore does not leak across concurrent invocations that use different IDs.
-* Framework session identifiers and TruLens conversation identifiers serve
-  different purposes. For example, LangChain's `session_id` selects message
-  history, while `conversation_id` groups TruLens records. You can reuse one
-  value for both, but TruLens does not connect them automatically.
 
 ## Next steps
 
