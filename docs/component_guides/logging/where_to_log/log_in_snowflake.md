@@ -26,6 +26,23 @@ TruLens can log traces and evaluations to a Snowflake database. This page covers
 
 Every method below results in a `TruSession` connected to Snowflake. Once connected, all traces and evaluations are logged automatically.
 
+## View results in Snowflake
+
+When you use `SnowflakeConnector`, view traces and evaluation results in the
+managed **AI Observability Evaluations** UI in Snowsight. This is a Snowflake UI
+and is separate from the TruLens Streamlit dashboard used with local database
+connectors.
+
+!!! warning "Time-series views are not available in Snowsight"
+
+    The Snowflake AI Observability Evaluations UI does not currently include
+    the TruLens dashboard's **Trends** time-series views for evaluation metrics,
+    latency, app cost, or evaluation cost.
+
+    The older `init_sis_dashboard=True` setup path for deploying the TruLens
+    Streamlit dashboard in Snowflake is deprecated. Use the managed Snowsight
+    UI for Snowflake-connected traces and evaluations.
+
 ---
 
 ## Browser-Based SSO
@@ -159,7 +176,9 @@ The traditional approach. Works but consider SSO or key-pair auth for better sec
 
 ??? question "I see a warning about `password` being required"
 
-    If you're using non-password auth (SSO, key-pair, OAuth), you can safely ignore this warning. Use the **Snowsight AI Observability** page for dashboards.
+    If you're using non-password auth (SSO, key-pair, OAuth), you can safely
+    ignore this warning. Use the **AI Observability Evaluations** UI in
+    Snowsight to view results.
 
 ??? question "`paramstyle` error: pyformat vs qmark"
 

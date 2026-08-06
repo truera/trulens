@@ -14,7 +14,8 @@ Notes for interpreting these docs:
 - [Getting started](https://www.trulens.org/getting_started/): Orientation and the shape of a TruLens workflow
 - [Install](https://www.trulens.org/getting_started/install/): Package layout and optional extras
 - [Quickstart](https://www.trulens.org/getting_started/quickstarts/quickstart/): Instrument an app, run metrics, read results
-- [Viewing results](https://www.trulens.org/getting_started/dashboard/): The dashboard, leaderboard and record views
+- [Viewing results](https://www.trulens.org/getting_started/dashboard/): Leaderboard, Trends, Records and Compare dashboard views
+- [Monitoring trends](https://www.trulens.org/getting_started/dashboard/trends/): Evaluation metrics, latency, app and evaluation cost over time, with record investigations
 - [GitHub repository](https://github.com/truera/trulens): Source, issues and releases. MIT licensed
 
 ## Core concepts
