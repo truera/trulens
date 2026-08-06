@@ -4414,7 +4414,7 @@ class LLMProvider(core_provider.Provider):
 
     def conversation_helpfulness(
         self,
-        records: Union[List[Any], str],
+        conversation: Union[List[Any], str],
         temperature: float = 0.0,
         **kwargs,
     ) -> float:
@@ -4426,7 +4426,7 @@ class LLMProvider(core_provider.Provider):
             conversation_to_prompt,
         )
 
-        transcript = conversation_to_prompt(records)
+        transcript = conversation_to_prompt(conversation)
         system_prompt = ConversationHelpfulness.system_prompt
         user_prompt = ConversationHelpfulness.user_prompt_template.format(
             transcript=transcript
@@ -4442,7 +4442,7 @@ class LLMProvider(core_provider.Provider):
 
     def topic_adherence(
         self,
-        records: Union[List[Any], str],
+        conversation: Union[List[Any], str],
         reference_topics: List[str],
         temperature: float = 0.0,
         **kwargs,
@@ -4453,7 +4453,7 @@ class LLMProvider(core_provider.Provider):
             conversation_to_prompt,
         )
 
-        transcript = conversation_to_prompt(records)
+        transcript = conversation_to_prompt(conversation)
         topics_str = ", ".join(reference_topics)
         system_prompt = TopicAdherence.system_prompt_template.format(
             reference_topics=topics_str
@@ -4470,7 +4470,7 @@ class LLMProvider(core_provider.Provider):
 
     def agent_goal_accuracy(
         self,
-        records: Union[List[Any], str],
+        conversation: Union[List[Any], str],
         reference_goal: Optional[str] = None,
         temperature: float = 0.0,
         **kwargs,
@@ -4481,7 +4481,7 @@ class LLMProvider(core_provider.Provider):
             conversation_to_prompt,
         )
 
-        transcript = conversation_to_prompt(records)
+        transcript = conversation_to_prompt(conversation)
         goal_text = (
             reference_goal
             or "Infer user's intended goal from dialogue context."
@@ -4501,7 +4501,7 @@ class LLMProvider(core_provider.Provider):
 
     def coherence_across_turns(
         self,
-        records: Union[List[Any], str],
+        conversation: Union[List[Any], str],
         temperature: float = 0.0,
         **kwargs,
     ) -> float:
@@ -4511,7 +4511,7 @@ class LLMProvider(core_provider.Provider):
             conversation_to_prompt,
         )
 
-        transcript = conversation_to_prompt(records)
+        transcript = conversation_to_prompt(conversation)
         system_prompt = CoherenceAcrossTurns.system_prompt
         user_prompt = f"Conversation Transcript:\n{transcript}"
         return self.generate_score(

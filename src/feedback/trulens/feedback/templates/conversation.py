@@ -24,21 +24,21 @@ __all__ = [
 ]
 
 
-def conversation_to_prompt(records: Union[List[Any], str]) -> str:
-    """Serialize a list of Record objects or turn dictionaries into a human-readable transcript.
+def conversation_to_prompt(conversation: Union[List[Any], str]) -> str:
+    """Serialize a conversation (list of Record objects, turn dictionaries, or pre-formatted string) into a human-readable transcript.
 
     Args:
-        records: A list of Record objects, turn dicts, or a pre-formatted string.
+        conversation: A list of Record objects, turn dicts, or a pre-formatted string.
 
     Returns:
         Formatted transcript string with role annotations (User, Assistant, Tool).
     """
-    if isinstance(records, str):
-        return records
+    if isinstance(conversation, str):
+        return conversation
 
     transcript_lines: List[str] = []
 
-    for idx, rec in enumerate(records, start=1):
+    for idx, rec in enumerate(conversation, start=1):
         if hasattr(rec, "main_input") and hasattr(rec, "main_output"):
             user_input = getattr(rec, "main_input", None)
             asst_output = getattr(rec, "main_output", None)

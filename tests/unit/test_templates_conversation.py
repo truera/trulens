@@ -18,11 +18,11 @@ class TestConversationTemplates:
         assert result == transcript
 
     def test_conversation_to_prompt_dicts(self):
-        records = [
+        conversation = [
             {"role": "user", "content": "How's the weather?"},
             {"role": "assistant", "content": "It is sunny today."},
         ]
-        result = conversation_to_prompt(records)
+        result = conversation_to_prompt(conversation)
         assert "User: How's the weather?" in result
         assert "Assistant: It is sunny today." in result
 
@@ -32,26 +32,26 @@ class TestConversationTemplates:
                 self.main_input = inp
                 self.main_output = out
 
-        records = [
+        conversation = [
             MockRecord("What is 2+2?", "2+2 equals 4."),
             MockRecord("Thanks!", "You are welcome!"),
         ]
-        result = conversation_to_prompt(records)
+        result = conversation_to_prompt(conversation)
         assert "Turn 1 User: What is 2+2?" in result
         assert "Turn 1 Assistant: 2+2 equals 4." in result
 
     def test_conversation_to_prompt_fallback(self):
-        records = ["Simple text turn"]
-        result = conversation_to_prompt(records)
+        conversation = ["Simple text turn"]
+        result = conversation_to_prompt(conversation)
         assert "Turn 1: Simple text turn" in result
 
     def test_provider_conversation_helpfulness(self):
         mock_provider = MagicMock()
         mock_provider.generate_score.return_value = 0.95
 
-        records = [{"role": "user", "content": "Help me code."}]
+        conversation = [{"role": "user", "content": "Help me code."}]
         score = LLMProvider.conversation_helpfulness(
-            mock_provider, records=records, custom_arg="value"
+            mock_provider, conversation=conversation, custom_arg="value"
         )
         assert score == 0.95
         mock_provider.generate_score.assert_called_once()
@@ -64,10 +64,10 @@ class TestConversationTemplates:
         mock_provider = MagicMock()
         mock_provider.generate_score.return_value = 0.85
 
-        records = [{"role": "user", "content": "Let's discuss banking."}]
+        conversation = [{"role": "user", "content": "Let's discuss banking."}]
         score = LLMProvider.topic_adherence(
             mock_provider,
-            records=records,
+            conversation=conversation,
             reference_topics=["banking", "finance"],
             custom_arg="value",
         )
@@ -82,10 +82,10 @@ class TestConversationTemplates:
         mock_provider = MagicMock()
         mock_provider.generate_score.return_value = 1.0
 
-        records = [{"role": "user", "content": "Book a flight."}]
+        conversation = [{"role": "user", "content": "Book a flight."}]
         score = LLMProvider.agent_goal_accuracy(
             mock_provider,
-            records=records,
+            conversation=conversation,
             reference_goal="Book flight",
             custom_arg="value",
         )
@@ -100,9 +100,9 @@ class TestConversationTemplates:
         mock_provider = MagicMock()
         mock_provider.generate_score.return_value = 0.9
 
-        records = [{"role": "user", "content": "Tell me a joke."}]
+        conversation = [{"role": "user", "content": "Tell me a joke."}]
         score = LLMProvider.coherence_across_turns(
-            mock_provider, records=records, custom_arg="value"
+            mock_provider, conversation=conversation, custom_arg="value"
         )
         assert score == 0.9
         mock_provider.generate_score.assert_called_once()
@@ -115,14 +115,16 @@ class TestConversationTemplates:
         mock_provider = MagicMock()
         mock_provider.generate_score.side_effect = RuntimeError("LLM Failure")
 
-        records = [{"role": "user", "content": "Test error"}]
+        conversation = [{"role": "user", "content": "Test error"}]
         with pytest.raises(RuntimeError, match="LLM Failure"):
-            LLMProvider.conversation_helpfulness(mock_provider, records=records)
+            LLMProvider.conversation_helpfulness(
+                mock_provider, conversation=conversation
+            )
 
         with pytest.raises(RuntimeError, match="LLM Failure"):
             LLMProvider.topic_adherence(
                 mock_provider,
-                records=records,
+                conversation=conversation,
                 reference_topics=["test"],
             )
 
