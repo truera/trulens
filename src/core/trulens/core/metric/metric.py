@@ -760,6 +760,14 @@ class Metric(feedback_schema.FeedbackDefinition):
         ret.selectors = new_selectors
         return ret
 
+    @property
+    def is_conversation_level(self) -> bool:
+        """Whether this metric selects conversation-scoped inputs."""
+        return bool(self.selectors) and all(
+            isinstance(selector, Selector) and selector.conversation_level
+            for selector in self.selectors.values()
+        )
+
     def with_arguments(self, **kwargs: Any) -> Metric:
         """Bind static keyword arguments to every metric invocation."""
         if self.imp is None:

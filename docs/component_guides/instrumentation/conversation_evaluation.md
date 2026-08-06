@@ -12,15 +12,14 @@ conversation-level result, and exploring the results in the dashboard.
 
 ## How `conversation_id` flows into spans
 
-Each invocation of your application produces a separate TruLens record. Pass the
-same `conversation_id` to each recording context to identify those records as turns
-in one logical conversation:
+Each top-level invocation of your application produces a separate TruLens record.
+Wrap all turns that should be evaluated together in one recording context:
 
 ```python
 conversation_id = "conv-climate-001"
 
-for user_input in turns:
-    with tru_chatbot(conversation_id=conversation_id):
+with tru_chatbot(conversation_id=conversation_id) as recording:
+    for user_input in turns:
         chatbot.invoke(
             {"input": user_input},
             config={
@@ -35,6 +34,11 @@ TruLens propagates `conversation_id` through
 [OpenTelemetry Baggage](https://opentelemetry.io/docs/concepts/signals/baggage/),
 so every child span created during that invocation carries
 `ai.observability.conversation_id`.
+
+The context defines the online evaluation batch. When it exits successfully,
+turn-level metrics remain queued per record and conversation-level metrics are queued
+once over the exact ordered records created in that context. Context exit does not
+wait for evaluation to finish.
 
 The two identifiers in the example have different responsibilities:
 
@@ -133,22 +137,42 @@ tru_chatbot = TruChain(
 )
 ```
 
-Record each turn in its own context manager. After all turns are available, flush the
-spans and compute feedback over the event batch:
+Record all turns that belong to one evaluation batch in the same context. Conversation
+evaluation is queued automatically on successful context exit:
 
 ```python
-session.force_flush()
-tru_chatbot.compute_feedbacks()
-session.force_flush()
+with tru_chatbot(conversation_id=conversation_id) as recording:
+    for user_input in turns:
+        chatbot.invoke(
+            {"input": user_input},
+            config={"configurable": {"session_id": conversation_id}},
+        )
 ```
 
-The feedback computer orders record roots by start time, groups them by application,
-run, and `conversation_id`, and evaluates the conversation metric once. Records with
-no `conversation_id` are not included in conversation-level evaluation.
+Use the returned recording when the next step must wait for persisted results:
 
-If more turns are recorded later, computing feedback again evaluates the newer
-conversation snapshot. The ordered contributing record-root span IDs provide the
-provenance used to distinguish and deduplicate snapshots.
+```python
+feedback_results = recording.retrieve_feedback_results()
+```
+
+The evaluator waits until every exact record is visible, orders their roots by start
+time, and runs the conversation metric once. Records without a `conversation_id` are
+not included in conversation-level evaluation.
+
+Reusing the same `conversation_id` in another context creates another independent
+evaluation batch. Earlier contexts are not reloaded or re-evaluated. Ordered
+contributing record-root span IDs provide provenance and deduplication, and the
+conversation evaluation root links to those record roots using OpenTelemetry links.
+
+For historical analysis or backfills, explicit event-batch APIs remain available:
+
+```python
+tru_chatbot.compute_feedbacks()
+session.compute_feedbacks_on_events(events, feedbacks)
+```
+
+Those APIs evaluate the conversation groups present in the supplied event batch; they
+are separate from context-bounded online evaluation.
 
 ## Retrieve and interpret scores
 
@@ -213,11 +237,12 @@ On the **Records** page, records sharing a `conversation_id` appear as one threa
 
 - Conversation metrics require OpenTelemetry tracing.
 - `conversation_id` must be a string and is managed by your application.
-- Conversation metrics execute through event-batch computation such as
-  `App.compute_feedbacks()`, `TruSession.compute_feedbacks_on_events()`, or
-  client-side `Run.compute_metrics()`.
-- Legacy single-record metric execution cannot reconstruct a multi-record
-  conversation.
+- Online conversation metrics are queued once when a conversation recording context
+  exits successfully.
+- Direct metric execution does not support conversation selectors because it does not
+  receive a multi-record OpenTelemetry event batch.
+- Explicit event-batch computation remains supported through `App.compute_feedbacks()`,
+  `TruSession.compute_feedbacks_on_events()`, and client-side `Run.compute_metrics()`.
 
 ## See also
 

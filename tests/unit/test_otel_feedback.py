@@ -37,6 +37,7 @@ class TestOtelFeedback(OtelTestCase):
             feedback.implementation_kwargs,
             {"reference_topics": ["billing"]},
         )
+        self.assertTrue(feedback.is_conversation_level)
         feedback.check_otel_selectors()
         self.assertEqual(feedback(records=[{"input": "hello"}]), 1.0)
 
@@ -50,6 +51,10 @@ class TestOtelFeedback(OtelTestCase):
         )
         with self.assertRaisesRegex(ValueError, "cannot be mixed"):
             feedback.check_otel_selectors()
+
+    def test_record_selector_is_not_conversation_level(self) -> None:
+        feedback = Feedback(self._mock_feedback_function_1).on_input()
+        self.assertFalse(feedback.is_conversation_level)
 
     def test_on_input(self) -> None:
         feedback = Feedback(self._mock_feedback_function_1).on_input()

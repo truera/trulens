@@ -262,6 +262,7 @@ def _compute_feedback_by_conversation(
         )
         records = []
         root_span_ids = []
+        root_span_contexts = []
         for root in roots:
             attributes = root["record_attributes"]
             records.append({
@@ -269,6 +270,9 @@ def _compute_feedback_by_conversation(
                 "output": attributes.get(SpanAttributes.RECORD_ROOT.OUTPUT),
             })
             root_span_ids.append(root["trace"]["span_id"])
+            trace_id = root["trace"].get("trace_id")
+            if trace_id is not None:
+                root_span_contexts.append((trace_id, root["trace"]["span_id"]))
 
         inputs = {}
         for arg, selector in kwarg_to_selector.items():
@@ -292,6 +296,7 @@ def _compute_feedback_by_conversation(
             inputs[arg] = FeedbackFunctionInput(
                 value=value,
                 span_id=root_span_ids,
+                span_contexts=root_span_contexts,
                 span_attribute=span_attribute,
                 collect_list=True,
             )
@@ -318,6 +323,7 @@ def _compute_feedback_by_conversation(
         record_id_to_record_root,
         max_workers=max_workers,
         record_id_to_conversation_id=target_record_id_to_conversation_id,
+        raise_worker_errors=True,
     )
 
 
@@ -751,6 +757,7 @@ def _feedback_already_computed(
         valid = valid and feedback_name == curr.get(
             SpanAttributes.EVAL_ROOT.METRIC_NAME
         )
+        valid = valid and curr.get(SpanAttributes.EVAL_ROOT.SCORE) is not None
         for k, v in kwarg_inputs.items():
             if not valid:
                 break
@@ -778,6 +785,7 @@ def _run_feedback_on_inputs(
     record_id_to_record_root: Dict[str, pd.Series],
     max_workers: Optional[int] = None,
     record_id_to_conversation_id: Optional[Dict[str, str]] = None,
+    raise_worker_errors: bool = False,
 ) -> int:
     """Run feedback function on all inputs.
 
@@ -813,6 +821,7 @@ def _run_feedback_on_inputs(
     workers = max_workers if max_workers is not None else len(flattened_inputs)
     workers = max(workers, 1)
     ret = 0
+    errors = []
 
     with ThreadPoolExecutor(max_workers=workers) as executor:
         # Each worker gets its own context copy so context vars
@@ -835,9 +844,12 @@ def _run_feedback_on_inputs(
                 future.result()
                 ret += 1
             except Exception as e:
+                errors.append(e)
                 _logger.warning(
                     f"feedback_name={feedback_name}, record={rid}, span_group={sg} had an error during computation:\n{str(e)}"
                 )
+    if raise_worker_errors and errors:
+        raise errors[0]
     return ret
 
 
@@ -927,6 +939,14 @@ def _call_feedback_function(
     Returns:
         The score returned by the feedback function.
     """
+    source_span_contexts = next(
+        (
+            value.span_contexts
+            for value in kwarg_inputs.values()
+            if value.span_contexts
+        ),
+        None,
+    )
     context_manager = OtelFeedbackComputationRecordingContext(
         app_name=app_name,
         app_version=app_version,
@@ -936,6 +956,7 @@ def _call_feedback_function(
         target_record_id=target_record_id,
         feedback_name=feedback_name,
         conversation_id=conversation_id,
+        source_span_contexts=source_span_contexts,
     )
     with context_manager as eval_root_span:
         try:
