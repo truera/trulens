@@ -147,9 +147,20 @@ def _process_eval_calls_for_display(
     )
     if conversation_argument is not None:
         df = df.rename(columns={conversation_argument: "input"})
-        if "explanation" not in df.columns:
-            df["explanation"] = ""
-        return df[["input", "score", "explanation"]]
+        columns = ["input", "score"]
+        if (
+            "explanation" in df.columns
+            and df["explanation"]
+            .apply(
+                lambda value: (
+                    pd.notna(value)
+                    and (not isinstance(value, str) or bool(value.strip()))
+                )
+            )
+            .any()
+        ):
+            columns.append("explanation")
+        return df[columns]
     return df
 
 

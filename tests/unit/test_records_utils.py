@@ -90,6 +90,53 @@ def test_process_conversation_input_as_transcript():
     assert "reference" not in result.columns
 
 
+@pytest.mark.parametrize("explanation", [None, "", "   "])
+def test_process_conversation_input_omits_empty_explanation(explanation):
+    calls = [
+        {
+            "span_type": "eval",
+            "eval_root_id": "root1",
+            "args": {
+                "records": [
+                    {"record_id": "1", "input": "Hello", "output": "Hi"}
+                ]
+            },
+            "ret": 1.0,
+            "meta": {"explanation": explanation},
+        }
+    ]
+
+    result = _process_eval_calls_for_display(
+        calls,
+        conversation_args_by_root={"root1": {"records"}},
+    )
+
+    assert result.columns.tolist() == ["input", "score"]
+
+
+def test_process_conversation_input_omits_missing_explanation():
+    calls = [
+        {
+            "span_type": "eval",
+            "eval_root_id": "root1",
+            "args": {
+                "records": [
+                    {"record_id": "1", "input": "Hello", "output": "Hi"}
+                ]
+            },
+            "ret": 1.0,
+            "meta": {},
+        }
+    ]
+
+    result = _process_eval_calls_for_display(
+        calls,
+        conversation_args_by_root={"root1": {"records"}},
+    )
+
+    assert result.columns.tolist() == ["input", "score"]
+
+
 def test_process_generic_structured_input_unchanged():
     records = [{"record_id": "1", "input": "Hello", "output": "Hi"}]
     calls = [
