@@ -8,7 +8,7 @@ conversation-level result, and exploring the results in the dashboard.
 !!! tip "Quickstart notebook"
     Run the
     [Conversation Evaluation Quickstart](../../getting_started/quickstarts/conversation_evaluation.ipynb)
-    for an end-to-end LangChain example.
+    for a framework-neutral end-to-end example using an instrumented Python app.
 
 ## How `conversation_id` flows into spans
 
@@ -248,5 +248,6 @@ On the **Records** page, records sharing a `conversation_id` appear as one threa
 
 - [Conversation ID — Grouping Multi-Turn Traces](conversation_id.md)
 - [Conversation Evaluation Quickstart](../../getting_started/quickstarts/conversation_evaluation.ipynb)
+- [LangChain Conversation Evaluation](https://github.com/truera/trulens/blob/main/examples/expositional/frameworks/langchain/conversation_evaluation.ipynb)
 - [Feedback Selectors](../evaluation/feedback_selectors/index.md)
 - [Span Groups](span_groups.md)
