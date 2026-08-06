@@ -1,0 +1,10 @@
+repos:
+  - repo: local
+    hooks:
+      - id: trulens-eval-smoke-test
+        name: TruLens eval smoke test
+        entry: python examples/cicd/pre_commit/eval_smoke_test.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]

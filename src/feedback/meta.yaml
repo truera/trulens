@@ -1,6 +1,6 @@
 {% set name = "trulens-feedback" %}
 {% set pyname = name.replace('-', '.') %}
-{% set version = "2.8.1" %}
+{% set version = "2.11.0" %}
 
 package:
   name: {{ name|lower }}
@@ -12,7 +12,7 @@ source:
   {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-feedback/#files
-  sha256: d2973b36915c5f015ea724740996ddf380e3abde9865b68307a863e46b7baa4e
+  sha256: a25b176a64e056f65d70a888cad38f15507dcba9c84c3cea917cfeab5992ab45
   {% endif %}
 
 build:
@@ -22,11 +22,11 @@ build:
 
 requirements:
   host:
-    - python >=3.9,<3.13
+    - python >=3.9,<3.14
     - poetry-core <2.0.0
     - pip
   run:
-    - python >=3.9,<3.13
+    - python >=3.9,<3.14
     - trulens-core >=1.0.0,<3.0.0
     - nltk >=3.9.1,<4.0.0
     - pydantic >=2.4.2,<3.0.0
@@ -41,7 +41,7 @@ test:
     - pip check
     - python -c 'import {{ pyname }}; assert {{ pyname }}.__version__ == "{{ version }}", "Installed version does not match expected version"'
   requires:
-    - python >=3.9,<3.13
+    - python >=3.9,<3.14
     - pip
 
 about:

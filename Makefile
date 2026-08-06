@@ -97,12 +97,19 @@ env-tests-notebook: env-tests env-tests-optional
 		markdown
 
 
-# Lock the poetry dependencies for all the subprojects.
-lock: $(POETRY_DIRS)
-	for dir in $(POETRY_DIRS); do \
-		echo "Creating lockfile for $$dir/pyproject.toml"; \
-		poetry lock -C $$dir; \
-	done
+# Lock the root project's dependencies.
+#
+# Only the root lockfile is committed, so only the root is locked. This used to
+# iterate every POETRY_DIRS entry, which meant 22 resolutions of which 21 were
+# thrown away: .gitignore ignores src/**/poetry.lock, so those files were written
+# and then never tracked.
+#
+# This does not update anything by default. Poetry 2.x keeps the pins already in
+# the lockfile and resolves only what pyproject.toml actually changed, which is
+# what stops a version bump quietly dragging unrelated upgrades into a release.
+# `poetry lock --regenerate` is the explicit way to refresh the whole graph.
+lock:
+	poetry lock
 
 # Install all the subprojects using pip.
 pip-install: $(POETRY_DIRS)
@@ -152,7 +159,11 @@ docs-serve-debug: env-docs
 docs-serve-dirty: env-docs
 	poetry run properdocs serve --dirty -a 127.0.0.1:8000
 
-docs-upload: clean env-docs $(shell find docs -type f) mkdocs.yml
+# check-no-lfs-pointers runs first, and deliberately ahead of the interactive
+# `clean` prompt, so a deploy from a clone with LFS smudge disabled stops before
+# asking the operator anything. Deploying from CI is the supported path now, but
+# this target still exists, so it gets the same guard.
+docs-upload: check-no-lfs-pointers clean env-docs $(shell find docs -type f) mkdocs.yml
 	poetry run ggshield secret scan repo ./docs
 	poetry run properdocs gh-deploy
 
@@ -162,19 +173,28 @@ docs-upload: clean env-docs $(shell find docs -type f) mkdocs.yml
 docs-linkcheck: site
 	lychee --offline --no-progress "site/**/*.html"
 
-# Check documentation for broken internal links using properdocs --strict.
-# Does not require lychee; fails if any warnings beyond the pre-existing
-# README.md/index.md conflict are found.
+# Check documentation for broken internal links and other build warnings using
+# properdocs --strict. Does not require lychee. The build is warning-clean, so
+# any new warning (broken link, unresolved cross-reference, missing annotation)
+# fails this target.
 docs-linkcheck-strict: env-docs
-	@OUTPUT=$$(poetry run properdocs build --clean --strict 2>&1); \
-	echo "$$OUTPUT"; \
-  BROKEN=$$(echo "$$OUTPUT" | grep "WARNING -" | grep -v "README.md" | grep -v "griffe:"); \
-	if [ -n "$$BROKEN" ]; then \
-	  echo ""; \
-	  echo "Broken links / documentation warnings found:"; \
-	  echo "$$BROKEN"; \
-	  exit 1; \
-	fi
+	poetry run properdocs build --clean --strict
+
+# Validate docs/llms.txt: the shape the llmstxt.org spec requires, plus every
+# internal link it lists being present in the built sitemap. Neither lychee nor
+# the strict build looks inside static files, so without this a page can be
+# renamed and llms.txt silently keeps pointing at the old URL. Needs a build
+# first; CI runs it straight after docs-linkcheck-strict.
+check-llms-txt:
+	poetry run python tools/check_llms_txt.py
+
+# Fail if any LFS-tracked file under docs/ is still a pointer stub. Costs
+# milliseconds and needs no build, because it reads the working tree rather than
+# the rendered site. Guards against publishing 130-byte text stubs in place of
+# images, which is what a clone with lfs.smudge disabled produces and what the
+# docs build will copy into site/ without complaint.
+check-no-lfs-pointers:
+	poetry run python tools/check_no_lfs_pointers.py
 
 # Start the trubot slack app.
 trubot:
@@ -298,7 +318,7 @@ test-unit:
 		echo "Attempting to run anyway (expect failures)..."; \
 		$(PYTEST) tests/unit/test_otel*.py; \
 	fi
-	$(PYTEST) $(shell ls tests/unit/test_*.py | grep -v test_otel)
+	$(PYTEST) $(shell ls tests/unit/test_*.py tests/unit/providers/test_*.py | grep -v test_otel)
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
 test-e2e:
@@ -313,16 +333,26 @@ install-wheels:
 
 # Release Steps:
 ## Step: Clean repo:
+#
+# Interactive by design: `git clean -fxd` is destructive and a human should see
+# the dry run before agreeing to it. Set FORCE_CLEAN=1 to skip the prompt, which
+# is what CI does -- there is nobody there to answer it, so the read would block
+# until the job timed out.
 clean:
 	git clean --dry-run -fxd
-	@read -p "Do you wish to remove these files? (y/N)" -n 1 -r; \
-	echo; \
-	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+	@if [ -n "$(FORCE_CLEAN)" ]; then \
+		echo "FORCE_CLEAN is set; removing the files listed above without asking."; \
 		git clean -fxd; \
 	else \
-		echo "Did not clean!"; \
-		exit 1; \
-	fi;
+		read -p "Do you wish to remove these files? (y/N)" -n 1 -r; \
+		echo; \
+		if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+			git clean -fxd; \
+		else \
+			echo "Did not clean!"; \
+			exit 1; \
+		fi; \
+	fi
 
 ## Step: Build wheels
 build: $(POETRY_DIRS)
@@ -354,7 +384,7 @@ zip-wheels:
 	poetry run ./zip_wheels.sh
 
 
-# Usage: make bump-version-patch
+# Usage: make bump-version-X.Y.Z
 bump-version-%: $(POETRY_DIRS)
 	for dir in $(POETRY_DIRS); do \
 		echo "Updating $$dir version"; \
@@ -368,31 +398,45 @@ bump-version-%: $(POETRY_DIRS)
 update-meta-yaml:
 	poetry run python update_meta_yaml.py
 
+update-meta-yaml-versions:
+	poetry run python update_meta_yaml.py --version-only
+
 
 ## Step: Upload wheels to pypi
 # Usage: TOKEN=... make upload-trulens-instrument-langchain
 # In all cases, we need to clean, build, zip-wheels, then build again. The reason is because we want the final build to have the zipped wheels.
+#
+# twine reads the credentials from the environment rather than from -p on the
+# command line, so the token stays out of the process list and out of the command
+# that make echoes. TOKEN is still honoured, so `TOKEN=... make upload-all` keeps
+# working; CI sets TWINE_PASSWORD directly from a secret variable instead.
+export TWINE_USERNAME = __token__
+ifndef TWINE_PASSWORD
+export TWINE_PASSWORD = $(TOKEN)
+endif
+
 upload-%: clean build
 	make zip-wheels \
 		&& make build \
-		&& poetry run twine upload -u __token__ -p $(TOKEN) dist/$*/*
+		&& poetry run twine upload dist/$*/*
 
 upload-all: clean build
 	make zip-wheels \
 		&& make build \
-		&& poetry run twine upload --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl \
-		&& poetry run twine upload --skip-existing -u __token__ -p $(TOKEN) dist/**/*.tar.gz
+		&& poetry run twine check dist/**/*.whl dist/**/*.tar.gz \
+		&& poetry run twine upload --skip-existing dist/**/*.whl \
+		&& poetry run twine upload --skip-existing dist/**/*.tar.gz
 
 upload-testpypi-%: clean build
 	make zip-wheels \
 		&& make build \
-		&& poetry run twine upload -r testpypi -u __token__ -p $(TOKEN) dist/$*/*
+		&& poetry run twine upload -r testpypi dist/$*/*
 
 upload-testpypi-all: clean build
 	make zip-wheels \
 		&& make build \
-		&& poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl \
-		&& poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.tar.gz
+		&& poetry run twine upload -r testpypi --skip-existing dist/**/*.whl \
+		&& poetry run twine upload -r testpypi --skip-existing dist/**/*.tar.gz
 
 build-record-viewer-otel:
 	cd src/dashboard/react_components/record_viewer_otel \
