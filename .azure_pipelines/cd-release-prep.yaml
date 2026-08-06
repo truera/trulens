@@ -58,6 +58,12 @@ jobs:
           # LFS stays off: nothing here reads an image.
           persistCredentials: true
 
+      # update_meta_yaml.py needs requests, which the dev group provides.
+      - bash: |
+          set -euo pipefail
+          poetry sync --only dev
+        displayName: "Install the dev group"
+
       - bash: |
           set -euo pipefail
           CURRENT_VERSION=$(grep -m1 '^version' src/core/pyproject.toml | sed -E 's/^version *= *"(.*)"/\1/')
