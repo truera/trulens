@@ -87,3 +87,26 @@ class TestRewardFunction:
         adapter = RewardFunction.from_metric(metric, transform="identity")
         reward = adapter.evaluate_sample("test", "output")
         assert reward == pytest.approx(0.5)
+
+    def test_canonical_trulens_signature(self):
+        """Test with canonical TruLens provider function signature (keyword-only prompt & response)."""
+
+        def trulens_canonical_feedback(prompt: str, response: str) -> float:
+            assert prompt == "hello"
+            assert response == "world"
+            return 0.8
+
+        adapter = RewardFunction(
+            trulens_canonical_feedback, transform="identity"
+        )
+        assert adapter.evaluate_sample("hello", "world") == pytest.approx(0.8)
+
+    def test_internal_typeerror_propagates(self):
+        """Test that internal TypeErrors inside feedback_fn logic are not swallowed."""
+
+        def buggy_feedback(prompt: str, response: str) -> float:
+            raise TypeError("Internal provider argument error")
+
+        adapter = RewardFunction(buggy_feedback, transform="identity")
+        with pytest.raises(TypeError, match="Internal provider argument error"):
+            adapter.evaluate_sample("p", "c")
