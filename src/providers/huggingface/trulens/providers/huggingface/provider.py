@@ -724,6 +724,18 @@ class HuggingfaceLocal(HuggingfaceBase):
     _cached_tokenizers: Dict[str, Any] = {}
     _cached_models: Dict[str, Any] = {}
 
+    @staticmethod
+    def _score_for_label(
+        probs: List[float], id2label: Dict[int, str], expected_label: str
+    ) -> float:
+        for label_id, label in id2label.items():
+            if label == expected_label:
+                return float(probs[label_id])
+        raise RuntimeError(
+            f"{expected_label!r} not found in model labels: "
+            f"{list(id2label.values())}"
+        )
+
     def _retrieve_tokenizer_and_model(
         self,
         key: str,
@@ -749,7 +761,7 @@ class HuggingfaceLocal(HuggingfaceBase):
         )
         with torch.no_grad():
             tokens = tokenizer(text, truncation=True, return_tensors="pt")
-            output = model(tokens["input_ids"])
+            output = model(**tokens)
             probs = torch.softmax(output["logits"][0], -1).tolist()
         id2label = model.config.id2label
         return {id2label[i]: float(probs[i]) for i in range(len(probs))}
@@ -760,13 +772,11 @@ class HuggingfaceLocal(HuggingfaceBase):
         )
         with torch.no_grad():
             tokens = tokenizer(input, truncation=True, return_tensors="pt")
-            output = model(tokens["input_ids"])
+            output = model(**tokens)
             probs = torch.softmax(output["logits"][0], -1).tolist()
-        id2label = model.config.id2label
-        for i, label in id2label.items():
-            if label == "context_relevance":
-                return float(probs[i])
-        raise RuntimeError("'context_relevance' not found in model labels.")
+        return self._score_for_label(
+            probs, model.config.id2label, "context_relevance"
+        )
 
     def _positive_sentiment_endpoint(self, input: str) -> float:
         tokenizer, model = self._retrieve_tokenizer_and_model(
@@ -774,13 +784,9 @@ class HuggingfaceLocal(HuggingfaceBase):
         )
         with torch.no_grad():
             tokens = tokenizer(input, truncation=True, return_tensors="pt")
-            output = model(tokens["input_ids"])
+            output = model(**tokens)
             probs = torch.softmax(output["logits"][0], -1).tolist()
-        id2label = model.config.id2label
-        for i, label in id2label.items():
-            if label == "LABEL_2":
-                return float(probs[i])
-        raise RuntimeError("LABEL_2 not found in model labels.")
+        return self._score_for_label(probs, model.config.id2label, "LABEL_2")
 
     def _toxic_endpoint(self, input: str) -> float:
         tokenizer, model = self._retrieve_tokenizer_and_model(
@@ -788,13 +794,9 @@ class HuggingfaceLocal(HuggingfaceBase):
         )
         with torch.no_grad():
             tokens = tokenizer(input, truncation=True, return_tensors="pt")
-            output = model(tokens["input_ids"])
+            output = model(**tokens)
             probs = torch.softmax(output["logits"][0], -1).tolist()
-        id2label = model.config.id2label
-        for i, label in id2label.items():
-            if label == "toxic":
-                return float(probs[i])
-        raise RuntimeError("toxic not found in model labels.")
+        return self._score_for_label(probs, model.config.id2label, "toxic")
 
     def _summarized_groundedness_endpoint(self, input: str) -> float:
         tokenizer, model = self._retrieve_tokenizer_and_model(
@@ -802,13 +804,9 @@ class HuggingfaceLocal(HuggingfaceBase):
         )
         with torch.no_grad():
             tokens = tokenizer(input, truncation=True, return_tensors="pt")
-            output = model(tokens["input_ids"])
+            output = model(**tokens)
             probs = torch.softmax(output["logits"][0], -1).tolist()
-        id2label = model.config.id2label
-        for i, label in id2label.items():
-            if label == "entailment":
-                return float(probs[i])
-        raise RuntimeError("entailment not found in model labels.")
+        return self._score_for_label(probs, model.config.id2label, "entailment")
 
     # TODEP
     @_tci
@@ -877,8 +875,10 @@ class HuggingfaceLocal(HuggingfaceBase):
         return likelihood_scores, reasons
 
     def _hallucination_evaluator_endpoint(self, input: str) -> float:
-        # HHEM-2.1-Open uses google/flan-t5-base tokenizer and requires
-        # trust_remote_code for its custom architecture.
+        # HHEM-2.1-Open requires custom model code. `trust_remote_code=True`
+        # executes code downloaded from the model repository, so keep the
+        # model key fixed to this reviewed Vectara model rather than accepting
+        # a user-controlled identifier here.
         tokenizer_key = "google/flan-t5-base"
         model_key = HUGS_HALLUCINATION_MODEL_PATH
         if tokenizer_key not in self._cached_tokenizers:
