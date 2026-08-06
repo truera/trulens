@@ -57,6 +57,9 @@ def conversation_to_prompt(records: list[Any] | str) -> str:
 class ConversationHelpfulness(Semantics, CriteriaOutputSpaceMixin):
     """Evaluates helpfulness across a multi-turn conversation."""
 
+    criteria: ClassVar[str] = (
+        "Is the assistant helpful, clear, and thorough across the conversation?"
+    )
     output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
     output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
 
@@ -84,6 +87,9 @@ class ConversationHelpfulness(Semantics, CriteriaOutputSpaceMixin):
 class TopicAdherence(Semantics, CriteriaOutputSpaceMixin):
     """Evaluates topic adherence across conversation turns."""
 
+    criteria: ClassVar[str] = (
+        "Does the conversation adhere to the specified reference topics?"
+    )
     output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
     output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
     system_prompt_template: ClassVar[str] = cleandoc(
@@ -119,6 +125,9 @@ class AgentGoalAccuracy(Semantics):
 class CoherenceAcrossTurns(Semantics, CriteriaOutputSpaceMixin):
     """Evaluates logical coherence across conversation turns."""
 
+    criteria: ClassVar[str] = (
+        "Is the conversation logically coherent and consistent across turns?"
+    )
     output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
     output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
     system_prompt: ClassVar[str] = cleandoc(
