@@ -1,6 +1,6 @@
 {% set name = "trulens-providers-cortex" %}
 {% set pyname = name.replace('-', '.') %}
-{% set version = "2.11.0" %}
+{% set version = "2.12.0" %}
 
 package:
   name: {{ name|lower }}
