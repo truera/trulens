@@ -7,14 +7,17 @@ import logging
 import threading
 import time
 
-from agents.stream_events import RunItemStreamEvent, RawResponsesStreamEvent
-from agents.items import ToolCallItem, ToolCallOutputItem, MessageOutputItem
+from agents.items import MessageOutputItem
+from agents.items import ToolCallItem
+from agents.items import ToolCallOutputItem
+from agents.stream_events import RawResponsesStreamEvent
+from agents.stream_events import RunItemStreamEvent
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from trulens.core.app import trace_with_run
-from trulens.core.run import RunConfig, RunStatus
+from trulens.core.run import RunStatus
 
 from src.eval.metrics import SERVERSIDE_METRICS
 from src.observability.trulens_setup import setup_observability
@@ -49,14 +52,7 @@ def _sse(event: str, data: dict) -> str:
 
 def _compute_metrics_bg(run_name: str):
     try:
-        run_config = RunConfig(
-            run_name=run_name,
-            dataset_name=f"live_{run_name}",
-            source_type="DATAFRAME",
-            dataset_spec={},
-            llm_judge_name="openai-gpt-5.1",
-        )
-        run = tru_app.add_run(run_config=run_config)
+        run = tru_app.get_run(run_name)
 
         for _ in range(20):
             status = run.get_status()

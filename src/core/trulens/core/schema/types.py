@@ -12,6 +12,9 @@ By default these hashes of record content as json.
 [Record.record_id][trulens.core.schema.record.Record.record_id].
 """
 
+ConversationID: TypeAlias = str
+"""Unique identifier for a conversation."""
+
 CallID: TypeAlias = str
 """Unique identifier for a record app call.
 

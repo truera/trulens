@@ -3,11 +3,8 @@
 from trulens.apps import basic as basic_app
 from trulens.core import session as core_session
 from trulens.core.schema import feedback as feedback_schema
-from trulens.core.utils import keys as key_utils
 
 from tests import test as mod_test
-
-key_utils.check_keys("OPENAI_API_KEY", "HUGGINGFACE_API_KEY")
 
 
 class TestTruBasicApp(mod_test.TruTestCase):

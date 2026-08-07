@@ -17,6 +17,8 @@ from typing import (
 
 import pandas as pd
 from trulens.core.schema import app as app_schema
+from trulens.core.schema import base as base_schema
+from trulens.core.schema import conversation as conversation_schema
 from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import event as event_schema
 from trulens.core.schema import feedback as feedback_schema
@@ -380,6 +382,77 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
     ) -> Optional[app_schema.AppDefinition]:
         """Update the metadata of an app."""
 
+    def get_conversations(
+        self, app_id: Optional[types_schema.AppID] = None
+    ) -> Dict[types_schema.ConversationID, conversation_schema.Conversation]:
+        """Get conversations reconstructed from recorded spans."""
+        app_ids = [app_id] if app_id is not None else None
+        records, _ = self.get_records_and_feedback(app_ids=app_ids)
+        if records.empty or "conversation_id" not in records.columns:
+            return {}
+
+        records = records[records["conversation_id"].notna()].copy()
+        if records.empty:
+            return {}
+        records = records.sort_values(["ts", "record_id"])
+
+        conversations = {}
+        for conversation_id, group in records.groupby(
+            "conversation_id", sort=False
+        ):
+            app_ids_in_group = group["app_id"].dropna().unique().tolist()
+            if len(app_ids_in_group) != 1:
+                raise ValueError(
+                    f"Conversation ID {conversation_id!r} belongs to multiple apps. "
+                    "Pass app_id to disambiguate it."
+                )
+            conversations[conversation_id] = conversation_schema.Conversation(
+                conversation_id=conversation_id,
+                app_id=app_ids_in_group[0],
+                record_ids=group["record_id"].tolist(),
+                ts=group.iloc[0]["ts"],
+            )
+        return conversations
+
+    def get_records_by_conversation(
+        self,
+        conversation_id: types_schema.ConversationID,
+        app_id: Optional[types_schema.AppID] = None,
+    ) -> List[record_schema.Record]:
+        """Get a conversation's records ordered chronologically."""
+        app_ids = [app_id] if app_id is not None else None
+        records, _ = self.get_records_and_feedback(app_ids=app_ids)
+        if records.empty or "conversation_id" not in records.columns:
+            return []
+
+        records = records[records["conversation_id"] == conversation_id]
+        if records.empty:
+            return []
+        app_ids_in_records = records["app_id"].dropna().unique().tolist()
+        if len(app_ids_in_records) != 1:
+            raise ValueError(
+                f"Conversation ID {conversation_id!r} belongs to multiple apps. "
+                "Pass app_id to disambiguate it."
+            )
+
+        records = records.sort_values(["ts", "record_id"])
+        return [
+            record_schema.Record(
+                record_id=row["record_id"],
+                calls=[],
+                app_id=row["app_id"],
+                conversation_id=row["conversation_id"],
+                cost=base_schema.Cost.model_validate(row["cost_json"]),
+                perf=base_schema.Perf.model_validate(row["perf_json"]),
+                ts=row["ts"],
+                tags=row["tags"],
+                meta=row["record_json"].get("meta"),
+                main_input=row["input"],
+                main_output=row["output"],
+            )
+            for _, row in records.iterrows()
+        ]
+
     @abc.abstractmethod
     def get_records_and_feedback(
         self,
@@ -619,6 +692,10 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                     "eval_cost_snowflake": 0.0,  # Initialize to 0.0, calculated below (Snowflake credits)
                     "cost_currency": "USD",  # Initialize to "USD", calculated below
                     "feedback_results": {},  # Initialize to empty map, calculated below
+                    # Sampling decision (populated from EVAL_DECISION spans)
+                    "sampled": None,  # None until an EVAL_DECISION span is found
+                    "sample_rate": None,
+                    "eval_decision_reason": None,
                 }
 
             record_events[record_id]["events"].append(event)
@@ -663,6 +740,18 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                 else:
                     record_events[record_id]["eval_cost"] += amount
                 # Do not add EVAL costs to total_cost to avoid lumping
+            elif span_type == SpanAttributes.SpanType.EVAL_DECISION.value:
+                # Extract sampling decision metadata.
+                record_events[record_id]["sample_rate"] = record_attributes.get(
+                    SpanAttributes.EVAL_DECISION.SAMPLE_RATE
+                )
+                reason = record_attributes.get(
+                    SpanAttributes.EVAL_DECISION.EVAL_DECISION_REASON
+                )
+                record_events[record_id]["eval_decision_reason"] = reason
+                record_events[record_id]["sampled"] = (
+                    reason == "evaluated" if reason else None
+                )
             else:
                 # For non-eval spans, update total_cost and tokens
                 self._update_cost_info_otel(
@@ -811,6 +900,7 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
             record_json = {
                 "record_id": record_id,
                 "app_id": record_data["app_id"],
+                "conversation_id": record_data.get("conversation_id"),
                 "input": record_data["input"],
                 "output": record_data["output"],
                 "tags": record_data["tags"],
@@ -856,6 +946,10 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                 "eval_cost_snowflake": record_data["eval_cost_snowflake"],
                 "cost_currency": record_data["cost_currency"],
                 "num_events": len(record_data["events"]),
+                # Sampling decision metadata
+                "sampled": record_data["sampled"],
+                "sample_rate": record_data["sample_rate"],
+                "eval_decision_reason": record_data["eval_decision_reason"],
             }
 
             # Add feedback results

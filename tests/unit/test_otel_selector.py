@@ -8,6 +8,25 @@ from tests.util.otel_test_case import OtelTestCase
 
 
 class TestOtelSelector(OtelTestCase):
+    def test_conversation_selectors(self) -> None:
+        self.assertEqual(
+            Selector.select_conversation(),
+            Selector(
+                conversation_level=True,
+                conversation_attribute="records",
+            ),
+        )
+        self.assertEqual(
+            Selector.select_conversation_input().conversation_attribute,
+            "input",
+        )
+        self.assertEqual(
+            Selector.select_conversation_output().conversation_attribute,
+            "output",
+        )
+        with self.assertRaises(ValueError):
+            Selector(trace_level=True, conversation_level=True)
+
     def test__split_function_name(self) -> None:
         self.assertEqual(
             Selector._split_function_name("a.B.c"), ["a", "B", "c"]
