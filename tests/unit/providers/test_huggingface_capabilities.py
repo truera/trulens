@@ -1,5 +1,28 @@
 # pyright: reportMissingImports=false, reportMissingModuleSource=false
+import types
+from unittest import mock
+
 import pytest
+
+
+class _FakeOutput(dict):
+    def __init__(self, logits):
+        super().__init__(logits=logits)
+        self.logits = logits
+
+
+def _fake_tokenizer_and_model(logits, id2label):
+    import torch
+
+    tokens = {
+        "input_ids": torch.tensor([[101, 102]]),
+        "attention_mask": torch.tensor([[1, 1]]),
+    }
+    tokenizer = mock.Mock(return_value=tokens)
+    tokenizer.decode.return_value = "Alice"
+    model = mock.Mock(return_value=_FakeOutput(torch.tensor(logits)))
+    model.config = types.SimpleNamespace(id2label=id2label)
+    return tokenizer, model
 
 
 @pytest.mark.optional
@@ -140,6 +163,165 @@ def test_huggingface_local_model_loading_cached(monkeypatch):
     # Same objects returned from cache
     assert tokenizer1 is tokenizer2
     assert model1 is model2
+
+
+@pytest.mark.optional
+def test_huggingface_local_language_scores(monkeypatch):
+    from trulens.providers.huggingface.provider import HuggingfaceLocal
+
+    provider = HuggingfaceLocal()
+    tokenizer, model = _fake_tokenizer_and_model(
+        [[0.2, 1.8]], {0: "en", 1: "fr"}
+    )
+    monkeypatch.setattr(
+        provider,
+        "_retrieve_tokenizer_and_model",
+        mock.Mock(return_value=(tokenizer, model)),
+    )
+
+    result = provider._language_scores_endpoint("bonjour")
+
+    assert set(result) == {"en", "fr"}
+    assert all(isinstance(score, float) for score in result.values())
+    model.assert_called_once_with(**tokenizer.return_value)
+
+
+@pytest.mark.optional
+@pytest.mark.parametrize(
+    ("endpoint_name", "expected_label"),
+    [
+        ("_context_relevance_endpoint", "context_relevance"),
+        ("_positive_sentiment_endpoint", "LABEL_2"),
+        ("_toxic_endpoint", "toxic"),
+        ("_summarized_groundedness_endpoint", "entailment"),
+    ],
+)
+def test_huggingface_local_scalar_endpoints(
+    monkeypatch, endpoint_name, expected_label
+):
+    from trulens.providers.huggingface.provider import HuggingfaceLocal
+
+    provider = HuggingfaceLocal()
+    tokenizer, model = _fake_tokenizer_and_model(
+        [[0.2, 1.8]], {0: "other", 1: expected_label}
+    )
+    monkeypatch.setattr(
+        provider,
+        "_retrieve_tokenizer_and_model",
+        mock.Mock(return_value=(tokenizer, model)),
+    )
+
+    result = getattr(provider, endpoint_name)("input")
+
+    assert isinstance(result, float)
+    model.assert_called_once_with(**tokenizer.return_value)
+
+
+@pytest.mark.optional
+@pytest.mark.parametrize(
+    ("endpoint_name", "expected_label"),
+    [
+        ("_context_relevance_endpoint", "context_relevance"),
+        ("_positive_sentiment_endpoint", "LABEL_2"),
+        ("_toxic_endpoint", "toxic"),
+        ("_summarized_groundedness_endpoint", "entailment"),
+    ],
+)
+def test_huggingface_local_label_errors_list_available_labels(
+    monkeypatch, endpoint_name, expected_label
+):
+    from trulens.providers.huggingface.provider import HuggingfaceLocal
+
+    provider = HuggingfaceLocal()
+    tokenizer, model = _fake_tokenizer_and_model(
+        [[0.2, 1.8]], {0: "negative", 1: "positive"}
+    )
+    monkeypatch.setattr(
+        provider,
+        "_retrieve_tokenizer_and_model",
+        mock.Mock(return_value=(tokenizer, model)),
+    )
+
+    with pytest.raises(RuntimeError) as exc_info:
+        getattr(provider, endpoint_name)("input")
+
+    assert expected_label in str(exc_info.value)
+    assert "['negative', 'positive']" in str(exc_info.value)
+
+
+@pytest.mark.optional
+def test_huggingface_local_pii_detection(monkeypatch):
+    from trulens.providers.huggingface.provider import HuggingfaceLocal
+
+    provider = HuggingfaceLocal()
+    tokenizer, model = _fake_tokenizer_and_model(
+        [[[0.1, 1.9], [1.9, 0.1]]], {0: "O", 1: "B-NAME"}
+    )
+    monkeypatch.setattr(
+        provider,
+        "_retrieve_tokenizer_and_model",
+        mock.Mock(return_value=(tokenizer, model)),
+    )
+
+    result = provider._pii_detection_endpoint("Alice")
+
+    assert isinstance(result, list)
+    assert len(result) == 1
+    assert isinstance(result[0], float)
+    model.assert_called_once_with(**tokenizer.return_value)
+
+
+@pytest.mark.optional
+def test_huggingface_local_pii_detection_with_reasons(monkeypatch):
+    from trulens.providers.huggingface.provider import HuggingfaceLocal
+
+    provider = HuggingfaceLocal()
+    tokenizer, model = _fake_tokenizer_and_model(
+        [[[0.1, 1.9], [1.9, 0.1]]], {0: "O", 1: "B-NAME"}
+    )
+    monkeypatch.setattr(
+        provider,
+        "_retrieve_tokenizer_and_model",
+        mock.Mock(return_value=(tokenizer, model)),
+    )
+
+    scores, reasons = provider._pii_detection_with_cot_reasons_endpoint("Alice")
+
+    assert isinstance(scores, list)
+    assert len(scores) == 1
+    assert isinstance(scores[0], float)
+    assert list(reasons) == ["NAME detected: Alice"]
+    model.assert_called_once_with(**tokenizer.return_value)
+
+
+@pytest.mark.optional
+def test_huggingface_local_hallucination_endpoint(monkeypatch):
+    import trulens.providers.huggingface.provider as provider_mod
+
+    provider = provider_mod.HuggingfaceLocal()
+    provider._cached_tokenizers.clear()
+    provider._cached_models.clear()
+    tokenizer, model = _fake_tokenizer_and_model([[0.2, 1.8]], {})
+    tokenizer_loader = mock.Mock(return_value=tokenizer)
+    model_loader = mock.Mock(return_value=model)
+    monkeypatch.setattr(
+        provider_mod.AutoTokenizer, "from_pretrained", tokenizer_loader
+    )
+    monkeypatch.setattr(
+        provider_mod.AutoModelForSequenceClassification,
+        "from_pretrained",
+        model_loader,
+    )
+
+    result = provider._hallucination_evaluator_endpoint("premise hypothesis")
+
+    assert isinstance(result, float)
+    tokenizer_loader.assert_called_once_with("google/flan-t5-base")
+    model_loader.assert_called_once_with(
+        provider_mod.HUGS_HALLUCINATION_MODEL_PATH,
+        trust_remote_code=True,
+    )
+    model.assert_called_once_with(**tokenizer.return_value)
 
 
 @pytest.mark.optional
