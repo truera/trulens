@@ -92,6 +92,44 @@ class GenAIAttributes:
         """Result returned by the tool (JSON-serialised)."""
 
 
+class GenAIEvents:
+    """OTEL GenAI semantic convention event names and event attribute keys.
+
+    See: https://opentelemetry.io/docs/specs/semconv/gen-ai/
+    """
+
+    PROMPT = GEN_AI_SCOPE + ".prompt"
+    """Span event emitted for GenAI prompt/input content."""
+
+    CHOICE = GEN_AI_SCOPE + ".choice"
+    """Span event emitted for GenAI choice/completion output content."""
+
+    RETRIEVAL_QUERY = GEN_AI_SCOPE + ".retrieval.query"
+    """Span event emitted for retrieval query content."""
+
+    RETRIEVAL_DOCUMENTS = GEN_AI_SCOPE + ".retrieval.documents"
+    """Span event emitted for retrieved documents content."""
+
+    class EventAttributes:
+        PROMPT_TEXT = GEN_AI_SCOPE + ".prompt"
+        """Prompt/input text attribute in a ``gen_ai.prompt`` event."""
+
+        COMPLETION_TEXT = GEN_AI_SCOPE + ".completion"
+        """Completion/output text attribute in a ``gen_ai.choice`` event."""
+
+        ROLE = GEN_AI_SCOPE + ".role"
+        """Message role attribute (e.g. ``user``, ``system``, ``assistant``)."""
+
+        FINISH_REASON = GEN_AI_SCOPE + ".finish_reason"
+        """Completion finish reason (e.g. ``stop``, ``length``)."""
+
+        QUERY_TEXT = GEN_AI_SCOPE + ".retrieval.query.text"
+        """Query text attribute in a retrieval event."""
+
+        DOCUMENTS = GEN_AI_SCOPE + ".retrieval.documents"
+        """Retrieved documents attribute in a retrieval event."""
+
+
 class ResourceAttributes:
     APP_ID = BASE_SCOPE + ".app_id"
     """ID of the app that the span belongs to."""

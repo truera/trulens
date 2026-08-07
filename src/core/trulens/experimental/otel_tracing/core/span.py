@@ -7,6 +7,7 @@ from __future__ import annotations
 from inspect import signature
 import json
 import logging
+import os
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -23,6 +24,7 @@ from opentelemetry.context import Context
 from opentelemetry.trace.span import Span
 from opentelemetry.util.types import AttributeValue
 from trulens.otel.semconv.trace import GenAIAttributes
+from trulens.otel.semconv.trace import GenAIEvents
 from trulens.otel.semconv.trace import ResourceAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -409,4 +411,141 @@ def set_genai_tool_attributes(
     if call_result is not None:
         set_span_attribute_safely(
             span, GenAIAttributes.TOOL.CALL_RESULT, call_result
+        )
+
+
+"""
+GenAI Content Capture Policy & Span Event Emission Helpers.
+
+For PII safety, prompt, completion, and retrieved document content are emitted
+as OTEL Span Events and gated behind an opt-in policy (default OFF).
+"""
+
+_CONTENT_CAPTURE_ENABLED: Optional[bool] = None
+
+
+def is_content_capture_enabled() -> bool:
+    """Check if GenAI content capture (prompts, completions, documents) is opted in.
+
+    Returns True if TRULENS_OTEL_CAPTURE_CONTENT or
+    OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT is set to 'true', '1',
+    or 'yes', or if content capture has been explicitly enabled. Defaults to
+    False for PII safety.
+    """
+    global _CONTENT_CAPTURE_ENABLED
+    if _CONTENT_CAPTURE_ENABLED is not None:
+        return _CONTENT_CAPTURE_ENABLED
+
+    env_val = (
+        os.getenv("TRULENS_OTEL_CAPTURE_CONTENT")
+        or os.getenv("OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT")
+        or os.getenv("TRULENS_CAPTURE_CONTENT")
+    )
+    if env_val is not None:
+        return env_val.strip().lower() in ("true", "1", "yes", "on")
+    return False
+
+
+def set_content_capture(enabled: Optional[bool]) -> None:
+    """Explicitly enable or disable GenAI content capture (or pass None to reset to env default)."""
+    global _CONTENT_CAPTURE_ENABLED
+    _CONTENT_CAPTURE_ENABLED = enabled
+
+
+def add_genai_prompt_event(
+    span: Span,
+    prompt: Any,
+    *,
+    role: Optional[str] = None,
+    capture_content: Optional[bool] = None,
+) -> None:
+    """Emit a ``gen_ai.prompt`` span event if content capture is opted in.
+
+    If content capture is opted out (default), no span event is emitted.
+    """
+    should_capture = (
+        capture_content
+        if capture_content is not None
+        else is_content_capture_enabled()
+    )
+    if not should_capture or prompt is None:
+        return
+
+    attrs: Dict[str, AttributeValue] = {
+        GenAIEvents.EventAttributes.PROMPT_TEXT: _convert_to_valid_span_attribute_type(
+            prompt
+        )
+    }
+    if role is not None:
+        attrs[GenAIEvents.EventAttributes.ROLE] = role
+
+    span.add_event(GenAIEvents.PROMPT, attributes=attrs)
+
+
+def add_genai_completion_event(
+    span: Span,
+    completion: Any,
+    *,
+    finish_reason: Optional[str] = None,
+    capture_content: Optional[bool] = None,
+) -> None:
+    """Emit a ``gen_ai.choice`` span event if content capture is opted in.
+
+    If content capture is opted out (default), no span event is emitted.
+    """
+    should_capture = (
+        capture_content
+        if capture_content is not None
+        else is_content_capture_enabled()
+    )
+    if not should_capture or completion is None:
+        return
+
+    attrs: Dict[str, AttributeValue] = {
+        GenAIEvents.EventAttributes.COMPLETION_TEXT: _convert_to_valid_span_attribute_type(
+            completion
+        )
+    }
+    if finish_reason is not None:
+        attrs[GenAIEvents.EventAttributes.FINISH_REASON] = finish_reason
+
+    span.add_event(GenAIEvents.CHOICE, attributes=attrs)
+
+
+def add_genai_retrieval_events(
+    span: Span,
+    *,
+    query_text: Optional[str] = None,
+    documents: Optional[Any] = None,
+    capture_content: Optional[bool] = None,
+) -> None:
+    """Emit ``gen_ai.retrieval.*`` span events if content capture is opted in.
+
+    If content capture is opted out (default), no span events are emitted.
+    """
+    should_capture = (
+        capture_content
+        if capture_content is not None
+        else is_content_capture_enabled()
+    )
+    if not should_capture:
+        return
+
+    if query_text is not None:
+        span.add_event(
+            GenAIEvents.RETRIEVAL_QUERY,
+            attributes={
+                GenAIEvents.EventAttributes.QUERY_TEXT: _convert_to_valid_span_attribute_type(
+                    query_text
+                )
+            },
+        )
+    if documents is not None:
+        span.add_event(
+            GenAIEvents.RETRIEVAL_DOCUMENTS,
+            attributes={
+                GenAIEvents.EventAttributes.DOCUMENTS: _convert_to_valid_span_attribute_type(
+                    documents
+                )
+            },
         )
