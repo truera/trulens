@@ -191,44 +191,41 @@ instrument_method(
 
 ### Evaluation
 
-Feedback functions evaluate LLM app quality. Must return `float` in [0.0, 1.0] or `dict[str, float]`.
+Metrics evaluate LLM app quality. Must return `float` in [0.0, 1.0] or `dict[str, float]`.
 
 #### Basic usage with shortcuts
 ```python
-from trulens.core import Feedback
+from trulens.core import Metric, Selector
 from trulens.providers.openai import OpenAI
 
 provider = OpenAI()
-f_relevance = Feedback(provider.relevance_with_cot_reasons).on_input().on_output()
+f_relevance = Metric(implementation=provider.relevance_with_cot_reasons).on_input_output()
 ```
 
 Shortcuts:
-- `on_input()` - selects `RECORD_ROOT.INPUT`
-- `on_output()` - selects `RECORD_ROOT.OUTPUT`
+- `on_input_output()` - selects `RECORD_ROOT.INPUT` and `RECORD_ROOT.OUTPUT`
 - `on_context()` - selects `RETRIEVAL.RETRIEVED_CONTEXTS`
 
 #### Selecting span attributes with Selector
 
 Use `Selector` to explicitly select instrumented span attributes for evaluation:
 ```python
-from trulens.core import Feedback
-from trulens.core.feedback.selector import Selector
+from trulens.core import Metric, Selector
 from trulens.otel.semconv.trace import SpanAttributes
 
-f_answer_relevance = (
-    Feedback(provider.relevance_with_cot_reasons, name="Answer Relevance")
-    .on({
+f_answer_relevance = Metric(
+    implementation=provider.relevance_with_cot_reasons,
+    name="Answer Relevance",
+    selectors={
         "prompt": Selector(
             span_type=SpanAttributes.SpanType.RECORD_ROOT,
             span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
         ),
-    })
-    .on({
         "response": Selector(
             span_type=SpanAttributes.SpanType.RECORD_ROOT,
             span_attribute=SpanAttributes.RECORD_ROOT.OUTPUT,
         ),
-    })
+    },
 )
 ```
 
@@ -238,30 +235,36 @@ f_answer_relevance = (
 - `collect_list=True` - concatenate all contexts for single evaluation (for groundedness)
 
 ```python
-# Evaluate each retrieved context individually
-f_context_relevance = (
-    Feedback(provider.context_relevance_with_cot_reasons, name="Context Relevance")
-    .on_input()
-    .on({
+f_context_relevance = Metric(
+    implementation=provider.context_relevance_with_cot_reasons,
+    name="Context Relevance",
+    selectors={
+        "prompt": Selector(
+            span_type=SpanAttributes.SpanType.RECORD_ROOT,
+            span_attribute=SpanAttributes.RECORD_ROOT.INPUT,
+        ),
         "context": Selector(
             span_type=SpanAttributes.SpanType.RETRIEVAL,
             span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
-            collect_list=False
+            collect_list=False,
         ),
-    })
+    },
 )
 
-# Evaluate groundedness against all contexts combined
-f_groundedness = (
-    Feedback(provider.groundedness_measure_with_cot_reasons, name="Groundedness")
-    .on({
+f_groundedness = Metric(
+    implementation=provider.groundedness_measure_with_cot_reasons,
+    name="Groundedness",
+    selectors={
         "context": Selector(
             span_type=SpanAttributes.SpanType.RETRIEVAL,
             span_attribute=SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS,
-            collect_list=True
+            collect_list=True,
         ),
-    })
-    .on_output()
+        "response": Selector(
+            span_type=SpanAttributes.SpanType.RECORD_ROOT,
+            span_attribute=SpanAttributes.RECORD_ROOT.OUTPUT,
+        ),
+    },
 )
 ```
 
