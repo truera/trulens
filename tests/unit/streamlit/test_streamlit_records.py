@@ -2,7 +2,48 @@ import pandas as pd
 from trulens.dashboard.tabs.Records import _conversation_metric_row
 from trulens.dashboard.tabs.Records import _conversation_turn_html
 from trulens.dashboard.tabs.Records import _partition_feedback_scopes
+from trulens.dashboard.tabs.Records import _preprocess_df
 from trulens.dashboard.tabs.Records import _split_conversation_turns
+
+
+def _records() -> pd.DataFrame:
+    reasons = ["evaluated", "not_sampled", "throttled", None, "future_reason"]
+    return pd.DataFrame({
+        "app_id": ["app"] * 5,
+        "app_name": ["Test App"] * 5,
+        "app_version": ["v1"] * 5,
+        "record_id": [f"record-{i}" for i in range(5)],
+        "input": [f"input {i}" for i in range(5)],
+        "output": [f"output {i}" for i in range(5)],
+        "ts": pd.date_range("2026-07-01", periods=5),
+        "eval_decision_reason": reasons,
+        "sample_rate": [0.1, 0.1, 0.1, None, 0.1],
+    })
+
+
+def test_preprocess_adds_online_eval_columns():
+    result = _preprocess_df(_records())
+
+    assert result["online_eval_status"].tolist() == [
+        "Unknown",
+        "Not configured",
+        "Skipped · throttled",
+        "Skipped · sampled out",
+        "Selected",
+    ]
+    assert result["sample_rate_display"].tolist() == [
+        "10%",
+        "—",
+        "10%",
+        "10%",
+        "10%",
+    ]
+
+
+def test_preprocess_filters_skipped_records():
+    result = _preprocess_df(_records(), online_eval_filter="Skipped")
+
+    assert set(result["record_id"]) == {"record-1", "record-2"}
 
 
 def test_conversation_bubbles_use_theme_colors():
