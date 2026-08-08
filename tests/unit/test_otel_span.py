@@ -2,8 +2,10 @@
 Tests for OTEL instrument decorator.
 """
 
+import os
 from unittest import TestCase
 from unittest.mock import Mock
+from unittest.mock import patch
 
 from trulens.core.otel.instrument import _resolve_attributes
 from trulens.experimental.otel_tracing.core.span import (
@@ -283,3 +285,81 @@ class TestGenAIHelpers(TestCase):
         span = self._make_span()
         set_genai_tool_attributes(span)
         span.set_attribute.assert_not_called()
+
+    # ------------------------------------------------------------------ #
+    # Content Capture Policy & Span Events                                #
+    # ------------------------------------------------------------------ #
+
+    def test_content_capture_policy_default_disabled(self) -> None:
+        """Content capture defaults to False for PII safety."""
+        from trulens.experimental.otel_tracing.core.span import (
+            is_content_capture_enabled,
+        )
+        from trulens.experimental.otel_tracing.core.span import (
+            set_content_capture,
+        )
+
+        set_content_capture(None)
+        with patch.dict(os.environ, {}, clear=True):
+            self.assertFalse(is_content_capture_enabled())
+
+    def test_content_capture_policy_env_vars(self) -> None:
+        """Environment variables enable content capture."""
+        from trulens.experimental.otel_tracing.core.span import (
+            is_content_capture_enabled,
+        )
+        from trulens.experimental.otel_tracing.core.span import (
+            set_content_capture,
+        )
+
+        set_content_capture(None)
+        with patch.dict(os.environ, {"TRULENS_OTEL_CAPTURE_CONTENT": "true"}):
+            self.assertTrue(is_content_capture_enabled())
+
+        set_content_capture(None)
+        with patch.dict(
+            os.environ,
+            {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "1"},
+        ):
+            self.assertTrue(is_content_capture_enabled())
+
+    def test_genai_prompt_and_completion_events_gated_by_opt_in(self) -> None:
+        """Verify prompt and completion span events are emitted ONLY when opted in."""
+        from trulens.experimental.otel_tracing.core.span import (
+            add_genai_completion_event,
+        )
+        from trulens.experimental.otel_tracing.core.span import (
+            add_genai_prompt_event,
+        )
+        from trulens.experimental.otel_tracing.core.span import (
+            set_content_capture,
+        )
+        from trulens.otel.semconv.trace import GenAIEvents
+
+        span = Mock()
+        span.add_event = Mock()
+
+        # When opted out (default): no events emitted
+        set_content_capture(False)
+        add_genai_prompt_event(span, prompt="What is TruLens?")
+        add_genai_completion_event(
+            span, completion="TruLens is LLM observability."
+        )
+        span.add_event.assert_not_called()
+
+        # When opted in: span events are emitted
+        set_content_capture(True)
+        add_genai_prompt_event(span, prompt="What is TruLens?", role="user")
+        add_genai_completion_event(
+            span,
+            completion="TruLens is LLM observability.",
+            finish_reason="stop",
+        )
+
+        self.assertEqual(span.add_event.call_count, 2)
+        event_names = [c.args[0] for c in span.add_event.call_args_list]
+        self.assertIn(GenAIEvents.PROMPT, event_names)
+        self.assertIn(GenAIEvents.CHOICE, event_names)
+
+        # Reset content capture policy
+        set_content_capture(None)
