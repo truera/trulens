@@ -235,15 +235,6 @@ def test_context_relevance_pipeline_accepts_decimal_rating():
     assert 0.0 <= score <= 1.0
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "generate_score returns a (score, reason) tuple for structured-JSON "
-        "responses instead of a normalized float, inconsistent with its "
-        "`-> float` annotation, with generate_score_and_reasons, and with "
-        "every other response shape (truera/trulens#2496)."
-    ),
-)
 def test_generate_score_structured_json_returns_float():
     response = (
         '{"criteria": "relevance", "supporting_evidence": "...", "score": 2}'
