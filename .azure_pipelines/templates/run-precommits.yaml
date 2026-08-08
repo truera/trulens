@@ -1,7 +1,7 @@
 steps:
   - bash: |
       set -e
-      poetry install --only dev --sync
+      poetry sync --only dev
       make run-precommit
     condition: eq(variables['python-version'], 3.11)
     displayName: Run Pre-commit hooks

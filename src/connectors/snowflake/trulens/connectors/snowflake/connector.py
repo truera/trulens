@@ -497,7 +497,7 @@ class SnowflakeConnector(DBConnector):
         """Populate Snowflake-specific fields on the App after it is
         constructed. Replaces the previous ``isinstance(connector,
         SnowflakeConnector)`` branch in
-        [App.__init__][trulens.core.app.App.__init__]."""
+        [App][trulens.core.app.App] construction."""
         app_name = kwargs.get("app_name")
         app_version = kwargs.get("app_version")
         if app_name is None:

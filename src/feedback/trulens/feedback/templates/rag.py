@@ -6,6 +6,7 @@ answer relevance, answerability, comprehensiveness, etc.
 from inspect import cleandoc
 from typing import ClassVar
 
+from trulens.feedback.templates.base import BINARY_0_1_PROMPT
 from trulens.feedback.templates.base import LIKERT_0_3_PROMPT
 from trulens.feedback.templates.base import CriteriaOutputSpaceMixin
 from trulens.feedback.templates.base import OutputSpace
@@ -322,6 +323,74 @@ class Comprehensiveness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     )
 
 
+class CitationAccuracy(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
+    """Graded, format-agnostic citation quality.
+
+    Like [CitationAttribution][trulens.feedback.templates.rag.CitationAttribution],
+    this asks whether a response's citations are supported by the retrieved
+    context. It differs in three ways that decide which one you want:
+
+    - **Citation format.** ``CitationAttribution`` requires explicit ``[N]``
+      markers and checks each marker against numbered passage N. This template
+      is format-agnostic: it also covers inline or prose attributions
+      ("according to the 2023 annual report..."), URLs, or footnotes, where
+      there is no ``[N]`` marker to resolve.
+    - **Output space.** ``CitationAttribution`` is binary: any misattribution
+      is a hard fail. This template is a 0-3 Likert, so a response with one bad
+      citation out of ten is distinguishable from one where every citation is
+      bad. Use it when you want a graded signal to track across runs.
+    - **Missing citations.** ``CitationAttribution`` deliberately does not
+      penalize a claim that carries no citation marker. This template *does*:
+      a claim that the context supports but that goes uncited counts against
+      the score. Use it when your pipeline requires that context-derived
+      claims be cited, and use ``CitationAttribution`` when uncited claims are
+      acceptable and only misattribution matters.
+    """
+
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+    criteria_template: ClassVar[str] = """
+        - Every claim in the RESPONSE that carries a citation must be supported by the cited passage in the RETRIEVED CONTEXT.
+        - A RESPONSE whose citations are fabricated, point to passages that do not support the cited claim, or are missing where support exists should score {min_score}.
+        - A RESPONSE where some citations are accurate but others are unsupported, mismatched, or missing should get an intermediate score.
+        - A RESPONSE where every cited claim is directly and correctly supported by the referenced passage in the RETRIEVED CONTEXT should score {max_score}.
+        - Only judge the accuracy of the citations, not the overall quality or relevance of the RESPONSE.
+        """
+
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
+    )
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """You are a CITATION ACCURACY grader; providing the degree to which the citations in a RESPONSE are supported by the RETRIEVED CONTEXT.
+        Respond only as a number from {output_space_prompt}.
+
+        Criteria for evaluating citation accuracy:
+        {criteria}
+        {additional_instructions}
+
+        Never elaborate.
+        """
+    )
+
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            additional_instructions="",
+        )
+    )
+
+    user_prompt: ClassVar[str] = cleandoc(
+        """RESPONSE: {response}
+        RETRIEVED CONTEXT: {context}
+
+        CITATION ACCURACY:
+        """
+    )
+
+
 # ------------------------------------------------------------------
 # Standalone prompt constants for RAG evaluation
 # ------------------------------------------------------------------
@@ -375,6 +444,64 @@ Score: {score}
 # Backward-compat alias (old name).
 GROUNDEDNESS_REASON_TEMPLATE = GROUNDEDNESS_NLI_REASON_FORMAT
 
+
+class CitationAttribution(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
+    """Citation-attribution faithfulness.
+
+    Unlike groundedness (does the source support the statement *somewhere*),
+    this checks attribution: does each ``[N]`` citation marker point to the
+    SOURCE passage that supports the specific claim it is attached to. It
+    catches misattribution: a claim cited to passage ``[A]`` that does not
+    support it, even though some other passage ``[B]`` would.
+    """
+
+    output_space_prompt: ClassVar[str] = BINARY_0_1_PROMPT
+    output_space: ClassVar[str] = OutputSpace.BINARY.name
+
+    criteria_template: ClassVar[str] = """
+        - An ANSWER in which every [N] marker points to a SOURCE passage that actually supports the specific claim it is attached to should get a score of {max_score}.
+        - An ANSWER in which at least one claim carries a citation [N] where SOURCE passage N does NOT support that claim should get a score of {min_score}, even if some other SOURCE passage would support it. This is citation misattribution.
+        - Judge attribution only, relative to the SOURCE passages, and not against world knowledge.
+        - A claim that carries no citation marker at all is not a misattribution and should not be penalized under this criterion.
+        """
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """You are a CITATION-ATTRIBUTION classifier for a retrieval-augmented ANSWER whose claims carry [N] citation markers, where N is the numbered SOURCE passage being cited.
+
+        Respond only as a number from {output_space_prompt}.
+
+        You should score the citation attribution of the ANSWER based on the following criteria:
+        {criteria}
+        {additional_instructions}
+
+        Check each [N] marker against the SOURCE passage it names. Never elaborate."""
+    )
+
+    user_prompt: ClassVar[str] = cleandoc(
+        """QUESTION: {question}
+
+        SOURCES:
+        {source}
+
+        ANSWER WITH CITATIONS: {statement}
+
+        CITATION ATTRIBUTION:"""
+    )
+
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.BINARY.value[0],
+        max_score=OutputSpace.BINARY.value[1],
+    )
+
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+            additional_instructions="",
+        )
+    )
+
+
 __all__ = [
     "Groundedness",
     "Answerability",
@@ -383,6 +510,8 @@ __all__ = [
     "ContextRelevance",
     "PromptResponseRelevance",
     "Comprehensiveness",
+    "CitationAttribution",
+    "CitationAccuracy",
     "SYSTEM_FIND_SUPPORTING",
     "USER_FIND_SUPPORTING",
     "GENERATE_KEY_POINTS_SYSTEM_PROMPT",

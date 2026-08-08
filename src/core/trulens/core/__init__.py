@@ -31,6 +31,7 @@ from trulens.core.feedback.feedback import SnowflakeFeedback  # noqa: E402
 from trulens.core.feedback.provider import Provider  # noqa: E402
 from trulens.core.metric import Metric  # noqa: E402
 from trulens.core.metric import Selector  # noqa: E402
+from trulens.core.sampling import SamplingConfig  # noqa: E402
 from trulens.core.schema.feedback import FeedbackMode  # noqa: E402
 from trulens.core.schema.select import Select  # noqa: E402
 from trulens.core.session import Tru  # noqa: E402
@@ -58,4 +59,5 @@ __all__ = [
     "SnowflakeFeedback",
     "Select",
     "Provider",
+    "SamplingConfig",
 ]
