@@ -38,8 +38,12 @@ trulens-dashboard = { version = "^2.0.0", extras = [
   "full",
 ] }
 trulens-otel-semconv = { version = "^2.0.0" }
+opentelemetry-exporter-otlp-proto-grpc = { version = ">=1.23.0", optional = true }
 # Remove after deprecation period:
 trulens_eval = { version = "^2.0.0" }
+
+[tool.poetry.extras]
+otlp = ["opentelemetry-exporter-otlp-proto-grpc"]
 
 [tool.poetry.group.benchmark.dependencies]
 trulens-benchmark = { path = "src/benchmark", develop = true }

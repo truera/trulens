@@ -56,6 +56,12 @@ class GenAIAttributes:
         OUTPUT_TOKENS = GEN_AI_SCOPE + ".usage.output_tokens"
         """Number of completion/output tokens generated."""
 
+    class PROVIDER:
+        """Current attribute identifying the GenAI provider."""
+
+        NAME = GEN_AI_SCOPE + ".provider.name"
+        """Name of the GenAI provider (e.g. ``openai``)."""
+
     class SYSTEM:
         """Attributes identifying the GenAI provider/system.
 

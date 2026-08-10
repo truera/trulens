@@ -36,6 +36,54 @@ import os
 os.environ["TRULENS_OTEL_TRACING"] = "0"
 ```
 
+## Exporting to an OTLP backend
+
+Install the OTLP exporter extra before using this option:
+
+```bash
+pip install "trulens[otlp]"
+```
+
+For applications that depend directly on `trulens-core`, install
+`trulens-core[otlp]` instead.
+
+The default exporter writes TruLens spans to the configured TruLens database.
+To send traces and GenAI metrics to an OTLP-compatible collector, select the
+OTLP gRPC exporter when creating the session:
+
+```python
+from trulens.core import TruSession
+
+session = TruSession(
+    otel_exporter="otlp",
+    otlp_endpoint="http://localhost:4317",
+)
+```
+
+!!! warning
+
+    OTLP mode replaces the TruLens database/Snowflake span exporter. Spans are
+    sent to the OTLP backend instead of being persisted to the TruLens
+    database, so the TruLens dashboard and feedback evaluations that read
+    spans from that database will not see them. This option is not a fan-out
+    configuration.
+
+When `otlp_endpoint` is omitted, the standard OpenTelemetry environment
+variables are used, including `OTEL_EXPORTER_OTLP_ENDPOINT` and
+`OTEL_EXPORTER_OTLP_HEADERS`. OTLP mode exports TruLens traces and the
+following histogram metrics:
+
+- `gen_ai.client.token.usage`, with `gen_ai.token.type` set to `input` or
+  `output`.
+- `gen_ai.client.operation.duration`, measured in seconds.
+
+Metrics use the standard `gen_ai.operation.name` and `gen_ai.provider.name`
+attributes. The existing `gen_ai.system` span attribute remains available for
+backward compatibility.
+
+Call `session.force_flush()` before process exit when the application needs to
+wait for pending trace and metric exports.
+
 ## Span type taxonomy
 
 TruLens defines a set of span types that describe the role of each span in a trace.

@@ -7,6 +7,11 @@ from typing import Any, Callable, Dict, Optional
 
 from opentelemetry import trace
 from opentelemetry.context import Context
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import MetricExporter
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+from opentelemetry.sdk.metrics.view import ExplicitBucketHistogramAggregation
+from opentelemetry.sdk.metrics.view import View
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace import export as otel_export_sdk
@@ -17,6 +22,19 @@ from trulens.core.utils import python as python_utils
 from trulens.core.utils import text as text_utils
 from trulens.experimental.otel_tracing.core.exporter.connector import (
     TruLensOtelSpanExporter,
+)
+from trulens.experimental.otel_tracing.core.metrics import (
+    OPERATION_DURATION_BUCKET_BOUNDARIES,
+)
+from trulens.experimental.otel_tracing.core.metrics import (
+    OPERATION_DURATION_METRIC,
+)
+from trulens.experimental.otel_tracing.core.metrics import (
+    TOKEN_USAGE_BUCKET_BOUNDARIES,
+)
+from trulens.experimental.otel_tracing.core.metrics import TOKEN_USAGE_METRIC
+from trulens.experimental.otel_tracing.core.metrics import (
+    TrulensOtelMetricsSpanProcessor,
 )
 from trulens.experimental.otel_tracing.core.span import (
     set_general_span_attributes,
@@ -56,6 +74,32 @@ def _set_up_tracer_provider() -> TracerProvider:
     if not isinstance(global_tracer_provider, TracerProvider):
         raise ValueError("Received a TracerProvider of an unexpected type!")
     return global_tracer_provider
+
+
+def _create_otlp_exporters(
+    endpoint: Optional[str],
+) -> tuple[otel_export_sdk.SpanExporter, MetricExporter]:
+    """Create OTLP gRPC exporters for traces and metrics."""
+    try:
+        from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
+            OTLPMetricExporter,
+        )
+        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+            OTLPSpanExporter,
+        )
+    except ImportError as exc:
+        raise ImportError(
+            "OTLP export requires `opentelemetry-exporter-otlp-proto-grpc`."
+        ) from exc
+
+    exporter_kwargs = {}
+    if endpoint is not None:
+        exporter_kwargs["endpoint"] = endpoint
+
+    return (
+        OTLPSpanExporter(**exporter_kwargs),
+        OTLPMetricExporter(**exporter_kwargs),
+    )
 
 
 def _can_import(to_import: str) -> bool:
@@ -112,18 +156,31 @@ class _TruSession(core_session.TruSession):
         self,
         connector: DBConnector,
         exporter: Optional[otel_export_sdk.SpanExporter],
+        *,
+        exporter_name: Optional[str] = None,
+        otlp_endpoint: Optional[str] = None,
+        metric_exporter: Optional[MetricExporter] = None,
     ):
-        logger.info(
-            f"{text_utils.UNICODE_CHECK} OpenTelemetry exporter set: "
-            f"{python_utils.class_name(exporter.__class__)}"
-        )
+        if exporter_name == "otlp":
+            if exporter is not None or metric_exporter is not None:
+                raise ValueError(
+                    "OTLP exporter selection cannot be combined with custom "
+                    "experimental OTel exporters."
+                )
+            exporter, metric_exporter = _create_otlp_exporters(otlp_endpoint)
+        elif exporter_name is not None:
+            raise ValueError(f"Unsupported OTel exporter: {exporter_name}")
+        elif otlp_endpoint is not None:
+            raise ValueError('`otlp_endpoint` requires `otel_exporter="otlp"`.')
 
         tracer_provider = _set_up_tracer_provider()
-        # Setting it here for easy access without having to assert the type
-        # every time
         self._experimental_tracer_provider = tracer_provider
         exporter = _TruSession._validate_otel_exporter(
             self, exporter, connector
+        )
+        logger.info(
+            f"{text_utils.UNICODE_CHECK} OpenTelemetry exporter set: "
+            f"{python_utils.class_name(exporter.__class__)}"
         )
         self._experimental_otel_span_processor = TrulensOtelSpanProcessor(
             exporter
@@ -133,6 +190,45 @@ class _TruSession(core_session.TruSession):
         )
         logger.info(
             f"{text_utils.UNICODE_CHECK} Added new TrulensOtelSpanProcessor"
+        )
+
+        if metric_exporter is None:
+            return
+        if not isinstance(metric_exporter, MetricExporter):
+            raise ValueError(
+                "Provided metric exporter must be an OpenTelemetry "
+                "MetricExporter!"
+            )
+
+        metric_reader = PeriodicExportingMetricReader(metric_exporter)
+        metric_views = (
+            View(
+                instrument_name=TOKEN_USAGE_METRIC,
+                aggregation=ExplicitBucketHistogramAggregation(
+                    TOKEN_USAGE_BUCKET_BOUNDARIES
+                ),
+            ),
+            View(
+                instrument_name=OPERATION_DURATION_METRIC,
+                aggregation=ExplicitBucketHistogramAggregation(
+                    OPERATION_DURATION_BUCKET_BOUNDARIES
+                ),
+            ),
+        )
+        meter_provider = MeterProvider(
+            resource=tracer_provider.resource,
+            metric_readers=[metric_reader],
+            views=metric_views,
+        )
+        self._experimental_otel_metric_exporter = metric_exporter
+        self._experimental_meter_provider = meter_provider
+        meter = meter_provider.get_meter(TRULENS_SERVICE_NAME)
+        tracer_provider.add_span_processor(
+            TrulensOtelMetricsSpanProcessor(meter)
+        )
+        logger.info(
+            f"{text_utils.UNICODE_CHECK} Added GenAI OpenTelemetry metrics "
+            "pipeline"
         )
 
     @staticmethod
