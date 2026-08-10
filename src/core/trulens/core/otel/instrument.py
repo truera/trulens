@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+from contextvars import ContextVar
 import inspect
 import logging
 import types
@@ -20,7 +22,22 @@ from opentelemetry.baggage import get_baggage
 from opentelemetry.baggage import remove_baggage
 from opentelemetry.baggage import set_baggage
 import opentelemetry.context as context_api
+from opentelemetry.trace import Link
+from opentelemetry.trace import SpanContext
+from opentelemetry.trace import TraceFlags
 from opentelemetry.trace.span import Span
+from trulens.core.otel.function_call_context_manager import (
+    NESTED_RECORD_PARENT_APP_ID_BAGGAGE_KEY,
+)
+from trulens.core.otel.function_call_context_manager import (
+    NESTED_RECORD_PARENT_RECORD_ID_BAGGAGE_KEY,
+)
+from trulens.core.otel.function_call_context_manager import (
+    NESTED_RECORD_PARENT_SPAN_ID_BAGGAGE_KEY,
+)
+from trulens.core.otel.function_call_context_manager import (
+    NESTED_RECORD_UNJOINABLE_PARENT_RECORD_ID_BAGGAGE_KEY,
+)
 from trulens.core.otel.function_call_context_manager import (
     create_function_call_context_manager,
 )
@@ -66,6 +83,49 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+
+# ContextVar holding the current span-group stack as a tuple of strings.
+# Using a tuple (immutable) so that each ContextVar token captures a
+# snapshot — no shared-mutable-state bugs across concurrent contexts.
+_current_span_groups: ContextVar[Tuple[str, ...]] = ContextVar(
+    "_current_span_groups", default=()
+)
+
+
+class span_group:
+    """Context manager that tags every span created inside the block with
+    a group label via ``SpanAttributes.SPAN_GROUPS``.
+
+    Uses a ``contextvars.ContextVar`` — no OTEL baggage, no cross-process
+    propagation.  Span groups are an in-process concept.
+
+    Example::
+
+        with span_group("hop1"):
+            ctx1 = retrieve("query 1")   # span gets SPAN_GROUPS=["hop1"]
+        with span_group("hop2"):
+            ctx2 = retrieve("query 2")   # span gets SPAN_GROUPS=["hop2"]
+
+    Nesting merges groups::
+
+        with span_group("hop1"):
+            with span_group("retry"):
+                retrieve("q")            # SPAN_GROUPS=["hop1", "retry"]
+    """
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+        self._token = None
+
+    def __enter__(self):
+        existing = _current_span_groups.get()
+        self._token = _current_span_groups.set(existing + (self.name,))
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self._token is not None:
+            _current_span_groups.reset(self._token)
+            self._token = None
 
 
 def get_func_name(func: Callable) -> str:
@@ -134,7 +194,10 @@ def _set_span_attributes(
         # Set general span attributes.
         set_general_span_attributes(span, span_type)
         # Set record root span attributes if necessary.
-        if span_type == SpanAttributes.SpanType.RECORD_ROOT:
+        if span_type in (
+            SpanAttributes.SpanType.RECORD_ROOT,
+            SpanAttributes.SpanType.NESTED_RECORD_ROOT,
+        ):
             set_record_root_span_attributes(
                 span,
                 func,
@@ -333,7 +396,9 @@ class instrument:
             span_end_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
             func_name_for_call = _func_name_for_instance(instance)
             with create_function_call_context_manager(
-                self.create_new_span, func_name_for_call
+                self.create_new_span,
+                func_name_for_call,
+                span_type=self.span_type,
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
@@ -379,13 +444,36 @@ class instrument:
             span_end_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
             func_name_for_call = _func_name_for_instance(instance)
             with create_function_call_context_manager(
-                self.create_new_span, func_name_for_call
+                self.create_new_span,
+                func_name_for_call,
+                span_type=self.span_type,
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
                 # Run function.
                 try:
                     ret = await func(*args, **kwargs)
+                except asyncio.CancelledError:
+                    try:
+                        _finalize_span(
+                            span,
+                            self.span_type,
+                            func_name_for_call,
+                            func,
+                            None,
+                            self.attributes,
+                            instance,
+                            args,
+                            kwargs,
+                            ret,
+                            self.only_set_user_defined_attributes,
+                            span_end_callbacks,
+                        )
+                    except Exception:
+                        logger.exception(
+                            "Error finalizing span during cancellation."
+                        )
+                    raise
                 except Exception as e:
                     # We want to get into the next clause to allow the users
                     # to still add attributes. It's on the user to deal with
@@ -417,7 +505,9 @@ class instrument:
             span_end_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
             func_name_for_call = _func_name_for_instance(instance)
             with create_function_call_context_manager(
-                self.create_new_span, func_name_for_call
+                self.create_new_span,
+                func_name_for_call,
+                span_type=self.span_type,
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
@@ -490,12 +580,16 @@ def instrument_method(
     attributes: Attributes = None,
     must_be_first_wrapper: bool = False,
 ) -> None:
+    method = getattr(cls, method_name)
+    if hasattr(method, TRULENS_INSTRUMENT_WRAPPER_FLAG):
+        return
+
     wrapper = instrument(
         span_type=span_type,
         attributes=attributes,
         must_be_first_wrapper=must_be_first_wrapper,
     )
-    setattr(cls, method_name, wrapper(getattr(cls, method_name)))
+    setattr(cls, method_name, wrapper(method))
 
 
 def instrument_cost_computer(
@@ -553,8 +647,15 @@ class OtelBaseRecordingContext:
 
     # Calling set_baggage does not actually add the baggage to the current context, but returns a new one
     # To avoid issues with remembering to add/remove the baggage, we attach it to the runtime context.
-    def attach_to_context(self, key: str, value: object):
-        if get_baggage(key) or value is None:
+    def attach_to_context(
+        self, key: str, value: object, *, override: bool = False
+    ):
+        # Skip unset values; only overwrite existing baggage when `override=True`
+        # (used by nested TruApp calls to attach parent-linkage keys onto a
+        # context that may already carry an outer app's baggage).
+        if value is None:
+            return
+        if get_baggage(key) and not override:
             return
 
         self.tokens.append(context_api.attach(set_baggage(key, value)))
@@ -619,15 +720,68 @@ class OtelRecordingContext(OtelBaseRecordingContext):
         self.ground_truth_output = ground_truth_output
         self.input_selector = input_selector
         self.conversation_id = conversation_id
+        self.recording: Optional[Recording] = None
+
+    @property
+    def record_ids(self) -> List[str]:
+        """Record IDs created inside this recording context."""
+        if self.recording is None:
+            return []
+        return [record.record_id for record in self.recording.records]
 
     # For use as a context manager.
     def __enter__(self) -> Recording:
-        self.attach_to_context("__trulens_app__", self.tru_app)
-        self.attach_to_context(ResourceAttributes.APP_NAME, self.app_name)
-        self.attach_to_context(ResourceAttributes.APP_VERSION, self.app_version)
-        self.attach_to_context(ResourceAttributes.APP_ID, self.app_id)
+        parent_record_id = get_baggage(SpanAttributes.RECORD_ID)
+        parent_app_id = get_baggage(ResourceAttributes.APP_ID)
+        parent_otel_ctx = get_baggage("__trulens_otel_ctx__")
+        parent_recording = get_baggage("__trulens_recording__")
+
+        if (
+            parent_record_id is not None
+            and parent_app_id is not None
+            and parent_otel_ctx is not None
+            and parent_recording is not None
+        ):
+            current_span = trace.get_current_span()
+            current_span_context = current_span.get_span_context()
+            if (
+                current_span_context is not None
+                and current_span_context.is_valid
+            ):
+                self.attach_to_context(
+                    NESTED_RECORD_PARENT_RECORD_ID_BAGGAGE_KEY,
+                    parent_record_id,
+                    override=True,
+                )
+                self.attach_to_context(
+                    NESTED_RECORD_PARENT_SPAN_ID_BAGGAGE_KEY,
+                    str(current_span_context.span_id),
+                    override=True,
+                )
+                self.attach_to_context(
+                    NESTED_RECORD_PARENT_APP_ID_BAGGAGE_KEY,
+                    parent_app_id,
+                    override=True,
+                )
+            else:
+                self.attach_to_context(
+                    NESTED_RECORD_UNJOINABLE_PARENT_RECORD_ID_BAGGAGE_KEY,
+                    parent_record_id,
+                    override=True,
+                )
+
+        self.attach_to_context("__trulens_app__", self.tru_app, override=True)
+        self.attach_to_context(
+            ResourceAttributes.APP_NAME, self.app_name, override=True
+        )
+        self.attach_to_context(
+            ResourceAttributes.APP_VERSION, self.app_version, override=True
+        )
+        self.attach_to_context(
+            ResourceAttributes.APP_ID, self.app_id, override=True
+        )
         # Attach self so child spans can register baggage tokens for cleanup at app exit.
-        self.attach_to_context("__trulens_otel_ctx__", self)
+        self.attach_to_context("__trulens_otel_ctx__", self, override=True)
         self.attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
         self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
 
@@ -647,15 +801,19 @@ class OtelRecordingContext(OtelBaseRecordingContext):
                 SpanAttributes.CONVERSATION_ID, self.conversation_id
             )
 
-        ret = Recording(self.tru_app)
-        self.attach_to_context("__trulens_recording__", ret)
-        return ret
+        self.recording = Recording(self.tru_app)
+        self.attach_to_context(
+            "__trulens_recording__", self.recording, override=True
+        )
+        return self.recording
 
 
 class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
     def __init__(self, *args, **kwargs):
         self.target_record_id = kwargs.pop("target_record_id")
         self.feedback_name = kwargs.pop("feedback_name")
+        self.conversation_id = kwargs.pop("conversation_id", None)
+        self.source_span_contexts = kwargs.pop("source_span_contexts", None)
         super().__init__(*args, **kwargs)
 
     # For use as a context manager.
@@ -674,12 +832,31 @@ class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
             SpanAttributes.EVAL.TARGET_RECORD_ID, self.target_record_id
         )
         self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
+        if self.conversation_id is not None:
+            self.attach_to_context(
+                SpanAttributes.CONVERSATION_ID, self.conversation_id
+            )
         self.attach_to_context(
             SpanAttributes.EVAL.METRIC_NAME, self.feedback_name
         )
 
         # Use start_as_current_span as a context manager
-        self.span_context = tracer.start_as_current_span("eval_root")
+        links = []
+        for trace_id, span_id in self.source_span_contexts or []:
+            try:
+                span_context = SpanContext(
+                    trace_id=int(trace_id),
+                    span_id=int(span_id),
+                    is_remote=True,
+                    trace_flags=TraceFlags.SAMPLED,
+                )
+            except (TypeError, ValueError):
+                continue
+            if span_context.is_valid:
+                links.append(Link(span_context))
+        self.span_context = tracer.start_as_current_span(
+            "eval_root", links=links
+        )
         root_span = self.span_context.__enter__()
         root_span_id = str(root_span.get_span_context().span_id)
 

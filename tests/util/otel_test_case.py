@@ -118,7 +118,10 @@ class OtelTestCase(TruTestCase):
         self._convert_column_types(expected)
         if ignore_locators is None:
             ignore_locators = []
-        ignore_locators += ["[resource_attributes][telemetry.sdk.version]"]
+        ignore_locators += [
+            "[resource_attributes][telemetry.sdk.version]",
+            "[resource_attributes][service.version]",
+        ]
         compare_dfs_accounting_for_ids_and_timestamps(
             self,
             expected,

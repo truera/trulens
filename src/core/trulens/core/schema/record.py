@@ -131,6 +131,9 @@ class Record(serial_utils.SerialModel, Hashable):
     app_id: types_schema.AppID
     """The app that produced this record."""
 
+    conversation_id: Optional[types_schema.ConversationID] = None
+    """The conversation this record belongs to, if any."""
+
     cost: Optional[base_schema.Cost] = None
     """Costs associated with the record."""
 

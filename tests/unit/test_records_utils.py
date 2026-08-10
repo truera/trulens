@@ -5,6 +5,9 @@ import pytest
 from trulens.dashboard.utils.records_utils import _filter_duplicate_span_calls
 from trulens.dashboard.utils.records_utils import _filter_eval_calls_by_root
 from trulens.dashboard.utils.records_utils import _identify_span_types
+from trulens.dashboard.utils.records_utils import (
+    _process_eval_calls_for_display,
+)
 
 # Test data for OTel spans
 OTEL_EVAL_ROOT = {
@@ -41,6 +44,114 @@ def test_identify_span_types_otel():
     assert len(eval_calls) == 1
     assert eval_root_calls[0]["span_type"] == "EVAL_ROOT"
     assert eval_calls[0]["span_type"] == "EVAL"
+
+
+def test_identify_span_types_otel_lowercase():
+    calls = [
+        dict(OTEL_EVAL_ROOT, span_type="eval_root"),
+        dict(OTEL_EVAL, span_type="eval"),
+    ]
+    eval_root_calls, eval_calls = _identify_span_types(calls)
+
+    assert len(eval_root_calls) == 1
+    assert len(eval_calls) == 1
+
+
+def test_process_conversation_input_as_transcript():
+    records = [
+        {"record_id": "1", "input": "Hello", "output": "Hi"},
+        {"record_id": "2", "input": "Help", "output": "Done"},
+    ]
+    calls = [
+        {
+            "span_type": "eval",
+            "eval_root_id": "root1",
+            "args": {"records": records, "reference": "support"},
+            "ret": 1.0,
+            "meta": {"explanation": "All turns received an answer."},
+        }
+    ]
+
+    result = _process_eval_calls_for_display(
+        calls,
+        conversation_args_by_root={"root1": {"records"}},
+    )
+
+    assert result.columns.tolist() == ["input", "score", "explanation"]
+    assert result.loc[0, "input"] == (
+        "Turn 1 User: Hello\n"
+        "Turn 1 Assistant: Hi\n"
+        "Turn 2 User: Help\n"
+        "Turn 2 Assistant: Done"
+    )
+    assert result.loc[0, "score"] == 1.0
+    assert result.loc[0, "explanation"] == "All turns received an answer."
+    assert "record_id" not in result.loc[0, "input"]
+    assert "reference" not in result.columns
+
+
+@pytest.mark.parametrize("explanation", [None, "", "   "])
+def test_process_conversation_input_omits_empty_explanation(explanation):
+    calls = [
+        {
+            "span_type": "eval",
+            "eval_root_id": "root1",
+            "args": {
+                "records": [
+                    {"record_id": "1", "input": "Hello", "output": "Hi"}
+                ]
+            },
+            "ret": 1.0,
+            "meta": {"explanation": explanation},
+        }
+    ]
+
+    result = _process_eval_calls_for_display(
+        calls,
+        conversation_args_by_root={"root1": {"records"}},
+    )
+
+    assert result.columns.tolist() == ["input", "score"]
+
+
+def test_process_conversation_input_omits_missing_explanation():
+    calls = [
+        {
+            "span_type": "eval",
+            "eval_root_id": "root1",
+            "args": {
+                "records": [
+                    {"record_id": "1", "input": "Hello", "output": "Hi"}
+                ]
+            },
+            "ret": 1.0,
+            "meta": {},
+        }
+    ]
+
+    result = _process_eval_calls_for_display(
+        calls,
+        conversation_args_by_root={"root1": {"records"}},
+    )
+
+    assert result.columns.tolist() == ["input", "score"]
+
+
+def test_process_generic_structured_input_unchanged():
+    records = [{"record_id": "1", "input": "Hello", "output": "Hi"}]
+    calls = [
+        {
+            "span_type": "eval",
+            "eval_root_id": "root1",
+            "args": {"records": records},
+            "ret": 1.0,
+            "meta": {},
+        }
+    ]
+
+    result = _process_eval_calls_for_display(calls)
+
+    assert "record_id" in result.loc[0, "records"]
 
 
 def test_identify_span_types_legacy():

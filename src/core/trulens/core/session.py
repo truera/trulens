@@ -35,6 +35,7 @@ from trulens.core.feedback import feedback as core_feedback
 from trulens.core.metric import metric as core_metric
 from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import app as app_schema
+from trulens.core.schema import conversation as conversation_schema
 from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import groundtruth as groundtruth_schema
@@ -159,6 +160,9 @@ class TruSession(
     _dashboard_listener_stdout: Optional[Thread] = pydantic.PrivateAttr(None)
 
     _dashboard_listener_stderr: Optional[Thread] = pydantic.PrivateAttr(None)
+
+    _sampling_controller: Optional[Any] = pydantic.PrivateAttr(None)
+    """Active :class:`SamplingController`, set via :meth:`configure_online_eval`."""
 
     connector: Optional[core_connector.DBConnector] = pydantic.Field(
         None, exclude=True
@@ -290,6 +294,98 @@ class TruSession(
             )
 
             _TruSession._start_track_costs_background()
+
+    # -- Sampling / online-eval configuration --------------------------------
+
+    @property
+    def sampling_controller(self):
+        """The active :class:`SamplingController`, or ``None``."""
+        return self._sampling_controller
+
+    @sampling_controller.setter
+    def sampling_controller(self, controller) -> None:
+        """Set or replace the sampling controller directly.
+
+        Primarily useful for testing — allows injecting a controller
+        with forced decisions without going through
+        :meth:`configure_online_eval`.
+        """
+        self._sampling_controller = controller
+
+    def configure_online_eval(
+        self,
+        sample_rate: Union[float, Dict[str, float]] = 1.0,
+        throttle: Optional[int] = None,
+        cost_budget: Optional[float] = None,
+        feedbacks: Optional[Sequence[core_metric.Metric]] = None,
+    ) -> None:
+        """Configure sampling for automatic post-ingest evaluation.
+
+        A second call **replaces** the previous configuration entirely.
+
+        This does **not** affect explicit ``compute_metrics()`` /
+        ``compute_now()`` calls -- those always evaluate everything.
+
+        Args:
+            sample_rate: Probability (0--1) that a record is evaluated,
+                or a ``{app_name: rate}`` dict for per-app rates.
+            throttle: Max evaluations per minute (``None`` = unlimited).
+            cost_budget: Daily USD cap (``None`` = unlimited).
+                Only enforceable for providers whose ``reports_costs``
+                property is ``True``.
+            feedbacks: Optional list of metrics/feedbacks whose providers
+                should be checked for cost-tracking support when
+                ``cost_budget`` is set.  If omitted, the warning is
+                generic.
+        """
+        from trulens.core.sampling import SamplingConfig
+        from trulens.core.sampling import SamplingController
+
+        config = SamplingConfig(
+            sample_rate=sample_rate,
+            throttle=throttle,
+            cost_budget=cost_budget,
+        )
+        self._sampling_controller = SamplingController(config)
+
+        logger.info("Online evaluation sampling configured: %s", config)
+
+        if cost_budget is not None:
+            self._warn_cost_tracking(feedbacks)
+
+    def _warn_cost_tracking(
+        self,
+        feedbacks: Optional[Sequence[core_metric.Metric]],
+    ) -> None:
+        """Emit warnings for metrics whose providers cannot report costs."""
+        if feedbacks is None or len(feedbacks) == 0:
+            logger.warning(
+                "cost_budget is set but no feedbacks were passed to "
+                "configure_online_eval(), so the cost-tracking check "
+                "could not run.  Call configure_online_eval(feedbacks=...) "
+                "after constructing your TruApp with its feedback list, "
+                "or budget enforcement will silently fail for providers "
+                "that do not report costs."
+            )
+            return
+
+        for fb in feedbacks:
+            impl = getattr(fb, "imp", None) or getattr(fb, "_imp", None)
+            if impl is None:
+                continue
+            provider = getattr(impl, "__self__", None)
+            if provider is None:
+                continue
+            from trulens.core.feedback.provider import Provider
+
+            if isinstance(provider, Provider) and not provider.reports_costs:
+                logger.warning(
+                    "cost_budget set but metric '%s' uses provider '%s' "
+                    "which does not report costs; budget will not be "
+                    "enforced for this metric.",
+                    fb.name,
+                    type(provider).__name__,
+                )
 
     def App(self, *args, app: Optional[Any] = None, **kwargs) -> base_app.App:
         """Create an App from the given App constructor arguments by guessing
@@ -794,6 +890,22 @@ class TruSession(
 
         return self.connector.get_apps()
 
+    def get_conversations(
+        self, app_id: Optional[types_schema.AppID] = None
+    ) -> Dict[types_schema.ConversationID, conversation_schema.Conversation]:
+        """Get conversations reconstructed from recorded spans."""
+        return self.connector.get_conversations(app_id=app_id)
+
+    def get_records_by_conversation(
+        self,
+        conversation_id: types_schema.ConversationID,
+        app_id: Optional[types_schema.AppID] = None,
+    ) -> List[record_schema.Record]:
+        """Get a conversation's records ordered chronologically."""
+        return self.connector.get_records_by_conversation(
+            conversation_id=conversation_id, app_id=app_id
+        )
+
     def get_records_and_feedback(
         self,
         app_ids: Optional[List[types_schema.AppID]] = None,
@@ -849,7 +961,8 @@ class TruSession(
         group_by_metadata_key: Optional[str] = None,
         limit: Optional[int] = None,
         offset: Optional[int] = None,
-    ) -> pandas.DataFrame:
+        format: str = "dataframe",
+    ) -> Union[pandas.DataFrame, str, List[Dict[str, Any]]]:
         """Get a leaderboard for the given apps.
 
         Args:
@@ -862,16 +975,33 @@ class TruSession(
 
             offset: Record row offset to select which records to use to aggregate the leaderboard.
 
+            format: Output format for the leaderboard. Supported values are
+                `"dataframe"` for the existing pandas DataFrame behavior,
+                `"dict"` for `DataFrame.to_dict(orient="records")`, and
+                `"json"` for `DataFrame.to_json(orient="records")`.
+
         Returns:
-            Dataframe of apps with their feedback results aggregated.
-            If group_by_metadata_key is provided, the dataframe will be grouped by the specified key.
+            Leaderboard data in the requested format. If `format` is
+            `"dataframe"` and `group_by_metadata_key` is provided, the
+            DataFrame will be grouped by the specified key.
         """
-        return self.connector.get_leaderboard(
+        leaderboard = self.connector.get_leaderboard(
             app_ids=app_ids,
             group_by_metadata_key=group_by_metadata_key,
             limit=limit,
             offset=offset,
         )
+        if format == "dataframe":
+            return leaderboard
+        elif format == "dict":
+            return leaderboard.to_dict(orient="records")
+        elif format == "json":
+            return leaderboard.to_json(orient="records")
+        else:
+            raise ValueError(
+                "Unsupported leaderboard format. Expected one of "
+                "'dataframe', 'dict', or 'json'."
+            )
 
     def add_ground_truth_to_dataset(
         self,
