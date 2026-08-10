@@ -36,6 +36,16 @@ from trulens.otel.semconv.trace import GenAIAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 
+def _has_otlp_exporter() -> bool:
+    """Return whether the optional OTLP exporter package is installed."""
+    try:
+        return find_spec("opentelemetry.exporter.otlp.proto.grpc") is not None
+    except ModuleNotFoundError:
+        # ``find_spec`` raises when the optional ``opentelemetry.exporter``
+        # parent package is not installed at all.
+        return False
+
+
 class _Histogram:
     def __init__(self):
         self.records = []
@@ -163,7 +173,7 @@ class TestOtelMetricsSpanProcessor(unittest.TestCase):
         TruSession.delete_singleton(TruSession)
 
     @unittest.skipUnless(
-        find_spec("opentelemetry.exporter.otlp.proto.grpc") is not None,
+        _has_otlp_exporter(),
         "OTLP gRPC exporter is not installed",
     )
     def test_otlp_factory_creates_trace_and_metric_exporters(self):
