@@ -95,14 +95,13 @@ class GenAIAttributes:
 class GenAIEvents:
     """OTEL GenAI semantic convention event names and event attribute keys.
 
-    See: https://opentelemetry.io/docs/specs/semconv/gen-ai/
+    See: https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-events/
     """
 
-    PROMPT = GEN_AI_SCOPE + ".prompt"
-    """Span event emitted for GenAI prompt/input content."""
-
-    CHOICE = GEN_AI_SCOPE + ".choice"
-    """Span event emitted for GenAI choice/completion output content."""
+    CLIENT_INFERENCE_OPERATION_DETAILS = (
+        GEN_AI_SCOPE + ".client.inference.operation.details"
+    )
+    """Span event emitted for GenAI client inference operation details (inputs and outputs)."""
 
     RETRIEVAL_QUERY = GEN_AI_SCOPE + ".retrieval.query"
     """Span event emitted for retrieval query content."""
@@ -110,12 +109,16 @@ class GenAIEvents:
     RETRIEVAL_DOCUMENTS = GEN_AI_SCOPE + ".retrieval.documents"
     """Span event emitted for retrieved documents content."""
 
-    class EventAttributes:
-        PROMPT_TEXT = GEN_AI_SCOPE + ".prompt"
-        """Prompt/input text attribute in a ``gen_ai.prompt`` event."""
+    # Backward-compatible event name aliases
+    PROMPT = CLIENT_INFERENCE_OPERATION_DETAILS
+    CHOICE = CLIENT_INFERENCE_OPERATION_DETAILS
 
-        COMPLETION_TEXT = GEN_AI_SCOPE + ".completion"
-        """Completion/output text attribute in a ``gen_ai.choice`` event."""
+    class EventAttributes:
+        INPUT_MESSAGES = GEN_AI_SCOPE + ".input.messages"
+        """Structured input messages attribute in a ``gen_ai.client.inference.operation.details`` event."""
+
+        OUTPUT_MESSAGES = GEN_AI_SCOPE + ".output.messages"
+        """Structured output messages attribute in a ``gen_ai.client.inference.operation.details`` event."""
 
         ROLE = GEN_AI_SCOPE + ".role"
         """Message role attribute (e.g. ``user``, ``system``, ``assistant``)."""
@@ -128,6 +131,10 @@ class GenAIEvents:
 
         DOCUMENTS = GEN_AI_SCOPE + ".retrieval.documents"
         """Retrieved documents attribute in a retrieval event."""
+
+        # Backward-compatible attribute key aliases
+        PROMPT_TEXT = GEN_AI_SCOPE + ".input.messages"
+        COMPLETION_TEXT = GEN_AI_SCOPE + ".output.messages"
 
 
 class ResourceAttributes:

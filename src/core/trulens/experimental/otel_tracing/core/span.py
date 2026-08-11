@@ -4,6 +4,8 @@ This file contains utility functions specific to certain span types.
 
 from __future__ import annotations
 
+import asyncio
+from collections.abc import Callable
 from inspect import signature
 import json
 import logging
@@ -11,12 +13,7 @@ import os
 from typing import (
     TYPE_CHECKING,
     Any,
-    Callable,
-    Dict,
-    List,
     Optional,
-    Tuple,
-    Union,
 )
 
 from opentelemetry.baggage import get_baggage
@@ -37,17 +34,10 @@ logger = logging.getLogger(__name__)
 Type definitions
 """
 Attributes = Optional[
-    Union[
-        Dict[str, Any],
-        Callable[
-            [
-                Optional[Any],
-                Optional[Exception],
-                List[Any],
-                Optional[Dict[str, Any]],
-            ],
-            Dict[str, Any],
-        ],
+    dict[str, Any]
+    | Callable[
+        [Any | None, Exception | None, list[Any], dict[str, Any] | None],
+        dict[str, Any],
     ]
 ]
 
@@ -56,7 +46,7 @@ General utilites for all spans
 """
 
 
-def _stringify_span_attribute(o: Any) -> Tuple[bool, str]:
+def _stringify_span_attribute(o: Any) -> tuple[bool, str]:
     """Converts an object to a string.
 
     Args:
@@ -115,19 +105,19 @@ def set_span_attribute_safely(
 
 
 def set_string_span_attribute_from_baggage(
-    span: Span, key: str, context: Optional[Context] = None
+    span: Span, key: str, context: Context | None = None
 ) -> None:
     value = get_baggage(key, context)
     if value is not None:
         span.set_attribute(key, str(value))
 
 
-def validate_attributes(attributes: Dict[str, Any]) -> Dict[str, Any]:
+def validate_attributes(attributes: dict[str, Any]) -> dict[str, Any]:
     """
     Utility function to validate span attributes based on the span type.
     """
     if not isinstance(attributes, dict) or any([
-        not isinstance(key, str) for key in attributes.keys()
+        not isinstance(key, str) for key in attributes
     ]):
         raise ValueError("Attributes must be a dictionary with string keys.")
 
@@ -142,7 +132,7 @@ def set_general_span_attributes(
     span: Span,
     /,
     span_type: SpanAttributes.SpanType,
-    context: Optional[Context] = None,
+    context: Context | None = None,
 ) -> None:
     span.set_attribute(SpanAttributes.SPAN_TYPE, span_type)
 
@@ -193,12 +183,17 @@ def set_function_call_attributes(
     span: Span,
     ret: Any,
     func_name: str,
-    func_exception: Optional[Exception],
-    all_kwargs: Dict[str, Any],
+    func_exception: Exception | None,
+    all_kwargs: dict[str, Any],
 ) -> None:
     set_span_attribute_safely(span, SpanAttributes.CALL.RETURN, ret)
     set_span_attribute_safely(span, SpanAttributes.CALL.FUNCTION, func_name)
-    set_span_attribute_safely(span, SpanAttributes.CALL.ERROR, func_exception)
+    if func_exception is not None and not isinstance(
+        func_exception, asyncio.CancelledError
+    ):
+        set_span_attribute_safely(
+            span, SpanAttributes.CALL.ERROR, func_exception
+        )
     for k, v in all_kwargs.items():
         set_span_attribute_safely(span, f"{SpanAttributes.CALL.KWARGS}.{k}", v)
 
@@ -206,7 +201,7 @@ def set_function_call_attributes(
 def set_user_defined_attributes(
     span: Span,
     *,
-    attributes: Dict[str, Any],
+    attributes: dict[str, Any],
 ) -> None:
     final_attributes = validate_attributes(attributes)
 
@@ -256,7 +251,7 @@ def set_record_root_span_attributes(
     args: tuple,
     kwargs: dict,
     ret: Any,
-    exception: Optional[Exception],
+    exception: Exception | None,
 ) -> None:
     tru_app: App = get_baggage("__trulens_app__")
     sig = signature(func)
@@ -319,12 +314,12 @@ without requiring TruLens-specific attribute knowledge.
 def set_genai_generation_attributes(
     span: Span,
     *,
-    model: Optional[str] = None,
-    input_tokens: Optional[int] = None,
-    output_tokens: Optional[int] = None,
-    temperature: Optional[float] = None,
-    provider_name: Optional[str] = None,
-    operation_name: Optional[str] = None,
+    model: str | None = None,
+    input_tokens: int | None = None,
+    output_tokens: int | None = None,
+    temperature: float | None = None,
+    provider_name: str | None = None,
+    operation_name: str | None = None,
 ) -> None:
     """Emit ``gen_ai.*`` attributes for a GENERATION span.
 
@@ -371,8 +366,8 @@ def set_genai_generation_attributes(
 def set_genai_retrieval_attributes(
     span: Span,
     *,
-    query_text: Optional[str] = None,
-    documents: Optional[Any] = None,
+    query_text: str | None = None,
+    documents: Any | None = None,
 ) -> None:
     """Emit ``gen_ai.*`` attributes for a RETRIEVAL span.
 
@@ -396,9 +391,9 @@ def set_genai_retrieval_attributes(
 def set_genai_tool_attributes(
     span: Span,
     *,
-    tool_name: Optional[str] = None,
-    call_arguments: Optional[Any] = None,
-    call_result: Optional[Any] = None,
+    tool_name: str | None = None,
+    call_arguments: Any | None = None,
+    call_result: Any | None = None,
 ) -> None:
     """Emit ``gen_ai.*`` attributes for a TOOL or MCP span.
 
@@ -429,7 +424,7 @@ For PII safety, prompt, completion, and retrieved document content are emitted
 as OTEL Span Events and gated behind an opt-in policy (default OFF).
 """
 
-_CONTENT_CAPTURE_ENABLED: Optional[bool] = None
+_CONTENT_CAPTURE_ENABLED: bool | None = None
 
 
 def is_content_capture_enabled() -> bool:
@@ -454,78 +449,93 @@ def is_content_capture_enabled() -> bool:
     return False
 
 
-def set_content_capture(enabled: Optional[bool]) -> None:
+def set_content_capture(enabled: bool | None) -> None:
     """Explicitly enable or disable GenAI content capture (or pass None to reset to env default)."""
     global _CONTENT_CAPTURE_ENABLED
     _CONTENT_CAPTURE_ENABLED = enabled
+
+
+def add_genai_inference_event(
+    span: Span,
+    *,
+    input_messages: Any | None = None,
+    output_messages: Any | None = None,
+    role: str | None = None,
+    finish_reason: str | None = None,
+    capture_content: bool | None = None,
+) -> None:
+    """Emit a ``gen_ai.client.inference.operation.details`` span event if content capture is opted in.
+
+    Conforms to OTEL GenAI Semantic Conventions v1.36.0+ single event model.
+    If content capture is opted out (default), no span event is emitted.
+    """
+    should_capture = (
+        capture_content
+        if capture_content is not None
+        else is_content_capture_enabled()
+    )
+    if not should_capture:
+        return
+    if input_messages is None and output_messages is None:
+        return
+
+    attrs: dict[str, AttributeValue] = {}
+    if input_messages is not None:
+        attrs[GenAIEvents.EventAttributes.INPUT_MESSAGES] = (
+            _convert_to_valid_span_attribute_type(input_messages)
+        )
+    if output_messages is not None:
+        attrs[GenAIEvents.EventAttributes.OUTPUT_MESSAGES] = (
+            _convert_to_valid_span_attribute_type(output_messages)
+        )
+    if role is not None:
+        attrs[GenAIEvents.EventAttributes.ROLE] = role
+    if finish_reason is not None:
+        attrs[GenAIEvents.EventAttributes.FINISH_REASON] = finish_reason
+
+    span.add_event(
+        GenAIEvents.CLIENT_INFERENCE_OPERATION_DETAILS, attributes=attrs
+    )
 
 
 def add_genai_prompt_event(
     span: Span,
     prompt: Any,
     *,
-    role: Optional[str] = None,
-    capture_content: Optional[bool] = None,
+    role: str | None = None,
+    capture_content: bool | None = None,
 ) -> None:
-    """Emit a ``gen_ai.prompt`` span event if content capture is opted in.
-
-    If content capture is opted out (default), no span event is emitted.
-    """
-    should_capture = (
-        capture_content
-        if capture_content is not None
-        else is_content_capture_enabled()
+    """Emit input content in a ``gen_ai.client.inference.operation.details`` span event if opted in."""
+    add_genai_inference_event(
+        span,
+        input_messages=prompt,
+        role=role,
+        capture_content=capture_content,
     )
-    if not should_capture or prompt is None:
-        return
-
-    attrs: Dict[str, AttributeValue] = {
-        GenAIEvents.EventAttributes.PROMPT_TEXT: _convert_to_valid_span_attribute_type(
-            prompt
-        )
-    }
-    if role is not None:
-        attrs[GenAIEvents.EventAttributes.ROLE] = role
-
-    span.add_event(GenAIEvents.PROMPT, attributes=attrs)
 
 
 def add_genai_completion_event(
     span: Span,
     completion: Any,
     *,
-    finish_reason: Optional[str] = None,
-    capture_content: Optional[bool] = None,
+    finish_reason: str | None = None,
+    capture_content: bool | None = None,
 ) -> None:
-    """Emit a ``gen_ai.choice`` span event if content capture is opted in.
-
-    If content capture is opted out (default), no span event is emitted.
-    """
-    should_capture = (
-        capture_content
-        if capture_content is not None
-        else is_content_capture_enabled()
+    """Emit output content in a ``gen_ai.client.inference.operation.details`` span event if opted in."""
+    add_genai_inference_event(
+        span,
+        output_messages=completion,
+        finish_reason=finish_reason,
+        capture_content=capture_content,
     )
-    if not should_capture or completion is None:
-        return
-
-    attrs: Dict[str, AttributeValue] = {
-        GenAIEvents.EventAttributes.COMPLETION_TEXT: _convert_to_valid_span_attribute_type(
-            completion
-        )
-    }
-    if finish_reason is not None:
-        attrs[GenAIEvents.EventAttributes.FINISH_REASON] = finish_reason
-
-    span.add_event(GenAIEvents.CHOICE, attributes=attrs)
 
 
 def add_genai_retrieval_events(
     span: Span,
     *,
-    query_text: Optional[str] = None,
-    documents: Optional[Any] = None,
-    capture_content: Optional[bool] = None,
+    query_text: str | None = None,
+    documents: Any | None = None,
+    capture_content: bool | None = None,
 ) -> None:
     """Emit ``gen_ai.retrieval.*`` span events if content capture is opted in.
 
