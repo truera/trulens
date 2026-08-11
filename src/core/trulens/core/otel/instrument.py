@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from contextvars import ContextVar
 import inspect
 import logging
 import types
@@ -21,6 +22,9 @@ from opentelemetry.baggage import get_baggage
 from opentelemetry.baggage import remove_baggage
 from opentelemetry.baggage import set_baggage
 import opentelemetry.context as context_api
+from opentelemetry.trace import Link
+from opentelemetry.trace import SpanContext
+from opentelemetry.trace import TraceFlags
 from opentelemetry.trace.span import Span
 from trulens.core.otel.function_call_context_manager import (
     NESTED_RECORD_PARENT_APP_ID_BAGGAGE_KEY,
@@ -79,6 +83,49 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+
+# ContextVar holding the current span-group stack as a tuple of strings.
+# Using a tuple (immutable) so that each ContextVar token captures a
+# snapshot — no shared-mutable-state bugs across concurrent contexts.
+_current_span_groups: ContextVar[Tuple[str, ...]] = ContextVar(
+    "_current_span_groups", default=()
+)
+
+
+class span_group:
+    """Context manager that tags every span created inside the block with
+    a group label via ``SpanAttributes.SPAN_GROUPS``.
+
+    Uses a ``contextvars.ContextVar`` — no OTEL baggage, no cross-process
+    propagation.  Span groups are an in-process concept.
+
+    Example::
+
+        with span_group("hop1"):
+            ctx1 = retrieve("query 1")   # span gets SPAN_GROUPS=["hop1"]
+        with span_group("hop2"):
+            ctx2 = retrieve("query 2")   # span gets SPAN_GROUPS=["hop2"]
+
+    Nesting merges groups::
+
+        with span_group("hop1"):
+            with span_group("retry"):
+                retrieve("q")            # SPAN_GROUPS=["hop1", "retry"]
+    """
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+        self._token = None
+
+    def __enter__(self):
+        existing = _current_span_groups.get()
+        self._token = _current_span_groups.set(existing + (self.name,))
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self._token is not None:
+            _current_span_groups.reset(self._token)
+            self._token = None
 
 
 def get_func_name(func: Callable) -> str:
@@ -349,7 +396,9 @@ class instrument:
             span_end_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
             func_name_for_call = _func_name_for_instance(instance)
             with create_function_call_context_manager(
-                self.create_new_span, func_name_for_call
+                self.create_new_span,
+                func_name_for_call,
+                span_type=self.span_type,
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
@@ -395,7 +444,9 @@ class instrument:
             span_end_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
             func_name_for_call = _func_name_for_instance(instance)
             with create_function_call_context_manager(
-                self.create_new_span, func_name_for_call
+                self.create_new_span,
+                func_name_for_call,
+                span_type=self.span_type,
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
@@ -454,7 +505,9 @@ class instrument:
             span_end_callbacks = kwargs.pop(TRULENS_SPAN_END_CALLBACKS, [])
             func_name_for_call = _func_name_for_instance(instance)
             with create_function_call_context_manager(
-                self.create_new_span, func_name_for_call
+                self.create_new_span,
+                func_name_for_call,
+                span_type=self.span_type,
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
@@ -667,6 +720,14 @@ class OtelRecordingContext(OtelBaseRecordingContext):
         self.ground_truth_output = ground_truth_output
         self.input_selector = input_selector
         self.conversation_id = conversation_id
+        self.recording: Optional[Recording] = None
+
+    @property
+    def record_ids(self) -> List[str]:
+        """Record IDs created inside this recording context."""
+        if self.recording is None:
+            return []
+        return [record.record_id for record in self.recording.records]
 
     # For use as a context manager.
     def __enter__(self) -> Recording:
@@ -740,15 +801,19 @@ class OtelRecordingContext(OtelBaseRecordingContext):
                 SpanAttributes.CONVERSATION_ID, self.conversation_id
             )
 
-        ret = Recording(self.tru_app)
-        self.attach_to_context("__trulens_recording__", ret, override=True)
-        return ret
+        self.recording = Recording(self.tru_app)
+        self.attach_to_context(
+            "__trulens_recording__", self.recording, override=True
+        )
+        return self.recording
 
 
 class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
     def __init__(self, *args, **kwargs):
         self.target_record_id = kwargs.pop("target_record_id")
         self.feedback_name = kwargs.pop("feedback_name")
+        self.conversation_id = kwargs.pop("conversation_id", None)
+        self.source_span_contexts = kwargs.pop("source_span_contexts", None)
         super().__init__(*args, **kwargs)
 
     # For use as a context manager.
@@ -767,12 +832,31 @@ class OtelFeedbackComputationRecordingContext(OtelBaseRecordingContext):
             SpanAttributes.EVAL.TARGET_RECORD_ID, self.target_record_id
         )
         self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
+        if self.conversation_id is not None:
+            self.attach_to_context(
+                SpanAttributes.CONVERSATION_ID, self.conversation_id
+            )
         self.attach_to_context(
             SpanAttributes.EVAL.METRIC_NAME, self.feedback_name
         )
 
         # Use start_as_current_span as a context manager
-        self.span_context = tracer.start_as_current_span("eval_root")
+        links = []
+        for trace_id, span_id in self.source_span_contexts or []:
+            try:
+                span_context = SpanContext(
+                    trace_id=int(trace_id),
+                    span_id=int(span_id),
+                    is_remote=True,
+                    trace_flags=TraceFlags.SAMPLED,
+                )
+            except (TypeError, ValueError):
+                continue
+            if span_context.is_valid:
+                links.append(Link(span_context))
+        self.span_context = tracer.start_as_current_span(
+            "eval_root", links=links
+        )
         root_span = self.span_context.__enter__()
         root_span_id = str(root_span.get_span_context().span_id)
 

@@ -98,6 +98,7 @@ class TestOtelAsyncConcurrency(unittest.TestCase):
         return super().tearDownClass()
 
     def setUp(self) -> None:
+        instrument.enable_all_instrumentation()
         self.exporter = InMemorySpanExporter()
         self.exporter.clear()
         self.test_app = _TestApp()
@@ -109,6 +110,7 @@ class TestOtelAsyncConcurrency(unittest.TestCase):
     def tearDown(self) -> None:
         self.span_processor.shutdown()
         self.exporter.clear()
+        instrument.disable_all_instrumentation()
         return super().tearDown()
 
     def _recording_context(self) -> OtelRecordingContext:

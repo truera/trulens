@@ -16,6 +16,7 @@ Usage:
     make update-meta-yaml
 """
 
+import argparse
 from pathlib import Path
 import re
 import sys
@@ -93,6 +94,21 @@ def fetch_sha256_from_pypi(package_name: str, version: str) -> str | None:
         return None
 
 
+def update_meta_yaml_version(meta_yaml_path: Path, version: str) -> bool:
+    """Update only the version in a meta.yaml file."""
+    content = meta_yaml_path.read_text()
+    updated = re.sub(
+        r'(\{%\s*set\s+version\s*=\s*")[^"]+("\s*%\})',
+        rf"\g<1>{version}\g<2>",
+        content,
+    )
+
+    if updated != content:
+        meta_yaml_path.write_text(updated)
+        return True
+    return False
+
+
 def update_meta_yaml(meta_yaml_path: Path, version: str, sha256: str) -> bool:
     """Update the meta.yaml file with new version and SHA256.
 
@@ -121,9 +137,20 @@ def update_meta_yaml(meta_yaml_path: Path, version: str, sha256: str) -> bool:
 
 def main():
     """Main function to update all meta.yaml files."""
-    print(
-        "Updating meta.yaml files with versions and SHA256 hashes from PyPI...\n"
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--version-only",
+        action="store_true",
+        help="Update recipe versions without fetching pre-release hashes.",
     )
+    args = parser.parse_args()
+
+    if args.version_only:
+        print("Updating meta.yaml versions from pyproject.toml files...\n")
+    else:
+        print(
+            "Updating meta.yaml files with versions and SHA256 hashes from PyPI...\n"
+        )
 
     meta_yaml_files = find_meta_yaml_files()
 
@@ -141,16 +168,6 @@ def main():
         relative_path = meta_yaml_path.relative_to(REPO_ROOT)
         print(f"Processing: {relative_path}")
 
-        # Extract package name
-        package_name = extract_package_name(meta_yaml_path)
-        if not package_name:
-            print(
-                f"  Error: Could not extract package name from {relative_path}"
-            )
-            error_count += 1
-            continue
-        print(f"  Package: {package_name}")
-
         # Find corresponding pyproject.toml
         pyproject_path = meta_yaml_path.parent / "pyproject.toml"
         version = extract_version_from_pyproject(pyproject_path)
@@ -161,6 +178,26 @@ def main():
             error_count += 1
             continue
         print(f"  Version: {version}")
+
+        if args.version_only:
+            if update_meta_yaml_version(meta_yaml_path, version):
+                print(f"  ✓ Updated {relative_path}")
+                success_count += 1
+            else:
+                print("  - No changes needed (already up to date)")
+                skip_count += 1
+            print()
+            continue
+
+        # Extract package name
+        package_name = extract_package_name(meta_yaml_path)
+        if not package_name:
+            print(
+                f"  Error: Could not extract package name from {relative_path}"
+            )
+            error_count += 1
+            continue
+        print(f"  Package: {package_name}")
 
         # Fetch SHA256 from PyPI
         sha256 = fetch_sha256_from_pypi(package_name, version)

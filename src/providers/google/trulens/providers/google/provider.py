@@ -71,6 +71,10 @@ class Google(llm_provider.LLMProvider):
 
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "gemini-2.5-flash"
 
+    @property
+    def reports_costs(self) -> bool:
+        return True
+
     def __init__(
         self,
         endpoint=None,

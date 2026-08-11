@@ -23,6 +23,7 @@ from trulens.core._utils.pycompat import Future  # code style exception
 from trulens.core.database import base as core_db
 from trulens.core.otel.utils import is_otel_tracing_enabled
 from trulens.core.schema import app as app_schema
+from trulens.core.schema import conversation as conversation_schema
 from trulens.core.schema import event as event_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
@@ -328,6 +329,22 @@ class DBConnector(ABC, text_utils.WithIdentString):
 
         return list(self.db.get_apps())
 
+    def get_conversations(
+        self, app_id: Optional[types_schema.AppID] = None
+    ) -> dict[types_schema.ConversationID, conversation_schema.Conversation]:
+        """Get conversations reconstructed from recorded spans."""
+        return self.db.get_conversations(app_id=app_id)
+
+    def get_records_by_conversation(
+        self,
+        conversation_id: types_schema.ConversationID,
+        app_id: Optional[types_schema.AppID] = None,
+    ) -> List[record_schema.Record]:
+        """Get a conversation's records ordered chronologically."""
+        return self.db.get_records_by_conversation(
+            conversation_id=conversation_id, app_id=app_id
+        )
+
     def get_records_and_feedback(
         self,
         app_ids: Optional[List[types_schema.AppID]] = None,
@@ -521,7 +538,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
         return events[events.apply(row_matches_run, axis=1)]
 
     def augment_app(self, app: Any, **kwargs: Any) -> None:
-        """Hook called from [App.__init__][trulens.core.app.App.__init__]
+        """Hook called from [App][trulens.core.app.App] construction
         after the App is constructed. Connectors may override this to
         contribute connector-specific state (e.g. DAOs or external object
         identifiers) to the App. Default is a no-op."""

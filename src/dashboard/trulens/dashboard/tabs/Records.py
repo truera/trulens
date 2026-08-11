@@ -914,36 +914,113 @@ def _clear_selected_thread():
         st.query_params.pop("selected_thread")
 
 
-def _render_conversation_timeline(subset: pd.DataFrame):
-    """Render a chat-style message timeline with left-aligned user and
-    right-aligned assistant messages. Each turn is clickable to scroll
-    to its full trace below.
-    """
-    for turn_index, (_, msg) in enumerate(subset.iterrows()):
+def _conversation_turn_html(
+    *,
+    record_id: str,
+    turn_label: str,
+    border: str,
+    user_text: str,
+    assistant_text: str,
+) -> str:
+    return (
+        f'<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;border-left:3px solid {border};padding-left:8px;">'
+        f'  <span style="color:{border};font-size:0.72em;font-weight:600;">{turn_label}</span>'
+        f'  <div style="display:flex;align-items:flex-start;">'
+        f'    <div style="background:var(--secondary-background-color);color:var(--text-color);border:1px solid color-mix(in srgb, var(--text-color) 12%, transparent);border-radius:12px 12px 12px 2px;padding:8px 12px;max-width:75%;font-size:0.85em;">'
+        f'      <span style="color:color-mix(in srgb, var(--text-color) 65%, transparent);font-size:0.75em;">User</span><br>{user_text}'
+        f"    </div>"
+        f"  </div>"
+        f'  <div style="display:flex;align-items:flex-start;justify-content:flex-end;">'
+        f'    <div style="background:color-mix(in srgb, var(--primary-color) 14%, var(--background-color));color:var(--text-color);border:1px solid color-mix(in srgb, var(--primary-color) 35%, transparent);border-radius:12px 12px 2px 12px;padding:8px 12px;max-width:75%;font-size:0.85em;">'
+        f'      <span style="color:color-mix(in srgb, var(--text-color) 65%, transparent);font-size:0.75em;">Assistant</span><br>{assistant_text}'
+        f"    </div>"
+        f'    <a href="#record-{record_id}" style="margin-left:8px;margin-top:8px;text-decoration:none;font-size:0.75em;color:var(--text-color);opacity:0.65;white-space:nowrap;">trace&nbsp;↓</a>'
+        f"  </div>"
+        f"</div>"
+    )
+
+
+def _partition_feedback_scopes(
+    subset: pd.DataFrame,
+    feedback_col_names: Sequence[str],
+) -> tuple[list[str], list[str]]:
+    conversation_metrics = []
+    turn_metrics = []
+    for metric_name in feedback_col_names:
+        calls_column = f"{metric_name}_calls"
+        is_conversation_metric = False
+        if calls_column in subset.columns:
+            for calls in subset[calls_column].dropna():
+                if not isinstance(calls, list):
+                    continue
+                for call in calls:
+                    if not isinstance(call, dict):
+                        continue
+                    args_span_attribute = call.get("args_span_attribute", {})
+                    if isinstance(args_span_attribute, dict) and (
+                        "conversation.records" in args_span_attribute.values()
+                    ):
+                        is_conversation_metric = True
+                        break
+                if is_conversation_metric:
+                    break
+        if is_conversation_metric:
+            conversation_metrics.append(metric_name)
+        else:
+            turn_metrics.append(metric_name)
+    return conversation_metrics, turn_metrics
+
+
+def _conversation_metric_row(
+    subset: pd.DataFrame, metric_name: str
+) -> Optional[pd.Series]:
+    rows = subset[subset[metric_name].notna()]
+    if rows.empty:
+        return None
+    return rows.sort_values("ts").iloc[-1]
+
+
+def _split_conversation_turns(
+    subset: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    if len(subset) <= 2:
+        return subset, subset.iloc[0:0], subset.iloc[0:0]
+    return subset.iloc[[0]], subset.iloc[1:-1], subset.iloc[[-1]]
+
+
+def _render_conversation_turns(subset: pd.DataFrame) -> None:
+    for _, msg in subset.iterrows():
         record_id = msg["record_id"]
+        turn_label = "Conversation turn"
+        border = "var(--primary-color)"
         input_text = str(msg["input"])[:200]
         output_text = str(msg["output"])[:200]
         ellipsis_in = "..." if len(str(msg["input"])) > 200 else ""
         ellipsis_out = "..." if len(str(msg["output"])) > 200 else ""
-
-        user_text = _escape_problematic_markdown(input_text) + ellipsis_in
-        asst_text = _escape_problematic_markdown(output_text) + ellipsis_out
-
         st.html(
-            f'<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;">'
-            f'  <div style="display:flex;align-items:flex-start;">'
-            f'    <div style="background:#2a2a3d;border-radius:12px 12px 12px 2px;padding:8px 12px;max-width:75%;font-size:0.85em;">'
-            f'      <span style="color:#aaa;font-size:0.75em;">User</span><br>{user_text}'
-            f"    </div>"
-            f"  </div>"
-            f'  <div style="display:flex;align-items:flex-start;justify-content:flex-end;">'
-            f'    <div style="background:#1a3a2a;border-radius:12px 12px 2px 12px;padding:8px 12px;max-width:75%;font-size:0.85em;">'
-            f'      <span style="color:#aaa;font-size:0.75em;">Assistant</span><br>{asst_text}'
-            f"    </div>"
-            f'    <a href="#record-{record_id}" style="margin-left:8px;margin-top:8px;text-decoration:none;font-size:0.75em;color:#888;white-space:nowrap;">trace&nbsp;↓</a>'
-            f"  </div>"
-            f"</div>"
+            _conversation_turn_html(
+                record_id=record_id,
+                turn_label=turn_label,
+                border=border,
+                user_text=_escape_problematic_markdown(input_text)
+                + ellipsis_in,
+                assistant_text=_escape_problematic_markdown(output_text)
+                + ellipsis_out,
+            )
         )
+
+
+def _render_conversation_timeline(subset: pd.DataFrame):
+    """Render first/last turns with collapsed middle conversation turns."""
+    first_turns, middle_turns, last_turns = _split_conversation_turns(subset)
+    _render_conversation_turns(first_turns)
+    if not middle_turns.empty:
+        with st.expander(
+            f"See {len(middle_turns)} more turns",
+            expanded=False,
+        ):
+            _render_conversation_turns(middle_turns)
+    _render_conversation_turns(last_turns)
 
 
 def _render_thread(
@@ -1029,19 +1106,46 @@ def _render_thread(
                 help="Sum of tokens generated across all turns.",
             )
 
-    # Conversation-level average metrics as pills + per-turn drill-down
-    avail_fcols = [
+    available_metrics = [
         f
         for f in feedback_col_names
         if f in subset.columns and subset[f].notna().any()
     ]
-    if avail_fcols:
+    conversation_metrics, turn_metrics = _partition_feedback_scopes(
+        subset, available_metrics
+    )
+
+    if conversation_metrics:
+        st.markdown("#### Conversation metrics")
+        conversation_scores = pd.Series({
+            metric_name: _conversation_metric_row(subset, metric_name)[
+                metric_name
+            ]
+            for metric_name in conversation_metrics
+        })
+        selected_metric = _render_feedback_pills(
+            conversation_metrics,
+            feedback_directions,
+            selected_row=conversation_scores,
+            key=f"{page_name}.conversation_metrics.{thread_key}",
+        )
+        if selected_metric:
+            metric_row = _conversation_metric_row(subset, selected_metric)
+            if metric_row is not None:
+                _render_feedback_call(
+                    selected_metric,
+                    metric_row,
+                    feedback_directions=feedback_directions,
+                )
+
+    if turn_metrics:
+        st.markdown("#### Turn metrics")
         avg_row = pd.Series({
-            fcol: subset[fcol].mean(skipna=True) for fcol in avail_fcols
+            fcol: subset[fcol].mean(skipna=True) for fcol in turn_metrics
         })
         pills_key = f"{page_name}.thread_avg_pills.{thread_key}"
         selected_metric = _render_feedback_pills(
-            avail_fcols,
+            turn_metrics,
             feedback_directions,
             selected_row=avg_row,
             key=pills_key,
@@ -1070,7 +1174,7 @@ def _render_thread(
         _render_record_detail(
             msg,
             records_df,
-            feedback_col_names,
+            turn_metrics,
             feedback_directions,
             key_suffix=f"{thread_key}.{turn_index}.{msg['record_id']}",
         )

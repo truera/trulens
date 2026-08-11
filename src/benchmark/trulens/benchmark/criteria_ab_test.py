@@ -39,6 +39,7 @@ import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
+from trulens.core.utils import stats as stats_utils
 from trulens.feedback import groundtruth as feedback_groundtruth
 
 log = logging.getLogger(__name__)
@@ -114,9 +115,7 @@ class CriteriaABTestReport:
         """Mean score difference (A - B) and its permutation p-value."""
         return {
             "mean_difference": float(np.mean(self.diffs)),
-            "p_value": feedback_groundtruth.paired_permutation_pvalue(
-                self.diffs
-            ),
+            "p_value": stats_utils.paired_permutation_pvalue(self.diffs),
         }
 
     def top_disagreements(self, k: int = 5) -> List[Dict[str, Any]]:
