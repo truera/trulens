@@ -473,6 +473,7 @@ class Selector:
     # If `trace_level` is False, then this `Selector` describes a single span
     # determined by `function_name`, `span_name`, and `span_type`.
     trace_level: bool = False
+    conversation_level: bool = False
     function_name: Optional[str] = None
     span_name: Optional[str] = None
     span_type: Optional[str] = None
@@ -482,6 +483,7 @@ class Selector:
     span_attributes_processor: Optional[Callable[[Dict[str, Any]], Any]] = None
     span_attribute: Optional[str] = None
     function_attribute: Optional[str] = None
+    conversation_attribute: Optional[str] = None
 
     # If the value extracted from the span is None (i.e. from
     # `span_attributes_processor`, `span_attribute`, or `function_attribute`),
@@ -506,6 +508,7 @@ class Selector:
     def __init__(
         self,
         trace_level: bool = False,
+        conversation_level: bool = False,
         function_name: Optional[str] = None,
         span_name: Optional[str] = None,
         span_type: Optional[str] = None,
@@ -514,12 +517,27 @@ class Selector:
         ] = None,
         span_attribute: Optional[str] = None,
         function_attribute: Optional[str] = None,
+        conversation_attribute: Optional[str] = None,
         ignore_none_values: bool = False,
         collect_list: bool = True,
         match_only_if_no_ancestor_matched: bool = False,
     ):
+        if trace_level and conversation_level:
+            raise ValueError(
+                "A selector cannot be both trace level and conversation level."
+            )
+        if conversation_level and conversation_attribute not in {
+            "records",
+            "input",
+            "output",
+        }:
+            raise ValueError(
+                "Conversation selectors require `conversation_attribute` to be "
+                "one of 'records', 'input', or 'output'."
+            )
         if (
             not trace_level
+            and not conversation_level
             and sum([
                 span_attributes_processor is not None,
                 span_attribute is not None,
@@ -531,12 +549,14 @@ class Selector:
                 "Must specify exactly one of `span_attributes_processor`, `span_attribute`, or `function_attribute`!"
             )
         self.trace_level = trace_level
+        self.conversation_level = conversation_level
         self.function_name = function_name
         self.span_name = span_name
         self.span_type = span_type
         self.span_attributes_processor = span_attributes_processor
         self.span_attribute = span_attribute
         self.function_attribute = function_attribute
+        self.conversation_attribute = conversation_attribute
         self.ignore_none_values = ignore_none_values
         self.collect_list = collect_list
         self.match_only_if_no_ancestor_matched = (
@@ -546,6 +566,7 @@ class Selector:
     def describes_same_spans(self, other: Selector) -> bool:
         return (
             self.trace_level == other.trace_level
+            and self.conversation_level == other.conversation_level
             and self.function_name == other.function_name
             and self.span_name == other.span_name
             and self.span_type == other.span_type
@@ -602,12 +623,36 @@ class Selector:
                     ret.span_attribute = SpanAttributes.CALL.RETURN
                 else:
                     ret.span_attribute = f"{SpanAttributes.CALL.KWARGS}.{self.function_attribute}"
-            elif not self.trace_level:
+            elif not self.trace_level and not self.conversation_level:
                 raise ValueError(
                     "None of `span_attributes_processor`, `span_attribute`, or `function_attribute` are set!"
                 )
             ret.value = attributes.get(ret.span_attribute, None)
         return ret
+
+    @staticmethod
+    def select_conversation() -> Selector:
+        """Return a selector for ordered records in a conversation."""
+        return Selector(
+            conversation_level=True,
+            conversation_attribute="records",
+        )
+
+    @staticmethod
+    def select_conversation_input() -> Selector:
+        """Return a selector for ordered inputs in a conversation."""
+        return Selector(
+            conversation_level=True,
+            conversation_attribute="input",
+        )
+
+    @staticmethod
+    def select_conversation_output() -> Selector:
+        """Return a selector for ordered outputs in a conversation."""
+        return Selector(
+            conversation_level=True,
+            conversation_attribute="output",
+        )
 
     @staticmethod
     def select_record_input(ignore_none_values: bool = True) -> Selector:

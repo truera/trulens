@@ -177,6 +177,14 @@ def set_general_span_attributes(
     set_string_span_attribute_from_baggage(
         span, SpanAttributes.CONVERSATION_ID, context
     )
+    # SPAN_GROUPS is read from a ContextVar (not baggage) and stored as a
+    # list attribute.  The ContextVar is managed by span_group() in
+    # trulens.core.otel.instrument.
+    from trulens.core.otel.instrument import _current_span_groups
+
+    groups = _current_span_groups.get()
+    if groups:
+        span.set_attribute(SpanAttributes.SPAN_GROUPS, list(groups))
 
 
 def set_function_call_attributes(

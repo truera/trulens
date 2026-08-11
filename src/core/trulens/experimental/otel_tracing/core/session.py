@@ -1,4 +1,7 @@
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as pkg_version
 import logging
+import os
 import threading
 from typing import Any, Callable, Dict, Optional
 
@@ -28,7 +31,24 @@ _costs_thread: Optional[threading.Thread] = None
 
 
 def _set_up_tracer_provider() -> TracerProvider:
-    resource = Resource.create({"service.name": TRULENS_SERVICE_NAME})
+    resource_attrs = {
+        "service.name": TRULENS_SERVICE_NAME,
+    }
+    try:
+        resource_attrs["service.version"] = pkg_version("trulens-core")
+    except PackageNotFoundError:
+        pass
+    # Only set deployment.environment when explicitly configured via
+    # TruLens-specific env vars.  When unset, Resource.create() will
+    # still honour the standard OTEL_RESOURCE_ATTRIBUTES variable,
+    # e.g. OTEL_RESOURCE_ATTRIBUTES=deployment.environment=production.
+    deployment_env = os.environ.get(
+        "TRULENS_DEPLOYMENT_ENVIRONMENT",
+        os.environ.get("DEPLOYMENT_ENVIRONMENT"),
+    )
+    if deployment_env is not None:
+        resource_attrs["deployment.environment"] = deployment_env
+    resource = Resource.create(resource_attrs)
     provider = TracerProvider(resource=resource)
     trace.set_tracer_provider(provider)
 

@@ -1,0 +1,35 @@
+# TruLens evaluation gate for GitHub Actions.
+#
+# Copy this file into your repository at `.github/workflows/trulens-eval-gate.yml`.
+# It runs `eval_gate.py` on every pull request and fails the build if any
+# feedback score drops below TRULENS_MIN_SCORE.
+#
+# Add your OpenAI key as a repository secret named OPENAI_API_KEY:
+#   Settings -> Secrets and variables -> Actions -> New repository secret
+
+name: TruLens Eval Gate
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  eval-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install trulens trulens-providers-openai
+
+      - name: Run TruLens eval gate
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          TRULENS_MIN_SCORE: "0.7"
+        run: python examples/cicd/github_actions/eval_gate.py
