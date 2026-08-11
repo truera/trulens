@@ -874,8 +874,9 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                                 "explanation": record_attributes.get(
                                     SpanAttributes.EVAL.EXPLANATION
                                 ),
-                                "metadata": record_attributes.get(
-                                    SpanAttributes.EVAL.METADATA, {}
+                                "metadata": self._extract_namespaced_attributes(
+                                    record_attributes,
+                                    SpanAttributes.EVAL.METADATA,
                                 ),
                             },
                         }
