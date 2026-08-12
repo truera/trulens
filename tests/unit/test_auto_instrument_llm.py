@@ -35,8 +35,14 @@ class TestAutoInstrumentLLM(TestCase):
 
     def test_auto_instrument_idempotent(self) -> None:
         """Verify auto_instrument_all_llms is safe to call multiple times."""
+        from trulens.experimental.otel_tracing.core.auto_instrument import (
+            is_auto_instrumentation_enabled,
+        )
+
         auto_instrument_all_llms()
+        self.assertTrue(is_auto_instrumentation_enabled())
         auto_instrument_all_llms()
+        self.assertTrue(is_auto_instrumentation_enabled())
 
     @patch("trulens.core.otel.instrument.instrument_method")
     def test_instrument_openai(self, mock_instrument_method: MagicMock) -> None:
