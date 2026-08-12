@@ -1,3 +1,4 @@
+import builtins
 from importlib.util import find_spec
 import tempfile
 from types import SimpleNamespace
@@ -171,6 +172,22 @@ class TestOtelMetricsSpanProcessor(unittest.TestCase):
         with self.assertRaises(ValueError):
             TruSession(otlp_endpoint="http://localhost:4317")
         TruSession.delete_singleton(TruSession)
+
+    def test_otlp_factory_missing_dependency_has_install_hint(self):
+        original_import = builtins.__import__
+
+        def import_without_otlp_exporter(name, *args, **kwargs):
+            if name.startswith("opentelemetry.exporter.otlp.proto.grpc"):
+                raise ImportError("missing optional exporter")
+            return original_import(name, *args, **kwargs)
+
+        with mock.patch(
+            "builtins.__import__", side_effect=import_without_otlp_exporter
+        ):
+            with self.assertRaisesRegex(
+                ImportError, r'pip install "trulens\[otlp\]"'
+            ):
+                _create_otlp_exporters("http://localhost:4317")
 
     @unittest.skipUnless(
         _has_otlp_exporter(),

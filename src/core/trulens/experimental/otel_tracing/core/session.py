@@ -89,7 +89,10 @@ def _create_otlp_exporters(
         )
     except ImportError as exc:
         raise ImportError(
-            "OTLP export requires `opentelemetry-exporter-otlp-proto-grpc`."
+            "OTLP export requires the optional "
+            "`opentelemetry-exporter-otlp-proto-grpc` dependency. "
+            'Install it with `pip install "trulens[otlp]"` '
+            'or `pip install "trulens-core[otlp]"`.'
         ) from exc
 
     exporter_kwargs = {}

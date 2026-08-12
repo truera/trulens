@@ -47,6 +47,13 @@ pip install "trulens[otlp]"
 For applications that depend directly on `trulens-core`, install
 `trulens-core[otlp]` instead.
 
+The current OTLP gRPC exporter release resolves against the matching
+OpenTelemetry SDK release line. The lockfile currently resolves
+`opentelemetry-exporter-otlp-proto-grpc` to `1.44.0`, which requires
+`opentelemetry-sdk>=1.44.0,<1.45.0`. If your application pins a newer SDK,
+install a compatible exporter/SDK pair or isolate the TruLens OTLP
+environment.
+
 The default exporter writes TruLens spans to the configured TruLens database.
 To send traces and GenAI metrics to an OTLP-compatible collector, select the
 OTLP gRPC exporter when creating the session:
@@ -59,6 +66,10 @@ session = TruSession(
     otlp_endpoint="http://localhost:4317",
 )
 ```
+
+This option uses gRPC transport. HTTP/protobuf export is not currently
+supported; use a gRPC collector endpoint such as port `4317`, not the HTTP
+default port `4318`.
 
 !!! warning
 
