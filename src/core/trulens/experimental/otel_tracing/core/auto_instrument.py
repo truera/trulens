@@ -18,6 +18,11 @@ logger = logging.getLogger(__name__)
 _LLM_AUTO_INSTRUMENTED: bool = False
 
 
+def is_auto_instrumentation_enabled() -> bool:
+    """Check if generic LLM auto-instrumentation is active."""
+    return _LLM_AUTO_INSTRUMENTED
+
+
 def _can_import(module_name: str) -> bool:
     try:
         __import__(module_name)
