@@ -82,17 +82,16 @@ MALFORMED_JSON_FALLTHROUGH_CASES = [
 @pytest.mark.parametrize("response,expected", JSON_CASES)
 def test_generate_score_json_branch(provider, response, expected):
     """generate_score should parse a JSON dict/list response directly,
-    without going through the regex fallback at all. Note: the JSON
-    branch returns a (score, reason_dict) tuple, unlike the plain-string
-    branch which returns a bare float."""
+    without going through the regex fallback at all. It returns a bare
+    float on every path; reasons are available via
+    generate_score_and_reasons."""
     provider.canned_response = response
-    score, reason = provider.generate_score(
+    score = provider.generate_score(
         system_prompt="irrelevant for this test",
         min_score_val=0,
         max_score_val=10,
     )
     assert score == pytest.approx(expected)
-    assert "reason" in reason
 
 
 @pytest.mark.parametrize("response,expected", PLAIN_STRING_CASES)

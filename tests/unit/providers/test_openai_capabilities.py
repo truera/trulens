@@ -502,14 +502,9 @@ def test_generate_score_end_to_end_via_cfg_tool_call(monkeypatch):
         min_score_val=0,
         max_score_val=3,
     )
-    # generate_score returns (score, reason) when it parses structured
-    # JSON (see tests/integration/test_score_parsing_pipeline.py); the
-    # payload {"score": 2} on a 0-3 scale normalizes to 2/3. A mid-scale
-    # value is used so the assertion cannot pass by coinciding with a
-    # scale endpoint.
-    assert isinstance(result, tuple)
-    score, reason = result
-    assert score == pytest.approx(2 / 3)
-    assert reason == {"reason": {"score": 2}}
+    # generate_score returns a bare float; the payload {"score": 2} on a
+    # 0-3 scale normalizes to 2/3. A mid-scale value is used so the
+    # assertion cannot pass by coinciding with a scale endpoint.
+    assert result == pytest.approx(2 / 3)
     # Pin the route: the CFG create path produced the value.
     assert provider.endpoint.client.responses.create_calls == 1
