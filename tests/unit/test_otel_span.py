@@ -2,8 +2,10 @@
 Tests for OTEL instrument decorator.
 """
 
+import os
 from unittest import TestCase
 from unittest.mock import Mock
+from unittest.mock import patch
 
 from trulens.core.otel.instrument import _resolve_attributes
 from trulens.experimental.otel_tracing.core.span import (
@@ -155,6 +157,20 @@ class TestOtelSpan(TestCase):
 class TestGenAIHelpers(TestCase):
     """Unit tests for GenAI semantic convention dual-emit helpers."""
 
+    def setUp(self) -> None:
+        from trulens.experimental.otel_tracing.core.span import (
+            set_content_capture,
+        )
+
+        set_content_capture(None)
+
+    def tearDown(self) -> None:
+        from trulens.experimental.otel_tracing.core.span import (
+            set_content_capture,
+        )
+
+        set_content_capture(None)
+
     def _make_span(self) -> Mock:
         span = Mock()
         span.set_attribute = Mock()
@@ -283,3 +299,145 @@ class TestGenAIHelpers(TestCase):
         span = self._make_span()
         set_genai_tool_attributes(span)
         span.set_attribute.assert_not_called()
+
+    # ------------------------------------------------------------------ #
+    # Content Capture Policy & Span Events                                #
+    # ------------------------------------------------------------------ #
+
+    def test_content_capture_policy_default_disabled(self) -> None:
+        """Content capture defaults to False for PII safety."""
+        from trulens.experimental.otel_tracing.core.span import (
+            is_content_capture_enabled,
+        )
+        from trulens.experimental.otel_tracing.core.span import (
+            set_content_capture,
+        )
+
+        set_content_capture(None)
+        with patch.dict(os.environ, {}, clear=True):
+            self.assertFalse(is_content_capture_enabled())
+
+    def test_content_capture_policy_env_vars(self) -> None:
+        """Environment variables enable content capture."""
+        from trulens.experimental.otel_tracing.core.span import (
+            is_content_capture_enabled,
+        )
+        from trulens.experimental.otel_tracing.core.span import (
+            set_content_capture,
+        )
+
+        set_content_capture(None)
+        with patch.dict(os.environ, {"TRULENS_OTEL_CAPTURE_CONTENT": "true"}):
+            self.assertTrue(is_content_capture_enabled())
+
+        set_content_capture(None)
+        with patch.dict(
+            os.environ,
+            {"OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT": "1"},
+        ):
+            self.assertTrue(is_content_capture_enabled())
+
+    def test_genai_inference_event_single_event_model(self) -> None:
+        """Verify single event gen_ai.client.inference.operation.details is emitted when opted in."""
+        from trulens.experimental.otel_tracing.core.span import (
+            add_genai_inference_event,
+        )
+        from trulens.experimental.otel_tracing.core.span import (
+            set_content_capture,
+        )
+        from trulens.otel.semconv.trace import GenAIEvents
+
+        span = Mock()
+        span.add_event = Mock()
+
+        # When opted out (default): no events emitted
+        set_content_capture(False)
+        add_genai_inference_event(
+            span,
+            input_messages="What is TruLens?",
+            output_messages="TruLens is LLM observability.",
+        )
+        span.add_event.assert_not_called()
+
+        # When opted in: single spec-compliant event emitted
+        set_content_capture(True)
+        add_genai_inference_event(
+            span,
+            input_messages="What is TruLens?",
+            output_messages="TruLens is LLM observability.",
+            role="user",
+            finish_reason="stop",
+        )
+
+        span.add_event.assert_called_once()
+        event_name = span.add_event.call_args.args[0]
+        event_attrs = span.add_event.call_args.kwargs.get("attributes", {})
+
+        self.assertEqual(
+            event_name, GenAIEvents.CLIENT_INFERENCE_OPERATION_DETAILS
+        )
+        self.assertEqual(
+            event_name, "gen_ai.client.inference.operation.details"
+        )
+        self.assertEqual(
+            event_attrs[GenAIEvents.EventAttributes.INPUT_MESSAGES],
+            "What is TruLens?",
+        )
+        self.assertEqual(
+            event_attrs[GenAIEvents.EventAttributes.OUTPUT_MESSAGES],
+            "TruLens is LLM observability.",
+        )
+
+    def test_genai_prompt_and_completion_convenience_wrappers(self) -> None:
+        """Verify convenience wrappers emit gen_ai.client.inference.operation.details."""
+        from trulens.experimental.otel_tracing.core.span import (
+            add_genai_completion_event,
+        )
+        from trulens.experimental.otel_tracing.core.span import (
+            add_genai_prompt_event,
+        )
+        from trulens.experimental.otel_tracing.core.span import (
+            set_content_capture,
+        )
+        from trulens.otel.semconv.trace import GenAIEvents
+
+        span = Mock()
+        span.add_event = Mock()
+
+        set_content_capture(True)
+        add_genai_prompt_event(span, prompt="What is TruLens?", role="user")
+        add_genai_completion_event(
+            span,
+            completion="TruLens is LLM observability.",
+            finish_reason="stop",
+        )
+
+        self.assertEqual(span.add_event.call_count, 2)
+        for call in span.add_event.call_args_list:
+            self.assertEqual(
+                call.args[0], GenAIEvents.CLIENT_INFERENCE_OPERATION_DETAILS
+            )
+
+    def test_genai_retrieval_events(self) -> None:
+        """Verify retrieval events are emitted when opted in."""
+        from trulens.experimental.otel_tracing.core.span import (
+            add_genai_retrieval_events,
+        )
+        from trulens.experimental.otel_tracing.core.span import (
+            set_content_capture,
+        )
+        from trulens.otel.semconv.trace import GenAIEvents
+
+        span = Mock()
+        span.add_event = Mock()
+
+        set_content_capture(False)
+        add_genai_retrieval_events(span, query_text="query", documents=["doc1"])
+        span.add_event.assert_not_called()
+
+        set_content_capture(True)
+        add_genai_retrieval_events(span, query_text="query", documents=["doc1"])
+        self.assertEqual(span.add_event.call_count, 2)
+        event_names = [c.args[0] for c in span.add_event.call_args_list]
+        self.assertIn(GenAIEvents.RETRIEVAL_QUERY, event_names)
+        self.assertIn(GenAIEvents.RETRIEVAL_DOCUMENTS, event_names)
