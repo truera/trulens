@@ -43,9 +43,7 @@ Notes for interpreting these docs:
 - [Agentic evaluations](https://www.trulens.org/component_guides/evaluation/agentic_evaluations/): Plan adherence, tool selection and execution metrics for agents
 - [Selectors](https://www.trulens.org/component_guides/evaluation/feedback_selectors/): Pointing a metric at the right span and field
 - [Aggregation](https://www.trulens.org/component_guides/evaluation/feedback_aggregation/): Turning per-span scores into one number
-- [LLM jury](https://www.trulens.org/component_guides/evaluation/llm_jury/): Ensembling several judges
-- [Cross-model alignment](https://www.trulens.org/component_guides/evaluation/cross_model_alignment/): Finding where judge models disagree
-- [Golden set generation](https://www.trulens.org/component_guides/evaluation/golden_set_generator/): Building ground truth to score judges against
+- [LLM judge alignment](https://www.trulens.org/component_guides/evaluation/llm_judge_alignment/): Building golden sets, diagnosing alignment, comparing judges and criteria, selecting examples, and using juries
 
 ## Running evaluations
 
