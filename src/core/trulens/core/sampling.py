@@ -76,8 +76,8 @@ class SamplingConfig(pydantic.BaseModel):
     """Probability of evaluating a record.
 
     * ``float`` -- a single global rate applied to every app.
-    * ``dict[str, float]`` -- per-app rates keyed by app name.  Records
-      from apps not in the dict are **not evaluated**.
+    * ``dict[str, float]`` -- per-app rates keyed by app name. Records from
+      apps not in the dict are evaluated normally without sampling telemetry.
     """
 
     throttle: Optional[int] = None

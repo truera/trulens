@@ -249,7 +249,8 @@ nav:
           - ⟁ RAG Triad: getting_started/core_concepts/rag_triad.md
           - 🏆 Honest, Harmless, Helpful Evals: getting_started/core_concepts/honest_harmless_helpful_evals.md
       - 🎈Viewing Results:
-          - getting_started/dashboard/index.md
+          - Overview: getting_started/dashboard/index.md
+          - Trends: getting_started/dashboard/trends.md
   - 🗺️ Component Guides:
     - Instrumentation:
         - component_guides/instrumentation/index.md

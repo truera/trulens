@@ -1,4 +1,6 @@
 import argparse
+from dataclasses import dataclass
+import datetime
 import json
 import os
 import sys
@@ -27,14 +29,92 @@ from trulens.otel.semconv.trace import ResourceAttributes
 ST_APP_NAME = "app_name"
 ST_RECORDS_LIMIT = "records_limit"
 
+DRILLDOWN_KINDS = {"feedback", "latency", "app_cost", "eval_cost"}
+
+
+@dataclass(frozen=True)
+class RecordsDrilldown:
+    app_version: str
+    metric_kind: str
+    metric_name: str
+    start_time: datetime.datetime
+    end_time: datetime.datetime
+    sort_direction: str
+    currency: Optional[str] = None
+
+    def __post_init__(self):
+        if self.metric_kind not in DRILLDOWN_KINDS:
+            raise ValueError(f"Unsupported metric kind: {self.metric_kind}")
+        if self.sort_direction not in ("asc", "desc"):
+            raise ValueError("sort_direction must be 'asc' or 'desc'")
+        if self.start_time >= self.end_time:
+            raise ValueError("start_time must be before end_time")
+
+    def to_query_params(self) -> Dict[str, str]:
+        values = {
+            "app_versions": self.app_version,
+            "metric_kind": self.metric_kind,
+            "metric_name": self.metric_name,
+            "start_time": self.start_time.isoformat(),
+            "end_time": self.end_time.isoformat(),
+            "sort_direction": self.sort_direction,
+        }
+        if self.currency:
+            values["currency"] = self.currency
+        return values
+
+
+ONLINE_EVAL_STATUS_LABELS = {
+    "evaluated": "Selected",
+    "not_sampled": "Skipped · sampled out",
+    "throttled": "Skipped · throttled",
+    "over_budget": "Skipped · budget reached",
+}
+
+
+def format_sample_rate(value: Any) -> str:
+    """Format a nullable sample rate for display."""
+    if value is None or pd.isna(value):
+        return "—"
+    return f"{float(value):.0%}"
+
+
+def format_leaderboard_sample_rate(row: pd.Series) -> str:
+    """Format the latest observed rate as a percentage."""
+    return format_sample_rate(row.get("Sample Rate"))
+
+
+def add_online_eval_columns(records_df: pd.DataFrame) -> pd.DataFrame:
+    """Add stable display columns for nullable sampling telemetry."""
+    df = records_df.copy()
+    if "eval_decision_reason" not in df.columns:
+        df["eval_decision_reason"] = None
+    if "sample_rate" not in df.columns:
+        df["sample_rate"] = None
+    df["online_eval_status"] = df["eval_decision_reason"].map(
+        ONLINE_EVAL_STATUS_LABELS
+    )
+    df["online_eval_status"] = df["online_eval_status"].where(
+        df["eval_decision_reason"].notna(), "Not configured"
+    )
+    unknown = (
+        df["eval_decision_reason"].notna() & df["online_eval_status"].isna()
+    )
+    df.loc[unknown, "online_eval_status"] = "Unknown"
+    df["sample_rate_display"] = df["sample_rate"].map(format_sample_rate)
+    return df
+
 
 def set_page_config(page_title: Optional[str] = None):
     page_title = f"TruLens: {page_title}" if page_title else "TruLens"
-    st.set_page_config(
-        page_title=page_title,
-        page_icon="https://www.trulens.org/img/favicon.ico",
-        layout="wide",
-    )
+    try:
+        st.set_page_config(
+            page_title=page_title,
+            page_icon="https://www.trulens.org/img/favicon.ico",
+            layout="wide",
+        )
+    except st.errors.StreamlitSetPageConfigMustBeFirstCommandError:
+        pass
 
     if is_sis_compatibility_enabled():
         pass
@@ -221,6 +301,11 @@ def get_records_and_feedback(
     app_name: Optional[str] = None,
     app_versions: Optional[List[str]] = None,
     run_name: Optional[str] = None,
+    record_ids: Optional[List[str]] = None,
+    matched_record_ids: Optional[List[str]] = None,
+    include_conversation_context: bool = False,
+    start_time: Optional[pd.Timestamp] = None,
+    end_time: Optional[pd.Timestamp] = None,
     offset: Optional[int] = None,
     limit: Optional[int] = None,
 ):
@@ -233,6 +318,11 @@ def get_records_and_feedback(
         app_name=app_name,
         app_versions=app_versions,
         run_name=run_name,
+        record_ids=record_ids,
+        matched_record_ids=matched_record_ids,
+        include_conversation_context=include_conversation_context,
+        start_time=start_time,
+        end_time=end_time,
         offset=offset,
         limit=limit,
     )
@@ -300,6 +390,98 @@ def get_leaderboard_aggregates(
     return lms.get_leaderboard_aggregates(
         app_name=app_name,
         app_versions=app_versions,
+    )
+
+
+@st.cache_data(
+    ttl=dashboard_constants.CACHE_TTL,
+    show_spinner="Aggregating feedback score trends",
+)
+def get_feedback_score_trends(
+    app_name: Optional[str] = None,
+    app_versions: Optional[List[str]] = None,
+    bucket: str = "day",
+    start_time: Optional[pd.Timestamp] = None,
+    end_time: Optional[pd.Timestamp] = None,
+):
+    session = get_session()
+    lms = session.connector.db
+    assert lms
+    return lms.get_feedback_score_trends(
+        app_name=app_name,
+        app_versions=app_versions,
+        bucket=bucket,
+        start_time=start_time,
+        end_time=end_time,
+    )
+
+
+@st.cache_data(
+    ttl=dashboard_constants.CACHE_TTL,
+    show_spinner="Aggregating application metrics",
+)
+def get_app_metric_trends(
+    app_name: Optional[str] = None,
+    app_versions: Optional[List[str]] = None,
+    bucket: str = "day",
+    start_time: Optional[pd.Timestamp] = None,
+    end_time: Optional[pd.Timestamp] = None,
+):
+    session = get_session()
+    lms = session.connector.db
+    assert lms
+    return lms.get_app_metric_trends(
+        app_name=app_name,
+        app_versions=app_versions,
+        bucket=bucket,
+        start_time=start_time,
+        end_time=end_time,
+    )
+
+
+@st.cache_data(
+    ttl=dashboard_constants.CACHE_TTL,
+    show_spinner="Aggregating evaluation costs",
+)
+def get_eval_cost_trends(
+    app_name: Optional[str] = None,
+    app_versions: Optional[List[str]] = None,
+    bucket: str = "day",
+    start_time: Optional[pd.Timestamp] = None,
+    end_time: Optional[pd.Timestamp] = None,
+):
+    session = get_session()
+    lms = session.connector.db
+    assert lms
+    return lms.get_eval_cost_trends(
+        app_name=app_name,
+        app_versions=app_versions,
+        bucket=bucket,
+        start_time=start_time,
+        end_time=end_time,
+    )
+
+
+def get_eval_drilldown_record_ids(
+    app_name: str,
+    app_versions: List[str],
+    metric_kind: str,
+    metric_name: str,
+    start_time: pd.Timestamp,
+    end_time: pd.Timestamp,
+    currency: Optional[str] = None,
+):
+    session = get_session()
+    lms = session.connector.db
+    assert lms
+    return lms.get_eval_drilldown_record_ids(
+        app_name=app_name,
+        app_versions=app_versions,
+        metric_kind=metric_kind,
+        metric_name=metric_name,
+        start_time=start_time,
+        end_time=end_time,
+        currency=currency,
     )
 
 
