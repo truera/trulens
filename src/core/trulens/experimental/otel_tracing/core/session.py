@@ -3,6 +3,7 @@ from importlib.metadata import version as pkg_version
 import logging
 import os
 import threading
+import time
 from typing import Any, Callable, Dict, Optional
 
 from opentelemetry import trace
@@ -213,12 +214,28 @@ class _TruSession(core_session.TruSession):
             # Instrument AsyncOpenAI.post method directly for async cost tracking
             try:
                 from openai import AsyncOpenAI
+                from openai import AsyncStream
                 from trulens.core.otel.instrument import instrument_method
+                from trulens.providers.openai.endpoint import (
+                    instrument_async_openai_stream,
+                )
 
                 def async_post_cost_attributes(ret, exception, *args, **kwargs):
                     """Extract costs and capture input/output from AsyncOpenAI post responses."""
 
+                    request_returned_at = time.monotonic()
                     attrs = {}
+
+                    if isinstance(ret, AsyncStream):
+                        # Streaming responses aren't ChatCompletion-shaped
+                        # (no top-level .model/.usage/.choices), so none of
+                        # the output-capture/cost logic below applies -- the
+                        # stream is wrapped so CHUNKS_RECEIVED/TTFT/
+                        # TOKENS_PER_SECOND get recorded once it's consumed.
+                        attrs[SpanAttributes.GENERATION.IS_STREAMING] = True
+                        instrument_async_openai_stream(ret, request_returned_at)
+                        # Still fall through to capture the request (path,
+                        # body, prompts) below, but skip response parsing.
 
                     # Capture the input (path and request body)
                     if args and len(args) > 0:
@@ -278,8 +295,10 @@ class _TruSession(core_session.TruSession):
                         except Exception:
                             pass  # Silently skip serialization errors
 
-                    # Capture the output
-                    if ret:
+                    # Capture the output (skip for streaming responses --
+                    # an AsyncStream isn't ChatCompletion-shaped, and its
+                    # own attributes are handled above)
+                    if ret and not isinstance(ret, AsyncStream):
                         try:
                             # Try to serialize the response
                             if hasattr(ret, "model_dump"):
@@ -397,6 +416,17 @@ class _TruSession(core_session.TruSession):
                     "post",
                     span_type=SpanAttributes.SpanType.GENERATION,
                     attributes=async_post_cost_attributes,
+                    # Piggyback on whatever span is already open (typically
+                    # the caller's own @instrument-decorated method) rather
+                    # than creating a new span scoped exactly to the
+                    # `await post(...)` call. That new span would always end
+                    # the instant post() resolves to the stream object --
+                    # before the caller starts consuming it -- making it
+                    # impossible to ever record CHUNKS_RECEIVED/
+                    # TIME_TO_FIRST_TOKEN_MS/TOKENS_PER_SECOND for streaming
+                    # responses. Matches the sync OpenAI client's existing
+                    # instrument_cost_computer (also create_new_span=False).
+                    create_new_span=False,
                 )
 
             except ImportError as e:
