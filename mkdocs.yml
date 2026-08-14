@@ -177,6 +177,12 @@ plugins:
         trulens/human_feedback.md: getting_started/quickstarts/adding_human_feedback.ipynb
         trulens/release_blog_1dot.md: blog/posts/release_blog_1dot.md
         blog/otel_for_the_agentic_world.md: blog/posts/trulens_otel.md
+        component_guides/evaluation/golden_set_generator.md: component_guides/evaluation/llm_judge_alignment.md
+        component_guides/evaluation/score_distribution.md: component_guides/evaluation/llm_judge_alignment.md
+        component_guides/evaluation/criteria_ab_test.md: component_guides/evaluation/llm_judge_alignment.md
+        component_guides/evaluation/few_shot_optimization.md: component_guides/evaluation/llm_judge_alignment.md
+        component_guides/evaluation/cross_model_alignment.md: component_guides/evaluation/llm_judge_alignment.md
+        component_guides/evaluation/llm_jury.md: component_guides/evaluation/llm_judge_alignment.md
 
 theme:
   name: material
@@ -272,10 +278,7 @@ nav:
         - component_guides/evaluation/index.md
         - Anatomy of a Metric: component_guides/evaluation/feedback_anatomy.md
         - Feedback Providers: component_guides/evaluation/feedback_providers.md
-        - Migrating to Metric API: component_guides/evaluation/metric_migration.md
-        - Score Distribution Analysis: component_guides/evaluation/score_distribution.md
-        - Criteria A/B Testing: component_guides/evaluation/criteria_ab_test.md
-        - Cross-Model Alignment: component_guides/evaluation/cross_model_alignment.md
+        - LLM Judge Alignment: component_guides/evaluation/llm_judge_alignment.md
         - Metric Implementations:
             - component_guides/evaluation/feedback_implementations/index.md
             - Stock Metrics: component_guides/evaluation/feedback_implementations/stock.md
@@ -293,8 +296,7 @@ nav:
             - Batch evaluation with runs: component_guides/evaluation/batch_evaluation.md
         - Generating Test Cases:
             - component_guides/evaluation/generate_test_cases.md
-        - Golden Set Generation: component_guides/evaluation/golden_set_generator.md
-        - LLM Jury (Ensemble Judges): component_guides/evaluation/llm_jury.md
+        - Migrating to Metric API: component_guides/evaluation/metric_migration.md
         - Evaluate MLFlow Traces: component_guides/evaluation/mlflow.md
     - 🏃 Runtime Evaluation:
         - component_guides/runtime_evaluation/index.md
