@@ -1,6 +1,6 @@
 {% set name = "trulens-apps-langgraph" %}
 {% set pyname = name.replace('-', '.') %}
-{% set version = "2.12.0" %}
+{% set version = "2.13.0" %}
 
 package:
   name: {{ name|lower }}
