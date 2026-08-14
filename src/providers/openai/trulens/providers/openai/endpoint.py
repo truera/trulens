@@ -23,6 +23,7 @@ the involved classes will need to be adapted here. The important classes are:
 import inspect
 import logging
 import pprint
+import time
 from typing import (
     Any,
     Callable,
@@ -51,6 +52,7 @@ except ImportError:
         from langchain_core.outputs import LLMResult
 
 from langchain_community.callbacks.openai_info import OpenAICallbackHandler
+from opentelemetry import trace as otel_trace
 import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
 from trulens.core.feedback import endpoint as core_endpoint
@@ -125,12 +127,22 @@ class OpenAICostComputer:
         endpoint = OpenAIEndpoint()
         callback = OpenAICallback(endpoint=endpoint)
         model_name = ""
+        streaming_attributes: Dict[str, Any] = {}
 
         if hasattr(response, "__iter__") and not hasattr(response, "model"):
+            streaming_attributes[SpanAttributes.GENERATION.IS_STREAMING] = True
+            request_returned_at = time.monotonic()
             try:
                 first_chunk = next(response)
+                first_chunk_received_at = time.monotonic()
+                streaming_attributes[
+                    SpanAttributes.GENERATION.TIME_TO_FIRST_TOKEN_MS
+                ] = (first_chunk_received_at - request_returned_at) * 1000
                 model_name = first_chunk.model or ""
                 response = prepend_first_chunk(response, first_chunk)
+                response = _instrument_stream_span_attributes(
+                    response, first_chunk_received_at
+                )
             except Exception:
                 logger.exception(
                     "Exception occurred while consuming the first chunk from a streamed response."
@@ -156,6 +168,7 @@ class OpenAICostComputer:
         }
         if model_name:
             ret[SpanAttributes.COST.MODEL] = model_name
+        ret.update(streaming_attributes)
 
         return ret
 
@@ -659,4 +672,148 @@ def prepend_first_chunk(stream, first_chunk):
         yield from original_iter
 
     stream._iterator = new_iter()
+    return stream
+
+
+def _instrument_stream_span_attributes(stream, first_chunk_received_at: float):
+    """Wrap `stream`'s iterator to record `CHUNKS_RECEIVED` and, when usage
+    is available (e.g. the caller passed ``stream_options={"include_usage":
+    True}``), `TOKENS_PER_SECOND` on the span that is current *right now* --
+    which must be called before this function, i.e. synchronously as soon as
+    the streamed response object is returned.
+
+    This only works if that span is still open by the time the stream is
+    exhausted, which is the case when the calling code consumes the stream
+    inside the same instrumented function that issued the request (the
+    common pattern). If the raw stream is instead handed off elsewhere (e.g.
+    returned directly to an outer caller for pass-through streaming), the
+    span will have already ended and this becomes a silent no-op -- chunk
+    count/throughput just won't be recorded for that call, same as if this
+    function did not exist.
+    """
+    span = otel_trace.get_current_span()
+    if not span.get_span_context().is_valid:
+        return stream
+
+    state: Dict[str, Any] = {
+        "count": 0,
+        "last_chunk_at": first_chunk_received_at,
+        "completion_tokens": None,
+    }
+
+    def _record_chunk(chunk):
+        state["count"] += 1
+        state["last_chunk_at"] = time.monotonic()
+        usage = getattr(chunk, "usage", None)
+        completion_tokens = getattr(usage, "completion_tokens", None)
+        if completion_tokens:
+            state["completion_tokens"] = completion_tokens
+        return chunk
+
+    def _on_done(_chunks):
+        try:
+            span.set_attribute(
+                SpanAttributes.GENERATION.CHUNKS_RECEIVED, state["count"]
+            )
+            duration_s = state["last_chunk_at"] - first_chunk_received_at
+            if state["completion_tokens"] and duration_s > 0:
+                span.set_attribute(
+                    SpanAttributes.GENERATION.TOKENS_PER_SECOND,
+                    state["completion_tokens"] / duration_s,
+                )
+        except Exception:
+            logger.debug(
+                "Could not record streaming span attributes; the span may "
+                "have already ended.",
+                exc_info=True,
+            )
+
+    if isinstance(stream, openai.AsyncStream):
+        stream._iterator = python_utils.wrap_async_generator(
+            stream._iterator, wrap=_record_chunk, on_done=_on_done
+        )
+    elif isinstance(stream, openai.Stream):
+        stream._iterator = python_utils.wrap_generator(
+            stream._iterator, wrap=_record_chunk, on_done=_on_done
+        )
+    return stream
+
+
+def instrument_async_openai_stream(
+    stream: "openai.AsyncStream", request_returned_at: float
+) -> "openai.AsyncStream":
+    """Async counterpart to `_instrument_stream_span_attributes`, for use
+    from a hook that -- unlike `OpenAICostComputer.handle_response` for the
+    sync client -- cannot `await` the first chunk itself to measure TTFT
+    synchronously (e.g. a plain sync `attributes` callback on an
+    already-awaited `AsyncOpenAI.post()` call). Records `IS_STREAMING`
+    immediately (returned as a caller-attached attribute, since that much is
+    known synchronously) and defers `TIME_TO_FIRST_TOKEN_MS` /
+    `CHUNKS_RECEIVED` / `TOKENS_PER_SECOND` to when the stream is actually
+    consumed, same graceful-no-op-if-span-already-ended caveat as above.
+
+    Note this measures TTFT from `request_returned_at` (when the coroutine
+    resolved to the stream object) to whenever the *caller* first pulls a
+    chunk -- which, unlike the sync path's eager first-chunk read, can
+    slightly overstate true network TTFT if the caller does other work
+    before starting to iterate the stream.
+    """
+    span = otel_trace.get_current_span()
+    if not span.get_span_context().is_valid or not isinstance(
+        stream, openai.AsyncStream
+    ):
+        return stream
+
+    state: Dict[str, Any] = {
+        "count": 0,
+        "first_chunk_at": None,
+        "last_chunk_at": request_returned_at,
+        "completion_tokens": None,
+    }
+
+    def _record_chunk(chunk):
+        now = time.monotonic()
+        state["count"] += 1
+        if state["first_chunk_at"] is None:
+            state["first_chunk_at"] = now
+            try:
+                span.set_attribute(
+                    SpanAttributes.GENERATION.TIME_TO_FIRST_TOKEN_MS,
+                    (now - request_returned_at) * 1000,
+                )
+            except Exception:
+                logger.debug(
+                    "Could not record TIME_TO_FIRST_TOKEN_MS; the span may "
+                    "have already ended.",
+                    exc_info=True,
+                )
+        state["last_chunk_at"] = now
+        usage = getattr(chunk, "usage", None)
+        completion_tokens = getattr(usage, "completion_tokens", None)
+        if completion_tokens:
+            state["completion_tokens"] = completion_tokens
+        return chunk
+
+    def _on_done(_chunks):
+        try:
+            span.set_attribute(
+                SpanAttributes.GENERATION.CHUNKS_RECEIVED, state["count"]
+            )
+            if state["first_chunk_at"] is not None:
+                duration_s = state["last_chunk_at"] - state["first_chunk_at"]
+                if state["completion_tokens"] and duration_s > 0:
+                    span.set_attribute(
+                        SpanAttributes.GENERATION.TOKENS_PER_SECOND,
+                        state["completion_tokens"] / duration_s,
+                    )
+        except Exception:
+            logger.debug(
+                "Could not record streaming span attributes; the span may "
+                "have already ended.",
+                exc_info=True,
+            )
+
+    stream._iterator = python_utils.wrap_async_generator(
+        stream._iterator, wrap=_record_chunk, on_done=_on_done
+    )
     return stream

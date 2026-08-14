@@ -599,6 +599,7 @@ def instrument_method(
     span_type: SpanAttributes.SpanType = SpanAttributes.SpanType.UNKNOWN,
     attributes: Attributes = None,
     must_be_first_wrapper: bool = False,
+    create_new_span: bool = True,
 ) -> None:
     method = getattr(cls, method_name)
     if hasattr(method, TRULENS_INSTRUMENT_WRAPPER_FLAG):
@@ -608,6 +609,7 @@ def instrument_method(
         span_type=span_type,
         attributes=attributes,
         must_be_first_wrapper=must_be_first_wrapper,
+        create_new_span=create_new_span,
     )
     setattr(cls, method_name, wrapper(method))
 
