@@ -75,7 +75,12 @@ def test_chunks_received_and_tokens_per_second_recorded_on_open_span(
 ):
     from trulens.providers.openai.endpoint import OpenAICostComputer
 
-    usage = Mock(completion_tokens=7)
+    usage = Mock(
+        spec=["prompt_tokens", "completion_tokens", "total_tokens"],
+        prompt_tokens=12,
+        completion_tokens=7,
+        total_tokens=19,
+    )
     stream = _make_sync_stream([
         _make_chunk("Hello"),
         _make_chunk(" world"),
@@ -92,6 +97,9 @@ def test_chunks_received_and_tokens_per_second_recorded_on_open_span(
     attrs: Dict[str, Any] = spans[0].attributes
     assert attrs[SpanAttributes.GENERATION.CHUNKS_RECEIVED] == 3
     assert attrs[SpanAttributes.GENERATION.TOKENS_PER_SECOND] > 0
+    assert attrs[SpanAttributes.COST.NUM_PROMPT_TOKENS] == 12
+    assert attrs[SpanAttributes.COST.NUM_COMPLETION_TOKENS] == 7
+    assert attrs[SpanAttributes.COST.NUM_TOKENS] == 19
 
 
 @pytest.mark.optional
