@@ -425,6 +425,22 @@ class SpanAttributes:
 
         base = BASE_SCOPE + ".generation"
 
+        IS_STREAMING = base + ".is_streaming"
+        """Whether this generation call used streaming (e.g. `stream=True`)."""
+
+        TIME_TO_FIRST_TOKEN_MS = base + ".time_to_first_token_ms"
+        """Milliseconds between issuing the request and receiving the first
+        streamed chunk. Only set when `IS_STREAMING` is `True`."""
+
+        TOKENS_PER_SECOND = base + ".tokens_per_second"
+        """Completion tokens generated per second, measured from the first
+        to the last chunk received. Only set when `IS_STREAMING` is
+        `True`."""
+
+        CHUNKS_RECEIVED = base + ".chunks_received"
+        """Number of chunks received while consuming a streamed response.
+        Only set when `IS_STREAMING` is `True`."""
+
     class GRAPH_TASK:
         """A graph task function execution."""
 

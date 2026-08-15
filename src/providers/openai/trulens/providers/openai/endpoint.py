@@ -23,6 +23,7 @@ the involved classes will need to be adapted here. The important classes are:
 import inspect
 import logging
 import pprint
+import time
 from typing import (
     Any,
     Callable,
@@ -51,6 +52,7 @@ except ImportError:
         from langchain_core.outputs import LLMResult
 
 from langchain_community.callbacks.openai_info import OpenAICallbackHandler
+from opentelemetry import trace as otel_trace
 import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
 from trulens.core.feedback import endpoint as core_endpoint
@@ -125,12 +127,22 @@ class OpenAICostComputer:
         endpoint = OpenAIEndpoint()
         callback = OpenAICallback(endpoint=endpoint)
         model_name = ""
+        streaming_attributes: Dict[str, Any] = {}
 
         if hasattr(response, "__iter__") and not hasattr(response, "model"):
+            streaming_attributes[SpanAttributes.GENERATION.IS_STREAMING] = True
+            request_returned_at = time.monotonic()
             try:
                 first_chunk = next(response)
+                first_chunk_received_at = time.monotonic()
+                streaming_attributes[
+                    SpanAttributes.GENERATION.TIME_TO_FIRST_TOKEN_MS
+                ] = (first_chunk_received_at - request_returned_at) * 1000
                 model_name = first_chunk.model or ""
                 response = prepend_first_chunk(response, first_chunk)
+                response = _instrument_stream_span_attributes(
+                    response, first_chunk_received_at
+                )
             except Exception:
                 logger.exception(
                     "Exception occurred while consuming the first chunk from a streamed response."
@@ -156,6 +168,7 @@ class OpenAICostComputer:
         }
         if model_name:
             ret[SpanAttributes.COST.MODEL] = model_name
+        ret.update(streaming_attributes)
 
         return ret
 
@@ -310,6 +323,11 @@ class OpenAICallback(core_endpoint.EndpointCallback):
         exclude=True,
     )
 
+    _stream_usage: Optional[Dict[str, int]] = pydantic.PrivateAttr(default=None)
+    """Token usage captured from a streamed response's trailing usage-only
+    chunk (sent when the caller passes `stream_options={"include_usage":
+    True}`), held until `finalize_stream` is called."""
+
     _FIELDS_MAP: ClassVar[List[Tuple[str, str]]] = [
         ("cost", "total_cost"),
         ("n_tokens", "total_tokens"),
@@ -325,25 +343,51 @@ class OpenAICallback(core_endpoint.EndpointCallback):
 
         try:
             if hasattr(response, "choices"):
-                choices = response.choices
+                for choice in response.choices:
+                    if (
+                        choice.finish_reason != "stop"
+                        and hasattr(choice, "delta")
+                        and choice.delta.content
+                    ):
+                        self.chunks.append({"text": choice.delta.content})
 
-                for choice in choices:
-                    if choice.finish_reason == "stop":
-                        llm_result = LLMResult(
-                            llm_output=dict(
-                                token_usage={},
-                                model_name=response.model or "",
-                            ),
-                            generations=[self.chunks],
-                        )
-                        self.chunks = []
-                        self.handle_generation(response=llm_result)
-                    else:
-                        if hasattr(choice, "delta"):
-                            self.chunks.append({"text": choice.delta.content})
-
+            # Real token usage, when present, arrives on a *separate*
+            # trailing chunk with empty `choices` (only sent when the
+            # caller passes `stream_options={"include_usage": True}`), not
+            # on the same chunk as `finish_reason == "stop"` -- so it can't
+            # be read in the branch above. Held here and applied once the
+            # stream is fully consumed, in `finalize_stream`.
+            usage = getattr(response, "usage", None)
+            if usage is not None:
+                self._stream_usage = {
+                    "prompt_tokens": getattr(usage, "prompt_tokens", 0) or 0,
+                    "completion_tokens": getattr(usage, "completion_tokens", 0)
+                    or 0,
+                    "total_tokens": getattr(usage, "total_tokens", 0) or 0,
+                }
         finally:
             return response
+
+    def finalize_stream(self, model_name: str = "") -> None:
+        """Flush accumulated streamed chunks into a cost/generation record.
+        Must be called once the stream's iterator is exhausted (not on
+        `finish_reason == "stop"`, since real usage -- when requested --
+        arrives in a later chunk than that; see `handle_generation_chunk`).
+        A no-op if nothing was accumulated (e.g. a non-streaming response,
+        which never calls `handle_generation_chunk` in the first place).
+        """
+        if not self.chunks and self._stream_usage is None:
+            return
+        llm_result = LLMResult(
+            llm_output=dict(
+                token_usage=self._stream_usage or {},
+                model_name=model_name,
+            ),
+            generations=[self.chunks],
+        )
+        self.chunks = []
+        self._stream_usage = None
+        self.handle_generation(response=llm_result)
 
     def handle_generation(self, response: LLMResult) -> None:
         super().handle_generation(response)
@@ -506,10 +550,18 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
 
                     return chunk
 
+            def handle_stream_done(_chunks) -> None:
+                with python_utils.with_context(context_vars):
+                    for callback in callbacks:
+                        finalize = getattr(callback, "finalize_stream", None)
+                        if finalize is not None:
+                            finalize(model_name=model_name)
+
             if isinstance(response, openai.AsyncStream):
                 response._iterator = python_utils.wrap_async_generator(
                     response._iterator,
                     wrap=handle_chunk,
+                    on_done=handle_stream_done,
                     context_vars=context_vars,
                 )
                 return response
@@ -518,6 +570,7 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
                 response._iterator = python_utils.wrap_generator(
                     response._iterator,
                     wrap=handle_chunk,
+                    on_done=handle_stream_done,
                     context_vars=context_vars,
                 )
                 return response
@@ -659,4 +712,86 @@ def prepend_first_chunk(stream, first_chunk):
         yield from original_iter
 
     stream._iterator = new_iter()
+    return stream
+
+
+def _instrument_stream_span_attributes(stream, first_chunk_received_at: float):
+    """Wrap `stream`'s iterator to record `CHUNKS_RECEIVED` and, when usage
+    is available (e.g. the caller passed ``stream_options={"include_usage":
+    True}``), `TOKENS_PER_SECOND` and real `COST.NUM_*_TOKENS` (in place of
+    the zeros/absence they'd otherwise have for a streamed call) on the span
+    that is current *right now* -- which must be called before this
+    function, i.e. synchronously as soon as the streamed response object is
+    returned.
+
+    This only works if that span is still open by the time the stream is
+    exhausted, which is the case when the calling code consumes the stream
+    inside the same instrumented function that issued the request (the
+    common pattern). If the raw stream is instead handed off elsewhere (e.g.
+    returned directly to an outer caller for pass-through streaming), the
+    span will have already ended and this becomes a silent no-op -- chunk
+    count/throughput/tokens just won't be recorded for that call, same as if
+    this function did not exist.
+    """
+    span = otel_trace.get_current_span()
+    if not span.get_span_context().is_valid:
+        return stream
+
+    state: Dict[str, Any] = {
+        "count": 0,
+        "last_chunk_at": first_chunk_received_at,
+        "usage": None,
+    }
+
+    def _record_chunk(chunk):
+        state["count"] += 1
+        state["last_chunk_at"] = time.monotonic()
+        usage = getattr(chunk, "usage", None)
+        if usage is not None:
+            state["usage"] = usage
+        return chunk
+
+    def _on_done(_chunks):
+        try:
+            span.set_attribute(
+                SpanAttributes.GENERATION.CHUNKS_RECEIVED, state["count"]
+            )
+            usage = state["usage"]
+            completion_tokens = getattr(usage, "completion_tokens", None)
+            duration_s = state["last_chunk_at"] - first_chunk_received_at
+            if completion_tokens and duration_s > 0:
+                span.set_attribute(
+                    SpanAttributes.GENERATION.TOKENS_PER_SECOND,
+                    completion_tokens / duration_s,
+                )
+            if usage is not None:
+                # The synchronous OpenAICostComputer.handle_response call
+                # that set up this wrap already flushed COST.* onto this
+                # span *before* any chunk was consumed, so it's stuck at
+                # zero/absent -- overwrite it now that real numbers exist.
+                prompt_tokens = getattr(usage, "prompt_tokens", 0) or 0
+                total_tokens = getattr(usage, "total_tokens", 0) or 0
+                span.set_attribute(
+                    SpanAttributes.COST.NUM_PROMPT_TOKENS, prompt_tokens
+                )
+                span.set_attribute(
+                    SpanAttributes.COST.NUM_COMPLETION_TOKENS,
+                    completion_tokens or 0,
+                )
+                span.set_attribute(SpanAttributes.COST.NUM_TOKENS, total_tokens)
+        except Exception:
+            logger.debug(
+                "Could not record streaming span attributes; the span may "
+                "have already ended.",
+                exc_info=True,
+            )
+
+    if isinstance(stream, openai.AsyncStream):
+        stream._iterator = python_utils.wrap_async_generator(
+            stream._iterator, wrap=_record_chunk, on_done=_on_done
+        )
+    elif isinstance(stream, openai.Stream):
+        stream._iterator = python_utils.wrap_generator(
+            stream._iterator, wrap=_record_chunk, on_done=_on_done
+        )
     return stream
