@@ -14,10 +14,12 @@ validate_suite(), the same real EvalPort validator every other adapter in
 this ecosystem tests against -- not a mock.
 """
 
+from openeval.validate import validate_result_set
+from openeval.validate import validate_suite
 import pandas as pd
 import pytest
-from openeval.validate import validate_result_set, validate_suite
-from trulens.openeval import from_openeval, to_openeval
+from trulens.openeval import from_openeval
+from trulens.openeval import to_openeval
 
 
 def _records_df(rows, attrs=None):
@@ -84,52 +86,50 @@ def test_to_openeval_basic_shape_and_validates_against_real_spec():
 
 
 def test_to_openeval_excludes_calls_companion_columns_by_default():
-    df = _records_df(
-        [
-            {
-                "record_id": "rec_1",
-                "input": "hi",
-                "output": "hello",
-                "latency": 0.1,
-                "Groundedness": 0.7,
-                "Groundedness_calls": [{"args": {}, "ret": 0.7}],
-            }
-        ]
-    )
+    df = _records_df([
+        {
+            "record_id": "rec_1",
+            "input": "hi",
+            "output": "hello",
+            "latency": 0.1,
+            "Groundedness": 0.7,
+            "Groundedness_calls": [{"args": {}, "ret": 0.7}],
+        }
+    ])
     result_set = to_openeval(df)
-    grader_ids = {g["grader_id"] for g in result_set["results"][0]["grader_results"]}
+    grader_ids = {
+        g["grader_id"] for g in result_set["results"][0]["grader_results"]
+    }
     assert grader_ids == {"groundedness"}
     assert "groundedness_calls" not in grader_ids
 
 
 def test_to_openeval_explicit_metric_columns_overrides_auto_detection():
-    df = _records_df(
-        [
-            {
-                "record_id": "rec_1",
-                "input": "hi",
-                "output": "hello",
-                "Groundedness": 0.7,
-                "Custom Score": 0.3,
-            }
-        ]
-    )
+    df = _records_df([
+        {
+            "record_id": "rec_1",
+            "input": "hi",
+            "output": "hello",
+            "Groundedness": 0.7,
+            "Custom Score": 0.3,
+        }
+    ])
     result_set = to_openeval(df, metric_columns=["Custom Score"])
-    grader_ids = {g["grader_id"] for g in result_set["results"][0]["grader_results"]}
+    grader_ids = {
+        g["grader_id"] for g in result_set["results"][0]["grader_results"]
+    }
     assert grader_ids == {"custom_score"}
 
 
 def test_to_openeval_missing_feedback_score_is_skipped_not_errored():
-    df = _records_df(
-        [
-            {
-                "record_id": "rec_1",
-                "input": "hi",
-                "output": "hello",
-                "Groundedness": None,
-            }
-        ]
-    )
+    df = _records_df([
+        {
+            "record_id": "rec_1",
+            "input": "hi",
+            "output": "hello",
+            "Groundedness": None,
+        }
+    ])
     result_set = to_openeval(df)
     # No valid score -> no grader results -> overall fails cleanly, matches
     # the "no feedback scores fails cleanly" convention every other adapter
@@ -139,9 +139,9 @@ def test_to_openeval_missing_feedback_score_is_skipped_not_errored():
 
 
 def test_to_openeval_custom_pass_threshold():
-    df = _records_df(
-        [{"record_id": "rec_1", "input": "x", "output": "y", "Score": 0.6}]
-    )
+    df = _records_df([
+        {"record_id": "rec_1", "input": "x", "output": "y", "Score": 0.6}
+    ])
     default = to_openeval(df)
     assert default["results"][0]["passed"] is True  # 0.6 >= default 0.5
 
@@ -153,34 +153,30 @@ def test_to_openeval_score_clamped_to_valid_range():
     # EvalPort's schema requires score in [0, 1]; a feedback function that
     # (unusually) returns slightly out of range must not produce an invalid
     # ResultSet.
-    df = _records_df(
-        [{"record_id": "rec_1", "input": "x", "output": "y", "Score": 1.2}]
-    )
+    df = _records_df([
+        {"record_id": "rec_1", "input": "x", "output": "y", "Score": 1.2}
+    ])
     result_set = to_openeval(df)
     assert result_set["results"][0]["grader_results"][0]["score"] == 1.0
     assert validate_result_set(result_set).valid
 
 
 def test_to_openeval_latency_unit_ms_is_respected():
-    df = _records_df(
-        [{"record_id": "rec_1", "input": "x", "output": "y", "latency": 250}]
-    )
+    df = _records_df([
+        {"record_id": "rec_1", "input": "x", "output": "y", "latency": 250}
+    ])
     result_set = to_openeval(df, latency_unit="ms")
     assert result_set["results"][0]["duration_ms"] == 250
 
 
 def test_to_openeval_run_id_defaults_when_no_run_name_attr():
-    df = _records_df(
-        [{"record_id": "rec_1", "input": "x", "output": "y"}]
-    )
+    df = _records_df([{"record_id": "rec_1", "input": "x", "output": "y"}])
     result_set = to_openeval(df)
     assert result_set["run_id"] == "trulens_run"
 
 
 def test_to_openeval_explicit_timestamps_are_respected():
-    df = _records_df(
-        [{"record_id": "rec_1", "input": "x", "output": "y"}]
-    )
+    df = _records_df([{"record_id": "rec_1", "input": "x", "output": "y"}])
     result_set = to_openeval(
         df,
         started_at="2026-01-15T10:30:00Z",
@@ -202,13 +198,11 @@ def test_to_openeval_missing_required_column_raises():
 
 
 def test_to_openeval_summary_matches_actual_pass_fail_counts():
-    df = _records_df(
-        [
-            {"record_id": "rec_1", "input": "a", "output": "b", "Score": 0.9},
-            {"record_id": "rec_2", "input": "a", "output": "b", "Score": 0.1},
-            {"record_id": "rec_3", "input": "a", "output": "b", "Score": 0.6},
-        ]
-    )
+    df = _records_df([
+        {"record_id": "rec_1", "input": "a", "output": "b", "Score": 0.9},
+        {"record_id": "rec_2", "input": "a", "output": "b", "Score": 0.1},
+        {"record_id": "rec_3", "input": "a", "output": "b", "Score": 0.6},
+    ])
     result_set = to_openeval(df)
     assert result_set["summary"]["total"] == 3
     assert result_set["summary"]["passed"] == 2
@@ -244,7 +238,11 @@ def test_from_openeval_returns_dataframe_and_valid_dataset_spec():
 
     input_df, dataset_spec = from_openeval(suite)
 
-    assert list(input_df.columns) == ["input", "ground_truth_output", "input_id"]
+    assert list(input_df.columns) == [
+        "input",
+        "ground_truth_output",
+        "input_id",
+    ]
     assert len(input_df) == 2
     assert input_df.iloc[0]["input"] == "What is the capital of France?"
     assert input_df.iloc[0]["ground_truth_output"] == "Paris"
@@ -294,10 +292,26 @@ def test_end_to_end_suite_to_run_to_resultset_round_trip():
     suite = {
         "version": "1.0.0",
         "id": "e2e_suite",
-        "graders": [{"id": "g1", "type": "llm_judge", "params": {"prompt": "{output}", "model": "gpt-4o"}}],
+        "graders": [
+            {
+                "id": "g1",
+                "type": "llm_judge",
+                "params": {"prompt": "{output}", "model": "gpt-4o"},
+            }
+        ],
         "test_cases": [
-            {"id": "tc1", "input": "What is the capital of France?", "expected_output": "Paris", "graders": ["g1"]},
-            {"id": "tc2", "input": "What is 2+2?", "expected_output": "4", "graders": ["g1"]},
+            {
+                "id": "tc1",
+                "input": "What is the capital of France?",
+                "expected_output": "Paris",
+                "graders": ["g1"],
+            },
+            {
+                "id": "tc2",
+                "input": "What is 2+2?",
+                "expected_output": "4",
+                "graders": ["g1"],
+            },
         ],
     }
     assert validate_suite(suite).valid
@@ -310,15 +324,13 @@ def test_end_to_end_suite_to_run_to_resultset_round_trip():
     # (a real integration would join TruLens's assigned record_ids back to
     # input_df[input_id_column] itself; that join is outside this module's
     # scope, same as every other adapter leaves execution to the caller).
-    records_df = pd.DataFrame(
-        {
-            "record_id": input_df["input_id"],
-            "input": input_df["input"],
-            "output": ["Paris", "4"],
-            "latency": [1.1, 0.3],
-            "Correctness": [1.0, 1.0],
-        }
-    )
+    records_df = pd.DataFrame({
+        "record_id": input_df["input_id"],
+        "input": input_df["input"],
+        "output": ["Paris", "4"],
+        "latency": [1.1, 0.3],
+        "Correctness": [1.0, 1.0],
+    })
     records_df.attrs["run_name"] = "e2e_run"
 
     result_set = to_openeval(records_df, suite_id=suite["id"])

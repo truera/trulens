@@ -43,12 +43,15 @@ this ecosystem (see e.g. adapters/opik-openeval-adapter's README).
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
+from datetime import timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 try:
     import pandas as pd
-except ImportError as e:  # pragma: no cover - trulens-core already depends on pandas
+except (
+    ImportError
+) as e:  # pragma: no cover - trulens-core already depends on pandas
     raise ImportError(
         "trulens-openeval requires pandas, which trulens-core already depends on."
     ) from e
@@ -141,10 +144,14 @@ def to_openeval(
         ValueError: if ``records_df`` is empty or missing a required column.
     """
     if records_df is None or len(records_df) == 0:
-        raise ValueError("to_openeval: records_df is empty -- nothing to convert.")
+        raise ValueError(
+            "to_openeval: records_df is empty -- nothing to convert."
+        )
 
     missing_required = [
-        c for c in ("record_id", "input", "output") if c not in records_df.columns
+        c
+        for c in ("record_id", "input", "output")
+        if c not in records_df.columns
     ]
     if missing_required:
         raise ValueError(
@@ -176,20 +183,20 @@ def to_openeval(
             if _is_missing(raw_score):
                 continue
             score = max(0.0, min(1.0, float(raw_score)))
-            grader_results.append(
-                {
-                    "grader_id": _feedback_column_to_grader_id(col),
-                    "type": "custom",
-                    "score": score,
-                    "passed": score >= pass_threshold,
-                }
-            )
+            grader_results.append({
+                "grader_id": _feedback_column_to_grader_id(col),
+                "type": "custom",
+                "score": score,
+                "passed": score >= pass_threshold,
+            })
 
         result: Dict[str, Any] = {
             "test_case_id": str(row["record_id"]),
             "grader_results": grader_results,
             "passed": (
-                all(g["passed"] for g in grader_results) if grader_results else False
+                all(g["passed"] for g in grader_results)
+                if grader_results
+                else False
             ),
             "metadata": {"trulens": {"record_id": str(row["record_id"])}},
         }
@@ -197,10 +204,14 @@ def to_openeval(
         if not _is_missing(row.get("output")):
             result["actual_output"] = str(row["output"])
 
-        if "latency" in records_df.columns and not _is_missing(row.get("latency")):
+        if "latency" in records_df.columns and not _is_missing(
+            row.get("latency")
+        ):
             latency_value = float(row["latency"])
             duration_ms = (
-                latency_value * 1000 if latency_unit == "seconds" else latency_value
+                latency_value * 1000
+                if latency_unit == "seconds"
+                else latency_value
             )
             result["duration_ms"] = max(0, round(duration_ms))
 
@@ -270,13 +281,11 @@ def from_openeval(
 
     rows = []
     for tc in test_cases:
-        rows.append(
-            {
-                "input": tc.get("input"),
-                "ground_truth_output": tc.get("expected_output"),
-                input_id_column: tc.get("id"),
-            }
-        )
+        rows.append({
+            "input": tc.get("input"),
+            "ground_truth_output": tc.get("expected_output"),
+            input_id_column: tc.get("id"),
+        })
 
     input_df = pd.DataFrame(rows)
     dataset_spec = {
