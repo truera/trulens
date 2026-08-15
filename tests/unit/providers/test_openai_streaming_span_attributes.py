@@ -2,7 +2,6 @@
 from typing import Any, Dict
 from unittest.mock import Mock
 
-import openai
 from opentelemetry import trace
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
@@ -11,6 +10,18 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
 import pytest
 from trulens.otel.semconv.trace import GenAIAttributes
 from trulens.otel.semconv.trace import SpanAttributes
+
+try:
+    import openai
+
+    OPENAI_AVAILABLE = True
+except ImportError:
+    openai = None
+    OPENAI_AVAILABLE = False
+
+pytestmark = pytest.mark.skipif(
+    not OPENAI_AVAILABLE, reason="OpenAI not available"
+)
 
 
 def _make_chunk(content: str, usage=None):
