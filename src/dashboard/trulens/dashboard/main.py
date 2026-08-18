@@ -12,11 +12,12 @@ from trulens.dashboard.utils.dashboard_utils import set_page_config
 
 def main():
     """Main dashboard function using st.navigation and st.Page."""
-    get_session()
     set_page_config(page_title="Dashboard")
+    get_session()
     tabs_dir = Path(__file__).parent / "tabs"
     pages = [
         st.Page(str(tabs_dir / "Leaderboard.py"), default=True),
+        st.Page(str(tabs_dir / "Trends.py")),
         st.Page(str(tabs_dir / "Records.py")),
         st.Page(str(tabs_dir / "Compare.py")),
     ]

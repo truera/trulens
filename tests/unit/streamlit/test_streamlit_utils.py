@@ -90,6 +90,9 @@ class TestDataFactory:
             "Total Cost (USD)": [0.01 * (i + 1) for i in range(size)],
             "Total Cost (Snowflake Credits)": [0.0] * size,
             "Total Tokens": [100 + 50 * i for i in range(size)],
+            "Sample Rate": [0.1 + 0.05 * i for i in range(size)],
+            "Sample Rate Min": [0.1 + 0.05 * i for i in range(size)],
+            "Sample Rate Max": [0.1 + 0.05 * i for i in range(size)],
         }
 
         for feedback_name in feedback_names:
@@ -379,6 +382,7 @@ class MockManager:
                     mock_data["feedback_col_names"],
                 )
             ),
+            get_feedback_score_trends=Mock(return_value=pd.DataFrame()),
             get_feedback_defs=Mock(return_value=({}, {})),
             get_session=Mock(),
             is_sis_compatibility_enabled=Mock(return_value=False),

@@ -23,6 +23,15 @@ This construction is **composable and extensible**.
 
 **Extensible** meaning that the user can extend a feedback provider with custom feedback implementations of the user's choosing.
 
+## Developing an LLM judge
+
+Choosing a provider is only one part of judge quality. A judge must also be
+tested against human labels and validated after changing its rubric,
+instructions, examples, model, or score threshold.
+
+Start with the [LLM judge alignment guide](llm_judge_alignment.md) for the full
+golden-set, diagnosis, A/B testing, and held-out validation workflow.
+
 !!! example
 
     In a high-stakes domain requiring evaluating long chunks of context, the user may choose to use a more expensive SOTA model.

@@ -21,18 +21,17 @@ Typical usage
 
     provider = OpenAI()
 
-    # A pool of candidate demonstrations: each entry is a
-    # (feedback_kwargs, ground_truth_score) pair.
+    # Candidate demonstrations use the judge's prompt score scale.
     candidates = [
-        ({"input": "What is 2+2?", "output": "4"},          1.0),
-        ({"input": "What is the capital?", "output": "Paris"}, 0.9),
-        ({"input": "Who wrote Hamlet?", "output": "Einstein"}, 0.1),
+        ({"prompt": "What is 2+2?", "response": "4"}, 3),
+        ({"prompt": "What is the capital?", "response": "Paris"}, 3),
+        ({"prompt": "Who wrote Hamlet?", "response": "Einstein"}, 0),
         # … more examples …
     ]
 
     # A separate held-out dataset used to *evaluate* which examples help most.
     eval_dataset = [
-        ({"input": "Explain gravity.", "output": "A force."}, 0.8),
+        ({"prompt": "Explain gravity.", "response": "A force."}, 0.8),
         # …
     ]
 
@@ -41,14 +40,15 @@ Typical usage
         candidates=candidates,
         eval_dataset=eval_dataset,
         n_examples=3,
+        examples_format="structured",
     )
-    best_examples = optimizer.optimize()
+    result = optimizer.optimize()
 
-    # Use the optimized examples with your feedback function.
+    # Standard TruLens provider methods accept the structured list directly.
     provider.relevance(
-        input="…",
-        output="…",
-        examples=optimizer.format_examples(best_examples),
+        prompt="…",
+        response="…",
+        examples=result.best_examples,
     )
 """
 
@@ -66,8 +66,10 @@ logger = logging.getLogger(__name__)
 # A single feedback call's keyword arguments, e.g. {"input": "…", "output": "…"}.
 FeedbackKwargs = dict[str, str]
 
-# A labeled example: (feedback_kwargs, ground_truth_score ∈ [0, 1]).
-LabeledExample = tuple[FeedbackKwargs, float]
+# A labeled example contains feedback arguments and a score. Standard TruLens
+# providers require an integer on the prompt's output scale; custom callables may
+# use normalized floats with the text format.
+LabeledExample = tuple[FeedbackKwargs, float | int]
 
 VALID_METRICS = {
     "pearson",
@@ -133,15 +135,15 @@ class FewShotOptimizer:
     ----------
     feedback_fn:
         A callable that accepts the keyword arguments defined in
-        *candidates* plus an optional ``examples: str`` keyword argument.
+        *candidates* plus an optional ``examples`` keyword argument.
         It must return a ``float`` in ``[0, 1]``. Must be thread-safe; called
         concurrently when max_workers > 1. Typically a bound method
         on a :class:`trulens.feedback.LLMProvider` subclass, e.g.
         ``provider.relevance``.
     candidates:
         Pool of demonstration examples to select from.  Each entry is a
-        ``(feedback_kwargs, ground_truth_score)`` pair where
-        ``ground_truth_score`` is a float in ``[0, 1]``.
+        ``(feedback_kwargs, score)`` pair. With ``examples_format="structured"``,
+        the score must be an integer on the feedback function's prompt scale.
     eval_dataset:
         Held-out labeled examples used to measure how well a candidate set
         helps the judge.  Should be *disjoint* from *candidates* to avoid
@@ -150,8 +152,14 @@ class FewShotOptimizer:
         Maximum number of examples to include in the final prompt.
         Defaults to ``3``.
     format_sep:
-        Separator inserted between formatted examples when building the
-        ``examples`` string passed to *feedback_fn*.  Defaults to ``"\\n\\n"``.
+        Separator inserted between examples returned by
+        :meth:`format_examples`. Standard TruLens providers use the structured
+        examples directly. Defaults to ``"\\n\\n"``.
+    examples_format:
+        ``"text"`` preserves the original behavior and passes a formatted
+        string to custom feedback callables. ``"structured"`` passes the list
+        of ``(feedback_kwargs, score)`` tuples expected by standard TruLens
+        providers. Defaults to ``"text"``.
     metric:
         Evaluation metric to optimize. Supported metrics: ``"pearson"``,
         ``"spearman"``, ``"precision"``, ``"recall"``, ``"f1"``,
@@ -174,6 +182,7 @@ class FewShotOptimizer:
         metric: str = "pearson",
         metric_threshold: float = 0.5,
         max_workers: int | None = None,
+        examples_format: str = "text",
     ) -> None:
         if not candidates:
             raise ValueError("`candidates` must not be empty.")
@@ -181,6 +190,18 @@ class FewShotOptimizer:
             raise ValueError("`eval_dataset` must not be empty.")
         if n_examples < 1:
             raise ValueError("`n_examples` must be >= 1.")
+        if examples_format not in {"text", "structured"}:
+            raise ValueError(
+                "`examples_format` must be either 'text' or 'structured'."
+            )
+        if examples_format == "structured" and any(
+            isinstance(score, bool) or not isinstance(score, int)
+            for _, score in candidates
+        ):
+            raise ValueError(
+                "Structured examples require integer scores on the feedback "
+                "function's prompt scale."
+            )
 
         metric_lower = metric.lower()
         if metric_lower not in VALID_METRICS:
@@ -194,6 +215,7 @@ class FewShotOptimizer:
         self.eval_dataset = eval_dataset
         self.n_examples = n_examples
         self.format_sep = format_sep
+        self.examples_format = examples_format
         self.metric = metric_lower
         self.metric_threshold = metric_threshold
         self.max_workers = max_workers
@@ -285,8 +307,7 @@ class FewShotOptimizer:
         )
 
     def format_examples(self, examples: list[LabeledExample]) -> str:
-        """Serialise a list of labeled examples into the string format expected
-        by *feedback_fn*'s ``examples`` parameter.
+        """Serialize examples for custom callables that accept a string.
 
         Each example is rendered as a bullet showing the input kwargs and the
         expected score, separated by :attr:`format_sep`.
@@ -300,8 +321,8 @@ class FewShotOptimizer:
         Returns
         -------
         str
-            A human-readable string ready to be passed as
-            ``feedback_fn(..., examples=<return_value>)``.
+            A human-readable representation. Standard TruLens provider methods
+            should receive the structured examples instead.
         """
         parts = []
         for i, (kwargs, score) in enumerate(examples, start=1):
@@ -321,9 +342,9 @@ class FewShotOptimizer:
     ) -> float | None:
         """Evaluate *candidate_set* against :attr:`eval_dataset`.
 
-        Calls :attr:`feedback_fn` on every eval sample with the formatted
-        *candidate_set* injected as few-shot examples, then computes the
-        selected metric between predicted and ground-truth scores.
+        Calls :attr:`feedback_fn` on every eval sample with *candidate_set*
+        injected in the configured format, then computes the selected metric
+        between predicted and ground-truth scores.
 
         Parameters
         ----------
@@ -336,13 +357,17 @@ class FewShotOptimizer:
             Evaluation metric score, or ``None`` if fewer than two eval samples
             produced valid predictions.
         """
-        examples_str = self.format_examples(candidate_set)
         predicted: list[float] = []
         ground_truth: list[float] = []
+        examples = (
+            candidate_set
+            if self.examples_format == "structured"
+            else self.format_examples(candidate_set)
+        )
 
         for kwargs, gt_score in self.eval_dataset:
             try:
-                score = self.feedback_fn(**kwargs, examples=examples_str)
+                score = self.feedback_fn(**kwargs, examples=examples)
                 if score is not None:
                     predicted.append(float(score))
                     ground_truth.append(gt_score)
