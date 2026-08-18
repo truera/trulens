@@ -8,7 +8,6 @@ SHELL := /bin/bash
 REPO_ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 PYTEST := poetry run pytest --rootdir=. -s -r fex --durations=0
 PYTEST_ISOLATED := poetry run pytest --rootdir=. -s -r fex --durations=0 -n auto --dist=loadscope
-OTEL_TEST_FILES := $(wildcard tests/unit/test_otel*.py)
 POETRY_DIRS := $(shell find . \
 	-not -path "./dist/*" \
 	-maxdepth 4 \
@@ -305,31 +304,19 @@ test-%-all: env-tests env-tests-optional env-tests-snowflake
 
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline
 # frequently.
-# OTEL tests require process isolation due to async background threads and
-# optional native dependencies. Optional OTEL modules run in separate normal
-# pytest processes so native extensions are not loaded in xdist workers.
+# OTEL tests require process isolation due to async background threads
+# NOTE: pytest-xdist MUST be installed for OTEL tests to pass in batch
+# It should be installed via: poetry install --with dev
 test-unit:
-	@if [ "$${TEST_OPTIONAL:-}" = "true" ] || [ "$${TEST_OPTIONAL:-}" = "1" ]; then \
-		echo "✅ Running optional OTEL modules in separate pytest processes..."; \
-		for test_file in $(OTEL_TEST_FILES); do \
-			$(PYTEST) "$$test_file"; \
-			test_status=$$?; \
-			if [ $$test_status -eq 5 ]; then \
-				echo "ℹ️ No runnable tests in $$test_file; continuing."; \
-			elif [ $$test_status -ne 0 ]; then \
-				exit $$test_status; \
-			fi; \
-		done; \
-	elif poetry run python -c "import xdist" 2>/dev/null; then \
+	@if poetry run python -c "import xdist" 2>/dev/null; then \
 		echo "✅ Running OTEL tests with pytest-xdist for process isolation..."; \
-		$(PYTEST_ISOLATED) $(filter-out tests/unit/test_otel_async_concurrency.py,$(OTEL_TEST_FILES)); \
-		$(PYTEST) tests/unit/test_otel_async_concurrency.py; \
+		$(PYTEST_ISOLATED) tests/unit/test_otel*.py; \
 	else \
 		echo "❌ ERROR: pytest-xdist not installed!"; \
 		echo "OTEL tests WILL FAIL without process isolation."; \
 		echo "Install with: poetry install --with dev"; \
 		echo "Attempting to run anyway (expect failures)..."; \
-		$(PYTEST) $(OTEL_TEST_FILES); \
+		$(PYTEST) tests/unit/test_otel*.py; \
 	fi
 	$(PYTEST) $(shell ls tests/unit/test_*.py tests/unit/providers/test_*.py | grep -v test_otel)
 # Tests in the e2e folder make use of possibly costly endpoints. They
