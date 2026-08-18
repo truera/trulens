@@ -47,6 +47,19 @@ class GenAIAttributes:
         TEMPERATURE = GEN_AI_SCOPE + ".request.temperature"
         """Sampling temperature requested."""
 
+        STREAM = GEN_AI_SCOPE + ".request.stream"
+        """Whether the request was made in streaming mode. Conditionally
+        required: only set if and only if the request is streaming (per
+        spec, an unset value is assumed to mean non-streaming)."""
+
+    class RESPONSE:
+        """Attributes describing the GenAI response."""
+
+        TIME_TO_FIRST_CHUNK = GEN_AI_SCOPE + ".response.time_to_first_chunk"
+        """Time to first chunk in a streaming response, in seconds, measured
+        from request issuance to the first chunk being received. Recommended
+        when the request was a streaming request."""
+
     class USAGE:
         """Token usage reported by the GenAI provider."""
 
@@ -421,25 +434,44 @@ class SpanAttributes:
         """The retrieved contexts."""
 
     class GENERATION:
-        """A generation call to an LLM."""
+        """A generation call to an LLM.
+
+        `IS_STREAMING` and `TIME_TO_FIRST_TOKEN_MS` below have canonical
+        OTel GenAI semconv counterparts --
+        `GenAIAttributes.REQUEST.STREAM` and
+        `GenAIAttributes.RESPONSE.TIME_TO_FIRST_CHUNK` respectively -- which
+        are emitted alongside these for interoperability. `TOKENS_PER_SECOND`
+        and `CHUNKS_RECEIVED` do not: the OTel GenAI spec models per-chunk
+        latency/throughput as Histogram metrics
+        (`gen_ai.client.operation.time_per_output_chunk`), not span
+        attributes, but this codebase has no OTel Metrics/MeterProvider
+        pipeline yet. Until one exists, these two stay TruLens-internal
+        (`ai.observability.*` only, no `gen_ai.*` counterpart) rather than
+        being misrepresented as canonical semconv.
+        """
 
         base = BASE_SCOPE + ".generation"
 
         IS_STREAMING = base + ".is_streaming"
-        """Whether this generation call used streaming (e.g. `stream=True`)."""
+        """Whether this generation call used streaming (e.g. `stream=True`).
+        See also `GenAIAttributes.REQUEST.STREAM`."""
 
         TIME_TO_FIRST_TOKEN_MS = base + ".time_to_first_token_ms"
         """Milliseconds between issuing the request and receiving the first
-        streamed chunk. Only set when `IS_STREAMING` is `True`."""
+        streamed chunk. Only set when `IS_STREAMING` is `True`. See also
+        `GenAIAttributes.RESPONSE.TIME_TO_FIRST_CHUNK` (same measurement,
+        canonical key, unit seconds instead of milliseconds)."""
 
         TOKENS_PER_SECOND = base + ".tokens_per_second"
         """Completion tokens generated per second, measured from the first
-        to the last chunk received. Only set when `IS_STREAMING` is
-        `True`."""
+        to the last chunk received. Only set when `IS_STREAMING` is `True`.
+        TruLens-internal; not part of OTel GenAI semconv (see class
+        docstring)."""
 
         CHUNKS_RECEIVED = base + ".chunks_received"
         """Number of chunks received while consuming a streamed response.
-        Only set when `IS_STREAMING` is `True`."""
+        Only set when `IS_STREAMING` is `True`. TruLens-internal; not part
+        of OTel GenAI semconv (see class docstring)."""
 
     class GRAPH_TASK:
         """A graph task function execution."""
