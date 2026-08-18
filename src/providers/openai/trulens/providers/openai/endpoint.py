@@ -728,11 +728,7 @@ def _instrument_stream_span_attributes(stream, first_chunk_received_at: float):
                 exc_info=True,
             )
 
-    if isinstance(stream, openai.AsyncStream):
-        stream._iterator = python_utils.wrap_async_generator(
-            stream._iterator, wrap=_record_chunk, on_done=_on_done
-        )
-    elif isinstance(stream, openai.Stream):
+    if isinstance(stream, openai.Stream):
         stream._iterator = python_utils.wrap_generator(
             stream._iterator, wrap=_record_chunk, on_done=_on_done
         )

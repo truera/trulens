@@ -95,7 +95,7 @@ def test_chunks_received_and_tokens_per_second_recorded_on_open_span(
 
 
 @pytest.mark.optional
-def test_chunks_received_omitted_without_usage(otel_setup):
+def test_tokens_per_second_omitted_without_usage(otel_setup):
     from trulens.providers.openai.endpoint import OpenAICostComputer
 
     stream = _make_sync_stream([_make_chunk("Hello"), _make_chunk(" world")])
