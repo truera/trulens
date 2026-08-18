@@ -1,4 +1,5 @@
 # pyright: reportMissingImports=false, reportMissingModuleSource=false
+import itertools
 from typing import Any, Dict
 from unittest.mock import Mock
 
@@ -83,9 +84,17 @@ def test_streaming_attrs_returned_immediately(otel_setup):
 
 @pytest.mark.optional
 def test_chunks_received_and_tokens_per_second_recorded_on_open_span(
-    otel_setup,
+    otel_setup, monkeypatch
 ):
+    from trulens.providers.openai import endpoint as openai_endpoint_module
     from trulens.providers.openai.endpoint import OpenAICostComputer
+
+    # Real mock consumption is faster than _MIN_TOKENS_PER_SECOND_DURATION_S,
+    # so fake the clock to simulate a realistic gap between chunks.
+    fake_clock = itertools.count(start=0.0, step=0.05)
+    monkeypatch.setattr(
+        openai_endpoint_module.time, "monotonic", lambda: next(fake_clock)
+    )
 
     usage = Mock(completion_tokens=7)
     stream = _make_sync_stream([

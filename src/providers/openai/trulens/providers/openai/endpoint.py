@@ -676,6 +676,13 @@ def prepend_first_chunk(stream, first_chunk):
     return stream
 
 
+_MIN_TOKENS_PER_SECOND_DURATION_S = 0.01
+"""Minimum elapsed time between the first and last chunk before
+`TOKENS_PER_SECOND` is recorded. Streams that finish faster than this are
+skipped rather than dividing by a near-zero duration, which would produce
+misleadingly huge throughput numbers."""
+
+
 def _instrument_stream_span_attributes(stream, first_chunk_received_at: float):
     """Wrap `stream`'s iterator to record `CHUNKS_RECEIVED` and, when usage
     is available (e.g. the caller passed ``stream_options={"include_usage":
@@ -717,7 +724,10 @@ def _instrument_stream_span_attributes(stream, first_chunk_received_at: float):
                 SpanAttributes.GENERATION.CHUNKS_RECEIVED, state["count"]
             )
             duration_s = state["last_chunk_at"] - first_chunk_received_at
-            if state["completion_tokens"] and duration_s > 0:
+            if (
+                state["completion_tokens"]
+                and duration_s >= _MIN_TOKENS_PER_SECOND_DURATION_S
+            ):
                 span.set_attribute(
                     SpanAttributes.GENERATION.TOKENS_PER_SECOND,
                     state["completion_tokens"] / duration_s,
