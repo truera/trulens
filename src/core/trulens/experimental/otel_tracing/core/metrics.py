@@ -4,7 +4,9 @@ from typing import TYPE_CHECKING, Any
 
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace import SpanProcessor
+from trulens.otel.semconv.trace import ErrorAttributes
 from trulens.otel.semconv.trace import GenAIAttributes
+from trulens.otel.semconv.trace import ServerAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 if TYPE_CHECKING:
@@ -99,10 +101,10 @@ class TrulensOtelMetricsSpanProcessor(SpanProcessor):
             metric_attributes[GenAIAttributes.REQUEST.MODEL] = model
 
         for key in (
-            "gen_ai.response.model",
-            "server.address",
-            "server.port",
-            "error.type",
+            GenAIAttributes.RESPONSE.MODEL,
+            ServerAttributes.ADDRESS,
+            ServerAttributes.PORT,
+            ErrorAttributes.TYPE,
         ):
             if key in attributes:
                 metric_attributes[key] = attributes[key]
