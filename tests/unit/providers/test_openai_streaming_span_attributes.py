@@ -9,6 +9,7 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
 import pytest
+from trulens.otel.semconv.trace import GenAIAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 
@@ -65,8 +66,8 @@ def test_streaming_attrs_returned_immediately(otel_setup):
         # the wrapped iterator).
         list(stream)
 
-    assert ret[SpanAttributes.GENERATION.IS_STREAMING] is True
-    assert ret[SpanAttributes.GENERATION.TIME_TO_FIRST_TOKEN_MS] >= 0
+    assert ret[GenAIAttributes.REQUEST.STREAM] is True
+    assert ret[GenAIAttributes.RESPONSE.TIME_TO_FIRST_CHUNK] >= 0
 
 
 @pytest.mark.optional
@@ -144,4 +145,4 @@ def test_non_streaming_response_unaffected():
     from trulens.providers.openai.endpoint import OpenAICostComputer
 
     ret = OpenAICostComputer.handle_response(_FakeChatCompletion())
-    assert SpanAttributes.GENERATION.IS_STREAMING not in ret
+    assert GenAIAttributes.REQUEST.STREAM not in ret

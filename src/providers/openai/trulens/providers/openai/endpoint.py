@@ -62,6 +62,7 @@ from trulens.core.utils import pace as pace_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
+from trulens.otel.semconv.trace import GenAIAttributes
 from trulens.otel.semconv.trace import SpanAttributes
 
 import openai
@@ -130,14 +131,14 @@ class OpenAICostComputer:
         streaming_attributes: Dict[str, Any] = {}
 
         if hasattr(response, "__iter__") and not hasattr(response, "model"):
-            streaming_attributes[SpanAttributes.GENERATION.IS_STREAMING] = True
+            streaming_attributes[GenAIAttributes.REQUEST.STREAM] = True
             request_returned_at = time.monotonic()
             try:
                 first_chunk = next(response)
                 first_chunk_received_at = time.monotonic()
                 streaming_attributes[
-                    SpanAttributes.GENERATION.TIME_TO_FIRST_TOKEN_MS
-                ] = (first_chunk_received_at - request_returned_at) * 1000
+                    GenAIAttributes.RESPONSE.TIME_TO_FIRST_CHUNK
+                ] = first_chunk_received_at - request_returned_at
                 model_name = first_chunk.model or ""
                 response = prepend_first_chunk(response, first_chunk)
                 response = _instrument_stream_span_attributes(
