@@ -226,6 +226,12 @@ class Ollama(openai_provider.OpenAI):
         keep_alive: Optional[Union[str, int]] = None,
         **kwargs,
     ) -> Optional[str]:
+        """Only `temperature`, `seed`, and `top_p` are translated from
+        OpenAI-style keyword arguments into Ollama's nested `options` dict.
+        Other OpenAI params (e.g. `max_tokens`, `frequency_penalty`,
+        `presence_penalty`) are silently ignored here -- pass their Ollama
+        equivalents (e.g. `num_predict` for `max_tokens`) directly via the
+        `options` dict instead."""
         if messages is not None:
             input_messages = list(messages)
         elif prompt is not None:
