@@ -462,6 +462,10 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
         app_versions: Optional[List[types_schema.AppVersion]] = None,
         run_name: Optional[types_schema.RunName] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
+        matched_record_ids: Optional[List[types_schema.RecordID]] = None,
+        include_conversation_context: bool = False,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
@@ -511,6 +515,64 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
         Returns:
             A tuple of (aggregated dataframe, feedback column names).
         """
+        raise NotImplementedError()
+
+    def get_feedback_score_trends(
+        self,
+        app_name: Optional[types_schema.AppName] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
+        bucket: str = "day",
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+    ) -> pd.DataFrame:
+        """Get time-bucketed feedback score statistics.
+
+        Args:
+            app_name: App name to filter by.
+            app_versions: App versions to filter by.
+            bucket: Time bucket, either ``day`` or ``week``.
+            start_time: Inclusive event timestamp lower bound.
+            end_time: Exclusive event timestamp upper bound.
+
+        Returns:
+            Feedback score counts, means, and 95% confidence bounds grouped by
+            app version, metric, and time bucket.
+        """
+        raise NotImplementedError()
+
+    def get_app_metric_trends(
+        self,
+        app_name: Optional[types_schema.AppName] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
+        bucket: str = "day",
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+    ) -> pd.DataFrame:
+        """Get time-bucketed application latency and cost statistics."""
+        raise NotImplementedError()
+
+    def get_eval_cost_trends(
+        self,
+        app_name: Optional[types_schema.AppName] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
+        bucket: str = "day",
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+    ) -> pd.DataFrame:
+        """Get time-bucketed observed evaluation cost statistics."""
+        raise NotImplementedError()
+
+    def get_eval_drilldown_record_ids(
+        self,
+        app_name: types_schema.AppName,
+        app_versions: List[types_schema.AppVersion],
+        metric_kind: str,
+        metric_name: str,
+        start_time: datetime,
+        end_time: datetime,
+        currency: Optional[str] = None,
+    ) -> List[types_schema.RecordID]:
+        """Get record IDs for an evaluation-time chart bucket."""
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -874,8 +936,9 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
                                 "explanation": record_attributes.get(
                                     SpanAttributes.EVAL.EXPLANATION
                                 ),
-                                "metadata": record_attributes.get(
-                                    SpanAttributes.EVAL.METADATA, {}
+                                "metadata": self._extract_namespaced_attributes(
+                                    record_attributes,
+                                    SpanAttributes.EVAL.METADATA,
                                 ),
                             },
                         }

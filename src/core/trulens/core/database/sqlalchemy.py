@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import datetime
+from datetime import timedelta
 import json
 import logging
 from sqlite3 import OperationalError
@@ -186,6 +187,19 @@ class SQLAlchemyDB(core_db.DB):
             - sa.func.julianday(self.orm.Event.start_timestamp) * 86400
         )
 
+    def _latency_seconds_expr(self) -> Any:
+        """Return record latency in seconds without aggregation."""
+        if self.engine.dialect.name == "postgresql":
+            return sa.extract(
+                "epoch",
+                sa.cast(self.orm.Event.timestamp, sa.DateTime)
+                - sa.cast(self.orm.Event.start_timestamp, sa.DateTime),
+            )
+        return (
+            sa.func.julianday(self.orm.Event.timestamp) * 86400
+            - sa.func.julianday(self.orm.Event.start_timestamp) * 86400
+        )
+
     def _json_path_expr(self, column_obj: Any, path: str) -> Any:
         """Build a SQL expression that extracts ``path`` from a JSON column.
         Default covers SQLite/MySQL/Postgres. Subclasses override for other
@@ -195,6 +209,24 @@ class SQLAlchemyDB(core_db.DB):
             return sa.func.json_extract_path_text(column_obj, path)
         # SQLite and MySQL use json_extract with JSONPath syntax.
         return sa.func.json_extract(column_obj, f'$."{path}"')
+
+    def _time_bucket_expr(self, bucket: str) -> Any:
+        """Return a portable day or week bucket expression."""
+        if bucket not in ("day", "week"):
+            raise ValueError("bucket must be 'day' or 'week'")
+        if self.engine.dialect.name == "postgresql":
+            return sa.func.date_trunc(bucket, self.orm.Event.start_timestamp)
+        if bucket == "day":
+            return sa.func.strftime(
+                "%Y-%m-%d 00:00:00", self.orm.Event.start_timestamp
+            )
+        weekday = sa.cast(
+            sa.func.strftime("%w", self.orm.Event.start_timestamp), sa.Integer
+        )
+        return sa.func.date(
+            self.orm.Event.start_timestamp,
+            sa.func.printf("-%d days", (weekday + 6) % 7),
+        )
 
     @classmethod
     def from_tru_args(
@@ -857,6 +889,8 @@ class SQLAlchemyDB(core_db.DB):
         app_version: Optional[types_schema.AppVersion] = None,
         app_versions: Optional[List[types_schema.AppVersion]] = None,
         run_name: Optional[types_schema.RunName] = None,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> sa.Select:
@@ -938,6 +972,10 @@ class SQLAlchemyDB(core_db.DB):
                 "record_attributes", SpanAttributes.RUN_NAME
             )
             conditions.append(run_name_expr == run_name)
+        if start_time is not None:
+            conditions.append(self.orm.Event.start_timestamp >= start_time)
+        if end_time is not None:
+            conditions.append(self.orm.Event.start_timestamp < end_time)
 
         # Apply all conditions
         stmt = stmt.where(sa.and_(*conditions))
@@ -946,7 +984,9 @@ class SQLAlchemyDB(core_db.DB):
         stmt = stmt.group_by("record_id")
 
         # Order by timestamp descending (newest first)
-        stmt = stmt.order_by(sa.desc("min_start_timestamp"))
+        stmt = stmt.order_by(
+            sa.desc("min_start_timestamp"), sa.text("record_id")
+        )
 
         # Apply pagination
         if limit is not None:
@@ -956,6 +996,56 @@ class SQLAlchemyDB(core_db.DB):
 
         return stmt
 
+    def _expand_conversation_record_ids_otel(
+        self, session, matched_record_ids: List[types_schema.RecordID]
+    ) -> List[types_schema.RecordID]:
+        record_id_expr = self._json_extract_otel(
+            "record_attributes", SpanAttributes.RECORD_ID
+        )
+        conversation_expr = self._json_extract_otel(
+            "record_attributes", SpanAttributes.CONVERSATION_ID
+        )
+        app_name_expr = self._json_extract_otel(
+            "resource_attributes", ResourceAttributes.APP_NAME
+        )
+        version_expr = self._json_extract_otel(
+            "resource_attributes", ResourceAttributes.APP_VERSION
+        )
+        root_condition = (
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.SPAN_TYPE
+            )
+            == SpanAttributes.SpanType.RECORD_ROOT.value
+        )
+        matched_rows = session.execute(
+            sa.select(
+                record_id_expr, conversation_expr, app_name_expr, version_expr
+            ).where(root_condition, record_id_expr.in_(matched_record_ids))
+        ).all()
+        conversation_keys = {
+            (row[2], row[3], row[1])
+            for row in matched_rows
+            if row[1] not in (None, "")
+        }
+        expanded = set(matched_record_ids)
+        if conversation_keys:
+            conditions = [
+                sa.and_(
+                    app_name_expr == app_name,
+                    version_expr == version,
+                    conversation_expr == conversation_id,
+                )
+                for app_name, version, conversation_id in conversation_keys
+            ]
+            expanded.update(
+                session.execute(
+                    sa.select(record_id_expr).where(
+                        root_condition, sa.or_(*conditions)
+                    )
+                ).scalars()
+            )
+        return list(expanded)
+
     def _get_records_and_feedback_otel(
         self,
         app_ids: Optional[List[str]] = None,
@@ -964,6 +1054,10 @@ class SQLAlchemyDB(core_db.DB):
         app_versions: Optional[List[types_schema.AppVersion]] = None,
         run_name: Optional[types_schema.RunName] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
+        matched_record_ids: Optional[List[types_schema.RecordID]] = None,
+        include_conversation_context: bool = False,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
@@ -986,6 +1080,12 @@ class SQLAlchemyDB(core_db.DB):
             A tuple of (records dataframe, feedback column names).
         """
         with self.session.begin() as session:
+            if matched_record_ids is not None:
+                record_ids = matched_record_ids
+            if include_conversation_context and matched_record_ids:
+                record_ids = self._expand_conversation_record_ids_otel(
+                    session, matched_record_ids
+                )
             # Get paginated record IDs
             if record_ids is None:
                 record_id_subquery = self._get_paginated_record_ids_otel(
@@ -994,12 +1094,18 @@ class SQLAlchemyDB(core_db.DB):
                     app_version=app_version,
                     app_versions=app_versions,
                     run_name=run_name,
+                    start_time=start_time,
+                    end_time=end_time,
                     offset=offset,
                     limit=limit,
                 )
                 record_ids_sql = sa.select(record_id_subquery.c.record_id)
             else:
-                record_ids_sql = record_ids
+                record_ids_sql = record_ids[
+                    offset or 0 : (offset or 0) + limit
+                    if limit is not None
+                    else None
+                ]
 
             # Now get all events for those record IDs
             stmt = sa.select(self.orm.Event).where(
@@ -1010,11 +1116,17 @@ class SQLAlchemyDB(core_db.DB):
 
             # Execute query
             events = session.execute(stmt).scalars().all()
-            return self._get_records_and_feedback_otel_from_events(
-                events=events,
-                app_ids=app_ids,
-                app_name=app_name,
+            result, feedback_columns = (
+                self._get_records_and_feedback_otel_from_events(
+                    events=events,
+                    app_ids=app_ids,
+                    app_name=app_name,
+                )
             )
+            result["is_match"] = result["record_id"].isin(
+                matched_record_ids or result["record_id"]
+            )
+            return result, feedback_columns
 
     def _build_otel_conditions(
         self,
@@ -1083,6 +1195,7 @@ class SQLAlchemyDB(core_db.DB):
             app_versions=app_versions,
         )
         latency_expr = self._latency_expr()
+        recent_cutoff = datetime.utcnow() - timedelta(days=7)
 
         base_stmt = (
             sa.select(
@@ -1090,6 +1203,15 @@ class SQLAlchemyDB(core_db.DB):
                 app_version_col,
                 app_id_col,
                 sa.func.count(sa.distinct(record_id_col)).label("Records"),
+                sa.func.sum(
+                    sa.case(
+                        (self.orm.Event.start_timestamp >= recent_cutoff, 1),
+                        else_=0,
+                    )
+                ).label("Recent Records"),
+                sa.func.max(self.orm.Event.start_timestamp).label(
+                    "Latest Record Timestamp"
+                ),
                 latency_expr.label("Average Latency (s)"),
                 sa.func.sum(sa.cast(cost_col, sa.Float)).label("total_cost"),
                 sa.func.coalesce(
@@ -1145,9 +1267,37 @@ class SQLAlchemyDB(core_db.DB):
             )
         )
 
+        decision_rate_col = self._json_extract_otel(
+            "record_attributes", SpanAttributes.EVAL_DECISION.SAMPLE_RATE
+        )
+        decision_conditions = self._build_otel_conditions(
+            SpanAttributes.SpanType.EVAL_DECISION.value,
+            app_name=app_name,
+            app_versions=app_versions,
+        )
+        decision_stmt = (
+            sa.select(
+                self._json_extract_otel(
+                    "resource_attributes", ResourceAttributes.APP_NAME
+                ).label("app_name"),
+                self._json_extract_otel(
+                    "resource_attributes", ResourceAttributes.APP_VERSION
+                ).label("app_version"),
+                self._json_extract_otel(
+                    "resource_attributes", ResourceAttributes.APP_ID
+                ).label("app_id"),
+                sa.cast(decision_rate_col, sa.Float).label("sample_rate"),
+                self.orm.Event.start_timestamp.label("decision_timestamp"),
+                self.orm.Event.event_id.label("event_id"),
+            )
+            .where(sa.and_(*decision_conditions))
+            .order_by(self.orm.Event.start_timestamp, self.orm.Event.event_id)
+        )
+
         with self.session.begin() as session:
             base_rows = session.execute(base_stmt).all()
             eval_rows = session.execute(eval_stmt).all()
+            decision_rows = session.execute(decision_stmt).all()
 
         base_df = pd.DataFrame(
             base_rows,
@@ -1156,6 +1306,8 @@ class SQLAlchemyDB(core_db.DB):
                 "app_version",
                 "app_id",
                 "Records",
+                "Recent Records",
+                "Latest Record Timestamp",
                 "Average Latency (s)",
                 "total_cost",
                 "cost_currency",
@@ -1213,9 +1365,335 @@ class SQLAlchemyDB(core_db.DB):
                 how="left",
             )
 
+        base_df["Sample Rate"] = np.nan
+        base_df["Sample Rate Min"] = np.nan
+        base_df["Sample Rate Max"] = np.nan
+        if decision_rows:
+            decision_df = pd.DataFrame(
+                decision_rows,
+                columns=[
+                    "app_name",
+                    "app_version",
+                    "app_id",
+                    "sample_rate",
+                    "decision_timestamp",
+                    "event_id",
+                ],
+            )
+            group_cols = ["app_name", "app_version", "app_id"]
+            decision_df = decision_df.sort_values(
+                ["decision_timestamp", "event_id"], kind="stable"
+            )
+            rate_bounds = decision_df.groupby(
+                group_cols, as_index=False, dropna=False
+            ).agg(**{
+                "Sample Rate Min": ("sample_rate", "min"),
+                "Sample Rate Max": ("sample_rate", "max"),
+            })
+            latest_rates = decision_df.drop_duplicates(
+                subset=group_cols, keep="last"
+            )[group_cols + ["sample_rate"]].rename(
+                columns={"sample_rate": "Sample Rate"}
+            )
+            rate_df = latest_rates.merge(rate_bounds, on=group_cols, how="left")
+            base_df = base_df.drop(
+                columns=["Sample Rate", "Sample Rate Min", "Sample Rate Max"]
+            ).merge(rate_df, on=group_cols, how="left")
+
         base_df = base_df.round(3)
         base_df["tags"] = ""
         return base_df, feedback_col_names
+
+    def get_feedback_score_trends(
+        self,
+        app_name: Optional[types_schema.AppName] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
+        bucket: str = "day",
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+    ) -> pd.DataFrame:
+        """See [DB.get_feedback_score_trends][trulens.core.database.base.DB.get_feedback_score_trends]."""
+        if not is_otel_tracing_enabled():
+            return pd.DataFrame()
+
+        bucket_col = self._time_bucket_expr(bucket).label("time_bucket")
+        score_col = sa.cast(
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.EVAL_ROOT.SCORE
+            ),
+            sa.Float,
+        )
+        conditions = self._build_otel_conditions(
+            SpanAttributes.SpanType.EVAL_ROOT.value,
+            app_name=app_name,
+            app_versions=app_versions,
+        )
+        if start_time is not None:
+            conditions.append(self.orm.Event.start_timestamp >= start_time)
+        if end_time is not None:
+            conditions.append(self.orm.Event.start_timestamp < end_time)
+        stmt = (
+            sa.select(
+                self._json_extract_otel(
+                    "resource_attributes", ResourceAttributes.APP_NAME
+                ).label("app_name"),
+                self._json_extract_otel(
+                    "resource_attributes", ResourceAttributes.APP_VERSION
+                ).label("app_version"),
+                self._json_extract_otel(
+                    "record_attributes", SpanAttributes.EVAL_ROOT.METRIC_NAME
+                ).label("metric_name"),
+                bucket_col,
+                sa.func.count(score_col).label("count"),
+                sa.func.avg(score_col).label("mean"),
+                sa.func.avg(score_col * score_col).label("mean_square"),
+            )
+            .where(sa.and_(*conditions))
+            .group_by(
+                sa.text("app_name"),
+                sa.text("app_version"),
+                sa.text("metric_name"),
+                bucket_col,
+            )
+            .order_by(bucket_col)
+        )
+        with self.session.begin() as session:
+            rows = session.execute(stmt).all()
+        trends = pd.DataFrame(
+            rows,
+            columns=[
+                "app_name",
+                "app_version",
+                "metric_name",
+                "time_bucket",
+                "count",
+                "mean",
+                "mean_square",
+            ],
+        )
+        if trends.empty:
+            return trends
+        trends["time_bucket"] = pd.to_datetime(trends["time_bucket"])
+        variance = (trends["mean_square"] - trends["mean"] ** 2).clip(lower=0)
+        sample_variance = (
+            variance * trends["count"] / (trends["count"] - 1)
+        ).where(trends["count"] > 1)
+        standard_error = np.sqrt(sample_variance / trends["count"])
+        trends["standard_error"] = standard_error
+        margin = 1.96 * standard_error
+        trends["ci_lower"] = (trends["mean"] - margin).clip(lower=0)
+        trends["ci_upper"] = (trends["mean"] + margin).clip(upper=1)
+        return trends.drop(columns=["mean_square"])
+
+    def get_app_metric_trends(
+        self,
+        app_name: Optional[types_schema.AppName] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
+        bucket: str = "day",
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+    ) -> pd.DataFrame:
+        """See [DB.get_app_metric_trends][trulens.core.database.base.DB.get_app_metric_trends]."""
+        if not is_otel_tracing_enabled():
+            return pd.DataFrame()
+        conditions = self._build_otel_conditions(
+            SpanAttributes.SpanType.RECORD_ROOT.value,
+            app_name=app_name,
+            app_versions=app_versions,
+        )
+        if start_time is not None:
+            conditions.append(self.orm.Event.start_timestamp >= start_time)
+        if end_time is not None:
+            conditions.append(self.orm.Event.start_timestamp < end_time)
+        stmt = sa.select(
+            self._json_extract_otel(
+                "resource_attributes", ResourceAttributes.APP_NAME
+            ).label("app_name"),
+            self._json_extract_otel(
+                "resource_attributes", ResourceAttributes.APP_VERSION
+            ).label("app_version"),
+            self._time_bucket_expr(bucket).label("time_bucket"),
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.RECORD_ID
+            ).label("record_id"),
+            self._latency_seconds_expr().label("latency"),
+            sa.cast(
+                self._json_extract_otel(
+                    "record_attributes", SpanAttributes.COST.COST
+                ),
+                sa.Float,
+            ).label("cost"),
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.COST.CURRENCY
+            ).label("currency"),
+        ).where(sa.and_(*conditions))
+        with self.session.begin() as session:
+            rows = session.execute(stmt).all()
+        records = pd.DataFrame(
+            rows,
+            columns=[
+                "app_name",
+                "app_version",
+                "time_bucket",
+                "record_id",
+                "latency",
+                "cost",
+                "currency",
+            ],
+        )
+        if records.empty:
+            return records
+        records["time_bucket"] = pd.to_datetime(records["time_bucket"])
+        records["currency"] = records["currency"].fillna("USD")
+        records["cost"] = records["cost"].fillna(0.0)
+        records = records.sort_values("time_bucket").drop_duplicates(
+            subset=["app_name", "app_version", "record_id"], keep="last"
+        )
+        group_cols = ["app_name", "app_version", "time_bucket", "currency"]
+        return (
+            records.groupby(group_cols, as_index=False, dropna=False)
+            .agg(
+                record_count=("latency", "count"),
+                average_latency=("latency", "mean"),
+                p90_latency=("latency", lambda values: values.quantile(0.90)),
+                p99_latency=("latency", lambda values: values.quantile(0.99)),
+                total_app_cost=("cost", "sum"),
+                average_app_cost=("cost", "mean"),
+            )
+            .sort_values("time_bucket")
+        )
+
+    def get_eval_cost_trends(
+        self,
+        app_name: Optional[types_schema.AppName] = None,
+        app_versions: Optional[List[types_schema.AppVersion]] = None,
+        bucket: str = "day",
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+    ) -> pd.DataFrame:
+        """See [DB.get_eval_cost_trends][trulens.core.database.base.DB.get_eval_cost_trends]."""
+        if not is_otel_tracing_enabled():
+            return pd.DataFrame()
+        conditions = self._build_otel_conditions(
+            SpanAttributes.SpanType.EVAL_ROOT.value,
+            app_name=app_name,
+            app_versions=app_versions,
+        )
+        if start_time is not None:
+            conditions.append(self.orm.Event.start_timestamp >= start_time)
+        if end_time is not None:
+            conditions.append(self.orm.Event.start_timestamp < end_time)
+        stmt = sa.select(
+            self._json_extract_otel(
+                "resource_attributes", ResourceAttributes.APP_NAME
+            ).label("app_name"),
+            self._json_extract_otel(
+                "resource_attributes", ResourceAttributes.APP_VERSION
+            ).label("app_version"),
+            self._time_bucket_expr(bucket).label("time_bucket"),
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.RECORD_ID
+            ).label("record_id"),
+            sa.cast(
+                self._json_extract_otel(
+                    "record_attributes", SpanAttributes.COST.COST
+                ),
+                sa.Float,
+            ).label("cost"),
+            self._json_extract_otel(
+                "record_attributes", SpanAttributes.COST.CURRENCY
+            ).label("currency"),
+        ).where(sa.and_(*conditions))
+        with self.session.begin() as session:
+            rows = session.execute(stmt).all()
+        evals = pd.DataFrame(
+            rows,
+            columns=[
+                "app_name",
+                "app_version",
+                "time_bucket",
+                "record_id",
+                "cost",
+                "currency",
+            ],
+        )
+        if evals.empty:
+            return evals
+        evals = evals[evals["cost"].notna()].copy()
+        if evals.empty:
+            return evals
+        evals["time_bucket"] = pd.to_datetime(evals["time_bucket"])
+        evals["currency"] = evals["currency"].fillna("USD")
+        group_cols = ["app_name", "app_version", "time_bucket", "currency"]
+        return (
+            evals.groupby(group_cols, as_index=False, dropna=False)
+            .agg(
+                evaluated_record_count=("record_id", "nunique"),
+                total_eval_cost=("cost", "sum"),
+            )
+            .assign(
+                average_eval_cost=lambda frame: frame["total_eval_cost"]
+                / frame["evaluated_record_count"]
+            )
+            .sort_values("time_bucket")
+        )
+
+    def get_eval_drilldown_record_ids(
+        self,
+        app_name: types_schema.AppName,
+        app_versions: List[types_schema.AppVersion],
+        metric_kind: str,
+        metric_name: str,
+        start_time: datetime,
+        end_time: datetime,
+        currency: Optional[str] = None,
+    ) -> List[types_schema.RecordID]:
+        if not is_otel_tracing_enabled():
+            raise NotImplementedError(
+                "Evaluation-time drill-down requires OTEL tracing."
+            )
+        if metric_kind not in ("feedback", "eval_cost"):
+            raise ValueError(
+                f"Unsupported evaluation drill-down: {metric_kind}"
+            )
+        conditions = self._build_otel_conditions(
+            SpanAttributes.SpanType.EVAL_ROOT.value,
+            app_name=app_name,
+            app_versions=app_versions,
+        )
+        conditions.extend([
+            self.orm.Event.start_timestamp >= start_time,
+            self.orm.Event.start_timestamp < end_time,
+        ])
+        if metric_kind == "feedback":
+            metric_expr = self._json_extract_otel(
+                "record_attributes", SpanAttributes.EVAL_ROOT.METRIC_NAME
+            )
+            conditions.append(metric_expr.in_(metric_name.split(",")))
+            score_expr = self._json_extract_otel(
+                "record_attributes", SpanAttributes.EVAL_ROOT.SCORE
+            )
+            conditions.append(score_expr.isnot(None))
+        if currency:
+            currency_expr = self._json_extract_otel(
+                "record_attributes", SpanAttributes.COST.CURRENCY
+            )
+            if currency == "USD":
+                conditions.append(
+                    sa.or_(currency_expr == currency, currency_expr.is_(None))
+                )
+            else:
+                conditions.append(currency_expr == currency)
+        record_id_expr = self._json_extract_otel(
+            "record_attributes", SpanAttributes.RECORD_ID
+        )
+        stmt = (
+            sa.select(record_id_expr.label("record_id"))
+            .where(sa.and_(*conditions))
+            .group_by(record_id_expr)
+        )
+        with self.session.begin() as session:
+            return list(session.execute(stmt).scalars().all())
 
     def _get_leaderboard_aggregates_pre_otel(
         self,
@@ -1362,6 +1840,10 @@ class SQLAlchemyDB(core_db.DB):
         app_versions: Optional[List[types_schema.AppVersion]] = None,
         run_name: Optional[types_schema.RunName] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
+        matched_record_ids: Optional[List[types_schema.RecordID]] = None,
+        include_conversation_context: bool = False,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
@@ -1382,6 +1864,10 @@ class SQLAlchemyDB(core_db.DB):
                 app_versions=app_versions,
                 run_name=run_name,
                 record_ids=record_ids,
+                matched_record_ids=matched_record_ids,
+                include_conversation_context=include_conversation_context,
+                start_time=start_time,
+                end_time=end_time,
                 offset=offset,
                 limit=limit,
             )

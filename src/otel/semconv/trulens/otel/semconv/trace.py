@@ -104,6 +104,51 @@ class GenAIAttributes:
         """Result returned by the tool (JSON-serialised)."""
 
 
+class GenAIEvents:
+    """OTEL GenAI semantic convention event names and event attribute keys.
+
+    See: https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-events/
+    """
+
+    CLIENT_INFERENCE_OPERATION_DETAILS = (
+        GEN_AI_SCOPE + ".client.inference.operation.details"
+    )
+    """Span event emitted for GenAI client inference operation details (inputs and outputs)."""
+
+    RETRIEVAL_QUERY = GEN_AI_SCOPE + ".retrieval.query"
+    """Span event emitted for retrieval query content."""
+
+    RETRIEVAL_DOCUMENTS = GEN_AI_SCOPE + ".retrieval.documents"
+    """Span event emitted for retrieved documents content."""
+
+    # Backward-compatible event name aliases
+    PROMPT = CLIENT_INFERENCE_OPERATION_DETAILS
+    CHOICE = CLIENT_INFERENCE_OPERATION_DETAILS
+
+    class EventAttributes:
+        INPUT_MESSAGES = GEN_AI_SCOPE + ".input.messages"
+        """Structured input messages attribute in a ``gen_ai.client.inference.operation.details`` event."""
+
+        OUTPUT_MESSAGES = GEN_AI_SCOPE + ".output.messages"
+        """Structured output messages attribute in a ``gen_ai.client.inference.operation.details`` event."""
+
+        ROLE = GEN_AI_SCOPE + ".role"
+        """Message role attribute (e.g. ``user``, ``system``, ``assistant``)."""
+
+        FINISH_REASON = GEN_AI_SCOPE + ".finish_reason"
+        """Completion finish reason (e.g. ``stop``, ``length``)."""
+
+        QUERY_TEXT = GEN_AI_SCOPE + ".retrieval.query.text"
+        """Query text attribute in a retrieval event."""
+
+        DOCUMENTS = GEN_AI_SCOPE + ".retrieval.documents"
+        """Retrieved documents attribute in a retrieval event."""
+
+        # Backward-compatible attribute key aliases
+        PROMPT_TEXT = GEN_AI_SCOPE + ".input.messages"
+        COMPLETION_TEXT = GEN_AI_SCOPE + ".output.messages"
+
+
 class ResourceAttributes:
     APP_ID = BASE_SCOPE + ".app_id"
     """ID of the app that the span belongs to."""

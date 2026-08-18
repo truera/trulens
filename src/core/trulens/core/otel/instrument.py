@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
+from collections.abc import Sequence
 from contextvars import ContextVar
 import inspect
 import logging
@@ -9,12 +11,6 @@ from types import TracebackType
 from typing import (
     TYPE_CHECKING,
     Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
 )
 
 from opentelemetry import trace
@@ -45,6 +41,12 @@ from trulens.core.otel.recording import Recording
 from trulens.core.schema.app import AppDefinition
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
 from trulens.experimental.otel_tracing.core.span import Attributes
+from trulens.experimental.otel_tracing.core.span import (
+    add_genai_inference_event,
+)
+from trulens.experimental.otel_tracing.core.span import (
+    add_genai_retrieval_events,
+)
 from trulens.experimental.otel_tracing.core.span import (
     set_function_call_attributes,
 )
@@ -87,7 +89,7 @@ logger = logging.getLogger(__name__)
 # ContextVar holding the current span-group stack as a tuple of strings.
 # Using a tuple (immutable) so that each ContextVar token captures a
 # snapshot — no shared-mutable-state bugs across concurrent contexts.
-_current_span_groups: ContextVar[Tuple[str, ...]] = ContextVar(
+_current_span_groups: ContextVar[tuple[str, ...]] = ContextVar(
     "_current_span_groups", default=()
 )
 
@@ -144,11 +146,11 @@ def get_func_name(func: Callable) -> str:
 
 def _resolve_attributes(
     attributes: Attributes,
-    ret: Optional[Any],
-    exception: Optional[Exception],
+    ret: Any | None,
+    exception: Exception | None,
     args: Sequence[Any],
-    all_kwargs: Dict[str, Any],
-) -> Dict[str, Any]:
+    all_kwargs: dict[str, Any],
+) -> dict[str, Any]:
     if attributes is None:
         return {}
     if callable(attributes):
@@ -168,11 +170,11 @@ def _set_span_attributes(
     span_type: SpanAttributes.SpanType,
     func_name: str,
     func: Callable,
-    func_exception: Optional[Exception],
+    func_exception: Exception | None,
     attributes: Attributes,
     instance: Any,
-    args: Tuple[Any],
-    kwargs: Dict[str, Any],
+    args: tuple[Any],
+    kwargs: dict[str, Any],
     ret: Any,
     only_set_user_defined_attributes: bool = False,
 ):
@@ -242,8 +244,26 @@ def _set_span_attributes(
             provider_name=resolved_attributes.get("provider_name"),
             operation_name=resolved_attributes.get("operation_name"),
         )
+        add_genai_inference_event(
+            span,
+            input_messages=resolved_attributes.get("prompt")
+            or resolved_attributes.get("input")
+            or resolved_attributes.get("messages"),
+            output_messages=resolved_attributes.get("completion")
+            or resolved_attributes.get("output")
+            or (ret if isinstance(ret, str) else None),
+        )
     elif span_type == SpanAttributes.SpanType.RETRIEVAL:
         set_genai_retrieval_attributes(
+            span,
+            query_text=resolved_attributes.get(
+                SpanAttributes.RETRIEVAL.QUERY_TEXT
+            ),
+            documents=resolved_attributes.get(
+                SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS
+            ),
+        )
+        add_genai_retrieval_events(
             span,
             query_text=resolved_attributes.get(
                 SpanAttributes.RETRIEVAL.QUERY_TEXT
@@ -270,16 +290,16 @@ def _finalize_span(
     span_type: SpanAttributes.SpanType,
     func_name: str,
     func: Callable,
-    func_exception: Optional[Exception],
+    func_exception: Exception | None,
     attributes: Attributes,
     instance: Any,
-    args: Tuple[Any],
-    kwargs: Dict[str, Any],
+    args: tuple[Any],
+    kwargs: dict[str, Any],
     ret: Any,
     only_set_user_defined_attributes: bool = False,
-    span_end_callbacks: List[Callable[[Span], None]] = [],
+    span_end_callbacks: list[Callable[[Span], None]] = [],
 ):
-    attributes_exception: Optional[Exception] = None
+    attributes_exception: Exception | None = None
     try:
         _set_span_attributes(
             span,
@@ -311,7 +331,7 @@ class instrument:
     def __init__(
         self,
         *,
-        name: Optional[str] = None,
+        name: str | None = None,
         span_type: SpanAttributes.SpanType = SpanAttributes.SpanType.UNKNOWN,
         attributes: Attributes = None,
         **kwargs,
@@ -401,7 +421,7 @@ class instrument:
                 span_type=self.span_type,
             ) as span:
                 ret = None
-                func_exception: Optional[Exception] = None
+                func_exception: Exception | None = None
                 # Run function.
                 try:
                     result = func(*args, **kwargs)
@@ -449,7 +469,7 @@ class instrument:
                 span_type=self.span_type,
             ) as span:
                 ret = None
-                func_exception: Optional[Exception] = None
+                func_exception: Exception | None = None
                 # Run function.
                 try:
                     ret = await func(*args, **kwargs)
@@ -510,7 +530,7 @@ class instrument:
                 span_type=self.span_type,
             ) as span:
                 ret = None
-                func_exception: Optional[Exception] = None
+                func_exception: Exception | None = None
                 # Run function.
                 try:
                     result = func(*args, **kwargs)
@@ -616,13 +636,13 @@ class OtelBaseRecordingContext:
     The ID of the input that the recording context is currently processing.
     """
 
-    tokens: List[object] = []
+    tokens: list[object] = []
     """
     OTEL context tokens for the current context manager. These tokens are how the OTEL
     context api keeps track of what is changed in the context, and used to undo the changes.
     """
 
-    context_keys_added: List[str] = []
+    context_keys_added: list[str] = []
     """
     Keys added to the OTEL context.
     """
@@ -684,9 +704,9 @@ class OtelBaseRecordingContext:
 
     async def __aexit__(
         self,
-        exc_type: Optional[BaseException],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: BaseException | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         return self.__exit__(exc_type, exc_val, exc_tb)
 
@@ -700,12 +720,11 @@ class OtelRecordingContext(OtelBaseRecordingContext):
         app_version: str,
         run_name: str,
         input_id: str,
-        input_records_count: Optional[int] = None,
-        ground_truth_output: Optional[str] = None,
-        input_selector: Optional[
-            Callable[[Tuple[Any, ...], Dict[str, Any]], Any]
-        ] = None,
-        conversation_id: Optional[str] = None,
+        input_records_count: int | None = None,
+        ground_truth_output: str | None = None,
+        input_selector: Callable[[tuple[Any, ...], dict[str, Any]], Any]
+        | None = None,
+        conversation_id: str | None = None,
     ) -> None:
         app_id = AppDefinition._compute_app_id(app_name, app_version)
         super().__init__(
@@ -720,10 +739,10 @@ class OtelRecordingContext(OtelBaseRecordingContext):
         self.ground_truth_output = ground_truth_output
         self.input_selector = input_selector
         self.conversation_id = conversation_id
-        self.recording: Optional[Recording] = None
+        self.recording: Recording | None = None
 
     @property
-    def record_ids(self) -> List[str]:
+    def record_ids(self) -> list[str]:
         """Record IDs created inside this recording context."""
         if self.recording is None:
             return []
@@ -927,7 +946,7 @@ def extract_output_content(ret) -> str:
     return str(ret)
 
 
-def extract_tool_calls(ret) -> Optional[str]:
+def extract_tool_calls(ret) -> str | None:
     """Extract and format tool calls from an LLM response.
 
     Formats tool calls as: "tool_name(arg1=val1, arg2=val2), other_tool(...)"
@@ -985,7 +1004,7 @@ def generation_attributes() -> Callable:
             return model.invoke(messages)
     """
 
-    def _extract(ret, exception, *args, **kwargs) -> Dict[str, Any]:
+    def _extract(ret, exception, *args, **kwargs) -> dict[str, Any]:
         result = {}
 
         # Extract input content from first positional arg (usually messages)
@@ -1010,7 +1029,7 @@ def generation_attributes() -> Callable:
 
 
 def instrument_tools(
-    tools_by_name: Dict[str, Any],
+    tools_by_name: dict[str, Any],
     *,
     invoke_method: str = "invoke",
 ) -> None:
