@@ -10798,6 +10798,7 @@ files = []
 develop = true
 
 [package.dependencies]
+httpx = ">=0.23.0,<1"
 openai = ">=1.52.1,<2.0.0"
 trulens-core = "^2.0.0"
 trulens-feedback = "^2.0.0"

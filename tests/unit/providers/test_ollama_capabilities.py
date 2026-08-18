@@ -1,65 +1,26 @@
 # pyright: reportMissingImports=false, reportMissingModuleSource=false
-import types
 from typing import Any, Dict
 
+import httpx
 import pydantic
 import pytest
 
 
-@pytest.fixture(autouse=True)
-def _reset_model_capabilities_cache():
-    # Ensure each test starts with a clean capability cache
-    from trulens.providers.ollama import (
-        Ollama,  # type: ignore[import-not-found]
-    )
-
-    Ollama.clear_model_capabilities_cache()
-    yield
-    Ollama.clear_model_capabilities_cache()
-
-
-class _DummyResponses:
-    """Simulates Ollama's OpenAI-compatible server, which does not expose
-    the `/v1/responses` endpoint."""
-
-    def __init__(self):
-        self.parse_calls = 0
-
-    def parse(self, *, input, text_format, **kwargs):  # noqa: ANN001
-        self.parse_calls += 1
-        raise Exception("404 page not found: responses api not supported")
-
-
-class _DummyChatCompletions:
-    def __init__(self):
-        self.create_calls: list[Dict[str, Any]] = []
-
-    class _Choices:
-        def __init__(self, content: str):
-            self.message = types.SimpleNamespace(content=content)
-
-    class _Completion:
-        def __init__(self, content: str):
-            self.choices = [_DummyChatCompletions._Choices(content=content)]
-
-    def create(self, *, messages, **kwargs):  # noqa: ANN001
-        self.create_calls.append(dict(kwargs))
-        return _DummyChatCompletions._Completion(content="ok")
-
-
-class _DummyChat:
-    def __init__(self, completions: _DummyChatCompletions):
-        self.completions = completions
-
-
-class _DummyClient:
-    def __init__(self):
-        self.responses = _DummyResponses()
-        self.chat = _DummyChat(_DummyChatCompletions())
-
-
 class _ParsedModel(pydantic.BaseModel):
     value: str
+
+
+class _FakeResponse:
+    def __init__(self, payload: Dict[str, Any], status_code: int = 200):
+        self._payload = payload
+        self.status_code = status_code
+
+    def raise_for_status(self) -> None:
+        if self.status_code >= 400:
+            raise httpx.HTTPStatusError("error", request=None, response=self)
+
+    def json(self) -> Dict[str, Any]:
+        return self._payload
 
 
 @pytest.mark.optional
@@ -78,6 +39,7 @@ def test_defaults_to_local_ollama_server(monkeypatch):
         "http://localhost:11434/v1/"
     )
     assert provider.endpoint.client.client.api_key == "ollama"
+    assert provider._native_base_url() == "http://localhost:11434"
 
 
 @pytest.mark.optional
@@ -92,9 +54,7 @@ def test_respects_env_var_base_url(monkeypatch):
     provider = Ollama(model_engine="qwen2.5")
 
     assert provider.model_engine == "qwen2.5"
-    assert str(provider.endpoint.client.client.base_url) == (
-        "http://my-ollama-host:11434/v1/"
-    )
+    assert provider._native_base_url() == "http://my-ollama-host:11434"
 
 
 @pytest.mark.optional
@@ -107,42 +67,191 @@ def test_explicit_base_url_overrides_env(monkeypatch):
 
     provider = Ollama(base_url="http://explicit-host:11434/v1")
 
-    assert str(provider.endpoint.client.client.base_url) == (
-        "http://explicit-host:11434/v1/"
-    )
+    assert provider._native_base_url() == "http://explicit-host:11434"
 
 
 @pytest.mark.optional
-def test_falls_back_to_chat_completions_when_responses_api_missing(
-    monkeypatch,
-):
-    # Ollama's OpenAI-compatible server does not implement the Responses
-    # API, so structured-output/CFG probing must gracefully fall back to
-    # the Chat Completions endpoint rather than raising.
+def test_chat_completion_uses_native_api_and_records_usage(monkeypatch):
     from trulens.providers.ollama import (
         Ollama,  # type: ignore[import-not-found]
     )
 
     provider = Ollama(model_engine="llama3.2")
-    dummy_client = _DummyClient()
-    provider.endpoint.client = dummy_client
+
+    captured: Dict[str, Any] = {}
+
+    def fake_post(*, url, json, timeout):  # noqa: ANN001
+        captured["url"] = url
+        captured["json"] = json
+        return _FakeResponse({
+            "message": {"role": "assistant", "content": "hello there"},
+            "prompt_eval_count": 12,
+            "eval_count": 4,
+        })
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+
+    out = provider._create_chat_completion(
+        messages=[{"role": "user", "content": "hi"}],
+    )
+
+    assert out == "hello there"
+    assert captured["url"] == "http://localhost:11434/api/chat"
+    assert captured["json"]["model"] == "llama3.2"
+    assert captured["json"]["stream"] is False
+    assert "options" not in captured["json"]
+    assert "keep_alive" not in captured["json"]
+
+    cost = provider.endpoint.global_callback.cost
+    assert cost.n_prompt_tokens == 12
+    assert cost.n_completion_tokens == 4
+    assert cost.n_tokens == 16
+
+
+@pytest.mark.optional
+def test_options_and_keep_alive_are_forwarded_and_mergeable(monkeypatch):
+    from trulens.providers.ollama import (
+        Ollama,  # type: ignore[import-not-found]
+    )
+
+    provider = Ollama(
+        model_engine="llama3.2",
+        options={"num_ctx": 4096},
+        keep_alive="5m",
+    )
+
+    captured: Dict[str, Any] = {}
+
+    def fake_post(*, url, json, timeout):  # noqa: ANN001
+        captured["json"] = json
+        return _FakeResponse({"message": {"content": "ok"}})
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+
+    # Per-call `options` should merge on top of the provider-level default,
+    # and a per-call `keep_alive` should override the provider-level one.
+    out = provider._create_chat_completion(
+        messages=[{"role": "user", "content": "hi"}],
+        options={"repeat_penalty": 1.2},
+        keep_alive="1m",
+    )
+
+    assert out == "ok"
+    assert captured["json"]["options"] == {
+        "num_ctx": 4096,
+        "repeat_penalty": 1.2,
+    }
+    assert captured["json"]["keep_alive"] == "1m"
+
+
+@pytest.mark.optional
+def test_temperature_and_seed_move_into_options(monkeypatch):
+    from trulens.providers.ollama import (
+        Ollama,  # type: ignore[import-not-found]
+    )
+
+    provider = Ollama(model_engine="llama3.2")
+
+    captured: Dict[str, Any] = {}
+
+    def fake_post(*, url, json, timeout):  # noqa: ANN001
+        captured["json"] = json
+        return _FakeResponse({"message": {"content": "ok"}})
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+
+    provider._create_chat_completion(
+        messages=[{"role": "user", "content": "hi"}],
+        temperature=0.0,
+        seed=123,
+        reasoning_effort="medium",
+    )
+
+    assert captured["json"]["options"] == {"temperature": 0.0, "seed": 123}
+    # Ollama has no native reasoning_effort control; it must not leak
+    # through as a top-level (invalid) request field.
+    assert "reasoning_effort" not in captured["json"]
+
+
+@pytest.mark.optional
+def test_response_format_becomes_native_json_schema(monkeypatch):
+    from trulens.providers.ollama import (
+        Ollama,  # type: ignore[import-not-found]
+    )
+
+    provider = Ollama(model_engine="llama3.2")
+
+    captured: Dict[str, Any] = {}
+
+    def fake_post(*, url, json, timeout):  # noqa: ANN001
+        captured["json"] = json
+        return _FakeResponse({"message": {"content": '{"value": "ok"}'}})
+
+    monkeypatch.setattr(httpx, "post", fake_post)
 
     out = provider._create_chat_completion(
         messages=[{"role": "user", "content": "hi"}],
         response_format=_ParsedModel,
     )
 
-    # responses.parse() was tried once, found unavailable, then the call
-    # fell back (and stayed cached) to chat.completions.create().
-    assert out == "ok"
-    assert dummy_client.responses.parse_calls == 1
-    assert len(dummy_client.chat.completions.create_calls) == 1
+    assert out == '{"value": "ok"}'
+    assert captured["json"]["format"] == _ParsedModel.model_json_schema()
 
-    # A second call should skip the unavailable Responses API entirely.
-    out2 = provider._create_chat_completion(
-        messages=[{"role": "user", "content": "hi again"}],
-        response_format=_ParsedModel,
+
+@pytest.mark.optional
+def test_list_models(monkeypatch):
+    from trulens.providers.ollama import (
+        Ollama,  # type: ignore[import-not-found]
     )
-    assert out2 == "ok"
-    assert dummy_client.responses.parse_calls == 1
-    assert len(dummy_client.chat.completions.create_calls) == 2
+
+    provider = Ollama()
+
+    def fake_get(url, timeout):  # noqa: ANN001
+        assert url == "http://localhost:11434/api/tags"
+        return _FakeResponse({
+            "models": [{"name": "llama3.2:latest"}, {"name": "qwen2.5:7b"}]
+        })
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    assert provider.list_models() == ["llama3.2:latest", "qwen2.5:7b"]
+
+
+@pytest.mark.optional
+def test_pull_model_defaults_to_model_engine(monkeypatch):
+    from trulens.providers.ollama import (
+        Ollama,  # type: ignore[import-not-found]
+    )
+
+    provider = Ollama(model_engine="llama3.2")
+
+    captured: Dict[str, Any] = {}
+
+    def fake_post(url, *, json, timeout):  # noqa: ANN001
+        captured["url"] = url
+        captured["json"] = json
+        return _FakeResponse({"status": "success"})
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+
+    provider.pull_model()
+
+    assert captured["url"] == "http://localhost:11434/api/pull"
+    assert captured["json"] == {"name": "llama3.2", "stream": False}
+
+
+@pytest.mark.optional
+def test_pull_model_raises_on_failure_status(monkeypatch):
+    from trulens.providers.ollama import (
+        Ollama,  # type: ignore[import-not-found]
+    )
+
+    provider = Ollama(model_engine="llama3.2")
+
+    def fake_post(url, *, json, timeout):  # noqa: ANN001
+        return _FakeResponse({"status": "error", "error": "not found"})
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+
+    with pytest.raises(RuntimeError):
+        provider.pull_model("nonexistent-model")
