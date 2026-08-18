@@ -213,7 +213,10 @@ def instrument_bedrock() -> None:
         def bedrock_attributes(
             ret: Any, exception: Exception | None, *args: Any, **kwargs: Any
         ) -> dict[str, Any]:
-            if not args or args[0] not in (
+            operation_name = (
+                args[0] if args else kwargs.get("operation_name", "")
+            )
+            if operation_name not in (
                 "InvokeModel",
                 "InvokeModelWithResponseStream",
             ):
