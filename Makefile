@@ -312,7 +312,13 @@ test-unit:
 	@if [ "$${TEST_OPTIONAL:-}" = "true" ] || [ "$${TEST_OPTIONAL:-}" = "1" ]; then \
 		echo "✅ Running optional OTEL modules in separate pytest processes..."; \
 		for test_file in $(OTEL_TEST_FILES); do \
-			$(PYTEST) "$$test_file" || exit $$?; \
+			$(PYTEST) "$$test_file"; \
+			test_status=$$?; \
+			if [ $$test_status -eq 5 ]; then \
+				echo "ℹ️ No runnable tests in $$test_file; continuing."; \
+			elif [ $$test_status -ne 0 ]; then \
+				exit $$test_status; \
+			fi; \
 		done; \
 	elif poetry run python -c "import xdist" 2>/dev/null; then \
 		echo "✅ Running OTEL tests with pytest-xdist for process isolation..."; \
