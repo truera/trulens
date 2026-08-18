@@ -1201,6 +1201,109 @@ class TestOtelGetRecordsAndFeedback(OtelTestCase):
             "Extracted kwargs contains unexpected keys",
         )
 
+    def test_eval_metadata_extracted_from_namespaced_attributes(self):
+        """Regression test for #2682: eval metadata must be read via namespace extraction.
+
+        The writer namespaces each key as ai.observability.eval.metadata.<key>.
+        The reader must use _extract_namespaced_attributes, not a bare .get(),
+        otherwise meta["metadata"] is always {}.
+        """
+        record_id = "test_meta_record"
+        start_time = "2025-04-11 10:19:55.993955"
+        end_time = "2025-04-11 10:19:58.166175"
+        span_id = f"span_{record_id}"
+
+        root_event_data = {
+            "event_id": "root_meta_event",
+            "record": {
+                "kind": 1,
+                "name": "__main__.TestApp.query",
+                "parent_span_id": "",
+                "status": "STATUS_CODE_UNSET",
+            },
+            "record_attributes": {
+                "ai.observability.app_name": self.app_name,
+                "ai.observability.app_version": self.app_version,
+                "ai.observability.app_id": self.app_id,
+                "ai.observability.record_id": record_id,
+                "ai.observability.span_type": SpanAttributes.SpanType.RECORD_ROOT.value,
+                "ai.observability.record_root.input": "test input",
+                "ai.observability.record_root.output": "test output",
+            },
+            "record_type": "SPAN",
+            "resource_attributes": {
+                "service.name": "trulens",
+                "telemetry.sdk.language": "python",
+                "telemetry.sdk.name": "opentelemetry",
+                "telemetry.sdk.version": "1.31.0",
+                "ai.observability.app_name": self.app_name,
+                "ai.observability.app_version": self.app_version,
+                "ai.observability.app_id": self.app_id,
+            },
+            "start_timestamp": start_time,
+            "timestamp": end_time,
+            "trace": {
+                "parent_id": "",
+                "span_id": span_id,
+                "trace_id": "meta_trace_id",
+            },
+        }
+        self.db.insert_event(Event.model_validate(root_event_data))
+
+        eval_event_data = {
+            "event_id": "eval_meta_event",
+            "record": {
+                "kind": 1,
+                "name": "stub_metric",
+                "parent_span_id": span_id,
+                "status": "STATUS_CODE_UNSET",
+            },
+            "record_attributes": {
+                "ai.observability.app_name": self.app_name,
+                "ai.observability.app_version": self.app_version,
+                "ai.observability.app_id": self.app_id,
+                "ai.observability.record_id": record_id,
+                "ai.observability.span_type": SpanAttributes.SpanType.EVAL.value,
+                "ai.observability.eval.metric_name": "StubMetric",
+                "ai.observability.eval.score": 1.0,
+                # namespaced metadata keys — the pattern the writer uses
+                "ai.observability.eval.metadata.reasons": [
+                    "statement 1 is supported"
+                ],
+                "ai.observability.eval.metadata.custom_key": "custom_value",
+            },
+            "record_type": "SPAN",
+            "resource_attributes": {
+                "service.name": "trulens",
+                "telemetry.sdk.language": "python",
+                "telemetry.sdk.name": "opentelemetry",
+                "telemetry.sdk.version": "1.31.0",
+            },
+            "start_timestamp": start_time,
+            "timestamp": end_time,
+            "trace": {
+                "parent_id": span_id,
+                "span_id": "eval_meta_span",
+                "trace_id": "meta_trace_id",
+            },
+        }
+        self.db.insert_event(Event.model_validate(eval_event_data))
+
+        df, feedback_cols = self.db._get_records_and_feedback_otel()
+
+        self.assertEqual(len(feedback_cols), 1)
+        row = df.iloc[0]
+        calls = row["StubMetric_calls"]
+        self.assertEqual(len(calls), 1)
+
+        meta = calls[0]["meta"]
+        metadata = meta["metadata"]
+        self.assertIsInstance(
+            metadata, dict, "meta['metadata'] must be a dict, not empty {}"
+        )
+        self.assertEqual(metadata.get("custom_key"), "custom_value")
+        self.assertEqual(metadata.get("reasons"), ["statement 1 is supported"])
+
     def test_get_records_and_feedback_otel_app_version_filtering(self):
         """Test app_version filtering in both pagination and records retrieval methods."""
         # Create apps with different versions

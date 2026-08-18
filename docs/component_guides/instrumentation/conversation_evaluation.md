@@ -246,8 +246,11 @@ On the **Records** page, records sharing a `conversation_id` appear as one threa
 
 ## See also
 
-- [Conversation ID — Grouping Multi-Turn Traces](conversation_id.md)
-- [Conversation Evaluation Quickstart](../../getting_started/quickstarts/conversation_evaluation.ipynb)
+- [Conversation ID — Grouping Multi-Turn Traces](conversation_id.md) — propagation
+  mechanics and API reference
+- [Span Groups](span_groups.md) — localize metrics to specific segments within a
+  single turn
+- [Feedback Selectors](../evaluation/feedback_selectors/index.md) — choosing what
+  to evaluate in each turn
+- [Conversation Evaluation Quickstart notebook](../../getting_started/quickstarts/conversation_evaluation.ipynb)
 - [LangChain Conversation Evaluation](https://github.com/truera/trulens/blob/main/examples/expositional/frameworks/langchain/conversation_evaluation.ipynb)
-- [Feedback Selectors](../evaluation/feedback_selectors/index.md)
-- [Span Groups](span_groups.md)

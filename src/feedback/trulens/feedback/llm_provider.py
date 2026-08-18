@@ -206,7 +206,7 @@ class LLMProvider(core_provider.Provider):
         min_score_val: int = 0,
         max_score_val: int = 10,
         temperature: float = 0.0,
-    ) -> float | tuple[float, dict]:
+    ) -> float:
         """
         Base method to generate a score normalized to 0 to 1, used for evaluation.
 
@@ -218,15 +218,8 @@ class LLMProvider(core_provider.Provider):
             temperature (float): The temperature for the LLM response.
 
         Returns:
-            float | tuple[float, dict]: The normalized score on a 0-1 scale.
-            When the LLM returns a structured JSON response containing a ``score``
-            key, returns a ``(score, reason_dict)`` tuple where ``reason_dict``
-            contains the raw parsed JSON under a ``"reason"`` key. When the
-            response is a plain string, returns a bare ``float``. Callers should
-            handle both forms, e.g.::
-
-                result = provider.generate_score(system_prompt="...")
-                score = result[0] if isinstance(result, tuple) else result
+            float: The normalized score on a 0-1 scale. If reasons are needed,
+            use :meth:`generate_score_and_reasons` instead.
         """
 
         assert self.endpoint is not None, "Endpoint is not set."
@@ -277,7 +270,7 @@ class LLMProvider(core_provider.Provider):
                     max_score_val - min_score_val
                 )
 
-            return normalized_score, {"reason": parsed_json}
+            return normalized_score
 
         if isinstance(parsed_json, list):
             # If a list is returned, average the scores where possible.
@@ -303,7 +296,7 @@ class LLMProvider(core_provider.Provider):
                 )
             else:
                 normalized_score = -1.0
-            return normalized_score, {"reason": parsed_json}
+            return normalized_score
 
         if isinstance(response, feedback_output_schemas.BaseFeedbackResponse):
             score = response.score
@@ -3610,10 +3603,6 @@ class LLMProvider(core_provider.Provider):
                     min_score_val=0,
                     max_score_val=1,
                 )
-                # generate_score returns (score, reason) when the judge
-                # responds with structured JSON; compare on the score alone.
-                if isinstance(score, tuple):
-                    score = score[0]
             except Exception:
                 score = 0  # assume not abstention if abstention scoring fails
             return score
@@ -3630,10 +3619,6 @@ class LLMProvider(core_provider.Provider):
                 min_score_val=0,
                 max_score_val=1,
             )
-            # generate_score returns (score, reason) when the judge
-            # responds with structured JSON; compare on the score alone.
-            if isinstance(score, tuple):
-                score = score[0]
             return score
 
         if filter_trivial_statements:

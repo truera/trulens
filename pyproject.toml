@@ -10,7 +10,7 @@ requires = [
 # early with a clear message rather than letting either surprise happen.
 requires-poetry = ">=2.0"
 name = "trulens"
-version = "2.12.0"
+version = "2.13.0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",

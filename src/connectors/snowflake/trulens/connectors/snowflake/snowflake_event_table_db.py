@@ -92,10 +92,20 @@ class SnowflakeEventTableDB(core_db.DB):
         app_versions: Optional[List[types_schema.AppVersion]] = None,
         run_name: Optional[types_schema.RunName] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
+        matched_record_ids: Optional[List[types_schema.RecordID]] = None,
+        include_conversation_context: bool = False,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """See [DB.get_records_and_feedback][trulens.core.database.base.DB.get_records_and_feedback]."""
+        if include_conversation_context:
+            raise NotImplementedError(
+                "Conversation context expansion is not supported for Snowflake event tables."
+            )
+        if matched_record_ids is not None:
+            record_ids = matched_record_ids
         df = self._get_events(
             app_ids=app_ids,
             app_name=app_name,
@@ -103,6 +113,8 @@ class SnowflakeEventTableDB(core_db.DB):
             app_versions=app_versions,
             run_name=run_name,
             record_ids=record_ids,
+            start_time=start_time,
+            end_time=end_time,
         )
         events = []
         for _, row in df.iterrows():
@@ -165,7 +177,10 @@ class SnowflakeEventTableDB(core_db.DB):
         run_name: Optional[types_schema.RunName] = None,
         record_ids: Optional[List[types_schema.RecordID]] = None,
         start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
     ) -> pd.DataFrame:
+        if record_ids == []:
+            return pd.DataFrame()
         if app_name is None:
             raise ValueError("app_name is required!")
         if app_ids is not None:
@@ -208,6 +223,9 @@ class SnowflakeEventTableDB(core_db.DB):
         if start_time:
             where_clauses.append("START_TIMESTAMP >= ?")
             extra_params.append(start_time)
+        if end_time:
+            where_clauses.append("START_TIMESTAMP < ?")
+            extra_params.append(end_time)
         if where_clauses:
             q += " WHERE " + " AND ".join(where_clauses)
         df = None
