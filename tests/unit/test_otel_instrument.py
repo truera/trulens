@@ -587,6 +587,7 @@ class TestOtelInstrument(unittest.TestCase):
         self.assertGreaterEqual(
             attrs[SpanAttributes.GENERATION.TIME_TO_FIRST_TOKEN_MS], 0
         )
+        self.assertNotIn(SpanAttributes.GENERATION.TOKENS_PER_SECOND, attrs)
 
     def test_non_generation_generator_has_no_streaming_attributes(
         self,
