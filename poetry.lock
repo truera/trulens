@@ -10788,6 +10788,26 @@ type = "directory"
 url = "src/providers/litellm"
 
 [[package]]
+name = "trulens-providers-ollama"
+version = "2.13.0"
+description = "Library to systematically track and evaluate LLM based applications."
+optional = false
+python-versions = "^3.9"
+groups = ["providers"]
+files = []
+develop = true
+
+[package.dependencies]
+openai = ">=1.52.1,<2.0.0"
+trulens-core = "^2.0.0"
+trulens-feedback = "^2.0.0"
+trulens-providers-openai = "^2.0.0"
+
+[package.source]
+type = "directory"
+url = "src/providers/ollama"
+
+[[package]]
 name = "trulens-providers-openai"
 version = "2.13.0"
 description = "Library to systematically track and evaluate LLM based applications."
@@ -12021,4 +12041,4 @@ reference = "pypi-public"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "c4d6fce38a6d476bc7a54f29551426508bff979352287c46060d2f127eed6738"
+content-hash = "465416467eb6a6294472dda076a14b71663b880218a4422564d1d3e73790facf"

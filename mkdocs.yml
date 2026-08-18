@@ -104,6 +104,7 @@ plugins:
             - src/providers/huggingface
             - src/providers/langchain
             - src/providers/litellm
+            - src/providers/ollama
             - src/providers/openai
             - src/connectors/snowflake
             - src/trulens_eval # to remove after deprecation

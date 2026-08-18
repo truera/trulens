@@ -28,6 +28,8 @@ Tools for instrumenting LLM apps built with other frameworks:
 Integrations for running feedback functions with different LLM providers:
 
 - `trulens-providers-openai` - OpenAI models
+- `trulens-providers-ollama` - Local (or remote) Ollama models via its
+  OpenAI-compatible API
 - `trulens-providers-litellm` - LiteLLM (supports Ollama and many others)
 - `trulens-providers-huggingface` - HuggingFace models
 - `trulens-providers-bedrock` - AWS Bedrock models
