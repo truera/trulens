@@ -10,6 +10,7 @@ import pytest
 from trulens.core.otel.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
 
+import tests.util.otel_test_case
 import tests.util.otel_tru_app_test_case
 from tests.utils import enable_otel_backwards_compatibility
 
@@ -20,6 +21,10 @@ try:
     from langchain_community.embeddings import DeterministicFakeEmbedding
     from langchain_community.llms import FakeListLLM
     from langchain_community.vectorstores import FAISS
+    from langchain_core.language_models.fake_chat_models import (
+        GenericFakeChatModel,
+    )
+    from langchain_core.messages import AIMessage
     from langchain_core.output_parsers import StrOutputParser
     from langchain_core.runnables import RunnablePassthrough
     from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -140,3 +145,68 @@ class TestOtelTruChain(tests.util.otel_tru_app_test_case.OtelTruAppTestCase):
         self._compare_record_attributes_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_chain__test_smoke.csv"
         )
+
+
+@pytest.mark.optional
+class TestOtelTruChainStreaming(tests.util.otel_test_case.OtelTestCase):
+    """LangChain's `BaseChatModel.stream`/`.astream` are registered with
+    span_type=GENERATION in this app's METHODS() (see
+    trulens.apps.langchain.tru_chain), and route through the same generic
+    generator-wrapping in trulens.core.otel.instrument that any other
+    @instrument(span_type=GENERATION) generator function does. So no
+    LangChain-specific streaming instrumentation code is needed -- these
+    tests exist to prove that's actually true, not to add new behavior.
+    """
+
+    def test_sync_stream_records_streaming_attributes(self) -> None:
+        model = GenericFakeChatModel(
+            messages=iter([AIMessage(content="Hello world")])
+        )
+        tru_chain = TruChain(model, app_name="test_app", app_version="v1")
+
+        with tru_chain:
+            chunks = list(model.stream("say hello"))
+        self.assertEqual(len(chunks), 3)  # "Hello", " ", "world"
+
+        events = self._get_events()
+        found = False
+        for attrs in events["record_attributes"]:
+            if SpanAttributes.GENERATION.IS_STREAMING in attrs:
+                found = True
+                self.assertTrue(attrs[SpanAttributes.GENERATION.IS_STREAMING])
+                self.assertEqual(
+                    attrs[SpanAttributes.GENERATION.CHUNKS_RECEIVED], 3
+                )
+                self.assertGreaterEqual(
+                    attrs[SpanAttributes.GENERATION.TIME_TO_FIRST_TOKEN_MS], 0
+                )
+        self.assertTrue(found, "No span with IS_STREAMING found")
+
+    def test_async_stream_records_streaming_attributes(self) -> None:
+        import asyncio
+
+        model = GenericFakeChatModel(
+            messages=iter([AIMessage(content="Hello world")])
+        )
+        tru_chain = TruChain(model, app_name="test_app", app_version="v1")
+
+        async def run():
+            chunks = []
+            with tru_chain:
+                async for chunk in model.astream("say hello"):
+                    chunks.append(chunk)
+            return chunks
+
+        chunks = asyncio.run(run())
+        self.assertEqual(len(chunks), 3)
+
+        events = self._get_events()
+        found = False
+        for attrs in events["record_attributes"]:
+            if SpanAttributes.GENERATION.IS_STREAMING in attrs:
+                found = True
+                self.assertTrue(attrs[SpanAttributes.GENERATION.IS_STREAMING])
+                self.assertEqual(
+                    attrs[SpanAttributes.GENERATION.CHUNKS_RECEIVED], 3
+                )
+        self.assertTrue(found, "No span with IS_STREAMING found")
