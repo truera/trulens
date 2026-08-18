@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from contextvars import ContextVar
 import inspect
 import logging
+import time
 import types
 from types import TracebackType
 from typing import (
@@ -285,6 +286,40 @@ def _set_span_attributes(
         )
 
 
+def _record_generic_streaming_attributes(
+    span: Span,
+    span_type: SpanAttributes.SpanType,
+    chunk_count: int,
+    request_started_at: float,
+    first_chunk_at: float | None,
+) -> None:
+    """Record IS_STREAMING/TIME_TO_FIRST_TOKEN_MS/CHUNKS_RECEIVED for any
+    GENERATION-typed `@instrument`-decorated function that returns a
+    generator or async generator -- the "generic async generator pattern",
+    as opposed to provider-specific instrumentation (e.g. the OpenAI
+    endpoint's) which knows enough about chunk contents to also compute
+    TOKENS_PER_SECOND from real token counts. No token count is fabricated
+    here since a generic chunk's contents aren't known to be token-shaped.
+    """
+    if span_type != SpanAttributes.SpanType.GENERATION or chunk_count == 0:
+        return
+    try:
+        span.set_attribute(SpanAttributes.GENERATION.IS_STREAMING, True)
+        span.set_attribute(
+            SpanAttributes.GENERATION.CHUNKS_RECEIVED, chunk_count
+        )
+        if first_chunk_at is not None:
+            span.set_attribute(
+                SpanAttributes.GENERATION.TIME_TO_FIRST_TOKEN_MS,
+                (first_chunk_at - request_started_at) * 1000,
+            )
+    except Exception:
+        logger.debug(
+            "Could not record generic streaming span attributes.",
+            exc_info=True,
+        )
+
+
 def _finalize_span(
     span: Span,
     span_type: SpanAttributes.SpanType,
@@ -422,13 +457,21 @@ class instrument:
             ) as span:
                 ret = None
                 func_exception: Exception | None = None
+                was_generator = False
+                chunk_count = 0
+                request_started_at = time.monotonic()
+                first_chunk_at: float | None = None
                 # Run function.
                 try:
                     result = func(*args, **kwargs)
                     if isinstance(result, types.GeneratorType):
+                        was_generator = True
                         yield "is_generator"
                         ret = []
                         for curr in result:
+                            chunk_count += 1
+                            if first_chunk_at is None:
+                                first_chunk_at = time.monotonic()
                             ret.append(curr)
                             yield curr
                     else:
@@ -441,6 +484,14 @@ class instrument:
                     # None as a return value.
                     func_exception = e
                 finally:
+                    if was_generator:
+                        _record_generic_streaming_attributes(
+                            span,
+                            self.span_type,
+                            chunk_count,
+                            request_started_at,
+                            first_chunk_at,
+                        )
                     _finalize_span(
                         span,
                         self.span_type,
@@ -531,11 +582,17 @@ class instrument:
             ) as span:
                 ret = None
                 func_exception: Exception | None = None
+                chunk_count = 0
+                request_started_at = time.monotonic()
+                first_chunk_at: float | None = None
                 # Run function.
                 try:
                     result = func(*args, **kwargs)
                     ret = []
                     async for curr in result:
+                        chunk_count += 1
+                        if first_chunk_at is None:
+                            first_chunk_at = time.monotonic()
                         ret.append(curr)
                         yield curr
                 except Exception as e:
@@ -544,6 +601,13 @@ class instrument:
                     # None as a return value.
                     func_exception = e
                 finally:
+                    _record_generic_streaming_attributes(
+                        span,
+                        self.span_type,
+                        chunk_count,
+                        request_started_at,
+                        first_chunk_at,
+                    )
                     _finalize_span(
                         span,
                         self.span_type,

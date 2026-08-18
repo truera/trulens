@@ -537,3 +537,102 @@ class TestOtelInstrument(unittest.TestCase):
         self.assertEqual(len(spans), 1)
         proto = convert_readable_span_to_proto(spans[0])
         self.assertEqual(proto.kind, SpanProto.SpanKind.SPAN_KIND_CLIENT)
+
+    def test_sync_generation_generator_records_streaming_attributes(
+        self,
+    ) -> None:
+        """A GENERATION-typed sync generator function should get
+        IS_STREAMING/TIME_TO_FIRST_TOKEN_MS/CHUNKS_RECEIVED recorded
+        generically, with no fabricated TOKENS_PER_SECOND."""
+
+        @instrument(span_type=SpanAttributes.SpanType.GENERATION)
+        def stream_llm(prompt: str):
+            yield "Hello"
+            yield " world"
+
+        for _ in stream_llm("hi"):
+            pass
+
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        attrs = spans[0].attributes
+        self.assertTrue(attrs[SpanAttributes.GENERATION.IS_STREAMING])
+        self.assertEqual(attrs[SpanAttributes.GENERATION.CHUNKS_RECEIVED], 2)
+        self.assertGreaterEqual(
+            attrs[SpanAttributes.GENERATION.TIME_TO_FIRST_TOKEN_MS], 0
+        )
+        self.assertNotIn(SpanAttributes.GENERATION.TOKENS_PER_SECOND, attrs)
+
+    def test_async_generation_generator_records_streaming_attributes(
+        self,
+    ) -> None:
+        """Same as the sync case, but for an async generator function."""
+
+        @instrument(span_type=SpanAttributes.SpanType.GENERATION)
+        async def stream_llm(prompt: str):
+            yield "Hello"
+            yield " world"
+
+        async def consume():
+            async for _ in stream_llm("hi"):
+                pass
+
+        asyncio.run(consume())
+
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        attrs = spans[0].attributes
+        self.assertTrue(attrs[SpanAttributes.GENERATION.IS_STREAMING])
+        self.assertEqual(attrs[SpanAttributes.GENERATION.CHUNKS_RECEIVED], 2)
+        self.assertGreaterEqual(
+            attrs[SpanAttributes.GENERATION.TIME_TO_FIRST_TOKEN_MS], 0
+        )
+
+    def test_non_generation_generator_has_no_streaming_attributes(
+        self,
+    ) -> None:
+        """Streaming attributes are GENERATION-specific; a generator
+        function with a different (or no) span_type shouldn't get them."""
+
+        @instrument()
+        def stream_something(prompt: str):
+            yield "Hello"
+            yield " world"
+
+        for _ in stream_something("hi"):
+            pass
+
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        attrs = spans[0].attributes
+        self.assertNotIn(SpanAttributes.GENERATION.IS_STREAMING, attrs)
+        self.assertNotIn(SpanAttributes.GENERATION.CHUNKS_RECEIVED, attrs)
+        self.assertNotIn(
+            SpanAttributes.GENERATION.TIME_TO_FIRST_TOKEN_MS, attrs
+        )
+
+    def test_generation_generator_partial_consumption_records_partial_count(
+        self,
+    ) -> None:
+        """If a caller only partially consumes a streamed generator before
+        it's garbage-collected, CHUNKS_RECEIVED should reflect only what was
+        actually consumed, not the full underlying sequence."""
+
+        @instrument(span_type=SpanAttributes.SpanType.GENERATION)
+        def stream_llm(prompt: str):
+            yield "Kojikun"
+            yield "Nolan"
+            yield "Sachiboy"
+
+        gen = stream_llm("hi")
+        for i, _ in enumerate(gen):
+            if i == 1:
+                break
+        del gen
+        gc.collect()
+
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(
+            spans[0].attributes[SpanAttributes.GENERATION.CHUNKS_RECEIVED], 2
+        )
