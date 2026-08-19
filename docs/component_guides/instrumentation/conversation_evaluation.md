@@ -119,6 +119,42 @@ Selector.select_conversation_output()  # Ordered record outputs
 Conversation selectors cannot be mixed with record or span selectors in the same
 `Metric`. Attach separate metrics at each scope instead.
 
+### Add domain context to the judge
+
+Every conversation-level metric accepts `additional_instructions`, which appends
+domain guidance to the judge's system prompt. Reach for it when assistant turns
+are not natural language, such as SQL result rows, JSON payloads, or generated
+code, because the default prompts are calibrated for prose:
+
+```python
+f_conversation_coherence = Metric(
+    implementation=provider.coherence_across_turns,
+    name="Coherence Across Turns",
+    additional_instructions=(
+        "Assistant turns are structured SQL result rows rather than prose. "
+        "Judge coherence on whether each result follows from the user request "
+        "in the same turn and stays consistent with earlier results."
+    ),
+).on_conversation()
+```
+
+### Return the judge's reasoning
+
+Each conversation-level metric also has a `_with_cot_reasons` variant that
+returns the score together with the reasoning behind it, so a low score points at
+the turn that caused it instead of leaving the whole transcript under suspicion:
+
+```python
+f_conversation_coherence = Metric(
+    implementation=provider.coherence_across_turns_with_cot_reasons,
+    name="Coherence Across Turns",
+).on_conversation()
+```
+
+The conversation-level metrics are `coherence_across_turns`,
+`conversation_helpfulness`, `topic_adherence`, and `agent_goal_accuracy`. Each
+one has a matching `_with_cot_reasons` variant.
+
 ## Attach both metrics to an app
 
 Turn-level and conversation-level metrics can run on the same recorded application:
