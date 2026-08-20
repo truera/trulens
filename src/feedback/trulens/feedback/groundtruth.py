@@ -1,6 +1,7 @@
 from collections.abc import Callable
 import logging
 from typing import (
+    TYPE_CHECKING,
     ClassVar,
     Optional,
 )
@@ -21,11 +22,16 @@ from trulens.core.utils import stats as stats_utils
 from trulens.feedback import generated as feedback_generated
 from trulens.feedback import llm_provider
 
-with import_utils.OptionalImports(
-    messages=import_utils.format_import_errors(
-        "bert-score", purpose="measuring BERT Score"
-    )
-):
+# NOTE: bert-score is imported lazily, inside the one method that uses it.
+# `bert_score` imports torch and transformers at module scope, and this module is
+# re-exported by `trulens.feedback.__init__`, so importing it eagerly made every
+# importer of `trulens.feedback` pay for torch. torch's import also dlopens
+# bundled CUDA libraries, which has segfaulted Python 3.13 CI workers mid-test.
+_BERT_SCORE_MESSAGES = import_utils.format_import_errors(
+    "bert-score", purpose="measuring BERT Score"
+)
+
+if TYPE_CHECKING:
     from bert_score import BERTScorer
 
 with import_utils.OptionalImports(
@@ -661,6 +667,9 @@ class GroundTruthAgreement(
             dict: with key 'ground_truth_response'
         """
         if self.bert_scorer is None:
+            with import_utils.OptionalImports(messages=_BERT_SCORE_MESSAGES):
+                from bert_score import BERTScorer
+
             self.bert_scorer = BERTScorer(lang="en", rescale_with_baseline=True)
         ground_truth_response = self._find_response(prompt)
         if ground_truth_response:
