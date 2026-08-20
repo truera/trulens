@@ -201,13 +201,7 @@ def _render_record_metrics(
 
     ttft_ms = _get_record_ttft_ms(selected_row)
     if ttft_ms is not None:
-        token_col, cost_col, latency_col, ttft_col, _ = st_columns([
-            1,
-            1,
-            1,
-            1,
-            2,
-        ])
+        token_col, cost_col, latency_col, ttft_col, _ = st_columns([1, 1, 1, 1, 2])
     else:
         token_col, cost_col, latency_col, _ = st_columns([1, 1, 1, 3])
 
