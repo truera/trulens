@@ -12,7 +12,7 @@ source:
   {% else %}
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-otel-semconv/#files
-  sha256: 4adbd12a5afda082f55e653bca4d77b38656892605cddce45adc43ae146e665a
+  sha256: b91a57008d21613a2b417f4e986f9687825000d0b92559503a42c60b9b303904
   {% endif %}
 
 build:
