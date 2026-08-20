@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-apps-rl"
-version = "2.13.0"
+version = "2.13.1"
 description = "RL reward integration for TruLens feedback metrics."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",

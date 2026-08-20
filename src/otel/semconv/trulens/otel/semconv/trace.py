@@ -425,6 +425,26 @@ class SpanAttributes:
 
         base = BASE_SCOPE + ".generation"
 
+        IS_STREAMING = base + ".is_streaming"
+        """Whether the generation was streamed back incrementally."""
+
+        TIME_TO_FIRST_TOKEN_MS = base + ".time_to_first_token_ms"
+        """Milliseconds between issuing the request and receiving the first chunk.
+
+        Only set for streaming generations.
+        """
+
+        TOKENS_PER_SECOND = base + ".tokens_per_second"
+        """Completion tokens generated per second over the streaming window.
+
+        Measured from the first chunk to the last so that it reflects generation
+        throughput rather than including time-to-first-token. Only set for
+        streaming generations whose completion token count is known.
+        """
+
+        CHUNKS_RECEIVED = base + ".chunks_received"
+        """Number of chunks received over the stream."""
+
     class GRAPH_TASK:
         """A graph task function execution."""
 

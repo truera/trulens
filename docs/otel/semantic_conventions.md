@@ -54,6 +54,10 @@
 | `ai.observability.mcp.output_is_error` | Whether the MCP tool call resulted in an error. | Never | | bool |
 | `ai.observability.mcp.execution_time_ms` | Time taken to execute the MCP tool call in milliseconds. | Never | | float |
 | `ai.observability.generation` | Namespace for attributes specific to a generation span. | | Y | |
+| `ai.observability.generation.is_streaming` | Whether the generation was streamed back incrementally. | Never | | bool |
+| `ai.observability.generation.time_to_first_token_ms` | Milliseconds spent waiting for the first chunk of a streamed generation. | Never | | float |
+| `ai.observability.generation.tokens_per_second` | Completion tokens generated per second, measured from the first chunk to the last so that it reflects generation throughput rather than including time to first token. Only set when the completion token count is known, which for a stream means the request asked for usage to be included. | Never | | float |
+| `ai.observability.generation.chunks_received` | Number of chunks received over a streamed generation. | Never | | int |
 | `ai.observability.graph_task` | Namespace for attributes specific to a graph task function execution span. | | Y | |
 | `ai.observability.graph_task.task_name` | Name of the task function. | Never | | str |
 | `ai.observability.graph_task.input_state` | Input state to the task. | Never | | Any |

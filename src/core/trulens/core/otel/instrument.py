@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from contextvars import ContextVar
 import inspect
 import logging
+import time
 import types
 from types import TracebackType
 from typing import (
@@ -285,6 +286,45 @@ def _set_span_attributes(
         )
 
 
+def _set_streaming_attributes(
+    span: Span,
+    started: float,
+    first_yield: float | None,
+    chunks_received: int,
+) -> None:
+    """Record streaming timing for a generator that TruLens iterated itself.
+
+    This covers anything that streams without going through a provider we
+    instrument directly: LangChain's `stream`/`astream`, or a plain async
+    generator. Token counts are unknowable from here, so throughput is left
+    unset rather than guessed at.
+
+    Skipped when a provider has already reported a stream on this span. One
+    that tracks its own sees chunks as they leave the network and knows how many
+    tokens they held, so its measurements are the better ones and must not be
+    overwritten by this coarser view. A provider reporting a *non*-streaming
+    call does not block us: the generator around it may still be streaming
+    something of its own.
+    """
+    if span is None or not span.is_recording():
+        return
+
+    existing = getattr(span, "attributes", None) or {}
+    if existing.get(SpanAttributes.GENERATION.IS_STREAMING):
+        return
+
+    span.set_attribute(SpanAttributes.GENERATION.IS_STREAMING, True)
+    span.set_attribute(
+        SpanAttributes.GENERATION.CHUNKS_RECEIVED, chunks_received
+    )
+
+    if first_yield is not None:
+        span.set_attribute(
+            SpanAttributes.GENERATION.TIME_TO_FIRST_TOKEN_MS,
+            (first_yield - started) * 1000.0,
+        )
+
+
 def _finalize_span(
     span: Span,
     span_type: SpanAttributes.SpanType,
@@ -422,13 +462,19 @@ class instrument:
             ) as span:
                 ret = None
                 func_exception: Exception | None = None
+                started = time.perf_counter()
+                first_yield: float | None = None
+                streamed = False
                 # Run function.
                 try:
                     result = func(*args, **kwargs)
                     if isinstance(result, types.GeneratorType):
+                        streamed = True
                         yield "is_generator"
                         ret = []
                         for curr in result:
+                            if first_yield is None:
+                                first_yield = time.perf_counter()
                             ret.append(curr)
                             yield curr
                     else:
@@ -441,6 +487,15 @@ class instrument:
                     # None as a return value.
                     func_exception = e
                 finally:
+                    if streamed:
+                        # Also runs when the consumer abandons the generator,
+                        # so a partially consumed stream is still measured.
+                        _set_streaming_attributes(
+                            span,
+                            started,
+                            first_yield,
+                            len(ret) if ret else 0,
+                        )
                     _finalize_span(
                         span,
                         self.span_type,
@@ -531,11 +586,15 @@ class instrument:
             ) as span:
                 ret = None
                 func_exception: Exception | None = None
+                started = time.perf_counter()
+                first_yield: float | None = None
                 # Run function.
                 try:
                     result = func(*args, **kwargs)
                     ret = []
                     async for curr in result:
+                        if first_yield is None:
+                            first_yield = time.perf_counter()
                         ret.append(curr)
                         yield curr
                 except Exception as e:
@@ -544,6 +603,12 @@ class instrument:
                     # None as a return value.
                     func_exception = e
                 finally:
+                    _set_streaming_attributes(
+                        span,
+                        started,
+                        first_yield,
+                        len(ret) if ret else 0,
+                    )
                     _finalize_span(
                         span,
                         self.span_type,
