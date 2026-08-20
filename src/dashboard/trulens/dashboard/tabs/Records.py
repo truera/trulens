@@ -33,6 +33,7 @@ from trulens.dashboard.ux.styles import aggrid_css
 from trulens.dashboard.ux.styles import cell_rules
 from trulens.dashboard.ux.styles import default_direction
 from trulens.dashboard.ux.styles import radio_button_css
+from trulens.otel.semconv.trace import SpanAttributes
 
 
 def init_page_state():
@@ -166,6 +167,30 @@ def _escape_problematic_markdown(text: str) -> str:
     return escaped
 
 
+def _get_record_ttft_ms(selected_row: pd.Series) -> Optional[float]:
+    """Time to first token (ms) for this record, if it contains a streaming
+    GENERATION span. `None` if OTel tracing is off, the record has no such
+    span, or the span didn't capture a TTFT (e.g. it never got a first
+    chunk). When a record has multiple streaming generation calls, this
+    returns the first one found rather than an aggregate -- attribute
+    naming makes it explicit which record it came from either way."""
+    if not is_otel_tracing_enabled():
+        return None
+    try:
+        event_spans = _get_event_otel_spans(
+            selected_row["record_id"], selected_row["app_name"]
+        )
+    except Exception:
+        return None
+    for span in event_spans:
+        attrs = span.get("record_attributes") or {}
+        if attrs.get(SpanAttributes.GENERATION.IS_STREAMING):
+            ttft = attrs.get(SpanAttributes.GENERATION.TIME_TO_FIRST_TOKEN_MS)
+            if ttft is not None:
+                return ttft
+    return None
+
+
 def _render_record_metrics(
     records_df: pd.DataFrame, selected_row: pd.Series
 ) -> None:
@@ -174,7 +199,12 @@ def _render_record_metrics(
 
     app_specific_df = records_df[records_df["app_id"] == selected_row["app_id"]]
 
-    token_col, cost_col, latency_col, _ = st_columns([1, 1, 1, 3])
+    ttft_ms = _get_record_ttft_ms(selected_row)
+    if ttft_ms is not None:
+        cols = st_columns([1, 1, 1, 1, 2])
+        token_col, cost_col, latency_col, ttft_col, _ = cols
+    else:
+        token_col, cost_col, latency_col, _ = st_columns([1, 1, 1, 3])
 
     num_tokens = selected_row["total_tokens"]
     with token_col.container(height=128, border=True):
@@ -217,6 +247,16 @@ def _render_record_metrics(
             if delta_latency != 0
             else "Latency of the app execution.",
         )
+
+    if ttft_ms is not None:
+        with ttft_col.container(height=128, border=True):
+            st.metric(
+                label="Time to First Token (ms)",
+                value=f"{ttft_ms:.0f}ms",
+                help="Time between issuing the request and receiving the "
+                "first streamed chunk, for this record's (first) "
+                "streaming generation call.",
+            )
 
 
 def _render_record_detail(
