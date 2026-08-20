@@ -1,6 +1,6 @@
 {% set name = "trulens-dashboard" %}
 {% set pyname = name.replace('-', '.') %}
-{% set version = "2.13.0" %}
+{% set version = "2.13.1" %}
 
 package:
   name: {{ name|lower }}
