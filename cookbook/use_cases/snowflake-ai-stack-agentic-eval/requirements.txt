@@ -1,0 +1,11 @@
+langchain_community
+langchain_openai
+langchain_experimental
+langgraph
+matplotlib
+trulens-core
+trulens-dashboard
+trulens-providers-openai
+openai
+streamlit
+numpy

@@ -1,0 +1,116 @@
+.box {
+    position: relative;
+    padding: var(--gap-xl) 0;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 50px;
+        height: 5px;
+        background-color: var(--color-primary);
+
+    }
+    &.yellow {
+        &::before {
+            background-color: $yellow;
+        }
+    }
+    &.teal {
+        &::before {
+            background-color: $teal;
+        }
+    }
+
+    &__shadow {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        max-width: 22.5rem;
+        text-align: center;
+
+        .strong {
+            color: var(--color-primary);
+            font-size: 1.375rem;
+            margin: 1rem 0;
+        }
+    }
+
+    &:last-of-type {
+        padding-bottom: 0;
+    }
+
+}
+
+.box-dark {
+    border-radius:4px;
+    background-color:var(--color-primary);
+    overflow:hidden;
+
+    h1, h2, h3 {
+        color:$yellow;
+    }
+    h4, h5 {
+        color:$teal;
+    }
+    p, li {
+        color:$white;
+        font-weight:300;
+    }
+
+    div {
+        padding:4rem;
+
+        &.box {
+            padding-top:6rem;
+        }
+
+        &.box-violet {
+            background-color:$violet;
+            padding-bottom:3.5rem;
+        }
+
+        &.full-image {
+            padding-right:0px;
+        }
+
+
+        &:before {
+            top:4rem;
+        }
+
+        &:first-child {
+            &:before {
+                left:4rem;
+            }
+        }
+        &:nth-child(2) {
+            padding-left:0;
+        }
+        &:last-of-type {
+            padding-bottom:4rem;
+        }
+
+        @include res-max-tablet {
+            &.box, &.box-violet {
+                padding:1.25rem !important;
+            }
+            &.full-image {
+                padding:0px 0px 1.25rem 1.25rem;
+            }
+            &.box.teal {
+                padding-top:2.5rem !important;
+
+                &:before {
+                    left:1.25rem;
+                    top:1.25rem;
+                }
+            }
+            &:last-of-type {
+                padding-bottom:1.25rem;
+            }
+        }
+    }
+}

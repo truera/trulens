@@ -1,0 +1,856 @@
+{
+  "dataset": {
+    "label_mapping": "(expert relevance mean - 1) / 4",
+    "license": "MIT",
+    "original_examples": 1600,
+    "selected_examples": 72,
+    "selection_counts": [
+      {
+        "count": 8,
+        "score_range": "high",
+        "split": "development"
+      },
+      {
+        "count": 8,
+        "score_range": "low",
+        "split": "development"
+      },
+      {
+        "count": 8,
+        "score_range": "medium",
+        "split": "development"
+      },
+      {
+        "count": 8,
+        "score_range": "high",
+        "split": "held_out"
+      },
+      {
+        "count": 8,
+        "score_range": "low",
+        "split": "held_out"
+      },
+      {
+        "count": 8,
+        "score_range": "medium",
+        "split": "held_out"
+      },
+      {
+        "count": 8,
+        "score_range": "high",
+        "split": "validation"
+      },
+      {
+        "count": 8,
+        "score_range": "low",
+        "split": "validation"
+      },
+      {
+        "count": 8,
+        "score_range": "medium",
+        "split": "validation"
+      }
+    ],
+    "sensitive_topic_filter": [
+      "arrest",
+      "babies given antibiotics",
+      "behead",
+      "blowing people",
+      "bombing",
+      "child abuse",
+      "cerebral palsy",
+      "collided",
+      "crash",
+      "deep cuts",
+      "death",
+      "dead pet",
+      "fatal shooting",
+      "homicide",
+      "indecent assault",
+      "killed",
+      "knocking out",
+      "miscarriage",
+      "migrants",
+      "molest",
+      "murder",
+      "paedophile",
+      "pornograph",
+      "rape",
+      "racist",
+      "set the vehicle on fire",
+      "sex with",
+      "sexual",
+      "sexual abuse",
+      "shot dead",
+      "slave",
+      "sniper rifle",
+      "stabbing",
+      "suicide",
+      "terror attack",
+      "toddler",
+      "two-year-old",
+      "underage"
+    ],
+    "sha256": "7ff6f3f4d044223bd6922c5434d27bf28473950346fcfc2a3b7352c19163690e",
+    "source": "mteb/summeval (derived from Yale-LILY/SummEval)",
+    "url": "https://huggingface.co/datasets/mteb/summeval/resolve/bfc121155064afa2d81b5505682ffc0d96f4334c/data/test-00000-of-00001-35901af5f6649399.parquet"
+  },
+  "rubrics": {
+    "baseline": "Score how relevant the summary is to the source article. A better summary\ncaptures more of the article's important information.",
+    "improved": "Judge only content selection: how well the summary captures the source\narticle's important information. Do not reward fluency, grammaticality,\nfactual consistency, or length except when they change coverage of important\ncontent.\n\nBuild the integer score from three components:\n1. Central content, 0-6 points: 0 for no central event or claim; 2 for a vague\n   or fragmented reference; 4 for a clear but incomplete account; 6 for a\n   clear account of the article's central event or claim.\n2. Supporting context, 0-3 points: 0 for none of the important supporting\n   context; 1 for a little; 2 for most; 3 for essentially all.\n3. Focus, 0-1 point: 1 when the selected content stays focused; 0 when\n   repetition or peripheral details materially displace important content.\n\nAdd the three components and return that 0-10 total. Repeated versions of the\nsame fact count once, not as added coverage. A fluent list of names or details\nmust score low when it does not communicate the article's main point. Do not\nrequire every detail: a concise summary may score highly when it preserves the\nlead and the important supporting context."
+  },
+  "run_metadata": {
+    "model": "gemini-3.1-flash-lite",
+    "model_seed": 123,
+    "n_bins": 5,
+    "provider": "Google Gemini Developer API",
+    "request_interval_seconds": 4.2,
+    "run_date": "2026-07-31",
+    "selection_seed": 20260731,
+    "temperature": 0.0,
+    "threshold": 0.5,
+    "thresholds": [
+      0.3,
+      0.5,
+      0.7
+    ],
+    "top_n": 5
+  },
+  "splits": {
+    "development": {
+      "confusion_matrices": {
+        "baseline": [
+          {
+            "FN": 0,
+            "FP": 5,
+            "TN": 3,
+            "TP": 16,
+            "threshold": 0.3
+          },
+          {
+            "FN": 2,
+            "FP": 2,
+            "TN": 6,
+            "TP": 14,
+            "threshold": 0.5
+          },
+          {
+            "FN": 1,
+            "FP": 6,
+            "TN": 10,
+            "TP": 7,
+            "threshold": 0.7
+          }
+        ],
+        "improved": [
+          {
+            "FN": 1,
+            "FP": 4,
+            "TN": 4,
+            "TP": 15,
+            "threshold": 0.3
+          },
+          {
+            "FN": 1,
+            "FP": 2,
+            "TN": 6,
+            "TP": 15,
+            "threshold": 0.5
+          },
+          {
+            "FN": 1,
+            "FP": 6,
+            "TN": 10,
+            "TP": 7,
+            "threshold": 0.7
+          }
+        ]
+      },
+      "count": 24,
+      "difficulty_breakdown": {
+        "baseline": [
+          {
+            "bucket": "easy",
+            "count": 8,
+            "mae": 0.23125,
+            "mean_predicted_score": 0.375,
+            "mean_true_label": 0.15625,
+            "range": "[0.0, 0.3)",
+            "spearman_correlation": 0.3137858162210944
+          },
+          {
+            "bucket": "medium",
+            "count": 8,
+            "mae": 0.15000000000000002,
+            "mean_predicted_score": 0.6875,
+            "mean_true_label": 0.6041666666666666,
+            "range": "[0.3, 0.7)",
+            "spearman_correlation": 0.5471045255007143
+          },
+          {
+            "bucket": "hard",
+            "count": 8,
+            "mae": 0.14166666666666666,
+            "mean_predicted_score": 0.8500000000000001,
+            "mean_true_label": 0.8541666666666666,
+            "range": "[0.7, 1.0]",
+            "spearman_correlation": 0.11322770341445956
+          }
+        ],
+        "improved": [
+          {
+            "bucket": "easy",
+            "count": 8,
+            "mae": 0.17291666666666666,
+            "mean_predicted_score": 0.3125,
+            "mean_true_label": 0.15625,
+            "range": "[0.0, 0.3)",
+            "spearman_correlation": 0.6273870080192331
+          },
+          {
+            "bucket": "medium",
+            "count": 8,
+            "mae": 0.10833333333333334,
+            "mean_predicted_score": 0.6375,
+            "mean_true_label": 0.6041666666666666,
+            "range": "[0.3, 0.7)",
+            "spearman_correlation": 0.7115124735378853
+          },
+          {
+            "bucket": "hard",
+            "count": 8,
+            "mae": 0.125,
+            "mean_predicted_score": 0.8,
+            "mean_true_label": 0.8541666666666666,
+            "range": "[0.7, 1.0]",
+            "spearman_correlation": -0.1609315773946795
+          }
+        ]
+      },
+      "metrics": [
+        {
+          "baseline": 0.17430555555555557,
+          "direction": "lower",
+          "improved": 0.13541666666666666,
+          "metric": "MAE"
+        },
+        {
+          "baseline": 0.7288193295467071,
+          "direction": "higher",
+          "improved": 0.7722348494673035,
+          "metric": "Spearman correlation"
+        },
+        {
+          "baseline": 0.6045632232630938,
+          "direction": "higher",
+          "improved": 0.6412941548418435,
+          "metric": "Kendall's tau"
+        },
+        {
+          "baseline": 0.625,
+          "direction": "higher",
+          "improved": 0.7096774193548387,
+          "metric": "Cohen's kappa at 0.5"
+        },
+        {
+          "baseline": 0.05656250000000001,
+          "direction": "lower",
+          "improved": 0.03642361111111111,
+          "metric": "Brier score"
+        },
+        {
+          "baseline": 0.87890625,
+          "direction": "higher",
+          "improved": 0.90234375,
+          "metric": "AUC"
+        }
+      ],
+      "worst_misses": {
+        "baseline": [
+          {
+            "absolute_error": 0.6333333333333333,
+            "article_id": "dm-test-0cdd7cdb5d99c36f25f1f4fa0e962d558f7ff07b",
+            "index": 11,
+            "predicted_score": 0.8,
+            "sample_id": "dm-test-0cdd7cdb5d99c36f25f1f4fa0e962d558f7ff07b:M8",
+            "summary": "England Under-17s have qualified for the UEFA European Under-17 Championship in Bulgaria Trent Arnold (Liverpool), Herbie Kane (Liverpool), Chris Willock (Arsenal), Stephy Mavididi (Arsenal), Ike Ugbo (Chelsea) England Under-17s are in Group D alongside Italy, Holland and the Republic of Ireland England U17s will open their campaign against Italy on May 7 England U17s are in Group D alongside Italy",
+            "true_label": 0.16666666666666669
+          },
+          {
+            "absolute_error": 0.55,
+            "article_id": "cnn-test-e2bccd4dec93c9bb7b327827dae004c2d494ec31",
+            "index": 15,
+            "predicted_score": 0.8,
+            "sample_id": "cnn-test-e2bccd4dec93c9bb7b327827dae004c2d494ec31:M14",
+            "summary": "the classic video game `` space invaders '' was developed in japan . defense minister gen nakatani said japan 's air self defense force never had an extraterrestrial unidentified flying object . inoki has appeared in the u.s.-based wwe .",
+            "true_label": 0.25
+          },
+          {
+            "absolute_error": 0.43333333333333324,
+            "article_id": "dm-test-8b51a10370a1219137e231192e65b9cd52238ea6",
+            "index": 6,
+            "predicted_score": 0.4,
+            "sample_id": "dm-test-8b51a10370a1219137e231192e65b9cd52238ea6:M10",
+            "summary": "' it was here , of course , that stokes broke his wrist punching a locker after being dismissed last year and that will be a reminder to him of the need to channel his aggression in the right way now he is back in the england team . ben stokes has forged a reputation as a fiery character in the england cricket team . stokes -lrb- left -rrb- clashed with marlon samuels during the second test between west indies and england .",
+            "true_label": 0.8333333333333333
+          },
+          {
+            "absolute_error": 0.31666666666666665,
+            "article_id": "dm-test-4a593dc4c7e0b4d09bfdc66bb315c47b54eb15df",
+            "index": 21,
+            "predicted_score": 0.9,
+            "sample_id": "dm-test-4a593dc4c7e0b4d09bfdc66bb315c47b54eb15df:M4",
+            "summary": "jordan henderson thinks his side could catch manchester city in the premier league . henderson played his 47th game of season in the 2-0 win over newcastle united on monday night . manchester city have been faltering and lost 4-2 at manchester united .",
+            "true_label": 0.5833333333333334
+          },
+          {
+            "absolute_error": 0.3,
+            "article_id": "cnn-test-e2bccd4dec93c9bb7b327827dae004c2d494ec31",
+            "index": 12,
+            "predicted_score": 0.3,
+            "sample_id": "cnn-test-e2bccd4dec93c9bb7b327827dae004c2d494ec31:M15",
+            "summary": "`` space invaders '' was developed in japan back in 1970 . japanese can sleep soundly in their beds tonight as government 's top military official . he also fought muhammad ali in 1976 . inoki has appeared in the u.s.-based wwe .",
+            "true_label": 0.0
+          }
+        ],
+        "improved": [
+          {
+            "absolute_error": 0.5333333333333332,
+            "article_id": "dm-test-0cdd7cdb5d99c36f25f1f4fa0e962d558f7ff07b",
+            "index": 11,
+            "predicted_score": 0.7,
+            "sample_id": "dm-test-0cdd7cdb5d99c36f25f1f4fa0e962d558f7ff07b:M8",
+            "summary": "England Under-17s have qualified for the UEFA European Under-17 Championship in Bulgaria Trent Arnold (Liverpool), Herbie Kane (Liverpool), Chris Willock (Arsenal), Stephy Mavididi (Arsenal), Ike Ugbo (Chelsea) England Under-17s are in Group D alongside Italy, Holland and the Republic of Ireland England U17s will open their campaign against Italy on May 7 England U17s are in Group D alongside Italy",
+            "true_label": 0.16666666666666669
+          },
+          {
+            "absolute_error": 0.35,
+            "article_id": "cnn-test-e2bccd4dec93c9bb7b327827dae004c2d494ec31",
+            "index": 15,
+            "predicted_score": 0.6,
+            "sample_id": "cnn-test-e2bccd4dec93c9bb7b327827dae004c2d494ec31:M14",
+            "summary": "the classic video game `` space invaders '' was developed in japan . defense minister gen nakatani said japan 's air self defense force never had an extraterrestrial unidentified flying object . inoki has appeared in the u.s.-based wwe .",
+            "true_label": 0.25
+          },
+          {
+            "absolute_error": 0.33333333333333326,
+            "article_id": "dm-test-8b51a10370a1219137e231192e65b9cd52238ea6",
+            "index": 6,
+            "predicted_score": 0.5,
+            "sample_id": "dm-test-8b51a10370a1219137e231192e65b9cd52238ea6:M10",
+            "summary": "' it was here , of course , that stokes broke his wrist punching a locker after being dismissed last year and that will be a reminder to him of the need to channel his aggression in the right way now he is back in the england team . ben stokes has forged a reputation as a fiery character in the england cricket team . stokes -lrb- left -rrb- clashed with marlon samuels during the second test between west indies and england .",
+            "true_label": 0.8333333333333333
+          },
+          {
+            "absolute_error": 0.3,
+            "article_id": "dm-test-998cb27197db1fd299aff3322ac041ba4bf1148f",
+            "index": 23,
+            "predicted_score": 0.2,
+            "sample_id": "dm-test-998cb27197db1fd299aff3322ac041ba4bf1148f:M11",
+            "summary": "there 's not been a lot to laugh about this season at doncaster rovers . an uninspired campaign has seen the yorkshire side firmly entrenched in mid-table mediocrity in league one . saturday 's visit of fleetwood town , who were eyeing the beach after their play-off hopes had all but evaporated , hardly promised to be a thriller .",
+            "true_label": 0.5
+          },
+          {
+            "absolute_error": 0.2333333333333334,
+            "article_id": "dm-test-0783c68a744df6afa009d16e72709f2b4d90dea1",
+            "index": 18,
+            "predicted_score": 0.9,
+            "sample_id": "dm-test-0783c68a744df6afa009d16e72709f2b4d90dea1:M10",
+            "summary": "usain bolt will compete at the iaaf/btc world relays in the bahamas next month , the jamaica athletics administrative association has announced . the six-time olympic gold medallist will compete at the relay championship on may 2 and 3 as part of the jamaican team . usain bolt has confirmed he will be part of jamaica 's team at the world relays in the bahamas .",
+            "true_label": 0.6666666666666666
+          }
+        ]
+      }
+    },
+    "held_out": {
+      "confusion_matrices": {
+        "baseline": [
+          {
+            "FN": 0,
+            "FP": 5,
+            "TN": 3,
+            "TP": 16,
+            "threshold": 0.3
+          },
+          {
+            "FN": 0,
+            "FP": 2,
+            "TN": 9,
+            "TP": 13,
+            "threshold": 0.5
+          },
+          {
+            "FN": 0,
+            "FP": 6,
+            "TN": 10,
+            "TP": 8,
+            "threshold": 0.7
+          }
+        ],
+        "improved": [
+          {
+            "FN": 0,
+            "FP": 4,
+            "TN": 4,
+            "TP": 16,
+            "threshold": 0.3
+          },
+          {
+            "FN": 0,
+            "FP": 4,
+            "TN": 7,
+            "TP": 13,
+            "threshold": 0.5
+          },
+          {
+            "FN": 0,
+            "FP": 2,
+            "TN": 14,
+            "TP": 8,
+            "threshold": 0.7
+          }
+        ]
+      },
+      "count": 24,
+      "difficulty_breakdown": {
+        "baseline": [
+          {
+            "bucket": "easy",
+            "count": 8,
+            "mae": 0.12083333333333332,
+            "mean_predicted_score": 0.3,
+            "mean_true_label": 0.20833333333333334,
+            "range": "[0.0, 0.3)",
+            "spearman_correlation": 0.28127197523150593
+          },
+          {
+            "bucket": "medium",
+            "count": 8,
+            "mae": 0.17499999999999996,
+            "mean_predicted_score": 0.6375,
+            "mean_true_label": 0.5208333333333333,
+            "range": "[0.3, 0.7)",
+            "spearman_correlation": 0.510170532864002
+          },
+          {
+            "bucket": "hard",
+            "count": 8,
+            "mae": 0.08541666666666671,
+            "mean_predicted_score": 0.9375,
+            "mean_true_label": 0.8854166666666666,
+            "range": "[0.7, 1.0]",
+            "spearman_correlation": 0.23537827088100216
+          }
+        ],
+        "improved": [
+          {
+            "bucket": "easy",
+            "count": 8,
+            "mae": 0.14166666666666666,
+            "mean_predicted_score": 0.3,
+            "mean_true_label": 0.20833333333333334,
+            "range": "[0.0, 0.3)",
+            "spearman_correlation": -0.3375263702778072
+          },
+          {
+            "bucket": "medium",
+            "count": 8,
+            "mae": 0.08333333333333331,
+            "mean_predicted_score": 0.575,
+            "mean_true_label": 0.5208333333333333,
+            "range": "[0.3, 0.7)",
+            "spearman_correlation": 0.6444259362492657
+          },
+          {
+            "bucket": "hard",
+            "count": 8,
+            "mae": 0.08541666666666672,
+            "mean_predicted_score": 0.875,
+            "mean_true_label": 0.8854166666666666,
+            "range": "[0.7, 1.0]",
+            "spearman_correlation": 0.44230769230769235
+          }
+        ]
+      },
+      "metrics": [
+        {
+          "baseline": 0.12708333333333335,
+          "direction": "lower",
+          "improved": 0.10347222222222223,
+          "metric": "MAE"
+        },
+        {
+          "baseline": 0.8898110302088148,
+          "direction": "higher",
+          "improved": 0.8958517210944396,
+          "metric": "Spearman correlation"
+        },
+        {
+          "baseline": 0.7591341021059699,
+          "direction": "higher",
+          "improved": 0.7628458498023716,
+          "metric": "Kendall's tau"
+        },
+        {
+          "baseline": 0.8297872340425532,
+          "direction": "higher",
+          "improved": 0.6546762589928058,
+          "metric": "Cohen's kappa at 0.5"
+        },
+        {
+          "baseline": 0.026400462962962973,
+          "direction": "lower",
+          "improved": 0.01959490740740741,
+          "metric": "Brier score"
+        },
+        {
+          "baseline": 0.9895104895104895,
+          "direction": "higher",
+          "improved": 0.9895104895104895,
+          "metric": "AUC"
+        }
+      ],
+      "worst_misses": {
+        "baseline": [
+          {
+            "absolute_error": 0.35,
+            "article_id": "dm-test-d89de9c2a76f2665560becfe5d761a4fc62b9926",
+            "index": 13,
+            "predicted_score": 0.6,
+            "sample_id": "dm-test-d89de9c2a76f2665560becfe5d761a4fc62b9926:M13",
+            "summary": "altrincham 's compact 6,000-capacity home may not be old trafford , but it does have a proud history of its own . callum gribbin was the matchwinner for manchester united with a delightful free-kick . entry was probably as far removed from sunday 's big match as you could imagine .",
+            "true_label": 0.25
+          },
+          {
+            "absolute_error": 0.31666666666666665,
+            "article_id": "dm-test-2cf8c2d1d2ceb1980249f77e703f9039e63799d0",
+            "index": 16,
+            "predicted_score": 0.9,
+            "sample_id": "dm-test-2cf8c2d1d2ceb1980249f77e703f9039e63799d0:M11",
+            "summary": "sick of awkward father-daughter portraits ? well one photographer has found an effective - if a little odd - way of making them more interesting . japanese photographer y\u00fbki aoyama 's latest series of images capture po-faced teenagers pictured next to their fathers leaping into the air .",
+            "true_label": 0.5833333333333334
+          },
+          {
+            "absolute_error": 0.30000000000000004,
+            "article_id": "dm-test-632cfdb03aacd90a34a470f6a70b47eee62ec5f0",
+            "index": 18,
+            "predicted_score": 0.8,
+            "sample_id": "dm-test-632cfdb03aacd90a34a470f6a70b47eee62ec5f0:M1",
+            "summary": "serge gnabry played 90 minutes for arsenal under 21s against reading . the 19-year-old has not featured for the first team since march last year . serge gnabry played for arsenal 's development squad as they lost 1-0 .",
+            "true_label": 0.5
+          },
+          {
+            "absolute_error": 0.2833333333333333,
+            "article_id": "dm-test-c16c9fa34ccae7e2b9e29c3988ccb74974c4b3c0",
+            "index": 21,
+            "predicted_score": 0.7,
+            "sample_id": "dm-test-c16c9fa34ccae7e2b9e29c3988ccb74974c4b3c0:M8",
+            "summary": "Carlos Tevez is leaving Juventus to join Boca Juniors in Argentina.",
+            "true_label": 0.41666666666666663
+          },
+          {
+            "absolute_error": 0.23333333333333334,
+            "article_id": "dm-test-2a48112ddee712f2364f128076cb2db555a043b1",
+            "index": 10,
+            "predicted_score": 0.4,
+            "sample_id": "dm-test-2a48112ddee712f2364f128076cb2db555a043b1:M10",
+            "summary": "esteban cambiasso says that helping keep leicester in the premier league will feel like winning a trophy . ' the argentinian midfielder poses with the trophy after his team won the 2010 fifa club world cup . argentine primera division .",
+            "true_label": 0.16666666666666669
+          }
+        ],
+        "improved": [
+          {
+            "absolute_error": 0.3333333333333333,
+            "article_id": "cnn-test-a02e362c5b8f049848ce718b37b96117485461cf",
+            "index": 8,
+            "predicted_score": 0.5,
+            "sample_id": "cnn-test-a02e362c5b8f049848ce718b37b96117485461cf:M0",
+            "summary": "deep reddish color caught seattle native tim durkan 's eye on april 14 . the fires have destroyed dozens of villages in the region of siberia .",
+            "true_label": 0.16666666666666669
+          },
+          {
+            "absolute_error": 0.3333333333333333,
+            "article_id": "dm-test-2a48112ddee712f2364f128076cb2db555a043b1",
+            "index": 10,
+            "predicted_score": 0.5,
+            "sample_id": "dm-test-2a48112ddee712f2364f128076cb2db555a043b1:M10",
+            "summary": "esteban cambiasso says that helping keep leicester in the premier league will feel like winning a trophy . ' the argentinian midfielder poses with the trophy after his team won the 2010 fifa club world cup . argentine primera division .",
+            "true_label": 0.16666666666666669
+          },
+          {
+            "absolute_error": 0.21666666666666679,
+            "article_id": "dm-test-d83b82a9cd504218e604616be3f3c3928e3428b8",
+            "index": 1,
+            "predicted_score": 0.7,
+            "sample_id": "dm-test-d83b82a9cd504218e604616be3f3c3928e3428b8:M7",
+            "summary": "arsenal drew 0-0 with chelsea at stamford bridge on saturday . sky sports pundit thierry henry questioned arsenal's transfer business . henry said the gunners need to buy four players to win the league . he said they need a goalkeeper, centre back, defensive midfielder and striker .",
+            "true_label": 0.9166666666666667
+          },
+          {
+            "absolute_error": 0.19999999999999996,
+            "article_id": "dm-test-632cfdb03aacd90a34a470f6a70b47eee62ec5f0",
+            "index": 18,
+            "predicted_score": 0.7,
+            "sample_id": "dm-test-632cfdb03aacd90a34a470f6a70b47eee62ec5f0:M1",
+            "summary": "serge gnabry played 90 minutes for arsenal under 21s against reading . the 19-year-old has not featured for the first team since march last year . serge gnabry played for arsenal 's development squad as they lost 1-0 .",
+            "true_label": 0.5
+          },
+          {
+            "absolute_error": 0.18333333333333335,
+            "article_id": "dm-test-c16c9fa34ccae7e2b9e29c3988ccb74974c4b3c0",
+            "index": 21,
+            "predicted_score": 0.6,
+            "sample_id": "dm-test-c16c9fa34ccae7e2b9e29c3988ccb74974c4b3c0:M8",
+            "summary": "Carlos Tevez is leaving Juventus to join Boca Juniors in Argentina.",
+            "true_label": 0.41666666666666663
+          }
+        ]
+      }
+    },
+    "validation": {
+      "confusion_matrices": {
+        "baseline": [
+          {
+            "FN": 0,
+            "FP": 7,
+            "TN": 1,
+            "TP": 16,
+            "threshold": 0.3
+          },
+          {
+            "FN": 0,
+            "FP": 3,
+            "TN": 8,
+            "TP": 13,
+            "threshold": 0.5
+          },
+          {
+            "FN": 0,
+            "FP": 7,
+            "TN": 9,
+            "TP": 8,
+            "threshold": 0.7
+          }
+        ],
+        "improved": [
+          {
+            "FN": 0,
+            "FP": 6,
+            "TN": 2,
+            "TP": 16,
+            "threshold": 0.3
+          },
+          {
+            "FN": 0,
+            "FP": 6,
+            "TN": 5,
+            "TP": 13,
+            "threshold": 0.5
+          },
+          {
+            "FN": 3,
+            "FP": 4,
+            "TN": 12,
+            "TP": 5,
+            "threshold": 0.7
+          }
+        ]
+      },
+      "count": 24,
+      "difficulty_breakdown": {
+        "baseline": [
+          {
+            "bucket": "easy",
+            "count": 8,
+            "mae": 0.22916666666666666,
+            "mean_predicted_score": 0.375,
+            "mean_true_label": 0.14583333333333331,
+            "range": "[0.0, 0.3)",
+            "spearman_correlation": -0.36366703342629186
+          },
+          {
+            "bucket": "medium",
+            "count": 8,
+            "mae": 0.2791666666666667,
+            "mean_predicted_score": 0.8,
+            "mean_true_label": 0.5416666666666666,
+            "range": "[0.3, 0.7)",
+            "spearman_correlation": 0.4260281680828159
+          },
+          {
+            "bucket": "hard",
+            "count": 8,
+            "mae": 0.1125,
+            "mean_predicted_score": 0.875,
+            "mean_true_label": 0.8333333333333333,
+            "range": "[0.7, 1.0]",
+            "spearman_correlation": 0.0
+          }
+        ],
+        "improved": [
+          {
+            "bucket": "easy",
+            "count": 8,
+            "mae": 0.24583333333333332,
+            "mean_predicted_score": 0.375,
+            "mean_true_label": 0.14583333333333331,
+            "range": "[0.0, 0.3)",
+            "spearman_correlation": 0.5001563232803553
+          },
+          {
+            "bucket": "medium",
+            "count": 8,
+            "mae": 0.2,
+            "mean_predicted_score": 0.725,
+            "mean_true_label": 0.5416666666666666,
+            "range": "[0.3, 0.7)",
+            "spearman_correlation": 0.5391429360431537
+          },
+          {
+            "bucket": "hard",
+            "count": 8,
+            "mae": 0.17500000000000002,
+            "mean_predicted_score": 0.7375,
+            "mean_true_label": 0.8333333333333333,
+            "range": "[0.7, 1.0]",
+            "spearman_correlation": 0.11615078990692515
+          }
+        ]
+      },
+      "metrics": [
+        {
+          "baseline": 0.20694444444444446,
+          "direction": "lower",
+          "improved": 0.20694444444444446,
+          "metric": "MAE"
+        },
+        {
+          "baseline": 0.6977908174319207,
+          "direction": "higher",
+          "improved": 0.732234179843723,
+          "metric": "Spearman correlation"
+        },
+        {
+          "baseline": 0.524268494221167,
+          "direction": "higher",
+          "improved": 0.5818996415034142,
+          "metric": "Kendall's tau"
+        },
+        {
+          "baseline": 0.7428571428571429,
+          "direction": "higher",
+          "improved": 0.47445255474452563,
+          "metric": "Cohen's kappa at 0.5"
+        },
+        {
+          "baseline": 0.06974537037037037,
+          "direction": "lower",
+          "improved": 0.05280092592592592,
+          "metric": "Brier score"
+        },
+        {
+          "baseline": 0.9545454545454546,
+          "direction": "higher",
+          "improved": 0.958041958041958,
+          "metric": "AUC"
+        }
+      ],
+      "worst_misses": {
+        "baseline": [
+          {
+            "absolute_error": 0.7,
+            "article_id": "dm-test-eeef09d26cf30c2124c0399b08eedc6321fe5d20",
+            "index": 15,
+            "predicted_score": 0.7,
+            "sample_id": "dm-test-eeef09d26cf30c2124c0399b08eedc6321fe5d20:M14",
+            "summary": "neymar helped brazil beat chile 1-0 at the emirates stadium on sunday . real madrid remain top of their euro league division . luis enrique 's barcelona had won their el clasico to move four points clear at the top of la liga .",
+            "true_label": 0.0
+          },
+          {
+            "absolute_error": 0.41666666666666663,
+            "article_id": "dm-test-23e8c1d71474d239aa9ae37b9a05031b0054b8ce",
+            "index": 17,
+            "predicted_score": 1.0,
+            "sample_id": "dm-test-23e8c1d71474d239aa9ae37b9a05031b0054b8ce:M13",
+            "summary": "nigel pearson has urged leicester to keep their cool and ignore their relegation rivals . the foxes host swansea on saturday just three points from safety in the barclays premier league after back-to-back wins . last week 's 3-2 win at west brom handed them a survival lifeline .",
+            "true_label": 0.5833333333333334
+          },
+          {
+            "absolute_error": 0.41666666666666663,
+            "article_id": "dm-test-eeef09d26cf30c2124c0399b08eedc6321fe5d20",
+            "index": 18,
+            "predicted_score": 1.0,
+            "sample_id": "dm-test-eeef09d26cf30c2124c0399b08eedc6321fe5d20:M15",
+            "summary": "neymar and dani alves proved their dedication to barcelona . neymar and alves headed to watch el clasico on thursday night . neymar helped brazil beat chile 1-0 at the emirates stadium on sunday . real madrid remain top of their euro league division over their rivals .",
+            "true_label": 0.5833333333333334
+          },
+          {
+            "absolute_error": 0.3833333333333334,
+            "article_id": "dm-test-808a439a5d83fc47baaea934c8779a7ebc62470d",
+            "index": 22,
+            "predicted_score": 0.8,
+            "sample_id": "dm-test-808a439a5d83fc47baaea934c8779a7ebc62470d:M0",
+            "summary": "mark clattenburg has been named to take charge of manchester derby on sunday . city captain vincent kompany was dismissed for two bookable offences during the euro 2016 qualifier . the 40-year-old has only sent off two players from united and city this season .",
+            "true_label": 0.41666666666666663
+          },
+          {
+            "absolute_error": 0.33333333333333337,
+            "article_id": "dm-test-e43eef75de38d246db9d80216ca9f5487215a78b",
+            "index": 19,
+            "predicted_score": 1.0,
+            "sample_id": "dm-test-e43eef75de38d246db9d80216ca9f5487215a78b:M7",
+            "summary": "filipe luis insists he wants to stay at chelsea until the end of his contract . atletico madrid are considering re-signing the left back in the summer . luis played in brazil's friendly wins against france and chile .",
+            "true_label": 0.6666666666666666
+          }
+        ],
+        "improved": [
+          {
+            "absolute_error": 0.4333333333333333,
+            "article_id": "dm-test-2feca9acf532e33f1ab7442c442c8e19787d8d7b",
+            "index": 12,
+            "predicted_score": 0.6,
+            "sample_id": "dm-test-2feca9acf532e33f1ab7442c442c8e19787d8d7b:M4",
+            "summary": "roland giroux gently cups the fish with his hand from within side the tank and then treats it to a massage . the fish initially moves away before swimming in a full circle and returning to rest in between the man 's fingers .",
+            "true_label": 0.16666666666666669
+          },
+          {
+            "absolute_error": 0.41666666666666663,
+            "article_id": "dm-test-eeef09d26cf30c2124c0399b08eedc6321fe5d20",
+            "index": 18,
+            "predicted_score": 1.0,
+            "sample_id": "dm-test-eeef09d26cf30c2124c0399b08eedc6321fe5d20:M15",
+            "summary": "neymar and dani alves proved their dedication to barcelona . neymar and alves headed to watch el clasico on thursday night . neymar helped brazil beat chile 1-0 at the emirates stadium on sunday . real madrid remain top of their euro league division over their rivals .",
+            "true_label": 0.5833333333333334
+          },
+          {
+            "absolute_error": 0.3166666666666667,
+            "article_id": "dm-test-eeef09d26cf30c2124c0399b08eedc6321fe5d20",
+            "index": 9,
+            "predicted_score": 0.4,
+            "sample_id": "dm-test-eeef09d26cf30c2124c0399b08eedc6321fe5d20:M4",
+            "summary": "brazil star neymar takes a selfie with friends and barcelona team-mate dani alves -lrb- right -rrb- . however real madrid remain top of their euro league division over their bitter rivals , just by points difference . neymar 's sister rafaella led his national side to a 1-0 win over chile at the emirates last weekend .",
+            "true_label": 0.08333333333333331
+          },
+          {
+            "absolute_error": 0.3166666666666667,
+            "article_id": "dm-test-31114653cd606fd3f4b1035f98dedd71f8282cd2",
+            "index": 10,
+            "predicted_score": 0.4,
+            "sample_id": "dm-test-31114653cd606fd3f4b1035f98dedd71f8282cd2:M0",
+            "summary": "the top two sides in group b meet at cardiff city stadium on june 12 . wales ' crunch euro 2016 qualifier with belgium this summer . wales play belgium at the 1958 world cup on june 1958 . chris coleman 's charges can claim one of the two automatic qualifiers spots . belgium and wales have 11 points from five games in 1958 .",
+            "true_label": 0.08333333333333331
+          },
+          {
+            "absolute_error": 0.31666666666666665,
+            "article_id": "dm-test-23e8c1d71474d239aa9ae37b9a05031b0054b8ce",
+            "index": 17,
+            "predicted_score": 0.9,
+            "sample_id": "dm-test-23e8c1d71474d239aa9ae37b9a05031b0054b8ce:M13",
+            "summary": "nigel pearson has urged leicester to keep their cool and ignore their relegation rivals . the foxes host swansea on saturday just three points from safety in the barclays premier league after back-to-back wins . last week 's 3-2 win at west brom handed them a survival lifeline .",
+            "true_label": 0.5833333333333334
+          }
+        ]
+      }
+    }
+  }
+}
