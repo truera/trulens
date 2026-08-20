@@ -355,7 +355,7 @@ def _finalize_span(
             only_set_user_defined_attributes=only_set_user_defined_attributes,
         )
     except Exception as e:
-        logger.error(f"Error setting attributes: {e}")
+        logger.error(f"Error finalizing span during cancellation. {e}")
         attributes_exception = e
     for span_end_callback in span_end_callbacks:
         span_end_callback(span)
@@ -528,14 +528,14 @@ class instrument:
                 # Run function.
                 try:
                     ret = await func(*args, **kwargs)
-                except asyncio.CancelledError:
+                except asyncio.CancelledError as error:
                     try:
                         _finalize_span(
                             span,
                             self.span_type,
                             func_name_for_call,
                             func,
-                            None,
+                            error,
                             self.attributes,
                             instance,
                             args,
@@ -544,9 +544,9 @@ class instrument:
                             self.only_set_user_defined_attributes,
                             span_end_callbacks,
                         )
-                    except Exception:
-                        logger.exception(
-                            "Error finalizing span during cancellation."
+                    except Exception as e:
+                        logger.error(
+                            f"Error finalizing span during cancellation. {e}"
                         )
                     raise
                 except Exception as e:

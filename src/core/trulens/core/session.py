@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Iterable
+from collections.abc import Mapping
+from collections.abc import Sequence
 from concurrent import futures
 from datetime import datetime
 import inspect
@@ -14,14 +17,6 @@ from time import time
 from typing import (
     TYPE_CHECKING,
     Any,
-    Dict,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
 )
 import warnings
 
@@ -142,46 +137,44 @@ class TruSession(
     GROUND_TRUTHS_BATCH_SIZE: int = 100
     """Time to wait before inserting a batch of ground truths into the database."""
 
-    _evaluator_stop: Optional[threading.Event] = pydantic.PrivateAttr(None)
+    _evaluator_stop: threading.Event | None = pydantic.PrivateAttr(None)
     """Event for stopping the deferred evaluator which runs in another thread."""
 
-    _evaluator_proc: Optional[Union[Process, Thread]] = pydantic.PrivateAttr(
-        None
-    )
+    _evaluator_proc: Process | Thread | None = pydantic.PrivateAttr(None)
 
-    _dashboard_urls: Optional[str] = pydantic.PrivateAttr(None)
+    _dashboard_urls: str | None = pydantic.PrivateAttr(None)
 
-    _dashboard_proc: Optional[Process] = pydantic.PrivateAttr(None)
+    _dashboard_proc: Process | None = pydantic.PrivateAttr(None)
 
-    _tunnel_listener_stdout: Optional[Thread] = pydantic.PrivateAttr(None)
+    _tunnel_listener_stdout: Thread | None = pydantic.PrivateAttr(None)
 
-    _tunnel_listener_stderr: Optional[Thread] = pydantic.PrivateAttr(None)
+    _tunnel_listener_stderr: Thread | None = pydantic.PrivateAttr(None)
 
-    _dashboard_listener_stdout: Optional[Thread] = pydantic.PrivateAttr(None)
+    _dashboard_listener_stdout: Thread | None = pydantic.PrivateAttr(None)
 
-    _dashboard_listener_stderr: Optional[Thread] = pydantic.PrivateAttr(None)
+    _dashboard_listener_stderr: Thread | None = pydantic.PrivateAttr(None)
 
-    _sampling_controller: Optional[Any] = pydantic.PrivateAttr(None)
+    _sampling_controller: Any | None = pydantic.PrivateAttr(None)
     """Active :class:`SamplingController`, set via :meth:`configure_online_eval`."""
 
-    connector: Optional[core_connector.DBConnector] = pydantic.Field(
+    connector: core_connector.DBConnector | None = pydantic.Field(
         None, exclude=True
     )
     """Database Connector to use. If not provided, a default is created and
     used."""
 
-    _experimental_otel_exporter: Optional[SpanExporter] = pydantic.PrivateAttr(
+    _experimental_otel_exporter: SpanExporter | None = pydantic.PrivateAttr(
         None
     )
 
-    _experimental_tracer_provider: Optional[TracerProvider] = (
-        pydantic.PrivateAttr(None)
+    _experimental_tracer_provider: TracerProvider | None = pydantic.PrivateAttr(
+        None
     )
 
     @property
     def experimental_otel_exporter(
         self,
-    ) -> Optional[SpanExporter]:
+    ) -> SpanExporter | None:
         """EXPERIMENTAL(otel_tracing): OpenTelemetry SpanExporter to send spans
         to.
 
@@ -225,14 +218,11 @@ class TruSession(
 
     def __init__(
         self,
-        connector: Optional[core_connector.DBConnector] = None,
-        experimental_feature_flags: Optional[
-            Union[
-                Mapping[core_experimental.Feature, bool],
-                List[core_experimental.Feature],
-            ]
-        ] = None,
-        _experimental_otel_exporter: Optional[SpanExporter] = None,
+        connector: core_connector.DBConnector | None = None,
+        experimental_feature_flags: Mapping[core_experimental.Feature, bool]
+        | list[core_experimental.Feature]
+        | None = None,
+        _experimental_otel_exporter: SpanExporter | None = None,
         **kwargs: Any,
     ):
         if python_utils.safe_hasattr(self, "connector"):
@@ -295,6 +285,19 @@ class TruSession(
 
             _TruSession._start_track_costs_background()
 
+    def auto_instrument_llm(self) -> None:
+        """Auto-instrument any LLM call across detected SDK clients (OpenAI, Anthropic, Google GenAI, Bedrock, LiteLLM).
+
+        Hooks completion methods at the client/completion layer and emits
+        SpanType.GENERATION spans with gen_ai.* attributes, cost, and span events
+        without requiring a framework wrapper or manual @instrument decorators.
+        """
+        from trulens.experimental.otel_tracing.core.auto_instrument import (
+            auto_instrument_all_llms,
+        )
+
+        auto_instrument_all_llms()
+
     # -- Sampling / online-eval configuration --------------------------------
 
     @property
@@ -314,10 +317,10 @@ class TruSession(
 
     def configure_online_eval(
         self,
-        sample_rate: Union[float, Dict[str, float]] = 1.0,
-        throttle: Optional[int] = None,
-        cost_budget: Optional[float] = None,
-        feedbacks: Optional[Sequence[core_metric.Metric]] = None,
+        sample_rate: float | dict[str, float] = 1.0,
+        throttle: int | None = None,
+        cost_budget: float | None = None,
+        feedbacks: Sequence[core_metric.Metric] | None = None,
     ) -> None:
         """Configure sampling for automatic post-ingest evaluation.
 
@@ -355,7 +358,7 @@ class TruSession(
 
     def _warn_cost_tracking(
         self,
-        feedbacks: Optional[Sequence[core_metric.Metric]],
+        feedbacks: Sequence[core_metric.Metric] | None,
     ) -> None:
         """Emit warnings for metrics whose providers cannot report costs."""
         if feedbacks is None or len(feedbacks) == 0:
@@ -387,7 +390,7 @@ class TruSession(
                     type(provider).__name__,
                 )
 
-    def App(self, *args, app: Optional[Any] = None, **kwargs) -> base_app.App:
+    def App(self, *args, app: Any | None = None, **kwargs) -> base_app.App:
         """Create an App from the given App constructor arguments by guessing
         which app type they refer to.
 
@@ -637,7 +640,7 @@ class TruSession(
         """
         self.connector.reset_database()
 
-    def migrate_database(self, **kwargs: Dict[str, Any]):
+    def migrate_database(self, **kwargs: dict[str, Any]):
         """Migrates the database.
 
         This should be run whenever there are breaking changes in a database
@@ -654,7 +657,7 @@ class TruSession(
         self.connector.migrate_database(**kwargs)
 
     def add_record(
-        self, record: Optional[record_schema.Record] = None, **kwargs: dict
+        self, record: record_schema.Record | None = None, **kwargs: dict
     ) -> types_schema.RecordID:
         """Add a record to the database.
 
@@ -685,12 +688,12 @@ class TruSession(
         self,
         record: record_schema.Record,
         feedback_functions: Sequence[core_metric.Metric],
-        app: Optional[app_schema.AppDefinition] = None,
+        app: app_schema.AppDefinition | None = None,
         wait: bool = True,
-    ) -> Union[
-        Iterable[feedback_schema.FeedbackResult],
-        Iterable[Future[feedback_schema.FeedbackResult]],
-    ]:
+    ) -> (
+        Iterable[feedback_schema.FeedbackResult]
+        | Iterable[Future[feedback_schema.FeedbackResult]]
+    ):
         """Run a collection of feedback functions and report their result.
 
         Args:
@@ -740,7 +743,7 @@ class TruSession(
         if not isinstance(wait, bool):
             raise ValueError("`wait` must be a bool.")
 
-        future_feedback_map: Dict[
+        future_feedback_map: dict[
             Future[feedback_schema.FeedbackResult], core_feedback.Feedback
         ] = {
             p[1]: p[0]
@@ -795,12 +798,9 @@ class TruSession(
 
     def add_feedback(
         self,
-        feedback_result_or_future: Optional[
-            Union[
-                feedback_schema.FeedbackResult,
-                Future[feedback_schema.FeedbackResult],
-            ]
-        ] = None,
+        feedback_result_or_future: feedback_schema.FeedbackResult
+        | Future[feedback_schema.FeedbackResult]
+        | None = None,
         **kwargs: dict,
     ) -> types_schema.FeedbackResultID:
         """Add a single feedback result or future to the database and return its unique id.
@@ -831,12 +831,10 @@ class TruSession(
     def add_feedbacks(
         self,
         feedback_results: Iterable[
-            Union[
-                feedback_schema.FeedbackResult,
-                Future[feedback_schema.FeedbackResult],
-            ]
+            feedback_schema.FeedbackResult
+            | Future[feedback_schema.FeedbackResult]
         ],
-    ) -> List[types_schema.FeedbackResultID]:
+    ) -> list[types_schema.FeedbackResultID]:
         """Add multiple feedback results to the database and return their unique ids.
 
         Args:
@@ -853,7 +851,7 @@ class TruSession(
 
     def get_app(
         self, app_id: types_schema.AppID
-    ) -> Optional[serial_utils.JSONized[app_schema.AppDefinition]]:
+    ) -> serial_utils.JSONized[app_schema.AppDefinition] | None:
         """Look up an app from the database.
 
         This method produces the JSON-ized version of the app. It can be deserialized back into an [AppDefinition][trulens.core.schema.app.AppDefinition] with `model_validate`:
@@ -878,7 +876,7 @@ class TruSession(
 
         return self.connector.get_app(app_id)
 
-    def get_apps(self) -> List[serial_utils.JSONized[app_schema.AppDefinition]]:
+    def get_apps(self) -> list[serial_utils.JSONized[app_schema.AppDefinition]]:
         """Look up all apps from the database.
 
         Returns:
@@ -891,16 +889,16 @@ class TruSession(
         return self.connector.get_apps()
 
     def get_conversations(
-        self, app_id: Optional[types_schema.AppID] = None
-    ) -> Dict[types_schema.ConversationID, conversation_schema.Conversation]:
+        self, app_id: types_schema.AppID | None = None
+    ) -> dict[types_schema.ConversationID, conversation_schema.Conversation]:
         """Get conversations reconstructed from recorded spans."""
         return self.connector.get_conversations(app_id=app_id)
 
     def get_records_by_conversation(
         self,
         conversation_id: types_schema.ConversationID,
-        app_id: Optional[types_schema.AppID] = None,
-    ) -> List[record_schema.Record]:
+        app_id: types_schema.AppID | None = None,
+    ) -> list[record_schema.Record]:
         """Get a conversation's records ordered chronologically."""
         return self.connector.get_records_by_conversation(
             conversation_id=conversation_id, app_id=app_id
@@ -908,15 +906,15 @@ class TruSession(
 
     def get_records_and_feedback(
         self,
-        app_ids: Optional[List[types_schema.AppID]] = None,
-        app_name: Optional[types_schema.AppName] = None,
-        app_version: Optional[types_schema.AppVersion] = None,
-        app_versions: Optional[List[types_schema.AppVersion]] = None,
-        run_name: Optional[types_schema.RunName] = None,
-        record_ids: Optional[List[types_schema.RecordID]] = None,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None,
-    ) -> Tuple[pandas.DataFrame, List[str]]:
+        app_ids: list[types_schema.AppID] | None = None,
+        app_name: types_schema.AppName | None = None,
+        app_version: types_schema.AppVersion | None = None,
+        app_versions: list[types_schema.AppVersion] | None = None,
+        run_name: types_schema.RunName | None = None,
+        record_ids: list[types_schema.RecordID] | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> tuple[pandas.DataFrame, list[str]]:
         """Get records, their feedback results, and feedback names.
 
         Args:
@@ -957,12 +955,12 @@ class TruSession(
 
     def get_leaderboard(
         self,
-        app_ids: Optional[List[types_schema.AppID]] = None,
-        group_by_metadata_key: Optional[str] = None,
-        limit: Optional[int] = None,
-        offset: Optional[int] = None,
+        app_ids: list[types_schema.AppID] | None = None,
+        group_by_metadata_key: str | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
         format: str = "dataframe",
-    ) -> Union[pandas.DataFrame, str, List[Dict[str, Any]]]:
+    ) -> pandas.DataFrame | str | list[dict[str, Any]]:
         """Get a leaderboard for the given apps.
 
         Args:
@@ -1007,7 +1005,7 @@ class TruSession(
         self,
         dataset_name: str,
         ground_truth_df: pandas.DataFrame,
-        dataset_metadata: Optional[Dict[str, Any]] = None,
+        dataset_metadata: dict[str, Any] | None = None,
     ):
         """Create a new dataset, if not existing, and add ground truth data to it. If
         the dataset with the same name already exists, the ground truth data will be added to it.
@@ -1048,10 +1046,10 @@ class TruSession(
 
     def get_ground_truth(
         self,
-        dataset_name: Optional[str] = None,
-        user_table_name: Optional[str] = None,
-        user_schema_mapping: Optional[Dict[str, str]] = None,
-        user_schema_name: Optional[str] = None,
+        dataset_name: str | None = None,
+        user_table_name: str | None = None,
+        user_schema_mapping: dict[str, str] | None = None,
+        user_schema_name: str | None = None,
     ) -> pandas.DataFrame:
         """Get ground truth data from the dataset. If `user_table_name` and `user_schema_mapping` are provided,
         load a virtual dataset from the user's table using the schema mapping. If `dataset_name` is provided,
@@ -1077,9 +1075,9 @@ class TruSession(
         restart: bool = False,
         fork: bool = False,
         disable_tqdm: bool = False,
-        run_location: Optional[feedback_schema.FeedbackRunLocation] = None,
+        run_location: feedback_schema.FeedbackRunLocation | None = None,
         return_when_done: bool = False,
-    ) -> Optional[Union[Process, Thread]]:
+    ) -> Process | Thread | None:
         """
         Start a deferred feedback function evaluation thread or process.
 
@@ -1196,15 +1194,15 @@ class TruSession(
 
             runs_stats = defaultdict(int)
 
-            futures_map: Dict[
+            futures_map: dict[
                 Future[feedback_schema.FeedbackResult], pandas.Series
             ] = dict()
 
             while fork or not self._evaluator_stop.is_set():
                 if len(futures_map) < self.DEFERRED_NUM_RUNS:
                     # Get some new evals to run if some already completed by now.
-                    new_futures: List[
-                        Tuple[
+                    new_futures: list[
+                        tuple[
                             pandas.Series,
                             Future[feedback_schema.FeedbackResult],
                         ]
@@ -1352,7 +1350,7 @@ class TruSession(
 
     def wait_for_records(
         self,
-        record_ids: List[str],
+        record_ids: list[str],
         timeout: float = 10,
         poll_interval: float = 0.5,
     ) -> None:
@@ -1372,7 +1370,7 @@ class TruSession(
 
     def _wait_for_records_otel(
         self,
-        record_ids: List[str],
+        record_ids: list[str],
         timeout: float,
         poll_interval: float,
     ) -> None:
@@ -1420,7 +1418,7 @@ class TruSession(
 
     def _wait_for_records_legacy(
         self,
-        record_ids: List[str],
+        record_ids: list[str],
         timeout: float,
         poll_interval: float,
     ) -> None:
@@ -1442,8 +1440,8 @@ class TruSession(
 
     def wait_for_feedback_results(
         self,
-        record_ids: List[str],
-        feedback_names: List[str],
+        record_ids: list[str],
+        feedback_names: list[str],
         timeout: float = 60,
         poll_interval: float = 0.5,
     ) -> None:
@@ -1524,7 +1522,7 @@ class TruSession(
         self,
         record: Record,
         feedback_name: str,
-        feedback_result: Union[float, int],
+        feedback_result: float,
         higher_is_better: bool,
     ) -> None:
         """
@@ -1580,7 +1578,7 @@ class TruSession(
     def compute_feedbacks_on_events(
         self,
         events: pandas.DataFrame,
-        feedbacks: List[core_metric.Metric],
+        feedbacks: list[core_metric.Metric],
         raise_error_on_no_feedbacks_computed: bool = False,
     ) -> None:
         """Compute feedbacks/metrics on events.
@@ -1615,10 +1613,10 @@ class TruSession(
 
     def get_events(
         self,
-        app_name: Optional[str],
-        app_version: Optional[str],
-        record_ids: Optional[List[str]] = None,
-        start_time: Optional[datetime] = None,
+        app_name: str | None,
+        app_version: str | None,
+        record_ids: list[str] | None = None,
+        start_time: datetime | None = None,
     ) -> pandas.DataFrame:
         """
         Get events/spans from the database in OTel mode.
