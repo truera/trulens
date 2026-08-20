@@ -42,6 +42,43 @@ def test_conversation_provider_methods_use_supported_score_arguments() -> None:
     )
 
 
+def test_conversation_cot_methods_use_supported_score_arguments() -> None:
+    provider = mock.create_autospec(llm_provider.LLMProvider, instance=True)
+    provider.generate_score_and_reasons.return_value = (1.0, {"reason": "ok"})
+    records = [{"input": "Help", "output": "Done"}]
+
+    assert llm_provider.LLMProvider.topic_adherence_with_cot_reasons(
+        provider,
+        records=records,
+        reference_topics=["support"],
+    ) == (1.0, {"reason": "ok"})
+    provider.generate_score_and_reasons.assert_called_once_with(
+        system_prompt=mock.ANY,
+        user_prompt=mock.ANY,
+        min_score_val=0,
+        max_score_val=3,
+        temperature=0.0,
+    )
+
+
+def test_agent_goal_accuracy_cot_keeps_binary_output_space() -> None:
+    provider = mock.create_autospec(llm_provider.LLMProvider, instance=True)
+    provider.generate_score_and_reasons.return_value = (1.0, {"reason": "ok"})
+    records = [{"input": "Help", "output": "Done"}]
+
+    assert llm_provider.LLMProvider.agent_goal_accuracy_with_cot_reasons(
+        provider,
+        records=records,
+    ) == (1.0, {"reason": "ok"})
+    provider.generate_score_and_reasons.assert_called_once_with(
+        system_prompt=mock.ANY,
+        user_prompt=mock.ANY,
+        min_score_val=0,
+        max_score_val=1,
+        temperature=0.0,
+    )
+
+
 def test_agent_goal_accuracy_requests_score_only() -> None:
     prompt = templates_conversation.AgentGoalAccuracy.system_prompt_template
     assert "Reason:" not in prompt
