@@ -67,6 +67,9 @@ from trulens.experimental.otel_tracing.core.span import (
     set_record_root_span_attributes,
 )
 from trulens.experimental.otel_tracing.core.span import (
+    set_span_attribute_safely,
+)
+from trulens.experimental.otel_tracing.core.span import (
     set_user_defined_attributes,
 )
 from trulens.otel.semconv.constants import (
@@ -83,6 +86,7 @@ import wrapt
 
 if TYPE_CHECKING:
     from trulens.core.app import App
+    from trulens.core.schema import prompt as prompt_schema
 
 
 logger = logging.getLogger(__name__)
@@ -129,6 +133,66 @@ class span_group:
         if self._token is not None:
             _current_span_groups.reset(self._token)
             self._token = None
+
+
+def set_prompt_lineage_attributes(
+    span: Span,
+    rendered: "prompt_schema.RenderedPrompt",
+) -> None:
+    """Attach prompt lineage to a span the caller owns.
+
+    Only identifiers and a hash of the rendered content are written, so this
+    works with GenAI content capture off and never copies a prompt body into
+    the span.
+
+    Args:
+        span: The span to write to. Ignored when it is not recording.
+        rendered: The result of rendering one exact prompt version.
+    """
+
+    if span is None or not span.is_recording():
+        return
+
+    set_span_attribute_safely(
+        span, SpanAttributes.PROMPT.ID, rendered.prompt_id
+    )
+    set_span_attribute_safely(span, SpanAttributes.PROMPT.SLUG, rendered.slug)
+    set_span_attribute_safely(
+        span, SpanAttributes.PROMPT.VERSION_ID, rendered.version_id
+    )
+    set_span_attribute_safely(span, SpanAttributes.PROMPT.LABEL, rendered.label)
+    set_span_attribute_safely(
+        span,
+        SpanAttributes.PROMPT.RENDERED_CONTENT_HASH,
+        rendered.rendered_content_hash,
+    )
+
+
+class prompt_lineage:
+    """Context manager that tags the current span with prompt lineage.
+
+    The span belongs to the caller. This writes the prompt id, slug, exact
+    version id, requested label, and rendered-content hash onto it, and calls
+    no model.
+
+    Example::
+
+        resolved = session.get_prompt("support-assistant", label="production")
+        request = resolved.render(question=question)
+
+        with prompt_lineage(request):
+            answer = my_generation_call(request.messages)
+    """
+
+    def __init__(self, rendered: "prompt_schema.RenderedPrompt") -> None:
+        self.rendered = rendered
+
+    def __enter__(self) -> "prompt_schema.RenderedPrompt":
+        set_prompt_lineage_attributes(trace.get_current_span(), self.rendered)
+        return self.rendered
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return False
 
 
 def get_func_name(func: Callable) -> str:
