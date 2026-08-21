@@ -1,0 +1,83 @@
+# Code owners for TruLens.
+#
+# Ownership here is the authoritative record of Area Reviewer scope. See
+# CONTRIBUTOR_LADDER.md for how paths get assigned and MAINTAINERS.md for the
+# current roster.
+#
+# GitHub ignores CODEOWNERS entries for accounts without write access, so Area
+# Triagers cannot appear here; their advisory routing lives in
+# .github/area-reviewers.yml.
+#
+# ORDER MATTERS: for CODEOWNERS the LAST matching pattern wins, not the union of
+# matches. Broad areas are listed first and narrower ones after, so that a
+# specific owner overrides the surrounding area rather than being shadowed by it.
+
+# Default: any path not matched below.
+*                                       @truera/trulens_maintainers
+
+# ---------------------------------------------------------------------------
+# Broad areas
+# ---------------------------------------------------------------------------
+
+# Core. Largest area in the repo; advisory triage is routed to the whole cohort
+# via area-reviewers.yml, but ownership stays with maintainers for now.
+/src/core/                              @truera/trulens_maintainers
+
+# Documentation and the docs site.
+/docs/                                  @truera/trulens_maintainers
+/mkdocs.yml                             @truera/trulens_maintainers
+/README.md                              @truera/trulens_maintainers
+
+# Feedback functions.
+/src/feedback/                          @truera/trulens_maintainers
+
+# Providers — all provider integrations except Cortex.
+/src/providers/                         @truera/trulens_maintainers
+
+# Benchmarking and golden sets.
+/src/benchmark/                         @truera/trulens_maintainers
+
+# OpenTelemetry semantic conventions.
+/src/otel/                              @truera/trulens_maintainers
+
+# ---------------------------------------------------------------------------
+# Narrower areas — must stay below the broad entries above
+# ---------------------------------------------------------------------------
+
+# Feedback templates.
+/src/feedback/trulens/feedback/templates/     @truera/trulens_maintainers
+
+# Ensemble and prompt optimization.
+/src/feedback/trulens/feedback/optimize.py    @truera/trulens_maintainers
+/src/apps/gepa/                         @truera/trulens_maintainers
+
+# LLM judge alignment.
+/src/benchmark/trulens/benchmark/alignment_report.py        @truera/trulens_maintainers
+/src/benchmark/trulens/benchmark/cross_model_alignment.py   @truera/trulens_maintainers
+/src/benchmark/trulens/benchmark/criteria_ab_test.py        @truera/trulens_maintainers
+/src/benchmark/trulens/benchmark/score_distribution.py      @truera/trulens_maintainers
+/docs/component_guides/evaluation/llm_judge_alignment.md    @truera/trulens_maintainers
+
+# Offline and batch evaluation.
+/src/core/trulens/core/batch.py         @truera/trulens_maintainers
+/src/benchmark/trulens/benchmark/golden_set_generator.py    @truera/trulens_maintainers
+
+# Runs and online evaluation sampling.
+/src/core/trulens/core/run.py           @truera/trulens_maintainers
+/src/core/trulens/core/sampling.py      @truera/trulens_maintainers
+
+# Cortex provider. Tracks unreleased Snowflake API changes, so it is carved out
+# of the providers area and kept with maintainers.
+/src/providers/cortex/                   @truera/trulens_maintainers
+
+# ---------------------------------------------------------------------------
+# Governance
+# ---------------------------------------------------------------------------
+/CONTRIBUTOR_LADDER.md                  @truera/trulens_maintainers
+/GOVERNANCE.md                          @truera/trulens_maintainers
+/MAINTAINERS.md                         @truera/trulens_maintainers
+/.github/CODEOWNERS                     @truera/trulens_maintainers
+/.github/area-reviewers.yml             @truera/trulens_maintainers
+/.github/workflows/                     @truera/trulens_maintainers
+/.github/scripts/                       @truera/trulens_maintainers
+/DCO                                    @truera/trulens_maintainers

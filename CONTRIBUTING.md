@@ -126,6 +126,41 @@ Past community contributions include the SQLAlchemy connector and LiteLLM provid
 
 ---
 
+## Certifying Your Contribution
+
+The pull request template ends with two checkboxes. Tick both and you're done;
+they cover every commit in the pull request.
+
+```
+- [x] I certify that I wrote these changes, or have the right to submit them under this project's license — the Developer Certificate of Origin
+- [x] This change follows the TruLens standards for code style, imports, docstrings, and tests
+```
+
+The first is the [Developer Certificate of Origin](DCO), the same certificate the
+Linux kernel and CNCF projects use. There is no agreement to sign, no form, and no
+account to create. The text is short and worth reading once.
+
+The second points at [Standards](docs/contributing/standards.md), also published at
+<https://www.trulens.org/contributing/standards/>. Most of it is enforced by
+`make format` and `make lint`; the parts that aren't are the module-import
+conventions, the docstring format, and the guidance on
+[AI-assisted contributions](docs/contributing/standards.md#ai-assisted-contributions),
+which is worth reading before you open a pull request.
+
+A CI check looks for both lines and says which one is missing or unticked. It
+re-runs when you push, so the check reflects the commits currently in the pull
+request rather than the ones that were there when you ticked the boxes.
+
+Two notes:
+
+- Leave both lines in the description. If you delete the section the check cannot
+  find them and will ask you to add them back.
+- Rewording around them is fine. The check looks for a task-list item mentioning
+  the Developer Certificate of Origin, and one mentioning TruLens standards, not
+  for exact wording.
+
+No per-commit sign-off is needed.
+
 ## Reference
 
 Before contributing, familiarize yourself with:
@@ -139,6 +174,28 @@ Before contributing, familiarize yourself with:
 | [Release Policies](docs/contributing/policies.md) | Versioning, deprecation, and experimental features |
 | [Tech Debt](docs/contributing/techdebt.md) | Known issues and areas needing refactoring |
 | [Database Schema](docs/contributing/database.md) | OTEL events table, legacy schema, and migrations |
+
+---
+
+## Taking on More Responsibility
+
+Contributing regularly and want a larger role? TruLens has a documented path from
+contributor to maintainer, with published criteria at each step:
+
+| Rung | Write access | Scope |
+| ---- | ------------ | ----- |
+| Contributor | None | — |
+| Area Triager | None (GitHub Triage role) | Issues and PRs in one area |
+| Area Reviewer | Merge, scoped to paths | One named area |
+| Maintainer | Merge, project-wide | Whole project |
+
+Area Triager needs about a month of contribution history and one sponsor. Most active
+contributors are ready for it sooner than they expect. See the [Contributor
+Ladder](CONTRIBUTOR_LADDER.md) for requirements and the nomination process, and
+[Governance](GOVERNANCE.md) for how decisions get made.
+
+If you're already contributing and interested, say so in an issue or to a
+maintainer. You don't need to wait to be noticed.
 
 ---
 
