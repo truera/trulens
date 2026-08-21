@@ -9,11 +9,9 @@ Project-wide merge rights, release authority, and direction.
 | Name | Employer | GitHub |
 | ---- | -------- | ------ |
 | Alex Issa | Snowflake | A5Wagyu32 |
-| Anupam Datta | Snowflake | sfc-gh-adatta |
 | Daniel Huang | Snowflake | daniel-huang-1230 |
 | Garett Tok Ern Liang | Snowflake | sfc-gh-gtokernliang |
 | Josh Reini | Snowflake | joshreini1 |
-| Shayak Sen | Snowflake | sfc-gh-shsen |
 | Stan Rudenko | Snowflake | sfc-gh-srudenko |
 
 ## Area Reviewers
@@ -37,7 +35,9 @@ back, open an issue or email a Maintainer and ask — no re-nomination needed.
 
 | Name | Employer at the time | GitHub |
 | ---- | -------------------- | ------ |
+| Anupam Datta | Snowflake | sfc-gh-adatta |
 | David Kurokawa | Snowflake | sfc-gh-dkurokawa |
 | Nikhil Vytla | Snowflake | sfc-gh-nvytla |
 | Piotr Mardziel | Snowflake | piotrm0 |
 | Ricardo Shih | TruEra | rshih32 |
+| Shayak Sen | Snowflake | sfc-gh-shsen |
