@@ -3,13 +3,12 @@
 ## Overview
 
 TruLens is an open source project maintained by Snowflake's AI Observability
-team. Development is primarily led by a small core team, with contributions
-welcome from the community.
+team. Development is led by a small core team, with contributions welcome from
+the community.
 
 Review and merge happen in this repository, in public. There is no internal
-pipeline that mirrors changes in from elsewhere. This is deliberate: it is what
-makes it possible for contributors outside Snowflake to hold real
-responsibility here.
+pipeline that mirrors changes in from elsewhere, which is what makes it possible
+for contributors outside Snowflake to hold real responsibility here.
 
 ## Roles
 
@@ -49,7 +48,7 @@ Nominations to the contributor ladder follow the process in
 ## Releases
 
 Release authority, and the credentials it requires — PyPI publish rights,
-signing keys, CI secrets — attach only to Maintainers. Area Reviewers have merge
+signing keys, CI secrets — belong to Maintainers only. Area Reviewers have merge
 rights within their area and no release credentials. Release policy is in
 [POLICIES.md](./POLICIES.md).
 
@@ -61,10 +60,10 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup and guidelines.
 
 ## Evolving Governance
 
-This governance model reflects the current state of the project. As the
-contributor community grows, we expect to adopt more formal processes (such as
-shared decision-making among maintainers or a steering committee). Changes to
-this document will be proposed via pull request and approved by the project lead.
+This model reflects the current state of the project. As the contributor
+community grows we expect to adopt more formal processes, such as shared
+decision-making among maintainers or a steering committee. Changes to this
+document are proposed via pull request and approved by the project lead.
 
 ---
 

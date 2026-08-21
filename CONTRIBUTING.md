@@ -144,9 +144,8 @@ Before contributing, familiarize yourself with:
 
 ## Taking on More Responsibility
 
-Contributing regularly and want a larger role in the project? TruLens has a
-documented path from contributor to maintainer, with published criteria at each
-step:
+Contributing regularly and want a larger role? TruLens has a documented path from
+contributor to maintainer, with published criteria at each step:
 
 | Rung | Write access | Scope |
 | ---- | ------------ | ----- |
@@ -155,13 +154,13 @@ step:
 | Area Reviewer | Merge, scoped to paths | One named area |
 | Maintainer | Merge, project-wide | Whole project |
 
-Triager needs roughly a month of contribution history and one sponsor, and is
-the rung most active contributors are ready for sooner than they expect. See the
-[Contributor Ladder](CONTRIBUTOR_LADDER.md) for requirements and the nomination
-process, and [Governance](GOVERNANCE.md) for how decisions get made.
+Triager needs about a month of contribution history and one sponsor. Most active
+contributors are ready for it sooner than they expect. See the [Contributor
+Ladder](CONTRIBUTOR_LADDER.md) for requirements and the nomination process, and
+[Governance](GOVERNANCE.md) for how decisions get made.
 
-If you are already contributing and interested, say so in an issue or to a
-maintainer — you do not need to wait to be noticed.
+If you're already contributing and interested, say so in an issue or to a
+maintainer. You don't need to wait to be noticed.
 
 ---
 

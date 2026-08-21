@@ -29,9 +29,9 @@ _Nominations in progress._
 
 ## Emeritus
 
-Former Triagers, Area Reviewers, and Maintainers. Merit earned does not expire:
-anyone listed here can be reinstated at their previous rung on request. To come
-back, open an issue or email a Maintainer and ask — no re-nomination needed.
+Former Triagers, Area Reviewers, and Maintainers. Merit earned doesn't expire:
+anyone listed here can be reinstated at their previous rung by opening an issue
+or emailing a Maintainer.
 
 | Name | Employer at the time | GitHub |
 | ---- | -------------------- | ------ |
