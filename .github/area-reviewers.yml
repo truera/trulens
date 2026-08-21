@@ -103,10 +103,14 @@ areas:
     # reviewers: [Payal2000]
 
   - name: Providers
-    # All provider integrations. Siddharth authored the Google/Gemini provider;
-    # the area is the whole provider surface because the integrations share
-    # shape and the failure modes recur across them.
+    # All provider integrations except Cortex. Siddharth authored the
+    # Google/Gemini provider; the area is the whole provider surface because the
+    # integrations share plumbing and the same failure modes recur across them.
+    # Cortex is excluded: it is Snowflake's own provider and the busiest of the
+    # eight, so it stays with maintainers.
     paths:
       - src/providers/
+    exclude:
+      - src/providers/cortex/
     reviewers: []
     # reviewers: [sahusiddharth]

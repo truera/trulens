@@ -35,7 +35,7 @@
 # Proposed Area Reviewer: @debu-sinha
 /src/feedback/                          @truera/trulens-maintainers
 
-# Providers — all provider integrations.
+# Providers — all provider integrations except Cortex.
 # Proposed Area Reviewer: @sahusiddharth
 /src/providers/                         @truera/trulens-maintainers
 
@@ -77,6 +77,10 @@
 # Proposed Area Reviewer: @Payal2000
 /src/core/trulens/core/run.py           @truera/trulens-maintainers
 /src/core/trulens/core/sampling.py      @truera/trulens-maintainers
+
+# Cortex provider. Snowflake's own provider and the busiest of the eight;
+# deliberately carved out of the providers area and kept with maintainers.
+/src/providers/cortex/                   @truera/trulens-maintainers
 
 # ---------------------------------------------------------------------------
 # Governance
