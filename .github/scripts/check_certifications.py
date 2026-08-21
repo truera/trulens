@@ -29,13 +29,12 @@ import sys
 # reordered without breaking the check.
 REQUIRED = {
     "Developer Certificate of Origin": (
-        "- [x] I certify that I wrote these changes, or have the right to submit\n"
-        "      them under this project's license (the Developer Certificate of\n"
-        "      Origin)"
+        "- [x] I certify that I wrote these changes, or have the right to submit"
+        " them under this project's license (the Developer Certificate of Origin)"
     ),
     "TruLens standards": (
-        "- [x] This change follows the TruLens standards\n"
-        "      (https://www.trulens.org/contributing/standards/)"
+        "- [x] This change follows the TruLens standards"
+        " (https://www.trulens.org/contributing/standards/)"
     ),
 }
 

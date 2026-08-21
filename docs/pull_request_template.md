@@ -20,11 +20,7 @@ Please include any other details of this change useful for _TruLens_ developers.
 
 ## Certification
 
-- [ ] I certify that I wrote these changes, or have the right to submit them
-  under this project's license — the
-  [Developer Certificate of Origin](https://github.com/truera/trulens/blob/main/DCO)
-- [ ] This change follows the
-  [TruLens standards](https://www.trulens.org/contributing/standards/) for code
-  style, imports, docstrings, and tests
+- [ ] I certify that I wrote these changes, or have the right to submit them under this project's license — the [Developer Certificate of Origin](https://github.com/truera/trulens/blob/main/DCO)
+- [ ] This change follows the [TruLens standards](https://www.trulens.org/contributing/standards/) for code style, imports, docstrings, and tests
 
 Please leave both lines in place; a CI check looks for them.

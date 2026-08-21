@@ -132,10 +132,8 @@ The pull request template ends with two checkboxes. Tick both and you're done;
 they cover every commit in the pull request.
 
 ```
-- [x] I certify that I wrote these changes, or have the right to submit them
-  under this project's license — the Developer Certificate of Origin
-- [x] This change follows the TruLens standards for code style, imports,
-  docstrings, and tests
+- [x] I certify that I wrote these changes, or have the right to submit them under this project's license — the Developer Certificate of Origin
+- [x] This change follows the TruLens standards for code style, imports, docstrings, and tests
 ```
 
 The first is the [Developer Certificate of Origin](DCO), the same certificate the
