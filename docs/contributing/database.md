@@ -37,13 +37,26 @@ ground truth data. These are written to via
 | ----- | ----------- |
 | `trulens_dataset` | Dataset definitions (dataset_id, dataset_json) |
 | `trulens_ground_truth` | Ground truth entries linked to datasets |
+| `trulens_dataset_version` | Immutable, content-addressed snapshots of a dataset |
+| `trulens_dataset_version_item` | The examples belonging to one snapshot |
 
 ```text
 dataset (1) ──────< ground_truth (many)
+         (1) ──────< dataset_version (many) ──────< dataset_version_item (many)
 ```
 
 These tables are separate from trace storage and are used to store expected
 outputs for evaluation comparisons.
+
+`trulens_dataset` and `trulens_ground_truth` are mutable: writing to a dataset
+changes what it contains. `trulens_dataset_version` rows are immutable — the
+version id is a hash of the version's ordered contents, so any change to those
+contents is a new row rather than an update to an existing one, and
+`(dataset_id, version_index)` is unique so version history cannot fork. Datasets
+written before versioning existed are exposed as version zero by a
+compatibility loader that reads, but never rewrites, their ground truth
+payloads. See
+[Dataset Versions](../component_guides/evaluation/dataset_versions.md).
 
 ### Benefits of OTEL Schema
 
@@ -128,6 +141,9 @@ Existing migrations in `src/core/trulens/core/database/migrations/versions/`:
 | 8 | Update records app_id |
 | 9 | Update app_json |
 | 10 | Create events table (OTEL) |
+| 11 | Add events table indexes |
+| 12 | Create runs table |
+| 13 | Add dataset_version and dataset_version_item tables |
 
 ---
 

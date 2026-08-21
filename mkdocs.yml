@@ -296,6 +296,7 @@ nav:
             - Batch evaluation with runs: component_guides/evaluation/batch_evaluation.md
         - Generating Test Cases:
             - component_guides/evaluation/generate_test_cases.md
+        - Dataset Versions: component_guides/evaluation/dataset_versions.md
         - Migrating to Metric API: component_guides/evaluation/metric_migration.md
         - Evaluate MLFlow Traces: component_guides/evaluation/mlflow.md
     - 🏃 Runtime Evaluation:

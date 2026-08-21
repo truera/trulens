@@ -32,6 +32,7 @@ class RunDaoBase(abc.ABC):
         label: Optional[str] = "",
         llm_judge_name: Optional[str] = "",
         mode: Optional[Mode] = Mode.APP_INVOCATION,
+        dataset_version_id: Optional[str] = None,
     ) -> pd.DataFrame: ...
 
     @abc.abstractmethod
