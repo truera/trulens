@@ -99,9 +99,9 @@ the rung stays low-risk.
 Reviewing is also how you reach the next rung, which asks for 5 pull requests as
 primary reviewer.
 
-`src/core` is routed to all Area Triagers rather than to one owner. It is the
-largest area and the least covered by review, so it is the fastest way to build
-the experience the next rung asks for.
+`src/core` is routed to all Area Triagers rather than to one owner. Everything else
+in the project depends on it, so reading core changes is the fastest way to build
+the context the next rung asks for.
 
 ### Process
 

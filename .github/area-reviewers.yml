@@ -29,10 +29,9 @@
 
 areas:
   - name: Core
-    # The largest area in the repo and the one with the thinnest review
-    # coverage, so it is deliberately routed to the whole cohort rather than to
-    # one owner. The goal is exposure: core is where reviewers need experience
-    # before they can own anything in it.
+    # The largest area in the repo, and everything else depends on it. Routed to
+    # the whole cohort rather than to one owner, so that reviewers build context
+    # in core before owning anything that sits on top of it.
     paths:
       - src/core/
     reviewers: []
