@@ -652,11 +652,104 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
         raise NotImplementedError()
 
     @abc.abstractmethod
+    def get_dataset(
+        self, dataset_name: str
+    ) -> Optional[dataset_schema.Dataset]:
+        """Get a dataset by name.
+
+        A dataset id hashes both the name and the metadata, so a name can map
+        to more than one row; the one with the lowest id is returned so the
+        choice is deterministic.
+
+        Args:
+            dataset_name: The name of the dataset.
+
+        Returns:
+            The dataset, or `None` if no dataset carries that name.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
     def get_datasets(self) -> pd.DataFrame:
         """Get all datasets from the database.
 
         Returns:
             A dataframe with the datasets.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def insert_dataset_version(
+        self, dataset_version: dataset_schema.DatasetVersion
+    ) -> types_schema.DatasetVersionID:
+        """Publish an immutable dataset version and its items.
+
+        The version id is content-addressed, so publishing identical content
+        twice is idempotent and returns the id of the version that already
+        exists rather than updating it.
+
+        Args:
+            dataset_version: The version to publish, with its items loaded.
+
+        Returns:
+            The id of the published (or already existing) version.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_dataset_version(
+        self,
+        dataset_version_id: Optional[types_schema.DatasetVersionID] = None,
+        dataset_name: Optional[str] = None,
+        dataset_id: Optional[types_schema.DatasetID] = None,
+        load_items: bool = True,
+    ) -> Optional[dataset_schema.DatasetVersion]:
+        """Get one dataset version.
+
+        When `dataset_version_id` is given that exact snapshot is loaded.
+        Otherwise the latest version of the named dataset is resolved, falling
+        back to a version zero reconstructed from pre-versioning ground truth
+        rows when nothing has been published yet.
+
+        Args:
+            dataset_version_id: The exact version to load, if pinning one.
+            dataset_name: The dataset whose latest version to resolve.
+            dataset_id: The dataset whose latest version to resolve.
+            load_items: Whether to also load the version's items.
+
+        Returns:
+            The version, or `None` if it could not be resolved.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_dataset_versions(
+        self,
+        dataset_name: Optional[str] = None,
+        dataset_id: Optional[types_schema.DatasetID] = None,
+    ) -> pd.DataFrame:
+        """Get the published versions of a dataset, oldest first.
+
+        Args:
+            dataset_name: The dataset whose versions to list.
+            dataset_id: The dataset whose versions to list.
+
+        Returns:
+            A dataframe with one row per version.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_dataset_version_items(
+        self, dataset_version_id: types_schema.DatasetVersionID
+    ) -> List[dataset_schema.DatasetVersionItem]:
+        """Get the items of a published dataset version, in order.
+
+        Args:
+            dataset_version_id: The version whose items to load.
+
+        Returns:
+            The version's items.
         """
         raise NotImplementedError()
 

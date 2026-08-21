@@ -21,6 +21,7 @@ from trulens.core.dao.run import RunDaoBase
 from trulens.core.enums import Mode
 from trulens.core.feedback.custom_metric import MetricConfig
 from trulens.core.metric import metric as metric_module
+from trulens.core.schema import dataset as dataset_schema
 from trulens.core.utils.json import obj_id_of_obj
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -172,11 +173,17 @@ class RunDiff:
             ``run_a.compare(run_b)``).
         run_b_name: Name of the candidate run.
         metrics: Per-metric comparison results keyed by metric name.
+        dataset_version_id_a: The immutable dataset version the baseline run
+            was pinned to, if any.
+        dataset_version_id_b: The immutable dataset version the candidate run
+            was pinned to, if any.
     """
 
     run_a_name: str
     run_b_name: str
     metrics: Dict[str, MetricDiff] = dataclasses.field(default_factory=dict)
+    dataset_version_id_a: Optional[str] = None
+    dataset_version_id_b: Optional[str] = None
 
     def summary(self) -> pd.DataFrame:
         """Return a one-row-per-metric summary DataFrame."""
@@ -193,6 +200,25 @@ class RunDiff:
                 "n_items": md.n_items,
             })
         return pd.DataFrame(rows)
+
+    def provenance(self) -> pd.DataFrame:
+        """Return the dataset version each side of the comparison read.
+
+        A comparison is only meaningful over the same test set, so this
+        reports which immutable snapshot each run was pinned to. `None` means
+        the run read a source that was not pinned to a version.
+        """
+
+        return pd.DataFrame([
+            {
+                "run": self.run_a_name,
+                "dataset_version_id": self.dataset_version_id_a,
+            },
+            {
+                "run": self.run_b_name,
+                "dataset_version_id": self.dataset_version_id_b,
+            },
+        ])
 
     def items_df(self, metric_name: str) -> pd.DataFrame:
         """Return per-item details for a given metric as a DataFrame."""
@@ -287,6 +313,11 @@ class RunConfig(BaseModel):
     dataset_spec: Dict[str, str] = Field(
         default=...,
         description="Mandatory column name mapping from reserved dataset fields to column names in user's table.",
+    )
+
+    dataset_version_id: Optional[str] = Field(
+        default=None,
+        description="Optional id of an immutable dataset version to pin. When set, the run reads that exact snapshot instead of the current contents of the source.",
     )
 
     description: Optional[str] = Field(
@@ -427,6 +458,10 @@ class Run(BaseModel):
             default="DATAFRAME",
             description="Type of the source (e.g. 'DATAFRAME').",
         )
+        dataset_version_id: Optional[str] = Field(
+            default=None,
+            description="Id of the immutable dataset version this run read, if one was pinned.",
+        )
 
     source_info: SourceInfo = Field(
         default=...,
@@ -557,6 +592,46 @@ class Run(BaseModel):
             RunStatus.FAILED,
             RunStatus.UNKNOWN,
         ]
+
+    def _fetch_dataset_version_input_df(self) -> pd.DataFrame:
+        """Load the pinned dataset version as this run's input dataframe.
+
+        The frame is built with the column names this run's `column_spec`
+        already refers to, so the rest of the invocation path does not need to
+        know whether the input came from a table or a pinned snapshot.
+
+        Raises:
+            ValueError: If the pinned version cannot be loaded.
+        """
+
+        dataset_version_id = self.source_info.dataset_version_id
+
+        version = self.tru_session.get_dataset_version(
+            dataset_version_id=dataset_version_id
+        )
+        if version is None:
+            raise ValueError(
+                f"Dataset version {dataset_version_id} not found. A run that "
+                "pins a version can only be started once that version is "
+                "readable from the connected database."
+            )
+
+        spec = dataset_schema.normalize_column_spec(
+            self.source_info.column_spec
+        )
+
+        readers = {
+            "input": lambda item: item.input,
+            "input_id": lambda item: item.input_id,
+            "expected_response": lambda item: item.expected_response,
+            "expected_contexts": lambda item: item.expected_contexts,
+            "metadata": lambda item: item.meta,
+        }
+
+        return pd.DataFrame({
+            column_name: [readers[field](item) for item in version.items]
+            for field, column_name in spec.items()
+        })
 
     def _warn_if_snowflake_parallel(self, value: int):
         if value > 1:
@@ -800,10 +875,17 @@ class Run(BaseModel):
             return f"Cannot start a new invocation when in run status: {current_status}. Valid statuses are: {RunStatus.CREATED}, {RunStatus.INVOCATION_PARTIALLY_COMPLETED}, or {RunStatus.FAILED}."
 
         if input_df is None:
-            logger.info(
-                "No input dataframe provided. Fetching input data from source."
-            )
-            input_df = self.run_dao.fetch_source_data(self.source_info.name)
+            if self.source_info.dataset_version_id:
+                logger.info(
+                    "No input dataframe provided. Loading pinned dataset "
+                    f"version {self.source_info.dataset_version_id}."
+                )
+                input_df = self._fetch_dataset_version_input_df()
+            else:
+                logger.info(
+                    "No input dataframe provided. Fetching input data from source."
+                )
+                input_df = self.run_dao.fetch_source_data(self.source_info.name)
 
         dataset_spec = self.source_info.column_spec
 
@@ -1699,6 +1781,17 @@ _NON_METRIC_COLS = {"record_id", "input", "output", "latency"}
 _DIRECTION_WARNED: set = set()
 
 
+def _dataset_version_id_of(run: Any) -> Optional[str]:
+    """Read the dataset version a run was pinned to, if any.
+
+    Comparison accepts anything run-shaped, so a run object that carries no
+    source info simply has no pinned version rather than being an error.
+    """
+
+    source_info = getattr(run, "source_info", None)
+    return getattr(source_info, "dataset_version_id", None)
+
+
 def _lookup_metric_directions(tru_session: Any) -> Dict[str, bool]:
     """Derive ``{metric_name: higher_is_better}`` from stored feedback defs.
 
@@ -1936,8 +2029,26 @@ def compare_runs(
             items=items,
         )
 
+    dataset_version_id_a = _dataset_version_id_of(run_a)
+    dataset_version_id_b = _dataset_version_id_of(run_b)
+
+    if (
+        dataset_version_id_a is not None
+        and dataset_version_id_b is not None
+        and dataset_version_id_a != dataset_version_id_b
+    ):
+        logger.warning(
+            "The two runs were pinned to different dataset versions (%s vs "
+            "%s), so metric deltas mix changes in the app with changes in "
+            "the test set.",
+            dataset_version_id_a,
+            dataset_version_id_b,
+        )
+
     return RunDiff(
         run_a_name=run_a.run_name,
         run_b_name=run_b.run_name,
         metrics=metrics_result,
+        dataset_version_id_a=dataset_version_id_a,
+        dataset_version_id_b=dataset_version_id_b,
     )

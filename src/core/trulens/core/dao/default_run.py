@@ -58,6 +58,7 @@ class DefaultRunDao(RunDaoBase):
         label: Optional[str] = "",
         llm_judge_name: Optional[str] = "",
         mode: Optional[Mode] = Mode.APP_INVOCATION,
+        dataset_version_id: Optional[str] = None,
     ) -> pd.DataFrame:
         orm = self._db.orm
         now = time.time()
@@ -72,6 +73,8 @@ class DefaultRunDao(RunDaoBase):
             "column_spec": dataset_spec,
             "source_type": source_type,
         }
+        if dataset_version_id:
+            source_info["dataset_version_id"] = dataset_version_id
 
         with self._db.session.begin() as session:
             existing = (

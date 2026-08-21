@@ -316,7 +316,19 @@ class SnowflakeEventTableDB(core_db.DB):
                 )
                 yield serial_utils.JSONized(app_defn)
 
+    def get_dataset(*args, **kwargs):
+        raise NotImplementedError()
+
     def get_datasets(*args, **kwargs):
+        raise NotImplementedError()
+
+    def get_dataset_version(*args, **kwargs):
+        raise NotImplementedError()
+
+    def get_dataset_version_items(*args, **kwargs):
+        raise NotImplementedError()
+
+    def get_dataset_versions(*args, **kwargs):
         raise NotImplementedError()
 
     def get_db_revision(*args, **kwargs):
@@ -353,6 +365,9 @@ class SnowflakeEventTableDB(core_db.DB):
         raise NotImplementedError()
 
     def insert_dataset(*args, **kwargs):
+        raise NotImplementedError()
+
+    def insert_dataset_version(*args, **kwargs):
         raise NotImplementedError()
 
     def insert_event(*args, **kwargs):
