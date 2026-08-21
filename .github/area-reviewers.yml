@@ -101,8 +101,7 @@ areas:
     # reviewers: [<handle>]
 
   - name: Providers
-    # All provider integrations except Cortex. Siddharth authored the
-    # Google/Gemini provider; the area is the whole provider surface because the
+    # All provider integrations except Cortex. Scoped as one area because the
     # integrations share plumbing and the same failure modes recur across them.
     # Cortex is excluded: it is Snowflake's own provider and the busiest of the
     # eight, so it stays with maintainers.
