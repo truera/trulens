@@ -14,6 +14,7 @@ from time import time
 from typing import (
     TYPE_CHECKING,
     Any,
+    Callable,
     Dict,
     Iterable,
     List,
@@ -27,6 +28,7 @@ import warnings
 
 import pandas
 import pydantic
+from trulens.core import dataset as core_dataset
 from trulens.core import experimental as core_experimental
 from trulens.core._utils import optional as optional_utils
 from trulens.core._utils.pycompat import Future  # code style exception
@@ -1045,6 +1047,108 @@ class TruSession(
         # remaining ground truths in the buffer
         if buffer:
             self.connector.db.batch_insert_ground_truth(buffer)
+
+    def curate_records_to_dataset(
+        self,
+        dataset_name: str,
+        records: pandas.DataFrame,
+        mapping: Optional[core_dataset.TraceDatasetMapping] = None,
+        expected_response_fn: Optional[
+            Callable[[pandas.Series], Optional[str]]
+        ] = None,
+        dataset_metadata: Optional[Dict[str, Any]] = None,
+        on_error: str = core_dataset.ON_ERROR_RAISE,
+        batch_size: int = core_dataset.DEFAULT_BATCH_SIZE,
+        include_provenance: bool = True,
+    ) -> core_dataset.CurationResult:
+        """Curate recorded traces into a persisted evaluation dataset.
+
+        Turns a records dataframe into
+        [GroundTruth][trulens.core.schema.groundtruth.GroundTruth] rows: it
+        validates the mapping against the dataframe, resolves recorded inputs
+        and outputs into stable text, normalizes expected contexts, preserves
+        provenance in metadata, and writes in bounded batches. Ground truth
+        ids are content-addressed, so curating the same rows twice does not
+        create duplicate rows.
+
+        Accepted inputs:
+
+        - a dataframe from
+          [get_records_and_feedback][trulens.core.session.TruSession.get_records_and_feedback];
+        - a dataframe carrying a `record_id` column but not the record
+          content, which is resolved through the session before mapping;
+        - a review export (CSV, JSON, ...) that the caller has loaded into a
+          dataframe.
+
+        Example:
+            ```python
+            result = session.curate_records_to_dataset(
+                dataset_name="production-failures",
+                records=records_df,
+                mapping=TraceDatasetMapping(
+                    query="input",
+                    expected_response="corrected_output",
+                    metadata={"groundedness": "Groundedness"},
+                ),
+                on_error="collect",
+            )
+            ```
+
+        Args:
+            dataset_name: Name of the dataset to write to. It is created if it
+                does not exist.
+            records: The rows to curate.
+            mapping: Which dataframe columns supply which ground truth fields.
+                Values are column names, never expressions. Defaults to
+                `TraceDatasetMapping()`, which reads `input` and `record_id`.
+            expected_response_fn: Synchronous callback returning the expected
+                response for a row. Only consulted when the mapped
+                `expected_response` column is absent or empty for that row —
+                a mapped correction always wins. TruLens never calls an LLM on
+                your behalf here.
+            dataset_metadata: Metadata for the dataset itself.
+            on_error: `"raise"` to fail on the first unusable row, or
+                `"collect"` to skip it and report it in the result. Malformed
+                rows are never written in either mode.
+            batch_size: Ground truths written per database round trip. Peak
+                memory is one batch beyond the input dataframe.
+            include_provenance: Whether to copy the source record id and app
+                name/version into each ground truth's metadata. A ground truth
+                id covers its metadata, so leaving this on means two records
+                with identical content but different provenance stay distinct;
+                turn it off to deduplicate purely on example content.
+
+        Returns:
+            A [CurationResult][trulens.core.dataset.CurationResult] with the
+            accepted, duplicate and rejected counts, the ids written, and one
+            error row per rejection.
+
+        Raises:
+            ValueError: If `on_error` or `batch_size` is invalid, or a mapped
+                column is missing from `records`. Column validation happens
+                before anything is written.
+            core_dataset.CurationRowError: In `"raise"` mode, on the first
+                unusable row. Batches written before that point stay written;
+                because ids are content-addressed, re-running after fixing the
+                data is safe.
+        """
+
+        def _resolve(record_ids: List[str]) -> pandas.DataFrame:
+            resolved, _ = self.get_records_and_feedback(record_ids=record_ids)
+            return resolved
+
+        return core_dataset.curate_records_to_dataset(
+            dataset_name=dataset_name,
+            records=records,
+            db=self.connector.db,
+            mapping=mapping,
+            expected_response_fn=expected_response_fn,
+            dataset_metadata=dataset_metadata,
+            on_error=on_error,
+            batch_size=batch_size,
+            include_provenance=include_provenance,
+            record_resolver=_resolve,
+        )
 
     def get_ground_truth(
         self,
