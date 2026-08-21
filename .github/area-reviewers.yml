@@ -36,8 +36,7 @@ areas:
     paths:
       - src/core/
     reviewers: []
-    # reviewers: [Payal2000, bashward, debu-sinha, desusaiteja,
-    #             maitraymukeshkumarmodi-aiml, nuthalapativarun]
+    # reviewers: [<handle>]
 
   - name: Documentation
     paths:
@@ -45,32 +44,32 @@ areas:
       - mkdocs.yml
       - README.md
     reviewers: []
-    # reviewers: [aqilaziz, nuthalapativarun]
+    # reviewers: [<handle>]
 
   - name: OpenTelemetry semantic conventions
     paths:
       - src/otel/
     reviewers: []
-    # reviewers: [nuthalapativarun]
+    # reviewers: [<handle>]
 
   - name: Feedback functions
     paths:
       - src/feedback/
     reviewers: []
-    # reviewers: [debu-sinha]
+    # reviewers: [<handle>]
 
   - name: Feedback templates
     paths:
       - src/feedback/trulens/feedback/templates/
     reviewers: []
-    # reviewers: [maitraymukeshkumarmodi-aiml]
+    # reviewers: [<handle>]
 
   - name: Ensemble and prompt optimization
     paths:
       - src/apps/gepa/
       - src/feedback/trulens/feedback/optimize.py
     reviewers: []
-    # reviewers: [bashward]
+    # reviewers: [<handle>]
 
   - name: LLM judge alignment
     paths:
@@ -80,27 +79,27 @@ areas:
       - src/benchmark/trulens/benchmark/score_distribution.py
       - docs/component_guides/evaluation/llm_judge_alignment.md
     reviewers: []
-    # reviewers: [debu-sinha]
+    # reviewers: [<handle>]
 
   - name: Benchmarking and golden sets
     paths:
       - src/benchmark/
     reviewers: []
-    # reviewers: [maitraymukeshkumarmodi-aiml]
+    # reviewers: [<handle>]
 
   - name: Offline and batch evaluation
     paths:
       - src/core/trulens/core/batch.py
       - src/benchmark/trulens/benchmark/golden_set_generator.py
     reviewers: []
-    # reviewers: [desusaiteja]
+    # reviewers: [<handle>]
 
   - name: Runs and online evaluation sampling
     paths:
       - src/core/trulens/core/run.py
       - src/core/trulens/core/sampling.py
     reviewers: []
-    # reviewers: [Payal2000]
+    # reviewers: [<handle>]
 
   - name: Providers
     # All provider integrations except Cortex. Siddharth authored the
@@ -113,4 +112,4 @@ areas:
     exclude:
       - src/providers/cortex/
     reviewers: []
-    # reviewers: [sahusiddharth]
+    # reviewers: [<handle>]

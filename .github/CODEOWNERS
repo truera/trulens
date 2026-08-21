@@ -26,25 +26,20 @@
 /src/core/                              @truera/trulens_maintainers
 
 # Documentation and the docs site.
-# Proposed Area Reviewers: @aqilaziz, @nuthalapativarun
 /docs/                                  @truera/trulens_maintainers
 /mkdocs.yml                             @truera/trulens_maintainers
 /README.md                              @truera/trulens_maintainers
 
 # Feedback functions.
-# Proposed Area Reviewer: @debu-sinha
 /src/feedback/                          @truera/trulens_maintainers
 
 # Providers — all provider integrations except Cortex.
-# Proposed Area Reviewer: @sahusiddharth
 /src/providers/                         @truera/trulens_maintainers
 
 # Benchmarking and golden sets.
-# Proposed Area Reviewer: @maitraymukeshkumarmodi-aiml
 /src/benchmark/                         @truera/trulens_maintainers
 
 # OpenTelemetry semantic conventions.
-# Proposed Area Reviewer: @nuthalapativarun
 /src/otel/                              @truera/trulens_maintainers
 
 # ---------------------------------------------------------------------------
@@ -52,16 +47,13 @@
 # ---------------------------------------------------------------------------
 
 # Feedback templates.
-# Proposed Area Reviewer: @maitraymukeshkumarmodi-aiml
 /src/feedback/trulens/feedback/templates/     @truera/trulens_maintainers
 
 # Ensemble and prompt optimization.
-# Proposed Area Reviewer: @bashward
 /src/feedback/trulens/feedback/optimize.py    @truera/trulens_maintainers
 /src/apps/gepa/                         @truera/trulens_maintainers
 
 # LLM judge alignment.
-# Proposed Area Reviewer: @debu-sinha
 /src/benchmark/trulens/benchmark/alignment_report.py        @truera/trulens_maintainers
 /src/benchmark/trulens/benchmark/cross_model_alignment.py   @truera/trulens_maintainers
 /src/benchmark/trulens/benchmark/criteria_ab_test.py        @truera/trulens_maintainers
@@ -69,12 +61,10 @@
 /docs/component_guides/evaluation/llm_judge_alignment.md    @truera/trulens_maintainers
 
 # Offline and batch evaluation.
-# Proposed Area Reviewer: @desusaiteja
 /src/core/trulens/core/batch.py         @truera/trulens_maintainers
 /src/benchmark/trulens/benchmark/golden_set_generator.py    @truera/trulens_maintainers
 
 # Runs and online evaluation sampling.
-# Proposed Area Reviewer: @Payal2000
 /src/core/trulens/core/run.py           @truera/trulens_maintainers
 /src/core/trulens/core/sampling.py      @truera/trulens_maintainers
 
