@@ -267,7 +267,13 @@ function signature.
 
 ## Typescript
 
-No standards are currently recommended.
+The dashboard's React components are formatted with Prettier and linted with
+ESLint. Configuration lives beside each component:
+
+- `src/dashboard/react_components/record_viewer/.eslintrc.cjs` and `.prettierrc`
+- `src/dashboard/react_components/record_viewer_otel/.prettierrc`
+
+No further conventions are specified.
 
 ## Markdown
 
@@ -329,10 +335,32 @@ See `tests/unit`.
 
 See `tests/unit/static`.
 
-Static tests run on multiple versions of Python: `3.9`, `3.10`, `3.11`, `3.12`.
-Some tests that require all optional packages to be installed run only on
-`3.11` as some optional packages may not support newer Python versions yet.
+### Integration tests
+
+See `tests/integration`.
+
+### Python versions
+
+The project requires Python `^3.10`. Pull request tests run on `3.10`, `3.11`,
+`3.12` and `3.13`, with `3.12` as the default job.
+
+Each version runs the `basic`, `optional` and `snowflake` marker suites, with one
+exception: the `snowflake` suite is skipped on `3.12`.
+
+### Running tests locally
+
+```shell
+> make test-unit
+> make test-unit-basic
+> make test-unit-optional
+```
+
+The `test-<suite>-<marker>` targets are pattern rules, so any suite and marker
+combine. Golden files are regenerated with `make write-golden-<name>`.
 
 ### Test pipelines
 
-Defined in `.azure_pipelines/ci-eval{-pr,}.yaml`.
+Defined in `.azure_pipelines/ci-eval-pr.yaml`, which calls the shared steps in
+`.azure_pipelines/templates/run-tests.yaml`. See
+[`.azure_pipelines/README.md`](https://github.com/truera/trulens/blob/main/.azure_pipelines/README.md)
+for how the pipelines fit together.
