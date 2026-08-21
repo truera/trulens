@@ -1,10 +1,9 @@
-# Area reviewers — advisory review routing.
+# Area reviewers: advisory review routing.
 #
-# WHY THIS FILE EXISTS, SEPARATELY FROM CODEOWNERS:
-# GitHub silently ignores CODEOWNERS entries for accounts without write access.
-# Area Triagers have the Triage role, not write, so they cannot be code owners — but
-# they *can* be requested as reviewers, because review requests only require
-# read access. This file is the routing table for those advisory requests.
+# This file exists separately from CODEOWNERS because GitHub ignores CODEOWNERS
+# entries for accounts without write access. Area Triagers hold the Triage role,
+# not write, so they cannot be code owners. Review requests only require read
+# access, so they can be routed here instead.
 #
 # Two mechanisms, two files:
 #   .github/CODEOWNERS          -> Area Reviewers and Maintainers. Blocking.

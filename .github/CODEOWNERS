@@ -4,11 +4,9 @@
 # CONTRIBUTOR_LADDER.md for how paths get assigned and MAINTAINERS.md for the
 # current roster.
 #
-# NOTE: GitHub ignores CODEOWNERS entries for accounts without write access, so
-# Area Triagers cannot appear here. Advisory review routing for them lives in
-# .github/area-reviewers.yml instead. Proposed owners below are carried as
-# comments until they reach Area Reviewer, at which point the line is
-# uncommented in the same PR that grants scoped write access.
+# GitHub ignores CODEOWNERS entries for accounts without write access, so Area
+# Triagers cannot appear here; their advisory routing lives in
+# .github/area-reviewers.yml.
 #
 # ORDER MATTERS: for CODEOWNERS the LAST matching pattern wins, not the union of
 # matches. Broad areas are listed first and narrower ones after, so that a

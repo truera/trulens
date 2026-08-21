@@ -5,7 +5,7 @@ describes how contributors outside Snowflake take on responsibility in the
 project.
 
 The criteria are published so you can see what the path is instead of guessing.
-Two things they don't mean:
+They are not a formula:
 
 - **Meeting the requirements makes you eligible for nomination, not entitled to
   promotion.** The numbers are a floor. Judgment, care, and how you work with
@@ -13,8 +13,6 @@ Two things they don't mean:
 - **We are biased toward yes.** Nominations are read as "do I have a reason to
   say no," not "give me a reason to say yes." An objection should come with
   specific next steps the candidate can act on.
-
-Adding people here is an investment in the project, not a reward for past work.
 
 ## The rungs
 
@@ -35,7 +33,7 @@ question who vouches for you publicly, by name, on the nomination.
 Sponsorship means having worked with you directly — reviewed your code, argued
 about a design, coordinated on an issue. Someone who hasn't done that can't
 sponsor you, however well regarded you are. A sponsor is accountable for the
-judgment, not just supportive of it.
+judgment.
 
 You don't arrange your own sponsors. A Maintainer or Area Reviewer opens the
 nomination and finds them.
@@ -54,18 +52,16 @@ reviewers for pull requests in their area. No write access to the codebase.
 
 Your area is named when you're nominated and recorded in
 [`.github/area-reviewers.yml`](./.github/area-reviewers.yml). It determines what
-gets routed to you and what you're expected to keep an eye on. Note that GitHub's
-Triage permission is repository-wide and cannot be restricted to paths, so the
-area is a statement of responsibility rather than a technical limit: you *can*
-label and close issues anywhere, and you're asked to concentrate where you have
-context.
+gets routed to you. GitHub's Triage permission is repository-wide and cannot be
+restricted to paths, so you can label and close issues anywhere; the area is
+where you're asked to concentrate.
 
 ### Responsibilities
 
 - Triage incoming issues in your area: reproduce what you can, ask for missing
   detail, apply labels, close duplicates and resolved issues.
-- Review pull requests in your area. Comment reviews are the useful default: ask
-  the questions, point out what looks wrong, say what you checked.
+- Review pull requests in your area. Comment reviews are enough: ask questions,
+  point out what looks wrong, say what you checked.
 - Point contributors at the right context: a related issue, the relevant docs, a
   prior PR.
 - Follow the [Code of Conduct](./CONTRIBUTING.md) and help others meet it.
@@ -79,8 +75,7 @@ context.
   features.
 - **One sponsor** who is an Area Reviewer or Maintainer.
 
-Someone reads the work itself. Counts decide who is worth looking at, not who gets
-the role.
+Someone reads the work itself. The counts only decide who gets looked at.
 
 ### Privileges
 
@@ -94,12 +89,11 @@ On reviews specifically: you can leave comment reviews, and because this is a
 public repository GitHub will also let you press Approve or Request changes. Those
 buttons don't carry merge authority here — `main` requires an approving review
 from a code owner, and GitHub ignores CODEOWNERS entries for accounts without
-write access. So an Area Triager's review informs the decision without gating it.
-That isn't a comment on the quality of your review; it's the mechanism by which
-the rung stays low-risk.
+write access. So an Area Triager's review informs the decision without gating it,
+whichever button you press.
 
-Reviewing is also how you reach the next rung, which asks for 5 pull requests as
-primary reviewer.
+Reviewing is also how you reach the next rung, which asks for substantive
+reviews on five pull requests written by other people.
 
 `src/core` is routed to all Area Triagers rather than to one owner. Everything else
 in the project depends on it, so reading core changes is the fastest way to build
@@ -123,8 +117,6 @@ the context the next rung asks for.
 
 The first rung with merge rights, **scoped to specific paths** in
 [`.github/CODEOWNERS`](./.github/CODEOWNERS) rather than the whole repository.
-Scoping keeps the grant proportionate to the evidence: authority goes where
-someone has depth.
 
 ### Responsibilities
 
@@ -190,7 +182,7 @@ Project-wide responsibility, including releases and direction.
 
 - Review and merge across the project, including paths no Area Reviewer covers.
 - Set roadmap and architectural direction; decide on breaking changes.
-- Run releases and hold the credentials that requires.
+- Run releases.
 - Nominate and mentor people toward the next rung.
 - Keep this document accurate, and amend it when it stops matching reality.
 

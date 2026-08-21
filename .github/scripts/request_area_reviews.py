@@ -40,9 +40,8 @@ def load_areas(path: Path = CONFIG_PATH) -> list[dict[str, Any]]:
 def matches(pattern: str, changed_path: str) -> bool:
     """Whether ``changed_path`` falls under ``pattern``.
 
-    Patterns are directory prefixes (trailing ``/``) or exact paths. There is
-    deliberately no wildcard support -- this table routes review requests to
-    people, so predictability matters more than expressiveness.
+    Patterns are directory prefixes (trailing ``/``) or exact paths. No
+    wildcards, so that matching stays predictable.
     """
     if pattern.endswith("/"):
         return changed_path.startswith(pattern)

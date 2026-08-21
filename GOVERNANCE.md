@@ -7,8 +7,8 @@ team. Development is led by a small core team, with contributions welcome from
 the community.
 
 Review and merge happen in this repository, in public. There is no internal
-pipeline that mirrors changes in from elsewhere, which is what makes it possible
-for contributors outside Snowflake to hold real responsibility here.
+pipeline that mirrors changes in from elsewhere, so a contributor outside
+Snowflake can hold the same responsibility as one inside it.
 
 ## Roles
 
