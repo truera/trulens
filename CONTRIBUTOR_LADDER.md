@@ -76,8 +76,6 @@ context.
   requests**, or a comparable record of triage, documentation, or community
   support. Different shapes of history qualify: a run of small PRs, a couple of
   complex ones that took real back-and-forth, or sustained help in issues.
-- Two-factor authentication enabled on your GitHub account.
-- Signed CLA.
 - **One sponsor** who is an Area Reviewer or Maintainer.
 
 ### Privileges
