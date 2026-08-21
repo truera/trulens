@@ -44,6 +44,46 @@ You are not required to disclose assistant use and reviewers will not ask. Menti
 it is welcome, and pointing at the parts you are least sure of is more useful than a
 blanket disclosure.
 
+## Contributing your own integration
+
+Integrations for a specific model, framework, vector store, or product are welcome,
+and several of the packages here started that way. The guidance below is about where
+that code sits, so that one integration does not take up more room in the project
+than the others.
+
+Keep it self-contained. Each integration is its own installable package, with its own
+`pyproject.toml`, under `src/providers/`, `src/apps/`, or `src/connectors/`. That is
+where the code, its optional dependencies, and its tests belong. See
+[Optional Packages](https://www.trulens.org/contributing/optional/).
+
+Leave the shared surfaces alone:
+
+- Don't add a dependency on your integration to `trulens-core` or to any other
+  package that does not need it.
+- Don't change a core API to suit one integration. If core genuinely needs to
+  change, make that case on its own in its own pull request, and it will be judged
+  on whether it helps every integration.
+- Don't add your product to the README, the quickstarts, or the top level of the
+  documentation navigation as part of the same pull request, and don't reorder an
+  existing list to move yours up it. Whether an integration is listed in the README
+  is a separate decision from whether it is merged; ask rather than assume.
+- Examples go in `examples/expositional/` and the cookbook, organized by topic.
+  `examples/quickstart/` is for minimal demonstrations of core concepts with few
+  dependencies, and is not the place to introduce a new integration.
+
+Tests must run without your service. CI has no credentials for third-party APIs, so
+tests need to pass with mocks or be marked so they can be skipped. The available
+markers are in `pyproject.toml` under `[tool.pytest.ini_options]`; add one for your
+integration if none fits.
+
+Expect to keep it working. An integration is a standing commitment rather than a
+one-off contribution: upstream SDKs change, and whoever added the integration is
+usually the only person who can tell a real break from an intended change. An
+integration nobody maintains will eventually be deprecated, following
+[Release Policies](https://www.trulens.org/contributing/policies/). If you would
+rather not carry that, a cookbook example is a good contribution on its own and
+carries no such expectation.
+
 ## Proper Names
 
 In natural language text, style/format proper names using italics if available.
