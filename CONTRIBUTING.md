@@ -128,38 +128,72 @@ Past community contributions include the SQLAlchemy connector and LiteLLM provid
 
 ## Signing Off Your Commits
 
-TruLens uses the [Developer Certificate of Origin](DCO), the same lightweight
-mechanism the Linux kernel and CNCF projects use. There is no agreement to sign
-and no form to fill in. You certify each contribution by adding a line to the
-commit message:
+TruLens uses the [Developer Certificate of Origin](DCO), the same mechanism the
+Linux kernel and CNCF projects use. There is no agreement to sign, no form, and no
+account to create. You certify each contribution by adding one line to the commit
+message:
 
 ```
 Signed-off-by: Your Name <your.email@example.com>
 ```
 
-Git adds it for you with `-s`:
+By adding it you state that you wrote the change, or that you have the right to
+submit it under this project's license. The full text is in [DCO](DCO); it is
+short and worth reading once.
+
+### What this means day to day
+
+Commit with `-s` and git writes the line for you, using your configured name and
+email:
 
 ```bash
 git commit -s -m "fix: handle empty context list"
 ```
 
-The name and email must match the ones on the commit. Set them once with
-`git config user.name` and `git config user.email` and it works from then on.
-
-By signing off you state that you wrote the change, or that you have the right to
-submit it under this project's license. The full text is in [DCO](DCO); it is
-short and worth reading once.
-
-A CI check verifies every commit in a pull request. If you forget, it will tell
-you how to fix it:
+Set your identity once and it works from then on:
 
 ```bash
-git rebase --signoff origin/main
-git push --force-with-lease
+git config --global user.name "Your Name"
+git config --global user.email "your.email@example.com"
 ```
 
-Only commits in your pull request are checked, so nothing in the project's
-existing history is affected.
+If you want it always on for this repository, alias it or use
+`git config --global format.signOff true` with `git format-patch` workflows.
+
+Two cases need a little care:
+
+- **Editing files in the GitHub web UI**, including accepting a reviewer's
+  suggestion, produces a commit without a sign-off. Add the line yourself in the
+  extended description box before committing.
+- **Forgetting on the first few commits** is the common one. The check tells you
+  the fix:
+
+  ```bash
+  git rebase --signoff origin/main
+  git push --force-with-lease
+  ```
+
+  That rewrites your branch's commit messages and nothing else.
+
+### What the check does
+
+A CI job reads the commits your pull request adds and looks for a sign-off whose
+email matches the commit author. It only looks at commits your PR introduces, so
+the project's existing history is unaffected. Bot commits are exempt. Several
+sign-offs on one commit are fine, which is what co-authored work produces.
+
+A bare `Signed-off-by` mismatch is the only thing it fails on. It does not check
+the content of your change, and it is not a code-quality gate.
+
+### Does this add friction?
+
+A little, and only once. After `git config` and learning `-s`, the cost is a flag
+you stop noticing. The real cost lands on people who do not know about it yet,
+which is why the check prints the recovery command rather than just failing, and
+why the pull request template mentions it.
+
+If you get stuck on it, say so in the pull request. Nobody's contribution gets
+turned away over a missing trailer.
 
 ---
 
