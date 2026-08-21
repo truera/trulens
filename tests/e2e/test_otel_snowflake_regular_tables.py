@@ -80,13 +80,15 @@ class TestOtelSnowflakeRegularTables(OtelTestCase, SnowflakeTestCase):
         num_eval_and_eval_root_events = (
             events["record_attributes"]
             .apply(
-                lambda curr: 1
-                if curr.get(SpanAttributes.SPAN_TYPE)
-                in [
-                    SpanAttributes.SpanType.EVAL_ROOT,
-                    SpanAttributes.SpanType.EVAL,
-                ]
-                else 0
+                lambda curr: (
+                    1
+                    if curr.get(SpanAttributes.SPAN_TYPE)
+                    in [
+                        SpanAttributes.SpanType.EVAL_ROOT,
+                        SpanAttributes.SpanType.EVAL,
+                    ]
+                    else 0
+                )
             )
             .sum()
         )

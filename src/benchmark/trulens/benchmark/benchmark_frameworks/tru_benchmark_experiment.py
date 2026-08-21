@@ -99,7 +99,8 @@ class TruBenchmarkExperiment:
             on_selector = select_schema.Select.RecordCalls.run_score_generation_on_single_row.rets
 
         self.f_benchmark_metrics: List[core_metric.Metric] = [
-            core_feedback.Feedback(
+            core_feedback
+            .Feedback(
                 lambda x: x,
                 name=f"metric_{agg_func.__name__}",
             )

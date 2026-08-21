@@ -19,8 +19,10 @@ pip install trulens-apps-gepa
 ```python
 from trulens.apps.gepa import TruGEPA, run_evolution
 
+
 def my_relevance(prompt: str) -> float:
     return len(prompt) / 200  # replace with a real TruLens provider method
+
 
 # Without logging:
 fitness = TruGEPA(my_relevance, optimize_key="prompt")
@@ -28,6 +30,7 @@ fitness = TruGEPA(my_relevance, optimize_key="prompt")
 # With logging — supply both app_name and app_version (omit both to disable;
 # supplying only one raises a ValueError immediately):
 from trulens.core import TruSession
+
 session = TruSession()
 
 fitness = TruGEPA(
