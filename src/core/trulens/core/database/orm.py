@@ -14,6 +14,7 @@ from sqlalchemy import Enum
 from sqlalchemy import Float
 from sqlalchemy import ForeignKey
 from sqlalchemy import Index
+from sqlalchemy import Integer
 from sqlalchemy import Text
 from sqlalchemy import UniqueConstraint
 from sqlalchemy import event
@@ -121,6 +122,8 @@ class ORM(abc.ABC, Generic[T]):
     FeedbackResult: Type[T]
     GroundTruth: Type[T]
     Dataset: Type[T]
+    DatasetVersion: Type[T]
+    DatasetVersionItem: Type[T]
     Event: Type[T]
     Run: Type[T]
 
@@ -406,6 +409,118 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
                 return cls(
                     dataset_id=obj.dataset_id,
                     dataset_json=obj.model_dump_json(redact_keys=redact_keys),
+                )
+
+        class DatasetVersion(base):
+            """ORM class for
+            [DatasetVersion][trulens.core.schema.dataset.DatasetVersion].
+
+            Rows in this table are immutable once written: a version id is a
+            hash of the version's contents, so any change to the contents is a
+            different row rather than an update to this one.
+            """
+
+            _table_base_name = "dataset_version"
+
+            dataset_version_id = Column(
+                TYPE_ID, nullable=False, primary_key=True
+            )
+            dataset_id = Column(
+                TYPE_ID,
+                ForeignKey(f"{prefix}dataset.dataset_id"),
+                nullable=False,
+            )
+            parent_dataset_version_id = Column(TYPE_ID, nullable=True)
+            version_index = Column(Integer, nullable=False)
+            content_hash = Column(TYPE_ID, nullable=False)
+            item_count = Column(Integer, nullable=False)
+            created_at = Column(TYPE_TIMESTAMP, nullable=False)
+            dataset_version_json = Column(TYPE_JSON, nullable=False)
+
+            @declared_attr.directive
+            def __table_args__(cls):
+                return (
+                    UniqueConstraint(
+                        "dataset_id",
+                        "version_index",
+                        name=f"uq_{cls.__tablename__}_dataset_version_index",
+                    ),
+                )
+
+            dataset = relationship(
+                "Dataset",
+                backref=backref(
+                    "dataset_versions",
+                    cascade="all,delete",
+                    order_by=version_index,
+                ),
+            )
+            # See NOTE(backref order_by).
+
+            @classmethod
+            def parse(
+                cls,
+                obj: dataset_schema.DatasetVersion,
+                redact_keys: bool = False,
+            ) -> ORM.DatasetVersion:
+                return cls(
+                    dataset_version_id=obj.dataset_version_id,
+                    dataset_id=obj.dataset_id,
+                    parent_dataset_version_id=obj.parent_dataset_version_id,
+                    version_index=obj.version_index,
+                    content_hash=obj.content_hash,
+                    item_count=obj.item_count,
+                    created_at=obj.created_at,
+                    dataset_version_json=obj.metadata_json(),
+                )
+
+        class DatasetVersionItem(base):
+            """ORM class for
+            [DatasetVersionItem][trulens.core.schema.dataset.DatasetVersionItem].
+
+            An item id is content-addressed and therefore repeats across the
+            versions that contain the same example; the primary key is the
+            pair of version and item.
+            """
+
+            _table_base_name = "dataset_version_item"
+
+            dataset_version_id = Column(
+                TYPE_ID,
+                ForeignKey(f"{prefix}dataset_version.dataset_version_id"),
+                nullable=False,
+                primary_key=True,
+            )
+            item_id = Column(TYPE_ID, nullable=False, primary_key=True)
+            item_index = Column(Integer, nullable=False)
+            input_id = Column(TYPE_ID, nullable=True)
+            dataset_version_item_json = Column(TYPE_JSON, nullable=False)
+
+            dataset_version = relationship(
+                "DatasetVersion",
+                backref=backref(
+                    "items",
+                    cascade="all,delete",
+                    order_by=item_index,
+                ),
+            )
+            # See NOTE(backref order_by).
+
+            @classmethod
+            def parse(
+                cls,
+                obj: dataset_schema.DatasetVersionItem,
+                item_index: int,
+                redact_keys: bool = False,
+            ) -> ORM.DatasetVersionItem:
+                return cls(
+                    dataset_version_id=obj.dataset_version_id,
+                    item_id=obj.item_id,
+                    item_index=item_index,
+                    input_id=obj.input_id,
+                    dataset_version_item_json=obj.model_dump_json(
+                        redact_keys=redact_keys
+                    ),
                 )
 
         class Run(base):

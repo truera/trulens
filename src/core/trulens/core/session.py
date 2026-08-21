@@ -69,6 +69,111 @@ with import_utils.OptionalImports(messages=optional_utils.REQUIREMENT_TQDM):
 logger = logging.getLogger(__name__)
 
 
+def ground_truth_df_of_dataset_version(
+    version: dataset_schema.DatasetVersion,
+) -> pandas.DataFrame:
+    """Render a dataset version in the legacy ground truth dataframe shape.
+
+    `GroundTruth` remains supported as an output shape, so code that already
+    consumes the frame returned by
+    [get_ground_truth][trulens.core.session.TruSession.get_ground_truth] keeps
+    working against versioned data.
+
+    Args:
+        version: The version to render, with its items loaded.
+
+    Returns:
+        A dataframe with the ground truth columns plus `item_id` and `splits`.
+    """
+
+    rows = []
+    for item in version.items:
+        ground_truth = groundtruth_schema.ground_truth_of_dataset_version_item(
+            item, version.dataset_id
+        )
+        rows.append((
+            ground_truth.ground_truth_id,
+            version.dataset_id,
+            ground_truth.query,
+            ground_truth.query_id,
+            ground_truth.expected_response,
+            ground_truth.expected_chunks,
+            ground_truth.meta,
+            item.item_id,
+            item.splits,
+        ))
+
+    return pandas.DataFrame(
+        data=rows,
+        columns=[
+            "ground_truth_id",
+            "dataset_id",
+            "query",
+            "query_id",
+            "expected_response",
+            "expected_chunks",
+            "meta",
+            "item_id",
+            "splits",
+        ],
+    )
+
+
+def _apply_dataset_version_splits(
+    items: List[dataset_schema.DatasetVersionItem],
+    splits: Optional[Dict[str, Sequence[str]]],
+) -> List[dataset_schema.DatasetVersionItem]:
+    """Attach named splits to the items they name.
+
+    Split members are matched against each item's caller-supplied `input_id`
+    first and then against its content-addressed item id, so a caller can name
+    members with whichever identifier they already have.
+
+    Raises:
+        ValueError: If a split names a member that is not among the items.
+    """
+
+    if not splits:
+        return items
+
+    by_item_id: Dict[str, List[str]] = {}
+    unknown = []
+
+    for split_name, members in splits.items():
+        for member in members:
+            matched = [
+                item
+                for item in items
+                if item.input_id == member or item.item_id == member
+            ]
+            if not matched:
+                unknown.append(f"{split_name}:{member}")
+                continue
+            for item in matched:
+                by_item_id.setdefault(item.item_id, []).append(str(split_name))
+
+    if unknown:
+        raise ValueError(
+            "Splits name members that are not in this dataset version: "
+            + ", ".join(sorted(unknown))
+            + "."
+        )
+
+    # Items are immutable once published, and their ids do not depend on
+    # splits, so rebuilding with the split names attached is safe.
+    return [
+        dataset_schema.DatasetVersionItem(
+            input=item.input,
+            input_id=item.input_id,
+            expected_response=item.expected_response,
+            expected_contexts=item.expected_contexts,
+            meta=item.meta,
+            splits=by_item_id.get(item.item_id),
+        )
+        for item in items
+    ]
+
+
 class TruSession(
     core_experimental._WithExperimentalSettings, python_utils.PydanticSingleton
 ):
@@ -1213,12 +1318,270 @@ class TruSession(
             record_resolver=_resolve,
         )
 
+    def create_dataset_version(
+        self,
+        dataset_name: str,
+        dataframe: Optional[pandas.DataFrame] = None,
+        ground_truths: Optional[
+            Sequence[groundtruth_schema.GroundTruth]
+        ] = None,
+        column_spec: Optional[Dict[str, str]] = None,
+        splits: Optional[Dict[str, Sequence[str]]] = None,
+        description: Optional[str] = None,
+        dataset_metadata: Optional[Dict[str, Any]] = None,
+        source_metadata: Optional[Dict[str, Any]] = None,
+        parent_dataset_version_id: Optional[
+            types_schema.DatasetVersionID
+        ] = None,
+    ) -> dataset_schema.DatasetVersion:
+        """Publish an immutable version of a dataset.
+
+        The version id is content-addressed from the ordered contents of the
+        version, so publishing identical content twice is idempotent: the
+        second call returns the version that already exists rather than
+        creating a duplicate or modifying it. `description` and
+        `parent_dataset_version_id` are provenance annotations only and do not
+        take part in that identity, so re-publishing the same examples under a
+        new description returns the original version unchanged.
+
+        Args:
+            dataset_name: Name of the dataset to publish a version of. The
+                dataset is created if it does not exist yet.
+            dataframe: The examples to publish, one per row. Mutually
+                exclusive with `ground_truths`.
+            ground_truths: The examples to publish as
+                [GroundTruth][trulens.core.schema.groundtruth.GroundTruth]
+                entries. Mutually exclusive with `dataframe`.
+            column_spec: Mapping from dataset version item fields (`input`,
+                `input_id`, `expected_response`, `expected_contexts`,
+                `metadata`) to column names in `dataframe`. Required with
+                `dataframe`. Legacy spellings such as `query` and
+                `ground_truth_output` are accepted.
+            splits: Named splits, mapping a split name to the members it
+                contains. Members are matched against each example's
+                `input_id` first and then its item id.
+            description: A description of what this version contains.
+            dataset_metadata: Metadata for the dataset itself. Only used when
+                the dataset does not exist yet.
+            source_metadata: Metadata describing where the content came from.
+                This *is* part of the version's identity.
+            parent_dataset_version_id: The version this one was derived from.
+                Defaults to the current latest version.
+
+        Returns:
+            The published
+            [DatasetVersion][trulens.core.schema.dataset.DatasetVersion], with
+            its items loaded.
+
+        Raises:
+            ValueError: If neither or both of `dataframe` and `ground_truths`
+                are given, if `column_spec` is missing or does not name an
+                `input` column, or if a split names a member that is not in
+                the version.
+        """
+
+        if (dataframe is None) == (ground_truths is None):
+            raise ValueError(
+                "Exactly one of `dataframe` or `ground_truths` must be "
+                "provided."
+            )
+
+        if dataframe is not None:
+            if column_spec is None:
+                raise ValueError(
+                    "`column_spec` is required when publishing from a "
+                    "dataframe."
+                )
+            items = self._dataset_version_items_of_dataframe(
+                dataframe, column_spec
+            )
+        else:
+            items = [
+                groundtruth_schema.dataset_version_item_of_ground_truth(
+                    ground_truth
+                )
+                for ground_truth in ground_truths
+            ]
+
+        items = _apply_dataset_version_splits(items, splits)
+
+        existing_dataset = self.connector.db.get_dataset(dataset_name)
+        if existing_dataset is not None and dataset_metadata is None:
+            dataset_id = existing_dataset.dataset_id
+        else:
+            dataset_id = self.connector.db.insert_dataset(
+                dataset=dataset_schema.Dataset(
+                    name=dataset_name, meta=dataset_metadata
+                )
+            )
+
+        version = dataset_schema.DatasetVersion(
+            dataset_id=dataset_id,
+            items=items,
+            description=description,
+            source_meta=(
+                source_metadata
+                if source_metadata is not None
+                else {"dataset_name": dataset_name}
+            ),
+            created_at=time(),
+            parent_dataset_version_id=parent_dataset_version_id,
+        )
+
+        dataset_version_id = self.connector.db.insert_dataset_version(version)
+
+        return self.connector.db.get_dataset_version(
+            dataset_version_id=dataset_version_id
+        )
+
+    def _dataset_version_items_of_dataframe(
+        self,
+        dataframe: pandas.DataFrame,
+        column_spec: Dict[str, str],
+    ) -> List[dataset_schema.DatasetVersionItem]:
+        """Build dataset version items out of a dataframe."""
+
+        spec = dataset_schema.normalize_column_spec(column_spec)
+
+        missing = sorted(
+            column
+            for column in spec.values()
+            if column not in dataframe.columns
+        )
+        if missing:
+            raise ValueError(
+                "The column spec names columns that are not in the "
+                f"dataframe: {', '.join(missing)}."
+            )
+
+        return [
+            dataset_schema.DatasetVersionItem(
+                input=row[spec["input"]],
+                input_id=row[spec["input_id"]] if "input_id" in spec else None,
+                expected_response=(
+                    row[spec["expected_response"]]
+                    if "expected_response" in spec
+                    else None
+                ),
+                expected_contexts=(
+                    row[spec["expected_contexts"]]
+                    if "expected_contexts" in spec
+                    else None
+                ),
+                meta=row[spec["metadata"]] if "metadata" in spec else None,
+            )
+            for _, row in dataframe.iterrows()
+        ]
+
+    def get_dataset_version(
+        self,
+        dataset_name: Optional[str] = None,
+        dataset_version_id: Optional[types_schema.DatasetVersionID] = None,
+        load_items: bool = True,
+    ) -> Optional[dataset_schema.DatasetVersion]:
+        """Load one immutable dataset version.
+
+        Pin an exact snapshot with `dataset_version_id`, or pass only
+        `dataset_name` to resolve the latest version. A dataset whose examples
+        predate versioning resolves to a version zero reconstructed from its
+        ground truth rows, which leaves the original payloads untouched.
+
+        Args:
+            dataset_name: The dataset whose latest version to resolve.
+            dataset_version_id: The exact version to load.
+            load_items: Whether to also load the version's examples.
+
+        Returns:
+            The version, or `None` if it could not be resolved.
+
+        Raises:
+            ValueError: If neither argument is given, or if the version found
+                by id does not belong to the named dataset.
+        """
+
+        if dataset_name is None and dataset_version_id is None:
+            raise ValueError(
+                "Either `dataset_name` or `dataset_version_id` must be "
+                "provided."
+            )
+
+        version = self.connector.db.get_dataset_version(
+            dataset_version_id=dataset_version_id,
+            dataset_name=dataset_name if dataset_version_id is None else None,
+            load_items=load_items,
+        )
+
+        if (
+            version is not None
+            and dataset_version_id is not None
+            and dataset_name is not None
+        ):
+            dataset = self.connector.db.get_dataset(dataset_name)
+            if dataset is None or dataset.dataset_id != version.dataset_id:
+                raise ValueError(
+                    f"Dataset version {dataset_version_id} does not belong to "
+                    f"dataset '{dataset_name}'."
+                )
+
+        return version
+
+    def list_dataset_versions(self, dataset_name: str) -> pandas.DataFrame:
+        """List the versions of a dataset, oldest first.
+
+        Args:
+            dataset_name: Name of the dataset.
+
+        Returns:
+            A dataframe with one row per version.
+        """
+
+        return self.connector.db.get_dataset_versions(dataset_name=dataset_name)
+
+    def compare_dataset_versions(
+        self,
+        dataset_version_id_a: types_schema.DatasetVersionID,
+        dataset_version_id_b: types_schema.DatasetVersionID,
+    ) -> dataset_schema.DatasetVersionDiff:
+        """Compare the membership of two dataset versions.
+
+        Args:
+            dataset_version_id_a: The baseline version.
+            dataset_version_id_b: The version to compare against the baseline.
+
+        Returns:
+            A
+            [DatasetVersionDiff][trulens.core.schema.dataset.DatasetVersionDiff]
+            reporting the added, removed and unchanged item ids.
+
+        Raises:
+            ValueError: If either version could not be found.
+        """
+
+        version_a = self.connector.db.get_dataset_version(
+            dataset_version_id=dataset_version_id_a
+        )
+        version_b = self.connector.db.get_dataset_version(
+            dataset_version_id=dataset_version_id_b
+        )
+
+        for dataset_version_id, version in (
+            (dataset_version_id_a, version_a),
+            (dataset_version_id_b, version_b),
+        ):
+            if version is None:
+                raise ValueError(
+                    f"Dataset version {dataset_version_id} not found."
+                )
+
+        return dataset_schema.DatasetVersionDiff.between(version_a, version_b)
+
     def get_ground_truth(
         self,
         dataset_name: Optional[str] = None,
         user_table_name: Optional[str] = None,
         user_schema_mapping: Optional[Dict[str, str]] = None,
         user_schema_name: Optional[str] = None,
+        dataset_version_id: Optional[types_schema.DatasetVersionID] = None,
     ) -> pandas.DataFrame:
         """Get ground truth data from the dataset. If `user_table_name` and `user_schema_mapping` are provided,
         load a virtual dataset from the user's table using the schema mapping. If `dataset_name` is provided,
@@ -1227,8 +1590,27 @@ class TruSession(
         user_table_name: Name of the user's table to load ground truth data from.
         user_schema_mapping: Mapping of user table columns to internal `GroundTruth` schema fields.
         user_schema_name: Name of the user's schema to load ground truth data from.
+        dataset_version_id: Load the examples of this exact immutable dataset
+            version instead of the dataset's current ground truth rows.
+
+        Note:
+            Passing only `dataset_name` keeps returning every ground truth row
+            of the dataset, exactly as before, so that publishing a version of
+            a subset does not silently change what existing callers read. Pass
+            `dataset_version_id` — or use
+            [get_dataset_version][trulens.core.session.TruSession.get_dataset_version]
+            — to read a pinned snapshot.
         """
-        if user_table_name and user_schema_mapping:
+        if dataset_version_id:
+            version = self.connector.db.get_dataset_version(
+                dataset_version_id=dataset_version_id
+            )
+            if version is None:
+                raise ValueError(
+                    f"Dataset version {dataset_version_id} not found."
+                )
+            return ground_truth_df_of_dataset_version(version)
+        elif user_table_name and user_schema_mapping:
             return self.connector.db.get_virtual_ground_truth(
                 user_table_name, user_schema_mapping, user_schema_name
             )

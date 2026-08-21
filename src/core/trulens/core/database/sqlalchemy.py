@@ -2165,6 +2165,23 @@ class SQLAlchemyDB(core_db.DB):
 
             return _dataset.dataset_id
 
+    def get_dataset(
+        self, dataset_name: str
+    ) -> Optional[dataset_schema.Dataset]:
+        """See [DB.get_dataset][trulens.core.database.base.DB.get_dataset]."""
+
+        with self.session.begin() as session:
+            rows = self._dataset_rows_by_name(session, dataset_name)
+            if not rows:
+                return None
+
+            payload = json.loads(rows[0].dataset_json)
+            return dataset_schema.Dataset(
+                name=payload.get("name", dataset_name),
+                dataset_id=rows[0].dataset_id,
+                meta=payload.get("meta"),
+            )
+
     def get_datasets(self) -> pd.DataFrame:
         """See [DB.get_datasets][trulens.core.database.base.DB.get_datasets]."""
 
@@ -2185,6 +2202,369 @@ class SQLAlchemyDB(core_db.DB):
                 data=[_row(ds) for ds in results],
                 columns=["dataset_id", "name", "meta"],
             )
+
+    def _dataset_rows_by_name(
+        self, session, dataset_name: str
+    ) -> List["db_orm.Dataset"]:
+        """Every dataset row carrying the given name, ordered by id.
+
+        A dataset id hashes the name *and* the metadata, so the same name can
+        legitimately map to more than one row. Ordering by id makes the choice
+        of primary row deterministic.
+        """
+
+        rows = [
+            row
+            for row in session.query(self.orm.Dataset).all()
+            if _dataset_name_of_row(row) == dataset_name
+        ]
+        return sorted(rows, key=lambda row: row.dataset_id)
+
+    def _resolve_dataset_row(
+        self,
+        session,
+        dataset_name: Optional[str] = None,
+        dataset_id: Optional[types_schema.DatasetID] = None,
+    ) -> Optional["db_orm.Dataset"]:
+        """Resolve the single dataset row addressed by a name or an id.
+
+        Versions always hang off one dataset row. When a name maps to several
+        rows the primary one — the lowest id — owns them, so that resolving by
+        name and resolving by id cannot disagree about which rows version zero
+        is reconstructed from.
+        """
+
+        if dataset_id is not None:
+            return (
+                session.query(self.orm.Dataset)
+                .filter_by(dataset_id=dataset_id)
+                .first()
+            )
+
+        if dataset_name is None:
+            raise ValueError(
+                "Either `dataset_name` or `dataset_id` must be provided."
+            )
+
+        rows = self._dataset_rows_by_name(session, dataset_name)
+        return rows[0] if rows else None
+
+    def _synthesize_version_zero(
+        self,
+        session,
+        dataset_row: Optional["db_orm.Dataset"],
+    ) -> Optional[dataset_schema.DatasetVersion]:
+        """Reconstruct version zero from pre-versioning ground truth rows.
+
+        This is the compatibility loader: the original ground truth payloads
+        are read but never rewritten. Rows are ordered by `ground_truth_id` so
+        the reconstruction — and therefore the content-addressed version id —
+        is deterministic.
+
+        Returns:
+            The reconstructed version, or `None` when the dataset has no
+            ground truth rows to reconstruct from.
+        """
+
+        if dataset_row is None:
+            return None
+
+        items = []
+        ground_truth_rows = (
+            session.query(self.orm.GroundTruth)
+            .filter_by(dataset_id=dataset_row.dataset_id)
+            .order_by(self.orm.GroundTruth.ground_truth_id)
+            .all()
+        )
+        for ground_truth_row in ground_truth_rows:
+            payload = json.loads(ground_truth_row.ground_truth_json)
+            items.append(
+                dataset_schema.DatasetVersionItem(
+                    input=payload.get("query"),
+                    input_id=payload.get("query_id"),
+                    expected_response=payload.get("expected_response"),
+                    expected_contexts=payload.get("expected_chunks"),
+                    meta=payload.get("meta"),
+                )
+            )
+
+        if not items:
+            return None
+
+        source_meta = {"origin": dataset_schema.VERSION_ZERO_ORIGIN}
+        dataset_name = _dataset_name_of_row(dataset_row)
+        if dataset_name is not None:
+            source_meta["dataset_name"] = dataset_name
+
+        return dataset_schema.DatasetVersion(
+            dataset_id=dataset_row.dataset_id,
+            items=items,
+            description=(
+                "Version zero, reconstructed from ground truth rows that "
+                "predate dataset versioning."
+            ),
+            source_meta=source_meta,
+            created_at=dataset_schema.VERSION_ZERO_CREATED_AT,
+            version_index=0,
+        )
+
+    def insert_dataset_version(
+        self, dataset_version: dataset_schema.DatasetVersion
+    ) -> types_schema.DatasetVersionID:
+        """See [DB.insert_dataset_version][trulens.core.database.base.DB.insert_dataset_version]."""
+
+        # TODO: thread safety. The unique constraint on
+        # (dataset_id, version_index) turns a lost race into an error rather
+        # than a corrupted history.
+        with self.session.begin() as session:
+            if (
+                session.query(self.orm.DatasetVersion)
+                .filter_by(
+                    dataset_version_id=dataset_version.dataset_version_id
+                )
+                .first()
+            ):
+                # Versions are immutable: an identical publish is a no-op.
+                logger.info(
+                    f"{text_utils.UNICODE_CHECK} dataset version "
+                    f"{dataset_version.dataset_version_id} already exists"
+                )
+                return dataset_version.dataset_version_id
+
+            latest = (
+                session.query(self.orm.DatasetVersion)
+                .filter_by(dataset_id=dataset_version.dataset_id)
+                .order_by(self.orm.DatasetVersion.version_index.desc())
+                .first()
+            )
+
+            if latest is None:
+                # First publish for this dataset: materialize the legacy ground
+                # truth rows as version zero so they stay loadable afterwards.
+                version_zero = self._synthesize_version_zero(
+                    session,
+                    self._resolve_dataset_row(
+                        session, dataset_id=dataset_version.dataset_id
+                    ),
+                )
+                if version_zero is not None:
+                    self._write_dataset_version(session, version_zero, 0)
+                    if (
+                        version_zero.dataset_version_id
+                        == dataset_version.dataset_version_id
+                    ):
+                        # The publish is identical to version zero.
+                        return version_zero.dataset_version_id
+                    latest = version_zero
+
+            if latest is not None:
+                version_index = latest.version_index + 1
+                if dataset_version.parent_dataset_version_id is None:
+                    dataset_version.parent_dataset_version_id = (
+                        latest.dataset_version_id
+                    )
+            else:
+                version_index = 0
+
+            self._write_dataset_version(session, dataset_version, version_index)
+
+            logger.info(
+                f"{text_utils.UNICODE_CHECK} added dataset version "
+                f"{dataset_version.dataset_version_id} "
+                f"({dataset_version.item_count} item(s))"
+            )
+
+            return dataset_version.dataset_version_id
+
+    def _write_dataset_version(
+        self,
+        session,
+        dataset_version: dataset_schema.DatasetVersion,
+        version_index: int,
+    ) -> None:
+        """Write a version and its items inside an open transaction."""
+
+        dataset_version.version_index = version_index
+
+        session.add(
+            self.orm.DatasetVersion.parse(
+                dataset_version, redact_keys=self.redact_keys
+            )
+        )
+        session.add_all([
+            self.orm.DatasetVersionItem.parse(
+                item, item_index=index, redact_keys=self.redact_keys
+            )
+            for index, item in enumerate(dataset_version.items)
+        ])
+
+    def get_dataset_version(
+        self,
+        dataset_version_id: Optional[types_schema.DatasetVersionID] = None,
+        dataset_name: Optional[str] = None,
+        dataset_id: Optional[types_schema.DatasetID] = None,
+        load_items: bool = True,
+    ) -> Optional[dataset_schema.DatasetVersion]:
+        """See [DB.get_dataset_version][trulens.core.database.base.DB.get_dataset_version]."""
+
+        with self.session.begin() as session:
+            if dataset_version_id is not None:
+                row = (
+                    session.query(self.orm.DatasetVersion)
+                    .filter_by(dataset_version_id=dataset_version_id)
+                    .first()
+                )
+                if row is None:
+                    return None
+                return self._load_dataset_version(session, row, load_items)
+
+            dataset_row = self._resolve_dataset_row(
+                session, dataset_name=dataset_name, dataset_id=dataset_id
+            )
+            if dataset_row is None:
+                return None
+
+            row = (
+                session.query(self.orm.DatasetVersion)
+                .filter_by(dataset_id=dataset_row.dataset_id)
+                .order_by(self.orm.DatasetVersion.version_index.desc())
+                .first()
+            )
+            if row is not None:
+                return self._load_dataset_version(session, row, load_items)
+
+            # Nothing published yet: fall back to the compatibility loader.
+            return self._synthesize_version_zero(session, dataset_row)
+
+    def get_dataset_versions(
+        self,
+        dataset_name: Optional[str] = None,
+        dataset_id: Optional[types_schema.DatasetID] = None,
+    ) -> pd.DataFrame:
+        """See [DB.get_dataset_versions][trulens.core.database.base.DB.get_dataset_versions]."""
+
+        columns = [
+            "dataset_version_id",
+            "dataset_id",
+            "version_index",
+            "parent_dataset_version_id",
+            "description",
+            "item_count",
+            "content_hash",
+            "created_at",
+            "source_meta",
+        ]
+
+        with self.session.begin() as session:
+            dataset_row = self._resolve_dataset_row(
+                session, dataset_name=dataset_name, dataset_id=dataset_id
+            )
+            if dataset_row is None:
+                return pd.DataFrame(columns=columns)
+
+            rows = (
+                session.query(self.orm.DatasetVersion)
+                .filter_by(dataset_id=dataset_row.dataset_id)
+                .order_by(self.orm.DatasetVersion.version_index)
+                .all()
+            )
+
+            if not rows:
+                version_zero = self._synthesize_version_zero(
+                    session, dataset_row
+                )
+                if version_zero is None:
+                    return pd.DataFrame(columns=columns)
+                versions = [version_zero]
+            else:
+                versions = [
+                    self._load_dataset_version(session, row, load_items=False)
+                    for row in rows
+                ]
+
+            return pd.DataFrame(
+                data=(
+                    (
+                        version.dataset_version_id,
+                        version.dataset_id,
+                        version.version_index,
+                        version.parent_dataset_version_id,
+                        version.description,
+                        version.item_count,
+                        version.content_hash,
+                        version.created_at,
+                        version.source_meta,
+                    )
+                    for version in versions
+                ),
+                columns=columns,
+            )
+
+    def get_dataset_version_items(
+        self, dataset_version_id: types_schema.DatasetVersionID
+    ) -> List[dataset_schema.DatasetVersionItem]:
+        """See [DB.get_dataset_version_items][trulens.core.database.base.DB.get_dataset_version_items]."""
+
+        with self.session.begin() as session:
+            return self._load_dataset_version_items(session, dataset_version_id)
+
+    def _load_dataset_version_items(
+        self, session, dataset_version_id: types_schema.DatasetVersionID
+    ) -> List[dataset_schema.DatasetVersionItem]:
+        """Load a version's items, in the order they were published."""
+
+        rows = (
+            session.query(self.orm.DatasetVersionItem)
+            .filter_by(dataset_version_id=dataset_version_id)
+            .order_by(self.orm.DatasetVersionItem.item_index)
+            .all()
+        )
+
+        items = []
+        for row in rows:
+            payload = json.loads(row.dataset_version_item_json)
+            items.append(
+                dataset_schema.DatasetVersionItem(
+                    item_id=row.item_id,
+                    dataset_version_id=row.dataset_version_id,
+                    input=payload.get("input"),
+                    input_id=payload.get("input_id"),
+                    expected_response=payload.get("expected_response"),
+                    expected_contexts=payload.get("expected_contexts"),
+                    meta=payload.get("meta"),
+                    splits=payload.get("splits"),
+                )
+            )
+        return items
+
+    def _load_dataset_version(
+        self,
+        session,
+        row: "db_orm.DatasetVersion",
+        load_items: bool = True,
+    ) -> dataset_schema.DatasetVersion:
+        """Rebuild a version from its row, optionally with its items."""
+
+        metadata = json.loads(row.dataset_version_json)
+
+        items = (
+            self._load_dataset_version_items(session, row.dataset_version_id)
+            if load_items
+            else []
+        )
+
+        return dataset_schema.DatasetVersion(
+            dataset_id=row.dataset_id,
+            items=items,
+            parent_dataset_version_id=row.parent_dataset_version_id,
+            description=metadata.get("description"),
+            source_meta=metadata.get("source_meta"),
+            created_at=row.created_at,
+            dataset_version_id=row.dataset_version_id,
+            content_hash=row.content_hash,
+            item_count=row.item_count,
+            version_index=row.version_index,
+        )
 
     def insert_event(self, event: Event) -> types_schema.EventID:
         """See [DB.insert_event][trulens.core.database.base.DB.insert_event]."""
@@ -2363,6 +2743,16 @@ def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
         data=(_extract(c) for c in cost_json),
         columns=["total_tokens", "total_cost", "cost_currency"],
     )
+
+
+def _dataset_name_of_row(row: "db_orm.Dataset") -> Optional[str]:
+    """Read a dataset's name out of its json payload."""
+
+    try:
+        return json.loads(row.dataset_json).get("name")
+    except (json.JSONDecodeError, TypeError, AttributeError):
+        logger.warning("Could not read the name of dataset %s.", row.dataset_id)
+        return None
 
 
 def _extract_ground_truths(
