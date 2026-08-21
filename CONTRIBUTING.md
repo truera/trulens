@@ -126,6 +126,43 @@ Past community contributions include the SQLAlchemy connector and LiteLLM provid
 
 ---
 
+## Signing Off Your Commits
+
+TruLens uses the [Developer Certificate of Origin](DCO), the same lightweight
+mechanism the Linux kernel and CNCF projects use. There is no agreement to sign
+and no form to fill in. You certify each contribution by adding a line to the
+commit message:
+
+```
+Signed-off-by: Your Name <your.email@example.com>
+```
+
+Git adds it for you with `-s`:
+
+```bash
+git commit -s -m "fix: handle empty context list"
+```
+
+The name and email must match the ones on the commit. Set them once with
+`git config user.name` and `git config user.email` and it works from then on.
+
+By signing off you state that you wrote the change, or that you have the right to
+submit it under this project's license. The full text is in [DCO](DCO); it is
+short and worth reading once.
+
+A CI check verifies every commit in a pull request. If you forget, it will tell
+you how to fix it:
+
+```bash
+git rebase --signoff origin/main
+git push --force-with-lease
+```
+
+Only commits in your pull request are checked, so nothing in the project's
+existing history is affected.
+
+---
+
 ## Reference
 
 Before contributing, familiarize yourself with:

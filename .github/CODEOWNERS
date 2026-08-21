@@ -82,3 +82,4 @@
 /.github/area-reviewers.yml             @truera/trulens_maintainers
 /.github/workflows/                     @truera/trulens_maintainers
 /.github/scripts/                       @truera/trulens_maintainers
+/DCO                                    @truera/trulens_maintainers

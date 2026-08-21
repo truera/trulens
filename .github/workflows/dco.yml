@@ -1,0 +1,35 @@
+name: DCO
+
+# Checks that every commit in a pull request carries a Signed-off-by trailer,
+# certifying the Developer Certificate of Origin in /DCO.
+#
+# Uses `pull_request` rather than `pull_request_target`: this only needs to read
+# commit metadata, so the read-only token that fork PRs receive is enough. Nothing
+# here executes code from the pull request.
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  dco:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history, so the merge base with the target branch is available.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Check sign-offs
+        run: |
+          python .github/scripts/check_dco.py \
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.event.pull_request.head.sha }}"
