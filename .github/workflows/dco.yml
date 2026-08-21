@@ -1,15 +1,19 @@
 name: DCO
 
-# Checks that every commit in a pull request carries a Signed-off-by trailer,
-# certifying the Developer Certificate of Origin in /DCO.
+# Checks that the pull request description certifies the Developer Certificate of
+# Origin in /DCO, via the checkbox in the pull request template.
 #
-# Uses `pull_request` rather than `pull_request_target`: this only needs to read
-# commit metadata, so the read-only token that fork PRs receive is enough. Nothing
-# here executes code from the pull request.
+# Runs on `edited` so that ticking the box re-runs the check, and on `synchronize`
+# so that a passing status always corresponds to the current head commit rather
+# than to whatever the pull request contained when the box was ticked.
+#
+# Uses `pull_request` rather than `pull_request_target`: this reads the description
+# from the event payload and needs no token, so the read-only token given to fork
+# pull requests is enough. No pull request code is executed.
 
 on:
   pull_request:
-    types: [opened, reopened, synchronize]
+    types: [opened, reopened, edited, synchronize]
 
 permissions:
   contents: read
@@ -20,16 +24,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # Full history, so the merge base with the target branch is available.
-          fetch-depth: 0
           persist-credentials: false
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Check sign-offs
-        run: |
-          python .github/scripts/check_dco.py \
-            "${{ github.event.pull_request.base.sha }}" \
-            "${{ github.event.pull_request.head.sha }}"
+      - name: Check the certification
+        env:
+          # Via the environment, not interpolated into the run script, so that a
+          # description containing shell metacharacters cannot affect the command.
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: python .github/scripts/check_dco.py --body "$PR_BODY"

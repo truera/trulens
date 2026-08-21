@@ -18,13 +18,10 @@ Please include any other details of this change useful for _TruLens_ developers.
 - [ ] This change includes re-generated golden test results
 - [ ] This change requires a documentation update
 
-## Sign-off
+## Certification
 
-- [ ] My commits are signed off (`git commit -s`), certifying the
+- [ ] I certify that I wrote these changes, or have the right to submit them
+  under this project's license — the
   [Developer Certificate of Origin](../DCO)
 
-New to this? It means you wrote the change, or have the right to contribute it
-under this project's license. `git commit -s` adds the line for you. If the DCO
-check fails, it prints the command to fix it — usually
-`git rebase --signoff origin/main && git push --force-with-lease`. Ask if you get
-stuck; this is not a reason for your contribution to be turned away.
+Please leave this line in place; a CI check looks for it.

@@ -1,107 +1,111 @@
-"""Check that every commit in a pull request carries a DCO sign-off.
+"""Check that a pull request certifies the Developer Certificate of Origin.
 
-Each commit needs a trailer of the form::
+The pull request template carries a checkbox. Ticking it certifies the
+[DCO](../../DCO) for every commit in the pull request: that you wrote the changes,
+or have the right to submit them under this project's license.
 
-    Signed-off-by: Your Name <your.email@example.com>
-
-with an email matching the commit's author or committer. Adding it certifies the
-[Developer Certificate of Origin](../../DCO) -- that you wrote the change, or
-have the right to submit it under this project's license.
-
-Only commits introduced by the pull request are checked, so history predating
-this policy is unaffected.
+The check re-runs whenever commits are pushed, so a passing status always
+corresponds to the pull request's current head rather than to whatever it looked
+like when the box was ticked.
 
 Usage::
 
-    python check_dco.py <base-sha> <head-sha>
+    python check_dco.py --body-file body.md
+    python check_dco.py --body "$PR_BODY"
 """
 
 from __future__ import annotations
 
 import argparse
 import re
-import subprocess
 import sys
 
-SIGNOFF = re.compile(r"^Signed-off-by: .+ <(?P<email>[^<>]+)>\s*$", re.M)
+TERM = "developer certificate of origin"
 
-# Bots commit through the API and cannot add trailers.
-BOT_SUFFIXES = ("[bot]",)
-BOT_EMAILS = ("@users.noreply.github.com",)
+# A task-list item: "- [ ]", "- [x]", "* [X]", with optional leading whitespace.
+ITEM = re.compile(r"^[ \t]*[-*][ \t]*\[(?P<mark>[ xX])\](?P<rest>.*)$")
 
+MISSING = """No Developer Certificate of Origin checkbox found in the pull request
+description.
 
-def commits(base: str, head: str) -> list[str]:
-    """SHAs introduced by head and not present in base, excluding merges."""
-    out = subprocess.run(
-        ["git", "rev-list", "--no-merges", f"{base}..{head}"],
-        capture_output=True,
-        text=True,
-        check=True,
-    ).stdout
-    return [line for line in out.split() if line]
+The pull request template includes it. If the section was removed, add this line
+back to the description:
 
+  - [x] I certify that I wrote these changes, or have the right to submit them
+        under this project's license (the Developer Certificate of Origin)
+"""
 
-def field(sha: str, fmt: str) -> str:
-    return subprocess.run(
-        ["git", "show", "-s", f"--format={fmt}", sha],
-        capture_output=True,
-        text=True,
-        check=True,
-    ).stdout.strip()
+UNTICKED = """The Developer Certificate of Origin checkbox is not ticked.
+
+Edit the pull request description and change `- [ ]` to `- [x]` on that line. By
+ticking it you certify that you wrote these changes, or have the right to submit
+them under this project's license. The full text is in DCO at the repository root.
+"""
 
 
-def is_bot(name: str, email: str) -> bool:
-    return name.endswith(BOT_SUFFIXES) and email.endswith(BOT_EMAILS)
+def _items(body: str) -> list[tuple[str, str]]:
+    """Task-list items as (mark, text), joining wrapped continuation lines.
+
+    Markdown allows a list item to wrap across lines, and the template's item does.
+    Anything after the checkbox that is not itself a new list item, a heading, or a
+    blank line belongs to the same item.
+    """
+    items: list[tuple[str, str]] = []
+    mark: str | None = None
+    parts: list[str] = []
+
+    def flush() -> None:
+        if mark is not None:
+            items.append((mark, " ".join(parts)))
+
+    for line in (body or "").splitlines():
+        match = ITEM.match(line)
+        if match:
+            flush()
+            mark = match.group("mark")
+            parts = [match.group("rest")]
+            continue
+        if mark is not None:
+            if not line.strip() or line.lstrip().startswith("#"):
+                flush()
+                mark, parts = None, []
+            else:
+                parts.append(line.strip())
+    flush()
+    return items
 
 
-def check(sha: str) -> str | None:
-    """Return an error message, or None when the commit is signed off."""
-    author_name = field(sha, "%an")
-    author_email = field(sha, "%ae").lower()
-    committer_email = field(sha, "%ce").lower()
-    body = field(sha, "%B")
-
-    if is_bot(author_name, author_email):
-        return None
-
-    signoffs = {m.group("email").lower() for m in SIGNOFF.finditer(body)}
-    if not signoffs:
-        return f"{sha[:8]} {field(sha, '%s')[:60]!r} has no Signed-off-by"
-    if author_email not in signoffs and committer_email not in signoffs:
-        return (
-            f"{sha[:8]} signed off by {', '.join(sorted(signoffs))} but authored "
-            f"by {author_email}"
-        )
+def check(body: str) -> str | None:
+    """Return an error message, or None when the DCO is certified."""
+    relevant = [
+        (mark, text) for mark, text in _items(body) if TERM in text.lower()
+    ]
+    if not relevant:
+        return MISSING
+    if all(mark == " " for mark, _ in relevant):
+        return UNTICKED
     return None
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("base", help="base SHA or ref")
-    parser.add_argument("head", help="head SHA or ref")
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--body", help="pull request description")
+    source.add_argument("--body-file", help="file containing the description")
     args = parser.parse_args()
 
-    shas = commits(args.base, args.head)
-    if not shas:
-        print("no commits to check")
-        return 0
-
-    failures = [msg for sha in shas if (msg := check(sha))]
-    if not failures:
-        print(f"all {len(shas)} commit(s) signed off")
-        return 0
-
-    print(
-        f"{len(failures)} of {len(shas)} commit(s) missing a valid sign-off:\n"
+    body = (
+        args.body
+        if args.body is not None
+        else open(args.body_file, encoding="utf-8").read()
     )
-    for msg in failures:
-        print(f"  {msg}")
-    print(
-        "\nSign off future commits with `git commit -s`. To fix these, run:\n"
-        f"\n    git rebase --signoff {args.base}\n    git push --force-with-lease\n"
-        "\nSee CONTRIBUTING.md for details, and DCO for what you are certifying."
-    )
-    return 1
+
+    error = check(body)
+    if error:
+        print(error)
+        return 1
+    print("Developer Certificate of Origin certified")
+    return 0
 
 
 if __name__ == "__main__":
