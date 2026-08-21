@@ -28,6 +28,7 @@ import warnings
 import pandas
 import pydantic
 from trulens.core import experimental as core_experimental
+from trulens.core import prompt as core_prompt
 from trulens.core._utils import optional as optional_utils
 from trulens.core._utils.pycompat import Future  # code style exception
 from trulens.core.database import connector as core_connector
@@ -39,6 +40,7 @@ from trulens.core.schema import conversation as conversation_schema
 from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import groundtruth as groundtruth_schema
+from trulens.core.schema import prompt as prompt_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.utils import deprecation as deprecation_utils
@@ -160,6 +162,9 @@ class TruSession(
     _dashboard_listener_stdout: Optional[Thread] = pydantic.PrivateAttr(None)
 
     _dashboard_listener_stderr: Optional[Thread] = pydantic.PrivateAttr(None)
+
+    _prompt_label_cache: Optional[Any] = pydantic.PrivateAttr(None)
+    """Process-local TTL cache of prompt label to exact version."""
 
     _sampling_controller: Optional[Any] = pydantic.PrivateAttr(None)
     """Active :class:`SamplingController`, set via :meth:`configure_online_eval`."""
@@ -636,6 +641,7 @@ class TruSession(
         See [DB.reset_database][trulens.core.database.base.DB.reset_database].
         """
         self.connector.reset_database()
+        self.prompt_label_cache.invalidate()
 
     def migrate_database(self, **kwargs: Dict[str, Any]):
         """Migrates the database.
@@ -1071,6 +1077,223 @@ class TruSession(
             raise ValueError(
                 "Either `dataset_name` or `user_table_name` and `user_schema_mapping` must be provided."
             )
+
+    @property
+    def prompt_label_cache(self) -> core_prompt.LabelCache:
+        """Process-local time-to-live cache of prompt label to exact version.
+
+        Disabled by default. Set `session.prompt_label_cache.ttl` to a positive
+        number of seconds to reduce label reads. Correctness never depends on
+        it: exact-version lookups bypass it entirely and every write
+        invalidates the label it touched.
+        """
+
+        if self._prompt_label_cache is None:
+            self._prompt_label_cache = core_prompt.LabelCache()
+        return self._prompt_label_cache
+
+    def create_prompt(
+        self,
+        slug: str,
+        name: Optional[str] = None,
+        prompt_type: Union[
+            prompt_schema.PromptType, str
+        ] = prompt_schema.PromptType.TEXT,
+        description: Optional[str] = None,
+        tags: Optional[Sequence[str]] = None,
+    ) -> prompt_schema.Prompt:
+        """Create a prompt, or update the metadata of an existing slug.
+
+        Args:
+            slug: Stable key such as `support-assistant`.
+            name: Display name. Defaults to the slug.
+            prompt_type: `text` or `chat`. Fixed after creation.
+            description: Free-text description.
+            tags: Tags for grouping prompts.
+
+        Returns:
+            The stored [Prompt][trulens.core.schema.prompt.Prompt].
+        """
+
+        return core_prompt.create_prompt(
+            self.connector.db,
+            slug=slug,
+            name=name,
+            prompt_type=prompt_type,
+            description=description,
+            tags=tags,
+        )
+
+    def create_prompt_version(
+        self,
+        prompt: Union[prompt_schema.Prompt, types_schema.PromptID, str],
+        text: Optional[str] = None,
+        messages: Optional[Sequence[Dict[str, Any]]] = None,
+        variables: Optional[Sequence[str]] = None,
+        model_defaults: Optional[Dict[str, Any]] = None,
+        response_format: Optional[Dict[str, Any]] = None,
+        change_note: Optional[str] = None,
+        parent_version_id: Optional[types_schema.PromptVersionID] = None,
+        created_by: Optional[str] = None,
+    ) -> prompt_schema.PromptVersion:
+        """Create an immutable prompt version and move `latest` onto it.
+
+        Creating the same content twice returns the same version.
+
+        Args:
+            prompt: A prompt, prompt id, or slug.
+            text: Template string for a text prompt.
+            messages: Ordered messages for a chat prompt.
+            variables: Declared variable names. Inferred from the content when
+                omitted.
+            model_defaults: Provider-neutral model settings. Never credentials.
+            response_format: Response-format metadata for provider adapters.
+            change_note: Why the version was created.
+            parent_version_id: The version this one derives from. Defaults to
+                whatever `latest` currently points at.
+            created_by: Who created the version.
+
+        Returns:
+            The stored
+            [PromptVersion][trulens.core.schema.prompt.PromptVersion].
+        """
+
+        return core_prompt.create_prompt_version(
+            self.connector.db,
+            prompt=prompt,
+            text=text,
+            messages=messages,
+            variables=variables,
+            model_defaults=model_defaults,
+            response_format=response_format,
+            change_note=change_note,
+            parent_version_id=parent_version_id,
+            created_by=created_by,
+            cache=self.prompt_label_cache,
+        )
+
+    def set_prompt_label(
+        self,
+        prompt: Union[prompt_schema.Prompt, types_schema.PromptID, str],
+        label: str,
+        version: Union[
+            prompt_schema.PromptVersion, types_schema.PromptVersionID
+        ],
+        moved_by: Optional[str] = None,
+    ) -> prompt_schema.PromptLabel:
+        """Point a label at one exact version and record the movement.
+
+        Rolling back is the same call with an older version. Application code
+        that looks the label up needs no change.
+
+        Args:
+            prompt: A prompt, prompt id, or slug.
+            label: The label name, for example `production`.
+            version: The version or version id to point at.
+            moved_by: Caller label written to the history entry.
+
+        Returns:
+            The resulting
+            [PromptLabel][trulens.core.schema.prompt.PromptLabel].
+        """
+
+        return core_prompt.set_prompt_label(
+            self.connector.db,
+            prompt=prompt,
+            label=label,
+            version=version,
+            moved_by=moved_by,
+            cache=self.prompt_label_cache,
+        )
+
+    def get_prompt(
+        self,
+        prompt: Union[prompt_schema.Prompt, types_schema.PromptID, str],
+        label: Optional[str] = None,
+        version_id: Optional[types_schema.PromptVersionID] = None,
+        use_cache: bool = True,
+    ) -> prompt_schema.ResolvedPrompt:
+        """Resolve a prompt to one exact version.
+
+        Args:
+            prompt: A prompt, prompt id, or slug.
+            label: Label to resolve. Defaults to `latest` when no `version_id`
+                is given.
+            version_id: Exact version to load. Wins over `label`.
+            use_cache: Set false to bypass the label cache for this call.
+
+        Returns:
+            A [ResolvedPrompt][trulens.core.schema.prompt.ResolvedPrompt],
+            which renders locally without calling a model.
+        """
+
+        return core_prompt.resolve_prompt(
+            self.connector.db,
+            prompt=prompt,
+            label=label,
+            version_id=version_id,
+            cache=self.prompt_label_cache,
+            use_cache=use_cache,
+        )
+
+    def get_prompts(self) -> pandas.DataFrame:
+        """Get every prompt in the database.
+
+        Returns:
+            A dataframe with one row per prompt.
+        """
+
+        return self.connector.db.get_prompts()
+
+    def get_prompt_versions(
+        self, prompt: Union[prompt_schema.Prompt, types_schema.PromptID, str]
+    ) -> pandas.DataFrame:
+        """Get every version of a prompt, oldest first.
+
+        Args:
+            prompt: A prompt, prompt id, or slug.
+
+        Returns:
+            A dataframe with one row per version.
+        """
+
+        resolved = core_prompt.as_prompt(self.connector.db, prompt)
+        return self.connector.db.get_prompt_versions(resolved.prompt_id)
+
+    def get_prompt_labels(
+        self, prompt: Union[prompt_schema.Prompt, types_schema.PromptID, str]
+    ) -> pandas.DataFrame:
+        """Get every label of a prompt and the version it points at.
+
+        Args:
+            prompt: A prompt, prompt id, or slug.
+
+        Returns:
+            A dataframe with one row per label.
+        """
+
+        resolved = core_prompt.as_prompt(self.connector.db, prompt)
+        return self.connector.db.get_prompt_labels(resolved.prompt_id)
+
+    def get_prompt_label_history(
+        self,
+        prompt: Union[prompt_schema.Prompt, types_schema.PromptID, str],
+        label: Optional[str] = None,
+    ) -> pandas.DataFrame:
+        """Get the append-only history of label movements, newest first.
+
+        Args:
+            prompt: A prompt, prompt id, or slug.
+            label: Restrict to one label when given.
+
+        Returns:
+            A dataframe with one row per movement.
+        """
+
+        resolved = core_prompt.as_prompt(self.connector.db, prompt)
+        return self.connector.db.get_prompt_label_history(
+            resolved.prompt_id, label=label
+        )
 
     def start_evaluator(
         self,
