@@ -35,6 +35,7 @@ First, this requires loading data into a vector store.
 
         return {"messages": [AIMessage(content="No research query provided")]}
 
+
     def writer_agent(state):
         """Agent that writes articles based on research."""
         messages = state.get("messages", [])
@@ -46,10 +47,13 @@ First, this requires loading data into a vector store.
                 research_content = str(last_message)
 
             # Simulate article writing
-            article = f"Article: Based on the research - {research_content[:100]}..."
+            article = (
+                f"Article: Based on the research - {research_content[:100]}..."
+            )
             return {"messages": [AIMessage(content=article)]}
 
         return {"messages": [AIMessage(content="No research content provided")]}
+
 
     # Create the workflow
     workflow = StateGraph(MessagesState)
@@ -66,11 +70,7 @@ First, this requires loading data into a vector store.
     print(f"Graph type: {type(graph)}")
     print(f"Graph module: {graph.__module__}")
 
-    config = {
-        "configurable": {
-            "thread_id": "1"
-        }
-    }
+    config = {"configurable": {"thread_id": "1"}}
     ```
 
 To instrument the graph, all that's required is to wrap it using TruGraph.
@@ -80,10 +80,7 @@ To instrument the graph, all that's required is to wrap it using TruGraph.
     ```python
     from trulens.apps.langgraph import TruGraph
 
-    tru_recorder = TruGraph(graph,
-        app_name="tru_simple_graph",
-        app_version="v1.0"
-        )
+    tru_recorder = TruGraph(graph, app_name="tru_simple_graph", app_version="v1.0")
     ```
 
 ## Auto-Detection of apps using LangGraph `@task` decorator
@@ -105,8 +102,8 @@ In the example below, `my_agent_function` is automatically instrumented. No manu
 !!! example
 
     ```python
-
     from langgraph.func import task
+
 
     @task  # This is automatically detected and instrumented by TruGraph
     def my_agent_function(state, config):
@@ -133,15 +130,18 @@ In addition, we manually instrument the `preprocess` with _TruLens_ `@instrument
     from langgraph.types import interrupt
     from langgraph.checkpoint.memory import MemorySaver
 
+
     @instrument()
     def preprocess_input(topic: str) -> str:
         """Custom preprocessing step."""
         return f"Preprocessed {topic}"
 
+
     @task
     def write_essay(topic: str) -> str:
         """Write an essay about the given topic."""
         return f"An essay about topic: {topic}"
+
 
     @entrypoint(checkpointer=MemorySaver())
     def workflow(topic: str) -> dict:
@@ -151,29 +151,31 @@ In addition, we manually instrument the `preprocess` with _TruLens_ `@instrument
             # Any json-serializable payload provided to interrupt as argument.
             # It will be surfaced on the client side as an Interrupt when streaming data
             # from the workflow.
-            "essay": essay, # The essay we want reviewed.
+            "essay": essay,  # The essay we want reviewed.
             # We can add any additional information that we need.
             # For example, introduce a key called "action" with some instructions.
             "action": "Please approve/reject the essay",
         })
 
         return {
-            "essay": essay, # The essay that was generated
-            "is_approved": is_approved, # Response from HIL
+            "essay": essay,  # The essay that was generated
+            "is_approved": is_approved,  # Response from HIL
         }
+
 
     class ComplexRAGAgent:
         def __init__(self):
             self.workflow = workflow
+
         def run(self, topic: str) -> dict:
             return self.workflow.invoke(topic)
 
 
     complex_agent = ComplexRAGAgent()
 
-    tru_graph_complex_agent = TruGraph(complex_agent,
-       app_name="essay_writer",
-       app_version="base")
+    tru_graph_complex_agent = TruGraph(
+        complex_agent, app_name="essay_writer", app_version="base"
+    )
 
     with tru_graph_complex_agent as app:
         complex_agent.run("cat")

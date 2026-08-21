@@ -153,11 +153,11 @@ sample = generator.sample(
 )
 
 # Freeze a reproducible 60/20/20 split before tuning any judge.
-sample_df = sample.to_df().sample(frac=1, random_state=42).reset_index(drop=True)
+sample_df = (
+    sample.to_df().sample(frac=1, random_state=42).reset_index(drop=True)
+)
 sample_df["split"] = (
-    ["development"] * 30
-    + ["validation"] * 10
-    + ["held_out"] * 10
+    ["development"] * 30 + ["validation"] * 10 + ["held_out"] * 10
 )
 
 # After human annotators populate expected_score directly in sample_df:
@@ -198,7 +198,9 @@ needed to reproduce the run:
 from trulens.providers.openai import OpenAI
 
 provider = OpenAI(model_engine="gpt-4o-mini")
-strict_criteria = "A response is relevant only when it directly answers the prompt."
+strict_criteria = (
+    "A response is relevant only when it directly answers the prompt."
+)
 domain_instructions = "Do not reward fluency when the response is incomplete."
 selected_examples = [
     ({"prompt": "What is 2 + 2?", "response": "4"}, 3),
@@ -246,9 +248,9 @@ Construct a [`Metric`][trulens.core.Metric] directly from each configuration:
 
 ```python
 from trulens.core import Metric
+
 judges = {
-    name: Metric(**config["metric"])
-    for name, config in judge_configs.items()
+    name: Metric(**config["metric"]) for name, config in judge_configs.items()
 }
 
 score, metadata = judges["strict"](
@@ -531,7 +533,9 @@ jury = Jury(
     method="relevance_with_cot_reasons",
     aggregation="median",
 )
-metric = Metric(implementation=jury, name="Jury Relevance").on_input().on_output()
+metric = (
+    Metric(implementation=jury, name="Jury Relevance").on_input().on_output()
+)
 ```
 
 `Jury` supports `mean`, `median`, `trimmed_mean`, `majority_vote`,

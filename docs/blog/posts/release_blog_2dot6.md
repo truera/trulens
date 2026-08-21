@@ -123,7 +123,7 @@ We've added two methods to support this workflow:
     session.wait_for_feedback_results(
         record_ids=record_ids,
         feedback_names=["Answer Relevance", "Groundedness"],
-        timeout=300
+        timeout=300,
     )
     ```
 

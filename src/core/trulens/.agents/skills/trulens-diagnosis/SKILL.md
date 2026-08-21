@@ -44,7 +44,9 @@ for col in feedback_cols:
         low = records_df[records_df[col] < FAIL_THRESHOLD]
         if not low.empty:
             failing[col] = low
-            print(f"\n{col}: {len(low)} failing records out of {len(records_df)}")
+            print(
+                f"\n{col}: {len(low)} failing records out of {len(records_df)}"
+            )
             print(low[["input", "output", col]].head(5))
 ```
 
@@ -76,6 +78,7 @@ Use the dashboard to inspect individual span attributes:
 
 ```python
 from trulens.dashboard import run_dashboard
+
 run_dashboard(session)
 # Navigate to Records → click a failing record → expand spans
 ```
@@ -106,11 +109,14 @@ vector_store.query(query_texts=query, n_results=5)  # was 2
 
 # Fix B: Improve chunking — reduce chunk size, add overlap
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+
 splitter = RecursiveCharacterTextSplitter(chunk_size=256, chunk_overlap=50)
 
 # Fix C: Switch embedding model
 from langchain_openai import OpenAIEmbeddings
+
 embeddings = OpenAIEmbeddings(model="text-embedding-3-large")  # was small
+
 
 # Fix D: Add query rewriting before retrieval
 @instrument(span_type=SpanAttributes.SpanType.RETRIEVAL)
@@ -129,16 +135,18 @@ SYSTEM_PROMPT = """Answer ONLY using the provided context.
 If the context doesn't contain the answer, say 'I don't know.'
 Do not add information from your training data."""
 
+
 # Fix B: Filter low-relevance chunks before passing to LLM
 def filter_contexts(contexts: list, query: str, threshold: float = 0.7) -> list:
     # Re-rank and filter by relevance score
     return [c for c, score in zip(contexts, scores) if score >= threshold]
 
+
 # Fix C: Reduce temperature to minimize hallucination
 response = client.chat.completions.create(
     model="gpt-4o-mini",
     temperature=0.0,  # was 0.7
-    messages=[...]
+    messages=[...],
 )
 ```
 
@@ -174,7 +182,7 @@ tools = [
             "Do NOT use for real-time data or calculations."
         ),
     },
-    ...
+    ...,
 ]
 
 # Fix B: Add few-shot examples to the agent prompt showing correct tool use
