@@ -103,8 +103,8 @@ areas:
   - name: Providers
     # All provider integrations except Cortex. Scoped as one area because the
     # integrations share plumbing and the same failure modes recur across them.
-    # Cortex is excluded: it is Snowflake's own provider and the busiest of the
-    # eight, so it stays with maintainers.
+    # Cortex is excluded: it tracks unreleased Snowflake API changes, so
+    # maintainers keep reviewing it.
     paths:
       - src/providers/
     exclude:

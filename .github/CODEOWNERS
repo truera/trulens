@@ -68,8 +68,8 @@
 /src/core/trulens/core/run.py           @truera/trulens_maintainers
 /src/core/trulens/core/sampling.py      @truera/trulens_maintainers
 
-# Cortex provider. Snowflake's own provider and the busiest of the eight;
-# deliberately carved out of the providers area and kept with maintainers.
+# Cortex provider. Tracks unreleased Snowflake API changes, so it is carved out
+# of the providers area and kept with maintainers.
 /src/providers/cortex/                   @truera/trulens_maintainers
 
 # ---------------------------------------------------------------------------
