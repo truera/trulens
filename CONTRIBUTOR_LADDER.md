@@ -72,11 +72,15 @@ context.
 
 ### Requirements
 
-- Roughly **1 month** of contribution history and about **5 merged pull
-  requests**, or a comparable record of triage, documentation, or community
-  support. Different shapes of history qualify: a run of small PRs, a couple of
-  complex ones that took real back-and-forth, or sustained help in issues.
+- A few merged pull requests — **about three** — or a comparable record of triage,
+  documentation, or community support, over **at least a month**. Different shapes
+  of history qualify: a run of small PRs, one or two that took real back-and-forth,
+  or sustained help in issues. Maintenance and documentation count the same as
+  features.
 - **One sponsor** who is an Area Reviewer or Maintainer.
+
+Someone reads the work itself. Counts decide who is worth looking at, not who gets
+the role.
 
 ### Privileges
 
@@ -132,10 +136,12 @@ someone has depth.
 ### Requirements
 
 - Area Triager for at least **1 month**.
-- At least **20 substantive contributions** in the past 12 months. That includes
-  authoring PRs, reviewing PRs, triaging issues, writing documentation, testing
-  release candidates, and answering other users' questions.
-- Primary reviewer on at least **5 pull requests**.
+- **Substantive reviews on at least 5 pull requests written by other people.**
+  Substantive means engaging with the change: asking what it does, finding a
+  problem, or approving with a note on what you checked. A bare "LGTM" doesn't
+  count, and neither do comments on your own PRs.
+- Activity spread over **at least 3 months**, rather than concentrated in a single
+  burst.
 - Depth in **one named area**, with a track record that includes maintenance —
   fixing, deprecating, following up — and not only new features.
 - **Two sponsors** who are Area Reviewers or Maintainers. See
@@ -186,9 +192,9 @@ Project-wide responsibility, including releases and direction.
 
 - Area Reviewer for at least **6 months**.
 - Breadth across several areas rather than depth in one.
-- At least **10 pull requests as primary reviewer** and **30 reviewed or
-  merged**.
-- Has mentored at least one contributor up a rung.
+- **Substantive reviews on at least 30 pull requests** written by other people,
+  and named as a requested reviewer on at least **10** of them.
+- Has sponsored or mentored at least one contributor up a rung.
 - Can exercise judgment for the good of the project, independent of their
   employer, friends, or team.
 
