@@ -21,7 +21,7 @@ Adding people here is an investment in the project, not a reward for past work.
 | Rung | Write access | Scope |
 | ---- | ------------ | ----- |
 | Contributor | None | — |
-| [Triager](#triager) | None (GitHub Triage role) | Issues and pull requests |
+| [Area Triager](#area-triager) | None (GitHub Triage role) | Issues and PRs in one area |
 | [Area Reviewer](#area-reviewer) | Merge, scoped to paths | One named area |
 | [Maintainer](#maintainer) | Merge, project-wide | Whole project |
 
@@ -47,15 +47,25 @@ starts to bind once someone outside Snowflake reaches Area Reviewer.
 
 ---
 
-## Triager
+## Area Triager
 
-Triagers keep the issue tracker and PR queue in order. No write access to the
-codebase.
+Area Triagers keep the issue tracker and PR queue in order, and are the first
+reviewers for pull requests in their area. No write access to the codebase.
+
+Your area is named when you're nominated and recorded in
+[`.github/area-reviewers.yml`](./.github/area-reviewers.yml). It determines what
+gets routed to you and what you're expected to keep an eye on. Note that GitHub's
+Triage permission is repository-wide and cannot be restricted to paths, so the
+area is a statement of responsibility rather than a technical limit: you *can*
+label and close issues anywhere, and you're asked to concentrate where you have
+context.
 
 ### Responsibilities
 
-- Triage incoming issues: reproduce what you can, ask for missing detail, apply
-  labels, close duplicates and resolved issues.
+- Triage incoming issues in your area: reproduce what you can, ask for missing
+  detail, apply labels, close duplicates and resolved issues.
+- Review pull requests in your area. Comment reviews are the useful default: ask
+  the questions, point out what looks wrong, say what you checked.
 - Point contributors at the right context: a related issue, the relevant docs, a
   prior PR.
 - Follow the [Code of Conduct](./CONTRIBUTING.md) and help others meet it.
@@ -73,25 +83,36 @@ codebase.
 ### Privileges
 
 - GitHub **Triage** role: label, assign, close and reopen issues and PRs.
-- Listed under Triagers in [MAINTAINERS.md](./MAINTAINERS.md).
+- Listed with your area under Area Triagers in
+  [MAINTAINERS.md](./MAINTAINERS.md).
 - Automatic review requests on PRs touching your area, routed by
-  [`.github/area-reviewers.yml`](./.github/area-reviewers.yml). A Maintainer or
-  Area Reviewer still approves and merges, so these reviews are advisory, but
-  they are where the track record for the next rung comes from.
+  `area-reviewers.yml`.
 
-`src/core` is routed to all Triagers rather than to one owner. It is the largest
-area and the least covered by review, so it is the fastest way to build the
-experience the next rung asks for.
+On reviews specifically: you can leave comment reviews, and because this is a
+public repository GitHub will also let you press Approve or Request changes. Those
+buttons don't carry merge authority here — `main` requires an approving review
+from a code owner, and GitHub ignores CODEOWNERS entries for accounts without
+write access. So an Area Triager's review informs the decision without gating it.
+That isn't a comment on the quality of your review; it's the mechanism by which
+the rung stays low-risk.
+
+Reviewing is also how you reach the next rung, which asks for 5 pull requests as
+primary reviewer.
+
+`src/core` is routed to all Area Triagers rather than to one owner. It is the
+largest area and the least covered by review, so it is the fastest way to build
+the experience the next rung asks for.
 
 ### Process
 
 1. A Maintainer or Area Reviewer opens an issue titled
-   `Triager nomination: <github-handle>`, linking representative work.
-2. The nominee comments to confirm they want the role and accept the
-   responsibilities above.
+   `Area Triager nomination: <github-handle>`, naming the proposed area and
+   linking representative work.
+2. The nominee comments to confirm they want the role, accept the
+   responsibilities above, and agree the area is the right one.
 3. Open at least **72 hours** for comment. It passes if no Maintainer objects.
-4. A Maintainer grants the Triage role and opens a PR adding the handle to
-   `MAINTAINERS.md`.
+4. A Maintainer grants the Triage role, then opens a PR adding the handle and
+   area to `MAINTAINERS.md` and `area-reviewers.yml`.
 
 ---
 
@@ -112,7 +133,7 @@ someone has depth.
 
 ### Requirements
 
-- Triager for at least **1 month**.
+- Area Triager for at least **1 month**.
 - At least **20 substantive contributions** in the past 12 months. That includes
   authoring PRs, reviewing PRs, triaging issues, writing documentation, testing
   release candidates, and answering other users' questions.
@@ -127,7 +148,7 @@ someone has depth.
 - Merge rights scoped to your area's paths in `CODEOWNERS`. Your approval
   satisfies the review requirement for PRs in that area.
 - Automatic review requests for PRs touching your paths.
-- A vote on nominations to Triager and Area Reviewer.
+- A vote on nominations to Area Triager and Area Reviewer.
 - Listed with your area in `MAINTAINERS.md`.
 
 Area Reviewers do **not** hold PyPI publish rights, package signing keys, or CI
@@ -208,7 +229,7 @@ the non-Snowflake share of Area Reviewers deliberately.
 
 ### Inactivity and Emeritus
 
-After **12 months** with no contribution, a Triager or Area Reviewer moves to
+After **12 months** with no contribution, an Area Triager or Area Reviewer moves to
 Emeritus and their access is removed. Unused permissions are a liability, and an
 inaccurate roster misleads contributors about who is available.
 

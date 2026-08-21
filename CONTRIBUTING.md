@@ -150,11 +150,11 @@ contributor to maintainer, with published criteria at each step:
 | Rung | Write access | Scope |
 | ---- | ------------ | ----- |
 | Contributor | None | — |
-| Triager | None (GitHub Triage role) | Issues and pull requests |
+| Area Triager | None (GitHub Triage role) | Issues and PRs in one area |
 | Area Reviewer | Merge, scoped to paths | One named area |
 | Maintainer | Merge, project-wide | Whole project |
 
-Triager needs about a month of contribution history and one sponsor. Most active
+Area Triager needs about a month of contribution history and one sponsor. Most active
 contributors are ready for it sooner than they expect. See the [Contributor
 Ladder](CONTRIBUTOR_LADDER.md) for requirements and the nomination process, and
 [Governance](GOVERNANCE.md) for how decisions get made.

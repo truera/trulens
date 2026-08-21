@@ -2,15 +2,15 @@
 #
 # WHY THIS FILE EXISTS, SEPARATELY FROM CODEOWNERS:
 # GitHub silently ignores CODEOWNERS entries for accounts without write access.
-# Triagers have the Triage role, not write, so they cannot be code owners — but
+# Area Triagers have the Triage role, not write, so they cannot be code owners — but
 # they *can* be requested as reviewers, because review requests only require
 # read access. This file is the routing table for those advisory requests.
 #
 # Two mechanisms, two files:
 #   .github/CODEOWNERS          -> Area Reviewers and Maintainers. Blocking.
-#   .github/area-reviewers.yml  -> Triagers. Advisory, non-blocking.
+#   .github/area-reviewers.yml  -> Area Triagers. Advisory, non-blocking.
 #
-# When a Triager is promoted to Area Reviewer, move them from here into
+# When an Area Triager is promoted to Area Reviewer, move them from here into
 # CODEOWNERS in the same PR that grants scoped write access.
 #
 # PATH MATCHING: prefixes and exact paths only, matched against each changed

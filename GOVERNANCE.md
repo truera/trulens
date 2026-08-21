@@ -18,7 +18,7 @@ defined in the [Contributor Ladder](./CONTRIBUTOR_LADDER.md):
 | Rung | Write access | Scope |
 | ---- | ------------ | ----- |
 | Contributor | None | — |
-| Triager | None (GitHub Triage role) | Issues and pull requests |
+| Area Triager | None (GitHub Triage role) | Issues and PRs in one area |
 | Area Reviewer | Merge, scoped to paths | One named area |
 | Maintainer | Merge, project-wide | Whole project |
 

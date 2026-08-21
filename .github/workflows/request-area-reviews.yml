@@ -4,7 +4,7 @@ name: Request area reviews
 # .github/area-reviewers.yml, based on which paths a pull request changes.
 #
 # CODEOWNERS already does this for Area Reviewers and Maintainers, but GitHub
-# ignores CODEOWNERS entries for accounts without write access — so Triagers
+# ignores CODEOWNERS entries for accounts without write access — so Area Triagers
 # never get routed anything. This workflow covers that gap.
 #
 # Uses pull_request_target so that pull requests from forks get routed too:

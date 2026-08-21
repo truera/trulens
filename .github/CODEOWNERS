@@ -5,7 +5,7 @@
 # current roster.
 #
 # NOTE: GitHub ignores CODEOWNERS entries for accounts without write access, so
-# Triagers cannot appear here. Advisory review routing for Triagers lives in
+# Area Triagers cannot appear here. Advisory review routing for them lives in
 # .github/area-reviewers.yml instead. Proposed owners below are carried as
 # comments until they reach Area Reviewer, at which point the line is
 # uncommented in the same PR that grants scoped write access.
@@ -15,7 +15,7 @@
 # specific owner overrides the surrounding area rather than being shadowed by it.
 
 # Default: any path not matched below.
-*                                       @truera/trulens-maintainers
+*                                       @truera/trulens_maintainers
 
 # ---------------------------------------------------------------------------
 # Broad areas
@@ -23,29 +23,29 @@
 
 # Core. Largest area in the repo; advisory triage is routed to the whole cohort
 # via area-reviewers.yml, but ownership stays with maintainers for now.
-/src/core/                              @truera/trulens-maintainers
+/src/core/                              @truera/trulens_maintainers
 
 # Documentation and the docs site.
 # Proposed Area Reviewers: @aqilaziz, @nuthalapativarun
-/docs/                                  @truera/trulens-maintainers
-/mkdocs.yml                             @truera/trulens-maintainers
-/README.md                              @truera/trulens-maintainers
+/docs/                                  @truera/trulens_maintainers
+/mkdocs.yml                             @truera/trulens_maintainers
+/README.md                              @truera/trulens_maintainers
 
 # Feedback functions.
 # Proposed Area Reviewer: @debu-sinha
-/src/feedback/                          @truera/trulens-maintainers
+/src/feedback/                          @truera/trulens_maintainers
 
 # Providers — all provider integrations except Cortex.
 # Proposed Area Reviewer: @sahusiddharth
-/src/providers/                         @truera/trulens-maintainers
+/src/providers/                         @truera/trulens_maintainers
 
 # Benchmarking and golden sets.
 # Proposed Area Reviewer: @maitraymukeshkumarmodi-aiml
-/src/benchmark/                         @truera/trulens-maintainers
+/src/benchmark/                         @truera/trulens_maintainers
 
 # OpenTelemetry semantic conventions.
 # Proposed Area Reviewer: @nuthalapativarun
-/src/otel/                              @truera/trulens-maintainers
+/src/otel/                              @truera/trulens_maintainers
 
 # ---------------------------------------------------------------------------
 # Narrower areas — must stay below the broad entries above
@@ -53,42 +53,42 @@
 
 # Feedback templates.
 # Proposed Area Reviewer: @maitraymukeshkumarmodi-aiml
-/src/feedback/trulens/feedback/templates/     @truera/trulens-maintainers
+/src/feedback/trulens/feedback/templates/     @truera/trulens_maintainers
 
 # Ensemble and prompt optimization.
 # Proposed Area Reviewer: @bashward
-/src/feedback/trulens/feedback/optimize.py    @truera/trulens-maintainers
-/src/apps/gepa/                         @truera/trulens-maintainers
+/src/feedback/trulens/feedback/optimize.py    @truera/trulens_maintainers
+/src/apps/gepa/                         @truera/trulens_maintainers
 
 # LLM judge alignment.
 # Proposed Area Reviewer: @debu-sinha
-/src/benchmark/trulens/benchmark/alignment_report.py        @truera/trulens-maintainers
-/src/benchmark/trulens/benchmark/cross_model_alignment.py   @truera/trulens-maintainers
-/src/benchmark/trulens/benchmark/criteria_ab_test.py        @truera/trulens-maintainers
-/src/benchmark/trulens/benchmark/score_distribution.py      @truera/trulens-maintainers
-/docs/component_guides/evaluation/llm_judge_alignment.md    @truera/trulens-maintainers
+/src/benchmark/trulens/benchmark/alignment_report.py        @truera/trulens_maintainers
+/src/benchmark/trulens/benchmark/cross_model_alignment.py   @truera/trulens_maintainers
+/src/benchmark/trulens/benchmark/criteria_ab_test.py        @truera/trulens_maintainers
+/src/benchmark/trulens/benchmark/score_distribution.py      @truera/trulens_maintainers
+/docs/component_guides/evaluation/llm_judge_alignment.md    @truera/trulens_maintainers
 
 # Offline and batch evaluation.
 # Proposed Area Reviewer: @desusaiteja
-/src/core/trulens/core/batch.py         @truera/trulens-maintainers
-/src/benchmark/trulens/benchmark/golden_set_generator.py    @truera/trulens-maintainers
+/src/core/trulens/core/batch.py         @truera/trulens_maintainers
+/src/benchmark/trulens/benchmark/golden_set_generator.py    @truera/trulens_maintainers
 
 # Runs and online evaluation sampling.
 # Proposed Area Reviewer: @Payal2000
-/src/core/trulens/core/run.py           @truera/trulens-maintainers
-/src/core/trulens/core/sampling.py      @truera/trulens-maintainers
+/src/core/trulens/core/run.py           @truera/trulens_maintainers
+/src/core/trulens/core/sampling.py      @truera/trulens_maintainers
 
 # Cortex provider. Snowflake's own provider and the busiest of the eight;
 # deliberately carved out of the providers area and kept with maintainers.
-/src/providers/cortex/                   @truera/trulens-maintainers
+/src/providers/cortex/                   @truera/trulens_maintainers
 
 # ---------------------------------------------------------------------------
 # Governance
 # ---------------------------------------------------------------------------
-/CONTRIBUTOR_LADDER.md                  @truera/trulens-maintainers
-/GOVERNANCE.md                          @truera/trulens-maintainers
-/MAINTAINERS.md                         @truera/trulens-maintainers
-/.github/CODEOWNERS                     @truera/trulens-maintainers
-/.github/area-reviewers.yml             @truera/trulens-maintainers
-/.github/workflows/                     @truera/trulens-maintainers
-/.github/scripts/                       @truera/trulens-maintainers
+/CONTRIBUTOR_LADDER.md                  @truera/trulens_maintainers
+/GOVERNANCE.md                          @truera/trulens_maintainers
+/MAINTAINERS.md                         @truera/trulens_maintainers
+/.github/CODEOWNERS                     @truera/trulens_maintainers
+/.github/area-reviewers.yml             @truera/trulens_maintainers
+/.github/workflows/                     @truera/trulens_maintainers
+/.github/scripts/                       @truera/trulens_maintainers

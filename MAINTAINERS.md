@@ -21,15 +21,15 @@ Merge rights scoped to the paths listed in `CODEOWNERS`.
 _None yet. This rung is open — see the
 [Contributor Ladder](./CONTRIBUTOR_LADDER.md#area-reviewer)._
 
-## Triagers
+## Area Triagers
 
-Issue and pull request triage. No write access to the codebase.
+Issue and pull request triage in a named area. No write access to the codebase.
 
 _Nominations in progress._
 
 ## Emeritus
 
-Former Triagers, Area Reviewers, and Maintainers. Merit earned doesn't expire:
+Former Area Triagers, Area Reviewers, and Maintainers. Merit earned doesn't expire:
 anyone listed here can be reinstated at their previous rung by opening an issue
 or emailing a Maintainer.
 
