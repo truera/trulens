@@ -128,33 +128,38 @@ Past community contributions include the SQLAlchemy connector and LiteLLM provid
 
 ## Certifying Your Contribution
 
-TruLens uses the [Developer Certificate of Origin](DCO), the same certificate the
-Linux kernel and CNCF projects use. There is no agreement to sign, no form, and no
-account to create.
-
-The pull request template has a checkbox:
+The pull request template ends with two checkboxes. Tick both and you're done;
+they cover every commit in the pull request.
 
 ```
 - [x] I certify that I wrote these changes, or have the right to submit them
   under this project's license — the Developer Certificate of Origin
+- [x] This change follows the TruLens standards for code style, imports,
+  docstrings, and tests
 ```
 
-Tick it and you're done. It covers every commit in the pull request. The full text
-is in [DCO](DCO); it is short and worth reading once.
+The first is the [Developer Certificate of Origin](DCO), the same certificate the
+Linux kernel and CNCF projects use. There is no agreement to sign, no form, and no
+account to create. The text is short and worth reading once.
 
-A CI check looks for that line and fails if it is missing or unticked, with a
-message saying which. It re-runs when you push, so the check always reflects the
-commits currently in the pull request rather than the ones that were there when you
-ticked the box.
+The second points at [Standards](docs/contributing/standards.md), also published at
+<https://www.trulens.org/contributing/standards/>. Most of it is enforced by
+`make format` and `make lint`; the parts that aren't are the module-import
+conventions and the docstring format.
+
+A CI check looks for both lines and says which one is missing or unticked. It
+re-runs when you push, so the check reflects the commits currently in the pull
+request rather than the ones that were there when you ticked the boxes.
 
 Two notes:
 
-- Leave the line in the description. If you delete the section the check cannot
-  find it and will ask you to add it back.
-- Rewording around it is fine. The check looks for a task-list item mentioning the
-  Developer Certificate of Origin, not for exact wording.
+- Leave both lines in the description. If you delete the section the check cannot
+  find them and will ask you to add them back.
+- Rewording around them is fine. The check looks for a task-list item mentioning
+  the Developer Certificate of Origin, and one mentioning TruLens standards, not
+  for exact wording.
 
-Nothing else is required, and no per-commit sign-off is needed.
+No per-commit sign-off is needed.
 
 ## Reference
 
