@@ -3,6 +3,47 @@
 Standards for code and its documentation to be maintained in
 `trulens`. Ongoing work aims at adapting these standards to existing code.
 
+## AI-assisted contributions
+
+Using an assistant to write _TruLens_ code is fine. The certification in the pull
+request template is an assertion about the code, not about how it was produced: you
+are the author, and you are answerable for it.
+
+Before opening the pull request:
+
+- Read every line you are submitting and be ready to say why it is written that
+  way. If a reviewer asks and you cannot answer, it was not ready.
+- Run it. `make format`, `make lint`, and the relevant `make test-*` target.
+  Generated code often reads correctly and fails on import.
+- Check the APIs exist. Assistants invent plausible _TruLens_ methods, attributes
+  and keyword arguments. The
+  [reference docs](https://www.trulens.org/reference/) are generated from the
+  source, so they are the thing to check against.
+- Check imports against [Imports](#imports) below. Generated code defaults to
+  `from trulens.core.feedback.feedback import Feedback`; this project imports
+  the module and renames it.
+- Check the docstring format. Google style, as in
+  [Docstrings](#docstrings) below.
+- Check the tests assert something. A test where a mock returns what the mock was
+  configured to return will pass and demonstrate nothing.
+- Don't add a dependency to make generated code work. Optional dependencies have a
+  structure; see
+  [Optional Packages](https://www.trulens.org/contributing/optional/).
+- Clear notebook outputs. The `nb-clean` pre-commit hook does this; run
+  `pre-commit run --all-files` if you are unsure.
+
+On scope:
+
+- Prefer one reviewable change to one large one. Review is the scarce resource
+  here, not authoring.
+- Don't claim more issues than you are actively working on, and check whether
+  someone else has claimed one before starting.
+- Don't submit documentation or examples for behavior you have not run.
+
+You are not required to disclose assistant use and reviewers will not ask. Mentioning
+it is welcome, and pointing at the parts you are least sure of is more useful than a
+blanket disclosure.
+
 ## Proper Names
 
 In natural language text, style/format proper names using italics if available.

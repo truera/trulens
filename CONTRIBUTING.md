@@ -143,7 +143,9 @@ account to create. The text is short and worth reading once.
 The second points at [Standards](docs/contributing/standards.md), also published at
 <https://www.trulens.org/contributing/standards/>. Most of it is enforced by
 `make format` and `make lint`; the parts that aren't are the module-import
-conventions and the docstring format.
+conventions, the docstring format, and the guidance on
+[AI-assisted contributions](docs/contributing/standards.md#ai-assisted-contributions),
+which is worth reading before you open a pull request.
 
 A CI check looks for both lines and says which one is missing or unticked. It
 re-runs when you push, so the check reflects the commits currently in the pull
