@@ -155,8 +155,12 @@ someone has depth.
 - A vote on nominations to Area Triager and Area Reviewer.
 - Listed with your area in `MAINTAINERS.md`.
 
-Area Reviewers do **not** hold PyPI publish rights, package signing keys, or CI
-secrets. Those attach only to Maintainer.
+Scoped merge rights do not reach publishing. Releases are built and uploaded by
+Azure Pipelines, triggered when a version bump in `src/core/pyproject.toml` lands
+on `main`, and the PyPI token is a secret variable in that project rather than a
+GitHub permission. `src/core/` is owned by maintainers in
+[`CODEOWNERS`](./.github/CODEOWNERS), and the release pipeline never runs on a
+pull request.
 
 ### Process
 
@@ -202,7 +206,8 @@ Project-wide responsibility, including releases and direction.
 
 - Project-wide merge rights.
 - A vote on releases, breaking changes, roadmap, and governance changes.
-- Release credentials: PyPI publish rights, signing keys, CI secrets.
+- Release authority: the Azure Pipelines project that builds and uploads
+  releases, and the PyPI token it holds.
 - Authority to represent the project publicly.
 
 ### Process

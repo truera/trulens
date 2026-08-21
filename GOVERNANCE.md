@@ -47,10 +47,12 @@ Nominations to the contributor ladder follow the process in
 
 ## Releases
 
-Release authority, and the credentials it requires — PyPI publish rights,
-signing keys, CI secrets — belong to Maintainers only. Area Reviewers have merge
-rights within their area and no release credentials. Release policy is in
-[POLICIES.md](./POLICIES.md).
+Releases are built and uploaded by Azure Pipelines, triggered when a version bump
+in `src/core/pyproject.toml` lands on `main`. The PyPI token is a secret variable
+in that project, so publishing is not a GitHub permission and scoped merge rights
+do not confer it. Release policy is in [POLICIES.md](./POLICIES.md), and the
+pipelines are documented in
+[`.azure_pipelines/README.md`](./.azure_pipelines/README.md).
 
 ## Contributing
 
