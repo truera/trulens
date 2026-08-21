@@ -63,9 +63,15 @@ role carries no write access to the codebase.
 
 - GitHub **Triage** role: label, assign, close and reopen issues and PRs.
 - Listed under Triagers in [MAINTAINERS.md](./MAINTAINERS.md).
-- Invited to review pull requests in your area of interest. Reviews from
-  Triagers are advisory — a Maintainer still approves and merges — but this is
-  where the review track record for the next rung comes from.
+- Automatic review requests on pull requests touching your area, routed by
+  [`.github/area-reviewers.yml`](./.github/area-reviewers.yml). Reviews from
+  Triagers are advisory — a Maintainer or Area Reviewer still approves and merges
+  — but this is where the review track record for the next rung comes from.
+
+`src/core` is routed to all Triagers rather than to one area owner. It is the
+largest area in the project and the one with the thinnest review coverage, and
+reviewing it is the most direct way to build the experience the next rung asks
+for.
 
 ### Process
 
