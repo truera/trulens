@@ -31,9 +31,12 @@
 /mkdocs.yml                             @truera/trulens-maintainers
 /README.md                              @truera/trulens-maintainers
 
-# Feedback functions and providers.
+# Feedback functions.
 # Proposed Area Reviewer: @debu-sinha
 /src/feedback/                          @truera/trulens-maintainers
+
+# Providers — all provider integrations.
+# Proposed Area Reviewer: @sahusiddharth
 /src/providers/                         @truera/trulens-maintainers
 
 # Benchmarking and golden sets.
@@ -74,10 +77,6 @@
 # Proposed Area Reviewer: @Payal2000
 /src/core/trulens/core/run.py           @truera/trulens-maintainers
 /src/core/trulens/core/sampling.py      @truera/trulens-maintainers
-
-# Google / Gemini provider.
-# Proposed Area Reviewer: @sahusiddharth (this provider only)
-/src/providers/google/                  @truera/trulens-maintainers
 
 # ---------------------------------------------------------------------------
 # Governance

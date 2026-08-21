@@ -53,12 +53,9 @@ areas:
     reviewers: []
     # reviewers: [nuthalapativarun]
 
-  - name: Feedback functions and providers
+  - name: Feedback functions
     paths:
       - src/feedback/
-      - src/providers/
-    exclude:
-      - src/providers/google/
     reviewers: []
     # reviewers: [debu-sinha]
 
@@ -105,8 +102,11 @@ areas:
     reviewers: []
     # reviewers: [Payal2000]
 
-  - name: Google / Gemini provider
+  - name: Providers
+    # All provider integrations. Siddharth authored the Google/Gemini provider;
+    # the area is the whole provider surface because the integrations share
+    # shape and the failure modes recur across them.
     paths:
-      - src/providers/google/
+      - src/providers/
     reviewers: []
     # reviewers: [sahusiddharth]
