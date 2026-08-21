@@ -111,7 +111,8 @@ the context the next rung asks for.
    `Area Triager nomination: <github-handle>`, naming the proposed area and
    linking representative work.
 2. The nominee comments to confirm they want the role, accept the
-   responsibilities above, and agree the area is the right one.
+   responsibilities above, agree the area is the right one, and state their
+   affiliation for [MAINTAINERS.md](./MAINTAINERS.md).
 3. Open at least **72 hours** for comment. It passes if no Maintainer objects.
 4. A Maintainer grants the Triage role, then opens a PR adding the handle and
    area to `MAINTAINERS.md` and `area-reviewers.yml`.
@@ -167,7 +168,8 @@ pull request.
 1. A Maintainer or Area Reviewer opens a PR adding the candidate to `CODEOWNERS`
    and `MAINTAINERS.md`, naming the area and linking evidence for each
    requirement.
-2. The candidate comments to confirm they accept the responsibilities.
+2. The candidate comments to confirm they accept the responsibilities and to state
+   their affiliation, along with any involvement in a competing project.
 3. The second sponsor comments `+1`.
 4. Open at least **7 days**. It passes on approval by a majority of Maintainers,
    with no sustained objection from a Maintainer or from an Area Reviewer whose
