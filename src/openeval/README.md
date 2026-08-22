@@ -4,6 +4,8 @@ Convert between TruLens `Run` records and [EvalPort](https://github.com/adhabnr-
 
 See [truera/trulens#2680](https://github.com/truera/trulens/issues/2680) for the proposal this module implements.
 
+> **Status:** approved by @joshreini1 on 2026-08-17 ("Ready to merge" -- the two failing checks are pre-existing `test_otel_async_concurrency.py` flakes, unrelated to this change).
+
 ## Install
 
 This module ships inside the `trulens` monorepo as `trulens-openeval`, following the same layout as `trulens-hotspots` and `src/connectors/snowflake`:
