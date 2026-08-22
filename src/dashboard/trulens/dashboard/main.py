@@ -20,6 +20,7 @@ def main():
         st.Page(str(tabs_dir / "Trends.py")),
         st.Page(str(tabs_dir / "Records.py")),
         st.Page(str(tabs_dir / "Compare.py")),
+        st.Page(str(tabs_dir / "Review.py")),
     ]
     if custom_pages_dir := os.environ.get("TRULENS_UI_CUSTOM_PAGES"):
         if os.path.isdir(custom_pages_dir):
