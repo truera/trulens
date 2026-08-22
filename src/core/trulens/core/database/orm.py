@@ -30,6 +30,7 @@ from trulens.core.schema import event as event_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import groundtruth as groundtruth_schema
 from trulens.core.schema import record as record_schema
+from trulens.core.schema import review as review_schema
 from trulens.core.utils import json as json_utils
 
 TYPE_JSON = Text
@@ -121,6 +122,9 @@ class ORM(abc.ABC, Generic[T]):
     FeedbackResult: Type[T]
     GroundTruth: Type[T]
     Dataset: Type[T]
+    ReviewQueue: Type[T]
+    ReviewItem: Type[T]
+    HumanReview: Type[T]
     Event: Type[T]
     Run: Type[T]
 
@@ -406,6 +410,138 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
                 return cls(
                     dataset_id=obj.dataset_id,
                     dataset_json=obj.model_dump_json(redact_keys=redact_keys),
+                )
+
+        class ReviewQueue(base):
+            """ORM class for
+            [ReviewQueue][trulens.core.schema.review.ReviewQueue]."""
+
+            _table_base_name = "review_queues"
+
+            review_queue_id = Column(TYPE_ID, nullable=False, primary_key=True)
+            name = Column(VARCHAR(256), nullable=False)
+            review_queue_json = Column(TYPE_JSON, nullable=False)
+            created_at = Column(Float, nullable=False)
+            updated_at = Column(Float, nullable=False)
+
+            @classmethod
+            def parse(
+                cls,
+                obj: review_schema.ReviewQueue,
+                redact_keys: bool = False,
+            ) -> ORM.ReviewQueue:
+                return cls(
+                    review_queue_id=obj.review_queue_id,
+                    name=obj.name,
+                    review_queue_json=obj.model_dump_json(
+                        redact_keys=redact_keys
+                    ),
+                    created_at=obj.created_at,
+                    updated_at=obj.updated_at,
+                )
+
+        class ReviewItem(base):
+            """ORM class for
+            [ReviewItem][trulens.core.schema.review.ReviewItem].
+
+            State, priority and claim columns are kept out of the JSON blob so
+            that claiming an item can be a single conditional UPDATE.
+            """
+
+            _table_base_name = "review_items"
+
+            review_item_id = Column(TYPE_ID, nullable=False, primary_key=True)
+            review_queue_id = Column(
+                TYPE_ID,
+                ForeignKey(f"{prefix}review_queues.review_queue_id"),
+                nullable=False,
+            )
+            target_type = Column(VARCHAR(64), nullable=False)
+            target_id = Column(TYPE_ID, nullable=False)
+            priority = Column(Float, nullable=False, default=0.0)
+            state = Column(VARCHAR(32), nullable=False)
+            claim_token = Column(TYPE_ID, nullable=True)
+            claimed_at = Column(Float, nullable=True)
+            claimed_by = Column(VARCHAR(256), nullable=True)
+            current_review_id = Column(TYPE_ID, nullable=True)
+            review_item_json = Column(TYPE_JSON, nullable=False)
+            created_at = Column(Float, nullable=False)
+            updated_at = Column(Float, nullable=False)
+
+            queue = relationship(
+                "ReviewQueue",
+                backref=backref(
+                    "review_items",
+                    cascade="all,delete",
+                    order_by=review_item_id,
+                ),
+            )
+            # See NOTE(backref order_by).
+
+            @classmethod
+            def parse(
+                cls,
+                obj: review_schema.ReviewItem,
+                redact_keys: bool = False,
+            ) -> ORM.ReviewItem:
+                return cls(
+                    review_item_id=obj.review_item_id,
+                    review_queue_id=obj.review_queue_id,
+                    target_type=obj.target_type.value,
+                    target_id=obj.target_id,
+                    priority=obj.priority,
+                    state=obj.state.value,
+                    claim_token=obj.claim_token,
+                    claimed_at=obj.claimed_at,
+                    claimed_by=obj.claimed_by,
+                    current_review_id=obj.current_review_id,
+                    review_item_json=obj.model_dump_json(
+                        redact_keys=redact_keys
+                    ),
+                    created_at=obj.created_at,
+                    updated_at=obj.updated_at,
+                )
+
+        class HumanReview(base):
+            """ORM class for
+            [HumanReview][trulens.core.schema.review.HumanReview].
+
+            Rows are only ever inserted: an edit is a new row pointing at the
+            one it supersedes, so review history is never overwritten.
+            """
+
+            _table_base_name = "human_reviews"
+
+            human_review_id = Column(TYPE_ID, nullable=False, primary_key=True)
+            target_type = Column(VARCHAR(64), nullable=False)
+            target_id = Column(TYPE_ID, nullable=False)
+            verdict = Column(VARCHAR(32), nullable=False)
+            score = Column(Float, nullable=True)
+            reviewer = Column(VARCHAR(256), nullable=True)
+            review_queue_id = Column(TYPE_ID, nullable=True)
+            supersedes_id = Column(TYPE_ID, nullable=True)
+            human_review_json = Column(TYPE_JSON, nullable=False)
+            ts = Column(Float, nullable=False)
+
+            @classmethod
+            def parse(
+                cls,
+                obj: review_schema.HumanReview,
+                redact_keys: bool = False,
+            ) -> ORM.HumanReview:
+                return cls(
+                    human_review_id=obj.human_review_id,
+                    target_type=obj.target_type.value,
+                    target_id=obj.target_id,
+                    verdict=obj.verdict.value,
+                    score=obj.score,
+                    reviewer=obj.reviewer,
+                    review_queue_id=obj.review_queue_id,
+                    supersedes_id=obj.supersedes_id,
+                    human_review_json=obj.model_dump_json(
+                        redact_keys=redact_keys
+                    ),
+                    ts=obj.ts,
                 )
 
         class Run(base):

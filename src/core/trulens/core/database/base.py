@@ -24,6 +24,7 @@ from trulens.core.schema import event as event_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import groundtruth as groundtruth_schema
 from trulens.core.schema import record as record_schema
+from trulens.core.schema import review as review_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.schema.event import Event
 from trulens.core.utils import json as json_utils
@@ -635,6 +636,216 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
             A dataframe with the virtual ground truths.
         """
         raise NotImplementedError()
+
+    # --- Human review -----------------------------------------------------
+    #
+    # Concrete rather than abstract so that database backends which do not
+    # support review queues keep working; the SQLAlchemy backend implements
+    # all of them.
+
+    def _review_unsupported(self, what: str):
+        raise NotImplementedError(
+            f"{type(self).__name__} does not support {what}. Human review "
+            "queues require a SQLAlchemy-backed database."
+        )
+
+    def insert_review_queue(
+        self, review_queue: review_schema.ReviewQueue
+    ) -> review_schema.ReviewQueueID:
+        """Insert or update a review queue.
+
+        Args:
+            review_queue: The queue to persist.
+
+        Returns:
+            The id of the queue.
+        """
+        self._review_unsupported("review queues")
+
+    def get_review_queue(
+        self,
+        review_queue_id: Optional[review_schema.ReviewQueueID] = None,
+        name: Optional[str] = None,
+    ) -> Optional[review_schema.ReviewQueue]:
+        """Look a review queue up by id or by name.
+
+        Args:
+            review_queue_id: Id of the queue.
+            name: Name of the queue. The most recent match wins.
+
+        Returns:
+            The queue, or `None` if there is no match.
+        """
+        self._review_unsupported("review queues")
+
+    def get_review_queues(self) -> pd.DataFrame:
+        """Get all review queues.
+
+        Returns:
+            A dataframe with one row per queue.
+        """
+        self._review_unsupported("review queues")
+
+    def add_review_items(
+        self,
+        review_queue_id: review_schema.ReviewQueueID,
+        targets: Sequence[review_schema.ReviewTarget],
+    ) -> List[review_schema.ReviewItem]:
+        """Materialize targets into a queue.
+
+        Item ids are derived from the queue and the target, so adding the same
+        target twice is idempotent.
+
+        Args:
+            review_queue_id: Queue to add to.
+            targets: Targets to queue.
+
+        Returns:
+            The items for every given target, new or already present.
+        """
+        self._review_unsupported("review queues")
+
+    def get_review_items(
+        self,
+        review_queue_id: review_schema.ReviewQueueID,
+        state: Optional[review_schema.ReviewItemState] = None,
+    ) -> List[review_schema.ReviewItem]:
+        """Get a queue's items, worst-first.
+
+        Args:
+            review_queue_id: Queue to read.
+            state: Only return items in this state.
+
+        Returns:
+            The matching items.
+        """
+        self._review_unsupported("review queues")
+
+    def get_review_queue_progress(
+        self, review_queue_id: review_schema.ReviewQueueID
+    ) -> Dict[str, int]:
+        """Count a queue's items by state.
+
+        Args:
+            review_queue_id: Queue to count.
+
+        Returns:
+            A mapping of state name to count, plus `total`.
+        """
+        self._review_unsupported("review queues")
+
+    def claim_next_review_item(
+        self,
+        review_queue_id: review_schema.ReviewQueueID,
+        reviewer: Optional[str] = None,
+        now: Optional[float] = None,
+    ) -> Optional[review_schema.ReviewItem]:
+        """Claim the next item to review.
+
+        Performs one conditional update from `pending` to `in_review`, so two
+        callers racing for the same item cannot both succeed. Claims aged past
+        the queue's `stale_claim_seconds` become claimable again, but only when
+        someone asks for work: there is no background reaper.
+
+        Args:
+            review_queue_id: Queue to pull from.
+            reviewer: Caller label to record against the claim.
+            now: Current time, for testing.
+
+        Returns:
+            The claimed item, or `None` when nothing is available.
+        """
+        self._review_unsupported("review queues")
+
+    def update_review_item_state(
+        self,
+        review_item_id: review_schema.ReviewItemID,
+        state: review_schema.ReviewItemState,
+        claim_token: Optional[str] = None,
+        current_review_id: Optional[review_schema.HumanReviewID] = None,
+        now: Optional[float] = None,
+    ) -> review_schema.ReviewItem:
+        """Move an item to a new state.
+
+        Args:
+            review_item_id: Item to update.
+            state: State to move to.
+            claim_token: Token of the claim being acted on, when there is one.
+            current_review_id: Review to record against the item.
+            now: Current time, for testing.
+
+        Returns:
+            The updated item.
+        """
+        self._review_unsupported("review queues")
+
+    def insert_human_review(
+        self, human_review: review_schema.HumanReview
+    ) -> review_schema.HumanReviewID:
+        """Persist a human review.
+
+        Reviews are insert-only: an edit is a new row superseding the one
+        before it.
+
+        Args:
+            human_review: The review to persist.
+
+        Returns:
+            The id of the review.
+        """
+        self._review_unsupported("human reviews")
+
+    def get_latest_human_review(
+        self,
+        target_type: review_schema.ReviewTargetType,
+        target_id: str,
+        reviewer: Optional[str] = None,
+    ) -> Optional[review_schema.HumanReview]:
+        """Get the current review of a target.
+
+        Args:
+            target_type: Kind of object reviewed.
+            target_id: Id of the object reviewed.
+            reviewer: Restrict to one reviewer label.
+
+        Returns:
+            The review nothing supersedes, or `None`.
+        """
+        self._review_unsupported("human reviews")
+
+    def get_human_reviews(
+        self,
+        review_queue_id: Optional[review_schema.ReviewQueueID] = None,
+        target_type: Optional[review_schema.ReviewTargetType] = None,
+        target_id: Optional[str] = None,
+        reviewer: Optional[str] = None,
+        include_superseded: bool = True,
+    ) -> pd.DataFrame:
+        """Get human reviews as a dataframe.
+
+        Args:
+            review_queue_id: Only reviews from this queue.
+            target_type: Only reviews of this kind of object.
+            target_id: Only reviews of this object.
+            reviewer: Only reviews by this reviewer label.
+            include_superseded: Whether to include replaced reviews.
+
+        Returns:
+            A dataframe with one row per review.
+        """
+        self._review_unsupported("human reviews")
+
+    def delete_review_queue(
+        self, review_queue_id: review_schema.ReviewQueueID
+    ) -> None:
+        """Delete a queue and its items.
+
+        Reviews and the source traces the queue pointed at are left alone.
+
+        Args:
+            review_queue_id: Queue to delete.
+        """
+        self._review_unsupported("review queues")
 
     @abc.abstractmethod
     def insert_dataset(

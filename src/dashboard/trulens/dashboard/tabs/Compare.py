@@ -23,6 +23,7 @@ from trulens.dashboard.utils.dashboard_utils import render_sidebar
 from trulens.dashboard.utils.dashboard_utils import set_page_config
 from trulens.dashboard.utils.records_utils import _render_feedback_call
 from trulens.dashboard.utils.records_utils import _render_feedback_pills
+from trulens.dashboard.utils.review_utils import render_add_to_queue
 from trulens.dashboard.utils.streamlit_compat import st_columns
 from trulens.dashboard.ux.styles import aggrid_css
 from trulens.dashboard.ux.styles import diff_cell_css
@@ -794,6 +795,17 @@ def render_app_comparison(app_name: str):
         record_data[app_id] = {**data, "records": records}
     record_header_container.divider()
     record_header_container.header("Record Comparison")
+    with record_header_container:
+        # Every version's record for this row, so a comparison can be sent to
+        # a queue as a group.
+        render_add_to_queue(
+            [
+                data["records"]["record_id"].iloc[0]
+                for data in record_data.values()
+                if not data["records"].empty
+            ],
+            key=f"{page_name}.add_to_queue",
+        )
     with record_feedback_graph_container:
         _render_all_app_feedback_plot(record_data, feedback_col_names)
 
