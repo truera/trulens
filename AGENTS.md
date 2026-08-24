@@ -105,6 +105,20 @@ with tru_app as recording:
 
 ### OTEL instrumentation
 
+**OTEL tracing is enabled by default.** Do not set `TRULENS_OTEL_TRACING=1` and do not pass
+`Feature.OTEL_TRACING` - both are no-ops. `is_otel_tracing_enabled()` returns `True` unless the
+environment variable is explicitly set to `"0"` or `"false"`:
+
+```python
+# trulens/core/otel/utils.py
+def is_otel_tracing_enabled() -> bool:
+    return not _is_env_var_disabled("TRULENS_OTEL_TRACING")  # "0" / "false" only
+```
+
+The variable is only useful for *disabling* tracing. Note the failure mode that follows: a leftover
+`TRULENS_OTEL_TRACING=0` in a shell or `.env` silently produces no spans rather than an error, so
+check for it first when traces are missing.
+
 Basic instrumentation - captures function args and return as span attributes:
 ```python
 from trulens.core.otel.instrument import instrument
@@ -282,11 +296,23 @@ f_groundedness = (
 ```
 
 ### Experimental features
+
 ```python
 from trulens.core.experimental import Feature
 
-session = TruSession(experimental_feature_flags=[Feature.OTEL_TRACING])
+session = TruSession(experimental_feature_flags=[Feature.SIS_COMPATIBILITY])
 ```
+
+`Feature.OTEL_TRACING` does not belong in this list. `TruSession` calls `is_otel_tracing_enabled()`
+during setup and, when it returns `True` (the default), sets that flag to `True` and freezes it:
+
+```python
+# trulens/core/experimental/__init__.py
+if is_otel_tracing_enabled():
+    self._experimental_feature(Feature.OTEL_TRACING, value=True, freeze=True)
+```
+
+Passing it explicitly is redundant.
 
 ## Adding new components
 
