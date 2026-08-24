@@ -47,6 +47,12 @@ class GenAIAttributes:
         TEMPERATURE = GEN_AI_SCOPE + ".request.temperature"
         """Sampling temperature requested."""
 
+    class RESPONSE:
+        """Attributes describing the GenAI response."""
+
+        MODEL = GEN_AI_SCOPE + ".response.model"
+        """Model name that produced the response."""
+
     class USAGE:
         """Token usage reported by the GenAI provider."""
 
@@ -55,6 +61,12 @@ class GenAIAttributes:
 
         OUTPUT_TOKENS = GEN_AI_SCOPE + ".usage.output_tokens"
         """Number of completion/output tokens generated."""
+
+    class PROVIDER:
+        """Current attribute identifying the GenAI provider."""
+
+        NAME = GEN_AI_SCOPE + ".provider.name"
+        """Name of the GenAI provider (e.g. ``openai``)."""
 
     class SYSTEM:
         """Attributes identifying the GenAI provider/system.
@@ -146,6 +158,23 @@ class ResourceAttributes:
 
     APP_VERSION = BASE_SCOPE + ".app_version"
     """Name of the version that the span belongs to."""
+
+
+class ServerAttributes:
+    """Standard OpenTelemetry server attributes."""
+
+    ADDRESS = "server.address"
+    """Server network address."""
+
+    PORT = "server.port"
+    """Server network port."""
+
+
+class ErrorAttributes:
+    """Standard OpenTelemetry error attributes."""
+
+    TYPE = "error.type"
+    """Error type or class name."""
 
 
 class SpanAttributes:
