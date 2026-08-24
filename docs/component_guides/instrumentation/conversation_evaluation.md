@@ -111,8 +111,8 @@ TruLens also provides explicit selector factories when a custom evaluator needs 
 part of the transcript:
 
 ```python
-Selector.select_conversation()         # Ordered input/output records
-Selector.select_conversation_input()   # Ordered record inputs
+Selector.select_conversation()  # Ordered input/output records
+Selector.select_conversation_input()  # Ordered record inputs
 Selector.select_conversation_output()  # Ordered record outputs
 ```
 
@@ -240,7 +240,8 @@ Use `groupby` only when you want to summarize a per-turn metric:
 
 ```python
 answer_relevance_by_conversation = (
-    records.dropna(subset=["conversation_id", "Answer Relevance"])
+    records
+    .dropna(subset=["conversation_id", "Answer Relevance"])
     .groupby("conversation_id", as_index=False)["Answer Relevance"]
     .mean()
     .rename(columns={"Answer Relevance": "Average Answer Relevance"})

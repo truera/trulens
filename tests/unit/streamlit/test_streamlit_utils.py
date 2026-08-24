@@ -209,9 +209,9 @@ class AppTestHelper:
             if expected_content in str(header.value):
                 headers_found = True
                 break
-        assert (
-            headers_found
-        ), f"Header with '{expected_content}' should be present"
+        assert headers_found, (
+            f"Header with '{expected_content}' should be present"
+        )
 
     @staticmethod
     def assert_has_error_with_message(app: AppTest, expected_message: str):
@@ -235,16 +235,16 @@ class AppTestHelper:
             all_text += str(
                 element.value if hasattr(element, "value") else element
             )
-        assert (
-            expected_text in all_text
-        ), f"Expected text '{expected_text}' not found in app content"
+        assert expected_text in all_text, (
+            f"Expected text '{expected_text}' not found in app content"
+        )
 
     @staticmethod
     def assert_has_metrics(app: AppTest, min_count=1):
         """Assert that the app has rendered metrics."""
-        assert (
-            len(app.metric) >= min_count
-        ), f"Should have at least {min_count} metrics"
+        assert len(app.metric) >= min_count, (
+            f"Should have at least {min_count} metrics"
+        )
 
     @staticmethod
     def assert_has_buttons(
@@ -256,9 +256,9 @@ class AppTestHelper:
         if expected_labels:
             button_labels = [button.label for button in app.button]
             for label in expected_labels:
-                assert any(
-                    label in btn_label for btn_label in button_labels
-                ), f"Button with label '{label}' should be present"
+                assert any(label in btn_label for btn_label in button_labels), (
+                    f"Button with label '{label}' should be present"
+                )
 
     @staticmethod
     def assert_has_multiselect_with_label(app: AppTest, expected_label: str):
@@ -268,9 +268,9 @@ class AppTestHelper:
             if expected_label in str(multiselect.label):
                 multiselect_found = True
                 break
-        assert (
-            multiselect_found
-        ), f"Multiselect with label '{expected_label}' should be present"
+        assert multiselect_found, (
+            f"Multiselect with label '{expected_label}' should be present"
+        )
 
     @staticmethod
     def assert_has_toggle_with_label(app: AppTest, expected_label: str):
@@ -280,9 +280,9 @@ class AppTestHelper:
             if expected_label in str(toggle.label):
                 toggle_found = True
                 break
-        assert (
-            toggle_found
-        ), f"Toggle with label '{expected_label}' should be present"
+        assert toggle_found, (
+            f"Toggle with label '{expected_label}' should be present"
+        )
 
 
 class MockManager:

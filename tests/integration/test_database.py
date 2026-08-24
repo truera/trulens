@@ -339,9 +339,9 @@ def _test_db_migration(db: sqlalchemy_db.SQLAlchemyDB):
 
     # apply each upgrade at a time up to head revision
     for i, next_rev in enumerate(history):
-        assert (
-            int(next_rev) == i + 1
-        ), f"Versions must be monotonically increasing from 1: {history}"
+        assert int(next_rev) == i + 1, (
+            f"Versions must be monotonically increasing from 1: {history}"
+        )
         assert_revision(engine, curr_rev, "behind")
         db_migrations.upgrade_db(engine, revision=next_rev)
         curr_rev = next_rev

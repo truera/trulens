@@ -116,18 +116,14 @@ TruLens introduces **span groups** to handle repeated tool calls within a trace.
 
 ```python
 class App:
+    @instrument(attributes={SpanAttributes.SPAN_GROUPS: "idx"})
+    def clean_up_question(question: str, idx: str) -> str: ...
 
     @instrument(attributes={SpanAttributes.SPAN_GROUPS: "idx"})
-    def clean_up_question(question: str, idx: str) -> str:
-        ...
-
-    @instrument(attributes={SpanAttributes.SPAN_GROUPS: "idx"})
-    def clean_up_response(response: str, idx: str) -> str:
-        ...
+    def clean_up_response(response: str, idx: str) -> str: ...
 
     @instrument()
-    def combine_responses(cleaned_responses: List[str]) -> str:
-        ...
+    def combine_responses(cleaned_responses: List[str]) -> str: ...
 
     @instrument()
     def query(complex_question: str) -> str:
@@ -180,6 +176,7 @@ pip install trulens-core==1.5.0
 
 ```python
 from trulens.core.otel.instrument import instrument
+
 
 @instrument(
     attributes={

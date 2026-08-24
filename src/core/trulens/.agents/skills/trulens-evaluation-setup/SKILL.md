@@ -113,6 +113,7 @@ def my_custom_metric(input_text: str, output_text: str) -> float:
 
     return score
 
+
 f_custom = Metric(
     implementation=my_custom_metric,
     name="My Custom Metric",
@@ -130,6 +131,7 @@ def custom_with_context(query: str, context: str, response: str) -> float:
     """Evaluate using query, retrieved context, and response."""
     # Your evaluation logic
     return score
+
 
 f_custom_context = Metric(
     implementation=custom_with_context,
@@ -443,6 +445,7 @@ def my_custom_metric(input_text: str, output_text: str) -> float:
     # Your evaluation logic here
     score = len(output_text) / (len(input_text) + len(output_text))
     return min(max(score, 0.0), 1.0)
+
 
 f_custom = Metric(
     implementation=my_custom_metric,

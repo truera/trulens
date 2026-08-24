@@ -34,6 +34,6 @@ def test_re_0_10_rating(test_input, expected):
     except feedback_generated.ParseError:
         result = None
 
-    assert (
-        result == expected
-    ), f"Failed on {test_input}: expected {expected}, got {result}"
+    assert result == expected, (
+        f"Failed on {test_input}: expected {expected}, got {result}"
+    )

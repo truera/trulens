@@ -39,7 +39,9 @@ The new `Metric` class uses an explicit `selectors` dictionary instead of chaine
     )
 
     f_context_relevance = (
-        Feedback(provider.context_relevance_with_cot_reasons, name="Context Relevance")
+        Feedback(
+            provider.context_relevance_with_cot_reasons, name="Context Relevance"
+        )
         .on_input()
         .on(Select.RecordCalls.retrieve.rets)
         .aggregate(numpy.mean)
@@ -136,6 +138,7 @@ TruLens's LiteLLM provider now correctly forwards `api_base`, `api_key`, and oth
 
     # Via environment variable (LiteLLM reads OLLAMA_API_BASE automatically)
     import os
+
     os.environ["OLLAMA_API_BASE"] = "http://localhost:11434"
     provider = LiteLLM(model_engine="ollama/llama3.1")
 
