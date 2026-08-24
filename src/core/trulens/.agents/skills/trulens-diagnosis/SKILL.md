@@ -288,7 +288,7 @@ fix for metric A introduced a failure in metric B.
 | Issue | Solution |
 |-------|----------|
 | No failing records found | Lower the threshold (e.g., `< 0.8`) or check if evaluations completed |
-| Trace JSON empty | Ensure `OTEL_TRACING` is enabled and spans are captured |
+| Trace JSON empty | OTEL tracing is on by default; check for a leftover `TRULENS_OTEL_TRACING=0` disabling it, and confirm spans are captured |
 | Same metric still failing after fix | Check if the fix is actually being applied — add logging to confirm |
 | Regression in another metric | The fix may be too aggressive; tune parameters (temperature, k, prompt) |
 | Can't identify root cause from trace | Enable debug logging: `import logging; logging.basicConfig(level=logging.DEBUG)` |
